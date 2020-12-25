@@ -1,0 +1,9 @@
+admin:
+  page:
+    mainImageFormat:
+      label: Format
+      none: ∅
+      normal: Normal
+      13fullscreen: 1/3 screen
+      34fullscreen: 3/4 screen
+      fullscreen: Full screen

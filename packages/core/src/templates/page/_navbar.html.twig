@@ -1,0 +1,76 @@
+{#
+    @params array       logo {class, href, alt},
+    @params array       navbar_items
+    @params string      navbar_container
+    @params string      navbar_wrapper_class
+    @params string      navbar_nav_class
+    @params string      navbar_nav_item_class
+    @params string      navbar_nav_item_class_active
+    @param bool         navbar_toggler
+    @param string       navbar_heigh
+#}
+
+{% set navbar_items = navbar_items ?? {
+  'Admin': (class_exists('\\Pushword\\Admin\\PushwordAdminBundle') ? '/admin/' : 'https://pushword.piedweb.com/extension/admin'),
+  'Kitchen Sink': {'href': page('kitchen-sink')},
+  'Docs': {
+        'anchor': svg('arrow-up-right-from-square', {class: 'w-auto h-3 mr-1 fill-current text-gray-300 group-hover:text-gray-600 inline-block'}) ~ 'Docs',
+        'href': 'https://pushword.piedweb.com',
+        'class': 'group text-gray-800 hover:text-primary'
+  },
+ } %}
+
+{% set toggle_button = navbar_items is not empty ? (navbar_toggler is defined ? navbar_toggler : true) : true %}
+
+{% set navbar_wrapper_class = navbar_wrapper_class|default('flex flex-col justify-between max-w-screen-lg w-full mx-auto lg:flex-row order-first' ~ (toggle_button == false ? ' items-center' : '')) %}
+
+{% set navbar_nav_class = navbar_nav_class|default(toggle_button
+  ? 'absolute *:p-3 lg:*:p-0 top-12 lg:relative lg:top-0 bg-white shadow-xl lg:shadow-none lg:p-0 w-full lg:w-auto flex flex-col overflow-hidden max-h-0  transition-all delay-150 duration-700 lg:items-center lg:justify-start lg:max-h-full lg:flex-row lg:space-x-6 lg:pt-0'
+  : 'flex flex-row space-x-6 text-center items-center pt-3 lg:pt-0') %}
+
+{% block before_navbar %}{% endblock %}
+
+<div class="{{ navbar_wrapper_class }}" id="navbar">
+    {{ (navbar_container is defined ? ('<div class="' ~ navbar_container|default('') ~ '">') : '')|raw }}
+
+        {% block logo %}
+            <a class="{{ logo.class|default('block mr-1 font-mono text-xl font-bold text-primary hover:text-secondary p-4') }}" href="{{ logo.href|default(page('homepage')) }}"{% if logo.style is defined %} style="{{ logo.style }}"{% endif %}>{{ logo.alt|default(app_name)|raw }}</a>
+        {% endblock %}
+
+        {% block toggle_button %}
+            {% if toggle_button %}
+            <label onclick="setTimeout(function(){document.querySelector('#navbar').scrollIntoView();},250)" class="{{ navbar_toggler_class|default('absolute top-3 lg:hidden right-3 text-gray-800') }}" type="button" data-toggle="collapse" data-target="#navbar-links" aria-controls="navbar-links" aria-expanded="true" aria-label="{{ 'Toggle navigation'|trans }}" for="navbar-toggler">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M2.5 11.5A.5.5 0 0 1 3 11h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 3h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+            </label>
+            <input type="checkbox" id="navbar-toggler" class="hidden show-hide-input">
+            {% endif %}
+        {% endblock %}
+
+        {% block nav_list %}
+            {% if navbar_items is defined and navbar_items is not empty %}
+                <nav id="navbar-links" class="{{ navbar_nav_class }}">
+                    {% for anchor, item in navbar_items %}
+
+                        {# some navbar normalization #}
+                        {% if item is not iterable %}
+                            {% set item = {href: item} %}
+                        {% endif %}
+
+                        {% if item.html is defined %}
+                            {{ item.html|raw }}
+                        {% elseif is_current_page(item.href, page) %}
+                            <span class="{{ navbar_nav_item_class_active ?? navbar_nav_item_class ?? 'text-secondary font-bold' }}" aria-current="page">
+                                {{ item.anchor ?? anchor|raw }}
+                            </span>
+                        {% else %}
+                          {% set itemAttr = ({'class': navbar_nav_item_class ?? 'text-gray-800 hover:text-primary'})|merge(item|filter((v, k) => k != "anchor")) %}
+                          {{ link(item.anchor ?? anchor, itemAttr, item.encrypt ?? false) }}
+                        {% endif %}
+                    {% endfor %}
+                </nav>
+            {% endif %}
+        {% endblock %}
+    {{ (navbar_container is defined ? '</div>' : '')|raw }}
+</div>

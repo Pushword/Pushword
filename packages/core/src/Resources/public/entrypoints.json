@@ -1,0 +1,14 @@
+{
+  "entrypoints": {
+    "app": {
+      "js": [
+        "/bundles/pushwordcore/app.js"
+      ]
+    },
+    "style": {
+      "css": [
+        "/bundles/pushwordcore/style.css"
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{% if (block.data.display == 'card') %}
+{# show preview for a 1024px screen max (else client screen width) #}
+<div style="text-align: center; max-width:100%;overflow-x:auto; overflow-y:hidden">
+<iframe seamless height="auto" style="width:100vw;max-width:1200px; border: none;transform-origin: 0 0;"
+    onload="
+        var ratio = (screen.width > 1024 ? 1024 / screen.width : 1);
+        this.height = this.contentWindow.document.documentElement.scrollHeight + 'px';
+        this.parentNode.style.maxHeight = this.contentWindow.document.documentElement.scrollHeight * ratio + 'px';
+        if (ratio !== 1) this.parentNode.style.overflowX = 'hidden';
+        this.style.transform= 'scale('+ratio+')';
+
+    "
+srcdoc='
+<base target="_blank" />
+
+{% apply replace({"'": "\'"}) %}
+
+{{ block("css", view('/base.html.twig')) }}
+
+{{ pages_list(block.data.kw, [block.data.max|default(9), block.data.maxPages|default(1)], block.data.order, 'card') }}
+
+{% endapply %}
+
+' />
+</base>
+</div>
+{% else %}
+    {% include view('/block/pages_list.html.twig', '@PushwordAdminBlockEditor') %}
+{% endif %}

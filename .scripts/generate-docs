@@ -1,0 +1,53 @@
+#!/bin/bash -e
+
+#composer reset-skeleton
+
+# function restoreData {
+#     echo "restore data..."
+#      if [[ $CURRENT_DIR = 'packages/skeleton' ]]
+#     then
+#         cd ../../
+#     fi
+#     #bash ./.scripts/data-restore no-docs
+# }
+# trap restoreData EXIT
+#bash ./.scripts/data-preserve no-docs
+
+php ./.scripts/generate-docs-assets
+
+
+CURRENT_DIR='packages/skeleton'
+cd packages/skeleton
+
+php bin/console pushword:flat:import pushword.piedweb.com && php bin/console pushword:static:generate pushword.piedweb.com
+
+cd ../../
+# Syncing with docs branch and sending to dist
+
+git branch -D docs || true
+
+git checkout --orphan docs
+
+git rm -rf .
+
+shopt -s extglob
+rm -rf !("docs"|".git")
+rm -rf .git-hooks
+rm -rf .github
+rm -rf .scripts
+rm -rf .phpunit.cache || true
+rm -rf .vscode || true
+rm -f .gitignore
+find -name '.*' -type f -exec rm {} \; -print
+
+git add docs/*
+
+git commit -m 'update docs'
+
+git push origin docs --force
+
+git checkout main
+
+git stash || true
+
+composer update -q && composer reset

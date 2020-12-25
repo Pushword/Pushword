@@ -1,0 +1,34 @@
+{#
+    image
+    date
+    hLevel
+    title
+#}
+{% if page is defined %}
+ {% set image = page.mainImage %}
+ {% set date = page.createdAt %}
+ {% set title = pw(page).h1 %}
+ {% set link = page(page) %}
+{% endif %}
+
+{% block card %}
+    {% import view('/component/image_helper.html.twig') as helper %}
+<article class="overflow-hidden rounded-lg shadow-xl transition-all duration-75 ease-in-out hover:shadow clickable cursor-pointer">
+    {% if image is defined and image is not null %}
+        {{ helper.thumb(media_from_string(image), page ?? null, 'thumb', {'class': 'block w-full h-auto m-0'}) }}
+    {% endif %}
+        {% block card_date %}
+        <!--<span class="block p-2 text-sm text-white bg-primary">
+            {{ (date ?? 'now')|date('d/m/Y à H:i') }}
+        </span>-->
+        {% endblock %}
+        <{{ title_tag|default('h' ~ (hLevel|default(2))) }} class="py-4 px-6 mt-0 font-bold text-xl leading-tight">
+            {% if encrypted_link is defined %}{{ link(title, link) }}{% else %}
+                <a href="{{ link }}" style="text-decoration:none">
+                    {{ title|raw }}
+                </a>
+            {% endif %}
+        </h{{ title_tag|default('h' ~ (hLevel|default(2))) }}>
+    </header>
+</article>
+{% endblock %}

@@ -1,0 +1,51 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      #fail-fast: true
+      matrix:
+        os: [ubuntu-latest] #, windows-latest
+        php: [8.2, 8.3]
+        stability: [prefer-stable] #prefer-lowest,
+
+    name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: pecl
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo, xdebug
+          #coverage: none
+
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Install dependencies
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+
+      #- name: Install browsers
+      #  run: vendor/bin/bdi detect drivers
+      - name: Initialize
+        run: composer reset
+
+      - name: Generate Images Cache
+        run: cd packages/skeleton && php bin/console pushword:image:cache
+
+      - name: Execute tests
+        run: vendor/bin/phpunit --coverage-clover coverage.xml
+
+      - name: Send coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: coverage.xml

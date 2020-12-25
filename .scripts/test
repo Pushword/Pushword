@@ -1,0 +1,27 @@
+#!/bin/bash -e
+
+function restoreDataAndComposerDependencies {
+    echo 'restore data and dependencies...'
+    bash ./.scripts/data-restore
+    composer update
+}
+
+function restoreData {
+    echo 'restore data...'
+    bash ./.scripts/data-restore
+}
+
+trap restoreData EXIT
+sh ./.scripts/data-preserve
+
+
+#XDEBUG_MODE=off php -dxdebug.mode=off
+vendor/bin/phpunit --stop-on-failure
+#--debug
+
+if [ "$1" = "full" ]
+then
+    trap restoreDataAndComposerDependencies EXIT
+    composer update --prefer-lowest
+    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug
+fi

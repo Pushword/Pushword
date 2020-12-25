@@ -1,0 +1,229 @@
+/* purgecss start ignore */
+
+//@import '~codemirror/lib/codemirror.css'; //./../../../core/node_modules/
+//@import "~codemirror/lib/codemirror.css";
+//@import "~easymde/src/css/easymde.css";
+@import '~easymde/dist/easymde.min.css';
+@import '~codemirror-spell-checker/src/css/spell-checker.css';
+
+/* Column Expanding */
+.mainFields,
+.columnFields {
+  transition: width 0.5s ease, margin 0.5s ease;
+}
+.w-0 {
+  width: 0 !important;
+}
+@media (min-width: 992px) {
+  #columnFields {
+    padding-left: 0px;
+    margin-left: -5px;
+  }
+}
+
+/* Customize Sonata */
+.content-header {
+  padding: 0;
+}
+@media (max-width: 767px) {
+  .logo {
+    display: none;
+  }
+}
+.main-header {
+  .logo {
+    display: none;
+  }
+  @media (min-width: 767.1px) {
+    .logo {
+      width: 0px;
+    }
+    .navbar {
+      margin-left: 0px;
+    }
+  }
+}
+
+textarea.autosize {
+  height: 34px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  resize: none;
+  padding-bottom: 0;
+}
+/* Editor EasyMDE */
+.editor-toolbar.fullscreen,
+.CodeMirror-fullscreen,
+.EasyMDEContainer .CodeMirror-fullscreen {
+  z-index: 100000000;
+}
+.CodeMirror-lines {
+  max-width: 768px;
+  margin: auto;
+}
+.CodeMirror {
+  display: none;
+}
+.EasyMDEContainer .CodeMirror {
+  display: block;
+}
+
+.preview-visible {
+  display: block;
+}
+.load-preview {
+  display: none;
+}
+.editor-preview {
+  background: #fff;
+  overflow: hidden;
+  padding: 0;
+  z-index: 1000;
+}
+.box-body {
+  font-size: 16.8px;
+}
+
+/* Page edit */
+.navbar-formactions {
+  position: fixed;
+  padding: 15px;
+  //box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  text-align: right;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 809;
+  background: #d1d5db;
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+  @media (min-width: 992px) {
+    padding: 7px;
+    background: #f3f4f6;
+    bottom: auto;
+    top: 0;
+    z-index: 1030;
+    left: 37px;
+    .btn-default {
+      margin-right: 40px;
+    }
+  }
+}
+
+.navbar-formactions {
+  display: inline-flex;
+  justify-content: flex-end;
+}
+.navbar-formactions button[name='btn_update_and_edit'],
+.navbar-formactions button[name='btn_create_and_edit'] {
+  .fas {
+    margin-right: 8px;
+  }
+  font-size: 16px;
+  order: 8;
+  margin-right: 10px;
+}
+
+.navbar-formactions button[name='btn_create_and_create'] {
+  display: none;
+}
+.navbar-formactions button[name='btn_update_and_list'],
+.navbar-formactions button[name='btn_create_and_list'] {
+  .fas {
+    display: none;
+  }
+  background: transparent;
+  color: #4b5563;
+  border: 0px solid #00a65a;
+  margin-left: 20px;
+  font-size: 16px;
+}
+.navbar-formactions .btn-danger {
+  display: none;
+}
+
+.field-short-description {
+  min-width: 160px;
+  width: 100%;
+}
+
+.sidebar-menu > li > a > .fa,
+.sidebar-menu > li > a > .glyphicon,
+.sidebar-menu > li > a > .ion,
+.sidebar-menu > li > a > .fab,
+.sidebar-menu > li > a > .fad,
+.sidebar-menu > li > a > .fal,
+.sidebar-menu > li > a > .far,
+.sidebar-menu > li > a > .fas {
+  width: 30px;
+  text-align: center;
+  margin-left: -15px;
+}
+
+.ace_scrollbar {
+  z-index: 0 !important;
+}
+
+.tagsFieldWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin-top: -44px;
+  font-style: italic;
+}
+.tagsFieldWrapper::before {
+  content: '#';
+  position: absolute;
+  left: 5px; /* Adjust as needed */
+  top: 27%;
+  z-index: 2;
+  color: #e8e8eb; /* Adjust color as needed */
+  font-size: 2em; /* Adjust size as needed */
+}
+.tagsField {
+  padding-left: 35px; /* Adjust according to the width of the hashtag icon */
+  border: 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.tagsField::placeholder {
+  color: #e8e8eb;
+}
+
+.codex-editor .textSuggester {
+  width: 91%;
+  margin-top: -7px;
+}
+
+.textSuggester {
+  max-height: 120px;
+  overflow-y: auto;
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #e8e8eb;
+  width: 100%;
+  z-index: 3;
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  div {
+    display: block;
+    width: 100%;
+    padding: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+    border-bottom: 1px solid #e8e8eb;
+  }
+  div:last-child {
+    border-bottom: 0;
+  }
+
+  div.select {
+    /* keydown, keyup */
+    background-color: rgba(34, 186, 255, 0.08);
+  }
+  div.over {
+    /* mouse over */
+    background-color: #eff2f5;
+  }
+}
+
+/* purgecss end ignore */

@@ -1,0 +1,5 @@
+{% extends view('/page/page_default.html.twig') %}
+
+{% block body %}
+    {{ pw(page).mainContent.body|raw }}
+{% endblock %}

@@ -1,0 +1,12 @@
+{
+  "entrypoints": {
+    "admin.min": {
+      "css": [
+        "/bundles/pushwordadmin/admin.min.css"
+      ],
+      "js": [
+        "/bundles/pushwordadmin/admin.min.js"
+      ]
+    }
+  }
+}

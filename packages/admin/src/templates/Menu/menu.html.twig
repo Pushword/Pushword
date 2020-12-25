@@ -1,0 +1,24 @@
+{% extends '@SonataAdmin/Menu/sonata_menu.html.twig' %}
+
+{% block item %}
+    {% if item.label in ['admin.label.theme', 'admin.label.params']
+        and app.request.attributes.get('_route') in ['pushword_template_editor_create', 'pushword_template_editor_edit'] %}
+        {% do item.setAttribute('class', (item.getAttribute('class') ~ ' active')) %}
+    {% endif %}
+
+    {% if item.label in ['admin.label.content', 'admin.label.page']
+        and app.request.attributes.get('_route') in ['pushword_version_list'] %}
+        {% do item.setAttribute('class', (item.getAttribute('class') ~ ' active')) %}
+    {% endif %}
+
+    {% if item.name in ['page'] %}
+        {% do item.setAttribute('class', (item.getAttribute('class')|replace({'treeview': ''}))) %}
+    {% endif %}
+
+    {% if item.label in ['admin.label.conversation']
+        and app.request.attributes.get('_route') in ['admin_conversation_create', 'admin_conversation_edit'] %}
+        {% do item.setAttribute('class', (item.getAttribute('class') ~ ' active')) %}
+    {% endif %}
+
+    {{ parent()|preg_replace('@treeview(.*/admin/page/list)@', '$1')|raw }}
+{% endblock %}

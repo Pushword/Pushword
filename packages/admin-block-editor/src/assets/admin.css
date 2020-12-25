@@ -1,0 +1,71 @@
+/* purgecss start ignore */
+
+/* editorjs raw */
+.aceInsideEditorJs {
+  background-color: #f3f4f6 !important;
+}
+.aceInsideEditorJs .ace_content,
+.aceInsideEditorJs .ace_scroller {
+  padding: 0 2px;
+}
+
+.aceInsideEditorJs .ace_hidden-cursors {
+  opacity: 0 !important;
+}
+
+.aceInsideEditorJs .ace_active-line {
+  background: none !important;
+}
+
+.ce-rawtool__textarea {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+/* heading anchor size */
+.ce-header::after {
+  font-size: 1rem;
+  padding-top: 2rem;
+}
+
+a[rel='encrypt']:not(.link-btn) {
+  color: #059669;
+}
+
+@media screen and (min-width: 1200px) {
+  .ce-block__content,
+  .ce-toolbar__content {
+    margin-left: 60px;
+  }
+}
+
+/** editorjs quote ui inspired by https://github.com/editor-js/quote/pull/23 */
+
+.cdx-quote {
+  border-left: 0;
+}
+
+.cdx-quote .cdx-input[data-placeholder]::before {
+  position: absolute !important;
+}
+
+.cdx-quote__text {
+  min-height: unset !important;
+  margin-bottom: 10px;
+  border: none;
+  border-left: 1px solid #517b9f;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.cdx-quote__caption {
+  border: none;
+  border-left: 1px solid #517b9f;
+  box-shadow: none;
+  border-radius: 0;
+  color: #3e58fb;
+  border-top: 1px solid #00000017;
+}
+
+/* purgecss end ignore */

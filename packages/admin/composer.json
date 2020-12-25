@@ -1,0 +1,35 @@
+{
+    "name": "pushword/admin",
+    "type": "symfony-bundle",
+    "description": "Default Admin to manage online Pushword App and websites.",
+    "keywords": [],
+    "homepage": "https://pushword.piedweb.com/extension/admin",
+    "license": "MIT",
+    "require": {
+        "pushword/core": "^0",
+        "sonata-project/admin-bundle": "^4.0",
+        "sonata-project/doctrine-orm-admin-bundle": "^4.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Pushword\\Admin\\": "src"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "authors": [
+        {
+            "name": "Robin@PiedWeb",
+            "email": "contact@piedweb.com",
+            "homepage": "https://piedweb.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

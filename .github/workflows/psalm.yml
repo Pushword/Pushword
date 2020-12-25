@@ -1,0 +1,76 @@
+name: "Static Code Analysis"
+
+on: [push, pull_request]
+
+jobs:
+  phpstan:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        php: [8.2, 8.3]
+        stability: [prefer-stable] #prefer-lowest,
+
+    name: PHPStan - P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install PHP with extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Install Composer dependencies (highest)
+        uses: ramsey/composer-install@v1
+        with:
+          dependency-versions: highest
+          composer-options: --prefer-dist --${{ matrix.stability }} --no-interaction
+
+      - name: Build container
+        run: cd packages/skeleton && php ./bin/console cache:clear
+
+      - name: PHPStan
+        run: vendor/bin/phpstan --memory-limit=1G analyse --error-format=github --debug
+
+  psalm:
+    name: psalm
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        php: [8.2, 8.3]
+        stability: [prefer-stable]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick
+          coverage: none
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Run composer install
+        run: composer install -n --prefer-dist
+
+      - name: Build container
+        run: cd packages/skeleton && php ./bin/console cache:clear
+
+      - name: Run psalm
+        run: ./vendor/bin/psalm --output-format=github --shepherd
+
+        # uses: docker://vimeo/psalm-github-actions
+        # with:
+        #   args: --shepherd

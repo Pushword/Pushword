@@ -1,0 +1,332 @@
+{% extends view('/base.html.twig') %}
+
+{% block title %}{{ 'md_cs.page.h1'|trans }}{% endblock %}
+
+{% block robots %}
+    {% if page.metaRobots is defined and page.metaRobots is not null %}
+        <meta name="robots" content="no-index">
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+<link rel="stylesheet" href="/bundles/pushwordcore/tailwind.min.css">
+
+<div class="max-w-screen-md p-3 mx-auto">
+
+<div class="prose"><h1 class="mb-5"><small>{{ 'md_cs.page.h1'|trans }}</small> <br>{{ 'md_cs.page.subtitle'|trans }}</h1></div>
+
+<div class="p-3 mb-5 prose border rounded">
+
+{% apply markdown %}
+###### <small style="text-transform:uppercase;">Sommaire</small>
+{% block cheatsheet_toc %}
+- [{{ 'md_cs.title'|trans }}](#title)
+- [{{ 'md_cs.chapeau'|trans }}](#chapeau)
+- [{{ 'md_cs.emphasis'|trans }}](#style)
+- [{{ 'md_cs.link'|trans }}](#link)
+    - [{{ 'md_cs.link_to_mail'|trans }}](#mail)
+    - [{{ 'md_cs.link_to_phone'|trans }}](#tel)
+- [{{ 'md_cs.lists'|trans }}](#lists)
+- [{{ 'md_cs.paragraph'|trans }}](#p)
+- [{{ 'md_cs.quote'|trans }}](#quote)
+- [{{ 'md_cs.image'|trans }}](#img)
+- [{{ 'md_cs.video'|trans }}](#video)
+- [{{ 'md_cs.page_list'|trans }}](#pageslist)
+- [{{ 'md_cs.redirection'|trans }}](#redirect)
+- [{{ 'md_cs.others'|trans }}](#others)
+{% endblock %}
+{% endapply %}
+</div>
+
+{% block cheatsheet_content %}
+
+<!-- -->
+
+<h2 id="title" class="mb-4 text-3xl font-bold">{{ 'md_cs.title'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+## Title 2 (h2)
+### Title 3 (h3)
+### Title 4 (h4)
+#### Title 5 (h5)
+#### Title 6 (h6)
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
+## Title 2 (h2)<br>
+### Title 3 (h3)<br>
+### Title 4 (h4)<br>
+#### Title 5 (h5)<br>
+#### Title 6 (h6)
+{% endapply %}</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="chapeau" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.chapeau'|trans }}</h2>
+
+<div class="mb-4 prose dark:prose-light">
+    <p>{{ 'md_cs.chapeau_description'|trans }}</p>
+</div>
+
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
+Ce paragraphe est un chapeau.<br>
+{{ '&lt;!--break--&gt;' }}<br>
+Ceci est le reste de mon contenu...
+{% endapply %}</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="style" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.emphasis'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+Italique : *astérisques* ou _underscores_
+
+Gras  : **astérisques** ou __underscores__.
+
+Gras et Italique : **astérisques et _underscore_**.
+
+Fluo             : <mark>fluuuuooo</mark>
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
+Italique         : *astérisques* ou _underscores_<br>
+Gras             : **astérisques** ou __underscores__.<br>
+Gras et Italique : **astérisques et _ sous-scores _**.<br>
+Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
+{% endapply %}</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="link" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.link'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+[{{ 'md_cs.link_homepage'|trans }}](/)
+
+[{{ 'md_cs.link_other_site'|trans }}](https://piedweb.com/)
+
+{{ link('md_cs.link_bot_hidden'|trans, 'https://example.tld/') }}
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
+[{{ 'md_cs.link_homepage'|trans }}](/)<br>
+<br>
+[{{ 'md_cs.link_other_site'|trans }}](https://piedweb.com/)<br>
+<br>
+{{ "{{ link('" ~ ('md_cs.link_bot_hidden'|trans) ~ "', 'https://example.tld/') }}" }}
+{% endapply %}</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="mail" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.link_to_mail'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+{{ mail('contact@example.tld') }}
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
+{{ "{<!---->{" }} mail('contact@example.tld') }}
+</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="tel" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.link_to_phone'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+{{ tel('+33 7 00 00 00 00 00 00 00') }}
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
+{{ "{<!---->{" }} tel('+33 7 00 00 00 00 00 00 00') }}
+</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="lists" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.lists'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+1. premier élément d'une liste ordonnée
+2. second
+    * sous-liste
+1. Le chiffre n'a pas d'importance
+    1. sous-liste ordordonnée
+4. un dernier élement
+
+* Liste avec un astérisque
+- ou un moins
+    1. sous-liste ordonnée
++ Ou un plus
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
+1. premier élément d'une liste ordonnée<br>
+2. second<br>
+    * sous-liste<br>
+1. Le chiffre n'a pas d'importance<br>
+    1. sous-liste ordordonnée<br>
+4. un dernier élement<br>
+<br>
+* Liste avec un astérisque<br>
+- ou un moins<br>
+    1. sous-liste ordonnée<br>
++ Ou un plus
+{% endapply %}</code></pre>
+</div>
+<!-- -->
+
+<h2 id="p" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.paragraph'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+Sauter deux lignes.
+
+Permet de créer deux paragraphes.
+
+Une seule,
+n'a aucune incidence.
+
+Pour ajouter un saut de ligne<br>
+deux espace sont nécessaires.
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
+Sauter deux lignes.<br>
+<br>
+Permet de créer deux paragraphes.<br>
+<br>
+Une seule,<br>
+n'a aucune incidence.<br>
+<br>
+Pour ajouter un saut de ligne⋅⋅<br>
+deux espace sont nécessaires.{% endapply %}</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="quote" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.quote'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+> Mon bloc de contenu cité
+> sur plusieurs lignes
+
+> ou sur plusieurs paragraphes
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
+> Mon bloc de contenu cité<br>
+> sur plusieurs lignes<br>
+<br>
+> ou sur plusieurs paragraphes<br>
+{% endapply %}</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="img" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.image'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
+![image's description](/media/default/mon-image.jpg)<br>
+![image's description](https://images.unsplash.com/photo-1473448912268-2022ce9509d8?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1625&q=80)<br>
+<br>
+# Pour afficher une gallerie
+{{ "{{ gallery({'image desc': '/media/default/mon-image.jpg'})|unprose }}" }}
+{% endapply %}</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="video" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.video'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
+{{ "{{" }} video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose {{ "}}" }}
+{% endapply %}</code></pre>
+</div>
+<div class="prose dark:prose-light">
+{% apply markdown %}
+- le premier élément correspond à l'URL de votre vidéo (youtube ou autre)
+- le second à l'image d'aperçu
+- le troisième
+- une quatrième valeur peut être ajouter `url` : permet de forcer l'affichage de la vidéo en plein écran
+{% endapply %}
+</div>
+
+<!-- -->
+
+<h2 id="pageslist" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.page_list'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
+{{ "{{" }} pages_list('exampleTag')|unprose {{ "}}" }}
+{{ "{{" }} pages_list('exampleTag OR <!--invisible-hash-in-content--> OR comment:invisible-hash-in-content')|unprose {{ "}}" }}
+{% endapply %}</code></pre>
+
+Discover more on [Advanced Pages Listing](https://pushword.piedweb.com/pages-list).
+
+{% apply markdown %}
+- `max` nombre maximum d'items à montrer, peut être un tableau pour paginer le résultat, défault : `0`, no limit
+- `order`  default `publishedAt DESC,priority DESC`
+- `view` default `/component/pages_list.html.twig`, accepte tout chemin vers un template ou `card` pour `/component/pages_list_card.html.twig`
+- `host` default current host, if set to '', will be set to current host
+{% endapply %}
+</div>
+
+<h2 id="redirect" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.redirection'|trans }}</h2>
+
+<div class="prose dark:prose-light">
+<p>Votre contenu doit contenir uniquement :</p></div>
+
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
+Location: http://example.eg/
+{% endapply %}</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="others" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.others'|trans }}</h2>
+
+<div class="prose dark:prose-light">
+{% apply markdown %}
+- `container`  <br>
+   class pour le contenant du contenu.
+
+- `feeds` array(type, uri, title)
+
+- `template` (default: `/page/page.html.twig`)
+
+- `main_image_multiple` <br>
+  Plusieurs images en fonction d'un hash contenu dans l'url (ex: `winter:/media/defaut/winter.jpg;summer:/media/defaut/summer.jpg`)
+
+- `toc` (: true) : active le sommaire
+
+- Tout autre *Autres Paramètres* peut êgalement être appelé directement dans la page `{{ "{{ page.customParam }}" }}`
+{% endapply %}
+</div>
+
+{% endblock %}
+
+</div>
+{% endblock %}

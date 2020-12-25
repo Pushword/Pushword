@@ -1,0 +1,17 @@
+{
+  "devDependencies": {
+    "@pushword/js-helper": "file:../js-helper"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev-server": "encore dev-server",
+    "dev": "encore dev",
+    "watch": "encore dev --watch",
+    "build": "NODE_ENV=production yarn encore production"
+  },
+  "dependencies": {
+    "htmx.org": "^1.9.9",
+    "suggest.js": "https://github.com/onozaty/suggest.js"
+  }
+}

@@ -1,0 +1,8 @@
+user:
+  resource: '@PushwordCoreBundle/Resources/config/routes/user.yaml'
+
+media:
+  resource: '@PushwordCoreBundle/Resources/config/routes/media.yaml'
+
+page:
+  resource: '@PushwordCoreBundle/Resources/config/routes/pages.yaml'

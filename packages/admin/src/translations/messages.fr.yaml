@@ -1,0 +1,214 @@
+# Markdown Cheatsheet
+#---
+md_cs:
+  page:
+    h1: "Aide-Mémoire Markdown"
+    subtitle: "La syntaxe en détails"
+  title: "Titre et sous-titre"
+  chapeau: Chapeau
+  chapeau_description: Le chapeau est le paragraphe introductif placé sous le titre.
+  emphasis: Accentuation
+  link: Lien
+  link_homepage: Lien vers la page d'accueil
+  link_other_site: Lien vers un autre site
+  link_bot_hidden: Lien Invisible pour les robots
+  link_to_mail: Vers une adresse mail
+  link_to_phone: Vers un n° de téléphone
+  link_to_fragment: Vers une partie de la page
+  lists: Listes
+  paragraph: Paragraphe et saut de ligne
+  quote: Citation
+  image: Image et galeries
+  video: Vidéo
+  page_list: Lister des pages
+  redirection: Redirection
+  others: Autres
+
+#---
+# Admin
+#---
+datetimeMediumFormat: 'd/m/Y à H:m'
+
+Page List: Liste des pages
+
+admin:
+  draft: Brouillon
+
+  label:
+    page: Page
+    media: Media
+    content: Pages
+    list: Liste
+    user: Utilisateur
+    users: Utilisateurs
+    manage: Mettre en ligne
+    update: Actualiser
+    params: Réglages
+    redirection: Redirection
+    check_content: Vérifier le contenu
+    conversation: Conversation
+    cheatsheet: Aide-mémoire
+
+  action: Action
+  details: Details
+  edition: Edition # not good
+
+  page:
+    revisions: Révisions
+    gallery:
+      label: Galerie d'images
+    state:
+      label: État
+    search:
+      label: Search
+    permanlien:
+      label: Permanlien
+    host:
+      label: Domaine
+    update_notification:
+      title: "[%appName%] Edition en cours"
+    params:
+      label: Paramètres
+    title:
+      search_label: Titre (search)
+      label: Titre
+      help: '<small>Titre visible dans les moteurs de recherches - <span id="titleWidth"></span></small>'
+    slug:
+      label: Identifiant Url
+      help: " "
+    locale:
+      label: Language
+      help: "<small>Au format décrit par la norme rfc 5646 (ex: <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>"
+    subTitle:
+      label: Sous-titre
+    translations:
+      label: "Traductions"
+      help: "Utiliser l'url pour trouver la page (ex : en/my-other)."
+    searchExcrept:
+      label: Courte Description
+      help: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) - <span id="descWidth"></span></small>'
+    h1:
+      label: Titre
+      help: <small>Le <em>H1</em> est visible sur vos pages tandis que le <code>Titre</code> de votre document s'affichera dans la barre du navigateur et sur les moteurs de recherches.</small>
+    name:
+      label: Nom court
+      help: Permet d'identifier la page, utilisé dans le fil d'arianne.
+    faq:
+      label: Questions Associées
+    relatedPage:
+      label: Pages Associées
+    images:
+      label: Images
+    metaRobots:
+      label: Moteur de recherches
+      choice:
+        noIndex: Interdire l'indexation
+    author:
+      label: Auteur
+    parentPage:
+      label: Page Parente
+    publishedAt:
+      label: Publié le
+      online: <span style="color:#449d44">Publié</span>
+      draft: Brouillon
+    editMessage:
+      label: Motif d'édition
+      help:           Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>
+      helpVersionned: Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">Voir l'historique</a>
+    createdAt:
+      label: Créé le
+    updatedAt:
+      label: Mise à jour le
+    template:
+      label: Moteur de thème (facultatif)
+    mainContent:
+      label: Corps de la page
+      help: ""
+    mainImage:
+      label: Image d'en-tête
+    markdown:
+      label: Formatage markdown
+      help: Applique l'enrichissement du texte via la syntaxe Markdown à l'intégralité du contenu.<br>Sinon utiliser directement <code>{% filter markdown %}mon texte{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>En savoir plus</a>.
+    customProperties:
+      label: Autres paramètres
+      help: Au format <em>YAML</em>.
+    og:
+      label: Open Graph Card
+    ogTitle:
+      label: Titre
+      help: Par défaut, la title de la page sinon le titre.
+    ogDescription:
+      label: Description
+      help: Par défaut, la description <code>search</code> sinon un extrait
+    ogImage:
+      label: Image
+      help: Par défaut, l'image principale de la page
+    twitterSite:
+      label: Twitter Site
+      help: <code>@Username</code>, valeur par défaut si régler dans l'App.
+    twitterCreator:
+      label: Twitter Creator
+      help: <code>@Username</code>, valeur par défaut si régler dans l'App.
+    twitterCard:
+      label: Twitter Card
+      help: <a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>En savoir plus</a>
+    priority:
+      label: Priorité
+      help: Permet d'ordonner les pages par priorité (puis par date de publication)
+
+  user:
+    label:
+      profile: Profil
+      security: Securité
+      id: Identifiants
+    enabled:
+      label: Compte activé
+    role:
+      label: Role
+      super_admin: Super Administrateur
+      admin: Administrateur
+      editor: Editeur
+      user: Utilisateur
+    firstname:
+      label: Prénom
+    password:
+      label: Mot de passe
+    username:
+      label: Nom d'utilisateur
+
+    lastname:
+      label: Nom
+    phone:
+      label: Téléphone
+    email:
+      label: Adresse mail
+    dateOfBirth:
+      label: Date de naissance
+    createdAt:
+      label: Date d'enregistrement
+
+  media:
+    preview:
+      label: Aperçu
+    related:
+      label: Pages connectées
+    name:
+      label: Nom
+      help: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"
+    mediaFile:
+      label: Fichier
+    names:
+      label: "Traduction"
+      help: "Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne."
+    mainColor:
+      label: Couleur Principale
+    createdAt:
+      label: Date d'upload
+    filetype:
+      label: Type de fichiers
+
+  element:
+    deleted: Elément supprimé.
+
+  static:
+    updated: Site actualisé avec succès.

@@ -1,0 +1,28 @@
+
+<div class="form-group" style="margin-top:10px">
+<label for="draft" style="font-weight:400">
+<input type="checkbox" id="draft" class="minimal" {{ draft ? 'checked' : '' }}>
+<i>Brouillon</i></label>
+</div>
+<script>
+$( document ).ready(function() {
+    $("#draft").on("ifChanged", toggleDraft);
+});
+function toggleDraft() {
+
+    var inputDate = document.querySelector('[data-selector="publishedAtToDraft"]');
+    var currentDate = new Date(inputDate.value);
+    console.log(currentDate)
+
+    var draft = document.getElementById('draft');
+    if (draft.checked) {
+        currentDate.setFullYear(currentDate.getFullYear() + 10);
+    } else {
+        currentDate =new Date();
+    }
+
+    var formattedDate = currentDate.toISOString().slice(0, 16).replace('T', ' ');
+
+    inputDate.value = formattedDate;
+}
+</script>

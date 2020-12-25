@@ -1,0 +1,5 @@
+admin_media_block:
+  resource:
+    path: ./Controller
+    namespace: Pushword\AdminBlockEditor\Controller
+  type: attribute

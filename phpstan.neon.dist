@@ -1,0 +1,36 @@
+parameters:
+    level: max
+    paths:
+        - rector.php
+        - packages/admin/src
+        - packages/admin/tests
+        - packages/admin-block-editor/src
+        - packages/admin-block-editor/tests
+        - packages/advanced-main-image/src
+        - packages/conversation/src
+        - packages/conversation/tests
+        - packages/core/src
+        - packages/core/tests
+        - packages/flat/src
+        - packages/flat/tests
+        - packages/installer/src
+        - packages/page-scanner/src
+        - packages/page-scanner/tests
+        - packages/page-update-notifier/src
+        - packages/page-update-notifier/tests
+        - packages/skeleton/src
+        - packages/skeleton/tests
+        - packages/static-generator/src
+        - packages/static-generator/tests
+        - packages/template-editor/src
+        - packages/template-editor/tests
+        - packages/version/src
+        - packages/version/tests
+    excludePaths:
+        - packages/installer/src/PostInstall.php
+        - packages/core/tests/DependencyInjection/PushwordConfigFactoryTest.php
+    symfony:
+        container_xml_path: /tmp/com.github.pushword.pushword/tests/var/dev/cache/App_KernelDevDebugContainer.xml
+        console_application_loader: packages/skeleton/bin/console-test.php
+    doctrine:
+        objectManagerLoader: packages/skeleton/bin/object-test.php

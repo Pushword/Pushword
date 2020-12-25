@@ -1,0 +1,9 @@
+.aceFsBtn {
+    display: none;
+    color: black;
+}
+@media screen and (min-width: 1200px) {
+    .ce-rawtool-focus {
+        width: calc(100vw - 220px - 28vw);
+    }
+}

@@ -1,0 +1,20 @@
+{% block list %}{% apply spaceless %}
+    {% if pages is not empty %}
+        <ul>
+            {% for page in pages %}
+                <li>
+                    <a href="{{ page(page) }}">
+                        {{ pw(page).h1|raw }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>...</p>
+    {% endif %}
+
+    {% if pager is defined and pager is not null %}
+        {{ pager(pager, {'omitFirstPage': true, 'pageParameter': '[pager]', 'routeName': pager_route, 'routeParams': pager_route_params}) }}
+    {% endif %}
+{% endapply %}
+{% endblock %}

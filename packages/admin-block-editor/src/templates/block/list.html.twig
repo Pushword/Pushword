@@ -1,0 +1,26 @@
+{# {{ blockWrapperAttr(block) }} #}
+{{ block.data.style == 'unordered' ? '<ul>' : '<ol>' }}
+{% for item in block.data.items %}
+    {% if item.content is defined %}
+        <li>
+            {{ item.content|raw }}
+            {{ _self.nested_list(item.items, block.data.style) }}
+        </li>
+    {% else %}
+        <li>{{ item|raw }}</li>
+    {% endif %}
+{% endfor %}
+{{ block.data.style == 'unordered' ? '</ul>' : '</ol>' }}
+
+{% macro nested_list(items, style) %}
+    {% if items %}
+        {{ style == 'unordered' ? '<ul>' : '<ol>' }}
+            {% for item in items %}
+                    <li>
+                        {{ item.content|raw }}
+                        {{ _self.nested_list(item.items, style) }}
+                    </li>
+            {% endfor %}
+            {{ style == 'unordered' ? '</ul>' : '</ol>' }}
+    {% endif %}
+{% endmacro %}

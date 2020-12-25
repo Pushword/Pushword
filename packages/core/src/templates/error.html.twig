@@ -1,0 +1,11 @@
+{% extends view('/base.html.twig') %}
+
+{% block title %}{{ 'error.title'|trans }}{% endblock %}
+
+{% block body %}
+<div class="container mx-auto mt-5">
+    <h1>{{ 'error.title'|trans|raw }}</h1>
+    <p>{{ (status_code is defined ? 'error.serverSay'|trans ~ ' <em>' ~ status_code ~ '</em> <em>' ~ status_text ~ '</em>' : null)|raw }}</p>
+    <p>{{ 'error.description'|trans|raw }}</p>
+</div>
+{% endblock %}

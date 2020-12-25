@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+# Locally link js-helper
+# cd packages/js-helper; yarn link; cd ../core; yarn link @pushword/js-helper; cd ../../
+
+cd packages/skeleton
+rm var/app.db|| true
+rm -rf media|| true
+cp -r media~ media
+php bin/console cache:clear -q
+php bin/console doctrine:schema:create -q
+php bin/console doctrine:fixtures:load -q
+php bin/console pushword:image:cache -q
+php bin/console assets:install --symlink --relative -q
+php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN

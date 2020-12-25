@@ -1,0 +1,3 @@
+docs/* linguist-vendored
+packages/skeleton/var/* linguist-vendored
+packages/skeleton/media/* linguist-vendored

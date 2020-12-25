@@ -1,0 +1,12 @@
+{
+  "entrypoints": {
+    "admin-block-editor": {
+      "css": [
+        "./admin-block-editor.css"
+      ],
+      "js": [
+        "./admin-block-editor.js"
+      ]
+    }
+  }
+}

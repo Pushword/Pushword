@@ -1,0 +1,43 @@
+{#
+
+This file is part of the Sonata package.
+
+(c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+
+#}
+
+{% extends '@SonataAdmin/CRUD/list_outer_rows_mosaic.html.twig' %}
+
+{% block sonata_mosaic_default_view %}
+    <span class="mosaic-box-label label label-primary pull-right">
+        {% if object.title is defined and object.title is not null %}{{ object.title }}
+        {% elseif object.name is defined and object.name is not null %} {{ object.name }}
+        {% endif %}
+    </span>
+{% endblock %}
+
+{% block sonata_mosaic_hover_view %}
+    <span class="mosaic-box-label label label-primary pull-right">
+        {% if object.title is defined and object.title is not null %}{{ object.title }}
+        {% elseif object.name is defined and object.name is not null %} {{ object.name }}
+        {% endif %}
+    </span>
+
+    {% if object.width is defined and object.width is not null %} {{ object.width }}{% if object.height %}x{{ object.height }}{% endif %}px{% endif %}
+
+{% endblock %}
+
+{% block sonata_mosaic_description %}
+
+    {% if admin.isGranted('EDIT', object) and admin.hasRoute('edit') %}
+        <a class="mosaic-inner-link" href="{{ admin.generateUrl('edit', {'id': object|sonata_urlsafeid}) }}">{{ meta.title|u.truncate(40, '...') }}</a>
+    {% elseif admin.isGranted('SHOW', object) and admin.hasRoute('show') %}
+        <a class="mosaic-inner-link" href="{{ admin.generateUrl('show', {'id': object|sonata_urlsafeid}) }}">{{ meta.title|u.truncate(40, '...') }}</a>
+    {% else %}
+        {{ meta.title|u.truncate(40, '...') }}
+    {% endif %}
+
+{% endblock %}

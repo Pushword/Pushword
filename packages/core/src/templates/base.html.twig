@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+{% block html_opener %}<html>{% endblock %}
+
+{% block head %}
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    {% block favicon %}
+      {% if apps.get().get('favicon_path') is not null %}
+        {# permit retrocompatibility with a feature previous v1 wich is deprecated ! Prefer override base.html.twig ➜ favicon block #}
+        {% include view('/component/favicon.html.twig') with {favicon_path: apps.get().get('favicon_path')} only %}
+      {% else %}
+      <link rel="icon" href="{{ asset(apps.get().get('assets:favicon') ?? 'bundles/pushwordcore/favicon.ico') }}" />
+      {% endif %}
+    {% endblock %}
+
+    <title>{% block title %}Pushword CMS !{% endblock %}</title>
+
+    {% block css %}
+      {% block css_stylesheets %}
+        {% for stylesheet in apps.get().getStylesheets() %}
+          <link rel="stylesheet" href="{{ asset(stylesheet) }}">
+        {% endfor %}
+      {% endblock %}
+
+      {% set default_font = 'Inter var, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol' %}
+
+      <style>
+        {% block css_var %}
+          :root {
+            --primary: {{ apps.get().get('css_var:color_primary') ?? '#0ea5e9' }};
+            --secondary: {{ apps.get().get('css_var:color_secondary') ?? '#0369a1' }};
+            --font-family: {{ apps.get().get('css_var:font_family') ?? default_font }}
+          }
+        {% endblock %}
+        .nojs{display:inline-block}
+      </style>
+      <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:none !important}</style>');</script>
+    {% endblock %}
+
+    {% block feed %}
+      <link rel="alternate" type="application/rss+xml" href="{{ apps.get().baseUrl|default('') }}/feed.xml" title="{{ apps.get().name|default('') }} &raquo; {{ 'feed.alternate_title'|trans }}" />
+    {% endblock %}
+
+    {% block robots %}{% endblock %}
+    {% block alternate_language %}{% endblock %}
+    {% block open_graph %}{% endblock %}
+  </head>
+{% endblock %}
+
+  {% block body_opener %}
+  <body{% if body_class is defined %} class="{{ body_class|default('') }}"{% endif %}{% if body_style is defined %} style="{{ body_style|default('') }}"{% endif %}>
+  {% endblock %}
+
+    {% block body %}{% endblock %}
+
+    {% block script %}
+      {% for javascript in apps.get().getJavascripts() %}
+        <script{% if javascript is iterable %}{{ attr(javascript) }}{% else %} src="{{ asset(javascript) }}" async{% endif %}></script>
+      {% endfor %}
+    {% endblock %}
+
+  </body>
+</html>

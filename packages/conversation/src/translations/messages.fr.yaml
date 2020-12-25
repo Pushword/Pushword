@@ -1,0 +1,43 @@
+conversation:
+  title: Conversation
+  send:
+    success: Bien noté !
+    # Permets d'être assez large pour l'envoi d'un formulaire de contact, l'inscription à une newsletter
+    # ou le partage d'un commentaire
+  name:
+    placeholder: Nom
+  email:
+    placeholder: Email
+  submitLabel: Valider
+  input:
+    notset: inconnu
+  suscribeToNewsletter: Inscription à la newsletter
+
+admin:
+  conversation:
+    notification:
+      title:
+        singular: '[%appName%] : Nouveau message'
+        plural: '[%appName%] : Nouveaux messages'
+    label:
+      conversation: Conversation
+      publishedAt: Publié le
+      author: Auteur
+
+    authorEmail:
+      label: Email
+
+    authorName:
+      label: Nom
+
+    authorIp:
+      label: IP
+
+    content:
+      label: Contenu
+
+    referring:
+      label: Référant
+
+    createdAt:
+      label: Posté le
