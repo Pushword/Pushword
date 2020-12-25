@@ -1,0 +1,28 @@
+pushword_media:
+  path: /download/{path}
+  controller: Pushword\Core\Controller\MediaController::download
+  methods: [GET, HEAD]
+  requirements:
+    path: '[a-zA-Z0-9\-/\.]*'
+
+liip_imagine_filter_runtime:
+  path: /{filter}/rc/{hash}/{path}
+  defaults:
+    _controller: '%liip_imagine.controller.filter_runtime_action%'
+  methods:
+    - GET
+  requirements:
+    filter: '[A-z0-9_-]*'
+    path: .+
+    #stateless: true
+
+liip_imagine_filter:
+  path: /media/{filter}/{path}
+  defaults:
+    _controller: '%liip_imagine.controller.filter_action%'
+  methods:
+    - GET
+  requirements:
+    filter: '[A-z0-9_-]*'
+    path: .+
+    #stateless: true

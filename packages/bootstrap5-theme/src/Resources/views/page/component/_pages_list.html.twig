@@ -1,0 +1,56 @@
+{# component for @piedweb/bs5-extended // small cards #}
+{% block lists %}
+{% if pages is not empty %}
+    <ul class="justify-content-center list-unstyled row">
+    {% for page in pages %}
+        {% block item %}
+        {% if (page.createdAt) <= date('now') %}
+        <li class="col-sm-6 col-xl-4 mt-5">
+            <div class="position-relative p-3 shadow border-0 rounded bg-white">
+
+                {% block header %}
+                {% if page.mainImage is defined and page.mainImage is not null %}
+                <div class="p-0 mt-n5 mb-4 shadow position-relative w-100">
+                    {% set image = page.mainImage %}
+                     <picture>
+                        <source type="image/webp" srcset="{{ image.fullPathWebP|imagine_filter('thumb') }}" />
+                        <img
+                            class="img-fluid rounded z-1 w-100"
+                            loading=lazy
+                            alt="{{ page.content is defined ? page.content.h1 : (page.h1|default(page.title))|striptags }}"
+                            srcset="{{ image.fullPath|imagine_filter('thumb') }}"
+                            src="{{ image.fullPath|imagine_filter('default') }}"
+                            width="1000" height="1000" />
+                     </picture>
+
+                    <picture>
+                        <source srcset="{{ image.fullPathWebP|imagine_filter('thumb') }}" />
+                        <img
+                            srcset="{{ image.fullPath|imagine_filter('thumb') }}"
+                            src="{{ image.fullPath|imagine_filter('default') }}"
+                            alt="{{ page.content is defined ? page.content.h1 : (page.h1|default(page.title))|striptags }}"
+                            class="img-fluid shadow-color mt-2 rounded"
+                            height="1000" width="1000" loading="lazy" />
+                    </picture>
+                </div>
+                {% endif %}
+                {% endblock %}
+
+                {% block body %}
+
+                     {% if page.searchExcreptProduct is defined and page.searchExcreptProduct is not null %}
+                        <div class="text-primary d-block"><small>{{ page.searchExcreptProduct }}</small></div>
+                    {% endif %}
+                    <a href="{{ page.title_href|default(page(page.realSlug ?? '')) }}" class="stretched-link text-decoration-none h5 d-block">
+                        {{ (page.content is defined ? page.content.h1 : (page.h1|default(page.title)))|raw }}
+                    </a>
+                {% endblock %}
+
+            </div>
+        </li>
+        {% endif %}
+        {% endblock %}
+    {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}

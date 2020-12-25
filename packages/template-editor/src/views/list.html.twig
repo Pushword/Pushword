@@ -1,0 +1,57 @@
+{% extends '@SonataAdmin/standard_layout.html.twig' %}
+
+{% block title %}
+- Liste des fichiers Thème
+{% endblock %}
+
+{%block actions %}
+               <ul class="nav navbar-nav navbar-right">
+                  <li><a class="sonata-action-element" href="{{ path ('pushword_template_editor_create') }}"><i class="fa fa-plus-circle" aria-hidden="true"></i>
+                     Ajouter
+                     </a>
+                  </li>
+               </ul>
+{% endblock %}
+{% block sonata_admin_content %}
+    {% include '@SonataTwig/FlashMessage/render.html.twig' %}
+<div class="box box-primary" style="margin-bottom: 100px;">
+   <div class="box-body table-responsive no-padding">
+      <table class="table table-bordered table-striped table-hover sonata-ba-list">
+         <thead>
+            <tr class="sonata-ba-list-field-header">
+               <th class="sonata-ba-list-field-header-text">
+                    Path
+               </th>
+               <th class="text-right sonata-ba-list-field-header-text">
+                  Action
+               </th>
+            </tr>
+         </thead>
+         <tbody>
+            {% for element in elements %}
+            <tr>
+                <td class="sonata-ba-list-field sonata-ba-list-field-html">
+                  <a class="sonata-link-identifier" href="{{ path ('pushword_template_editor_edit', {'encodedPath':element.encodedPath}) }}">
+                      {{ element.path }}
+                  </a>
+               </td>
+               <td class="sonata-ba-list-field sonata-ba-list-field-text" objectid="34" style="text-align:right">
+                  <div class="btn-group">
+                     <a href="{{ path ('pushword_template_editor_edit', {'encodedPath':element.encodedPath}) }}" class="btn btn-sm btn-default view_link" title="Editer">
+                     <i class="fa fa-edit" aria-hidden="true"></i>
+                     Editer
+                     </a>
+                     <a href="{{ path ('pushword_template_editor_delete', {'encodedPath':element.encodedPath}) }}" class="btn btn-sm btn-default delete_link" title="Supprimer">
+                     <i class="fa fa-times" aria-hidden="true"></i>
+                     Supprimer
+                     </a>
+                  </div>
+               </td>
+            </tr>
+            {% endfor %}
+         </tbody>
+      </table>
+   </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+
+{% macro thumb(image, page = null, default_filter = 'thumb', otherAttributes = {}) %}{% spaceless %}
+    <picture>
+        <source type="image/webp" srcset="{{ image.fullPathWebP|imagine_filter(default_filter) }} 576w" />
+        <img srcset="{{ image.fullPath|imagine_filter(default_filter) }} 576w"
+            src="{{ image.fullPath|imagine_filter('default') }}"
+            loading="lazy"
+            width="10000" height="10000"
+            alt="{{ image.name(page is defined ? page.locale : null) }}"
+            {{ otherAttributes ? attr(otherAttributes) : '' }} />
+    </picture>
+{% endspaceless %}{% endmacro %}

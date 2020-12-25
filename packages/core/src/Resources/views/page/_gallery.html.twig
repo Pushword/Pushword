@@ -1,0 +1,24 @@
+
+
+
+{% set gallery_id = random(10, 1000) %}
+
+{% block gallery %}
+    {% if page.images is defined and page.images is not empty %}
+        <ul class="grid grid-cols-2 gap-3 list-none">
+            {% for image in page.images.slice(galleryFilterFrom|default('0'), length|default('1000')) %}
+                <li>{{ _self.galleryPart(image, gallery_id, page) }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
+
+
+{% macro galleryPart(image, gallery_id, page = null, default_filter = 'thumb') %}
+    {% import view('/component/macro.html.twig') as helper %}
+    {% set imageHtml = helper.thumb(image, page, default_filter) %}
+    {{ link(imageHtml,
+        image.fullPath|imagine_filter('default'),
+        {'data-fslightbox': gallery_id, 'dwl': image.fullPathWebP|imagine_filter('default')}
+    ) }}
+{% endmacro %}

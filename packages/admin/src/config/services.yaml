@@ -1,0 +1,90 @@
+services:
+  # ---
+  # Page
+  # ---
+
+  Pushword\Admin\PageAdminInterface:
+    alias: pushword.admin.page
+
+  pushword.admin.page:
+    class: Pushword\Admin\Page\Admin
+    arguments:
+      - ~
+      - '%pw.entity_page%'
+      - Pushword\Admin\Page\CRUDControllerInterface
+    tags:
+      - { name: sonata.admin, manager_type: orm, label: admin.label.page }
+    calls:
+      - [setLiipImage, ['@liip_imagine.cache.manager']]
+      - [setTemplate, [list, '@@pwAdmin/CRUD/mosaic.html.twig']]
+      - [setTemplate, [show, '@@pwAdmin/page/page_show.html.twig']]
+      - [setTemplate, [edit, '@@pwAdmin/page/page_edit.html.twig']]
+      - [setTemplate, [preview, '@@pwAdmin/page/preview.html.twig']]
+      - [setSecurityTokenStorage, ['@security.token_storage']]
+      - [setTwig, ['@twig']]
+      - [setApps, ['@pushword.apps']]
+      - [setMediaClass, ['%pw.entity_media%']]
+      - [setUserClass, ['%pw.entity_user%']]
+      - [setPageClass, ['%pw.entity_page%']]
+      - [setRouter, ['@router']]
+    public: true
+
+  Pushword\Admin\Page\CRUDControllerInterface:
+    alias: pushword.admin.pageCRUDController
+    public: true
+
+  pushword.admin.pageCRUDController:
+    class: Pushword\Admin\Page\CRUDController
+    autowire: true
+    calls:
+      - [setParams, ['@parameter_bag']]
+
+  # ---
+  # Others
+  # ---
+
+  Pushword\Admin\MediaAdminInterface:
+    alias: pushword.admin.media
+
+  pushword.admin.media:
+    class: Pushword\Admin\MediaAdmin
+    arguments: [~, '%pw.entity_media%', ~]
+    calls:
+      - [setLiipImage, ['@liip_imagine.cache.manager']]
+      - [setTemplate, [list, '@@pwAdmin/CRUD/mosaic.html.twig']]
+      - [
+          setTemplate,
+          [
+            short_object_description,
+            '@@pwAdmin/media/short_object_description.html.twig',
+          ],
+        ]
+      - [setEntityManager, ['@doctrine.orm.default_entity_manager']]
+      - [setTwig, ['@twig']]
+      - [setPageClass, ['%pw.entity_page%']]
+    tags:
+      - { name: sonata.admin, manager_type: orm, label: admin.label.media }
+
+  Pushword\Admin\PageHasMediaAdminInterface:
+    alias: pushword.admin.pagehasmedia
+
+  pushword.admin.pagehasmedia:
+    class: Pushword\Admin\PageHasMediaAdmin
+    arguments: [~, '%pw.entity_pagehasmedia%', ~]
+    calls:
+      - [setLiipImage, ['@liip_imagine.cache.manager']]
+    tags:
+      - { name: sonata.admin, manager_type: orm }
+
+  Pushword\Admin\UserAdminInterface:
+    alias: pushword.admin.user
+
+  pushword.admin.user:
+    class: Pushword\Admin\UserAdmin
+    arguments: [~, '%pw.entity_user%', ~]
+    tags:
+      - { name: sonata.admin, manager_type: orm, label: admin.label.user }
+    public: true
+    calls:
+      - [setUserClass, ['%pw.entity_user%']]
+      - [setSecurityTokenStorage, ['@security.token_storage']]

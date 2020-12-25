@@ -1,0 +1,39 @@
+{#
+
+This file is part of the Sonata package.
+
+(c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+
+#}
+
+{% extends base_template %}
+
+{% block title %}
+    {{ "title_show"|trans({'%name%': admin.toString(object)|u.truncate(15, '...') }, 'SonataAdminBundle') }}
+{% endblock %}
+
+{% block navbar_title %}
+    {{ block('title') }}
+{% endblock %}
+
+{%- block actions -%}
+    {% include '@SonataAdmin/CRUD/action_buttons.html.twig' %}
+{%- endblock -%}
+
+{% block tab_menu %}
+    {{ knp_menu_render(admin.sidemenu(action), {
+        'currentClass' : 'active',
+        'template': get_global_template('tab_menu_template')
+    }, 'twig') }}
+{% endblock %}
+
+{% block show %}
+    {% if object.realSlug is defined %}
+        <script>
+            window.location.replace('{{ object.host ? path('custom_host_pushword_page', {slug: object.realSlug, host: object.host}) : page(object.realSlug, object.locale, object.host) }}');
+        </script>
+    {% endif %}
+{% endblock %}

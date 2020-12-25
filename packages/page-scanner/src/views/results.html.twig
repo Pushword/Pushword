@@ -1,0 +1,67 @@
+{% extends '@SonataAdmin/standard_layout.html.twig' %}
+
+{% block title %}
+- Vérification du contenu
+{% endblock %}
+
+{% block sonata_admin_content %}
+    {% if message is defined %}
+        <p class="alert alert-success">{{ message|trans }}</p>
+    {% else %}
+        <div class="box box-{{ errorsByPages is empty ? 'success' : 'warning' }}">
+             <div class="box-header">
+                <h3 class="box-title">Scan du site</h3>
+            </div>
+            <div class="box-body">
+
+                {% if errorsByPages is empty and lastEdit != 0 %}
+                    <p class="alert alert-success">Le précédent scan a été complété avec succès : le contenu ne semble comporter aucune erreur. Un nouveau scan vient d'être lancé, revenez dans un instant.</p>
+                {% elseif lastEdit == 0 %}
+                    <p class="alert alert-success">Premier scan juste lancé. Revenez dans un instant (rafraichissement automatique).</p>
+                    <script>$(document).ready(function() { setTimeout(function () { location.reload(1); }, 3000); });</script>
+                {% else  %}
+                    <p class="alert alert-warning">Résultat du scan du {{ lastEdit|date('d/m/Y à H:i') }}{{ newRun ? ' (nouveau scan en cours)': ''}}.</p>
+
+                    <table class="table table-bordered table-striped table-hover sonata-ba-list">
+                        <thead>
+                            <tr>
+                                <th>Page</th>
+                                <th>Erreur</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for errorsBypage in errorsByPages %}
+                            {% set object = errorsBypage.0.page %}
+                            <tr>
+                                <td>
+                                    <a href="{{ path('admin_app_page_edit', {'id' : object.id }) }}">
+                                        {% if object.metaRobots != '' %}<span class="badge" title="{{ object.metaRobots}}"><i class="fa fa-eye-slash"></i></span> {% endif %}
+                                        <span style="color:#333; font-weight:400; font-size:90%">{{ object.host ? object.host ~ ' › ' : '' }}{{ object.slug }}</span><br>
+                                        <span style="font-size:110%;font-weight:600">{{ object.h1|raw }}</span>
+                                    </a>
+                                </td>
+                                <td>
+                                    <ul>
+                                        {% for error in errorsBypage %}
+                                            <li>{{ error.message|raw }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                 </td>
+                                 <td>
+                                    <a href="{{ path('admin_app_page_show', {'id' : object.id }) }}" target=_blank class="btn btn-sm btn-default view_link">
+                                        <i class="fa fa-eye" aria-hidden="true"></i>
+                                     </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+            </div>
+            <div class="clearfix box-footer">
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock %}

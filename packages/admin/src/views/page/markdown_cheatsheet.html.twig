@@ -1,0 +1,310 @@
+{% extends view('/base.html.twig') %}
+
+
+{% block title %}Aide-Mémoire Markdown{% endblock %}
+
+{% block robots %}
+    {% if page.metaRobots is defined and page.metaRobots is not null %}
+        <meta name="robots" content="no-index}">
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+<div class="container mt-5 mb-5 container-txt">
+<h1 class="mb-5"><small>Aide-Mémoire Markdown</small> <br>La syntaxe en détails</h1>
+<div class="p-3 mb-5 border rounded" style="max-width:700px">
+<style>html { scroll-behavior: smooth; }
+pre { overflow:auto;}
+body {background-color:#fff}</style>
+{% filter markdown %}
+###### <small style="text-transform:uppercase;">Sommaire</small>
+
+- [Titre, sous-titre et chapeau](#title)
+- [Chapeau](#chapeau)
+- [Accentuation](#style)
+- [Lien hypertexte](#link)
+    - [Vers une adresse mail (protection spam)](#mail)
+    - [Vers un numéro de téléphone](#tel)
+    - [Vers une partie de page](#fragment)
+- [Listes](#list)
+- [Paragraphes et saut de ligne](#p)
+- [Citation](#quote)
+- [Image et galeries](#img)
+- [Vidéo](#video)
+- [Liste des pages via un mot clef](#pageslist)
+- [Lister des pages enfants (blog/news/...)](#children)
+- [Redirection](#redirect)
+- [Contenu enrichi](#rich-content)
+{% endfilter %}
+</div>
+
+<hr class="mt-5 mb-5">
+
+<h2 id="title">Titre et sous-titre</h2>
+
+<pre>
+## Titre 2 (h2)<br>
+### Titre 3 (h3)<br>
+### Titre 4 (h4)<br>
+#### Titre 5 (h5)<br>
+#### Titre 6 (h6)
+</pre>
+
+{% filter markdown %}
+## Titre 2 (h2)
+### Titre 3 (h3)
+### Titre 4 (h4)
+#### Titre 5 (h5)
+#### Titre 6 (h6)
+{% endfilter %}
+
+<hr class="mt-5 mb-5">
+
+<h2 id="chapeau">Chapeau</h2>
+
+Paragraphe sous le titre :
+
+<pre>
+Ce paragraphe est un chapeau.
+{{ '&lt;!--break--&gt;' }}
+Ceci est le reste de mon contenu...
+</pre>
+
+<hr class="mt-5 mb-5">
+
+<h2 id="style">Accentuation</h2>
+<pre>
+Italique         : *astérisques* ou _underscores_<br>
+Gras             : **astérisques** ou __underscores__.<br>
+Gras et Italique : **astérisques et _ sous-scores _**.
+</pre>
+{% filter markdown %}
+Italique : *astérisques* ou _underscores_
+
+Gras  : **astérisques** ou __underscores__.
+
+Gras et Italique : **astérisques et _underscore_**.
+{% endfilter %}
+<hr class="mt-5 mb-5">
+
+<h2 id="link">Lien Hypertexte</h2>
+<pre>
+[ma page d'accueil](/)
+[un autre site](https://example.tld/)
+</pre>
+{% filter markdown %}
+[ma page d'accueil](/)
+
+[un autre site](https://example.tld/)
+{% endfilter %}
+
+Lien dissimulé pour les moteurs de recherches :
+
+<pre>{{ "{{ link('Pied Web', 'https://piedweb.com/') }}" }}</pre>
+
+<h3 id="mail" class="mt-5">Lien vers une adresse mail</h3>
+
+<pre>{{ "{{ mail('contact@example.tld') }}" }}</pre>
+
+<p>{{ mail('contact@example.tld') }}</p>
+
+<p>La plupart des robots ne verront que <code>pbagnpg@rknzcyr.gyq</code></p>
+
+<h3 id="tel" class="mt-5">Lien vers un numéro de téléphone</h3>
+
+<pre>{{ "{{ tel('+33 7 68 68 68 68') }}" }}</pre>
+
+<h3 id="fragment" class="mt-5">Ajouter un lien vers une partie de page</h3>
+
+<ol>
+    <li>Créer l'ancre repère dans la page, exemple :
+        <pre>## Titre 2 {{ "{id=titre2}"|escape }}</pre>
+    </li>
+    <li>Créer le lien :<code>[ancre de lien vers partie titre 2 de la page](#titre2)</code></li>
+</ol>
+
+<hr class="mt-5 mb-5">
+
+<h2 id="list">Listes</h2>
+<pre>
+1. premier élément d'une liste ordonnée
+2. second
+    * sous-liste
+1. Le chiffre n'a pas d'importance
+    1. sous-liste ordordonnée
+4. un dernier élement
+
+* Liste avec un astérisque
+- ou un moins
+    1. sous-liste ordonnée
++ Ou un plus
+</pre>
+
+{% filter markdown %}
+1. premier élément d'une liste ordonnée
+2. second
+    * sous-liste
+1. Le chiffre n'a pas d'importance
+    1. sous-liste ordordonnée
+4. un dernier élement
+
+* Liste avec un astérisque
+- ou un moins
+    1. sous-liste ordonnée
++ Ou un plus
+{% endfilter %}
+
+<hr class="mt-5 mb-5">
+
+<h2 id="p">Paragraphes et saut de ligne</h2>
+<pre>
+Sauter deux lignes.
+
+Permet de créer deux paragraphes.
+
+Une seule,
+n'a aucune incidence.
+
+Pour ajouter un saut de ligne⋅⋅
+deux espace sont nécessaires.
+</pre>
+{% filter markdown %}
+Sauter deux lignes.
+
+Permet de créer deux paragraphes.
+
+Une seule,
+n'a aucune incidence.
+
+Pour ajouter un saut de ligne
+deux espace sont nécessaires.
+{% endfilter %}
+<hr class="mt-5 mb-5">
+
+<h2 id="quote">Citation</h2>
+<pre>
+Ma citation :
+
+> Mon bloc de contenu cité
+> sur plusieurs lignes
+
+> ou sur plusieurs paragraphes
+</pre>
+{% filter markdown %}
+Ma citation :
+
+> Mon bloc de contenu cité
+> sur plusieurs lignes
+
+> ou sur plusieurs paragraphes
+{% endfilter %}
+<hr class="mt-5 mb-5">
+
+<h2 id="img">Image</h2>
+
+<p>Exemple (le code suivant est normalement proposé dans le gestionnaire de l'image) : </p>
+<pre>
+![Texte alternatif](/media/default/media/mon-image.jpg)
+</pre>
+
+<hr class="mt-5 mb-5">
+
+<h2>Galerie</h2>
+
+<p>Pour afficher toutes les images liées à une <code>page</code> :</p>
+<pre>
+{{ "{{ gallery(page) }}" }}
+</pre>
+
+<p>Pour afficher seulement les 4 premières images liées à la <code>page</code> :</p>
+
+<pre>
+{{ "{{ gallery(page, 1, 4) }}" }}
+</pre>
+
+<hr class="mt-5 mb-5">
+
+
+<h2 id="video">Vidéo</h2>
+
+<pre>
+{{ "{{ video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}" }}
+</pre>
+
+
+<hr class="mt-5 mb-5">
+
+<h2 id="pageslist">Lister des pages via un mot clef ou un hash</h2>
+
+Pour lister des pages contenant un terme ou un `tag` :
+<pre>{{ "{{" }} list('keyword X or <!--invisible-hash-in-content-->') {{ "}}" }} </pre>
+
+
+Autres paramètres :
+<pre>{{ "{{" }}  list('keyword X', $number = 3, $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig') {{ "}}" }}</pre>
+
+
+
+<h2 id=children class="mt-5">Lister les pages enfants (blog/news/...)</h2>
+
+<pre>{{ "
+&lt;div class=row&gt;{% include view('/component/_pages_list.html.twig') with {pages: page.childrenPages|reverse} only %}&lt;/div&gt;
+" }}</pre>
+
+<hr class="mt-5 mb-5">
+
+
+<h2 id="redirect">Redirection</h2>
+Votre contenu doit contenir uniquement :
+<pre>
+Location: http://example.eg/
+</pre>
+<hr class="mt-5 mb-5">
+
+
+<h2 id="rich-content">Contenu enrichi</h2>
+
+<p class="my-4"><span style="display: inline-block;font-weight:700;padding: .25em .5em;font-size: .75em;color: #fff;text-align: center;white-space: nowrap;vertical-align: baseline; border-radius: .25rem; background-color: #dc3545;">!</span> <span style="color:#dc3545;">Fonctionnalités avancées.</span></p>
+
+{% filter markdown %}
+- `subtitle`
+
+- `container`  <br>
+   class pour le contenant du contenu, par défault *container container-txt pt-4 mb-5*
+
+- `feeds` array(type, uri, title)
+
+- `template` (default: `/page/page.html.twig`)
+
+- `main_image_multiple` <br>
+  Plusieurs images en fonction d'un hash contenu dans l'url (ex: `winter:/media/defaut/winter.jpg;summer:/media/defaut/summer.jpg`)
+
+- `video` (`url` or `embed_code`[, `btn_title`, `btn_style`])
+
+- `toc` (= true) : active le sommaire
+{% endfilter %}
+
+</div>
+
+<style>
+pre {
+  padding: 16px;
+}
+
+code {
+  padding: 5px;
+}
+
+pre, code {
+  font-size: 85%;
+  background-color: #f6f8fa;
+  border-radius: 3px;
+}
+
+blockquote {
+  padding: 0 1em;
+  color: #6a737d;
+  border-left: .25em solid #dfe2e5;
+}
+</style>
+{% endblock %}

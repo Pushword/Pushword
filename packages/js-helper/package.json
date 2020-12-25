@@ -1,0 +1,24 @@
+{
+  "name": "@pushword/js-helper",
+  "version": "0.0.21",
+  "description": "",
+  "author": "Robin@PiedWeb <contact@piedweb.com>",
+  "license": "MIT",
+  "scripts": {
+    "prettier": "prettier ./src/*.{js,scss} --write"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pushword/js-helper.git"
+  },
+  "keywords": [
+    "pied web",
+    "native"
+  ],
+  "bugs": {
+    "url": "https://github.com/Pushword/Pushword/issues"
+  },
+  "homepage": "https://pushword.piedweb.com",
+  "dependencies": {},
+  "devDependencies": {}
+}

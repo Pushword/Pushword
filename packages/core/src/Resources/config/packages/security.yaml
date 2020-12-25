@@ -1,0 +1,61 @@
+security:
+  encoders:
+    '%pw.entity_user%':
+      algorithm: auto
+
+  role_hierarchy:
+    ROLE_EDITOR:
+      - ROLE_USER
+      - ROLE_SONATA_ADMIN
+      - ROLE_PIEDWEB_ADMIN
+      - ROLE_PIEDWEB_ADMIN_PAGE_CREATE
+      - ROLE_PIEDWEB_ADMIN_PAGE_DELETE
+      - ROLE_PIEDWEB_ADMIN_PAGE_VIEW
+      - ROLE_PIEDWEB_ADMIN_PAGE_LIST
+      - ROLE_PIEDWEB_ADMIN_PAGE_EDIT
+      - ROLE_PIEDWEB_ADMIN_MEDIA_CREATE
+      - ROLE_PIEDWEB_ADMIN_MEDIA_EDIT
+      - ROLE_PIEDWEB_ADMIN_MEDIA_LIST
+      - ROLE_PIEDWEB_ADMIN_MEDIA_VIEW
+      - ROLE_PIEDWEB_ADMIN_MEDIA_DELETE
+      - ROLE_PIEDWEB_ADMIN_USER_CREATE
+    ROLE_ADMIN:
+      - ROLE_EDITOR
+      - ROLE_PIEDWEB_ADMIN_THEME
+    ROLE_SUPER_ADMIN:
+      - ROLE_ADMIN
+      - ROLE_ALLOWED_TO_SWITCH
+      - ROLE_PIEDWEB_ADMIN_USER_DELETE
+      - ROLE_PIEDWEB_ADMIN_USER_VIEW
+      - ROLE_PIEDWEB_ADMIN_USER_LIST
+      - ROLE_PIEDWEB_ADMIN_USER_EDIT
+  access_decision_manager:
+    strategy: unanimous
+
+  providers:
+    # used to reload user from session & other features (e.g. switch_user)
+    pushword_user_provider:
+      entity:
+        class: '%pw.entity_user%'
+        property: email
+
+  firewalls:
+    dev:
+      pattern: ^/(_(profiler|wdt)|css|images|js)/
+      security: false
+    default:
+      anonymous: lazy
+      http_basic:
+        realm: Secured Area
+      guard:
+        authenticators:
+          - Pushword\Core\Security\UserAuthenticator
+        entry_point: Pushword\Core\Security\UserAuthenticator
+      logout:
+        path: pushword_logout
+        # where to redirect after logout
+        # target: app_any_route
+      remember_me:
+        lifetime: 31536000 # a year
+        always_remember_me: true
+        secret: '%kernel.secret%'

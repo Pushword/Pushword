@@ -1,0 +1,13 @@
+services:
+  Pushword\Core\Component\Router\RouterInterface:
+    alias: pushword.router
+
+  pushword.router:
+    class: Pushword\Core\Component\Router\Router
+    autowire: true
+    public: true
+
+  Pushword\Core\Component\Router\RouterTwigExtension:
+    tags:
+      - 'twig.extension'
+    autowire: true

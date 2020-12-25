@@ -1,0 +1,59 @@
+services:
+  # --------
+  # ContactBundle
+  # --------
+
+  Pushword\Conversation\PushwordConversation: ~
+
+  Pushword\Conversation\:
+    autowire: true
+    resource: '../../../src/*'
+    exclude: '../../../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+
+  # controllers are imported separately to make sure services can be injected
+  # as action arguments even if you don't extend any base controller class
+  Pushword\Conversation\Controller\:
+    autowire: true
+    resource: '../../../src/Controller'
+    tags: ['controller.service_arguments']
+
+  pushword.admin.conversation:
+    class: Pushword\Conversation\Admin\ConversationAdmin
+    arguments:
+      - ~
+      - '%pw.conversation.entity_message%'
+      - ~
+    tags:
+      - {
+          name: sonata.admin,
+          manager_type: orm,
+          label: admin.label.conversation,
+        }
+    public: true
+
+  pushword.conversation.notifier:
+    class: Pushword\Conversation\Service\NewMessageMailNotifier
+    autowire: true
+    arguments:
+      $message: '%pw.conversation.entity_message%'
+      $rootDir: '%kernel.root_dir%'
+
+  pushword.conversation.notification_command:
+    arguments:
+      - '@pushword.conversation.notifier'
+    class: Pushword\Conversation\Command\NotificationCommand
+    tags: ['console.command']
+
+  pushword.conversation.twig_extension:
+    class: Pushword\Conversation\Twig\AppExtension
+    autowire: true
+    tags:
+      - 'twig.extension'
+      #- { name: kernel.event_listener, event: kernel.request, method: onKernelRequest }
+    arguments:
+      $messageEntity: '%pw.conversation.entity_message%'
+
+  Pushword\Conversation\Repository\MessageRepository:
+    arguments: ['@doctrine', '%pw.conversation.entity_message%']
+    tags:
+      - { name: doctrine.repository_service }

@@ -1,0 +1,10 @@
+services:
+  Pushword\Core\Component\App\AppPool:
+    alias: pushword.apps
+
+  pushword.apps:
+    class: Pushword\Core\Component\App\AppPool
+    arguments:
+      $host: null
+      $apps: '%pw.apps%'
+    public: true

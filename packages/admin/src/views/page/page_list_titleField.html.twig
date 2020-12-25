@@ -1,0 +1,7 @@
+{% extends '@SonataAdmin/CRUD/base_list_field.html.twig' %}
+
+{% block field %}
+{% if object.metaRobots != '' %}<span class="badge" title="{{ object.metaRobots}}"><i class="fa fa-eye-slash"></i></span> {% endif %}
+<span style="color:#333; font-weight:400; font-size:90%">{{ object.host ? object.host ~ ' › ' : '' }}{{ object.slug }}</span><br>
+<span style="font-size:110%;font-weight:600">{{ '<' in object.h1 or object.h1 is empty ? object.title : object.h1|raw }}</span>
+{% endblock %}

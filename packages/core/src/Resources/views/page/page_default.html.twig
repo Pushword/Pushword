@@ -1,0 +1,88 @@
+{% extends view('/base.html.twig', twig) %}
+
+{# ----------- #}
+
+{% block html_opener %}
+	<html
+		lang="{{ page.locale|default(apps.get().defaultLocale) }}"
+		{{ mergeAttr({'class': 'leading-tight text-gray-900'}, page.htmlOpenerAttr|default({})) }}
+	>
+{% endblock %}
+
+{% block title %}
+	{{ page.content.title|striptags }}
+{% endblock %}
+
+{% block robots %}
+	{% if page.searchExcrept is defined and page.searchExcrept is not null %}
+		<meta name="description" content="{{ page.searchExcrept|escape }}">
+	{% endif %}
+
+	{% if page.metaRobots is defined and page.metaRobots is not null %}
+		<meta name="robots" content="{{ page.metaRobots }}">
+	{% endif %}
+
+	<link rel="canonical" href="{{ page(page, true) }}"/>
+
+{% endblock %}
+
+
+{% block alternate_language %}
+	{% if page.locale is not null %}
+		<link rel="alternate" hreflang="{{ page.locale }}" href="{{ page(page, true) }}"/>
+		{% for translation in page.translations %}
+			<link rel="alternate" hreflang="{{ translation.locale }}" href="{{ page(translation, true) }}"/>
+		{% endfor %}
+	{% endif %}
+{% endblock %}
+
+
+{% block open_graph %}
+	<meta name="og:title" content="{{ page.ogTitle|default(page.getTitle(true))|striptags }}">
+	<meta name="og:url" content="{{ page(page, true) }}">
+	{% if page.searchExcrept %}
+		<meta name="og:description" content="{{ page.ogDescription|default(page.searchExcrept)|striptags }}">
+	{% endif %}
+	{% if page.mainImage is defined and page.mainImage is not null %}
+		<meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ (page.mainImage.fullPath)|imagine_filter('default') }}">
+	{% endif %}
+{% endblock %}
+
+{% block feed %}
+	{# TODO #}
+	{{ parent() }}
+	{% if page.feeds is defined and page.feeds is not null %}
+		{% for feed in page.feeds %}
+			<link
+				rel="alternate"
+				type="{{ feed.type|default('application/rss+xml') }}"
+				href="{{ apps.get().baseUrl|default('') }}{{ feed.uri }}"
+				title="{{ app_name|default('') }} &raquo; {{ feed.title }}"
+			/>
+		{% endfor %}
+	{% endif %}
+{% endblock %}
+
+
+{% block body %}
+
+	{% block content %}
+		{% include view('/page/_content.html.twig') %}
+	{% endblock %}
+
+	{% block breadcrumb %}
+		{% include view('/page/_breadcrumb.html.twig') %}
+	{% endblock %}
+
+	{% block footer %}
+		{% include view('/page/_footer.html.twig') %}
+	{% endblock %}
+
+	{% block navbar %}
+		{% include view('/page/_navbar.html.twig') %}
+	{% endblock %}
+{% endblock %}
+
+{% block html_closer %}
+	</html>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% set page = object %}
+{% do apps.switchCurrentApp(page.host) %}
+<html style="scroll-behavior:auto">
+    <body style="scroll-behavior:auto">
+{{ block("css", view("/base.html.twig")) }}
+
+{{ block("content", view(page.template|default('/page/page_default.html.twig'))) }}
+
+{{ block("script", view('/base.html.twig')) }}
+
+    </body>
+</html>

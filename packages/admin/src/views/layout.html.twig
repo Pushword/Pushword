@@ -1,0 +1,12 @@
+{% extends '@SonataAdmin/standard_layout.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('bundles/pushwordcore/admin.css') }}">
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="/bundles/pushwordcore/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ asset('bundles/pushwordcore/admin.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,38 @@
+services:
+  Pushword\Flat\FlatFileImporter:
+    alias: pushword.flat.importer
+
+  pushword.flat.importer:
+    class: Pushword\Flat\FlatFileImporter
+    autowire: true
+    arguments:
+      $webDir: '%pw.dir%'
+
+  Pushword\Flat\FlatFileCommand:
+    autowire: true
+    arguments:
+    tags: ['console.command']
+
+  Pushword\Flat\FlatFileContentDirFinder:
+    alias: pushword.flat.content_dir_finder
+
+  pushword.flat.content_dir_finder:
+    class: Pushword\Flat\FlatFileContentDirFinder
+    autowire: true
+    arguments:
+      $webDir: '%pw.dir%'
+
+  Pushword\Flat\Importer\PageImporter:
+    autowire: true
+    arguments:
+      $entityClass: '%pw.entity_page%'
+    calls:
+      - [setContentDirFinder, ['@pushword.flat.content_dir_finder']]
+      - [setMediaClass, ['%pw.entity_media%']]
+
+  Pushword\Flat\Importer\MediaImporter:
+    autowire: true
+    arguments:
+      $entityClass: '%pw.entity_media%'
+    calls:
+      - [setWebDir, ['%pw.dir%']]

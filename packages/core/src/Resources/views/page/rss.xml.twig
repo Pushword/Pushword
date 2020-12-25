@@ -1,0 +1,29 @@
+{% set base = apps.get().baseUrl %}<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        {% block header %}
+        <title>{{ page.content.title|default(app_name) }}</title>
+        <link>{{ base ~ page(page.realSlug|default('')) }}</link>
+        <description><![CDATA[{% block description %}{{ page.searchExcrept|default('') }}{% endblock %}]]></description>
+        <atom:link
+            href="{{ base }}/{{ feedUri|default((page.slug == 'homepage' ? 'index' : page.realSlug) ~ '.xml') }}"
+            rel="self"
+            type="application/rss+xml"
+        />
+        {% endblock %}
+        {% set pages = pages is defined ? pages : (page.childrenPages|reverse)|slice(0, 5) %}
+        {% for page in pages %}
+        {% block item %}
+            {% if page.metaRobots != 'noindex' %}
+                <item>
+                    <title><![CDATA[{{ page.content.title(true)|striptags|html_entity_decode }}]]></title>
+                    <link>{{ page(page, true) }}</link>
+                    <guid>{{ page(page, true) }}</guid>
+                    <pubDate>{{ page.createdAt|date('D, d M Y H:i:s O') }}</pubDate>
+                </item>
+            {% endif %}
+        {% endblock %}
+        {% endfor %}
+
+    </channel>
+</rss>

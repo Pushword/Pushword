@@ -1,0 +1,3 @@
+knp_markdown:
+  parser:
+    service: pushword.markdown_parser

@@ -1,0 +1,30 @@
+{% extends '@SonataAdmin/CRUD/base_list.html.twig' %}
+
+
+{% block table_header %}
+    {% if admin.getListMode() != 'mosaic' %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block list_table %}
+    {{ parent() }}
+
+    <style>
+    div.mosaic-inner-box {
+        height: 100%;
+    }
+    </style>
+{% endblock %}
+
+
+
+{% block table_body %}
+    <tbody>
+        {% if admin.getListMode() == 'tree' %}
+            // TODO
+        {% else %}
+            {% include get_admin_template('outer_list_rows_' ~ admin.getListMode(), admin.code) %}
+        {% endif %}
+    </tbody>
+{% endblock %}

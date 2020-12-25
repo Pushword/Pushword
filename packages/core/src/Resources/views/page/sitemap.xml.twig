@@ -1,0 +1,16 @@
+{% set base = app_base_url is defined ? app_base_url : (url('pushword_page', {slug: ''})|trim('/', 'right')) %}
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+{% for page in pages %}
+  <url>
+    <loc>{{ page(page, true) }}</loc>
+    <lastmod>{{ page.updatedAt|date('Y-m-d') }}</lastmod>
+    {% if page.locale and page.translations.count > 0 %}
+        <xhtml:link rel="alternate" hreflang="{{ page.locale }}" href="{{ page(page, true) }}"/>
+        {% for translation in page.translations %}
+            <xhtml:link rel="alternate" hreflang="{{ translation.locale }}" href="{{ base ~ page(translation.realSlug) }}"/>
+        {% endfor %}
+    {% endif %}
+  </url>
+{% endfor %}
+</urlset>

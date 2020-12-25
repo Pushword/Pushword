@@ -1,0 +1,20 @@
+#!/bin/bash
+
+
+
+FILE=yarn.lock
+if [ -f "$FILE" ]; then
+    echo 'nothing'#yarn upgrade
+else
+    yarn
+fi
+
+cd ../../
+
+php ./packages/admin/src/assets/easymde-hack
+
+cd packages/core
+
+yarn build
+
+cd ../../

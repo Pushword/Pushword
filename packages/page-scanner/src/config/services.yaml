@@ -1,0 +1,24 @@
+services:
+  Pushword\PageScanner\PageScannerService:
+    alias: pushword.page_scanner
+
+  pushword.page_scanner:
+    class: Pushword\PageScanner\PageScannerService
+    autowire: true
+    arguments:
+      $webDir: '%pw.dir%'
+      $kernel: '@kernel'
+
+  Pushword\PageScanner\PageScannerCommand:
+    autowire: true
+    arguments:
+      $pageClass: '%pw.entity_page%'
+      $varDir: '%kernel.root_dir%/../var'
+    tags: ['console.command']
+
+  Pushword\PageScanner\PageScannerController:
+    autowire: true
+    arguments:
+      $varDir: '%kernel.root_dir%/../var'
+    tags:
+      - { name: 'controller.service_arguments' }

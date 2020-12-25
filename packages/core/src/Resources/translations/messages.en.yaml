@@ -1,0 +1,210 @@
+---
+#---
+#---
+# Views Component
+video:
+  play: 'Lecture'
+
+fr: Français
+en: English
+
+#---
+# Entity
+#---
+
+#---
+# Security
+#---
+security:
+  login:
+    title: Connexion
+    email: Email
+    password: Mot de passe
+    label_button: Se connecter
+    remember_me: Se souvenir de moi
+    email_not_found: Votre email n'a pu être trouvé.
+
+#---
+# Admin
+#---
+Page List: Liste des pages
+
+admin:
+  label:
+    page: Page
+    media: Media
+    content: Contenu
+    list: Liste
+    user: Utilisateur
+    users: Utilisateurs
+    manage: Mettre en ligne
+    update: Actualiser
+    params: Réglages
+    theme: Éditeur de thème
+    check_content: Vérifier le contenu
+    conversation: Conversation
+
+  action: Action
+  details: Details
+  edition: Edition # not good
+
+  page:
+    gallery:
+      label: Galerie d'images
+    state:
+      label: État
+    search:
+      label: Search
+    permanlien:
+      label: Permanlien
+    host:
+      label: Domaine
+    update_notification:
+      title: '[%appName%] Edition en cours'
+    params:
+      label: Paramètres
+    title:
+      label: Titre
+      help: '<small>Titre visible depuis les moteurs de recherches dans la limite de 560px (taille actuelle : <span id="titleWidth"></span>)</small>'
+    slug:
+      label: Identifiant Url
+      help: ' '
+    locale:
+      label: Language
+      help: '<small>Au format décrit par la norme rfc 5646 (ex: <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>'
+    subTitle:
+      label: Sous-titre
+    translations:
+      label: 'Traductions'
+      help: "Utiliser l'url pour trouver la page (ex : en/my-other)."
+    searchExcrept:
+      label: Courte Description
+      help: Visible depuis les pages de résultats des moteurs de recherches (meta description)
+    h1:
+      label: Titre
+      help: <small>Le <em>H1</em> est visible sur vos pages tandis que le <code>Titre</code> de votre document s'affichera dans la barre du navigateur et sur les moteurs de recherches.</small>
+    name:
+      label: Nom court
+      help: Permet d'identifier la page, utilisé dans le fil d'arianne.
+    faq:
+      label: Questions Associées
+    relatedPage:
+      label: Pages Associées
+    images:
+      label: Images
+    metaRobots:
+      label: Moteur de recherches
+      choice:
+        noIndex: Interdire l'indexation
+    author:
+      label: Auteur
+    parentPage:
+      label: Page Parente
+    createdAt:
+      label: Publié le
+    updatedAt:
+      label: Mise à jour le
+    template:
+      label: Moteur de thème (facultatif)
+    mainContent:
+      label: Corps de la page
+      help: Les balises HTML ainsi que les fonctionnalités de Twig sont autorisées.<br><br>
+    mainImage:
+      label: Image d'en-tête
+    markdown:
+      label: Formatage markdown
+      help: Applique l'enrichissement du texte via la syntaxe Markdown à l'intégralité du contenu.<br>Sinon utiliser directement <code>{% filter markdown %}mon texte{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>En savoir plus</a>.
+    customProperties:
+      label: Autres paramètres
+      help: Au format <em>YAML</em>.
+    og:
+      label: Open Graph Card
+    ogTitle:
+      label: Titre
+      help: Par défaut, la title de la page sinon le titre.
+    ogDescription:
+      label: Description
+      help: Par défaut, la description <code>search</code> sinon un extrait
+    ogImage:
+      label: Image
+      help: Par défaut, l'image principale de la page
+    twitterSite:
+      label: Twitter Site
+      help: <code>@Username</code>, valeur par défaut si régler dans l'App.
+    twitterCreator:
+      label: Twitter Creator
+      help: <code>@Username</code>, valeur par défaut si régler dans l'App.
+    twitterCard:
+      label: Twitter Card
+      help: <a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>En savoir plus</a>
+
+  user:
+    label:
+      profile: Profil
+      security: Securité
+      id: Identifiants
+    enabled:
+      label: Compte activé
+    role:
+      label: Role
+      super_admin: Super Administrateur
+      admin: Administrateur
+      editor: Editeur
+      user: Utilisateur
+    firstname:
+      label: Prénom
+    password:
+      label: Mot de passe
+    username:
+      label: Nom d'utilisateur
+
+    lastname:
+      label: Nom
+    phone:
+      label: Téléphone
+    email:
+      label: Adresse mail
+    dateOfBirth:
+      label: Date de naissance
+    createdAt:
+      label: Date d'enregistrement
+
+  media:
+    preview:
+      label: Aperçu
+    related:
+      label: Pages connectées
+    name:
+      label: Nom
+      help: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"
+    mediaFile:
+      label: Fichier
+    names:
+      label: 'Traduction'
+      help: 'Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne.'
+    mainColor:
+      label: Couleur Principale
+    createdAt:
+      label: Date d'upload
+
+  element:
+    deleted: Elément supprimé.
+
+  static:
+    updated: Site actualisé avec succès.
+
+#---
+# Errors Page(s)
+#---
+
+error:
+  title: Oops! Une erreur...
+  serverSay: Le serveur indique
+  description: Un écrou semble s'être dévisser.<br>Merci de nous informer sur votre environnement lorsque cette erreur c'est produite.<br><br><a href="/" class="btn btn-secondary">Retour</a>
+
+#---
+# Feed
+#---
+feed:
+  description: Dernière page publiée.
+  alternate_title: Flux

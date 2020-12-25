@@ -1,0 +1,27 @@
+page_routes:
+  resource: '@PushwordCoreBundle/Resources/config/routes/page.yaml'
+
+custom_host_routes:
+  resource: '@PushwordCoreBundle/Resources/config/routes/page.yaml'
+  prefix: '/{host}/'
+  name_prefix: 'custom_host_'
+  requirements:
+    host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
+    #'[a-zA-Z0-9\-\.]*'
+
+## Catch-all
+
+custom_host_pushword_page:
+  path: /{host}/{slug}
+  controller: Pushword\Core\Controller\PageController::show
+  methods: [GET, HEAD]
+  requirements:
+    slug: '[A-Za-z0-9_\/\.\-]*'
+    host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
+
+pushword_page:
+  path: /{slug}
+  controller: Pushword\Core\Controller\PageController::show
+  methods: [GET, HEAD]
+  requirements:
+    slug: '[A-Za-z0-9_\/\.\-]*'

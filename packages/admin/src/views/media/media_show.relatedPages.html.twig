@@ -1,0 +1,32 @@
+{% if mainImage.count > 0 %}
+    <h4>Via l'illustration principale</h4>
+    <ul>
+        {% for page in mainImage %}
+            {% block item %}
+                <li><a href="{{ path('admin_app_page_edit', {'id': page.id}) }}">{{ page.content.title(true)|raw }}</a></li>
+            {% endblock %}
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if gallery.count > 0 %}
+    <h4>Via une gallerie</h4>
+    <ul>
+        {% for pageHasMedia in gallery %}
+            {% block item2 %}
+                <li><a href="{{ path('admin_app_page_edit', {'id': pageHasMedia.page.id}) }}">{{ pageHasMedia.page.content.title(true)|raw }}</a></li>
+            {% endblock %}
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if content %}
+    <h4>Via le contenu</h4>
+    <ul>
+        {% for page in content %}
+            {% block item3 %}
+                <li><a href="{{ path('admin_app_page_edit', {'id': page.id}) }}">{{ page.content.title(true)|raw }}</a></li>
+            {% endblock %}
+        {% endfor %}
+    </ul>
+{% endif %}

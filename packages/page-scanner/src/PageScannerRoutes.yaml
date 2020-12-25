@@ -1,0 +1,3 @@
+pushword_page_scanner:
+  path: /admin/page/scan
+  controller: Pushword\PageScanner\PageScannerController::scanAction

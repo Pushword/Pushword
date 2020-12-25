@@ -1,0 +1,24 @@
+{#
+    @param  \Pushword\Core\Entity\MediaInterface image
+    //~' sizes="100vw">,
+    image.fullPath|imagine_filter('default'),
+    ~' sizes="(max-width: 768px) 100vw, (max-width: 1200px) 49vw, 33vw"'
+#}
+
+
+{{ link(''
+    ~'<picture>'
+        ~'<source'
+            ~' srcset="'
+                ~ image.fullPathWebP|imagine_filter('xs') ~' 576w'
+            ~'"'
+            ~' />'
+        ~'<img'
+            ~' srcset="'
+                ~ image.fullPath|imagine_filter('xs') ~' 576w'
+            ~'"'
+            ~' width="1000" height="1000" class="img-fluid"'
+            ~' src="'~ image.fullPath|imagine_filter('default') ~'" loading="lazy" alt="' ~ image.name ~'" />'
+    ~'</picture>',
+    image.fullPath|imagine_filter('default'),
+    { 'class': 'tile', 'dwl': image.fullPathWebP|imagine_filter('default') }) }}

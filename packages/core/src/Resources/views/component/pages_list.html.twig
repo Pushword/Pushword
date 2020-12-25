@@ -1,0 +1,15 @@
+{% block list %}{% spaceless %}
+    {% if pages is not empty %}
+        <ul>
+            {% for page in pages %}
+                <li>
+                    <a href="{{ page(page) }}">
+                        {{ page.content.title(true)|raw }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>...</p>
+    {% endif %}
+{% endspaceless %}{% endblock %}

@@ -1,0 +1,13 @@
+{% if pages is not empty %}
+    <ul>
+        {% for page in pages %}
+            {% if (page.createdAt) <= date('now') %}
+                <li>
+                    <a href="{{ page(page.realSlug) }}">
+                        {{ page.content.title(true)|raw }}
+                    </a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+{% endif %}

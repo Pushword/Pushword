@@ -1,0 +1,10 @@
+{% extends '@SonataAdmin/Menu/sonata_menu.html.twig' %}
+
+{% block item %}
+    {% if item.label in ['admin.label.theme', 'admin.label.params']
+        and app.request.attributes.get('_route') in ['pushword_template_editor_create', 'pushword_template_editor_edit'] %}
+        {% do item.setAttribute('class', (item.getAttribute('class') ~ ' active')) %}
+    {% endif %}
+
+    {{ parent() }}
+{% endblock %}

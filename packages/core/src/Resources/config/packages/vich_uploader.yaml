@@ -1,0 +1,10 @@
+vich_uploader:
+  db_driver: orm
+
+  mappings:
+    media_media:
+      #uri_prefix:
+      upload_destination: '%pw.media_dir_absolute%'
+      namer:
+        service: Pushword\Core\Service\VichUploadPropertyNamer #Vich\UploaderBundle\Naming\PropertyNamer
+        options: { property: 'slug' }

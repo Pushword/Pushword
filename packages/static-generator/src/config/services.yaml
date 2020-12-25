@@ -1,0 +1,20 @@
+services:
+  Pushword\StaticGenerator\StaticAppGenerator:
+    alias: pushword.static_app_generator
+
+  pushword.static_app_generator:
+    class: Pushword\StaticGenerator\StaticAppGenerator
+    autowire: true
+    arguments:
+      $kernel: '@kernel'
+      $webDir: '%pw.dir%'
+    public: true # when i will be able to test it without loading it with this, remove that
+
+  Pushword\StaticGenerator\StaticController:
+    tags: ['controller.service_arguments']
+    arguments: ['@pushword.static_app_generator']
+
+  pushword.static_command:
+    class: Pushword\StaticGenerator\StaticCommand
+    arguments: ['@pushword.static_app_generator']
+    tags: ['console.command']

@@ -1,0 +1,15 @@
+pushword_template_editor_list:
+  path: /admin/template/list
+  controller: Pushword\TemplateEditor\ElementAdmin::listElement
+
+pushword_template_editor_edit:
+  path: /admin/template/edit/{encodedPath}
+  controller: Pushword\TemplateEditor\ElementAdmin::editElement
+
+pushword_template_editor_create:
+  path: /admin/template/create
+  controller: Pushword\TemplateEditor\ElementAdmin::editElement
+
+pushword_template_editor_delete:
+  path: /admin/template/delete/{encodedPath}
+  controller: Pushword\TemplateEditor\ElementAdmin::deleteElement

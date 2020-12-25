@@ -1,0 +1,67 @@
+{#
+    image_src
+    image_alt       // image.name(page is defined ? page.locale : '')
+    image_attr
+    image_wrapper
+    image_wrapper_class
+
+        xs: #576px
+        sm: #768px
+        md: #992px
+        lg: #1200px
+        xl: #1200px+
+#}
+
+
+{% block inline_image %}
+    {% if image_src is defined %}
+        {% if image_wrapper_class is defined or image_wrapper is defined %}
+            <{{ image_wrapper|default('p') }} class="{{ image_wrapper_class|default('') }}">
+            {% endif %}
+
+                {% if isInternalImage(image_src) %}
+                    {% set image =  getImageFrom(image_src) %}
+                    {{ image_link is not defined ? link(
+                        _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null),
+                        image.fullPath|imagine_filter('default'),
+                        {'dwl': image.fullPathWebP|imagine_filter('default')}
+                    ) : _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null) }}
+
+                {% else %}
+                    <img
+                        src="{{ image_src }}"
+                        loading="lazy"
+                        class="{{ (rounded is defined ? 'rounded' : '') ~ (image_class is defined ? ' '~image_class : ' img-fluid') }}"
+                        alt="{{ image_alt }}" />
+                {% endif %}
+
+            {% if image_wrapper_class is defined %}
+
+            </{{ image_wrapper|default('p') }}>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+
+{% macro renderImage(image, image_class = null, image_attr = null, image_alt = null) %}
+<picture>
+    <source type="image/webp"
+        srcset="{{ image.fullPathWebP|imagine_filter('xs') ~' 576w'
+            ~','~ image.fullPathWebP|imagine_filter('sm') ~' 768w'
+            ~','~ image.fullPathWebP|imagine_filter('md') ~' 992w'
+            ~','~ image.fullPathWebP|imagine_filter('lg') ~' 1200w'
+            ~','~ image.fullPathWebP|imagine_filter('xl') ~' 1600w' }}" />
+    <img {{ mergeAttr({srcset: image.fullPath|imagine_filter('xs') ~' 576w'
+            ~','~ image.fullPath|imagine_filter('sm') ~' 768w'
+            ~','~ image.fullPath|imagine_filter('md') ~' 992w'
+            ~','~ image.fullPath|imagine_filter('lg') ~' 1200w'
+            ~','~ image.fullPath|imagine_filter('xl') ~' 1600w',
+        src: image.fullPath|imagine_filter('default'),
+        loading: 'lazy',
+        class: image_class ?? 'w-full h-auto',
+        width: 100000,
+        height: 100000,
+        alt: image_alt|default(image.alt)
+    }, image_attr ?? {}) }} />
+</picture>
+{% endmacro %}

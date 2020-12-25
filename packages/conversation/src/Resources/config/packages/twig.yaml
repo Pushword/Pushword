@@ -1,0 +1,5 @@
+twig:
+  paths:
+    '%pw.package_dir%/conversation/src/Resources/views': PushwordConversation
+  form_themes:
+    - '@PushwordConversation/conversation/tailwind_form_layout.html.twig'

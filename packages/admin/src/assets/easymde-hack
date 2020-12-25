@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+$easyMDEFile = './node_modules/easymde/src/js/easymde.js';
+
+$content = file_get_contents($easyMDEFile);
+
+if (strpos($content, 'twig') !== false)
+    return;
+
+$toAdd = file_get_contents(__DIR__.'/easymde.twig.js');
+$before = '    this.codemirror.getScrollerElement().style.minHeight = options.minHeight;';
+$content = str_replace($before, $toAdd.chr(10).$before, $content);
+
+$toAdd = "require('codemirror/mode/twig/twig.js');";
+$after = "markdown.js');";
+$content = str_replace($after, $after.chr(10).$toAdd.chr(10), $content);
+
+file_put_contents($easyMDEFile, $content);

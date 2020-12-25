@@ -1,0 +1,70 @@
+{#
+    @params array       logo {href, alt},
+    @params array       menu_items {attr:{href...}, anchor, items: [...]} // todo remove next realse the bc break items
+    @params string      menu_container
+    @params string      menu_wrapper_class
+    @params string      menu_navbar_nav_class
+#}
+{% set menu_items = menu_items ?? (items ?? null) %}
+
+
+    <nav class="{{ menu_wrapper_class|default('navbar navbar-expand-md navbar-light bg-white shadow') }}" id="navbar">
+        <div class="{{ menu_container|default('container') }}">
+
+            {% block logo %}
+                {% if logo is defined %}
+                    <a class="navbar-brand" href="{{ logo.href|default(homepage()) }}">
+                        {% if logo.alt is defined %}{{ logo.alt }}{% endif %}
+                    </a>
+                {% endif %}
+            {% endblock %}
+
+
+            {% block toggle_button %}
+                {% if menu_items is defined and menu_items is not empty %}
+                <label class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-links" aria-controls="navbar-links" aria-expanded="false" aria-label="Toggle navigation" for="navbar-toggler">
+                    <span class="navbar-toggler-icon"></span>
+                </label>
+                <input type="checkbox" id="navbar-toggler" class="navbar-toggler-checkbox">
+                {% endif %}
+            {% endblock %}
+
+            {% block nav_list %}
+                {% if menu_items is defined and menu_items is not empty %}
+                    <div class="collapse navbar-collapse" id="navbar-links">
+                        <ul class="{{ menu_navbar_nav_class|default('navbar-nav w-100') }}">
+                            {% block nav_list_tems %}
+                                {% for item in menu_items %}
+                                    <li class="nav-item py-lg-3">
+                                        {% if isCurrentPage(item.attr.href, page) %}
+                                            <span class="nav-link disabled" aria-current="page">
+                                        {% else %}
+                                            <a{{ mergeAttr((item.attr is defined ? item.attr : {}), {'class': 'nav-link'})}}>
+                                        {% endif %}
+                                            {{ item.anchor|raw }}
+                                        {{ page.slug is defined and item.attr.href == page(page.realSlug) ? '</span>' : '</a>' }}
+                                            {#
+                                            {% if item.items is defined %}
+                                            <ul class="nav-sub-item">
+                                                {% for sub_item in item.items %}
+                                                    <li>
+                                                         {% if page.slug is defined and sub_item.attr.href == page(page.realSlug) %}
+                                                            <span class="nav-link disabled">
+                                                        {% else %}
+                                                            <a{{ attr((sub_item.attr is defined ? sub_item.attr : {}), {'href':'#'})}}>
+                                                        {% endif %}
+                                                            {{ sub_item.anchor|raw }}
+                                                        {{ page.slug is defined and sub_item.attr.href == page(page.realSlug) ? '</span>' : '</a>' }}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                            {% endif %}#}
+                                    </li>
+                                {% endfor %}
+                            {% endblock %}
+                        </ul>
+                    </div>
+                {% endif %}
+            {% endblock %}
+        </div>
+    </nav>

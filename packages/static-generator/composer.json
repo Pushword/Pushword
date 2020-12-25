@@ -1,0 +1,33 @@
+{
+  "name": "pushword/static-generator",
+  "type": "symfony-bundle",
+  "description": "Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/static-generator",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "^0.0"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\StaticGenerator\\": "src"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5"
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

@@ -1,0 +1,6 @@
+sonata_admin:
+  dashboard:
+    groups:
+      app.admin.group.page:
+        items:
+          - pushword.admin.conversation

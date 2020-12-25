@@ -1,0 +1,16 @@
+
+<div class=row>
+    <div class=col-md-6>
+        <a href="{{ media.fullPath|imagine_filter('default') }}">
+            <img src="{{ media.fullPath|imagine_filter('md') }}" style="max-width:100%">
+        </a>
+     </div>
+     <div class=col-md-6>
+         Chemin:<br>
+         <code>{{ media.fullPath|imagine_filter('default') }}</code>
+         <br><br>Markdown:<br>
+         <pre>![{{ media.name|replace({'[': '', ']': ''}) }}]({{ media.fullPath|imagine_filter('default') }})</pre>
+         Couleur dominante:<br>
+         <pre style="background-color:{{media.getMainColor}};color:{{media.mainColorOpposite}}">{{media.getMainColor}}</pre>
+    </div>
+</div>

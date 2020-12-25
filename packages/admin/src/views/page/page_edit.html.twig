@@ -1,0 +1,102 @@
+{% extends 'SonataAdminBundle:CRUD:base_edit.html.twig' %}
+
+{% block navbar_title %}
+    {{ block('title') }}
+{% endblock %}
+
+{% block sonata_page_content_header %}
+    <div style="display:none">{{ parent() }}</div>
+
+    <!-- spacer for save btns -->
+    <div style="margin-top:40px">&nbsp;</div>
+{% endblock %}
+
+{% block sonata_tab_content %}
+        {{ _self.render_groups(admin, form, admin.formtabs['default'].groups) }}
+{% endblock %}
+{% block sonata_pre_fieldsets %}
+        <nav class="navbar navbar-default navbar-formactions">
+        {{ block('sonata_form_actions') }}
+    </nav>
+    {{ parent() }}
+{% endblock %}
+{% block formactions %}<!--{{ parent() }}-->{% endblock %}
+
+
+{% macro render_groups(admin, form, groups) %}
+
+    {% for code in groups %}
+        {% if admin.formgroups[code] is defined %}
+            {% set form_group = admin.formgroups[code] %}
+
+            {% if 'columnFields' in form_group.class %}
+                {% set column_field_open = column_field_open is not defined ? false : true %}
+                {{ _self.render_group_in_column(admin, form, form_group, column_field_open, loop) }}
+            {% else %}
+                {{ _self.render_group(admin, form, form_group) }}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro render_group(admin, form, form_group) %}
+    <div class="{{ form_group.class|default('col-md-12') }}">
+        <div class="{{ form_group.box_class }}" style="border-top:1px solid #3c8dbc;padding-top:10px">
+            <div class="box-body">
+                <div class="sonata-ba-collapsed-fields">
+                    {% if form_group.description %}
+                        <p>{{ form_group.description|trans({}, form_group.translation_domain ?: admin.translationDomain) }}</p>
+                    {% endif %}
+
+                    {% for field_name in form_group.fields if form[field_name] is defined %}
+                        {{ form_row(form[field_name]) }}
+                    {% else %}
+                        <em>{{ 'message_form_group_empty'|trans({}, 'SonataAdminBundle') }}</em>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro render_group_in_column(admin, form, form_group, columnFieldOpen, loop) %}
+    {% if columnFieldOpen == false %}
+        <div class="{{ form_group.class|default('col-md-12') }}" id="columnFields">
+    {% endif %}
+
+    <div class="box {{ 'expand' in form_group.class ? 'expandColumnFields' : '' }}" style="margin:0;border:0">
+        <div class="box-header" style="padding:0">
+            <h4 style="margin:0">
+                <a style="display:block;padding:10px; background-color:#F5F5F5; border-top:1px solid #3c8dbc;
+                    border-radius:5px;font-weight:bold"
+                    class="box-title"
+                    data-toggle="collapse"
+                    data-parent="#columnFields"
+                    href="#cf-{{ loop.index }}"
+                    aria-expanded="{{ columnFieldOpen == false ? 'true' : 'false' }}"
+                    aria-controls="cf-{{ loop.index }}"
+                >
+                    {{ form_group.label|trans({}, form_group.translation_domain ?: admin.translationDomain) }}
+                </a>
+            </h4>
+        </div>
+        <div class="box-body collapse {{ columnFieldOpen == false ? ' in' : '' }}" id="cf-{{ loop.index }}"
+            role="tabpanel" style="border-top:1px solid #3c8dbc;margin-bottom:-5px;padding-bottom:10px;">
+            <div class="sonata-ba-collapsed-fields">
+                {% if form_group.description %}
+                    <p>{{ form_group.description|trans({}, form_group.translation_domain ?: admin.translationDomain) }}</p>
+                {% endif %}
+
+                {% for field_name in form_group.fields if form[field_name] is defined %}
+                    <div style="margin-top:20px">
+                    {{ form_row(form[field_name]) }}</div>
+                {% else %}
+                    <em>{{ 'message_form_group_empty'|trans({}, 'SonataAdminBundle') }}</em>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% if loop.last %}</div>{% endif %}
+
+{% endmacro %}

@@ -1,0 +1,12 @@
+<footer class="mt-10 text-sm border-t-2 border-gray-200">
+    <div class="max-w-screen-md p-3 py-10 mx-auto text-right">
+        {% block footer %}
+            {% include view('/component/alternate_links.html.twig') %}
+        {% endblock %}
+
+        {% block extra_footer %}
+            <a href="{{ homepage(page) }}" class="block mb-3 text-2xl text-primary hover:text-primary-light">{{ app_name }}</a>
+            Design by <a href="https://piedweb.com" class="text-primary hover:text-primary-light">Pied Web</a>.
+        {% endblock %}
+    </div>
+</footer>

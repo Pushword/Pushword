@@ -1,0 +1,9 @@
+<ul class="list-group list-group-horizontal">
+    {% for translation in page.translations %}
+        <li class="list-group-item">
+            <a href="{{ page(translation.realSlug) }}" title="{{ translation.title }} — {{ translation.locale|trans }}" lang="{{ translation.locale }}" hreflang="{{ translation.locale }}">
+                {{ translation.locale|trans }}
+            </a>
+        </li>
+    {% endfor %}
+</ul>

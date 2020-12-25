@@ -1,0 +1,21 @@
+
+
+    {% if page.parentPage is defined and page.parentPage is not null %}
+        {% if page.parentPage.parentPage is not null %} {#We don't generate a breadcrumb for only one parent Page#}
+            <nav aria-label="breadcrumb">
+                <ul>
+                    {{ _self.breadcrumbPart(page.parentPage) }}
+                    <li aria-current="page">{{ page.getName(true) }}</li>
+                </ul>
+            </nav>
+        {% endif %}
+    {% endif %}
+
+{% macro breadcrumbPart(page) %}
+    {% if page.parentPage is not null %}
+        {{ _self.breadcrumbPart(page.parentPage) }}
+    {% endif %}
+    <li>
+        <a href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}">{{ page.getName(true) }}</a>
+    </li>
+{% endmacro %}

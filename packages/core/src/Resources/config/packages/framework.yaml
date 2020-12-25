@@ -1,0 +1,18 @@
+framework:
+  secret: '%secret%'
+  translator: { fallbacks: ['%locale%'] }
+
+  session:
+    handler_id: ~
+    cookie_lifetime: 0
+
+  php_errors:
+    log: true
+
+  default_locale: '%locale%'
+
+  templating:
+    engines: ['twig', 'php']
+
+  assets:
+    json_manifest_path: '%kernel.project_dir%/public/assets/manifest.json'

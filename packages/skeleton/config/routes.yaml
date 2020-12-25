@@ -1,0 +1,23 @@
+## Extension
+## ---------
+
+static:
+  resource: '@PushwordStaticGeneratorBundle/StaticRoutes.yaml'
+
+page_scanner:
+  resource: '@PushwordPageScannerBundle/PageScannerRoutes.yaml'
+
+template_editor:
+  resource: '@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml'
+
+admin:
+  resource: '@PushwordAdminBundle/AdminRoutes.yaml'
+
+conversation:
+  resource: '@PushwordConversationBundle/Resources/config/routes/conversation.yaml'
+
+## Core
+## ---------
+
+page:
+  resource: '@PushwordCoreBundle/Resources/config/routes/all.yaml'

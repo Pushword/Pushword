@@ -1,0 +1,18 @@
+twig:
+  default_path: '%kernel.project_dir%/templates'
+  debug: '%kernel.debug%'
+  strict_variables: '%kernel.debug%'
+  paths:
+    '%vendor_dir%/sonata-project/admin-bundle/src/Resources/views': SonataAdmin
+    #'%vendor_dir%/sonata-project/twig-extensions/src/Bridge/Symfony/Resources/views': SonataTwig
+    '%kernel.root_dir%/../templates': App
+    '%pw.package_dir%/core/src/Resources/views/TwigBundle': Twig
+    '%pw.package_dir%/core/src/../src/Resources/views': Pushword
+    #'%kernel.root_dir%/../templates/bundles/PushwordCoreBundle/': PushwordCore
+  globals:
+    apps: '@pushword.apps'
+    twig: '@twig'
+
+  form_themes:
+    - 'bootstrap_4_layout.html.twig'
+    - '@SonataForm/Form/datepicker.html.twig'

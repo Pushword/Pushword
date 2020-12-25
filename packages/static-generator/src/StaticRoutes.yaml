@@ -1,0 +1,11 @@
+piedweb_static_generate:
+  path: /admin/static
+  controller: Pushword\StaticGenerator\StaticController::generateStatic
+  methods: [GET]
+
+old_piedweb_static_generate:
+  path: /~static
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+  defaults:
+    route: piedweb_static_generate
+    permanent: true

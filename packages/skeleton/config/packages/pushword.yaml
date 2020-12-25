@@ -1,0 +1,27 @@
+#used for tests
+
+pushword:
+  locale: '%locale%'
+  entity_page: App\Entity\Page
+  entity_pagehasmedia: App\Entity\PageHasMedia
+  entity_media: App\Entity\Media
+  entity_user: App\Entity\User
+  apps:
+    - {
+        hosts: ['localhost.dev', 'localhost'],
+        base_url: 'https://localhost.dev',
+        randomTest: 123,
+      }
+    - {
+        hosts: [pushword.piedweb.com],
+        base_url: 'https://pushword.piedweb.com',
+        flat_content_dir: '../docs/content',
+        static_dir: '%kernel.project_dir%/../../docs',
+        name: 'Pushword',
+        favicon_path: '/assets/favicons/',
+        static_generate_for: 'github',
+        assets:
+          { javascripts: ['/assets/app.js'], stylesheets: ['/assets/tw.css'] },
+        color_bg: '#fff',
+        static_dont_copy: ['bundles', 'media'],
+      }

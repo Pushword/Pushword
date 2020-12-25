@@ -1,0 +1,24 @@
+{% set btn_title = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26">
+      <polygon class="fill-current " points="9.33 6.69 9.33 19.39 19.3 13.04 9.33 6.69"/>
+      <path class="fill-current " d="M26,13A13,13,0,1,1,13,0,13,13,0,0,1,26,13ZM13,2.18A10.89,10.89,0,1,0,23.84,13.06,10.89,10.89,0,0,0,13,2.18Z"/>
+    </svg>' %}
+
+{% block video %}
+    {% set is_embed = embed_code is defined and embed_code is not null %}
+        <div class="relative m-3 aspect-w-16 aspect-h-9"
+            {% if is_embed %} replaceBy="{{ embed_code|replace({'"': "'"}) }}"{% endif %}
+        >
+            {% if false ==  is_embed %}<span data-rot="{{ encrypt(url) }}" data-fslightbox>{% endif %}
+                {{ _self.videoThumb(image, alt|default(url), btn_title) }}
+            {% if false == is_embed %}</a>{% endif %}
+            </div>
+
+{% endblock %}
+
+{% macro videoThumb(image, alt, btn_title) %}
+    {% include view('/component/inline_image.html.twig') with {'image_src': image,'image_alt': alt|striptags,'image_link': false, image_class: 'm-0 absolute top-0 left-0 h-full w-full'} %}
+    <div class="absolute top-0 left-0 w-full h-full bg-white bg-opacity-25"></div>
+    <span><span class="absolute block w-2/5 p-5 cursor-pointer text-primary hover:text-primary-light" style="transform: translate(-50%,-50%);margin-right:-50%;top: 50%;left: 50%;">
+       {{ btn_title|raw }}
+    </span></span>
+{% endmacro %}

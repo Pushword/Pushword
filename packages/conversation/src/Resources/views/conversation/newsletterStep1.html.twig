@@ -1,0 +1,33 @@
+{% extends '@PushwordConversation/conversation/conversation.html.twig' %}
+
+        {% block before %}
+            <div class="w-full max-w-md">
+            <div class="flex items-center py-2 border-b border-primary">
+        {% endblock %}
+
+        {% block authorEmail %}
+            {% form_theme conversation 'form_div_layout.html.twig' %}
+             {{ form_widget(conversation.authorEmail, {
+                    attr: {
+                        'placeholder': 'conversation.email.placeholder'|trans,
+                        onfocus: "this.placeholder = ''",
+                        onblur: "this.placeholder = '"~'conversation.email.placeholder'|trans~"'",
+                        required: "text",
+                        pattern: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$",
+                        type: "email",
+                        class: 'appearance-none bg-transparent border-none focus:ring-transparent focus:border-transparent focus:shadow-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none'
+                    }
+                }) }}
+
+        {% endblock %}
+
+        {% block submit %}
+
+             <button class="flex-shrink-0 px-2 py-1 text-sm text-white border-4 rounded bg-primary border-primary hover:border-primary-light hover:bg-primary-light">{{ submitLabel|default('conversation.submitLabel'|trans) }}</button>
+
+        {% endblock %}
+
+        {% block after %}
+                </div>
+            </div>
+        {% endblock %}

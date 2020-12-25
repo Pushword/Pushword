@@ -1,0 +1,15 @@
+{% block user_block %}
+{#todo implement SonataUserBlundle, watch https://github.com/sonata-project/SonataUserBundle/pull/1256 #}
+    {% if app.user %}
+        {% set _bg_class          = "bg-light-blue" %}
+        {% set _logout_uri        = url('pushword_logout') %}
+    {% set _logout_text       = 'Se déconnecter' %}
+
+    <li class="user-footer">
+        <div class="pull-right">
+            <a href="{{ _logout_uri }}" class="btn btn-default btn-flat"><i
+                        class="fa fa-sign-out fa-fw"></i> {{ _logout_text }}</a>
+            </div>
+        </li>
+    {% endif %}
+{% endblock %}

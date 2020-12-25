@@ -1,0 +1,164 @@
+{#% extends 'SonataAdminBundle:Form:form_admin_fields.html.twig' %#}
+
+{% extends '@SonataDoctrineORMAdmin/Form/form_admin_fields.html.twig' %}
+
+{% block inline_table %}
+
+<div class=row>
+
+</div>
+<style>
+.table-borderless td, .table-borderless th, .table-borderless tr {
+    border: none;
+}
+.field-short-description { padding-left:35px; max-width:200px;    min-width: 160px;}
+</style>
+<table class="table table-borderless">
+    <tbody class="sonata-ba-tbody">
+        {% for nested_group_field_name, nested_group_field in form.children %}
+            <tr class="sonata-ba-td-{{ id }}"><!--style="display:inline-table;"-->
+                <td class="sonata-ba-td-{{ id }}-_delete control-group" style="position:relative;">
+                        {% set media = nested_group_field.children['media'] %}
+                        {% if media.vars.sonata_help %}
+                            {{ media.vars.sonata_help|raw }}
+                            <div style="display:none">{{ form_widget(media) }}</div>
+                        {% else %}
+                            {{ form_widget(media) }}
+                        {% endif %}
+
+
+                        <span
+                            {% if media.vars.sonata_help %}
+                                style="position:absolute; right: 10px;top:10px"
+                            {% else %}
+                                style="position: absolute; top: 0; margin-top: 9px; left:7px;"
+                            {% endif %}
+                            {% if media.vars.sonata_help %}style="position:absolute;z-index:4; left: 130px; margin-top: 5px;" {% endif%}
+                            onclick="$(this).closest('tr').remove();" class="btn btn-danger btn-sm{% if media.vars.sonata_help is null %} sonata-ba-action{% endif%}"
+                        ><i class="fa fa-trash"></i></span>
+                </td>
+                <td class="sonata-ba-td-{{ id }}-media control-group" style="display:none"></td>
+                <td class="sonata-ba-td-{{ id }}-position control-group" style="display:none">
+
+                        {% set nested_field = nested_group_field.children['_delete'] %}
+                        {{ form_row(nested_field, { 'label': ('action_delete'|trans({}, 'SonataAdminBundle')) }) }}
+
+                         {% set nested_field = nested_group_field.children['position'] %}
+                        {{ form_widget(nested_field) }}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
+
+{% block sonata_admin_orm_one_to_many_widget %}
+{% if not sonata_admin.field_description.hasassociationadmin %}
+    {% for element in value %}
+        {{ element|render_relation_element(sonata_admin.field_description) }}
+    {% endfor %}
+{% else %}
+
+    <div id="field_container_{{ id }}" class="field-container">
+        <span id="field_widget_{{ id }}" >
+            {% if form.children|length > 0 %}
+                {{ block('inline_table') }}
+            {% endif %}
+
+
+        </span>
+
+        {% set display_create_button = sonata_admin.field_description.associationadmin.hasRoute('create')
+            and sonata_admin.field_description.associationadmin.hasAccess('create')
+            and btn_add
+            and (
+                sonata_admin.field_description.options.limit is not defined or
+                form.children|length < sonata_admin.field_description.options.limit
+            ) %}
+
+        {% if sonata_admin.edit == 'inline' %}
+
+            {% if display_create_button %}
+                <span id="field_actions_{{ id }}" >
+                    <a
+                        href="{{ sonata_admin.field_description.associationadmin.generateUrl(
+                            'create',
+                            sonata_admin.field_description.getOption('link_parameters', {})
+                        ) }}"
+                        onclick="return start_field_retrieve_{{ id }}(this);"
+                        class="btn btn-success btn-sm sonata-ba-action"
+                        title="{{ btn_add|trans({}, btn_catalogue) }}"
+                    >
+                        <i class="fa fa-plus-circle"></i>
+                        {{ btn_add|trans({}, btn_catalogue) }}
+                    </a>
+                </span>
+            {% endif %}
+
+            {# add code for the sortable options #}
+            {% if sonata_admin.field_description.options.sortable is defined %}
+                {% if sonata_admin.inline == 'table' %}
+                    {% include '@SonataAdmin/CRUD/Association/edit_one_to_many_sortable_script_table.html.twig' %}
+                {% else %}
+                    {% include '@SonataAdmin/CRUD/Association/edit_one_to_many_sortable_script_tabs.html.twig' %}
+                {% endif %}
+            {% endif %}
+
+            {# include association code #}
+            {% include '@SonataAdmin/CRUD/Association/edit_one_script.html.twig' %}
+
+        {% else %}
+            <span id="field_actions_{{ id }}" >
+                {% if display_create_button %}
+                    <a
+                        href="{{ sonata_admin.field_description.associationadmin.generateUrl(
+                            'create',
+                            sonata_admin.field_description.getOption('link_parameters', {})
+                        ) }}"
+                        onclick="return start_field_dialog_form_add_{{ id }}(this);"
+                        class="btn btn-success btn-sm sonata-ba-action"
+                        title="{{ btn_add|trans({}, btn_catalogue) }}"
+                    >
+                        <i class="fa fa-plus-circle"></i>
+                        {{ btn_add|trans({}, btn_catalogue) }}
+                    </a>
+                {% endif %}
+            </span>
+
+            {% include '@SonataAdmin/CRUD/Association/edit_modal.html.twig' %}
+
+            {% include '@SonataAdmin/CRUD/Association/edit_many_script.html.twig' %}
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block media_collection %}
+{% if nested_field.vars.name == '_delete' %}
+    <div class="col-md-1" style="min-width:160px">
+        <div style="font-size:12px; z-index: 9; bottom:0; position: absolute; width: 150px; padding-left: 10px;">
+            {{ form_row(nested_field, { 'label': ('action_delete'|trans({}, 'SonataAdminBundle')) }) }}
+        </div>
+{% else %}
+
+    {% if nested_field.vars.name == 'media' and nested_field.vars.sonata_help %}
+
+        <div style="width:150px;padding-bottom:46px;">{{ nested_field.vars.sonata_help|raw }}</div></div>
+    {% else %}
+        {#{ form_row(nested_field) }#}
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}
+
+
+{#
+    https://github.com/sonata-project/SonataAdminBundle/blob/master/src/Resources/views/Form/form_admin_fields.html.twig
+
+    https://github.com/sonata-project/SonataDoctrineORMAdminBundle/blob/master/src/Resources/views/Form/form_admin_fields.html.twig
+    https://github.com/sonata-project/SonataAdminBundle/blob/master/src/Resources/views/CRUD/Association/edit_many_to_one.html.twig
+
+#}

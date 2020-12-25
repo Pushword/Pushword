@@ -1,0 +1,13 @@
+cd assets;
+
+yarn
+
+#yarn build
+
+cd ../../skeleton;
+
+php bin/console pushword:flat:import pushword.piedweb.com
+
+php bin/console pushword:static:generate pushword.piedweb.com
+
+rm -rf ../../docs/download/
