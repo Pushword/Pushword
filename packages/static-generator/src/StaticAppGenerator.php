@@ -123,18 +123,26 @@ class StaticAppGenerator
         $this->kernel = $kernel;
     }
 
-    public function generateAll($filter = null)
+    /**
+     * Undocumented function
+     *
+     * @param string $filter
+     * @return integer the number of site generated
+     */
+    public function generateAll(?string $filter = null): int
     {
+        $i = 0;
         foreach ($this->apps->getHosts() as $host) {
             if ($filter && $filter != $host) {
                 continue;
             }
-            $this->generate($host, $this->mustGetPagesWithoutHost);
 
-            $this->mustGetPagesWithoutHost = false;
+            $this->generate($host);
+
+            ++$i;
         }
 
-        return true;
+        return $i;
     }
 
     public function generateFromHost($host)
@@ -151,7 +159,7 @@ class StaticAppGenerator
     protected function generate($host, $mustGetPagesWithoutHost = false)
     {
         $this->app = $this->apps->switchCurrentApp($host)->get();
-        $this->mustGetPagesWithoutHost = $mustGetPagesWithoutHost;
+        $this->mustGetPagesWithoutHost = $this->app->isFirstApp();
 
         $this->filesystem->remove($this->getStaticDir());
         $this->filesystem->mkdir($this->getStaticDir());
