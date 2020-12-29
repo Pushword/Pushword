@@ -121,6 +121,7 @@ class StaticAppGenerator
 
         static::loadKernel($kernel);
         $this->kernel = $kernel;
+        static::$appKernel->getContainer()->get('pushword.router')->setUseCustomHostPath(false);
     }
 
     /**
@@ -400,6 +401,7 @@ class StaticAppGenerator
     protected function saveAsStatic($liveUri, $destination)
     {
         $request = Request::create($liveUri);
+        //$request->headers->set('host', $this->app->getMainHost());
 
         $response = static::$appKernel->handle($request);
 
