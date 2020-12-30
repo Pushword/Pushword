@@ -119,7 +119,9 @@ class PageImporter extends AbstractImporter
 
     private function normalizePropertyName(string $propertyName)
     {
-        if ($propertyName == 'parent') $propertyName = 'parentPage';
+        if ('parent' == $propertyName) {
+            $propertyName = 'parentPage';
+        }
 
         return $propertyName;
     }
@@ -148,7 +150,6 @@ class PageImporter extends AbstractImporter
 
                     continue;
                 }
-
 
                 if (\is_string($object)) {
                     $this->$object($page, $property, $value);
