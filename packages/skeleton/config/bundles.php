@@ -52,6 +52,5 @@ return [
 
     // No need for testing purpose, useful else
     //Symfony\WebpackEncoreBundle\WebpackEncoreBundle::class => ['all' => true],
-    //Symfony\Bundle\WebProfilerBundle\WebProfilerBundle::class => ['dev' => true, 'test' => true],
     //Pushword\Conversation\PushwordConversation::class => ['all' => true],
 ];
