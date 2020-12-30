@@ -1,5 +1,5 @@
 framework:
-  secret: '%secret%'
+  secret: 'secretKeyToOverride (normally, it s automatically done by symfony standard edition'
   translator: { fallbacks: ['%locale%'] }
 
   session:

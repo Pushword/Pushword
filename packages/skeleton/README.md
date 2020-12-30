@@ -27,9 +27,6 @@ php bin/console pushword:user:create $emailvar $passvar ROLE_SUPER_ADMIN
 # Install Bundle Assets
 php bin/console assets:install
 
-# Create a robots.txt
-#echo '' >public/robots.txt
-
 # Launch Server and Play
 symfony server:start -d
 ```

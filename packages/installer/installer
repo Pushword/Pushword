@@ -12,12 +12,13 @@ echo "Installation running in folder $folder"
 rm -rf ${folder}
 
 # Install symfony
-composer create-project symfony/skeleton ${folder} ^4.4
+composer create-project symfony/skeleton ${folder} ^5.2
 cd ${folder}
 
 # Install Pied Web CMS
 composer require pushword/core
 composer require pushword/skeleton
+composer require pushword/admin
 
 # Work around because we prepend our config in the bundle
 #sed -i -e "/access_control:/d" ./config/packages/security.yaml
