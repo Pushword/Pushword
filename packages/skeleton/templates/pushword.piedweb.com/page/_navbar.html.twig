@@ -6,21 +6,22 @@
                 <span class="hidden mt-2 ml-2 text-small lg:inline-block">{{ app_name }}</span>
             </a>
         </span>
-        <div class="flex flex-row flex-1 mx-2">
-            <input type="text" id="search" placeholder="Search" class="w-20 px-2 py-1 text-xl border-none md:w-full focus:w-60 md:focus:w-full focus:shadow-none focus:outline-none focus:border-none">
-            <button class="hidden px-4 py-4 mr-10 font-bold text-white rounded md:block bg-primary-light hover:bg-primary" onclick="document.querySelector('#search').focus()">
+        <div class="flex flex-row flex-1 mx-3 md:mx-6">
+            <input type="text" id="search" placeholder="Search" class="w-20 px-2 py-1 text-xl border-none rounded md:rounded-r-none md:rounded-l-lg md:w-full focus:w-60 md:focus:w-full focus:shadow-none focus:outline-none focus:border-none bg-gray-50">
+            <button class="hidden px-4 py-4 font-bold text-white rounded-r-lg md:block bg-primary-light hover:bg-primary" onclick="document.querySelector('#search').focus()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                 </svg>
             </button>
         </div>
         <nav class="nav">
-            <ul class="flex space-x-6">
-                <li><a class="hidden text-primary hover:text-primary-light md:inline-block" href="/installation">Getting Started</a></li>
-                <li><a class="text-primary hover:text-primary-light" href="/themes">Themes</a></li>
-                <li><a class="text-primary hover:text-primary-light" href="/extensions">Extensions</a></li>
-                <li><a class="hidden text-primary hover:text-primary-light md:inline-block" href="/contribute">Contribute</a></li>
-                <li><a class="hidden text-primary hover:text-primary-light md:inline-block" href="/roadmap">Roadmap</a></li>
+            <ul class="flex space-x-1">
+                {% set nav_item_class = 'px-3 py-4 rounded text-primary hover:bg-primary-light hover:text-white' %}
+                <li><a class="hidden md:inline-block {{ nav_item_class }}" href="/installation">Getting Started</a></li>
+                <li><a class="{{ nav_item_class }} inline-block" href="/themes">Themes</a></li>
+                <li><a class="{{ nav_item_class }} inline-block" href="/extensions">Extensions</a></li>
+                <li><a class="hidden md:inline-block {{ nav_item_class }}" href="/contribute">Contribute</a></li>
+                <li><a class="hidden md:inline-block {{ nav_item_class }}" href="/roadmap">Roadmap</a></li>
             </ul>
         </nav>
     </div>

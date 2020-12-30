@@ -33,7 +33,7 @@
     </label>
     <div id="right-column-nav" class="sticky z-40 h-full px-3 mr-24 overflow-hidden text-sm bg-white border-r border-gray-200 w-60 lg:block lg:top-18 lg:mr-3">
         {% set heading_class = 'block px-3 mb-3 text-sm font-semibold tracking-wide text-gray-900 uppercase lg:mb-3 lg:text-xs mt-3' %}
-        {% set link_class = 'block px-3 py-2 transition-colors duration-200 relative hover:text-white hover:bg-primary text-gray-900 rounded' %}
+        {% set link_class = 'block px-3 py-2 transition-colors duration-200 relative hover:text-white hover:bg-primary-light text-gray-900 rounded' %}
         {% for n in nav %}
             {% set uri = n.1 == '#' ? '#' : page(n.1) %}
             <a href="{{ uri }}" class="{{ n.2 is defined ? heading_class : link_class }} {{ n.2 is not defined and isCurrentPage(uri, page) ? ' bg-gray-200' : '' }}">

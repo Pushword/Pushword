@@ -31,6 +31,10 @@
 
     </div>
     {% else %}
+            <div class="p-3 prose ">
+                <h1>{{ page.content.title(true)|raw }}</h1>
+            </div>
+
         {{ parent() }}
     {% endif %}
 {% endblock %}
