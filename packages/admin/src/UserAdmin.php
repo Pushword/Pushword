@@ -26,7 +26,7 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
         return method_exists($this->userClass, 'get'.$name);
     }
 
-    protected function configureFormFields(FormMapper $formMapper)
+    protected function configureFormFields(FormMapper $formMapper): void
     {
         // Next : load this from configuration
         $firstColumn = ['email', 'username', 'password', 'createdAt'];
@@ -52,7 +52,7 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
         }
     }
 
-    protected function configureDatagridFilters(DatagridMapper $datagridMapper)
+    protected function configureDatagridFilters(DatagridMapper $datagridMapper): void
     {
         $datagridMapper->add('id')
             ->add('email')
@@ -60,7 +60,7 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
         ;
     }
 
-    protected function configureListFields(ListMapper $listMapper)
+    protected function configureListFields(ListMapper $listMapper): void
     {
         $listMapper
             ->add('username', null, [

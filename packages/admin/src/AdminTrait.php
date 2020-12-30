@@ -40,7 +40,7 @@ trait AdminTrait
                 jUzMSwxMi4xMDEzNDY5IEwxNi44OTg2NTMxLDEyLjEwMTM0NjkgTDE2Ljg5ODY1MzEsMTIuMTAxMzQ2OSBaIE0yNCw3IEw3LDI0I
                 Ew4LDI1IEwyNSw4IEwyNCw3IEwyNCw3IFoiIGlkPSJleWUtaGlkZGVuIi8+PC9nPjwvZz48L3N2Zz4=';
 
-    abstract public function setListMode($mode);
+    abstract public function setListMode(string $mode): void;
 
     /**
      * Must be a cookie to check before to do that

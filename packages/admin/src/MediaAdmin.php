@@ -7,6 +7,7 @@ use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata; //use Sonata\BlockBundle\Meta\Metadata;
+use Sonata\AdminBundle\Object\MetadataInterface;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
@@ -28,7 +29,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         $this->liipImage = $liipImage;
     }
 
-    protected function configureFormFields(FormMapper $formMapper)
+    protected function configureFormFields(FormMapper $formMapper): void
     {
         $media = $this->getSubject();
 
@@ -77,7 +78,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
 
         $formMapper->end();
 
-        if ($media && $media->getMedia()) {
+        if ($media->getMedia()) {
             $formMapper->with('admin.media.preview.label', [
                 'class' => 'col-md-12',
                 'description' => $this->showMediaPreview(),
@@ -153,7 +154,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         );
     }
 
-    protected function configureDatagridFilters(DatagridMapper $datagridMapper)
+    protected function configureDatagridFilters(DatagridMapper $datagridMapper): void
     {
         $datagridMapper->add('name', null, [
             'label' => 'admin.media.name.label',
@@ -163,7 +164,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         ]);
     }
 
-    protected function configureListFields(ListMapper $listMapper)
+    protected function configureListFields(ListMapper $listMapper): void
     {
         $this->setMosaicDefaultListMode();
 
@@ -185,7 +186,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         ]);
     }
 
-    public function getObjectMetadata($media)
+    public function getObjectMetadata($media): MetadataInterface
     {
         if (false !== strpos($media->getMimeType(), 'image/')) {
             $fullPath = '/'.$media->getRelativeDir().'/'.$media->getMedia();

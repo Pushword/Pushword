@@ -13,12 +13,12 @@ services:
     autowire: true
     arguments:
       $pageClass: '%pw.entity_page%'
-      $varDir: '%kernel.root_dir%/../var'
+      $varDir: '%kernel.project_dir%/var'
     tags: ['console.command']
 
   Pushword\PageScanner\PageScannerController:
     autowire: true
     arguments:
-      $varDir: '%kernel.root_dir%/../var'
+      $varDir: '%kernel.project_dir%/var'
     tags:
       - { name: 'controller.service_arguments' }

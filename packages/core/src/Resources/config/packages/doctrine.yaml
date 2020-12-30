@@ -17,7 +17,7 @@ doctrine:
       App:
         type: annotation
         prefix: App\Entity
-        dir: '%kernel.root_dir%/../src/Entity'
+        dir: '%kernel.project_dir%/src/Entity'
         is_bundle: false
       PushwordCoreBundle:
         type: annotation

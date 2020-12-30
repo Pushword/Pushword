@@ -11,8 +11,5 @@ framework:
 
   default_locale: '%locale%'
 
-  templating:
-    engines: ['twig', 'php']
-
   assets:
     json_manifest_path: '%kernel.project_dir%/public/assets/manifest.json'

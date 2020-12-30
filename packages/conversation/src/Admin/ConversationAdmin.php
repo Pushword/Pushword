@@ -19,7 +19,7 @@ class ConversationAdmin extends AbstractAdmin
         '_per_page' => 256,
     ];
 
-    protected function configureFormFields(FormMapper $formMapper)
+    protected function configureFormFields(FormMapper $formMapper): void
     {
         $formMapper->with('admin.conversation.label.conversation', ['class' => 'col-md-8'])
             ->add('content', TextareaType::class, [
@@ -59,7 +59,7 @@ class ConversationAdmin extends AbstractAdmin
             ->end();
     }
 
-    protected function configureDatagridFilters(DatagridMapper $datagridMapper)
+    protected function configureDatagridFilters(DatagridMapper $datagridMapper): void
     {
         $datagridMapper->add('referring', null, [
             'label' => 'admin.conversation.from.label',
@@ -69,7 +69,7 @@ class ConversationAdmin extends AbstractAdmin
         ]);
     }
 
-    protected function configureListFields(ListMapper $listMapper)
+    protected function configureListFields(ListMapper $listMapper): void
     {
         $listMapper
             ->add('referring', TextType::class)

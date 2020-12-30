@@ -11,7 +11,7 @@ return function (ContainerConfigurator $configurator) {
         ->autowire()
         ->args([
             '$pageClass' => '%pw.entity_page%',
-            '$varDir' => '%kernel.root_dir%/../var',
+            '$varDir' => '%kernel.project_dir%/var',
         ])
         ->tag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_page%', 'event' => 'postUpdate'])
         ->tag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_page%', 'event' => 'postPersist'])

@@ -27,7 +27,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
     {
         if (false !== strpos(__DIR__, '/vendor/')) {
             $container->setParameter('pw.package_dir', '%kernel.project_dir%/../vendor/pushword');
-            $container->setParameter('vendor_dir', '%kernel.root_dir%/../vendor');
+            $container->setParameter('vendor_dir', '%kernel.project_dir%/../vendor');
 
             return;
         }

@@ -26,7 +26,7 @@ class NewMessageMailNotifier
     private $emailTo;
     private $emailFrom;
     private $appName;
-    private $rootDir;
+    private $projectDir;
     private $interval;
     private $message;
     private $host;
@@ -40,7 +40,7 @@ class NewMessageMailNotifier
         $message,
         MailerInterface $mailer,
         AppPool $apps,
-        $rootDir,
+        $projectDir,
         EntityManagerInterface $entityManager,
         TranslatorInterface $translator
     ) {
@@ -51,7 +51,7 @@ class NewMessageMailNotifier
         $this->interval = $this->apps->get()->get('conversation_notification_interval');
         $this->appName = $this->apps->get()->get('name');
         $this->host = $this->apps->get()->getMainHost();
-        $this->rootDir = $rootDir;
+        $this->projectDir = $projectDir;
         $this->em = $entityManager;
         $this->translator = $translator;
         $this->message = $message;
@@ -73,7 +73,7 @@ class NewMessageMailNotifier
             return;
         }
 
-        $lastTime = new LastTime($this->rootDir.'/../var/lastNewMessageNotification');
+        $lastTime = new LastTime($this->projectDir.'/var/lastNewMessageNotification');
         if (false === $lastTime->wasRunSince(new DateInterval($this->interval))) {
             return;
         }

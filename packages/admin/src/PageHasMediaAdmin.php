@@ -41,7 +41,7 @@ class PageHasMediaAdmin extends AbstractAdmin implements PageHasMediaAdminInterf
         return $help;
     }
 
-    protected function configureFormFields(FormMapper $formMapper)
+    protected function configureFormFields(FormMapper $formMapper): void
     {
         $media = $this->getSubject() ? $this->getSubject()->getMedia() : null;
 
@@ -61,7 +61,7 @@ class PageHasMediaAdmin extends AbstractAdmin implements PageHasMediaAdminInterf
             ->add('position', HiddenType::class);
     }
 
-    protected function configureListFields(ListMapper $listMapper)
+    protected function configureListFields(ListMapper $listMapper): void
     {
         $listMapper
             ->add('media')

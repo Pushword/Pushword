@@ -3,7 +3,7 @@
 return [
     'twig' => [
         'paths' => [
-            '%pw.package_dir%/admin/src/views' => 'pwAdmin',
+            '%pw.package_dir%/admin/src/templates' => 'pwAdmin',
         ],
     ],
 ];

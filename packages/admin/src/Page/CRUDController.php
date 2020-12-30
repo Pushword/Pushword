@@ -5,6 +5,8 @@ namespace Pushword\Admin\Page;
 use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Controller\CRUDController as SonataCRUDController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CRUDController extends SonataCRUDController implements CRUDControllerInterface
 {
@@ -15,9 +17,8 @@ class CRUDController extends SonataCRUDController implements CRUDControllerInter
         $this->params = $params;
     }
 
-    public function listAction()
+    public function listAction(Request $request): Response
     {
-        $request = $this->getRequest();
         if ($listMode = $request->get('_list_mode')) {
             $this->admin->setListMode($listMode);
         }
@@ -27,7 +28,7 @@ class CRUDController extends SonataCRUDController implements CRUDControllerInter
             return $this->treeAction();
         }
 
-        return parent::listAction();
+        return parent::listAction($request);
     }
 
     public function treeAction()

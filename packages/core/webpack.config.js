@@ -4,9 +4,9 @@ const tailwindcss = require('tailwindcss');
 const purgecss = require('@fullhuman/postcss-purgecss')({
   mode: 'all',
   content: [
-    './src/Resources/views/**/*.html.twig',
-    './src/Resources/views/*.html.twig',
-    './../conversation/src/Resources/views/*.html.twig',
+    './src/templates/**/*.html.twig',
+    './src/templates/*.html.twig',
+    './../conversation/src/templates/*.html.twig',
   ],
   defaultExtractor: (content) => content.match(/[\w-/:]+(?<!:)/g) || [],
 });

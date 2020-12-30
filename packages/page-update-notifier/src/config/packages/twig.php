@@ -3,7 +3,7 @@
 return [
     'twig' => [
         'paths' => [
-            '%pw.package_dir%/page-update-notifier/src/views' => 'pwPageUpdateNotification',
+            '%pw.package_dir%/page-update-notifier/src/templates' => 'pwPageUpdateNotification',
         ],
     ],
 ];

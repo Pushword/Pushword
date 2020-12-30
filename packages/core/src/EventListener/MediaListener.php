@@ -22,13 +22,13 @@ class MediaListener
     protected $em;
     protected $eventDispatcher;
     protected $filesystem;
-    protected $rootDir;
+    protected $projetDir;
     protected $cacheManager;
     protected $cacheGenerator;
 
     public function __construct(
         string $projectDir,
-        string $rootDir,
+        string $projetDir,
         EntityManagerInterface $em,
         CacheManager $cacheManager,
         EventDispatcherInterface $eventDispatcher,
@@ -40,7 +40,7 @@ class MediaListener
         $this->cacheManager = $cacheManager;
         $this->eventDispatcher = $eventDispatcher;
         $this->filesystem = $filesystem;
-        $this->rootDir = $rootDir;
+        $this->projetDir = $projetDir;
         $this->cacheGenerator = $cacheGenerator;
     }
 
@@ -63,8 +63,8 @@ class MediaListener
         if ($event->hasChangedField('media')) {
             //var_dump($media->getRelativeDir().'/'.$media->getMediaBeforeUpdate()); exit;
             $this->filesystem->rename(
-                $this->rootDir.'/../'.$media->getRelativeDir().'/'.$media->getMediaBeforeUpdate(),
-                $this->rootDir.'/../'.$media->getRelativeDir().'/'.$media->getMedia()
+                $this->projetDir.'/'.$media->getRelativeDir().'/'.$media->getMediaBeforeUpdate(),
+                $this->projetDir.'/'.$media->getRelativeDir().'/'.$media->getMedia()
             );
             $this->cacheManager->remove('/'.$media->getRelativeDir().'/'.$media->getMediaBeforeUpdate());
         }
@@ -72,7 +72,7 @@ class MediaListener
 
     public function preRemove(MediaInterface $media)
     {
-        $this->filesystem->remove($this->rootDir.'/../'.$media->getRelativeDir().'/'.$media->getMedia());
+        $this->filesystem->remove($this->projetDir.'/'.$media->getRelativeDir().'/'.$media->getMedia());
         $this->cacheManager->remove('/'.$media->getRelativeDir().'/'.$media->getMediaBeforeUpdate());
     }
 

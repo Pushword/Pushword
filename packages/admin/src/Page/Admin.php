@@ -9,6 +9,7 @@ use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata;
+use Sonata\AdminBundle\Object\MetadataInterface;
 
 class Admin extends AbstractAdmin implements AdminInterface
 {
@@ -55,7 +56,7 @@ class Admin extends AbstractAdmin implements AdminInterface
         return method_exists($this->pageClass, 'get'.$name);
     }
 
-    protected function configureFormFields(FormMapper $formMapper)
+    protected function configureFormFields(FormMapper $formMapper): void
     {
         // Next : load this from configuration
         $mainFields = ['h1', 'mainContent']; //'mainContentType'];
@@ -97,7 +98,7 @@ class Admin extends AbstractAdmin implements AdminInterface
         }
     }
 
-    public function getNewInstance()
+    public function getNewInstance(): object
     {
         $instance = parent::getNewInstance();
         $instance->setLocale($this->apps->get()->getDefaultLocale()); // todo : always use first app params
@@ -106,7 +107,7 @@ class Admin extends AbstractAdmin implements AdminInterface
         return $instance;
     }
 
-    protected function configureDatagridFilters(DatagridMapper $formMapper)
+    protected function configureDatagridFilters(DatagridMapper $formMapper): void
     {
         $formMapper->add('locale', null, ['label' => 'admin.page.locale.label']);
 
@@ -140,12 +141,12 @@ class Admin extends AbstractAdmin implements AdminInterface
         }
     }
 
-    public function preUpdate($page)
+    public function preUpdate(object $page): void
     {
         $page->setUpdatedAt(new \Datetime());
     }
 
-    protected function configureListFields(ListMapper $listMapper)
+    protected function configureListFields(ListMapper $listMapper): void
     {
         $listMapper->addIdentifier('h1', 'html', [
             'label' => 'admin.page.title.label',
@@ -166,7 +167,7 @@ class Admin extends AbstractAdmin implements AdminInterface
         ]);
     }
 
-    public function getObjectMetadata($page)
+    public function getObjectMetadata($page): MetadataInterface
     {
         $media = $page->getMainImage();
         if (null !== $media && false !== strpos($media->getMimeType(), 'image/')) {

@@ -36,7 +36,7 @@ services:
     autowire: true
     arguments:
       $message: '%pw.conversation.entity_message%'
-      $rootDir: '%kernel.root_dir%'
+      $projectDir: '%kernel.project_dir%'
 
   pushword.conversation.notification_command:
     arguments:

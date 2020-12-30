@@ -101,7 +101,7 @@ services:
     autowire: true
     arguments:
       $projectDir: '%kernel.project_dir%'
-      $rootDir: '%kernel.root_dir%'
+      $projetDir: '%kernel.project_dir%'
     tags:
       - { name: kernel.event_listener, event: vich_uploader.pre_upload }
       - { name: kernel.event_listener, event: vich_uploader.post_upload }

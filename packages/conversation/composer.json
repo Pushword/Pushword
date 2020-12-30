@@ -6,7 +6,7 @@
   "homepage": "https://pushword.piedweb.com/extension/conversation",
   "license": "MIT",
   "require": {
-    "piedweb/cms-bundle": "^0"
+    "puswhord/ccore": "^0.0"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5"
