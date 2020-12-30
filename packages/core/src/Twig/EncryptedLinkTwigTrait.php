@@ -19,6 +19,10 @@ trait EncryptedLinkTwigTrait
             $path = $this->router->generate($path);
         }
 
+        if (\is_string($attr)) {
+            $attr = ['class' => $attr];
+        }
+
         $attr = array_merge($attr, ['data-rot' => self::encrypt($path)]);
         $template = $this->getApp()->getView('/component/javascript_link.html.twig', $this->twig);
         $renderedLink = $this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]);

@@ -1,7 +1,6 @@
 ---
 title: Pushword - Modern CMS to build rapidly Websites (powered by Symfony)
 h1: Build modern websites rapidly <br> maintain it as quickly
-toc: true
 name: Pushword
 ---
 

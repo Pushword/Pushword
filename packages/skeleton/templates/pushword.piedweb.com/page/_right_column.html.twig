@@ -39,6 +39,7 @@
             <a href="{{ uri }}" class="{{ n.2 is defined ? heading_class : link_class }} {{ n.2 is not defined and isCurrentPage(uri, page) ? ' bg-gray-200' : '' }}">
                 {{ n.0 }}</a>
         {% endfor %}
+        {{ link('Source Code', 'https://github.com/Pushword/Pushword', link_class) }}
     </div>
 </div>
 <script>
