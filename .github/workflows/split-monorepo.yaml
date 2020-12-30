@@ -46,6 +46,7 @@ jobs:
           - page-update-notifier
           - static-generator
           - template-editor
+          - skeleton
           #package: ${{fromJson(needs.provide_packages_json.outputs.matrix)}}
 
     steps:
