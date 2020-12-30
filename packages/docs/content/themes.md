@@ -1,6 +1,7 @@
 ---
 h1: Find your missing themes with a Pushword Extension
 title: Themes
+parent: homepage
 ---
 
 - ...

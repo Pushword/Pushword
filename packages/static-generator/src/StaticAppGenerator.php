@@ -125,10 +125,11 @@ class StaticAppGenerator
     }
 
     /**
-     * Undocumented function
+     * Undocumented function.
      *
      * @param string $filter
-     * @return integer the number of site generated
+     *
+     * @return int the number of site generated
      */
     public function generateAll(?string $filter = null): int
     {

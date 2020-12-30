@@ -2,6 +2,7 @@
 title: 'Pushword Page Scanner : Find dead links, 404, 301 and more.'
 h1: Page Scanner
 toc: true
+parent: extensions
 ---
 
 Find dead links, 404, 301 and more (command line or admin).

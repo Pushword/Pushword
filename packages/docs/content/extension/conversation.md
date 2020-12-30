@@ -3,6 +3,7 @@ title: 'Conversation: Add Comment, Newsletter Form or Contact For'
 h1: Conversation
 toc: true
 twig: 0
+parent: extensions
 ---
 
 Extend your Pushword website with **comments**, a **contact** form or just an **user input**.

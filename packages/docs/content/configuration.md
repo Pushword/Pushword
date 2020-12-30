@@ -2,6 +2,7 @@
 title: Configure a fresh install of Pushword
 h1: Configuration
 toc: true
+parent: installation
 ---
 
 Have a look inside `config/packages/pushword.yaml`.

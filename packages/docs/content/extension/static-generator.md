@@ -1,7 +1,8 @@
 ---
-title: Be notify when your Pushword installation is edited
-h1: Page Update Notifier
+title: Static Website Generator with Pushword
+h1: Static Generator
 toc: true
+parent: extensions
 ---
 
 Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).

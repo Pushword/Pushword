@@ -88,8 +88,12 @@ class PageImporter extends AbstractImporter
         $page->setCustomProperties([]);
 
         foreach ($data as $key => $value) {
-            if (\in_array($key, $this->getObjectRequiredProperties())) {
+            $key = $this->normalizePropertyName($key);
+
+            if (\in_array($key, array_keys($this->getObjectRequiredProperties()))) {
                 $this->toAddAtTheEnd[$slug] = array_merge($this->toAddAtTheEnd[$slug] ?? [], [$key => $value]);
+
+                continue;
             }
             $setter = 'set'.ucfirst($key);
             if (method_exists($page, $setter)) {
@@ -113,18 +117,19 @@ class PageImporter extends AbstractImporter
         }
     }
 
+    private function normalizePropertyName(string $propertyName)
+    {
+        if ($propertyName == 'parent') $propertyName = 'parentPage';
+
+        return $propertyName;
+    }
+
     private function toAddAtTheEnd()
     {
         foreach ($this->toAddAtTheEnd as $slug => $data) {
             $page = $this->getPage($slug);
             foreach ($data as $property => $value) {
                 $object = $this->getObjectRequiredProperties($property);
-
-                if (\is_string($object)) {
-                    $this->$object($page, $property, $value);
-
-                    continue;
-                }
 
                 if (PageInterface::class === $object) {
                     $setter = 'set'.ucfirst($property);
@@ -140,6 +145,13 @@ class PageImporter extends AbstractImporter
                         continue;
                     }
                     $page->$setter($media);
+
+                    continue;
+                }
+
+
+                if (\is_string($object)) {
+                    $this->$object($page, $property, $value);
 
                     continue;
                 }

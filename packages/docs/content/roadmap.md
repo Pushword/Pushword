@@ -2,6 +2,7 @@
 title: 'Where Pushword is going ? Roadmap, TODO and Ideas'
 h1: <s>ROADMAP</s> Just TODO and IDEA
 toc: true
+parent: contribute
 ---
 
 ### Documentation

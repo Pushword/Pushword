@@ -2,6 +2,7 @@
 title: Puswhord Code Architecture
 h1: The Code Architecture
 toc: true
+parent: contribute
 ---
 
 Are you searching for :

@@ -2,6 +2,7 @@
 title: Puswhord Flat File CMS - Markdown and Twig Ready
 h1: Flat
 toc: true
+parent: extensions
 ---
 
 Transform Pushword in a FlatFile CMS.

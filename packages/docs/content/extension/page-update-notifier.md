@@ -2,6 +2,7 @@
 title: Be notify when a page is edited on your Pushword
 h1: Page Update Notifier
 toc: true
+parent: extensions
 ---
 
 Get mail notification when your pushword content (page) is edited.

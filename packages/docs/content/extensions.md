@@ -2,6 +2,7 @@
 h1: Find your missing feature with a Pushword Extension
 title: Extensions
 todo: Faire un script pour générer automatiquement un tableau avec le titre, la description, officially maintained (X/V), le nombre de Stars
+parent: homepage
 ---
 
 - [Admin](/extension/admin)

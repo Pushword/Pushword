@@ -1,6 +1,7 @@
 ---
 title: Create a Pushword Extension the easy way
 h1: Create an extension
+parent: extensions
 ---
 
 Each extension is build as a [symfony bundle](https://symfony.com/doc/current/bundles.html).

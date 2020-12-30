@@ -2,6 +2,7 @@
 title: Pushword License and contributors
 h1: License and contributors
 toc: true
+parent: installation
 ---
 
 ## Contributors

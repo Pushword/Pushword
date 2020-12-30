@@ -2,6 +2,7 @@
 title: Upgrade a Pushword installation
 h1: Upgrade Guide
 toc: true
+parent: installation
 ---
 
 Smooth way is to use [composer](https://getcomposer.org), a dependency manager for PHP.

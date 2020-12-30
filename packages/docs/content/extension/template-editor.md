@@ -1,7 +1,8 @@
 ---
-title: Be notify when your Pushword installation is edited
-h1: Page Update Notifier
+title: Template Editor with Pushword
+h1: Template Editor
 toc: true
+parent: extensions
 ---
 
 Edit view file online in the [admin](https://pushword.piedweb.com/extension/admin).

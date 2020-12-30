@@ -2,6 +2,7 @@
 title: Pushword - Modern CMS to build rapidly Websites (powered by Symfony)
 h1: Build modern websites rapidly <br> maintain it as quickly
 toc: true
+name: Pushword
 ---
 
 Puswhord is a php **CMS** build on top of **Symfony** to **rapidly** create, manage and maintain **Modern Website(s)**.
