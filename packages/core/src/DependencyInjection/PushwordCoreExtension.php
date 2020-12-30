@@ -26,8 +26,8 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
     private function setPathParameters(ContainerBuilder $container): void
     {
         if (false !== strpos(__DIR__, '/vendor/')) {
-            $container->setParameter('pw.package_dir', '%kernel.project_dir%/../vendor/pushword');
-            $container->setParameter('vendor_dir', '%kernel.project_dir%/../vendor');
+            $container->setParameter('pw.package_dir', '%kernel.project_dir%/vendor/pushword');
+            $container->setParameter('vendor_dir', '%kernel.project_dir%/vendor');
 
             return;
         }

@@ -53,6 +53,8 @@ final class PushwordConfigFactory
     public function loadApps(): self
     {
         if (! isset($this->config['apps'])) {
+            $this->setParameter('pw.apps', $this->parseApps([]));
+
             return $this;
         }
 

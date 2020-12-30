@@ -3,8 +3,6 @@ twig:
   debug: '%kernel.debug%'
   strict_variables: '%kernel.debug%'
   paths:
-    '%vendor_dir%/sonata-project/admin-bundle/src/Resources/views': SonataAdmin
-    #'%vendor_dir%/sonata-project/admin-bundle/src/templates': SonataAdmin
     #'%vendor_dir%/sonata-project/twig-extensions/src/Bridge/Symfony/Resources/views': SonataTwig
     '%kernel.project_dir%/templates': App
     '%pw.package_dir%/core/src/templates/TwigBundle': Twig
