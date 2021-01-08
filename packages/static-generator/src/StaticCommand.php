@@ -22,18 +22,27 @@ class StaticCommand extends Command
         $this
             ->setName('pushword:static:generate')
             ->setDescription('Generate static version  for your website')
-            ->addArgument('host', InputArgument::OPTIONAL);
+            ->addArgument('host', InputArgument::OPTIONAL)
+            ->addArgument('page', InputArgument::OPTIONAL);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if ($input->getArgument('host')) {
-            $this->staticAppGenerator->generateFromHost($input->getArgument('host'));
-        } else {
+        if (! $input->getArgument('host')) {
             $this->staticAppGenerator->generateAll();
+            $output->writeln('All websites generated witch success.');
+
+            return 0;
         }
 
-        $output->writeln('Static version generation succeeded.');
+        if (! $input->getArgument('page')) {
+            $this->staticAppGenerator->generateFromHost($input->getArgument('host'));
+            $output->writeln($input->getArgument('host').' generated witch success.');
+
+            return 0;
+        }
+
+        $this->staticAppGenerator->generatePage($input->getArgument('host'), $input->getArgument('page'));
 
         return 0;
     }

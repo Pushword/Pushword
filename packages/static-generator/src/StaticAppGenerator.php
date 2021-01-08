@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator;
 
 use Pushword\Core\Component\App\AppPool;
+use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -58,6 +59,13 @@ class StaticAppGenerator
     public function generateFromHost($host)
     {
         return $this->generateAll($host);
+    }
+
+    public function generatePage($host, string $page)
+    {
+        $this->apps->switchCurrentApp($host)->get();
+
+        $this->generatorBag->get(PagesGenerator::class)->generatePageBySlug($page);
     }
 
     /**

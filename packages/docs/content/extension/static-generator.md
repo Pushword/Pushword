@@ -33,7 +33,12 @@ Add in your current `config/package/pushword.yaml` for an App or globally under 
 ## Command
 
 ```
-php bin/console pushword:static:generate $host
-```
+# Generate all apps
+php bin/console pushword:static:generate
 
-Where $host is facultative.
+# Generate 1 app
+php bin/console pushword:static:generate $host
+
+# (re)Generate only one page
+php bin/console pushword:static:generate $host $slug
+```

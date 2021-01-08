@@ -17,4 +17,17 @@ class PagesGenerator extends PageGenerator
             //if ($page->getRealSlug()) $this->generateFeedFor($page);
         }
     }
+
+    public function generatePageBySlug(string $page, ?string $host = null): void
+    {
+        parent::generate($host);
+
+        $pages = $this->getPageRepository()
+            ->setHostCanBeNull($this->mustGetPagesWithoutHost)
+            ->getPublishedPages($this->app->getMainHost(), ['slug', 'LIKE', $page]);
+
+        foreach ($pages as $page) {
+            $this->generatePage($host, $page);
+        }
+    }
 }

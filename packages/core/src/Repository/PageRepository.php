@@ -31,12 +31,17 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             }
         }
 
+        if (! isset($where[0]) || ! \is_array($where[0])) {
+            $where = [$where];
+        }
+
         foreach ($where as $k => $w) {
-            $qb->andWhere('p.'.$w['key'].' '.$w['operator'].' :m'.$k)->setParameter('m'.$k, $w['value']);
+            $qb->andWhere('p.'.($w['key'] ?? $w[0]).' '.($w['operator'] ?? $w[1]).' :m'.$k)
+                ->setParameter('m'.$k, $w['value'] ?? $w[2]);
         }
 
         if ($orderBy) {
-            $qb->orderBy('p.'.$orderBy['key'], $orderBy['direction']);
+            $qb->orderBy('p.'.($orderBy['key'] ?? $orderBy[0]), $orderBy['direction'] ?? $orderBy[1]);
         }
 
         if ($limit) {
