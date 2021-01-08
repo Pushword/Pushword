@@ -12,7 +12,7 @@ filter:
     - 'docs/*'
     - 'packages/skeleton/*'
     - 'packages/docs/*'
-    - 'packages/core/Service/WebPConverter.php'
+    - 'packages/core/src/Service/WebPConverter.php'
 
 checks:
   php:
