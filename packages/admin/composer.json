@@ -7,7 +7,7 @@
   "license": "MIT",
   "require": {
     "pushword/core": "^0.0",
-    "sonata-project/admin-bundle": "4.x-dev",
+    "sonata-project/admin-bundle": "dev-master#cdb43e98af92feca785f1d1c06cf5f1af893424c",
     "sonata-project/doctrine-orm-admin-bundle": "4.x-dev"
   },
   "extra": {

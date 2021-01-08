@@ -25,7 +25,7 @@ static:
 Add in your current `config/package/pushword.yaml` for an App or globally under `pushword_static_generator:`
 
 ```
-    static_generate_for: apache|github
+    static_generators: apache|github|[..., classNameGenerator, ...]
     static_symlink: true
     static_dir: '' #default /%mainHost.tld%/
 ```

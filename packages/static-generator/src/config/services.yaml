@@ -1,14 +1,22 @@
 services:
+  _defaults:
+    bind:
+      $kernel: '@kernel'
+
+  Pushword\StaticGenerator\GeneratorBag:
+    autowire: true
+
+  Pushword\StaticGenerator\Generator\:
+    autowire: true
+    resource: '../../src/Generator'
+
   Pushword\StaticGenerator\StaticAppGenerator:
     alias: pushword.static_app_generator
 
   pushword.static_app_generator:
     class: Pushword\StaticGenerator\StaticAppGenerator
     autowire: true
-    arguments:
-      $kernel: '@kernel'
-      $webDir: '%pw.dir%'
-    public: true # when i will be able to test it without loading it with this, remove that
+    #public: true # when i will be able to test it without loading it with this, remove that
 
   Pushword\StaticGenerator\StaticController:
     tags: ['controller.service_arguments']

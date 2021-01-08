@@ -9,6 +9,7 @@ class Configuration implements ConfigurationInterface
 {
     const DEFAULT_TEMPLATE = '@Pushword';
     const DEFAULT_APP_FALLBACK = [
+        'public_dir',
         'locale',
         'locales',
         'name',
@@ -40,6 +41,7 @@ class Configuration implements ConfigurationInterface
             // used in PageScanner,StaticGenerator,MediaWebPathResolver to find public/index.php TODO rplce it
             // for the symfony parameters
             ->scalarNode('dir')->defaultValue('%kernel.project_dir%/public')->cannotBeEmpty()->end()
+            ->scalarNode('public_dir')->defaultValue('%kernel.project_dir%/public')->cannotBeEmpty()->end()
             ->scalarNode('entity_page')->defaultValue('App\Entity\Page')->cannotBeEmpty()->end()
             ->scalarNode('entity_media')->defaultValue('App\Entity\Media')->cannotBeEmpty()->end()
             ->scalarNode('entity_user')->defaultValue('App\Entity\User')->cannotBeEmpty()->end()

@@ -46,7 +46,7 @@ class PageController extends AbstractController
 
     public function show(?string $slug, ?string $host, Request $request): Response
     {
-        $page = $this->getPage($slug, $host, $request);
+        $page = $this->getPage($slug, $host);
 
         // SEO redirection if we are not on the good URI (for exemple /fr/tagada instead of /tagada)
         if ((null === $host || $host == $request->getHost())
@@ -81,7 +81,7 @@ class PageController extends AbstractController
 
     public function showFeed(?string $slug, ?string $host, Request $request)
     {
-        $page = $this->getPage($slug, $host, $request);
+        $page = $this->getPage($slug, $host);
 
         if ('homepage' == $slug) {
             return $this->redirect($this->generateUrl('pushword_page_feed', ['slug' => 'index']), 301);
@@ -89,6 +89,10 @@ class PageController extends AbstractController
 
         $response = new Response();
         $response->headers->set('Content-Type', 'text/xml');
+
+        if (! \count($page->getChildrenPages())) {
+            throw $this->createNotFoundException();
+        }
 
         return $this->render(
             $this->getView('/page/rss.xml.twig'),
@@ -104,9 +108,9 @@ class PageController extends AbstractController
     {
         $this->setApp($host);
         $locale = $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->app->getDefaultLocale();
-        $LocaleHomepage = $this->getPage($locale, $host, $request, false);
+        $LocaleHomepage = $this->getPage($locale, $host, false);
         $slug = 'homepage';
-        $page = $LocaleHomepage ?: $this->getPage($slug, $host, $request);
+        $page = $LocaleHomepage ?: $this->getPage($slug, $host);
 
         $params = [
             'pages' => $this->getPages(5, $request),
@@ -182,7 +186,7 @@ class PageController extends AbstractController
         $this->app = $this->apps->switchCurrentApp($host)->get();
     }
 
-    protected function getPage(?string &$slug, ?string $host = null, ?Request $request, $throwException = true): ?Page
+    protected function getPage(?string &$slug, ?string $host = null, $throwException = true): ?Page
     {
         $this->setApp($host); // TODO Move it on request listener (could be real host or parameter host)
 

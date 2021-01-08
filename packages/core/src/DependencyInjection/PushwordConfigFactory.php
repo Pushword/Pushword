@@ -110,7 +110,7 @@ final class PushwordConfigFactory
 
         foreach ($fallbackProperties as $p) {
             if (! isset($app[$p])) {
-                $app[$p] = $this->config[$p]; //'%'.'pw.'.$p.'%';
+                $app[$p] = ! \is_string($this->config[$p]) ? $this->config[$p] : str_replace('%main_host%', $app['hosts'][0], $this->config[$p]); //'%'.'pw.'.$p.'%';
             } elseif ('custom_properties' == $p) {
                 $app['custom_properties'] = array_merge($this->config['custom_properties'],  $app['custom_properties']);
             }

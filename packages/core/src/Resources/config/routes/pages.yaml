@@ -11,6 +11,21 @@ custom_host_routes:
 
 ## Catch-all
 
+custom_host_pushword_page_feed:
+  path: /{host}/{slug}.xml
+  controller: Pushword\Core\Controller\PageController::showFeed
+  methods: [GET, HEAD]
+  requirements:
+    slug: '[A-Za-z0-9_\/\.\-]*'
+    host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
+
+pushword_page_feed:
+  path: /{slug}.xml
+  controller: Pushword\Core\Controller\PageController::showFeed
+  methods: [GET, HEAD]
+  requirements:
+    slug: '[A-Za-z0-9_\/\.\-]*'
+
 custom_host_pushword_page:
   path: /{host}/{slug}
   controller: Pushword\Core\Controller\PageController::show

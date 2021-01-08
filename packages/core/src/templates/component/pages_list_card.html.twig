@@ -1,7 +1,7 @@
 {% import view('/component/macro.html.twig') as helper %}
 
 {% set hLevel = 2 %}
-{% block list %}{% spaceless %}
+{% block list %}{% apply spaceless %}
     {% if pages is not empty %}
         <ul class="flex flex-row list-none">
             {% for page in pages %}
@@ -31,5 +31,5 @@
     {% else %}
         <p>...</p>
     {% endif %}
-{% endspaceless %}
+{% endapply %}
 {% endblock %}

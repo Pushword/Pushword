@@ -19,9 +19,16 @@ pushword:
         static_dir: '%kernel.project_dir%/../../docs',
         name: 'Pushword',
         favicon_path: '/assets/favicons/',
-        static_generate_for: 'github',
+        static_generators:
+          [
+            Pushword\StaticGenerator\Generator\PagesGenerator,
+            Pushword\StaticGenerator\Generator\RobotsGenerator,
+            Pushword\StaticGenerator\Generator\ErrorPageGenerator,
+            Pushword\StaticGenerator\Generator\CopierGenerator,
+            Pushword\StaticGenerator\Generator\CNAMEGenerator,
+          ],
         assets:
           { javascripts: ['/assets/app.js'], stylesheets: ['/assets/tw.css'] },
         color_bg: '#fff',
-        static_dont_copy: ['bundles', 'media'],
+        static_copy: ['assets'],
       }

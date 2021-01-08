@@ -9,6 +9,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Environment as Twig;
 
 class ConversationFormController extends AbstractController
 {
@@ -24,14 +25,19 @@ class ConversationFormController extends AbstractController
     /** @var AppPool */
     protected $apps;
 
+    /** @var Twig */
+    protected $twig;
+
     public function __construct(
         TranslatorInterface $translator,
         AppPool $apps,
-        ParameterBagInterface $params
+        ParameterBagInterface $params,
+        Twig $twig
     ) {
         $this->translator = $translator;
         $this->params = $params;
         $this->apps = $apps;
+        $this->twig = $twig;
     }
 
     protected function getFormManagerClass($type)
@@ -67,7 +73,7 @@ class ConversationFormController extends AbstractController
             $this->get('doctrine'),
             $this->get('security.token_storage'),
             $this->get('form.factory'),
-            $this->get('twig'),
+            $this->twig,
             $this->get('router'),
             $this->get('translator'),
             $this->apps

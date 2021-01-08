@@ -19,13 +19,6 @@ pushword_page_robots_txt:
   methods: [GET, HEAD]
   requirements:
     _locale: '[a-zA-Z]{2}(_[a-zA-Z]+)?\/|'
-
-pushword_page_feed:
-  path: /{slug}.xml
-  controller: Pushword\Core\Controller\PageController::showFeed
-  methods: [GET, HEAD]
-  requirements:
-    slug: '[A-Za-z0-9_\/\.\-]*'
-# todo : add priority to this route https://symfony.com/doc/current/routing.html#priority-parameter
+# todo : add priority to route https://symfony.com/doc/current/routing.html#priority-parameter
 # move routes to annotation ?!
 # permit to use extension without bug with this catch all

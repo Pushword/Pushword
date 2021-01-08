@@ -13,6 +13,7 @@ parent: contribute
 
 ## TODO before v1
 
+- [ ] Générer une seule page
 - [ ] Revoir la gestion des assets
 - [ ] Revoir install-cms (bin/console assets:install --symlink --relative)git
 - [ ] Other tests (toward 50% coverage)
@@ -21,6 +22,7 @@ parent: contribute
 
 ## TODO Extension
 
+- [ ] FacebookManager (post from facebook and show last facebook status)
 - [ ] Flat: Transform markdown link to page link (useful for navigate in docs from editor)
 - [ ] Flat: Throw error when the content is more up to date in database... add export (and maintain ID)
 - [ ] Wordpress To Pushword/Core (and vice versa)
