@@ -47,8 +47,8 @@ return [
     //Sonata\Exporter\Bridge\Symfony\SonataExporterSymfonyBundle::class => ['all' => true],
 
     // Used for tests
-    Symfony\Bundle\MakerBundle\MakerBundle::class => ['all'=>true],
-    Symfony\Bundle\WebProfilerBundle\WebProfilerBundle::class => ['all'=>true],
+    Symfony\Bundle\MakerBundle\MakerBundle::class => ['dev' => true, 'test'=>true],
+    Symfony\Bundle\WebProfilerBundle\WebProfilerBundle::class => ['dev' => true, 'test'=>true],
 
     // No need for testing purpose, useful else
     //Symfony\WebpackEncoreBundle\WebpackEncoreBundle::class => ['all' => true],
