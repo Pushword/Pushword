@@ -98,7 +98,6 @@ class PageScannerService
             return;
         } elseif (200 != $response->getStatusCode()) {
             $this->addError('error on generating the page ('.$response->getStatusCode().')');
-            exit;
 
             return;
         }

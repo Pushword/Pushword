@@ -79,7 +79,7 @@ class PageController extends AbstractController
         return $this->app->getView($path, $this->twig);
     }
 
-    public function showFeed(?string $slug, ?string $host, Request $request)
+    public function showFeed(?string $slug, ?string $host)
     {
         $page = $this->getPage($slug, $host);
 
@@ -142,7 +142,7 @@ class PageController extends AbstractController
         );
     }
 
-    public function showRobotsTxt(?string $host, Request $request)
+    public function showRobotsTxt(?string $host)
     {
         $this->setApp($host);
 
