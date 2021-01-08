@@ -13,7 +13,6 @@ parent: contribute
 
 ## TODO before v1
 
-- [ ] Générer une seule page
 - [ ] Revoir la gestion des assets
 - [ ] Revoir install-cms (bin/console assets:install --symlink --relative)git
 - [ ] Other tests (toward 50% coverage)

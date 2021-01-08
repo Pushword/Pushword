@@ -94,7 +94,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/bundles'));
+        $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/assets'));
     }
 
     public function testError()
