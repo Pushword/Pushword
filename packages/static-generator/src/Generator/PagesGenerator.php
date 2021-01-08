@@ -9,12 +9,11 @@ class PagesGenerator extends PageGenerator
         parent::generate($host);
 
         $pages = $this->getPageRepository()
-            ->setHostCanBeNull($this->mustGetPagesWithoutHost)
+            ->setHostCanBeNull($this->app->isFirstApp())
             ->getPublishedPages($this->app->getMainHost());
 
         foreach ($pages as $page) {
-            $this->generatePage($host, $page);
-            //if ($page->getRealSlug()) $this->generateFeedFor($page);
+            $this->generatePage($page);
         }
     }
 
@@ -23,11 +22,11 @@ class PagesGenerator extends PageGenerator
         parent::generate($host);
 
         $pages = $this->getPageRepository()
-            ->setHostCanBeNull($this->mustGetPagesWithoutHost)
+            ->setHostCanBeNull($this->app->isFirstApp())
             ->getPublishedPages($this->app->getMainHost(), ['slug', 'LIKE', $page]);
 
         foreach ($pages as $page) {
-            $this->generatePage($host, $page);
+            $this->generatePage($page);
         }
     }
 }

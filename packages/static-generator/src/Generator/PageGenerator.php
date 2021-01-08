@@ -20,10 +20,8 @@ class PageGenerator extends AbstractGenerator
         }
     }
 
-    public function generatePage(string $host = null, Page $page): void
+    public function generatePage(Page $page): void
     {
-        parent::generate($host);
-
         if (false !== $page->getRedirection()) {
             $this->redirectionManager->add($page);
 

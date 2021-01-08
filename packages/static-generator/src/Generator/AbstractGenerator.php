@@ -52,7 +52,6 @@ abstract class AbstractGenerator
     protected $app;
 
     protected $staticDomain;
-    protected $mustGetPagesWithoutHost = true;
 
     /** var @string */
     protected $staticDir;
