@@ -31,13 +31,19 @@ class StaticGeneratorTest extends KernelTestCase
 
         $this->assertTrue(true);
 
-        return; // i have an incredible error with the doctrine entity manager
-
-        //$commandTester->execute([]);
+        $commandTester->execute(['localhost.dev']);
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
         $this->assertTrue(false !== strpos($output, 'success'));
+
+        $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/.htaccess'));
+        $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/index.html'));
+        $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/robots.txt'));
+
+        $staticDir = __DIR__.'/../../skeleton/localhost.dev';
+        $filesystem = new Filesystem();
+        $filesystem->remove($staticDir);
     }
 
     public function testIt()
@@ -127,7 +133,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        $this->assertTrue(! file_exists(__DIR__.'/../../skeleton/localhost.dev/index.html')); // todo fix it
+        $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/index.html'));
     }
 
     public function getGeneratorBag(): GeneratorBag

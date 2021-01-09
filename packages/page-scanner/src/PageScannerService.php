@@ -97,6 +97,7 @@ class PageScannerService
             // todo check redirection
             return;
         } elseif (200 != $response->getStatusCode()) {
+            file_put_contents('debug', $response);
             $this->addError('error on generating the page ('.$response->getStatusCode().')');
 
             return;
@@ -191,7 +192,7 @@ class PageScannerService
      *
      * @return bool
      */
-    protected function urlExist($uri)
+    protected function urlExist(string $uri): bool
     {
         $harvest = Harvest::fromUrl(
             $uri,
@@ -209,7 +210,7 @@ class PageScannerService
         return true;
     }
 
-    protected function uriExist($uri)
+    protected function uriExist(string $uri): bool
     {
         $slug = ltrim($uri, '/');
 

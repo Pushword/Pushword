@@ -4,8 +4,8 @@ const tailwindcss = require('tailwindcss');
 const purgecss = require('@fullhuman/postcss-purgecss')({
   mode: 'all',
   content: [
-    './../../core/src/Resources/views/**/*.html.twig',
-    './../../core/src/Resources/views/*.html.twig',
+    './../../core/src/templates/**/*.html.twig',
+    './../../core/src/templates/*.html.twig',
     './../../skeleton/templates/pushword.piedweb.com/*.html.twig',
     './../../skeleton/templates/pushword.piedweb.com/**/*.html.twig',
     './../content/*.md',

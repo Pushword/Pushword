@@ -48,7 +48,7 @@ return [
 
     // Used for tests
     Symfony\Bundle\MakerBundle\MakerBundle::class => ['dev' => true, 'test'=>true],
-    Symfony\Bundle\WebProfilerBundle\WebProfilerBundle::class => ['dev' => true, 'test'=>true],
+    Symfony\Bundle\WebProfilerBundle\WebProfilerBundle::class => ['dev' => true],
 
     // No need for testing purpose, useful else
     //Symfony\WebpackEncoreBundle\WebpackEncoreBundle::class => ['all' => true],
