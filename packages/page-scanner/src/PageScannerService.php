@@ -187,10 +187,6 @@ class PageScannerService
 
     /**
      * this is really slow on big website.
-     *
-     * @param string $uri
-     *
-     * @return bool
      */
     protected function urlExist(string $uri): bool
     {
