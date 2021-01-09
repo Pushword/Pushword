@@ -3,7 +3,7 @@
 {% block html_opener %}
 	<html
 		lang="{{ page.locale|default(apps.get().defaultLocale) }}"
-		{{ mergeAttr({'class': 'leading-tight text-gray-900'}, page.htmlOpenerAttr|default({})) }}
+		{{ mergeAttr({'class': 'leading-tight text-gray-900 dark:bg-gray-900 dark:text-gray-100'}, page.htmlOpenerAttr|default({})) }}
 	>
 {% endblock %}
 

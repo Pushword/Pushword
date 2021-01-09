@@ -15,7 +15,11 @@ module.exports = {
       'half-75': '0 1 70%',
     },
     extend: {
-      typography: {
+      screens: {
+        light: { raw: '(prefers-color-scheme: light)' },
+        dark: { raw: '(prefers-color-scheme: dark)' },
+      },
+      typography: (theme) => ({
         DEFAULT: {
           css: {
             color: '#333',
@@ -27,7 +31,68 @@ module.exports = {
             },
           },
         },
-      },
+        light: {
+          css: [
+            {
+              color: theme('colors.gray.100'),
+              '[class~="lead"]': {
+                color: theme('colors.gray.300'),
+              },
+              a: {
+                color: theme('colors.gray.100'),
+              },
+              strong: {
+                color: 'var(--primary-light)',
+              },
+              'ol > li::before': {
+                color: theme('colors.gray.400'),
+              },
+              'ul > li::before': {
+                backgroundColor: theme('colors.gray.600'),
+              },
+              hr: {
+                borderColor: theme('colors.gray.200'),
+              },
+              blockquote: {
+                color: theme('colors.gray.200'),
+                borderLeftColor: theme('colors.gray.600'),
+              },
+              h1: {
+                color: theme('colors.gray.100'),
+              },
+              h2: {
+                color: theme('colors.gray.100'),
+              },
+              h3: {
+                color: theme('colors.gray.100'),
+              },
+              h4: {
+                color: theme('colors.gray.100'),
+              },
+              'figure figcaption': {
+                color: theme('colors.gray.400'),
+              },
+              code: {
+                color: theme('colors.gray.100'),
+              },
+              'a code': {
+                color: theme('colors.gray.100'),
+              },
+              pre: {
+                color: theme('colors.gray.200'),
+                backgroundColor: theme('colors.gray.600'),
+              },
+              thead: {
+                color: theme('colors.gray.100'),
+                borderBottomColor: theme('colors.gray.400'),
+              },
+              'tbody tr': {
+                borderBottomColor: theme('colors.gray.600'),
+              },
+            },
+          ],
+        },
+      }),
       colors: {
         primary: 'var(--primary)',
         'primary-light': 'var(--primary-light)',
@@ -36,6 +101,9 @@ module.exports = {
     },
   },
   variants: {
+    extend: {
+      typography: ['dark'],
+    },
     width: ['responsive', 'hover', 'focus'],
   },
   plugins: [

@@ -1,6 +1,6 @@
 {% extends '@Pushword/page/_content.html.twig' %}
 
-{% set container = 'p-3 prose ' %}
+{% set container = 'p-3 prose dark:prose-light' %}
 
 {% block toc %}{% endblock %}
 
@@ -12,18 +12,20 @@
     <div class="flex flex-wrap">
 
         <div class="order-2 w-full overflow-hidden lg:order-1 lg:w-4/5">
-            <div class="p-3 prose ">
+            <div class="p-3 prose dark:prose-light">
                 <h1>{{ page.content.title(true)|raw }}</h1>
                 {{ page.content.intro|raw }}
             </div>
         </div>
 
+        {% if page.content.toc is not empty %}
         <div class="order-3 w-full overflow-hidden lg:order-2 lg:w-1/5">
-            <div class="max-w-screen-sm p-2 pt-4 m-2 border border-gray-200 rounded lg:max-w-xs lg:absolute">
-                <h3 class="block px-3 mb-3 text-sm font-semibold tracking-wide text-gray-900 uppercase lg:mb-3 lg:text-xs">Contents</h3>
-                <div class="prose-sm">{{ page.content.toc|raw }}</div>
+            <div class="max-w-screen-sm p-2 pt-4 m-2 border border-gray-200 rounded dark:border-gray-700 lg:max-w-xs lg:absolute">
+                <h3 class="block px-3 mb-3 text-sm font-semibold tracking-wide text-gray-900 uppercase dark:text-gray-100 lg:mb-3 lg:text-xs">Contents</h3>
+                <div class="prose-sm dark:prose-light">{{ page.content.toc|raw }}</div>
             </div>
         </div>
+        {% endif %}
 
         <div class="order-4 w-full overflow-hidden lg:w-4/5">
             <div class="{{ container }} ">{{ page.content.content|raw }}</div>
@@ -31,7 +33,7 @@
 
     </div>
     {% else %}
-            <div class="p-3 prose ">
+            <div class="p-3 prose dark:prose-light">
                 <h1>{{ page.content.title(true)|raw }}</h1>
             </div>
 
