@@ -9,11 +9,11 @@ class Configuration implements ConfigurationInterface
 {
     const DEFAULT_TEMPLATE = '@Pushword';
     const DEFAULT_APP_FALLBACK = [
+        'hosts',
         'public_dir',
         'locale',
         'locales',
         'name',
-        'hosts',
         'base_url',
         'template',
         'template_dir',
@@ -63,7 +63,7 @@ class Configuration implements ConfigurationInterface
             // The following is a garbage, useful for quick new extension not well designed (no check for conf values)
             ->variableNode('custom_properties')->defaultValue(self::DEFAULT_CUSTOM_PROPERTIES)->end()
 
-            ->variableNode('apps')->end()
+            ->variableNode('apps')->defaultValue([[]])->end()
         ->end();
 
         return $treeBuilder;

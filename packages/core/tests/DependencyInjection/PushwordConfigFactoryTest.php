@@ -13,6 +13,17 @@ use Symfony\Component\Yaml\Yaml;
 
 class PushwordConfigFactoryTest extends TestCase
 {
+    public function testWithoutConfiguration()
+    {
+        $container = new ContainerBuilder(new ParameterBag([]));
+        $config = (new Processor())->processConfiguration(new Configuration(), []);
+        $factory = new PushwordConfigFactory($container, $config);
+        $factory->loadConfigToParams();
+        $factory->loadApps();
+        $this->assertSame('App\Entity\Page', $container->getParameter('pw.entity_page'));
+        $this->assertTrue(! empty($container->getParameter('pw.apps')));
+    }
+
     public function testIt()
     {
         $container = new ContainerBuilder(new ParameterBag([]));
