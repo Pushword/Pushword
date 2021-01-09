@@ -16,17 +16,22 @@ composer create-project symfony/skeleton ${folder}  ^5.2
 cd ${folder}
 
 # Set in french and add the database :)
-sed -i -e "s/parameters:/parameters:\n    locale: 'fr'\n    database: '%env(resolve:DATABASE_URL)%'/" config/services.yaml
+#sed -i -e "s/parameters:/parameters:\n    locale: 'fr'\n    database: '%env(resolve:DATABASE_URL)%'/" config/services.yaml
 
 # Work around because we prepend our config in the bundle
-sed -i -e "/Pushword\\\Core\\\PushwordCoreBundle::class => \['all' => true\],/d" config/bundles.php
-sed -i -e "s/return \[/return \[\n    Pushword\\\Core\\\PushwordCoreBundle::class => \['all' => true\],/" config/bundles.php
+#sed -i -e "/Pushword\\\Core\\\PushwordCoreBundle::class => \['all' => true\],/d" config/bundles.php
+#sed -i -e "s/return \[/return \[\n    Pushword\\\Core\\\PushwordCoreBundle::class => \['all' => true\],/" config/bundles.php
+
+composer require pushword/installer
+sed -i -e 's/"scripts": {/"scripts": {\n        "post-package-install": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::postPackageInstall"\n        ],/' composer.json
+sed -i -e 's/"post-update-cmd": \[/"post-update-cmd": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::beforeCacheClear",/' composer.json
+
 
 # Avoid an error because Pushword prepend security config
-cd config/packages
-rm doctrine.yaml framework.yaml liip_imagine.yaml  translation.yaml twig.yaml vich_uploader.yaml
-rm assets.yaml security.yaml
-cd ../../
+# rm config/packages/security.yaml
+# rm doctrine.yaml framework.yaml liip_imagine.yaml  translation.yaml twig.yaml vich_uploader.yaml
+# rm assets.yaml security.yaml
+# cd ../../
 
 # Get Pushword
 composer require pushword/core

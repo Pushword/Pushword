@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Use it :
+# echo 'a y' | ./installer ./my-folder
+
+# Bash script relative lines
+: ${1?failure: in wich folder should i work ?}
+folder=$1
+echo "Installation running in folder $folder"
+
+# First clean the folder where we will install
+rm -rf ${folder}
+
+# Install symfony
+composer create-project symfony/skeleton ${folder}  ^5.2
+cd ${folder}
+
+composer require pushword/installer
+sed -i -e 's/"scripts": {/"scripts": {\n        "post-package-install": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::postPackageInstall"\n        \],/' composer.json
+sed -i -e 's/"post-update-cmd": \[/"post-update-cmd": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::beforeCacheClear",/' composer.json
+
+# Get Pushword
+composer require pushword/core
+composer require pushword/admin
+composer require pushword/skeleton --dev
+
+# We copy pushword config to easily edit it later manually
+cp vendor/pushword/installer/src/pushword.yaml config/packages/pushword.yaml
+
+# Copy Entities
+cp -R vendor/pushword/skeleton/src/Entity/. src/Entity
+cp -R vendor/pushword/skeleton/src/DataFixtures/. src/DataFixtures
+
+# Install sqlite by default
+sed -i -e "s/DATABASE_URL=\".*\"/DATABASE_URL=\"sqlite:\/\/\/%kernel\.project_dir%\/var\/app\.db\"/" .env
+
+## Install default routes
+echo -e "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/all.yaml'" >config/routes.yaml
+
+# Create Database:
+php bin/console doctrine:schema:create
+php bin/console doctrine:fixtures:load
+
+# Add an admin user :
+read -p 'Email: ' emailvar
+read -sp 'Password: ' passvar
+php bin/console pushword:user:create $emailvar $passvar ROLE_SUPER_ADMIN
+#php bin/console pushword:user:create admin@example.tld P@ssword ROLE_SUPER_ADMIN
+
+# Install Bundle Assets
+php bin/console assets:install
+
+mkdir public/build && echo -e "{}" >public/build/manifest.json
+
+sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::postPackageInstall"/d' composer.json
+sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::beforeCacheClear",/d' composer.json
+composer remove pushword/installer
+
+# Launch Server and Play
+read -p "Launch Server and play? [Y/n] " -n 1 -r
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    symfony server:start -d --no-tls
+fi

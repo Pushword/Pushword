@@ -1,0 +1,44 @@
+# Generated via
+# $ php bin/console config:dump-reference pushword
+
+pushword:
+  # dir:                  '%kernel.project_dir%/public'
+  # public_dir:           '%kernel.project_dir%/public'
+  # entity_page:          App\Entity\Page
+  # entity_media:         App\Entity\Media
+  # entity_user:          App\Entity\User
+  # entity_pagehasmedia:  App\Entity\PageHasMedia
+  # media_dir_absolute:   '%kernel.project_dir%/media'
+  # app_fallback_properties:
+  #     - hosts
+  #     - public_dir
+  #     - locale
+  #     - locales
+  #     - name
+  #     - base_url
+  #     - template
+  #     - template_dir
+  #     - custom_properties
+  # locale:               '%locale%'
+
+  # # eg: fr|en
+  # locales:              '%locale%'
+  # name:                 Pushword
+  # host:                 localhost
+  # hosts:
+  #     - %pw.host%
+  # base_url:             'https://%pw.host%'
+  # template:             '@Pushword'
+  # template_dir:         '%kernel.project_dir%/templates'
+  # custom_properties:
+  #     main_content_type:   Raw
+  #     can_use_twig_shortcode: 1
+  #     main_content_shortcode: twig,date,email,encryptedLink,image,phoneNumber,twigVideo,punctuation,markdown
+  #     fields_shortcode:    twig,date,email,encryptedLink,phoneNumber
+  #     assets:
+  #         stylesheets:
+  #             - /bundles/pushwordcore/tailwind.css
+  #         javascripts:
+  #             - /bundles/pushwordcore/page.js
+  # apps:
+  #     -

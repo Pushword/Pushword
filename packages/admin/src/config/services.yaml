@@ -36,8 +36,11 @@ services:
   pushword.admin.pageCRUDController:
     class: Pushword\Admin\Page\CRUDController
     autowire: true
+    autoconfigure: true
+    tags: ['controller.service_arguments']
     calls:
       - [setParams, ['@parameter_bag']]
+      - [setContainer, ['@service_container']]
 
   # ---
   # Others

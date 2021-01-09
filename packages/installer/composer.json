@@ -1,22 +1,25 @@
 {
-  "name": "pushword/skeleton",
-  "type": "symfony-bundle",
-  "description": "This package is used for testing purpose, for demoing and by the installer. It's not a copy-paster skeleton, prefer use the installer (see https://pushword.piedweb.com/installation ).",
+  "name": "pushword/installer",
+  "description": "",
   "keywords": [],
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",
-  "require": {
-    "pushword/core": "^0.0"
-  },
-  "require-dev": {},
+  "require": {},
   "extra": {
     "branch-alias": {
       "dev-master": "0.0.x-dev",
       "dev-main": "0.0.x-dev"
     }
   },
-  "autoload": {},
-  "autoload-dev": {},
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Installer\\": "src"
+    }
+  },
+  "require-dev": {
+    "composer/composer": "^2.0",
+    "phpunit/phpunit": "^9.5"
+  },
   "authors": [
     {
       "name": "Robin@PiedWeb",

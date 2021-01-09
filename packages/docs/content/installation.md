@@ -8,12 +8,13 @@ Supposing composer is installed globally
 
 ```
 
-curl https://raw.githubusercontent.com/Pushword/Pushword/main/packages/installer/installer >> install-cms && chmod +x install-cms && ./install-cms ./my-folder
-
-# Valid 'a' to install all recipes !
+curl https://raw.githubusercontent.com/Pushword/Pushword/main/packages/installer/src/installer >> installer
+&& chmod +x installer
+&& echo 'a y' | ./installer ./my-folder
 
 ```
 
-Else, look in the shell script [`installer`](https://raw.githubusercontent.com/Pushword/Pushword/main/packages/installer/installer) where each step is describe.
+Else, look in the shell script [`installer`](https://raw.githubusercontent.com/Pushword/Pushword/main/packages/installer/src/installer) where each step is describe.
 
+<!-- for postcss... -->
 <pre><code>...</code></pre>

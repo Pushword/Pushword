@@ -6,11 +6,11 @@
 
 return [
     Pushword\Core\PushwordCoreBundle::class => ['all' => true],
+    Pushword\Admin\PushwordAdminBundle::class => ['all' => true],
     Pushword\PageUpdateNotifier\PushwordPageUpdateNotifierBundle::class => ['all' => true],
     Pushword\StaticGenerator\PushwordStaticGeneratorBundle::class => ['all' => true],
     Pushword\PageScanner\PushwordPageScannerBundle::class => ['all' => true],
     Pushword\TemplateEditor\PushwordTemplateEditorBundle::class => ['all' => true],
-    Pushword\Admin\PushwordAdminBundle::class => ['all' => true],
     Pushword\Flat\PushwordFlatBundle::class => ['all' => true],
     Pushword\Conversation\PushwordConversationBundle::class => ['all' => true],
 
