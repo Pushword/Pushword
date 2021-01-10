@@ -8,6 +8,7 @@ services:
 
   pushword.admin.page:
     class: Pushword\Admin\Page\Admin
+    autowire: true
     arguments:
       - ~
       - '%pw.entity_page%'

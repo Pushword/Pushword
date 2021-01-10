@@ -48,11 +48,15 @@
                         <p>{{ form_group.description|trans({}, form_group.translation_domain ?: admin.translationDomain) }}</p>
                     {% endif %}
 
-                    {% for field_name in form_group.fields if form[field_name] is defined %}
-                        {{ form_row(form[field_name]) }}
-                    {% else %}
-                        <em>{{ 'message_form_group_empty'|trans({}, 'SonataAdminBundle') }}</em>
+
+                    {% for field_name in form_group.fields %}
+                        {% if form[field_name] is defined %}
+                            {{ form_row(form[field_name]) }}
+                        {% else %}
+                            <em>{{ 'message_form_group_empty'|trans({}, 'SonataAdminBundle') }}</em>
+                        {% endif %}
                     {% endfor %}
+
                 </div>
             </div>
         </div>
@@ -87,12 +91,15 @@
                     <p>{{ form_group.description|trans({}, form_group.translation_domain ?: admin.translationDomain) }}</p>
                 {% endif %}
 
-                {% for field_name in form_group.fields if form[field_name] is defined %}
-                    <div style="margin-top:20px">
-                    {{ form_row(form[field_name]) }}</div>
-                {% else %}
-                    <em>{{ 'message_form_group_empty'|trans({}, 'SonataAdminBundle') }}</em>
+                {% for field_name in form_group.fields %}
+                    {%  if form[field_name] is defined %}
+                        <div style="margin-top:20px">
+                            {{ form_row(form[field_name]) }}</div>
+                    {% else %}
+                        <em>{{ 'message_form_group_empty'|trans({}, 'SonataAdminBundle') }}</em>
+                    {% endif %}
                 {% endfor %}
+
             </div>
         </div>
     </div>

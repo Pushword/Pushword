@@ -147,7 +147,7 @@ class AppConfig
 
         // check if twig template exist
         try {
-            $twig->loadTemplate($name);
+            $twig->load($name);
 
             return $name;
         } finally {

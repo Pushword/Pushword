@@ -126,6 +126,10 @@ services:
     arguments: ['@doctrine', '%pw.entity_media%']
     tags: ['doctrine.repository_service']
 
+  Pushword\Core\Repository\UserRepository:
+    arguments: ['@doctrine', '%pw.entity_user%']
+    tags: ['doctrine.repository_service']
+
   # --------
   # TWIG extension
   # --------
