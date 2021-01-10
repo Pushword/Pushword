@@ -18,12 +18,15 @@
       <directory>packages/*/src/</directory>
     </include>
     <exclude>
+      <directory>packages/*/*/config/packages/</directory>
       <directory>packages/skeleton/src/</directory>
+      <directory>packages/bootstrap5-theme/src/</directory>
       <directory>packages/admin/src/</directory>
-      <file>*Admin.php</file>
+      <file>packages/*/src/*Admin.php</file>
+      <file>packages/*/src/*/*Admin.php</file>
       <file>packages/core/src/Service/WebPConverter.php</file>
-      <directory>packages/core/src/Entity/</directory>
-      <directory>packages/core/src/Entity/</directory>
+      <directory>packages/*/src/Entity/</directory>
+      <directory>packages/installer/src/</directory>
     </exclude>
   </coverage>
 </phpunit>
