@@ -31,7 +31,7 @@
     "piedweb/url-harvester": "^0.0.26",
     "rosell-dk/webp-convert": "^2.4",
     "sensio/framework-extra-bundle": "^5.6",
-    "sonata-project/admin-bundle": "dev-master#cdb43e98af92feca785f1d1c06cf5f1af893424c",
+    "sonata-project/admin-bundle": "dev-master#40cd89b77bace5d0d8b7c3eb53c7ad764c0c40a0",
     "sonata-project/doctrine-orm-admin-bundle": "4.x-dev",
     "spatie/async": "^1.5",
     "spatie/yaml-front-matter": "^2.0",
@@ -61,6 +61,7 @@
   },
   "require-dev": {
     "composer/composer": "^2.0",
+    "cweagans/composer-patches": "^1.7",
     "friendsofphp/php-cs-fixer": "^2.17",
     "friendsoftwig/twigcs": "^4.0",
     "phpunit/phpunit": "^9.5",
@@ -71,11 +72,17 @@
     "symfony/profiler-pack": "^1.0",
     "symfony/test-pack": "^1.0",
     "symplify/monorepo-builder": "^9.0",
+    "symplify/vendor-patches": "^9.0",
     "vimeo/psalm": "^4.3"
   },
   "extra": {
     "branch-alias": {
       "dev-master": "0.0-dev"
+    },
+    "patches": {
+      "sonata-project/admin-bundle": [
+        "packages/admin/patches/sonata-project-admin-bundle-src-datagrid-pager-php.patch"
+      ]
     }
   },
   "autoload": {
@@ -116,9 +123,9 @@
     "assets": "cd packages/core && ./build-assets",
     "docs": "cd packages/docs && ./build"
   },
-  "minimum-stability": "dev",
-  "prefer-stable": true,
   "config": {
     "sort-packages": true
-  }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }

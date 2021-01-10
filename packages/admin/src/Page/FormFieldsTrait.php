@@ -140,7 +140,7 @@ trait FormFieldsTrait
     protected function configureFormFieldH1(FormMapper $formMapper): FormMapper
     {
         $style = 'border-radius: 5px; font-size: 140%; font-weight: 700;'
-            .'border: 1px solid #ddd;';
+            .'border: 1px solid #ddd; padding: 10px 10px 0px 10px;margin-top:-23px; margin-bottom:-23px';
         // Todo move style to view
         return $formMapper->add('h1', TextareaType::class, [
             'required' => false,

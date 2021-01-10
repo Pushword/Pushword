@@ -88,7 +88,7 @@ class Admin extends AbstractAdmin implements AdminInterface
         foreach ($columnFields as $k => $block) {
             $fields = $block['fields'] ?? $block;
             $class = isset($block['expand']) ? 'expand' : '';
-            $formMapper->with($k, ['class' => 'col-md-3 columnFields '.$class]);
+            $formMapper->with($k, ['class' => 'col-md-3 columnFields '.$class, 'label' => $k]);
             foreach ($fields as $field) {
                 $func = 'configureFormField'.ucfirst($field);
                 $this->$func($formMapper);
