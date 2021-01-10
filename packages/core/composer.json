@@ -14,7 +14,6 @@
     "doctrine/doctrine-fixtures-bundle": "^3.4",
     "doctrine/doctrine-migrations-bundle": "^3.0",
     "doctrine/orm": "^2.8.1",
-    "dpolac/twig-lambda": "^1.0",
     "knplabs/knp-markdown-bundle": "^1.8",
     "league/color-extractor": "^0.3.2",
     "liip/imagine-bundle": "^2.3",
@@ -42,8 +41,7 @@
     "symfony/web-link": "^5.2",
     "symfony/webpack-encore-bundle": "^1.8",
     "symfony/yaml": "^5.2",
-    "twig/intl-extra": "^3.1",
-    "umpirsky/twig-php-function": "^0.2",
+    "twig/intl-extra": "^3.2",
     "vich/uploader-bundle": "^1.16",
     "villfa/invert-color": "^0.5",
     "wyrihaximus/html-compress": "^4.1"

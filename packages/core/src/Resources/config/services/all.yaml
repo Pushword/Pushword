@@ -130,9 +130,9 @@ services:
   # TWIG extension
   # --------
 
-  dpolac.twig_lambda.extension:
-    class: DPolac\TwigLambda\LambdaExtension
-    tags: [{ name: twig.extension }]
+  # dpolac.twig_lambda.extension:
+  #   class: DPolac\TwigLambda\LambdaExtension
+  #   tags: [{ name: twig.extension }]
 
   pushword.twig.extension.render_attributes:
     class: PiedWeb\RenderAttributes\TwigExtension
