@@ -8,7 +8,7 @@ Supposing composer is installed globally
 
 ```
 
-curl https://raw.githubusercontent.com/Pushword/Pushword/main/packages/installer/src/installer >> installer
+curl https://raw.githubusercontent.com/Pushword/Pushword/main/packages/installer/src/installer >> installer \
 && chmod +x installer
 && echo 'a y' | ./installer ./my-folder
 

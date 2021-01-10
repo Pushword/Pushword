@@ -47,6 +47,7 @@ jobs:
           - static-generator
           - template-editor
           - skeleton
+          - installer
           #package: ${{fromJson(needs.provide_packages_json.outputs.matrix)}}
 
     steps:
