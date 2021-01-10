@@ -2,8 +2,8 @@
 
 namespace Pushword\Installer;
 
-use Composer\Installer\PackageEvent;
 use Composer\DependencyResolver\Operation\InstallOperation;
+use Composer\Installer\PackageEvent;
 
 class PostInstall
 {
