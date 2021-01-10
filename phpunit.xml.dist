@@ -18,11 +18,17 @@
       <directory>packages/*/src/</directory>
     </include>
     <exclude>
+      <!-- those simple array are tested by bootstrap.php -->
       <directory>packages/*/*/config/packages/</directory>
+      <!-- no need to test skeleton -->
       <directory>packages/skeleton/src/</directory>
+      <!-- wip -->
       <directory>packages/bootstrap5-theme/src/</directory>
+
+      <!-- maybe create -->
       <directory>packages/admin/src/</directory>
       <file>packages/*/src/*Admin.php</file>
+      <file>packages/template-editor/src/ElementAdmin.php</file>
       <file>packages/*/src/*/*Admin.php</file>
       <file>packages/core/src/Service/WebPConverter.php</file>
       <directory>packages/*/src/Entity/</directory>

@@ -15,14 +15,23 @@ rm -rf ${folder}
 composer create-project symfony/skeleton ${folder}  ^5.2
 cd ${folder}
 
+# Install profiler (not installer by symfony skeleton ?!)
+composer require --dev symfony/profiler-pack
+
 composer require pushword/installer
 sed -i -e 's/"scripts": {/"scripts": {\n        "post-package-install": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::postPackageInstall"\n        \],/' composer.json
 sed -i -e 's/"post-update-cmd": \[/"post-update-cmd": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::beforeCacheClear",/' composer.json
 
+# Enable flex recipes from contrib repo
+composer config extra.symfony.allow-contrib true
+
 # Get Pushword
-composer require pushword/core
-composer require pushword/admin
+composer require pushword/core pushword/admin
 composer require pushword/skeleton --dev
+
+# Add puswhord/admin routes
+sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle/AdminRoutes.yaml"\n/' config/routes.yaml
+
 
 # We copy pushword config to easily edit it later manually
 cp vendor/pushword/installer/src/pushword.yaml config/packages/pushword.yaml
@@ -45,7 +54,7 @@ php bin/console doctrine:fixtures:load
 read -p 'Email: ' emailvar
 read -sp 'Password: ' passvar
 php bin/console pushword:user:create $emailvar $passvar ROLE_SUPER_ADMIN
-#php bin/console pushword:user:create admin@example.tld P@ssword ROLE_SUPER_ADMIN
+#php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN
 
 # Install Bundle Assets
 php bin/console assets:install
