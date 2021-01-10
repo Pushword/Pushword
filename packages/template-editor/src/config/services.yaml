@@ -1,0 +1,5 @@
+services:
+  Pushword\TemplateEditor\ElementAdmin:
+    autowire: true
+    autoconfigure: true
+    tags: ['controller.service_arguments']

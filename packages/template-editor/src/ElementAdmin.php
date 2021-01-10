@@ -8,6 +8,7 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
@@ -16,9 +17,17 @@ use Symfony\Component\Process\Process;
  */
 class ElementAdmin extends AbstractController
 {
+    protected KernelInterface $kernel;
+
+    /** @required */
+    public function setKernel(KernelInterface $kernel): void
+    {
+        $this->kernel = $kernel;
+    }
+
     protected function getElements()
     {
-        return new ElementRepository($this->get('kernel')->getProjectDir().'/templates');
+        return new ElementRepository($this->kernel->getProjectDir().'/templates');
     }
 
     public function listElement()
@@ -35,7 +44,7 @@ class ElementAdmin extends AbstractController
             }
         }
 
-        return $element ?? new Element($this->get('kernel')->getProjectDir().'/templates');
+        return $element ?? new Element($this->kernel->getProjectDir().'/templates');
     }
 
     protected function clearTwigCache()

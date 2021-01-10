@@ -12,10 +12,6 @@ class Configuration implements ConfigurationInterface
 
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder('pushword_page_scanner');
-        $treeBuilder->getRootNode()->children()
-        ->end();
-
-        return $treeBuilder;
+        return new TreeBuilder('pushword_page_scanner');
     }
 }
