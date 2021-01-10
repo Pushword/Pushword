@@ -92,7 +92,13 @@ class AppExtension extends AbstractExtension
             new TwigFunction('children', [$this, 'renderChildrenList'], self::options(true)),
             new TwigFunction('card_children', [$this, 'renderChildrenListCard'], self::options(true)),
             new TwigFunction('getPages', [$this, 'getPublishedPages'], self::options(true)),
+            new TwigFunction('str_rot13', [$this, 'rot13'], self::options()),
         ];
+    }
+
+    public function rot13(string $str): string
+    {
+        return str_rot13($str);
     }
 
     public function getPublishedPages(Twig $twig, $host = null, $where = [], $orderBy = [], $limit = 0)

@@ -134,14 +134,6 @@ services:
     class: DPolac\TwigLambda\LambdaExtension
     tags: [{ name: twig.extension }]
 
-  pushword.twig.extension.php_function:
-    class: Umpirsky\Twig\Extension\PhpFunctionExtension
-    public: false
-    tags:
-      - { name: twig.extension }
-    calls:
-      - [allowFunction, ['str_rot13']]
-
   pushword.twig.extension.render_attributes:
     class: PiedWeb\RenderAttributes\TwigExtension
     public: false

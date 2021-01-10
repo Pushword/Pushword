@@ -56,7 +56,6 @@
     "symfony/webpack-encore-bundle": "^1.8",
     "symfony/yaml": "^5.2",
     "twig/intl-extra": "^3.1",
-    "umpirsky/twig-php-function": "^0.2",
     "vich/uploader-bundle": "^1.16",
     "villfa/invert-color": "^0.5",
     "wyrihaximus/html-compress": "^4.1"
