@@ -1,7 +1,7 @@
 {
   "name": "@pushword/js-helper",
-  "version": "0.0.34",
-  "description": "Pushword front end helpers.",
+  "version": "0.0.35",
+  "description": "Pushword front end helpers. ",
   "author": "Robin@PiedWeb <contact@piedweb.com>",
   "license": "MIT",
   "scripts": {
@@ -18,5 +18,6 @@
   "bugs": {
     "url": "https://github.com/Pushword/Pushword/issues"
   },
-  "homepage": "https://pushword.piedweb.com"
+  "homepage": "https://pushword.piedweb.com",
+  "gitHead": "242ec54483dca1be93d7a62d8d554c9c08008c28"
 }
