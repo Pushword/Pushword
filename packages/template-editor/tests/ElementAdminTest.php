@@ -3,6 +3,7 @@
 namespace Pushword\TemplateEditor\Tests;
 
 use Pushword\Admin\Tests\AbstractAdminTest;
+use Pushword\TemplateEditor\ElementRepository;
 
 class ElementAdminTest extends AbstractAdminTest
 {
@@ -15,9 +16,10 @@ class ElementAdminTest extends AbstractAdminTest
         $client->request('GET', '/admin/template/list');
         $this->assertResponseIsSuccessful();
 
-        /* doesn't work on windows
-        $client->request('GET', '/admin/template/edit/d75972ad5182b92398cb571e2e223deb'); ///pushword.piedweb.com/page/_content.html.twig
+        $repo = new ElementRepository(self::$kernel->getProjectDir().'/templates');
+        $element = $repo->getAll()[0];
+
+        $client->request('GET', '/admin/template/edit/'.$element->getEncodedPath()); ///pushword.piedweb.com/page/_content.html.twig
         $this->assertResponseIsSuccessful();
-        */
     }
 }
