@@ -1,6 +1,6 @@
 {
   "name": "@pushword/js-helper",
-  "version": "0.0.22",
+  "version": "0.0.33",
   "description": "",
   "author": "Robin@PiedWeb <contact@piedweb.com>",
   "license": "MIT",
@@ -18,7 +18,5 @@
   "bugs": {
     "url": "https://github.com/Pushword/Pushword/issues"
   },
-  "homepage": "https://pushword.piedweb.com",
-  "dependencies": {},
-  "devDependencies": {}
+  "homepage": "https://pushword.piedweb.com"
 }
