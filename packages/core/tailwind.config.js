@@ -9,7 +9,7 @@ module.exports = {
             a: {
               color: 'var(--primary)',
               '&:hover': {
-                color: 'var(--primary-light)',
+                opacity: '.75',
               },
             },
           },
@@ -17,8 +17,7 @@ module.exports = {
       },
       colors: {
         primary: 'var(--primary)',
-        'primary-light': 'var(--primary-light)',
-        bg: 'var(--secondary)',
+        secondary: 'var(--secondary)',
       },
     },
   },

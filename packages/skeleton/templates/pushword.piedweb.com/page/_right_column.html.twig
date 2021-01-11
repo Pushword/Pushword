@@ -6,7 +6,7 @@
 <div class="h-full">
     <input type="checkbox" id="right-column" class="hidden">
 
-    <label for="right-column" id="right-column-toggler" class="fixed bottom-0 left-0 z-50 block w-12 h-12 p-3 m-2 cursor-pointer bg-primary hover:bg-primary-light">
+    <label for="right-column" id="right-column-toggler" class="fixed bottom-0 left-0 z-50 block w-12 h-12 p-3 m-2 cursor-pointer bg-primary hover:bg-opacity-75">
         <div class="relative flex flex-wrap content-center w-6 h-6">
             <span class="block w-full h-1 border-b-2 border-gray-100"></span>
             <span class="block w-full h-1 my-1 border-b-2 border-gray-100"></span>
@@ -15,7 +15,7 @@
     </label>
     <div id="right-column-nav" class="sticky z-40 h-full px-3 mr-24 overflow-hidden text-sm bg-white border-r border-gray-200 w-60 lg:block lg:top-18 lg:mr-3 dark:bg-gray-900 dark:border-gray-700">
         {% set heading_class = 'block px-3 mb-3 text-sm font-semibold tracking-wide text-gray-900 dark:text-gray-100 uppercase lg:mb-3 lg:text-xs mt-3' %}
-        {% set link_class = 'block px-3 py-2 transition-colors duration-200 relative hover:text-white hover:bg-primary-light text-gray-900 dark:text-gray-100 rounded' %}
+        {% set link_class = 'block px-3 py-2 transition-colors duration-200 relative hover:text-white hover:bg-primary hover:bg-opacity-75 text-gray-900 dark:text-gray-100 rounded' %}
         {% for n in nav %}
             {% set uri = n.1 == '#' ? '#' : page(n.1) %}
             <a href="{{ uri }}" class="{{ n.2 is defined ? heading_class : link_class }} {{ n.2 is not defined and isCurrentPage(uri, page) ? ' bg-gray-200 dark:bg-gray-700' : '' }}">

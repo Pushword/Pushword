@@ -117,9 +117,11 @@
     "tests": "composer update --prefer-lowest && composer test && composer update && composer test",
     "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
     "format": "vendor/bin/php-cs-fixer fix",
-    "assets": "cd packages/core && ./build-assets",
+    "assets-core": "cd packages/core && yarn && yarn build && cd ../",
+    "assets-admin": "cd packages/admin && yarn && cd ../../ && php ./packages/admin/src/Resources/assets/easymde-hack && cd packages/admin && yarn build",
+    "assets": "composer assets-core && composer assets-admin",
     "docs": "cd packages/docs && ./build",
-    "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add . && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish && cd ../../"
+    "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add . && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish"
   },
   "config": {
     "sort-packages": true

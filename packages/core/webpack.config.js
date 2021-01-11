@@ -33,22 +33,9 @@ Encore.setOutputPath('./src/Resources/public/')
   })
   .disableSingleRuntimeChunk()
   .copyFiles({
-    from: './node_modules/ace-builds/src-min-noconflict/',
-    // relative to the output dir
-    to: 'ace/[name].[ext]',
-    // only copy files matching this pattern
-    pattern: /\.js$/,
-  })
-  .copyFiles({
-    from: './src/Resources/assets/',
-    to: '[name].[ext]',
-    pattern: /logo.svg$/,
-  })
-  .copyFiles({
     from: './src/Resources/assets/favicons',
     to: 'favicons/[name].[ext]',
   })
-  .addEntry('admin', './../admin/src/assets/admin.js') // {{ asset('bundles/pushwordcore/admin.js') }}
   .addEntry('page', './src/Resources/assets/page.js') // {{ asset('bundles/pushwordcore/page.js') }}
   .addStyleEntry('tailwind', './src/Resources/assets/tailwind.css');
 

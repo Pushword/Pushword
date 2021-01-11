@@ -1,13 +1,5 @@
 {
   "entrypoints": {
-    "admin": {
-      "css": [
-        "./admin.css"
-      ],
-      "js": [
-        "./admin.js"
-      ]
-    },
     "page": {
       "js": [
         "./page.js"

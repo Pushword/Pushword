@@ -38,7 +38,7 @@ html {
 }
 
 .prose span[data-rot]:hover {
-  color: var(--primary-light);
+  color: var(--primary);
 }
 
 .link-text {

@@ -24,9 +24,9 @@ module.exports = {
           css: {
             color: '#333',
             a: {
-              color: 'var(--primary)',
+              color: 'var(--secondary)',
               '&:hover': {
-                color: 'var(--primary-light)',
+                opacity: '0.75',
               },
             },
           },
@@ -38,11 +38,8 @@ module.exports = {
               '[class~="lead"]': {
                 color: theme('colors.gray.300'),
               },
-              a: {
-                color: theme('colors.gray.100'),
-              },
               strong: {
-                color: 'var(--primary-light)',
+                color: 'white',
               },
               'ol > li::before': {
                 color: theme('colors.gray.400'),
@@ -95,8 +92,6 @@ module.exports = {
       }),
       colors: {
         primary: 'var(--primary)',
-        'primary-light': 'var(--primary-light)',
-        bg: 'var(--secondary)',
       },
     },
   },

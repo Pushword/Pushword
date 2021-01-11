@@ -12,7 +12,7 @@ return [
             'role_super_admin' => 'ROLE_SUPER_ADMIN',
         ],
         'title' => 'Admin',
-        'title_logo' => '/bundles/pushwordcore/logo.svg',
+        'title_logo' => '/bundles/pushwordadmin/logo.svg',
         'dashboard' => [
             'blocks' => null, //- { type: sonata.admin.block.admin_list, position: left }
             'groups' => [
