@@ -27,7 +27,6 @@ If not, be happy : there is autowiring, event suscriber and more !
 - Build on top on Symfony and other #[fantastic well maintained packages](https://raw.githubusercontent.com/Pushword/Pushword/main/composer.json)
 - Build as a symfony bundle, **extendable** with symfony bundle
 - **Tested** / **Traits** / **Command**
--
 
 ## Be visible on Search Engine<br> <small>**SEO** : feel like **wikipedia**</small>
 

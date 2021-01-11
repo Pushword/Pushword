@@ -39,4 +39,51 @@
 
         {{ parent() }}
     {% endif %}
+
+    <div class="flex mx-3 mt-5">
+
+        {{ _self.previous(nav, page) }}
+
+        {{ _self.next(nav, page) }}
+    </div>
+
 {% endblock %}
+
+
+{% macro next(nav, page) %}
+    {% set next_is_the_one = false %}
+    {% for n in nav %}
+
+        {% if next_is_the_one and n.2 is not defined %}
+            <a class="flex ml-auto text-right text-gray-500 hover:text-gray-900 dark:hover:text-gray-100" href="{{ n.1 == '#' ? '#' : page(n.1)}}">
+                {{ n.0 }} <span aria-hidden="true" class="ml-2">→</span>
+            </a>
+            {% set next_is_the_one = false %}
+        {% endif %}
+
+        {% if n.2 is not defined and n.1 == page.realSlug %}
+            {% set next_is_the_one = true %}
+        {% endif %}
+    {% endfor %}
+
+{% endmacro %}
+
+{% macro previous(nav, page) %}
+
+
+    {% set previous = null %}
+
+    {% for n in nav %}
+        {% if n.2 is not defined and n.1 == page.realSlug and previous is not null %}
+            <a class="flex mr-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100" href="{{ previous.1 == '#' ? '#' : page(previous.1)}}">
+                <span aria-hidden="true" class="mr-2">←</span> {{ previous.0 }}
+            </a>
+        {% endif %}
+
+        {% if n.2 is not defined %}
+            {% set previous = n %}
+        {% endif %}
+    {% endfor %}
+
+
+{% endmacro %}

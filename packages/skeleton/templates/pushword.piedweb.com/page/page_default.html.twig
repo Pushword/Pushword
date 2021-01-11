@@ -1,5 +1,27 @@
 {% extends '@Pushword/page/page_default.html.twig' %}
 
+{% set nav = [
+    ['Getting Started', 'installation', true],
+    ['Introduction', ''],
+    ['Installation', 'installation'],
+    ['Configuration', 'configuration'],
+    ['Upgrade Guide', 'upgrade'],
+    ['Cookbook', 'cookbook'],
+    ['Theme', 'themes', true],
+    ['Find a Theme', 'themes'],
+    ['Customize the current theme or change the theme', '#'],
+    ['Override the Current Theme', '#'],
+    ['Create a new theme', '#'],
+    ['Extensions', 'create-extension', true],
+    ['Find an extension', 'extensions'],
+    ['Customize your Pushword installation', '#'],
+    ['Create an extension (and package it)', 'create-extension'],
+    ['Contribute', 'contribute', true],
+    ['Issues and Pull Request', 'contribute'],
+    ['The Architecture', 'architecture'],
+    ['Roadmap', 'roadmap'],
+] %}
+
 {% block html_opener %}
 	<html
 		lang="{{ page.locale|default(apps.get().defaultLocale) }}"

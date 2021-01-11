@@ -5,19 +5,9 @@ toc: true
 parent: contribute
 ---
 
-### Documentation
-
-- [ ] Create a theme
-- [ ] Create a navbar and a horizontal menu
-- [ ] Create a Previous/Next Link
-
 ## TODO before v1
 
 - [ ] Revoir la gestion des assets
-- [ ] Revoir install-cms (bin/console assets:install --symlink --relative)git
-- [ ] Other tests (toward 50% coverage)
-- [ ] MonoRepo
-      \_ Implement split https://github.com/symplify/monorepo-split-github-action https://github.com/symplify/symplify/blob/6f24c4e2e38de76ab09a4dceb28d48672296bfd2/.github/workflows/split_monorepo.yaml
 
 ## TODO Extension
 
@@ -36,6 +26,7 @@ parent: contribute
 
 ### To plan
 
+- [ ] CI : Test Installer
 - [ ] Author for page (will permit to manage page view right later)
 - [ ] Archive edit (page) (extension or core ?)
 - [ ] Multi-user editor Multi-site but not everybody can edit everything (see draft.md) (extension or core ?)
