@@ -35,12 +35,12 @@ class ElementAdmin extends AbstractController
         return $this->render('@pwTemplateEditor/list.html.twig', ['elements' => $this->getElements()->getAll()]);
     }
 
-    protected function getElement($encodedPath)
+    protected function getElement($encodedPath): Element
     {
         if (null !== $encodedPath) {
             $element = $this->getElements()->getOneByEncodedPath($encodedPath);
             if (! $element) {
-                throw $this->createNotFoundException('This element does not exist...');
+                throw $this->createNotFoundException('`'.$encodedPath.'` element does not exist...');
             }
         }
 
