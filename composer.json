@@ -118,7 +118,8 @@
     "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
     "format": "vendor/bin/php-cs-fixer fix",
     "assets": "cd packages/core && ./build-assets",
-    "docs": "cd packages/docs && ./build"
+    "docs": "cd packages/docs && ./build",
+    "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add . && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish && cd ../../"
   },
   "config": {
     "sort-packages": true
