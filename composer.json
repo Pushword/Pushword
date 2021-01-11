@@ -101,17 +101,14 @@
   "autoload-dev": {
     "psr-4": {
       "App\\": "packages/skeleton/src",
-      "Pushword\\Admin\\": "tests",
-      "Pushword\\Conversation\\": "tests",
-      "Pushword\\Core\\": [
-        "packages/core/tests",
-        "tests"
-      ],
-      "Pushword\\Flat\\": "tests",
-      "Pushword\\PageScanner\\": "tests",
-      "Pushword\\PageUpdateNotifier\\": "tests",
-      "Pushword\\StaticGenerator\\": "tests",
-      "Pushword\\TemplateEditor\\": "tests"
+      "Pushword\\Admin\\Tests\\": "packages/admin/tests",
+      "Pushword\\Conversation\\Tests\\": "packages/conversation/tests",
+      "Pushword\\Core\\Tests\\": "packages/core/tests",
+      "Pushword\\Flat\\Tests\\": "packages/flat/tests",
+      "Pushword\\PageScanner\\Tests\\": "packages/page-scanner/tests",
+      "Pushword\\PageUpdateNotifier\\Tests\\": "packages/page-update-notifier/tests",
+      "Pushword\\StaticGenerator\\Tests\\": "packages/static-generator/tests",
+      "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests"
     }
   },
   "scripts": {
