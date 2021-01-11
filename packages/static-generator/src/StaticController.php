@@ -10,9 +10,9 @@ class StaticController extends AbstractController
     /**
      * @Security("is_granted('ROLE_EDITOR')")
      */
-    public function generateStatic(StaticAppGenerator $staticAppGenerator)
+    public function generateStatic(StaticAppGenerator $staticAppGenerator, ?string $host = null)
     {
-        $staticAppGenerator->generateAll();
+        $staticAppGenerator->generate($host);
 
         return $this->render('@pwStaticGenerator/results.html.twig');
     }

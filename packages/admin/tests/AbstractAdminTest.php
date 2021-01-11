@@ -33,7 +33,7 @@ abstract class AbstractAdminTest extends WebTestCase
         return self::$client;
     }
 
-    protected static function createUser():void
+    protected static function createUser(): void
     {
         if (true === self::$userCreated) {
             return;
@@ -42,8 +42,9 @@ abstract class AbstractAdminTest extends WebTestCase
         $userRepository = static::$container->get(UserRepository::class);
         $testUser = $userRepository->findOneByEmail('jane.doe@example.com');
 
-        if ($testUser)
+        if ($testUser) {
             return;
+        }
 
         $kernel = static::createKernel();
         $application = new Application($kernel);

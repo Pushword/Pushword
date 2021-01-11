@@ -29,14 +29,14 @@ class StaticCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if (! $input->getArgument('host')) {
-            $this->staticAppGenerator->generateAll();
+            $this->staticAppGenerator->generate();
             $output->writeln('All websites generated witch success.');
 
             return 0;
         }
 
         if (! $input->getArgument('page')) {
-            $this->staticAppGenerator->generateFromHost($input->getArgument('host'));
+            $this->staticAppGenerator->generate($input->getArgument('host'));
             $output->writeln($input->getArgument('host').' generated witch success.');
 
             return 0;

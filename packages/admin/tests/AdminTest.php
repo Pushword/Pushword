@@ -2,11 +2,6 @@
 
 namespace Pushword\Admin\Tests;
 
-use Symfony\Bundle\FrameworkBundle\Console\Application;
-use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Console\Tester\CommandTester;
-
 class AdminTest extends AbstractAdminTest
 {
     public function testLogin()

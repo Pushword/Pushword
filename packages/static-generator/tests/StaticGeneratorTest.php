@@ -60,7 +60,7 @@ class StaticGeneratorTest extends KernelTestCase
             $generatorBag->get(RedirectionManager::class)
         );
 
-        $staticAppGenerator->generateFromHost('localhost.dev');
+        $staticAppGenerator->generate('localhost.dev');
 
         $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev'));
 

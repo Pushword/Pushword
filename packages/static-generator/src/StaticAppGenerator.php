@@ -34,31 +34,24 @@ class StaticAppGenerator
     }
 
     /**
-     * Undocumented function.
-     *
-     * @param string $filter
+     * @param string $host if null, generate all apps
      *
      * @return int the number of site generated
      */
-    public function generateAll(?string $filter = null): int
+    public function generate(?string $host = null): int
     {
         $i = 0;
         foreach ($this->apps->getHosts() as $host) {
-            if ($filter && $filter != $host) {
+            if ($host && $host != $host) {
                 continue;
             }
 
-            $this->generate($host);
+            $this->generateHost($host);
             $this->redirectionManager->reset();
             ++$i;
         }
 
         return $i;
-    }
-
-    public function generateFromHost($host)
-    {
-        return $this->generateAll($host);
     }
 
     public function generatePage($host, string $page)
@@ -69,12 +62,10 @@ class StaticAppGenerator
     }
 
     /**
-     * Main Logic is here.
-     *
      * @throws \RuntimeException
      * @throws \LogicException
      */
-    protected function generate($host)
+    protected function generateHost(?string $host)
     {
         $app = $this->apps->switchCurrentApp($host)->get();
 

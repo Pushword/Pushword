@@ -1,7 +1,11 @@
 piedweb_static_generate:
-  path: /admin/static
+  path: /admin/static/{host}
   controller: Pushword\StaticGenerator\StaticController::generateStatic
   methods: [GET]
+  defaults:
+    host: null
+  requirements:
+    host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
 
 old_piedweb_static_generate:
   path: /~static

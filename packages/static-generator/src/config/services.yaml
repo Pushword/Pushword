@@ -21,6 +21,8 @@ services:
   Pushword\StaticGenerator\StaticController:
     tags: ['controller.service_arguments']
     arguments: ['@pushword.static_app_generator']
+    autowire: true
+    autoconfigure: true
 
   pushword.static_command:
     class: Pushword\StaticGenerator\StaticCommand
