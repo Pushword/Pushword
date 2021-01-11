@@ -33,8 +33,12 @@
             <style>
             :root {
             --bg: {{ apps.get().get('color_bg') ?? '#f6f6f6' }};
-            --primary: {{ apps.get().get('color_primary') ?? '#d97706' }};
-            --primary-light: {{ apps.get().get('color_primary-light') ?? '#F59E0B' }};
+            --primary: {{ apps.get().get('css_var:color_primary') ?? '#d97706' }};
+            --primary-light: {{ apps.get().get('css_var:color_primary_light') ?? '#F59E0B' }};
+            --secondary: {{ apps.get().get('css_var:color_secondary') ?? '#F59E0B' }};
+            --secondary-light: {{ apps.get().get('css_var:color_secondary_light') ?? '#F59E0B' }};
+            --font-family: {{ apps.get().get('css_var:font_family') ?? 'Inter var, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol' }};
+            --line-height: {{ apps.get().get('css_var:line_height') ?? '1.5' }};
             }
             </style>
             {% endblock %}

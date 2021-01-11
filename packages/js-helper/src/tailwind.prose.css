@@ -1,0 +1,52 @@
+html {
+  font-family: var(--font-family);
+  line-height: var(--line-height);
+}
+
+.prose {
+  max-width: none;
+}
+
+.prose ul.list-none {
+  margin: 0;
+}
+.prose ul.list-none > li {
+  padding-left: 0;
+  margin: 0;
+}
+.prose ul.list-none > li::before {
+  height: 0;
+  width: 0;
+}
+
+.m-0 {
+  margin: 0 !important;
+}
+.mt-0 {
+  margin-top: 0 !important;
+}
+
+.text-white {
+  color: #fff !important;
+}
+
+.prose span[data-rot] {
+  cursor: pointer;
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.prose span[data-rot]:hover {
+  color: var(--primary-light);
+}
+
+.link-text {
+  color: inherit;
+}
+
+.ninja {
+  text-decoration: none !important;
+  color: inherit;
+  cursor: auto;
+}
