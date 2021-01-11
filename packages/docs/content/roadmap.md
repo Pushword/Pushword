@@ -21,11 +21,11 @@ parent: contribute
 - [ ] Create a page from a Media (media edit) => button to create a new page with title = name and mainImage = Media
       (useful for photographer website)... or create a dynamic page /media/[slug]/ showing data from Media
 - [ ] Intégrer Schema.org dans le backend d'une page
-
 - [ ] Settings Manager (simple textarea permitting to edit pushword config and parameters ? and rebooting cache)
 
 ### To plan
 
+- [ ] Media Management v2 : utiliser IPTC&exif pour stocker toutes les infos stockées en bdd (static power)
 - [ ] CI : Test Installer
 - [ ] Author for page (will permit to manage page view right later)
 - [ ] Archive edit (page) (extension or core ?)
