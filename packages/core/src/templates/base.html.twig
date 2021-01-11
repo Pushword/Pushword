@@ -35,14 +35,14 @@
             --primary: {{ apps.get().get('css_var:color_primary') ?? '#F59E0B' }};
             --secondary: {{ apps.get().get('css_var:color_secondary') ?? '#d97706' }};
             --font-family: {{ apps.get().get('css_var:font_family') ?? 'Inter var, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol' }};
-            --line-height: {{ apps.get().get('css_var:line_height') ?? '1.5' }};
             }
             </style>
             {% endblock %}
 
             {# <link rel="stylesheet" href="{{ asset('assets/app.css') }}"> #}
 
-	        <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:none}</style>');</script>
+            <style>.nojs{display:none}</style>
+	        <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:block}</style>');</script>
         {% endblock %}
 
         {% block feed %}

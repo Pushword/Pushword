@@ -23,7 +23,7 @@ trait EmailTwigTrait
 
     public static function readableEncodedMail($mail)
     {
-        return str_replace('@', '<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-at" '
+        return str_replace('@', '<svg width="1em" height="1em" viewBox="0 0 16 16" class="inline-block" '
         .'fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M13.106 '
         .'7.222c0-2.967-2.249-5.032-5.482-5.032-3.35 0-5.646 2.318-5.646 5.702 0 3.493 2.235 5.708 5.762'
         .' 5.708.862 0 1.689-.123 2.304-.335v-.862c-.43.199-1.354.328-2.29.328-2.926 0-4.813-1.88-4.813-4.798'

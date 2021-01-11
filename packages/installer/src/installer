@@ -36,9 +36,13 @@ sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle/AdminRoutes.yaml"\n/' c
 # We copy pushword config to easily edit it later manually
 cp vendor/pushword/installer/src/pushword.yaml config/packages/pushword.yaml
 
+# Copy Default Media
+cp -r vendor/pushword/skeleton/media media
+
 # Copy Entities
 cp -R vendor/pushword/skeleton/src/Entity/. src/Entity
 cp -R vendor/pushword/skeleton/src/DataFixtures/. src/DataFixtures
+
 
 # Install sqlite by default
 sed -i -e "s/DATABASE_URL=\".*\"/DATABASE_URL=\"sqlite:\/\/\/%kernel\.project_dir%\/var\/app\.db\"/" .env
@@ -49,6 +53,7 @@ echo -e "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/a
 # Create Database:
 php bin/console doctrine:schema:create
 php bin/console doctrine:fixtures:load
+php bin/console pushword:media:cache &
 
 # Add an admin user :
 read -p 'Email: ' emailvar
