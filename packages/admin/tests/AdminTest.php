@@ -31,7 +31,6 @@ class AdminTest extends AbstractAdminTest
             }
         }
 
-
         $client->request('GET', '/admin/app/page/2/edit');
         $this->assertResponseIsSuccessful();
     }

@@ -6,7 +6,7 @@ use Pushword\Admin\Tests\AbstractAdminTest;
 
 class ConversationAdminTest extends AbstractAdminTest
 {
-    public function testAdmins()
+    public function testAdmin()
     {
         $client = $this->loginUser();
 

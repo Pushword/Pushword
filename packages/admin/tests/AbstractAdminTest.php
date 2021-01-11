@@ -12,25 +12,25 @@ abstract class AbstractAdminTest extends WebTestCase
 {
     protected static bool $userCreated = false;
 
-    protected static $client;
+    protected $client;
 
     protected function loginUser(): KernelBrowser
     {
-        if (self::$client) {
-            return self::$client;
+        if (null !== $this->client) {
+            return $this->client;
         }
 
-        self::$client = static::createClient();
+        $this->client = static::createClient();
 
         self::createUser();
 
-        $crawler = self::$client->request('GET', '/login');
+        $crawler = $this->client->request('GET', '/login');
         $form = $crawler->filter('[method=post]')->form();
         $form['email'] = 'admin@example.tld';
         $form['password'] = 'mySecr3tpAssword';
-        $crawler = self::$client->submit($form);
+        $crawler = $this->client->submit($form);
 
-        return self::$client;
+        return $this->client;
     }
 
     protected static function createUser(): void
@@ -40,7 +40,7 @@ abstract class AbstractAdminTest extends WebTestCase
         }
 
         $userRepository = static::$container->get(UserRepository::class);
-        $testUser = $userRepository->findOneByEmail('jane.doe@example.com');
+        $testUser = $userRepository->findOneByEmail('admin@example.tld');
 
         if ($testUser) {
             return;
