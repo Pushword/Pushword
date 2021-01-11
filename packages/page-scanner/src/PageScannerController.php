@@ -3,6 +3,7 @@
 namespace Pushword\PageScanner;
 
 use DateInterval;
+use Exception;
 use Pushword\Core\Utils\LastTime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Container;
@@ -28,14 +29,28 @@ class PageScannerController extends AbstractController
     protected $filesystem;
     protected $eventDispatcher;
 
-    public static $fileCache = '/page-scan';
+    protected static $fileCache;
 
     public function __construct(
         Filesystem $filesystem,
         string $varDir
     ) {
         $this->filesystem = $filesystem;
-        self::$fileCache = $varDir.self::$fileCache;
+        $this->setFileCache($varDir);
+    }
+
+    public static function setFileCache(string $varDir): void
+    {
+        self::$fileCache = self::$fileCache ?: $varDir.'/page-scan';
+    }
+
+    public static function fileCache(): string
+    {
+        if (! \is_string(self::$fileCache)) {
+            throw new Exception('setFileCache($varDir) must be setted before call fileCache()');
+        }
+
+        return self::$fileCache;
     }
 
     public function scanAction()

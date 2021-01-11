@@ -31,7 +31,7 @@ class PageScannerCommand extends Command
         $this->pageClass = $pageClass;
         $this->em = $em;
         $this->filesystem = $filesystem;
-        PageScannerController::$fileCache = $varDir.PageScannerController::$fileCache;
+        PageScannerController::setFileCache($varDir);
     }
 
     protected function configure()
@@ -48,7 +48,7 @@ class PageScannerCommand extends Command
             //sleep(30);
             $errors = $this->scanAll($host);
             //dd($errors);
-            $this->filesystem->dumpFile(PageScannerController::$fileCache, serialize($errors));
+            $this->filesystem->dumpFile(PageScannerController::fileCache(), serialize($errors));
             $lock->release();
 
             return true;
