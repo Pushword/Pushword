@@ -32,7 +32,7 @@
     "piedweb/url-harvester": "^0.0.26",
     "rosell-dk/webp-convert": "^2.4",
     "sensio/framework-extra-bundle": "^5.6",
-    "sonata-project/admin-bundle": "dev-master#40cd89b77bace5d0d8b7c3eb53c7ad764c0c40a0",
+    "sonata-project/admin-bundle": "dev-master#08dbbf19e21a9e9012d8fb020ae3784991b4d893",
     "sonata-project/doctrine-orm-admin-bundle": "4.x-dev",
     "spatie/async": "^1.5",
     "spatie/yaml-front-matter": "^2.0",
