@@ -3,7 +3,6 @@
 namespace Pushword\Admin;
 
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Entity\UserInterface;
 use Sonata\AdminBundle\Admin\AdminInterface as AdminAdminInterface;
 use Symfony\Component\Routing\RouterInterface;
 

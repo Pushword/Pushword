@@ -47,7 +47,6 @@ class Admin extends AbstractAdmin implements AdminInterface
         return method_exists($this->pageClass, 'get'.$name);
     }
 
-
     protected function configureFormFields(FormMapper $formMapper): void
     {
         $fields = $this->apps->get()->get('admin_page_form_fields');

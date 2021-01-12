@@ -22,6 +22,7 @@
     "doctrine/doctrine-fixtures-bundle": "^3.4",
     "doctrine/doctrine-migrations-bundle": "^3.0",
     "doctrine/orm": "^2.8.1",
+    "fortawesome/font-awesome": "^5.15",
     "knplabs/knp-markdown-bundle": "^1.8",
     "league/color-extractor": "^0.3.2",
     "liip/imagine-bundle": "^2.3",
@@ -95,6 +96,7 @@
       "Pushword\\PageScanner\\": "packages/page-scanner/src",
       "Pushword\\PageUpdateNotifier\\": "packages/page-update-notifier/src",
       "Pushword\\StaticGenerator\\": "packages/static-generator/src",
+      "Pushword\\Svg\\": "packages/svg/src",
       "Pushword\\TemplateEditor\\": "packages/template-editor/src"
     }
   },
@@ -108,6 +110,7 @@
       "Pushword\\PageScanner\\Tests\\": "packages/page-scanner/tests",
       "Pushword\\PageUpdateNotifier\\Tests\\": "packages/page-update-notifier/tests",
       "Pushword\\StaticGenerator\\Tests\\": "packages/static-generator/tests",
+      "Pushword\\Svg\\Tests\\": "packages/svg/tests",
       "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests"
     }
   },

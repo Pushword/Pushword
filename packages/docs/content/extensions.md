@@ -17,6 +17,8 @@ parent: homepage
   Get mail notification when your pushword content (page) is edited.
 - [Static Generator](/extension/static-generator)
   Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).
+- [Svg](/extension/svg)
+  Add SVG with ease in your main content or in a template file via a twig function.
 - [Template Editor](/extension/template-editor)
   Edit view file online in the [admin](https://pushword.piedweb.com/extension/admin).
 

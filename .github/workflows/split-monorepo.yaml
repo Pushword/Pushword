@@ -47,6 +47,7 @@ jobs:
           - static-generator
           - template-editor
           - skeleton
+          - svg
           - installer
           - js-helper
           #package: ${{fromJson(needs.provide_packages_json.outputs.matrix)}}

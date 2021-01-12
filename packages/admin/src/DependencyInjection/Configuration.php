@@ -29,7 +29,6 @@ use Pushword\Admin\FormField\UserRolesField;
 use Pushword\Admin\FormField\UserUsernameField;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 
 class Configuration implements ConfigurationInterface
 {
@@ -40,7 +39,7 @@ class Configuration implements ConfigurationInterface
 
     const DEFAULT_ADMIN_USER_FORM_FIELDS = [
         [UserEmailField::class, UserUsernameField::class, UserPasswordField::class, CreatedAtField::class],
-        ['admin.user.label.security' => [UserRolesField::class],]
+        ['admin.user.label.security' => [UserRolesField::class]],
     ];
     const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
         [PageH1Field::class, PageMainContentField::class],
