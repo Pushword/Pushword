@@ -26,7 +26,6 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
 
     private $messagePrefix = 'admin.media';
 
-
     protected function configureFormFields(FormMapper $formMapper): void
     {
         $media = $this->getSubject();

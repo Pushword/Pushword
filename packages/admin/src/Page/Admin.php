@@ -2,10 +2,7 @@
 
 namespace Pushword\Admin\Page;
 
-use Exception;
-use Pushword\Admin\Page\AdminInterface;
 use Pushword\Admin\AdminTrait;
-use Pushword\Admin\SharedFormFieldsTrait;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -50,10 +47,6 @@ class Admin extends AbstractAdmin implements AdminInterface
         return method_exists($this->pageClass, 'get'.$name);
     }
 
-    protected function addFormField(string $field, FormMapper $formMapper): void
-    {
-        (new $field($this))->formField($formMapper);
-    }
 
     protected function configureFormFields(FormMapper $formMapper): void
     {
@@ -158,5 +151,4 @@ class Admin extends AbstractAdmin implements AdminInterface
 
         return new Metadata(strip_tags($page->getName(true)), null, $thumb);
     }
-
 }

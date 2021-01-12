@@ -3,12 +3,13 @@
 namespace Pushword\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager as LiipCacheManager;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\UserInterface;
+use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Twig\Environment as Twig;
-use Liip\ImagineBundle\Imagine\Cache\CacheManager as LiipCacheManager;
 
 trait AdminTrait
 {
@@ -70,7 +71,12 @@ trait AdminTrait
         return $this;
     }
 
-    protected function getUser()
+    protected function addFormField(string $field, FormMapper $formMapper): void
+    {
+        (new $field($this))->formField($formMapper);
+    }
+
+    public function getUser()
     {
         return $this->securityTokenStorage->getToken()->getUser();
     }
@@ -80,7 +86,6 @@ trait AdminTrait
     {
         $this->securityTokenStorage = $securityTokenStorage;
     }
-
 
     /** @required */
     public function setEntityManagerInterface(EntityManagerInterface $em): void

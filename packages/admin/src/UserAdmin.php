@@ -11,7 +11,6 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 class UserAdmin extends AbstractAdmin implements UserAdminInterface
 {
     use AdminTrait;
-    use UserAdminFormFieldsTrait;
 
     protected $messagePrefix = 'admin.user';
 
@@ -28,24 +27,18 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
 
     protected function configureFormFields(FormMapper $formMapper): void
     {
-        // Next : load this from configuration
-        $firstColumn = ['email', 'username', 'password', 'createdAt'];
-        $secondColumn = [
-            'admin.user.label.security' => ['roles'],
-        ];
+        $fields = $this->apps->get()->get('admin_user_form_fields');
 
         $formMapper->with('admin.user.label.id', ['class' => 'col-md-6 mainFields']);
-        foreach ($firstColumn as $field) {
-            $func = 'configureFormField'.ucfirst($field);
-            $this->$func($formMapper);
+        foreach ($fields[0] as $field) {
+            $this->addFormField($field, $formMapper);
         }
         $formMapper->end();
 
-        foreach ($secondColumn as $k => $block) {
+        foreach ($fields[1]  as $k => $block) {
             $formMapper->with($k, ['class' => 'col-md-3 columnFields']);
             foreach ($block as $field) {
-                $func = 'configureFormField'.ucfirst($field);
-                $this->$func($formMapper);
+                $this->addFormField($field, $formMapper);
             }
 
             $formMapper->end();

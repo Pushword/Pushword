@@ -2,14 +2,12 @@
 
 namespace Pushword\Admin\FormField;
 
-
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\Form\Type\DateTimePickerType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
 class CreatedAtField extends AbstractField
 {
-
     public function formField(FormMapper $formMapper): FormMapper
     {
         return $formMapper->add('createdAt', DateTimePickerType::class, [

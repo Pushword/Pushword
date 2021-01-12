@@ -4,13 +4,11 @@ namespace Pushword\Admin\DependencyInjection;
 
 use Pushword\Admin\FormField\CreatedAtField;
 use Pushword\Admin\FormField\CustomPropertiesField;
-use Pushword\Admin\FormField\OgDescription;
 use Pushword\Admin\FormField\OgDescriptionField;
 use Pushword\Admin\FormField\OgImageField;
 use Pushword\Admin\FormField\OgTitleField;
 use Pushword\Admin\FormField\OgTwitterCardField;
 use Pushword\Admin\FormField\OgTwitterCreatorField;
-use Pushword\Admin\FormField\OgTwitterSite;
 use Pushword\Admin\FormField\OgTwitterSiteField;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageHostField;
@@ -25,18 +23,25 @@ use Pushword\Admin\FormField\PageSearchExcreptField;
 use Pushword\Admin\FormField\PageSlugField;
 use Pushword\Admin\FormField\PageTitleField;
 use Pushword\Admin\FormField\PageTranslationsField;
-use Pushword\Conversation\Form\MessageForm;
-use Pushword\Conversation\Form\MultiStepMessageForm;
-use Pushword\Conversation\Form\NewsletterForm;
+use Pushword\Admin\FormField\UserEmailField;
+use Pushword\Admin\FormField\UserPasswordField;
+use Pushword\Admin\FormField\UserRolesField;
+use Pushword\Admin\FormField\UserUsernameField;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 
 class Configuration implements ConfigurationInterface
 {
     const DEFAULT_APP_FALLBACK = [
         'admin_page_form_fields',
+        'admin_user_form_fields',
     ];
 
+    const DEFAULT_ADMIN_USER_FORM_FIELDS = [
+        [UserEmailField::class, UserUsernameField::class, UserPasswordField::class, CreatedAtField::class],
+        ['admin.user.label.security' => [UserRolesField::class],]
+    ];
     const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
         [PageH1Field::class, PageMainContentField::class],
         [
@@ -54,9 +59,9 @@ class Configuration implements ConfigurationInterface
             'admin.page.og.label' => [
                 'expand' => true,
                 'fields' => [OgTitleField::class, OgDescriptionField::class, OgImageField::class,
-                    OgTwitterCardField::class, OgTwitterSiteField::class, OgTwitterCreatorField::class],
+                    OgTwitterCardField::class, OgTwitterSiteField::class, OgTwitterCreatorField::class, ],
             ],
-        ]
+        ],
     ];
 
     public function getConfigTreeBuilder()
@@ -67,6 +72,7 @@ class Configuration implements ConfigurationInterface
                 ->children()
                     ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
                     ->variableNode('admin_page_form_fields')->defaultValue(self::DEFAULT_ADMIN_PAGE_FORM_FIELDS)->cannotBeEmpty()->end()
+                    ->variableNode('admin_user_form_fields')->defaultValue(self::DEFAULT_ADMIN_USER_FORM_FIELDS)->cannotBeEmpty()->end()
                 ->end()
         ;
 
