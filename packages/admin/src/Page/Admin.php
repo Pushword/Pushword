@@ -2,6 +2,8 @@
 
 namespace Pushword\Admin\Page;
 
+use Exception;
+use Pushword\Admin\Page\AdminInterface;
 use Pushword\Admin\AdminTrait;
 use Pushword\Admin\SharedFormFieldsTrait;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
@@ -16,9 +18,6 @@ class Admin extends AbstractAdmin implements AdminInterface
     public $supportsPreviewMode = true;
 
     use AdminTrait;
-    use FormFieldsOpenGraphTrait;
-    use FormFieldsTrait;
-    use SharedFormFieldsTrait;
 
     protected $messagePrefix = 'admin.page';
 
@@ -29,11 +28,11 @@ class Admin extends AbstractAdmin implements AdminInterface
         '_per_page' => 256,
     ];
 
+    protected array $fields = [];
+
     protected $perPageOptions = [16, 250, 1000];
 
     protected $maxPerPage = 1000;
-
-    protected $liipImage;
 
     public function __construct($code, $class, $baseControllerName)
     {
@@ -41,11 +40,6 @@ class Admin extends AbstractAdmin implements AdminInterface
         $this->listModes['tree'] = [
             'class' => 'fa fa-sitemap',
         ];
-    }
-
-    public function setLiipImage($liipImage)
-    {
-        $this->liipImage = $liipImage;
     }
 
     /**
@@ -56,42 +50,27 @@ class Admin extends AbstractAdmin implements AdminInterface
         return method_exists($this->pageClass, 'get'.$name);
     }
 
+    protected function addFormField(string $field, FormMapper $formMapper): void
+    {
+        (new $field($this))->formField($formMapper);
+    }
+
     protected function configureFormFields(FormMapper $formMapper): void
     {
-        // Next : load this from configuration
-        $mainFields = ['h1', 'mainContent']; //'mainContentType'];
-        $columnFields = [
-            'admin.page.state.label' => ['createdAt', 'metaRobots'],
-            'admin.page.permanlien.label' => ['host', 'slug'],
-            'admin.page.mainImage.label' => ['mainImage'],
-            'admin.page.parentPage.label' => ['parentPage'],
-            'admin.page.search.label' => [
-                'expand' => true,
-                'fields' => ['title', 'name', 'searchExcrept'],
-            ],
-            'admin.page.translations.label' => ['locale', 'translations'],
-            'admin.page.customProperties.label' => ['expand' => true, 'fields' => ['customProperties']],
-            'admin.page.gallery.label' => ['images'],
-            'admin.page.og.label' => [
-                'expand' => true,
-                'fields' => ['ogTitle', 'ogDescription', 'ogImage', 'TwitterCard', 'twitterSite', 'twitterCreator'],
-            ],
-        ];
+        $fields = $this->apps->get()->get('admin_page_form_fields');
 
         $formMapper->with('admin.page.mainContent.label', ['class' => 'col-md-9 mainFields']);
-        foreach ($mainFields as $field) {
-            $func = 'configureFormField'.ucfirst($field);
-            $this->$func($formMapper);
+        foreach ($fields[0] as $field) {
+            $this->addFormField($field, $formMapper);
         }
         $formMapper->end();
 
-        foreach ($columnFields as $k => $block) {
+        foreach ($fields[1] as $k => $block) {
             $fields = $block['fields'] ?? $block;
             $class = isset($block['expand']) ? 'expand' : '';
             $formMapper->with($k, ['class' => 'col-md-3 columnFields '.$class, 'label' => $k]);
             foreach ($fields as $field) {
-                $func = 'configureFormField'.ucfirst($field);
-                $this->$func($formMapper);
+                $this->addFormField($field, $formMapper);
             }
 
             $formMapper->end();
@@ -111,7 +90,7 @@ class Admin extends AbstractAdmin implements AdminInterface
     {
         $formMapper->add('locale', null, ['label' => 'admin.page.locale.label']);
 
-        if (\count($this->getHosts()) > 1) {
+        if (\count($this->getApps()->getHosts()) > 1) {
             $formMapper->add('host', null, ['label' => 'admin.page.host.label']);
         }
 
@@ -179,4 +158,5 @@ class Admin extends AbstractAdmin implements AdminInterface
 
         return new Metadata(strip_tags($page->getName(true)), null, $thumb);
     }
+
 }

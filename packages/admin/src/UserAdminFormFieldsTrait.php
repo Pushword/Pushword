@@ -3,10 +3,12 @@
 namespace Pushword\Admin;
 
 use Sonata\AdminBundle\Form\FormMapper;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Sonata\Form\Type\DatePickerType;
 use Sonata\Form\Type\ImmutableArrayType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Sonata\Form\Type\DateTimePickerType;
 
 trait UserAdminFormFieldsTrait
 {
@@ -39,7 +41,7 @@ trait UserAdminFormFieldsTrait
                 ['0', ChoiceType::class, [
                     'required' => false,
                     'label' => 'admin.user.role.label',
-                    'choices' => $this->getUser()->hasRole('ROLE_SUPER_ADMIN') ? [
+                    'choices' => in_array('ROLE_SUPER_ADMIN', $this->getUser()->getRoles()) ? [
                         'admin.user.role.super_admin' => 'ROLE_SUPER_ADMIN',
                         'admin.user.role.admin' => 'ROLE_ADMIN',
                         'admin.user.role.editor' => 'ROLE_EDITOR',
@@ -51,6 +53,21 @@ trait UserAdminFormFieldsTrait
                     ],
                 ]],
             ],
+        ]);
+    }
+
+    protected function configureFormFieldCreatedAt(FormMapper $formMapper): FormMapper
+    {
+        return $formMapper->add('createdAt', DateTimePickerType::class, [
+            'format' => DateTimeType::HTML5_FORMAT,
+            'dp_side_by_side' => true,
+            'dp_use_current' => true,
+            'dp_use_seconds' => false,
+            'dp_collapse' => true,
+            'dp_calendar_weeks' => false,
+            'dp_view_mode' => 'days',
+            'dp_min_view_mode' => 'days',
+            'label' => $this->getMessagePrefix().'.createdAt.label',
         ]);
     }
 

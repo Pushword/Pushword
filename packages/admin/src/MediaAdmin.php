@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -21,13 +22,10 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         '_sort_by' => 'updatedAt',
     ];
 
-    private $liipImage;
     private $relatedPages;
 
-    public function setLiipImage($liipImage)
-    {
-        $this->liipImage = $liipImage;
-    }
+    private $messagePrefix = 'admin.media';
+
 
     protected function configureFormFields(FormMapper $formMapper): void
     {
@@ -133,8 +131,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
 
         $media = $this->getSubject();
 
-        $pages = $this->em
-            ->getRepository($this->pageClass)
+        $pages = Repository::getPageRepository($this->em, $this->pageClass)
             ->getPagesUsingMedia($this->liipImage->getBrowserPath($media->getFullPath(), 'default'));
 
         $this->relatedPages = [

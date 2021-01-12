@@ -2,6 +2,8 @@
 
 namespace Pushword\Admin;
 
-interface PageHasMediaAdminInterface
+use Pushword\Admin\AdminInterface;
+
+interface PageHasMediaAdminInterface extends AdminInterface
 {
 }

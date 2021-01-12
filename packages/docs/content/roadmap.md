@@ -8,6 +8,9 @@ parent: contribute
 ## TODO before v1
 
 - [ ] Revoir la gestion des assets
+- [ ] WEBpConverter => move to patches
+- [ ] AbstractAdminFormEntity with constructor(Admin $admin) and getFormField(...) getSearchField... + load \*AdminFormEntity from config (so the admin panel is configurable without writing PHP)
+- [ ] SVG twig extension {{ svg('icon', attr) }}
 
 ## TODO Extension
 

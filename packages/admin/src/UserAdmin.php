@@ -11,10 +11,10 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 class UserAdmin extends AbstractAdmin implements UserAdminInterface
 {
     use AdminTrait;
-    use SharedFormFieldsTrait;
     use UserAdminFormFieldsTrait;
 
     protected $messagePrefix = 'admin.user';
+
     protected $datagridValues = [
         '_page' => 1,
         '_sort_order' => 'DESC',

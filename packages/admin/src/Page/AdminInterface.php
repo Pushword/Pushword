@@ -2,6 +2,11 @@
 
 namespace Pushword\Admin\Page;
 
-interface AdminInterface
+use Pushword\Admin\AdminInterface as BaseAdminInterface;
+use Pushword\Core\Component\App\AppPool;
+use Symfony\Component\Routing\RouterInterface;
+use Sonata\AdminBundle\Admin\AdminInterface as AdminAdminInterface;
+
+interface AdminInterface extends BaseAdminInterface
 {
 }

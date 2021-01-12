@@ -10,12 +10,9 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 
 class PageHasMediaAdmin extends AbstractAdmin implements PageHasMediaAdminInterface
 {
-    private $liipImage;
+    use AdminTrait;
 
-    public function setLiipImage($liipImage)
-    {
-        $this->liipImage = $liipImage;
-    }
+    protected string $messagePrefix = 'admin.media';
 
     protected function getMedialHelp($media)
     {

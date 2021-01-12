@@ -16,18 +16,12 @@ services:
     tags:
       - { name: sonata.admin, manager_type: orm, label: admin.label.page }
     calls:
-      - [setLiipImage, ['@liip_imagine.cache.manager']]
       - [setTemplate, [list, '@@pwAdmin/CRUD/mosaic.html.twig']]
       - [setTemplate, [show, '@@pwAdmin/page/page_show.html.twig']]
       - [setTemplate, [edit, '@@pwAdmin/page/page_edit.html.twig']]
-      - [setTemplate, [preview, '@@pwAdmin/page/preview.html.twig']]
-      - [setSecurityTokenStorage, ['@security.token_storage']]
-      - [setTwig, ['@twig']]
-      - [setApps, ['@pushword.apps']]
       - [setMediaClass, ['%pw.entity_media%']]
       - [setUserClass, ['%pw.entity_user%']]
       - [setPageClass, ['%pw.entity_page%']]
-      - [setRouter, ['@router']]
     public: true
 
   Pushword\Admin\Page\CRUDControllerInterface:
@@ -53,8 +47,8 @@ services:
   pushword.admin.media:
     class: Pushword\Admin\MediaAdmin
     arguments: [~, '%pw.entity_media%', ~]
+    autowire: true
     calls:
-      - [setLiipImage, ['@liip_imagine.cache.manager']]
       - [setTemplate, [list, '@@pwAdmin/CRUD/mosaic.html.twig']]
       - [
           setTemplate,
@@ -63,8 +57,6 @@ services:
             '@@pwAdmin/media/short_object_description.html.twig',
           ],
         ]
-      - [setEntityManager, ['@doctrine.orm.default_entity_manager']]
-      - [setTwig, ['@twig']]
       - [setPageClass, ['%pw.entity_page%']]
     tags:
       - { name: sonata.admin, manager_type: orm, label: admin.label.media }
@@ -75,8 +67,7 @@ services:
   pushword.admin.pagehasmedia:
     class: Pushword\Admin\PageHasMediaAdmin
     arguments: [~, '%pw.entity_pagehasmedia%', ~]
-    calls:
-      - [setLiipImage, ['@liip_imagine.cache.manager']]
+    autowire: true
     tags:
       - { name: sonata.admin, manager_type: orm }
 
@@ -85,10 +76,10 @@ services:
 
   pushword.admin.user:
     class: Pushword\Admin\UserAdmin
+    autowire: true
     arguments: [~, '%pw.entity_user%', ~]
     tags:
       - { name: sonata.admin, manager_type: orm, label: admin.label.user }
     public: true
     calls:
       - [setUserClass, ['%pw.entity_user%']]
-      - [setSecurityTokenStorage, ['@security.token_storage']]

@@ -30,7 +30,7 @@ composer require pushword/core pushword/admin
 composer require pushword/skeleton --dev
 
 # Add puswhord/admin routes
-sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle/AdminRoutes.yaml"\n/' config/routes.yaml
+sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle\/AdminRoutes.yaml"\n/' config/routes.yaml
 
 
 # We copy pushword config to easily edit it later manually

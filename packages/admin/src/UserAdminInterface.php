@@ -2,6 +2,8 @@
 
 namespace Pushword\Admin;
 
-interface UserAdminInterface
+use Pushword\Admin\AdminInterface;
+
+interface UserAdminInterface extends AdminInterface
 {
 }

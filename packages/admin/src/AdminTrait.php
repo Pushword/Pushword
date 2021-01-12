@@ -2,16 +2,25 @@
 
 namespace Pushword\Admin;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Entity\UserInterface;
+use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Twig\Environment as Twig;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager as LiipCacheManager;
+
 trait AdminTrait
 {
-    protected $apps;
-    protected $pageClass;
-    protected $mediaClass;
-    protected $userClass;
-    protected $twig;
-    protected $em;
-    protected $router;
-    protected $securityTokenStorage;
+    protected AppPool $apps;
+    private LiipCacheManager $liipImage;
+    protected string $pageClass;
+    protected string $mediaClass;
+    protected string $userClass;
+    protected Twig $twig;
+    protected EntityManagerInterface $em;
+    protected RouterInterface $router;
+    protected TokenStorageInterface $securityTokenStorage;
 
     protected static $thumb = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgaGVpZ2h0PSIzMnB4IiB2ZXJzaW
                 9uPSIxLjEiIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMycHgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIg
@@ -66,50 +75,80 @@ trait AdminTrait
         return $this->securityTokenStorage->getToken()->getUser();
     }
 
-    public function setSecurityTokenStorage($securityTokenStorage)
+    /** @required */
+    public function setSecurityTokenStorage(TokenStorageInterface $securityTokenStorage): void
     {
         $this->securityTokenStorage = $securityTokenStorage;
     }
 
-    public function setEntityManager($em)
+
+    /** @required */
+    public function setEntityManagerInterface(EntityManagerInterface $em): void
     {
         $this->em = $em;
     }
 
-    public function setTwig($twig)
+    /** @required */
+    public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;
     }
 
-    public function setPageClass($pageClass)
+    public function setPageClass($pageClass): void
     {
         $this->pageClass = $pageClass;
     }
 
-    public function setApps($apps)
+    /** @required */
+    public function setApps(AppPool $apps): void
     {
         $this->apps = $apps;
     }
 
-    public function setMediaClass($mediaClass)
+    public function getApps(): AppPool
+    {
+        return $this->apps;
+    }
+
+    public function setMediaClass($mediaClass): void
     {
         $this->mediaClass = $mediaClass;
     }
 
-    public function setUserClass($userClass)
+    public function setUserClass($userClass): void
     {
         $this->userClass = $userClass;
     }
 
-    /**
-     * Set the value of router.
-     *
-     * @return self
-     */
-    public function setRouter($router)
+    /** @required */
+    public function setRouter(RouterInterface $router): void
     {
         $this->router = $router;
+    }
 
-        return $this;
+    public function getRouter(): RouterInterface
+    {
+        return $this->router;
+    }
+
+    public function getMediaClass(): string
+    {
+        return $this->mediaClass;
+    }
+
+    public function getPageClass(): string
+    {
+        return $this->pageClass;
+    }
+
+    public function getMessagePrefix(): string
+    {
+        return $this->messagePrefix;
+    }
+
+    /** @required */
+    public function setLiipImage(LiipCacheManager $liipImage)
+    {
+        $this->liipImage = $liipImage;
     }
 }
