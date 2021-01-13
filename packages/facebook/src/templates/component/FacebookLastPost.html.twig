@@ -1,30 +1,29 @@
+{% block facebook_last_post %}
 
-{% set publish_time = post.publish_time|date('Y-m-d H:i:s')|format_datetime('short', 'short') %}
+    {% block text %}<div>{{ post.text|markdown }}</div>{% endblock %}
 
-<div>
-{{ post.text|markdown }}
-</div>
+    {% block gallery %}
+        {% set gallery_id = 'g-' ~ post.post_id %}
+        {% from view('/page/_gallery.html.twig') import galleryPart %}
+        {% if post.images_hd is defined and post.images_hd is not empty %}
+            <ul class="grid grid-cols-2 gap-3 list-none">
+                {% for image in post.images_hd %}
+                    <li>{{ galleryPart(image, gallery_id, null) }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endblock %}
 
-        {% import view('/component/macro.html.twig') as helper %}
-{% set gallery_id = 'g-' ~ post.post_id %}
-{% if post.images_hd %}
-    {% for image in post.images_hd %}
-        {{ image.media }}
-            {{ helper.thumb(image, null, 'default') }}
-    {% endfor %}
-{% endif %}
+    {% block meta_data %}
+        {% apply spaceless %}
+        {% set publish_time = post.publish_time|date('Y-m-d H:i:s')|format_datetime('short', 'short') %}
+        {% set postUrl = 'https://www.facebook.com/' ~ pageId ~ '/posts/' ~ post.post_id %}
+        <div class="font-light text-right">
+        {{ link(svg('comments', {'class': 'fill-current inline-block', 'width': '1em'}) ~ ' ' ~ post.comment_number, postUrl) }} |
+        {{ link(svg('thumbs-up', {'class': 'fill-current inline-block', 'width': '1em'}) ~ ' ' ~ post.like_number, postUrl) }} |
+        {{ link(svg('clock', {'class': 'fill-current inline-block', 'width': '1em'}) ~ ' ' ~ publish_time, postUrl) }}
+        </div>
+        {% endapply %}
+    {% endblock %}
 
-<div class="font-light text-right">
-{% set postUrl = 'https://www.facebook.com/' ~ pageId ~ '/posts/' ~ post.post_id %}
-
-
-{% set icon = svg('comments', {'class': 'fill-current inline-block', 'width': '1em'}) %}
-{{ link(icon ~ ' ' ~ post.comment_number, postUrl) }} |
-
-{% set icon = svg('thumbs-up', {'class': 'fill-current inline-block', 'width': '1em'}) %}
-{{ link(icon ~ ' ' ~ post.like_number, postUrl) }} |
-
-
-{% set icon = svg('clock', {'class': 'fill-current inline-block', 'width': '1em'}) %}
-{{ link(icon ~ ' ' ~ publish_time, postUrl) }}
-</div>
+{% endblock %}
