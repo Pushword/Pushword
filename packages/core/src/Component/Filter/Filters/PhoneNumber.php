@@ -17,7 +17,7 @@ class PhoneNumber extends ShortCode
 
     public function convertPhoneNumber($body)
     {
-        $rgx = '/(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}/iU';
+        $rgx = '/ (?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4} /iU';
         preg_match_all($rgx, $body, $matches);
 
         if (! isset($matches[0])) {

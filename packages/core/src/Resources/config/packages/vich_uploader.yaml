@@ -4,7 +4,7 @@ vich_uploader:
   mappings:
     media_media:
       #uri_prefix:
-      upload_destination: '%pw.media_dir_absolute%'
+      upload_destination: '%pw.media_dir%'
       namer:
         service: Pushword\Core\Service\VichUploadPropertyNamer #Vich\UploaderBundle\Naming\PropertyNamer
         options: { property: 'slug' }

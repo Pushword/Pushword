@@ -6,7 +6,7 @@
             src="{{ image.fullPath|imagine_filter('default') }}"
             loading="lazy"
             width="10000" height="10000"
-            alt="{{ image.name(page is defined ? page.locale : null) }}"
+            alt="{{ image.name(page is not null ? page.locale : null) }}"
             {{ otherAttributes ? attr(otherAttributes) : '' }} />
     </picture>
 {% endapply %}{% endmacro %}

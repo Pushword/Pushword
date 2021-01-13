@@ -1,5 +1,5 @@
 ---
-title: Pushword License and contributors
+title: Pushword CMS License and contributors
 h1: License and contributors
 toc: true
 parent: installation

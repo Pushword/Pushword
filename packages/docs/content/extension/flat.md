@@ -10,7 +10,7 @@ Transform Pushword in a FlatFile CMS.
 ## Install
 
 ```
-composer require piedweb/flat-file
+composer require pushword/flat-file
 ```
 
 ## Configure

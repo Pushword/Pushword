@@ -1,5 +1,5 @@
 ---
-title: 'Insert SVG/Icon in your content - Pushword'
+title: 'Insert SVG/Icon in your content - Pushword CMS'
 h1: SVG
 toc: true
 parent: extensions

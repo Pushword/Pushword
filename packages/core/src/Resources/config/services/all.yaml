@@ -3,7 +3,6 @@ services:
   # Me
   # --------
   Twig\Extension\StringLoaderExtension: ~
-  Twig\Extensions\IntlExtension: null
 
   Pushword\Core\PushwordCoreBundle: ~
 
@@ -141,6 +140,11 @@ services:
   pushword.twig.extension.render_attributes:
     class: PiedWeb\RenderAttributes\TwigExtension
     public: false
+    tags:
+      - { name: twig.extension }
+
+  twig.extension.intl:
+    class: Twig\Extra\Intl\IntlExtension
     tags:
       - { name: twig.extension }
 

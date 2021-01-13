@@ -1,5 +1,5 @@
 ---
-title: Static Website Generator with Pushword
+title: Static Website Generator with Pushword CMS
 h1: Static Generator
 toc: true
 parent: extensions
@@ -10,7 +10,7 @@ Generate a static website serve by github pages, apaches with one command or via
 ## Install
 
 ```shell
-composer require piedweb/template-editor
+composer require pushword/template-editor
 ```
 
 Add Routes

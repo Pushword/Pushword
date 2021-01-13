@@ -1,5 +1,5 @@
 ---
-title: Template Editor with Pushword
+title: Template Editor with Pushword CMS
 h1: Template Editor
 toc: true
 parent: extensions

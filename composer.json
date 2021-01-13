@@ -27,8 +27,9 @@
     "league/color-extractor": "^0.3.2",
     "liip/imagine-bundle": "^2.3",
     "nette/utils": "^3.2",
+    "piedweb/facebook-scraper": "^0.0.71",
     "piedweb/linksimprover": "^0.0.7",
-    "piedweb/render-html-attributes": "^1.0 | ^2.0",
+    "piedweb/render-html-attributes": "^2.0",
     "piedweb/url-harvester": "^0.0.26",
     "rosell-dk/webp-convert": "^2.4",
     "sensio/framework-extra-bundle": "^5.6",
@@ -97,6 +98,7 @@
       "Pushword\\PageUpdateNotifier\\": "packages/page-update-notifier/src",
       "Pushword\\StaticGenerator\\": "packages/static-generator/src",
       "Pushword\\Svg\\": "packages/svg/src",
+      "Pushword\\Facebook\\": "packages/facebook/src",
       "Pushword\\TemplateEditor\\": "packages/template-editor/src"
     }
   },
@@ -111,6 +113,7 @@
       "Pushword\\PageUpdateNotifier\\Tests\\": "packages/page-update-notifier/tests",
       "Pushword\\StaticGenerator\\Tests\\": "packages/static-generator/tests",
       "Pushword\\Svg\\Tests\\": "packages/svg/tests",
+      "Pushword\\Facebook\\Tests\\": "packages/facebook/tests",
       "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests"
     }
   },

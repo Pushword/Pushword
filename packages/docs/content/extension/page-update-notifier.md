@@ -1,5 +1,5 @@
 ---
-title: Be notify when a page is edited on your Pushword
+title: Be notify when a page is edited on your Pushword CMS
 h1: Page Update Notifier
 toc: true
 parent: extensions

@@ -71,6 +71,8 @@ class PageController extends AbstractController
             }
         }
 
+        $request->setLocale($page->getLocale()); // TODO: move it to event (onRequest + onPageLoad)
+
         return $this->render($view, $params, $response);
     }
 
@@ -79,7 +81,7 @@ class PageController extends AbstractController
         return $this->app->getView($path, $this->twig);
     }
 
-    public function showFeed(?string $slug, ?string $host)
+    public function showFeed(?string $slug, ?string $host, Request $request)
     {
         $page = $this->getPage($slug, $host);
 
@@ -93,6 +95,8 @@ class PageController extends AbstractController
         if (! \count($page->getChildrenPages())) {
             throw $this->createNotFoundException();
         }
+
+        $request->setLocale($page->getLocale()); // TODO: move it to event (onRequest + onPageLoad)
 
         return $this->render(
             $this->getView('/page/rss.xml.twig'),

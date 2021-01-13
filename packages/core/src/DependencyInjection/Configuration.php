@@ -46,7 +46,7 @@ class Configuration implements ConfigurationInterface
             ->scalarNode('entity_media')->defaultValue('App\Entity\Media')->cannotBeEmpty()->end()
             ->scalarNode('entity_user')->defaultValue('App\Entity\User')->cannotBeEmpty()->end()
             ->scalarNode('entity_pagehasmedia')->defaultValue('App\Entity\PageHasMedia')->cannotBeEmpty()->end()
-            ->scalarNode('media_dir_absolute')->defaultValue('%kernel.project_dir%/media')->cannotBeEmpty()->end()
+            ->scalarNode('media_dir')->defaultValue('%kernel.project_dir%/media')->cannotBeEmpty()->end()
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
             // default app value
             ->scalarNode('locale')->defaultValue('%locale%')->cannotBeEmpty()->end()

@@ -3,13 +3,15 @@
 namespace Pushword\Svg;
 
 use Exception;
-use Pushword\Core\Component\App\AppPool;
+use PiedWeb\RenderAttributes\AttributesTrait;
+use Pushword\Core\AutowiringTrait\RequiredApps;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 class TwigExtension extends AbstractExtension
 {
-    private AppPool $apps;
+    use AttributesTrait;
+    use RequiredApps;
 
     public function getFunctions()
     {
@@ -18,13 +20,7 @@ class TwigExtension extends AbstractExtension
         ];
     }
 
-    /** @required */
-    public function setApps(AppPool $apps)
-    {
-        $this->apps = $apps;
-    }
-
-    public function getSvg(string $name): string
+    public function getSvg(string $name, $attr = ['class' => 'fill-current']): string
     {
         $dir = $this->apps->get()->get('svg_dir');
 
@@ -42,6 +38,20 @@ class TwigExtension extends AbstractExtension
             throw new Exception('`'.$name.'` (svg) not found.');
         }
 
-        return file_get_contents($file);
+        $svg = file_get_contents($file);
+
+        $svg = self::replaceOnce('<svg ', '<svg '.self::mapAttributes($attr).' ', $svg);
+
+        return $svg;
+    }
+
+    private static function replaceOnce(string $needle, string $replace, string $haystack)
+    {
+        $pos = strpos($haystack, $needle);
+        if (false !== $pos) {
+            $haystack = substr_replace($haystack, $replace, $pos, \strlen($needle));
+        }
+
+        return $haystack;
     }
 }

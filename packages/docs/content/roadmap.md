@@ -12,7 +12,7 @@ parent: contribute
 
 ## TODO Extension
 
-- [ ] FacebookManager (post from facebook and show last facebook status)
+- [ ] FacebookManager (post from facebook and ~~show last facebook status~~ )
 - [ ] Flat: Transform markdown link to page link (useful for navigate in docs from editor)
 - [ ] Flat: Throw error when the content is more up to date in database... add export (and maintain ID)
 - [ ] Wordpress To Pushword/Core (and vice versa)
