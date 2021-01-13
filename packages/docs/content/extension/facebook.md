@@ -28,17 +28,3 @@ For now, this extension just permit to show last post from a page.
 ### Override default theme
 
 Create a `/component/FacebookLastPost.html.twig` in your app template directory.
-
-## Usage
-
-### Command Line
-
-```
-php bin/console pushword:flat:import $host
-```
-
-Where $host is facultative.
-
-```
-
-```

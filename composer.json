@@ -25,6 +25,7 @@
     "fortawesome/font-awesome": "^5.15",
     "knplabs/knp-markdown-bundle": "^1.8",
     "league/color-extractor": "^0.3.2",
+    "league/commonmark": "^1.5",
     "liip/imagine-bundle": "^2.3",
     "nette/utils": "^3.2",
     "piedweb/facebook-scraper": "^0.0.71",
