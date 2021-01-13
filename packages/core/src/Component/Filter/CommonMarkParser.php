@@ -1,0 +1,47 @@
+<?php
+
+namespace Pushword\Core\Component\Filter;
+
+use Knp\Bundle\MarkdownBundle\MarkdownParserInterface;
+use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Environment;
+use League\CommonMark\Extension\Attributes\AttributesExtension;
+use League\CommonMark\Extension\SmartPunct\SmartPunctExtension;
+use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
+use League\CommonMark\Extension\Table\TableExtension;
+
+/**
+ * TODO: missing https://michelf.ca/projects/php-markdown/extra/#markdown-attr to switch to commonmark
+ */
+class CommonMarkParser implements MarkdownParserInterface
+{
+    protected Environment $env;
+
+    protected $converter;
+    protected array $config;
+
+    public function __construct()
+    {
+        $this->env = Environment::createCommonMarkEnvironment();
+        $this->env->addExtension(new AttributesExtension());
+        $this->env->addExtension(new TableExtension());
+        $this->env->addExtension(new SmartPunctExtension());
+        $this->env->addExtension(new StrikethroughExtension());
+
+        $this->config = [];
+    }
+
+    public function getConverter()
+    {
+        if (! $this->converter) {
+            $this->converter = new CommonMarkConverter($this->config, $this->env);
+        }
+
+        return $this->converter;
+    }
+
+    public function transformMarkdown($text)
+    {
+        return $this->getConverter()->convertToHtml($text);
+    }
+}

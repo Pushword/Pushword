@@ -7,7 +7,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use PiedWeb\RenderAttributes\AttributesTrait;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Component\Filter\Filters\Punctuation;
 use Pushword\Core\Component\Router\RouterInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaExternal;

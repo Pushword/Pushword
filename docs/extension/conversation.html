@@ -5,7 +5,7 @@ composer require pushword/conversation
 conversation:
     resource: '@PushwordConversationBundle/Resources/config/routes/conversation.yaml'
 </code></pre> <p>Update database <pre><code>php bin/console doctrine:schema:update --force
-</code></pre> <h2 id=usage>Usage</h2> <h3 id=you-can-use-it-as-is-and-include-it-in-your-page-with-two-manners>You can use it as is and include it in your Page with two manners&nbsp;:</h3> <pre><code class="language-bash"># Load form via fetch (javascript)
+</code></pre> <h2 id=usage>Usage</h2> <h3 id=you-can-use-it-as-is-and-include-it-in-your-page-with-two-manners>You can use it as is and include it in your Page with two manners&nbsp;:</h3> <pre><code class="bash"># Load form via fetch (javascript)
 &lt;div data-live="{{ conversation('newsletter') }}"&gt;&lt;/div&gt;
 # =
 &lt;div data-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'newsletter-'~page.slug, 'host': page.host}) }}"&gt;&lt;/div&gt;
