@@ -11,7 +11,7 @@ use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 
 /**
- * TODO: missing https://michelf.ca/projects/php-markdown/extra/#markdown-attr to switch to commonmark
+ * TODO: missing https://michelf.ca/projects/php-markdown/extra/#markdown-attr to switch to commonmark.
  */
 class CommonMarkParser implements MarkdownParserInterface
 {

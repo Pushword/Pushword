@@ -65,6 +65,7 @@ class AppExtension extends AbstractExtension
             new TwigFilter('html_entity_decode', 'html_entity_decode'),
             new TwigFilter('slugify', [(new Slugify()), 'slugify']),
             new TwigFilter('preg_replace', [self::class, 'pregReplace']),
+            new TwigFunction('nice_punctuation', [HtmlBeautifer::class, 'punctuationBeautifer'], self::options()),
         ];
     }
 
@@ -94,7 +95,6 @@ class AppExtension extends AbstractExtension
             new TwigFunction('card_children', [$this, 'renderChildrenListCard'], self::options(true)),
             new TwigFunction('getPages', [$this, 'getPublishedPages'], self::options(true)),
             new TwigFunction('str_rot13', [$this, 'rot13'], self::options()),
-            new TwigFunction('nice_punct', [HtmlBeautifer::class, 'punctuationBeautifer'], self::options()),
         ];
     }
 
