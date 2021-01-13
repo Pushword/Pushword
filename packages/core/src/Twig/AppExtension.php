@@ -65,7 +65,7 @@ class AppExtension extends AbstractExtension
             new TwigFilter('html_entity_decode', 'html_entity_decode'),
             new TwigFilter('slugify', [(new Slugify()), 'slugify']),
             new TwigFilter('preg_replace', [self::class, 'pregReplace']),
-            new TwigFunction('nice_punctuation', [HtmlBeautifer::class, 'punctuationBeautifer'], self::options()),
+            new TwigFilter('nice_punctuation', [HtmlBeautifer::class, 'punctuationBeautifer']),
         ];
     }
 
