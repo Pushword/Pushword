@@ -26,15 +26,16 @@ class TwigExtension extends AbstractExtension
 
         $couldBeIn = ['solid/', 'regular/', 'brands/', ''];
 
+        $file = null;
         foreach ($couldBeIn as $subDir) {
             $file = $dir.'/'.$subDir.$name.'.svg';
             if (file_exists($file)) {
                 break;
             }
-            unset($file);
+            $file = null;
         }
 
-        if (! isset($file)) {
+        if (! $file) {
             throw new Exception('`'.$name.'` (svg) not found.');
         }
 
