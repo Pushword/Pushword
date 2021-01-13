@@ -11,6 +11,8 @@ parent: homepage
   Extend your Pushword website with **comments**, a **contact** form or just an **user input**.
 - [Flat](/extension/flat)
   Transform Pushword in a FlatFile CMS.
+- [Facebook](/extension/facebook)
+  Write from Facebook on your page managed by Pushword.
 - [Page Scanner](/extension/page-scanner)
   Find dead links, 404, 301 and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)

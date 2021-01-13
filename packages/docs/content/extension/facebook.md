@@ -18,10 +18,10 @@ composer require pushword/facebook
 For now, this extension just permit to show last post from a page.
 
 ```
-{{ facebook_last_post('Google') }}
+{{ "{{ facebook_last_post('Google') }}" }}
 # will return the last post from Google's Facebook Page render via /component/FacebookLastPost.html.twig
 
-{% set fb_last_post_meta_data = facebook_last_post('Google', '') %}
+{{ "{% set fb_last_post_meta_data = facebook_last_post('Google', '') %}" }}
 # will return an array
 ```
 
