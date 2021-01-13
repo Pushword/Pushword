@@ -149,14 +149,30 @@ function memorizeOpenPannel() {
     localStorage.panels = JSON.stringify(panels);
   });
 
-  var panels =
-    localStorage.panels === 'undefined'
-      ? new Array()
-      : JSON.parse(localStorage.panels);
+  function onInit() {
+    var panels =
+      localStorage.panels === 'undefined'
+        ? new Array()
+        : JSON.parse(localStorage.panels);
 
-  for (var i in panels) {
-    if ($('#' + panels[i]).hasClass('collapse')) {
-      $('#' + panels[i]).collapse('show');
+    for (var i in panels) {
+      if ($('#' + panels[i]).hasClass('collapse')) {
+        $('#' + panels[i]).collapse('show');
+      }
     }
+  }
+
+  onInit();
+  onErrorOpenPanel();
+
+  function onErrorOpenPanel() {
+    document
+      .querySelectorAll('.sonata-ba-field-error-messages')
+      .forEach(function (element) {
+        var panel = element.closest('.collapse');
+        if (panel) {
+          $(panel).collapse('show');
+        }
+      });
   }
 }
