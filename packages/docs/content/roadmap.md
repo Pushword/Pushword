@@ -8,7 +8,7 @@ parent: contribute
 ## TODO before v1
 
 - [ ] Revoir la gestion des assets
-- [ ] Attendre la realease de sonata 4
+- [ ] release de sonata 4
 
 ## TODO Extension
 

@@ -129,7 +129,7 @@ function memorizeOpenPannel() {
   $('.collapse').on('shown.bs.collapse', function () {
     var active = $(this).attr('id');
     var panels =
-      localStorage.panels === undefined
+      localStorage.panels === 'undefined'
         ? new Array()
         : JSON.parse(localStorage.panels);
     if ($.inArray(active, panels) == -1) panels.push(active);
@@ -139,7 +139,7 @@ function memorizeOpenPannel() {
   $('.collapse').on('hidden.bs.collapse', function () {
     var active = $(this).attr('id');
     var panels =
-      localStorage.panels === undefined
+      localStorage.panels === 'undefined'
         ? new Array()
         : JSON.parse(localStorage.panels);
     var elementIndex = $.inArray(active, panels);
@@ -147,15 +147,16 @@ function memorizeOpenPannel() {
       panels.splice(elementIndex, 1);
     }
     localStorage.panels = JSON.stringify(panels);
-
-    var panels =
-      localStorage.panels === undefined
-        ? new Array()
-        : JSON.parse(localStorage.panels);
-    for (var i in panels) {
-      if ($('#' + panels[i]).hasClass('collapse')) {
-        $('#' + panels[i]).collapse('show');
-      }
-    }
   });
+
+  var panels =
+    localStorage.panels === 'undefined'
+      ? new Array()
+      : JSON.parse(localStorage.panels);
+
+  for (var i in panels) {
+    if ($('#' + panels[i]).hasClass('collapse')) {
+      $('#' + panels[i]).collapse('show');
+    }
+  }
 }
