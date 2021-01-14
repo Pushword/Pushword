@@ -19,8 +19,8 @@
             <tr class="sonata-ba-td-{{ id }}"><!--style="display:inline-table;"-->
                 <td class="sonata-ba-td-{{ id }}-_delete control-group" style="position:relative;">
                         {% set media = nested_group_field.children['media'] %}
-                        {% if media.vars.sonata_help %}
-                            {{ media.vars.sonata_help|raw }}
+                        {% if media.vars.help %}
+                            {{ media.vars.help|raw }}
                             <div style="display:none">{{ form_widget(media) }}</div>
                         {% else %}
                             {{ form_widget(media) }}
@@ -28,13 +28,13 @@
 
 
                         <span
-                            {% if media.vars.sonata_help %}
+                            {% if media.vars.help %}
                                 style="position:absolute; right: 10px;top:10px"
                             {% else %}
                                 style="position: absolute; top: 0; margin-top: 9px; left:7px;"
                             {% endif %}
-                            {% if media.vars.sonata_help %}style="position:absolute;z-index:4; left: 130px; margin-top: 5px;" {% endif%}
-                            onclick="$(this).closest('tr').remove();" class="btn btn-danger btn-sm{% if media.vars.sonata_help is null %} sonata-ba-action{% endif%}"
+                            {% if media.vars.help %}style="position:absolute;z-index:4; left: 130px; margin-top: 5px;" {% endif%}
+                            onclick="$(this).closest('tr').remove();" class="btn btn-danger btn-sm{% if media.vars.help is null %} sonata-ba-action{% endif%}"
                         ><i class="fa fa-trash"></i></span>
                 </td>
                 <td class="sonata-ba-td-{{ id }}-media control-group" style="display:none"></td>

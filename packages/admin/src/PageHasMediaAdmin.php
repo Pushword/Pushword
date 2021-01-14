@@ -52,7 +52,8 @@ class PageHasMediaAdmin extends AbstractAdmin implements PageHasMediaAdminInterf
                     'btn_edit' => false,
                     'btn_add' => (! $media) ? ' ' : false,
                     'btn_list' => (! $media) ? ' ' : false,
-                    'sonata_help' => $this->getMedialHelp($media),
+                    'help' => $this->getMedialHelp($media),
+                    'help_html' => true,
                 ]
             )
             ->add('position', HiddenType::class);
