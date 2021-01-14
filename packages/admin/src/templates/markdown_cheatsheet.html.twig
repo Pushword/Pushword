@@ -14,15 +14,16 @@
 hr.mt-5 {
     margin-top:1.5rem !important;
 }
+html { scroll-behavior: smooth; }
+pre { overflow:auto;}
+body {background-color:#fff}
 </style>
 
 <div class="max-w-screen-md p-3 mx-auto prose">
 <h1 class="mb-5"><small>Aide-Mémoire Markdown</small> <br>La syntaxe en détails</h1>
 <div class="p-3 mb-5 border rounded" style="max-width:700px">
-<style>html { scroll-behavior: smooth; }
-pre { overflow:auto;}
-body {background-color:#fff}</style>
-{% filter markdown %}
+
+{% apply markdown %}
 ###### <small style="text-transform:uppercase;">Sommaire</small>
 
 - [Titre, sous-titre et chapeau](#title)
@@ -41,7 +42,7 @@ body {background-color:#fff}</style>
 - [Lister des pages enfants (blog/news/...)](#children)
 - [Redirection](#redirect)
 - [Contenu enrichi](#rich-content)
-{% endfilter %}
+{% endapply %}
 </div>
 
 <hr class="mt-5 mb-5">
@@ -56,13 +57,13 @@ body {background-color:#fff}</style>
 #### Titre 6 (h6)
 </pre>
 
-{% filter markdown %}
+{% apply markdown %}
 ## Titre 2 (h2)
 ### Titre 3 (h3)
 ### Titre 4 (h4)
 #### Titre 5 (h5)
 #### Titre 6 (h6)
-{% endfilter %}
+{% endapply %}
 
 <hr class="mt-5 mb-5">
 
@@ -85,7 +86,7 @@ Gras             : **astérisques** ou __underscores__.<br>
 Gras et Italique : **astérisques et _ sous-scores _**.<br>
 Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 </pre>
-{% filter markdown %}
+{% apply markdown %}
 Italique : *astérisques* ou _underscores_
 
 Gras  : **astérisques** ou __underscores__.
@@ -93,7 +94,7 @@ Gras  : **astérisques** ou __underscores__.
 Gras et Italique : **astérisques et _underscore_**.
 
 Fluo             : <mark>fluuuuooo</mark>
-{% endfilter %}
+{% endapply %}
 <hr class="mt-5 mb-5">
 
 <h2 id="link">Lien Hypertexte</h2>
@@ -101,11 +102,11 @@ Fluo             : <mark>fluuuuooo</mark>
 [ma page d'accueil](/)
 [un autre site](https://example.tld/)
 </pre>
-{% filter markdown %}
+{% apply markdown %}
 [ma page d'accueil](/)
 
 [un autre site](https://example.tld/)
-{% endfilter %}
+{% endapply %}
 
 Lien dissimulé pour les moteurs de recherches :
 
@@ -151,7 +152,7 @@ Lien dissimulé pour les moteurs de recherches :
 + Ou un plus
 </pre>
 
-{% filter markdown %}
+{% apply markdown %}
 1. premier élément d'une liste ordonnée
 2. second
     * sous-liste
@@ -163,7 +164,7 @@ Lien dissimulé pour les moteurs de recherches :
 - ou un moins
     1. sous-liste ordonnée
 + Ou un plus
-{% endfilter %}
+{% endapply %}
 
 <hr class="mt-5 mb-5">
 
@@ -179,7 +180,7 @@ n'a aucune incidence.
 Pour ajouter un saut de ligne⋅⋅
 deux espace sont nécessaires.
 </pre>
-{% filter markdown %}
+{% apply markdown %}
 Sauter deux lignes.
 
 Permet de créer deux paragraphes.
@@ -189,7 +190,7 @@ n'a aucune incidence.
 
 Pour ajouter un saut de ligne<br>
 deux espace sont nécessaires.
-{% endfilter %}
+{% endapply %}
 <hr class="mt-5 mb-5">
 
 <h2 id="quote">Citation</h2>
@@ -201,14 +202,14 @@ Ma citation :
 
 > ou sur plusieurs paragraphes
 </pre>
-{% filter markdown %}
+{% apply markdown %}
 Ma citation :
 
 > Mon bloc de contenu cité
 > sur plusieurs lignes
 
 > ou sur plusieurs paragraphes
-{% endfilter %}
+{% endapply %}
 <hr class="mt-5 mb-5">
 
 <h2 id="img">Image</h2>
@@ -251,12 +252,12 @@ Ma citation :
 {{ "{{ video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}" }}
 </pre>
 
-{% filter markdown %}
+{% apply markdown %}
 - le premier élément correspond à l'URL de votre vidéo (youtube ou autre)
 - le second à l'image d'aperçu
 - le troisième
 - une quatrième valeur peut être ajouter `url` : permet de forcer l'affichage de la vidéo en plein écran
-{% endfilter %}
+{% endapply %}
 
 <hr class="mt-5 mb-5">
 
@@ -289,15 +290,15 @@ Location: http://example.eg/
 <hr class="mt-5 mb-5">
 
 
-<h2 id="rich-content">Autres Paramêtres</h2>
+<h2 id="rich-content">Autres Paramètres</h2>
 
 <p class="p-5 font-bold text-red-600 bg-red-100 rounded-sm">Fonctionnalités avancées.</p>
 
-{% filter markdown %}
+{% apply markdown %}
 - `subtitle`
 
 - `container`  <br>
-   class pour le contenant du contenu, par défault *container container-txt pt-4 mb-5*
+   class pour le contenant du contenu.
 
 - `feeds` array(type, uri, title)
 
@@ -306,12 +307,10 @@ Location: http://example.eg/
 - `main_image_multiple` <br>
   Plusieurs images en fonction d'un hash contenu dans l'url (ex: `winter:/media/defaut/winter.jpg;summer:/media/defaut/summer.jpg`)
 
-- `video` (`url` or `embed_code`[, `btn_title`, `btn_style`])
-
 - `toc` (= true) : active le sommaire
 
 - Tout autre *Autres Paramêtres* peut êgalement être appelé directement dans la page `{{ "{{ page.customParam }}" }}`
-{% endfilter %}
+{% endapply %}
 
 </div>
 
