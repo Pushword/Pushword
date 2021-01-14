@@ -37,7 +37,7 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
 
     public function getCreatedAt();
 
-    public function getTemplate(); // todo change to getView
+    public function getTemplate();
 
     public function getCustomProperty(string $name);
 

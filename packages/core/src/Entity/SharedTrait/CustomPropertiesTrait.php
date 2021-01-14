@@ -119,7 +119,7 @@ trait CustomPropertiesTrait
 
     public function isStandAloneCustomProperty($name): bool
     {
-        return ! method_exists($this, 'get'.ucfirst($name)) && ! method_exists($this, 'get'.$name);
+        return ! method_exists($this, 'set'.ucfirst($name)) && ! method_exists($this, 'set'.$name);
     }
 
     public function setCustomProperty($name, $value): self
