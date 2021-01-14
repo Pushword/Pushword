@@ -66,9 +66,18 @@ php bin/console assets:install --symlink --relative
 
 mkdir public/build && echo -e "{}" >public/build/manifest.json
 
+
+# Do some cleaning
+rm package.json
+rm -rf assets
+cp vendor/pushword/skeleton/assets assets
+
 sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::postPackageInstall"/d' composer.json
 sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::beforeCacheClear",/d' composer.json
 composer remove pushword/installer
+composer remove pushword/skeleton
+
+
 
 # Launch Server and Play
 read -p "Launch Server and play? [Y/n] " -n 1 -r
