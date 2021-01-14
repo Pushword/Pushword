@@ -1,30 +1,11 @@
 {% import view('/component/macro.html.twig') as helper %}
 
-{% set hLevel = 2 %}
 {% block list %}{% apply spaceless %}
     {% if pages is not empty %}
         <ul class="flex flex-row list-none">
             {% for page in pages %}
                 <li class="w-full px-1 my-1 sm:w-1/2">
-
-                    <!-- Article -->
-                    <div class="overflow-hidden rounded-lg shadow-lg">
-
-                        {% if page.mainImage is defined and page.mainImage is not null %}
-                            {{ helper.thumb(page.mainImage, page, 'thumb', {'class': 'block w-full h-auto m-0'}) }}
-                        {% endif %}
-
-                            <span class="block p-2 text-sm text-white bg-primary">
-                                {{ page.createdAt|date('d/m/Y à H:i') }}
-                            </span>
-                            <h{{ hLevel }} class="p-2 mt-0 text-md" style="margin-bottom:0.5rem">
-                                <a href="{{ page(page) }}" style="text-decoration:none">
-                                    {{ page.content.h1|raw }}
-                                </a>
-                            </h{{ hLevel }}>
-                        </header>
-
-                    </article>
+                    {% include view('/component/card.html.twig', {'page': page}) %}
                 </li>
             {% endfor %}
         </ul>

@@ -19,8 +19,8 @@
             <{{ image_wrapper|default('p') }} class="{{ image_wrapper_class|default('') }}">
             {% endif %}
 
-                {% if isInternalImage(image_src) %}
-                    {% set image =  getImageFrom(image_src) %}
+                {% if is_internal_image(image_src) %}
+                    {% set image =  img_to_media(image_src) %}
                     {{ image_link is not defined ? link(
                         _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null),
                         image.fullPath|imagine_filter('default'),

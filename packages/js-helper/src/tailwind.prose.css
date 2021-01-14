@@ -49,3 +49,7 @@ html {
   color: inherit;
   cursor: auto;
 }
+
+.show-hide-input:checked ~ div {
+  display: block !important;
+}
