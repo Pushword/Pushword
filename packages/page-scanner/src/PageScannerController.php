@@ -65,7 +65,7 @@ class PageScannerController extends AbstractController
 
         $lastTime = new LastTime(self::$fileCache);
         if (false === $lastTime->wasRunSince(new DateInterval('PT5M'))) { // todo config
-            exec('cd ../ && php bin/console page:scan > /dev/null 2>/dev/null &');
+            exec('cd ../ && php bin/console pushword:page:scan > /dev/null 2>/dev/null &');
             $newRunLaunched = true;
             $lastTime->setWasRun('now', false);
         }

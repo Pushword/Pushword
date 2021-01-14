@@ -67,6 +67,7 @@ class MediaListener
                 $this->projetDir.'/'.$media->getRelativeDir().'/'.$media->getMedia()
             );
             $this->cacheManager->remove('/'.$media->getRelativeDir().'/'.$media->getMediaBeforeUpdate());
+            exec('cd ../ && php bin/console pushword:media:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
         }
     }
 
@@ -119,6 +120,8 @@ class MediaListener
             // A better way would be to
             // implement https://github.com/liip/LiipImagineBundle/issues/242#issuecomment-71647135
             $path = '/'.$media->getRelativeDir().'/'.$media->getMedia();
+
+            //exec('cd ../ && php bin/console pushword:media:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
             $this->cacheGenerator->storeImageInCache($path, $this->cacheGenerator->getBinary($path), 'default');
 
             $this->eventDispatcher->addListener(

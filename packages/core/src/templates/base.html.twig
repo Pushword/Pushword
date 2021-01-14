@@ -41,8 +41,8 @@
 
             {# <link rel="stylesheet" href="{{ asset('assets/app.css') }}"> #}
 
-            <style>.nojs{display:none}</style>
-	        <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:block}</style>');</script>
+            <style>.nojs{display:block}</style>
+	        <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:none !important}</style>');</script>
         {% endblock %}
 
         {% block feed %}

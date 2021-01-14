@@ -16,16 +16,21 @@
 {% block inline_image %}
     {% if image_src is defined %}
         {% if image_wrapper_class is defined or image_wrapper is defined %}
-            <{{ image_wrapper|default('p') }} class="{{ image_wrapper_class|default('') }}">
+            <{{ image_wrapper|default('p') }} {% if image_wrapper_class is defined %}class="{{ image_wrapper_class }}"{% endif %}>
             {% endif %}
 
                 {% if is_internal_image(image_src) %}
                     {% set image =  img_to_media(image_src) %}
-                    {{ image_link is not defined ? link(
+
+                    {{ image_link is not defined or image_link != false ?
+
+                    link(
                         _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null),
-                        image.fullPath|imagine_filter('default'),
-                        {'dwl': image.fullPathWebP|imagine_filter('default')}
-                    ) : _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null) }}
+                        image_link|default(image.fullPath|imagine_filter('default')),
+                        image_link is not defined ? {'data-fslightbox': 'inline', 'dwl': image.fullPathWebP|imagine_filter('default')} : {}
+                    )
+                        : _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null)
+                    }}
 
                 {% else %}
                     <img

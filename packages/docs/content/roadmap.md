@@ -9,10 +9,7 @@ parent: contribute
 
 - [ ] Revoir la gestion des assets
 - [ ] release de sonata 4
-- [ ] Import(/export) Media in Flat
-- [ ] template from string (see AppExtension)
-- [ ] on media rename, mediacache not reloaded (todo)
-- [ ]
+- [ ] Import(/export) Media in Flat (see facebook image importer)
 
 ## TODO Extension
 

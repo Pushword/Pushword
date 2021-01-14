@@ -74,7 +74,6 @@ class AppExtension extends AbstractExtension
     public function getFunctions()
     {
         return [
-            new TwigFunction('template_from_string', 'addslashes'), // TODO FIX IT
             new TwigFunction('view', [$this, 'getView'], ['needs_environment' => true]),
             new TwigFunction('is_current_page', [$this, 'isCurrentPage']), // used ?
             new TwigFunction('is_internal_image', [self::class, 'isInternalImage']), // used ?

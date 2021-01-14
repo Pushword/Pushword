@@ -5,20 +5,27 @@
 
 {% block gallery %}
     {% if page.images is defined and page.images is not empty %}
-        <ul class="grid grid-cols-2 gap-3 list-none">
-            {% for image in page.images.slice(galleryFilterFrom|default('0'), length|default('1000')) %}
-                <li>{{ _self.galleryPart(image, gallery_id, page) }}</li>
-            {% endfor %}
-        </ul>
+        {% set grid_cols = page.images|length < 5 ? page.images|length : (page.images|length is odd ? 3 : 4) %}
+        <div class="w-full-vw">
+            <ul class="{{ gallery_class|default('grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-2xl mx-auto') }}">
+                {% for image in page.images.slice(galleryFilterFrom|default('0'), length|default('1000')) %}
+                    <li>{{ _self.gallery_part(image, gallery_id, page) }}</li>
+                {% endfor %}
+            </ul>
+        </div>
     {% endif %}
 {% endblock %}
 
 
-{% macro galleryPart(image, gallery_id, page = null, default_filter = 'thumb') %}
+{% macro gallery_part(image, gallery_id, page = null, default_filter = 'thumb') %}
     {% import view('/component/macro.html.twig') as helper %}
-    {% set imageHtml = helper.thumb(image, page, default_filter) %}
-    {{ link(imageHtml,
+    {% set image_html = helper.thumb(image, page, default_filter, {'class': 'unprose'}) %}
+    <div style="max-width:330px;" class="mx-auto">
+    {{ link(image_html,
         image.fullPath|imagine_filter('default'),
-        {'data-fslightbox': gallery_id, 'dwl': image.fullPathWebP|imagine_filter('default')}
-    ) }}
+        {
+            'data-fslightbox': gallery_id,
+            'dwl': image.fullPathWebP|imagine_filter('default')
+        }) }}
+        </div>
 {% endmacro %}

@@ -1,5 +1,5 @@
 {% block content %}
-    <div class="{{ page.container|default(container ?? 'max-w-screen-md mx-auto p-3 prose prose-sm sm:prose') }}">
+    <div class="{{ page.container|default(container ?? 'max-w-screen-md mx-auto pt-12 p-3 prose prose-sm') }}">
 
         {% block h1 %}
             <h1>{{ page.content.title(true)|raw }}</h1>

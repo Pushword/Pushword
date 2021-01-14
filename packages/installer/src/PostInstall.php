@@ -24,7 +24,15 @@ class PostInstall
 
     public static function beforeCacheClear()
     {
-        $files = ['templates/base.html.twig', 'config/packages/security.yaml', 'config/packages/liip_imagine.yaml', 'config/packages/vich_uploader.yaml', 'config/packages/sonata_admin.yaml'];
+        $files = [
+            'templates/base.html.twig',
+            'config/packages/security.yaml',
+            'config/packages/liip_imagine.yaml',
+            'config/packages/vich_uploader.yaml',
+            'config/packages/sonata_admin.yaml',
+            'config/packages/translation.yaml',
+        ];
+
         foreach ($files as $file) {
             if (file_exists($file)) {
                 unlink($file);

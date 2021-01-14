@@ -1,11 +1,9 @@
-{% import view('/component/macro.html.twig') as helper %}
-
 {% block list %}{% apply spaceless %}
     {% if pages is not empty %}
-        <ul class="flex flex-row list-none">
-            {% for page in pages %}
+        <ul class="flex flex-row unprose">
+            {% for p in pages %}
                 <li class="w-full px-1 my-1 sm:w-1/2">
-                    {% include view('/component/card.html.twig', {'page': page}) %}
+                    {% include view('/component/card.html.twig') with {'page': p} only %}
                 </li>
             {% endfor %}
         </ul>

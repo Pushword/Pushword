@@ -2,7 +2,7 @@
 
     {% if page.parentPage is defined and page.parentPage is not null %}
         {% if page.parentPage.parentPage is not null %} {#We don't generate a breadcrumb for only one parent Page#}
-            <nav aria-label="breadcrumb" class="p-3 text-sm font-light text-gray-700 dark:text-gray-300">
+            <nav aria-label="breadcrumb" class="max-w-3xl p-3 mx-auto text-sm font-light text-gray-700 dark:text-gray-300">
                 <ul>
                     {{ _self.breadcrumbPart(page.parentPage, true) }}
                     <!--<li aria-current="page" class="inline-block"> › {{ page.content.name|raw|striptags }}</li>-->
@@ -17,6 +17,6 @@
     {% endif %}
     <li class="inline-block">
         <a href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}" class="hover:underline">{{ page.content.name|raw|striptags }}</a>
-        {% if first != true %} ›&nbsp;{% endif %}
+        {% if first != true %}<span class="inline-block px-1">›</span>{% endif %}
     </li>
 {% endmacro %}

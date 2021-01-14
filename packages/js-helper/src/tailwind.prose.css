@@ -53,3 +53,12 @@ html {
 .show-hide-input:checked ~ div {
   display: block !important;
 }
+
+.w-full-vw {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
