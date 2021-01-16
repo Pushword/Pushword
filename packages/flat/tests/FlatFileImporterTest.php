@@ -11,6 +11,7 @@ use Pushword\Flat\FlatFileImporter;
 use Pushword\Flat\Importer\MediaImporter;
 use Pushword\Flat\Importer\PageImporter;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 class FlatFileImporterTest extends KernelTestCase
 {
@@ -20,14 +21,15 @@ class FlatFileImporterTest extends KernelTestCase
 
         $this->assertSame(
             $this->getContentDirFinder()->get('pushword.piedweb.com'),
-            self::$kernel->getContainer()->getParameter('pw.dir').'/../'
-                .self::$kernel->getContainer()->get('pushword.apps')->get('pushword.piedweb.com')->get('flat_content_dir')
+            $this->getContentDir()
         );
     }
 
     public function testIt(): void
     {
         self::bootKernel();
+
+        $this->prepare();
 
         $importer = new FlatFileImporter(
             self::$kernel->getContainer()->getParameter('pw.dir'),
@@ -41,10 +43,28 @@ class FlatFileImporterTest extends KernelTestCase
             'pushword.piedweb.com'
         );
 
-        $this->assertSame(
-            '../docs/content',
-            self::$kernel->getContainer()->get('pushword.apps')->get('pushword.piedweb.com')->get('flat_content_dir')
-        );
+        // todo make test
+        $this->assertFileExists(self::$kernel->getContainer()->getParameter('kernel.project_dir').'/media/logo-test.png');
+
+        $this->clean();
+    }
+
+    private function getContentDir()
+    {
+        return self::$kernel->getContainer()->getParameter('kernel.project_dir').'/../docs/content';
+    }
+
+    private function prepare()
+    {
+        (new FileSystem())->mirror(__DIR__.'/content/media', $this->getContentDir().'/media');
+        (new FileSystem())->copy(__DIR__.'/content/test-content.md', $this->getContentDir().'/test-content.md');
+    }
+
+    private function clean()
+    {
+        unlink(self::$kernel->getContainer()->getParameter('kernel.project_dir').'/media/logo-test.png');
+        unlink($this->getContentDir().'/test-content.md');
+        (new FileSystem())->remove($this->getContentDir().'/media');
     }
 
     private function getContentDirFinder()
@@ -55,13 +75,13 @@ class FlatFileImporterTest extends KernelTestCase
         );
     }
 
-    private function getMediaImporter()
+    private function getMediaImporter(): MediaImporter
     {
-        return new MediaImporter(
+        return (new MediaImporter(
             self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
             self::$kernel->getContainer()->get('pushword.apps'),
             Media::class
-        );
+        ))->setMediaDir(self::$kernel->getContainer()->getParameter('kernel.project_dir').'/media');
     }
 
     private function getPageImporter()
@@ -72,6 +92,8 @@ class FlatFileImporterTest extends KernelTestCase
             Page::class
         );
         $pageImporter->setContentDirFinder($this->getContentDirFinder());
+        $pageImporter->setMediaClass(self::$kernel->getContainer()->getParameter('pw.entity_media'));
+        $pageImporter->setPageHasMediaClass(self::$kernel->getContainer()->getParameter('pw.entity_pagehasmedia'));
 
         return $pageImporter;
     }

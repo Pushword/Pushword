@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://pushword.piedweb.com/test-content</loc>
+    <lastmod>2021-01-16</lastmod>
+      </url>
+  <url>
     <loc>https://pushword.piedweb.com/architecture</loc>
     <lastmod>2021-01-16</lastmod>
       </url>
@@ -22,10 +26,6 @@
       </url>
   <url>
     <loc>https://pushword.piedweb.com/extension/admin</loc>
-    <lastmod>2021-01-16</lastmod>
-      </url>
-  <url>
-    <loc>https://pushword.piedweb.com/extension/conversation</loc>
     <lastmod>2021-01-16</lastmod>
       </url>
   <url>

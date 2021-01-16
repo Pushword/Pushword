@@ -4,9 +4,6 @@ namespace Pushword\Core\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
-use League\ColorExtractor\Color;
-use League\ColorExtractor\ColorExtractor;
-use League\ColorExtractor\Palette;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Service\MediaCacheGenerator;
@@ -112,8 +109,6 @@ class MediaListener
         $media->setRelativeDir($relativeDir);
 
         if (false !== strpos($media->getMimeType(), 'image/')) {
-            $this->updatePaletteColor($media);
-
             $this->cacheManager->remove($media->getFullPath());
 
             // Quick hack to have correct URI in image previewer
@@ -131,14 +126,5 @@ class MediaListener
                 }
             );
         }
-    }
-
-    protected function updatePaletteColor(MediaInterface $media)
-    {
-        $img = $this->projectDir.$media->getPath();
-        $palette = Palette::fromFilename($img, Color::fromHexToInt('#FFFFFF'));
-        $extractor = new ColorExtractor($palette);
-        $colors = $extractor->extract();
-        $media->setMainColor(Color::fromIntToHex($colors[0]));
     }
 }

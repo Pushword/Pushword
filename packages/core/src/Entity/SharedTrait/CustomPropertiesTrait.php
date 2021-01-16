@@ -137,7 +137,7 @@ trait CustomPropertiesTrait
         return $this->customProperties[$name] ?? null;
     }
 
-    public function removeCustomProperty($name)
+    public function removeCustomProperty($name): void
     {
         unset($this->customProperties[$name]);
     }

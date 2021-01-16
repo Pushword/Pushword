@@ -6,7 +6,7 @@ services:
     class: Pushword\Flat\FlatFileImporter
     autowire: true
     arguments:
-      $webDir: '%pw.dir%'
+      $projectDir: '%kernel.project_dir%'
 
   Pushword\Flat\FlatFileCommand:
     autowire: true
@@ -20,7 +20,7 @@ services:
     class: Pushword\Flat\FlatFileContentDirFinder
     autowire: true
     arguments:
-      $webDir: '%pw.dir%'
+      $projectDir: '%kernel.project_dir%'
 
   Pushword\Flat\Importer\PageImporter:
     autowire: true
@@ -29,10 +29,11 @@ services:
     calls:
       - [setContentDirFinder, ['@pushword.flat.content_dir_finder']]
       - [setMediaClass, ['%pw.entity_media%']]
+      - [setPageHasMediaClass, ['%pw.entity_pagehasmedia%']]
 
   Pushword\Flat\Importer\MediaImporter:
     autowire: true
     arguments:
       $entityClass: '%pw.entity_media%'
     calls:
-      - [setWebDir, ['%pw.dir%']]
+      - [setMediaDir, ['%pw.media_dir%']]

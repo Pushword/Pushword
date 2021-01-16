@@ -4,6 +4,7 @@ namespace Pushword\Admin\DependencyInjection;
 
 use Pushword\Admin\FormField\CreatedAtField;
 use Pushword\Admin\FormField\CustomPropertiesField;
+use Pushword\Admin\FormField\HostField;
 use Pushword\Admin\FormField\OgDescriptionField;
 use Pushword\Admin\FormField\OgImageField;
 use Pushword\Admin\FormField\OgTitleField;
@@ -11,7 +12,6 @@ use Pushword\Admin\FormField\OgTwitterCardField;
 use Pushword\Admin\FormField\OgTwitterCreatorField;
 use Pushword\Admin\FormField\OgTwitterSiteField;
 use Pushword\Admin\FormField\PageH1Field;
-use Pushword\Admin\FormField\PageHostField;
 use Pushword\Admin\FormField\PageImagesField;
 use Pushword\Admin\FormField\PageLocaleField;
 use Pushword\Admin\FormField\PageMainContentField;
@@ -45,7 +45,7 @@ class Configuration implements ConfigurationInterface
         [PageH1Field::class, PageMainContentField::class],
         [
             'admin.page.state.label' => [CreatedAtField::class, PageMetaRobotsField::class],
-            'admin.page.permanlien.label' => [PageHostField::class, PageSlugField::class],
+            'admin.page.permanlien.label' => [HostField::class, PageSlugField::class],
             'admin.page.mainImage.label' => [PageMainImageField::class],
             'admin.page.parentPage.label' => [PageParentPageField::class],
             'admin.page.search.label' => [

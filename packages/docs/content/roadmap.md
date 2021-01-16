@@ -9,7 +9,6 @@ parent: contribute
 
 - [ ] Revoir la gestion des assets
 - [ ] release de sonata 4
-- [ ] Import(/export) Media in Flat (see facebook image importer)
 - [ ] Test installer
 - [ ] update docs
 - [ ] Issue : User Password Edit don't work from admin

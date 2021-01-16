@@ -13,44 +13,45 @@ use Pushword\Flat\Importer\PageImporter;
  */
 class FlatFileImporter
 {
-    /** @var AppConfig */
-    protected $app;
-    /** @var AppPool */
-    protected $apps;
-    protected $webDir;
-    /** @var FlatFileContentDirFinder */
-    protected $contentDirFinder;
-    /** @var PageImporter */
-    protected $pageImporter;
-    /** @var MediaImporter */
-    protected $mediaImporter;
+    protected AppConfig $app;
+    protected AppPool $apps;
+    protected string $projectDir;
+    protected FlatFileContentDirFinder $contentDirFinder;
+    protected PageImporter $pageImporter;
+    protected MediaImporter $mediaImporter;
 
     public function __construct(
-        string $webDir,
+        string $projectDir,
         AppPool $apps,
         FlatFileContentDirFinder $contentDirFinder,
         PageImporter $pageImporter,
         MediaImporter $mediaImporter
     ) {
-        $this->webDir = $webDir;
+        $this->projectDir = $projectDir;
         $this->apps = $apps;
         $this->contentDirFinder = $contentDirFinder;
         $this->pageImporter = $pageImporter;
         $this->mediaImporter = $mediaImporter;
     }
 
-    public function run(?string $host)
+    public function run(?string $host): void
     {
         $this->app = $this->apps->switchCurrentApp($host)->get();
 
-        $this->importFiles($this->webDir.'/../media', 'media');
-        $this->importFiles($this->contentDirFinder->get($this->app->getMainHost()), 'page');
+        $contentDir = $this->contentDirFinder->get($this->app->getMainHost());
+        $this->importFiles($this->projectDir.'/media', 'media');
+        $this->importFiles(file_exists($contentDir.'/media/default') ? $contentDir.'/media/default' : $contentDir.'/media', 'media');
+        $this->importFiles($contentDir, 'page');
         $this->mediaImporter->finishImport();
         $this->pageImporter->finishImport();
     }
 
-    private function importFiles($dir, string $type)
+    private function importFiles($dir, string $type): void
     {
+        if (! file_exists($dir)) {
+            return;
+        }
+
         $files = scandir($dir);
         foreach ($files as $file) {
             if (\in_array($file, ['.', '..'])) {

@@ -59,7 +59,14 @@ trait PageImageTrait
         $this->pageHasMedias[] = $pageHasMedia;
     }
 
-    public function removePageHasMedia(PageHasMedia $pageHasMedia)
+    public function resetPageHasMedias(): void
+    {
+        foreach ($this->pageHasMedias as $pageHasMedia) {
+            $this->removePageHasMedia($pageHasMedia);
+        }
+    }
+
+    public function removePageHasMedia(PageHasMedia $pageHasMedia): void
     {
         $this->pageHasMedias->removeElement($pageHasMedia);
     }

@@ -12,15 +12,15 @@ class FlatFileContentDirFinder
 {
     /** @var AppPool */
     protected $apps;
-    protected $webDir;
+    protected $projectDir;
 
     protected $contentDir = [];
 
     public function __construct(
         AppPool $apps,
-        string $webDir
+        string $projectDir
     ) {
-        $this->webDir = $webDir;
+        $this->projectDir = $projectDir;
         $this->apps = $apps;
     }
 
@@ -37,7 +37,7 @@ class FlatFileContentDirFinder
             throw new Exception('No content dir in app\'s param.');
         }
 
-        $this->contentDir[$host] = $this->webDir.'/../'.$dir;
+        $this->contentDir[$host] = $dir; // $this->projectDir.'/'.$dir;
 
         if (! file_exists($this->contentDir[$host])) {
             throw new Exception('Content dir `'.$dir.'` not found.');

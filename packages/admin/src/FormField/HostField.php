@@ -5,10 +5,16 @@ namespace Pushword\Admin\FormField;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
-class PageHostField extends AbstractField
+class HostField extends AbstractField
 {
     public function formField(FormMapper $formMapper): FormMapper
     {
+        if (1 === \count($this->admin->getApps()->getHosts())) {
+            $this->admin->getSubject()->setHost($this->admin->getApps()->get()->getMainHost());
+
+            return $formMapper;
+        }
+
         if (null === $this->admin->getSubject()->getHost()) {
             $this->admin->getSubject()->setHost($this->admin->getApps()->getMainHost());
         }

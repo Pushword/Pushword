@@ -25,7 +25,10 @@ class PageImporter extends AbstractImporter
     /** @var FlatFileContentDirFinder */
     protected $contentDirFinder;
 
-    protected $mediaClass;
+    protected string $mediaClass;
+    protected string $pageHasMediaClass;
+
+    private bool $newPage = false;
 
     public function setContentDirFinder(FlatFileContentDirFinder $contentDirFinder)
     {
@@ -37,6 +40,11 @@ class PageImporter extends AbstractImporter
         $this->mediaClass = $mediaClass;
     }
 
+    public function setPageHasMediaClass(string $class): void
+    {
+        $this->pageHasMediaClass = $class;
+    }
+
     private function getContentDir()
     {
         $host = $this->apps->get()->getMainHost();
@@ -44,8 +52,12 @@ class PageImporter extends AbstractImporter
         return $this->contentDirFinder->get($host);
     }
 
-    public function import(string $filePath, DateTimeInterface $lastEditDatetime)
+    public function import(string $filePath, DateTimeInterface $lastEditDatetime): void
     {
+        if ('text/plain' != finfo_file(finfo_open(FILEINFO_MIME_TYPE), $filePath)) {
+            return;
+        }
+
         $content = file_get_contents($filePath);
         $yamlParsed = YamlFrontMatter::parse($content);
 
@@ -73,29 +85,40 @@ class PageImporter extends AbstractImporter
         return $slug;
     }
 
-    private function editPage(string $slug, array $data, string $content, DateTime $lastEditDatetime)
+    private function getPageFromSlug($slug): PageInterface
     {
         $page = $this->getPage($slug);
-        $newPage = false;
+        $this->newPage = false;
 
         if (! $page) {
             $pageClass = $this->entityClass;
             $page = new $pageClass();
-            $newPage = true;
-        } elseif ($page->getUpdatedAt() >= $lastEditDatetime) {
+            $this->newPage = true;
+        }
+
+        return $page;
+    }
+
+    private function editPage(string $slug, array $data, string $content, DateTime $lastEditDatetime)
+    {
+        $page = $this->getPageFromSlug($slug);
+
+        if (false === $this->newPage && $page->getUpdatedAt() >= $lastEditDatetime) {
             return; // no update needed
         }
+
         $page->setCustomProperties([]);
 
         foreach ($data as $key => $value) {
             $key = $this->normalizePropertyName($key);
+            $camelKey = self::underscoreToCamelCase($key);
 
-            if (\in_array($key, array_keys($this->getObjectRequiredProperties()))) {
-                $this->toAddAtTheEnd[$slug] = array_merge($this->toAddAtTheEnd[$slug] ?? [], [$key => $value]);
+            if (\in_array($camelKey, array_keys($this->getObjectRequiredProperties()))) {
+                $this->toAddAtTheEnd[$slug] = array_merge($this->toAddAtTheEnd[$slug] ?? [], [$camelKey => $value]);
 
                 continue;
             }
-            $setter = 'set'.ucfirst($key);
+            $setter = 'set'.ucfirst($camelKey);
             if (method_exists($page, $setter)) {
                 $page->$setter($value);
 
@@ -112,7 +135,7 @@ class PageImporter extends AbstractImporter
         $page->setMainContent($content);
 
         // todo parentPage, translations
-        if (true === $newPage) {
+        if (true === $this->newPage) {
             $this->em->persist($page);
         }
     }
@@ -142,30 +165,38 @@ class PageImporter extends AbstractImporter
 
                 if (MediaInterface::class === $object) {
                     $setter = 'set'.ucfirst($property);
-                    $media = $this->getMedia($value);
+                    $mediaName = preg_replace('@^/?media/(default)?/@', '', $value);
+                    $media = $this->getMedia($mediaName);
                     if (null === $media) {
-                        continue;
+                        throw new Exception('Media `'.$value.'` ('.$mediaName.') not found in `'.$slug.'`.');
                     }
                     $page->$setter($media);
 
                     continue;
                 }
 
-                if (\is_string($object)) {
-                    $this->$object($page, $property, $value);
-
-                    continue;
-                }
+                $this->$object($page, $property, $value);
             }
         }
     }
 
-    public function addImages(PageInterface $page, string $property, array $images)
+    private function addImages(PageInterface $page, string $property, array $images): void
     {
-        // todo
+        $page->resetPageHasMedias();
+
+        foreach ($images as $image) {
+            $mediaName = preg_replace('@^/?media/(default)?/@', '', $image);
+            $media = $this->getMedia($mediaName);
+            if (null === $media) {
+                throw new Exception('Media `'.$image.'` ('.$mediaName.') not found in `'.$page->getSlug().'`.');
+            }
+            $pageHasMediaClass = $this->pageHasMediaClass;
+            $pageHasMedia = (new $pageHasMediaClass())->setMedia($media);
+            $page->addPageHasMedia($pageHasMedia);
+        }
     }
 
-    public function addPages(PageInterface $page, string $property, array $pages)
+    private function addPages(PageInterface $page, string $property, array $pages)
     {
         $setter = 'set'.ucfirst($property);
         $this->$setter([]);

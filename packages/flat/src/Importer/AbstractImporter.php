@@ -36,4 +36,11 @@ abstract class AbstractImporter
     {
         $this->em->flush();
     }
+
+    protected static function underscoreToCamelCase(string $string): string
+    {
+        $str = str_replace('_', '', ucwords($string, '_'));
+
+        return lcfirst($str);
+    }
 }

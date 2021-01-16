@@ -21,7 +21,7 @@ class ConfigurationTest extends KernelTestCase
         );
 
         $this->assertSame(
-            '../docs/content',
+            self::$kernel->getContainer()->getParameter('kernel.project_dir').'/../docs/content',
             self::$kernel->getContainer()->get('pushword.apps')->get('pushword.piedweb.com')->get('flat_content_dir')
         );
     }

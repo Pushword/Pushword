@@ -2,12 +2,16 @@
 
 namespace Pushword\Core\Service;
 
+use Doctrine\ORM\EntityManagerInterface;
+use League\ColorExtractor\Color;
+use League\ColorExtractor\ColorExtractor;
+use League\ColorExtractor\Palette;
 use Liip\ImagineBundle\Exception\Binary\Loader\NotLoadableException;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
+//use WebPConvert\Convert\Converters\Stack as WebPConverter;
 use Liip\ImagineBundle\Imagine\Data\DataManager;
 use Liip\ImagineBundle\Imagine\Filter\FilterManager;
 use Pushword\Core\Entity\MediaInterface;
-//use WebPConvert\Convert\Converters\Stack as WebPConverter;
 use Spatie\Async\Pool;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -18,6 +22,7 @@ class MediaCacheGenerator
     protected $cacheManager;
     protected $filterManager;
     protected $dataManager;
+    protected $em;
 
     protected static $webPConverterOptions = [
         'converters' => ['cwebp'],
@@ -29,16 +34,20 @@ class MediaCacheGenerator
         string $projectDir,
         CacheManager $cacheManager,
         DataManager $dataManager,
-        FilterManager $filterManager
+        FilterManager $filterManager,
+        EntityManagerInterface $em
     ) {
         $this->projectDir = $projectDir;
         $this->cacheManager = $cacheManager;
         $this->dataManager = $dataManager;
         $this->filterManager = $filterManager;
+        $this->em = $em;
     }
 
     public function generateCache(MediaInterface $media)
     {
+        $this->updatePaletteColor($media);
+
         $this->pool = Pool::create();
 
         $this->createWebP($media); // do i need it ?! Yes, if the generation failed, liip will use this one
@@ -55,6 +64,17 @@ class MediaCacheGenerator
             //$this->storeImageInCache($pathWebP, $binary, $filter); liip not optimized...
         }
         $this->pool->wait();
+
+        $this->em->flush();
+    }
+
+    protected function updatePaletteColor(MediaInterface $media)
+    {
+        $img = $this->projectDir.$media->getPath();
+        $palette = Palette::fromFilename($img, Color::fromHexToInt('#FFFFFF'));
+        $extractor = new ColorExtractor($palette);
+        $colors = $extractor->extract();
+        $media->setMainColor(Color::fromIntToHex($colors[0]));
     }
 
     public function getBinary($path)

@@ -168,7 +168,7 @@ trait MediaTrait
     /**
      * Used by VichUploader.
      */
-    public function setSlug($slug)
+    public function setSlug($slug): self
     {
         if (! $slug) {
             return $this;

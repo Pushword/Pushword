@@ -33,9 +33,11 @@ class PageHasMedia implements PageHasMediaInterface
         return $this->getPage().' | '.$this->getMedia();
     }
 
-    public function setPage(?PageInterface $page = null)
+    public function setPage(?PageInterface $page = null): self
     {
         $this->page = $page;
+
+        return $this;
     }
 
     public function getPage()
@@ -43,9 +45,11 @@ class PageHasMedia implements PageHasMediaInterface
         return $this->page;
     }
 
-    public function setMedia(?MediaInterface $media = null)
+    public function setMedia(?MediaInterface $media = null): self
     {
         $this->media = $media;
+
+        return $this;
     }
 
     public function getMedia()

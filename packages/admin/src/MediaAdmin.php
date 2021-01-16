@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Pushword\Admin\FormField\CustomPropertiesField;
 use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
@@ -64,7 +65,9 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
             ])
             ->end();
 
-        $formMapper->with('i18n', ['class' => 'col-md-4']);
+        $formMapper->with('Params', ['class' => 'col-md-4']);
+
+        (new CustomPropertiesField($this))->formField($formMapper);
 
         $formMapper->add('names', null, [
             'required' => false,

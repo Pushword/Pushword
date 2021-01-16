@@ -3,11 +3,12 @@
 namespace Pushword\Core\Entity;
 
 use Pushword\Core\Component\Filter\FilterInterface;
+use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\HostInterface;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\TimestampableInterface;
 
-interface PageInterface extends HostInterface, IdInterface, TimestampableInterface
+interface PageInterface extends HostInterface, IdInterface, TimestampableInterface, CustomPropertiesInterface
 {
     // PageTrait
     public function getSlug(): ?string;
@@ -29,6 +30,13 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
 
     public function getChildrenPages();
 
+    // ImageTrait
+    public function resetPageHasMedias(): void;
+
+    public function removePageHasMedia(PageHasMedia $pageHasMedia): void;
+
+    public function addPageHasMedia(PageHasMedia $pageHasMedia);
+
     // ---
 
     public function getRedirection();
@@ -38,8 +46,6 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
     public function getCreatedAt();
 
     public function getTemplate();
-
-    public function getCustomProperty(string $name);
 
     public function getH1();
 
