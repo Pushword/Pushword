@@ -5,11 +5,15 @@ namespace Pushword\PageScanner;
 use DateInterval;
 use Exception;
 use Pushword\Core\Utils\LastTime;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBag;
 use Symfony\Component\Filesystem\Filesystem;
 
+/**
+ * @IsGranted("ROLE_PUSHWORD_ADMIN")
+ */
 class PageScannerController extends AbstractController
 {
     /**

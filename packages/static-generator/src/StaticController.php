@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 class StaticController extends AbstractController
 {
     /**
-     * @Security("is_granted('ROLE_EDITOR')")
+     * @Security("is_granted('ROLE_PUSHWORD_ADMIN')")
      */
     public function generateStatic(StaticAppGenerator $staticAppGenerator, ?string $host = null)
     {

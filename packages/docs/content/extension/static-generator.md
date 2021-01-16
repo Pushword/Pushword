@@ -23,7 +23,7 @@ static:
 Add routes via 1 command line :
 
 ```
-sed -i '1s/^/static:\n    resource: "@PushwordStaticGeneratorBundle/StaticRoutes.yaml"\n/' config/routes.yaml
+sed -i '1s/^/static:\n    resource: "@PushwordStaticGeneratorBundle\/StaticRoutes.yaml"\n/' config/routes.yaml
 ```
 
 ## Configure

@@ -19,3 +19,9 @@ Add Routes
 template_editor:
   resource: '@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml'
 ```
+
+Add routes via 1 command line :
+
+```
+sed -i '1s/^/template_editor:\n    resource: "@PushwordTemplateEditorBundle\/TemplateEditorRoutes.yaml"\n/' config/routes.yaml
+```

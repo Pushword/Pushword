@@ -13,7 +13,7 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 /**
- * @IsGranted("ROLE_PIEDWEB_ADMIN_THEME")
+ * @IsGranted("ROLE_PUSHWORD_ADMIN_THEME")
  */
 class ElementAdmin extends AbstractController
 {
