@@ -12,6 +12,7 @@ parent: contribute
 - [ ] Import(/export) Media in Flat (see facebook image importer)
 - [ ] Test installer
 - [ ] update docs
+- [ ] Issue : User Password Edit don't work from admin
 
 ## TODO Extension
 
