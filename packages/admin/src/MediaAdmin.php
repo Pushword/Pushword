@@ -30,7 +30,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
     {
         $media = $this->getSubject();
 
-        $formMapper->with('Media', ['class' => 'col-md-6'])
+        $formMapper->with('Media', ['class' => 'col-md-8'])
 
             ->add('mediaFile', FileType::class, [
                 'label' => 'admin.media.mediaFile.label',
@@ -64,7 +64,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
             ])
             ->end();
 
-        $formMapper->with('i18n', ['class' => 'col-md-6']);
+        $formMapper->with('i18n', ['class' => 'col-md-4']);
 
         $formMapper->add('names', null, [
             'required' => false,
