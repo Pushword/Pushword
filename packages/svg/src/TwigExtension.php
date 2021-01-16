@@ -20,7 +20,7 @@ class TwigExtension extends AbstractExtension
         ];
     }
 
-    public function getSvg(string $name, $attr = ['class' => 'fill-current']): string
+    public function getSvg(string $name, $attr = ['class' => 'fill-current w-4 inline-block -mt-1']): string
     {
         $dir = $this->apps->get()->get('svg_dir');
 

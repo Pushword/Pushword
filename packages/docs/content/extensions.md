@@ -24,4 +24,4 @@ parent: homepage
 - [Template Editor](/extension/template-editor)
   Edit view file online in the [admin](https://pushword.piedweb.com/extension/admin).
 
-Add your own extension [editing this file on github](https://github.com/Pushword/Pushword/edit/main/packages/docs/content/extensions.md).
+Add your own extension #[editing this file on github](https://github.com/Pushword/Pushword/edit/main/packages/docs/content/extensions.md).

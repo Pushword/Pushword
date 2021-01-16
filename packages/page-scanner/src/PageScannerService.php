@@ -5,7 +5,6 @@ namespace Pushword\PageScanner;
 use Doctrine\ORM\EntityManagerInterface;
 use PiedWeb\UrlHarvester\Harvest;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Component\Router\RouterInterface as PwRouter;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
@@ -44,17 +43,15 @@ class PageScannerService
         EntityManagerInterface $em,
         string $webDir,
         AppPool $apps,
-        PwRouter $router,
         KernelInterface $kernel
     ) {
         $this->twig = $twig;
-        $this->router = $router;
-        $this->router->setUseCustomHostPath(false);
         $this->em = $em;
         $this->webDir = $webDir;
         $this->apps = $apps;
 
         static::loadKernel($kernel);
+        static::$appKernel->getContainer()->get('pushword.router')->setUseCustomHostPath(false);
     }
 
     protected function resetErrors()

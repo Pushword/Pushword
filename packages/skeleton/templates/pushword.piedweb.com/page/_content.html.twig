@@ -6,7 +6,6 @@
 
 {% block content %}
 
-
     {% if page.toc is not null %}
     {% block h1 %} {% endblock %}
     <div class="flex flex-wrap">
@@ -40,12 +39,27 @@
         {{ parent() }}
     {% endif %}
 
+    {#
+    {% if page.slug != 'homepage' %}
+        <div class="p-5 pt-5 mx-3 text-yellow-800 border-l-4 border-yellow-500 bg-yellow-50">
+            {{ svg('exclamation-triangle') }} ...
+        </div>
+    {% endif %}#}
+
+
     <div class="flex mx-3 mt-5">
 
         {{ _self.previous(nav, page) }}
 
         {{ _self.next(nav, page) }}
     </div>
+
+    {% if page.slug != 'homepage' %}
+        <div class="mx-3 mt-10 text-sm font-light text-center text-gray-500">
+            {{ link(svg('edit', {'class': 'fill-current w-3 inline-block -mt-1'}) ~ '<span class="hidden ml-2 lg:inline-block">Edit via github</span>', 'https://github.com/Pushword/Pushword/edit/main/packages/docs/content/' ~ page.slug ~ '.md', {'class': 'hover:text-gray-900 dark:hover:text-gray-100'}) }}
+        </div>
+    {% endif %}
+
 
 {% endblock %}
 
