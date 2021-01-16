@@ -10,6 +10,7 @@ parent: contribute
 - [ ] Revoir la gestion des assets
 - [ ] release de sonata 4
 - [ ] Import(/export) Media in Flat (see facebook image importer)
+- [ ] Test installer
 
 ## TODO Extension
 

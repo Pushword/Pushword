@@ -18,6 +18,8 @@ Add Routes
 ```yaml
 page_scanner:
   resource: '@PushwordPageScannerBundle/PageScannerRoutes.yaml'
+# or do it in 1 command line
+# $ sed -i '1s/^/page_scanner:\n    resource: "@PushwordPageScannerBundle\/PageScannerRoutes.yaml"\n/' config/routes.yaml
 ```
 
 ## Command

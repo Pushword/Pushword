@@ -18,10 +18,6 @@ Add Routes
 ```yaml
 admin:
   resource: '@PushwordAdminBundle/AdminRoutes.yaml'
-```
-
-Add routes via 1 command line :
-
-```
-sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle\/AdminRoutes.yaml"\n/' config/routes.yaml
+# or do it in 1 command line
+# $ sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle\/AdminRoutes.yaml"\n/' config/routes.yaml
 ```

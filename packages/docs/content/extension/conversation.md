@@ -19,6 +19,9 @@ composer require pushword/conversation
 # Add the route to your Routes:
 conversation:
     resource: '@PushwordConversationBundle/Resources/config/routes/conversation.yaml'
+
+# or do it in 1 command line
+# $ sed -i '1s/^/admin:\n    resource: "@PushwordConversationBundle\/Resources\/config\/routes\/conversation.yaml"\n/' config/routes.yaml
 ```
 
 Update database

@@ -77,7 +77,15 @@ sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::beforeCacheClear",/d' compos
 composer remove pushword/installer
 composer remove pushword/skeleton
 
-
+# Install recommended extension
+read -p "Install recommended extensions (page-scanner, static-generator, svg, template-editor) ? [Y/n] " -n 1 -r
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    composer require pushword/page-scanner pushword/static-generator pushword/svg pushword/template-editor
+    sed -i '1s/^/page_scanner:\n    resource: "@PushwordPageScannerBundle\/PageScannerRoutes.yaml"\n/' config/routes.yaml
+    sed -i '1s/^/static:\n    resource: "@PushwordStaticGeneratorBundle\/StaticRoutes.yaml"\n/' config/routes.yaml
+    sed -i '1s/^/template_editor:\n    resource: "@PushwordTemplateEditorBundle\/TemplateEditorRoutes.yaml"\n/' config/routes.yaml
+fi
 
 # Launch Server and Play
 read -p "Launch Server and play? [Y/n] " -n 1 -r
