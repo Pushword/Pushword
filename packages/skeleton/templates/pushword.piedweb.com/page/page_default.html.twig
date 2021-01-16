@@ -22,6 +22,8 @@
     ['Roadmap', 'roadmap'],
 ] %}
 
+{% set breadcrumb_class = 'p-3 text-sm font-light text-gray-700 dark:text-gray-300' %}
+
 {% block html_opener %}
 	<html
 		lang="{{ page.locale|default(apps.get().defaultLocale) }}"

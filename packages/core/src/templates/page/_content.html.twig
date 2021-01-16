@@ -1,5 +1,5 @@
 {% block content %}
-    <div class="{{ page.container|default(container ?? 'max-w-screen-md mx-auto pt-12 p-3 prose prose-sm') }}">
+    <div class="{{ page.container|default(container ?? 'max-w-screen-md mx-auto pt-12 p-3 prose prose-sm pb-10') }}">
 
         {% block h1 %}
             <h1>{{ page.content.title(true)|raw }}</h1>
@@ -23,10 +23,10 @@
         {% block main_content %}
             {% if page.toc is not null %}
                 {% block toc %}
-                    {{ page.content.intro|raw  }}
+                    {{ page.content.intro|raw }}
                     <h3>Navigation</h3>
-                    {{ page.content.toc|raw  }}
-                    {{ page.content.content|raw  }}
+                    {{ page.content.toc|raw }}
+                    {{ page.content.content|raw }}
                     {% endblock %}
             {% else %}
                 {{ page.content.body|raw }}

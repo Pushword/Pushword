@@ -2,7 +2,7 @@
 
     {% if page.parentPage is defined and page.parentPage is not null %}
         {% if page.parentPage.parentPage is not null %} {#We don't generate a breadcrumb for only one parent Page#}
-            <nav aria-label="breadcrumb" class="max-w-3xl p-3 mx-auto text-sm font-light text-gray-700 dark:text-gray-300">
+            <nav aria-label="breadcrumb" class="{{ breadcrumb_class|default('max-w-3xl p-3 mx-auto text-sm font-light text-gray-700 dark:text-gray-300') }}">
                 <ul>
                     {{ _self.breadcrumbPart(page.parentPage, true) }}
                     <!--<li aria-current="page" class="inline-block"> › {{ page.content.name|raw|striptags }}</li>-->

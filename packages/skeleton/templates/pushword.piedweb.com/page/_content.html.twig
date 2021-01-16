@@ -1,17 +1,18 @@
 {% extends '@Pushword/page/_content.html.twig' %}
 
-{% set container = 'p-3 prose dark:prose-light' %}
+{% set container = 'p-3 prose dark:prose-light max-w-none max-w-3xl' %}
 
 {% block toc %}{% endblock %}
 
 {% block content %}
 
+    <div class="pt-3"></div>
     {% if page.toc is not null %}
     {% block h1 %} {% endblock %}
-    <div class="flex flex-wrap">
+    <div class="flex flex-wrap max-w-5xl">
 
-        <div class="order-2 w-full overflow-hidden lg:order-1 lg:w-4/5">
-            <div class="p-3 prose dark:prose-light">
+        <div class="order-2 w-fulloverflow-hidden lg:order-1 lg:w-4/5">
+            <div class="p-3 prose dark:prose-light max-w-none">
                 <h1>{{ page.content.title(true)|raw }}</h1>
                 {{ page.content.intro|raw }}
             </div>
@@ -19,9 +20,9 @@
 
         {% if page.content.toc is not empty %}
         <div class="order-3 w-full overflow-hidden lg:order-2 lg:w-1/5">
-            <div class="max-w-screen-sm p-2 pt-4 m-2 border border-gray-200 rounded dark:border-gray-700 lg:max-w-xs lg:absolute">
-                <h3 class="block px-3 mb-3 text-sm font-semibold tracking-wide text-gray-900 uppercase dark:text-gray-100 lg:mb-3 lg:text-xs">Contents</h3>
-                <div class="prose-sm dark:prose-light">{{ page.content.toc|raw }}</div>
+            <div class="max-w-screen-sm p-2 pt-4 m-2 rounded shadow-md bg-gray-50 dark:border-gray-700 lg:max-w-xs lg:absolute">
+                <h3 class="block px-1 mb-3 text-sm font-semibold tracking-wide text-gray-900 uppercase dark:text-gray-100 lg:mb-3 lg:text-xs">Contents</h3>
+                <div class="px-1 -ml-6 prose-sm dark:prose-light max-w-none">{{ page.content.toc|raw }}</div>
             </div>
         </div>
         {% endif %}
@@ -32,7 +33,7 @@
 
     </div>
     {% else %}
-            <div class="p-3 prose dark:prose-light">
+            <div class="p-3 prose dark:prose-light max-w-none">
                 <h1>{{ page.content.title(true)|raw }}</h1>
             </div>
 
@@ -47,7 +48,7 @@
     {% endif %}#}
 
 
-    <div class="flex mx-3 mt-5">
+    <div class="flex max-w-3xl mx-3 mt-5">
 
         {{ _self.previous(nav, page) }}
 
@@ -60,6 +61,7 @@
         </div>
     {% endif %}
 
+    <div class="pb-10"></div>
 
 {% endblock %}
 
@@ -69,7 +71,7 @@
     {% for n in nav %}
 
         {% if next_is_the_one and n.2 is not defined %}
-            <a class="flex ml-auto text-right text-gray-500 hover:text-gray-900 dark:hover:text-gray-100" href="{{ n.1 == '#' ? '#' : page(n.1)}}">
+            <a class="flex ml-auto text-right text-gray-500 hover:text-gray-900 dark:hover:text-gray-100" href="{{ n.1 == '#' ? '#' : page(n.1) }}">
                 {{ n.0 }} <span aria-hidden="true" class="ml-2">→</span>
             </a>
             {% set next_is_the_one = false %}
@@ -89,7 +91,7 @@
 
     {% for n in nav %}
         {% if n.2 is not defined and n.1 == page.realSlug and previous is not null %}
-            <a class="flex mr-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100" href="{{ previous.1 == '#' ? '#' : page(previous.1)}}">
+            <a class="flex mr-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100" href="{{ previous.1 == '#' ? '#' : page(previous.1) }}">
                 <span aria-hidden="true" class="mr-2">←</span> {{ previous.0 }}
             </a>
         {% endif %}
