@@ -1,3 +1,7 @@
 pushword_page_scanner:
-  path: /admin/page/scan
+  path: /admin/page/scan/{force}
   controller: Pushword\PageScanner\PageScannerController::scanAction
+  requirements:
+    force: '[0-1]'
+  defaults:
+    force: 0

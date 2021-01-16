@@ -20,7 +20,10 @@
                     <p class="alert alert-success">Premier scan juste lancé. Revenez dans un instant (rafraichissement automatique).</p>
                     <script>$(document).ready(function() { setTimeout(function () { location.reload(1); }, 3000); });</script>
                 {% else  %}
-                    <p class="alert alert-warning">Résultat du scan du {{ lastEdit|date('d/m/Y à H:i') }}{{ newRun ? ' (nouveau scan en cours)': ''}}.</p>
+                    <p class="alert alert-warning">
+                        Résultat du scan du {{ lastEdit|date('d/m/Y à H:i') }}
+                        {{ newRun ? ' (<em>nouveau scan en cours</em>)' : ('(<a href="'~ path('pushword_page_scanner', {'force': '1'}) ~'">forcer un nouveau scan</a>)')|raw }}.
+                    </p>
 
                     <table class="table table-bordered table-striped table-hover sonata-ba-list">
                         <thead>

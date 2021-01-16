@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBag;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @IsGranted("ROLE_PUSHWORD_ADMIN")
@@ -57,7 +58,7 @@ class PageScannerController extends AbstractController
         return self::$fileCache;
     }
 
-    public function scanAction()
+    public function scanAction($force = 0): Response
     {
         if ($this->filesystem->exists(self::$fileCache)) {
             $errors = unserialize(file_get_contents(self::$fileCache));
@@ -68,7 +69,7 @@ class PageScannerController extends AbstractController
         }
 
         $lastTime = new LastTime(self::$fileCache);
-        if (false === $lastTime->wasRunSince(new DateInterval('PT5M'))) { // todo config
+        if ($force || false === $lastTime->wasRunSince(new DateInterval('PT5M'))) { // todo config
             exec('cd ../ && php bin/console pushword:page:scan > /dev/null 2>/dev/null &');
             $newRunLaunched = true;
             $lastTime->setWasRun('now', false);
