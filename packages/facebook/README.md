@@ -2,13 +2,13 @@
 
 Insert icon (facebook) with ease in Pushword's content via a twig function.
 
-[![Latest Version](https://img.shields.io/github/tag/pushword/pushword.facebook?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
-[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.facebook?style=flat)](LICENSE)
+[![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
 [![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/Pushword/Pushword/Tests?label=tests)](https://github.com/Pushword/Pushword/actions)
-[![Quality Score](https://img.shields.io/scrutinizer/g/pushword/pushword.facebook?style=flat)](https://scrutinizer-ci.com/g/pushword/pushword)
-[![Code Coverage](https://codecov.io/gh/Pushword/Pushword/branch/main/graph/badge.facebook)](https://codecov.io/gh/Pushword/Pushword/branch/main)
-[![Type Coverage](https://shepherd.dev/github/pushword/pushword/coverage.facebook)](https://shepherd.dev/github/pushword/pushword)
-[![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.facebook?style=flat)](https://packagist.org/packages/pushword/core)
+[![Quality Score](https://img.shields.io/scrutinizer/g/pushword/pushword.svg?style=flat)](https://scrutinizer-ci.com/g/pushword/pushword)
+[![Code Coverage](https://codecov.io/gh/Pushword/Pushword/branch/main/graph/badge.svg)](https://codecov.io/gh/Pushword/Pushword/branch/main)
+[![Type Coverage](https://shepherd.dev/github/pushword/pushword/coverage.svg)](https://shepherd.dev/github/pushword/pushword)
+[![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.svg?style=flat)](https://packagist.org/packages/pushword/core)
 
 ## Documentation
 
