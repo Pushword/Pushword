@@ -1,6 +1,6 @@
 # Pushword
 
-A php **CMS** build on top of **Symfony** to **rapidly** create, manage and maintain **Modern Website(s)**.
+A php **CMS** built on top of **Symfony** to **rapidly** create, manage and maintain **Modern Website(s)**.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)

@@ -1,7 +1,7 @@
 {
   "name": "pushword/core",
   "type": "symfony-bundle",
-  "description": "A php CMS build on top of Symfony to rapidly create, manage and maintain Modern Website(s).",
+  "description": "A php CMS built on top of Symfony to rapidly create, manage and maintain Modern Website(s).",
   "keywords": [],
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",

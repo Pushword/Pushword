@@ -4,7 +4,7 @@ h1: Build modern websites rapidly <br> maintain it as quickly
 name: Pushword
 ---
 
-Puswhord is a php **CMS** build on top of **Symfony** to **rapidly** create, manage and maintain **Modern Website(s)**.
+Puswhord is a php **CMS** built on top of **Symfony** to **rapidly** create, manage and maintain **Modern Website(s)**.
 
 ## **Edition** <br><small>Simple and efficient Admin </small>
 
