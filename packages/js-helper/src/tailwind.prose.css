@@ -1,32 +1,51 @@
+/**
+ * Relative to link
+ */
+
+.prose span[data-rot] {
+  cursor: pointer;
+  color: var(--secondary);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.prose span[data-rot]:hover {
+  color: var(--secondary);
+  opacity: 0.75;
+}
+
+.text-color-inherit,
+.link-text {
+  color: inherit !important;
+}
+
+.no-decoration,
+.ninja {
+  text-decoration: none !important;
+  color: inherit !important;
+  cursor: auto !important;
+}
+
+/**
+ * Some smoothiness
+ */
+
 html {
   font-family: var(--font-family);
   scroll-behavior: smooth;
 }
 
-span[data-rot] {
-  cursor: pointer;
-  color: var(--primary);
-  text-decoration: underline;
-  font-weight: 500;
-}
-
-span[data-rot]:hover {
-  color: var(--primary);
-}
-
-.link-text {
-  color: inherit;
-}
-
-.ninja {
-  text-decoration: none !important;
-  color: inherit;
-  cursor: auto;
-}
+/**
+ * Pure css hamburger menu
+ */
 
 .show-hide-input:checked ~ div {
   display: block !important;
 }
+
+/**
+ * Special full-width from everywhere
+ */
 
 .w-full-vw {
   width: 100vw;

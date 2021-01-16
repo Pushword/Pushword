@@ -1,5 +1,3 @@
-https://pushword.piedweb.com/extension/facebook
-https://pushword.piedweb.com/extension/svg
 https://pushword.piedweb.com/architecture
 https://pushword.piedweb.com/configuration
 https://pushword.piedweb.com/contribute
@@ -7,11 +5,13 @@ https://pushword.piedweb.com/cookbook
 https://pushword.piedweb.com/create-extension
 https://pushword.piedweb.com/extension/admin
 https://pushword.piedweb.com/extension/conversation
+https://pushword.piedweb.com/extension/facebook
 https://pushword.piedweb.com/extension/flat
 https://pushword.piedweb.com/extension
 https://pushword.piedweb.com/extension/page-scanner
 https://pushword.piedweb.com/extension/page-update-notifier
 https://pushword.piedweb.com/extension/static-generator
+https://pushword.piedweb.com/extension/svg
 https://pushword.piedweb.com/extension/template-editor
 https://pushword.piedweb.com/extensions
 https://pushword.piedweb.com/

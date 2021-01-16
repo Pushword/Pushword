@@ -24,9 +24,9 @@ Encore.setOutputPath('./../public/assets/')
   .enablePostCssLoader((options) => {
     options.postcssOptions = {
       plugins: [
+        require('postcss-import'),
         tailwindcss('./tailwind.config.js'),
         require('autoprefixer'),
-        require('postcss-import'),
       ],
     };
     if (Encore.isProduction()) {

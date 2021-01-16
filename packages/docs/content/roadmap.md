@@ -11,7 +11,6 @@ parent: contribute
 - [ ] release de sonata 4
 - [ ] Import(/export) Media in Flat (see facebook image importer)
 - [ ] Test installer
-- [ ] Force refresh for page-scanner
 - [ ] update docs
 
 ## TODO Extension

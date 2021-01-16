@@ -11,6 +11,8 @@ const purgecss = require('@fullhuman/postcss-purgecss')({
     './../content/*.md',
     './*.js',
     './../content/**/*.md',
+    './../../../docs/*.html',
+    './../../../docs/**/*.html',
   ],
   defaultExtractor: (content) => content.match(/[\w-/:]+(?<!:)/g) || [],
 });
@@ -24,9 +26,9 @@ Encore.setOutputPath('./../../skeleton/public/assets/')
   .enablePostCssLoader((options) => {
     options.postcssOptions = {
       plugins: [
+        require('postcss-import'),
         tailwindcss('./tailwind.config.js'),
         require('autoprefixer'),
-        require('postcss-import'),
       ],
     };
     if (Encore.isProduction()) {
