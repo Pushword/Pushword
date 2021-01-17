@@ -33,11 +33,11 @@
 
     </div>
     {% else %}
-            <div class="p-3 prose dark:prose-light max-w-none">
-                <h1>{{ page.content.title(true)|raw }}</h1>
+            <div class="max-w-3xl p-3 prose dark:prose-light">
+                <h1>{{ page.content.h1|raw }}</h1>
+                {{ page.content.chapeau|raw }}
+                {{ page.content.body|raw }}
             </div>
-
-        {{ parent() }}
     {% endif %}
 
     {#

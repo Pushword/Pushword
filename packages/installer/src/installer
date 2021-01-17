@@ -37,7 +37,7 @@ sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle\/AdminRoutes.yaml"\n/' 
 cp vendor/pushword/installer/src/pushword.yaml config/packages/pushword.yaml
 
 # Copy Default Media
-cp -r vendor/pushword/skeleton/media media
+cp -r vendor/pushword/skeleton/media~ media
 
 # Copy Entities
 cp -R vendor/pushword/skeleton/src/Entity/. src/Entity
