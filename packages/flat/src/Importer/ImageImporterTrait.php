@@ -69,8 +69,9 @@ trait ImageImporterTrait
 
             $setter = 'set'.ucfirst($key);
             if (method_exists($media, $setter)) {
-                if (in_array($key, ['createdAt', 'updatedAt']))
+                if (\in_array($key, ['createdAt', 'updatedAt'])) {
                     $value = new DateTime($value);
+                }
 
                 $media->$setter($value);
 

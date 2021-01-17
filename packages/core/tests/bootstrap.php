@@ -17,7 +17,7 @@ $autoload = require $file;
 
 (new Dotenv())->loadEnv(__DIR__.'/.env');
 
-if (!file_exists($monoRepoBase.'/packages/skeleton/media')) {
+if (! file_exists($monoRepoBase.'/packages/skeleton/media')) {
     $fs = new Filesystem();
     $fs->mirror($monoRepoBase.'/packages/skeleton/media~', $monoRepoBase.'/packages/skeleton/media');
 }
