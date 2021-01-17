@@ -2,6 +2,7 @@
 
 namespace Pushword\Flat\Importer;
 
+use DateTime;
 use DateTimeInterface;
 use iBudasov\Iptc\Manager as Iptc;
 use Pushword\Core\Entity\MediaInterface;
@@ -59,13 +60,6 @@ trait ImageImporterTrait
                 ->setSize(filesize($filePath))
                 ->setDimensions([$imgSize[0], $imgSize[1]]);
 
-        if (true === $this->newMedia) {
-            $media
-                ->setSlug($this->getFilename($filePath))
-                ->setMedia($this->getFilename($filePath))
-                ->setName($this->getFilename($filePath));
-        }
-
         $data = $this->getImageData($filePath, $imgSize['mime']);
 
         $media->setCustomProperties([]);
@@ -75,6 +69,9 @@ trait ImageImporterTrait
 
             $setter = 'set'.ucfirst($key);
             if (method_exists($media, $setter)) {
+                if (in_array($key, ['createdAt', 'updatedAt']))
+                    $value = new DateTime($value);
+
                 $media->$setter($value);
 
                 continue;

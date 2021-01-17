@@ -5,6 +5,7 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\Filesystem\Filesystem;
 
 $monoRepoBase = __DIR__.'/../../..';
 $file = $monoRepoBase.'/vendor/autoload.php';
@@ -16,8 +17,9 @@ $autoload = require $file;
 
 (new Dotenv())->loadEnv(__DIR__.'/.env');
 
-if (file_exists($monoRepoBase.'/packages/skeleton/media/piedweb.png')) {
-    rename($monoRepoBase.'/packages/skeleton/media/piedweb.png', $monoRepoBase.'/packages/skeleton/media/piedweb-logo.png');
+if (!file_exists($monoRepoBase.'/packages/skeleton/media')) {
+    $fs = new Filesystem();
+    $fs->mirror($monoRepoBase.'/packages/skeleton/media~', $monoRepoBase.'/packages/skeleton/media');
 }
 
 $kernel = new Kernel('test', true);

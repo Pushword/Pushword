@@ -25,4 +25,5 @@ class Media implements MediaInterface
         $this->updatedAt = null !== $this->updatedAt ? $this->updatedAt : new \DateTime();
         $this->createdAt = null !== $this->createdAt ? $this->createdAt : new \DateTime();
     }
+
 }

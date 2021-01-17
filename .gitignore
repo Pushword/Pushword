@@ -26,8 +26,7 @@ bootstrap5-theme
 **/skeleton/static
 **/skeleton/localhost.dev
 **/skeleton/pushword.piedweb.com
-**/skeleton/media/*.webp
-**/skeleton/media/fb-*
+**/skeleton/media
 **/skeleton/var/app.db
 **/skeleton/src/Migrations
 

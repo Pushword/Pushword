@@ -40,6 +40,7 @@ class FlatFileImporter
 
         $contentDir = $this->contentDirFinder->get($this->app->getMainHost());
         $this->importFiles($this->projectDir.'/media', 'media');
+        $this->mediaImporter->finishImport();
         $this->importFiles(file_exists($contentDir.'/media/default') ? $contentDir.'/media/default' : $contentDir.'/media', 'media');
         $this->importFiles($contentDir, 'page');
         $this->mediaImporter->finishImport();
