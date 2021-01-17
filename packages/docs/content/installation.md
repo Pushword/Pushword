@@ -15,7 +15,7 @@ toc: true
 
 ```
 
-curl https://raw.githubusercontent.com/Pushword/Pushword/main/packages/installer/src/installer >> installer && chmod +x installer && echo 'y' | ./installer ./my-folder
+curl https://raw.githubusercontent.com/Pushword/Pushword/main/packages/installer/src/installer >> installer && chmod +x installer && ./installer ./my-folder
 
 ```
 
