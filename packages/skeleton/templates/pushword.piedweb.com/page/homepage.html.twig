@@ -1,0 +1,20 @@
+{% extends view('/page/page_default.html.twig') %}
+
+{% block html_opener %}
+	<html
+		lang="{{ page.locale|default(apps.get().defaultLocale) }}"
+		{{ mergeAttr({'class': 'leading-tight text-gray-900 dark:bg-gray-900 dark:text-gray-100'}, page.htmlOpenerAttr|default({})) }}
+	>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap items-stretch max-w-screen-xl mx-auto">
+
+
+    <div class="order-2 w-full mx-auto lg:mr-0 lg:ml-0">
+        {% include view('/page/_content.html.twig') %}
+    </div>
+</div>
+{% endblock %}
+
+{% block breadcrumb %} {% endblock %}

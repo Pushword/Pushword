@@ -37,7 +37,8 @@ class PageScannerCommand extends Command
     protected function configure()
     {
         $this
-            ->setName('pushword:page:scan')
+            ->setName('pushword:page-scanner:scan')
+            ->setDescription('Find dead links, 404, 301 and more in your content.')
             ->addArgument('host', InputArgument::OPTIONAL, '');
     }
 

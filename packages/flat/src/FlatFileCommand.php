@@ -24,6 +24,7 @@ class FlatFileCommand extends Command
     {
         $this
             ->setName('pushword:flat:import')
+            ->setDescription('Syncing flat file inside database.')
             ->addArgument('host', InputArgument::OPTIONAL, '');
     }
 

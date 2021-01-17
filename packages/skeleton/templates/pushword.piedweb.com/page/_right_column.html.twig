@@ -3,6 +3,7 @@
 
 
 {% block right_column %}
+{% if page.slug != 'homepage' %}
 <div class="h-full">
     <input type="checkbox" id="right-column" class="hidden">
 
@@ -53,4 +54,7 @@ document.addEventListener('DOMContentLoaded',  function() {
     left: 15rem;
 }
 </style>
+{% else %}
+<div class="sticky z-40 h-full px-1 py-3 mr-24 overflow-hidden text-sm bg-white w-60 lg:block lg:top-18 lg:mr-3 dark:bg-gray-900 dark:border-gray-700">&nbsp;</div>
+{% endif %}
 {% endblock %}

@@ -13,7 +13,7 @@
     {% block h1 %} {% endblock %}
     <div class="flex flex-wrap max-w-5xl">
 
-        <div class="order-2 w-fulloverflow-hidden lg:order-1 lg:w-4/5">
+        <div class="order-2 w-full overflow-hidden lg:order-1 lg:w-4/5">
             <div class="p-3 prose dark:prose-light max-w-none">
                 <h1>{{ page.content.h1|raw }}</h1>
                 {{ page.content.intro|raw }}
@@ -39,7 +39,7 @@
 
     </div>
     {% else %}
-            <div class="max-w-3xl p-3 prose dark:prose-light">
+            <div class="{{ page.slug == 'homepage' ? 'max-w-screen-lg prose-lg mx-auto' : 'max-w-3xl' }} p-3 prose dark:prose-light">
                 <h1>{{ page.content.h1|raw }}</h1>
                 {{ page.content.chapeau|raw }}
                 {{ page.content.body|raw }}

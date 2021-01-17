@@ -4,8 +4,10 @@ h1: Create an extension
 parent: extensions
 ---
 
-Each extension is build as a [symfony bundle](https://symfony.com/doc/current/bundles.html).
+Each extension is built as a [symfony bundle](https://symfony.com/doc/current/bundles.html).
 
-When you know that, you just have to learn how to make a bundle for symfony and you will know how to make an extension for Pushword.
+When you know that, you just have to learn how to [create a bundle for symfony](https://symfony.com/doc/current/bundles.html) and you will know how to make an extension for Pushword.
 
-There is some simple example like [flat](https://github.com/Pushword/Pushword/tree/main/packages/flat/) or more complex like [conversation](https://github.com/Pushword/Pushword/tree/main/packages/conversation/) (and more respecting the symfony best practices).
+There is some simple example like [flat](https://github.com/Pushword/Pushword/tree/main/packages/flat/) or more complex like [conversation](https://github.com/Pushword/Pushword/tree/main/packages/conversation/).
+
+If you don't want to share your extension, you don't need to build a bundle, just go in `./src` and start coding following symfony concept.

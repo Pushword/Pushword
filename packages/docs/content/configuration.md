@@ -5,9 +5,11 @@ toc: true
 parent: installation
 ---
 
-Have a look inside `config/packages/pushword.yaml`.
+If you use the automatic installer, just open `config/packages/pushword.yaml` and start configure your app(s).
 
-Try this command to get the up to date configuration's options :
+The only important property to configure now is **hosts** (`hosts: [localhost.dev]`). Then you are ready to use your website.
+
+To get the up to date configuration's options :
 
 ```shell
 php bin/console config:dump-reference PushwordCoreBundle

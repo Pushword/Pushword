@@ -17,11 +17,11 @@
         <nav class="nav">
             <ul class="flex space-x-1">
                 {% set nav_item_class = 'px-3 py-4 rounded text-primary hover:bg-primary hover:bg-opacity-75 hover:text-white transition-colors duration-200' %}
-                <li><a class="hidden md:inline-block {{ nav_item_class }}" href="/installation">Getting Started</a></li>
-                <li><a class="{{ nav_item_class }} inline-block" href="/themes">Themes</a></li>
-                <li><a class="{{ nav_item_class }} inline-block" href="/extensions">Extensions</a></li>
-                <li><a class="hidden md:inline-block {{ nav_item_class }}" href="/contribute">Contribute</a></li>
-                <li><a class="hidden md:inline-block {{ nav_item_class }}" href="/roadmap">Roadmap</a></li>
+                <li><a class="hidden md:inline-block {{ nav_item_class }}" href="{{ page('installation') }}">Getting Started</a></li>
+                <li><a class="{{ nav_item_class }} inline-block" href="{{ page('themes') }}">Themes</a></li>
+                <li><a class="{{ nav_item_class }} inline-block" href="{{ page('extension') }}">Extensions</a></li>
+                <li><a class="hidden md:inline-block {{ nav_item_class }}" href="{{ page('contribute') }}">Contribute</a></li>
+                <li><a class="hidden md:inline-block {{ nav_item_class }}" href="{{ page('roadmap') }}">Roadmap</a></li>
             </ul>
         </nav>
     </div>

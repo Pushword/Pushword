@@ -1,3 +1,5 @@
+https://pushword.piedweb.com/command
+https://pushword.piedweb.com/manage-assets
 https://pushword.piedweb.com/override-theme
 https://pushword.piedweb.com/editor
 https://pushword.piedweb.com/architecture

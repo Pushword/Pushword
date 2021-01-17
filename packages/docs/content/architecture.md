@@ -7,8 +7,8 @@ parent: contribute
 
 Are you searching for :
 
-- organizing your own app code
-- organizing the code for a pushword extension
+-   organizing your own app code : see #[symfony good practices](https://symfony.com/doc/current/best_practices.html) or look at the #[demo app](https://github.com/Pushword/Pushword/tree/main/packages/skeleton)
+-   organizing the code for a pushword extension : see [create an extension](/create-extension)
 
 Else, you are at the good place.
 
@@ -18,13 +18,15 @@ The [core](https://github.com/Pushword/Pushword/tree/main/packages/core/) contai
 
 Each extension are facultative.
 
-Keeping all this extensions in one repository permit to test them easily and to code much quicker.
+Keeping all this extensions in one repository permit to test them easily, to understand the code easily and to code much quicker.
 
-The [skeleton](https://github.com/Pushword/Pushword/tree/main/packages/skeleton) isn't a real skeleton (copy and install). It's used for testing, demos and a few class from skeleton are extracted by the default installer.
+The [skeleton](https://github.com/Pushword/Pushword/tree/main/packages/skeleton) isn't a real skeleton (copy and install).
+
+It's used for testing, demo, using for generating the docs and a few class from skeleton are extracted by the default installer.
 
 ## On top of Symfony
 
-Each package (except _skeleton_) is build as a [symfony bundle](https://symfony.com/doc/current/bundles.html).
+Each package (except _skeleton_, _installer_ and _js-helper_) is built as a [symfony bundle](https://symfony.com/doc/current/bundles.html).
 
 The `core` package required a symfony app instaled to be functionnel.
 

@@ -186,8 +186,9 @@ class PageImporter extends AbstractImporter
 
     private function addImages(PageInterface $page, string $property, array $images): void
     {
-        if ($property != 'images')
+        if ('images' != $property) {
             return;
+        }
 
         $page->resetPageHasMedias();
 

@@ -28,7 +28,7 @@ class NotificationCommand extends Command
     {
         $this
             ->setName('pushword:conversation:notify')
-            ->setDescription('Send a report of last messages.')
+            ->setDescription('Send a mail (notification) with the latests messages stored (this comand is useful to program a cron).')
         ;
     }
 
