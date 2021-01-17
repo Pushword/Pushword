@@ -22,7 +22,7 @@ class Configuration implements ConfigurationInterface
     const DEFAULT_CUSTOM_PROPERTIES = [
         'main_content_type' => 'Raw', // not anymore used, replaced by filters... to remove
         'can_use_twig_shortcode' => true,
-        'main_content_shortcode' => 'twig,date,email,encryptedLink,image,phoneNumber,twigVideo,punctuation,markdown',
+        'main_content_shortcode' => 'twig,date,email,encryptedLink,image,phoneNumber,twigVideo,punctuation,markdown,unprose',
         'fields_shortcode' => 'twig,date,email,encryptedLink,phoneNumber',
         'assets' => [
             'stylesheets' => [

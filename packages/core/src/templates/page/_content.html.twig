@@ -1,8 +1,9 @@
 {% block content %}
-    <div class="{{ page.container|default(container ?? 'max-w-screen-md mx-auto pt-12 p-3 prose prose-sm pb-10') }}">
+<div class="{{ page.container|default(apps.get().get('page_container')|default('max-w-screen-sm p-3 pt-12 mx-auto')) }}">
+    <div class="{{ page.prose|default(apps.get().get('page_prose')|default('prose max-w-none')) }}">
 
         {% block h1 %}
-            <h1>{{ page.content.title(true)|raw }}</h1>
+            <h1>{{ page.content.h1|raw }}</h1>
         {% endblock %}
 
         {% block description %}
@@ -11,7 +12,7 @@
 
         {% block main_image %}
             {% if page.mainImage is not null %}
-                {% include view('/component/_inline_image.html.twig') with {
+                {% include view('/component/inline_image.html.twig') with {
                         'image_src': page.mainImage.fullPath|imagine_filter('default'),
                         'image_alt': page.mainImage.name(page.locale, true)|default(page.getTitle(true)|striptags),
                         'image_wrapper_class': ' ',
@@ -35,4 +36,5 @@
 
 
     </div>
+</div>
 {% endblock %}

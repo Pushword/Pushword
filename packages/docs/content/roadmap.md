@@ -7,7 +7,6 @@ parent: contribute
 
 ## TODO before v1
 
-- [ ] Revoir la gestion des assets
 - [ ] release de sonata 4
 - [ ] Test installer
 - [ ] update docs

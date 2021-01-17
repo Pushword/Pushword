@@ -228,19 +228,19 @@ Ma citation :
 
 <p>Pour afficher toutes les images liées à une <code>page</code> :</p>
 <pre>
-{{ "{{ gallery(page) }}" }}
+{{ "{{ gallery(page) }}|unprose" }}
 </pre>
 
 <p>Pour afficher seulement les 4 premières images liées à la <code>page</code> :</p>
 
 <pre>
-{{ "{{ gallery(page, 1, 4) }}" }}
+{{ "{{ gallery(page, 1, 4) }}|unprose" }}
 </pre>
 
 <p>Pour afficher seulement les 2 suivantes :</p>
 
 <pre>
-{{ "{{ gallery(page, 4, 2) }}" }}
+{{ "{{ gallery(page, 4, 2) }}|unprose" }}
 </pre>
 
 <hr class="mt-5 mb-5">
@@ -249,7 +249,7 @@ Ma citation :
 <h2 id="video">Vidéo</h2>
 
 <pre>
-{{ "{{ video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}" }}
+{{ "{{ video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose" }}
 </pre>
 
 {% apply markdown %}
@@ -264,20 +264,20 @@ Ma citation :
 <h2 id="pageslist">Lister des pages via un mot clef ou un hash</h2>
 
 Pour lister des pages contenant un terme ou un `tag` :
-<pre>{{ "{{" }} list('keyword X or <!--invisible-hash-in-content-->') {{ "}}" }} </pre>
+<pre>{{ "{{" }} list('keyword X or <!--invisible-hash-in-content-->')|unprose {{ "}}" }} </pre>
 
 
 Autres paramètres :
-<pre>{{ "{{" }}  list('keyword X', $number = 3, $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig') {{ "}}" }}</pre>
-<pre>{{ "{{" }}  cardlist('keyword X', $number = 3, $orderBy = 'createdAt') {{ "}}" }}</pre>
+<pre>{{ "{{" }}  list('keyword X', $number = 3, $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig')|unprose {{ "}}" }}</pre>
+<pre>{{ "{{" }}  cardlist('keyword X', $number = 3, $orderBy = 'createdAt')|unprose {{ "}}" }}</pre>
 
 
 
 <h2 id=children class="mt-5">Lister les pages enfants (blog/news/...)</h2>
 
-<pre>{{ "{{" }} children(page, $number = 3) {{ "}}" }} </pre>
+<pre>{{ "{{" }} children(page, $number = 3)|unprose {{ "}}" }} </pre>
 
-<pre>{{ "{{" }} cardchildren(page, $number = 3) {{ "}}" }} </pre>
+<pre>{{ "{{" }} cardchildren(page, $number = 3)|unprose {{ "}}" }} </pre>
 
 <hr class="mt-5 mb-5">
 

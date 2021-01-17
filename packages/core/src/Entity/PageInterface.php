@@ -35,7 +35,7 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
 
     public function removePageHasMedia(PageHasMedia $pageHasMedia): void;
 
-    public function addPageHasMedia(PageHasMedia $pageHasMedia);
+    public function addPageHasMedia(PageHasMedia $pageHasMedia): self;
 
     // ---
 

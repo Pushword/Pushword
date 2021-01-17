@@ -20,21 +20,21 @@ A few example for the editor possibilities. Best to observe this, it's in admin 
 
 ## Galleries
 
-{{ gallery(page) }}
+{{ gallery(page)|unprose }}
 
-{{ gallery(page, 1, 1) }}
+{{ gallery(page, 1, 1)|unprose }}
 
-{{ gallery(page,  2, 1) }}
+{{ gallery(page,  1, 3)|unprose }}
 
 ## Video
 
 Avoiding load Youtube cookies per default.
 
-{{ video('https://www.youtube.com/watch?v=UeN6MAk4l5M', '/media/default/1.jpg') }}
+{{ video('https://www.youtube.com/watch?v=UeN6MAk4l5M', '/media/default/1.jpg')|unprose }}
 
 or open an iframe
 
-{{ video('https://www.youtube.com/watch?v=UeN6MAk4l5M', '/media/default/2.jpg', 'my video title', true) }}
+{{ video('https://www.youtube.com/watch?v=UeN6MAk4l5M', '/media/default/2.jpg', 'my video title', true)|unprose }}
 
 ## Advanced
 
@@ -44,12 +44,12 @@ or open an iframe
 
 ### Page found via Kw
 
-{{  list('welcome', 3) }}
+{{  list('fun', 3) }}
 
-{{  card_list('welcome', 3) }}
+{{  card_list('Fun', 3)|unprose }}
 
 ### Children Page (from parent for the case)
 
 {{  children(page.parentPage, 3) }}
 
-{{  card_children(page.parentPage, 3) }}
+{{  card_children(page.parentPage, 3)|unprose }}

@@ -8,6 +8,7 @@ use Exception;
 use PiedWeb\RenderAttributes\AttributesTrait;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Component\Filter\Filters\Unprose;
 use Pushword\Core\Component\Router\RouterInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaExternal;
@@ -68,6 +69,7 @@ class AppExtension extends AbstractExtension
             new TwigFilter('slugify', [(new Slugify()), 'slugify']),
             new TwigFilter('preg_replace', [self::class, 'pregReplace']),
             new TwigFilter('nice_punctuation', [HtmlBeautifer::class, 'punctuationBeautifer'], self::options()),
+            new TwigFilter('unprose', [Unprose::class, 'unprose'], self::options()),
         ];
     }
 

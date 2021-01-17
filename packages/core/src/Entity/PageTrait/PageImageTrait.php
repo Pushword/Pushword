@@ -53,10 +53,12 @@ trait PageImageTrait
         return $this->pageHasMedias;
     }
 
-    public function addPageHasMedia(PageHasMedia $pageHasMedia)
+    public function addPageHasMedia(PageHasMedia $pageHasMedia): self
     {
         $pageHasMedia->setPage($this);
         $this->pageHasMedias[] = $pageHasMedia;
+
+        return $this;
     }
 
     public function resetPageHasMedias(): void
