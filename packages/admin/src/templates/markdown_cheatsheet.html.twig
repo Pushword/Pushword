@@ -10,82 +10,83 @@
 {% endblock %}
 
 {% block body %}
-<style>
-hr.mt-5 {
-    margin-top:1.5rem !important;
-}
-html { scroll-behavior: smooth; }
-pre { overflow:auto;}
-body {background-color:#fff}
-</style>
+<link rel="stylesheet" href="/bundles/pushwordcore/tailwind.css">
 
-<div class="max-w-screen-md p-3 mx-auto prose">
-<h1 class="mb-5"><small>Aide-Mémoire Markdown</small> <br>La syntaxe en détails</h1>
-<div class="p-3 mb-5 border rounded" style="max-width:700px">
+<div class="max-w-screen-md p-3 mx-auto">
+
+<div class="prose"><h1 class="mb-5"><small>Aide-Mémoire Markdown</small> <br>La syntaxe en détails</h1></div>
+
+<div class="p-3 mb-5 prose border rounded">
 
 {% apply markdown %}
 ###### <small style="text-transform:uppercase;">Sommaire</small>
-
-- [Titre, sous-titre et chapeau](#title)
-- [Chapeau](#chapeau)
-- [Accentuation](#style)
-- [Lien hypertexte](#link)
-    - [Vers une adresse mail (protection spam)](#mail)
-    - [Vers un numéro de téléphone](#tel)
-    - [Vers une partie de page](#fragment)
-- [Listes](#list)
-- [Paragraphes et saut de ligne](#p)
-- [Citation](#quote)
-- [Image et galeries](#img)
-- [Vidéo](#video)
-- [Liste des pages via un mot clef](#pageslist)
-- [Lister des pages enfants (blog/news/...)](#children)
-- [Redirection](#redirect)
-- [Contenu enrichi](#rich-content)
+{% block cheatsheet_toc %}
+- [{{ 'md_cs.title'|trans }}](#title)
+- [{{ 'md_cs.chapeau'|trans }}](#chapeau)
+- [{{ 'md_cs.emphasis'|trans }}](#style)
+- [{{ 'md_cs.link'|trans }}](#link)
+    - [{{ 'md_cs.link_to_mail'|trans }}](#mail)
+    - [{{ 'md_cs.link_to_phone'|trans }}](#tel)
+- [{{ 'md_cs.lists'|trans }}](#lists)
+- [{{ 'md_cs.paragraph'|trans }}](#p)
+- [{{ 'md_cs.quote'|trans }}](#quote)
+- [{{ 'md_cs.image'|trans }}](#img)
+- [{{ 'md_cs.video'|trans }}](#video)
+- [{{ 'md_cs.page_list'|trans }}](#pageslist)
+- [{{ 'md_cs.redirection'|trans }}](#redirect)
+- [{{ 'md_cs.others'|trans }}](#others)
+{% endblock %}
 {% endapply %}
 </div>
 
-<hr class="mt-5 mb-5">
+{% block cheatsheet_content %}
 
-<h2 id="title">Titre et sous-titre</h2>
 
-<pre>
-## Titre 2 (h2)<br>
-### Titre 3 (h3)<br>
-### Titre 4 (h4)<br>
-#### Titre 5 (h5)<br>
-#### Titre 6 (h6)
-</pre>
+<!-- -->
 
+<h2 id="title" class="mb-4 text-3xl font-bold">{{ 'md_cs.title'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
-## Titre 2 (h2)
-### Titre 3 (h3)
-### Titre 4 (h4)
-#### Titre 5 (h5)
-#### Titre 6 (h6)
+## Title 2 (h2)
+### Title 3 (h3)
+### Title 4 (h4)
+#### Title 5 (h5)
+#### Title 6 (h6)
 {% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+## Title 2 (h2)<br>
+### Title 3 (h3)<br>
+### Title 4 (h4)<br>
+#### Title 5 (h5)<br>
+#### Title 6 (h6)
+{% endapply %}</code></pre>
+</div>
 
-<hr class="mt-5 mb-5">
+<!-- -->
 
-<h2 id="chapeau">Chapeau</h2>
+<h2 id="chapeau" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.chapeau'|trans }}</h2>
 
-Paragraphe sous le titre :
+<div class="mb-4 prose dark:prose-light">
+    <p>{{ 'md_cs.chapeau_description'|trans }}</p>
+</div>
 
-<pre>
-Ce paragraphe est un chapeau.
-{{ '&lt;!--break--&gt;' }}
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
+Ce paragraphe est un chapeau.<br>
+{{ '&lt;!--break--&gt;' }}<br>
 Ceci est le reste de mon contenu...
-</pre>
+{% endapply %}</code></pre>
+</div>
 
-<hr class="mt-5 mb-5">
+<!-- -->
 
-<h2 id="style">Accentuation</h2>
-<pre>
-Italique         : *astérisques* ou _underscores_<br>
-Gras             : **astérisques** ou __underscores__.<br>
-Gras et Italique : **astérisques et _ sous-scores _**.<br>
-Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
-</pre>
+<h2 id="style" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.emphasis'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 Italique : *astérisques* ou _underscores_
 
@@ -95,50 +96,77 @@ Gras et Italique : **astérisques et _underscore_**.
 
 Fluo             : <mark>fluuuuooo</mark>
 {% endapply %}
-<hr class="mt-5 mb-5">
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+Italique         : *astérisques* ou _underscores_<br>
+Gras             : **astérisques** ou __underscores__.<br>
+Gras et Italique : **astérisques et _ sous-scores _**.<br>
+Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
+{% endapply %}</code></pre>
+</div>
 
-<h2 id="link">Lien Hypertexte</h2>
-<pre>
-[ma page d'accueil](/)
-[un autre site](https://example.tld/)
-</pre>
+<!-- -->
+
+<h2 id="link" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.link'|trans }}</h2>
+
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
-[ma page d'accueil](/)
+[{{ 'md_cs.link_homepage'|trans }}](/)
 
-[un autre site](https://example.tld/)
+[{{ 'md_cs.link_other_site'|trans }}](https://example.tld/)
+
+{{ link('md_cs.link_bot_hidden'|trans, 'https://piedweb.com/') }}
 {% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+[{{ 'md_cs.link_homepage'|trans }}](/)<br>
+<br>
+[{{ 'md_cs.link_other_site'|trans }}](https://example.tld/)<br>
+<br>
+{{ "{{ link('"~('md_cs.link_bot_hidden'|trans) ~"', 'https://piedweb.com/') }}" }}
+{% endapply %}</code></pre>
+</div>
 
-Lien dissimulé pour les moteurs de recherches :
 
-<pre>{{ "{{ link('Pied Web', 'https://piedweb.com/') }}" }}</pre>
+<!-- -->
 
-<h3 id="mail" class="mt-5">Lien vers une adresse mail</h3>
+<h2 id="mail" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.link_to_mail'|trans }}</h2>
 
-<pre>contact@example.tld</pre>
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+{{ mail('contact@example.tld') }}
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>
+{{ "{<!---->{" }} mail('contact@example.tld') }}
+</code></pre>
+</div>
 
-<p>{{ mail('contact@example.tld') }}</p>
+<!-- -->
 
-<p>Mettre le mail brut dans le texte, il sera trouvé automatiquement et converti en lien. La plupart des robots ne verront que <code>pbagnpg@rknzcyr.gyq</code></p>
+<h2 id="tel" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.link_to_phone'|trans }}</h2>
 
-<h3 id="tel" class="mt-5">Lien vers un numéro de téléphone</h3>
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
+{{ tel('+33 7 00 00 00 00 00 00 00') }}
+{% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>
+{{ "{<!---->{" }} tel('+33 7 00 00 00 00 00 00 00') }}
+</code></pre>
+</div>
 
-<pre>+33 7 68 68 68 68</pre>
 
-<p>{{ tel('+33 7 68 68 68 68') }}</p>
+<!-- -->
 
-<h3 id="fragment" class="mt-5">Ajouter un lien vers une partie de page</h3>
+<h2 id="lists" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.lists'|trans }}</h2>
 
-<ol>
-    <li>Créer l'ancre repère dans la page, exemple :
-        <pre>## Titre 2 {{ "{id=titre2}"|escape }}</pre>
-    </li>
-    <li>Créer le lien :<code>[ancre de lien vers partie titre 2 de la page](#titre2)</code></li>
-</ol>
-
-<hr class="mt-5 mb-5">
-
-<h2 id="list">Listes</h2>
-<pre>
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+{% apply markdown %}
 1. premier élément d'une liste ordonnée
 2. second
     * sous-liste
@@ -150,36 +178,28 @@ Lien dissimulé pour les moteurs de recherches :
 - ou un moins
     1. sous-liste ordonnée
 + Ou un plus
-</pre>
-
-{% apply markdown %}
-1. premier élément d'une liste ordonnée
-2. second
-    * sous-liste
-1. Le chiffre n'a pas d'importance
-    1. sous-liste ordordonnée
-4. un dernier élement
-
-* Liste avec un astérisque
-- ou un moins
-    1. sous-liste ordonnée
-+ Ou un plus
 {% endapply %}
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+1. premier élément d'une liste ordonnée<br>
+2. second<br>
+    * sous-liste<br>
+1. Le chiffre n'a pas d'importance<br>
+    1. sous-liste ordordonnée<br>
+4. un dernier élement<br>
+<br>
+* Liste avec un astérisque<br>
+- ou un moins<br>
+    1. sous-liste ordonnée<br>
++ Ou un plus
+{% endapply %}</code></pre>
+</div>
+<!-- -->
 
-<hr class="mt-5 mb-5">
+<h2 id="p" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.paragraph'|trans }}</h2>
 
-<h2 id="p">Paragraphes et saut de ligne</h2>
-<pre>
-Sauter deux lignes.
-
-Permet de créer deux paragraphes.
-
-Une seule,
-n'a aucune incidence.
-
-Pour ajouter un saut de ligne⋅⋅
-deux espace sont nécessaires.
-</pre>
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 Sauter deux lignes.
 
@@ -191,112 +211,112 @@ n'a aucune incidence.
 Pour ajouter un saut de ligne<br>
 deux espace sont nécessaires.
 {% endapply %}
-<hr class="mt-5 mb-5">
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+Sauter deux lignes.<br>
+<br>
+Permet de créer deux paragraphes.<br>
+<br>
+Une seule,<br>
+n'a aucune incidence.<br>
+<br>
+Pour ajouter un saut de ligne⋅⋅<br>
+deux espace sont nécessaires.{% endapply %}</code></pre>
+</div>
 
-<h2 id="quote">Citation</h2>
-<pre>
-Ma citation :
+<!-- -->
 
-> Mon bloc de contenu cité
-> sur plusieurs lignes
+<h2 id="quote" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.quote'|trans }}</h2>
 
-> ou sur plusieurs paragraphes
-</pre>
+<div class="relative mb-8 overflow-hidden">
+    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
-Ma citation :
-
 > Mon bloc de contenu cité
 > sur plusieurs lignes
 
 > ou sur plusieurs paragraphes
 {% endapply %}
-<hr class="mt-5 mb-5">
+    </div>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+> Mon bloc de contenu cité<br>
+> sur plusieurs lignes<br>
+<br>
+> ou sur plusieurs paragraphes<br>
+{% endapply %}</code></pre>
+</div>
 
-<h2 id="img">Image</h2>
+<!-- -->
 
-<p>Exemple (le code suivant est proposé directement le gestionnaire de l'image, un clic
- sur celui-ci le copie automatiquement dans votre presse papier) : </p>
-<pre>
-![Texte alternatif](/media/default/media/mon-image.jpg)
-</pre>
+<h2 id="img" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.image'|trans }}</h2>
 
-<p class="p-5 font-bold text-green-600 bg-green-100 rounded-sm">Il est déconseillé d'utiliser des images provenant d'un site tiers (cf loi RGPD)</p>
-
-<hr class="mt-5 mb-5">
-
-<h2>Galerie</h2>
-
-<p>Pour afficher toutes les images liées à une <code>page</code> :</p>
-<pre>
-{{ "{{ gallery(page) }}|unprose" }}
-</pre>
-
-<p>Pour afficher seulement les 4 premières images liées à la <code>page</code> :</p>
-
-<pre>
-{{ "{{ gallery(page, 1, 4) }}|unprose" }}
-</pre>
-
-<p>Pour afficher seulement les 2 suivantes :</p>
-
-<pre>
-{{ "{{ gallery(page, 4, 2) }}|unprose" }}
-</pre>
-
-<hr class="mt-5 mb-5">
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
+![Texte alternatif](/media/default/media/mon-image.jpg)<br>
+<br>
+# Pour afficher toutes les images liées à une page <br>
+{{ "{{ gallery(page)|unprose }}" }}<br>
+<br>
+# Pour afficher seulement les 4 premières images liées à une page:<br>
+{{ "{{ gallery(page, 1, 4)|unprose }}" }}<br>
+# Pour afficher seulement les 2 suivantes :<br>
+{{ "{{ gallery(page, 4, 2)|unprose }}" }}
+{% endapply %}</code></pre>
+</div>
+<p class="p-5 mt-6 font-bold text-yellow-600 border-l-4 border-yellow-600 rounded-sm bg-yellow-50">Il est déconseillé d'utiliser des images provenant d'un site tiers (cf loi RGPD)</p>
 
 
-<h2 id="video">Vidéo</h2>
+<!-- -->
 
-<pre>
-{{ "{{ video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose" }}
-</pre>
+<h2 id="video" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.video'|trans }}</h2>
 
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
+{{ "{{" }} video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose {{ "}}" }}
+{% endapply %}</code></pre>
+</div>
+<div class="prose dark:prose-light">
 {% apply markdown %}
 - le premier élément correspond à l'URL de votre vidéo (youtube ou autre)
 - le second à l'image d'aperçu
 - le troisième
 - une quatrième valeur peut être ajouter `url` : permet de forcer l'affichage de la vidéo en plein écran
 {% endapply %}
+</div>
 
-<hr class="mt-5 mb-5">
+<!-- -->
 
-<h2 id="pageslist">Lister des pages via un mot clef ou un hash</h2>
+<h2 id="pageslist" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.page_list'|trans }}</h2>
 
-Pour lister des pages contenant un terme ou un `tag` :
-<pre>{{ "{{" }} list('keyword X or <!--invisible-hash-in-content-->')|unprose {{ "}}" }} </pre>
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
+{{ "{{" }} list('keyword X or <!--invisible-hash-in-content-->')|unprose {{ "}}" }}<br>
+{{ "{{" }} list('keyword X', $number = 3, $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig')|unprose {{ "}}" }}<br>
+{{ "{{" }} cardlist('keyword X', $number = 3, $orderBy = 'createdAt')|unprose {{ "}}" }}<br>
+<br>
+{{ "{{" }} children(page, $number = 3)|unprose {{ "}}" }}<br>
+{{ "{{" }} cardchildren(page, $number = 3)|unprose {{ "}}" }}
+{% endapply %}</code></pre>
+</div>
 
+<h2 id="redirect" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.redirection'|trans }}</h2>
 
-Autres paramètres :
-<pre>{{ "{{" }}  list('keyword X', $number = 3, $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig')|unprose {{ "}}" }}</pre>
-<pre>{{ "{{" }}  cardlist('keyword X', $number = 3, $orderBy = 'createdAt')|unprose {{ "}}" }}</pre>
+<div class="prose dark:prose-light">
+<p>Votre contenu doit contenir uniquement :</p></div>
 
-
-
-<h2 id=children class="mt-5">Lister les pages enfants (blog/news/...)</h2>
-
-<pre>{{ "{{" }} children(page, $number = 3)|unprose {{ "}}" }} </pre>
-
-<pre>{{ "{{" }} cardchildren(page, $number = 3)|unprose {{ "}}" }} </pre>
-
-<hr class="mt-5 mb-5">
-
-
-<h2 id="redirect">Redirection</h2>
-Votre contenu doit contenir uniquement :
-<pre>
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
 Location: http://example.eg/
-</pre>
-<hr class="mt-5 mb-5">
+{% endapply %}</code></pre>
+</div>
 
 
-<h2 id="rich-content">Autres Paramètres</h2>
+<!-- -->
 
-<p class="p-5 font-bold text-red-600 bg-red-100 rounded-sm">Fonctionnalités avancées.</p>
 
+<h2 id="others" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.others'|trans }}</h2>
+
+<div class="prose dark:prose-light">
 {% apply markdown %}
-- `subtitle`
-
 - `container`  <br>
    class pour le contenant du contenu.
 
@@ -307,32 +327,14 @@ Location: http://example.eg/
 - `main_image_multiple` <br>
   Plusieurs images en fonction d'un hash contenu dans l'url (ex: `winter:/media/defaut/winter.jpg;summer:/media/defaut/summer.jpg`)
 
-- `toc` (= true) : active le sommaire
+- `toc` (: true) : active le sommaire
 
-- Tout autre *Autres Paramêtres* peut êgalement être appelé directement dans la page `{{ "{{ page.customParam }}" }}`
+- Tout autre *Autres Paramètres* peut êgalement être appelé directement dans la page `{{ "{{ page.customParam }}" }}`
 {% endapply %}
-
 </div>
 
-<style>
-pre {
-  padding: 16px;
-}
 
-code {
-  padding: 5px;
-}
+{% endblock %}
 
-pre, code {
-  font-size: 85%;
-  background-color: #f6f8fa;
-  border-radius: 3px;
-}
-
-blockquote {
-  padding: 0 1em;
-  color: #6a737d;
-  border-left: .25em solid #dfe2e5;
-}
-</style>
+</div>
 {% endblock %}

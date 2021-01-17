@@ -92,7 +92,7 @@ class Raw implements FilterInterface
         }
 
         if ($this->page->getCustomProperty('toc')) {
-            $this->toc = (new TocGenerator())->getHtmlMenu($this->content);
+            $this->toc = (new TocGenerator())->getHtmlMenu($this->content, 2);
         }
     }
 

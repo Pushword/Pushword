@@ -1,19 +1,21 @@
 {% extends '@Pushword/page/_content.html.twig' %}
 
-{% set container = 'p-3 prose dark:prose-light max-w-none max-w-3xl' %}
+{% set container = 'p-3 '~ (page.prose ? page.prose : 'prose dark:prose-light') ~' max-w-3xl' %}
 
 {% block toc %}{% endblock %}
 
 {% block content %}
 
     <div class="pt-3"></div>
-    {% if page.toc is not null %}
+    {% if page.raw is not null %}
+            {{ page.content.body|raw }}
+    {% elseif page.toc is not null %}
     {% block h1 %} {% endblock %}
     <div class="flex flex-wrap max-w-5xl">
 
         <div class="order-2 w-fulloverflow-hidden lg:order-1 lg:w-4/5">
             <div class="p-3 prose dark:prose-light max-w-none">
-                <h1>{{ page.content.title(true)|raw }}</h1>
+                <h1>{{ page.content.h1|raw }}</h1>
                 {{ page.content.intro|raw }}
             </div>
         </div>
@@ -22,13 +24,17 @@
         <div class="order-3 w-full overflow-hidden lg:order-2 lg:w-1/5">
             <div class="max-w-screen-sm p-2 pt-4 m-2 rounded shadow-md bg-gray-50 dark:border-gray-700 lg:max-w-xs lg:absolute">
                 <h3 class="block px-1 mb-3 text-sm font-semibold tracking-wide text-gray-900 uppercase dark:text-gray-100 lg:mb-3 lg:text-xs">Contents</h3>
-                <div class="px-1 -ml-6 prose-sm dark:prose-light max-w-none">{{ page.content.toc|raw }}</div>
+                <div class="px-1 -ml-6 prose-sm dark:prose-light max-w-none">
+                    {{ page.content.toc|raw }}
+                </div>
             </div>
         </div>
         {% endif %}
 
         <div class="order-4 w-full overflow-hidden lg:w-4/5">
-            <div class="{{ container }} ">{{ page.content.content|raw }}</div>
+            <div class="{{ container }} ">
+                {{ page.content.content|raw }}
+            </div>
         </div>
 
     </div>

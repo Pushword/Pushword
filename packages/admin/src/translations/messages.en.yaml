@@ -1,0 +1,21 @@
+md_cs:
+  title: Title and subtitle
+  chapeau: Chapeau
+  chapeau_description: Le chapeau est le paragraphe introductif placé sous le titre.
+  emphasis: Emphasis
+  link: Link
+  link_homepage: Lien vers la page d'accueil
+  link_other_site: Lien vers un autre site
+  link_bot_hidden: Lien Invisible pour les robots
+  link_to_mail: Link to mail
+  link_to_phone: Vers un n° de téléphone
+  link_to_fragment: Link to fragment
+  lists: Lists
+  paragraph: Paragraph
+  quote: Quote
+  image: Image and gallery
+  video: Video
+  page_list: List pages
+  children_list: List children pages (blog/news/...)
+  redirection: Redirection
+  others: Others

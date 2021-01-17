@@ -6,6 +6,7 @@ const purgecss = require('@fullhuman/postcss-purgecss')({
   content: [
     './../../core/src/templates/**/*.html.twig',
     './../../core/src/templates/*.html.twig',
+    './../../admin/src/templates/*.html.twig',
     './../../skeleton/templates/pushword.piedweb.com/*.html.twig',
     './../../skeleton/templates/pushword.piedweb.com/**/*.html.twig',
     './../content/*.md',
