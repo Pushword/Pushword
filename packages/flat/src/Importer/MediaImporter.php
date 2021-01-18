@@ -29,7 +29,7 @@ class MediaImporter extends AbstractImporter
     {
         // for now, we import only image TODO
         if (
-            0 !== strpos(finfo_file(finfo_open(FILEINFO_MIME_TYPE), $filePath), 'image/')
+            0 !== strpos(finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $filePath), 'image/')
             || preg_match('/\.webp$/', $filePath)) {
             return;
         }

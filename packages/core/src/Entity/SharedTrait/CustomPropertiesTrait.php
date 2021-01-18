@@ -49,7 +49,7 @@ trait CustomPropertiesTrait
         $standStandAloneCustomProperties = array_filter(
             $this->getCustomProperties(),
             [$this, 'isStandAloneCustomProperty'],
-            ARRAY_FILTER_USE_KEY
+            \ARRAY_FILTER_USE_KEY
         );
         if (! $standStandAloneCustomProperties) {
             return '';

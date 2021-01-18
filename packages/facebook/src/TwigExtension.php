@@ -91,7 +91,7 @@ class TwigExtension extends AbstractExtension
 
         $imgSize = getimagesize($image);
 
-        $fileName = 'fb-'.pathinfo($image, PATHINFO_BASENAME).'.'.str_replace('image/', '', $imgSize['mime']);
+        $fileName = 'fb-'.pathinfo($image, \PATHINFO_BASENAME).'.'.str_replace('image/', '', $imgSize['mime']);
 
         $newFilePath = $this->mediaDir.'/'.$fileName;
 

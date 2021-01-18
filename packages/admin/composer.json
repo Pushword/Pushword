@@ -1,42 +1,42 @@
 {
-  "name": "pushword/admin",
-  "type": "symfony-bundle",
-  "description": "Default Admin to manage online Pushword App and websites.",
-  "keywords": [],
-  "homepage": "https://pushword.piedweb.com/extension/admin",
-  "license": "MIT",
-  "require": {
-    "pushword/core": "^0.0",
-    "sonata-project/admin-bundle": "dev-master#08dbbf19e21a9e9012d8fb020ae3784991b4d893",
-    "sonata-project/doctrine-orm-admin-bundle": "4.x-dev"
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "0.0.x-dev",
-      "dev-main": "0.0.x-dev"
+    "name": "pushword/admin",
+    "type": "symfony-bundle",
+    "description": "Default Admin to manage online Pushword App and websites.",
+    "keywords": [],
+    "homepage": "https://pushword.piedweb.com/extension/admin",
+    "license": "MIT",
+    "require": {
+        "pushword/core": "^0.0",
+        "sonata-project/admin-bundle": "dev-master#08dbbf19e21a9e9012d8fb020ae3784991b4d893",
+        "sonata-project/doctrine-orm-admin-bundle": "4.x-dev"
     },
-    "patches": {
-      "sonata-project/admin-bundle": [
-        "patches/sonata-project-admin-bundle-src-datagrid-pager-php.patch"
-      ]
-    }
-  },
-  "autoload": {
-    "psr-4": {
-      "Pushword\\Admin\\": "src"
-    }
-  },
-  "require-dev": {
-    "phpunit/phpunit": "^9.5",
-    "cweagans/composer-patches": "^1.7"
-  },
-  "authors": [
-    {
-      "name": "Robin@PiedWeb",
-      "email": "contact@piedweb.com",
-      "homepage": "https://piedweb.com"
-    }
-  ],
-  "minimum-stability": "dev",
-  "prefer-stable": true
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.0.x-dev",
+            "dev-main": "0.0.x-dev"
+        },
+        "patches": {
+            "sonata-project/admin-bundle": [
+                "patches/sonata-project-admin-bundle-src-datagrid-pager-php.patch"
+            ]
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Pushword\\Admin\\": "src"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "cweagans/composer-patches": "^1.7"
+    },
+    "authors": [
+        {
+            "name": "Robin@PiedWeb",
+            "email": "contact@piedweb.com",
+            "homepage": "https://piedweb.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

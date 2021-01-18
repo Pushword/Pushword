@@ -15,7 +15,7 @@ class Date extends ShortCode
     {
         //var_dump($string); exit;
         if ($locale) {
-            setlocale(LC_TIME, self::convertLocale($locale));
+            setlocale(\LC_TIME, self::convertLocale($locale));
         }
 
         //$string = preg_replace('/date\([\'"]?([a-z% ]+)[\'"]?\)/i',

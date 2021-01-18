@@ -12,9 +12,8 @@ use Sonata\AdminBundle\Object\MetadataInterface;
 
 class Admin extends AbstractAdmin implements AdminInterface
 {
-    public $supportsPreviewMode = true;
-
     use AdminTrait;
+    public $supportsPreviewMode = true;
 
     protected $messagePrefix = 'admin.page';
 
