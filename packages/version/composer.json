@@ -1,5 +1,5 @@
 {
-    "name": "pushword/version-file",
+    "name": "pushword/version",
     "type": "symfony-bundle",
     "description": "Versioning pages with Pushword CMS.",
     "keywords": [],
