@@ -1,29 +1,28 @@
 ---
 title: Pushword - Modern CMS to build rapidly Websites (powered by Symfony)
-h1: Build modern websites rapidly <br> <span class="text-primary">maintain it as quickly</span>
+h1: <span class="block mt-6 leading-relaxed">Build modern <em class="font-light">Content First</em> websites rapidly <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>
 name: Pushword
 template: /page/homepage.html.twig
-prose: "max-w-screen-lg prose-lg mx-auto p-3 prose dark:prose-light"
+prose: "max-w-screen-lg prose-sm md:prose-lg mx-auto p-3 prose dark:prose-light"
 ---
 
-<div class="p-3 text-xl bg-yellow-50 text-secondary rounded-xl" markdown=1>
+{% apply unprose %}
 
-Puswhord is a **PHP** <strong style="color:var(--primary)">CMS</strong> to <strong style="color:var(--primary)">rapidly</strong> create, manage and maintain <strong style="color:var(--primary)">extandable Website(s)</strong>.
+<div class="max-w-screen-lg p-3 mx-auto mb-6 text-xl md:p-6 bg-gradient-to-br from-yellow-500 to-yellow-600 text-yellow-50 text-secondary rounded-xl">
+<p class="py-3">Puswhord is a PHP <strong class="text-white">CMS</strong> to <strong class="text-white">rapidly</strong> create, manage and maintain <strong class="text-white">extandable Website(s)</strong>.</p>
+<p class="py-3">It’s</p>
+<ul class="list-disc list-inside">
+<li class="py-2">easily <em>editable</em> via <strong class="text-white">flat files</strong> or <strong class="text-white">full featured admin</strong></li>
+<li class="py-2">fully <em>configurable</em>, <em>customizable</em> and <em>extandable</em>. <strong>Configure it</strong> via one config file in <em>yaml</em>, edit the default theme built with <strong class="text-white">Tailwind</strong> in an instant, extend it with <a href="/extension">extension</a></li>
+<li class="py-2"><strong>searchable</strong> : be findable on <strong class="text-white">google</strong> and other search engine</li>
+<li class="py-2">build on top one of the most popular PHP framework <strong class="text-white">symfony</strong>. And you don’t need to know about it <strong class="text-white">to install Pushword</strong>.</li>
+</ul>
+<p class="hidden w-24 p-3 mt-3 font-bold text-center transform bg-white rounded shadow-md lg:block lg:-ml-10 -rotate-12 text-primary lg:-mb-3">Bonus</p>
+<p class="py-3">With Pushword managing <strong class="text-white">multi-site</strong> and <strong class="text-white">internationalization</strong> is so simple.</p>
+</div>
+{% endapply %}
 
-It's
-
--   easily _editable_ via <strong style="color:var(--primary)">flat files</strong> or <strong style="color:var(--primary)">full featured admin</strong>
--   fully _configurable_ and _customizable_ : configure it via one config file in _yaml_ and edit the default theme built with <strong style="color:var(--primary)">Tailwind</strong> in a second
--   **searchable** : be findable on <strong style="color:var(--primary)">google</strong> and other search engine
--   build on top one of the most popular PHP framework <strong style="color:var(--primary)">symfony</strong>. And you don't need to know about it <strong style="color:var(--primary)">to install Pushword</strong>.
-
-<p class="text-center"><strong class="inline-block p-3 -mb-3 rotate-180 bg-yellow-100 rounded shadow-md" style="color:var(--primary)">Bonus</strong> </p>
-
-With Pushword managing <strong style="color:var(--primary)">multi-site</strong> and <strong style="color:var(--primary)">internationalization</strong> is so simple.
-
- </div>
-
-Want a demo ? This website is built with **Pushword**.
+Want a demo ? This website is built with **Pushword** with flat file management, see the #[{{ svg('github') }} source code](https://github.com/Pushword/Pushword/tree/main/packages/docs).
 
 See [how to install and test Pushword in less than one minute](/installation) :
 

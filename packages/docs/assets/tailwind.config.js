@@ -32,6 +32,9 @@ module.exports = {
                             textDecoration: "none",
                             fontWeight: 400,
                         },
+                        "ul > li::before": {
+                            backgroundColor: theme("colors.gray.600"),
+                        },
                         color: "#333",
                         a: {
                             color: "var(--secondary)",
@@ -80,6 +83,7 @@ module.exports = {
                                 color: theme("colors.gray.400"),
                             },
                             code: {
+                                backgroundColor: theme("colors.gray.600"),
                                 color: theme("colors.gray.100"),
                             },
                             "a code": {

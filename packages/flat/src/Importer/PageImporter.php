@@ -54,7 +54,7 @@ class PageImporter extends AbstractImporter
 
     public function import(string $filePath, DateTimeInterface $lastEditDatetime): void
     {
-        if ('text/plain' != finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $filePath)) {
+        if (0 !== strpos(finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $filePath), 'text/')) {
             return;
         }
 

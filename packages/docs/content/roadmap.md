@@ -10,6 +10,7 @@ parent: contribute
 -   release de sonata 4
 -   Test installer
 -   Issue : User Password Edit don't work from admin
+-   Issue : preview not working
 
 ## TODO Extension
 

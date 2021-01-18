@@ -3,7 +3,6 @@
 # Use it :
 # ./installer ./my-folder
 
-# Bash script relative lines
 : ${1?failure: in wich folder should i work ?}
 folder=$1
 echo "Installation running in folder $folder"
@@ -61,26 +60,25 @@ php bin/console assets:install --symlink --relative -q
 
 mkdir public/build && echo -e "{}" >public/build/manifest.json
 
-
-# Do some cleaning
-rm package.json
-rm -rf assets
-cp vendor/pushword/skeleton/assets assets
-
-sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::postPackageInstall"/d' composer.json
-sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::beforeCacheClear",/d' composer.json
-composer remove pushword/installer pushword/skeleton -q
-
 # Install recommended extension
 read -p "Install recommended extensions (admin, page-scanner, static-generator, svg, template-editor) ? [Y/n] " -n 1 -r
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    composer require pushword/admin pushword/page-scanner pushword/static-generator pushword/svg pushword/template-editor
+    composer require pushword/admin pushword/page-scanner pushword/static-generator pushword/svg pushword/template-editor -q
     sed -i '1s/^/page_scanner:\n    resource: "@PushwordPageScannerBundle\/PageScannerRoutes.yaml"\n/' config/routes.yaml
     sed -i '1s/^/static:\n    resource: "@PushwordStaticGeneratorBundle\/StaticRoutes.yaml"\n/' config/routes.yaml
     sed -i '1s/^/template_editor:\n    resource: "@PushwordTemplateEditorBundle\/TemplateEditorRoutes.yaml"\n/' config/routes.yaml
     sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle\/AdminRoutes.yaml"\n/' config/routes.yaml
 fi
+
+# Do some cleaning
+rm package.json
+rm -rf assets
+cp -r vendor/pushword/skeleton/assets assets
+
+sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::postPackageInstall"/d' composer.json
+sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::beforeCacheClear",/d' composer.json
+composer remove pushword/installer pushword/skeleton -q
 
 # Launch Server and Play
 read -p "Launch Server and play? [Y/n] " -n 1 -r

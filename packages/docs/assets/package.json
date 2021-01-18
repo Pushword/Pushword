@@ -29,5 +29,8 @@
     "dev": "encore dev",
     "watch": "encore dev --watch",
     "build": "encore production"
+  },
+  "dependencies": {
+    "tailwindcss-hero-patterns": "^0.0.1"
   }
 }
