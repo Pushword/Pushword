@@ -3,7 +3,7 @@
 #---
 # Views Component
 video:
-  play: 'Lecture'
+  play: "Lecture"
 
 fr: Français
 en: English
@@ -60,7 +60,7 @@ admin:
     host:
       label: Domaine
     update_notification:
-      title: '[%appName%] Edition en cours'
+      title: "[%appName%] Edition en cours"
     params:
       label: Paramètres
     title:
@@ -68,14 +68,14 @@ admin:
       help: '<small>Titre visible depuis les moteurs de recherches dans la limite de 560px (taille actuelle : <span id="titleWidth"></span>)</small>'
     slug:
       label: Identifiant Url
-      help: ' '
+      help: " "
     locale:
       label: Language
-      help: '<small>Au format décrit par la norme rfc 5646 (ex: <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>'
+      help: "<small>Au format décrit par la norme rfc 5646 (ex: <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>"
     subTitle:
       label: Sous-titre
     translations:
-      label: 'Traductions'
+      label: "Traductions"
       help: "Utiliser l'url pour trouver la page (ex : en/my-other)."
     searchExcrept:
       label: Courte Description
@@ -108,7 +108,7 @@ admin:
       label: Moteur de thème (facultatif)
     mainContent:
       label: Corps de la page
-      help: Les balises HTML ainsi que les fonctionnalités de Twig sont autorisées.<br><br>
+      help: ""
     mainImage:
       label: Image d'en-tête
     markdown:
@@ -180,8 +180,8 @@ admin:
     mediaFile:
       label: Fichier
     names:
-      label: 'Traduction'
-      help: 'Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne.'
+      label: "Traduction"
+      help: "Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne."
     mainColor:
       label: Couleur Principale
     createdAt:

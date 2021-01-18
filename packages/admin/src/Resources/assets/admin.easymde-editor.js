@@ -22,6 +22,7 @@ export function easyMDEditor() {
                 "image",
                 "quote",
                 "code",
+                "|",
                 "side-by-side",
                 "fullscreen",
                 {
@@ -37,14 +38,16 @@ export function easyMDEditor() {
             spellChecker: false,
             nativeSpellcheck: true,
             previewImagesInEditor: true,
+            sideBySideFullscreen: false,
             insertTexts: {
                 link: ["[", "]()"],
                 image: ["![", "](/media/default/...)"],
             },
             //minHeight: "70vh",
-            maxHeight: "70vh",
+            maxHeight: "65vh",
             syncSideBySidePreviewScroll: false,
             previewRender: function (editorContent, preview) {
+                resizeSidePreview();
                 $(editorElement).val(editorContent);
                 if (!document.getElementById("previewf")) {
                     customPreview(editorContent, editorElement, preview);
@@ -59,6 +62,15 @@ export function easyMDEditor() {
             /**/
         });
     });
+
+    function resizeSidePreview() {
+        var sidedNoFullScreenContainer = document.querySelector(
+            ".editor-preview-side" //".sided--no-fullscreen"
+        );
+        if (sidedNoFullScreenContainer) {
+            sidedNoFullScreenContainer.style.height = "inherit";
+        }
+    }
 
     function customPreview(editorContent, editorElement, preview) {
         var preloadIframeElement = document.querySelector(
