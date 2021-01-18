@@ -16,7 +16,7 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder('flat');
         $treeBuilder->getRootNode()->children()
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
-            ->scalarNode('flat_content_dir')->defaultValue('content')->cannotBeEmpty()->end()
+            ->scalarNode('flat_content_dir')->defaultValue('')->end()
         ->end();
 
         return $treeBuilder;

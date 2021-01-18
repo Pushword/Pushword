@@ -6,12 +6,28 @@ services:
     class: Pushword\Flat\FlatFileImporter
     autowire: true
     arguments:
-      $projectDir: '%kernel.project_dir%'
+      $projectDir: "%kernel.project_dir%"
 
-  Pushword\Flat\FlatFileCommand:
+  Pushword\Flat\FlatFileExporter:
+    alias: pushword.flat.exporter
+
+  pushword.flat.exporter:
+    class: Pushword\Flat\FlatFileExporter
     autowire: true
     arguments:
-    tags: ['console.command']
+      $projectDir: "%kernel.project_dir%"
+      $pageClass: "%pw.entity_page%"
+      $mediaClass: "%pw.entity_media%"
+
+  Pushword\Flat\FlatFileImportCommand:
+    autowire: true
+    arguments:
+    tags: ["console.command"]
+
+  Pushword\Flat\FlatFileExportCommand:
+    autowire: true
+    arguments:
+    tags: ["console.command"]
 
   Pushword\Flat\FlatFileContentDirFinder:
     alias: pushword.flat.content_dir_finder
@@ -20,20 +36,20 @@ services:
     class: Pushword\Flat\FlatFileContentDirFinder
     autowire: true
     arguments:
-      $projectDir: '%kernel.project_dir%'
+      $projectDir: "%kernel.project_dir%"
 
   Pushword\Flat\Importer\PageImporter:
     autowire: true
     arguments:
-      $entityClass: '%pw.entity_page%'
+      $entityClass: "%pw.entity_page%"
     calls:
-      - [setContentDirFinder, ['@pushword.flat.content_dir_finder']]
-      - [setMediaClass, ['%pw.entity_media%']]
-      - [setPageHasMediaClass, ['%pw.entity_pagehasmedia%']]
+      - [setContentDirFinder, ["@pushword.flat.content_dir_finder"]]
+      - [setMediaClass, ["%pw.entity_media%"]]
+      - [setPageHasMediaClass, ["%pw.entity_pagehasmedia%"]]
 
   Pushword\Flat\Importer\MediaImporter:
     autowire: true
     arguments:
-      $entityClass: '%pw.entity_media%'
+      $entityClass: "%pw.entity_media%"
     calls:
-      - [setMediaDir, ['%pw.media_dir%']]
+      - [setMediaDir, ["%pw.media_dir%"]]

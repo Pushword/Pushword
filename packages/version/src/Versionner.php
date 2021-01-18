@@ -9,6 +9,7 @@ use Doctrine\Persistence\Event\LifecycleEventArgs;
 use Exception;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
+use Pushword\Core\Utils\Entity;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
@@ -147,37 +148,6 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
 
     private function getProperties(PageInterface $page): array
     {
-        $reflClass = new \ReflectionClass(\get_class($page));
-        $properties = array_filter($reflClass->getProperties(), function (\ReflectionProperty $property) {
-            if (false !== strpos($property->getDocComment(), '@ORM\Column')) {
-                return true;
-            }
-        });
-        foreach ($properties as $key => $property) {
-            if ('id' == $property->getName()) {
-                continue;
-            }
-            $properties[$key] = $property->getName();
-        }
-
-        return array_values($properties);
+        return Entity::getProperties($page);
     }
-
-    /*
-    Kept for Exporter #TODO
-    public function createVersion2(
-        PageInterface $page
-    ): void
-    {
-        $versionFile = $this->logsDir.'/version/'.$page->getId().'/'.uniqid();
-
-        $properties = $this->getProperties($page);
-
-        foreach ($properties as $key => $property) {
-            $getter = 'get'.ucfirst($property->getName());
-            $properties[$property->getName()] = $page->$getter();
-        }
-
-        dd(json_encode($properties));
-    }*/
 }

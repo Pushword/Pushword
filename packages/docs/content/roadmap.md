@@ -8,7 +8,6 @@ parent: contribute
 ## TODO before v1
 
 -   release de sonata 4
--   Test installer
 -   Issue : User Password Edit don't work from admin
 -   Issue : preview not working
 
