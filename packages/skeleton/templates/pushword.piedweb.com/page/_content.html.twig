@@ -53,12 +53,14 @@
     {% endif %}#}
 
 
+    {% if page.slug != 'homepage' %}
     <div class="flex max-w-3xl mx-3 mt-5">
 
         {{ _self.previous(nav, page) }}
 
         {{ _self.next(nav, page) }}
     </div>
+    {% endif %}
 
     {% if page.slug != 'homepage' %}
         <div class="mx-3 mt-10 text-sm font-light text-center text-gray-500">

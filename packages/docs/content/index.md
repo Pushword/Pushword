@@ -48,8 +48,8 @@ Or look at the detailled features or directly the #[source code](https://github.
 
 Symfony upgrade your developpement process : the famous framework come with autowiring, event suscriber, large community and good documentation !
 
--   Build on top on Symfony and other #[fantastic well maintained packages](https://raw.githubusercontent.com/Pushword/Pushword/main/composer.json)
--   Build as a symfony bundle, **extendable** with symfony bundle
+-   Built on top on Symfony and other #[fantastic well maintained packages](https://raw.githubusercontent.com/Pushword/Pushword/main/composer.json)
+-   Built as a symfony bundle, **extendable** with symfony bundle
 -   **Tested** / **Traits** / **Command**
 
 ## Be visible on Search Engine<br> <small>**SEO** : feel like **wikipedia**</small>
