@@ -1,86 +1,86 @@
 {
-  "name": "pushword/core",
-  "type": "symfony-bundle",
-  "description": "A php CMS built on top of Symfony to rapidly create, manage and maintain Modern Website(s).",
-  "keywords": [],
-  "homepage": "https://pushword.piedweb.com",
-  "license": "MIT",
-  "require": {
-    "php": "^7.4",
-    "caseyamcl/toc": "^3.0",
-    "cocur/slugify": "^3.0|^4.0",
-    "doctrine/annotations": "^1.11",
-    "doctrine/doctrine-bundle": "^2.2.2",
-    "doctrine/doctrine-fixtures-bundle": "^3.4",
-    "doctrine/doctrine-migrations-bundle": "^3.0",
-    "doctrine/orm": "^2.8.1",
-    "knplabs/knp-markdown-bundle": "^1.8",
-    "league/color-extractor": "^0.3.2",
-    "liip/imagine-bundle": "^2.3",
-    "piedweb/render-html-attributes": "^1.0 | ^2.0",
-    "piedweb/url-harvester": "^0.0.26",
-    "rosell-dk/webp-convert": "^2.4",
-    "sensio/framework-extra-bundle": "^5.6",
-    "spatie/async": "^1.5",
-    "symfony/asset": "^5.2",
-    "symfony/cache": "^5.2",
-    "symfony/console": "^5.2",
-    "symfony/expression-language": "^5.2",
-    "symfony/finder": "^5.2",
-    "symfony/form": "^5.2",
-    "symfony/framework-bundle": "^5.2",
-    "symfony/lock": "^5.2",
-    "symfony/mailer": "^5.2",
-    "symfony/process": "^5.2",
-    "symfony/security-bundle": "^5.2",
-    "symfony/security-csrf": "^5.2",
-    "symfony/security-guard": "^5.2",
-    "symfony/translation": "^5.2",
-    "symfony/twig-bundle": "^5.2",
-    "symfony/validator": "^5.2",
-    "symfony/web-link": "^5.2",
-    "symfony/webpack-encore-bundle": "^1.8",
-    "symfony/yaml": "^5.2",
-    "twig/intl-extra": "^3.2",
-    "vich/uploader-bundle": "^1.16",
-    "villfa/invert-color": "^0.5",
-    "wyrihaximus/html-compress": "^4.1"
-  },
-  "require-dev": {
-    "friendsofphp/php-cs-fixer": "^2.17",
-    "friendsoftwig/twigcs": "^4.0",
-    "phpunit/phpunit": "^9.5",
-    "squizlabs/php_codesniffer": "^3.5",
-    "symfony/phpunit-bridge": "^5.0",
-    "vimeo/psalm": "^4.3",
-    "symfony/dotenv": "^5.2",
-    "symfony/maker-bundle": "^1.26",
-    "symfony/profiler-pack": "^1.0",
-    "symplify/monorepo-builder": "^9.0"
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "0.0.x-dev",
-      "dev-main": "0.0.x-dev"
-    }
-  },
-  "autoload": {
-    "psr-4": {
-      "Pushword\\Core\\": "src"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Pushword\\Core\\": "tests"
-    }
-  },
-  "authors": [
-    {
-      "name": "Robin@PiedWeb",
-      "email": "contact@piedweb.com",
-      "homepage": "https://piedweb.com"
-    }
-  ],
-  "minimum-stability": "dev",
-  "prefer-stable": true
+    "name": "pushword/core",
+    "type": "symfony-bundle",
+    "description": "A php CMS built on top of Symfony to rapidly create, manage and maintain Modern Website(s).",
+    "keywords": [],
+    "homepage": "https://pushword.piedweb.com",
+    "license": "MIT",
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "caseyamcl/toc": "^3.0",
+        "cocur/slugify": "^3.0|^4.0",
+        "doctrine/annotations": "^1.11",
+        "doctrine/doctrine-bundle": "^2.2.2",
+        "doctrine/doctrine-fixtures-bundle": "^3.4",
+        "doctrine/doctrine-migrations-bundle": "^3.0",
+        "doctrine/orm": "^2.8.1",
+        "knplabs/knp-markdown-bundle": "^1.8",
+        "league/color-extractor": "^0.3.2",
+        "liip/imagine-bundle": "^2.3",
+        "piedweb/render-html-attributes": "^1.0 | ^2.0",
+        "piedweb/url-harvester": "^0.0.26",
+        "rosell-dk/webp-convert": "^2.4",
+        "sensio/framework-extra-bundle": "^5.6",
+        "spatie/async": "^1.5",
+        "symfony/asset": "^5.2",
+        "symfony/cache": "^5.2",
+        "symfony/console": "^5.2",
+        "symfony/expression-language": "^5.2",
+        "symfony/finder": "^5.2",
+        "symfony/form": "^5.2",
+        "symfony/framework-bundle": "^5.2",
+        "symfony/lock": "^5.2",
+        "symfony/mailer": "^5.2",
+        "symfony/process": "^5.2",
+        "symfony/security-bundle": "^5.2",
+        "symfony/security-csrf": "^5.2",
+        "symfony/security-guard": "^5.2",
+        "symfony/translation": "^5.2",
+        "symfony/twig-bundle": "^5.2",
+        "symfony/validator": "^5.2",
+        "symfony/web-link": "^5.2",
+        "symfony/webpack-encore-bundle": "^1.8",
+        "symfony/yaml": "^5.2",
+        "twig/intl-extra": "^3.2",
+        "vich/uploader-bundle": "^1.16",
+        "villfa/invert-color": "^0.5",
+        "wyrihaximus/html-compress": "^4.1"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.17",
+        "friendsoftwig/twigcs": "^4.0",
+        "phpunit/phpunit": "^9.5",
+        "squizlabs/php_codesniffer": "^3.5",
+        "symfony/phpunit-bridge": "^5.0",
+        "vimeo/psalm": "^4.3",
+        "symfony/dotenv": "^5.2",
+        "symfony/maker-bundle": "^1.26",
+        "symfony/profiler-pack": "^1.0",
+        "symplify/monorepo-builder": "^9.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.0.x-dev",
+            "dev-main": "0.0.x-dev"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Pushword\\Core\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Pushword\\Core\\": "tests"
+        }
+    },
+    "authors": [
+        {
+            "name": "Robin@PiedWeb",
+            "email": "contact@piedweb.com",
+            "homepage": "https://piedweb.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
