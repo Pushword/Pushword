@@ -24,6 +24,6 @@ parent: homepage
 -   [Template Editor](/extension/template-editor)
     Edit view file online in the [admin](https://pushword.piedweb.com/extension/admin).
 -   [Version](/extension/version)
-    Versionning pages with Pushword CMS.
+    Versioning pages with Pushword CMS.
 
 Add your own extension #[editing this file on github](https://github.com/Pushword/Pushword/edit/main/packages/docs/content/extensions.md).

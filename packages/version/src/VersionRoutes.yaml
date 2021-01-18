@@ -1,6 +1,6 @@
 piedweb_version_reset:
   path: /admin/version/{id}/reset
-  controller: Pushword\Version\VersionController::resetVersionning
+  controller: Pushword\Version\VersionController::resetVersioning
   methods: [GET]
 
 piedweb_version_list:

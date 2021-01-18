@@ -1,7 +1,7 @@
 {
     "name": "pushword/version-file",
     "type": "symfony-bundle",
-    "description": "Versionning pages with Pushword CMS.",
+    "description": "Versioning pages with Pushword CMS.",
     "keywords": [],
     "homepage": "https://pushword.piedweb.com/extension/version",
     "license": "MIT",

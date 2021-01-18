@@ -40,7 +40,7 @@ class VersionController extends AbstractController
         return $this->redirectToRoute('admin_app_page_edit', ['id' => $id]);
     }
 
-    public function resetVersionning(string $id): Response
+    public function resetVersioning(string $id): Response
     {
         $this->versionner->reset($id);
 

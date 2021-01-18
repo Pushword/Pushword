@@ -1,11 +1,11 @@
 ---
-title: "Page Versionning for Pushword CMS"
+title: "Page Versioning for Pushword CMS"
 h1: Version
 toc: true
 parent: extensions
 ---
 
-Versionning pages with Pushword CMS.
+Versioning pages with Pushword CMS.
 
 ## Install
 
@@ -32,4 +32,4 @@ Then you can switch from one or an other version (identified by it _h1_ and the 
 
 #### Does it work with [Flat](/extension/flat) ?
 
-Yes, but you need to install admin extension to able to restore a previous version from a page. Else you can use a versionning tool like git.
+Yes, but you need to install admin extension to able to restore a previous version from a page. Else you can use a Versioning tool like git.

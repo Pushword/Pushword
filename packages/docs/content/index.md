@@ -17,8 +17,8 @@ prose: "max-w-screen-lg prose-sm md:prose-lg mx-auto p-3 prose dark:prose-light"
 <li class="py-2"><strong>searchable</strong> : be findable on <strong class="text-white">google</strong> and other search engine</li>
 <li class="py-2">build on top one of the most popular PHP framework <strong class="text-white">symfony</strong>. And you don’t need to know about it <strong class="text-white">to install Pushword</strong>.</li>
 </ul>
-<p class="hidden w-24 p-3 mt-3 font-bold text-center transform bg-white rounded shadow-md lg:block lg:-ml-10 -rotate-12 text-primary lg:-mb-3">Bonus</p>
-<p class="py-3">With Pushword managing <strong class="text-white">multi-site</strong> and <strong class="text-white">internationalization</strong> is so simple.</p>
+<p class="hidden w-24 p-3 mt-3 font-bold text-center transform bg-white rounded-lg shadow-md lg:block lg:-ml-10 -rotate-12 text-primary lg:-mb-3">Bonus</p>
+<p class="py-3">With Pushword managing <strong class="text-white">multi-site</strong>, <strong class="text-white">internationalization</strong> and <strong>page vesioning</strong> is so simple.</p>
 </div>
 {% endapply %}
 
@@ -26,7 +26,7 @@ Want a demo ? This website is built with **Pushword** with flat file management,
 
 See [how to install and test Pushword in less than one minute](/installation) :
 
-{{ link('Get started', '/installation', {class: 'block text-center font-bold uppercase mx-auto p-3 text-white rotate-180 rounded bg-primary hover:opacity-75', 'style': 'max-width:200px'})|unprose }}
+{{ link('Get started', '/installation', {class: 'block text-center font-bold uppercase mx-auto p-3 text-white rotate-180 rounded-lg bg-primary hover:opacity-75', 'style': 'max-width:200px'})|unprose }}
 
 Or look at the detailled features or directly the #[source code](https://github.com/Pushword/pushword) (monorepo).
 

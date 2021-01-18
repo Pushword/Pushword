@@ -1,6 +1,6 @@
 # Version
 
-Versionning pages with Pushword CMS.
+Versioning pages with Pushword CMS.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)

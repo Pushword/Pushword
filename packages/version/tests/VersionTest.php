@@ -21,9 +21,9 @@ class VersionTest extends KernelTestCase
 
         $page = $repo->findOneBy(['id' => 1]);
 
-        $page->setH1('edited title to test versionning');
+        $page->setH1('edited title to test Versioning');
         $em->flush();
-        $page->setH1('edited title to test versionning the second time');
+        $page->setH1('edited title to test Versioning the second time');
         $em->flush();
 
         $versionner = new Versionner(
