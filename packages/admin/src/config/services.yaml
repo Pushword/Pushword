@@ -11,17 +11,18 @@ services:
     autowire: true
     arguments:
       - ~
-      - '%pw.entity_page%'
+      - "%pw.entity_page%"
       - Pushword\Admin\Page\CRUDControllerInterface
     tags:
       - { name: sonata.admin, manager_type: orm, label: admin.label.page }
     calls:
-      - [setTemplate, [list, '@@pwAdmin/CRUD/mosaic.html.twig']]
-      - [setTemplate, [show, '@@pwAdmin/page/page_show.html.twig']]
-      - [setTemplate, [edit, '@@pwAdmin/page/page_edit.html.twig']]
-      - [setMediaClass, ['%pw.entity_media%']]
-      - [setUserClass, ['%pw.entity_user%']]
-      - [setPageClass, ['%pw.entity_page%']]
+      - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
+      - [setTemplate, [show, "@@pwAdmin/page/page_show.html.twig"]]
+      - [setTemplate, [edit, "@@pwAdmin/page/page_edit.html.twig"]]
+      - [setTemplate, [preview, "@@pwAdmin/page/preview.html.twig"]]
+      - [setMediaClass, ["%pw.entity_media%"]]
+      - [setUserClass, ["%pw.entity_user%"]]
+      - [setPageClass, ["%pw.entity_page%"]]
     public: true
 
   Pushword\Admin\Page\CRUDControllerInterface:
@@ -32,10 +33,10 @@ services:
     class: Pushword\Admin\Page\CRUDController
     autowire: true
     autoconfigure: true
-    tags: ['controller.service_arguments']
+    tags: ["controller.service_arguments"]
     calls:
-      - [setParams, ['@parameter_bag']]
-      - [setContainer, ['@service_container']]
+      - [setParams, ["@parameter_bag"]]
+      - [setContainer, ["@service_container"]]
 
   # ---
   # Others
@@ -46,18 +47,18 @@ services:
 
   pushword.admin.media:
     class: Pushword\Admin\MediaAdmin
-    arguments: [~, '%pw.entity_media%', ~]
+    arguments: [~, "%pw.entity_media%", ~]
     autowire: true
     calls:
-      - [setTemplate, [list, '@@pwAdmin/CRUD/mosaic.html.twig']]
+      - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
       - [
           setTemplate,
           [
             short_object_description,
-            '@@pwAdmin/media/short_object_description.html.twig',
+            "@@pwAdmin/media/short_object_description.html.twig",
           ],
         ]
-      - [setPageClass, ['%pw.entity_page%']]
+      - [setPageClass, ["%pw.entity_page%"]]
     tags:
       - { name: sonata.admin, manager_type: orm, label: admin.label.media }
 
@@ -66,7 +67,7 @@ services:
 
   pushword.admin.pagehasmedia:
     class: Pushword\Admin\PageHasMediaAdmin
-    arguments: [~, '%pw.entity_pagehasmedia%', ~]
+    arguments: [~, "%pw.entity_pagehasmedia%", ~]
     autowire: true
     tags:
       - { name: sonata.admin, manager_type: orm }
@@ -77,9 +78,9 @@ services:
   pushword.admin.user:
     class: Pushword\Admin\UserAdmin
     autowire: true
-    arguments: [~, '%pw.entity_user%', ~]
+    arguments: [~, "%pw.entity_user%", ~]
     tags:
       - { name: sonata.admin, manager_type: orm, label: admin.label.user }
     public: true
     calls:
-      - [setUserClass, ['%pw.entity_user%']]
+      - [setUserClass, ["%pw.entity_user%"]]
