@@ -11,6 +11,7 @@ use Pushword\Admin\FormField\OgTitleField;
 use Pushword\Admin\FormField\OgTwitterCardField;
 use Pushword\Admin\FormField\OgTwitterCreatorField;
 use Pushword\Admin\FormField\OgTwitterSiteField;
+use Pushword\Admin\FormField\PageCreatedAtField;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageImagesField;
 use Pushword\Admin\FormField\PageLocaleField;
@@ -44,7 +45,7 @@ class Configuration implements ConfigurationInterface
     const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
         [PageH1Field::class, PageMainContentField::class],
         [
-            'admin.page.state.label' => [CreatedAtField::class, PageMetaRobotsField::class],
+            'admin.page.state.label' => [PageCreatedAtField::class, PageMetaRobotsField::class],
             'admin.page.permanlien.label' => [HostField::class, PageSlugField::class],
             'admin.page.mainImage.label' => [PageMainImageField::class],
             'admin.page.parentPage.label' => [PageParentPageField::class],

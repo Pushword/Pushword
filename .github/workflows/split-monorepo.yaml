@@ -51,6 +51,7 @@ jobs:
           - installer
           - facebook
           - js-helper
+          - version
           #package: ${{fromJson(needs.provide_packages_json.outputs.matrix)}}
 
     steps:
@@ -60,7 +61,7 @@ jobs:
 
       - # get git previous tag
         id: previous_tag
-        uses: 'WyriHaximus/github-action-get-previous-tag@master'
+        uses: "WyriHaximus/github-action-get-previous-tag@master"
 
       - # Uses an action in the root directory
         name: Monorepo Split of ${{ matrix.package }}
@@ -68,9 +69,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         with:
-          package-directory: 'packages/${{ matrix.package }}'
-          split-repository-organization: 'pushword'
-          split-repository-name: '${{ matrix.package }}'
+          package-directory: "packages/${{ matrix.package }}"
+          split-repository-organization: "pushword"
+          split-repository-name: "${{ matrix.package }}"
           tag: ${{ steps.previous_tag.outputs.tag }}
-          user-name: 'RobinDev'
-          user-email: 'contact@piedweb.com'
+          user-name: "RobinDev"
+          user-email: "contact@piedweb.com"

@@ -16,9 +16,11 @@ class CustomPropertiesField extends AbstractField
                 //'data-editor' => 'yaml',
                 'class' => 'autosize',
             ],
-            'label' => $this->admin->getMessagePrefix().'.customProperties.label',
+            //'label' => $this->admin->getMessagePrefix().'.customProperties.label',
+            'label' => 'admin.page.customProperties.label',
             'help_html' => true,
-            'help' => $this->admin->getMessagePrefix().'.customProperties.help',
+            'help' => 'admin.page.customProperties.help',
+            //'help' => $this->admin->getMessagePrefix().'.customProperties.help',
         ]);
     }
 }

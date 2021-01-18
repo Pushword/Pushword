@@ -53,6 +53,7 @@
         "symfony/security-bundle": "^5.2",
         "symfony/security-csrf": "^5.2",
         "symfony/security-guard": "^5.2",
+        "symfony/serializer": "^5.2",
         "symfony/translation": "^5.2",
         "symfony/twig-bundle": "^5.2",
         "symfony/validator": "^5.2",
@@ -102,6 +103,7 @@
             "Pushword\\StaticGenerator\\": "packages/static-generator/src",
             "Pushword\\Svg\\": "packages/svg/src",
             "Pushword\\Facebook\\": "packages/facebook/src",
+            "Pushword\\Version\\": "packages/version/src",
             "Pushword\\TemplateEditor\\": "packages/template-editor/src"
         }
     },
@@ -117,6 +119,7 @@
             "Pushword\\StaticGenerator\\Tests\\": "packages/static-generator/tests",
             "Pushword\\Svg\\Tests\\": "packages/svg/tests",
             "Pushword\\Facebook\\Tests\\": "packages/facebook/tests",
+            "Pushword\\Version\\Tests\\": "packages/Version/tests",
             "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests"
         }
     },

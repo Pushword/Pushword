@@ -64,11 +64,12 @@ mkdir public/build && echo -e "{}" >public/build/manifest.json
 read -p "Install recommended extensions (admin, page-scanner, static-generator, svg, template-editor) ? [Y/n] " -n 1 -r
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    composer require pushword/admin pushword/page-scanner pushword/static-generator pushword/svg pushword/template-editor -q
+    composer require pushword/admin pushword/page-scanner pushword/static-generator pushword/svg pushword/template-editor pushword/version -q
     sed -i '1s/^/page_scanner:\n    resource: "@PushwordPageScannerBundle\/PageScannerRoutes.yaml"\n/' config/routes.yaml
     sed -i '1s/^/static:\n    resource: "@PushwordStaticGeneratorBundle\/StaticRoutes.yaml"\n/' config/routes.yaml
     sed -i '1s/^/template_editor:\n    resource: "@PushwordTemplateEditorBundle\/TemplateEditorRoutes.yaml"\n/' config/routes.yaml
     sed -i '1s/^/admin:\n    resource: "@PushwordAdminBundle\/AdminRoutes.yaml"\n/' config/routes.yaml
+    sed -i '1s/^/version:\n    resource: "@PushwordVersionBundle\/VersionRoutes.yaml"\n/' config/routes.yaml
 fi
 
 # Do some cleaning

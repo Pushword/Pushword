@@ -33,6 +33,7 @@ trait PageSearchTrait
         return $this->getCustomProperty('template');
     }
 
+    /*
     public function getReadableContent()
     {
         throw new Exception('You should use getContent.content');
@@ -41,7 +42,7 @@ trait PageSearchTrait
     public function getChapeau()
     {
         throw new Exception('You should use getContent');
-    }
+    }*/
 
     public function getTitle(): ?string
     {

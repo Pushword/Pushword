@@ -1,0 +1,74 @@
+{% extends '@SonataAdmin/standard_layout.html.twig' %}
+
+{% block title %}
+ {{ page.slug }} ›  Versions
+{% endblock %}
+
+{% block navbar_title %}
+     <a href="{{ path('admin_app_page_edit', {id: page.id}) }}">{{ page.slug }}</a> › Versions
+{% endblock %}
+
+{% block tab_menu_navbar_header %}
+        <div class="navbar-header">
+             <span class="navbar-brand"><a href="{{ path('admin_app_page_edit', {id: page.id}) }}">{{ page.slug }}</a> › <b>Versions</b></span>
+        </div>
+{% endblock %}
+
+{% block actions %}
+               <ul class="nav navbar-nav navbar-right">
+                  <li><a class="sonata-action-element" href="{{ path ('piedweb_version_reset', {id: page.id}) }}"><i class="fa fa-trash" aria-hidden="true"></i>
+                     Reset
+                     </a>
+                  </li>
+               </ul>
+{% endblock %}
+
+{% block sonata_admin_content %}
+    {% include '@SonataTwig/FlashMessage/render.html.twig' %}
+<div class="box box-primary" style="margin-bottom: 100px;">
+   <div class="box-body table-responsive no-padding">
+      <table class="table table-bordered table-striped table-hover sonata-ba-list">
+         <thead>
+            <tr class="sonata-ba-list-field-header">
+               <th class="sonata-ba-list-field-header-text">
+                    {{ 'Titre' }}
+               </th>
+               <th class="sonata-ba-list-field-header-text">
+                    {{ 'Date' }}
+               </th>
+               <th class="text-right sonata-ba-list-field-header-text">
+                  Action
+               </th>
+            </tr>
+         </thead>
+         <tbody>
+            {% for version, p in pages %}
+            <tr>
+                <td class="sonata-ba-list-field sonata-ba-list-field-html">
+                  <a class="sonata-link-identifier" href="{{ path ('piedweb_version_load', {'id': page.id, 'version': version}) }}">
+                      {{ p.h1|default(p.title) }}
+                  </a>
+               </td>
+               <td class="sonata-ba-list-field sonata-ba-list-field-text">
+                  {{ p.updateAt|date }}
+               </td>
+               <td class="sonata-ba-list-field sonata-ba-list-field-text" objectid="34" style="text-align:right">
+                  <div class="btn-group">
+                     <a href="{{ path ('piedweb_version_load', {'id': page.id, 'version': version}) }}" class="btn btn-sm btn-default view_link" title="Editer">
+                     <i class="fa fa-edit" aria-hidden="true"></i>
+                     Switch
+                     </a>
+                     <!--<a href="{{ path ('piedweb_version_load', {'id': page.id, 'version': version}) }}" class="btn btn-sm btn-default delete_link" title="Supprimer">
+                     <i class="fa fa-times" aria-hidden="true"></i>
+                     Supprimer
+                     </a>-->
+                  </div>
+               </td>
+            </tr>
+            {% endfor %}
+         </tbody>
+      </table>
+   </div>
+</div>
+
+{% endblock %}

@@ -1,3 +1,5 @@
+version:
+    resource: "@PushwordVersionBundle/VersionRoutes.yaml"
    
 ## Extension
 ## ---------

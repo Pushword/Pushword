@@ -15,6 +15,7 @@ return [
     Pushword\Conversation\PushwordConversationBundle::class => ['all' => true],
     Pushword\Svg\PushwordSvgBundle::class => ['all' => true],
     Pushword\Facebook\PushwordFacebookBundle::class => ['all' => true],
+    Pushword\Version\PushwordVersionBundle::class => ['all' => true],
 
     // Symfony
     Symfony\Bundle\FrameworkBundle\FrameworkBundle::class => ['all' => true],

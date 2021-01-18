@@ -1,3 +1,4 @@
+https://pushword.piedweb.com/extension/version
 https://pushword.piedweb.com/extension/conversation
 https://pushword.piedweb.com/architecture
 https://pushword.piedweb.com/command

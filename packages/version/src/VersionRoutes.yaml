@@ -1,0 +1,14 @@
+piedweb_version_reset:
+  path: /admin/version/{id}/reset
+  controller: Pushword\Version\VersionController::resetVersionning
+  methods: [GET]
+
+piedweb_version_list:
+  path: /admin/version/{id}/list
+  controller: Pushword\Version\VersionController::listVersion
+  methods: [GET]
+
+piedweb_version_load:
+  path: /admin/version/{id}/{version}
+  controller: Pushword\Version\VersionController::loadVersion
+  methods: [GET]
