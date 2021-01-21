@@ -1,37 +1,36 @@
 {
-  "name": "pushword/flat-file",
-  "type": "symfony-bundle",
-  "description": "Transform Pushword in a FlatFile CMS.",
-  "keywords": [],
-  "homepage": "https://pushword.piedweb.com/extension/flat",
-  "license": "MIT",
-  "require": {
-    "pushword/core": "^0.0",
-    "spatie/yaml-front-matter": "^2.0",
-    "ibudasov/php7-iptc-manager": "^1.0",
-    "miljar/php-exif": "^0.6.5"
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "0.0.x-dev",
-      "dev-main": "0.0.x-dev"
-    }
-  },
-  "autoload": {
-    "psr-4": {
-      "Pushword\\Flat\\": "src"
-    }
-  },
-  "require-dev": {
-    "phpunit/phpunit": "^9.5"
-  },
-  "authors": [
-    {
-      "name": "Robin@PiedWeb",
-      "email": "contact@piedweb.com",
-      "homepage": "https://piedweb.com"
-    }
-  ],
-  "minimum-stability": "dev",
-  "prefer-stable": true
+    "name": "pushword/flat-file",
+    "type": "symfony-bundle",
+    "description": "Transform Pushword in a FlatFile CMS.",
+    "keywords": [],
+    "homepage": "https://pushword.piedweb.com/extension/flat",
+    "license": "MIT",
+    "require": {
+        "pushword/core": "^0.0",
+        "spatie/yaml-front-matter": "^2.0",
+        "miljar/php-exif": "^0.6.5"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.0.x-dev",
+            "dev-main": "0.0.x-dev"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Pushword\\Flat\\": "src"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "authors": [
+        {
+            "name": "Robin@PiedWeb",
+            "email": "contact@piedweb.com",
+            "homepage": "https://piedweb.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

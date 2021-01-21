@@ -6,5 +6,10 @@
         {% do item.setAttribute('class', (item.getAttribute('class') ~ ' active')) %}
     {% endif %}
 
+    {% if item.label in ['admin.label.content', 'admin.label.page']
+        and app.request.attributes.get('_route') in ['pushword_version_list'] %}
+        {% do item.setAttribute('class', (item.getAttribute('class') ~ ' active')) %}
+    {% endif %}
+
     {{ parent() }}
 {% endblock %}

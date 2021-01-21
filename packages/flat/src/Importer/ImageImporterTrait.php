@@ -4,7 +4,7 @@ namespace Pushword\Flat\Importer;
 
 use DateTime;
 use DateTimeInterface;
-use iBudasov\Iptc\Manager as Iptc;
+//use iBudasov\Iptc\Manager as Iptc;
 use Pushword\Core\Entity\MediaInterface;
 
 /**
@@ -25,15 +25,16 @@ trait ImageImporterTrait
         $this->importImageMediaData($media, $filePath);
     }
 
-    private function getImageData(string $filePath, string $mime): array
+    private function getImageData(string $filePath): array
     {
         $data = [];
 
+        /*
         if ('image/jpeg' == $mime) {
             $manager = Iptc::create();
             $manager->loadFile($filePath);
             $data = array_merge($data, $manager->getTags());
-        }
+        }*/
 
         $reader = \PHPExif\Reader\Reader::factory(\PHPExif\Reader\Reader::TYPE_NATIVE);
         $exif = $reader->read($filePath);
@@ -60,7 +61,7 @@ trait ImageImporterTrait
                 ->setSize(filesize($filePath))
                 ->setDimensions([$imgSize[0], $imgSize[1]]);
 
-        $data = $this->getImageData($filePath, $imgSize['mime']);
+        $data = $this->getImageData($filePath); //, $imgSize['mime']);
 
         $media->setCustomProperties([]);
 

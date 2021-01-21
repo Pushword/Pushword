@@ -9,7 +9,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest]
-        php: [7.4, 8.0]
+        php: [7.4]
+        #, 8.0 Waiting for this and this to be merged :
+        # - https://github.com/rosell-dk/webp-convert/pull/263
+        # - https://github.com/KnpLabs/KnpMarkdownBundle/pull/107
         stability: [prefer-stable] #prefer-lowest,
 
     name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}

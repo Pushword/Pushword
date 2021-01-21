@@ -14,7 +14,7 @@
     "description": "Monorepo for pushword CMS and supported extensions.",
     "license": "MIT",
     "require": {
-        "php": "^7.4 || ^8.0",
+        "php": "^7.4|^8.0",
         "caseyamcl/toc": "^3.0",
         "cocur/slugify": "^3.0|^4.0",
         "doctrine/annotations": "^1.11",
@@ -23,20 +23,19 @@
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.8.1",
         "fortawesome/font-awesome": "^5.15",
-        "ibudasov/php7-iptc-manager": "^1.0",
         "knplabs/knp-markdown-bundle": "^1.8",
         "league/color-extractor": "^0.3.2",
         "league/commonmark": "^1.5",
         "liip/imagine-bundle": "^2.3",
         "miljar/php-exif": "^0.6.5",
         "nette/utils": "^3.2",
-        "piedweb/facebook-scraper": "^0.0.71",
-        "piedweb/linksimprover": "^0.0.7",
-        "piedweb/render-html-attributes": "^2.0",
-        "piedweb/url-harvester": "^0.0.26",
+        "piedweb/facebook-scraper": "^0.0.72",
+        "piedweb/linksimprover": "^0.0.8",
+        "piedweb/render-html-attributes": "^2.0.1",
+        "piedweb/url-harvester": "^0.0.27",
         "rosell-dk/webp-convert": "^2.4",
         "sensio/framework-extra-bundle": "^5.6",
-        "sonata-project/admin-bundle": "dev-master#08dbbf19e21a9e9012d8fb020ae3784991b4d893",
+        "sonata-project/admin-bundle": "dev-master#3512d192562ca4ac48c306388f5579982e2faf43",
         "sonata-project/doctrine-orm-admin-bundle": "4.x-dev",
         "spatie/async": "^1.5",
         "spatie/yaml-front-matter": "^2.0",
@@ -84,11 +83,6 @@
     "extra": {
         "branch-alias": {
             "dev-master": "0.0-dev"
-        },
-        "patches": {
-            "sonata-project/admin-bundle": [
-                "packages/admin/patches/sonata-project-admin-bundle-src-datagrid-pager-php.patch"
-            ]
         }
     },
     "autoload": {

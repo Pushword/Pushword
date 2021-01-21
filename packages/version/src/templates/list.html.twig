@@ -16,7 +16,7 @@
 
 {% block actions %}
                <ul class="nav navbar-nav navbar-right">
-                  <li><a class="sonata-action-element" href="{{ path ('piedweb_version_reset', {id: page.id}) }}"><i class="fa fa-trash" aria-hidden="true"></i>
+                  <li><a class="sonata-action-element" href="{{ path ('pushword_version_reset', {id: page.id}) }}"><i class="fa fa-trash" aria-hidden="true"></i>
                      Reset
                      </a>
                   </li>
@@ -45,7 +45,7 @@
             {% for version, p in pages %}
             <tr>
                 <td class="sonata-ba-list-field sonata-ba-list-field-html">
-                  <a class="sonata-link-identifier" href="{{ path ('piedweb_version_load', {'id': page.id, 'version': version}) }}">
+                  <a class="sonata-link-identifier" href="{{ path ('pushword_version_load', {'id': page.id, 'version': version}) }}">
                       {{ p.h1|default(p.title) }}
                   </a>
                </td>
@@ -54,11 +54,11 @@
                </td>
                <td class="sonata-ba-list-field sonata-ba-list-field-text" objectid="34" style="text-align:right">
                   <div class="btn-group">
-                     <a href="{{ path ('piedweb_version_load', {'id': page.id, 'version': version}) }}" class="btn btn-sm btn-default view_link" title="Editer">
+                     <a href="{{ path ('pushword_version_load', {'id': page.id, 'version': version}) }}" class="btn btn-sm btn-default view_link" title="Editer">
                      <i class="fa fa-edit" aria-hidden="true"></i>
                      Switch
                      </a>
-                     <!--<a href="{{ path ('piedweb_version_load', {'id': page.id, 'version': version}) }}" class="btn btn-sm btn-default delete_link" title="Supprimer">
+                     <!--<a href="{{ path ('pushword_version_load', {'id': page.id, 'version': version}) }}" class="btn btn-sm btn-default delete_link" title="Supprimer">
                      <i class="fa fa-times" aria-hidden="true"></i>
                      Supprimer
                      </a>-->

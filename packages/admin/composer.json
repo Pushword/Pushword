@@ -7,18 +7,13 @@
     "license": "MIT",
     "require": {
         "pushword/core": "^0.0",
-        "sonata-project/admin-bundle": "dev-master#08dbbf19e21a9e9012d8fb020ae3784991b4d893",
+        "sonata-project/admin-bundle": "dev-master#3512d192562ca4ac48c306388f5579982e2faf43",
         "sonata-project/doctrine-orm-admin-bundle": "4.x-dev"
     },
     "extra": {
         "branch-alias": {
             "dev-master": "0.0.x-dev",
             "dev-main": "0.0.x-dev"
-        },
-        "patches": {
-            "sonata-project/admin-bundle": [
-                "patches/sonata-project-admin-bundle-src-datagrid-pager-php.patch"
-            ]
         }
     },
     "autoload": {
