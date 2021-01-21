@@ -16,7 +16,11 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder('svg');
         $treeBuilder->getRootNode()->children()
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
-            ->scalarNode('svg_dir')->defaultValue('%vendor_dir%/fortawesome/font-awesome/svgs')->cannotBeEmpty()->end()
+            ->variableNode('svg_dir')->defaultValue([
+                '%vendor_dir%/fortawesome/font-awesome/svgs/solid',
+                '%vendor_dir%/fortawesome/font-awesome/svgs/regular',
+                '%vendor_dir%/fortawesome/font-awesome/svgs/brands',
+            ])->cannotBeEmpty()->end()
         ->end();
 
         return $treeBuilder;

@@ -22,13 +22,15 @@ class TwigExtension extends AbstractExtension
 
     public function getSvg(string $name, $attr = ['class' => 'fill-current w-4 inline-block -mt-1']): string
     {
-        $dir = $this->apps->get()->get('svg_dir');
+        $dirs = $this->apps->get()->get('svg_dir');
 
-        $couldBeIn = ['solid/', 'regular/', 'brands/', ''];
+        if (! \is_array($dirs)) {
+            $dirs = [$dirs];
+        }
 
         $file = null;
-        foreach ($couldBeIn as $subDir) {
-            $file = $dir.'/'.$subDir.$name.'.svg';
+        foreach ($dirs as $dirPath) {
+            $file = $dirPath.'/'.$name.'.svg';
             if (file_exists($file)) {
                 break;
             }
