@@ -3,8 +3,8 @@
 namespace Pushword\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Liip\ImagineBundle\Imagine\Cache\CacheManager as LiipCacheManager;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Service\ImageManager;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -13,7 +13,7 @@ use Twig\Environment as Twig;
 trait AdminTrait
 {
     protected AppPool $apps;
-    private LiipCacheManager $liipImage;
+    private ImageManager $imageManager;
     protected string $pageClass;
     protected string $mediaClass;
     protected string $userClass;
@@ -151,8 +151,8 @@ trait AdminTrait
     }
 
     /** @required */
-    public function setLiipImage(LiipCacheManager $liipImage)
+    public function setImageManager(ImageManager $imageManager)
     {
-        $this->liipImage = $liipImage;
+        $this->imageManager = $imageManager;
     }
 }

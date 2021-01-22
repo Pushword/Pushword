@@ -7,7 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use InvertColor\Color;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
-use Symfony\Component\HttpFoundation\File\File;
+use Pushword\Core\Utils\Filepath;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -25,7 +26,7 @@ trait MediaTrait
     /**
      * @ORM\Column(type="string", length=255)
      */
-    protected $relativeDir;
+    protected $storeIn;
 
     /**
      * @ORM\Column(type="integer")
@@ -70,14 +71,14 @@ trait MediaTrait
      *     dimensions="dimensions"
      * )
      *
-     * @var File
+     * @var UploadedFile
      */
     protected $mediaFile;
 
     /**
      * @ORM\Column(type="string", length=100, unique=true)
      */
-    protected $name;
+    protected string $name = '';
 
     /**
      * @ORM\Column(type="text", nullable=true)
@@ -104,11 +105,6 @@ trait MediaTrait
      */
     protected $mainImagePages;
 
-    /**
-     * @ORM\Column(type="json", options={"default": "{}"})
-     */
-    protected $hosts = [];
-
     public function __toString()
     {
         return $this->name.' ';
@@ -122,7 +118,7 @@ trait MediaTrait
     protected function slugifyPreservingExtension($string)
     {
         $extension = $this->getExtension($string);
-        $stringSlugify = (new Slugify())->slugify($this->removeExtension($string));
+        $stringSlugify = (new Slugify())->slugify(Filepath::removeExtension($string));
 
         return $stringSlugify.$extension;
     }
@@ -158,9 +154,7 @@ trait MediaTrait
         $src = substr($src, \strlen('/media/default/'));
 
         $media = new self();
-        $media->setRelativeDir('/media');
         $media->setMedia($src);
-        $media->slug = $media->removeExtension($src);
 
         return $media;
     }
@@ -176,11 +170,7 @@ trait MediaTrait
 
         $slugSlugify = $this->slugifyPreservingExtension($slug);
 
-        if ($this->getExtension($this->media) != $this->getExtension($slugSlugify)) { // 1;
-            // TODO manage problem URL move... quick validation impossible before file upload, and impossible after from
-            // here
-
-            //$this->media ? $this->removeExtension($slugSlugify).$this->getExtension($this->media) :
+        if ($this->getExtension($this->media) != $this->getExtension($slugSlugify)) {
             $this->setMedia($slugSlugify);
         }
 
@@ -202,11 +192,6 @@ trait MediaTrait
         }
     }
 
-    protected function removeExtension($string)
-    {
-        return preg_replace('/\\.[^.\\s]{3,4}$/', '', $string);
-    }
-
     public function getSlug(): string
     {
         if ($this->slug) {
@@ -214,7 +199,7 @@ trait MediaTrait
         }
 
         if ($this->media) {
-            return $this->slug = $this->removeExtension($this->media);
+            return $this->slug = Filepath::removeExtension($this->media);
         }
 
         $this->slug = (new Slugify())->slugify($this->getName()); //Urlizer::urlize($this->getName());
@@ -222,7 +207,7 @@ trait MediaTrait
         return $this->slug;
     }
 
-    public function setMediaFile(?File $media = null): void
+    public function setMediaFile(?UploadedFile $media = null): void
     {
         $this->mediaFile = $media;
 
@@ -231,7 +216,7 @@ trait MediaTrait
         }
     }
 
-    public function getMediaFile(): ?File
+    public function getMediaFile(): ?UploadedFile
     {
         return $this->mediaFile;
     }
@@ -249,20 +234,24 @@ trait MediaTrait
 
         if (null !== $this->media) {
             $this->setMediaBeforeUpdate($this->media);
-            //$this->media = $this->removeExtension($media).$this->getExtension($this->media);
-        } //else
+        }
 
         $this->media = $media;
 
         return $this;
     }
 
-    public function getName($getLocalized = null, $onlyLocalized = false): ?string
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getNameLocalized($getLocalized = null, $onlyLocalized = false): string
     {
         $names = $this->getNames(true);
 
         return $getLocalized ?
-            (isset($names[$getLocalized]) ? $names[$getLocalized] : ($onlyLocalized ? null : $this->name))
+            (isset($names[$getLocalized]) ? $names[$getLocalized] : ($onlyLocalized ? '' : $this->name))
             : $this->name;
     }
 
@@ -273,7 +262,7 @@ trait MediaTrait
 
     public function setNames(?string $names): self
     {
-        $this->name = $names;
+        $this->names = $names;
 
         return $this;
     }
@@ -285,23 +274,28 @@ trait MediaTrait
         return $names[$locale] ?? $this->getName();
     }
 
-    public function setName(?string $name): self
+    public function setName(string $name): self
     {
         $this->name = $name;
 
         return $this;
     }
 
-    public function getRelativeDir(): ?string
+    public function getStoreIn(): ?string
     {
-        return rtrim($this->relativeDir, '/');
+        return $this->storeIn;
     }
 
-    public function setRelativeDir($relativeDir): self
+    public function setStoreIn(string $pathToDir): self
     {
-        $this->relativeDir = rtrim($relativeDir, '/');
+        $this->storeIn = $pathToDir;
 
         return $this;
+    }
+
+    public function getPath(): string
+    {
+        return $this->storeIn.'/'.$this->media;
     }
 
     public function getMimeType(): ?string
@@ -421,27 +415,8 @@ trait MediaTrait
         }
     }
 
-    public function getPath(): ?string
-    {
-        return $this->getFullPath();
-    }
-
-    public function getFullPath(): ?string
-    {
-        return null !== $this->media
-            ? '/'.$this->getRelativeDir().($this->getMedia() ? '/'.$this->getMedia() : '')
-            : null;
-    }
-
-    public function getFullPathWebP(): ?string
-    {
-        return null !== $this->media
-            ? '/'.$this->getRelativeDir().($this->getSlug() ? '/'.$this->getSlug().'.webp' : '')
-            : null;
-    }
-
     /**
-     * Get nOTE : this is used only for media renaming.
+     * this is used only for media renaming.
      *
      * @return string
      */
@@ -451,7 +426,7 @@ trait MediaTrait
     }
 
     /**
-     * Set nOTE : this is used only for media renaming.
+     * this is used only for media renaming.
      *
      * @param string $mediaBeforeUpdate NOTE : this is used only for media renaming
      *
@@ -460,44 +435,6 @@ trait MediaTrait
     public function setMediaBeforeUpdate(string $mediaBeforeUpdate)
     {
         $this->mediaBeforeUpdate = $mediaBeforeUpdate;
-
-        return $this;
-    }
-
-    public function getHosts()
-    {
-        return $this->hosts;
-    }
-
-    public function setHosts(array $hosts): self
-    {
-        $this->hosts = $hosts;
-
-        return $this;
-    }
-
-    public function hasHost($host)
-    {
-        return \in_array($host, $this->getHosts(), true);
-    }
-
-    public function addHost($host)
-    {
-        $host = strtoupper($host);
-
-        if (! \in_array($host, $this->hosts, true)) {
-            $this->hosts[] = $host;
-        }
-
-        return $this;
-    }
-
-    public function removeHost($host)
-    {
-        if (false !== $key = array_search($host, $this->hosts, true)) {
-            unset($this->hosts[$key]);
-            $this->hosts = array_values($this->hosts);
-        }
 
         return $this;
     }

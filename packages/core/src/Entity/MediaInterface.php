@@ -5,6 +5,7 @@ namespace Pushword\Core\Entity;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\TimestampableInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 interface MediaInterface extends IdInterface, TimestampableInterface, CustomPropertiesInterface
 {
@@ -14,15 +15,17 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function getMediaBeforeUpdate();
 
-    public function getRelativeDir();
+    public function getPath(): string;
 
-    public function setRelativeDir($relativeDir): self;
+    public function getStoreIn();
+
+    public function setStoreIn(string $pathToDir): self;
 
     public function getSlug();
 
-    public function getPath();
-
     public function setMainColor(?string $mainColor);
+
+    public function getMainColor();
 
     public function setSize($size): self;
 
@@ -34,5 +37,15 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function setMedia($media): self;
 
-    public function setName(?string $name): self;
+    public function setName(string $name): self;
+
+    public function setMediaFile(?UploadedFile $media = null): void;
+
+    public function getMimeType(): ?string;
+
+    public function getName(): string;
+
+    public function getNameLocalized($getLocalized = null, $onlyLocalized = false): ?string;
+
+    public function getMediaFile(): ?UploadedFile;
 }

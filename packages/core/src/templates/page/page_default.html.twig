@@ -44,7 +44,7 @@
 		<meta name="og:description" content="{{ page.ogDescription|default(page.searchExcrept)|striptags }}">
 	{% endif %}
 	{% if page.mainImage is defined and page.mainImage is not null %}
-		<meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ (page.mainImage.fullPath)|imagine_filter('default') }}">
+		<meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ (page.mainImage)|image('default') }}">
 	{% endif %}
 {% endblock %}
 

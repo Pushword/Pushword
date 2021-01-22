@@ -19,15 +19,19 @@ class FlatFileImporter
     protected FlatFileContentDirFinder $contentDirFinder;
     protected PageImporter $pageImporter;
     protected MediaImporter $mediaImporter;
+    protected string $mediaDir = '';
+    protected string $customMediaDir = '';
 
     public function __construct(
         string $projectDir,
+        string $mediaDir,
         AppPool $apps,
         FlatFileContentDirFinder $contentDirFinder,
         PageImporter $pageImporter,
         MediaImporter $mediaImporter
     ) {
         $this->projectDir = $projectDir;
+        $this->mediaDir = $mediaDir;
         $this->apps = $apps;
         $this->contentDirFinder = $contentDirFinder;
         $this->pageImporter = $pageImporter;
@@ -39,12 +43,25 @@ class FlatFileImporter
         $this->app = $this->apps->switchCurrentApp($host)->get();
 
         $contentDir = $this->contentDirFinder->get($this->app->getMainHost());
-        $this->importFiles($this->projectDir.'/media', 'media');
+
+        $this->importFiles($this->mediaDir, 'media');
         $this->mediaImporter->finishImport();
-        $this->importFiles(file_exists($contentDir.'/media/default') ? $contentDir.'/media/default' : $contentDir.'/media', 'media');
+
+        $this->importFiles($this->customMediaDir ? $contentDir.$this->customMediaDir : $contentDir.'/media', 'media');
+        $this->mediaImporter->finishImport();
+
         $this->importFiles($contentDir, 'page');
-        $this->mediaImporter->finishImport();
         $this->pageImporter->finishImport();
+    }
+
+    public function setMediaCustomDir(string $dir): void
+    {
+        $this->customMediaDir = $dir;
+    }
+
+    public function setMediaDir(string $dir): void
+    {
+        $this->mediaImporter->setMediaDir($dir);
     }
 
     private function importFiles($dir, string $type): void

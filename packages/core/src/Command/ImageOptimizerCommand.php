@@ -3,14 +3,14 @@
 namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Pushword\Core\Service\MediaCacheGenerator;
+use Pushword\Core\Service\ImageManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class MediaCacheGeneratorCommand extends Command
+class ImageOptimizerCommand extends Command
 {
     /**
      * @var EntityManagerInterface
@@ -23,18 +23,18 @@ class MediaCacheGeneratorCommand extends Command
     private $mediaClass;
 
     /**
-     * @var MediaCacheGenerator
+     * @var ImageManager
      */
-    private $mediaCacheGenerator;
+    private $imageManager;
 
     public function __construct(
         EntityManagerInterface $em,
-        MediaCacheGenerator $mediaCacheGenerator,
+        ImageManager $imageManager,
         string $mediaClass
     ) {
         $this->em = $em;
         $this->mediaClass = $mediaClass;
-        $this->mediaCacheGenerator = $mediaCacheGenerator;
+        $this->imageManager = $imageManager;
 
         parent::__construct();
     }
@@ -42,9 +42,9 @@ class MediaCacheGeneratorCommand extends Command
     protected function configure()
     {
         $this
-            ->setName('pushword:media:cache')
+            ->setName('pushword:image:optimize')
             ->setDescription('Generate all images cache')
-            ->addArgument('media', InputArgument::OPTIONAL, 'Image path (without `/media/`) to (re)generate cache.');
+            ->addArgument('media', InputArgument::OPTIONAL, 'Image name (eg: filename.jpg).');
     }
 
     protected function getMedias(InputInterface $input)
@@ -66,7 +66,7 @@ class MediaCacheGeneratorCommand extends Command
         $progressBar->start();
         foreach ($medias as $media) {
             if (false !== strpos($media->getMimeType(), 'image/')) {
-                $this->mediaCacheGenerator->generateCache($media);
+                $this->imageManager->optimize($media);
             }
             $progressBar->advance();
         }

@@ -111,7 +111,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/404.html'));
+        $this->assertFileExists(__DIR__.'/../../skeleton/localhost.dev/404.html');
     }
 
     public function testDownload()
@@ -122,7 +122,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/download'));
+        $this->assertFileExists(__DIR__.'/../../skeleton/localhost.dev/media');
     }
 
     public function testPages()
@@ -133,7 +133,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/index.html'));
+        $this->assertFileExists(__DIR__.'/../../skeleton/localhost.dev/index.html');
     }
 
     public function getGeneratorBag(): GeneratorBag
@@ -185,8 +185,21 @@ class StaticGeneratorTest extends KernelTestCase
         if ('pw.entity_page' == $name) {
             return \App\Entity\Page::class;
         }
+
         if ('kernel.project_dir' == $name) {
             return __DIR__.'/../../skeleton';
+        }
+
+        if ('pw.public_media_dir' == $name) {
+            return 'media';
+        }
+
+        if ('pw.media_dir' == $name) {
+            return realpath(__DIR__.'/../../skeleton/media');
+        }
+
+        if ('pw.public_dir' == $name) {
+            return realpath(__DIR__.'/../../skeleton/public');
         }
     }
 

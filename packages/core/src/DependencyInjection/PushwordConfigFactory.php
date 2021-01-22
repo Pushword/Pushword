@@ -133,7 +133,10 @@ final class PushwordConfigFactory
                 continue; // We don't load configuration we use in App
             }
 
-            if (\is_array($value) && IsAssociativeArray::test($value)) {
+            if (\is_array($value)
+            && ! \in_array($key, ['image_filter_sets'])
+                && IsAssociativeArray::test($value)
+                ) {
                 $this->loadToParameters($value, $prefix.$key.'.');
 
                 continue;

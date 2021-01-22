@@ -134,7 +134,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         $media = $this->getSubject();
 
         $pages = Repository::getPageRepository($this->em, $this->pageClass)
-            ->getPagesUsingMedia($this->liipImage->getBrowserPath($media->getFullPath(), 'default'));
+            ->getPagesUsingMedia($this->imageManager->getBrowserPath($media));
 
         $this->relatedPages = [
             'content' => $pages,
@@ -188,8 +188,7 @@ class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
     public function getObjectMetadata($media): MetadataInterface
     {
         if (false !== strpos($media->getMimeType(), 'image/')) {
-            $fullPath = '/'.$media->getRelativeDir().'/'.$media->getMedia();
-            $thumb = $this->liipImage->getBrowserPath($fullPath, 'thumb');
+            $thumb = $this->imageManager->getBrowserPath($media, 'thumb');
         } else {
             $thumb = self::$thumb;
         }

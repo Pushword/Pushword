@@ -12,17 +12,17 @@ class CopierGenerator extends AbstractGenerator
         $entries = $this->app->get('static_copy');
 
         foreach ($entries as $entry) {
-            if (! file_exists($this->webDir.'/'.$entry)) {
+            if (! file_exists($this->publicDir.'/'.$entry)) {
                 continue;
             }
             if (true === $symlink) {
                 $this->filesystem->symlink(
-                    str_replace($this->params->get('kernel.project_dir').'/', '../', $this->webDir.'/'.$entry),
+                    str_replace($this->params->get('kernel.project_dir').'/', '../', $this->publicDir.'/'.$entry),
                     $this->getStaticDir().'/'.$entry
                 );
             } else {
-                $action = is_file($this->webDir.'/'.$entry) ? 'copy' : 'mirror';
-                $this->filesystem->$action($this->webDir.'/'.$entry, $this->getStaticDir().'/'.$entry);
+                $action = is_file($this->publicDir.'/'.$entry) ? 'copy' : 'mirror';
+                $this->filesystem->$action($this->publicDir.'/'.$entry, $this->getStaticDir().'/'.$entry);
             }
         }
     }

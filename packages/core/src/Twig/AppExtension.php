@@ -11,10 +11,10 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\Filter\Filters\Unprose;
 use Pushword\Core\Component\Router\RouterInterface;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Entity\MediaExternal;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface as Page;
 use Pushword\Core\Repository\Repository;
+use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Utils\HtmlBeautifer;
 use Twig\Environment as Twig;
 use Twig\Extension\AbstractExtension;
@@ -48,13 +48,17 @@ class AppExtension extends AbstractExtension
     /** @var Twig */
     protected $twig;
 
-    public function __construct(EntityManagerInterface $em, string $pageClass, RouterInterface $router, AppPool $apps, Twig $twig)
+    /** @var ImageManager */
+    protected $imageManager;
+
+    public function __construct(EntityManagerInterface $em, string $pageClass, RouterInterface $router, AppPool $apps, Twig $twig, ImageManager $imageManager)
     {
         $this->em = $em;
         $this->router = $router;
         $this->pageClass = $pageClass;
         $this->apps = $apps;
         $this->twig = $twig;
+        $this->imageManager = $imageManager;
     }
 
     public function getApp(): AppConfig
@@ -70,6 +74,7 @@ class AppExtension extends AbstractExtension
             new TwigFilter('preg_replace', [self::class, 'pregReplace']),
             new TwigFilter('nice_punctuation', [HtmlBeautifer::class, 'punctuationBeautifer'], self::options()),
             new TwigFilter('unprose', [Unprose::class, 'unprose'], self::options()),
+            new TwigFilter('image', [$this->imageManager, 'getBrowserPath'], self::options()),
         ];
     }
 
@@ -122,8 +127,8 @@ class AppExtension extends AbstractExtension
 
     public static function transformInlineImageToMedia($src): MediaInterface
     {
-        if (\is_string($src)) {
-            return self::isInternalImage($src) ? Media::loadFromSrc($src) : MediaExternal::load($src);
+        if (\is_string($src) && self::isInternalImage($src)) {
+            return Media::loadFromSrc($src);
         }
 
         if (! $src instanceof MediaInterface) {

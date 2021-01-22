@@ -6,9 +6,9 @@ use Symfony\Component\Finder\Finder;
 
 class ElementRepository
 {
-    protected $templateDir;
+    private string $templateDir;
 
-    public function __construct($templateDir)
+    public function __construct(string $templateDir)
     {
         $this->templateDir = $templateDir;
     }
@@ -26,7 +26,7 @@ class ElementRepository
         return $elements;
     }
 
-    public function getOneByEncodedPath($path): ?Element
+    public function getOneByEncodedPath(string $path): ?Element
     {
         foreach ($this->getAll() as $element) {
             if ($element->getEncodedPath() == $path) {

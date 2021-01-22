@@ -13,7 +13,6 @@ use Pushword\Core\Utils\Entity;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class Versionner implements EventSubscriber //EventSubscriberInterface
@@ -23,7 +22,7 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
     private string $pageClass;
     private EntityManagerInterface $entityManager;
     public static bool $version = true;
-    private Serializer $serializer;
+    private SerializerInterface $serializer;
 
     public function __construct(
         string $logDir,
@@ -77,7 +76,7 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
         $this->fileSystem->dumpFile($versionFile, $jsonContent);
     }
 
-    public function loadVersion(string $pageId, string $version)
+    public function loadVersion(string $pageId, string $version): void
     {
         static::$version = false;
 
@@ -94,6 +93,7 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
         static::$version = true;
     }
 
+    /** @param PageInterface|string $id */
     public function populate(PageInterface $page, $id, string $version): PageInterface
     {
         $pageVersionned = $this->getPageVersion($id, $version);
@@ -103,6 +103,7 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
         return $page;
     }
 
+    /** @param PageInterface|string $page */
     private function getPageVersion($page, string $version): string
     {
         $versionFile = $this->getVersionFile($page, $version);
@@ -116,11 +117,13 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
         return $content;
     }
 
+    /** @param PageInterface|string $pageId */
     public function reset($pageId): void
     {
         $this->fileSystem->remove($this->getVersionDir($pageId));
     }
 
+    /** @param PageInterface|string $page */
     public function getPageVersions($page): array
     {
         $dir = $this->getVersionDir($page);
@@ -129,18 +132,20 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
             return [];
         }
 
-        $versions = array_filter(scandir($dir), function ($item) {
+        $versions = array_filter(scandir($dir), function (string $item) {
             return ! \in_array($item, ['.', '..']);
         });
 
         return array_values($versions);
     }
 
-    private function getVersionDir($page)
+    /** @param PageInterface|string $page */
+    private function getVersionDir($page): string
     {
-        return $this->logsDir.'/version/'.($page instanceof PageInterface ? $page->getId() : $page);
+        return $this->logsDir.'/version/'.($page instanceof PageInterface ? (string) $page->getId() : $page);
     }
 
+    /** @param PageInterface|string $page */
     private function getVersionFile($page, string $version = ''): string
     {
         return $this->getVersionDir($page).'/'.($version ?: uniqid());

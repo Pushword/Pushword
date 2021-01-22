@@ -8,11 +8,10 @@ build:
 
 filter:
   excluded_paths:
-    - '*/tests/*'
-    - 'docs/*'
-    - 'packages/skeleton/*'
-    - 'packages/docs/*'
-    - 'packages/core/src/Service/WebPConverter.php'
+    - "*/tests/*"
+    - "docs/*"
+    - "packages/skeleton/*"
+    - "packages/docs/*"
 
 checks:
   php:

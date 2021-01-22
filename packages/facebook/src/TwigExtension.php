@@ -6,7 +6,7 @@ use PiedWeb\FacebookScraper\Client;
 use PiedWeb\FacebookScraper\FacebookScraper;
 use Pushword\Core\AutowiringTrait\RequiredApps;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Service\MediaCacheGenerator;
+use Pushword\Core\Service\ImageManager;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\String\UnicodeString;
 use Twig\Environment as Twig;
@@ -20,7 +20,7 @@ class TwigExtension extends AbstractExtension
     private string $mediaDir;
 
     /** @required */
-    public MediaCacheGenerator $mediaCacheGenerator;
+    public ImageManager $imageManager;
 
     public function setMediaDir(string $mediaDir)
     {
@@ -97,18 +97,17 @@ class TwigExtension extends AbstractExtension
 
         $media = new Media();
         $media
-            ->setRelativeDir('media')
+            ->setStoreIn($this->mediaDir)
             ->setMimeType($imgSize['mime'])
             ->setSize(filesize($image))
             ->setDimensions([$imgSize[0], $imgSize[1]])
-            ->setSlug($fileName)
             ->setMedia($fileName)
             ->setName($alt);
 
         if (! file_exists($newFilePath)) {
             $fs->copy($image, $newFilePath);
 
-            $this->mediaCacheGenerator->generateCache($media);
+            $this->imageManager->generateCache($media);
         }
 
         return $media;

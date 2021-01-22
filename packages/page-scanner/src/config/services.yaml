@@ -6,19 +6,19 @@ services:
     class: Pushword\PageScanner\PageScannerService
     autowire: true
     arguments:
-      $webDir: '%pw.dir%'
-      $kernel: '@kernel'
+      $publicDir: "%pw.public_dir%"
+      $kernel: "@kernel"
 
   Pushword\PageScanner\PageScannerCommand:
     autowire: true
     arguments:
-      $pageClass: '%pw.entity_page%'
-      $varDir: '%kernel.project_dir%/var'
-    tags: ['console.command']
+      $pageClass: "%pw.entity_page%"
+      $varDir: "%kernel.project_dir%/var"
+    tags: ["console.command"]
 
   Pushword\PageScanner\PageScannerController:
     autowire: true
     arguments:
-      $varDir: '%kernel.project_dir%/var'
+      $varDir: "%kernel.project_dir%/var"
     tags:
-      - { name: 'controller.service_arguments' }
+      - { name: "controller.service_arguments" }

@@ -2,8 +2,6 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
-use Symfony\Component\Filesystem\Filesystem;
-
 class MediaGenerator extends AbstractGenerator
 {
     public function generate(?string $host = null): void
@@ -20,34 +18,29 @@ class MediaGenerator extends AbstractGenerator
      */
     protected function copyMediaToDownload()
     {
+        $publicMediaDir = $this->params->get('pw.public_media_dir');
+        $mediaDir = $this->params->get('pw.media_dir');
+        $staticMediaDir = $this->getStaticDir().'/'.$publicMediaDir;
+
         $symlink = $this->mustSymlink();
 
-        if (! file_exists($this->getStaticDir().'/download')) {
-            $this->filesystem->mkdir($this->getStaticDir().'/download/');
-            $this->filesystem->mkdir($this->getStaticDir().'/download/media');
+        if (! file_exists($staticMediaDir)) {
+            $this->filesystem->mkdir($staticMediaDir);
         }
 
-        $dir = dir($this->webDir.'/../media');
+        $dir = dir($mediaDir);
         while (false !== $entry = $dir->read()) {
             if ('.' == $entry || '..' == $entry) {
                 continue;
             }
-            // if the file is an image, it's ever exist (maybe it's slow to check every files)
-            if (! file_exists($this->webDir.'/media/default/'.$entry)) {
-                if (true === $symlink) {
-                    $this->filesystem->symlink(
-                        '../../../media/'.$entry,
-                        $this->getStaticDir().'/download/media/'.$entry
-                    );
-                } else {
-                    $this->filesystem->copy(
-                        $this->webDir.'/../media/'.$entry,
-                        $this->getStaticDir().'/download/media/'.$entry
-                    );
-                }
-            }
-        }
 
-        //$this->filesystem->$action($this->webDir.'/../media', $this->getStaticDir().'/download/media');
+            if (true === $symlink) {
+                $this->filesystem->symlink($mediaDir.'/'.$entry, $staticMediaDir.'/'.$entry);
+
+                continue;
+            }
+
+            $this->filesystem->copy($mediaDir.'/'.$entry, $staticMediaDir.'/'.$entry);
+        }
     }
 }

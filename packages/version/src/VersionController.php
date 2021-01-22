@@ -3,6 +3,7 @@
 namespace Pushword\Version;
 
 use Exception;
+use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -11,21 +12,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VersionController extends AbstractController
 {
-    private Versionner $versionner;
-    private string $pageClass;
+    /** @var Versionner */
+    private $versionner;
+    /** @var string */
+    private $pageClass;
 
-    /**
-     * @required
-     */
-    public function setVersionner(Versionner $versionner)
+    /** @required */
+    public function setVersionner(Versionner $versionner): void
     {
         $this->versionner = $versionner;
     }
 
-    /**
-     * @required
-     */
-    public function setParams(ParameterBagInterface $params)
+    /** @required */
+    public function setParams(ParameterBagInterface $params): void
     {
         $this->pageClass = $params->get('pw.entity_page');
     }
@@ -60,6 +59,10 @@ class VersionController extends AbstractController
         $pageVersions = [];
         $entity = $this->pageClass;
         foreach ($versions as $version) {
+            /**
+             * @var PageInterface $object
+             * @psalm-suppress InvalidStringClass
+             */
             $object = new $entity();
             $pageVersions[$version] = $this->versionner->populate($object, $page->getId(), $version);
         }

@@ -12,6 +12,7 @@ parent: contribute
 
 ## TODO Extension
 
+-   Static: copy only used media in public
 -   FacebookManager (post from facebook and ~~show last facebook status~~ )
 -   Flat: Transform markdown link to page link (useful for navigate in docs from editor)
 -   Flat: Throw error when the content is more up to date in database... add export (and maintain ID)

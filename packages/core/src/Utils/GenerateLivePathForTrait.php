@@ -7,10 +7,7 @@ use Pushword\Core\Entity\PageInterface;
 
 trait GenerateLivePathForTrait
 {
-    /**
-     * @var RouterInterface
-     */
-    protected $router;
+    protected RouterInterface $router;
 
     protected function generateLivePathFor($host, $route = 'pushword_page', $params = [])
     {

@@ -2,7 +2,6 @@
 
 namespace Pushword\Flat\Importer;
 
-use DateTime;
 use DateTimeInterface;
 //use iBudasov\Iptc\Manager as Iptc;
 use Pushword\Core\Entity\MediaInterface;
@@ -20,7 +19,7 @@ trait ImageImporterTrait
             return; // no update needed
         }
 
-        $this->copyToMediaDir($filePath);
+        $filePath = $this->copyToMediaDir($filePath);
 
         $this->importImageMediaData($media, $filePath);
     }
@@ -42,12 +41,7 @@ trait ImageImporterTrait
             $data = array_merge($data, $exif->getData());
         }
 
-        if (file_exists($filePath.'.json')) {
-            $jsonData = json_decode(file_get_contents($filePath.'.json'), true);
-            if ($jsonData) {
-                $data = array_merge($data, $jsonData);
-            }
-        }
+        $data = array_merge($data, $this->getData($filePath));
 
         return $data;
     }
@@ -55,34 +49,15 @@ trait ImageImporterTrait
     private function importImageMediaData(MediaInterface $media, string $filePath): void
     {
         $imgSize = getimagesize($filePath);
+
         $media
-                ->setRelativeDir('media')
+                ->setStoreIn(\dirname($filePath))
                 ->setMimeType($imgSize['mime'])
                 ->setSize(filesize($filePath))
                 ->setDimensions([$imgSize[0], $imgSize[1]]);
 
         $data = $this->getImageData($filePath); //, $imgSize['mime']);
 
-        $media->setCustomProperties([]);
-
-        foreach ($data as $key => $value) {
-            $key = self::underscoreToCamelCase($key);
-
-            $setter = 'set'.ucfirst($key);
-            if (method_exists($media, $setter)) {
-                if (\in_array($key, ['createdAt', 'updatedAt'])) {
-                    $value = new DateTime($value);
-                }
-
-                $media->$setter($value);
-
-                continue;
-            }
-            $media->setCustomProperty($key, $value);
-        }
-
-        if (true === $this->newMedia) {
-            $this->em->persist($media);
-        }
+        $this->setData($media, $data);
     }
 }

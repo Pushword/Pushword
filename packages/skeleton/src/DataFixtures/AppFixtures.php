@@ -9,9 +9,18 @@ use App\Entity\User;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class AppFixtures extends Fixture
 {
+    private ParameterBagInterface $params;
+
+    /** @required */
+    public function setParameterBag(ParameterBagInterface $params)
+    {
+        $this->params = $params;
+    }
+
     public function load(ObjectManager $manager)
     {
         $user = (new User())
@@ -27,11 +36,10 @@ class AppFixtures extends Fixture
         ];
         foreach ($medias as $name => $file) {
             $media[$name] = (new Media())
-            ->setRelativeDir('media')
+            ->setStoreIn($this->params->get('pw.media_dir'))
             ->setMimeType('image/'.substr($file, -3))
             ->setSize(2)
             ->setDimensions([1000, 1000])
-            ->setSlug($file)
             ->setMedia($file)
             ->setName($name);
 

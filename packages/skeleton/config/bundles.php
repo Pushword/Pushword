@@ -27,7 +27,6 @@ return [
 
     // Used for Media
     Vich\UploaderBundle\VichUploaderBundle::class => ['all' => true],
-    Liip\ImagineBundle\LiipImagineBundle::class => ['all' => true],
 
     // Used for Page
     Knp\Bundle\MarkdownBundle\KnpMarkdownBundle::class => ['all' => true],

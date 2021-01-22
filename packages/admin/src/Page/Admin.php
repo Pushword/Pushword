@@ -142,8 +142,7 @@ class Admin extends AbstractAdmin implements AdminInterface
     {
         $media = $page->getMainImage();
         if (null !== $media && false !== strpos($media->getMimeType(), 'image/')) {
-            $fullPath = '/'.$media->getRelativeDir().'/'.$media->getMedia();
-            $thumb = $this->liipImage->getBrowserPath($fullPath, 'thumb');
+            $thumb = $this->imageManager->getBrowserPath($media, 'thumb');
         } else {
             $thumb = self::$thumb;
         }

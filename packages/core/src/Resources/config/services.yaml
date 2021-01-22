@@ -1,5 +1,5 @@
 imports:
-  - { resource: '../../../src/Resources/config/services/all.yaml' }
-  - { resource: '../../../src/Component/Router/RouterServices.yaml' }
-  - { resource: '../../../src/Component/Filter/FilterServices.yaml' }
-  - { resource: '../../../src/Component/App/services.yaml' }
+  - { resource: "../../../src/Resources/config/CoreServices.yaml" }
+  - { resource: "../../../src/Component/Router/RouterServices.yaml" }
+  - { resource: "../../../src/Component/Filter/FilterServices.yaml" }
+  - { resource: "../../../src/Component/App/services.yaml" }

@@ -4,6 +4,7 @@ namespace Pushword\PageScanner;
 
 use Doctrine\ORM\EntityManagerInterface;
 use PiedWeb\UrlHarvester\Harvest;
+use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\Router\RouterInterface as PwRouter;
 use Pushword\Core\Entity\PageInterface;
@@ -21,19 +22,15 @@ class PageScannerService
     use GenerateLivePathForTrait;
     use KernelTrait;
 
-    /** @var \Pushword\Core\Component\App\AppConfig */
-    protected $app;
+    protected AppConfig $app;
 
-    /** @var EntityManagerInterface */
-    protected $em;
+    protected EntityManagerInterface $em;
     protected $pageHtml;
-    /** @var Twig */
-    protected $twig;
+    protected Twig $twig;
     protected $currentPage;
-    protected $webDir;
+    protected $publicDir;
     protected $previousRequest;
-    /** @var AppPool */
-    protected $apps;
+    protected AppPool $apps;
     protected $linksCheckedCounter = 0;
     protected $errors = [];
     protected $everChecked = [];
@@ -42,7 +39,7 @@ class PageScannerService
     public function __construct(
         Twig $twig,
         EntityManagerInterface $em,
-        string $webDir,
+        string $publicDir,
         AppPool $apps,
         PwRouter $router,
         KernelInterface $kernel
@@ -51,7 +48,7 @@ class PageScannerService
         $this->router = $router;
         $this->router->setUseCustomHostPath(false);
         $this->em = $em;
-        $this->webDir = $webDir;
+        $this->publicDir = $publicDir;
         $this->apps = $apps;
 
         static::loadKernel($kernel);
@@ -221,7 +218,7 @@ class PageScannerService
 
         $this->everChecked[$slug] = (
             null === $page
-                && ! file_exists($this->webDir.'/'.$slug)
+                && ! file_exists($this->publicDir.'/'.$slug)
                 && 'feed.xml' !== $slug
         ) ? false : true;
 

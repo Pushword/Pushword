@@ -23,61 +23,32 @@ abstract class AbstractGenerator
     use GenerateLivePathForTrait;
     use KernelTrait;
 
-    /**
-     * @var PageRepositoryInterface
-     */
-    protected $pageRepository;
+    protected PageRepositoryInterface $pageRepository;
 
-    /**
-     * @var Filesystem
-     */
-    protected $filesystem;
+    protected Filesystem $filesystem;
 
-    /**
-     * @var Twig
-     */
-    protected $twig;
+    protected Twig $twig;
 
-    /**
-     * @var string
-     */
-    protected $webDir;
+    protected string $publicDir;
 
-    /**
-     * @var AppPool
-     */
-    protected $apps;
+    protected AppPool $apps;
 
-    /** @var AppConfig */
-    protected $app;
+    protected AppConfig $app;
 
     protected $staticDomain;
 
-    /** var @string */
+    /** @var string */
     protected $staticDir;
 
-    /**
-     * @var RequestStack
-     */
-    protected $requesStack;
+    protected RequestStack $requesStack;
 
-    /**
-     * @var TranslatorInterface
-     */
-    protected $translator;
+    protected TranslatorInterface $translator;
 
-    /**
-     * @var HtmlCompressorInterface
-     */
-    protected $parser;
+    protected HtmlCompressorInterface $parser;
 
-    /**
-     * @var ParameterBagInterface
-     */
-    protected $params;
+    protected ParameterBagInterface $params;
 
-    /** @var RouterInterface */
-    protected $router;
+    protected RouterInterface $router;
 
     public function __construct(
         PageRepositoryInterface $pageRepository,
@@ -98,6 +69,7 @@ abstract class AbstractGenerator
         $this->router = $router;
         $this->router->setUseCustomHostPath(false);
         $this->apps = $apps;
+        $this->publicDir = $params->get('pw.public_dir');
         $this->parser = HtmlCompressor::construct();
 
         if (! method_exists($this->filesystem, 'dumpFile')) {
@@ -117,7 +89,6 @@ abstract class AbstractGenerator
     protected function init(?string $host = null): void
     {
         $this->app = null !== $host ? $this->apps->switchCurrentApp($host)->get() : $this->apps->get();
-        $this->webDir = $this->app->get('public_dir');
     }
 
     /**
@@ -133,7 +104,7 @@ abstract class AbstractGenerator
     {
         if (file_exists($file)) {
             copy(
-                str_replace($this->params->get('kernel.project_dir').'/', '../', $this->webDir.'/'.$file),
+                str_replace($this->params->get('kernel.project_dir').'/', '../', $this->publicDir.'/'.$file),
                 $this->getStaticDir().'/'.$file
             );
         }

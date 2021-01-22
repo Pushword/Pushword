@@ -22,6 +22,8 @@ class FlatFileExporter
     protected AppConfig $app;
     protected AppPool $apps;
     protected string $projectDir;
+    protected string $mediaDir;
+    protected string $copyMedia = '';
     protected string $exportDir = '';
     protected string $mediaClass;
     protected string $pageClass;
@@ -33,6 +35,7 @@ class FlatFileExporter
 
     public function __construct(
         string $projectDir,
+        string $mediaDir,
         string $pageClass,
         string $mediaClass,
         AppPool $apps,
@@ -42,6 +45,7 @@ class FlatFileExporter
         MediaImporter $mediaImporter
     ) {
         $this->projectDir = $projectDir;
+        $this->mediaDir = $mediaDir;
         $this->pageClass = $pageClass;
         $this->mediaClass = $mediaClass;
         $this->entityManager = $entityManager;
@@ -130,9 +134,18 @@ class FlatFileExporter
             $data[$property] = $media->$getter();
         }
 
-        $jsonContent = json_encode($data, \JSON_PRETTY_PRINT);
+        if ($this->copyMedia) {
+            $destination = $this->exportDir.'/'.$this->copyMedia.'/'.$media->getMedia();
+            $this->filesystem->copy($media->getPath(), $destination);
+        }
 
-        $this->filesystem->copy($this->projectDir.$media->getPath(), $this->exportDir.'/media/default/'.$media->getMedia());
-        $this->filesystem->dumpFile($this->exportDir.'/media/default/'.$media->getMedia().'.json', $jsonContent);
+        $jsonContent = json_encode($data, \JSON_PRETTY_PRINT);
+        $jsonFile = ($this->copyMedia ? $this->exportDir.'/'.$this->copyMedia : $this->mediaDir).'/'.$media->getMedia().'.json';
+        $this->filesystem->dumpFile($jsonFile, $jsonContent);
+    }
+
+    public function setCopyMedia(string $copyMedia): void
+    {
+        $this->copyMedia = $copyMedia;
     }
 }

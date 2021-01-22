@@ -7,7 +7,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
@@ -25,17 +27,17 @@ class ElementAdmin extends AbstractController
         $this->kernel = $kernel;
     }
 
-    protected function getElements()
+    protected function getElements(): ElementRepository
     {
         return new ElementRepository($this->kernel->getProjectDir().'/templates');
     }
 
-    public function listElement()
+    public function listElement(): Response
     {
         return $this->render('@pwTemplateEditor/list.html.twig', ['elements' => $this->getElements()->getAll()]);
     }
 
-    protected function getElement($encodedPath): Element
+    protected function getElement(?string $encodedPath): Element
     {
         if (null !== $encodedPath) {
             $element = $this->getElements()->getOneByEncodedPath($encodedPath);
@@ -47,7 +49,7 @@ class ElementAdmin extends AbstractController
         return $element ?? new Element($this->kernel->getProjectDir().'/templates');
     }
 
-    protected function clearTwigCache()
+    protected function clearTwigCache(): void
     {
         $twigCacheFolder = $this->get('twig')->getCache(true);
 
@@ -59,7 +61,7 @@ class ElementAdmin extends AbstractController
         }
     }
 
-    public function editElement($encodedPath = null, Request $request = null)
+    public function editElement(?string $encodedPath = null, Request $request = null): Response
     {
         $element = $this->getElement($encodedPath);
 
@@ -89,7 +91,7 @@ class ElementAdmin extends AbstractController
         );
     }
 
-    protected function editElementForm(Element $element)
+    protected function editElementForm(Element $element): FormInterface
     {
         return $this->createFormBuilder($element)
             ->add('path', TextType::class)
@@ -105,7 +107,7 @@ class ElementAdmin extends AbstractController
             ->getForm();
     }
 
-    public function deleteElement($encodedPath, Request $request)
+    public function deleteElement(string $encodedPath, Request $request): Response
     {
         $element = $this->getElement($encodedPath);
 

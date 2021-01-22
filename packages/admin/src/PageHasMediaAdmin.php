@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Pushword\Core\Entity\MediaInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
@@ -14,17 +15,18 @@ class PageHasMediaAdmin extends AbstractAdmin implements PageHasMediaAdminInterf
 
     protected string $messagePrefix = 'admin.media';
 
-    protected function getMedialHelp($media)
+    /**
+     * @param MediaInterface|null $media
+     */
+    protected function getMedialHelp($media): string
     {
         if (! ($media && $media->getMedia() && false !== strpos($media->getMimeType(), 'image/'))) {
-            return null;
+            return '';
         }
 
-        $fullPath = '/'.$media->getRelativeDir().'/'.$media->getMedia();
-
         $editUrl = $this->routeGenerator->generate('admin_app_media_edit', ['id' => $media->getId()]);
-        $thumbUrl = $this->liipImage->getBrowserPath($fullPath, 'thumb');
-        $defaultUrl = $this->liipImage->getBrowserPath($fullPath, 'default');
+        $thumbUrl = $this->imageManager->getBrowserPath($media, 'thumb');
+        $defaultUrl = $this->imageManager->getBrowserPath($media, 'default');
 
         $help = '<div><a href="'.$editUrl.'" target=_blank style="display:block">';
         $help .= '<img src="'.$thumbUrl.'" style="width:100%; max-width:300px">';
