@@ -6,8 +6,8 @@ use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Utils\Filepath;
+use Pushword\Core\Utils\ImageOptimizer\OptimizerChainFactory;
 use Spatie\ImageOptimizer\OptimizerChain;
-use Spatie\ImageOptimizer\OptimizerChainFactory;
 use Symfony\Component\Filesystem\Filesystem;
 
 class ImageManager

@@ -72,7 +72,7 @@ class MediaListener
             $this->imageManager->remove($media->getMediaBeforeUpdate());
 
             $this->imageManager->generateCache($media);
-            //exec('cd ../ && php bin/console pushword:media:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+            //exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
         }
     }
 
@@ -127,7 +127,7 @@ class MediaListener
             $this->imageManager->generateCache($media);
             $thumb = $this->imageManager->getLastThumb();
             $this->updatePaletteColor($media, $thumb ?: null);
-            //exec('cd ../ && php bin/console pushword:media:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+            //exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
         }
     }
 

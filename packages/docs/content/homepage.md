@@ -30,10 +30,47 @@ See [how to install and test Pushword in less than one minute](/installation) :
 
 Or look at the detailled features or directly the #[source code](https://github.com/Pushword/pushword) (monorepo).
 
-## **Edition** <br><small>Manage your content efficiently </small>
+{% apply unprose %}
 
--   Simple, functionnable and efficient default Admin. If you come from Wordpress, you will find your way easily.
-    If you prefer a **flat file cms**, Pushword do that too !
+<div class="grid grid-cols-1 gap-4 p-3 mx-auto md:grid-cols-2 xl:grid-cols-4 max-w-screen-2xl">
+
+<!-- Edit -->
+<div class="px-3 py-6 mb-6 rounded-lg shadow-lg bg-green-50">
+    <h2 class="flex mb-6 text-xl font-medium">
+        <div class="flex-shrink-0">
+            <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-green-500 rounded-full">{{ svg('tools') }}</div>
+        </div>
+        <div class="ml-3 text-green-500">Easy to install<br><small>Run it in a second</small></div>
+    </h2>
+    <div class="prose">
+        <p>Pushword run on a classic <strong>PHP</strong> environnement (and Composer). You have this on your machine or just a cheap shared host ? So you are able to install it in a few seconds.</p>
+        <p>By default, it works without dirty work. It even looks <strong>so simple</strong>. But don't be wrong, you can do amazing custom thing with it !</p>
+        <p>You want a <strong>blog</strong> or a <strong>documentation website</strong> ? Just install Pushword and play.</p>
+        <p>Want more features ?<br>Look at the <a href="/extensions">{{ svg('puzzle-piece') }} extensions</a>.</p>
+        <p><a href="/installation">Learn more about requirements and installation.</a></p>
+    </div>
+
+</div>
+
+<!-- Edit -->
+<div class="px-3 py-6 mb-6 rounded-lg shadow-lg bg-yellow-50">
+    <h2 class="flex mb-6 text-xl font-medium">
+        <div class="flex-shrink-0">
+            <div class="flex items-center justify-center w-10 h-10 text-white bg-yellow-500 rounded-full">
+                {{ svg('pencil-ruler') }}
+            </div>
+        </div>
+        <div class="ml-3 text-yellow-500">Easy to edit<br><small>Are you more Flat-file CMS or Full Featured Admin ?</small></div>
+    </h2>
+    <div class="prose">
+        <p>Pushword offers the two ways to manage a site : a <strong>simple, functionnable and efficient default Admin</strong>, if you come from Wordpress, you will find your way easily or a <strong>powerfull flat-file CMS</strong>, you will be able to edit your content or your template files from where you want (nextcloud folder, custom editor, git compatible...).</p>
+        <p>Default editor use <strong>Markdown/Html</strong> with extended <a href="/editor">features</a> (video, responsive image, encrypted link...).</p>
+        <p>{{ svg('dot-circle') }} A block editor is planned and will be released soon.</p>
+    </div>
+</div>
+</div>
+{% endapply %}
+
 -   By default, Pushword offers you to write content with **Markdown** or directly in **html** (with **Twig** functionnalities avalaible). It's render pretty cleaned source code and if you never use it, it's very easy to learn.
 -   **Multi-site**, Multi-language (i18n), Multi-domain or just **one simple website** : both are possible on the same installation
 -   **Easily extendable** ([extensions list](/extensions)) or ask a developper what you wish, extend _Pushword_ is simple as writing a symfony bundle.

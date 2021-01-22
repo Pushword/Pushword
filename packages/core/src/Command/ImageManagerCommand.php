@@ -42,7 +42,7 @@ class ImageManagerCommand extends Command
     protected function configure()
     {
         $this
-            ->setName('pushword:media:cache')
+            ->setName('pushword:image:cache')
             ->setDescription('Generate all images cache')
             ->addArgument('media', InputArgument::OPTIONAL, 'Image name (eg: filename.jpg).');
     }

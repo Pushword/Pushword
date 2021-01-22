@@ -1,0 +1,44 @@
+/**
+ * Relative to link
+ */
+.text-color-inherit,
+.link-text {
+    color: inherit !important;
+}
+
+.no-decoration,
+.ninja {
+    text-decoration: none !important;
+    color: inherit !important;
+    cursor: auto !important;
+}
+
+/**
+ * Some smoothiness
+ */
+
+html {
+    font-family: var(--font-family);
+    scroll-behavior: smooth;
+}
+
+/**
+ * Pure css hamburger menu
+ */
+
+.show-hide-input:checked ~ div {
+    display: block !important;
+}
+
+/**
+ * Special full-width from everywhere
+ */
+
+.w-full-vw {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+}

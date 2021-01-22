@@ -36,8 +36,10 @@ module.exports = {
                             backgroundColor: theme("colors.gray.600"),
                         },
                         color: "#333",
-                        a: {
-                            color: "var(--secondary)",
+                        "a, span[data-rot]": {
+                            boxShadow: "inset 0 -6px 0 #FDE68A",
+                            color: "#333",
+                            textDecoration: "none",
                             "&:hover": {
                                 opacity: "0.75",
                             },
