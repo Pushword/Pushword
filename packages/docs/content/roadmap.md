@@ -12,6 +12,7 @@ parent: contribute
 
 ## TODO Extension
 
+-   Intégrer Schema.org dans le backend d'une page
 -   Static: copy only used media in public
 -   FacebookManager (post from facebook and ~~show last facebook status~~ )
 -   Flat: Transform markdown link to page link (useful for navigate in docs from editor)
@@ -22,7 +23,6 @@ parent: contribute
 -   export/import FLAT FILES (spatie/yaml-front-matter, vérif à chaque requête pour une sync constante admin <-> flat files)
 -   Create a page from a Media (media edit) => button to create a new page with title = name and mainImage = Media
     (useful for photographer website)... or create a dynamic page /media/[slug]/ showing data from Media
--   Intégrer Schema.org dans le backend d'une page
 -   Settings Manager (simple textarea permitting to edit pushword config and parameters ? and rebooting cache)
 
 ### To plan
