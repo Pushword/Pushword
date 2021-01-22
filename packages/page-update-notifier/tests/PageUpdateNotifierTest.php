@@ -29,7 +29,7 @@ class PageUpdateNotifierTest extends KernelTestCase
             'App\Entity\Page',
             $mailer,
             $apps,
-            sys_get_temp_dir(), // vendor/piedweb/cms-bundle/Sekeleton',
+            sys_get_temp_dir(),
             $entityManager,
             $translator,
             $twig

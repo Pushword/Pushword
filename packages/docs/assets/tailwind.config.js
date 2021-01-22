@@ -50,6 +50,9 @@ module.exports = {
                     css: [
                         {
                             color: theme("colors.gray.100"),
+                            "a, span[data-rot]": {
+                                color: "#fff",
+                            },
                             '[class~="lead"]': {
                                 color: theme("colors.gray.300"),
                             },

@@ -9,6 +9,7 @@ parent: contribute
 
 -   release de sonata 4
 -   Issue : User Password Edit don't work from admin
+-   installer via composer-create (command pushword:new creating a new app config array)
 
 ## TODO Extension
 
@@ -24,6 +25,8 @@ parent: contribute
 -   Create a page from a Media (media edit) => button to create a new page with title = name and mainImage = Media
     (useful for photographer website)... or create a dynamic page /media/[slug]/ showing data from Media
 -   Settings Manager (simple textarea permitting to edit pushword config and parameters ? and rebooting cache)
+-   smart image optimizer (using all otpimizer avalaible and choosing the smallest file)
+-   interventionImageBundle (sortir mediaManager du bundle principal)
 
 ### To plan
 
