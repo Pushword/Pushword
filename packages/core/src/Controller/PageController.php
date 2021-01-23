@@ -119,7 +119,7 @@ class PageController extends AbstractController
         $params = [
             'pages' => $this->getPages(5, $request),
             'page' => $page,
-            'feedUri' => ($this->params->get('locale') == $locale ? '' : $locale.'/').'feed.xml',
+            'feedUri' => ($this->params->get('kernel.default_locale') == $locale ? '' : $locale.'/').'feed.xml',
         ];
 
         return $this->render(
@@ -170,7 +170,7 @@ class PageController extends AbstractController
             $this->apps->getMainHost(),
             $this->apps->isFirstApp(),
             $requestedLocale,
-            $this->params->get('locale'),
+            $this->params->get('kernel.default_locale'),
             $limit
         )->getQuery()->getResult();
 

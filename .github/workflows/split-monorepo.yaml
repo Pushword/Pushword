@@ -52,6 +52,7 @@ jobs:
           - facebook
           - js-helper
           - version
+          - new
           #package: ${{fromJson(needs.provide_packages_json.outputs.matrix)}}
 
     steps:

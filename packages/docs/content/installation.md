@@ -7,24 +7,40 @@ toc: true
 
 ## Requirements
 
--   **PHP** 7.4
+-   **PHP** >=7.4
 -   **PHP extensions** : dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, fileinfo
 -   **Composer** (#[how to install composer](https://getcomposer.org/download/))
 
-## Automatic installer via CLI (unix)
+## Automatic installer via composer
 
 ```
 
-curl https://raw.githubusercontent.com/Pushword/Pushword/main/packages/installer/src/installer >> installer && chmod +x installer && ./installer ./my-folder
+composer create-project pushword/new pushword
 
 ```
+
+That's it ! You can still configure an app or directly launch a PHP Server :
+
+```
+
+cd pushword;
+
+php bin/console pushword:new
+
+php -S 127.0.0.1:8004 -t public/
+
+
+```
+
+## Next
+
+Want more feature like **static**, **flat-file cms** or **page scanner** ?
+
+Look the [extensions](/extensions).
 
 ## Manual installation
 
-Look in the shell script [installer](https://github.com/Pushword/Pushword/blob/main/packages/installer/src/installer) where each step is describe.
-
-<!-- for postcss... -->
-<pre style="display:none"><code>...</code></pre>
+You can use `composer require pushword/core` in an existing Symfony Project. Have a look into `vendor/pushword/core/install.php` to finish manually the installation.
 
 ## Update
 
@@ -33,3 +49,6 @@ Stay up to date with only one command :
 ```
 composer update
 ```
+
+<!-- for postcss... -->
+<pre style="display:none"><code>...</code></pre>

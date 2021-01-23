@@ -1,6 +1,5 @@
 framework:
-  secret: 'secretKeyToOverride (normally, it s automatically done by symfony standard edition'
-  translator: { fallbacks: ['%locale%'] }
+  secret: "secretKeyToOverride (normally, it s automatically done by symfony standard edition"
 
   session:
     handler_id: ~
@@ -9,7 +8,5 @@ framework:
   php_errors:
     log: true
 
-  default_locale: '%locale%'
-
   assets:
-    json_manifest_path: '%kernel.project_dir%/public/assets/manifest.json'
+    json_manifest_path: "%kernel.project_dir%/public/assets/manifest.json"

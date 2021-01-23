@@ -9,7 +9,6 @@ parent: contribute
 
 -   release de sonata 4
 -   Issue : User Password Edit don't work from admin
--   installer via composer-create (command pushword:new creating a new app config array)
 
 ## TODO Extension
 

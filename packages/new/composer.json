@@ -8,19 +8,19 @@
         "php": ">=7.2.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "symfony/flex": "^1.3.1",
-        "pushword/installer": "*",
-        "pushword/core": "*"
+        "symfony/flex": "^1.3.1"
     },
     "flex-require": {
-        "symfony/console": "*",
-        "symfony/dotenv": "*",
-        "symfony/framework-bundle": "*",
-        "symfony/yaml": "*"
+        "symfony/console": "^5.2",
+        "symfony/dotenv": "^5.2",
+        "symfony/framework-bundle": "^5.2",
+        "symfony/yaml": "^5.2",
+        "pushword/core": "*"
     },
     "require-dev": {
-        "pushword/skeleton": "*",
-        "symfony/profiler-pack": "*"
+        "symfony/profiler-pack": "*",
+        "pushword/installer": "*",
+        "symfony/phpunit-bridge": "^5.2"
     },
     "config": {
         "optimize-autoloader": true,
@@ -45,15 +45,12 @@
         "symfony/polyfill-php72": "*"
     },
     "scripts": {
-        "post-package-install": [
-            "Pushword\\Installer\\PostInstall::postPackageInstall"
-        ],
         "auto-scripts": [],
         "post-install-cmd": [
             "@auto-scripts"
         ],
         "post-update-cmd": [
-            "Pushword\\Installer\\PostInstall::postPackageInstall",
+            "Pushword\\Installer\\PostInstall::postUpdateCommand",
             "@auto-scripts"
         ]
     },

@@ -4,7 +4,9 @@ module.exports = {
     purge: {}, // directly in webpack
     theme: {
         colors: {
-            gray: colors.blueGray,
+            "blue-gray": colors.blueGray,
+            "cool-gray": colors.coolGray,
+            gray: colors.gray,
             transparent: "transparent",
             current: "currentColor",
             black: colors.black,

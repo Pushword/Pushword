@@ -1,4 +1,3 @@
-https://pushword.piedweb.com/homepage.html
 https://pushword.piedweb.com/architecture
 https://pushword.piedweb.com/command
 https://pushword.piedweb.com/configuration
@@ -26,3 +25,4 @@ https://pushword.piedweb.com/roadmap
 https://pushword.piedweb.com/search.json
 https://pushword.piedweb.com/themes
 https://pushword.piedweb.com/upgrade
+https://pushword.piedweb.com/test-content

@@ -2,9 +2,7 @@ You just succeed to install **Pushword/Core**.
 
 You are on your future **homepage**.
 
-Go to [admin](/admin/) to edit this one.
-
-Use the credentials you enter during the installation.
+Did you install the [admin extension](https://pushword.piedweb.com/extension/admin) or the [flat file extension](https://pushword.piedweb.com/extension/flat) to edit this one ?
 
 Have Fun,
 

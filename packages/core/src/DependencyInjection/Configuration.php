@@ -104,6 +104,7 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder('pushword');
         $treeBuilder->getRootNode()->children()
             ->scalarNode('public_dir')->defaultValue('%kernel.project_dir%/public')->cannotBeEmpty()->end()
+            ->scalarNode('database_url')->defaultValue('sqlite:///%kernel.project_dir%/var/app.db')->cannotBeEmpty()->end()
             ->scalarNode('entity_page')->defaultValue('App\Entity\Page')->cannotBeEmpty()->end()
             ->scalarNode('entity_media')->defaultValue('App\Entity\Media')->cannotBeEmpty()->end()
             ->scalarNode('entity_user')->defaultValue('App\Entity\User')->cannotBeEmpty()->end()
@@ -118,10 +119,10 @@ class Configuration implements ConfigurationInterface
                 ->end()
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
             // default app value
-            ->scalarNode('locale')->defaultValue('%locale%')->cannotBeEmpty()->end()
+            ->scalarNode('locale')->defaultValue('%kernel.default_locale%')->cannotBeEmpty()->end()
             ->scalarNode('locales')
                 ->info('eg: fr|en')
-                ->defaultValue('%locale%')
+                ->defaultValue('%kernel.default_locale%')
                 ->end()
             ->scalarNode('name')->defaultValue('Pushword')->end()
             ->variableNode('host')->defaultValue('localhost')->end()

@@ -20,10 +20,10 @@ pushword:
   #     - template
   #     - template_dir
   #     - custom_properties
-  # locale:               '%locale%'
+  # locale:               '%kernel.default_locale%'
 
   # # eg: fr|en
-  # locales:              '%locale%'
+  # locales:              '%kernel.default_locale%''
   # name:                 Pushword
   # host:                 localhost
   # hosts:

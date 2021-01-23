@@ -1,5 +1,5 @@
 ---
-title: 'Conversation: Add Comment, Newsletter Form or Contact For'
+title: "Conversation: Add Comment, Newsletter Form or Contact For"
 h1: Conversation
 toc: true
 twig: 0
@@ -15,20 +15,10 @@ Via #[Packagist](https://packagist.org/packages/pushword/conversation) :
 ```
 # Get the Bundle
 composer require pushword/conversation
-
-# Add the route to your Routes:
-conversation:
-    resource: '@PushwordConversationBundle/Resources/config/routes/conversation.yaml'
-
-# or do it in 1 command line
-# $ sed -i '1s/^/admin:\n    resource: "@PushwordConversationBundle\/Resources\/config\/routes\/conversation.yaml"\n/' config/routes.yaml
 ```
 
-Update database
-
-```
-php bin/console doctrine:schema:update --force
-```
+That's it ! If you have a custom installation (not used the [default installer](/installation)),
+you may have a look inside `vendor/pushword/admin/install.php`.
 
 ## Usage
 

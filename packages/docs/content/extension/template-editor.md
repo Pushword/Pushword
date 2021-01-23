@@ -13,11 +13,5 @@ Edit view file online in the [admin](https://pushword.piedweb.com/extension/admi
 composer require pushword/template-editor
 ```
 
-Add Routes
-
-```yaml
-template_editor:
-  resource: '@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml'
-# or do it in 1 command line
-# $ sed -i '1s/^/template_editor:\n    resource: "@PushwordTemplateEditorBundle\/TemplateEditorRoutes.yaml"\n/' config/routes.yaml
-```
+That's it ! If you have a custom installation (not used the [default installer](/installation)),
+you may have a look inside `vendor/pushword/admin/install.php`.

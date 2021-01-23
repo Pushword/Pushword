@@ -13,14 +13,8 @@ Generate a static website serve by github pages, apaches with one command or via
 composer require pushword/template-editor
 ```
 
-Add Routes
-
-```yaml
-static:
-  resource: '@PushwordStaticGeneratorBundle/StaticRoutes.yaml'
-# or do it in 1 command line
-# $ sed -i '1s/^/static:\n    resource: "@PushwordStaticGeneratorBundle\/StaticRoutes.yaml"\n/' config/routes.yaml
-```
+That's it ! If you have a custom installation (not used the [default installer](/installation)),
+you may have a look inside `vendor/pushword/admin/install.php`.
 
 ## Configure
 

@@ -1,0 +1,9 @@
+<footer class="text-sm border-t shadow-inner text-cool-gray-200 border-yellow-50 dark:border-gray-700 bg-cool-gray-800 dark:bg-gray-900">
+    <div class="max-w-screen-md p-3 py-10 mx-auto text-center ">
+
+        {% block extra_footer %}
+            <a href="{{ homepage(page) }}" class="block mb-3 text-2xl text-white hover:opacity-75">{{ app_name }}</a>
+            Crafted by <a href="https://piedweb.com" class="text-white hover:opacity-75">Pied Web</a> | Source code on {{ link(svg('github') ~ ' github', 'https://github.com/pushword/pushword', {'class': 'text-white hover:opacity-75'}) }}
+        {% endblock %}
+    </div>
+</footer>

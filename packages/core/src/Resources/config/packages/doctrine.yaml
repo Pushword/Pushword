@@ -1,30 +1,30 @@
 doctrine:
   dbal:
     # configure these for your database server
-    driver: 'pdo_mysql'
-    server_version: '5.7'
+    driver: "pdo_mysql"
+    server_version: "5.7"
     charset: utf8mb4
     default_table_options:
       charset: utf8mb4
       collate: utf8mb4_unicode_ci
 
-    url: '%database%'
+    url: "%pw.database_url%"
   orm:
-    auto_generate_proxy_classes: '%kernel.debug%'
+    auto_generate_proxy_classes: "%kernel.debug%"
     naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
     auto_mapping: true
     mappings:
       App:
         type: annotation
         prefix: App\Entity
-        dir: '%kernel.project_dir%/src/Entity'
+        dir: "%kernel.project_dir%/src/Entity"
         is_bundle: false
       PushwordCoreBundle:
         type: annotation
-        dir: 'Entity'
+        dir: "Entity"
         alias: PushwordCore
     resolve_target_entities:
-      Pushword\Core\Entity\PageInterface: '%pw.entity_page%'
-      Pushword\Core\Entity\MediaInterface: '%pw.entity_media%'
-      Pushword\Core\Entity\UserInterface: '%pw.entity_user%'
-      Pushword\Core\Entity\PageHasMediaInterface: '%pw.entity_pagehasmedia%'
+      Pushword\Core\Entity\PageInterface: "%pw.entity_page%"
+      Pushword\Core\Entity\MediaInterface: "%pw.entity_media%"
+      Pushword\Core\Entity\UserInterface: "%pw.entity_user%"
+      Pushword\Core\Entity\PageHasMediaInterface: "%pw.entity_pagehasmedia%"
