@@ -1,6 +1,4 @@
-# Flat File CMS with Pushword
-
-Transform Pushword in a FlatFile CMS.
+# Welcome on your new Pushword Installation
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -12,7 +10,7 @@ Transform Pushword in a FlatFile CMS.
 
 ## Documentation
 
-Visit [pushword.piedweb.com](https://pushword.piedweb.com/extension/flat)
+Visit [pushword.piedweb.com](https://pushword.piedweb.com)
 
 ## Contributing
 

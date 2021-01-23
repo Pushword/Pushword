@@ -25,12 +25,11 @@ parent: contribute
 -   Create a page from a Media (media edit) => button to create a new page with title = name and mainImage = Media
     (useful for photographer website)... or create a dynamic page /media/[slug]/ showing data from Media
 -   Settings Manager (simple textarea permitting to edit pushword config and parameters ? and rebooting cache)
--   smart image optimizer (using all otpimizer avalaible and choosing the smallest file)
--   interventionImageBundle (sortir mediaManager du bundle principal)
 
 ### To plan
 
--   Media Management v2 : utiliser IPTC&exif pour stocker toutes les infos stockées en bdd (static power)
+-   smart image optimizer (using all otpimizer avalaible and choosing the smallest file)
+-   interventionImageBundle (sortir mediaManager du bundle principal)
 -   CI : Test Installer
 -   Author for page (will permit to manage page view right later)
 -   Archive edit (page) (extension or core ?)
@@ -42,9 +41,7 @@ parent: contribute
 -   Scan : scanner une page en direct + scanner plus de choses (liens externes, texte alternative manquant, etc.)
 -   Multi upload
 -   Test the code, search for all "todo" in the code,
--   Installation without composer (download composer if not installed)
 -   Pagination children/list (molto idea : PageController capture les pages /slug/[0-0]\*/ et renvoie si existe)
 -   Page with dynamic slug ?!
 -   Add https://github.com/nan-guo/Sonata-Menu-Bundle
 -   Move route to annotation (less extendable but more pratical with priority)
--   Move media to var (and create a link ?!)

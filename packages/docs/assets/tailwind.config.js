@@ -1,6 +1,23 @@
+const colors = require("tailwindcss/colors");
+
 module.exports = {
     purge: {}, // directly in webpack
     theme: {
+        colors: {
+            gray: colors.blueGray,
+            transparent: "transparent",
+            current: "currentColor",
+            black: colors.black,
+            white: colors.white,
+            gray: colors.coolGray,
+            red: colors.red,
+            yellow: colors.amber,
+            green: colors.emerald,
+            blue: colors.blue,
+            indigo: colors.indigo,
+            purple: colors.violet,
+            pink: colors.pink,
+        },
         flex: {
             1: "1 1 0%",
             auto: "1 1 auto",
@@ -37,7 +54,7 @@ module.exports = {
                         },
                         color: "#333",
                         "a, span[data-rot]": {
-                            boxShadow: "inset 0 -6px 0 #FDE68A",
+                            boxShadow: "inset 0 -6px 0 #FED7AA",
                             color: "#333",
                             textDecoration: "none",
                             "&:hover": {
@@ -52,6 +69,7 @@ module.exports = {
                             color: theme("colors.gray.100"),
                             "a, span[data-rot]": {
                                 color: "#fff",
+                                boxShadow: "inset 0 -6px 0 #9A3412",
                             },
                             '[class~="lead"]': {
                                 color: theme("colors.gray.300"),

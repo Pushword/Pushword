@@ -22,7 +22,7 @@ class PostInstall
         exec('sed -i -e "s/return \[/return \[\n    Pushword\\\\\Core\\\\\PushwordCoreBundle::class => \[\'all\' => true\],/" config/bundles.php');
     }
 
-    public static function beforeCacheClear()
+    public static function beforeCacheClear() // todo rename it
     {
         $files = [
             'templates/base.html.twig',

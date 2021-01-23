@@ -14,13 +14,13 @@
             <span class="block w-full h-1 border-b-2 border-gray-100"></span>
         </div>
     </label>
-    <div id="right-column-nav" class="sticky z-40 h-full py-6 pl-1 pr-3 mr-24 overflow-hidden text-sm bg-white border-r border-gray-200 w-60 lg:block lg:top-18 lg:mr-3 dark:bg-gray-900 dark:border-gray-700">
+    <div id="right-column-nav" class="sticky z-40 h-full py-6 pl-1 pr-3 mr-24 overflow-hidden text-sm bg-white border-r border-gray-200 lg:border-r-0 md:py-9 lg:mx-auto w-60 lg:block lg:top-18 dark:bg-gray-900 dark:border-gray-700">
         {% set heading_class = 'block px-3 mb-3 text-sm font-semibold tracking-wide text-gray-900 dark:text-gray-100 uppercase lg:mb-3 lg:text-xs mt-3' %}
-        {% set link_class = 'block px-3 py-2 transition-colors duration-200 relative hover:text-white hover:bg-primary hover:bg-opacity-75 text-gray-900 dark:text-gray-100 rounded' %}
+        {% set link_class = 'block px-3 py-2 transition-colors duration-200 relative hover:text-primary text-gray-900 dark:text-gray-100 rounded' %}
         {% for n in nav %}
             {% set uri = n.1 == '#' ? '#' : page(n.1) %}
-            <a href="{{ uri }}" class="{{ n.2 is defined ? heading_class : link_class }} {{ n.2 is not defined and is_current_page(uri, page) ? ' bg-gray-200 dark:bg-gray-700' : '' }}">
-                {{ n.0 }}</a>
+            <a href="{{ uri }}" class="{{ n.2 is defined ? heading_class : link_class }} {{ n.2 is not defined and is_current_page(uri, page) ? 'text-primary' : '' }}">
+                {{ n.2 is not defined and is_current_page(uri, page) ? '›' : '' }} {{ n.0 }}</a>
         {% endfor %}
         {{ link('<div style="display:inline-block;margin-bottom: -2px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></div> Source Code', 'https://github.com/Pushword/Pushword', link_class) }}
     </div>
@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded',  function() {
 #right-column:not(:checked) ~ #right-column-nav {
     height: 0 !important;
     width: 0;
+    padding: 0;
+    margin: 0;
 }
 #right-column:checked ~ label {
     left: 15rem;
