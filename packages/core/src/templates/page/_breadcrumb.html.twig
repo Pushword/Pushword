@@ -5,7 +5,7 @@
             <nav aria-label="breadcrumb" class="{{ breadcrumb_class|default('max-w-3xl p-3 mx-auto text-sm font-light text-gray-700 dark:text-gray-300') }}">
                 <ul>
                     {{ _self.breadcrumbPart(page.parentPage, true) }}
-                    <!--<li aria-current="page" class="inline-block"> › {{ page.content.name|raw|striptags }}</li>-->
+                    <!--<li aria-current="page" class="inline-block"> › {{ pw(page).name|raw|striptags }}</li>-->
                 </ul>
             </nav>
         {% endif %}
@@ -16,7 +16,7 @@
         {{ _self.breadcrumbPart(page.parentPage) }}
     {% endif %}
     <li class="inline-block">
-        <a href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}" class="hover:underline">{{ page.content.name|raw|striptags }}</a>
+        <a href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}" class="hover:underline">{{ pw(page).name|raw|striptags }}</a>
         {% if first != true %}<span class="inline-block px-1">›</span>{% endif %}
     </li>
 {% endmacro %}

@@ -6,7 +6,7 @@ use Pushword\Core\Component\App\AppConfig;
 
 trait PhoneNumberTwigTrait
 {
-    //abstract public function getApp(): AppConfig;
+    abstract public function getApp(): AppConfig;
 
     public function renderPhoneNumber($number, $class = '')
     {

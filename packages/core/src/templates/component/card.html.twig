@@ -7,7 +7,7 @@
 {% if page is defined %}
  {% set image = page.mainImage %}
  {% set date = page.createdAt %}
- {% set title = page.content.h1 %}
+ {% set title = pw(page).h1 %}
  {% set link = page(page) %}
 {% endif %}
 

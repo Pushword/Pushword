@@ -4,6 +4,8 @@
 //$pageScanner = class_exists('Pushword\StaticGenerator\PushwordPageScannerBundle');
 //$templateEditor = class_exists('Pushword\StaticGenerator\PushwordTemplateEditorBundle');
 
+use Pushword\Admin\PageAdminInterface;
+
 return [
     'sonata_admin' => [
         'security' => [
@@ -20,7 +22,7 @@ return [
                     'label' => 'admin.label.content',
                     'label_catalogue' => 'messages',
                     'items' => [
-                        0 => 'pushword.admin.page',
+                        0 => PageAdminInterface::class,
                         1 => 'pushword.admin.media',
                     ],
                 ],

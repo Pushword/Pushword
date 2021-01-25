@@ -1,13 +1,13 @@
 {% block content %}
-<div class="{{ page.container|default(apps.get().get('page_container')|default('max-w-screen-sm p-3 pt-12 mx-auto')) }}">
-    <div class="{{ page.prose|default(apps.get().get('page_prose')|default('prose max-w-none')) }}">
+<div{{ class(page, 'container', 'max-w-screen-sm px-3 py-12 mx-auto') }}> {# /!\ must be sync with \Pushword\Core\Twig\ClassTrait::$defaultContainerClass #}
+    <div{{ class(page, 'prose', 'prose max-w-none') }}>
 
         {% block h1 %}
-            <h1>{{ page.content.h1|raw }}</h1>
+            <h1>{{ pw(page).h1|raw }}</h1>
         {% endblock %}
 
         {% block description %}
-            {{ page.content.chapeau|raw }}
+            {{ pw(page).mainContent.chapeau|raw }}
         {% endblock %}
 
         {% block main_image %}
@@ -24,13 +24,13 @@
         {% block main_content %}
             {% if page.toc is not null %}
                 {% block toc %}
-                    {{ page.content.intro|raw }}
+                    {{ pw(page).mainContent.intro|raw }}
                     <h3>Navigation</h3>
-                    {{ page.content.toc|raw }}
-                    {{ page.content.content|raw }}
+                    {{ pw(page).mainContent.toc|raw }}
+                    {{ pw(page).mainContent.content|raw }}
                     {% endblock %}
             {% else %}
-                {{ page.content.body|raw }}
+                {{ pw(page).mainContent.body|raw }}
             {% endif %}
         {% endblock %}
 

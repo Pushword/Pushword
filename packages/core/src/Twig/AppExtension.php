@@ -8,7 +8,7 @@ use Exception;
 use PiedWeb\RenderAttributes\AttributesTrait;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Component\Filter\Filters\Unprose;
+use Pushword\Core\Component\EntityFilter\ManagerPoolInterface;
 use Pushword\Core\Component\Router\RouterInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaInterface;
@@ -16,6 +16,7 @@ use Pushword\Core\Entity\PageInterface as Page;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Utils\HtmlBeautifer;
+use Pushword\Core\Utils\MarkdownParser;
 use Twig\Environment as Twig;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
@@ -25,33 +26,25 @@ class AppExtension extends AbstractExtension
 {
     // TODO switch from Trait to service (will be better to test and add/remove twig extension)
     //use AttributesTrait;
+    use ClassTrait;
     use EmailTwigTrait;
     use EncryptedLinkTwigTrait;
     use GalleryTwigTrait;
     use PageListTwigTrait;
     use PhoneNumberTwigTrait;
     use TxtAnchorTwigTrait;
+    use UnproseTwigTrait;
     use VideoTwigTrait;
 
-    /** @var RouterInterface */
-    protected $router;
+    private RouterInterface $router;
+    private EntityManagerInterface $em;
+    private string $pageClass;
+    private AppPool $apps;
+    private Twig $twig;
+    private ImageManager $imageManager;
+    private ManagerPoolInterface $entityFilterManagerPool;
 
-    /** @var EntityManagerInterface */
-    protected $em;
-
-    /** @var string */
-    protected $pageClass;
-
-    /** @var AppPool */
-    protected $apps;
-
-    /** @var Twig */
-    protected $twig;
-
-    /** @var ImageManager */
-    protected $imageManager;
-
-    public function __construct(EntityManagerInterface $em, string $pageClass, RouterInterface $router, AppPool $apps, Twig $twig, ImageManager $imageManager)
+    public function __construct(EntityManagerInterface $em, string $pageClass, RouterInterface $router, AppPool $apps, Twig $twig, ImageManager $imageManager, ManagerPoolInterface $entityFilterManagerPool)
     {
         $this->em = $em;
         $this->router = $router;
@@ -59,6 +52,7 @@ class AppExtension extends AbstractExtension
         $this->apps = $apps;
         $this->twig = $twig;
         $this->imageManager = $imageManager;
+        $this->entityFilterManagerPool = $entityFilterManagerPool;
     }
 
     public function getApp(): AppConfig
@@ -73,8 +67,9 @@ class AppExtension extends AbstractExtension
             new TwigFilter('slugify', [(new Slugify()), 'slugify']),
             new TwigFilter('preg_replace', [self::class, 'pregReplace']),
             new TwigFilter('nice_punctuation', [HtmlBeautifer::class, 'punctuationBeautifer'], self::options()),
-            new TwigFilter('unprose', [Unprose::class, 'unprose'], self::options()),
+            new TwigFilter('unprose', [$this, 'unprose'], self::options()),
             new TwigFilter('image', [$this->imageManager, 'getBrowserPath'], self::options()),
+            new TwigFilter('markdown', [(new MarkdownParser()), 'transform'], self::options()),
         ];
     }
 
@@ -101,11 +96,13 @@ class AppExtension extends AbstractExtension
             new TwigFunction('card_list', [$this, 'renderPagesListCard'], self::options(true)),
             new TwigFunction('children', [$this, 'renderChildrenList'], self::options(true)),
             new TwigFunction('card_children', [$this, 'renderChildrenListCard'], self::options(true)),
-            new TwigFunction('pages', [$this, 'getPublishedPages'], self::options(true)),
+            new TwigFunction('pages', [$this, 'getPublishedPages'], self::options()),
+            new TwigFunction('class', [$this, 'getHtmlClass'], self::options()),
+            new TwigFunction('pw', [$this->entityFilterManagerPool, 'getProperty'], self::options()),
         ];
     }
 
-    public function getPublishedPages(Twig $twig, $host = null, $where = [], $orderBy = [], $limit = 0)
+    public function getPublishedPages($host = null, $where = [], $orderBy = [], $limit = 0)
     {
         return Repository::getPageRepository($this->em, $this->pageClass)->getPublishedPages($host, $where, $orderBy, $limit);
     }

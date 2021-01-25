@@ -222,6 +222,8 @@ class PageController extends AbstractController
             }
         }
 
+        $this->setApp($page); // permit to load currentPage in Apps (used by Router)
+
         return $page;
     }
 

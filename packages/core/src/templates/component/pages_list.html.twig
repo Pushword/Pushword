@@ -4,7 +4,7 @@
             {% for page in pages %}
                 <li>
                     <a href="{{ page(page) }}">
-                        {{ page.content.title(true)|raw }}
+                        {{ pw(page).h1|raw }}
                     </a>
                 </li>
             {% endfor %}

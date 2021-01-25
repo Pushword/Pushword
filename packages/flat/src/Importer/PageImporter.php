@@ -232,6 +232,7 @@ class PageImporter extends AbstractImporter
     private function getObjectRequiredProperties($key = null)
     {
         $properties = [
+            'extendedPage' => PageInterface::class,
             'parentPage' => PageInterface::class,
             'translations' => 'addPages',
             'mainImage' => MediaInterface::class,

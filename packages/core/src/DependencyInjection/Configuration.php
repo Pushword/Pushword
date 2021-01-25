@@ -16,21 +16,29 @@ class Configuration implements ConfigurationInterface
         'base_url',
         'template',
         'template_dir',
+        'entity_can_override_filters',
+        'filters',
+        'assets',
         'custom_properties',
     ];
-    const DEFAULT_CUSTOM_PROPERTIES = [
-        'main_content_type' => 'Raw', // not anymore used, replaced by filters... to remove
-        'can_use_twig_shortcode' => true,
-        'main_content_shortcode' => 'twig,date,email,encryptedLink,image,phoneNumber,twigVideo,punctuation,markdown,unprose',
-        'fields_shortcode' => 'twig,date,email,encryptedLink,phoneNumber',
-        'assets' => [
-            'stylesheets' => [
-                '/bundles/pushwordcore/tailwind.css',
-            ],
-            'javascripts' => ['/bundles/pushwordcore/page.js'],
-        ],
+    const DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS = true;
+
+    const DEFAULT_FILTERS = [
+        'main_content' => 'twig,date,email,encryptedLink,image,phoneNumber,punctuation,markdown,unprose,mainContentSplitter,extended',
+        'name' => 'twig,date,name,extended',
+        'title' => 'twig,date,elseH1,extended',
+        'string' => 'twig,date,email,encryptedLink,phoneNumber,extended',
     ];
-    const DEFAULT_TWIG_SHORTCODE = true;
+
+    const DEFAULT_ASSETS = [
+        'stylesheets' => [
+            '/bundles/pushwordcore/tailwind.css',
+        ],
+        'javascripts' => ['/bundles/pushwordcore/page.js'],
+    ];
+
+    const DEFAULT_CUSTOM_PROPERTIES = [];
+
     const DEFAULT_PUBLIC_MEDIA_DIR = '/media';
     const IMAGE_FILTERS_SET = [
         'default' => ['quality' => 90, 'filters' => ['downscale' => [1980, 1280]]],
@@ -128,6 +136,9 @@ class Configuration implements ConfigurationInterface
             ->variableNode('host')->defaultValue('localhost')->end()
             ->variableNode('hosts')->defaultValue(['%pw.host%'])->end()
             ->scalarNode('base_url')->defaultValue('https://%pw.host%')->end()
+            ->variableNode('assets')->defaultValue(self::DEFAULT_ASSETS)->end()
+            ->variableNode('filters')->defaultValue(self::DEFAULT_FILTERS)->end()
+            ->booleanNode('entity_can_override_filters')->defaultValue(self::DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS)->end()
             ->scalarNode('image_filter_sets')->defaultValue(self::IMAGE_FILTERS_SET)->cannotBeEmpty()->end()
             ->scalarNode('template')->defaultValue(self::DEFAULT_TEMPLATE)->cannotBeEmpty()->end()
             ->scalarNode('template_dir')->defaultValue('%kernel.project_dir%/templates')->cannotBeEmpty()->end()

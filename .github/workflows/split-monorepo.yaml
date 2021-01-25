@@ -76,3 +76,14 @@ jobs:
           tag: ${{ steps.previous_tag.outputs.tag }}
           user-name: "RobinDev"
           user-email: "contact@piedweb.com"
+
+  test_installer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger next workflow
+        if: success()
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+          repository: ${{ github.repository }}
+          event-type: after-split-monorepo

@@ -1,5 +1,8 @@
 services:
   _defaults:
+    #autowire: true
+    #autoconfigure: true
+    # todo!!!
     bind:
       $mediaClass: "%pw.entity_media%"
       $pageClass: "%pw.entity_page%"
@@ -13,7 +16,6 @@ services:
   # Me
   # --------
   Twig\Extension\StringLoaderExtension: ~
-
   Pushword\Core\PushwordCoreBundle: ~
 
   Pushword\Core\:
@@ -70,16 +72,14 @@ services:
         }
 
   Pushword\Core\Repository\PageRepositoryInterface:
-    arguments: ["@doctrine", "%pw.entity_page%"]
     class: Pushword\Core\Repository\PageRepository
+    arguments: ["@doctrine", "%pw.entity_page%"]
     tags:
       - { name: doctrine.repository_service }
 
-  pushword.page_repository:
-    class: Pushword\Core\Repository\PageRepository
-    arguments: ["@doctrine", "%pw.entity_page%"]
-    tags:
-      - { name: doctrine.repository_service }
+  Pushword\Core\Component\EntityFilter\ManagerPoolInterface:
+    class: Pushword\Core\Component\EntityFilter\ManagerPool
+    autowire: true
 
   # --------
   # Media

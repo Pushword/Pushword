@@ -6,19 +6,19 @@ use Twig\Environment as Twig;
 
 class AppConfig
 {
-    protected $isFirstApp = false;
-    protected $hosts;
-    protected $customProperties;
-    protected $locale;
-    protected $locales;
-    protected $baseUrl;
-    protected $name;
-    protected $template;
-    // This app conf are more customProperties... todo ?!
-    protected $canUseTwigShortcode;
-    protected $mainContentType;
+    private bool $isFirstApp = false;
+    private array $hosts;
+    private array $customProperties;
+    private string $locale;
+    private $locales;
+    private string $baseUrl;
+    private string $name;
+    private string $template;
+    private array $filters;
+    private bool $entityCanOverrideFilters;
+    private array $assets;
 
-    protected static function normalizePropertyName(string $string): string
+    private static function normalizePropertyName(string $string): string
     {
         $string = str_replace('_', '', ucwords(strtolower($string), '_'));
         $string = lcfirst($string);
@@ -112,9 +112,24 @@ class AppConfig
         return isset($this->customProperties[$key]) ? $this->customProperties[$key] : null;
     }
 
-    public function getTemplate()
+    public function getTemplate(): string
     {
         return $this->template;
+    }
+
+    public function getFilters(): array
+    {
+        return $this->filters;
+    }
+
+    public function entityCanOverrideFilters(): bool
+    {
+        return $this->entityCanOverrideFilters;
+    }
+
+    public function getAssets(): array
+    {
+        return $this->assets;
     }
 
     /**
@@ -155,7 +170,7 @@ class AppConfig
         }
     }
 
-    protected function getOverridedView(string $name)
+    private function getOverridedView(string $name)
     {
         $templateDir = $this->get('template_dir');
 
@@ -176,7 +191,7 @@ class AppConfig
         }
     }
 
-    protected function isFullPath($path)
+    private function isFullPath($path)
     {
         return 0 === strpos($path, '@') && false !== strpos($path, '/');
     }
@@ -217,18 +232,5 @@ class AppConfig
     public function getName()
     {
         return $this->name;
-    }
-
-    /**
-     * Get the value of mainContentType.
-     */
-    public function getMainContentType()
-    {
-        return $this->getCustomProperty('main_content_type');
-    }
-
-    public function canUseTwigShortcode(): bool
-    {
-        return $this->getCustomProperty('can_use_twig_shortcode');
     }
 }

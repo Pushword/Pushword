@@ -60,6 +60,9 @@ class PageScannerService
         $this->errors = [];
     }
 
+    /**
+     * @return true|array
+     */
     public function scan(PageInterface $page)
     {
         $this->app = $this->apps->get($page->getHost());

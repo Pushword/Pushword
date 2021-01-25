@@ -8,6 +8,7 @@
         {% set grid_cols = page.images|length < 5 ? page.images|length : (page.images|length is odd ? 3 : 4) %}
         <div class="{{ gallery_container_class|default('my-3') }}">{# w-full-vw #}
             <ul class="{{ gallery_class|default('grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-2xl mx-auto') }}">
+                {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
                 {% for image in page.images.slice(galleryFilterFrom|default('0'), length|default('1000')) %}
                     <li>{{ _self.gallery_part(image, gallery_id, page) }}</li>
                 {% endfor %}
@@ -17,7 +18,7 @@
 {% endblock %}
 
 
-{% macro gallery_part(image, gallery_id, page = null, default_filter = 'thumb') %}
+{% macro gallery_part(image, gallery_id, page = null, default_filter = 'xs') %}
     {% import view('/component/macro.html.twig') as helper %}
     {% set image_html = helper.thumb(image, page, default_filter, {'class': 'unprose'}) %}
     <div style="max-width:330px;" class="mx-auto">

@@ -11,7 +11,8 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         php: [7.4]
         #, 8.0 Waiting for this and this to be merged :
-        # - https://github.com/KnpLabs/KnpMarkdownBundle/pull/107
+        # - https://github.com/simplethings/EntityAuditBundle/pull/346
+        # or SonataDocrinteOrm drop this dependencies
         stability: [prefer-stable] #prefer-lowest,
 
     name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}

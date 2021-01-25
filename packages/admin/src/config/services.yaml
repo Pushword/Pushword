@@ -4,15 +4,12 @@ services:
   # ---
 
   Pushword\Admin\PageAdminInterface:
-    alias: pushword.admin.page
-
-  pushword.admin.page:
-    class: Pushword\Admin\Page\Admin
+    class: Pushword\Admin\PageAdmin
     autowire: true
     arguments:
       - ~
       - "%pw.entity_page%"
-      - Pushword\Admin\Page\CRUDControllerInterface
+      - Pushword\Admin\PageCRUDControllerInterface
     tags:
       - { name: sonata.admin, manager_type: orm, label: admin.label.page }
     calls:
@@ -25,17 +22,12 @@ services:
       - [setPageClass, ["%pw.entity_page%"]]
     public: true
 
-  Pushword\Admin\Page\CRUDControllerInterface:
-    alias: pushword.admin.pageCRUDController
-    public: true
-
-  pushword.admin.pageCRUDController:
-    class: Pushword\Admin\Page\CRUDController
+  Pushword\Admin\PageCRUDControllerInterface:
+    class: Pushword\Admin\PageCRUDController
     autowire: true
     autoconfigure: true
     tags: ["controller.service_arguments"]
     calls:
-      - [setParams, ["@parameter_bag"]]
       - [setContainer, ["@service_container"]]
 
   # ---

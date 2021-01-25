@@ -8,10 +8,9 @@ use Pushword\Core\Entity\PageInterface;
 
 trait EncryptedLinkTwigTrait
 {
-    /** @var RouterInterface */
-    protected $router;
+    private RouterInterface $router;
 
-    //abstract public function getApp(): AppConfig;
+    abstract public function getApp(): AppConfig;
 
     public function renderEncryptedLink($anchor, $path, $attr = [])
     {

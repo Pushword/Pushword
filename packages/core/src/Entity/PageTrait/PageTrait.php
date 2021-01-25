@@ -13,16 +13,16 @@ trait PageTrait
     protected $slug;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="string", length=255)
      */
-    protected $h1;
+    protected $h1 = '';
 
     /**
      * RawContent would have been a more appropriate name.
      *
-     * @ORM\Column(type="text", nullable=true)
+     * @ORM\Column(type="text")
      */
-    protected $mainContent;
+    protected $mainContent = '';
 
     public function __toString()
     {
@@ -88,14 +88,14 @@ trait PageTrait
         return $this;
     }
 
-    public function getMainContent(): ?string
+    public function getMainContent(): string
     {
         return $this->mainContent;
     }
 
     public function setMainContent(?string $mainContent): self
     {
-        $this->mainContent = $mainContent;
+        $this->mainContent = $mainContent ?: '';
 
         return $this;
     }

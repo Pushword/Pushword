@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Twig;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
@@ -10,14 +11,11 @@ use Twig\Environment as Twig;
 
 trait PageListTwigTrait
 {
-    /** @var string */
-    protected $pageClass;
+    private string $pageClass;
 
-    /** @var EntityManagerInterface */
-    protected $em;
+    private EntityManagerInterface $em;
 
-    /** @var AppPool */
-    protected $apps;
+    private AppPool $apps;
 
     abstract public function getApp(): AppConfig;
 

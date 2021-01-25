@@ -31,11 +31,12 @@ pushword:
   # base_url:             'https://%pw.host%'
   # template:             '@Pushword'
   # template_dir:         '%kernel.project_dir%/templates'
+  # page_can_override_filters: true
+  # filters:
+  #     main_content: twig,date,email,encryptedLink,image,phoneNumber,twigVideo,punctuation,markdown
+  #     name:         twig,date,name
+  #     string:       twig,date,email,encryptedLink,phoneNumber
   # custom_properties:
-  #     main_content_type:   Raw
-  #     can_use_twig_shortcode: 1
-  #     main_content_shortcode: twig,date,email,encryptedLink,image,phoneNumber,twigVideo,punctuation,markdown
-  #     fields_shortcode:    twig,date,email,encryptedLink,phoneNumber
   #     assets:
   #         stylesheets:
   #             - /bundles/pushwordcore/tailwind.css

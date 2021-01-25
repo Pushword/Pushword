@@ -3,7 +3,7 @@
 {% for page in pages %}
     <li>
         <code>{{ page.host }}/{{ page.slug }}</code><br>
-        <a href="{{ page(page, true) }}">{{ page.content.title|default(page.h1) }}</a><br>
+        <a href="{{ page(page, true) }}">{{ pw(page).title|default(page.h1) }}</a><br>
         Page mise à jour le {{ page.updatedAt|date("d/m/Y à H:i") }} <br>
         <a href="{{ url('admin_app_page_edit', {'id': page.id}) }}">Editer</a>
     </li>

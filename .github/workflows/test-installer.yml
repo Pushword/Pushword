@@ -1,6 +1,7 @@
 name: Test installer
-
-on: [push, pull_request]
+on:
+  repository_dispatch:
+    types: [after-split-monorepo]
 
 jobs:
   test:
@@ -12,9 +13,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest]
-        php: [7.4]
-        #, 8.0 Waiting for this and this to be merged :
-        # - https://github.com/KnpLabs/KnpMarkdownBundle/pull/107
+        php: [7.4] #, 8.0
 
     name: P${{ matrix.php }} - ${{ matrix.os }}
 

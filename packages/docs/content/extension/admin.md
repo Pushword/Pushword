@@ -21,5 +21,5 @@ Admin is now accessible via <small>https://mydomain.tld</small>`/admin/`.
 Don't forget to create an user with **ROLE_SUPER_ADMIN** to access to the just installed admin :
 
 ```shell
-php bin/console pushword:user:create`.
+php bin/console pushword:user:create
 ```

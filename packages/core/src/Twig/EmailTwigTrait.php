@@ -7,7 +7,7 @@ use Twig\Environment as Twig;
 
 trait EmailTwigTrait
 {
-    //abstract public function getApp(): AppConfig;
+    abstract public function getApp(): AppConfig;
 
     public function renderEncodedMail(Twig $twig, $mail, $class = '')
     {

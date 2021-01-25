@@ -28,8 +28,6 @@ return [
     // Used for Media
     Vich\UploaderBundle\VichUploaderBundle::class => ['all' => true],
 
-    // Used for Page
-    Knp\Bundle\MarkdownBundle\KnpMarkdownBundle::class => ['all' => true],
     // - generate default welcome page
     Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle::class => ['all' => true],
 

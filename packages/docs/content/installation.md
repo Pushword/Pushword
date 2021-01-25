@@ -21,20 +21,17 @@ composer create-project pushword/new pushword
 
 That's it ! You can still configure an app or directly launch a PHP Server :
 
-```
-
+```shell
 cd pushword;
-
 php bin/console pushword:new
-
 php -S 127.0.0.1:8004 -t public/
-
 
 ```
 
 ## Next
 
-Want more feature like **static**, **flat-file cms** or **page scanner** ?
+Want more feature like an [admin dashboard](/extension/admin), a [static website generator](/extension/static) or a
+[flat-file CMS manager](/extension/flat) ?
 
 Look the [extensions](/extensions).
 

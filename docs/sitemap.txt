@@ -1,5 +1,6 @@
 https://pushword.piedweb.com/architecture
 https://pushword.piedweb.com/command
+https://pushword.piedweb.com/component/entity-filter
 https://pushword.piedweb.com/configuration
 https://pushword.piedweb.com/contribute
 https://pushword.piedweb.com/create-extension
@@ -25,4 +26,3 @@ https://pushword.piedweb.com/roadmap
 https://pushword.piedweb.com/search.json
 https://pushword.piedweb.com/themes
 https://pushword.piedweb.com/upgrade
-https://pushword.piedweb.com/test-content

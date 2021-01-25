@@ -3,7 +3,7 @@
 namespace Pushword\Core\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Pushword\Core\Entity\PageTrait\PageContentTrait;
+use Pushword\Core\Entity\PageTrait\PageExtendedTrait;
 use Pushword\Core\Entity\PageTrait\PageI18nTrait;
 use Pushword\Core\Entity\PageTrait\PageImageTrait;
 use Pushword\Core\Entity\PageTrait\PageOpenGraphTrait;
@@ -34,7 +34,7 @@ class Page implements PageInterface
     use CustomPropertiesTrait;
     use HostTrait;
     use IdTrait;
-    use PageContentTrait;
+    use PageExtendedTrait;
     use PageI18nTrait;
     use PageImageTrait;
     use PageOpenGraphTrait;

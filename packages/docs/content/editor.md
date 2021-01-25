@@ -4,14 +4,14 @@ h1: "Editor Hidden Super Power<br><small>and Markdown Cheatsheet</small>"
 parent: homepage
 prose: " "
 raw: true
-main_content_shortcode: twig
+main_content: twig
 ---
 
 <div class="flex flex-wrap max-w-5xl">
 
     <div class="order-2 w-fulloverflow-hidden lg:order-1 lg:w-4/5">
         <div class="p-3 prose dark:prose-light max-w-none">
-            <h1>{{ page.content.h1|raw }}</h1>
+            <h1>{{ pw(page).h1|raw }}</h1>
             <p markdown=>{% apply markdown %}After installing the [admin](/extension/admin), you will be able to read this doc directly from your Pushword installation at `/admin/markdown-cheatsheet`.{% endapply %}</p>
         </div>
     </div>
