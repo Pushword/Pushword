@@ -1,7 +1,7 @@
 {% extends view('/base.html.twig') %}
 
 
-{% block title %}Aide-Mémoire Markdown{% endblock %}
+{% block title %}{{ 'md_cs.page.h1'|trans }}{% endblock %}
 
 {% block robots %}
     {% if page.metaRobots is defined and page.metaRobots is not null %}
@@ -14,7 +14,7 @@
 
 <div class="max-w-screen-md p-3 mx-auto">
 
-<div class="prose"><h1 class="mb-5"><small>Aide-Mémoire Markdown</small> <br>La syntaxe en détails</h1></div>
+<div class="prose"><h1 class="mb-5"><small>{{ 'md_cs.page.h1'|trans }}</small> <br>{{ 'md_cs.page.subtitle'|trans }}</h1></div>
 
 <div class="p-3 mb-5 prose border rounded">
 
@@ -290,11 +290,11 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
 {{ "{{" }} list('keyword X or <!--invisible-hash-in-content-->')|unprose {{ "}}" }}<br>
-{{ "{{" }} list('keyword X', $number = 3, $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig')|unprose {{ "}}" }}<br>
+{{ "{{" }} list('keyword X', $number = 3, $start = 1 $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig')|unprose {{ "}}" }}<br>
 {{ "{{" }} cardlist('keyword X', $number = 3, $orderBy = 'createdAt')|unprose {{ "}}" }}<br>
 <br>
-{{ "{{" }} children(page, $number = 3)|unprose {{ "}}" }}<br>
-{{ "{{" }} cardchildren(page, $number = 3)|unprose {{ "}}" }}
+{{ "{{" }} children(page, $number = 3, $start = 1)|unprose {{ "}}" }}<br>
+{{ "{{" }} cardchildren(page, $number = 3, $start = 1)|unprose {{ "}}" }}
 {% endapply %}</code></pre>
 </div>
 

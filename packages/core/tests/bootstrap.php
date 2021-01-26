@@ -17,10 +17,17 @@ $autoload = require $file;
 
 (new Dotenv())->loadEnv(__DIR__.'/.env');
 
-if (! file_exists($monoRepoBase.'/packages/skeleton/media/piedweb-logo.png')) {
-    $fs = new Filesystem();
-    $fs->mirror($monoRepoBase.'/packages/skeleton/media~', $monoRepoBase.'/packages/skeleton/media');
-}
+// Some reset here
+$fs = new Filesystem();
+@$fs->remove('/tmp/com.github.pushword.pushword/tests/var/dev/cache');
+@$fs->remove('/tmp/com.github.pushword.pushword/tests/var/test/cache');
+@$fs->remove('/tmp/com.github.pushword.pushword/tests/var/dev/log');
+@$fs->remove('/tmp/com.github.pushword.pushword/tests/var/test/log');
+@$fs->remove($monoRepoBase.'/packages/skeleton/var/app.db');
+@$fs->remove($monoRepoBase.'/packages/skeleton/var/page-scan');
+@$fs->remove($monoRepoBase.'/packages/skeleton/var/PageUpdateNotifier');
+@$fs->remove($monoRepoBase.'/packages/skeleton/media');
+@$fs->mirror($monoRepoBase.'/packages/skeleton/media~', $monoRepoBase.'/packages/skeleton/media');
 
 $kernel = new Kernel('test', true);
 $kernel->boot();

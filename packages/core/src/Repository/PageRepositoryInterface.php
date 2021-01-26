@@ -12,25 +12,28 @@ interface PageRepositoryInterface extends ServiceEntityRepositoryInterface, Obje
 {
     public function createQueryBuilder($alias, $indexBy = null);
 
-    public function getPublishedPages(string $host = '', array $where = [], array $orderBy = [], int $limit = 0);
+    /**
+     * Can be used via a twig function.
+     *
+     * @param string|array $host
+     * @param array        $orderBy containing key,direction
+     * @param int|array    $limit   containing start,max or just max
+     */
+    public function getPublishedPages($host = '', array $where = [], array $orderBy = [], $limit = 0);
 
-    public function getPage($slug, $host, $hostCanBeNull): ?Page;
+    public function getPage(string $slug, string $host): ?Page;
 
-    public function getIndexablePages(
-        $host,
-        $hostCanBeNull,
-        $locale,
-        $defaultLocale,
+    public function getIndexablePagesQuery(
+        string $host,
+        string $locale,
         ?int $limit = null
     ): QueryBuilder;
 
-    public function getPagesWithoutParent();
+    public function getPagesWithoutParent(): array;
 
-    public function setHostCanBeNull($hostCanBeNull);
+    public function getPagesUsingMedia(string $media): array;
 
-    public function getPagesUsingMedia($media);
+    public function andHost(QueryBuilder $qb, $host): QueryBuilder;
 
-    public function andHost(QueryBuilder $qb, $host, $hostCanBeNull = false): QueryBuilder;
-
-    public function findByHost($host, $hostCanBeNull = false): array;
+    public function findByHost(string $host): array;
 }

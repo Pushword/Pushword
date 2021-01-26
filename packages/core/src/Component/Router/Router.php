@@ -46,6 +46,8 @@ class Router implements RouterInterface
                 $homepage->setSlug($page->getLocale());
             }
             $homepage->setHost($page->getHost());
+        } else {
+            $homepage->setLocale($this->apps->get()->getLocale())->setHost($this->apps->get()->getMainHost());
         }
 
         return $this->generate($homepage, $canonical);

@@ -80,7 +80,7 @@ class FlatFileExporter
     private function exportPages(): void
     {
         $repo = Repository::getPageRepository($this->entityManager, $this->pageClass);
-        $pages = $repo->findByHost($this->apps->get()->getMainHost(), $this->apps->get()->isFirstApp());
+        $pages = $repo->findByHost($this->apps->get()->getMainHost());
 
         foreach ($pages as $page) {
             $this->exportPage($page);

@@ -92,7 +92,7 @@ class PageUpdateNotifier
             ->setParameter('lastTime', $datetime)
             ->orderBy('p.createdAt', 'ASC');
 
-        $pageRepo->andHost($queryBuilder, $this->app->getMainHost(), $this->app->isFirstApp());
+        $pageRepo->andHost($queryBuilder, $this->app->getMainHost());
 
         return $queryBuilder->getQuery()->getResult();
     }

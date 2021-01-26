@@ -9,6 +9,7 @@ use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata;
 use Sonata\AdminBundle\Object\MetadataInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class PageAdmin extends AbstractAdmin implements PageAdminInterface
 {
@@ -31,12 +32,20 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
     protected $maxPerPage = 1000;
 
+    private EventDispatcherInterface $eventDispatcher;
+
     public function __construct($code, $class, $baseControllerName)
     {
         parent::__construct($code, $class, $baseControllerName);
         $this->listModes['tree'] = [
             'class' => 'fa fa-sitemap',
         ];
+    }
+
+    /** @required */
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
+    {
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**

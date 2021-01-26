@@ -282,7 +282,7 @@
 
 <p>&lt;</p>
 
-<p>p>Simplest way is to override it (partially or completly) by create a new file in <code>.\/templates\/{$host}\/page&lt;\/code> naming it like the <span data-rot=\"_tvguho.pbz\/"},{"title":"Roadmap","url":"\/roadmap","slug":"roadmap","content":"<h2 id=\"todo-before-v1\">TODO before v1<\/h2>\n\n<ul>\n<li>release de sonata 4<\/li>\n<li>Issue&nbsp;: User Password Edit don't work from admin<\/li>\n<\/ul>\n\n<h3 id=\"dynamic-url-extension\">Dynamic URL <smal>Extension<\/smal><\/h3>\n\n<p>C'est un gros morceau pour garder la compatibilit\u00e9 avec le static generator "},{"title":"Themes","url":"\/themes","slug":"themes","content":"<p>To customize your website theme, you may be insterested in&nbsp;:<\/p>\n\n<ul>\n<li><a href=\"\/manage-assets\">customize the assets<\/a> (css and javascript)<\/li>\n<li><a href=\"\/override-theme\">customize template file<\/a> wich are rendering Pushword pages<\/li>\n<li>edit template file for <a href=\"\/extensi"},{"title":"Upgrade Guide","url":"\/upgrade","slug":"upgrade","content":"<p>Smooth way is to use <a href=\"https:\/\/getcomposer.org\">composer&lt;\/a>, a dependency manager for PHP.&lt;\/p>\n\n</p>
+<p>p>Simplest way is to override it (partially or completly) by create a new file in <code>.\/templates\/{$host}\/page&lt;\/code> naming it like the <span data-rot=\"_tvguho.pbz\/"},{"title":"Roadmap","url":"\/roadmap","slug":"roadmap","content":"<h2 id=\"todo-before-v1\">TODO before v1<\/h2>\n\n<ul>\n<li>release de sonata 4<\/li>\n<li>Issue&nbsp;: User Password Edit don't work from admin<\/li>\n<li>manage date i18n a better way than randomly<\/li>\n<\/ul>\n\n<h3 id=\"dynamic-url-extension\">Dynamic URL <smal>Extension<\/smal><\/h3>\n\n<p>C'est un gros morceau p"},{"title":"Themes","url":"\/themes","slug":"themes","content":"<p>To customize your website theme, you may be insterested in&nbsp;:<\/p>\n\n<ul>\n<li><a href=\"\/manage-assets\">customize the assets<\/a> (css and javascript)<\/li>\n<li><a href=\"\/override-theme\">customize template file<\/a> wich are rendering Pushword pages<\/li>\n<li>edit template file for <a href=\"\/extensi"},{"title":"Upgrade Guide","url":"\/upgrade","slug":"upgrade","content":"<p>Smooth way is to use <a href=\"https:\/\/getcomposer.org\">composer&lt;\/a>, a dependency manager for PHP.&lt;\/p>\n\n</p>
 
 <p>&lt;</p>
 
@@ -294,25 +294,5 @@
 
 <p>&lt;</p>
 
-<p>h2 id=\"from-piedweb-cms-0-0-86-to-pushword\">"},{"title":"Demo Page - Kitchen Sink  Markdown + Twig","url":"https:\/\/pushword.piedweb.com\/kitchen-sink","slug":"kitchen-sink","content":"</p>
-
-<p>&lt;</p>
-
-<p>p>A few example for the editor possibilities. Best to observe this, it's in admin with split editor (live preview Side By Side).&lt;\/p>\n\n</p>
-
-<p>&lt;</p>
-
-<p>h2>Links &amp; Routes&lt;\/h2>\n\n</p>
-
-<p>&lt;</p>
-
-<p>ul>\n<li><a href=\"https:\/\/pushword.piedweb.com\/\">Homepage&lt;\/a>&lt;\/li>\n<li><a href=\"https:\/\/pushword.piedweb.com\/kitchen-sink\">Current Page&lt;"},{"title":"Welcome&nbsp;: this is your first page","url":"https:\/\/pushword.piedweb.com\/","slug":"homepage","content":"<p>You just succeed to install <strong>Pushword\/Core&lt;\/strong>.&lt;\/p>\n\n</p>
-
-<p>&lt;</p>
-
-<p>p>You are on your future <strong>homepage&lt;\/strong>.&lt;\/p>\n\n</p>
-
-<p>&lt;</p>
-
-<p>p>Did you install the <a href=\"https:\/\/pushword.piedweb.com\/extension\/admin\">admin extension&lt;\/a> or the <a href=\"https:\/\/pushword.piedweb.com\/extension\/flat\">flat file exten"}]</p>
+<p>h2 id=\"from-piedweb-cms-0-0-86-to-pushword\">"}]</p>
 

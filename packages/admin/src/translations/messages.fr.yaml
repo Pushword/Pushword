@@ -1,4 +1,7 @@
 md_cs:
+  page:
+    h1: "Aide-Mémoire Markdown"
+    subtitle: "La syntaxe en détails"
   title: "Titre et sous-titre"
   chapeau: Chapeau
   chapeau_description: Le chapeau est le paragraphe introductif placé sous le titre.

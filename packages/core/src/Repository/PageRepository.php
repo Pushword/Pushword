@@ -4,66 +4,47 @@ namespace Pushword\Core\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
-use Pushword\Core\Entity\PageInterface as Page;
+use Doctrine\ORM\Tools\Pagination\Paginator;
+use Exception;
+use Pushword\Core\Entity\PageInterface;
 
 /**
- * @method Page|null find($id, $lockMode = null, $lockVersion = null)
- * @method Page|null findOneBy(array $criteria, array $orderBy = null)
- * @method list<T>   findAll()
- * @method list<T>   findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method PageInterface|null                        find($id, $lockMode = null, $lockVersion = null)
+ * @method PageInterface|null                        findOneBy(array $criteria, array $orderBy = null)
+ * @method list<\Pushword\Core\Entity\PageInterface> findAll()
+ * @method list<\Pushword\Core\Entity\PageInterface> findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 class PageRepository extends ServiceEntityRepository implements PageRepositoryInterface
 {
     protected $hostCanBeNull = false;
 
-    /**
-     * This one is useful, but totaly not instinctive.
-     */
-    public function getPublishedPages($host = '', array $where = [], array $orderBy = [], int $limit = 0)
+    public function getPublishedPages($host = '', array $where = [], array $orderBy = [], $limit = 0)
     {
-        $qb = $this->getQueryToFindPublished('p');
+        $qb = $this->getPublishedPageQuery('p');
 
-        if ($host) {
-            if (\is_array($host)) {
-                $this->andHost($qb, $host[0], $host[1]);
-            } else {
-                $this->andHost($qb, $host, $this->hostCanBeNull);
-            }
-        }
+        $this->andHost($qb, $host);
+        $this->andWhere($qb, $where);
+        $this->orderBy($qb, $orderBy);
+        $this->limit($qb, $limit);
 
-        if (! empty($where) && (! isset($where[0]) || ! \is_array($where[0]))) {
-            $where = [$where];
-        }
+        $query = $qb->getQuery();
 
-        foreach ($where as $k => $w) {
-            $qb->andWhere('p.'.($w['key'] ?? $w[0]).' '.($w['operator'] ?? $w[1]).' :m'.$k)
-                ->setParameter('m'.$k, $w['value'] ?? $w[2]);
-        }
-
-        if ($orderBy) {
-            $qb->orderBy('p.'.($orderBy['key'] ?? $orderBy[0]), $orderBy['direction'] ?? $orderBy[1]);
-        }
-
-        if ($limit) {
-            $qb->setMaxResults($limit + 1);
-        }
-
-        return $qb->getQuery()->getResult();
+        return \is_array($limit) ? new Paginator($query, true) : $query->getResult();
     }
 
-    protected function getQueryToFindPublished($p): QueryBuilder
+    protected function getPublishedPageQuery(string $alias = 'p'): QueryBuilder
     {
-        $queryBuilder = $this->createQueryBuilder($p)
-            ->andWhere($p.'.createdAt <=  :nwo')
+        $queryBuilder = $this->createQueryBuilder($alias)
+            ->andWhere($alias.'.createdAt <=  :nwo')
             ->setParameter('nwo', new \DateTime())
-            ->orderBy($p.'.createdAt', 'DESC');
+            ->orderBy($alias.'.createdAt', 'DESC');
 
         $this->andNotRedirection($queryBuilder);
 
         return $queryBuilder;
     }
 
-    public function getPage($slug, $host, $hostCanBeNull): ?Page
+    public function getPage(string $slug, string $host): ?PageInterface
     {
         $qb = $this->createQueryBuilder('p')
             ->andWhere('p.slug =  :slug')->setParameter('slug', $slug);
@@ -72,69 +53,33 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             $qb->orWhere('p.id =  :slug')->setParameter('slug', $slug);
         }
 
-        $qb = $this->andHost($qb, $host, $hostCanBeNull);
+        $qb = $this->andHost($qb, $host);
 
         return $qb->getQuery()->getResult()[0] ?? null;
     }
 
-    protected function andNotRedirection(QueryBuilder $qb): QueryBuilder
-    {
-        return $qb->andWhere('p.mainContent IS NULL OR p.mainContent NOT LIKE :noi')
-            ->setParameter('noi', 'Location:%');
-    }
-
-    protected function andIndexable(QueryBuilder $qb): QueryBuilder
-    {
-        return $qb->andWhere('p.metaRobots IS NULL OR p.metaRobots NOT LIKE :noi2')
-            ->setParameter('noi2', '%noindex%');
-    }
-
-    public function findByHost($host, $hostCanBeNull = false): array
+    public function findByHost(string $host): array
     {
         $qb = $this->createQueryBuilder('p');
-        $this->andHost($qb, $host, $hostCanBeNull);
+        $this->andHost($qb, $host);
 
         return $qb->getQuery()->getResult();
     }
 
-    public function andHost(QueryBuilder $qb, $host, $hostCanBeNull = false): QueryBuilder
-    {
-        if (\is_string($host)) {
-            $host = [$host];
-        }
-
-        if (! $hostCanBeNull && array_search(null, $host)) {
-            $hostCanBeNull = true;
-        }
-
-        $qb->andWhere('p.host IN (:host)'.($hostCanBeNull ? ' OR p.host IS NULL' : ''))
-            ->setParameter('host', $host);
-
-        return $qb;
-    }
-
-    protected function andLocale(QueryBuilder $qb, $locale, $defaultLocale): QueryBuilder
-    {
-        return $qb->andWhere(($defaultLocale == $locale ? 'p.locale IS NULL OR ' : '').'p.locale LIKE :locale')
-                ->setParameter('locale', $locale);
-    }
-
     /**
-     * Return page for sitemap
+     * Return page for sitemap and main Feed (PageController)
      * $qb->getQuery()->getResult();.
      */
-    public function getIndexablePages(
-        $host,
-        $hostCanBeNull,
-        $locale,
-        $defaultLocale,
+    public function getIndexablePagesQuery(
+        string $host,
+        string $locale,
         ?int $limit = null
     ): QueryBuilder {
-        $qb = $this->getQueryToFindPublished('p');
+        $qb = $this->getPublishedPageQuery('p');
         $qb = $this->andIndexable($qb);
         $qb = $this->andNotRedirection($qb);
-        $qb = $this->andHost($qb, $host, $hostCanBeNull);
-        $qb = $this->andLocale($qb, $locale, $defaultLocale);
+        $qb = $this->andHost($qb, $host);
+        $qb = $this->andLocale($qb, $locale);
 
         if (null !== $limit) {
             $qb->setMaxResults($limit);
@@ -143,7 +88,10 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         return $qb;
     }
 
-    public function getPagesWithoutParent()
+    /**
+     * Used in admin PageCrudController.
+     */
+    public function getPagesWithoutParent(): array
     {
         $q = $this->createQueryBuilder('p')
             ->andWhere('p.parentPage is NULL')
@@ -153,7 +101,10 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         return $q->getResult();
     }
 
-    public function getPagesUsingMedia($media)
+    /**
+     * Used in admin Media.
+     */
+    public function getPagesUsingMedia(string $media): array
     {
         $q = $this->createQueryBuilder('p')
             ->andWhere('p.mainContent LIKE :val')
@@ -164,15 +115,124 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         return $q->getResult();
     }
 
-    /**
-     * Set the value of hostCanBeNull.
-     *
-     * @return self
-     */
-    public function setHostCanBeNull($hostCanBeNull)
+    private function getRootAlias(QueryBuilder $qb): string
     {
-        $this->hostCanBeNull = $hostCanBeNull;
+        $aliases = $qb->getRootAliases();
 
-        return $this;
+        if (! isset($aliases[0])) {
+            throw new \RuntimeException('No alias was set before invoking getRootAlias().');
+        }
+
+        return $aliases[0];
+    }
+
+    /* ~~~~~~~~~~~~~~~ Query Builder Helper ~~~~~~~~~~~~~~~ */
+
+    /**
+     * QueryBuilder Helper.
+     *
+     * @param array $where array containing array with key,operator,value,key_prefix
+     *                     Eg:
+     *                     ['title', 'LIKE' '%this%'] => works
+     *                     [['title', 'LIKE' '%this%']] => works
+     *                     [['key'=>'title', 'operator' => 'LIKE', 'value' => '%this%'], ['key'=>'slug', 'operator' => 'LIKE', 'value' => '%this%']] => works
+     */
+    private function andWhere(QueryBuilder $qb, array $where): QueryBuilder
+    {
+        // Normalize array [']
+        if (! empty($where) && (! isset($where[0]) || ! \is_array($where[0]))) {
+            $where = [$where];
+        }
+
+        foreach ($where as $k => $w) {
+            if (! \is_array($w)) {
+                throw new Exception('malformated where params');
+            }
+
+            $qb->andWhere(
+                ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0])
+                    .' '.($w['operator'] ?? $w[1])
+                    .' :m'.$k
+            )->setParameter('m'.$k, $w['value'] ?? $w[2]);
+        }
+
+        return $qb;
+    }
+
+    /**
+     * @param array $orderBy containing key,direction
+     */
+    private function orderBy(QueryBuilder $qb, array $orderBy): QueryBuilder
+    {
+        if (! empty($orderBy)) {
+            $qb->orderBy($this->getRootAlias($qb).'.'.($orderBy['key'] ?? $orderBy[0]), $orderBy['direction'] ?? $orderBy[1]);
+        }
+
+        return $qb;
+    }
+
+    /**
+     * QueryBuilder Helper.
+     *
+     * @param string|array $host
+     */
+    public function andHost(QueryBuilder $qb, $host): QueryBuilder
+    {
+        if (! $host) {
+            return $qb;
+        }
+
+        if (\is_string($host)) {
+            $host = [$host];
+        }
+
+        return $qb->andWhere($this->getRootAlias($qb).'.host IN (:host)')
+            ->setParameter('host', $host);
+    }
+
+    protected function andLocale(QueryBuilder $qb, string $locale): QueryBuilder
+    {
+        if (! $locale) {
+            return $qb;
+        }
+
+        $alias = $this->getRootAlias($qb);
+
+        return $qb->andWhere($alias.'.locale LIKE :locale')
+                ->setParameter('locale', $locale);
+    }
+
+    protected function andIndexable(QueryBuilder $qb): QueryBuilder
+    {
+        $alias = $this->getRootAlias($qb);
+
+        return $qb->andWhere($alias.'.metaRobots IS NULL OR '.$alias.'.metaRobots NOT LIKE :noi2')
+            ->setParameter('noi2', '%noindex%');
+    }
+
+    protected function andNotRedirection(QueryBuilder $qb): QueryBuilder
+    {
+        $alias = $this->getRootAlias($qb);
+
+        return $qb->andWhere($alias.'.mainContent NOT LIKE :noi')
+            ->setParameter('noi', 'Location:%');
+    }
+
+    /**
+     * Query Builder helper.
+     *
+     * @param int|array $limit containing start,max or just max
+     */
+    protected function limit($qb, $limit): QueryBuilder
+    {
+        if (! $limit) {
+            return $qb;
+        }
+
+        if (\is_array($limit)) {
+            return $qb->setFirstResult($limit['start'] ?? $limit[0])->setMaxResults($limit['max'] ?? $limit[1]);
+        }
+
+        return $qb->setMaxResults($limit + 1);
     }
 }

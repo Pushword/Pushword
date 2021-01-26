@@ -10,23 +10,23 @@ trait PageSearchTrait
     /**
      * may Index ?
      *
-     * @ORM\Column(type="string", length=50, nullable=true)
+     * @ORM\Column(type="string", length=50)
      */
-    protected $metaRobots;
+    protected $metaRobots = '';
 
     /**
      * (links improver) / Breadcrumb.
      *
-     * @ORM\Column(type="string", length=150, nullable=true)
+     * @ORM\Column(type="string", length=150)
      */
-    protected $name;
+    protected $name = '';
 
     /**
      * HTML Title - SEO.
      *
-     * @ORM\Column(type="string", length=200, nullable=true)
+     * @ORM\Column(type="string", length=200)
      */
-    protected $title;
+    protected $title = '';
 
     public function getTemplate(): ?string
     {
@@ -51,7 +51,7 @@ trait PageSearchTrait
 
     public function setTitle(?string $title): self
     {
-        $this->title = $title;
+        $this->title = (string) $title;
 
         return $this;
     }
@@ -79,7 +79,7 @@ trait PageSearchTrait
 
     public function setMetaRobots(?string $metaRobots): self
     {
-        $this->metaRobots = $metaRobots;
+        $this->metaRobots = (string) $metaRobots;
 
         return $this;
     }
@@ -91,7 +91,7 @@ trait PageSearchTrait
 
     public function setName(?string $name): self
     {
-        $this->name = $name;
+        $this->name = (string) $name;
 
         return $this;
     }

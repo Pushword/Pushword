@@ -11,7 +11,7 @@ class PageRepositoryTest extends KernelTestCase
         self::bootKernel();
 
         $em = self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager');
-        $pages = $em->getRepository('App\Entity\Page')->getIndexablePages(null, true, 'en', 'en', 2)
+        $pages = $em->getRepository('App\Entity\Page')->getIndexablePagesQuery('', 'en', 2)
             ->getQuery()->getResult();
 
         $this->assertSame(2, \count($pages)); // depend on AppFixtures

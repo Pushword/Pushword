@@ -270,6 +270,6 @@ class PageImporter extends AbstractImporter
         }
         $repo = Repository::getPageRepository($this->em, $this->entityClass);
 
-        return $this->pages = $repo->findByHost($this->apps->get()->getMainHost(), $this->apps->get()->isFirstApp());
+        return $this->pages = $repo->findByHost($this->apps->get()->getMainHost());
     }
 }

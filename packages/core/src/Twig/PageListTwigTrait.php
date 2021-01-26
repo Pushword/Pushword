@@ -19,32 +19,37 @@ trait PageListTwigTrait
 
     abstract public function getApp(): AppConfig;
 
-    public function renderChildrenListCard(Twig $twig, $page, $number = 3)
+    // todo: add a request listener to paginate result
+    public function renderChildrenListCard(Twig $twig, PageInterface $page, int $max = 3, int $start = 0)
     {
-        return $this->renderChildrenList($twig, $page, $number, '/component/pages_list_card.html.twig');
+        return $this->renderChildrenList($twig, $page, $max, $start, '/component/pages_list_card.html.twig');
     }
 
-    public function renderChildrenList(Twig $twig, PageInterface $page, $number = 3, $view = '/component/pages_list.html.twig')
+    public function renderChildrenList(Twig $twig, PageInterface $page, int $max = 3, int $start = 0, string $view = '/component/pages_list.html.twig')
     {
         $template = $this->getApp()->getView($view);
 
-        return $twig->render($template, ['pages' => $page->getChildrenPages()]);
+        $pages = $page->getChildrenPages()->slice($start, $max);
+
+        return $twig->render($template, ['pages' => $pages]);
     }
 
     public function renderPagesListCard(
         Twig $twig,
         $search = '',
-        int $number = 3,
+        int $max = 3,
+        int $start = 0,
         $order = 'createdAt',
         $host = null
     ) {
-        return $this->renderPagesList($twig, $search, $number, $order, $host, '/component/pages_list_card.html.twig');
+        return $this->renderPagesList($twig, $search, $max, $start, $order, $host, '/component/pages_list_card.html.twig');
     }
 
     public function renderPagesList(
         Twig $twig,
         $search = '',
-        int $number = 3,
+        int $max = 3,
+        int $start = 0,
         $order = 'createdAt',
         $host = null,
         string $view = '/component/pages_list.html.twig'
@@ -60,8 +65,7 @@ trait PageListTwigTrait
             : ['key' => $order[0], 'direction' => $order[1]];
 
         $pages = Repository::getPageRepository($this->em, $this->pageClass)
-            ->setHostCanBeNull($host ? $this->apps->isFirstApp($host) : $this->getApp()->isFirstApp())
-            ->getPublishedPages($host ?? $this->getApp()->getMainHost(),  $search, $order, $number);
+            ->getPublishedPages($host ?? $this->getApp()->getMainHost(),  $search, $order, [$start, $max]);
 
         $template = $this->getApp()->getView($view);
 

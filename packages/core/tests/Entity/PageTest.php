@@ -10,7 +10,7 @@ class PageTest extends TestCase
     public function testBasics()
     {
         $page = new Page();
-        $this->assertNull($page->getTitle());
+        $this->assertEmpty($page->getTitle());
 
         $page->setTitle('hello');
         $this->assertSame('hello', $page->getTitle());

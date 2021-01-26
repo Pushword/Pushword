@@ -107,7 +107,6 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
     private function getPageVersion($page, string $version): string
     {
         $versionFile = $this->getVersionFile($page, $version);
-
         $content = file_get_contents($versionFile);
 
         if (false === $content) {

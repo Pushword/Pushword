@@ -44,12 +44,12 @@ class PageController extends AbstractController
         $this->apps = $apps;
     }
 
-    public function show(?string $slug, ?string $host, Request $request): Response
+    public function show(?string $slug, string $host = '', Request $request): Response
     {
         $page = $this->getPage($slug, $host);
 
         // SEO redirection if we are not on the good URI (for exemple /fr/tagada instead of /tagada)
-        if ((null === $host || $host == $request->getHost())
+        if ((! $host || $host == $request->getHost())
             && false !== $redirect = $this->checkIfUriIsCanonical($request, $page)) {
             return $this->redirect($redirect[0], $redirect[1]);
         }
@@ -166,11 +166,9 @@ class PageController extends AbstractController
     {
         $requestedLocale = rtrim($request->getLocale(), '/');
 
-        $pages = $this->getPageRepository()->getIndexablePages(
+        $pages = $this->getPageRepository()->getIndexablePagesQuery(
             $this->apps->getMainHost(),
-            $this->apps->isFirstApp(),
-            $requestedLocale,
-            $this->params->get('kernel.default_locale'),
+            $requestedLocale ?: $this->params->get('kernel.default_locale'),
             $limit
         )->getQuery()->getResult();
 
@@ -190,12 +188,10 @@ class PageController extends AbstractController
         $this->app = $this->apps->switchCurrentApp($host)->get();
     }
 
-    protected function getPage(?string &$slug, ?string $host = null, $throwException = true): ?Page
+    protected function getPage(?string &$slug, string $host = '', $throwException = true): ?Page
     {
-        $this->setApp($host); // TODO Move it on request listener (could be real host or parameter host)
-
         $slug = $this->noramlizeSlug($slug);
-        $page = $this->getPageRepository()->getPage($slug, $this->app->getMainHost(), $this->app->isFirstApp());
+        $page = $this->getPageRepository()->getPage($slug, $host);
 
         // Check if page exist
         if (null === $page) {
@@ -227,7 +223,7 @@ class PageController extends AbstractController
         return $page;
     }
 
-    protected function noramlizeSlug($slug)
+    protected function noramlizeSlug($slug): string
     {
         return (null === $slug || '' === $slug) ? 'homepage' : rtrim(strtolower($slug), '/');
     }

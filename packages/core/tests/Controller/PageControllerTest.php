@@ -18,7 +18,7 @@ class PageControllerTest extends KernelTestCase
     public function testShowAnotherPage()
     {
         $slug = 'kitchen-sink';
-        $response = $this->getPageController()->show($slug, null, Request::create('/en/'.$slug));
+        $response = $this->getPageController()->show($slug, '', Request::create('/en/'.$slug));
         $this->assertSame(301, $response->getStatusCode());
     }
 

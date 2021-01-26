@@ -42,31 +42,28 @@ class AppPool
         }
         $this->host = $host;
 
-        $app = $this->get($this->host, false);
+        $app = $this->get($this->host);
 
         $this->currentApp = $app->getMainHost();
 
         return $this;
     }
 
-    public function get($host = null, $isMainHost = true): AppConfig
+    public function get(?string $host = ''): AppConfig
     {
-        if ($isMainHost) {
-            $host = null === $host ? $this->currentApp : $host;
-            if (! isset($this->apps[$host])) {
-                throw new Exception('No AppConfig found (`'.$host.'`)');
-            }
-
+        $host = ! $host ? $this->currentApp : $host;
+        if (isset($this->apps[$host])) {
             return $this->apps[$host];
         }
 
-        foreach ($this->apps as $app) {
-            if (\in_array($host, $app->getHosts()) || null === $host) {
+        $apps = array_reverse($this->apps, true);
+        foreach ($apps as $app) {
+            if (\in_array($host, $app->getHosts())) {
                 return $app;
             }
         }
 
-        throw new Exception('No AppConfig found (`'.$host.'`)');
+        return $app; //throw new Exception('No AppConfig found (`'.$host.'`)');
     }
 
     public function getHosts(): array
@@ -82,9 +79,6 @@ class AppPool
         return $this->apps;
     }
 
-    /**
-     * Get the value of currentPage.
-     */
     public function getCurrentPage(): ?PageInterface
     {
         return $this->currentPage;
@@ -132,17 +126,13 @@ class AppPool
         return false;
     }
 
-    public function getApp(?string $key = null, ?string $host = null)
+    public function getApp(?string $key = null, string $host = '')
     {
-        if (null === $host) {
+        if (! $host) {
             $host = $this->currentApp;
         }
 
-        if (null === $host) {
-            throw new Exception('host can\'t be null');
-        }
-
-        $app = $this->apps[$host];
+        $app = $this->get($host);
 
         return $key ? $app->get($key) : $app;
     }

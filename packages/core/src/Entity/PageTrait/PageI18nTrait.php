@@ -11,9 +11,9 @@ trait PageI18nTrait
     /**
      * //rfc5646.
      *
-     * @ORM\Column(type="string", length=5, nullable=true)
+     * @ORM\Column(type="string", length=5)
      */
-    protected $locale;
+    protected string $locale = '';
 
     public function __constructI18n()
     {
@@ -25,14 +25,14 @@ trait PageI18nTrait
      */
     protected $translations;
 
-    public function getLocale(): ?string
+    public function getLocale(): string
     {
         return $this->locale;
     }
 
     public function setLocale($locale): self
     {
-        $this->locale = $locale;
+        $this->locale = (string) $locale;
 
         return $this;
     }

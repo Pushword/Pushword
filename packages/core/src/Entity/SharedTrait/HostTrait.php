@@ -7,9 +7,9 @@ use Doctrine\ORM\Mapping as ORM;
 trait HostTrait
 {
     /**
-     * @ORM\Column(type="string", length=253, nullable=true)
+     * @ORM\Column(type="string", length=253)
      */
-    protected $host;
+    protected $host = '';
 
     public function getHost(): ?string
     {
@@ -18,7 +18,7 @@ trait HostTrait
 
     public function setHost(?string $host): self
     {
-        $this->host = $host;
+        $this->host = (string) $host;
 
         return $this;
     }

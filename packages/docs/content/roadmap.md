@@ -9,6 +9,7 @@ parent: contribute
 
 -   release de sonata 4
 -   Issue : User Password Edit don't work from admin
+-   manage date i18n a better way than randomly
 
 ### Dynamic URL <smal>Extension</smal>
 

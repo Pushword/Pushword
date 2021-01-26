@@ -213,8 +213,6 @@ class StaticGeneratorTest extends KernelTestCase
             ->setMainContent('...');
 
         $pageRepo = $this->createMock(PageRepositoryInterface::class);
-        $pageRepo->method('setHostCanBeNull')
-            ->willReturn($pageRepo);
         $pageRepo->method('getPublishedPages')
                   ->willReturn([
                       $page,
