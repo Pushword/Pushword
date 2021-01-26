@@ -1,0 +1,113 @@
+<?php
+
+namespace Pushword\Core\Entity\PageTrait;
+
+use Doctrine\Common\Collections\ArrayCollection;
+use Pushword\Core\Entity\UserInterface;
+use Pushword\Core\Entity\PageHasEditor;
+
+trait PageEditorTrait
+{
+
+    /**
+     * @ORM\ManyToOne(
+     *     targetEntity="Pushword\Core\Entity\UserInterface",
+     *     cascade={"all"},
+     *     nullable=true
+     * )
+     */
+    protected UserInterface $lastEditor;
+
+
+    /**
+     * @ORM\OneToMany(
+     *     targetEntity="Pushword\Core\Entity\PageHasEditor",
+     *     mappedBy="page",
+     *     cascade={"all"},
+     *     orphanRemoval=true
+     * )
+     * @ORM\OrderBy({"editedAt": "DESC"})
+     */
+    protected $pageHasEditors;
+
+
+    /**
+     * @ORM\ManyToOne(
+     *     targetEntity="Pushword\Core\Entity\UserInterface",
+     *     cascade={"all"},
+     *     nullable=true
+     * )
+     */
+    protected UserInterface $createdBy;
+
+
+    public function __constructEditor()
+    {
+        $this->pageHasEditors = new ArrayCollection();
+    }
+
+    public function getLastEditor(): ?UserInterface
+    {
+        return $this->lastEditor;
+    }
+
+    public function setLastEditor(?UserInterface $lastEditor): self
+    {
+        $this->lastEditor = $lastEditor;
+
+        return $this;
+    }
+
+    /**
+     * Get targetEntity="Pushword\Core\Entity\UserInterface",
+     */
+    public function getCreatedBy(): ?UserInterface
+    {
+        return $this->createdBy;
+    }
+
+    /**
+     * Set targetEntity="Pushword\Core\Entity\UserInterface",
+     *
+     * @return  self
+     */
+    public function setCreatedBy(?UserInterface $createdBy)
+    {
+        $this->createdBy = $createdBy;
+
+        return $this;
+    }
+
+    public function setPageHasEditors($pageHasEditors)
+    {
+        $this->pageHasEditors = new ArrayCollection();
+        foreach ($pageHasEditors as $pageHasEditor) {
+            $this->addPageHasEditor($pageHasEditor);
+        }
+    }
+
+    public function getPageHasEditors()
+    {
+        return $this->pageHasEditors;
+    }
+
+    public function addPageHasEditor(PageHasEditor $pageHasEditor): self
+    {
+        $pageHasEditor->setPage($this);
+        $this->pageHasEditors[] = $pageHasEditor;
+
+        return $this;
+    }
+
+    public function resetPageHasEditors(): void
+    {
+        foreach ($this->pageHasEditors as $pageHasEditor) {
+            $this->removePageHasEditor($pageHasEditor);
+        }
+    }
+
+    public function removePageHasEditor(PageHasEditor $pageHasEditor): void
+    {
+        $this->pageHasEditors->removeElement($pageHasEditor);
+    }
+}

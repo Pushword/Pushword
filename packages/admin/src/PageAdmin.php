@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Pushword\Admin\FormField\Event as FormEvent;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -46,9 +47,20 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         return method_exists($this->pageClass, 'get'.$name);
     }
 
+    // todo documenter
+    protected function getFormFields(string $key = 'admin_page_form_fields')
+    {
+        $fields = $this->apps->get()->get($key);
+
+        $event = new FormEvent($this, $fields);
+        $this->eventDispatcher->dispatch($event, FormEvent::NAME);
+
+        return $event->getFields();
+    }
+
     protected function configureFormFields(FormMapper $formMapper): void
     {
-        $fields = $this->apps->get()->get('admin_page_form_fields');
+        $fields = $this->getFormFields();
 
         $formMapper->with('admin.page.mainContent.label', ['class' => 'col-md-9 mainFields']);
         foreach ($fields[0] as $field) {
