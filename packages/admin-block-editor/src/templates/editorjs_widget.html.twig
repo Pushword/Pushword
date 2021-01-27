@@ -1,0 +1,16 @@
+{% block editorjs_widget %}
+    <div style="border-radius: 5px; border: 1px solid rgb(221, 221, 221); padding: 10px 10px 0px;">
+  {% set editor_id = 'editorjs_' ~ id %}
+  {% set editor = editorjs(editor_id, config, value) %}
+    <input type="hidden" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }} value="{{ editor.data|json_encode }}">
+    <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
+
+    <script>
+        if (typeof editorjsConfigs === 'undefined') {
+            var editorjsConfigs = [];
+        }
+
+        editorjsConfigs.push({{ editorjs_serialize(editor) }});
+    </script>
+  </div>
+{% endblock editorjs_widget %}

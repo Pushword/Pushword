@@ -2,12 +2,15 @@
 
 namespace Pushword\Core\Twig;
 
+use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Entity\PageInterface;
 
 trait ClassTrait
 {
     private string $defaultContainerClass = 'max-w-screen-sm px-3 py-12 mx-auto';
     private string $defaultProseClass = 'prose max-w-none';
+
+    abstract public function getApp(): AppConfig;
 
     public function getClass($page = null, string $containerName = 'container', string $default = ''): string
     {

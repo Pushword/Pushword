@@ -1,0 +1,5 @@
+<div class="{{ class('prose', page) }}">
+{{ data.style == 'unordered' ? '<ul>' : '</ol>' }}
+{% for item in data.items %}<li>{{ item|raw }}</li>{% endfor %}
+{{ data.style == 'unordered' ? '</ul>' : '</ol>' }}
+</div>

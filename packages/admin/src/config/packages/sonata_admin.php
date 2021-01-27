@@ -1,9 +1,5 @@
 <?php
 
-//$staticGenerator = class_exists('Pushword\StaticGenerator\PushwordStaticGeneratorBundle');
-//$pageScanner = class_exists('Pushword\StaticGenerator\PushwordPageScannerBundle');
-//$templateEditor = class_exists('Pushword\StaticGenerator\PushwordTemplateEditorBundle');
-
 use Pushword\Admin\PageAdminInterface;
 
 return [

@@ -1,0 +1,88 @@
+/* purgecss start ignore */
+
+//@import '~codemirror/lib/codemirror.css'; //./../../../core/node_modules/
+@import "~codemirror/lib/codemirror.css";
+@import "~easymde/src/css/easymde.css";
+@import "~codemirror-spell-checker/src/css/spell-checker.css";
+
+/* Column Expanding */
+.mainFields,
+.columnFields {
+    transition: width 1s ease, margin 1s ease;
+}
+@media (min-width: 992px) {
+    #columnFields {
+        padding-left: 0px;
+        margin-left: -5px;
+    }
+}
+
+/* Customize Sonata */
+.content-header {
+    padding: 0;
+}
+@media (max-width: 767px) {
+    .logo {
+        display: none;
+    }
+}
+
+textarea.autosize {
+    height: 34px;
+    overflow: hidden;
+    overflow-wrap: break-word;
+    resize: none;
+    padding-bottom: 0;
+}
+/* Editor EasyMDE */
+.editor-toolbar.fullscreen,
+.CodeMirror-fullscreen,
+.EasyMDEContainer .CodeMirror-fullscreen {
+    z-index: 100000000;
+}
+.CodeMirror-lines {
+    max-width: 768px;
+    margin: auto;
+}
+.CodeMirror {
+    display: none;
+}
+.EasyMDEContainer .CodeMirror {
+    display: block;
+}
+
+.preview-visible {
+    display: block;
+}
+.load-preview {
+    display: none;
+}
+.editor-preview {
+    background: #fff;
+    overflow: hidden;
+    padding: 0;
+    z-index: 1000;
+}
+.box-body {
+    font-size: 16.8px;
+}
+
+/* Page edit */
+.navbar-formactions {
+    position: fixed;
+    padding: 15px;
+    //box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    border-bottom-left-radius: 5px;
+    top: 45px;
+    text-align: right;
+    right: -5px;
+    width: 100%;
+    z-index: 809;
+    background: #cad4e3;
+}
+
+.field-short-description {
+    min-width: 160px;
+    width: 100%;
+}
+/* purgecss end ignore */

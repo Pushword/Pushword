@@ -10,5 +10,5 @@ final class PushwordFlatExtension extends ConfigurableExtension implements Prepe
 {
     use ExtensionTrait;
 
-    protected $configFolder = __DIR__.'/../config/';
+    protected $configFolder = __DIR__.'/../config';
 }

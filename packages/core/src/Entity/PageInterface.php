@@ -10,15 +10,15 @@ use Pushword\Core\Entity\SharedTrait\TimestampableInterface;
 interface PageInterface extends HostInterface, IdInterface, TimestampableInterface, CustomPropertiesInterface
 {
     // PageTrait
-    public function getSlug(): ?string;
+    public function getSlug(): string;
 
-    public function getRealSlug(): ?string;
+    public function getRealSlug(): string;
 
     public function setSlug($slug, $set = false): self;
 
-    public function getMainContent(): ?string;
+    public function getMainContent(): string;
 
-    public function setMainContent(?string $mainContent): self;
+    public function setMainContent($mainContent): self;
 
     // ---
 

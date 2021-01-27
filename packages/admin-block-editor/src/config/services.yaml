@@ -1,0 +1,10 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    bind:
+      $editorBlockForNewPage: "%pw.pushword_admin_block_editor.new_page%"
+
+  Pushword\AdminBlockEditor\:
+    resource: "../*"
+    exclude: "../{DependencyInjection,Entity,Migrations,Tests,config,Kernel.php}"

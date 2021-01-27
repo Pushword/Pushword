@@ -1,0 +1,35 @@
+{
+    "name": "pushword/admin-block-editor",
+    "type": "symfony-bundle",
+    "description": "Supercharged the Pushword Admin with block editor (gutenberg like).",
+    "keywords": [],
+    "homepage": "https://pushword.piedweb.com/extension/admin-block-editor",
+    "license": "MIT",
+    "require": {
+        "pushword/core": "^0.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.0.x-dev",
+            "dev-main": "0.0.x-dev"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Pushword\\AdminBlockEditor\\": "src"
+        }
+    },
+    "require-dev": {
+        "pushword/admin": "^0.0",
+        "phpunit/phpunit": "^9.5"
+    },
+    "authors": [
+        {
+            "name": "Robin@PiedWeb",
+            "email": "contact@piedweb.com",
+            "homepage": "https://piedweb.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

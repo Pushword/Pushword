@@ -4,6 +4,7 @@ window.EasyMDE = EasyMDE;
 export function easyMDEditor() {
     var timeoutPreviewRender = null;
 
+    if (!document.querySelector(".persist-preview")) return;
     document.querySelector(".persist-preview").style.display = "none";
     $('textarea[data-editor="markdown"]').each(function () {
         var editorElement = $(this)[0];

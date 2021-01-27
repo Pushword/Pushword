@@ -1,0 +1,105 @@
+editorjs:
+  configs:
+    default:
+      initialBlock: paragraph
+      logLevel: ERROR
+      placeholder: "..."
+      inlineToolbar: ["mark", "underline", "inline-code"]
+      tools:
+        - header
+        - list
+        - raw
+        - attaches
+        - image
+        - delimiter
+        - quote
+        - inline-code
+        - marker
+        - bold
+        - italic
+        - link
+        - underline
+        - inline-style
+        - paragraph
+        - table
+        - button
+
+  tools:
+    header: # https://github.com/editor-js/header
+      className: Header
+      config:
+        placeholder: "..."
+        levels: [2, 3, 4]
+        defaultLevel: 2
+
+    list:
+      className: List
+
+    paragraph:
+      className: Paragraph
+
+    raw:
+      className: Raw
+      config:
+        placeholder: "<div>...</div>"
+
+    attaches:
+      className: Attaches
+      config:
+        endpoint: / # TODO
+
+    image:
+      className: Image
+      config:
+        endpoint: / # TODO
+
+    delimiter:
+      className: Delimiter
+
+    quote:
+      className: Quote
+      config:
+        quotePlaceholder: "..."
+        captionPlaceholder: t("citation")
+
+    inline-code:
+      className: InlineCode
+
+    marker:
+      className: Marker
+
+    bold:
+      className: Bold
+
+    italic:
+      className: Italic
+
+    underline:
+      className: Underline
+
+    inline-style:
+      className: StyleInlineTool
+
+    link:
+      className: Hyperlink
+
+    table:
+      className: Table
+
+    button:
+      className: Button
+
+    # example:
+    #   url: ~                  # ???
+    #   className: Example
+    #   config:
+    #     ... relative to block config ...
+    #     validationRules:      #todo https://github.com/editor-js/editorjs-php
+    #       text: ~
+    #       level:
+    #         type: int
+    #         canOnlyBe: [2, 3, 4]
+    #   inlineToolbar: true     # show the inline toolbar
+    #   toolbox:                # if is a inline toolbar tools
+    #     title: Example
+    #     icon: <i class="fa fa-example"></i>

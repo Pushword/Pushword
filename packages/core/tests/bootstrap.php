@@ -19,7 +19,7 @@ $autoload = require $file;
 
 // Some reset here
 $fs = new Filesystem();
-@$fs->remove('/tmp/com.github.pushword.pushword/tests/var/dev/cache');
+$fs->remove('/tmp/com.github.pushword.pushword/tests/var/dev/cache');
 @$fs->remove('/tmp/com.github.pushword.pushword/tests/var/test/cache');
 @$fs->remove('/tmp/com.github.pushword.pushword/tests/var/dev/log');
 @$fs->remove('/tmp/com.github.pushword.pushword/tests/var/test/log');

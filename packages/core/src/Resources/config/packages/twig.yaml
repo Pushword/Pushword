@@ -1,17 +1,17 @@
 twig:
-  default_path: '%kernel.project_dir%/templates'
-  debug: '%kernel.debug%'
-  strict_variables: '%kernel.debug%'
+  default_path: "%kernel.project_dir%/templates"
+  debug: "%kernel.debug%"
+  strict_variables: "%kernel.debug%"
   paths:
     #'%vendor_dir%/sonata-project/twig-extensions/src/Bridge/Symfony/Resources/views': SonataTwig
-    '%kernel.project_dir%/templates': App
-    '%pw.package_dir%/core/src/templates/TwigBundle': Twig
-    '%pw.package_dir%/core/src/../src/templates': Pushword
+    "%kernel.project_dir%/templates": App
+    "%pw.package_dir%/core/src/templates/TwigBundle": Twig
+    "%pw.package_dir%/core/src/../src/templates": Pushword
     #'%kernel.project_dir%/templates/bundles/PushwordCoreBundle/': PushwordCore
   globals:
-    apps: '@pushword.apps'
-    twig: '@twig'
+    apps: "@pushword.apps"
+    twig: "@twig"
 
   form_themes:
-    - 'bootstrap_4_layout.html.twig'
-    - '@SonataForm/Form/datepicker.html.twig'
+    #- 'bootstrap_4_layout.html.twig'
+    - "@SonataForm/Form/datepicker.html.twig"

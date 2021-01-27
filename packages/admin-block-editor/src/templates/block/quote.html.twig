@@ -1,0 +1,5 @@
+<blockquote{% if data.alignment is defined and data.alignment %} class="{{ 'text-' ~ data.alignment }}"{% endif %}>
+{# for tawildind compression : text-right text-left #}
+    <p>{{ data.text }}</p>
+    <cite>{{ data.caption }}</cite>
+</blockquote>

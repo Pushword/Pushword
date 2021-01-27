@@ -57,6 +57,7 @@
         "symfony/web-link": "^5.2",
         "symfony/webpack-encore-bundle": "^1.8",
         "symfony/yaml": "^5.2",
+        "tbmatuka/editorjs-bundle": "^0.1.3",
         "twig/intl-extra": "^3.2",
         "vich/uploader-bundle": "^1.16",
         "villfa/invert-color": "^0.5",
@@ -96,6 +97,7 @@
             "Pushword\\Svg\\": "packages/svg/src",
             "Pushword\\Facebook\\": "packages/facebook/src",
             "Pushword\\Version\\": "packages/version/src",
+            "Pushword\\AdminBlockEditor\\": "packages/admin-block-editor/src",
             "Pushword\\TemplateEditor\\": "packages/template-editor/src"
         }
     },
@@ -111,7 +113,8 @@
             "Pushword\\StaticGenerator\\Tests\\": "packages/static-generator/tests",
             "Pushword\\Svg\\Tests\\": "packages/svg/tests",
             "Pushword\\Facebook\\Tests\\": "packages/facebook/tests",
-            "Pushword\\Version\\Tests\\": "packages/Version/tests",
+            "Pushword\\Version\\Tests\\": "packages/version/tests",
+            "Pushword\\AdminBlockEditor\\Tests\\": "packages/admin-block-editor/tests",
             "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests"
         }
     },

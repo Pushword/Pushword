@@ -8,9 +8,11 @@ trait RequiredTwigTrait
 {
     private Twig $twig;
 
-    public function setTwig(Twig $twig): void
+    public function setTwig(Twig $twig): self
     {
         $this->twig = $twig;
+
+        return $this;
     }
 
     public function getTwig(): Twig

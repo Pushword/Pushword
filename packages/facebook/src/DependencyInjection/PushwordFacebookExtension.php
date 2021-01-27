@@ -10,5 +10,5 @@ final class PushwordFacebookExtension extends ConfigurableExtension implements P
 {
     use ExtensionTrait;
 
-    protected $configFolder = __DIR__.'/../config/';
+    protected $configFolder = __DIR__.'/../config';
 }

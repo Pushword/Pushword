@@ -10,5 +10,5 @@ final class PushwordVersionExtension extends ConfigurableExtension implements Pr
 {
     use ExtensionTrait;
 
-    protected string $configFolder = __DIR__.'/../config/';
+    protected string $configFolder = __DIR__.'/../config';
 }

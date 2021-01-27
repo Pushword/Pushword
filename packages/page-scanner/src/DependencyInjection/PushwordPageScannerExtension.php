@@ -10,5 +10,5 @@ final class PushwordPageScannerExtension extends ConfigurableExtension implement
 {
     use ExtensionTrait;
 
-    protected $configFolder = __DIR__.'/../config/';
+    protected $configFolder = __DIR__.'/../config';
 }

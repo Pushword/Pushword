@@ -5,6 +5,7 @@ https://pushword.piedweb.com/configuration
 https://pushword.piedweb.com/contribute
 https://pushword.piedweb.com/create-extension
 https://pushword.piedweb.com/editor
+https://pushword.piedweb.com/extension/admin-block-editor
 https://pushword.piedweb.com/extension/admin
 https://pushword.piedweb.com/extension/conversation
 https://pushword.piedweb.com/extension/facebook

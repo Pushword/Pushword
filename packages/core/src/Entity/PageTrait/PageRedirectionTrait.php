@@ -7,7 +7,7 @@ trait PageRedirectionTrait
     protected $redirectionUrl;
     protected $redirectionCode;
 
-    abstract public function getMainContent(): ?string;
+    abstract public function getMainContent(): string;
 
     /**
      * Check if a content don't start by 'Location: http://valid-url.tld/eg'.

@@ -10,5 +10,5 @@ final class PushwordAdminExtension extends ConfigurableExtension implements Prep
 {
     use ExtensionTrait;
 
-    protected $configFolder = __DIR__.'/../config/';
+    protected string $configFolder = __DIR__.'/../config';
 }

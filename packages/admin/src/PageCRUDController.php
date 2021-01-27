@@ -2,6 +2,8 @@
 
 namespace Pushword\Admin;
 
+use Exception;
+use Psr\Container\ContainerInterface;
 use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Controller\CRUDController as SonataCRUDController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -10,10 +12,20 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PageCRUDController extends SonataCRUDController implements PageCRUDControllerInterface
 {
-    protected $params;
+    protected ParameterBagInterface $params;
 
     /** @required */
-    public function setParams(ParameterBagInterface $params)
+    public function loadContainer(ContainerInterface $container): void
+    {
+        $this->container = $container;
+
+        if (! $this->container->has('parameter_bag')) {
+            throw new Exception('patch no longer worked');
+        }
+    }
+
+    /** @required */
+    public function setParams(ParameterBagInterface $params): void
     {
         $this->params = $params;
     }

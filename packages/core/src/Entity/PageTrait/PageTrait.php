@@ -41,27 +41,19 @@ trait PageTrait
 
     public function setH1(?string $h1): self
     {
-        $this->h1 = $h1;
+        $this->h1 = (string) $h1;
 
         return $this;
     }
 
-    public function getSlug(): ?string
+    public function getSlug(): string
     {
-        if (! $this->slug) {
-            return $this->id;
-        }
-
-        return $this->slug;
+        return ! $this->slug ? (string) $this->id : $this->slug;
     }
 
-    public function getRealSlug(): ?string
+    public function getRealSlug(): string
     {
-        if ('homepage' == $this->slug) {
-            return '';
-        }
-
-        return $this->slug;
+        return 'homepage' == $this->getSlug() ? '' : $this->getSlug();
     }
 
     public static function normalizeSlug(string $slug): string
@@ -88,14 +80,18 @@ trait PageTrait
         return $this;
     }
 
+    /** @return string */
     public function getMainContent(): string
     {
         return $this->mainContent;
     }
 
-    public function setMainContent(?string $mainContent): self
+    /**
+     * @param string $mainContent
+     */
+    public function setMainContent($mainContent): self
     {
-        $this->mainContent = $mainContent ?: '';
+        $this->mainContent = (string) $mainContent;
 
         return $this;
     }

@@ -53,6 +53,7 @@ jobs:
           - js-helper
           - version
           - new
+          - admin-block-editor
           #package: ${{fromJson(needs.provide_packages_json.outputs.matrix)}}
 
     steps:

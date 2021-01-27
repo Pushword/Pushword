@@ -10,5 +10,5 @@ final class PageUpdateNotifierExtension extends ConfigurableExtension implements
 {
     use ExtensionTrait;
 
-    protected $configFolder = __DIR__.'/../config/';
+    protected $configFolder = __DIR__.'/../config';
 }

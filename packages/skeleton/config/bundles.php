@@ -17,6 +17,9 @@ return [
     Pushword\Facebook\PushwordFacebookBundle::class => ['all' => true],
     Pushword\Version\PushwordVersionBundle::class => ['all' => true],
 
+    Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle::class => ['all' => true],
+    Tbmatuka\EditorjsBundle\TbmatukaEditorjsBundle::class => ['all' => true],
+
     // Symfony
     Symfony\Bundle\FrameworkBundle\FrameworkBundle::class => ['all' => true],
     Symfony\Bundle\TwigBundle\TwigBundle::class => ['all' => true],
