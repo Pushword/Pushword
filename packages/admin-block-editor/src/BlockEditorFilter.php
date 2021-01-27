@@ -13,10 +13,10 @@ use Pushword\Core\Twig\ClassTrait;
 
 final class BlockEditorFilter extends AbstractFilter
 {
-    use RequiredEntityTrait;
-    use RequiredTwigTrait;
     use ClassTrait;
     use RequiredAppTrait;
+    use RequiredEntityTrait;
+    use RequiredTwigTrait;
 
     /** @var array */
     private $appBlocks;
@@ -44,18 +44,20 @@ final class BlockEditorFilter extends AbstractFilter
             $renderValue .= $this->mayProse($block->type).$blockRendered."\n";
         }
 
-        return $renderValue. ($this->proseOpen ? "\n".'</div>'."\n" : '');
+        return $renderValue.($this->proseOpen ? "\n".'</div>'."\n" : '');
     }
 
     private function mayProse(string $type): string
     {
-        if ($this->proseOpen && !in_array($type, $this->app->get('admin_block_editor_type_to_prose'))) {
+        if ($this->proseOpen && ! \in_array($type, $this->app->get('admin_block_editor_type_to_prose'))) {
             $this->proseOpen = false;
+
             return "\n".'</div>'."\n";
         }
 
-        if (! $this->proseOpen && in_array($type, $this->app->get('admin_block_editor_type_to_prose'))) {
+        if (! $this->proseOpen && \in_array($type, $this->app->get('admin_block_editor_type_to_prose'))) {
             $this->proseOpen = true;
+
             return "\n".'<div'.$this->getHtmlClass($this->getEntity(), 'prose').'>'."\n";
         }
 
@@ -97,7 +99,7 @@ final class BlockEditorFilter extends AbstractFilter
                 continue;
             }
 
-            if (in_array($block, DefaultBlock::AVAILABLE_BLOCKS)) {
+            if (\in_array($block, DefaultBlock::AVAILABLE_BLOCKS)) {
                 $this->appBlocks[$block] = $this->loadBlockManager(new DefaultBlock($block));
 
                 continue;

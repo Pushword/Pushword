@@ -50,7 +50,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
 
         /** @var PageInterface $page */
         $page = $event->getAdmin()->getSubject();
-        /** @psalm-suppress  NoInterfaceProperties */
+        /* @psalm-suppress  NoInterfaceProperties */
         $page->jsMainContent = $this->transformMainContent($page->getMainContent());
     }
 

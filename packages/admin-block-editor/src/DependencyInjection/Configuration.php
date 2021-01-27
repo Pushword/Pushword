@@ -13,7 +13,7 @@ class Configuration implements ConfigurationInterface
         'admin_block_editor',
         'admin_block_editor_disable_listener',
         'admin_block_editor_blocks',
-        'admin_block_editor_type_to_prose'
+        'admin_block_editor_type_to_prose',
     ];
 
     const DEFAULT_TYPE_TO_PROSE = ['paragraph', 'image', 'list', 'blockquote', 'code'];

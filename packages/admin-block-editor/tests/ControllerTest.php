@@ -3,7 +3,6 @@
 namespace Pushword\AdminBlockEditor\Tests;
 
 use Pushword\Admin\Tests\AbstractAdminTest;
-use Pushword\AdminBlockEditor\Versionner;
 
 class ControllerTest extends AbstractAdminTest
 {

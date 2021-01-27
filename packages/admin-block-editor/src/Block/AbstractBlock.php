@@ -15,7 +15,6 @@ abstract class AbstractBlock implements BlockInterface
 
     public string $name;
 
-
     public function __construct(string $name)
     {
         if ($name !== $this->name) {
@@ -32,5 +31,4 @@ abstract class AbstractBlock implements BlockInterface
             'page' => $this->getEntity(),
         ]);
     }
-
 }
