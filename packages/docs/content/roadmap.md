@@ -7,7 +7,6 @@ parent: contribute
 
 ## TODO before v1
 
--   Exporter SONATA
 -   Micro données
 -   pagination https://www.babdev.com/open-source/packages/pagerfantabundle/docs/3.x/intro
 

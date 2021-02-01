@@ -3,6 +3,9 @@ services:
   # Page
   # ---
 
+  Sonata\AdminBundle\Bridge\Exporter\AdminExporter:
+    autowire: true
+
   Pushword\Admin\PageAdminInterface:
     class: Pushword\Admin\PageAdmin
     autowire: true
