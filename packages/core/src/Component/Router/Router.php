@@ -53,7 +53,7 @@ class Router implements RouterInterface
         return $this->generate($homepage, $canonical);
     }
 
-    public function generate($slug = 'homepage', $canonical = false): string
+    public function generate($slug = 'homepage', $canonical = false, $pager = null): string
     {
         $page = null;
 
@@ -79,7 +79,13 @@ class Router implements RouterInterface
             $baseUrl = $this->apps->getApp('baseUrl', $page->getHost());
         }
 
-        return ($baseUrl ?? '').$this->router->generate(self::PATH, ['slug' => $slug]);
+        $url = ($baseUrl ?? '').$this->router->generate(self::PATH, ['slug' => $slug]);
+
+        if ($pager && '1' !== (string) $pager) {
+            $url = rtrim($url, '/').'/'.$pager;
+        }
+
+        return $url;
     }
 
     protected function mayUseCustomPath()

@@ -28,12 +28,12 @@ class PageGenerator extends AbstractGenerator
             return;
         }
 
-        $this->saveAsStatic($this->generateLivePathFor($page), $this->generateFilePath($page));
+        $this->saveAsStatic($this->generateLivePathFor($page), $this->generateFilePath($page), $page);
 
         $this->generateFeedFor($page);
     }
 
-    protected function generateFilePath(Page $page)
+    protected function generateFilePath(Page $page, ?int $pager = null)
     {
         $slug = '' == $page->getRealSlug() ? 'index' : $page->getRealSlug();
 
@@ -41,7 +41,14 @@ class PageGenerator extends AbstractGenerator
             return $this->getStaticDir().'/'.$slug;
         }
 
-        return $this->getStaticDir().'/'.$slug.'.html';
+        $filePath = $this->getStaticDir().'/';
+        if ($pager) {
+            $filePath .= 'index' == $slug ? '' : rtrim($slug, '/');
+
+            return $filePath.'/'.$pager.'.html';
+        }
+
+        return $filePath.$slug.'.html';
     }
 
     /**
@@ -61,7 +68,7 @@ class PageGenerator extends AbstractGenerator
         $this->saveAsStatic($liveUri, $staticFile);
     }
 
-    protected function saveAsStatic($liveUri, $destination)
+    protected function saveAsStatic($liveUri, $destination, ?Page $page = null)
     {
         $request = Request::create($liveUri);
         //$request->headers->set('host', $this->app->getMainHost());
@@ -84,12 +91,22 @@ class PageGenerator extends AbstractGenerator
         }
 
         if (false !== strpos($response->headers->all()['content-type'][0] ?? '', 'html')) {
+            if (false !== strpos($response->getContent(), '<!-- pager:')) {
+                $this->extractPager($page, $response->getContent());
+            }
             $content = $this->compress($response->getContent());
         } else {
             $content = $response->getContent();
         }
 
         $this->filesystem->dumpFile($destination, $content);
+    }
+
+    private function extractPager(Page $page, string $content): void
+    {
+        preg_match('#<!-- pager:([0-9]+) -->#', $content, $match);
+        $pager = (int) $match[1];
+        $this->saveAsStatic(rtrim($this->generateLivePathFor($page), '/').'/'.$pager, $this->generateFilePath($page, $pager), $page);
     }
 
     protected function compress($html)

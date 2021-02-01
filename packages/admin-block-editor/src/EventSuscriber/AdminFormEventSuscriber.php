@@ -35,6 +35,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         }
     }
 
+    /** @psalm-suppress  NoInterfaceProperties */
     public function replaceFields(FormEvent $event): void
     {
         if (! $event->getAdmin() instanceof PageAdminInterface || ! $this->mayUseEditorBlock($event->getAdmin()->getSubject())) {
@@ -50,7 +51,6 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
 
         /** @var PageInterface $page */
         $page = $event->getAdmin()->getSubject();
-        /* @psalm-suppress  NoInterfaceProperties */
         $page->jsMainContent = $this->transformMainContent($page->getMainContent());
     }
 

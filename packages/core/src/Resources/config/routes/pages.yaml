@@ -1,10 +1,10 @@
 page_routes:
-  resource: '@PushwordCoreBundle/Resources/config/routes/page.yaml'
+  resource: "@PushwordCoreBundle/Resources/config/routes/page.yaml"
 
 custom_host_routes:
-  resource: '@PushwordCoreBundle/Resources/config/routes/page.yaml'
-  prefix: '/{host}/'
-  name_prefix: 'custom_host_'
+  resource: "@PushwordCoreBundle/Resources/config/routes/page.yaml"
+  prefix: "/{host}/"
+  name_prefix: "custom_host_"
   requirements:
     host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
     #'[a-zA-Z0-9\-\.]*'
@@ -31,12 +31,58 @@ custom_host_pushword_page:
   controller: Pushword\Core\Controller\PageController::show
   methods: [GET, HEAD]
   requirements:
-    slug: '[A-Za-z0-9_\/\.\-]*'
+    slug: '[A-Za-z0-9_\/\.\-]*$'
     host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
+  defaults:
+    slug: ""
 
 pushword_page:
   path: /{slug}
   controller: Pushword\Core\Controller\PageController::show
   methods: [GET, HEAD]
   requirements:
-    slug: '[A-Za-z0-9_\/\.\-]*'
+    slug: '[A-Za-z0-9_\/\.\-]*$'
+
+  # The next  routes are never catched but permit to generate page paginated route
+pushword_page_homepage_pager:
+  path: /{pager}
+  controller: Pushword\Core\Controller\PageController::show
+  methods: [GET, HEAD]
+  requirements:
+    pager: '\d+'
+  defaults:
+    slug: ""
+    pager: 1
+
+pushword_page_pager:
+  path: /{slug}/{pager}
+  controller: Pushword\Core\Controller\PageController::show
+  methods: [GET, HEAD]
+  requirements:
+    slug: '[A-Za-z0-9_\/\.\-]*[A-Za-z0-9]+$'
+    pager: '\d+'
+  defaults:
+    slug: ""
+    pager: 1
+
+custom_host_pushword_page_homepage_pager:
+  path: /{host}/{pager}
+  controller: Pushword\Core\Controller\PageController::show
+  methods: [GET, HEAD]
+  requirements:
+    host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
+    pager: '(|\d+)'
+  defaults:
+    pager: 1
+
+custom_host_pushword_page_pager:
+  path: /{host}/{slug}/{pager}
+  controller: Pushword\Core\Controller\PageController::show
+  methods: [GET, HEAD]
+  requirements:
+    slug: '[A-Za-z0-9_\/\.\-]*$'
+    host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
+    pager: '\d+'
+  defaults:
+    slug: ""
+    pager: 1

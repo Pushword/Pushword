@@ -22,7 +22,7 @@
 		<meta name="robots" content="{{ page.metaRobots }}">
 	{% endif %}
 
-	<link rel="canonical" href="{{ page(page, true) }}"/>
+	<link rel="canonical" href="{{ page(page, true, app.request.get('pager')) }}"/>
 
 {% endblock %}
 

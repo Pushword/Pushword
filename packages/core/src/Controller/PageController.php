@@ -46,7 +46,7 @@ class PageController extends AbstractController
 
     public function show(?string $slug, string $host = '', Request $request): Response
     {
-        $page = $this->getPage($slug, $host);
+        $page = $this->getPage($slug, $host, true, true, $request);
 
         // SEO redirection if we are not on the good URI (for exemple /fr/tagada instead of /tagada)
         if ((! $host || $host == $request->getHost())
@@ -162,7 +162,7 @@ class PageController extends AbstractController
         );
     }
 
-    protected function getPages(?int $limit = null, Request $request)
+    private function getPages(?int $limit = null, Request $request)
     {
         $requestedLocale = rtrim($request->getLocale(), '/');
 
@@ -178,7 +178,7 @@ class PageController extends AbstractController
     /**
      * @return \Pushword\Core\Repository\PageRepository
      */
-    protected function getPageRepository()
+    private function getPageRepository()
     {
         return Repository::getPageRepository($this->em, $this->params->get('pw.entity_page'));
     }
@@ -188,13 +188,20 @@ class PageController extends AbstractController
         $this->app = $this->apps->switchCurrentApp($host)->get();
     }
 
-    protected function getPage(?string &$slug, string $host = '', $throwException = true): ?Page
+    private function getPage(?string &$slug, string $host = '', bool $throwException = true, bool $extractPager = false, ?Request $request = null): ?Page
     {
         $slug = $this->noramlizeSlug($slug);
-        $page = $this->getPageRepository()->getPage($slug, $host);
+        $page = $this->getPageRepository()->getPage($slug, $host, $extractPager ? false : true);
 
         // Check if page exist
         if (null === $page) {
+            if ($extractPager && preg_match('#(/([1-9][0-9]*)|^([1-9][0-9]*))$#', $slug, $match)) {
+                $unpaginatedSlug = substr($slug, 0, -(\strlen($match[1])));
+                $request->attributes->set('pager', (int) $match[2] ?: $match[3]);
+                $request->attributes->set('slug', $unpaginatedSlug);
+
+                return $this->getPage($unpaginatedSlug, $host, $throwException, false);
+            }
             if ($throwException) {
                 throw $this->createNotFoundException();
             } else {

@@ -17,7 +17,7 @@ return [
     Pushword\Facebook\PushwordFacebookBundle::class => ['all' => true],
     Pushword\Version\PushwordVersionBundle::class => ['all' => true],
 
-    Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle::class => ['all' => true],
+    //Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle::class => ['all' => true],
     Tbmatuka\EditorjsBundle\TbmatukaEditorjsBundle::class => ['all' => true],
 
     // Symfony
@@ -27,6 +27,8 @@ return [
 
     Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class => ['all' => true],
     Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle::class => ['all' => true],
+
+    BabDev\PagerfantaBundle\BabDevPagerfantaBundle::class => ['all' => true],
 
     // Used for Media
     Vich\UploaderBundle\VichUploaderBundle::class => ['all' => true],

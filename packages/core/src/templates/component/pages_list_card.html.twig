@@ -10,5 +10,8 @@
     {% else %}
         <p>...</p>
     {% endif %}
+    {% if pager is defined and pager is not null %}
+        {{ pager(pager, {'omitFirstPage': true, 'pageParameter': '[pager]', 'routeName': pager_route, 'routeParams': pager_route_params}) }}
+    {% endif %}
 {% endapply %}
 {% endblock %}

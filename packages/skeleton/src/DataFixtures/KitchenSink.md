@@ -2,14 +2,14 @@ A few example for the editor possibilities. Best to observe this, it's in admin 
 
 ## Links & Routes
 
-- [Homepage]({{ homepage() }})
-- [Current Page]({{ page(page) }})
-- Get Url : {{ page('/what-you-want-in-same-app') }}
-- Canonical with base: {{ page(page, true) }}
-- Encrypted Link : {{ link('Pied Web', 'https://piedweb.com/') }}
-- Self Encrypted Link: {{ link('Pied Web', page) }}
-- contact@piedweb.com ou {{ mail('contact@piedweb.com') }}
-- {{ tel('+33 00 00 00 00') }} ou directement +331 00 00 00 00 2
+-   [Homepage]({{ homepage() }})
+-   [Current Page]({{ page(page) }})
+-   Get Url : {{ page('/what-you-want-in-same-app') }}
+-   Canonical with base: {{ page(page, true) }}
+-   Encrypted Link : {{ link('Pied Web', 'https://piedweb.com/') }}
+-   Self Encrypted Link: {{ link('Pied Web', page) }}
+-   contact@piedweb.com ou {{ mail('contact@piedweb.com') }}
+-   {{ tel('+33 00 00 00 00') }} ou directement +331 00 00 00 00 2
 -
 
 ## Images et Galleries
@@ -38,7 +38,7 @@ or open an iframe
 
 ## Advanced
 
-- Get a theme component {{ view('/base.html.twig') }}
+-   Get a theme component {{ view('/base.html.twig') }}
 
 ## Render Page List
 
@@ -46,7 +46,7 @@ or open an iframe
 
 {{  list('fun', 3) }}
 
-{{  card_list('Fun', 3)|unprose }}
+{{  card_list('Fun', [3])|unprose }}
 
 ### Children Page (from parent for the case)
 

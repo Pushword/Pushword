@@ -92,6 +92,7 @@ class AppExtension extends AbstractExtension
             new TwigFunction('gallery', [$this, 'renderGallery'], self::options()),
             new TwigFunction('video', [$this, 'renderVideo'], self::options()),
             new TwigFunction('url_to_embed', [$this, 'getEmbedCode']),
+            new TwigFunction('pager', [$this, 'renderPager'], self::options(true)),
             new TwigFunction('list', [$this, 'renderPagesList'], self::options(true)),
             new TwigFunction('card_list', [$this, 'renderPagesListCard'], self::options(true)),
             new TwigFunction('children', [$this, 'renderChildrenList'], self::options(true)),

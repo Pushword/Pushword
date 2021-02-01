@@ -8,7 +8,7 @@ parent: contribute
 ## TODO before v1
 
 -   Micro données
--   pagination https://www.babdev.com/open-source/packages/pagerfantabundle/docs/3.x/intro
+-   pagination : tester & documenter
 
 -   textarea no new line make jump to .editorjs-holder too
 -   release de sonata 4

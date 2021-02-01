@@ -4,7 +4,6 @@ namespace Pushword\Core\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
-use Doctrine\ORM\Tools\Pagination\Paginator;
 use Exception;
 use Pushword\Core\Entity\PageInterface;
 
@@ -20,19 +19,30 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
 
     public function getPublishedPages($host = '', array $where = [], array $orderBy = [], $limit = 0)
     {
-        $qb = $this->getPublishedPageQuery('p');
+        $qb = $this->getPublishedPageQueryBuilder($host, $where, $orderBy);
 
-        $this->andHost($qb, $host);
-        $this->andWhere($qb, $where);
-        $this->orderBy($qb, $orderBy);
         $this->limit($qb, $limit);
 
         $query = $qb->getQuery();
 
-        return \is_array($limit) ? new Paginator($query, true) : $query->getResult();
+        return $query->getResult();
     }
 
-    protected function getPublishedPageQuery(string $alias = 'p'): QueryBuilder
+    public function getPublishedPageQueryBuilder($host = '', array $where = [], array $orderBy = [], int $limit = 0): QueryBuilder
+    {
+        $qb = $this->buildPublishedPageQuery('p');
+
+        $this->andHost($qb, $host);
+        $this->andWhere($qb, $where);
+        $this->orderBy($qb, $orderBy);
+        if ($limit) {
+            $this->limit($qb, $limit);
+        }
+
+        return $qb;
+    }
+
+    private function buildPublishedPageQuery(string $alias = 'p'): QueryBuilder
     {
         $queryBuilder = $this->createQueryBuilder($alias)
             ->andWhere($alias.'.createdAt <=  :nwo')
@@ -44,12 +54,12 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         return $queryBuilder;
     }
 
-    public function getPage(string $slug, string $host): ?PageInterface
+    public function getPage(string $slug, string $host, bool $checkId = true): ?PageInterface
     {
         $qb = $this->createQueryBuilder('p')
             ->andWhere('p.slug =  :slug')->setParameter('slug', $slug);
 
-        if ((int) $slug > 0) {
+        if ((int) $slug > 0 && $checkId) {
             $qb->orWhere('p.id =  :slug')->setParameter('slug', $slug);
         }
 
@@ -75,9 +85,8 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         string $locale,
         ?int $limit = null
     ): QueryBuilder {
-        $qb = $this->getPublishedPageQuery('p');
+        $qb = $this->buildPublishedPageQuery('p');
         $qb = $this->andIndexable($qb);
-        $qb = $this->andNotRedirection($qb);
         $qb = $this->andHost($qb, $host);
         $qb = $this->andLocale($qb, $locale);
 

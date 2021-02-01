@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\HostInterface;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
@@ -27,6 +28,9 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
 
     public function setParentPage(?self $parentPage): self;
 
+    /**
+     * @return ArrayCollection|PageInterface[]
+     */
     public function getChildrenPages();
 
     // ImageTrait

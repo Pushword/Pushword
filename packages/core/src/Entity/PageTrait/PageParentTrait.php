@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Entity\PageTrait;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\PageInterface;
 
@@ -30,6 +31,9 @@ trait PageParentTrait
         return $this;
     }
 
+    /**
+     * @return ArrayCollection|PageInterface[]
+     */
     public function getChildrenPages()
     {
         return $this->childrenPages;

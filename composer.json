@@ -15,6 +15,7 @@
     "license": "MIT",
     "require": {
         "php": ">=7.4",
+        "babdev/pagerfanta-bundle": "^2.8",
         "caseyamcl/toc": "^3.0",
         "cocur/slugify": "^3.0|^4.0",
         "doctrine/annotations": "^1.11",
@@ -33,7 +34,7 @@
         "piedweb/render-html-attributes": "^2.0.1",
         "piedweb/url-harvester": "^0.0.27",
         "sensio/framework-extra-bundle": "^5.6",
-        "sonata-project/admin-bundle": "dev-master#0ea4ef9d9fc639c9547008ceabb32f6e3c55da9d",
+        "sonata-project/admin-bundle": "dev-master#f34ae30d169132b17f3151fa294a80c57247a8a9",
         "sonata-project/doctrine-orm-admin-bundle": "4.x-dev",
         "spatie/image-optimizer": "^1.3",
         "spatie/yaml-front-matter": "^2.0",
