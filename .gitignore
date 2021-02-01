@@ -28,5 +28,7 @@ bootstrap5-theme
 **/skeleton/pushword.piedweb.com
 **/skeleton/media
 **/skeleton/src/Migrations
+**/skeleton/var/*
+!.gitkeep
 
 Draft.md

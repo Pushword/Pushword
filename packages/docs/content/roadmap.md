@@ -7,6 +7,10 @@ parent: contribute
 
 ## TODO before v1
 
+-   Exporter SONATA
+-   Micro données
+-   pagination https://www.babdev.com/open-source/packages/pagerfantabundle/docs/3.x/intro
+
 -   textarea no new line make jump to .editorjs-holder too
 -   release de sonata 4
 -   Issue : User Password Edit don't work from admin
@@ -33,6 +37,9 @@ Look for a better writer experience (https://github.com/front/g-editor or https:
 
 ## Soon
 
+-   **Page Scanner** : add <!-- page-scanner-ignore: what to ignore -->
+-   **New** API
+-   **eCommerce** bridge with sylius (or réciproque)
 -   [WIP] **Block editor** :
     -   Gérer des blocks compatible avec Sonata pour les Attchments et les Images (même block qu'on affichera différemment)
     -   Idem pour les galleries (PageHasMedia)

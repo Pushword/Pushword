@@ -15,6 +15,8 @@ This package is used for testing purpose, for demoing and by the installer. It's
 ```
 cd packages/skeleton;
 
+rm -rf media && cp -r media~ media
+
 php bin/console doctrine:schema:update --force
 php bin/console doctrine:fixtures:load
 

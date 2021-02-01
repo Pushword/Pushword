@@ -129,7 +129,7 @@
         "assets": "composer assets-core && composer assets-admin",
         "docs": "cd packages/docs && ./build",
         "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish",
-        "reset-skeleton": "cd packages/skeleton && rm var/app.db && php bin/console doctrine:schema:create -q && php bin/console doctrine:fixtures:load -q && php bin/console pushword:image:cache -q && php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN"
+        "reset-skeleton": "cd packages/skeleton && rm var/app.db && rm -rf media && cp -r media~ media && php bin/console doctrine:schema:create -q && php bin/console doctrine:fixtures:load -q && php bin/console pushword:image:cache -q && php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN"
     },
     "config": {
         "sort-packages": true
