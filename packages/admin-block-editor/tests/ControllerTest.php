@@ -10,7 +10,7 @@ class ControllerTest extends AbstractAdminTest
     {
         $client = $this->loginUser();
 
-        $client->request('GET', 'admin/app/page/3/edit');
+        $client->request('GET', 'admin/app/page/1/edit');
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
         // poor test
     }

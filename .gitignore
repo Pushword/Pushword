@@ -29,6 +29,7 @@ bootstrap5-theme
 **/skeleton/media
 **/skeleton/src/Migrations
 **/skeleton/var/*
+!**/skeleton/var/app.db*
 !.gitkeep
 
 Draft.md
