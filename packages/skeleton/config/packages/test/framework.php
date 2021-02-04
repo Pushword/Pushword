@@ -1,7 +1,0 @@
-<?php
-
-$container->loadFromExtension('framework', [
-    'ide' => 'vscode',
-    'test' => true,
-    'session' => ['storage_id' => 'session.storage.mock_file']
-]);

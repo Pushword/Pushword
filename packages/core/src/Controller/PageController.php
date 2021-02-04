@@ -13,34 +13,28 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Environment as Twig;
 
-class PageController extends AbstractController
+final class PageController extends AbstractController
 {
-    /**
-     * @var ParameterBagInterface
-     */
-    protected $params;
+    use RenderTrait;
 
-    /** @var AppPool */
-    protected $apps;
+    private ParameterBagInterface $params;
+
+    private AppPool $apps;
 
     /** @var AppConfig */
-    protected $app;
+    private $app;
 
-    /** @var Twig */
-    protected $twig;
+    private Twig $twig;
 
-    /** @var */
-    protected $em;
+    private EntityManagerInterface $em;
 
     public function __construct(
         ParameterBagInterface $params,
-        Twig $twig,
         EntityManagerInterface $em,
         AppPool $apps
     ) {
         $this->em = $em;
         $this->params = $params;
-        $this->twig = $twig;
         $this->apps = $apps;
     }
 
@@ -76,7 +70,7 @@ class PageController extends AbstractController
         return $this->render($view, $params, $response);
     }
 
-    protected function getView(string $path): string
+    private function getView(string $path): string
     {
         return $this->app->getView($path, $this->twig);
     }
@@ -183,7 +177,7 @@ class PageController extends AbstractController
         return Repository::getPageRepository($this->em, $this->params->get('pw.entity_page'));
     }
 
-    protected function setApp($host): void
+    private function setApp($host): void
     {
         $this->app = $this->apps->switchCurrentApp($host)->get();
     }
@@ -230,12 +224,12 @@ class PageController extends AbstractController
         return $page;
     }
 
-    protected function noramlizeSlug($slug): string
+    private function noramlizeSlug($slug): string
     {
         return (null === $slug || '' === $slug) ? 'homepage' : rtrim(strtolower($slug), '/');
     }
 
-    protected function checkIfUriIsCanonical(Request $request, Page $page)
+    private function checkIfUriIsCanonical(Request $request, Page $page)
     {
         $real = $request->getRequestUri();
 

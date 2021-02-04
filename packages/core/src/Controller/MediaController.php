@@ -6,10 +6,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
-class MediaController extends AbstractController
+final class MediaController extends AbstractController
 {
-    protected $translator;
-
     public function download(string $path)
     {
         $projectDir = $this->get('kernel')->getProjectDir();

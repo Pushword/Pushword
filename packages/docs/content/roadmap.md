@@ -15,21 +15,6 @@ parent: contribute
 -   Issue : User Password Edit don't work from admin
 -   manage date i18n a better way than randomly
 
-### Pagination
-
-Pagination children/list
-
-PageController capture par défaut les pages /slug/{paginate<\d+>?1`} et renvoie si existe la même page mais avec la liste intégrée
-
-Deux choses :
-
--   soit charger les résultats via _ajax_ (compatibilité avec turbolinks ?) en renvoyant juste le block concerné (donc utilisé `liveBlock`)
--   soit on génère une nouvelle page dans ce cas là :
-    comment gérer le duplicate content autour de la liste, l'indexation, la génération dans le sitemap, la compatibilité avec turbolinks si on charge via ajax (donc à éviter)
-    KISS : un paramètre `paginatePage` écrase les propriétés (en les préservant dans _extend_) avec par défault un page.title = page.title ~ '- ' ~ paginate
-
-Peut-être un pas vers dynamic URL ou s'appuyer dessus.
-
 ### Editor.js
 
 Look for a better writer experience (https://github.com/front/g-editor or https://editorjs.io) (1/2)
@@ -61,12 +46,19 @@ Look for a better writer experience (https://github.com/front/g-editor or https:
 
 ## One day (maybe)
 
--   **Admin** : Automatic save without flooding version
--   **Version** : Rewrite to load in an entity versionned version and used sonata filters
--   Add https://github.com/nan-guo/Sonata-Menu-Bundle
--   **Wordpress** to Pushword/Core (and vice versa)
--   **Flat** (spatie/yaml-front-matter, vérif à chaque requête pour une sync constante admin <-> flat files)
--   Create a page from a Media (media edit) => button to create a new page with title = name and mainImage = Media
+-   Stop using Repo and start autowiring thé good repo (used multiple repo)
+-   Fluidifier le process de test et deploiement (tester avec les vrais données)
+-   Move global app_base_url, name and color to à better spot (like évent suscriber)
+-   Move weird entity trait constructor to lificycle callback
+-   Move notify to messenger bus ? : https://symfony.com/doc/current/the-fast-track/fr/18-async.html
+
+*   **Pagination** : move to extension and drop pagerfanta
+*   **Admin** : Automatic save without flooding version
+*   **Version** : Rewrite to load in an entity versionned version and used sonata filters
+*   Add https://github.com/nan-guo/Sonata-Menu-Bundle
+*   **Wordpress** to Pushword/Core (and vice versa)
+*   **Flat** (spatie/yaml-front-matter, vérif à chaque requête pour une sync constante admin <-> flat files)
+*   Create a page from a Media (media edit) => button to create a new page with title = name and mainImage = Media
     (useful for photographer website)... or create a dynamic page /media/[slug]/ showing data from Media
 
 ### Smart image optimizer (global - piedweb package)
