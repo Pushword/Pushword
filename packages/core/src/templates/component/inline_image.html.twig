@@ -2,8 +2,8 @@
     image_src
     image_alt       // image.name(page is defined ? page.locale : '')
     image_attr
-    image_wrapper
-    image_wrapper_class
+    image_wrapper           default: p
+    image_wrapper_class     default: 'w-full h-auto'
 
         xs: #576px
         sm: #768px
@@ -11,7 +11,6 @@
         lg: #1200px
         xl: #1200px+
 #}
-
 
 {% block inline_image %}
     {% if image_src is defined %}
@@ -36,7 +35,7 @@
                     <img
                         src="{{ image_src }}"
                         loading="lazy"
-                        class="{{ (rounded is defined ? 'rounded' : '') ~ (image_class is defined ? ' '~image_class : ' img-fluid') }}"
+                        class="{{ (rounded is defined ? 'rounded' : '') ~ (image_class is defined and image_class ? ' '~image_class : ' ' ~ 'w-full h-auto') }}"
                         alt="{{ image_alt }}" />
                 {% endif %}
 
@@ -63,7 +62,7 @@
             ~','~ image|image('xl') ~' 1600w',
         src: image|image('default'),
         loading: 'lazy',
-        class: image_class ?? 'w-full h-auto',
+        class: image_class is defined and image_class ? image_class : 'w-full h-auto',
         width: 100000,
         height: 100000,
         alt: image_alt|default(image.alt)

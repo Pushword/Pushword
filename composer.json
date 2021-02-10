@@ -34,7 +34,7 @@
         "piedweb/render-html-attributes": "^2.0.1",
         "piedweb/url-harvester": "^0.0.27",
         "sensio/framework-extra-bundle": "^5.6",
-        "sonata-project/admin-bundle": "dev-master#f34ae30d169132b17f3151fa294a80c57247a8a9",
+        "sonata-project/admin-bundle": "dev-master#3747cc5534822dc0ec09e32244023cefc2bd74da",
         "sonata-project/doctrine-orm-admin-bundle": "4.x-dev",
         "spatie/image-optimizer": "^1.3",
         "spatie/yaml-front-matter": "^2.0",

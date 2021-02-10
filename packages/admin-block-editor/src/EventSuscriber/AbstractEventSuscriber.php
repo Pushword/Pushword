@@ -21,6 +21,10 @@ abstract class AbstractEventSuscriber implements EventSubscriberInterface
 
     protected function mayUseEditorBlock(?PageInterface $page): bool
     {
+        if ($page && ! empty($page->getMainContent()) && ! json_decode($page->getMainContent())) {
+            return false;
+        }
+
         if ($page && $page->getHost() && \is_bool($this->apps->get($page->getHost())->get('admin_block_editor'))) {
             return $this->apps->get($page->getHost())->get('admin_block_editor');
         }

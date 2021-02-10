@@ -25,6 +25,7 @@ bootstrap5-theme
 **/skeleton/public/media
 **/skeleton/static
 **/skeleton/localhost.dev
+**/skeleton/admin-block-editor.test
 **/skeleton/pushword.piedweb.com
 **/skeleton/media
 **/skeleton/src/Migrations

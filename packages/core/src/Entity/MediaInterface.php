@@ -5,7 +5,7 @@ namespace Pushword\Core\Entity;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\TimestampableInterface;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\File\File;
 
 interface MediaInterface extends IdInterface, TimestampableInterface, CustomPropertiesInterface
 {
@@ -39,7 +39,7 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function setName(string $name): self;
 
-    public function setMediaFile(?UploadedFile $media = null): void;
+    public function setMediaFile(?File $media = null): void;
 
     public function getMimeType(): ?string;
 
@@ -47,5 +47,5 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function getNameLocalized($getLocalized = null, $onlyLocalized = false): ?string;
 
-    public function getMediaFile(): ?UploadedFile;
+    public function getMediaFile(): ?File;
 }

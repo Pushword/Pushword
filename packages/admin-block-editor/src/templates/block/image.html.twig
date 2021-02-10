@@ -1,1 +1,11 @@
-{# todo {% extends view('/component/inline_image.html.twig' witch {} only) %}#}
+{% if data.stretched %}<div class="w-full-vw">{% endif %}
+{% if data.withBackground %}<div class="px-12 py-1 bg-gray-400">{% endif %}
+
+    {% include view('/component/inline_image.html.twig') with {
+        'image_src': data.file.media|image('default'),
+        'image_alt': data.caption,
+        'image_class : ((data.stretched ? 'w-full h-auto' : 'w-auto h-auto') ~ ' ' ~ (data.withBorder ? 'border border-gray-500' : ''))|trim
+    } only %}
+
+{% if data.withBackground %}</div>{% endif %}
+{% if data.stretched %}</div>{% endif %}

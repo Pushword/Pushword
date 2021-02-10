@@ -10,10 +10,12 @@ use Intervention\Image\Image;
 use League\ColorExtractor\Color;
 use League\ColorExtractor\ColorExtractor;
 use League\ColorExtractor\Palette;
+use LogicException;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Service\ImageManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Vich\UploaderBundle\Event\Event;
 
 class MediaListener
@@ -88,11 +90,19 @@ class MediaListener
     /**
      * Si l'utilisateur ne propose pas de nom pour l'image,
      * on récupère celui d'origine duquel on enlève son extension.
+     *
+     * @psalm-suppress  UndefinedMethod
      */
     protected function checkIfThereIsAName(MediaInterface $media): void
     {
         if (empty($media->getName())) {
-            $media->setName(preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFile()->getClientOriginalName()));
+            if (! $media->getMediaFile() instanceof UploadedFile) {
+                throw new LogicException('You must set a name if you are not using UploadedFile');
+            }
+
+            $name = $media->getMediaFile()->getClientOriginalName();
+
+            $media->setName(preg_replace('/\\.[^.\\s]{3,4}$/', '', $name));
         }
     }
 

@@ -29,3 +29,7 @@ pushword:
         color_bg: "#fff",
         static_copy: ["assets"],
       }
+    - {
+        hosts: [admin-block-editor.test],
+        base_url: "https://admin-block-editor.test",
+      }

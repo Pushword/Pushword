@@ -15,21 +15,20 @@ parent: contribute
 -   Issue : User Password Edit don't work from admin
 -   manage date i18n a better way than randomly
 
-### Editor.js
-
-Look for a better writer experience (https://github.com/front/g-editor or https://editorjs.io) (1/2)
-
 ## Soon
 
+-   associé un champ vidéo à l'image d'en-tête
 -   **Page Scanner** : add <!-- page-scanner-ignore: what to ignore -->
 -   **New** API
 -   **eCommerce** bridge with sylius (or réciproque)
 -   [WIP] **Block editor** :
     -   Gérer des blocks compatible avec Sonata pour les Attchments et les Images (même block qu'on affichera différemment)
+        EN COURS: Image, reste à gérer l'affichage d'une gallerie sonata admin plutôt que d'un _select file_
     -   Idem pour les galleries (PageHasMedia)
     -   Encrypted Link
     -   Link to page (avec Router, permet navigation sur preprod)
     -   implement https://github.com/hata6502/editorjs-element to edit directly with site style
+    -   gérer la possibilité de désactiver editor.js pour insérer une redirection ?!
 -   **Admin** : extend parameters and events to filters and form for all admin (will permit extension)
 -   **Extend** : Partially implemented in core. May added test and form field in admin ?
 -   Schema.org dans le backend d'une page

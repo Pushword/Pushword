@@ -50,8 +50,6 @@ editorjs:
 
     image:
       className: Image
-      config:
-        endpoint: / # TODO
 
     delimiter:
       className: Delimiter
@@ -60,7 +58,7 @@ editorjs:
       className: Quote
       config:
         quotePlaceholder: "..."
-        captionPlaceholder: t("citation")
+        captionPlaceholder: "..."
 
     inline-code:
       className: InlineCode

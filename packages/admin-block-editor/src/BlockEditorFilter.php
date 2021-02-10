@@ -66,11 +66,13 @@ final class BlockEditorFilter extends AbstractFilter
 
     private function loadBlockManager(BlockInterface $blockManager): BlockInterface
     {
-        return $blockManager
+        $blockManager
             ->setApp($this->app)
             ->setEntity($this->getEntity())
             ->setTwig($this->getTwig())
         ;
+
+        return $blockManager;
     }
 
     private function getBlockManager(string $type): BlockInterface

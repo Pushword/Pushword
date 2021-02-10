@@ -9,6 +9,14 @@ class DefaultBlock extends AbstractBlock
     const AVAILABLE_BLOCKS = [
         'paragraph',
         'list',
+        'header',
+        'raw',
+        'quote',
+        'code',
+        'list',
+        'delimiter',
+        'table',
+        'image',
     ];
 
     public function __construct(string $name)

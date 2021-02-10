@@ -29,7 +29,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         }
 
         $returnValues = $event->getAdmin()->getRequest()->get($event->getAdmin()->getRequest()->get('uniqid'));
-        if ($returnValues['jsMainContent']) {
+        if (isset($returnValues['jsMainContent'])) {
             // sanitize with https://github.com/editor-js/editorjs-php // todo
             $event->getAdmin()->getSubject()->setMainContent($returnValues['jsMainContent']);
         }

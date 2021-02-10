@@ -1,0 +1,4 @@
+admin_media_block:
+  path: /admin/media/block
+  controller: Pushword\AdminBlockEditor\Controller\MediaBlockController::manage
+  methods: POST
