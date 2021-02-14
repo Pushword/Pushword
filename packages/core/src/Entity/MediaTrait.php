@@ -3,7 +3,6 @@
 namespace Pushword\Core\Entity;
 
 use Cocur\Slugify\Slugify;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use InvertColor\Color;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
@@ -90,16 +89,6 @@ trait MediaTrait
 
     /**
      * @ORM\OneToMany(
-     *     targetEntity="Pushword\Core\Entity\PageHasMediaInterface",
-     *     mappedBy="media",
-     *     cascade={"all"},
-     *     orphanRemoval=true
-     * )
-     */
-    protected $pageHasMedias;
-
-    /**
-     * @ORM\OneToMany(
      *     targetEntity="Pushword\Core\Entity\PageInterface",
      *     mappedBy="mainImage"
      * )
@@ -148,11 +137,12 @@ trait MediaTrait
     }
 
     /**
-     * Useed in twig AppExtension transformInlineImageToMedia.
+     * Useed in twig AppExtension transformStringToMedia.
+     * Convert the source path (often /media/default/... or just ...) in a Media Object.
      */
-    public static function loadFromSrc($src)
+    public static function loadFromSrc(string $src): self
     {
-        $src = substr($src, \strlen('/media/default/'));
+        $src = false !== strpos($src, '/') ? substr($src, \strlen('/media/default/')) : $src;
 
         $media = new self();
         $media->setMedia($src);
@@ -375,30 +365,6 @@ trait MediaTrait
         $this->mainColor = $mainColor;
 
         return $this;
-    }
-
-    public function setPageHasMedias($pageHasMedias)
-    {
-        $this->pageHasMedias = new ArrayCollection();
-        foreach ($pageHasMedias as $pageHasMedia) {
-            $this->addPageHasMedia($pageHasMedia);
-        }
-    }
-
-    public function getPageHasMedias()
-    {
-        return $this->pageHasMedias;
-    }
-
-    public function addPageHasMedia(PageHasMedia $pageHasMedia)
-    {
-        $pageHasMedia->setMedia($this);
-        $this->pageHasMedias[] = $pageHasMedia;
-    }
-
-    public function removePageHasMedia(PageHasMedia $pageHasMedia)
-    {
-        $this->pageHasMedias->removeElement($pageHasMedia);
     }
 
     public function getMainImagePages()

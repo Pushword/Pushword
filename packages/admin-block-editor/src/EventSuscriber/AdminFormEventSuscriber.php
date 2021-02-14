@@ -6,8 +6,9 @@ use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageMainContentField;
 use Pushword\Admin\PageAdminInterface;
-use Pushword\AdminBlockEditor\PageH1FormField;
-use Pushword\AdminBlockEditor\PageMainContentFormField;
+use Pushword\AdminBlockEditor\FormField\PageH1FormField;
+use Pushword\AdminBlockEditor\FormField\PageImageFormField;
+use Pushword\AdminBlockEditor\FormField\PageMainContentFormField;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Event\PersistenceEvent;
 
@@ -29,9 +30,10 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         }
 
         $returnValues = $event->getAdmin()->getRequest()->get($event->getAdmin()->getRequest()->get('uniqid'));
-        if (isset($returnValues['jsMainContent'])) {
+        //dd($returnValues);
+        if (isset($returnValues['mainContent'])) {
             // sanitize with https://github.com/editor-js/editorjs-php // todo
-            $event->getAdmin()->getSubject()->setMainContent($returnValues['jsMainContent']);
+            $event->getAdmin()->getSubject()->setMainContent($returnValues['mainContent']);
         }
     }
 
@@ -47,6 +49,8 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         $fields = $this->replace(PageMainContentField::class, PageMainContentFormField::class, $fields);
         $fields = $this->replace(PageH1Field::class, PageH1FormField::class, $fields);
 
+        $fields[0][PageImageFormField::class] = PageImageFormField::class;
+
         $event->setFields($fields);
 
         /** @var PageInterface $page */
@@ -60,7 +64,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         if (false === $jsonContent) {
             // we just start to use editor.js for this page... try parsing raw content and creating a JS
             return '{}'; // todo
-            // {"time":1611744796620,"blocks":[{"type":"paragraph","data":{"text":"test"}},{"type":"paragraph","data":{"text":"test"}}],"version":"2.19.1"}
+            // {"time":1611744796620,"blocks":[{"type":"paragraph","data":{"text":""}}],"version":"2.19.1"}
         }
 
         return $content;

@@ -15,12 +15,8 @@ trait PageI18nTrait
      */
     protected string $locale = '';
 
-    public function __constructI18n()
-    {
-        $this->translations = new ArrayCollection();
-    }
-
     /**
+     * @var ArrayCollection
      * @ORM\ManyToMany(targetEntity="Pushword\Core\Entity\PageInterface")
      */
     protected $translations;
@@ -46,18 +42,18 @@ trait PageI18nTrait
 
     public function getTranslations(): Collection
     {
-        return $this->translations;
+        return $this->translations ? $this->translations : new ArrayCollection();
     }
 
     public function addTranslation(self $translation, $recursive = true): self
     {
-        if (! $this->translations->contains($translation) && $this != $translation) {
+        if (! $this->getTranslations()->contains($translation) && $this != $translation) {
             $this->translations[] = $translation;
         }
 
         // Add the other ('ever exist') translations to the new added Translation
         if (true === $recursive) {
-            foreach ($this->translations as $otherTranslation) {
+            foreach ($this->getTranslations() as $otherTranslation) {
                 $translation->addTranslation($otherTranslation, false);
             }
         }
@@ -68,7 +64,7 @@ trait PageI18nTrait
         if (true === $recursive) {
             $translation->addTranslation($this, false);
 
-            foreach ($this->translations as $otherTranslation) {
+            foreach ($this->getTranslations() as $otherTranslation) {
                 if ($otherTranslation != $this // déjà fait
                     && $otherTranslation != $translation // on ne se référence pas soit-même
                 ) {
@@ -82,11 +78,11 @@ trait PageI18nTrait
 
     public function removeTranslation(self $translation, $recursive = true): self
     {
-        if ($this->translations->contains($translation)) {
-            $this->translations->removeElement($translation);
+        if ($this->getTranslations()->contains($translation)) {
+            $this->getTranslations()->removeElement($translation);
 
             if (true === $recursive) {
-                foreach ($this->translations as $otherTranslation) {
+                foreach ($this->getTranslations() as $otherTranslation) {
                     $translation->removeTranslation($otherTranslation, false);
                 }
             }
@@ -95,7 +91,7 @@ trait PageI18nTrait
         if (true === $recursive) {
             $translation->removeTranslation($this, false);
 
-            foreach ($this->translations as $otherTranslation) {
+            foreach ($this->getTranslations() as $otherTranslation) {
                 if ($otherTranslation != $this // déjà fait
                     && $otherTranslation != $translation // on ne se déréférence pas soit-même
                 ) {

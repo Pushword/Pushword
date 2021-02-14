@@ -4,7 +4,7 @@ namespace Pushword\Core\Component\App;
 
 use Twig\Environment as Twig;
 
-class AppConfig
+final class AppConfig
 {
     private bool $isFirstApp = false;
     private array $hosts;
@@ -17,6 +17,7 @@ class AppConfig
     private array $filters;
     private bool $entityCanOverrideFilters;
     private array $assets;
+    private Twig $twig;
 
     private static function normalizePropertyName(string $string): string
     {
@@ -34,6 +35,11 @@ class AppConfig
         }
 
         $this->isFirstApp = $isFirstApp;
+    }
+
+    public function setTwig(Twig $twig)
+    {
+        $this->twig = $twig;
     }
 
     public function getParamsForRendering(): array
@@ -135,7 +141,7 @@ class AppConfig
     /**
      * @psalm-suppress InternalMethod
      */
-    public function getView(?string $path = null, ?Twig $twig = null, $fallback = '@Pushword') // todo : make twig global
+    public function getView(?string $path = null, $fallback = '@Pushword') // todo : make twig global
     {
         if (null === $path) {
             return $this->template.'/page/page.html.twig';
@@ -156,13 +162,9 @@ class AppConfig
 
         $name = $this->template.$path;
 
-        if (null === $twig || $fallback == $this->template) {
-            return $name;
-        }
-
         // check if twig template exist
         try {
-            $twig->load($name);
+            $this->twig->load($name);
 
             return $name;
         } finally {

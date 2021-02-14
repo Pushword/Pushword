@@ -7,7 +7,6 @@ pushword:
   # entity_page:          App\Entity\Page
   # entity_media:         App\Entity\Media
   # entity_user:          App\Entity\User
-  # entity_pagehasmedia:  App\Entity\PageHasMedia
   # public_media_dir:     'media'
   # media_dir:            '%kernel.project_dir%/media'
   # app_fallback_properties:

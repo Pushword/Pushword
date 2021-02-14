@@ -5,9 +5,7 @@ namespace Pushword\Facebook;
 use PiedWeb\FacebookScraper\Client;
 use PiedWeb\FacebookScraper\FacebookScraper;
 use Pushword\Core\AutowiringTrait\RequiredApps;
-use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\ImageManager;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\String\UnicodeString;
 use Twig\Environment as Twig;
 use Twig\Extension\AbstractExtension;
@@ -66,7 +64,7 @@ class TwigExtension extends AbstractExtension
             $lastPost['images_hd'] = $this->importImages($lastPost);
         }
 
-        $view = $this->apps->get()->getView($template, $twig, '@PushwordFacebook');
+        $view = $this->apps->get()->getView($template, '@PushwordFacebook');
 
         return $twig->render($view, ['pageId' => $id, 'post' => $lastPost]);
     }
@@ -75,41 +73,13 @@ class TwigExtension extends AbstractExtension
     {
         $return = [];
 
-        $alt = new UnicodeString($post['text']);
+        $text = new UnicodeString($post['text']);
 
         foreach ($post['images_hd'] as $i => $image) {
-            $return[] = $this->importImage($image, $alt->truncate(50, '...').($i ? ' '.$i : ''));
+            $name = $text->truncate(25, '...').($i ? ' '.$i : '');
+            $return[] = $this->imageManager->importExternal($image, $name, 'fb-'.$name);
         }
 
         return $return;
-    }
-
-    private function importImage($image, $alt = ''): Media
-    {
-        $alt = str_replace(["\n", '"'], ' ', $alt);
-        $fs = new FileSystem();
-
-        $imgSize = getimagesize($image);
-
-        $fileName = 'fb-'.pathinfo($image, \PATHINFO_BASENAME).'.'.str_replace('image/', '', $imgSize['mime']);
-
-        $newFilePath = $this->mediaDir.'/'.$fileName;
-
-        $media = new Media();
-        $media
-            ->setStoreIn($this->mediaDir)
-            ->setMimeType($imgSize['mime'])
-            ->setSize(filesize($image))
-            ->setDimensions([$imgSize[0], $imgSize[1]])
-            ->setMedia($fileName)
-            ->setName($alt);
-
-        if (! file_exists($newFilePath)) {
-            $fs->copy($image, $newFilePath);
-
-            $this->imageManager->generateCache($media);
-        }
-
-        return $media;
     }
 }

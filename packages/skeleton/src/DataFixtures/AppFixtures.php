@@ -4,7 +4,6 @@ namespace App\DataFixtures;
 
 use App\Entity\Media;
 use App\Entity\Page;
-use App\Entity\PageHasMedia;
 use App\Entity\User;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -59,10 +58,6 @@ class AppFixtures extends Fixture
         $manager->persist($homepage);
         $manager->flush();
 
-        $pageHasMedia1 = (new PageHasMedia())->setMedia($media['Pied Web Logo']);
-        $pageHasMedia2 = (new PageHasMedia())->setMedia($media['Demo 1']);
-        $pageHasMedia3 = (new PageHasMedia())->setMedia($media['Demo 2']);
-
         $ksPage = (new Page())
             ->setH1('Demo Page - Kitchen Sink  Markdown + Twig')
             ->setSlug('kitchen-sink')
@@ -72,9 +67,6 @@ class AppFixtures extends Fixture
             ->setParentPage($homepage)
             ->setCreatedAt(new DateTime('1 day ago'))
             ->setUpdatedAt(new DateTime('1 day ago'))
-            ->addPageHasMedia($pageHasMedia1)
-            ->addPageHasMedia($pageHasMedia2)
-            ->addPageHasMedia($pageHasMedia3)
             ->setMainContent(file_get_contents(__DIR__.'/KitchenSink.md'));
 
         $manager->persist($ksPage);

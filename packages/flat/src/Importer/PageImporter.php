@@ -26,7 +26,6 @@ class PageImporter extends AbstractImporter
     protected $contentDirFinder;
 
     protected string $mediaClass;
-    protected string $pageHasMediaClass;
 
     private bool $newPage = false;
 
@@ -38,11 +37,6 @@ class PageImporter extends AbstractImporter
     public function setMediaClass(string $mediaClass)
     {
         $this->mediaClass = $mediaClass;
-    }
-
-    public function setPageHasMediaClass(string $class): void
-    {
-        $this->pageHasMediaClass = $class;
     }
 
     private function getContentDir()
@@ -184,26 +178,6 @@ class PageImporter extends AbstractImporter
         }
     }
 
-    private function addImages(PageInterface $page, string $property, array $images): void
-    {
-        if ('images' != $property) {
-            return;
-        }
-
-        $page->resetPageHasMedias();
-
-        foreach ($images as $image) {
-            $mediaName = preg_replace('@^/?media/(default)?/@', '', $image);
-            $media = $this->getMedia($mediaName);
-            if (null === $media) {
-                throw new Exception('Media `'.$image.'` ('.$mediaName.') not found in `'.$page->getSlug().'`.');
-            }
-            $pageHasMediaClass = $this->pageHasMediaClass;
-            $pageHasMedia = (new $pageHasMediaClass())->setMedia($media);
-            $page->addPageHasMedia($pageHasMedia);
-        }
-    }
-
     private function addPages(PageInterface $page, string $property, array $pages)
     {
         $setter = 'set'.ucfirst($property);
@@ -236,7 +210,6 @@ class PageImporter extends AbstractImporter
             'parentPage' => PageInterface::class,
             'translations' => 'addPages',
             'mainImage' => MediaInterface::class,
-            'images' => 'addImages',
         ];
 
         if (null === $key) {

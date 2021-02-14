@@ -3,20 +3,19 @@
 namespace Pushword\Core\Twig;
 
 use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Entity\PageInterface as Page;
 
 trait GalleryTwigTrait
 {
     abstract public function getApp(): AppConfig;
 
-    public function renderGallery(Page $currentPage, $filterImageFrom = 1, $length = 1001)
+    public function renderGallery(array $images, ?string $gridCols = null, ?string $imageFilter = null): string
     {
-        $template = $this->getApp()->getView('/page/_gallery.html.twig', $this->twig);
+        $template = $this->getApp()->getView('/component/images_gallery.html.twig');
 
         return $this->twig->render($template, [
-            'page' => $currentPage,
-            'galleryFilterFrom' => $filterImageFrom - 1,
-            'length' => $length,
+            'images' => $images,
+            'grid_cols' => $gridCols,
+            'image_filter' => $imageFilter,
         ]);
     }
 }

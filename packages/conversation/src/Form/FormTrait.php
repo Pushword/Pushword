@@ -190,7 +190,7 @@ trait FormTrait
 
     private function getView(string $path): string
     {
-        return $this->app->getView('/conversation/'.$path, $this->twig, '@PushwordConversation');
+        return $this->app->getView('/conversation/'.$path, '@PushwordConversation');
     }
 
     public function getShowFormTemplate(): string
@@ -217,7 +217,7 @@ trait FormTrait
 
     protected function showSuccess(): string
     {
-        $view = $this->app->getView('/conversation/alert.html.twig', $this->twig, '@PushwordConversation');
+        $view = $this->app->getView('/conversation/alert.html.twig', '@PushwordConversation');
 
         return $this->twig->render($view, [
             'message' => $this->translator->trans($this->successMessage),

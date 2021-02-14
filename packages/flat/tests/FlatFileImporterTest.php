@@ -123,7 +123,6 @@ class FlatFileImporterTest extends KernelTestCase
         );
         $pageImporter->setContentDirFinder($this->getContentDirFinder());
         $pageImporter->setMediaClass(self::$kernel->getContainer()->getParameter('pw.entity_media'));
-        $pageImporter->setPageHasMediaClass(self::$kernel->getContainer()->getParameter('pw.entity_pagehasmedia'));
 
         return $pageImporter;
     }

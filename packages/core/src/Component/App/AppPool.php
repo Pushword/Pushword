@@ -5,27 +5,30 @@ namespace Pushword\Core\Component\App;
 use Exception;
 use Pushword\Core\Entity\PageInterface;
 
-class AppPool
+final class AppPool
 {
     /** @var array */
-    protected $apps = [];
+    private $apps = [];
     /** @var string */
-    protected $currentApp;
+    private $currentApp;
     /** @var string */
-    protected $host; // often same as currentApp
+    private $host; // often same as currentApp
 
     /**
      * Why there ? Because often, need to check current page don't override App Config.
      *
      *  @var PageInterface */
-    protected $currentPage;
+    private $currentPage;
 
-    public function __construct(?string $host, array $apps)
+    public function __construct(?string $host, array $apps, \Twig\Environment $twig = null)
     {
         $this->host = $host;
 
         foreach ($apps as $mainHost => $app) {
             $this->apps[$mainHost] = new AppConfig($app, array_key_first($apps) == $mainHost ? true : false);
+            if ($twig) {
+                $this->apps[$mainHost]->setTwig($twig);
+            }
         }
 
         $this->switchCurrentApp();
@@ -126,14 +129,17 @@ class AppPool
         return false;
     }
 
-    public function getApp(?string $key = null, string $host = '')
+    public function getApp(string $host = ''): AppConfig
     {
         if (! $host) {
             $host = $this->currentApp;
         }
 
-        $app = $this->get($host);
+        return $this->get($host);
+    }
 
-        return $key ? $app->get($key) : $app;
+    public function getAppValue(?string $key = null, string $host = '')
+    {
+        return $this->getApp($host)->get($key);
     }
 }

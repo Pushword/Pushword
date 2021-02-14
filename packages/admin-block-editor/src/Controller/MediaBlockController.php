@@ -3,7 +3,6 @@
 namespace Pushword\AdminBlockEditor\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use LogicException;
 use Pushword\Core\Component\EntityFilter\Filter\RequiredMediaClass;
 use Pushword\Core\Entity\MediaInterface;
@@ -33,16 +32,10 @@ final class MediaBlockController extends AbstractController
     public function manage(Request $request, ImageManager $imageManager): Response
     {
         /** @param File $mediaFile */
-        $mediaFile = $request->getContent() ? $this->getMediaFileFromUrl($request->getContent())
+        $mediaFile = $request->getContent() ? $this->getMediaFrom($request->getContent())
             : $request->files->get('image');
 
-        if (null === $mediaFile) {
-            throw new Exception('...');
-        }
-
-        if (false === strpos($mediaFile->getMimeType(), 'image/')) {
-            return new Response(json_encode(['error' => 'media sent is not an image']));
-        }
+        //if (false === strpos($mediaFile->getMimeType(), 'image/')) { return new Response(json_encode(['error' => 'media sent is not an image'])); }
 
         if ($mediaFile instanceof MediaInterface) {
             $media = $mediaFile;
@@ -55,9 +48,12 @@ final class MediaBlockController extends AbstractController
             $this->em->flush();
         }
 
+        $url = false === strpos($mediaFile->getMimeType(), 'image/') ? '/download/'.$media->getMedia()
+             : $imageManager->getBrowserPath($media->getMedia());
+
         return new Response(json_encode([
             'success' => 1,
-            'file' => $this->exportMedia($media, $imageManager->getBrowserPath($media->getMedia())),
+            'file' => $this->exportMedia($media, $url),
         ]));
     }
 
@@ -80,42 +76,68 @@ final class MediaBlockController extends AbstractController
     }
 
     /**
-     * Store in tmp system dir a cache from dist URL.
-     *
-     * @return UploadedFile|null
+     * @return UploadedFile|MediaInterface
      */
-    private function getMediaFileFromUrl(string $content)
+    private function getMediaFrom($content)
     {
         $content = json_decode($content, true);
 
-        if (! isset($content['url'])) {
+        if (! isset($content['url']) && ! isset($content['id'])) {
             throw new LogicException('URL not sent by editor.js ?!');
         }
 
-        if (! preg_match('#/([^/]*)$#', $content['url'], $matches)) {
-            throw new LogicException("URL doesn't contain file name");
+        if (isset($content['id'])) {
+            return $this->getMediaFileFromId($content['id']);
         }
 
         if (0 === strpos($content['url'], '/media/default/')) {
-            if (! $media = Repository::getMediaRepository($this->em, $this->mediaClass)
-                ->findOneBy(['media' => substr($content['url'], \strlen('/media/default/'))])) {
-                throw new LogicException('Media not found');
-            }
-
-            return $media;
+            return $this->getMediaFromMedia(substr($content['url'], \strlen('/media/default/')));
         }
 
-        if (! $fileContent = file_get_contents($content['url'])) {
+        return $this->getMediaFileFromUrl($content['url']);
+    }
+
+    private function getMediaFromMedia(string $media): MediaInterface
+    {
+        if (! $media = Repository::getMediaRepository($this->em, $this->mediaClass)->findOneBy(['media' => $media])) {
+            throw new LogicException('Media not found');
+        }
+
+        return $media;
+    }
+
+    /**
+     * Store in tmp system dir a cache from dist URL.
+     */
+    private function getMediaFileFromUrl(string $url): UploadedFile
+    {
+        if (! preg_match('#/([^/]*)$#', $url, $matches)) {
+            throw new LogicException("URL doesn't contain file name");
+        }
+
+        if (! $fileContent = file_get_contents($url)) {
             throw new LogicException('URL unreacheable');
         }
 
         $originalName = $matches[1];
         $filename = md5($matches[1]);
         $filePath = sys_get_temp_dir().'/'.$filename;
-        if (file_put_contents($filePath, $fileContent)) {
-            $mimeType = mime_content_type($filePath);
-
-            return new UploadedFile($filePath, $originalName, $mimeType, null, true);
+        if (! file_put_contents($filePath, $fileContent)) {
+            throw new LogicException('Storing in tmp folder filed');
         }
+
+        $mimeType = mime_content_type($filePath);
+
+        return new UploadedFile($filePath, $originalName, $mimeType, null, true);
+    }
+
+    private function getMediaFileFromId(string $id): MediaInterface
+    {
+        $id = (int) $id;
+        if (! $media = Repository::getMediaRepository($this->em, $this->mediaClass)->findOneBy(['id' => $id])) {
+            throw new LogicException('Media not found');
+        }
+
+        return $media;
     }
 }

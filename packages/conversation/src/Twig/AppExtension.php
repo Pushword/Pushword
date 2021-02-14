@@ -70,7 +70,7 @@ class AppExtension extends AbstractExtension
 
         $messages = $msgRepo->getMessagesPublishedByReferring($referring, $orderBy, $limit);
 
-        $view = $this->app->getView($view, $env, '@PushwordConversation');
+        $view = $this->app->getView($view, '@PushwordConversation');
 
         return $env->render($view, ['messages' => $messages]);
     }

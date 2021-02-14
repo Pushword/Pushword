@@ -10,25 +10,27 @@ parent: contribute
 -   Micro données
 -   pagination : tester & documenter
 
--   textarea no new line make jump to .editorjs-holder too
 -   release de sonata 4
 -   Issue : User Password Edit don't work from admin
 -   manage date i18n a better way than randomly
+-   **changer la façon dont sont gérer les galleries pour mettre la référence directement dans le contenu, exist PageHasMedia**
+-   extension/core ?! : permettre l'organisation des pages avec un paramètre force (utiliser pour getChildrenPages)
 
 ## Soon
 
--   associé un champ vidéo à l'image d'en-tête
--   **Page Scanner** : add <!-- page-scanner-ignore: what to ignore -->
+-   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
+-   **clickable**
+-   associé un champ vidéo à l'image d'en-tête (plugin !)
+-   **Page Scanner** : add <!-- page-scanner-ignore: what to ignore --> ou plutôt dans othersParameters !!
 -   **New** API
 -   **eCommerce** bridge with sylius (or réciproque)
 -   [WIP] **Block editor** :
-    -   Gérer des blocks compatible avec Sonata pour les Attchments et les Images (même block qu'on affichera différemment)
-        EN COURS: Image, reste à gérer l'affichage d'une gallerie sonata admin plutôt que d'un _select file_
-    -   Idem pour les galleries (PageHasMedia)
-    -   Encrypted Link
-    -   Link to page (avec Router, permet navigation sur preprod)
+    -   Gérer des blocks
+        -   [ ] Gallery https://github.com/mr8bit/carousel-editorjs#server-format
+        -   [1/2] Link / EncryptedLink : gérer côté filtre : capturer les liens `encrypt`, les transformer en liens JS
+    -   textarea no new line make jump to .editorjs-holder too
     -   implement https://github.com/hata6502/editorjs-element to edit directly with site style
-    -   gérer la possibilité de désactiver editor.js pour insérer une redirection ?!
+    -   gérer la possibilité de désactiver editor.js pour insérer une redirection ?! (ou aller chercher la redir dans le premier paragraphe ?)
 -   **Admin** : extend parameters and events to filters and form for all admin (will permit extension)
 -   **Extend** : Partially implemented in core. May added test and form field in admin ?
 -   Schema.org dans le backend d'une page
@@ -45,6 +47,7 @@ parent: contribute
 
 ## One day (maybe)
 
+-   Auto-update npm package (js-helper and editorjs-tool) via Github Actions
 -   Stop using Repo and start autowiring thé good repo (used multiple repo)
 -   Fluidifier le process de test et deploiement (tester avec les vrais données)
 -   Move global app_base_url, name and color to à better spot (like évent suscriber)

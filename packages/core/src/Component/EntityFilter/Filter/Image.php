@@ -26,7 +26,7 @@ class Image extends AbstractFilter
         $nbrMatch = \count($matches[0]);
         for ($k = 0; $k < $nbrMatch; ++$k) {
             $renderImg = '<div>'.$this->twig->render(
-                $this->app->getView('/component/inline_image.html.twig', $this->twig),
+                $this->app->getView('/component/image_inline.html.twig'),
                 [
                     //"image_wrapper_class" : "mimg",'
                     'image_src' => $matches[2][$k],

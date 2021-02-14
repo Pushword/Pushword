@@ -1,16 +1,131 @@
 {% block editorjs_widget %}
+
     <div style="border-radius: 5px; border: 1px solid rgb(221, 221, 221); padding: 10px 10px 0px;">
   {% set editor_id = 'editorjs_' ~ id %}
-  {% set editor = editorjs(editor_id, config, value) %}
-    <input type="hidden" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }} value="{{ editor.data|json_encode }}">
+    <input type="hidden" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }} value="{{ value }}">
     <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
-
-    <script>
-        if (typeof editorjsConfigs === 'undefined') {
-            var editorjsConfigs = [];
-        }
-
-        editorjsConfigs.push({{ editorjs_serialize(editor) }});
-    </script>
   </div>
-{% endblock editorjs_widget %}
+
+  <div style="padding-top:10px; text-align:center">
+    <a href="#" onclick="toggleEditorJs('{{ editor_id }}')">{{ svg('unlock', {'style': 'width:12px', fill: 'currentColor'}) }}</a>
+</div>
+    <script>
+
+var editorjsConfig = {
+    name: "default",
+    initialBlock: "paragraph",
+    placeholder: "...",
+    tools: {
+        header: {
+            name: "header",
+            className: "Header",
+            config: {
+                placeholder: "...",
+                levels: [2, 3, 4],
+                defaultLevel: 2,
+            },
+        },
+        list: {
+            name: "list",
+            className: "List",
+        },
+        attaches: {
+            name: "attaches",
+            className: "Attaches",
+            config: {
+                onSelectFile: editorJsTool.onSelectFile,
+                onUploadFile: editorJsTool.onUploadFile,
+            },
+        },
+        image: {
+            name: "image",
+            className: "Image",
+            config: {
+                endpoints: {
+                    byFile: "/admin/media/block",
+                    byUrl: "/admin/media/block",
+                },
+                onSelectFile: editorJsTool.onSelectFile,
+            }
+        },
+        embed: {
+            name: "embed",
+            className: "Embed",
+            config: {
+                onSelectFile: editorJsTool.onSelectFile,
+                onUploadFile: editorJsTool.onUploadFile,
+            },
+        },
+        raw: {
+            name: "raw",
+            className: "Raw",
+            config: {
+                placeholder: "<div>...</div>",
+            },
+        },
+        delimiter: {
+            name: "delimiter",
+            className: "Delimiter",
+        },
+        quote: {
+            name: "quote",
+            className: "Quote",
+            config: {
+                quotePlaceholder: "...",
+                captionPlaceholder: "...",
+            },
+        },
+        "inline-code": {
+            name: "inline-code",
+            className: "InlineCode",
+        },
+        marker: {
+            name: "marker",
+            className: "Marker",
+        },
+        bold: {
+            name: "bold",
+            className: "Bold",
+        },
+        italic: {
+            name: "italic",
+            className: "Italic",
+        },
+        link: {
+            name: "link",
+            className: "Hyperlink",
+        },
+        underline: {
+            name: "underline",
+            className: "Underline",
+        },
+        "inline-style": {
+            name: "inline-style",
+            className: "StyleInlineTool",
+        },
+        paragraph: {
+            name: "paragraph",
+            className: "Paragraph",
+        },
+        table: {
+            name: "table",
+            className: "Table",
+        },
+        button: {
+            name: "button",
+            className: "Button",
+        },
+        pages_list: {
+            name: "pages_list",
+            className: "PagesList",
+            config: {
+                preview: "/admin/page/block/{{ attr.page_id }}",
+            }
+        },
+    },
+    data: {{ (value ? value : "{}")|raw }},
+    logLevel: "ERROR",
+    holder: "{{ editor_id }}",
+};
+    </script>
+{% endblock %}

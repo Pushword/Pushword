@@ -31,24 +31,34 @@ deux espace sont nécessaires.</code></pre></div> <h2 class="font-bold mb-4 mt-1
 > sur plusieurs lignes<br><br>
 > ou sur plusieurs paragraphes<br></code></pre></div> <h2 class="font-bold mb-4 mt-16 text-3xl" id=img>Image and gallery</h2> <div class="mb-8 overflow-hidden relative"><pre class="bg-black bg-opacity-75 overflow-x-auto p-3 rounded-xl text-sm text-white"><code><div>
             
-                                    
-                    <span data-fslightbox="inline" dwl="/media/default/media/mon-image.webp" data-rot="/zrqvn/qrsnhyg/zrqvn/zba-vzntr.wct"><picture>
-    <source type="image/webp" srcset="/media/xs/media/mon-image.webp 576w,/media/sm/media/mon-image.webp 768w,/media/md/media/mon-image.webp 992w,/media/lg/media/mon-image.webp 1200w,/media/xl/media/mon-image.webp 1600w">
-    <img srcset="/media/xs/media/mon-image.jpg 576w,/media/sm/media/mon-image.jpg 768w,/media/md/media/mon-image.jpg 992w,/media/lg/media/mon-image.jpg 1200w,/media/xl/media/mon-image.jpg 1600w" src="/media/default/media/mon-image.jpg" loading="lazy" class="w-full h-auto" width="100000" height="100000" alt="Texte alternatif">
+                
+        
+            <span data-fslightbox="inline" dwl="/media/default/mon-image.webp" data-rot="/zrqvn/qrsnhyg/zba-vzntr.wct"><picture>
+    <source type="image/webp" srcset="/media/xs/mon-image.webp 576w,/media/sm/mon-image.webp 768w,/media/md/mon-image.webp 992w,/media/lg/mon-image.webp 1200w,/media/xl/mon-image.webp 1600w">
+    <img srcset="/media/xs/mon-image.jpg 576w,/media/sm/mon-image.jpg 768w,/media/md/mon-image.jpg 992w,/media/lg/mon-image.jpg 1200w,/media/xl/mon-image.jpg 1600w" src="/media/default/mon-image.jpg" loading="lazy" class="w-full h-auto" width="100000" height="100000" alt="image's description">
 </picture>
 </span>
+        
+            
 
+</div>
+<br>
+<div>
+            
                 
-                
+        
+            <span data-fslightbox="inline" dwl="/media/default/image-s-description-8c19.webp" data-rot="/zrqvn/qrsnhyg/vzntr-f-qrfpevcgvba-8p19.wct"><picture>
+    <source type="image/webp" srcset="/media/xs/image-s-description-8c19.webp 576w,/media/sm/image-s-description-8c19.webp 768w,/media/md/image-s-description-8c19.webp 992w,/media/lg/image-s-description-8c19.webp 1200w,/media/xl/image-s-description-8c19.webp 1600w">
+    <img srcset="/media/xs/image-s-description-8c19.jpg 576w,/media/sm/image-s-description-8c19.jpg 768w,/media/md/image-s-description-8c19.jpg 992w,/media/lg/image-s-description-8c19.jpg 1200w,/media/xl/image-s-description-8c19.jpg 1600w" src="/media/default/image-s-description-8c19.jpg" loading="lazy" class="w-full h-auto" width="100000" height="100000" alt="image's description">
+</picture>
+</span>
+        
+            
 
 </div>
 <br><br>
-# Pour afficher toutes les images liées à une page <br>
-{{ gallery(page)|unprose }}<br><br>
-# Pour afficher seulement les 4 premières images liées à une page:<br>
-{{ gallery(page, 1, 4)|unprose }}<br>
-# Pour afficher seulement les 2 suivantes&nbsp;:<br>
-{{ gallery(page, 4, 2)|unprose }}</code></pre> </div> <p class="bg-yellow-50 border-l-4 border-yellow-600 font-bold mt-6 p-5 rounded-sm text-yellow-600">Il est déconseillé d'utiliser des images provenant d'un site tiers (cf loi RGPD) <h2 class="font-bold mb-4 mt-16 text-3xl" id=video>Video</h2> <div class="mb-8 overflow-hidden relative"><pre class="bg-black bg-opacity-75 overflow-x-auto p-3 rounded-xl text-sm text-white"><code>{{ video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose }}</code></pre> </div> <div class="dark:prose-light prose"><ul><li>le premier élément correspond à l'URL de votre vidéo (youtube ou autre) <li>le second à l'image d'aperçu <li>le troisième <li>une quatrième valeur peut être ajouter <code>url</code>&nbsp;: permet de forcer l'affichage de la vidéo en plein écran</ul> </div> <h2 class="font-bold mb-4 mt-16 text-3xl" id=pageslist>List pages</h2> <div class="mb-8 overflow-hidden relative"><pre class="bg-black bg-opacity-75 overflow-x-auto p-3 rounded-xl text-sm text-white"><code>{{ list('keyword X or <!--invisible-hash-in-content-->')|unprose }}<br>
+# Pour afficher une gallerie
+{{ gallery({'image desc': '/media/default/mon-image.jpg'})|unprose }}</code></pre> </div> <h2 class="font-bold mb-4 mt-16 text-3xl" id=video>Video</h2> <div class="mb-8 overflow-hidden relative"><pre class="bg-black bg-opacity-75 overflow-x-auto p-3 rounded-xl text-sm text-white"><code>{{ video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose }}</code></pre> </div> <div class="dark:prose-light prose"><ul><li>le premier élément correspond à l'URL de votre vidéo (youtube ou autre) <li>le second à l'image d'aperçu <li>le troisième <li>une quatrième valeur peut être ajouter <code>url</code>&nbsp;: permet de forcer l'affichage de la vidéo en plein écran</ul> </div> <h2 class="font-bold mb-4 mt-16 text-3xl" id=pageslist>List pages</h2> <div class="mb-8 overflow-hidden relative"><pre class="bg-black bg-opacity-75 overflow-x-auto p-3 rounded-xl text-sm text-white"><code>{{ list('keyword X or <!--invisible-hash-in-content-->')|unprose }}<br>
 {{ list('keyword X', $number = 3, $start = 1 $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig')|unprose }}<br>
 {{ cardlist('keyword X', $number = 3, $orderBy = 'createdAt')|unprose }}<br><br>
 {{ children(page, $number = 3, $start = 1)|unprose }}<br>

@@ -1,0 +1,20 @@
+{% if (data.display == 'card') %}
+
+<iframe width="100%" height="auto" style="border: none" onload="resizeIframe(this)"
+srcdoc='
+<base target="_blank" />
+
+{% apply replace({"'": "\'"}) %}
+
+{{ block("css", view('/base.html.twig')) }}
+
+
+{{ pages_list(data.kw, [(data.max ? data.max : '9'), (data.maxPages ? data.maxPages : '1')], data.order, 'card') }}
+
+{% endapply %}
+
+' />
+</base>
+{% else %}
+    {% include view('/block/pages_list.html.twig', '@PushwordAdminBlockEditor') %}
+{% endif %}

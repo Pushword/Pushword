@@ -1,6 +1,6 @@
 <?php
 
-namespace Pushword\AdminBlockEditor;
+namespace Pushword\AdminBlockEditor\FormField;
 
 use Pushword\Admin\FormField\PageH1Field;
 use Sonata\AdminBundle\Form\FormMapper;

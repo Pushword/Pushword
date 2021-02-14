@@ -16,31 +16,19 @@
     {% if image_src is defined %}
         {% if image_wrapper_class is defined or image_wrapper is defined %}
             <{{ image_wrapper|default('p') }} {% if image_wrapper_class is defined %}class="{{ image_wrapper_class }}"{% endif %}>
-            {% endif %}
+        {% endif %}
 
-                {% if is_internal_image(image_src) %}
-                    {% set image =  img_to_media(image_src) %}
+        {% set image =  media_from_string(image_src, image_alt ?? '') %}
+        {% set image_html =  _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null) %}
 
-                    {{ image_link is not defined or image_link != false ?
+        {% if image_link is not defined or image_link != false %}
 
-                    link(
-                        _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null),
-                        image_link|default(image|image('default')),
-                        image_link is not defined ? {'data-fslightbox': 'inline', 'dwl': image|image('default', 'webp')} : {}
-                    )
-                        : _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null)
-                    }}
+            {{ link(image_html, image_link|default(image|image('default')), image_link is not defined ? {'data-fslightbox': 'inline', 'dwl': image|image('default', 'webp')} : {}) }}
+        {% else %}
+            {{ image_html }}
+        {% endif %}
 
-                {% else %}
-                    <img
-                        src="{{ image_src }}"
-                        loading="lazy"
-                        class="{{ (rounded is defined ? 'rounded' : '') ~ (image_class is defined and image_class ? ' '~image_class : ' ' ~ 'w-full h-auto') }}"
-                        alt="{{ image_alt }}" />
-                {% endif %}
-
-            {% if image_wrapper_class is defined %}
-
+        {% if image_wrapper_class is defined %}
             </{{ image_wrapper|default('p') }}>
         {% endif %}
     {% endif %}

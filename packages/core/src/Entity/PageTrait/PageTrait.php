@@ -10,12 +10,12 @@ trait PageTrait
     /**
      * @ORM\Column(type="string", length=150)
      */
-    protected $slug;
+    protected string $slug = '';
 
     /**
      * @ORM\Column(type="string", length=255)
      */
-    protected $h1 = '';
+    protected string $h1 = '';
 
     /**
      * RawContent would have been a more appropriate name.
@@ -27,11 +27,6 @@ trait PageTrait
     public function __toString()
     {
         return trim($this->host.'/'.$this->slug.' ');
-    }
-
-    public function __constructPage()
-    {
-        $this->slug = '';
     }
 
     public function getH1(): ?string
@@ -70,8 +65,8 @@ trait PageTrait
         if (true === $set) {
             $this->slug = $slug;
         } elseif (null === $slug) { // work around for disabled input in sonata admin
-            if (null === $this->slug) {
-                throw new \ErrorException('slug cant be null');
+            if ('' === $this->slug) {
+                throw new \ErrorException('slug cant be empty.');
             }
         } else {
             $this->slug = static::normalizeSlug($slug); //$this->setSlug(trim($slug, '/'), true);

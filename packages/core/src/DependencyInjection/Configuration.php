@@ -42,21 +42,21 @@ class Configuration implements ConfigurationInterface
     const DEFAULT_PUBLIC_MEDIA_DIR = '/media';
     const IMAGE_FILTERS_SET = [
         'default' => ['quality' => 90, 'filters' => ['downscale' => [1980, 1280]]],
-        'thumb' => [
-            'quality' => 80,
-            'filters' => [
-                'fit' => [
-                    330,
-                    330,
-                ],
-            ],
-        ],
         'height_300' => [
             'quality' => 82,
             'filters' => [
                 'heighten' => [
                     300,
                     'constraint' => '$constraint->upsize();',
+                ],
+            ],
+        ],
+        'thumb' => [
+            'quality' => 80,
+            'filters' => [
+                'fit' => [
+                    330,
+                    330,
                 ],
             ],
         ],
@@ -116,7 +116,6 @@ class Configuration implements ConfigurationInterface
             ->scalarNode('entity_page')->defaultValue('App\Entity\Page')->cannotBeEmpty()->end()
             ->scalarNode('entity_media')->defaultValue('App\Entity\Media')->cannotBeEmpty()->end()
             ->scalarNode('entity_user')->defaultValue('App\Entity\User')->cannotBeEmpty()->end()
-            ->scalarNode('entity_pagehasmedia')->defaultValue('App\Entity\PageHasMedia')->cannotBeEmpty()->end()
             ->scalarNode('media_dir')
                 ->defaultValue('%kernel.project_dir%/media')->cannotBeEmpty()
                 ->info('Dir where files will be uploaded when using admin.')

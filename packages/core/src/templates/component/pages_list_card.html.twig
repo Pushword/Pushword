@@ -1,6 +1,6 @@
 {% block list %}{% apply spaceless %}
     {% if pages is not empty %}
-        <ul class="flex flex-row unprose">
+        <ul class="flex flex-row my-5">
             {% for p in pages %}
                 <li class="w-full px-1 my-1 sm:w-1/2">
                     {% include view('/component/card.html.twig') with {'page': p} only %}
@@ -10,8 +10,8 @@
     {% else %}
         <p>...</p>
     {% endif %}
-    {% if pager is defined and pager is not null %}
-        {{ pager(pager, {'omitFirstPage': true, 'pageParameter': '[pager]', 'routeName': pager_route, 'routeParams': pager_route_params}) }}
+    {% if pager is defined and pager is not null and (pager.currentPage != 1 or pager.hasNextPage) %}
+        <div class="mb-5">{{ pager(pager, {'omitFirstPage': true, 'pageParameter': '[pager]', 'routeName': pager_route, 'routeParams': pager_route_params}) }}</div>
     {% endif %}
 {% endapply %}
 {% endblock %}

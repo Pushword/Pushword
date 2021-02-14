@@ -251,18 +251,13 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
-![Texte alternatif](/media/default/media/mon-image.jpg)<br>
+![image's description](/media/default/mon-image.jpg)<br>
+![image's description](https://images.unsplash.com/photo-1473448912268-2022ce9509d8?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1625&q=80)<br>
 <br>
-# Pour afficher toutes les images liées à une page <br>
-{{ "{{ gallery(page)|unprose }}" }}<br>
-<br>
-# Pour afficher seulement les 4 premières images liées à une page:<br>
-{{ "{{ gallery(page, 1, 4)|unprose }}" }}<br>
-# Pour afficher seulement les 2 suivantes :<br>
-{{ "{{ gallery(page, 4, 2)|unprose }}" }}
+# Pour afficher une gallerie
+{{ "{{ gallery({'image desc': '/media/default/mon-image.jpg'})|unprose }}" }}
 {% endapply %}</code></pre>
 </div>
-<p class="p-5 mt-6 font-bold text-yellow-600 border-l-4 border-yellow-600 rounded-sm bg-yellow-50">Il est déconseillé d'utiliser des images provenant d'un site tiers (cf loi RGPD)</p>
 
 
 <!-- -->

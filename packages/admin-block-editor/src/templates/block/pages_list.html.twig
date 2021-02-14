@@ -1,0 +1,7 @@
+
+
+{% if (data.display == 'card') %}
+{{ pages_list(data.kw, [(data.max ? data.max : '9'), (data.maxPages ? data.maxPages : '1')], data.order, 'card')|unprose }}
+{% else %}
+{{ pages_list(data.kw, [(data.max ? data.max : '9'), (data.maxPages ? data.maxPages : '1')], data.order) }}
+{% endif %}

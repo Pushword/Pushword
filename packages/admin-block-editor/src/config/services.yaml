@@ -5,6 +5,7 @@ services:
     bind:
       $editorBlockForNewPage: "%pw.pushword_admin_block_editor.new_page%"
       $mediaClass: "%pw.entity_media%"
+      $pageClass: "%pw.entity_page%"
 
   Pushword\AdminBlockEditor\:
     resource: "../*"

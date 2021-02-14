@@ -9,17 +9,6 @@
     </ul>
 {% endif %}
 
-{% if gallery.count > 0 %}
-    <h4>Via une gallerie</h4>
-    <ul>
-        {% for page_has_media in gallery %}
-            {% block item2 %}
-                <li><a href="{{ path('admin_app_page_edit', {'id': page_has_media.page.id}) }}">{{ pw(page_has_media.page).h1|raw }}</a></li>
-            {% endblock %}
-        {% endfor %}
-    </ul>
-{% endif %}
-
 {% if content %}
     <h4>Via le contenu</h4>
     <ul>

@@ -44,26 +44,10 @@ services:
     autowire: true
     calls:
       - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
-      - [
-          setTemplate,
-          [
-            short_object_description,
-            "@@pwAdmin/media/short_object_description.html.twig",
-          ],
-        ]
+      - [setTemplate, [short_object_description, "@@pwAdmin/media/short_object_description.html.twig"]]
       - [setPageClass, ["%pw.entity_page%"]]
     tags:
       - { name: sonata.admin, manager_type: orm, label: admin.label.media }
-
-  Pushword\Admin\PageHasMediaAdminInterface:
-    alias: pushword.admin.pagehasmedia
-
-  pushword.admin.pagehasmedia:
-    class: Pushword\Admin\PageHasMediaAdmin
-    arguments: [~, "%pw.entity_pagehasmedia%", ~]
-    autowire: true
-    tags:
-      - { name: sonata.admin, manager_type: orm }
 
   Pushword\Admin\UserAdminInterface:
     alias: pushword.admin.user

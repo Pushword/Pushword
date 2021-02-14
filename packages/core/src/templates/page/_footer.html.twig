@@ -1,12 +1,12 @@
 <footer class="{{ footer_class|default('text-sm border-t border-gray-200 dark:border-gray-700') }}">
-    <div class="max-w-screen-md p-3 py-10 mx-auto text-right">
+    <div class="max-w-screen-md p-3 py-10 mx-auto text-center text-gray-500">
         {% block footer %}
             {% include view('/component/alternate_links.html.twig') %}
         {% endblock %}
 
         {% block extra_footer %}
-            <a href="{{ homepage(page) }}" class="block mb-3 text-2xl text-primary hover:opacity-75">{{ app_name }}</a>
-            Crafted by <a href="https://piedweb.com" class="text-primary hover:opacity-75">Pied Web</a>.
+            {# You are not force to keep this link here, but having a mention to pushword somewhere is welcomed #}
+            <small>Powered by <a href="https://pushword.piedweb.com" class="text-primary hover:opacity-75">Pushword</a> ✕ <a href="https://piedweb.com" class="text-primary hover:opacity-75">Pied Web</a></small>
         {% endblock %}
     </div>
 </footer>

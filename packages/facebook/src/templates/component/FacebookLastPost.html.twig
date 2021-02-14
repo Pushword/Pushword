@@ -4,13 +4,8 @@
 
     {% block gallery %}
         {% set gallery_id = 'g-' ~ post.post_id %}
-        {% from view('/page/_gallery.html.twig') import gallery_part %}
         {% if post.images_hd is defined and post.images_hd is not empty %}
-            <ul class="grid grid-cols-2 gap-3 list-none">
-                {% for image in post.images_hd %}
-                    <li>{{ gallery_part(image, gallery_id, null) }}</li>
-                {% endfor %}
-            </ul>
+            {{ gallery(post.images_hd) }}
         {% endif %}
     {% endblock %}
 

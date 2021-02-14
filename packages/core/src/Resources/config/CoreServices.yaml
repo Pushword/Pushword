@@ -10,6 +10,7 @@ services:
       $projectDir: "%kernel.project_dir%"
       $filterSets: "%pw.image_filter_sets%"
       $publicMediaDir: "%pw.public_media_dir%"
+      $mediaDir: "%pw.media_dir%"
       $publicDir: "%pw.public_dir%"
 
   # --------
@@ -34,11 +35,7 @@ services:
   Pushword\Core\EventListener\UserListener:
     autowire: true
     tags:
-      - {
-          name: doctrine.orm.entity_listener,
-          entity: "%pw.entity_user%",
-          event: preUpdate,
-        }
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_user%", event: preUpdate }
 
   pushword.page_rendering.validator:
     class: Pushword\Core\Validator\Constraints\PageRenderingValidator
@@ -65,11 +62,7 @@ services:
   Pushword\Core\EventListener\PageListener:
     autowire: true
     tags:
-      - {
-          name: doctrine.orm.entity_listener,
-          entity: "%pw.entity_page%",
-          event: preRemove,
-        }
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_page%", event: preRemove }
 
   Pushword\Core\Repository\PageRepositoryInterface:
     class: Pushword\Core\Repository\PageRepository
@@ -103,16 +96,8 @@ services:
     tags:
       - { name: kernel.event_listener, event: vich_uploader.pre_upload }
       - { name: kernel.event_listener, event: vich_uploader.post_upload }
-      - {
-          name: doctrine.orm.entity_listener,
-          entity: "%pw.entity_media%",
-          event: preUpdate,
-        }
-      - {
-          name: doctrine.orm.entity_listener,
-          entity: "%pw.entity_media%",
-          event: preRemove,
-        }
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: preUpdate }
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: preRemove }
       #- { name: doctrine.orm.entity_listener, entity: Pushword\Core\Entity\Image, event: prePersist }
 
   pushword.media_repository:

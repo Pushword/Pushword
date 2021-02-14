@@ -27,4 +27,3 @@ doctrine:
       Pushword\Core\Entity\PageInterface: "%pw.entity_page%"
       Pushword\Core\Entity\MediaInterface: "%pw.entity_media%"
       Pushword\Core\Entity\UserInterface: "%pw.entity_user%"
-      Pushword\Core\Entity\PageHasMediaInterface: "%pw.entity_pagehasmedia%"

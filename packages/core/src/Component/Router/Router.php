@@ -76,7 +76,7 @@ class Router implements RouterInterface
         }
 
         if ($canonical && $page) {
-            $baseUrl = $this->apps->getApp('baseUrl', $page->getHost());
+            $baseUrl = $this->apps->getAppValue('baseUrl', $page->getHost());
         }
 
         $url = ($baseUrl ?? '').$this->router->generate(self::PATH, ['slug' => $slug]);

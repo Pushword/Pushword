@@ -13,7 +13,6 @@ use Pushword\Admin\FormField\OgTwitterCreatorField;
 use Pushword\Admin\FormField\OgTwitterSiteField;
 use Pushword\Admin\FormField\PageCreatedAtField;
 use Pushword\Admin\FormField\PageH1Field;
-use Pushword\Admin\FormField\PageImagesField;
 use Pushword\Admin\FormField\PageLocaleField;
 use Pushword\Admin\FormField\PageMainContentField;
 use Pushword\Admin\FormField\PageMainImageField;
@@ -55,7 +54,6 @@ class Configuration implements ConfigurationInterface
             ],
             'admin.page.translations.label' => [PageLocaleField::class, PageTranslationsField::class],
             'admin.page.customProperties.label' => ['expand' => true, 'fields' => [CustomPropertiesField::class]],
-            'admin.page.gallery.label' => [PageImagesField::class],
             'admin.page.og.label' => [
                 'expand' => true,
                 'fields' => [OgTitleField::class, OgDescriptionField::class, OgImageField::class,

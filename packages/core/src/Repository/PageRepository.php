@@ -115,13 +115,21 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
      */
     public function getPagesUsingMedia(string $media): array
     {
-        $q = $this->createQueryBuilder('p')
-            ->andWhere('p.mainContent LIKE :val')
-            ->setParameter('val', '%'.$media.'%')
-            ->getQuery()
-        ;
+        $qb = $this->createQueryBuilder('p');
 
-        return $q->getResult();
+        $or = $qb->expr()->orX();
+        $or->add($qb->expr()->like('p.mainContent', ':apostrophMedia')); // catch: 'example.jpg'
+        $or->add($qb->expr()->like('p.mainContent', ':quotedMedia')); // catch: "example.jpg'
+        $or->add($qb->expr()->like('p.mainContent', ':defaultMedia')); // catch: media/default/example.jpg
+        $or->add($qb->expr()->like('p.mainContent', ':thumbMedia'));
+        $query = $qb->where($or)->setParameters([
+            'apostrophMedia' => '%\''.$media.'\'%',
+            'quotedMedia' => '%"'.$media.'"%',
+            'defaultMedia' => '/media/default/'.$media.'%',
+            'thumbMedia' => '/media/thumb/'.$media.'%',
+        ])->getQuery();
+
+        return $query->getResult();
     }
 
     private function getRootAlias(QueryBuilder $qb): string

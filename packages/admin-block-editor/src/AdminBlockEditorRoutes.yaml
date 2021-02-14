@@ -2,3 +2,12 @@ admin_media_block:
   path: /admin/media/block
   controller: Pushword\AdminBlockEditor\Controller\MediaBlockController::manage
   methods: POST
+
+admin_page_block:
+  path: /admin/page/block/{id}
+  controller: Pushword\AdminBlockEditor\Controller\PageBlockController::manage
+  methods: POST
+  defaults:
+    id: 0
+  requirements:
+    id: "[0-9]+"

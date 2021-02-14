@@ -11,7 +11,7 @@ trait EmailTwigTrait
 
     public function renderEncodedMail(Twig $twig, $mail, $class = '')
     {
-        $template = $this->getApp()->getView('/component/encoded_mail.html.twig', $twig);
+        $template = $this->getApp()->getView('/component/encoded_mail.html.twig');
 
         return $twig->render($template, [
             'mail_readable' => self::readableEncodedMail($mail),

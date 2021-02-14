@@ -24,7 +24,7 @@ abstract class AbstractBlock implements BlockInterface
 
     public function render($data): string
     {
-        $view = $this->getApp()->getView('/block/'.$this->name.'.html.twig', $this->getTwig());
+        $view = $this->getApp()->getView('/block/'.$this->name.'.html.twig', '@PushwordAdminBlockEditor');
 
         return $this->getTwig()->render($view, [
             'data' => $data,

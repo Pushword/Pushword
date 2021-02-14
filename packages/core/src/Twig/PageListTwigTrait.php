@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Twig;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Pagerfanta\Adapter\ArrayAdapter;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
@@ -12,7 +11,6 @@ use Pagerfanta\RouteGenerator\RouteGeneratorFactoryInterface;
 use Pagerfanta\Twig\View\TwigView;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Environment as Twig;
@@ -32,49 +30,6 @@ trait PageListTwigTrait
 
     /** @required */
     public RouteGeneratorFactoryInterface $routeGeneratorFactory;
-
-    /**
-     * @param int|array $max if max is int => max result,
-     *                       if max is array => paginate where 0 => item per page and 1 (fac) maxPage
-     */
-    public function renderChildrenListCard(Twig $twig, PageInterface $page, $max = 0): string
-    {
-        return $this->renderChildrenList($twig, $page, $max, '/component/pages_list_card.html.twig');
-    }
-
-    /**
-     * @param int|array $max if max is int => max result,
-     *                       if max is array => paginate where 0 => item per page and 1 (fac) maxPage
-     */
-    public function renderChildrenList(
-        Twig $twig,
-        PageInterface $page,
-        $max = 0,
-        string $view = '/component/pages_list.html.twig'
-    ): string {
-        $pages = $page->getChildrenPages();
-
-        $limit = $this->getLimit($max);
-        if ($limit) {
-            $pages = $pages->slice(0, $limit);
-        }
-
-        if (\is_array($max)) {
-            $pager = (new Pagerfanta(new ArrayAdapter($pages instanceof ArrayCollection ? $pages->toArray() : $pages)))
-                ->setMaxPerPage($max[0])
-                ->setCurrentPage($this->getCurrentPage());
-            $pages = $pager->getCurrentPageResults();
-        }
-
-        $template = $this->getApp()->getView($view);
-
-        return $twig->render($template, [
-            'pager_route' => $this->getPagerRouteName(),
-            'pager_route_params' => $this->getPagerRouteParams(),
-            'pages' => $pages,
-            'pager' => $pager ?? null,
-        ]);
-    }
 
     private function getPagerRouteParams(): array
     {
@@ -99,14 +54,13 @@ trait PageListTwigTrait
         return $pagerRouter;
     }
 
-    public function renderPagesListCard(
-        Twig $twig,
-        $search = '',
-        $max = 0,
-        $order = 'createdAt',
-        $host = ''
-    ): string {
-        return $this->renderPagesList($twig, $search, $max, $order, $host, '/component/pages_list_card.html.twig');
+    private function stringToSearch(string $search)
+    {
+        if ('children' == strtolower($search) && $this->apps->getCurrentPage()) {
+            return [['parentPage', '=', $this->apps->getCurrentPage()->getId()]];
+        }
+
+        return [['key' => 'mainContent', 'operator' => 'LIKE', 'value' => '%'.$search.'%']];
     }
 
     /**
@@ -118,16 +72,22 @@ trait PageListTwigTrait
         $search = '',
         $max = 0,
         $order = 'createdAt',
-        $host = '',
-        string $view = '/component/pages_list.html.twig'
+        string $view = '/component/pages_list.html.twig',
+        $host = ''
     ): string {
-        if (\is_string($search)) {
-            $search = [['key' => 'mainContent', 'operator' => 'LIKE', 'value' => '%'.$search.'%']];
+        if ('card' == $view) {
+            $view = '/component/pages_list_card.html.twig';
         }
+
+        $search = \is_array($search) ? $search : $this->stringToSearch($search);
+
         if ($this->apps->getCurrentPage()) {
             $search[] = ['key' => 'id', 'operator' => '!=', 'value' => $this->apps->getCurrentPage()->getId()];
         }
 
+        if (false !== strpos($order, ' ')) {
+            $order = explode(' ', $order, 2);
+        }
         $order = \is_string($order) ? ['key' => $order, 'direction' => 'DESC']
             : ['key' => $order[0], 'direction' => $order[1]];
 
@@ -139,7 +99,7 @@ trait PageListTwigTrait
                 $this->getLimit($max)
             );
 
-        if (\is_array($max)) {
+        if (\is_array($max) && isset($max[1]) && $max[1] > 1) {
             $pages = (array) $queryBuilder->getQuery()->getResult();
             $limit = $this->getLimit($max);
             if ($limit) {

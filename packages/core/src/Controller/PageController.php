@@ -72,7 +72,7 @@ final class PageController extends AbstractController
 
     private function getView(string $path): string
     {
-        return $this->app->getView($path, $this->twig);
+        return $this->app->getView($path);
     }
 
     public function showFeed(?string $slug, ?string $host, Request $request)

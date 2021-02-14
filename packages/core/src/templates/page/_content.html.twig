@@ -12,7 +12,7 @@
 
         {% block main_image %}
             {% if page.mainImage is not null %}
-                {% include view('/component/inline_image.html.twig') with {
+                {% include view('/component/image_inline.html.twig') with {
                         'image_src': page.mainImage|image('default'),
                         'image_alt': page.mainImage.name(page.locale, true)|default(page.getTitle(true)|striptags),
                         'image_wrapper_class': ' ',

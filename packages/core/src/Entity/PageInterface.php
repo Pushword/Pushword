@@ -33,15 +33,6 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
      */
     public function getChildrenPages();
 
-    // ImageTrait
-    public function resetPageHasMedias(): void;
-
-    public function removePageHasMedia(PageHasMedia $pageHasMedia): void;
-
-    public function addPageHasMedia(PageHasMedia $pageHasMedia): self;
-
-    // ---
-
     public function getRedirection();
 
     public function getRedirectionCode();

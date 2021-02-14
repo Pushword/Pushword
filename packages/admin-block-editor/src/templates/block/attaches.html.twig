@@ -1,0 +1,13 @@
+{% apply unprose %}
+<div class="flex flex-row p-3 mx-3 my-6 border border-gray-400 rounded clickable">
+    <div class="w-16 px-3 text-gray-400">
+        {{ svg('file-alt', {class: 'w-8 pt-2 fill-current'}) }}
+    </div>
+    <div class="flex-grow">
+        <div class="font-bold">{{ data.title }}</div>
+        <div class="font-light">{{ filesize(data.file.size) }}B {# todo: translate #}</div>
+    </div>
+
+    {{ link(svg('download', {class: 'w-10 fill-current'}), data.file.url, {'class': 'd-block text-gray-600 p-3'}) }}
+</div>
+{% endapply %}

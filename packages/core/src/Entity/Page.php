@@ -5,7 +5,7 @@ namespace Pushword\Core\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\PageTrait\PageExtendedTrait;
 use Pushword\Core\Entity\PageTrait\PageI18nTrait;
-use Pushword\Core\Entity\PageTrait\PageImageTrait;
+use Pushword\Core\Entity\PageTrait\PageMainImageTrait;
 use Pushword\Core\Entity\PageTrait\PageOpenGraphTrait;
 use Pushword\Core\Entity\PageTrait\PageParentTrait;
 use Pushword\Core\Entity\PageTrait\PageRedirectionTrait;
@@ -36,7 +36,7 @@ class Page implements PageInterface
     use IdTrait;
     use PageExtendedTrait;
     use PageI18nTrait;
-    use PageImageTrait;
+    use PageMainImageTrait;
     use PageOpenGraphTrait;
     use PageParentTrait;
     use PageRedirectionTrait;
@@ -48,9 +48,5 @@ class Page implements PageInterface
     public function __construct()
     {
         $this->__constructTimestampable();
-        $this->__constructPage();
-        $this->__constructExtended();
-        $this->__constructImage();
-        $this->__constructI18n();
     }
 }

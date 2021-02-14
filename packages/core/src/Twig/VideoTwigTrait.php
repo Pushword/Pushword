@@ -10,7 +10,7 @@ trait VideoTwigTrait
 
     public function renderVideo($url, $image, $alternativeText = '', $forceUrl = false)
     {
-        $template = $this->getApp()->getView('/component/video.html.twig', $this->twig);
+        $template = $this->getApp()->getView('/component/video.html.twig');
         $youtube = $forceUrl ? null : static::getYoutubeVideoUrl($url);
 
         return trim($this->twig->render($template, [
@@ -31,7 +31,7 @@ trait VideoTwigTrait
     public function getEmbedCode($embed_code)
     {
         if ($id = self::getYoutubeVideoUrl($embed_code)) {
-            $template = $this->getApp()->getView('/component/video_youtube_embed.html.twig', $this->twig);
+            $template = $this->getApp()->getView('/component/video_youtube_embed.html.twig');
 
             return $this->twig->render($template, ['id' => $id]);
         }

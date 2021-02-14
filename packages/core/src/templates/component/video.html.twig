@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% macro videoThumb(image, alt, btn_title) %}
-    {% include view('/component/inline_image.html.twig') with {'image_src': image,'image_alt': alt|striptags,'image_link': false, image_class: 'm-0 absolute top-0 left-0 h-full w-full'} %}
+    {% include view('/component/image_inline.html.twig') with {'image_src': image,'image_alt': alt|striptags,'image_link': false, image_class: 'm-0 absolute top-0 left-0 h-full w-full'} %}
     <div class="absolute top-0 left-0 w-full h-full bg-white bg-opacity-25"></div>
     <span><span class="absolute block w-2/5 p-5 cursor-pointer text-primary hover:opacity-75" style="transform: translate(-50%,-50%);margin-right:-50%;top: 50%;left: 50%;">
        {{ btn_title|raw }}

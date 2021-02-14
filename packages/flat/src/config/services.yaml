@@ -47,7 +47,6 @@ services:
     calls:
       - [setContentDirFinder, ["@pushword.flat.content_dir_finder"]]
       - [setMediaClass, ["%pw.entity_media%"]]
-      - [setPageHasMediaClass, ["%pw.entity_pagehasmedia%"]]
 
   Pushword\Flat\Importer\MediaImporter:
     autowire: true

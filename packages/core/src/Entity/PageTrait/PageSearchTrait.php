@@ -56,10 +56,6 @@ trait PageSearchTrait
         return $this;
     }
 
-    public function __constructExtended()
-    {
-    }
-
     public function getSearchExcrept(): ?string
     {
         return $this->getCustomProperty('searchExcrept');

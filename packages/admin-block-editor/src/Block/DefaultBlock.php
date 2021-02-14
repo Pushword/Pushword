@@ -17,6 +17,9 @@ class DefaultBlock extends AbstractBlock
         'delimiter',
         'table',
         'image',
+        'embed',
+        'attaches',
+        'pages_list',
     ];
 
     public function __construct(string $name)

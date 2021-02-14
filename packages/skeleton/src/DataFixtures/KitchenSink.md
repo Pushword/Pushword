@@ -18,13 +18,11 @@ A few example for the editor possibilities. Best to observe this, it's in admin 
 
 ![Capture d’écran de 2020-12-12 15-33-27](/media/default/1.jpg)
 
-## Galleries
+![Capture d’écran de 2020-12-12 15-33-27](2.jpg)
 
-{{ gallery(page)|unprose }}
+## Gallery
 
-{{ gallery(page, 1, 1)|unprose }}
-
-{{ gallery(page,  1, 3)|unprose }}
+{{ gallery({'Pied Web Logo' :'piedweb-logo.png', 'Demo 1': '1.jpg', 'Demo 2': '2.jpg'})|unprose }}
 
 ## Video
 
@@ -44,12 +42,10 @@ or open an iframe
 
 ### Page found via Kw
 
-{{  list('fun', 3) }}
+{{  pages_list('fun', 3) }}
 
-{{  card_list('Fun', [3])|unprose }}
+{{  pages_list('Fun', [3, 3], 'createdAt DESC', 'card')|unprose }}
 
-### Children Page (from parent for the case)
+Some keywords are protected :
 
-{{  children(page.parentPage, 3) }}
-
-{{  card_children(page.parentPage, 3)|unprose }}
+-   **Children** : return children pages
