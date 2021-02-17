@@ -65,9 +65,7 @@ trait PageTrait
         if (true === $set) {
             $this->slug = $slug;
         } elseif (null === $slug) { // work around for disabled input in sonata admin
-            if ('' === $this->slug) {
-                throw new \ErrorException('slug cant be empty.');
-            }
+            //if ('' === $this->slug) throw new \ErrorException('slug cant be empty.');
         } else {
             $this->slug = static::normalizeSlug($slug); //$this->setSlug(trim($slug, '/'), true);
         }

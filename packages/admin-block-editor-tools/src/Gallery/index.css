@@ -1,0 +1,9 @@
+.cdx-input-gallery,
+.cdxcarousel-block {
+    margin-top: 20px !important;
+    width: 50%;
+}
+
+.cdxcarousel-item img {
+    margin-bottom: 10px !important;
+}

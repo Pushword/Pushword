@@ -20,6 +20,7 @@ class DefaultBlock extends AbstractBlock
         'embed',
         'attaches',
         'pages_list',
+        'gallery',
     ];
 
     public function __construct(string $name)

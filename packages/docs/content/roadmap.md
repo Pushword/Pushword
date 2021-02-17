@@ -18,19 +18,19 @@ parent: contribute
 
 ## Soon
 
+-   [WIP] **Block editor** :
+    -   show loader on select btn click
+    -   embed, abstract, pagesList => ok, reste à faire gallery, image
+    -   Documenter (notamment la gestion des filtres sur le contenu)
+    -   Tester
+    -   textarea no new line make jump to .editorjs-holder too
+    -   Edition avancée (template notamment dans pages, prose/unprise)
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
 -   **clickable**
 -   associé un champ vidéo à l'image d'en-tête (plugin !)
 -   **Page Scanner** : add <!-- page-scanner-ignore: what to ignore --> ou plutôt dans othersParameters !!
 -   **New** API
 -   **eCommerce** bridge with sylius (or réciproque)
--   [WIP] **Block editor** :
-    -   Gérer des blocks
-        -   [ ] Gallery https://github.com/mr8bit/carousel-editorjs#server-format
-        -   [1/2] Link / EncryptedLink : gérer côté filtre : capturer les liens `encrypt`, les transformer en liens JS
-    -   textarea no new line make jump to .editorjs-holder too
-    -   implement https://github.com/hata6502/editorjs-element to edit directly with site style
-    -   gérer la possibilité de désactiver editor.js pour insérer une redirection ?! (ou aller chercher la redir dans le premier paragraphe ?)
 -   **Admin** : extend parameters and events to filters and form for all admin (will permit extension)
 -   **Extend** : Partially implemented in core. May added test and form field in admin ?
 -   Schema.org dans le backend d'une page

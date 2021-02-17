@@ -24,7 +24,7 @@ If you want to go forward than a default install, you can override default param
 
 ```yaml
 admin_block_editor:
-    new_page: true # Set false to disable block editor for new page (because new page does not have app yet)
+    new_page: true # Set false to disable block editor for new page (because new page does not have an associated `app` yet)
 ```
 
 Or you individually app by app :
@@ -39,13 +39,7 @@ admin_block_editor_disable_listener: false
 # permit to use all the blocks pre-configured in this extension
 admin_block_editor_blocks: \Pushword\AdminBlockEditor\Block\DefaultBlock::AVAILABLE_BLOCKS
 
-admin_block_editor_type_to_prose: [
-        "paragraph",
-        "image",
-        "list",
-        "blockquote",
-        "code",
-    ] # leave empty if you don't want a prose container around this blocks
+admin_block_editor_type_to_prose: ["paragraph", "image", "list", "blockquote", "code"] # leave empty if you don't want a prose container around this blocks
 ```
 
 ### Disable Listener and use filter
@@ -56,6 +50,44 @@ By default, a listener apply `Pushword\AdminBlockEditor\BlockEditorFilter` befor
 
 If you want to reorder the filters, just disable `admin_block_editor_disable_listener` and add `Pushword\AdminBlockEditor\BlockEditorFilter` in you app's config.
 
+**Performance** : It's recommanded to use only `BlockEditorFilter` to increase speed on generating page.
+
 ### Override block template
 
 You just find the block you want to override in [./src/templates/block](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/templates/block) and override it in your `templates/my-app.tld/block/my-block.html.twig`
+
+### Customize editor
+
+You want to add a custom block ? This is the path to follow :
+
+1. Create a new [editor.js plugin](https://editorjs.io/the-first-plugin). There are a few examples in #[admin-block-editor-tools](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor-tools)
+
+2. [Override](https://symfony.com/doc/current/bundles/override.html) [@PushwordAdminBlockEditor/editorjs_widget.html.twig](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/templates/editorjs_widget.html.twig) to add your custom plugin
+
+I recommend you to import `@PushwordAdminBlockEditor/editorjs_widget.html`.twig and to create only the block **editorjs_block_to_add_new_plugin**
+
+3. Add in your _app_ configuration with **admin_block_editor_blocks**
+
+Your configuration may looks like
+
+```
+admin_block_editor_blocks: [
+      'paragraph',
+      'list',
+      'header',
+      'raw',
+      'quote',
+      'code',
+      'list',
+      'delimiter',
+      'table',
+      'image',
+      'embed',
+      'attaches',
+      'pages_list',
+      'gallery',
+      '\App\Block\MyCustomBlock`
+  ]
+```
+
+4. Create `\App\Block\MyCustomBlock` wich implements #[BlockInterface](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/block/BlockInterface.php) or inherit #[AbstractBlock](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/block/AbstractBlock.php)

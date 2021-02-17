@@ -31,4 +31,7 @@
       <directory>packages/installer/src/</directory>
     </exclude>
   </coverage>
+  <extensions>
+    <extension class="Symfony\Component\Panther\ServerExtension" />
+  </extensions>
 </phpunit>

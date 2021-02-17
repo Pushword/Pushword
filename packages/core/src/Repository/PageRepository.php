@@ -60,7 +60,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             ->andWhere('p.slug =  :slug')->setParameter('slug', $slug);
 
         if ((int) $slug > 0 && $checkId) {
-            $qb->orWhere('p.id =  :slug')->setParameter('slug', $slug);
+            $qb->orWhere('p.id =  :id')->setParameter('id', $slug);
         }
 
         $qb = $this->andHost($qb, $host);

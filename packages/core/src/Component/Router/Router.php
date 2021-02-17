@@ -9,18 +9,18 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
 
-class Router implements RouterInterface
+final class Router implements RouterInterface
 {
     /** @var SfRouterInterface */
-    protected $router;
+    private $router;
 
-    protected $useCustomHostPath = true; // TODO make it true on special request, same with absolute
+    private $useCustomHostPath = true; // TODO make it true on special request, same with absolute
 
     /** @var AppPool */
-    protected $apps;
+    private $apps;
 
     /** @var string */
-    protected $currentHost;
+    private $currentHost;
 
     public function __construct(
         SfRouterInterface $router,
@@ -88,7 +88,7 @@ class Router implements RouterInterface
         return $url;
     }
 
-    protected function mayUseCustomPath()
+    private function mayUseCustomPath()
     {
         return $this->useCustomHostPath
             && $this->currentHost // we have a request

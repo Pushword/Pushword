@@ -5,7 +5,7 @@ namespace Pushword\Core;
 use Pushword\Core\DependencyInjection\PushwordCoreExtension;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-class PushwordCoreBundle extends Bundle
+final class PushwordCoreBundle extends Bundle
 {
     public function getContainerExtension()
     {

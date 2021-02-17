@@ -18,6 +18,7 @@ class Media implements MediaInterface
 {
     use CustomPropertiesTrait;
     use IdTrait;
+    use MediaLoaderTrait;
     use MediaTrait;
 
     public function __construct()

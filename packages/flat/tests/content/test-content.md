@@ -5,4 +5,4 @@ main_image: media/default/logo-test.png
 
 This is my test content page
 
-{{ gallery({'logo test': media/default/logo-test.png}) }}
+{{ gallery({'logo test': '/media/default/logo-test.png'}) }}

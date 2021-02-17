@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Component;
 
 use DateTime;
+use Pushword\Core\Component\EntityFilter\Filter\HtmlEncryptedLink;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -17,6 +18,19 @@ class EntityFilterTest extends KernelTestCase
         $this->assertSame($this->getPage()->getH1(), $manager->getTitle());
         $this->assertSame('',  $manager->getMainContent()->getChapeau());
         $this->assertSame('<p>',  substr(trim($manager->getMainContent()->getBody()), 0, 3));
+    }
+
+    public function testEncryptedLink()
+    {
+        self::bootKernel();
+
+        $filter = new HtmlEncryptedLink();
+        $filter->setApp(self::$kernel->getContainer()->get('pushword.apps')->getApp());
+        $filter->setTwig(self::$kernel->getContainer()->get('twig'));
+        $this->assertSame(
+            'Lorem <span class data-rot=_cvrqjro.pbz/>Test</span> ipsum',
+            $filter->convertHtmlRelEncryptedLink('Lorem <a href="https://piedweb.com/" rel="encrypt">Test</a> ipsum')
+        );
     }
 
     private function getManagerPool()

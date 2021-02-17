@@ -9,7 +9,7 @@
 
 {% block images_gallery %}
     {% set gallery_id = random(10, 1000) %}
-    {% set grid_cols = grid_cols ? grid_cols : (images|length < 5 ? images|length : (images|length is odd ? 3 : 4)) %}
+    {% set grid_cols = grid_cols|default(images|length < 5 ? images|length : (images|length is odd ? 3 : 4)) %}
 
         <div class="{{ gallery_container_class|default('my-3') }}">{# w-full-vw #}
             <ul class="{{ gallery_class|default('grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-2xl mx-auto') }}">

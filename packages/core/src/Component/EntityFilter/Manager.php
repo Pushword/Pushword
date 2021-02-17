@@ -9,7 +9,7 @@ use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment as Twig;
 
-class Manager
+final class Manager
 {
     private $entity;
     private AppConfig $app;

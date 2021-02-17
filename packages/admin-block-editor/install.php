@@ -9,4 +9,4 @@ if (! \Pushword\Installer\PostInstall::isRoot()) {
 }
 
 echo '~~ Adding Routes'.chr(10);
-\Pushword\Installer\PostInstall::addOnTop('config/routes.yaml', "version:\n    resource: '@PushwordVersionBundle/VersionRoutes.yaml'\n");
+\Pushword\Installer\PostInstall::addOnTop('config/routes.yaml', "admin_block_editor:\n    resource: '@PushwordAdminBlockEditorBundle/AdminBlockEditorRoutes.yaml'\n");

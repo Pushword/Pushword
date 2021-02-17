@@ -110,6 +110,89 @@
         {
             "type": "pages_list",
             "data": { "kw": "test", "display": "list", "order": "createdAt DESC", "max": "", "maxPages": "" }
+        },
+        {
+            "type": "gallery",
+            "data": [
+                {
+                    "file": {
+                        "customProperties": [],
+                        "mimeType": "image/jpg",
+                        "size": 2,
+                        "height": 1000,
+                        "width": 1000,
+                        "mainColor": null,
+                        "media": "1.jpg",
+                        "name": "Demo 1",
+                        "names": null,
+                        "createdAt": {
+                            "date": "2021-02-17 16:38:57.000000",
+                            "timezone_type": 3,
+                            "timezone": "Europe/Berlin"
+                        },
+                        "updatedAt": {
+                            "date": "2021-02-17 16:38:57.000000",
+                            "timezone_type": 3,
+                            "timezone": "Europe/Berlin"
+                        },
+                        "url": "/media/default/1.jpg"
+                    },
+                    "url": "/media/default/1.jpg",
+                    "caption": ""
+                },
+                {
+                    "file": {
+                        "customProperties": [],
+                        "mimeType": "image/jpg",
+                        "size": 2,
+                        "height": 1000,
+                        "width": 1000,
+                        "mainColor": null,
+                        "media": "2.jpg",
+                        "name": "Demo 2",
+                        "names": null,
+                        "createdAt": {
+                            "date": "2021-02-17 16:38:57.000000",
+                            "timezone_type": 3,
+                            "timezone": "Europe/Berlin"
+                        },
+                        "updatedAt": {
+                            "date": "2021-02-17 16:38:57.000000",
+                            "timezone_type": 3,
+                            "timezone": "Europe/Berlin"
+                        },
+                        "url": "/media/default/2.jpg"
+                    },
+                    "url": "/media/default/2.jpg",
+                    "caption": ""
+                },
+                {
+                    "file": {
+                        "customProperties": [],
+                        "mimeType": "image/png",
+                        "size": 2,
+                        "height": 1000,
+                        "width": 1000,
+                        "mainColor": null,
+                        "media": "piedweb-logo.png",
+                        "name": "Pied Web Logo",
+                        "names": null,
+                        "createdAt": {
+                            "date": "2021-02-17 16:38:57.000000",
+                            "timezone_type": 3,
+                            "timezone": "Europe/Berlin"
+                        },
+                        "updatedAt": {
+                            "date": "2021-02-17 16:38:57.000000",
+                            "timezone_type": 3,
+                            "timezone": "Europe/Berlin"
+                        },
+                        "url": "/media/default/piedweb-logo.png"
+                    },
+                    "url": "/media/default/piedweb-logo.png",
+                    "caption": ""
+                }
+            ]
         }
     ],
     "version": "2.19.1"

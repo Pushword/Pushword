@@ -8,7 +8,7 @@ use Symfony\Contracts\EventDispatcher\Event;
  * The order.placed event is dispatched each time an order is created
  * in the system.
  */
-class FilterEvent extends Event
+final class FilterEvent extends Event
 {
     public const NAME_BEFORE = 'pushword.entity_filter.before_filtering';
     public const NAME_AFTER = 'pushword.entity_filter.after_filtering';

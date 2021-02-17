@@ -7,15 +7,16 @@
   </div>
 
   <div style="padding-top:10px; text-align:center">
-    <a href="#" onclick="toggleEditorJs('{{ editor_id }}')">{{ svg('unlock', {'style': 'width:12px', fill: 'currentColor'}) }}</a>
+    <a href="#" onclick="editorJsHelper.toggleEditorJs('{{ editor_id }}')">{{ svg('unlock', {'style': 'width:12px', fill: 'currentColor'}) }}</a>
 </div>
     <script>
-
+{% block editorjs_config %}
 var editorjsConfig = {
     name: "default",
     initialBlock: "paragraph",
     placeholder: "...",
     tools: {
+        {% block editorjs_tools %}
         header: {
             name: "header",
             className: "Header",
@@ -33,8 +34,8 @@ var editorjsConfig = {
             name: "attaches",
             className: "Attaches",
             config: {
-                onSelectFile: editorJsTool.onSelectFile,
-                onUploadFile: editorJsTool.onUploadFile,
+                onSelectFile: editorJsHelper.onSelectFile,
+                onUploadFile: editorJsHelper.onUploadFile,
             },
         },
         image: {
@@ -45,15 +46,28 @@ var editorjsConfig = {
                     byFile: "/admin/media/block",
                     byUrl: "/admin/media/block",
                 },
-                onSelectFile: editorJsTool.onSelectFile,
+                onSelectFile: editorJsHelper.onSelectFile,
+                onUploadFile: editorJsHelper.onUploadFile,
+            }
+        },
+        gallery: {
+            name: "gallery",
+            className: "Gallery",
+            config: {
+                endpoints: {
+                    byFile: "/admin/media/block",
+                    byUrl: "/admin/media/block",
+                },
+                onSelectFile: editorJsHelper.onSelectFile,
+                onUploadFile: editorJsHelper.onUploadFile,
             }
         },
         embed: {
             name: "embed",
             className: "Embed",
             config: {
-                onSelectFile: editorJsTool.onSelectFile,
-                onUploadFile: editorJsTool.onUploadFile,
+                onSelectFile: editorJsHelper.onSelectFile,
+                onUploadFile: editorJsHelper.onUploadFile,
             },
         },
         raw: {
@@ -94,6 +108,9 @@ var editorjsConfig = {
         link: {
             name: "link",
             className: "Hyperlink",
+            config: {
+                availableRels: ['noreferrer noopener nofollow', 'noopener', 'alternate', 'encrypt'],
+            }
         },
         underline: {
             name: "underline",
@@ -122,10 +139,13 @@ var editorjsConfig = {
                 preview: "/admin/page/block/{{ attr.page_id }}",
             }
         },
+        {% endblock %}
+        {% block editorjs_block_to_add_new_plugin %}{% endblock %}
     },
     data: {{ (value ? value : "{}")|raw }},
     logLevel: "ERROR",
     holder: "{{ editor_id }}",
 };
+{% endblock %}
     </script>
 {% endblock %}

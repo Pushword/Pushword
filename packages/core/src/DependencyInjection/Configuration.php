@@ -5,7 +5,7 @@ namespace Pushword\Core\DependencyInjection;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class Configuration implements ConfigurationInterface
+final class Configuration implements ConfigurationInterface
 {
     const DEFAULT_TEMPLATE = '@Pushword';
     const DEFAULT_APP_FALLBACK = [
@@ -24,7 +24,7 @@ class Configuration implements ConfigurationInterface
     const DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS = true;
 
     const DEFAULT_FILTERS = [
-        'main_content' => 'twig,date,email,encryptedLink,image,phoneNumber,punctuation,markdown,unprose,mainContentSplitter,extended',
+        'main_content' => 'twig,date,email,encryptedLink,htmlEncryptedLink,image,phoneNumber,punctuation,markdown,unprose,mainContentSplitter,extended',
         'name' => 'twig,date,name,extended',
         'title' => 'twig,date,elseH1,extended',
         'string' => 'twig,date,email,encryptedLink,phoneNumber,extended',

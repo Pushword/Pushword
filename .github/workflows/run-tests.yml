@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
+      - name: Install browsers
+        run: vendor/bin/bdi detect drivers
+
       - name: Execute tests
         run: vendor/bin/phpunit --coverage-clover coverage.xml
 

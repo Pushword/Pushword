@@ -5,7 +5,7 @@ namespace Pushword\Core\Component\Router;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
-class RouterTwigExtension extends AbstractExtension
+final class RouterTwigExtension extends AbstractExtension
 {
     /** @var RouterInterface */
     private $router;

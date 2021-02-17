@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/local/bin/node /home/robin/.yarn/releases/yarn-1.22.4.js install
+  /usr/local/bin/node /home/robin/.yarn/releases/yarn-1.22.4.js
 
 PATH: 
   /home/robin/.composer/vendor/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
@@ -14,7 +14,7 @@ Platform:
   linux x64
 
 Trace: 
-  SyntaxError: /media/robin/area2/localhost/Pushword/packages/admin-block-editor/package.json: Unexpected token @ in JSON at position 289
+  SyntaxError: /media/robin/area2/localhost/Pushword/packages/admin-block-editor-tools/package.json: Unexpected token ' in JSON at position 83
       at JSON.parse (<anonymous>)
       at /home/robin/.yarn/releases/yarn-1.22.4.js:1098:57
       at Generator.next (<anonymous>)
@@ -29,16 +29,18 @@ npm manifest:
           "@editorjs/code": "^2.6.0",
           "@editorjs/delimiter": "^1.2.0",
           "@editorjs/editorjs": "^2.19.1",
+          "@editorjs/embed": "^2.4.0",
           "@editorjs/header": "^2.6.1",
-          "@editorjs/image": ""@editorjs/image,
           "@editorjs/inline-code": "^1.3.1",
           "@editorjs/list": "^1.6.2",
           "@editorjs/marker": "^1.2.2",
           "@editorjs/quote": "^2.4.0",
           "@editorjs/raw": "^2.3.0",
           "@editorjs/table": "^1.3.0",
+          "@pushword/editorjs-tools": "file:../admin-block-editor-tools",
           "@pushword/js-helper": "file:../js-helper",
           "@symfony/webpack-encore": "^0.33",
+          "@vietlongn/editorjs-carousel": "^2.3.6",
           "ace-builds": "^1.4.12",
           "autoprefixer": "^10.1.0",
           "babel-preset-stage-2": "^6.24.1",
@@ -57,7 +59,7 @@ npm manifest:
           "postcss-loader": "^4.1",
           "sass-loader": "^10.1.0"
       },
-      "license": "UNLICENSED",
+      "license": "UNLICENSED #file:/media/robin/area2/localhost/PiedWeb/image",
       "private": true,
       "scripts": {
           "dev-server": "encore dev-server",
@@ -909,13 +911,15 @@ Lockfile:
       codex-notifier "^1.1.2"
       codex-tooltip "^1.0.1"
   
+  "@editorjs/embed@^2.4.0":
+    version "2.4.0"
+    resolved "https://registry.yarnpkg.com/@editorjs/embed/-/embed-2.4.0.tgz#589a579df9766f5f675af0f39408eb862fd5b4f3"
+    integrity sha512-sGX0KfPszeGBrlBYlgB1vPn/RYRQ/ORcEb9C2kUnFpmRU+R2yb7t+YD9r4DceTyODTK91imYx1YczMlBewGLDA==
+  
   "@editorjs/header@^2.6.1":
     version "2.6.1"
     resolved "https://registry.yarnpkg.com/@editorjs/header/-/header-2.6.1.tgz#454a46e4dbb32ae3aa1db4d22b0ddf2cc36c3134"
     integrity sha512-EsnyVFv5uThpU9tbQ/dUPFCQoa/sBFy2n+9tN3wOXJGx7sjea4fdcacJ2UYhO+7pCgZ+aSgmMOyGLYHUFbchvA==
-  
-  "@editorjs/image@file:../../../PiedWeb/image":
-    version "2.6.0"
   
   "@editorjs/inline-code@^1.3.1":
     version "1.3.1"
@@ -946,6 +950,9 @@ Lockfile:
     version "1.3.0"
     resolved "https://registry.yarnpkg.com/@editorjs/table/-/table-1.3.0.tgz#d203352135c86909df8bdb5a6c323a5c5041600d"
     integrity sha512-3/gr7IkjsYuECndCpcBSKzZQHos7C9QU1ach8avyVbXB3VLAa1RyGjgocu0Ct4d02HdxirrYZ7+vP1Na+s04GQ==
+  
+  "@pushword/editorjs-tools@file:../admin-block-editor-tools":
+    version "1.0.0"
   
   "@pushword/js-helper@file:../js-helper":
     version "0.0.42"
@@ -1059,6 +1066,11 @@ Lockfile:
       "@types/uglify-js" "*"
       "@types/webpack-sources" "*"
       source-map "^0.6.0"
+  
+  "@vietlongn/editorjs-carousel@^2.3.6":
+    version "2.3.6"
+    resolved "https://registry.yarnpkg.com/@vietlongn/editorjs-carousel/-/editorjs-carousel-2.3.6.tgz#fd276b11139784a1b8f69cd73552407bd728c327"
+    integrity sha512-ZXtIp0q9uBz4zSY0wtZ8plhR2t92iyrqA6DdrDnBS3ae1GWnUVtBucrZfdmgEnUXSVfQPUp5KqTaVwUuvCS0Yg==
   
   "@webassemblyjs/ast@1.9.0":
     version "1.9.0"

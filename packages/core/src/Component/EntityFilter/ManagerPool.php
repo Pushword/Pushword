@@ -6,7 +6,7 @@ use Pushword\Core\Component\App\AppPool;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment as Twig;
 
-class ManagerPool implements ManagerPoolInterface
+final class ManagerPool implements ManagerPoolInterface
 {
     /** @required */
     public AppPool $apps;

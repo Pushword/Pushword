@@ -185,7 +185,7 @@ final class PageController extends AbstractController
     private function getPage(?string &$slug, string $host = '', bool $throwException = true, bool $extractPager = false, ?Request $request = null): ?Page
     {
         $slug = $this->noramlizeSlug($slug);
-        $page = $this->getPageRepository()->getPage($slug, $host, $extractPager ? false : true);
+        $page = $this->getPageRepository()->getPage($slug, $host, true);
 
         // Check if page exist
         if (null === $page) {
@@ -194,7 +194,7 @@ final class PageController extends AbstractController
                 $request->attributes->set('pager', (int) $match[2] ?: $match[3]);
                 $request->attributes->set('slug', $unpaginatedSlug);
 
-                return $this->getPage($unpaginatedSlug, $host, $throwException, false);
+                return $this->getPage($unpaginatedSlug, $host, $throwException);
             }
             if ($throwException) {
                 throw $this->createNotFoundException();

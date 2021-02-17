@@ -5,22 +5,22 @@ namespace Pushword\Admin\Tests;
 use Pushword\Core\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Panther\PantherTestCase;
 
-abstract class AbstractAdminTest extends WebTestCase
+abstract class AbstractAdminTest extends PantherTestCase
 {
     protected static bool $userCreated = false;
 
     protected $client;
 
-    protected function loginUser(): KernelBrowser
+    protected function loginUser($client = null): KernelBrowser
     {
         if (null !== $this->client) {
             return $this->client;
         }
 
-        $this->client = static::createClient();
+        $this->client = $client ?: static::createClient();
 
         self::createUser();
 

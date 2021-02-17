@@ -15,6 +15,7 @@ node_modules/
 coverage
 coverage.xml
 /debug
+/drivers
 
 # Future packages
 related-pages

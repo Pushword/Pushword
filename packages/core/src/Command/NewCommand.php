@@ -8,7 +8,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Yaml\Yaml;
 
-class NewCommand extends Command
+final class NewCommand extends Command
 {
     private string $projectDir;
 
