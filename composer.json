@@ -66,7 +66,6 @@
     "require-dev": {
         "composer/composer": "^2.0",
         "cweagans/composer-patches": "^1.7",
-        "dbrekelmans/bdi": "^0.3.0",
         "friendsofphp/php-cs-fixer": "^2.17",
         "friendsoftwig/twigcs": "^4.0",
         "phpunit/phpunit": "^9.5",
