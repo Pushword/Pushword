@@ -8,15 +8,14 @@ parent: contribute
 ## TODO before v1
 
 -   Micro données
--   pagination : tester & documenter
-
 -   release de sonata 4
 -   Issue : User Password Edit don't work from admin
 -   manage date i18n a better way than randomly (document the process)
--   extension/core ?! : permettre l'organisation des pages avec un paramètre force (utiliser pour getChildrenPages)
+-   pushword doc design + (re)launch twitter (https://twitter.com/PushwordCMS) + dev.piedweb.com
 
 ## Soon
 
+-   **pagination** : tester & documenter
 -   **Block editor** : édition avancée (template notamment dans pages, prose/unprise)
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
 -   **clickable**
