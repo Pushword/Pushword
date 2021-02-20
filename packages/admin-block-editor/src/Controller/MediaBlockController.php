@@ -31,7 +31,7 @@ final class MediaBlockController extends AbstractController
 
     public function manage(Request $request, ImageManager $imageManager): Response
     {
-        /** @param File $mediaFile */
+        /** @var File $mediaFile */
         $mediaFile = $request->getContent() ? $this->getMediaFrom($request->getContent())
             : $request->files->get('image');
 
@@ -41,14 +41,14 @@ final class MediaBlockController extends AbstractController
             $media = $mediaFile;
         } else {
             $mediaClass = $this->mediaClass;
-            /** @param MediaInterface $media */
+            /** @var MediaInterface $media */
             $media = new $mediaClass();
             $media->setMediaFile($mediaFile);
             $this->em->persist($media);
             $this->em->flush();
         }
 
-        $url = false === strpos($mediaFile->getMimeType(), 'image/') ? '/download/'.$media->getMedia()
+        $url = false === strpos($media->getMimeType(), 'image/') ? '/download/'.$media->getMedia()
              : $imageManager->getBrowserPath($media->getMedia());
 
         return new Response(json_encode([
