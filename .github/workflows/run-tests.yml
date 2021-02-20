@@ -11,8 +11,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         php: [7.4]
         #, 8.0 Waiting for this and this to be merged :
-        # - https://github.com/simplethings/EntityAuditBundle/pull/346
-        # or SonataDocrinteOrm drop this dependencies
+        # - https://github.com/sonata-project/SonataDoctrineORMAdminBundle/pull/1285
         stability: [prefer-stable] #prefer-lowest,
 
     name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
