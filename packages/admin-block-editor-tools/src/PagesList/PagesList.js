@@ -90,16 +90,17 @@ export default class PagesList extends Abstract {
 
     getPreviewFromServer() {
         this.updateData();
+        const Tool = this;
         ajax.post({
             url: this.config.preview,
             data: this._data,
             type: ajax.contentType.JSON,
         })
             .then(function (response) {
-                this.updatePreview(response.body.content);
+                Tool.updatePreview(response.body.content);
             })
             .catch(function (error) {
-                tthis.updatePreview("An error occured...");
+                Tool.updatePreview("An error occured...");
             });
     }
 

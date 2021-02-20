@@ -29,12 +29,10 @@ final class PageBlockController extends AbstractController
         $this->twig = $twig;
     }
 
-    public function manage(int $id, Request $request): Response
+    public function manage($id, Request $request): Response
     {
-        $content = json_decode($request->getContent());
-        if (false === $content) {
-            throw new Exception('bad formetted json post data');
-        }
+        $content = $request->toArray();
+
         $request->attributes->set('_route', 'pushword_page'); //'custom_host_pushword_page'
         // TODO: sanitize
 

@@ -10,4 +10,4 @@ admin_page_block:
   defaults:
     id: 0
   requirements:
-    id: "[0-9]+"
+    id: "[0-9]*"

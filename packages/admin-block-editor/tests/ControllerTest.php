@@ -7,7 +7,7 @@ use Pushword\Admin\Tests\AbstractAdminTest;
 
 class ControllerTest extends AbstractAdminTest
 {
-    public function testIt()
+    public function testBasics()
     {
         $client = $this->loginUser(
             //static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
@@ -40,5 +40,52 @@ class ControllerTest extends AbstractAdminTest
         $em->flush();
 
         return $page->getId();
+    }
+
+    public function testPageController()
+    {
+        $client = $this->loginUser(
+            //static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
+        );
+        $client->request(
+            'POST',
+            '/admin/page/block/',
+            [],
+            [],
+            [],
+            json_encode(['kw' => 'fun', 'display' => 'list', 'order' => 'priority,publishedAt DESC', 'max' => '', 'maxPages' => ''])
+        );
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertSame(
+            '{"success":1,"content":"<ul><li><ahref=\"\/\">Welcome:thisisyourfirstpage<\/a><\/li><li><ahref=\"\/kitchen-sink\">DemoPage-KitchenSinkMarkdown+Twig<\/a><\/li><\/ul>"}',
+            str_replace([' ', '\n'], '', $client->getResponse()->getContent())
+        );
+
+        $client->request(
+            'POST',
+            '/admin/page/block/1',
+            [],
+            [],
+            [],
+            json_encode(['kw' => 'fun', 'display' => 'list', 'order' => 'priority,publishedAt DESC', 'max' => '', 'maxPages' => ''])
+        );
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+    }
+
+    public function testMediaController()
+    {
+        $client = $this->loginUser(
+            //static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
+        );
+        $client->request(
+            'POST',
+            '/admin/media/block',
+            [],
+            [],
+            [],
+            json_encode(['url' => 'https://pushword.piedweb.com/assets/favicons/android-chrome-512x512.png'])
+        );
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertSame('image/png', json_decode($client->getResponse()->getContent())->file->mimeType);
     }
 }
