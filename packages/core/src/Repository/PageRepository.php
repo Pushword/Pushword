@@ -181,6 +181,12 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
      */
     private function orderBy(QueryBuilder $qb, array $orderBy): QueryBuilder
     {
+        if ([] === $orderBy) {
+            return $qb;
+            dd(debug_backtrace());
+            exit();
+        }
+
         $key = implode(',', array_map(
             function ($item) use ($qb) { return $this->getRootAlias($qb).'.'.$item; },
             explode(',', $orderBy['key'] ?? $orderBy[0])
