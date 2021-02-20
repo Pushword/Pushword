@@ -1,0 +1,41 @@
+---
+#---
+#---
+# Views Component
+video:
+  play: "Lecture"
+
+fr: Français
+en: English
+
+#---
+# Entity
+#---
+
+#---
+# Security
+#---
+security:
+  login:
+    title: Connexion
+    email: Email
+    password: Mot de passe
+    label_button: Se connecter
+    remember_me: Se souvenir de moi
+    email_not_found: Votre email n'a pu être trouvé.
+
+#---
+# Errors Page(s)
+#---
+
+error:
+  title: Oops! Une erreur...
+  serverSay: Le serveur indique
+  description: Un écrou semble s'être dévisser.<br>Merci de nous informer sur votre environnement lorsque cette erreur c'est produite.<br><br><a href="/" class="btn btn-secondary">Retour</a>
+
+#---
+# Feed
+#---
+feed:
+  description: Dernière page publiée.
+  alternate_title: Flux

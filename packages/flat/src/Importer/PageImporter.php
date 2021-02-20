@@ -114,7 +114,7 @@ class PageImporter extends AbstractImporter
             }
             $setter = 'set'.ucfirst($camelKey);
             if (method_exists($page, $setter)) {
-                if (\in_array($camelKey, ['createdAt', 'updatedAt'])) {
+                if (\in_array($camelKey, ['publishedAt', 'createdAt', 'updatedAt'])) {
                     $value = new DateTime($value);
                 }
 

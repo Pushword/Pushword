@@ -57,10 +57,8 @@ export default class PagesList extends Abstract {
     createOrderSelect() {
         this.nodes.orderSelect = document.createElement("select");
         this.nodes.orderSelect.classList.add("cdx-select");
-        make.option(this.nodes.orderSelect, "createdAt DESC");
-        make.option(this.nodes.orderSelect, "createdAt ASC");
-        make.option(this.nodes.orderSelect, "force DESC");
-        make.option(this.nodes.orderSelect, "force ASC");
+        make.option(this.nodes.orderSelect, "priority,publishedAt DESC");
+        make.option(this.nodes.orderSelect, "priority,publishedAt ASC");
         if (this._data.order) this.nodes.orderSelect.value = this._data.orde;
         return this.nodes.orderSelect;
     }

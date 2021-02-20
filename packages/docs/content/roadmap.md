@@ -12,8 +12,7 @@ parent: contribute
 
 -   release de sonata 4
 -   Issue : User Password Edit don't work from admin
--   manage date i18n a better way than randomly
--   **changer la façon dont sont gérer les galleries pour mettre la référence directement dans le contenu, exist PageHasMedia**
+-   manage date i18n a better way than randomly (document the process)
 -   extension/core ?! : permettre l'organisation des pages avec un paramètre force (utiliser pour getChildrenPages)
 
 ## Soon

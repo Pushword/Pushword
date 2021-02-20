@@ -71,7 +71,7 @@ trait PageListTwigTrait
         Twig $twig,
         $search = '',
         $max = 0,
-        $order = 'createdAt',
+        $order = 'publishedAt,priority',
         string $view = '/component/pages_list.html.twig',
         $host = ''
     ): string {

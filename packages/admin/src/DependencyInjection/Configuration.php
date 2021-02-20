@@ -11,7 +11,6 @@ use Pushword\Admin\FormField\OgTitleField;
 use Pushword\Admin\FormField\OgTwitterCardField;
 use Pushword\Admin\FormField\OgTwitterCreatorField;
 use Pushword\Admin\FormField\OgTwitterSiteField;
-use Pushword\Admin\FormField\PageCreatedAtField;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageLocaleField;
 use Pushword\Admin\FormField\PageMainContentField;
@@ -19,10 +18,12 @@ use Pushword\Admin\FormField\PageMainImageField;
 use Pushword\Admin\FormField\PageMetaRobotsField;
 use Pushword\Admin\FormField\PageNameField;
 use Pushword\Admin\FormField\PageParentPageField;
+use Pushword\Admin\FormField\PagePublishedAtField;
 use Pushword\Admin\FormField\PageSearchExcreptField;
 use Pushword\Admin\FormField\PageSlugField;
 use Pushword\Admin\FormField\PageTitleField;
 use Pushword\Admin\FormField\PageTranslationsField;
+use Pushword\Admin\FormField\PriorityField;
 use Pushword\Admin\FormField\UserEmailField;
 use Pushword\Admin\FormField\UserPasswordField;
 use Pushword\Admin\FormField\UserRolesField;
@@ -44,13 +45,13 @@ class Configuration implements ConfigurationInterface
     const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
         [PageH1Field::class, PageMainContentField::class],
         [
-            'admin.page.state.label' => [PageCreatedAtField::class, PageMetaRobotsField::class],
+            'admin.page.state.label' => [PagePublishedAtField::class, PageMetaRobotsField::class],
             'admin.page.permanlien.label' => [HostField::class, PageSlugField::class],
             'admin.page.mainImage.label' => [PageMainImageField::class],
             'admin.page.parentPage.label' => [PageParentPageField::class],
             'admin.page.search.label' => [
                 'expand' => true,
-                'fields' => [PageTitleField::class, PageNameField::class, PageSearchExcreptField::class],
+                'fields' => [PageTitleField::class, PageNameField::class, PageSearchExcreptField::class, PriorityField::class],
             ],
             'admin.page.translations.label' => [PageLocaleField::class, PageTranslationsField::class],
             'admin.page.customProperties.label' => ['expand' => true, 'fields' => [CustomPropertiesField::class]],

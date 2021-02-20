@@ -12,21 +12,28 @@ trait PageSearchTrait
      *
      * @ORM\Column(type="string", length=50)
      */
-    protected $metaRobots = '';
+    protected string $metaRobots = '';
 
     /**
      * (links improver) / Breadcrumb.
      *
      * @ORM\Column(type="string", length=150)
      */
-    protected $name = '';
+    protected string $name = '';
 
     /**
      * HTML Title - SEO.
      *
      * @ORM\Column(type="string", length=200)
      */
-    protected $title = '';
+    protected string $title = '';
+
+    /**
+     * priority.
+     *
+     * @ORM\Column(type="integer")
+     */
+    protected int $priority = 0;
 
     public function getTemplate(): ?string
     {
@@ -88,6 +95,18 @@ trait PageSearchTrait
     public function setName(?string $name): self
     {
         $this->name = (string) $name;
+
+        return $this;
+    }
+
+    public function getPriority(): int
+    {
+        return $this->priority;
+    }
+
+    public function setPriority($priority): self
+    {
+        $this->priority = (int) $priority;
 
         return $this;
     }

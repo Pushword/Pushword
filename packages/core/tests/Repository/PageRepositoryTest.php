@@ -19,7 +19,7 @@ class PageRepositoryTest extends KernelTestCase
         $pages = $em->getRepository('App\Entity\Page')->getPublishedPages(
             '',
             [['key' => 'slug', 'operator' => '=', 'value' => 'homepage']],
-            ['key' => 'createdAt', 'direction' => 'DESC'],
+            ['key' => 'publishedAt', 'direction' => 'DESC'],
             1
         );
 

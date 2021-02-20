@@ -48,5 +48,6 @@ class Page implements PageInterface
     public function __construct()
     {
         $this->__constructTimestampable();
+        $this->publishedAt = new \DateTime();
     }
 }

@@ -44,7 +44,7 @@ or open an iframe
 
 {{  pages_list('fun', 3) }}
 
-{{  pages_list('Fun', [3, 3], 'createdAt DESC', 'card')|unprose }}
+{{  pages_list('Fun', [3, 3], 'publishedAt DESC', 'card')|unprose }}
 
 Some keywords are protected :
 

@@ -45,9 +45,9 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
     private function buildPublishedPageQuery(string $alias = 'p'): QueryBuilder
     {
         $queryBuilder = $this->createQueryBuilder($alias)
-            ->andWhere($alias.'.createdAt <=  :nwo')
+            ->andWhere($alias.'.publishedAt <=  :nwo')
             ->setParameter('nwo', new \DateTime())
-            ->orderBy($alias.'.createdAt', 'DESC');
+            ->orderBy($alias.'.publishedAt,'.$alias.'.priority', 'DESC');
 
         $this->andNotRedirection($queryBuilder);
 
@@ -181,8 +181,13 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
      */
     private function orderBy(QueryBuilder $qb, array $orderBy): QueryBuilder
     {
+        $key = implode(',', array_map(
+            function ($item) use ($qb) { return $this->getRootAlias($qb).'.'.$item; },
+            explode(',', $orderBy['key'] ?? $orderBy[0])
+        ));
+
         if (! empty($orderBy)) {
-            $qb->orderBy($this->getRootAlias($qb).'.'.($orderBy['key'] ?? $orderBy[0]), $orderBy['direction'] ?? $orderBy[1]);
+            $qb->orderBy($key, $orderBy['direction'] ?? $orderBy[1]);
         }
 
         return $qb;

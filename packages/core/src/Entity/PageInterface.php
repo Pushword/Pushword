@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Entity;
 
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\HostInterface;
@@ -20,6 +21,10 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
     public function getMainContent(): string;
 
     public function setMainContent($mainContent): self;
+
+    public function getPublishedAt(): DateTimeInterface;
+
+    public function setPublishedAt(DateTimeInterface $publishedAt): self;
 
     // ---
 
@@ -46,6 +51,8 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
     public function getTitle();
 
     public function getName();
+
+    public function getPriority(): int;
 
     // PageI18n
     public function getLocale();

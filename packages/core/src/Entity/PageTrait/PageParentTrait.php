@@ -15,7 +15,7 @@ trait PageParentTrait
 
     /**
      * @ORM\OneToMany(targetEntity="Pushword\Core\Entity\PageInterface", mappedBy="parentPage")
-     * @ORM\OrderBy({"id": "ASC"})
+     * @ORM\OrderBy({"priority,publishedAt": "DESC"})
      */
     protected $childrenPages;
 

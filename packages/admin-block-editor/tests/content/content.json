@@ -105,11 +105,11 @@
         },
         {
             "type": "pages_list",
-            "data": { "kw": "test", "display": "card", "order": "createdAt DESC", "max": "", "maxPages": "" }
+            "data": { "kw": "test", "display": "card", "order": "publishedAt DESC", "max": "", "maxPages": "" }
         },
         {
             "type": "pages_list",
-            "data": { "kw": "test", "display": "list", "order": "createdAt DESC", "max": "", "maxPages": "" }
+            "data": { "kw": "test", "display": "list", "order": "publishedAt DESC", "max": "", "maxPages": "" }
         },
         {
             "type": "gallery",
