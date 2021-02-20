@@ -17,9 +17,7 @@ parent: contribute
 
 ## Soon
 
--   [WIP] **Block editor** :
-    -   textarea no new line make jump to .editorjs-holder too
-    -   Edition avancée (template notamment dans pages, prose/unprise)
+-   **Block editor** : édition avancée (template notamment dans pages, prose/unprise)
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
 -   **clickable**
 -   associé un champ vidéo à l'image d'en-tête (plugin !)

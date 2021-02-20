@@ -183,8 +183,6 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
     {
         if ([] === $orderBy) {
             return $qb;
-            dd(debug_backtrace());
-            exit();
         }
 
         $key = implode(',', array_map(
@@ -192,9 +190,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             explode(',', $orderBy['key'] ?? $orderBy[0])
         ));
 
-        if (! empty($orderBy)) {
-            $qb->orderBy($key, $orderBy['direction'] ?? $orderBy[1]);
-        }
+        $qb->orderBy($key, $orderBy['direction'] ?? $orderBy[1] ?? 'DESC');
 
         return $qb;
     }

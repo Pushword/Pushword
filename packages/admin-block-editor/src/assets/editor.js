@@ -59,6 +59,10 @@ export class editorJs {
         this.initEditor(editorjsConfig);
     }
 
+    getEditors() {
+        return this.editors;
+    }
+
     initEditor(config) {
         if (typeof config.holder === "undefined") {
             return;
@@ -95,6 +99,7 @@ export class editorJs {
                 },
             })
         );
+
         this.editors[config.holder] = editor;
     }
 

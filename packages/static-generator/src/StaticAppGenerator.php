@@ -38,11 +38,11 @@ class StaticAppGenerator
      *
      * @return int the number of site generated
      */
-    public function generate(?string $host = null): int
+    public function generate(?string $hostToGenerate = null): int
     {
         $i = 0;
         foreach ($this->apps->getHosts() as $host) {
-            if ($host && $host != $host) {
+            if ($hostToGenerate && $hostToGenerate != $host) {
                 continue;
             }
 
@@ -74,6 +74,7 @@ class StaticAppGenerator
         $filesystem->mkdir($app->get('static_dir'));
 
         foreach ($app->get('static_generators') as $generator) {
+            //dump($generator);
             $this->generatorBag->get($generator)->generate();
         }
     }

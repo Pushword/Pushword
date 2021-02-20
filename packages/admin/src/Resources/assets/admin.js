@@ -67,22 +67,26 @@ function autoSizeTextarea() {
 
 jQuery.extend(jQuery.expr[":"], {
     focusable: function (el, index, selector) {
-        return $(el).is(
-            'textarea:not([style*="display: none"]),input,.CodeMirror-lines'
-        );
+        return $(el).is('textarea:not([style*="display: none"]),input,.CodeMirror-lines');
     },
 });
 
 function textareaWithoutNewLine() {
     $(document).on("keypress", ".textarea-no-newline", function (e) {
         if ((e.keyCode || e.which) == 13) {
-            var $canfocus = $(":focusable");
+            var $canfocus = $(":focusable:visible,.editorjs-holder");
             var index = $canfocus.index(this) + 1;
             if (index >= $canfocus.length) index = 0;
-            $canfocus.eq(index).focus();
+            $canfocus.eq(index).attr("class") == "editorjs-holder"
+                ? focusEditorJs($canfocus.eq(index))
+                : $canfocus.eq(index).focus();
             return false;
         }
     });
+}
+function focusEditorJs(editorJsHolder) {
+    const id = editorJsHolder.attr("id");
+    window.editors[id].focus();
 }
 function copyElementText(element) {
     var text = element.innerText;
@@ -106,8 +110,7 @@ function showTitlePixelWidth() {
         resultWrapper.innerHTML = input.value;
         var titleWidth = resultWrapper.offsetWidth;
         resultWrapper.innerHTML = titleWidth + "px";
-        resultWrapper.style =
-            titleWidth > 560 ? "color:#B0413E" : "color:#4F805D";
+        resultWrapper.style = titleWidth > 560 ? "color:#B0413E" : "color:#4F805D";
     }
     updateTitleWidth();
     input.addEventListener("input", updateTitleWidth);
@@ -131,8 +134,7 @@ function memorizeOpenPannel() {
     $(".collapse").on("shown.bs.collapse", function () {
         var active = $(this).attr("id");
         var panels =
-            localStorage.panels === "undefined" ||
-            localStorage.panels === undefined
+            localStorage.panels === "undefined" || localStorage.panels === undefined
                 ? new Array()
                 : JSON.parse(localStorage.panels);
         if ($.inArray(active, panels) == -1) panels.push(active);
@@ -142,8 +144,7 @@ function memorizeOpenPannel() {
     $(".collapse").on("hidden.bs.collapse", function () {
         var active = $(this).attr("id");
         var panels =
-            localStorage.panels === "undefined" ||
-            localStorage.panels === undefined
+            localStorage.panels === "undefined" || localStorage.panels === undefined
                 ? new Array()
                 : JSON.parse(localStorage.panels);
         var elementIndex = $.inArray(active, panels);
@@ -155,8 +156,7 @@ function memorizeOpenPannel() {
 
     function onInit() {
         var panels =
-            localStorage.panels === "undefined" ||
-            localStorage.panels === undefined
+            localStorage.panels === "undefined" || localStorage.panels === undefined
                 ? new Array()
                 : JSON.parse(localStorage.panels);
 
@@ -171,14 +171,12 @@ function memorizeOpenPannel() {
     onErrorOpenPanel();
 
     function onErrorOpenPanel() {
-        document
-            .querySelectorAll(".sonata-ba-field-error-messages")
-            .forEach(function (element) {
-                var panel = element.closest(".collapse");
-                if (panel) {
-                    $(panel).collapse("show");
-                }
-            });
+        document.querySelectorAll(".sonata-ba-field-error-messages").forEach(function (element) {
+            var panel = element.closest(".collapse");
+            if (panel) {
+                $(panel).collapse("show");
+            }
+        });
     }
 }
 

@@ -37,6 +37,12 @@ class RobotsGenerator extends PageGenerator
 
     protected function generateFeed($locale)
     {
+        if (! $this->getPageRepository()->getPage('homepage', $this->app->getMainHost())) {
+            return;
+            // we can't generate main feed if no homepage exist
+            // because mainFeed rely on homepage data
+        }
+
         $liveUri = $this->generateLivePathFor(
             $this->app->getMainHost(),
             'pushword_page_main_feed',

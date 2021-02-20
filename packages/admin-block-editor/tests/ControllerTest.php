@@ -2,14 +2,13 @@
 
 namespace Pushword\AdminBlockEditor\Tests;
 
-use Pushword\Admin\Tests\AbstractAdminTest;
 use App\Entity\Page;
+use Pushword\Admin\Tests\AbstractAdminTest;
 
 class ControllerTest extends AbstractAdminTest
 {
     public function testIt()
     {
-
         $client = $this->loginUser(
             //static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
         );

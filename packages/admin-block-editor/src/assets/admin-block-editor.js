@@ -4,5 +4,5 @@ import { editorJsHelper } from "./editorJsHelper.js";
 window.editorJsHelper = new editorJsHelper();
 
 window.addEventListener("load", function () {
-    new editorJs();
+    window.editors = new editorJs().getEditors();
 });
