@@ -18,10 +18,6 @@ parent: contribute
 ## Soon
 
 -   [WIP] **Block editor** :
-    -   show loader on select btn click
-    -   embed, abstract, pagesList => ok, reste à faire gallery, image
-    -   Documenter (notamment la gestion des filtres sur le contenu)
-    -   Tester
     -   textarea no new line make jump to .editorjs-holder too
     -   Edition avancée (template notamment dans pages, prose/unprise)
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
