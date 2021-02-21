@@ -11,7 +11,7 @@
         "pushword/static-generator": "self.version",
         "pushword/template-editor": "self.version"
     },
-    "description": "Monorepo for pushword CMS and supported extensions.",
+    "description": "Monorepo for pushword CMS and officially maintained extensions.",
     "license": "MIT",
     "require": {
         "php": ">=7.4",

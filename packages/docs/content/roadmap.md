@@ -7,7 +7,6 @@ parent: contribute
 
 ## TODO before v1
 
--   search for all "todo" in the code : move them here or fix them
 -   release de sonata 4
 -   implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
 -   manage date i18n a better way than randomly (document the process)
