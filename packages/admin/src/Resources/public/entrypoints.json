@@ -1,11 +1,11 @@
 {
   "entrypoints": {
-    "admin": {
+    "admin.min": {
       "css": [
-        "./admin.css"
+        "./admin.min.css"
       ],
       "js": [
-        "./admin.js"
+        "./admin.min.js"
       ]
     }
   }

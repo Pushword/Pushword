@@ -1,6 +1,6 @@
 {
-  "bundles/pushwordadmin/admin.css": "./admin.css",
-  "bundles/pushwordadmin/admin.js": "./admin.js",
+  "bundles/pushwordadmin/admin.min.css": "./admin.min.css",
+  "bundles/pushwordadmin/admin.min.js": "./admin.min.js",
   "bundles/pushwordadmin/ace/abap.js": "./ace/abap.js",
   "bundles/pushwordadmin/ace/abc.js": "./ace/abc.js",
   "bundles/pushwordadmin/ace/ace.js": "./ace/ace.js",
