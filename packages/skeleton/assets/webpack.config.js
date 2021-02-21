@@ -23,11 +23,7 @@ Encore.setOutputPath("./../public/assets/")
     .enableVersioning(false)
     .enablePostCssLoader((options) => {
         options.postcssOptions = {
-            plugins: [
-                require("postcss-import"),
-                tailwindcss("./tailwind.config.js"),
-                require("autoprefixer"),
-            ],
+            plugins: [require("postcss-import"), tailwindcss("./tailwind.config.js"), require("autoprefixer")],
         };
         if (Encore.isProduction()) {
             options.postcssOptions.plugins.push(purgecss);
@@ -48,7 +44,7 @@ Encore.setOutputPath("./../public/assets/")
         from: "./favicons",
         to: "[name].[ext]",
     })
-    .addEntry("app", "./app.js")
-    .addStyleEntry("tw", "./app.css");
+    .addEntry("app.min", "./app.js")
+    .addStyleEntry("tw.min", "./app.css");
 
 module.exports = Encore.getWebpackConfig();

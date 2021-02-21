@@ -1,6 +1,6 @@
 {
-  "assets/app.js": "/assets/app.js",
-  "assets/tw.css": "/assets/tw.css",
+  "assets/app.min.js": "/assets/app.min.js",
+  "assets/tw.min.css": "/assets/tw.min.css",
   "assets/browserstack-logo.svg": "/assets/browserstack-logo.svg",
   "assets/favicons/android-chrome-192x192.png": "/assets/favicons/android-chrome-192x192.png",
   "assets/favicons/android-chrome-512x512.png": "/assets/favicons/android-chrome-512x512.png",

@@ -60,7 +60,6 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
 
     private function transformMainContent($content)
     {
-
         // We never come to false here because we ever checked before with mayUseEditorBlock
         /*
         $jsonContent = json_decode($content);

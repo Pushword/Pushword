@@ -24,12 +24,8 @@ pushword:
             Pushword\StaticGenerator\Generator\CopierGenerator,
             Pushword\StaticGenerator\Generator\CNAMEGenerator,
           ],
-        assets:
-          { javascripts: ["/assets/app.js"], stylesheets: ["/assets/tw.css"] },
+        assets: { javascripts: ["/assets/app.min.js"], stylesheets: ["/assets/tw.min.css"] },
         color_bg: "#fff",
         static_copy: ["assets"],
       }
-    - {
-        hosts: [admin-block-editor.test],
-        base_url: "https://admin-block-editor.test",
-      }
+    - { hosts: [admin-block-editor.test], base_url: "https://admin-block-editor.test" }
