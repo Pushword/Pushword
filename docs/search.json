@@ -38,15 +38,11 @@
 
 <p>&lt;</p>
 
-<p>p>If you use the automatic installer, just open <code>config\/packages\/pushword.yaml&lt;\/code> and start configure your app(s).&lt;\/p>\n\n</p>
+<p>p>Before to <strong>code&lt;\/strong>, Pushword offers the ability to configure a lot of things from a <strong>yaml&lt;\/strong> (or PHP if you preferred) configuration file.&lt;\/p>\n\n</p>
 
 <p>&lt;</p>
 
-<p>p>The only important property to configure now is <strong>host&lt;\/strong> (<code>host: localhost.dev&lt;\/code>). Then you are ready to use your website.&lt;\/p>\n\n</p>
-
-<p>&lt;</p>
-
-<p>p>To get the up"},{"title":"Contribute","url":"\/contribute","slug":"contribute","content":"</p>
+<p>p>If you used the <a href=\"\/installation\">automatic installer&lt;\/a> to create a new <em>pushword project&lt;\/em>, just open <code>c"},{"title":"Contribute","url":"\/contribute","slug":"contribute","content":"</p>
 
 <p>&lt;</p>
 
@@ -166,7 +162,7 @@
 
 <p>&lt;</p>
 
-<p>ul>\n<li>Micro donn\u00e9es&lt;\/li>\n<li>release de sonata 4&lt;\/li>\n<li>Issue&nbsp;: User Password Edit don't work from admin&lt;\/li>\n<li>manage date i18n a better way than randomly (document the process)&lt;\/li>\n<li>pushword doc design + (re)launch twitter (https:\/\/twitt"},{"title":"Themes","url":"\/themes","slug":"themes","content":"</p>
+<p>ul>\n<li>release de sonata 4&lt;\/li>\n<li>implement <strong>SonataUserBlundle&lt;\/strong> (see user_block.html.twig), wait for https:\/\/github.com\/sonata-project\/SonataUserBundle\/pull\/1256&lt;\/li>\n<li>manage date i18n a better way than randomly (document the process"},{"title":"Themes","url":"\/themes","slug":"themes","content":"</p>
 
 <p>&lt;</p>
 
@@ -206,5 +202,5 @@
 
 <p>&lt;</p>
 
-<p>ul class=\"grid sm:grid-cols-1 gap-1 md:gap-3 list-none unprose max-w-2xl mx-auto\">\n                                                    <li>            <div style=\"max-width:330px;\" class=\"mx-auto\">\n    &lt;span data-fslightbox=898 d"}]</p>
+<p>ul class=\"grid sm:grid-cols-1 gap-1 md:gap-3 list-none unprose max-w-2xl mx-auto\">\n                                                    <li>            <div style=\"max-width:330px;\" class=\"mx-auto\">\n    &lt;span data-fslightbox=684 d"}]</p>
 

@@ -1,7 +1,5 @@
 <?php
 
-// todo: supprimer ! (données qui reviendront via ReservationBundle)
-
 namespace Pushword\Core\Entity;
 
 use Doctrine\ORM\Mapping as ORM;

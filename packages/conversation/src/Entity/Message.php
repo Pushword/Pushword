@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Entity;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Entity\SharedTrait\HostTrait;

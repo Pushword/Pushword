@@ -20,5 +20,6 @@ services:
     autowire: true
     arguments:
       $varDir: "%kernel.project_dir%/var"
+      $pageScanInterval: "%pw.pushword_page_scanner.min_interval_between_scan%"
     tags:
       - { name: "controller.service_arguments" }

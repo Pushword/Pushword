@@ -5,14 +5,203 @@ toc: true
 parent: installation
 ---
 
-If you use the automatic installer, just open `config/packages/pushword.yaml` and start configure your app(s).
+Before to **code**, Pushword offers the ability to configure a lot of things from a **yaml** (or PHP if you preferred) configuration file.
 
-The only important property to configure now is **host** (`host: localhost.dev`). Then you are ready to use your website.
+If you used the [automatic installer](/installation) to create a new _pushword project_, just open `config/packages/pushword.yaml` and start configure your **website**.
 
-To get the up to date configuration's options :
+<span class"bg bg-primary text-white p-3">Good to remember</span> In the configuration a `website` has a more generic name, it's an `app`
+
+When you create a new _pushword project_ important property to configure now is **host** (eg: `host: localhost.dev`). Then you are ready to use your website.
+
+## Two levels : `Global` vs `App` {id=configuration-types}
+
+Before to digg in your configuration file, you need to know there is two different config properties : the `global` ones and the `app` ones.
+
+This specificity is the same for almost all officially maintained pushword extensions.
+
+If you want the same configure value for all `app`, you can configure globally and the value will be transmit to each app config.
+
+### How to difference global from app configuration without reading the docs ?
+
+At the begining of each configuration's file (if you do [a fresh dump](#dump)), you will find a property named `app_fallback_properties`.
+
+This one define the **app** configuration.
+
+### How to get all configuration property without reading the docs ? {id=dump}
 
 ```shell
 php bin/console config:dump-reference PushwordCoreBundle
 ```
 
-If you don't understand what the purpose of `assets`, `filters` or another config's property. Feel free to ask (github or mail), I will list answers on this page.
+<span class"bg bg-primary text-white p-3">Good to remember</span> for each _Pushword Projet_, you have a lot of different extension, you may find the good configuration property in the concerned extension.
+
+For example, to get the admin configuration option
+
+```shell
+php bin/console config:dump-reference PushwordAdminBundle
+# or php bin/console config:dump-reference pushword_admin
+```
+
+## Can I add an custom app configuration property that I will be able to use in my custom code ?
+
+Yes and no !
+
+No because tanks to the **Symfony Configuration Component**, the configuration file is verified before to be used.
+
+And yes, because we want to create quickly a prototype or a POC, so Pushword add a special `custom_properties` under wich you can set the property you want.
+
+## Configuration Settings
+
+So remember, we are in the `config/packages/pushword.yaml` and this is a dump for the file with all properties.
+
+**If you don't understand what the purpose of a property property. Feel free to ask (github or mail), I will list answers on this page.**
+
+```
+pushword:
+    app_fallback_properties:
+        - hosts
+        - locale
+        - locales
+        - name
+        - base_url
+        - template
+        - template_dir
+        - entity_can_override_filters
+        - filters
+        - assets
+        - custom_properties
+    public_dir:           '%kernel.project_dir%/public'
+    # Dir where files will be uploaded when using admin.
+    media_dir:            '%kernel.project_dir%/media'
+    # Used to generate browser path. Must be accessible from public_dir.
+    public_media_dir:     /media
+    database_url:         'sqlite:///%kernel.project_dir%/var/app.db'
+    entity_page:          App\Entity\Page
+    entity_media:         App\Entity\Media
+    entity_user:          App\Entity\User
+    locale:               '%kernel.default_locale%'
+    # eg: fr|en
+    locales:              '%kernel.default_locale%'
+    name:                 Pushword
+    host:                 localhost
+    hosts:
+        # Default:
+        - %pw.host%
+    base_url:             'https://%pw.host%'
+    assets:
+        # Defaults:
+        stylesheets:
+            - /bundles/pushwordcore/tailwind.css
+        javascripts:
+            - /bundles/pushwordcore/page.js
+    filters:
+        # Defaults:
+        main_content:        twig,date,email,encryptedLink,htmlEncryptedLink,image,phoneNumber,punctuation,markdown,unprose,mainContentSplitter,extended
+        name:                twig,date,name,extended
+        title:               twig,date,elseH1,extended
+        string:              twig,date,email,encryptedLink,phoneNumber,extended
+    entity_can_override_filters: true
+    image_filter_sets:
+        default:
+            quality:             90
+            filters:
+                downscale:
+                    - 1980
+                    - 1280
+        height_300:
+            quality:             82
+            filters:
+                heighten:
+                    0:                   300
+                    constraint:          $constraint->upsize();
+        thumb:
+            quality:             80
+            filters:
+                fit:
+                    - 330
+                    - 330
+        xs:
+            quality:             85
+            filters:
+                widen:
+                    0:                   576
+                    constraint:          $constraint->upsize();
+        sm:
+            quality:             85
+            filters:
+                widen:
+                    0:                   768
+                    constraint:          $constraint->upsize();
+        md:
+            quality:             85
+            filters:
+                widen:
+                    0:                   992
+                    constraint:          $constraint->upsize();
+        lg:
+            quality:             85
+            filters:
+                widen:
+                    0:                   1200
+                    constraint:          $constraint->upsize();
+        xl:
+            quality:             85
+            filters:
+                widen:
+                    0:                   1600
+                    constraint:          $constraint->upsize();
+    template:             '@Pushword'
+    template_dir:         '%kernel.project_dir%/templates'
+    custom_properties:    []
+    apps:
+        # Default:
+        -
+```
+
+## Focus on the `app` property
+
+It's under this property you may customize _per app_ property.
+
+Example :
+
+```
+apps:
+    - {
+        hosts: ["localhost.dev", "localhost"],
+        base_url: "https://localhost.dev",
+        randomTest: 123,
+        admin_block_editor: false,
+        admin_block_editor_disable_listener: true,
+      }
+    - {
+        hosts: [pushword.piedweb.com],
+        base_url: "https://pushword.piedweb.com",
+        flat_content_dir: "%kernel.project_dir%/../docs/content",
+        static_dir: "%kernel.project_dir%/../../docs",
+        name: "Pushword",
+        favicon_path: "/assets/favicons/",
+        static_generators:
+          [
+            Pushword\StaticGenerator\Generator\PagesGenerator,
+            Pushword\StaticGenerator\Generator\RobotsGenerator,
+            Pushword\StaticGenerator\Generator\ErrorPageGenerator,
+            Pushword\StaticGenerator\Generator\CopierGenerator,
+            Pushword\StaticGenerator\Generator\CNAMEGenerator,
+          ],
+        assets:
+          { javascripts: ["/assets/app.js"], stylesheets: ["/assets/tw.css"] },
+        color_bg: "#fff",
+        static_copy: ["assets"],
+      }
+    - {
+        hosts: [admin-block-editor.test],
+        base_url: "https://admin-block-editor.test",
+      }
+```
+
+In this example, I defined 3 diffrents website (managed by the same Puswhord Project) where I customized a few properties
+for each website.
+
+You don't recognize all the properties ?
+
+That's normal, a lot of them came from [extensions](/extensions).

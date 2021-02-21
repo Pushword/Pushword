@@ -2,10 +2,6 @@
 
 namespace Pushword\Core\Repository;
 
-/**
- * todo implement interface when needed
- * Useful for avoiding intelephense error.
- */
 class Repository
 {
     public static function getPageRepository($doctrine, string $pageEntity): PageRepositoryInterface

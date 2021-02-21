@@ -30,6 +30,8 @@ md_cs:
 Page List: Liste des pages
 
 admin:
+  draft: Brouillon
+
   label:
     page: Page
     media: Media

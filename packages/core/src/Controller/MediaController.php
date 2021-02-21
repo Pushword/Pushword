@@ -8,10 +8,17 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 final class MediaController extends AbstractController
 {
-    public function download(string $path)
+    private string $publicMediaDir;
+
+    public function __construct(string $publicMediaDir)
+    {
+        $this->publicMediaDir = $publicMediaDir;
+    }
+
+    public function download(string $media)
     {
         $projectDir = $this->get('kernel')->getProjectDir();
-        $pathToFile = $projectDir.'/media/'.substr(str_replace('..', '', $path), \strlen('media/'));
+        $pathToFile = $projectDir.'/'.$this->publicMediaDir.'/'.str_replace('..', '', $media);
 
         if (! file_exists($pathToFile)) {
             throw $this->createNotFoundException('The media does not exist...');

@@ -7,40 +7,25 @@ use Exception;
 use Pushword\Core\Utils\LastTime;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Container;
-use Symfony\Component\DependencyInjection\ParameterBag\ContainerBag;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @IsGranted("ROLE_PUSHWORD_ADMIN")
  */
-class PageScannerController extends AbstractController
+final class PageScannerController extends AbstractController
 {
-    /**
-     * @var PageScannerService
-     */
-    protected $scanner;
-
-    /**
-     * @var Container
-     */
-    protected $container;
-
-    /**
-     * @var ContainerBag
-     */
-    protected $params;
-    protected $filesystem;
-    protected $eventDispatcher;
-
-    protected static $fileCache;
+    private Filesystem $filesystem;
+    private string $pageScanInterval;
+    private static $fileCache;
 
     public function __construct(
         Filesystem $filesystem,
-        string $varDir
+        string $varDir,
+        string $pageScanInterval
     ) {
         $this->filesystem = $filesystem;
+        $this->pageScanInterval = $pageScanInterval;
         $this->setFileCache($varDir);
     }
 
@@ -69,7 +54,7 @@ class PageScannerController extends AbstractController
         }
 
         $lastTime = new LastTime(self::$fileCache);
-        if ($force || false === $lastTime->wasRunSince(new DateInterval('PT5M'))) { // todo config
+        if ($force || false === $lastTime->wasRunSince(new DateInterval($this->pageScanInterval))) {
             exec('cd ../ && php bin/console pushword:page-scanner:scan > /dev/null 2>/dev/null &');
             $newRunLaunched = true;
             $lastTime->setWasRun('now', false);

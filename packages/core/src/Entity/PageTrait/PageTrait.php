@@ -3,6 +3,7 @@
 namespace Pushword\Core\Entity\PageTrait;
 
 use Cocur\Slugify\Slugify;
+use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -108,5 +109,10 @@ trait PageTrait
         $this->publishedAt = $publishedAt;
 
         return $this;
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->publishedAt <= new DateTime('now');
     }
 }

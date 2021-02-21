@@ -27,7 +27,7 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
 
     protected function configureFormFields(FormMapper $formMapper): void
     {
-        $fields = $this->apps->get()->get('admin_user_form_fields');
+        $fields = $this->getFormFields('admin_user_form_fields');
 
         $formMapper->with('admin.user.label.id', ['class' => 'col-md-6 mainFields']);
         foreach ($fields[0] as $field) {
@@ -84,12 +84,10 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
             );
         }
 
-        /*
-* todo
         $listMapper->add('roles[0]', null, [
-                'label' => 'admin.user.role.label',
-            ]);
-        /**/
+            'label' => 'admin.user.role.label',
+        ]);
+
         $listMapper
             ->add('createdAt', null, [
                 'editable' => true,

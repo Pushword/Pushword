@@ -33,7 +33,7 @@ final class ImageManager
         $this->publicMediaDir = $publicMediaDir;
         $this->fileSystem = new FileSystem();
         $this->mediaDir = $mediaDir;
-        $this->optimizer = OptimizerChainFactory::create(); // todo make optimizer bin path configurable
+        $this->optimizer = OptimizerChainFactory::create(); // t o d o make optimizer bin path configurable
     }
 
     public function setFilters(array $filters): void

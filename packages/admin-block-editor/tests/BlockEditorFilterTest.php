@@ -14,9 +14,9 @@ class BlockEditorFilterTest extends KernelTestCase
     public function testIt()
     {
         $filter = $this->getEditorFilterTest();
-        $filter->apply('test test test');
+        $mainContentFiltered = $filter->apply($filter->getEntity()->getMainContent());
 
-        $this->assertSame('test test test', $filter->getEntity()->getMainContent()); // todo
+        $this->assertStringContainsString('</div>', $mainContentFiltered);
     }
 
     private function getEditorFilterTest()
@@ -39,6 +39,6 @@ class BlockEditorFilterTest extends KernelTestCase
                 ->setCustomProperty('toc', true)
                 ->setCreatedAt(new DateTime('1 day ago'))
                 ->setUpdatedAt(new DateTime('1 day ago'))
-                ->setMainContent('test test test');
+                ->setMainContent(file_get_contents(__DIR__.'/content/content.json'));
     }
 }

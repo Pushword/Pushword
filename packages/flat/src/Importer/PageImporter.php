@@ -132,7 +132,6 @@ class PageImporter extends AbstractImporter
         }
         $page->setMainContent($content);
 
-        // todo parentPage, translations
         if (true === $this->newPage) {
             $this->em->persist($page);
         }

@@ -141,7 +141,7 @@ final class AppConfig
     /**
      * @psalm-suppress InternalMethod
      */
-    public function getView(?string $path = null, $fallback = '@Pushword') // todo : make twig global
+    public function getView(?string $path = null, $fallback = '@Pushword')
     {
         if (null === $path) {
             return $this->template.'/page/page.html.twig';

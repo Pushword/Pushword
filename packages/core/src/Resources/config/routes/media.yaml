@@ -1,6 +1,6 @@
-pushword_media:
-  path: /media/{path} #todo injecting pw.public_media_dir
+pushword_media_download:
+  path: /%pw.public_media_dir%/{media}
   controller: Pushword\Core\Controller\MediaController::download
   methods: [GET, HEAD]
   requirements:
-    path: '[a-zA-Z0-9\-/\.]*'
+    media: '[a-zA-Z0-9\-/\.]*'

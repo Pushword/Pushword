@@ -28,6 +28,7 @@ md_cs:
 Page List: Liste des pages
 
 admin:
+  draft: Draft
   label:
     page: Page
     media: Media

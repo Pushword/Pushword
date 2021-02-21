@@ -7,25 +7,29 @@ parent: contribute
 
 ## TODO before v1
 
--   Micro données
+-   search for all "todo" in the code : move them here or fix them
 -   release de sonata 4
--   Issue : User Password Edit don't work from admin
+-   implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
 -   manage date i18n a better way than randomly (document the process)
--   pushword doc design + (re)launch twitter (https://twitter.com/PushwordCMS) + dev.piedweb.com
 
 ## Soon
 
+-   test fresh install
+-   **Core** : ImageManger - make optimizer bin path configurable
+-   **Core** on login success, redirect to previous route (see UserAuthenticator)
+-   **Core** : use autowire and autoconfigure per default and remove useless lines
+-   Simplify request to external service with one pipe (toward Guzzle)
 -   **pagination** : tester & documenter
 -   **Block editor** : édition avancée (template notamment dans pages, prose/unprise)
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
 -   **clickable**
 -   associé un champ vidéo à l'image d'en-tête (plugin !)
--   **Page Scanner** : add <!-- page-scanner-ignore: what to ignore --> ou plutôt dans othersParameters !!
--   **New** API
--   **eCommerce** bridge with sylius (or réciproque)
--   **Admin** : extend parameters and events to filters and form for all admin (will permit extension)
--   **Extend** : Partially implemented in core. May added test and form field in admin ?
--   Schema.org dans le backend d'une page
+-   **Page Scanner** : add <!-- page-scanner-ignore: what to ignore --> ou plutôt dans othersParameters
+-   API ?!
+-   **Page Scanner** check redirection
+-   **Page Scanner** Check there is no translation with the same language than current page
+-   **eCommerce** bridge with sylius
+-   **Admin** : extend parameters and events to _filters_ and _lister_ will permit extension)
 -   **Static**: copy only used media in public
 -   **FacebookManager** : post from facebook
 -   **Flat**: Transform markdown link to page link (useful for navigate in docs from editor)
@@ -35,7 +39,7 @@ parent: contribute
 -   **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (see draft.md) (extension or core ?)
 -   **Page-Scanner** : scanner une page en direct + scanner plus de choses (texte alternatif manquant, etc.)
 -   **Multi-upload** (see https://packagist.org/packages/silasjoisten/sonata-multiupload-bundle)
--   Test the code, search for all "todo" in the code,
+-   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
 
 ## One day (maybe)
 

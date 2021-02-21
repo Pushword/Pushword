@@ -95,7 +95,7 @@ class PageScannerService
 
         if ($response->isRedirect()) {
             //. $linkedDocs[] = $response->headers->get('location');
-            // todo check redirection
+            // t o d o check redirection
             return;
         } elseif (200 != $response->getStatusCode()) {
             file_put_contents('debug', $response);

@@ -2,14 +2,12 @@
 
 namespace Pushword\Admin;
 
-use Pushword\Admin\FormField\Event as FormEvent;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata;
 use Sonata\AdminBundle\Object\MetadataInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class PageAdmin extends AbstractAdmin implements PageAdminInterface
 {
@@ -32,8 +30,6 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
     protected $maxPerPage = 1000;
 
-    private EventDispatcherInterface $eventDispatcher;
-
     public function __construct($code, $class, $baseControllerName)
     {
         parent::__construct($code, $class, $baseControllerName);
@@ -42,29 +38,12 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         ];
     }
 
-    /** @required */
-    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
-    {
-        $this->eventDispatcher = $eventDispatcher;
-    }
-
     /**
      * Check if page entity's item $name exist.
      */
     protected function exists(string $name): bool
     {
         return method_exists($this->pageClass, 'get'.$name);
-    }
-
-    // todo documenter
-    protected function getFormFields(string $key = 'admin_page_form_fields')
-    {
-        $fields = $this->apps->get()->get($key);
-
-        $event = new FormEvent($this, $fields);
-        $this->eventDispatcher->dispatch($event, FormEvent::NAME);
-
-        return $event->getFields();
     }
 
     protected function configureFormFields(FormMapper $formMapper): void
@@ -92,8 +71,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
     public function getNewInstance(): object
     {
         $instance = parent::getNewInstance();
-        $instance->setLocale($this->apps->get()->getDefaultLocale()); // todo : always use first app params
-        //$instance->setMainContentType($this->apps->get()->getDefaultMainContentType());
+        $instance->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
 
         return $instance;
     }
@@ -149,6 +127,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         ]);
         $listMapper->add('_action', null, [
             'actions' => [
+                'edit' => [],
                 'show' => [],
                 'delete' => [],
             ],

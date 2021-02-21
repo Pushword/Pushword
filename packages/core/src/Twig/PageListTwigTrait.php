@@ -4,7 +4,6 @@ namespace Pushword\Core\Twig;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pagerfanta\Adapter\ArrayAdapter;
-use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\PagerfantaInterface;
 use Pagerfanta\RouteGenerator\RouteGeneratorFactoryInterface;
@@ -12,6 +11,7 @@ use Pagerfanta\Twig\View\TwigView;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Repository\Repository;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Environment as Twig;
 
@@ -31,14 +31,19 @@ trait PageListTwigTrait
     /** @required */
     public RouteGeneratorFactoryInterface $routeGeneratorFactory;
 
+    private function getCurrentRequest(): ?Request
+    {
+        return $this->requestStack->getCurrentRequest();
+    }
+
     private function getPagerRouteParams(): array
     {
         $params = [];
-        if ($this->requestStack->getCurrentRequest()->get('slug')) {
-            $params['slug'] = rtrim($this->requestStack->getCurrentRequest()->get('slug'), '/');
+        if ($this->getCurrentRequest() && $this->getCurrentRequest()->get('slug')) {
+            $params['slug'] = rtrim($this->getCurrentRequest()->get('slug'), '/');
         }
 
-        if ($this->requestStack->getCurrentRequest()->get('host')) {
+        if ($this->getCurrentRequest() && $this->getCurrentRequest()->get('host')) {
             $params['host'] = $this->requestStack->getCurrentRequest()->get('host');
         }
 
@@ -47,8 +52,8 @@ trait PageListTwigTrait
 
     private function getPagerRouteName(): string
     {
-        $pagerRouter = $this->requestStack->getCurrentRequest()->get('_route');
-        $pagerRouter .= '' === $this->requestStack->getCurrentRequest()->get('slug') ? '_homepage' : '';
+        $pagerRouter = $this->getCurrentRequest() ? $this->getCurrentRequest()->get('_route') : 'pushword_page';
+        $pagerRouter .= $this->getCurrentRequest() && '' === $this->getCurrentRequest()->get('slug') ? '_homepage' : '';
         $pagerRouter .= '_pager';
 
         return $pagerRouter;
@@ -107,9 +112,7 @@ trait PageListTwigTrait
             }
 
             $pager = (new Pagerfanta(new ArrayAdapter($pages)))
-            // Wait PR https://github.com/BabDev/Pagerfanta/pull/21 to be merged and released
-            // $pager = (new Pagerfanta(new QueryAdapter($queryBuilder)))
-                // ->setMaxNbPages($max[1] ?? 0)
+                ->setMaxNbPages($max[1] ?? 0)
                 ->setMaxPerPage($max[0])
                 ->setCurrentPage($this->getCurrentPage());
             $pages = $pager->getCurrentPageResults();

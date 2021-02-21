@@ -11,7 +11,7 @@ class MediaControllerTest extends KernelTestCase
         self::bootKernel();
 
         $mediaController = self::$kernel->getContainer()->get('Pushword\Core\Controller\MediaController');
-        $response = $mediaController->download('media/piedweb-logo.png');
+        $response = $mediaController->download('piedweb-logo.png');
         $this->assertTrue(200 === $response->getStatusCode());
     }
 }

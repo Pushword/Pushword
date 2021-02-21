@@ -3,11 +3,13 @@
 namespace Pushword\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Service\ImageManager;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment as Twig;
 
 trait AdminTrait
@@ -51,6 +53,14 @@ trait AdminTrait
 
     abstract public function setListMode(string $mode): void;
 
+    protected EventDispatcherInterface $eventDispatcher;
+
+    /** @required */
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
+    {
+        $this->eventDispatcher = $eventDispatcher;
+    }
+
     /**
      * Must be a cookie to check before to do that
      * If you click one time to list, stay in liste mode.
@@ -87,15 +97,25 @@ trait AdminTrait
     }
 
     /** @required */
-    public function setEntityManagerInterface(EntityManagerInterface $em): void
+    public function setEntityManager(EntityManagerInterface $em): void
     {
         $this->em = $em;
+    }
+
+    public function getEntityManager(): EntityManagerInterface
+    {
+        return $this->em;
     }
 
     /** @required */
     public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;
+    }
+
+    public function getTwig(): Twig
+    {
+        return $this->twig;
     }
 
     public function setPageClass($pageClass): void
@@ -154,5 +174,15 @@ trait AdminTrait
     public function setImageManager(ImageManager $imageManager)
     {
         $this->imageManager = $imageManager;
+    }
+
+    protected function getFormFields(string $key = 'admin_page_form_fields'): array
+    {
+        $fields = $this->apps->get()->get($key);
+
+        $event = new FormEvent($this, $fields);
+        $this->eventDispatcher->dispatch($event, FormEvent::NAME);
+
+        return $event->getFields();
     }
 }

@@ -5,6 +5,11 @@ namespace Pushword\Admin\DependencyInjection;
 use Pushword\Admin\FormField\CreatedAtField;
 use Pushword\Admin\FormField\CustomPropertiesField;
 use Pushword\Admin\FormField\HostField;
+use Pushword\Admin\FormField\MediaMediaFileField;
+use Pushword\Admin\FormField\MediaNameField;
+use Pushword\Admin\FormField\MediaNamesField;
+use Pushword\Admin\FormField\MediaPreviewField;
+use Pushword\Admin\FormField\MediaSlugField;
 use Pushword\Admin\FormField\OgDescriptionField;
 use Pushword\Admin\FormField\OgImageField;
 use Pushword\Admin\FormField\OgTitleField;
@@ -36,12 +41,14 @@ class Configuration implements ConfigurationInterface
     const DEFAULT_APP_FALLBACK = [
         'admin_page_form_fields',
         'admin_user_form_fields',
+        'admin_media_form_fields',
     ];
 
     const DEFAULT_ADMIN_USER_FORM_FIELDS = [
         [UserEmailField::class, UserUsernameField::class, UserPasswordField::class, CreatedAtField::class],
         ['admin.user.label.security' => [UserRolesField::class]],
     ];
+
     const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
         [PageH1Field::class, PageMainContentField::class],
         [
@@ -63,6 +70,12 @@ class Configuration implements ConfigurationInterface
         ],
     ];
 
+    const DEFAULT_ADMIN_MEDIA_FORM_FIELDS = [
+        [MediaMediaFileField::class, MediaNameField::class, MediaSlugField::class],
+        [CustomPropertiesField::class, MediaNamesField::class],
+        [MediaPreviewField::class],
+    ];
+
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder('pushword_admin');
@@ -72,6 +85,7 @@ class Configuration implements ConfigurationInterface
                     ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
                     ->variableNode('admin_page_form_fields')->defaultValue(self::DEFAULT_ADMIN_PAGE_FORM_FIELDS)->cannotBeEmpty()->end()
                     ->variableNode('admin_user_form_fields')->defaultValue(self::DEFAULT_ADMIN_USER_FORM_FIELDS)->cannotBeEmpty()->end()
+                    ->variableNode('admin_media_form_fields')->defaultValue(self::DEFAULT_ADMIN_MEDIA_FORM_FIELDS)->cannotBeEmpty()->end()
                 ->end()
         ;
 

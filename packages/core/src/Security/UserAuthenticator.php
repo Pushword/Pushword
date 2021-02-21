@@ -98,7 +98,7 @@ class UserAuthenticator extends AbstractFormLoginAuthenticator implements Passwo
             return new RedirectResponse($targetPath);
         }
 
-        // todo redirect to previous route
+        // t o d o: redirect to previous route
         return new RedirectResponse($this->urlGenerator->generate('pushword_admin_dashboard'));
     }
 

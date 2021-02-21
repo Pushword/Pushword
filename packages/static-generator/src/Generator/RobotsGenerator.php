@@ -8,7 +8,7 @@ class RobotsGenerator extends PageGenerator
     {
         parent::generate($host);
 
-        foreach ($this->app->getLocales() as $locale) { // todo, find locale by my self via repo
+        foreach ($this->app->getLocales() as $locale) {
             foreach (['txt', 'xml'] as $format) {
                 $this->generateSitemap($locale, $format);
             }
@@ -30,7 +30,7 @@ class RobotsGenerator extends PageGenerator
             $staticFile = $this->getStaticDir().'/sitemap.'.$format;
         } else {
             $staticFile = $this->getStaticDir().'/'.$locale.'/sitemap.'.$format;
-        } // todo get it from URI removing host
+        }
 
         $this->saveAsStatic($liveUri, $staticFile);
     }

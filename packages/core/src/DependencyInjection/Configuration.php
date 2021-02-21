@@ -111,11 +111,8 @@ final class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('pushword');
         $treeBuilder->getRootNode()->children()
+            ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
             ->scalarNode('public_dir')->defaultValue('%kernel.project_dir%/public')->cannotBeEmpty()->end()
-            ->scalarNode('database_url')->defaultValue('sqlite:///%kernel.project_dir%/var/app.db')->cannotBeEmpty()->end()
-            ->scalarNode('entity_page')->defaultValue('App\Entity\Page')->cannotBeEmpty()->end()
-            ->scalarNode('entity_media')->defaultValue('App\Entity\Media')->cannotBeEmpty()->end()
-            ->scalarNode('entity_user')->defaultValue('App\Entity\User')->cannotBeEmpty()->end()
             ->scalarNode('media_dir')
                 ->defaultValue('%kernel.project_dir%/media')->cannotBeEmpty()
                 ->info('Dir where files will be uploaded when using admin.')
@@ -124,7 +121,11 @@ final class Configuration implements ConfigurationInterface
                 ->defaultValue(self::DEFAULT_PUBLIC_MEDIA_DIR)->cannotBeEmpty()
                 ->info('Used to generate browser path. Must be accessible from public_dir.')
                 ->end()
-            ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
+            ->scalarNode('database_url')->defaultValue('sqlite:///%kernel.project_dir%/var/app.db')->cannotBeEmpty()->end()
+            ->scalarNode('entity_page')->defaultValue('App\Entity\Page')->cannotBeEmpty()->end()
+            ->scalarNode('entity_media')->defaultValue('App\Entity\Media')->cannotBeEmpty()->end()
+            ->scalarNode('entity_user')->defaultValue('App\Entity\User')->cannotBeEmpty()->end()
+
             // default app value
             ->scalarNode('locale')->defaultValue('%kernel.default_locale%')->cannotBeEmpty()->end()
             ->scalarNode('locales')

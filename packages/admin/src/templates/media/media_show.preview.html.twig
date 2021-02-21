@@ -1,4 +1,4 @@
 
 URL:<br>
-<a href="/media/{{ media.media }}" target=_blank"><code>/media/{{ media.media }}</code></a>
-{# todo: injecting pw.public_media_dir (not /media/) #}
+{% set path = path('pushword_media_download',  {'media': media.media}) %}
+<a href="{{ path }}" target=_blank"><code>{{ path }}</code></a>

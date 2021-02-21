@@ -132,7 +132,6 @@ final class Manager
             $filterClass->setManagerPool($this->managerPool);
         }
 
-        // todo autowire
         return $filterClass;
     }
 

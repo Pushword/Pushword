@@ -161,7 +161,6 @@ trait CustomPropertiesTrait
             $property = lcfirst(preg_replace('/^get/', '', $method));
             if (! property_exists(static::class, $property)) {
                 return $this->getCustomProperty($property) ?? null;
-                // todo remove the else next release
             }
 
             return $this->$property;

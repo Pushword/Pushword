@@ -5,7 +5,7 @@
     </div>
     <div class="flex-grow">
         <div class="font-bold">{{ data.title }}</div>
-        <div class="font-light">{{ filesize(data.file.size) }}B {# todo: translate #}</div>
+        <div class="font-light">{{ filesize(data.file.size) }}{{ 'bytes_abbreviation'|trans }}</div>
     </div>
 
     {{ link(svg('download', {class: 'w-10 fill-current'}), data.file.url, {'class': 'd-block text-gray-600 p-3'}) }}

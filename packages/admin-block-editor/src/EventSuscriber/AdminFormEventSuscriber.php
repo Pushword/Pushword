@@ -32,7 +32,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         $returnValues = $event->getAdmin()->getRequest()->get($event->getAdmin()->getRequest()->get('uniqid'));
         //dd($returnValues);
         if (isset($returnValues['mainContent'])) {
-            // sanitize with https://github.com/editor-js/editorjs-php // todo
+            // sanitize with https://github.com/editor-js/editorjs-php
             $event->getAdmin()->getSubject()->setMainContent($returnValues['mainContent']);
         }
     }
@@ -61,11 +61,12 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
     private function transformMainContent($content)
     {
         $jsonContent = json_decode($content);
-        if (false === $jsonContent) {
+
+        // We never come to false here because we ever checked before with mayUseEditorBlock
+        /*if (false === $jsonContent) {
             // we just start to use editor.js for this page... try parsing raw content and creating a JS
-            return '{}'; // todo
-            // {"time":1611744796620,"blocks":[{"type":"paragraph","data":{"text":""}}],"version":"2.19.1"}
-        }
+            return json_encode(['blocks' => [['type' => 'raw', 'data' => ['html' => $content]]]]);
+        }*/
 
         return $content;
     }
