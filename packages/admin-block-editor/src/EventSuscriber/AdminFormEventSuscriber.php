@@ -60,10 +60,11 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
 
     private function transformMainContent($content)
     {
-        $jsonContent = json_decode($content);
 
         // We never come to false here because we ever checked before with mayUseEditorBlock
-        /*if (false === $jsonContent) {
+        /*
+        $jsonContent = json_decode($content);
+        if (false === $jsonContent) {
             // we just start to use editor.js for this page... try parsing raw content and creating a JS
             return json_encode(['blocks' => [['type' => 'raw', 'data' => ['html' => $content]]]]);
         }*/
