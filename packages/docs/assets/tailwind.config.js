@@ -1,8 +1,12 @@
 const colors = require("tailwindcss/colors");
+const heropatterns = require("tailwindcss-hero-patterns/src/patterns");
 
 module.exports = {
     purge: {}, // directly in webpack
     theme: {
+        heroPatterns: {
+            bubbles: heropatterns.bubbles,
+        },
         colors: {
             "blue-gray": colors.blueGray,
             "cool-gray": colors.coolGray,
@@ -143,5 +147,6 @@ module.exports = {
     plugins: [
         require("@tailwindcss/typography"),
         require("@tailwindcss/aspect-ratio"),
+        require("tailwindcss-hero-patterns"),
     ],
 };

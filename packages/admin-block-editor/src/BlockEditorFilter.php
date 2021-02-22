@@ -5,10 +5,10 @@ namespace Pushword\AdminBlockEditor;
 use Exception;
 use Pushword\AdminBlockEditor\Block\BlockInterface;
 use Pushword\AdminBlockEditor\Block\DefaultBlock;
+use Pushword\Core\AutowiringTrait\RequiredAppTrait;
+use Pushword\Core\AutowiringTrait\RequiredEntityTrait;
+use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use Pushword\Core\Component\EntityFilter\Filter\AbstractFilter;
-use Pushword\Core\Component\EntityFilter\Filter\RequiredAppTrait;
-use Pushword\Core\Component\EntityFilter\Filter\RequiredEntityTrait;
-use Pushword\Core\Component\EntityFilter\Filter\RequiredTwigTrait;
 use Pushword\Core\Twig\ClassTrait;
 
 final class BlockEditorFilter extends AbstractFilter

@@ -6,7 +6,7 @@ trait UnproseTwigTrait
 {
     public function encryptTag(string $tag): string
     {
-        return sha1($tag.date('Y'));
+        return '<'.$tag.' '.sha1($tag.date('Y')).'>';
     }
 
     /**
@@ -14,6 +14,6 @@ trait UnproseTwigTrait
      */
     public function unprose(string $html): string
     {
-        return $this->encryptTag('</div>').str_replace("\n", '', $html).$this->encryptTag('<div>');
+        return $this->encryptTag('div').str_replace("\n", '', $html).$this->encryptTag('/div');
     }
 }

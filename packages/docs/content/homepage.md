@@ -1,34 +1,66 @@
 ---
 title: Pushword - Modern CMS to build rapidly Websites (powered by Symfony)
-h1:
-    <span class="block mt-6 leading-relaxed">Build modern <em class="font-light">Content First</em> websites rapidly
+h1: <span class="block mt-6 leading-relaxed">Build modern <em class="font-light">Content First</em> websites rapidly
     <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>
 name: Pushword
 template: /page/homepage.html.twig
 prose: "max-w-screen-sm prose-sm md:prose-lg mx-auto p-3 prose dark:prose-light"
 ---
 
-<div class="max-w-screen-sm mx-auto" markdown=1>
+<div class="flex flex-row max-w-screen-lg mx-auto mb-6">
+
+<div class="pr-6 -mt-3" markdown=1>
 
 Puswhord is a PHP <strong>CMS</strong> to <strong>rapidly</strong> create, manage and maintain <strong>extandable Website(s)</strong>.
 
-It make it easy to create amazing <strong>searchable</strong> websites findable on <strong>google</strong>.
+It make it easy to create amazing <strong>searchable</strong> websites <strong>findable on google</strong>.
 
 Bonus, managing <strong>multi-site</strong>, <strong>internationalization</strong> and <strong>page vesioning</strong> is so simple.
 
-<strong>Want a demo ?</strong> This website is built with **Pushword** with flat file management !
+<strong>Want a demo ?</strong> This website is built with _Pushword_ with flat file management. You may prefer a <strong>block editor</strong> with an admin dashboard, it's possible with **simply installing an extension**.
 
-See [how to install and test Pushword in less than one minute](/installation)...
+See [how to install and test Pushword in less than one minute](/installation).
 
-Or look at the <strong>detailled features</strong> :
+Or look at the <strong>detailled features</strong>.
 
+</div>
+<div class="hidden p-3 -mt-3 prose-sm bg-gray-100 rounded-sm shadow dark:bg-gray-900 lg:block" style="width:400px" markdown=1>
+
+### Install
+
+<pre><code class="text-sm shell" style="overflow-x: hidden;">composer create-project pushword/new my-project</code></pre>
+
+That's it ! Launch a PHP Server (`cd my-project && php -S 127.0.0.1:8004 -t public/`).
+
+Maybe you will want to change [default configuration](/configuration) or add some [extensions](/extensions).
+
+### Download
+
+If you are not composer friendly, you can download the classic version.
+
+<p class="text-center">{{ link(svg('download', {'class': 'w-6 h-6 inline-block mr-2'}) ~ ' Pushword-Classic-1.0.0.zip', '#', {'class': 'font-bold'}) }}
+<br><small>{{ svg('exclamation-triangle', {'class': 'w-3 h-3 inline-block mr-1'}) }} not yet available</small></p>
+
+Unzip it on a classic Apache/PHP server and play.
+
+</div>
+</div>
+
+<div class="absolute hidden transform -right-14 w-96 -top-10 2xl:block 2xl:w-60 rotate-12" style="height:150vh">
+  <div class="w-full h-full bg-repeat text-primary-100 heropattern-bubbles-gray-200">
+  </div>
 </div>
 
 <!-- next: show a preview there -->
 
 {% apply unprose %}
 
-<div class="grid max-w-screen-sm grid-cols-2 gap-4 p-3 mx-auto md:grid-cols-4 xl:grid-cols-6 md:max-w-screen-2xl">
+<div class="relative mb-6 bg-gray-100 shadow-sm dark:bg-gray-800">
+    <div class="max-w-screen-sm mx-auto">
+        <h2 class="pt-12 pb-6 text-4xl">Features<br><small class="text-lg">Create content and publish it on the web smoothly</small></h2>
+    </div>
+
+<div class="grid max-w-screen-sm grid-cols-2 gap-4 mx-auto md:px-12 md:grid-cols-4 xl:grid-cols-6 md:max-w-screen-2xl ">
     <div class="col-span-2">
         <!-- Edit -->
         <div class="px-3 py-6 mb-6 rounded-lg shadow-lg bg-green-50">
@@ -148,6 +180,44 @@ Or look at the <strong>detailled features</strong> :
         </div>
     </div>
 </div>
+</div>
+
+<div class="max-w-screen-sm p-3 mx-auto">
+
+<h2 class="text-2xl"><small>Thanks to open source package and their contributors</small><br>Pushword CMS is built on top of</h2>
+
+<ul class="flex flex-row my-6 space-x-6">
+    <li class="text-center"><a href="https://symfony.com"><img src="/media/symfony.svg" alt="Symfony PHP Framework" class="h-16"><br><small>Symfony</small></a></li>
+    <li class="text-center"><a href="https://codex.so/editor"><img src="/media/editorjs.svg" alt="Editor.js" class="h-16"><br><small>Editor.js</a></small></li>
+    <li class="text-center"><a href="https://sonata-project.org"><img src="/media/sonata.svg" alt="Editor.js" class="w-16 h-16 bg-gray-300 rounded-full"><br><small>Sonata</small></a></li>
+</ul>
+
+<div class="pt-3 pb-6 prose">
+{% apply markdown %}
+And many more ({{ link('see dependencies', 'https://github.com/Pushword/Pushword/blob/main/composer.json') }}).
+
+### **You are heavily using Pushword CMS and making money with it ?**
+
+Don't forget to <strong>sponsor</strong> package maintainer.
+
+It will **reward their works** and maybe help to ensure long term support and keep **best feature up to date and open source**.
 {% endapply %}
 
-Time to [read the docs](/installation) or maybe have a look to the #[{{ svg('github') }} source code](https://github.com/Pushword/pushword).
+</div>
+
+</div>
+
+<div class="bg-gray-100 shadow-sm -mb-14 dark:bg-gray-800">
+<div class="max-w-screen-sm p-3 py-6 mx-auto prose-sm prose md:prose-lg dark:prose-light">
+
+<h2>Next</h2>
+{% apply markdown %}
+Time to [read the docs](/installation) or maybe have a look to the {{ link(svg('github') ~ 'source code', 'https://github.com/Pushword/pushword') }}.
+
+And follow {{ link('@PushwordCMS', 'https://twitter.com/PushwordCMS') }} on twitter or {{ link('github', 'https://github.com/Pushword/pushword') }} to be notified about updates or new extensions.
+{% endapply %}
+
+</div>
+</div>
+
+{% endapply %}

@@ -1,6 +1,6 @@
 {
-  "bundles/pushwordcore/page.js": "./page.js",
-  "bundles/pushwordcore/tailwind.css": "./tailwind.css",
+  "bundles/pushwordcore/page.min.js": "./page.min.js",
+  "bundles/pushwordcore/tailwind.min.css": "./tailwind.min.css",
   "bundles/pushwordcore/favicons/android-chrome-192x192.png": "./favicons/android-chrome-192x192.png",
   "bundles/pushwordcore/favicons/android-chrome-512x512.png": "./favicons/android-chrome-512x512.png",
   "bundles/pushwordcore/favicons/apple-touch-icon.png": "./favicons/apple-touch-icon.png",

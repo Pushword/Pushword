@@ -1,33 +1,30 @@
 services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    bind:
+      $projectDir: "%kernel.project_dir%"
+      $mediaDir: "%pw.media_dir%"
+      $pageClass: "%pw.entity_page%"
+      $mediaClass: "%pw.entity_media%"
+
   Pushword\Flat\FlatFileImporter:
     alias: pushword.flat.importer
 
   pushword.flat.importer:
     class: Pushword\Flat\FlatFileImporter
-    autowire: true
-    arguments:
-      $projectDir: "%kernel.project_dir%"
-      $mediaDir: "%pw.media_dir%"
 
   Pushword\Flat\FlatFileExporter:
     alias: pushword.flat.exporter
 
   pushword.flat.exporter:
     class: Pushword\Flat\FlatFileExporter
-    autowire: true
-    arguments:
-      $projectDir: "%kernel.project_dir%"
-      $mediaDir: "%pw.media_dir%"
-      $pageClass: "%pw.entity_page%"
-      $mediaClass: "%pw.entity_media%"
 
   Pushword\Flat\FlatFileImportCommand:
-    autowire: true
     arguments:
     tags: ["console.command"]
 
   Pushword\Flat\FlatFileExportCommand:
-    autowire: true
     arguments:
     tags: ["console.command"]
 
@@ -36,12 +33,8 @@ services:
 
   pushword.flat.content_dir_finder:
     class: Pushword\Flat\FlatFileContentDirFinder
-    autowire: true
-    arguments:
-      $projectDir: "%kernel.project_dir%"
 
   Pushword\Flat\Importer\PageImporter:
-    autowire: true
     arguments:
       $entityClass: "%pw.entity_page%"
     calls:
@@ -49,6 +42,5 @@ services:
       - [setMediaClass, ["%pw.entity_media%"]]
 
   Pushword\Flat\Importer\MediaImporter:
-    autowire: true
     arguments:
       $entityClass: "%pw.entity_media%"

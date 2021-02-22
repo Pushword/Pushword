@@ -38,8 +38,8 @@ pushword:
   # custom_properties:
   #     assets:
   #         stylesheets:
-  #             - /bundles/pushwordcore/tailwind.css
+  #             - /bundles/pushwordcore/tailwind.min.css
   #         javascripts:
-  #             - /bundles/pushwordcore/page.js
+  #             - /bundles/pushwordcore/page.min.js
   # apps:
   #     -

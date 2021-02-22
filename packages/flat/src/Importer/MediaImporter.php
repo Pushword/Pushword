@@ -19,6 +19,7 @@ class MediaImporter extends AbstractImporter
 
     private bool $newMedia = false;
 
+    /** @required */
     public function setMediaDir(string $mediaDir): self
     {
         $this->mediaDir = $mediaDir;
@@ -49,7 +50,7 @@ class MediaImporter extends AbstractImporter
     {
         $media = $this->getMedia($this->getFilename($filePath));
 
-        if (false === $this->newMedia && $media->getUpdatedAt() >= $lastEditDatetime) {
+        if (1 == 2 && false === $this->newMedia && $media->getUpdatedAt() >= $lastEditDatetime) {
             return; // no update needed
         }
 

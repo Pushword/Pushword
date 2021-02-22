@@ -2,3 +2,5 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 @import "./../../js-helper/src/tailwind.prose.scss";
+
+@import "highlight.js/styles/vs2015.css";

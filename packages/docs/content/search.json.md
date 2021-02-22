@@ -1,7 +1,7 @@
 ---
 template: none
 h1: search.json
-main_content: twig
+main_content_filters: twig
 headers:
     - [Content-type, application/json]
 ---

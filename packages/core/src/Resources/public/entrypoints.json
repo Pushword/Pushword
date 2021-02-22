@@ -1,13 +1,13 @@
 {
   "entrypoints": {
-    "page": {
+    "page.min": {
       "js": [
-        "./page.js"
+        "./page.min.js"
       ]
     },
-    "tailwind": {
+    "tailwind.min": {
       "css": [
-        "./tailwind.css"
+        "./tailwind.min.css"
       ]
     }
   }

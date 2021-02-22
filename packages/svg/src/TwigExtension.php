@@ -20,9 +20,9 @@ class TwigExtension extends AbstractExtension
         ];
     }
 
-    public function getSvg(string $name, $attr = ['class' => 'fill-current w-4 inline-block -mt-1']): string
+    public function getSvg(string $name, $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], string $dir = ''): string
     {
-        $dirs = $this->apps->get()->get('svg_dir');
+        $dirs = $dir ?: $this->apps->get()->get('svg_dir');
 
         if (! \is_array($dirs)) {
             $dirs = [$dirs];
@@ -39,6 +39,10 @@ class TwigExtension extends AbstractExtension
 
         if (! $file) {
             throw new Exception('`'.$name.'` (svg) not found.');
+        }
+
+        if (! \in_array(mime_content_type($file), ['image/svg+xml', 'image/svg'])) {
+            throw new Exception('`'.$name.'` seems not be a valid svg file.');
         }
 
         $svg = file_get_contents($file);

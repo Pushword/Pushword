@@ -22,11 +22,7 @@ Encore.setOutputPath("./src/Resources/public/")
     .enableVersioning(false)
     .enablePostCssLoader((options) => {
         options.postcssOptions = {
-            plugins: [
-                require("postcss-import"),
-                tailwindcss("./tailwind.config.js"),
-                require("autoprefixer"),
-            ],
+            plugins: [require("postcss-import"), tailwindcss("./tailwind.config.js"), require("autoprefixer")],
         };
         if (Encore.isProduction()) {
             options.postcssOptions.plugins.push(purgecss);
@@ -37,7 +33,7 @@ Encore.setOutputPath("./src/Resources/public/")
         from: "./src/Resources/assets/favicons",
         to: "favicons/[name].[ext]",
     })
-    .addEntry("page", "./src/Resources/assets/page.js") // {{ asset('bundles/pushwordcore/page.js') }}
-    .addStyleEntry("tailwind", "./src/Resources/assets/tailwind.css");
+    .addEntry("page.min", "./src/Resources/assets/page.js") // {{ asset('bundles/pushwordcore/page.min.js') }}
+    .addStyleEntry("tailwind.min", "./src/Resources/assets/tailwind.css");
 
 module.exports = Encore.getWebpackConfig();

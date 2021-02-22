@@ -3,6 +3,9 @@
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Knp\Menu\ItemInterface;
+use Pushword\Core\AutowiringTrait\RequiredAppTrait;
+use Pushword\Core\AutowiringTrait\RequiredEntityTrait;
+use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use TOC\MarkupFixer;
 use TOC\TocGenerator;
 

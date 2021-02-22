@@ -87,7 +87,7 @@ final class Manager
     private function getFilters(string $label): ?array
     {
         if ($this->app->entityCanOverrideFilters()) {
-            $filters = $this->entity->getCustomProperty($label);
+            $filters = $this->entity->getCustomProperty($label.'_filters');
         }
 
         if (! isset($filters) || ! $filters) {

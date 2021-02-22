@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use Pushword\Core\AutowiringTrait\RequiredEntityTrait;
+use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use Pushword\Core\Entity\PageInterface;
 
 class Twig extends AbstractFilter

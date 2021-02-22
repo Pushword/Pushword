@@ -2,6 +2,9 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use Pushword\Core\AutowiringTrait\RequiredEntityTrait;
+use Pushword\Core\AutowiringTrait\RequiredManagerPoolTrait;
+use Pushword\Core\AutowiringTrait\RequiredPropertyTrait;
 use Pushword\Core\Entity\PageInterface;
 
 // TODO: Documenter

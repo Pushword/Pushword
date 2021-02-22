@@ -1,6 +1,6 @@
 <?php
 
-namespace Pushword\Core\Component\EntityFilter\Filter;
+namespace Pushword\Core\AutowiringTrait;
 
 use Twig\Environment as Twig;
 

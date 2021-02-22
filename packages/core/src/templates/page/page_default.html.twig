@@ -46,6 +46,7 @@
 	{% if page.mainImage is defined and page.mainImage is not null %}
 		<meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ (page.mainImage)|image('default') }}">
 	{% endif %}
+    <script>const base = "{{ page('homepage') }}"</script>
 {% endblock %}
 
 {% block feed %}

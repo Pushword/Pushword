@@ -4,7 +4,7 @@ namespace Pushword\AdminBlockEditor\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
-use Pushword\Core\Component\EntityFilter\Filter\RequiredMediaClass;
+use Pushword\Core\AutowiringTrait\RequiredMediaClass;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Service\ImageManager;

@@ -1,6 +1,7 @@
 //import 'alpinejs';
 
-require("fslightbox");
+//require("fslightbox");
+import hljs from "highlight.js";
 
 require("simple-jekyll-search");
 
@@ -14,14 +15,15 @@ import {
 
 function onPageLoaded() {
     onDomChanged();
-    new FsLightbox();
+    //new FsLightbox();
     SimpleJekyllSearch({
         searchInput: document.getElementById("search"),
         resultsContainer: document.getElementById("search-results"),
-        json: "/search.json",
+        json: (base || "") + "/search.json",
         searchResultTemplate:
-            '<a href="{url}" class="block py-2 px-1 m-1 hover:bg-primary hover:text-white rounded"><span class="block">{title}</span><span class="text-xs font-light block mt-1">pushword.piedweb.com › {slug}</span></a>',
+            '<a href="{url}" class="block py-2 px-1 m-1 hover:bg-gray-800 dark:hover:bg-gray-200 hover:text-white dark:hover:text-gray-800 rounded"><span class="block">{title}</span><span class="text-xs font-light block mt-1">pushword.piedweb.com › {slug}</span></a>',
     });
+    initHighlight();
 }
 
 function onDomChanged() {
@@ -30,7 +32,7 @@ function onDomChanged() {
     uncloakLinks();
     readableEmail(".cea");
     replaceOn();
-    refreshFsLightbox();
+    //refreshFsLightbox();
 }
 
 document.addEventListener("DOMContentLoaded", onPageLoaded());

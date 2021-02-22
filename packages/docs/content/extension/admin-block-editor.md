@@ -70,7 +70,7 @@ I recommend you to import `@PushwordAdminBlockEditor/editorjs_widget.html`.twig 
 
 Your configuration may looks like
 
-```
+```yaml
 admin_block_editor_blocks: [
       'paragraph',
       'list',

@@ -1,6 +1,6 @@
 <?php
 
-namespace Pushword\Core\Component\EntityFilter\Filter;
+namespace Pushword\Core\AutowiringTrait;
 
 use Pushword\Core\Component\App\AppConfig;
 

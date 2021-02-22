@@ -3,9 +3,9 @@
 namespace Pushword\AdminBlockEditor\Block;
 
 use Exception;
-use Pushword\Core\Component\EntityFilter\Filter\RequiredAppTrait;
-use Pushword\Core\Component\EntityFilter\Filter\RequiredEntityTrait;
-use Pushword\Core\Component\EntityFilter\Filter\RequiredTwigTrait;
+use Pushword\Core\AutowiringTrait\RequiredAppTrait;
+use Pushword\Core\AutowiringTrait\RequiredEntityTrait;
+use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 
 abstract class AbstractBlock implements BlockInterface
 {

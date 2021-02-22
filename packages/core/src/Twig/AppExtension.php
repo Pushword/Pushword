@@ -12,7 +12,6 @@ use Pushword\Core\Component\EntityFilter\ManagerPoolInterface;
 use Pushword\Core\Component\Router\RouterInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaInterface;
-use Pushword\Core\Entity\PageInterface as Page;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Utils\FilesizeFormatter;
@@ -78,7 +77,6 @@ class AppExtension extends AbstractExtension
     {
         return [
             new TwigFunction('view', [$this, 'getView'], ['needs_environment' => false]),
-            new TwigFunction('is_current_page', [$this, 'isCurrentPage']), // used ?
             new TwigFunction('is_internal_image', [self::class, 'isInternalImage']), // used ?
             new TwigFunction('media_from_string', [$this, 'transformStringToMedia']), // used ?
             // loaded from trait
@@ -147,14 +145,6 @@ class AppExtension extends AbstractExtension
         }
 
         return $src;
-    }
-
-    public function isCurrentPage(string $uri, ?Page $currentPage): bool
-    {
-        return
-            null === $currentPage || $uri != $this->router->generate($currentPage->getRealSlug())
-            ? false
-            : true;
     }
 
     public static function pregReplace($subject, $pattern, $replacement)

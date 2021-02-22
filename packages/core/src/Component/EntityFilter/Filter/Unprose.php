@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use Pushword\Core\AutowiringTrait\RequiredAppTrait;
+use Pushword\Core\AutowiringTrait\RequiredEntityTrait;
 use Pushword\Core\Twig\ClassTrait;
 use Pushword\Core\Twig\UnproseTwigTrait;
 
@@ -25,18 +27,32 @@ class Unprose extends AbstractFilter
      */
     public function apply($string)
     {
-        $string = str_replace(
-            ['<p>'.$this->encryptTag('</div>').'</p>', '<p>'.$this->encryptTag('<div>').'</p>'],
-            ['</div>', '<div class="'.$this->getClass($this->entity, 'prose').'">'],
-            $string
-        );
+        $closeEncryptedTag = $this->encryptTag('div');
+        $openEncryptedTag = $this->encryptTag('/div');
+
+        // Remove blank prose added (eg: between to apply unprose ?)
+        //$string = preg_replace('/('.preg_quote($closeEncryptedTag, '/').'\s*'.preg_quote($openEncryptedTag, '/').')/', '', $string);
 
         $string = str_replace(
-            [$this->encryptTag('</div>'), $this->encryptTag('<div>')],
+            [$closeEncryptedTag, $openEncryptedTag],
             ['</div>', '<div class="'.$this->getClass($this->entity, 'prose').'">'],
             $string
         );
 
         return $string;
     }
+
+    /*
+        // Fix markdown encapsulate encryptedTag
+    $string = str_replace(
+            ['<p>'.$closeEncryptedTag.'</p>', $closeEncryptedTag.'</p>', '<p>'.$closeEncryptedTag],
+            $closeEncryptedTag,
+            $string
+        );
+        $string = str_replace(
+            ['<p>'.$openEncryptedTag.'</p>', '<p>'.$openEncryptedTag, $openEncryptedTag.'</p>'],
+            $openEncryptedTag,
+            $string
+        );
+    */
 }

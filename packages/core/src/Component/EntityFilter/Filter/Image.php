@@ -2,6 +2,9 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use Pushword\Core\AutowiringTrait\RequiredAppTrait;
+use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
+
 class Image extends AbstractFilter
 {
     use RequiredAppTrait;

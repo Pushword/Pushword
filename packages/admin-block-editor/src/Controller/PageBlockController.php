@@ -5,7 +5,7 @@ namespace Pushword\AdminBlockEditor\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Pushword\Core\AutowiringTrait\RequiredApps;
-use Pushword\Core\Component\EntityFilter\Filter\RequiredPageClass;
+use Pushword\Core\AutowiringTrait\RequiredPageClass;
 use Pushword\Core\Repository\Repository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
