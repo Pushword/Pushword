@@ -111,10 +111,6 @@ module.exports = {
                             "figure figcaption": {
                                 color: theme("colors.gray.400"),
                             },
-                            code: {
-                                backgroundColor: theme("colors.gray.600"),
-                                color: theme("colors.gray.100"),
-                            },
                             "a code": {
                                 color: theme("colors.gray.100"),
                             },

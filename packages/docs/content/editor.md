@@ -4,7 +4,7 @@ h1: "Editor Hidden Super Power<br><small>and Markdown Cheatsheet</small>"
 parent: homepage
 prose: " "
 raw: true
-main_content: twig
+main_content_filters: twig,mainContentToBody
 ---
 
 <div class="flex flex-wrap max-w-5xl">

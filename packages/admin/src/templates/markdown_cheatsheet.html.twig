@@ -56,7 +56,7 @@
 #### Title 6 (h6)
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
 ## Title 2 (h2)<br>
 ### Title 3 (h3)<br>
 ### Title 4 (h4)<br>
@@ -74,7 +74,7 @@
 </div>
 
 <div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
 Ce paragraphe est un chapeau.<br>
 {{ '&lt;!--break--&gt;' }}<br>
 Ceci est le reste de mon contenu...
@@ -97,7 +97,7 @@ Gras et Italique : **astérisques et _underscore_**.
 Fluo             : <mark>fluuuuooo</mark>
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
 Italique         : *astérisques* ou _underscores_<br>
 Gras             : **astérisques** ou __underscores__.<br>
 Gras et Italique : **astérisques et _ sous-scores _**.<br>
@@ -119,7 +119,7 @@ Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 {{ link('md_cs.link_bot_hidden'|trans, 'https://piedweb.com/') }}
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
 [{{ 'md_cs.link_homepage'|trans }}](/)<br>
 <br>
 [{{ 'md_cs.link_other_site'|trans }}](https://example.tld/)<br>
@@ -139,7 +139,7 @@ Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 {{ mail('contact@example.tld') }}
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 {{ "{<!---->{" }} mail('contact@example.tld') }}
 </code></pre>
 </div>
@@ -154,7 +154,7 @@ Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 {{ tel('+33 7 00 00 00 00 00 00 00') }}
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 {{ "{<!---->{" }} tel('+33 7 00 00 00 00 00 00 00') }}
 </code></pre>
 </div>
@@ -180,7 +180,7 @@ Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 + Ou un plus
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
 1. premier élément d'une liste ordonnée<br>
 2. second<br>
     * sous-liste<br>
@@ -212,7 +212,7 @@ Pour ajouter un saut de ligne<br>
 deux espace sont nécessaires.
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
 Sauter deux lignes.<br>
 <br>
 Permet de créer deux paragraphes.<br>
@@ -237,7 +237,7 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 > ou sur plusieurs paragraphes
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-b-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
 > Mon bloc de contenu cité<br>
 > sur plusieurs lignes<br>
 <br>
@@ -250,7 +250,7 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 <h2 id="img" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.image'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
 ![image's description](/media/default/mon-image.jpg)<br>
 ![image's description](https://images.unsplash.com/photo-1473448912268-2022ce9509d8?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1625&q=80)<br>
 <br>
@@ -265,7 +265,7 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 <h2 id="video" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.video'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
 {{ "{{" }} video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose {{ "}}" }}
 {% endapply %}</code></pre>
 </div>
@@ -283,7 +283,7 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 <h2 id="pageslist" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.page_list'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
 {{ "{{" }} list('keyword X or <!--invisible-hash-in-content-->')|unprose {{ "}}" }}<br>
 {{ "{{" }} list('keyword X', $number = 3, $start = 1 $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig')|unprose {{ "}}" }}<br>
 {{ "{{" }} cardlist('keyword X', $number = 3, $orderBy = 'createdAt')|unprose {{ "}}" }}<br>
@@ -299,7 +299,7 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 <p>Votre contenu doit contenir uniquement :</p></div>
 
 <div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-black bg-opacity-75 rounded-xl"><code>{% apply spaceless %}
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
 Location: http://example.eg/
 {% endapply %}</code></pre>
 </div>

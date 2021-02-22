@@ -14,12 +14,13 @@ import {
 } from "@pushword/js-helper/src/helpers.js";
 
 function onPageLoaded() {
+    const baseUrl = base || "";
     onDomChanged();
     //new FsLightbox();
     SimpleJekyllSearch({
         searchInput: document.getElementById("search"),
         resultsContainer: document.getElementById("search-results"),
-        json: (base || "") + "/search.json",
+        json: baseUrl + (baseUrl == "/" ? "" : "/") + "search.json",
         searchResultTemplate:
             '<a href="{url}" class="block py-2 px-1 m-1 hover:bg-gray-800 dark:hover:bg-gray-200 hover:text-white dark:hover:text-gray-800 rounded"><span class="block">{title}</span><span class="text-xs font-light block mt-1">pushword.piedweb.com › {slug}</span></a>',
     });

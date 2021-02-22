@@ -19,6 +19,7 @@ pushword:
         static_generators:
           [
             Pushword\StaticGenerator\Generator\PagesGenerator,
+            Pushword\StaticGenerator\Generator\MediaGenerator,
             Pushword\StaticGenerator\Generator\RobotsGenerator,
             Pushword\StaticGenerator\Generator\ErrorPageGenerator,
             Pushword\StaticGenerator\Generator\CopierGenerator,

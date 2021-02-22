@@ -24,7 +24,7 @@ See [how to install and test Pushword in less than one minute](/installation).
 Or look at the <strong>detailled features</strong>.
 
 </div>
-<div class="hidden p-3 -mt-3 prose-sm bg-gray-100 rounded-sm shadow dark:bg-gray-900 lg:block" style="width:400px" markdown=1>
+<div class="hidden p-3 -mt-3 prose-sm rounded-sm shadow-lg bg-gray-50 dark:bg-gray-900 lg:block" style="width:400px" markdown=1>
 
 ### Install
 
@@ -55,7 +55,7 @@ Unzip it on a classic Apache/PHP server and play.
 
 {% apply unprose %}
 
-<div class="relative mb-6 bg-gray-100 shadow-sm dark:bg-gray-800">
+<div class="relative mb-6 shadow-sm bg-gray-50 dark:bg-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-cool-gray-900 dark:to-cool-gray-800">
     <div class="max-w-screen-sm mx-auto">
         <h2 class="pt-12 pb-6 text-4xl">Features<br><small class="text-lg">Create content and publish it on the web smoothly</small></h2>
     </div>
@@ -63,7 +63,7 @@ Unzip it on a classic Apache/PHP server and play.
 <div class="grid max-w-screen-sm grid-cols-2 gap-4 mx-auto md:px-12 md:grid-cols-4 xl:grid-cols-6 md:max-w-screen-2xl ">
     <div class="col-span-2">
         <!-- Edit -->
-        <div class="px-3 py-6 mb-6 rounded-lg shadow-lg bg-green-50">
+        <div class="px-3 py-6 mb-6 rounded-lg bg-green-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-green-500 rounded-full">{{
@@ -80,7 +80,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <p class="text-sm font-light text-center text-green-500"> PHP 7 // <strong style="color: rgba(16, 185, 129, var(--tw-text-opacity));">PHP 8</strong> // Symfony5</p>
             </div>
         </div>
-        <div class="px-3 py-6 mb-6 rounded-lg shadow-lg bg-indigo-50">
+        <div class="px-3 py-6 mb-6 rounded-lg bg-indigo-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-indigo-500 rounded-full">
@@ -104,7 +104,7 @@ Unzip it on a classic Apache/PHP server and play.
         </div>
     </div>
     <div class="col-span-2">
-        <div class="px-3 py-6 mb-6 rounded-lg shadow-lg bg-blue-50">
+        <div class="px-3 py-6 mb-6 rounded-lg bg-blue-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-blue-500 rounded-full">
@@ -121,10 +121,10 @@ Unzip it on a classic Apache/PHP server and play.
                     you want (nextcloud folder, custom editor, git compatible...).</p>
                 <p>Default editor use <strong>Markdown/Html</strong> with extended <a href="/editor">features</a>
                     (video, responsive image, encrypted link...).</p>
-                <p>{{ svg('code-branch') }} A block editor is planned and will be released soon.</p>
+                <p>A <a href="/extension/admin-block-editor">block editor</a> is avalaible for non-markdown friendly people.</p>
             </div>
         </div>
-        <div class="px-3 py-6 mb-6 rounded-lg shadow-lg bg-red-50">
+        <div class="px-3 py-6 mb-6 rounded-lg bg-red-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-red-500 rounded-full">
@@ -145,7 +145,7 @@ Unzip it on a classic Apache/PHP server and play.
         </div>
     </div>
     <div class="flex flex-col items-start col-span-2 xl:flex-col md:col-span-4 xl:col-span-2 md:flex-row xl:col-start-auto md:space-x-3 xl:space-x-0">
-        <div class="px-3 py-6 mb-6 rounded-lg shadow-lg bg-pink-50">
+        <div class="px-3 py-6 mb-6 rounded-lg bg-pink-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-pink-500 rounded-full">
@@ -162,14 +162,14 @@ Unzip it on a classic Apache/PHP server and play.
                 <p>Woring about speed ? If default installation is not fast enough for you, you will fall in love with the <a href="/extension/static">{{ svg('bolt') }} Static Website Generator</a>.</p>
             </div>
         </div>
-        <div class="px-3 py-6 mb-6 rounded-lg shadow-lg bg-yellow-50 md:-mt-24 xl:mt-0">
+        <div class="px-3 py-6 mb-6 rounded-lg bg-purple-50 md:-mt-24 xl:mt-0">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
-                    <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-yellow-500 rounded-full">
+                    <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-purple-500 rounded-full">
                         {{ svg('gem') }}
                     </div>
                 </div>
-                <div class="ml-3 text-yellow-500">Design to last<br><small>Do you want to rebuild a new fancy website each year
+                <div class="ml-3 text-purple-500">Design to last<br><small>Do you want to rebuild a new fancy website each year
                         ?</small>
                 </div>
             </h2>
@@ -184,7 +184,7 @@ Unzip it on a classic Apache/PHP server and play.
 
 <div class="max-w-screen-sm p-3 mx-auto">
 
-<h2 class="text-2xl"><small>Thanks to open source package and their contributors</small><br>Pushword CMS is built on top of</h2>
+<h2 class="text-2xl pt-9"><small>Thanks to open source package and their contributors</small><br>Pushword CMS is built on top of</h2>
 
 <ul class="flex flex-row my-6 space-x-6">
     <li class="text-center"><a href="https://symfony.com"><img src="/media/symfony.svg" alt="Symfony PHP Framework" class="h-16"><br><small>Symfony</small></a></li>
@@ -192,7 +192,7 @@ Unzip it on a classic Apache/PHP server and play.
     <li class="text-center"><a href="https://sonata-project.org"><img src="/media/sonata.svg" alt="Editor.js" class="w-16 h-16 bg-gray-300 rounded-full"><br><small>Sonata</small></a></li>
 </ul>
 
-<div class="pt-3 pb-6 prose">
+<div class="pt-3 pb-12 prose dark:prose-light">
 {% apply markdown %}
 And many more ({{ link('see dependencies', 'https://github.com/Pushword/Pushword/blob/main/composer.json') }}).
 
@@ -207,8 +207,8 @@ It will **reward their works** and maybe help to ensure long term support and ke
 
 </div>
 
-<div class="bg-gray-100 shadow-sm -mb-14 dark:bg-gray-800">
-<div class="max-w-screen-sm p-3 py-6 mx-auto prose-sm prose md:prose-lg dark:prose-light">
+<div class="shadow-sm bg-gray-50 -mb-14 dark:bg-gray-800">
+<div class="max-w-screen-sm p-3 py-12 mx-auto prose-sm prose md:prose-lg dark:prose-light">
 
 <h2>Next</h2>
 {% apply markdown %}

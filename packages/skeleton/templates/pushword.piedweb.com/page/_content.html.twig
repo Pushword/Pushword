@@ -63,7 +63,7 @@
     {% endif %}
 
     {% if page.slug != 'homepage' %}
-        <div class="mx-3 mt-10 text-sm font-light text-center text-gray-500">
+        <div class="max-w-3xl mx-3 mt-10 text-sm font-light text-center text-gray-500">
             {{ link(svg('edit', {'class': 'fill-current w-3 inline-block -mt-1'}) ~ '<span class="hidden ml-2 lg:inline-block">Edit via github</span>', 'https://github.com/Pushword/Pushword/edit/main/packages/docs/content/' ~ page.slug ~ '.md', {'class': 'hover:text-gray-900 dark:hover:text-gray-100'}) }}
         </div>
     {% endif %}
