@@ -28,12 +28,16 @@ php -S 127.0.0.1:8004 -t public/
 
 ```
 
-## _Recommended_ Pushword Classic
+## _Recommended Extesions_ to get Pushword Classic
 
 By running the following command, it will install a few extensions to have a **classic** installation.
 
 ```shell
-composer require pushword/admin pushword/admin-block-editor pushword/conversation pushword/page-scanner pushword/page-update-notifier pushword/static-generator pushword/template-editor pushword/version
+composer req pushword/admin pushword/admin-block-editor pushword/page-scanner pushword/static-generator pushword/template-editor pushword/version
+
+# More specific
+composer req pushword/conversation pushword/page-update-notifier
+
 # create a new user
 php bin/console pushword:user:create
 ```
