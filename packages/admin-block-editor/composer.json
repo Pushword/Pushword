@@ -6,7 +6,8 @@
     "homepage": "https://pushword.piedweb.com/extension/admin-block-editor",
     "license": "MIT",
     "require": {
-        "pushword/core": "^0.0"
+        "pushword/core": "^0.0",
+        "pushword/svg": "^0.0"
     },
     "extra": {
         "branch-alias": {
