@@ -84,7 +84,7 @@ class MediaListener
             $this->filesystem->remove($media->getStoreIn().'/'.$media->getMedia());
         }
 
-        $this->imageManager->remove($media->getMediaBeforeUpdate());
+        $this->imageManager->remove($media);
     }
 
     /**
