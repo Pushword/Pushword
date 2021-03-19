@@ -34,6 +34,8 @@ By running the following command, it will install a few extensions to have a **c
 
 ```shell
 composer require pushword/admin pushword/admin-block-editor pushword/conversation pushword/page-scanner pushword/page-update-notifier pushword/static-generator pushword/template-editor pushword/version
+# create a new user
+php bin/console pushword:user:create
 ```
 
 ## Next

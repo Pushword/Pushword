@@ -95,6 +95,6 @@ final class UserCreateCommand extends Command
             return false;
         }
 
-        return $argument;
+        return $argumentValue;
     }
 }
