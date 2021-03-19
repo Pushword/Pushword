@@ -8,6 +8,7 @@ module.exports = {
         Gallery: "./src/Gallery/Gallery.js",
         Embed: "./src/Embed/Embed.js",
         PagesList: "./src/PagesList/PagesList.js",
+        Hyperlink: "./src/Hyperlink/Hyperlink.js",
     },
     module: {
         rules: [

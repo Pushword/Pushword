@@ -23,6 +23,7 @@
         "@editorjs/editorjs": "^2.19.1",
         "@editorjs/image": "https://github.com/editor-js/image.git#8e57e95eb0f9f55d3deb648a695c85e0fd5d526b",
         "@vietlongn/editorjs-carousel": "https://github.com/mr8bit/carousel-editorjs.git#1edd9d09b31d5242ac52984ad695a8a62fcdcc20",
+        "editorjs-hyperlink": "https://github.com/trinhtam/editorjs-hyperlink.git#1432f92f142e1825d0d4aefe7997d87280dffc2e",
         "babel-loader": "^8.1.0",
         "cross-env": "^7.0.3",
         "css-loader": "^3.5.3",

@@ -11,6 +11,25 @@
     text-decoration: none !important;
     color: inherit !important;
     cursor: auto !important;
+    border-bottom: 0;
+}
+
+.link-btn {
+    padding: 6px 12px;
+    margin-bottom: 0;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    color: #fff;
+    background-color: #3c8dbc;
+    border-color: #367fa9;
+    outline: none;
+    text-decoration: none !important;
+    font-size: 120%;
+}
+
+.link-btn:hover {
+    color: #fff !important;
 }
 
 /**

@@ -8,7 +8,7 @@ import Marker from "@editorjs/marker";
 import Code from "@editorjs/code";
 import InlineCode from "@editorjs/inline-code";
 //import { StyleInlineTool } from "editorjs-style";
-import Hyperlink from "editorjs-hyperlink";
+import Hyperlink from "@pushword/editorjs-tools/dist/Hyperlink.js"; //from "editorjs-hyperlink";
 import Paragraph from "editorjs-paragraph-with-alignment";
 import Table from "@editorjs/table";
 import { ItalicInlineTool, UnderlineInlineTool, StrongInlineTool } from "editorjs-inline-tool";
@@ -20,7 +20,7 @@ import Image from "@pushword/editorjs-tools/dist/Image.js"; // "@editorjs/image"
 import Embed from "@pushword/editorjs-tools/dist/Embed.js"; //"@editorjs/embed";
 import PagesList from "@pushword/editorjs-tools/dist/PagesList.js";
 import Gallery from "@pushword/editorjs-tools/dist/Gallery.js"; //"@vietlongn/editorjs-carousel";
-import Button from "@pushword/editorjs-tools/dist/Button.js"; //import Button from "editorjs-button";
+//import Button from "@pushword/editorjs-tools/dist/Button.js"; //import Button from "editorjs-button";
 
 /** Was initially design to permit multiple editor.js in one page */
 export class editorJs {
@@ -52,7 +52,7 @@ export class editorJs {
                       Embed: Embed,
                       PagesList: PagesList,
                       Gallery: Gallery,
-                      Button: Button,
+                      //Button: Button,
                       //StyleInlineTool: StyleInlineTool,
                   };
 

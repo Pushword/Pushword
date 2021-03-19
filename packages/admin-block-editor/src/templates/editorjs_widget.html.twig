@@ -109,16 +109,12 @@ var editorjsConfig = {
             name: "link",
             className: "Hyperlink",
             config: {
-                availableRels: ['noreferrer noopener nofollow', 'noopener', 'alternate', 'encrypt'],
+                availableRels: ['nofollow', 'noopener', 'alternate', 'encrypt'],
             }
         },
         underline: {
             name: "underline",
             className: "Underline",
-        },
-        "inline-style": {
-            name: "inline-style",
-            className: "StyleInlineTool",
         },
         paragraph: {
             name: "paragraph",
@@ -128,10 +124,6 @@ var editorjsConfig = {
             name: "table",
             className: "Table",
         },
-        button: {
-            name: "button",
-            className: "Button",
-        },
         pages_list: {
             name: "pages_list",
             className: "PagesList",
@@ -139,6 +131,8 @@ var editorjsConfig = {
                 preview: "/admin/page/block/{{ attr.page_id }}",
             }
         },
+        //button: { name: "button", className: "Button", },
+        // "inline-style": { name: "inline-style", className: "StyleInlineTool", },
         {% endblock %}
         {% block editorjs_block_to_add_new_plugin %}{% endblock %}
     },

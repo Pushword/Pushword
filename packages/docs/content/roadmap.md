@@ -11,6 +11,12 @@ parent: contribute
 -   implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
 -   manage date i18n a better way than randomly (document the process)
 
+Editeur
+
+-   encrypt option pour Button => supprimer le button et ajouter une checkbox btn dans hyperlink
+-   lien sur image
+-   rounded
+
 ## Soon
 
 -   test fresh install

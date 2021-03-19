@@ -1,23 +1,22 @@
 {
-  "name": "@pushword/js-helper",
-  "version": "0.0.42",
-  "description": "Pushword front end helpers. ",
-  "author": "Robin@PiedWeb <contact@piedweb.com>",
-  "license": "MIT",
-  "scripts": {
-    "prettier": "prettier ./src/*.{js,scss} --write"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Pushword/js-helper.git"
-  },
-  "keywords": [
-    "pied web",
-    "native"
-  ],
-  "bugs": {
-    "url": "https://github.com/Pushword/Pushword/issues"
-  },
-  "homepage": "https://pushword.piedweb.com",
-  "gitHead": "242ec54483dca1be93d7a62d8d554c9c08008c28"
+    "name": "@pushword/js-helper",
+    "version": "0.0.44",
+    "description": "Pushword front end helpers. ",
+    "author": "Robin@PiedWeb <contact@piedweb.com>",
+    "license": "MIT",
+    "scripts": {
+        "prettier": "prettier ./src/*.{js,scss} --write"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Pushword/js-helper.git"
+    },
+    "keywords": [
+        "native"
+    ],
+    "bugs": {
+        "url": "https://github.com/Pushword/Pushword/issues"
+    },
+    "homepage": "https://pushword.piedweb.com",
+    "gitHead": "242ec54483dca1be93d7a62d8d554c9c08008c28"
 }
