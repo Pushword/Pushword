@@ -15,7 +15,7 @@
     "license": "MIT",
     "require": {
         "php": ">=7.4",
-        "babdev/pagerfanta-bundle": "^2.8",
+        "babdev/pagerfanta-bundle": "^3.0",
         "caseyamcl/toc": "^3.0",
         "cocur/slugify": "^3.0|^4.0",
         "doctrine/annotations": "^1.11",
@@ -29,6 +29,7 @@
         "michelf/php-markdown": "^1.9",
         "miljar/php-exif": "^0.6.5",
         "nette/utils": "^3.2",
+        "pagerfanta/twig": "^3.0",
         "piedweb/facebook-scraper": "^0.0.72",
         "piedweb/linksimprover": "^0.0.8",
         "piedweb/render-html-attributes": "^2.0.1",

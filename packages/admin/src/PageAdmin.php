@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -68,12 +69,13 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         }
     }
 
-    public function getNewInstance(): object
+    protected function alterNewInstance(object $object): void
     {
-        $instance = parent::getNewInstance();
-        $instance->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
+        if (! $object instanceof PageInterface) {
+            return;
+        }
 
-        return $instance;
+        $object->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
     }
 
     protected function configureDatagridFilters(DatagridMapper $formMapper): void
