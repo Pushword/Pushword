@@ -13,9 +13,7 @@ parent: contribute
 
 Editeur
 
--   encrypt option pour Button => supprimer le button et ajouter une checkbox btn dans hyperlink
--   lien sur image
--   rounded
+-   lien sur image / image center / rounded
 
 ## Soon
 

@@ -1,3 +1,5 @@
+require("./admin.scss");
+
 import { editorJs } from "./editor.js";
 import { editorJsHelper } from "./editorJsHelper.js";
 
