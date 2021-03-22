@@ -55,7 +55,7 @@ export default class Hyperlink extends HyperlinkTool {
                 href: true,
                 target: true,
                 rel: true,
-                design: true,
+                class: true,
             },
         };
     }
