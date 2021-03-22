@@ -11,9 +11,7 @@ parent: contribute
 -   implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
 -   manage date i18n a better way than randomly (document the process)
 
-Editeur
-
--   lien sur image / image center / rounded
+-   **Editeur** : icône non voyant pour l'alt / lien sur image / rounded
 
 ## Soon
 

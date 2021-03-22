@@ -17,10 +17,16 @@ You can see how it's handle #[for the documentation](https://github.com/Pushword
 
 ## The Bundle Way {id=symfony}
 
-Ok, every package (even core) is built like a symfony bundle, so you can #[override template file the bundle way](https://symfony.com/doc/current/bundles/override.html). For this, you just need to find the template file you want to override and create a copy inside your `templates/bundles` folder like.
+Every package (even core) is built like a symfony bundle, so you can #[override template file the bundle way](https://symfony.com/doc/current/bundles/override.html).
+
+For this, you just need to find the template file you want to override and create a copy inside your `templates/bundles` folder like.
 
 Example, to override `/page/page_default.html.twig` :
 
 ```
 ./templates/bundles/PushwordCoreBundle/page/page_default.html.twig
 ```
+
+---
+
+-   #[See default core template file](https://github.com/Pushword/Pushword/tree/main/packages/core/src/templates/page)

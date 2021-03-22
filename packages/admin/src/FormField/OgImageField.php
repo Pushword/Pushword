@@ -11,9 +11,9 @@ class OgImageField extends AbstractField
     {
         return $formMapper->add('ogImage', TextType::class, [
             'required' => false,
-            'label' => 'admin.page.ogDescription.label',
+            'label' => 'admin.page.ogImage.label',
             'help_html' => true,
-            'help' => 'admin.page.ogDescription.help',
+            'help' => 'admin.page.ogImage.help',
         ]);
     }
 }

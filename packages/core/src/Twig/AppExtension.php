@@ -28,8 +28,8 @@ class AppExtension extends AbstractExtension
     //use AttributesTrait;
     use ClassTrait;
     use EmailTwigTrait;
-    use EncryptedLinkTwigTrait;
     use GalleryTwigTrait;
+    use LinkTwigTrait;
     use PageListTwigTrait;
     use PhoneNumberTwigTrait;
     use TxtAnchorTwigTrait;
@@ -80,8 +80,8 @@ class AppExtension extends AbstractExtension
             new TwigFunction('is_internal_image', [self::class, 'isInternalImage']), // used ?
             new TwigFunction('media_from_string', [$this, 'transformStringToMedia']), // used ?
             // loaded from trait
-            new TwigFunction('jslink', [$this, 'renderEncryptedLink'], self::options()),
-            new TwigFunction('link', [$this, 'renderEncryptedLink'], self::options()),
+            new TwigFunction('jslink', [$this, 'renderLink'], self::options()),
+            new TwigFunction('link', [$this, 'renderLink'], self::options()),
             new TwigFunction('encrypt', [self::class, 'encrypt'], self::options()),
             new TwigFunction('mail', [$this, 'renderEncodedMail'], self::options(true)),
             new TwigFunction('email', [$this, 'renderEncodedMail'], self::options(true)),

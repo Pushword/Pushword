@@ -45,7 +45,9 @@ html {
  * Pure css hamburger menu
  */
 
-.show-hide-input:checked ~ div {
+.show-hide-input:checked ~ div,
+.show-hide-input:checked ~ ul,
+.show-hide-input:checked ~ nav {
     display: block !important;
 }
 
