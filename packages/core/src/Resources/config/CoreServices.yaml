@@ -36,6 +36,7 @@ services:
     autowire: true
     tags:
       - { name: doctrine.orm.entity_listener, entity: "%pw.entity_user%", event: preUpdate }
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_user%", event: prePersist }
 
   pushword.page_rendering.validator:
     class: Pushword\Core\Validator\Constraints\PageRenderingValidator
