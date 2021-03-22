@@ -35,7 +35,7 @@
 
         {% block nav_list %}
             {% if navbar_items is defined and navbar_items is not empty %}
-                <nav id="navbar-links" class="{{ navbar_nav_class|default('flex space-x-4') }}">
+                <nav id="navbar-links" class="{{ navbar_nav_class|default('flex space-x-4 items-center') }}">
                     {% for item in navbar_items %}
                         {% if is_current_page(item.attr.href, page) %}
                             <span class="text-light {{ (navbar_nav_item_class_active ?? navbar_nav_item_class)|default('text-primary') }}" aria-current="page">
