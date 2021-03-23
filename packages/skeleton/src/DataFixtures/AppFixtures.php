@@ -14,6 +14,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 class AppFixtures extends Fixture
 {
     private ParameterBagInterface $params;
+    private AppPool $apps;
 
     /** @required */
     public function setParameterBag(ParameterBagInterface $params)
