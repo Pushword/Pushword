@@ -8,6 +8,7 @@ use App\Entity\User;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Pushword\Core\Component\App\AppPool;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class AppFixtures extends Fixture
@@ -18,6 +19,12 @@ class AppFixtures extends Fixture
     public function setParameterBag(ParameterBagInterface $params)
     {
         $this->params = $params;
+    }
+
+    /** @required */
+    public function setApps(AppPool $apps)
+    {
+        $this->apps = $apps;
     }
 
     public function load(ObjectManager $manager)
@@ -49,11 +56,14 @@ class AppFixtures extends Fixture
         $homepage = (new Page())
             ->setH1('Welcome : this is your first page')
             ->setSlug('homepage')
-            //->setHost('localhost.dev')
             ->setLocale('en')
             ->setCreatedAt(new DateTime('2 days ago'))
             ->setUpdatedAt(new DateTime('2 days ago'))
             ->setMainContent(file_get_contents(__DIR__.'/WelcomePage.md'));
+
+        if ('localhost.dev' == $this->apps->getMainHost()) {
+            $homepage->setHost('localhost.dev');
+        }
 
         $manager->persist($homepage);
         $manager->flush();
@@ -61,13 +71,16 @@ class AppFixtures extends Fixture
         $ksPage = (new Page())
             ->setH1('Demo Page - Kitchen Sink  Markdown + Twig')
             ->setSlug('kitchen-sink')
-            //->setHost('localhost.dev')
             ->setMainImage($media['Demo 1'])
             ->setLocale('en')
             ->setParentPage($homepage)
             ->setCreatedAt(new DateTime('1 day ago'))
             ->setUpdatedAt(new DateTime('1 day ago'))
             ->setMainContent(file_get_contents(__DIR__.'/KitchenSink.md'));
+
+        if ('localhost.dev' == $this->apps->getMainHost()) {
+            $ksPage->setHost('localhost.dev');
+        }
 
         $manager->persist($ksPage);
 

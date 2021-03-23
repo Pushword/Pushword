@@ -4,6 +4,7 @@
     "license": "MIT",
     "description": "Install a new Pushword instance with ease.",
     "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
         "php": ">=7.2.5",
         "ext-ctype": "*",
@@ -14,6 +15,7 @@
         "symfony/console": "^5.2",
         "symfony/dotenv": "^5.2",
         "symfony/framework-bundle": "^5.2",
+        "symfony/runtime": "*",
         "symfony/yaml": "^5.2",
         "pushword/core": "*"
     },
