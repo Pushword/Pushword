@@ -1,3 +1,3 @@
-<h{{ data.level }}{{ data.anchor is defined and data.anchor ? ' id="' ~ data.anchor ~ '"' : '' }}>
+<h{{ data.level }}{{ data.anchor is defined and data.anchor ? (' id="' ~ data.anchor ~ '"')|raw : '' }}>
 {{ data.text }}
 </h{{ data.level }}>
