@@ -98,7 +98,7 @@ trait PageListTwigTrait
 
         $queryBuilder = Repository::getPageRepository($this->em, $this->pageClass)
             ->getPublishedPageQueryBuilder(
-                $host ?: $this->getApp()->getMainHost(),
+                $host ?: [$this->getApp()->getMainHost(), ''],
                 $search,
                 $order,
                 $this->getLimit($max)
