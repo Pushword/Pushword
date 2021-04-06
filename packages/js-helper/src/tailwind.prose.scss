@@ -48,7 +48,8 @@ html {
 .show-hide-input:checked ~ div,
 .show-hide-input:checked ~ ul,
 .show-hide-input:checked ~ nav {
-    display: block !important;
+    max-height: 100vh;
+    padding-top: 1rem;
 }
 
 /**
@@ -62,4 +63,9 @@ html {
     right: 50%;
     margin-left: -50vw;
     margin-right: -50vw;
+}
+
+.first-letter:text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
 }

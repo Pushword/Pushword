@@ -1,0 +1,74 @@
+{% extends view('/page/_content.html.twig') %}
+
+{% block hero_content_header %}
+    <div
+        class="{{ page.hero_wrapper ?? hero_wrapper|default('w-full relative') }}"
+        style="background:{{ page.mainImage.mainColor }}"
+        {% if page.video is not null %}replaceBy="{{ url_to_embed(page.video.embed_code|default(page.video))|replace({'"': "'"}) }}"{% endif %}
+    >
+        <div class="{{ page.hero_container|default(hero_container ?? 'max-w-screen-sm mx-auto relative md:min-h-vw-3/4 py-6') }}">
+            <div class="{{ page.hero_position|default(hero_position ?? 'p-3 text-gray-50 md:absolute md:bottom-4 md:left-4 z-10') }}{{ main_image_blur is defined ? ' blur' : '' }}" style="text-shadow: 0 1px 16px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 50%);">
+
+                {% block subTitle %}
+                    {% if page.subtitle is not null %}
+                        <div class="{{ page.hero_subtitle_class|default(hero_subtitle_class ?? 'uppercase first-letter:text-lg mb-2') }}">
+                            {{ page.subtitle|raw }}
+                        </div>
+                    {% endif %}
+                {% endblock %}
+
+                {% block h1 %}
+                    <h1 class="{{ page.h1_class|default(h1_class ?? 'font-bold mb-2 text-4xl') }}">{{ pw(page).h1|raw }}</h1>
+                {% endblock %}
+
+                {% block description %}
+                    {{ pw(page).mainContent.chapeau|raw }}
+                {% endblock %}
+            </div>
+        </div>
+
+        {% block main_image %}
+            {% if page.main_image_multiple is not null %}
+                {% for bg in page.main_image_multiple|split(';') %}
+                    {% set bg = bg|split(':') %}
+                    {%
+                        include view('/component/image_inline.html.twig') with {
+                            'image_src': bg.1,
+                            'image_alt': bg.0~' '~page.mainImage.name(page.locale, true)|default(page.getTitle(true))|striptags,
+                            'image_link': false,
+                            'image_attr': {
+                                style: 'display:none',
+                                'x-hash': bg.0
+                            }
+                        }
+                    %}
+                {% endfor %}
+            {% endif %}
+            {% if page.mainImage is not null %}
+                {%
+                    include view('/component/image_inline.html.twig') with {
+                        'image_src': page.mainImage|image('default'),
+                        'image_link': false,
+                        'image_alt': page.mainImage.name(page.locale, true)|default(page.getTitle(true))|striptags,
+                        'image_class': 'md:object-cover md:h-full md:absolute md:top-0 md:z-0 w-full h-auto'
+                    }
+                %}
+
+            {% endif %}
+            {% if page.video is not null %}
+            <button class=" {{ page.video.btn_style|default('w-24 h-24 rounded-full bg-red-500 text-white text-center focus:outline-none shadow') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/> </svg>
+                <span class="sr-only">{{ page.video.btn_title|default('Lire la vidéo') }}</span>
+            </button>
+            {% endif %}
+        {% endblock %}
+    </div>
+
+{% endblock %}
+
+{% block content_header %}{% endblock %}
+
+{% block content %}
+    {{ block('hero_content_header') }}
+    {{ parent() }}
+{% endblock %}

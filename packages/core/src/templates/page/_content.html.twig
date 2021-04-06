@@ -1,23 +1,25 @@
 {% block content %}
-<div{{ class(page, 'container', 'max-w-screen-sm px-3 py-12 mx-auto') }}> {# /!\ must be sync with \Pushword\Core\Twig\ClassTrait::$defaultContainerClass #}
+<div{{ class(page, 'container', 'max-w-screen-sm px-3 pb-12 pt-3 mx-auto') }}> {# /!\ must be sync with \Pushword\Core\Twig\ClassTrait::$defaultContainerClass #}
     <div{{ class(page, 'prose', 'prose max-w-none') }}>
 
-        {% block h1 %}
-            <h1>{{ pw(page).h1|raw }}</h1>
-        {% endblock %}
+        {% block content_header %}
+            {% block h1 %}
+                <h1>{{ pw(page).h1|raw }}</h1>
+            {% endblock %}
 
-        {% block description %}
-            {{ pw(page).mainContent.chapeau|raw }}
-        {% endblock %}
+            {% block description %}
+                {{ pw(page).mainContent.chapeau|raw }}
+            {% endblock %}
 
-        {% block main_image %}
-            {% if page.mainImage is not null %}
-                {% include view('/component/image_inline.html.twig') with {
-                        'image_src': page.mainImage|image('default'),
-                        'image_alt': page.mainImage.name(page.locale, true)|default(page.getTitle(true)|striptags),
-                        'image_wrapper_class': ' ',
-                    } %}
-            {% endif %}
+            {% block main_image %}
+                {% if page.mainImage is not null %}
+                    {% include view('/component/image_inline.html.twig') with {
+                            'image_src': page.mainImage|image('default'),
+                            'image_alt': page.mainImage.name(page.locale, true)|default(page.getTitle(true)|striptags),
+                            'image_wrapper_class': ' ',
+                        } %}
+                {% endif %}
+            {% endblock %}
         {% endblock %}
 
 
