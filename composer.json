@@ -30,7 +30,7 @@
         "miljar/php-exif": "^0.6.5",
         "nette/utils": "^3.2",
         "pagerfanta/twig": "^3.0",
-        "piedweb/facebook-scraper": "^0.0.72",
+        "piedweb/facebook-scraper": "^0.0.74",
         "piedweb/linksimprover": "^0.0.8",
         "piedweb/render-html-attributes": "^2.0.1",
         "piedweb/url-harvester": "^0.0.27",
