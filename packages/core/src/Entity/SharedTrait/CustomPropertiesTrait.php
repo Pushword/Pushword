@@ -153,7 +153,7 @@ trait CustomPropertiesTrait
      */
     public function __call($method, $arguments)
     {
-        if ('_action' == $method) {
+        if ('_actions' == $method) {
             return; // avoid error with sonata
         }
 

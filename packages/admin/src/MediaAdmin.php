@@ -69,7 +69,7 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         $listMapper->add('mainColor', null, [
             'label' => 'admin.media.mainColor.label',
         ]);
-        $listMapper->add('_action', null, [
+        $listMapper->add('_actions', null, [
             'actions' => [
                 'edit' => [],
                 'delete' => [],

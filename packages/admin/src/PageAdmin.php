@@ -127,7 +127,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
             'format' => 'd/m à H:m',
             'label' => 'admin.page.updatedAt.label',
         ]);
-        $listMapper->add('_action', null, [
+        $listMapper->add('_actions', null, [
             'actions' => [
                 'edit' => [],
                 'show' => [],

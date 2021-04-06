@@ -93,7 +93,7 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
                 'editable' => true,
                 'label' => 'admin.user.createdAt.label',
             ])
-            ->add('_action', null, [
+            ->add('_actions', null, [
                 'actions' => [
                     'edit' => [],
                     'delete' => [],
