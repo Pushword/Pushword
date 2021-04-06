@@ -61,7 +61,7 @@ class PageUpdateNotifierTest extends KernelTestCase
     public function testNoEmailFromException()
     {
         $notifier = $this->getNotifier();
-        $this->getApps()->get()->setCustomProperty('page_update_notification_mail', 'contact@example.tld');
+        $this->getApps()->get()->setCustomProperty('page_update_notification_from', 'contact@example.tld');
         $this->expectExceptionCode(PageUpdateNotifier::ERROR_NO_EMAIL);
         $notifier->run($this->getPage());
     }
@@ -69,8 +69,8 @@ class PageUpdateNotifierTest extends KernelTestCase
     public function testNoIntervalException()
     {
         $notifier = $this->getNotifier();
-        $this->getApps()->get()->setCustomProperty('page_update_notification_mail', 'contact@example.tld');
-        $this->getApps()->get()->setCustomProperty('notifier_email', 'contact@example.tld');
+        $this->getApps()->get()->setCustomProperty('page_update_notification_from', 'contact@example.tld');
+        $this->getApps()->get()->setCustomProperty('page_update_notification_to', 'contact@example.tld');
 
         $this->expectExceptionCode(PageUpdateNotifier::ERROR_NO_INTERVAL);
         $notifier->run($this->getPage());
@@ -79,8 +79,8 @@ class PageUpdateNotifierTest extends KernelTestCase
     public function testRun()
     {
         $notifier = $this->getNotifier();
-        $this->getApps()->get()->setCustomProperty('page_update_notification_mail', 'contact@example.tld');
-        $this->getApps()->get()->setCustomProperty('notifier_email', 'contact@example.tld');
+        $this->getApps()->get()->setCustomProperty('page_update_notification_from', 'contact@example.tld');
+        $this->getApps()->get()->setCustomProperty('page_update_notification_to', 'contact@example.tld');
         $this->getApps()->get()->setCustomProperty('page_update_notification_interval', 'P1D');
 
         FileSystem::delete($notifier->getCacheDir());
