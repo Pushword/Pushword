@@ -7,7 +7,7 @@ use Pushword\Core\Entity\PageInterface;
 
 trait ClassTrait
 {
-    private string $defaultContainerClass = 'max-w-screen-sm px-3 py-12 mx-auto';
+    private string $defaultContainerClass = 'max-w-screen-sm px-3 py-12 mx-auto mb-auto';
     private string $defaultProseClass = 'prose max-w-none';
 
     abstract public function getApp(): AppConfig;

@@ -18,9 +18,9 @@ composer require pushword/page-update-notifier
 Add in your current `config/package/pushword.yaml` for an App or globally under `pushword_page_update_notifier:`
 
 ```
-    notifier_email: fromMe@example.tld
-    page_update_notification_mail: NotificationForMe@example.tld
-    interval: 'P1D' #See PHP DateInterval format https://www.php.net/manual/fr/class.dateinterval.php
+    page_update_notification_from: fromMe@example.tld
+    page_update_notification_to: NotificationForMe@example.tld
+    page_update_notification_interval: 'P1D' #See PHP DateInterval format https://www.php.net/manual/fr/class.dateinterval.php
 ```
 
 ## Usage
