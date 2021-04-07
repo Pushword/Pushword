@@ -36,6 +36,7 @@ trait PageMainImageTrait
     public function setMainImageFormat($value): self
     {
         $this->setCustomProperty('mainImageFormat', $value);
+
         return $this;
     }
 
@@ -43,5 +44,4 @@ trait PageMainImageTrait
     {
         return $this->getCustomProperty('mainImageFormat') ?? 1;
     }
-
 }

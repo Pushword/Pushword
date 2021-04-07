@@ -16,7 +16,6 @@ class PageMainImageField extends AbstractField
             'btn_edit' => false,
         ]);
 
-
         $formMapper->add('mainImageFormat', ChoiceType::class, [
             'required' => false,
             'label' => 'admin.page.mainImageFormat.label',
@@ -26,7 +25,7 @@ class PageMainImageField extends AbstractField
                 'admin.page.mainImageFormat.13fullscreen' => 2,
                 'admin.page.mainImageFormat.34fullscreen' => 3,
                 //'admin.page.mainImageFormat.fullscreen' => 4,
-            ]
+            ],
         ]);
 
         return $formMapper;
