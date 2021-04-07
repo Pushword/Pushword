@@ -18,18 +18,21 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
     protected $messagePrefix = 'admin.page';
 
-    protected $datagridValues = [
-        '_page' => 1,
-        '_sort_order' => 'DESC',
-        '_sort_by' => 'updatedAt',
-        '_per_page' => 256,
-    ];
-
     protected array $fields = [];
 
     protected $perPageOptions = [16, 250, 1000];
 
     protected $maxPerPage = 1000;
+
+    protected function configureDefaultSortValues(array &$sortValues): void
+    {
+        $sortValues = [
+            '_page' => 1,
+            '_sort_order' => 'DESC',
+            '_sort_by' => 'updatedAt',
+            '_per_page' => 100,
+        ];
+    }
 
     public function __construct($code, $class, $baseControllerName)
     {

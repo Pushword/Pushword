@@ -11,6 +11,7 @@ module.exports = {
             "screen-2/3": "66vh",
             "screen-1/2": "50vh",
             screen: "100vh",
+            full: "100%",
         },
         extend: {
             typography: (theme) => ({

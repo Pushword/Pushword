@@ -12,12 +12,15 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 class ConversationAdmin extends AbstractAdmin
 {
-    protected $datagridValues = [
-        '_page' => 1,
-        '_sort_order' => 'DESC',
-        '_sort_by' => 'createdAt',
-        '_per_page' => 256,
-    ];
+    protected function configureDefaultSortValues(array &$sortValues): void
+    {
+        $sortValues = [
+            '_page' => 1,
+            '_sort_order' => 'DESC',
+            '_sort_by' => 'createdAt',
+            '_per_page' => 100,
+        ];
+    }
 
     protected function configureFormFields(FormMapper $formMapper): void
     {

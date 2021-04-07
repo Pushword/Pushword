@@ -14,11 +14,14 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
 
     protected $messagePrefix = 'admin.user';
 
-    protected $datagridValues = [
-        '_page' => 1,
-        '_sort_order' => 'DESC',
-        '_sort_by' => 'createdAt',
-    ];
+    protected function configureDefaultSortValues(array &$sortValues): void
+    {
+        $sortValues = [
+            '_page' => 1,
+            '_sort_order' => 'DESC',
+            '_sort_by' => 'createdAt',
+        ];
+    }
 
     protected function exists(string $name): bool
     {

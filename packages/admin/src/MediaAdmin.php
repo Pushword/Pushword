@@ -13,15 +13,18 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
 {
     use AdminTrait;
 
-    private $datagridValues = [
-        '_page' => 1,
-        '_sort_order' => 'DESC',
-        '_sort_by' => 'updatedAt',
-    ];
-
     private $relatedPages;
 
     private $messagePrefix = 'admin.media';
+
+    protected function configureDefaultSortValues(array &$sortValues): void
+    {
+        $sortValues = [
+            '_page' => 1,
+            '_sort_order' => 'DESC',
+            '_sort_by' => 'updatedAt',
+        ];
+    }
 
     protected function configureFormFields(FormMapper $formMapper): void
     {
