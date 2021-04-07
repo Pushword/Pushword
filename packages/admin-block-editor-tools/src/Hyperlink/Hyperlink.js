@@ -124,6 +124,7 @@ export default class Hyperlink extends HyperlinkTool {
         let anchorTag = this.selection.findParentTag("A");
         if (anchorTag) {
             this.selection.expandToTag(anchorTag);
+            anchorTag["href"] = link;
         } else {
             document.execCommand(this.commandLink, false, link);
             anchorTag = this.selection.findParentTag("A");
@@ -140,7 +141,6 @@ export default class Hyperlink extends HyperlinkTool {
                 anchorTag.removeAttribute("rel");
             }
             if (!!design) {
-                console.log(design);
                 anchorTag.className = design;
             } else {
                 anchorTag.removeAttribute("class");
