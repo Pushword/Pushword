@@ -38,5 +38,7 @@ class PageMainImageField extends AbstractField
             case 3: return 'screen-3/4';
             case 4: return 'screen';
         }
+
+        return 'screen-3/4';
     }
 }
