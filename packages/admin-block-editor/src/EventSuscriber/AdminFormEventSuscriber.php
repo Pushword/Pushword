@@ -33,6 +33,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         //dd($returnValues);
         if (isset($returnValues['mainContent'])) {
             // sanitize with https://github.com/editor-js/editorjs-php
+            dd($returnValues['mainContent']);
             $event->getAdmin()->getSubject()->setMainContent($returnValues['mainContent']);
         }
     }

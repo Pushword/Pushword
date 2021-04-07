@@ -47,7 +47,6 @@ export class editorJsHelper {
         var textareaInput = document.querySelector("textarea[data-editorjs]");
         var elementToReplace = editorJsInput ? editorJsInput : textareaInput;
 
-        console.log(document.getElementById(editorId));
         document.getElementById(editorId).style.display = editorJsInput ? "none" : "block";
 
         var replaceElement = document.createElement(editorJsInput ? "textarea" : "input");

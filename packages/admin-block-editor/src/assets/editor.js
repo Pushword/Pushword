@@ -25,7 +25,6 @@ import Gallery from "@pushword/editorjs-tools/dist/Gallery.js"; //"@vietlongn/ed
 /** Was initially design to permit multiple editor.js in one page */
 export class editorJs {
     constructor() {
-        console.log(PagesList);
         if (typeof editorjsConfig === "undefined") return;
 
         this.editors = [];
