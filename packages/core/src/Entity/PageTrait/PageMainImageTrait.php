@@ -32,4 +32,16 @@ trait PageMainImageTrait
 
         return $this;
     }
+
+    public function setMainImageFormat($value): self
+    {
+        $this->setCustomProperty('mainImageFormat', $value);
+        return $this;
+    }
+
+    public function getMainImageFormat()
+    {
+        return $this->getCustomProperty('mainImageFormat') ?? 1;
+    }
+
 }

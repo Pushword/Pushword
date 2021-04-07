@@ -16,7 +16,7 @@
                     {% include view('/component/image_inline.html.twig') with {
                             'image_src': page.mainImage|image('default'),
                             'image_alt': page.mainImage.name(page.locale, true)|default(page.getTitle(true)|striptags),
-                            'image_wrapper_class': ' ',
+                            'image_wrapper_class': (page.mainImageFormat is same as(0) ? 'hidden' : ' '),
                         } %}
                 {% endif %}
             {% endblock %}

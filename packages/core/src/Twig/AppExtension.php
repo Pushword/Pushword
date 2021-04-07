@@ -6,6 +6,7 @@ use Cocur\Slugify\Slugify;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use PiedWeb\RenderAttributes\AttributesTrait;
+use Pushword\Admin\FormField\PageMainImageField;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\ManagerPoolInterface;
@@ -97,6 +98,7 @@ class AppExtension extends AbstractExtension
             new TwigFunction('class', [$this, 'getHtmlClass'], self::options()),
             new TwigFunction('pw', [$this->entityFilterManagerPool, 'getProperty'], self::options()),
             new TwigFunction('filesize', [FilesizeFormatter::class, 'formatBytes'], self::options()),
+            new TwigFunction('heroSize', [PageMainImageField::class, 'formatToRatio'], self::options()),
         ];
     }
 
