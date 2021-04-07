@@ -17,9 +17,13 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
 {
     protected $hostCanBeNull = false;
 
-    public function getPublishedPages($host = '', array $where = [], array $orderBy = [], $limit = 0)
+    public function getPublishedPages($host = '', array $where = [], array $orderBy = [], $limit = 0, bool $withRedirection = true)
     {
         $qb = $this->getPublishedPageQueryBuilder($host, $where, $orderBy);
+
+        if (! $withRedirection) {
+            $this->andNotRedirection($qb);
+        }
 
         $this->limit($qb, $limit);
 
@@ -49,7 +53,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             ->setParameter('nwo', new \DateTime())
             ->orderBy($alias.'.publishedAt,'.$alias.'.priority', 'DESC');
 
-        $this->andNotRedirection($queryBuilder);
+        //$this->andNotRedirection($queryBuilder);
 
         return $queryBuilder;
     }
@@ -89,6 +93,8 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         $qb = $this->andIndexable($qb);
         $qb = $this->andHost($qb, $host);
         $qb = $this->andLocale($qb, $locale);
+
+        $this->andNotRedirection($qb);
 
         if (null !== $limit) {
             $qb->setMaxResults($limit);

@@ -102,9 +102,10 @@ class AppExtension extends AbstractExtension
         ];
     }
 
-    public function getPublishedPages($host = null, $where = [], $orderBy = [], $limit = 0)
+    public function getPublishedPages($host = null, $where = [], $orderBy = [], $limit = 0, $withRedirection = false)
     {
-        return Repository::getPageRepository($this->em, $this->pageClass)->getPublishedPages($host, $where, $orderBy, $limit);
+        return Repository::getPageRepository($this->em, $this->pageClass)
+            ->getPublishedPages($host, $where, $orderBy, $limit, (bool) $withRedirection);
     }
 
     public function getView(string $path, ?string $fallback = null)

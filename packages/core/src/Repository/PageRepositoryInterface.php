@@ -19,7 +19,7 @@ interface PageRepositoryInterface extends ServiceEntityRepositoryInterface, Obje
      * @param array        $orderBy containing key,direction
      * @param int|array    $limit   containing start,max or just max
      */
-    public function getPublishedPages($host = '', array $where = [], array $orderBy = [], $limit = 0);
+    public function getPublishedPages($host = '', array $where = [], array $orderBy = [], $limit = 0, bool $withRedirection = true);
 
     public function getPublishedPageQueryBuilder($host = '', array $where = [], array $orderBy = [], int $limit = 0): QueryBuilder;
 
