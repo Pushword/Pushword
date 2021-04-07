@@ -28,8 +28,16 @@ class EntityFilterTest extends KernelTestCase
         $filter->setApp(self::$kernel->getContainer()->get('pushword.apps')->getApp());
         $filter->setTwig(self::$kernel->getContainer()->get('twig'));
         $this->assertSame(
-            'Lorem <span class data-rot=_cvrqjro.pbz/>Test</span> ipsum',
+            'Lorem <span data-rot=_cvrqjro.pbz/>Test</span> ipsum',
             $filter->convertHtmlRelEncryptedLink('Lorem <a href="https://piedweb.com/" rel="encrypt">Test</a> ipsum')
+        );
+        $this->assertSame(
+            'Lorem <span class=link-btn data-rot=_cvrqjro.pbz/>Test</span> ipsum',
+            $filter->convertHtmlRelEncryptedLink('Lorem <a class="link-btn" href="https://piedweb.com/" rel="encrypt">Test</a> ipsum')
+        );
+        $this->assertSame(
+            'Lorem <span class="link-btn btn-plus" data-rot=_cvrqjro.pbz/>Test</span> ipsum',
+            $filter->convertHtmlRelEncryptedLink('Lorem <a class="link-btn btn-plus" href="https://piedweb.com/" rel="encrypt">Test</a> ipsum')
         );
     }
 

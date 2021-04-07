@@ -191,7 +191,7 @@ class StaticGeneratorTest extends KernelTestCase
         }
 
         if ('pw.public_media_dir' == $name) {
-            return 'media';
+            return '/media';
         }
 
         if ('pw.media_dir' == $name) {

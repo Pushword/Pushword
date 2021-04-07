@@ -4,9 +4,9 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 
 final class HtmlEncryptedLink extends EncryptedLink
 {
-    const HTML_REGEX = '/<a\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\1(?:[^>]*?\s+)?rel=(["\'])encrypt\1(?:[^>]*?\s+)?>(((?!<\/a>).)*)<\/a>/i';
-    const HTML_REGEX_HREF_KEY = 2;
-    const HTML_REGEX_ANCHOR_KEY = 4;
+    const HTML_REGEX = '/(<a\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\2(?:[^>]*?\s+)?rel=(["\'])encrypt\4(?:[^>]*?\s+)?>)(((?!<\/a>).)*)<\/a>/i';
+    const HTML_REGEX_HREF_KEY = 3;
+    const HTML_REGEX_ANCHOR_KEY = 5;
 
     public function convertEncryptedLink($body): string
     {
@@ -21,6 +21,24 @@ final class HtmlEncryptedLink extends EncryptedLink
             return $body;
         }
 
-        return $this->replaceEncryptedLink($body, $matches, self::HTML_REGEX_HREF_KEY, self::HTML_REGEX_ANCHOR_KEY);
+        return $this->replaceRelEncryptedLink($body, $matches, self::HTML_REGEX_HREF_KEY, self::HTML_REGEX_ANCHOR_KEY);
+    }
+
+    private function extractClass(string $openingTag): string
+    {
+        return preg_match('/class=\"([^"]*)\"/i', $openingTag, $match) ? $match[1] : '';
+    }
+
+    private function replaceRelEncryptedLink(string $body, array $matches, int $hrefKey = 2, int $anchorKey = 1): string
+    {
+        $nbrMatch = \count($matches[0]);
+        for ($k = 0; $k < $nbrMatch; ++$k) {
+            $attr = $this->extractClass($matches[1][$k]);
+            $attr = $attr ? ['class' => $attr] : [];
+            $link = $this->renderLink($matches[$anchorKey][$k], $matches[$hrefKey][$k], $attr);
+            $body = str_replace($matches[0][$k],  $link, $body);
+        }
+
+        return $body;
     }
 }
