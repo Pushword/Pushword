@@ -65,7 +65,7 @@ final class ImageManagerCommand extends Command
         $progressBar = new ProgressBar($output, \count($medias));
         $progressBar->start();
         foreach ($medias as $media) {
-            if (false !== strpos($media->getMimeType(), 'image/')) {
+            if ($this->imageManager->isImage($media)) {
                 $this->imageManager->generateCache($media);
             }
             $progressBar->advance();

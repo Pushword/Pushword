@@ -73,7 +73,7 @@ final class MediaPreviewField extends AbstractField
     {
         $media = $this->admin->getSubject();
 
-        $template = false !== strpos($media->getMimeType(), 'image/') ?
+        $template = $this->admin->getImageManager()->isImage($media) ?
             '@pwAdmin/media/media_show.preview_image.html.twig'
             : '@pwAdmin/media/media_show.preview.html.twig';
 

@@ -41,6 +41,12 @@ final class ImageManager
         $this->filterSets = $filters;
     }
 
+    public function isImage(MediaInterface $media): bool
+    {
+        return false !== strpos($media->getMimeType(), 'image/')
+            && \in_array(strtolower(str_replace('image/', '', $media->getMimeType())), ['jpg', 'jpeg', 'png', 'gif']);
+    }
+
     /**
      * @param MediaInterface|string $media
      */

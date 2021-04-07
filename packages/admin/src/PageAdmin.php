@@ -142,7 +142,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
     public function getObjectMetadata($page): MetadataInterface
     {
         $media = $page->getMainImage();
-        if (null !== $media && false !== strpos($media->getMimeType(), 'image/')) {
+        if ($this->imageManager->isImage($media)) {
             $thumb = $this->imageManager->getBrowserPath($media, 'thumb');
         } else {
             $thumb = self::$thumb;

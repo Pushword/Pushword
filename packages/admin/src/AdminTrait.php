@@ -176,6 +176,11 @@ trait AdminTrait
         $this->imageManager = $imageManager;
     }
 
+    public function getImageManager(): ImageManager
+    {
+        return $this->imageManager;
+    }
+
     protected function getFormFields(string $key = 'admin_page_form_fields'): array
     {
         $fields = $this->apps->get()->get($key);

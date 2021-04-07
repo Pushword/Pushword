@@ -132,7 +132,7 @@ class MediaListener
         $absoluteDir = $mapping->getUploadDestination().'/'.$mapping->getUploadDir($media);
         $media->setStoreIn($absoluteDir);
 
-        if (false !== strpos($media->getMimeType(), 'image/')) {
+        if ($this->imageManager->isImage($media)) {
             $this->imageManager->remove($media);
             $this->imageManager->generateCache($media);
             $thumb = $this->imageManager->getLastThumb();

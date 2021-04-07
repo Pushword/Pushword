@@ -79,7 +79,7 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
 
     public function getObjectMetadata($media): MetadataInterface
     {
-        if (false !== strpos($media->getMimeType(), 'image/')) {
+        if ($this->imageManager->isImage($media)) {
             $thumb = $this->imageManager->getBrowserPath($media, 'thumb');
         } else {
             $thumb = self::$thumb;
