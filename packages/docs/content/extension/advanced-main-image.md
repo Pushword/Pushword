@@ -18,7 +18,6 @@ composer require pushword/advanced-main-imaged
 If you want to go forward than a default install (activating advanced image field for every ), you can override default parameters in your config :
 
 ```yaml
----
 advanced_main_image: true # Set false to disable block editor for new page (because new page does not have an associated `app` yet)
 ```
 

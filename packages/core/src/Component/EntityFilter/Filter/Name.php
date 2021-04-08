@@ -15,6 +15,6 @@ class Name extends AbstractFilter
     {
         $names = explode("\n", $name);
 
-        return $names[0] ? trim($names[0]) : (null !== $name ? $name : $this->entityFilterManager->getH1());
+        return $names[0] ? trim($names[0]) : (null !== $name && '' !== $name ? $name : $this->entityFilterManager->getH1());
     }
 }
