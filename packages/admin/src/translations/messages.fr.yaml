@@ -115,13 +115,6 @@ admin:
       help: ""
     mainImage:
       label: Image d'en-tête
-    mainImageFormat:
-      label: Format
-      none: ∅
-      normal: Normal
-      13fullscreen: 1/3 de l'écran
-      34fullscreen: 3/4 de l'écran
-      fullscreen: Plein écran
     markdown:
       label: Formatage markdown
       help: Applique l'enrichissement du texte via la syntaxe Markdown à l'intégralité du contenu.<br>Sinon utiliser directement <code>{% filter markdown %}mon texte{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>En savoir plus</a>.

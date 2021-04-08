@@ -6,6 +6,7 @@ use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageMainContentField;
 use Pushword\Admin\PageAdminInterface;
+use Pushword\Admin\Utils\FormFieldReplacer;
 use Pushword\AdminBlockEditor\FormField\PageH1FormField;
 use Pushword\AdminBlockEditor\FormField\PageImageFormField;
 use Pushword\AdminBlockEditor\FormField\PageMainContentFormField;
@@ -46,8 +47,8 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
 
         $fields = $event->getFields();
 
-        $fields = $this->replace(PageMainContentField::class, PageMainContentFormField::class, $fields);
-        $fields = $this->replace(PageH1Field::class, PageH1FormField::class, $fields);
+        $fields = (new FormFieldReplacer())->run(PageMainContentField::class, PageMainContentFormField::class, $fields);
+        $fields = (new FormFieldReplacer())->run(PageH1Field::class, PageH1FormField::class, $fields);
 
         $fields[0][PageImageFormField::class] = PageImageFormField::class;
 
@@ -69,15 +70,5 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         }*/
 
         return $content;
-    }
-
-    private function replace(string $formFieldClass, string $newFormFieldClass, $fields): array
-    {
-        $key = array_search($formFieldClass, $fields[0]);
-        if (false !== $key) {
-            $fields[0][$key] = $newFormFieldClass;
-        }
-
-        return $fields;
     }
 }

@@ -1,11 +1,11 @@
 ---
-title: "Standard Admin for Pushword : Admin User Interface"
-h1: Admin
+title: "Admin block editor to supercharge the default markdown admin with a rich text editor"
+h1: Admin Block Editor
 toc: true
 parent: extensions
 ---
 
-Create, edit, delete Page, Media, User with an interface built on top of Sonata Admin.
+Supercharge default admin with a rich text editor wich managed blocks.
 
 ## Install
 

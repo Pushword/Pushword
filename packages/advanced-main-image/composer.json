@@ -1,0 +1,35 @@
+{
+    "name": "pushword/advanced-main-image",
+    "type": "symfony-bundle",
+    "description": "Supercharged the Pushword Main Image with format options and hero page.",
+    "keywords": [],
+    "homepage": "https://pushword.piedweb.com/extension/advanced-main-image",
+    "license": "MIT",
+    "require": {
+        "pushword/core": "^0.0",
+        "pushword/admin": "^0.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.0.x-dev"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Pushword\\AdvancedMainImage\\": "src"
+        }
+    },
+    "require-dev": {
+        "pushword/admin": "^0.0",
+        "phpunit/phpunit": "^9.5"
+    },
+    "authors": [
+        {
+            "name": "Robin@PiedWeb",
+            "email": "contact@piedweb.com",
+            "homepage": "https://piedweb.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

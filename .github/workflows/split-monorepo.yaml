@@ -54,6 +54,7 @@ jobs:
           - version
           - new
           - admin-block-editor
+          - advanced-main-image
           #package: ${{fromJson(needs.provide_packages_json.outputs.matrix)}}
 
     steps:

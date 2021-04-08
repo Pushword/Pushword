@@ -89,7 +89,6 @@
     },
     "autoload": {
         "psr-4": {
-            "PiedWeb\\BootstrapThemeComponentBundle\\": "packages/bootstrap5-theme/src/",
             "Pushword\\Admin\\": "packages/admin/src",
             "Pushword\\Conversation\\": "packages/conversation/src",
             "Pushword\\Core\\": "packages/core/src",
@@ -101,7 +100,8 @@
             "Pushword\\Facebook\\": "packages/facebook/src",
             "Pushword\\Version\\": "packages/version/src",
             "Pushword\\AdminBlockEditor\\": "packages/admin-block-editor/src",
-            "Pushword\\TemplateEditor\\": "packages/template-editor/src"
+            "Pushword\\TemplateEditor\\": "packages/template-editor/src",
+            "Pushword\\AdvancedMainImage\\": "packages/advanced-main-image/src"
         }
     },
     "autoload-dev": {
@@ -118,7 +118,8 @@
             "Pushword\\Facebook\\Tests\\": "packages/facebook/tests",
             "Pushword\\Version\\Tests\\": "packages/version/tests",
             "Pushword\\AdminBlockEditor\\Tests\\": "packages/admin-block-editor/tests",
-            "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests"
+            "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests",
+            "Pushword\\AdvancedMainImage\\Tests\\": "packages/advanced-main-image/tests"
         }
     },
     "scripts": {

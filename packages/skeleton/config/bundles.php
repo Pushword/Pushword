@@ -16,8 +16,8 @@ return [
     Pushword\Svg\PushwordSvgBundle::class => ['all' => true],
     Pushword\Facebook\PushwordFacebookBundle::class => ['all' => true],
     Pushword\Version\PushwordVersionBundle::class => ['all' => true],
-
     Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle::class => ['all' => true],
+    Pushword\AdvancedMainImage\PushwordAdvancedMainImageBundle::class => ['all' => true],
 
     // Symfony
     Symfony\Bundle\FrameworkBundle\FrameworkBundle::class => ['all' => true],

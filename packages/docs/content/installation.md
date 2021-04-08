@@ -36,7 +36,9 @@ By running the following command, it will install a few extensions to have a **c
 composer req pushword/admin pushword/admin-block-editor pushword/page-scanner pushword/static-generator pushword/template-editor pushword/version
 
 # More specific
-composer req pushword/conversation pushword/page-update-notifier
+composer req pushword/page-update-notifier
+composer req pushword/advanced-main-image
+composer req pushword/conversation
 
 # create a new user
 php bin/console pushword:user:create
