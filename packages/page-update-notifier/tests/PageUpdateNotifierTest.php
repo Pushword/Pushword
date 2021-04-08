@@ -66,16 +66,6 @@ class PageUpdateNotifierTest extends KernelTestCase
         $notifier->run($this->getPage());
     }
 
-    public function testNoIntervalException()
-    {
-        $notifier = $this->getNotifier();
-        $this->getApps()->get()->setCustomProperty('page_update_notification_from', 'contact@example.tld');
-        $this->getApps()->get()->setCustomProperty('page_update_notification_to', 'contact@example.tld');
-
-        $this->expectExceptionCode(PageUpdateNotifier::ERROR_NO_INTERVAL);
-        $notifier->run($this->getPage());
-    }
-
     public function testRun()
     {
         $notifier = $this->getNotifier();
