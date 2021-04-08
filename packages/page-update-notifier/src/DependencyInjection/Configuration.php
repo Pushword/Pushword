@@ -8,9 +8,9 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 class Configuration implements ConfigurationInterface
 {
     const DEFAULT_APP_FALLBACK = [
-        'notifier_email',
-        'page_update_notification_mail',
-        'interval',
+        'page_update_notification_from',
+        'page_update_notification_to',
+        'page_update_notification_interval',
     ];
 
     public function getConfigTreeBuilder()
@@ -18,9 +18,9 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder('pushword_page_update_notifier');
         $treeBuilder->getRootNode()->children()
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
-            ->scalarNode('notifier_email')->defaultValue(null)->end()
-            ->scalarNode('page_update_notification_mail')->defaultValue(null)->end()
-            ->scalarNode('interval')->defaultValue('P1D')->end()
+            ->scalarNode('page_update_notification_from')->defaultValue(null)->end()
+            ->scalarNode('page_update_notification_to')->defaultValue(null)->end()
+            ->scalarNode('page_update_notification_interval')->defaultValue('P1D')->end()
         ->end();
 
         return $treeBuilder;
