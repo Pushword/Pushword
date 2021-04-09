@@ -7,6 +7,11 @@ parent: contribute
 
 ## TODO before v1
 
+-   Admin : Host : filter sur un select
+-   Hyperlink : make / link working and saving on change
+-   Admin : filter les pages parentes : si host sélectionner n'afficher que les pages de l'host & réciproque
+-   Page Scanner : détecter les pages parentes sur un autre host
+-   Page Scanner : surveille les mails non encryptés, surveille les liens encryptés + liens vers la preprod (= surveiller canonical)
 -   release de sonata 4
 -   implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
 -   manage date i18n a better way than randomly (document the process)
