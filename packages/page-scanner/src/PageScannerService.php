@@ -68,6 +68,9 @@ class PageScannerService
         $this->app = $this->apps->get($page->getHost());
         $this->currentPage = $page;
         $this->resetErrors();
+
+        $this->checkParentPageHost($page);
+
         $this->pageHtml = '';
 
         if (false !== $page->getRedirection()) {
@@ -86,6 +89,15 @@ class PageScannerService
         }
 
         return empty($this->errors) ? true : $this->errors;
+    }
+
+    protected function checkParentPageHost(Pageinterface $page): void
+    {
+        $parent = $page->getParentPage();
+
+        if ($parent && $parent->getHost() && $page->getHost() && $page->getHost() != $parent->getHost()) {
+            $this->addError('Parent page has a different host : <code>'.$parent->getHost().'</code> vs <code>'.$page->getHost().'</code>');
+        }
     }
 
     protected function getHtml($liveUri)

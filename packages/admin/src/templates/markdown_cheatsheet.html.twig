@@ -114,17 +114,17 @@ Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 {% apply markdown %}
 [{{ 'md_cs.link_homepage'|trans }}](/)
 
-[{{ 'md_cs.link_other_site'|trans }}](https://example.tld/)
+[{{ 'md_cs.link_other_site'|trans }}](https://piedweb.com/)
 
-{{ link('md_cs.link_bot_hidden'|trans, 'https://piedweb.com/') }}
+{{ link('md_cs.link_bot_hidden'|trans, 'https://example.tld/') }}
 {% endapply %}
     </div>
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
 [{{ 'md_cs.link_homepage'|trans }}](/)<br>
 <br>
-[{{ 'md_cs.link_other_site'|trans }}](https://example.tld/)<br>
+[{{ 'md_cs.link_other_site'|trans }}](https://piedweb.com/)<br>
 <br>
-{{ "{{ link('"~('md_cs.link_bot_hidden'|trans) ~"', 'https://piedweb.com/') }}" }}
+{{ "{{ link('"~('md_cs.link_bot_hidden'|trans) ~"', 'https://example.tld/') }}" }}
 {% endapply %}</code></pre>
 </div>
 

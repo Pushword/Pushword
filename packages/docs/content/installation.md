@@ -46,7 +46,7 @@ php bin/console pushword:user:create
 
 ## Next
 
-Want more feature like an [admin dashboard](/extension/admin), a [static website generator](/extension/static) or a
+Want more feature like an [admin dashboard](/extension/admin), a [static website generator](/extension/static-generator) or a
 [flat-file CMS manager](/extension/flat) ?
 
 Look the [extensions](/extensions).

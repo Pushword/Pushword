@@ -44,7 +44,7 @@ admin_block_editor_type_to_prose: ["paragraph", "image", "list", "blockquote", "
 
 ### Disable Listener and use filter
 
-This extension is built like an [entity filter](/entity-filter).
+This extension is built like an [entity filter](/component/entity-filter).
 
 By default, a listener apply `Pushword\AdminBlockEditor\BlockEditorFilter` before the defined filters in your app's config only on `mainContent`.
 

@@ -82,12 +82,12 @@ class PageScannerCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln('Scan will start in few seconds...');
+        $output->writeln('Acquiring page scanner lock to start the scan...');
 
         if ($this->scanAllWithLock($input->getArgument('host') ?? '')) {
             $output->writeln('done...');
         } else {
-            $output->writeln('cannot acquire the lock...');
+            $output->writeln('cannot acquiring the page scanner lock...');
         }
 
         return 0;

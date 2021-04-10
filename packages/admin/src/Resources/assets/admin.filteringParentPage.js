@@ -8,7 +8,7 @@ export function filterParentPageFromHost() {
 
     const updateParentPageOptions = function (host, allParentPages) {
         parentPageSelect.querySelectorAll("option").forEach((e) => e.parentNode.removeChild(e));
-        let parentPageForCurrentHost = Array.prototype.slice.call(allParentPages).filter(function (optionNode) {
+        let parentPageForCurrentHost = allParentPages.filter(function (optionNode) {
             return optionNode.text.startsWith(host);
         });
         parentPageForCurrentHost.forEach((option) => parentPageSelect.appendChild(option));
@@ -26,10 +26,10 @@ export function filterParentPageFromHost() {
     }
 
     const run = function () {
-        const allParentPages = parentPageSelect.querySelectorAll("option");
+        const allParentPages = Array.prototype.slice.call(parentPageSelect.querySelectorAll("option"));
 
         if (hostSelect.value) {
-            updateParentPageOptions(hostSelect.value);
+            updateParentPageOptions(hostSelect.value, allParentPages);
         }
 
         //hostSelect.addEventListener("change", (event) => {

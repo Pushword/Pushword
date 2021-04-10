@@ -7,7 +7,6 @@ parent: contribute
 
 ## TODO before v1
 
--   Admin : filter les pages parentes : si host sélectionner n'afficher que les pages de l'host & réciproque
 -   Page Scanner : détecter les pages parentes sur un autre host
 -   Page Scanner : surveille les mails non encryptés, surveille les liens encryptés + liens vers la preprod (= surveiller canonical)
 -   release de sonata 4
