@@ -81,7 +81,6 @@ class PageScannerService
 
         $liveUri = $this->generateLivePathFor($page);
         $this->pageHtml = $this->getHtml($liveUri);
-        dd(1);
 
         // 2. Je récupère tout les liens et je les check
         // href="", data-rot="" data-img="", src="", data-bg
@@ -163,12 +162,9 @@ class PageScannerService
             $uri = 'data-rot' == $matches[1][$k] ? str_rot13($uri) : $uri;
             $uri = strtok($uri, '#');
             $uri = $this->removeBase($uri);
-            dd(self::isMailtoOrTelLink($uri));
             if (self::isMailtoOrTelLink($uri) && 'data-rot' != $matches[1][$k]) {
-                dump('detected');
-                $this->addError('It may be better for bot protection to encrypt the following link : "'.$uri.'"');
-            }
-            elseif ('' !== $uri && self::isWebLink($uri)) {
+                $this->addError('It may be better to prevent spam to encrypt the following link : "'.$uri.'"');
+            } elseif ('' !== $uri && self::isWebLink($uri)) {
                 $linkedDocs[] = $uri;
             }
         }
@@ -176,8 +172,9 @@ class PageScannerService
         return array_unique($linkedDocs);
     }
 
-    protected static function isMailtoOrTelLink(string $uri): bool {
-        if (strpos($uri, 'tel:') !== false || strpos($uri, 'mailto:') !== false) {
+    protected static function isMailtoOrTelLink(string $uri): bool
+    {
+        if (false !== strpos($uri, 'tel:') || false !== strpos($uri, 'mailto:')) {
             return true;
         }
 
