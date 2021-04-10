@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Pushword\Admin\FormField\HostField;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
@@ -86,7 +87,8 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         $formMapper->add('locale', null, ['label' => 'admin.page.locale.label']);
 
         if (\count($this->getApps()->getHosts()) > 1) {
-            $formMapper->add('host', null, ['label' => 'admin.page.host.label']);
+            //$formMapper->add('host', null, ['label' => 'admin.page.host.label']);
+            (new HostField($this))->datagridMapper($formMapper);
         }
 
         $formMapper->add('h1', null, ['label' => 'admin.page.h1.label']);
