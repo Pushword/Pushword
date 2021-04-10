@@ -4,6 +4,7 @@ require("./admin.scss");
 
 import { easyMDEditor } from "./admin.easymde-editor";
 import { aceEditor } from "./admin.ace-editor";
+import { filterParentPageFromHost } from "./admin.filteringParentPage";
 //import { autosize } from 'autosize/src/autosize.js';
 import "core-js/stable";
 import "regenerator-runtime/runtime";
@@ -32,6 +33,7 @@ window.addEventListener("load", function () {
     var aceEditorElements = aceEditor();
     onDomChangedAction();
     removePreviewBtn();
+    filterParentPageFromHost();
 });
 
 window.onresize = onDomChanged;
