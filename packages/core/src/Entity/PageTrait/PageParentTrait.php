@@ -4,12 +4,14 @@ namespace Pushword\Core\Entity\PageTrait;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use LogicException;
 use Pushword\Core\Entity\PageInterface;
 
 trait PageParentTrait
 {
     /**
      * @ORM\ManyToOne(targetEntity="Pushword\Core\Entity\PageInterface", inversedBy="childrenPages")
+     * TODO: assert parentPage is not currentPage
      */
     protected $parentPage;
 
@@ -26,6 +28,10 @@ trait PageParentTrait
 
     public function setParentPage(?PageInterface $parentPage): self
     {
+        if ($parentPage === $this) {
+            throw new LogicException('Current Page can\'t be it own parent page.');
+        }
+
         $this->parentPage = $parentPage;
 
         return $this;

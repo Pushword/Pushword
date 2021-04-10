@@ -33,7 +33,7 @@ trait PageTrait
 
     public function __toString()
     {
-        return trim($this->host.'/'.$this->slug.' ');
+        return trim($this->host.'/'.$this->getSlug().' ');
     }
 
     public function getH1(): ?string

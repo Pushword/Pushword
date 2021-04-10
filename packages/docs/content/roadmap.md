@@ -7,7 +7,8 @@ parent: contribute
 
 ## TODO before v1
 
--   Page Scanner : détecter les pages parentes sur un autre host
+-   Admin Block Editor Tools : can't delete PagesList Block
+-   Page scanner : media to download are shown as error
 -   Page Scanner : surveille les mails non encryptés, surveille les liens encryptés + liens vers la preprod (= surveiller canonical)
 -   release de sonata 4
 -   implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
