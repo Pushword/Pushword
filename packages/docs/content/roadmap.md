@@ -7,7 +7,6 @@ parent: contribute
 
 ## TODO before v1
 
--   Admin : Host : filter sur un select
 -   Hyperlink : make / link working and saving on change
 -   Admin : filter les pages parentes : si host sélectionner n'afficher que les pages de l'host & réciproque
 -   Page Scanner : détecter les pages parentes sur un autre host

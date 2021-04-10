@@ -34,19 +34,17 @@ export default class Hyperlink extends HyperlinkTool {
         this.createSaveBtn();
         this.nodes.wrapper.appendChild(this.nodes.buttonSave);
 
+        this.nodes.wrapper.addEventListener("change", (event) => {
+            this.save(event);
+        });
+
         return this.nodes.wrapper;
     }
 
     createSaveBtn() {
+        this.initSelection = null;
         this.nodes.buttonSave = null;
-
-        this.nodes.buttonSave = document.createElement("button");
-        this.nodes.buttonSave.type = "button";
-        this.nodes.buttonSave.classList.add(this.CSS.buttonSave);
-        this.nodes.buttonSave.innerHTML = this.i18n.t("Save");
-        this.nodes.buttonSave.addEventListener("click", (event) => {
-            this.savePressed(event);
-        });
+        this.nodes.buttonSave = document.createElement("div");
     }
 
     static get sanitize() {
@@ -82,7 +80,7 @@ export default class Hyperlink extends HyperlinkTool {
         return !!anchorTag;
     }
 
-    savePressed(event) {
+    save(event) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
@@ -93,42 +91,47 @@ export default class Hyperlink extends HyperlinkTool {
         let design = this.nodes.selectDesign.value || "";
 
         if (!value.trim()) {
+            console.log("unlink");
             this.selection.restore();
             this.unlink();
-            event.preventDefault();
-            this.closeActions();
-        }
-
-        if (!!this.config.validate && !!this.config.validate === true && !this.validateURL(value)) {
-            this.tooltip.show(this.nodes.input, "The URL is not valid.", {
-                placement: "top",
-            });
-            setTimeout(() => {
-                this.tooltip.hide();
-            }, 1000);
             return;
         }
-
-        value = this.prepareLink(value);
+        //value = this.prepareLink(value);
 
         this.selection.restore();
         this.selection.removeFakeBackground();
-
         this.insertLink(value, target, rel, design);
+    }
 
-        this.selection.collapseToEnd();
-        this.inlineToolbar.close();
+    // To remove when https://github.com/trinhtam/editorjs-hyperlink/pull/11 is merged
+    addProtocol(link) {
+        if (/^(\w+):(\/\/)?/.test(link)) {
+            return link;
+        }
+
+        const isInternal = /^\/[^/\s]?/.test(link),
+            isAnchor = link.substring(0, 1) === "#",
+            isProtocolRelative = /^\/\/[^/\s]/.test(link);
+
+        if (!isInternal && !isAnchor && !isProtocolRelative) {
+            link = "http://" + link;
+        }
+
+        return link;
     }
 
     insertLink(link, target = "", rel = "", design = "") {
-        let anchorTag = this.selection.findParentTag("A");
+        let anchorTag = this.initSelection ? this.initSelection : this.selection.findParentTag("A");
+        console.log(this.initSelection);
         if (anchorTag) {
             this.selection.expandToTag(anchorTag);
             anchorTag["href"] = link;
         } else {
             document.execCommand(this.commandLink, false, link);
             anchorTag = this.selection.findParentTag("A");
+            this.initSelection = anchorTag;
         }
+
         if (anchorTag) {
             if (!!target) {
                 anchorTag["target"] = target;
@@ -146,5 +149,6 @@ export default class Hyperlink extends HyperlinkTool {
                 anchorTag.removeAttribute("class");
             }
         }
+        return anchorTag;
     }
 }
