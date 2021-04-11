@@ -8,6 +8,8 @@ use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\Router\RouterInterface as PwRouter;
 use Pushword\Core\Entity\PageInterface;
+use Pushword\Core\Repository\Repository;
+use Pushword\Core\Twig\AppExtension;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -74,9 +76,9 @@ class PageScannerService
         $this->pageHtml = '';
 
         if (false !== $page->getRedirection()) {
-            // check $page->getRedirection() return 20X
+            $this->checkLinkedDoc($this->removeBase($page->getRedirection()));
 
-            return true; // or status code
+            return empty($this->errors) ? true : $this->errors;
         }
 
         $liveUri = $this->generateLivePathFor($page);
@@ -158,12 +160,13 @@ class PageScannerService
         $linkedDocs = [];
         $matchesCount = \count($matches[0]);
         for ($k = 0; $k < $matchesCount; ++$k) {
-            $uri = isset($matches[4][$k]) ? $matches[4][$k] : $matches[5][$k];
-            $uri = 'data-rot' == $matches[1][$k] ? str_rot13($uri) : $uri;
+            $uri = $matches[4][$k] ?: $matches[5][$k];
+            $uri = 'data-rot' == $matches[1][$k] ? AppExtension::decrypt($uri) : $uri;
             $uri = strtok($uri, '#');
+            $uri = $uri.($matches[4][$k] ? '' : '#(encrypt)'); // not elegant but permit to remember it's an encrypted link
             $uri = $this->removeBase($uri);
             if (self::isMailtoOrTelLink($uri) && 'data-rot' != $matches[1][$k]) {
-                $this->addError('It may be better to prevent spam to encrypt the following link : "'.$uri.'"');
+                $this->addError('<code>'.$uri.'</code> to prevent spam, encrypt this link.');
             } elseif ('' !== $uri && self::isWebLink($uri)) {
                 $linkedDocs[] = $uri;
             }
@@ -190,29 +193,41 @@ class PageScannerService
         return $url;
     }
 
-    public function getLinksCheckedCounter()
+    public function getLinksCheckedCounter(): int
     {
         return $this->linksCheckedCounter;
     }
 
-    protected function checkLinkedDocs(array $linkedDocs)
+    protected function checkLinkedDocs(array $linkedDocs): void
     {
         foreach ($linkedDocs as $uri) {
             ++$this->linksCheckedCounter;
             if (! \is_string($uri)) {
-                continue;
+                continue; // TODO Log ?!
             }
-            if (('/' == $uri[0] && ! $this->uriExist($uri))
-                || (0 === strpos($uri, 'http') && ! $this->urlExist($uri))) {
-                $this->addError('<code>'.$uri.'</code> introuvable');
-            }
+            $this->checkLinkedDoc($uri);
+        }
+    }
+
+    protected function checkLinkedDoc(string $uri): void
+    {
+        // internal
+        if ('/' == $uri[0] && ! $this->uriExist($uri)) {
+            $this->addError('<code>'.$uri.'</code> not found');
+        }
+
+        // external
+        if (0 === strpos($uri, 'http') && true !== ($errorMsg = $this->urlExist($uri))) {
+            $this->addError('<code>'.$uri.'</code> '.$errorMsg);
         }
     }
 
     /**
      * this is really slow on big website.
+     *
+     * @return true|string
      */
-    protected function urlExist(string $uri): bool
+    protected function urlExist(string $uri)
     {
         $harvest = Harvest::fromUrl(
             $uri,
@@ -221,8 +236,12 @@ class PageScannerService
             $this->previousRequest
         );
 
-        if (\is_int($harvest) || 200 !== $harvest->getResponse()->getStatusCode()) {
-            return false;
+        if (\is_int($harvest)) {
+            return 'unreachable';
+        } elseif (200 !== $harvest->getResponse()->getStatusCode()) {
+            return 'status code';
+        } elseif (! $harvest->isCanonicalCorrect()) {
+            return 'canonical';
         }
 
         $this->previousRequest = $harvest->getResponse()->getRequest();
@@ -239,8 +258,10 @@ class PageScannerService
         }
 
         $checkDatabase = 0 !== strpos($slug, 'media/'); // we avoid to check in db the media, file exists is enough
-        $page = true !== $checkDatabase ? null : $this->em->getRepository(\get_class($this->currentPage))
-            ->findOneBy(['slug' => '' == $slug ? 'homepage' : $slug]); // todo add domain check (currentPage domain)
+
+        $page = true !== $checkDatabase ? null :
+            Repository::getPageRepository($this->em, \get_class($this->currentPage))
+                ->getPage($slug, $this->currentPage->getHost(), true);
 
         $this->everChecked[$slug] = (
             null === $page

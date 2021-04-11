@@ -13,7 +13,7 @@ trait LinkTwigTrait
 
     abstract public function getApp(): AppConfig;
 
-    public function renderLink($anchor, $path, $attr = [], bool $encrypt = true)
+    public function renderLink($anchor, $path, $attr = [], bool $encrypt = true): string
     {
         if (\is_bool($attr)) {
             $encrypt = $attr;
@@ -49,7 +49,7 @@ trait LinkTwigTrait
         return $renderedLink;
     }
 
-    public static function encrypt($path)
+    public static function encrypt(string $path): string
     {
         if (0 === strpos($path, 'http://')) {
             $path = '-'.substr($path, 7);
@@ -60,5 +60,20 @@ trait LinkTwigTrait
         }
 
         return str_rot13($path);
+    }
+
+    public static function decrypt(string $string)
+    {
+        $path = str_rot13($string);
+
+        if (0 === strpos($path, '-')) {
+            $path = 'http://'.substr($path, 1);
+        } elseif (0 === strpos($path, '_')) {
+            $path = 'http://'.substr($path, 1);
+        } elseif (0 === strpos($path, '@')) {
+            $path = 'mailto:'.substr($path, 1);
+        }
+
+        return $path;
     }
 }
