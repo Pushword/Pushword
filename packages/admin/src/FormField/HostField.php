@@ -29,9 +29,9 @@ class HostField extends AbstractField
         ]);
     }
 
-    public function datagridMapper(DatagridMapper $formMapper): DatagridMapper
+    public function datagridMapper(DatagridMapper $datagridMapper): DatagridMapper
     {
-        return $formMapper->add('host', ChoiceFilter::class, [
+        return $datagridMapper->add('host', ChoiceFilter::class, [
             'field_type' => ChoiceType::class,
             'field_options' => [
                 'choices' => array_combine($this->getHosts(), $this->getHosts()),

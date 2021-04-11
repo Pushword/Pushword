@@ -193,6 +193,8 @@ admin:
       label: Couleur Principale
     createdAt:
       label: Date d'upload
+    filetype:
+      label: Type de fichiers
 
   element:
     deleted: Elément supprimé.

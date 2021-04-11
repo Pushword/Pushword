@@ -46,6 +46,7 @@ services:
       - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
       - [setTemplate, [short_object_description, "@@pwAdmin/media/short_object_description.html.twig"]]
       - [setPageClass, ["%pw.entity_page%"]]
+      - [setMediaClass, ["%pw.entity_media%"]]
     tags:
       - { name: sonata.admin, manager_type: orm, label: admin.label.media }
 

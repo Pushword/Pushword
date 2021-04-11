@@ -2,12 +2,16 @@
 
 namespace Pushword\Admin;
 
+use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata; //use Sonata\BlockBundle\Meta\Metadata;
 use Sonata\AdminBundle\Object\MetadataInterface;
+use Sonata\DoctrineORMAdminBundle\Filter\ChoiceFilter;
+use Sonata\DoctrineORMAdminBundle\Filter\ModelAutocompleteFilter;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
 {
@@ -53,6 +57,29 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         $datagridMapper->add('name', null, [
             'label' => 'admin.media.name.label',
         ]);
+
+        /*
+        $datagridMapper->add('mimeType', ModelAutocompleteFilter::class, [
+            'field_options' => [
+                'property' => 'mimeType',
+                'class' => $this->mediaClass,
+                'multiple' => true
+        ],
+            'label' => 'admin.media.filetype.label',
+        ]);* */
+
+        $mimeTypes = Repository::getMediaRepository($this->getEntityManager(), $this->mediaClass)->getMimeTypes();
+        if ($mimeTypes) {
+            $datagridMapper->add('mimeType', ChoiceFilter::class, [
+                'field_type' => ChoiceType::class,
+                'field_options' => [
+                    'choices' => array_combine($mimeTypes, $mimeTypes),
+                    'multiple' => true,
+                ],
+                'label' => 'admin.media.filetype.label',
+            ]);
+        }
+
         $datagridMapper->add('names', null, [
             'label' => 'admin.media.names.label',
         ]);
