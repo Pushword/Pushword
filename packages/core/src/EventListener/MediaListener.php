@@ -136,18 +136,29 @@ class MediaListener
             $this->imageManager->remove($media);
             $this->imageManager->generateCache($media);
             $thumb = $this->imageManager->getLastThumb();
-            $this->updatePaletteColor($media, $thumb ?: null);
+            $this->updateMainColor($media, $thumb ?: null);
             //exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
         }
     }
 
+    private function updateMainColor(MediaInterface $media, ?Image $image = null): void
+    {
+        $image = clone $image;
+        $color = $image->limitColors(1)->pickColor(0, 0, 'hex');
+        $image->destroy();
+
+        $media->setMainColor($color);
+    }
+
+    /*  Palette was good, but not ready for PHP 8
     private function updatePaletteColor(MediaInterface $media, ?Image $image = null): void
     {
         $palette = $image->getDriver() instanceof GdDriver
             ? Palette::fromGD($image->getCore(), Color::fromHexToInt('#FFFFFF'))
             : Palette::fromFilename($this->imageManager->getFilterPath($media, 'xs'), Color::fromHexToInt('#FFFFFF'));
+
         $extractor = new ColorExtractor($palette);
         $colors = $extractor->extract();
         $media->setMainColor(Color::fromIntToHex($colors[0]));
-    }
+    }*/
 }

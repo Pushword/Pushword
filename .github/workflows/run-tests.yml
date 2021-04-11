@@ -9,9 +9,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest]
-        php: [7.4]
-        #, 8.0 Waiting for this and this to be merged :
-        # - https://github.com/sonata-project/SonataDoctrineORMAdminBundle/pull/1285
+        php: [7.4, 8.0]
         stability: [prefer-stable] #prefer-lowest,
 
     name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
