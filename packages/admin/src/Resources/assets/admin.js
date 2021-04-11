@@ -5,6 +5,7 @@ require("./admin.scss");
 import { easyMDEditor } from "./admin.easymde-editor";
 import { aceEditor } from "./admin.ace-editor";
 import { filterParentPageFromHost } from "./admin.filteringParentPage";
+import { filterImageFormField } from "./admin.filterImageFormField";
 //import { autosize } from 'autosize/src/autosize.js';
 import "core-js/stable";
 import "regenerator-runtime/runtime";
@@ -34,6 +35,7 @@ window.addEventListener("load", function () {
     onDomChangedAction();
     removePreviewBtn();
     filterParentPageFromHost();
+    filterImageFormField();
 });
 
 window.onresize = onDomChanged;
