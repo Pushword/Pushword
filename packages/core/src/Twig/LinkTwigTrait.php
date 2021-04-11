@@ -69,7 +69,7 @@ trait LinkTwigTrait
         if (0 === strpos($path, '-')) {
             $path = 'http://'.substr($path, 1);
         } elseif (0 === strpos($path, '_')) {
-            $path = 'http://'.substr($path, 1);
+            $path = 'https://'.substr($path, 1);
         } elseif (0 === strpos($path, '@')) {
             $path = 'mailto:'.substr($path, 1);
         }

@@ -113,7 +113,7 @@ class PageScannerService
             return;
         } elseif (200 != $response->getStatusCode()) {
             file_put_contents('debug', $response);
-            $this->addError('error on generating the page ('.$response->getStatusCode().')');
+            $this->addError('error occured generating the page ('.$response->getStatusCode().')');
 
             return;
         }
@@ -237,11 +237,11 @@ class PageScannerService
         );
 
         if (\is_int($harvest)) {
-            return 'unreachable';
-        } elseif (200 !== $harvest->getResponse()->getStatusCode()) {
-            return 'status code';
+            return 'unreachable...';
+        } elseif (200 !== $errorCode = $harvest->getResponse()->getStatusCode()) {
+            return 'status code ('.$errorCode.')';
         } elseif (! $harvest->isCanonicalCorrect()) {
-            return 'canonical';
+            return 'canonical ('.$harvest->getCanonical().')';
         }
 
         $this->previousRequest = $harvest->getResponse()->getRequest();
@@ -266,6 +266,7 @@ class PageScannerService
         $this->everChecked[$slug] = (
             null === $page
                 && ! file_exists($this->publicDir.'/'.$slug)
+                && ! file_exists($this->publicDir.'/../'.$slug)
                 && 'feed.xml' !== $slug
         ) ? false : true;
 

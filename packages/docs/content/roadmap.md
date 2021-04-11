@@ -9,8 +9,6 @@ parent: contribute
 
 -   Admin Block Editor : filter only image (svg ?) on select
 -   Admin Block Editor Tools : can't delete PagesList Block => https://github.com/codex-team/editor.js/issues/1640
--   Page scanner : media to download are shown as error
--   Page Scanner : , surveille les liens encryptés + liens vers la preprod (= surveiller canonical)
 -   release de sonata 4
 -   implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
 -   manage date i18n a better way than randomly (document the process)

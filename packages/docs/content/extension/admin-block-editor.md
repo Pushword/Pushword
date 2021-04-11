@@ -62,7 +62,7 @@ You want to add a custom block ? This is the path to follow :
 
 1. Create a new [editor.js plugin](https://editorjs.io/the-first-plugin). There are a few examples in #[admin-block-editor-tools](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor-tools)
 
-2. [Override](https://symfony.com/doc/current/bundles/override.html) [@PushwordAdminBlockEditor/editorjs_widget.html.twig](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/templates/editorjs_widget.html.twig) to add your custom plugin
+2. [Override](https://symfony.com/doc/current/bundles/override.html) [@PushwordAdminBlockEditor/editorjs_widget.html.twig](https://github.com/Pushword/Pushword/blob/main/packages/admin-block-editor/src/templates/editorjs_widget.html.twig) to add your custom plugin
 
 I recommend you to import `@PushwordAdminBlockEditor/editorjs_widget.html`.twig and to create only the block **editorjs_block_to_add_new_plugin**
 
@@ -90,4 +90,4 @@ admin_block_editor_blocks: [
   ]
 ```
 
-4. Create `\App\Block\MyCustomBlock` wich implements #[BlockInterface](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/block/BlockInterface.php) or inherit #[AbstractBlock](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/block/AbstractBlock.php)
+4. Create `\App\Block\MyCustomBlock` wich implements #[BlockInterface](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/Block/BlockInterface.php) or inherit #[AbstractBlock](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/Block/AbstractBlock.php)

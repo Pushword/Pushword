@@ -159,7 +159,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <p>Pushword was first crafted by a seo and developper guy. Being on the first page of search result matters !</p>
                 <p>So, of course, Pushword manage <strong>title</strong>, <strong>h1</strong>, <strong>description</strong>, <strong>nice url</strong>.</p>
                 <p>But discover more SEO feature like <strong>health checker</strong> (dead links checker), <strong>internal links improver</strong> (suggest links to add in your content) and more...</p>
-                <p>Woring about speed ? If default installation is not fast enough for you, you will fall in love with the <a href="/extension/static">{{ svg('bolt') }} Static Website Generator</a>.</p>
+                <p>Woring about speed ? If default installation is not fast enough for you, you will fall in love with the <a href="/extension/static-generator">{{ svg('bolt') }} Static Website Generator</a>.</p>
             </div>
         </div>
         <div class="px-3 py-6 mb-6 rounded-lg bg-purple-50 md:-mt-24 xl:mt-0">
