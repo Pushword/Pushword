@@ -75,7 +75,7 @@ trait PageSearchTrait
         return $this;
     }
 
-    public function getMetaRobots(): ?string
+    public function getMetaRobots(): string
     {
         return $this->metaRobots;
     }

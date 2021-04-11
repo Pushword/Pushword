@@ -1,9 +1,11 @@
 <?php
 
-namespace Pushword\PageScanner;
+namespace Pushword\PageScanner\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Repository\Repository;
+use Pushword\PageScanner\Controller\PageScannerController;
+use Pushword\PageScanner\Scanner\PageScannerService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;

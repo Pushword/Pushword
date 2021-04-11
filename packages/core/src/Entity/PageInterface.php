@@ -63,4 +63,6 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
     public function getExtendedPage(): ?self;
 
     public function setExtendPage(?self $extendedPage): self;
+
+    public function getMetaRobots(): string;
 }

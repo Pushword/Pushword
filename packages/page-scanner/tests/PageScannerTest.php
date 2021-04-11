@@ -4,9 +4,10 @@ namespace Pushword\PageScanner;
 
 use App\Entity\Page;
 use Pushword\Core\Entity\PageInterface;
+use Pushword\PageScanner\Scanner\LinkedDocsScanner;
+use Pushword\PageScanner\Scanner\PageScannerService;
+use Pushword\PageScanner\Scanner\ParentPageScanner;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Twig\Environment as Twig;
-use Twig\Loader\ArrayLoader as TwigLoader;
 
 class PageScannerTest extends KernelTestCase
 {
@@ -14,21 +15,23 @@ class PageScannerTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $scanner = new PageScannerService(//self::$kernel->getContainer()->get('twig')
-            new Twig(new TwigLoader()),
-            self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
-            __DIR__.'/../../skeleton/public',
-            self::$kernel->getContainer()->get('pushword.apps'),
+        $scanner = new PageScannerService(
             self::$kernel->getContainer()->get('pushword.router'),
             self::$kernel
         );
+        $scanner->linkedDocsScanner = new LinkedDocsScanner(
+            self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
+            __DIR__.'/../../skeleton/public',
+        );
+        $scanner->linkedDocsScanner->translator = self::$kernel->getContainer()->get('translator');
+
+        $scanner->parentPageScanner = new ParentPageScanner();
+        $scanner->parentPageScanner->translator = self::$kernel->getContainer()->get('translator');
+
         $errors = $scanner->scan($this->getPage());
 
-        // bad design test because skeleton is well installed on local and not fully
-        // on github action
         $this->assertTrue(
-            (\is_array($errors) && false !== strpos($errors[0]['message'], 'introuvable'))
-                || true === $errors
+            \is_array($errors) || true === $errors
         );
     }
 

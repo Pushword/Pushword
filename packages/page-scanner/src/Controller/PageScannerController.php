@@ -1,6 +1,6 @@
 <?php
 
-namespace Pushword\PageScanner;
+namespace Pushword\PageScanner\Controller;
 
 use DateInterval;
 use Exception;

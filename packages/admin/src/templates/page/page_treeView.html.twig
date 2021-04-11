@@ -38,7 +38,7 @@
                 <h3 class="box-title">Arborescence</h3>
             </div>
    <div class="box-body">
-      <ul class=tree>
+      <ul class="pageTree">
           {% for page in pages %}
                 <li>
                     {{ _self.renderListItem(page, true) }}
@@ -51,41 +51,41 @@
 
     {% block sonata_admin_tree_style %}
     <style>
-    .tree {
+    .pageTree {
         margin-top: 20px;
         margin-left: 30px;
     }
 
-    .tree,
-    .tree ul {
+    .pageTree,
+    .pageTree ul {
         list-style-type: none;
         padding: 0;
     }
 
-    .tree input {
+    .pageTree input {
         position: absolute;
         clip: rect(0, 0, 0, 0);
     }
 
-    .tree input~ul {
+    .pageTree input~ul {
         display: none;
     }
 
-    .tree input:checked~ul {
+    .pageTree input:checked~ul {
         display: block;
     }
 
-    .tree li {
+    .pageTree li {
         line-height: 1.2;
         position: relative;
         padding: 0 0 1em 1em;
     }
 
-    .tree ul li {
+    .pageTree ul li {
         padding: 1em 0 0 1em;
     }
 
-    .tree>li:last-child {
+    .pageTree>li:last-child {
         padding-bottom: 0;
     }
 

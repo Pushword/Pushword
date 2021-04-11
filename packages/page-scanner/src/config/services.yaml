@@ -1,25 +1,18 @@
 services:
-  Pushword\PageScanner\PageScannerService:
-    alias: pushword.page_scanner
-
-  pushword.page_scanner:
-    class: Pushword\PageScanner\PageScannerService
+  _defaults:
     autowire: true
-    arguments:
+    autoconfigure: true
+    bind:
       $publicDir: "%pw.public_dir%"
       $kernel: "@kernel"
-
-  Pushword\PageScanner\PageScannerCommand:
-    autowire: true
-    arguments:
       $pageClass: "%pw.entity_page%"
       $varDir: "%kernel.project_dir%/var"
-    tags: ["console.command"]
-
-  Pushword\PageScanner\PageScannerController:
-    autowire: true
-    arguments:
-      $varDir: "%kernel.project_dir%/var"
       $pageScanInterval: "%pw.pushword_page_scanner.min_interval_between_scan%"
-    tags:
-      - { name: "controller.service_arguments" }
+
+  Pushword\PageScanner\:
+    resource: "../*"
+    exclude: "../{DependencyInjection,Entity,Migrations,Tests,config,Kernel.php}"
+
+  Pushword\PageScanner\Controller\:
+    resource: "../Controller/"
+    tags: ["controller.service_arguments"]

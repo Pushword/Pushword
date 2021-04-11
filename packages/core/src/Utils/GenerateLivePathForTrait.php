@@ -9,7 +9,7 @@ trait GenerateLivePathForTrait
 {
     protected RouterInterface $router;
 
-    protected function generateLivePathFor($host, $route = 'pushword_page', $params = [])
+    public function generateLivePathFor($host, $route = 'pushword_page', $params = [])
     {
         if (isset($params['locale'])) {
             $params['_locale'] = $params['locale'].'/';

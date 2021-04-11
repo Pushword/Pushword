@@ -7,6 +7,8 @@ parent: contribute
 
 ## TODO before v1
 
+-   Admin: Page Tree https://github.com/sonata-project/SonataAdminBundle/issues/7035
+-   drop PHP 7.4 PHP 8 Boum
 -   Admin Block Editor Tools : can't delete PagesList Block => https://github.com/codex-team/editor.js/issues/1640
 -   release de sonata 4
 -   implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
