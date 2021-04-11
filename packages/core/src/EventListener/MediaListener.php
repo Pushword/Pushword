@@ -143,9 +143,13 @@ class MediaListener
 
     private function updateMainColor(MediaInterface $media, ?Image $image = null): void
     {
-        $image = clone $image;
-        $color = $image->limitColors(1)->pickColor(0, 0, 'hex');
-        $image->destroy();
+        if (null === $image) {
+            return;
+        }
+
+        $imageForPalette = clone $image;
+        $color = $imageForPalette->limitColors(1)->pickColor(0, 0, 'hex');
+        $imageForPalette->destroy();
 
         $media->setMainColor($color);
     }
