@@ -37,6 +37,7 @@ class HostField extends AbstractField
                 'choices' => array_combine($this->getHosts(), $this->getHosts()),
                 'multiple' => true,
             ],
+            'label' => 'admin.page.host.label',
         ]);
     }
 
