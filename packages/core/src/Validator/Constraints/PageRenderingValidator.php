@@ -5,17 +5,10 @@ namespace Pushword\Core\Validator\Constraints;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
+use Twig\Environment as Twig;
 
 class PageRenderingValidator extends ConstraintValidator
 {
-    private $apps;
-    private $twig;
-
-    public function __construct(array $apps, $twig)
-    {
-        $this->twig = $twig;
-        $this->apps = $apps;
-    }
 
     public function validate($value, Constraint $constraint)
     {

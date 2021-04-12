@@ -4,7 +4,7 @@ namespace Pushword\Core\Twig;
 
 use Exception;
 use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\Router\RouterInterface;
+use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Entity\PageInterface;
 
 trait LinkTwigTrait

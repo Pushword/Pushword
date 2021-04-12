@@ -20,7 +20,6 @@ class MediaGenerator extends AbstractGenerator
     {
         $publicMediaDir = $this->params->get('pw.public_media_dir');
         $mediaDir = $this->params->get('pw.media_dir');
-        //$mediaDir = $this->params->get('pw.public_dir').$publicMediaDir;
         $staticMediaDir = $this->getStaticDir().'/'.$publicMediaDir;
 
         $symlink = $this->mustSymlink();

@@ -7,7 +7,6 @@ parent: contribute
 
 ## To finish
 
--   **Core** : use autowire and autoconfigure per default and remove useless lines
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
 -   **Block editor** : édition avancée (template notamment dans pages, prose/unprise)

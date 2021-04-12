@@ -1,4 +1,137 @@
-imports:
-  - { resource: "../../../src/Resources/config/CoreServices.yaml" }
-  - { resource: "../../../src/Component/Router/RouterServices.yaml" }
-  - { resource: "../../../src/Component/App/services.yaml" }
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    bind:
+      $mediaClass: "%pw.entity_media%"
+      $pageClass: "%pw.entity_page%"
+      $userClass: "%pw.entity_user%"
+      $projectDir: "%kernel.project_dir%"
+      $filterSets: "%pw.image_filter_sets%"
+      $publicMediaDir: "%pw.public_media_dir%"
+      $mediaDir: "%pw.media_dir%"
+      $rawApps: "%pw.apps%"
+      $publicDir: "%pw.public_dir%"
+
+  # --------
+  # Me
+  # --------
+  Twig\Extension\StringLoaderExtension: ~
+  Pushword\Core\PushwordCoreBundle: ~
+
+  Pushword\Core\:
+    resource: "../../../src/*"
+    exclude: "../../../src/{Extension,Repository,DependencyInjection,Entity,Migrations,Tests,Kernel.php}"
+
+  # controllers are imported separately to make sure services can be injected
+  # as action arguments even if you don't extend any base controller class
+  Pushword\Core\Controller\:
+    resource: "../../../src/Controller"
+    tags: ["controller.service_arguments"]
+
+  # Todo: move to EventSuscriber
+  Pushword\Core\EventListener\UserListener:
+    tags:
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_user%", event: preUpdate }
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_user%", event: prePersist }
+
+  pushword.page_rendering.validator:
+    class: Pushword\Core\Validator\Constraints\PageRenderingValidator
+    tags:
+      - { name: validator.constraint_validator, alias: page_rendering }
+
+  # --------
+  # Page
+  # --------
+
+  # Todo: move to EventSuscriber
+  Pushword\Core\EventListener\PageListener:
+    tags:
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_page%", event: preRemove }
+
+  Pushword\Core\Repository\PageRepositoryInterface:
+    class: Pushword\Core\Repository\PageRepository
+    arguments:
+      $entityClass: "%pw.entity_page%"
+    tags:
+      - { name: doctrine.repository_service }
+
+  Pushword\Core\Component\EntityFilter\ManagerPoolInterface:
+    class: Pushword\Core\Component\EntityFilter\ManagerPool
+
+  # --------
+  # Media
+  # --------
+
+  # Todo: move to EventSuscriber
+  pushword.media_listener:
+    class: Pushword\Core\EventListener\MediaListener
+    tags:
+      - { name: kernel.event_listener, event: vich_uploader.pre_upload }
+      - { name: kernel.event_listener, event: vich_uploader.post_upload }
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: preUpdate }
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: preRemove }
+      #- { name: doctrine.orm.entity_listener, entity: Pushword\Core\Entity\Image, event: prePersist }
+
+  Pushword\Core\Repository\MediaRepository:
+    arguments:
+      $entityClass: "%pw.entity_media%"
+    tags: ["doctrine.repository_service"]
+
+  Pushword\Core\Repository\UserRepository:
+    arguments:
+      $entityClass: "%pw.entity_user%"
+    tags: ["doctrine.repository_service"]
+
+  # --------
+  # TWIG extension
+  # --------
+
+  pushword.twig.extension.render_attributes:
+    class: PiedWeb\RenderAttributes\TwigExtension
+    public: false
+    tags:
+      - { name: twig.extension }
+
+  twig.extension.intl:
+    class: Twig\Extra\Intl\IntlExtension
+    tags:
+      - { name: twig.extension }
+
+  # Router
+  # --------
+
+  Pushword\Core\Router\RouterInterface:
+    alias: pushword.router
+
+  pushword.router:
+    class: Pushword\Core\Router\Router
+    autowire: true
+    public: true
+
+  Pushword\Core\Router\RouterTwigExtension:
+    tags:
+      - "twig.extension"
+    autowire: true
+
+  # App
+  # --------
+
+  Pushword\Core\Component\App\AppPool:
+    alias: pushword.apps
+
+  pushword.apps:
+    class: Pushword\Core\Component\App\AppPool
+    public: true
+
+  # Vich
+  # --------
+
+  vich_uploader.pushword.namer_property:
+    class: Pushword\Core\Service\VichUploadPropertyNamer
+    public: true
+    arguments: ['@Vich\UploaderBundle\Util\Transliterator']
+
+  Pushword\Core\Service\VichUploadPropertyNamer:
+    alias: vich_uploader.pushword.namer_property
+    public: true

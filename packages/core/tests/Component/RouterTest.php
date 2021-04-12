@@ -2,7 +2,7 @@
 
 namespace Pushword\Core\Tests\Component;
 
-use Pushword\Core\Component\Router\Router;
+use Pushword\Core\Router\Router;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\RequestStack;
 

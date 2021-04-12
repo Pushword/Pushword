@@ -4,6 +4,7 @@ namespace Pushword\Core\Component\App;
 
 use Exception;
 use Pushword\Core\Entity\PageInterface;
+use \Twig\Environment as Twig;
 
 final class AppPool
 {
@@ -11,8 +12,6 @@ final class AppPool
     private $apps = [];
     /** @var string */
     private $currentApp;
-    /** @var string */
-    private $host; // often same as currentApp
 
     /**
      * Why there ? Because often, need to check current page don't override App Config.
@@ -20,32 +19,29 @@ final class AppPool
      *  @var PageInterface */
     private $currentPage;
 
-    public function __construct(?string $host, array $apps, \Twig\Environment $twig = null)
+    public function __construct(array $rawApps, Twig $twig)
     {
-        $this->host = $host;
+        $firstHost = array_key_first($rawApps);
 
-        foreach ($apps as $mainHost => $app) {
-            $this->apps[$mainHost] = new AppConfig($app, array_key_first($apps) == $mainHost ? true : false);
-            if ($twig) {
-                $this->apps[$mainHost]->setTwig($twig);
-            }
+        foreach ($rawApps as $mainHost => $app) {
+            $this->apps[$mainHost] = new AppConfig($app, $firstHost == $mainHost ? true : false);
+            $this->apps[$mainHost]->setTwig($twig);
         }
 
-        $this->switchCurrentApp();
+        $this->switchCurrentApp($firstHost);
     }
 
     /**
-     * Not good.
+     * @param string|PageInterface $host
      */
-    public function switchCurrentApp($host = null): self
+    public function switchCurrentApp($host): self
     {
         if ($host instanceof PageInterface) {
             $this->currentPage = $host;
             $host = $host->getHost();
         }
-        $this->host = $host;
 
-        $app = $this->get($this->host);
+        $app = $this->get($host);
 
         $this->currentApp = $app->getMainHost();
 

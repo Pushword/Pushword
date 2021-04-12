@@ -8,7 +8,7 @@
             {% endblock %}
 
             {% block description %}
-                {{ pw(page).mainContent.chapeau|raw }}
+                {{ pw(page).mainContent.chapeau is defined ? pw(page).mainContent.chapeau|raw : '' }}
             {% endblock %}
 
             {% block main_image %}

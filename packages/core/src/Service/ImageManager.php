@@ -160,7 +160,7 @@ final class ImageManager
 
         $fileName = null === $extension ? $media : Filepath::removeExtension($media).'.'.$extension;
 
-        return ($browserPath ? '' : $this->publicDir).$this->publicMediaDir.'/'.$filterName.'/'.$fileName;
+        return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/'.$filterName.'/'.$fileName;
     }
 
     /**
@@ -191,7 +191,7 @@ final class ImageManager
 
         $filterNames = array_keys($this->filterSets);
         foreach ($filterNames as $filterName) {
-            @unlink($this->publicDir.$this->publicMediaDir.'/'.$filterName.'/'.$media);
+            @unlink($this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName.'/'.$media);
         }
     }
 }

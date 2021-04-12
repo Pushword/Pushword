@@ -4,7 +4,7 @@ namespace Pushword\StaticGenerator\Generator;
 
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Component\Router\RouterInterface;
+use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Entity\PageInterface as Page;
 use Pushword\Core\Repository\PageRepositoryInterface;
 use Pushword\Core\Utils\GenerateLivePathForTrait;

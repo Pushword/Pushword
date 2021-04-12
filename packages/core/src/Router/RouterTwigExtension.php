@@ -1,6 +1,6 @@
 <?php
 
-namespace Pushword\Core\Component\Router;
+namespace Pushword\Core\Router;
 
 use Pushword\Core\Entity\PageInterface as Page;
 use Twig\Extension\AbstractExtension;

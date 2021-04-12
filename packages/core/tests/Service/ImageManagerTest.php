@@ -10,10 +10,10 @@ class ImageManagerTest extends KernelTestCase
     private $imageManager;
 
     private $publicDir = __DIR__.'/../../../skeleton/public';
-    private $publicMediaDir = '/media';
+    private $publicMediaDir = 'media';
     private $mediaDir = __DIR__.'/../../../skeleton/media';
 
-    private function getManager()
+    private function getManager(): ImageManager
     {
         if ($this->imageManager) {
             return $this->imageManager;
@@ -24,10 +24,10 @@ class ImageManagerTest extends KernelTestCase
 
     public function testBrowserAndFilterPath()
     {
-        $this->assertSame($this->publicMediaDir.'/default/test.png', $this->getManager()->getBrowserPath('test.png'));
-        $this->assertSame($this->publicMediaDir.'/xs/test.png', $this->getManager()->getBrowserPath('test.png', 'xs'));
-        $this->assertSame($this->publicDir.$this->publicMediaDir.'/default/test.png', $this->getManager()->getFilterPath('test.png', 'default'));
-        $this->assertSame($this->publicDir.$this->publicMediaDir.'/default/test.webp', $this->getManager()->getFilterPath('test.png', 'default', 'webp'));
+        $this->assertSame('/'.$this->publicMediaDir.'/default/test.png', $this->getManager()->getBrowserPath('test.png'));
+        $this->assertSame('/'.$this->publicMediaDir.'/xs/test.png', $this->getManager()->getBrowserPath('test.png', 'xs'));
+        $this->assertSame($this->publicDir.'/'.$this->publicMediaDir.'/default/test.png', $this->getManager()->getFilterPath('test.png', 'default'));
+        $this->assertSame($this->publicDir.'/'.$this->publicMediaDir.'/default/test.webp', $this->getManager()->getFilterPath('test.png', 'default', 'webp'));
     }
 
     public function testFilterCache()
@@ -36,9 +36,9 @@ class ImageManagerTest extends KernelTestCase
         $filters = ['xl' => ['quality' => 80, 'filters' => ['widen' => [1600, 'constraint' => '$constraint->upsize();']]]];
         $this->getManager()->generateFilteredCache($image, $filters);
 
-        $this->assertFileExists($this->publicDir.$this->publicMediaDir.'/xl/blank.jpg');
+        $this->assertFileExists($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
 
-        $imgSize = getimagesize($this->publicDir.$this->publicMediaDir.'/xl/blank.jpg');
+        $imgSize = getimagesize($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
         $this->assertSame(1, $imgSize[0]);
         $this->assertSame(1, $imgSize[1]);
 
@@ -46,12 +46,12 @@ class ImageManagerTest extends KernelTestCase
         $image = __DIR__.'/blank.jpg';
         $filters = ['xl' => ['quality' => 80, 'filters' => ['widen' => 1600]]];
         $this->getManager()->generateFilteredCache($image, $filters);
-        $imgSize = getimagesize($this->publicDir.$this->publicMediaDir.'/xl/blank.jpg');
+        $imgSize = getimagesize($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
         $this->assertSame(1600, $imgSize[0]);
 
         $this->getManager()->setFilters($filters);
         $this->getManager()->remove($image);
-        $this->assertFileDoesNotExist($this->publicDir.$this->publicMediaDir.'/xl/blank.jpg');
+        $this->assertFileDoesNotExist($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
     }
 
     public function testImportExternal()

@@ -11,31 +11,31 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
+use Symfony\Component\Translation\DataCollectorTranslator;
 
 final class PageController extends AbstractController
 {
     use RenderTrait;
 
     private ParameterBagInterface $params;
-
     private AppPool $apps;
-
-    /** @var AppConfig */
-    private $app;
-
+    private AppConfig $app;
     private Twig $twig;
-
     private EntityManagerInterface $em;
+    private TranslatorInterface $translator; //Symfony\Component\Translation\DataCollectorTranslator
 
     public function __construct(
         ParameterBagInterface $params,
         EntityManagerInterface $em,
-        AppPool $apps
+        AppPool $apps,
+        TranslatorInterface $translator
     ) {
         $this->em = $em;
         $this->params = $params;
         $this->apps = $apps;
+        $this->translator = $translator;
     }
 
     public function show(?string $slug, string $host = '', Request $request): Response
@@ -207,8 +207,8 @@ final class PageController extends AbstractController
             $page->setLocale($this->app->getDefaultLocale());
         }
 
-        //if (null !== $request) { $request->setLocale($page->getLocale()); }
-        $this->get('translator')->setLocale($page->getLocale());
+        /** @psalm-suppress  UndefinedInterfaceMethod */
+        $this->translator->setLocale($page->getLocale());
 
         // Check if page is public
         if ($page->getCreatedAt() > new \DateTimeImmutable() && ! $this->isGranted('ROLE_EDITOR')) {
