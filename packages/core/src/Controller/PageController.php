@@ -13,7 +13,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
-use Symfony\Component\Translation\DataCollectorTranslator;
 
 final class PageController extends AbstractController
 {
@@ -207,7 +206,7 @@ final class PageController extends AbstractController
             $page->setLocale($this->app->getDefaultLocale());
         }
 
-        /** @psalm-suppress  UndefinedInterfaceMethod */
+        /* @psalm-suppress  UndefinedInterfaceMethod */
         $this->translator->setLocale($page->getLocale());
 
         // Check if page is public

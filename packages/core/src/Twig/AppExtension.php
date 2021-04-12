@@ -9,10 +9,10 @@ use PiedWeb\RenderAttributes\AttributesTrait;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\ManagerPoolInterface;
-use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
+use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Utils\FilesizeFormatter;
 use Pushword\Core\Utils\HtmlBeautifer;
@@ -130,7 +130,6 @@ class AppExtension extends AbstractExtension
      */
     public function transformStringToMedia($src, string $name = ''): MediaInterface
     {
-
         if (\is_string($src) && self::isInternalImage($src)) {
             $media = Media::loadFromSrc($src);
             $media->setName($name);

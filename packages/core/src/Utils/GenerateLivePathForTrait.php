@@ -2,8 +2,8 @@
 
 namespace Pushword\Core\Utils;
 
-use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Entity\PageInterface;
+use Pushword\Core\Router\RouterInterface;
 
 trait GenerateLivePathForTrait
 {

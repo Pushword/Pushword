@@ -4,7 +4,7 @@ namespace Pushword\Core\Component\App;
 
 use Exception;
 use Pushword\Core\Entity\PageInterface;
-use \Twig\Environment as Twig;
+use Twig\Environment as Twig;
 
 final class AppPool
 {

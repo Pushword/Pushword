@@ -2,8 +2,8 @@
 
 namespace Pushword\PageScanner\Scanner;
 
-use Pushword\Core\Router\RouterInterface as PwRouter;
 use Pushword\Core\Entity\PageInterface;
+use Pushword\Core\Router\RouterInterface as PwRouter;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
 use Symfony\Component\HttpFoundation\Request;
