@@ -181,6 +181,7 @@ final class PageController extends AbstractController
         $this->app = $this->apps->switchCurrentApp($host)->get();
     }
 
+    /** @psalm-suppress UndefinedInterfaceMethod */
     private function getPage(?string &$slug, string $host = '', bool $throwException = true, bool $extractPager = false, ?Request $request = null): ?Page
     {
         $slug = $this->noramlizeSlug($slug);
@@ -206,7 +207,6 @@ final class PageController extends AbstractController
             $page->setLocale($this->app->getDefaultLocale());
         }
 
-        /* @psalm-suppress  UndefinedInterfaceMethod */
         $this->translator->setLocale($page->getLocale());
 
         // Check if page is public
