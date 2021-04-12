@@ -5,45 +5,53 @@ toc: true
 parent: contribute
 ---
 
-## Soon
+## To finish
 
--   **Admin Block Editor Tools** : prepare translating and transalte
--   implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
--   manage date i18n a better way than randomly (document the process)
--   Admin Block Editor Tools : can't delete PagesList Block => https://github.com/codex-team/editor.js/issues/1640
--   Restore Admin: Page Tree https://github.com/sonata-project/SonataAdminBundle/issues/7035
--   test fresh install
--   **Core** : ImageManger - make optimizer bin path configurable
--   **Core** on login success, redirect to previous route (see UserAuthenticator)
 -   **Core** : use autowire and autoconfigure per default and remove useless lines
--   Simplify request to external service with one pipe (toward Guzzle)
--   **pagination** : tester & documenter
+-   **Admin Block Editor Tools** : prepare translating and transalte
+-   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
 -   **Block editor** : édition avancée (template notamment dans pages, prose/unprise)
+-   **Core** : ImageManger - make optimizer bin path configurable
+-   **pagination** : tester & documenter
+
+## BugFix
+
+-   **Admin Block Editor Tools** : can't delete PagesList Block => https://github.com/codex-team/editor.js/issues/1640
+-   **Admin** : Restore Admin: Page Tree https://github.com/sonata-project/SonataAdminBundle/issues/7035
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
--   **clickable**
--   associé un champ vidéo à l'image d'en-tête (plugin !)
--   **Page Scanner** : add <!-- page-scanner-ignore: what to ignore --> ou plutôt dans othersParameters
--   API ?!
--   **Page Scanner** check redirection
--   **Page Scanner** Check there is no translation with the same language than current page
--   **eCommerce** bridge with sylius
+
+## Feature
+
+-   **Multi-upload** (see https://packagist.org/packages/silasjoisten/sonata-multiupload-bundle)
+-   Intégrer **LinksImprover** (+ UX)
+-   **Page-Scanner** :
+    -   scanner une page en direct + scanner plus de choses
+        -   texte alternatif manquant
+        -   Check there is no translation with the same language than current page
+    -   add <!-- page-scanner-ignore: what to ignore --> ou plutôt dans othersParameters
+-   **name suggester**: parse content, find words or multiple words used only in this doc, suggest it as potential name, s'active au moment du clic sur l'input name
+-   **eCommerce** bridge with sylius ?!
+-   **Advanced main image** : associé un champ vidéo à l'image d'en-tête
 -   **Admin** : extend parameters and events to _filters_ and _lister_ will permit extension)
 -   **Static**: copy only used media in public
 -   **FacebookManager** : post from facebook
--   **Flat**: Transform markdown link to page link (useful for navigate in docs from editor)
--   **Flat**: Throw error when the content is more up to date in database
--   Intégrer **LinksImprover** (+ UX), après précédent
--   **name suggester**: parse content, find words or multiple words used only in this doc, suggest it as potential name, s'active au moment du clic sur l'input name
+-   **Flat**:
+    -   Transform markdown link to page link (useful for navigate in docs from editor)
+    -   Throw error when the content is more up to date in database
+
+## Others
+
+-   **Core** : implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
+-   manage date i18n a better way than randomly (document the process)
+-   Simplify request to external service with one pipe (toward Guzzle and 1 configuration for all extension)
+-   API ?!
 -   **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (see draft.md) (extension or core ?)
--   **Page-Scanner** : scanner une page en direct + scanner plus de choses (texte alternatif manquant, etc.)
--   **Multi-upload** (see https://packagist.org/packages/silasjoisten/sonata-multiupload-bundle)
--   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
+-   **Core** : Rewrite filter componenent to use the power of symfony service
 
 ## One day (maybe)
 
 -   Auto-update npm package (js-helper and editorjs-tool) via Github Actions
--   Stop using Repo and start autowiring thé good repo (used multiple repo)
--   Fluidifier le process de test et deploiement (tester avec les vrais données)
+-   **Best testing** Fluidifier le process de test et deploiement (tester avec les vrais données)
 -   Move global app_base_url, name and color to à better spot (like évent suscriber)
 -   Move weird entity trait constructor to lificycle callback
 -   Move notify to messenger bus ? : https://symfony.com/doc/current/the-fast-track/fr/18-async.html
@@ -51,7 +59,7 @@ parent: contribute
 *   **Pagination** : move to extension and drop pagerfanta
 *   **Admin** : Automatic save without flooding version
 *   **Version** : Rewrite to load in an entity versionned version and used sonata filters
-*   Add https://github.com/nan-guo/Sonata-Menu-Bundle
+*   **Admin** (and admin extensions): Manage SonataAdminMenuOrder a better way than randomly
 *   **Wordpress** to Pushword/Core (and vice versa)
 *   **Flat** (spatie/yaml-front-matter, vérif à chaque requête pour une sync constante admin <-> flat files)
 *   Create a page from a Media (media edit) => button to create a new page with title = name and mainImage = Media

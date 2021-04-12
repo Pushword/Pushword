@@ -3,17 +3,18 @@ import ajax from "@codexteam/ajax";
 export class editorJsHelper {
     constructor() {}
 
-    static abstractOn(Tool, event, action = "select") {
+    static abstractOn(Tool, event, action = "select", inlineImageFieldSelector = '[id*="inline_image"]') {
+        //
         const buttonClicked = event.target;
         const originalTextContent = buttonClicked.textContent;
         //buttonClicked.textContent = ". . . ";
 
         const inlineImageField = document.querySelector(
-            'div[id*="inline_image"] ' + (action === "select" ? "a" : "a:nth-child(2)")
+            "div" + inlineImageFieldSelector + " " + (action === "select" ? "a" : "a:nth-child(2)")
         );
         inlineImageField.click();
 
-        document.querySelector("input[id*=inline_image]").onchange = function () {
+        document.querySelector("input" + inlineImageFieldSelector).onchange = function () {
             var id = jQuery(this).val();
             var upload = ajax
                 .post({
@@ -34,12 +35,20 @@ export class editorJsHelper {
         };
     }
 
-    onSelectFile(Tool, event) {
+    onSelectImage(Tool, event) {
         editorJsHelper.abstractOn(Tool, event, "select");
     }
 
-    onUploadFile(Tool, event) {
+    onSelectFile(Tool, event) {
+        editorJsHelper.abstractOn(Tool, event, "select", '[id*="inline_attaches"]');
+    }
+
+    onUploadImage(Tool, event) {
         editorJsHelper.abstractOn(Tool, event, "upload");
+    }
+
+    onUploadFile(Tool, event) {
+        editorJsHelper.abstractOn(Tool, event, "upload", '[id*="inline_attaches"]');
     }
 
     toggleEditorJs(editorId) {

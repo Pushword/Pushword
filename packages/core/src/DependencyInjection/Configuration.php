@@ -39,7 +39,7 @@ final class Configuration implements ConfigurationInterface
 
     const DEFAULT_CUSTOM_PROPERTIES = [];
 
-    const DEFAULT_PUBLIC_MEDIA_DIR = '/media';
+    const DEFAULT_PUBLIC_MEDIA_DIR = 'media';
     const IMAGE_FILTERS_SET = [
         'default' => ['quality' => 90, 'filters' => ['downscale' => [1980, 1280]]],
         'height_300' => [
