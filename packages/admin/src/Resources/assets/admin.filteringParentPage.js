@@ -9,7 +9,7 @@ export function filterParentPageFromHost() {
     const updateParentPageOptions = function (host, allParentPages) {
         parentPageSelect.querySelectorAll("option").forEach((e) => e.parentNode.removeChild(e));
         let parentPageForCurrentHost = allParentPages.filter(function (optionNode) {
-            return optionNode.text.startsWith(host);
+            return optionNode.text.startsWith(host) || !optionNode.value;
         });
         parentPageForCurrentHost.forEach((option) => parentPageSelect.appendChild(option));
     };
