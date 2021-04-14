@@ -4,7 +4,7 @@
     {% include view('/component/image_inline.html.twig') with {
         'image_src': data.file.media|image('default'),
         'image_alt': data.caption,
-        'image_class' : 'w-full h-auto ' ~ (data.withBorder ? 'border border-gray-500' : ''))|trim
+        'image_class' : ('w-full h-auto ' ~ (data.withBorder ? 'border border-gray-500' : ''))|trim
     } only %}
 
 {% if data.withBackground %}</div>{% endif %}
