@@ -26,9 +26,19 @@ trait PageParentTrait
         return $this->parentPage;
     }
 
-    public function setParentPage(?PageInterface $parentPage): self
+    // todo, move to assert
+    private function validateParentPage(PageInterface $parentPage): bool
     {
         if ($parentPage === $this) {
+            return false;
+        }
+
+        return $parentPage->getParentPage() ? $this->validateParentPage($parentPage->getParentPage()) : true;
+    }
+
+    public function setParentPage(?PageInterface $parentPage): self
+    {
+        if ($parentPage && ! $this->validateParentPage($parentPage)) {
             throw new LogicException('Current Page can\'t be it own parent page.');
         }
 

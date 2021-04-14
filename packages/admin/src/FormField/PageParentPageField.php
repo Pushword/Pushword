@@ -21,7 +21,13 @@ class PageParentPageField extends AbstractField
                 ],
                 ($this->admin->getSubject()->getId() ? ['query_builder' => function (PageRepository $er) {
                     return $er->createQueryBuilder('p')
-                        ->andWhere('p.id != :id')->setParameter('id', $this->admin->getSubject()->getId());
+                        ->andWhere('p.id != :id')
+                        ->setParameter('id', $this->admin->getSubject()->getId())
+                        ->andWhere('p.parentPage != :page')
+                        // TODO
+                        // this one must be recursive to avoid error when user
+                        // select a page wich has among this parents the current page
+                        ->setParameter('page', $this->admin->getSubject());
                 }] : [])
             )
         );
