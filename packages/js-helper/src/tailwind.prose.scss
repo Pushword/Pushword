@@ -20,9 +20,9 @@
     border-radius: 3px;
     border: 1px solid transparent;
     cursor: pointer;
-    color: #fff;
-    background-color: #3c8dbc;
-    border-color: #367fa9;
+    color: #fff !important;
+    background-color: var(--primary);
+    border-color: var(--primary);
     outline: none;
     text-decoration: none !important;
     font-size: 120%;

@@ -1,4 +1,4 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
-@import "@pushword/js-helper/src/tailwind.prose.css";
+@import "@pushword/js-helper/src/tailwind.prose.scss";
