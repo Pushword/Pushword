@@ -7,6 +7,7 @@ parent: contribute
 
 ## To finish
 
+-   tailwind jit & encore (see https://github.com/tailwindlabs/tailwindcss-jit/issues/51 https://github.com/Fridus/webpack-watch-files-plugin/issues/7)
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
 -   **Block editor** : édition avancée (template notamment dans pages, prose/unprise)

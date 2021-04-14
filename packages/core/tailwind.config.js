@@ -1,6 +1,15 @@
 module.exports = {
-    //mode: "jit",
-    purge: {}, // directly in webpack
+    mode: "jit",
+    purge: {
+        mode: "all",
+        content: [
+            "./src/templates/**/*.html.twig",
+            "./src/templates/*.html.twig",
+            "./../conversation/src/templates/*.html.twig",
+            "./../admin-block-editor/src/templates/block/*.html.twig",
+        ],
+        defaultExtractor: (content) => content.match(/[\w-/:]+(?<!:)/g) || [],
+    }, // directly in webpack
     theme: {
         minHeight: {
             0: "0",

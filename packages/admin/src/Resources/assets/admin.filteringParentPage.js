@@ -11,7 +11,8 @@ export function filterParentPageFromHost() {
         let parentPageForCurrentHost = allParentPages.filter(function (optionNode) {
             return optionNode.text.startsWith(host) || !optionNode.value;
         });
-        parentPageForCurrentHost.forEach((option) => parentPageSelect.appendChild(option));
+        parentPageForCurrentHost.reverse().forEach((option) => parentPageSelect.appendChild(option));
+        // .reverse() permit to avoid selecting last option (last option become the empty one)
     };
 
     const parentPageSelect = document.querySelector('select[name$="[parentPage]"]');
