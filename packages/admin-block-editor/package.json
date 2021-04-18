@@ -4,7 +4,7 @@
         "@editorjs/attaches": "^1.0.1",
         "@editorjs/code": "^2.6.0",
         "@editorjs/delimiter": "^1.2.0",
-        "@editorjs/editorjs": "^2.19.1",
+        "@editorjs/editorjs": "^2.20.2",
         "@editorjs/embed": "^2.4.0",
         "@editorjs/header": "^2.6.1",
         "@editorjs/inline-code": "^1.3.1",
