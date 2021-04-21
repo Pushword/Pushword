@@ -7,6 +7,7 @@ parent: contribute
 
 ## To finish
 
+-   **Core** rewrite theme to have the less file possible to override (move to \_FILE to block, merge base and page)
 -   tailwind jit & encore (see https://github.com/tailwindlabs/tailwindcss-jit/issues/51 https://github.com/Fridus/webpack-watch-files-plugin/issues/7)
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
@@ -16,7 +17,7 @@ parent: contribute
 
 ## BugFix
 
--   **Admin Block Editor Tools** : can't delete PagesList Block => https://github.com/codex-team/editor.js/issues/1640
+-   **Admin Block Editor Tools** : encrypt mail only encrypt mailto (normal behaviour) => encrypt content too if mail adress is the content
 -   **Admin** : Restore Admin: Page Tree https://github.com/sonata-project/SonataAdminBundle/issues/7035
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
 
