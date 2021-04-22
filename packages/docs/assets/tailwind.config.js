@@ -2,6 +2,7 @@ const colors = require("tailwindcss/colors");
 const heropatterns = require("tailwindcss-hero-patterns/src/patterns");
 
 module.exports = {
+    mode: "jit",
     purge: {}, // directly in webpack
     theme: {
         heroPatterns: {
