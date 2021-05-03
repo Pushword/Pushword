@@ -5,10 +5,11 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use Pushword\Core\Twig\EmailTwigTrait;
+use Pushword\Core\Twig\LinkTwigTrait;
 
 class Email extends AbstractFilter
 {
-    use EmailTwigTrait;
+    use LinkTwigTrait;
     use RequiredAppTrait;
     use RequiredTwigTrait;
 
@@ -30,7 +31,7 @@ class Email extends AbstractFilter
 
         $nbrMatch = \count($matches[0]);
         for ($k = 0; $k < $nbrMatch; ++$k) {
-            $body = ' '.str_replace($matches[0][$k], $this->renderEncodedMail($this->twig, $matches[1][$k]), $body).' ';
+            $body = ' '.str_replace($matches[0][$k], $this->renderEncodedMail($matches[1][$k]), $body).' ';
         }
 
         return $body;

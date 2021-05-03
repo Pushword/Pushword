@@ -31,18 +31,24 @@ export default class PagesList extends Abstract {
         if (this._data.display) this.nodes.displaySelect.value = this._data.display;
 
         const detailsWrapper = make.element("div", ["flex"]);
+        detailsWrapper.style.marginBottom = "15px";
+
         this.nodes.maxInput = make.input(
             this,
             ["cdx-input-labeled", "cdx-input-labeled-pageslist-max", "text-right", ...this.CSS.inputClass],
             "9",
             this._data.max
         );
+        this.nodes.maxInput.title = "max Items per Page";
+
         this.nodes.maxPagesInput = make.input(
             this,
             ["cdx-input-labeled", "cdx-input-labeled-pageslist-maxpages", "text-right", ...this.CSS.inputClass],
             "1",
             this._data.maxPages
         );
+        this.nodes.maxPagesInput.title = "max Pages";
+
         detailsWrapper.appendChild(this.nodes.displaySelect);
         detailsWrapper.appendChild(this.createOrderSelect());
         detailsWrapper.appendChild(this.nodes.maxInput);

@@ -27,7 +27,6 @@ class AppExtension extends AbstractExtension
     // TODO switch from Trait to service (will be better to test and add/remove twig extension)
     //use AttributesTrait;
     use ClassTrait;
-    use EmailTwigTrait;
     use GalleryTwigTrait;
     use LinkTwigTrait;
     use PageListTwigTrait;
@@ -83,8 +82,8 @@ class AppExtension extends AbstractExtension
             new TwigFunction('jslink', [$this, 'renderLink'], self::options()),
             new TwigFunction('link', [$this, 'renderLink'], self::options()),
             new TwigFunction('encrypt', [self::class, 'encrypt'], self::options()),
-            new TwigFunction('mail', [$this, 'renderEncodedMail'], self::options(true)),
-            new TwigFunction('email', [$this, 'renderEncodedMail'], self::options(true)),
+            new TwigFunction('mail', [$this, 'renderEncodedMail'], self::options()),
+            new TwigFunction('email', [$this, 'renderEncodedMail'], self::options()),
             new TwigFunction('tel', [$this, 'renderPhoneNumber'], self::options()),
             new TwigFunction('bookmark', [$this, 'renderTxtAnchor'], self::options()),
             new TwigFunction('anchor', [$this, 'renderTxtAnchor'], self::options()),
