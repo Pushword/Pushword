@@ -4,12 +4,13 @@ namespace Pushword\Core\Entity;
 
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
+use Pushword\Core\Entity\PageTrait\PageEditorInterface;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\HostInterface;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\TimestampableInterface;
 
-interface PageInterface extends HostInterface, IdInterface, TimestampableInterface, CustomPropertiesInterface
+interface PageInterface extends HostInterface, IdInterface, TimestampableInterface, CustomPropertiesInterface, PageEditorInterface
 {
     // PageTrait
     public function getSlug(): string;

@@ -23,6 +23,8 @@ parent: contribute
 
 ## Feature
 
+-   Toward wiki ! **Change requester** and **Public Historic** + **page authors**
+-   Youtube Importer (from a youtube hash, create a page with video and text is imported from subtitle)
 -   **Multi-upload** (see https://packagist.org/packages/silasjoisten/sonata-multiupload-bundle)
 -   Intégrer **LinksImprover** (+ UX)
 -   **Page-Scanner** :

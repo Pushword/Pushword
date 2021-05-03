@@ -50,7 +50,7 @@
                   </a>
                </td>
                <td class="sonata-ba-list-field sonata-ba-list-field-text">
-                  {{ p.updatedAt|date }}
+                  {{ p.updatedAt|date }} {{ p.lastEditBy ? '(<small>' ~ p.lastEditBy ~ ')</small>':'' }}
                </td>
                <td class="sonata-ba-list-field sonata-ba-list-field-text" objectid="34" style="text-align:right">
                   <div class="btn-group">

@@ -3,23 +3,19 @@
 namespace Pushword\Core\Entity\PageTrait;
 
 use Doctrine\Common\Collections\ArrayCollection;
-use Pushword\Core\Entity\UserInterface;
 use Pushword\Core\Entity\PageHasEditor;
+use Pushword\Core\Entity\UserInterface;
 
 trait PageEditorTrait
 {
-
     /**
      * @ORM\ManyToOne(
      *     targetEntity="Pushword\Core\Entity\UserInterface",
-     *     cascade={"all"},
-     *     nullable=true
      * )
      */
-    protected UserInterface $lastEditor;
+    protected $lastEditBy;
 
-
-    /**
+    /*
      * @ORM\OneToMany(
      *     targetEntity="Pushword\Core\Entity\PageHasEditor",
      *     mappedBy="page",
@@ -28,38 +24,27 @@ trait PageEditorTrait
      * )
      * @ORM\OrderBy({"editedAt": "DESC"})
      */
-    protected $pageHasEditors;
-
+    //protected ArrayCollection $pageHasEditors;
 
     /**
      * @ORM\ManyToOne(
      *     targetEntity="Pushword\Core\Entity\UserInterface",
-     *     cascade={"all"},
-     *     nullable=true
      * )
      */
-    protected UserInterface $createdBy;
+    protected $createdBy;
 
-
-    public function __constructEditor()
+    public function getLastEditBy(): ?UserInterface
     {
-        $this->pageHasEditors = new ArrayCollection();
+        return $this->lastEditBy;
     }
 
-    public function getLastEditor(): ?UserInterface
+    public function setLastEditBy(?UserInterface $lastEditBy): void
     {
-        return $this->lastEditor;
-    }
-
-    public function setLastEditor(?UserInterface $lastEditor): self
-    {
-        $this->lastEditor = $lastEditor;
-
-        return $this;
+        $this->lastEditBy = $lastEditBy;
     }
 
     /**
-     * Get targetEntity="Pushword\Core\Entity\UserInterface",
+     * Get targetEntity="Pushword\Core\Entity\UserInterface",.
      */
     public function getCreatedBy(): ?UserInterface
     {
@@ -67,18 +52,15 @@ trait PageEditorTrait
     }
 
     /**
-     * Set targetEntity="Pushword\Core\Entity\UserInterface",
-     *
-     * @return  self
+     * Set targetEntity="Pushword\Core\Entity\UserInterface",.
      */
-    public function setCreatedBy(?UserInterface $createdBy)
+    public function setCreatedBy(?UserInterface $createdBy): void
     {
         $this->createdBy = $createdBy;
-
-        return $this;
     }
 
-    public function setPageHasEditors($pageHasEditors)
+    /*
+    public function setPageHasEditors($pageHasEditors): void
     {
         $this->pageHasEditors = new ArrayCollection();
         foreach ($pageHasEditors as $pageHasEditor) {
@@ -86,17 +68,15 @@ trait PageEditorTrait
         }
     }
 
-    public function getPageHasEditors()
+    public function getPageHasEditors(): ?ArrayCollection
     {
         return $this->pageHasEditors;
     }
 
-    public function addPageHasEditor(PageHasEditor $pageHasEditor): self
+    public function addPageHasEditor(PageHasEditor $pageHasEditor): void
     {
         $pageHasEditor->setPage($this);
         $this->pageHasEditors[] = $pageHasEditor;
-
-        return $this;
     }
 
     public function resetPageHasEditors(): void
@@ -110,4 +90,5 @@ trait PageEditorTrait
     {
         $this->pageHasEditors->removeElement($pageHasEditor);
     }
+    */
 }

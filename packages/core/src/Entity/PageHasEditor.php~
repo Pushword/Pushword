@@ -8,12 +8,18 @@ use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
 
 /**
- * @ORM\MappedSuperclass
- * @ORM\HasLifecycleCallbacks
+ * @ORM\Entity
  */
 class PageHasEditor //implements PageHasEditorInterface
 {
     use IdTrait;
+
+    /**
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue(strategy="AUTO")
+     */
+    protected $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="Pushword\Core\Entity\UserInterface")
@@ -21,7 +27,7 @@ class PageHasEditor //implements PageHasEditorInterface
     protected UserInterface $editor;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Pushword\Core\Entity\PageInterface", inversedBy="pageHasEditor")
+     * @ORM\ManyToOne(targetEntity="Pushword\Core\Entity\PageInterface", inversedBy="pageHasEditors")
      */
     protected PageInterface $page;
 
@@ -32,7 +38,7 @@ class PageHasEditor //implements PageHasEditorInterface
 
     public function __toString()
     {
-        return $this->getPage().'|'.$this->getEditor().'|'.$this->getEditedAt;
+        return $this->getPage().'|'.$this->getEditor().'|'.$this->getEditedAt()->format('d/m/Y');
     }
 
     public function setPage(?PageInterface $page = null): self
@@ -56,7 +62,7 @@ class PageHasEditor //implements PageHasEditorInterface
 
     public function getEditor(): ?UserInterface
     {
-        return $this->media;
+        return $this->editor;
     }
 
     public function getEditedAt(): ?DateTime
@@ -65,9 +71,9 @@ class PageHasEditor //implements PageHasEditorInterface
     }
 
     /**
-     * Set the value of editedAt
+     * Set the value of editedAt.
      *
-     * @return  self
+     * @return self
      */
     public function setEditedAt(DateTime $editedAt)
     {
