@@ -1,32 +1,34 @@
-var Encore = require("@symfony/webpack-encore");
+const WatchExternalFilesPlugin = require("webpack-watch-files-plugin").default;
+const Encore = require("@symfony/webpack-encore");
 const tailwindcss = require("tailwindcss");
 
-const purgecss = require("@fullhuman/postcss-purgecss")({
-    mode: "all",
-    content: [
-        "./src/templates/**/*.html.twig",
-        "./src/templates/*.html.twig",
-        "./../conversation/src/templates/*.html.twig",
-        "./../admin-block-editor/src/templates/block/*.html.twig",
-    ],
-    defaultExtractor: (content) => content.match(/[\w-/:]+(?<!:)/g) || [],
-});
+const watchFiles = [
+    "./src/templates/**/*.html.twig",
+    "./src/templates/*.html.twig",
+    "./../conversation/src/templates/*.html.twig",
+    "./../admin-block-editor/src/templates/block/*.html.twig",
+];
+
+var TailwindConfig = require("./src/Resources/assets/tailwind.config.js");
+TailwindConfig.purge = watchFiles;
 
 Encore.setOutputPath("./src/Resources/public/")
     .setPublicPath("./")
     .setManifestKeyPrefix("bundles/pushwordcore")
 
     .cleanupOutputBeforeBuild()
+    .addPlugin(
+        new WatchExternalFilesPlugin({
+            files: watchFiles,
+        })
+    )
     .enableSassLoader()
     .enableSourceMaps(false)
     .enableVersioning(false)
     .enablePostCssLoader((options) => {
         options.postcssOptions = {
-            plugins: [require("postcss-import"), tailwindcss("./tailwind.config.js"), require("autoprefixer")],
+            plugins: [require("postcss-import"), tailwindcss(TailwindConfig), require("autoprefixer")],
         };
-        if (Encore.isProduction()) {
-            options.postcssOptions.plugins.push(purgecss);
-        }
     })
     .disableSingleRuntimeChunk()
     .copyFiles({

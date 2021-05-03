@@ -24,6 +24,8 @@ parent: contribute
 ## Feature
 
 -   Toward wiki ! **Change requester** and **Public Historic** + **page authors**
+    -   HUGE BUG: une fois la page mise à jour avec le dernier utilisateur, impossible d'afficher la page d'édition
+        de Admin sans être déconnecté
 -   Youtube Importer (from a youtube hash, create a page with video and text is imported from subtitle)
 -   **Multi-upload** (see https://packagist.org/packages/silasjoisten/sonata-multiupload-bundle)
 -   Intégrer **LinksImprover** (+ UX)

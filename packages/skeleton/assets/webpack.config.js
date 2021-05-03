@@ -1,19 +1,19 @@
-var Encore = require("@symfony/webpack-encore");
+const WatchExternalFilesPlugin = require("webpack-watch-files-plugin").default;
+cnst Encore = require("@symfony/webpack-encore");
 const tailwindcss = require("tailwindcss");
 
-const purgecss = require("@fullhuman/postcss-purgecss")({
-    mode: "all",
-    content: [
-        "./../vendor/pushword/core/src/templates/**/*.html.twig",
-        "./../vendor/pushword/core/src/templates/*.html.twig",
-        "./../templates/*/*.html.twig",
-        "./../templates/*/*/*.html.twig",
-        "./../templates/*.html.twig",
-        "./../templates/*/*.html.twig",
-        "./*.js",
-    ],
-    defaultExtractor: (content) => content.match(/[\w-/:]+(?<!:)/g) || [],
-});
+const watchFiles = [
+    "./../vendor/pushword/core/src/templates/**/*.html.twig",
+    "./../vendor/pushword/core/src/templates/*.html.twig",
+    "./../templates/*/*.html.twig",
+    "./../templates/*/*/*.html.twig",
+    "./../templates/*.html.twig",
+    "./../templates/*/*.html.twig",
+    "./*.js",
+];
+
+var tailwindConfig = require("./../vendor/pushword/core/src/Resources/assets/tailwind.config.js");
+tailwindConfig.purge = watchFiles;
 
 Encore.setOutputPath("./../public/assets/")
     .setPublicPath("/assets")
@@ -21,13 +21,15 @@ Encore.setOutputPath("./../public/assets/")
     .enableSassLoader()
     .enableSourceMaps(false)
     .enableVersioning(false)
+    .addPlugin(
+        new WatchExternalFilesPlugin({
+            files: watchFiles,
+        })
+    )
     .enablePostCssLoader((options) => {
         options.postcssOptions = {
             plugins: [require("postcss-import"), tailwindcss("./tailwind.config.js"), require("autoprefixer")],
         };
-        if (Encore.isProduction()) {
-            options.postcssOptions.plugins.push(purgecss);
-        }
     })
     .disableSingleRuntimeChunk()
     .copyFiles({

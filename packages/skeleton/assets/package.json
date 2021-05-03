@@ -15,14 +15,15 @@
         "postcss-import": "^14.0.0",
         "postcss-loader": "^4.1",
         "sass-loader": "^10.1.0",
-        "tailwindcss": "^2.1.0"
+        "tailwindcss": "^2.1.0",
+        "webpack-watch-files-plugin": "^1.1.0"
     },
     "license": "UNLICENSED",
     "private": true,
     "scripts": {
         "dev-server": "encore dev-server",
         "dev": "encore dev",
-        "watch": "encore dev --watch",
+        "watch": "TAILWIND_MODE=watch NODE_ENV=development encore dev --watch",
         "build": "encore production"
     }
 }
