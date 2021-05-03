@@ -63,9 +63,12 @@ final class ImageOptimizerCommand extends Command
         $medias = $this->getMedias($input);
 
         $progressBar = new ProgressBar($output, \count($medias));
+        $progressBar->setMessage('');
+        $progressBar->setFormat("%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% \r\n %message%");
         $progressBar->start();
         foreach ($medias as $media) {
             if ($this->imageManager->isImage($media)) {
+                $progressBar->setMessage($media->getPath());
                 $this->imageManager->optimize($media);
             }
             $progressBar->advance();
