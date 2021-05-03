@@ -8,9 +8,9 @@ use Pushword\Core\Entity\UserInterface;
 
 interface PageEditorInterface
 {
-    public function getLastEditBy(): ?UserInterface;
+    public function getEditedBy(): ?UserInterface;
 
-    public function setLastEditBy(?UserInterface $lastEditor): void;
+    public function setEditedBy(?UserInterface $user): void;
 
     /**
      * Get targetEntity="Pushword\Core\Entity\UserInterface",.
@@ -20,7 +20,7 @@ interface PageEditorInterface
     /**
      * Set targetEntity="Pushword\Core\Entity\UserInterface",.
      */
-    public function setCreatedBy(?UserInterface $createdBy): void;
+    public function setCreatedBy(?UserInterface $user): void;
 
     /*
     public function setPageHasEditors($pageHasEditors): void;

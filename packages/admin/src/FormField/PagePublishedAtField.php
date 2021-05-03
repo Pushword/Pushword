@@ -31,7 +31,7 @@ class PagePublishedAtField extends AbstractField
         // TODO: translate
         return $this->getSubject() && $this->getSubject()->getSlug() ?
             'Dernière édition le '.$this->getSubject()->getUpdatedAt()->format('d/m à H:m')
-            .($this->getSubject()->getLastEditBy() ? ' par '.$this->getSubject()->getLastEditBy()->getUsername() : '')
+            .($this->getSubject()->getEditedBy() ? ' par '.$this->getSubject()->getEditedBy()->getUsername() : '')
             .(class_exists(PushwordVersionBundle::class)
                 ? '<br><a href="'
                 .$this->admin->getRouter()->generate('pushword_version_list', ['id' => $this->getSubject()->getId()])

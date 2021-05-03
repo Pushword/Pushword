@@ -7,8 +7,6 @@ parent: contribute
 
 ## To finish
 
--   **Core** rewrite theme to have the less file possible to override (move to \_FILE to block, merge base and page)
--   tailwind jit & encore (see https://github.com/tailwindlabs/tailwindcss-jit/issues/51 https://github.com/Fridus/webpack-watch-files-plugin/issues/7)
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
 -   **Block editor** : édition avancée (template notamment dans pages, prose/unprise)
@@ -23,9 +21,13 @@ parent: contribute
 
 ## Feature
 
--   Toward wiki ! **Change requester** and **Public Historic** + **page authors**
-    -   HUGE BUG: une fois la page mise à jour avec le dernier utilisateur, impossible d'afficher la page d'édition
+-   Toward wiki !
+    -   **page authors**
+        HUGE BUG: une fois la page mise à jour avec le dernier utilisateur, impossible d'afficher la page d'édition
         de Admin sans être déconnecté
+    -   **edit message** (with secret msg to not write historic)
+    -   **Change requester**
+    -   **Public Historic** (or make accessible historic from page object)
 -   Youtube Importer (from a youtube hash, create a page with video and text is imported from subtitle)
 -   **Multi-upload** (see https://packagist.org/packages/silasjoisten/sonata-multiupload-bundle)
 -   Intégrer **LinksImprover** (+ UX)

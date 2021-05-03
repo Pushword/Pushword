@@ -51,6 +51,7 @@ trait ImageImporterTrait
         $imgSize = getimagesize($filePath);
 
         $media
+                ->setProjectDir($this->projectDir)
                 ->setStoreIn(\dirname($filePath))
                 ->setMimeType($imgSize['mime'])
                 ->setSize(filesize($filePath))

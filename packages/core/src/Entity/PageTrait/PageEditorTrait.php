@@ -13,7 +13,7 @@ trait PageEditorTrait
      *     targetEntity="Pushword\Core\Entity\UserInterface",
      * )
      */
-    protected $lastEditBy;
+    protected $editedBy;
 
     /*
      * @ORM\OneToMany(
@@ -33,14 +33,14 @@ trait PageEditorTrait
      */
     protected $createdBy;
 
-    public function getLastEditBy(): ?UserInterface
+    public function getEditedBy(): ?UserInterface
     {
-        return $this->lastEditBy;
+        return $this->editedBy;
     }
 
-    public function setLastEditBy(?UserInterface $lastEditBy): void
+    public function setEditedBy(?UserInterface $user): void
     {
-        $this->lastEditBy = $lastEditBy;
+        $this->editedBy = $user;
     }
 
     /**
@@ -54,9 +54,9 @@ trait PageEditorTrait
     /**
      * Set targetEntity="Pushword\Core\Entity\UserInterface",.
      */
-    public function setCreatedBy(?UserInterface $createdBy): void
+    public function setCreatedBy(?UserInterface $user): void
     {
-        $this->createdBy = $createdBy;
+        $this->createdBy = $user;
     }
 
     /*

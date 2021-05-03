@@ -4,6 +4,7 @@ namespace Pushword\Core\Entity;
 
 use Cocur\Slugify\Slugify;
 use Doctrine\ORM\Mapping as ORM;
+use Exception;
 use InvertColor\Color;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Core\Utils\Filepath;
@@ -95,7 +96,16 @@ trait MediaTrait
      */
     protected $mainImagePages;
 
-    public function __toString()
+    protected string $projectDir = '';
+
+    public function setProjectDir(string $projectDir): self
+    {
+        $this->projectDir = $projectDir;
+
+        return $this;
+    }
+
+    public function __toString(): string
     {
         return $this->name.' ';
     }
@@ -260,19 +270,27 @@ trait MediaTrait
 
     public function getStoreIn(): ?string
     {
-        return $this->storeIn;
+        if ('' === $this->projectDir) {
+            throw new Exception('must set project dir before');
+        }
+
+        return str_replace('%kernel.project_dir%', $this->projectDir, $this->storeIn);
     }
 
     public function setStoreIn(string $pathToDir): self
     {
-        $this->storeIn = $pathToDir;
+        if ('' === $this->projectDir) {
+            throw new Exception('must set project dir before');
+        }
+
+        $this->storeIn = str_replace($this->projectDir, '%kernel.project_dir%', $pathToDir);
 
         return $this;
     }
 
     public function getPath(): string
     {
-        return $this->storeIn.'/'.$this->media;
+        return $this->getStoreIn().'/'.$this->media;
     }
 
     public function getMimeType(): ?string

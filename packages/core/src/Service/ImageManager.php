@@ -17,6 +17,7 @@ final class ImageManager
     private string $publicDir;
     private string $publicMediaDir;
     private string $mediaDir;
+    private string $projectDir;
     private array $filterSets;
     private OptimizerChain $optimizer;
     private ?Image $lastThumb;
@@ -25,11 +26,13 @@ final class ImageManager
     public function __construct(
         array $filterSets,
         string $publicDir,
+        string $projectDir,
         string $publicMediaDir,
         string $mediaDir
     ) {
         $this->filterSets = $filterSets;
         $this->publicDir = $publicDir;
+        $this->projectDir = $projectDir;
         $this->publicMediaDir = $publicMediaDir;
         $this->fileSystem = new FileSystem();
         $this->mediaDir = $mediaDir;

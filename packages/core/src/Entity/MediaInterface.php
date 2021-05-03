@@ -17,6 +17,8 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function getPath(): string;
 
+    public function setProjectDir(string $projectDir): self;
+
     public function getStoreIn();
 
     public function setStoreIn(string $pathToDir): self;

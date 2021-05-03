@@ -52,6 +52,11 @@ class MediaListener
         $this->checkIfNameEverExistInDatabase($media);
     }
 
+    public function postLoad(MediaInterface $media)
+    {
+        $media->setProjectDir($this->projectDir);
+    }
+
     /**
      * renameMediaOnMediaNameUpdate.
      */
@@ -130,7 +135,7 @@ class MediaListener
         $mapping = $event->getMapping();
 
         $absoluteDir = $mapping->getUploadDestination().'/'.$mapping->getUploadDir($media);
-        $media->setStoreIn($absoluteDir);
+        $media->setProjectDir($this->projectDir)->setStoreIn($absoluteDir);
 
         if ($this->imageManager->isImage($media)) {
             $this->imageManager->remove($media);

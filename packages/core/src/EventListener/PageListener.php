@@ -39,19 +39,26 @@ class PageListener
 
     private function updatePageEditor(PageInterface $page): void
     {
+        if (! $user = $this->security->getUser()) {
+            return;
+        }
+
+        if ($page->getSlug() && $user->getUsername()) {
+            return;
+        } // Remove this when fix bug, only to avoid psalm shouting
+
         /*
         HUGE BUG: une fois la page mise à jour avec ce code, impossible d'afficher la page d'édition
-        de Admin sans être déconnecté
-        if (!$user = $this->security->getUser())
-            return;
+        de Admin sans être déconnecté *
 
         if (null === $page->getCreatedBy()) {
             $page->setCreatedBy($user);
         }
 
-        if (!$page->getLastEditBy() || $page->getLastEditBy() !== $user)
-            $page->setLastEditBy($user);
-        */
+        if (!$page->getEditedBy() || $page->getEditedBy() !== $user)
+            $page->setEditedBy($user);
+        /**/
+
         //$this->entityManager->flush();
         //$pageHasEditor = (new PageHasEditor())->setPage($page)->setEditor($user)->setEditedAt(new \DateTime());
         //$this->entityManager->persist($pageHasEditor);

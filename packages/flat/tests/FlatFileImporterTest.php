@@ -107,11 +107,12 @@ class FlatFileImporterTest extends KernelTestCase
 
     private function getMediaImporter(): MediaImporter
     {
-        return new MediaImporter(
+        return (new MediaImporter(
             self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
             self::$kernel->getContainer()->get('pushword.apps'),
             Media::class
-        ); //->setMediaDir(self::$kernel->getContainer()->getParameter('kernel.project_dir').'/media');
+        ))->setProjectDir(self::$kernel->getContainer()->getParameter('kernel.project_dir'));
+        //->setMediaDir(self::$kernel->getContainer()->getParameter('kernel.project_dir').'/media');
     }
 
     private function getPageImporter()

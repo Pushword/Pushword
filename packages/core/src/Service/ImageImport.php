@@ -33,6 +33,7 @@ trait ImageImport
 
         $media = new Media();
         $media
+            ->setProjectDir($this->projectDir)
                 ->setStoreIn($this->mediaDir)
                 ->setMimeType($imgSize['mime'])
                 ->setSize(filesize($imageLocalImport))

@@ -10,6 +10,7 @@ class ImageManagerTest extends KernelTestCase
     private $imageManager;
 
     private $publicDir = __DIR__.'/../../../skeleton/public';
+    private $projectDir = __DIR__.'/../../../skeleton';
     private $publicMediaDir = 'media';
     private $mediaDir = __DIR__.'/../../../skeleton/media';
 
@@ -19,7 +20,7 @@ class ImageManagerTest extends KernelTestCase
             return $this->imageManager;
         }
 
-        return $this->imageManager = new ImageManager([], $this->publicDir, $this->publicMediaDir, $this->mediaDir);
+        return $this->imageManager = new ImageManager([], $this->publicDir, $this->projectDir, $this->publicMediaDir, $this->mediaDir);
     }
 
     public function testBrowserAndFilterPath()

@@ -16,6 +16,7 @@ class MediaImporter extends AbstractImporter
     use ImageImporterTrait;
 
     protected $mediaDir;
+    protected $projectDir;
 
     private bool $newMedia = false;
 
@@ -23,6 +24,14 @@ class MediaImporter extends AbstractImporter
     public function setMediaDir(string $mediaDir): self
     {
         $this->mediaDir = $mediaDir;
+
+        return $this;
+    }
+
+    /** @required */
+    public function setProjectDir(string $projectDir): self
+    {
+        $this->projectDir = $projectDir;
 
         return $this;
     }
@@ -57,6 +66,7 @@ class MediaImporter extends AbstractImporter
         $filePath = $this->copyToMediaDir($filePath);
 
         $media
+            ->setProjectDir($this->projectDir)
             ->setStoreIn(\dirname($filePath))
             ->setSize(filesize($filePath))
             ->setMimeType(finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $filePath));

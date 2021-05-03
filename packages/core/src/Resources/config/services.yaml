@@ -73,6 +73,7 @@ services:
       - { name: kernel.event_listener, event: vich_uploader.post_upload }
       - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: preUpdate }
       - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: preRemove }
+      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: postLoad }
       #- { name: doctrine.orm.entity_listener, entity: Pushword\Core\Entity\Image, event: prePersist }
 
   Pushword\Core\Repository\MediaRepository:

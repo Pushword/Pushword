@@ -1,0 +1,22 @@
+{
+    "customProperties": [],
+    "mimeType": "image\/svg+xml",
+    "storeIn": "\/home\/robin\/localhost\/Pushword\/packages\/skeleton\/media",
+    "size": 2652,
+    "height": null,
+    "width": null,
+    "mainColor": null,
+    "media": "sonata.svg",
+    "name": "sonata.svg - 6090127f921a4",
+    "names": null,
+    "createdAt": {
+        "date": "2021-05-03 15:10:55.598432",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    },
+    "updatedAt": {
+        "date": "2021-05-03 15:10:55.598429",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    }
+}
