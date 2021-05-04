@@ -2,6 +2,8 @@
 
 namespace Pushword\Admin\FormField;
 
+use Doctrine\ORM\QueryBuilder;
+use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\PageRepository;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -20,14 +22,13 @@ class PageParentPageField extends AbstractField
                     'required' => false,
                 ],
                 ($this->admin->getSubject()->getId() ? ['query_builder' => function (PageRepository $er) {
-                    return $er->createQueryBuilder('p')
+                    $qb = $er->createQueryBuilder('p')
                         ->andWhere('p.id != :id')
-                        ->setParameter('id', $this->admin->getSubject()->getId())
-                        ->andWhere('p.parentPage != :page')
-                        // TODO
-                        // this one must be recursive to avoid error when user
-                        // select a page wich has among this parents the current page
-                        ->setParameter('page', $this->admin->getSubject());
+                        ->setParameter('id', $this->admin->getSubject()->getId());
+
+                    //$qb->andWhere('p.parentPage != :page')->setParameter('page', $this->admin->getSubject()->getId());
+
+                    return $qb;
                 }] : [])
             )
         );

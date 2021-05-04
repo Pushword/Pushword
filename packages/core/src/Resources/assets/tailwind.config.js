@@ -75,5 +75,12 @@ module.exports = {
                 });
             });
         }),
+        plugin(function ({ addVariant, e }) {
+            addVariant("first-child", ({ modifySelectors, separator }) => {
+                modifySelectors(({ className }) => {
+                    return `.${e(`first-child${separator}${className}`)}:first-child`;
+                });
+            });
+        }),
     ],
 };
