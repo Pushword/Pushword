@@ -21,7 +21,7 @@ final class BlockEditorFilter extends AbstractFilter
     /** @var array */
     private $appBlocks;
 
-    private bool $proseOpen = false;
+    private bool $proseOpen = true;
 
     /**
      * @return string
@@ -44,7 +44,10 @@ final class BlockEditorFilter extends AbstractFilter
             $renderValue .= $this->mayProse($block->type).$blockRendered."\n";
         }
 
-        return $renderValue.($this->proseOpen ? "\n".'</div>'."\n" : '');
+        //$renderValue = '<div>'.$renderValue.'</div>'; // Avoid markdown bug
+        return $renderValue;
+        //.(!$this->proseOpen ? "\n".'<div'.$this->getHtmlClass($this->getEntity(), 'prose').'>'."\n" : '');
+        //"\n".'</div>'."\n" : '');
     }
 
     private function mayProse(string $type): string

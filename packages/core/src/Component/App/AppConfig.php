@@ -128,6 +128,11 @@ final class AppConfig
         return $this->filters;
     }
 
+    public function setFilters(array $filters): void
+    {
+        $this->filters = $filters;
+    }
+
     public function entityCanOverrideFilters(): bool
     {
         return $this->entityCanOverrideFilters;

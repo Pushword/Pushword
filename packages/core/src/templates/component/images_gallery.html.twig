@@ -11,7 +11,7 @@
     {% set gallery_id = random(10, 1000) %}
     {% set grid_cols = grid_cols|default(images|length < 5 ? images|length : (images|length is odd ? 3 : 4)) %}
 
-        <div class="{{ gallery_container_class|default('my-3') }}">{# w-full-vw #}
+        <div class="{{ gallery_container_class|default('my-3') }}">{# w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw] #}
             <ul class="{{ gallery_class|default('grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-2xl mx-auto') }}">
                 {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
                 {% for name, image in images %}

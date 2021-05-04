@@ -1,3 +1,5 @@
+const plugin = require("tailwindcss/plugin");
+
 module.exports = {
     mode: "jit",
     purge: {}, // directly in webpack
@@ -33,5 +35,16 @@ module.exports = {
         },
     },
     variants: {},
-    plugins: [require("@tailwindcss/typography"), require("@tailwindcss/aspect-ratio"), require("@tailwindcss/forms")],
+    plugins: [
+        require("@tailwindcss/typography"),
+        require("@tailwindcss/aspect-ratio"),
+        require("@tailwindcss/forms"),
+        plugin(function ({ addVariant, e }) {
+            addVariant("first-letter", ({ modifySelectors, separator }) => {
+                modifySelectors(({ className }) => {
+                    return `.${e(`first-letter${separator}${className}`)}:first-letter`;
+                });
+            });
+        }),
+    ],
 };

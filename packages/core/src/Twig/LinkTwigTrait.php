@@ -6,7 +6,6 @@ use Exception;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Router\RouterInterface;
-use Twig\Environment as Twig;
 
 trait LinkTwigTrait
 {
@@ -38,7 +37,7 @@ trait LinkTwigTrait
         }
 
         if ($encrypt) {
-            if(strpos($path, 'mailto:') !== false && filter_var($anchor, FILTER_VALIDATE_EMAIL)) {
+            if (false !== strpos($path, 'mailto:') && filter_var($anchor, \FILTER_VALIDATE_EMAIL)) {
                 return $this->renderEncodedMail($anchor);
             }
             $attr = array_merge($attr, ['data-rot' => self::encrypt($path)]);

@@ -122,7 +122,6 @@ export default class Hyperlink extends HyperlinkTool {
 
     insertLink(link, target = "", rel = "", design = "") {
         let anchorTag = this.initSelection ? this.initSelection : this.selection.findParentTag("A");
-        console.log(this.initSelection);
         if (anchorTag) {
             this.selection.expandToTag(anchorTag);
             anchorTag["href"] = link;

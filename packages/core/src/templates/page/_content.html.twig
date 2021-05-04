@@ -1,6 +1,6 @@
 {% block content %}
-<div{{ class(page, 'container', 'max-w-screen-sm px-3 pt-3 pb-12 pt-3 mx-auto mb-auto') }}> {# /!\ must be sync with \Pushword\Core\Twig\ClassTrait::$defaultContainerClass #}
-    <div{{ class(page, 'prose', 'prose max-w-none') }}>
+<div{{ class(page, 'container', 'py-12 px-3') }}> {# /!\ must be sync with \Pushword\Core\Twig\ClassTrait::$defaultContainerClass #}
+    <div{{ class(page, 'prose', 'prose') }}>
 
         {% block content_header %}
             {% block h1 %}
@@ -37,7 +37,24 @@
             {% endif %}
         {% endblock %}
 
+        {# todo: if main.content.body finished with an opening div, remove it and remove the next div close :
+        preg_replace('#<div class="prose">\S*</div>#si', '', html) #}
 
     </div>
 </div>
+
+{% block content_part %}
+    {% if pw(page).mainContent.contentParts %}
+        {% for contentPart in pw(page).mainContent.contentParts %}
+        <div{{ class(page, 'partContainer', 'py-12 px-3 ' ~ cycle(['bg-gray-200', ''], loop.index0)) }}>
+            <div{{ class(page, 'prose', 'prose') }}>
+            {{ contentPart|raw }}
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+
+
+
 {% endblock %}

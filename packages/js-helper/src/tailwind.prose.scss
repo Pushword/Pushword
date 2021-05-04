@@ -1,4 +1,12 @@
 /**
+ * Override tailwind prose
+ */
+.prose {
+    width: 100%;
+    margin: 0 auto;
+}
+
+/**
  * Relative to link
  */
 .text-color-inherit,
@@ -32,10 +40,6 @@
     color: #fff !important;
 }
 
-.clickable {
-    cursor: pointer;
-}
-
 /**
  * Some smoothiness
  */
@@ -56,21 +60,7 @@ html {
     padding-top: 1rem;
 }
 
-/**
- * Special full-width from everywhere
- */
-
-.w-full-vw {
-    /* TODO : move to tailwind plugin */
-    width: 100vw;
-    position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
-}
-
-.first-letter:text-lg {
-    font-size: 1.125rem;
-    line-height: 1.75rem;
-}
+/*
+ * Special full-width from everywhere alias .w-full-vw:
+ w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw]
+*/

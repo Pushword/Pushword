@@ -11,7 +11,15 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
-## To 0.0.727
+## To 0.0.728
+
+-   Update stylesheets
+
+```
+cd assets && yarn && yarn encore production
+```
+
+-   Update doctrine
 
 ```
 bin/console make:migration && bin/console doctrine:migrations:migrate

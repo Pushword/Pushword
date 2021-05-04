@@ -4,7 +4,6 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
-use Pushword\Core\Twig\EmailTwigTrait;
 use Pushword\Core\Twig\LinkTwigTrait;
 
 class Email extends AbstractFilter

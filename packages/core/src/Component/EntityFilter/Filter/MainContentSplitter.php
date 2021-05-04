@@ -15,14 +15,19 @@ class MainContentSplitter extends AbstractFilter
     use RequiredEntityTrait;
     use RequiredTwigTrait;
 
-    private array $parts = ['chapeau', 'intro', 'toc', 'content', 'postContent'];
+    // delimiter <!--break-->
+    private array $parts = [
+        'chapeau', // content before the first *delimiter*
+        'intro', // when toc is active, content between the first delimiter (or from the begining) to the first hN
+        'toc',  // Table of Content
+        'content',
+    ];
 
     private string $chapeau = '';
     private string $intro = '';
     private string $toc = '';
     private string $content = '';
-    private string $postContent = '';
-    private array $contentPart = [];
+    private array $contentParts = [];
 
     /**
      * @return self
@@ -38,22 +43,27 @@ class MainContentSplitter extends AbstractFilter
     {
         $this->content = (string) $mainContent;
 
-        $parsedContent = explode('<!--break-->', $this->content);
+        $parsedContent = explode('<!--break-->', $this->content, 2);
 
         $this->chapeau = isset($parsedContent[1]) ? $parsedContent[0] : '';
         $this->content = $parsedContent[1] ?? $parsedContent[0];
 
-        if (isset($parsedContent[1])) {
-            unset($parsedContent[0], $parsedContent[1]);
-        } else {
-            unset($parsedContent[0]);
-        }
-
-        $this->contentPart = array_values($parsedContent);
-
         if (null !== $this->entity->getCustomProperty('toc')) {
             $this->parseToc();
         }
+
+        $this->splitContentToParts();
+    }
+
+    private function splitContentToParts(): void
+    {
+        $parsedContent = explode('<!--break-->', $this->content);
+        if (! isset($parsedContent[1])) {
+            return;
+        }
+        $this->content = $parsedContent[0];
+        unset($parsedContent[0]);
+        $this->contentParts = array_values($parsedContent);
     }
 
     private function parseToc(): void
@@ -71,7 +81,7 @@ class MainContentSplitter extends AbstractFilter
 
     public function getBody(bool $withChapeau = false): string
     {
-        return ($withChapeau ? $this->chapeau : '').$this->intro.$this->content.$this->postContent;
+        return ($withChapeau ? $this->chapeau : '').$this->intro.$this->content;
     }
 
     public function getChapeau(): string
@@ -84,9 +94,9 @@ class MainContentSplitter extends AbstractFilter
         return $this->content;
     }
 
-    public function getContentPart($key): string
+    public function getContentParts(): array
     {
-        return $this->contentPart[$key - 1];
+        return $this->contentParts;
     }
 
     public function getIntro(): string
