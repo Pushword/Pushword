@@ -15,22 +15,27 @@
             <ul class="{{ gallery_class|default('grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-2xl mx-auto') }}">
                 {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
                 {% for name, image in images %}
-                    <li>{{ _self.gallery_part(media_from_string(image, name), gallery_id, page ?? null, image_filter ?? 'thumb') }}</li>
+                    <li>{{ _self.gallery_part(
+                            media_from_string(image, name),
+                            gallery_id, page ?? null,
+                            image_filter ?? 'thumb',
+                            image_cntainer ?? null
+                        ) }}</li>
                 {% endfor %}
             </ul>
         </div>
 {% endblock %}
 
 
-{% macro gallery_part(image, gallery_id, page = null, default_filter = 'xs') %}
+{% macro gallery_part(image, gallery_id, page = null, default_filter = 'xs', image_container = null) %}
     {% import view('/component/image_helper.html.twig') as helper %}
     {% set image_html = helper.thumb(image, page, default_filter) %}
-    <div style="max-width:330px;" class="mx-auto">
+    {% if image_container is same as('') %}{% else %}<div class="{{ image_container|default(mx-auto max-w-[330px]) }}">{% endif %}
     {{ link(image_html,
         image|image('default'),
         {
             'data-fslightbox': gallery_id,
             'dwl': image|image('default', 'webp')
         }) }}
-        </div>
+     {% if image_container is same as('') %}{% else %}</div>{% endif %}
 {% endmacro %}

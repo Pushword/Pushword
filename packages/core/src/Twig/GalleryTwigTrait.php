@@ -8,7 +8,7 @@ trait GalleryTwigTrait
 {
     abstract public function getApp(): AppConfig;
 
-    public function renderGallery(array $images, ?string $gridCols = null, ?string $imageFilter = null): string
+    public function renderGallery(array $images, ?string $gridCols = null, ?string $imageFilter = null, $imageContainer = null): string
     {
         $template = $this->getApp()->getView('/component/images_gallery.html.twig');
 
@@ -16,6 +16,7 @@ trait GalleryTwigTrait
             'images' => $images,
             'grid_cols' => $gridCols,
             'image_filter' => $imageFilter,
+            'image_coontainer' => $imageContainer,
         ]);
     }
 }

@@ -41,7 +41,8 @@ final class BlockEditorFilter extends AbstractFilter
         foreach ($blocks as $block) {
             $classBlock = $this->getBlockManager($block->type);
             $blockRendered = $classBlock->render($block->data);
-            $renderValue .= $this->mayProse($block->type).$blockRendered."\n";
+            //$renderValue .= $this->mayProse($block->type); // duplicate the % unprose %
+            $renderValue .= $blockRendered."\n";
         }
 
         //$renderValue = '<div>'.$renderValue.'</div>'; // Avoid markdown bug

@@ -1,4 +1,5 @@
 {% block content %}
+<!--{{ pw(page).mainContent.chapeau|raw }}--> {# TODO: fix bug, if pw(page).ma... is not called before we really need it, it don't work #}
 <div{{ class(page, 'container', 'py-12 px-3') }}> {# /!\ must be sync with \Pushword\Core\Twig\ClassTrait::$defaultContainerClass #}
     <div{{ class(page, 'prose', 'prose') }}>
 
@@ -46,7 +47,7 @@
 {% block content_part %}
     {% if pw(page).mainContent.contentParts %}
         {% for contentPart in pw(page).mainContent.contentParts %}
-        <div{{ class(page, 'partContainer', 'py-12 px-3 ' ~ cycle(['bg-gray-200', ''], loop.index0)) }}>
+        <div{{ class(page, 'partContainer', 'py-12 px-3 ' ~ cycle([page_delimiter_cycle|default('bg-gray-200'), ''], loop.index0)) }}>
             <div{{ class(page, 'prose', 'prose') }}>
             {{ contentPart|raw }}
             </div>

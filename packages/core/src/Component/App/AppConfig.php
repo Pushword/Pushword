@@ -181,7 +181,7 @@ final class AppConfig
     {
         $templateDir = $this->get('template_dir');
 
-        $templateOverridedForHost = $templateDir.'/'.$this->getMainHost().$name;
+        $templateOverridedForHost = $templateDir.'/'.$this->getMainHost().('/' === $name[0] ? '' : '/').$name;
 
         if (file_exists($templateOverridedForHost)) {
             return '/'.$this->getMainHost().$name;
