@@ -6,6 +6,7 @@ import SelectionUtils from "editorjs-hyperlink/src/SelectionUtils";
 
 export default class Hyperlink extends HyperlinkTool {
     constructor({ data, config, api, readOnly }) {
+        config.shortcut = "CMD+K";
         super({ data, config, api, readOnly });
 
         this.avalaibleDesign = this.config.avalaibleDesign || [
