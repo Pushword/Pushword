@@ -1,5 +1,5 @@
 const WatchExternalFilesPlugin = require("webpack-watch-files-plugin").default;
-cnst Encore = require("@symfony/webpack-encore");
+const Encore = require("@symfony/webpack-encore");
 const tailwindcss = require("tailwindcss");
 
 const watchFiles = [
