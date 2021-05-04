@@ -50,7 +50,7 @@
                                 {{ item.anchor|raw }}
                             </span>
                         {% else %}
-                          {{ link(item.anchor, (item.attr is defined ? item.attr : {})|merge({'class': navbar_nav_item_class|default('text-primary hover:opacity-75')}), item.encrypt ?? false) }}
+                          {{ link(item.anchor, ({'class': navbar_nav_item_class|default('text-primary hover:opacity-75')})|merge(item.attr is defined ? item.attr : {}), item.encrypt ?? false) }}
                         {% endif %}
                     {% endfor %}
                 </nav>
