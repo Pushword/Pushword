@@ -30,7 +30,7 @@
 {% macro gallery_part(image, gallery_id, page = null, default_filter = 'xs', image_container = null) %}
     {% import view('/component/image_helper.html.twig') as helper %}
     {% set image_html = helper.thumb(image, page, default_filter) %}
-    {% if image_container is same as('') %}{% else %}<div class="{{ image_container|default(mx-auto max-w-[330px]) }}">{% endif %}
+    {% if image_container is same as('') %}{% else %}<div class="{{ image_container|default('mx-auto max-w-[330px]') }}">{% endif %}
     {{ link(image_html,
         image|image('default'),
         {

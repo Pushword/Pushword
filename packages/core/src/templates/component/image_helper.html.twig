@@ -6,7 +6,9 @@
             src="{{ image|image('default') }}"
             loading="lazy"
             width="10000" height="10000"
-            alt="{{ image.name(page is not null ? page.locale : null) }}"
+            {% if otherAttributes.alt is not defined %}
+                alt="{{ image.name(page is not null ? page.locale : null) }}"
+            {% endif %}
             {{ otherAttributes ? attr(otherAttributes) : '' }} />
     </picture>
 {% endapply %}{% endmacro %}

@@ -1,9 +1,10 @@
 {#
-    image_src
-    image_alt       // image.name(page is defined ? page.locale : '')
-    image_attr
-    image_wrapper           default: p
-    image_wrapper_class     default: 'w-full h-auto'
+    string      image_src               ...
+    strubg      image_alt               image.name(page is defined ? page.locale : '')
+    bool        image_link              default: true
+    array       image_attr
+    string      image_wrapper           default: 'p' if image_wrapper_class is setted
+    string      image_wrapper_class     default: 'w-full h-auto' if image_wrapper is setted
 
         xs: #576px
         sm: #768px

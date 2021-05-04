@@ -26,6 +26,6 @@ https://pushword.piedweb.com/manage-assets
 https://pushword.piedweb.com/override-theme
 https://pushword.piedweb.com/roadmap
 https://pushword.piedweb.com/search.json
-https://pushword.piedweb.com/test-content
 https://pushword.piedweb.com/themes
 https://pushword.piedweb.com/upgrade
+https://pushword.piedweb.com/test-content
