@@ -5,13 +5,16 @@ const tailwindcss = require("tailwindcss");
 const watchFiles = [
     "./../vendor/pushword/core/src/templates/**/*.html.twig",
     "./../vendor/pushword/core/src/templates/*.html.twig",
-    "./../templates/*/*.html.twig",
-    "./../templates/*/*/*.html.twig",
+    "./../vendor/pushword/conversation/src/templates/*.html.twig",
+    "./../vendor/pushword/admin-block-editor/src/templates/block/*.html.twig",
     "./../templates/*.html.twig",
-    "./../templates/*/*.html.twig",
-    "./*.js",
+    "./../templates/**/*.html.twig",
+    "./../templates/**/**/*.html.twig",
 ];
 
+// if yarn is shouting at you :
+// $ cp ./../vendor/pushword/core/src/Resources/assets/tailwind.config.js ./tailwind.config.js
+// Then edit the next line :
 var tailwindConfig = require("./../vendor/pushword/core/src/Resources/assets/tailwind.config.js");
 tailwindConfig.purge = watchFiles;
 
@@ -28,7 +31,7 @@ Encore.setOutputPath("./../public/assets/")
     )
     .enablePostCssLoader((options) => {
         options.postcssOptions = {
-            plugins: [require("postcss-import"), tailwindcss("./tailwind.config.js"), require("autoprefixer")],
+            plugins: [require("postcss-import"), tailwindcss(tailwindConfig), require("autoprefixer")],
         };
     })
     .disableSingleRuntimeChunk()
