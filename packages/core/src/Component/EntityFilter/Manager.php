@@ -47,11 +47,11 @@ final class Manager
             $method = 'get'.ucfirst($method);
         }
 
-        $returnValue = $arguments ? \call_user_func_array([$this->entity, $method], $arguments)
-            : \call_user_func([$this->entity, $method]);
-
         $event = new FilterEvent($this, substr($method, 3));
         $this->eventDispatcher->dispatch($event, FilterEvent::NAME_BEFORE);
+
+        $returnValue = $arguments ? \call_user_func_array([$this->entity, $method], $arguments)
+            : \call_user_func([$this->entity, $method]);
 
         $returnValue = $this->filter(substr($method, 3), $returnValue);
 
