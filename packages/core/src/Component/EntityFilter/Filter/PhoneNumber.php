@@ -32,7 +32,7 @@ class PhoneNumber extends AbstractFilter
         }
 
         foreach ($matches[0] as $m) {
-            $body = str_replace($m,  $this->renderPhoneNumber($m), $body);
+            $body = str_replace($m, $this->renderPhoneNumber($m), $body);
         }
 
         return $body;

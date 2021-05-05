@@ -14,14 +14,14 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    const DEFAULT_APP_FALLBACK = [
+    public const DEFAULT_APP_FALLBACK = [
         'static_generators',
         'static_symlink',
         'static_dir',
         'static_copy',
     ];
 
-    const DEFAULT_GENERATOR = [
+    public const DEFAULT_GENERATOR = [
         PagesGenerator::class,
         RobotsGenerator::class,
         ErrorPageGenerator::class,
@@ -30,7 +30,7 @@ class Configuration implements ConfigurationInterface
         HtaccessGenerator::class,
     ];
 
-    const DEFAULT_GENERATOR_GITHUB = [
+    public const DEFAULT_GENERATOR_GITHUB = [
         PagesGenerator::class,
         RobotsGenerator::class,
         ErrorPageGenerator::class,
@@ -39,7 +39,7 @@ class Configuration implements ConfigurationInterface
         CNAMEGenerator::class,
     ];
 
-    const DEFAULT_COPY = ['assets', 'bundles', 'media'];
+    public const DEFAULT_COPY = ['assets', 'bundles', 'media'];
 
     public function getConfigTreeBuilder()
     {

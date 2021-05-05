@@ -6,7 +6,7 @@ use Exception;
 
 class DefaultBlock extends AbstractBlock
 {
-    const AVAILABLE_BLOCKS = [
+    public const AVAILABLE_BLOCKS = [
         'paragraph',
         'list',
         'header',

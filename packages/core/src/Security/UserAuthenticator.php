@@ -25,8 +25,11 @@ class UserAuthenticator extends AbstractFormLoginAuthenticator implements Passwo
     use TargetPathTrait;
 
     private $entityManager;
+
     private $urlGenerator;
+
     private $csrfTokenManager;
+
     private $passwordEncoder;
 
     public function __construct(

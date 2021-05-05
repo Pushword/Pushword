@@ -12,10 +12,13 @@ final class PushwordConfigFactory
 {
     /** @var ContainerBuilder */
     private $container;
+
     /** @var string */
     private $prefix;
+
     /** @var array */
     private $config;
+
     /** @var ConfigurationInterface */
     private $configuration;
 
@@ -113,7 +116,7 @@ final class PushwordConfigFactory
                 $app[$p] = ! \is_string($this->config[$p]) ? $this->config[$p]
                     : str_replace('%main_host%', $app['hosts'][0], $this->config[$p]); //'%'.'pw.'.$p.'%';
             } elseif ('custom_properties' == $p) {
-                $app['custom_properties'] = array_merge($this->config['custom_properties'],  $app['custom_properties']);
+                $app['custom_properties'] = array_merge($this->config['custom_properties'], $app['custom_properties']);
             }
         }
 

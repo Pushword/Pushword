@@ -5,6 +5,7 @@ namespace Pushword\Core\Entity\PageTrait;
 trait PageRedirectionTrait
 {
     protected $redirectionUrl;
+
     protected $redirectionCode;
 
     abstract public function getMainContent(): string;

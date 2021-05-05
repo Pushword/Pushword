@@ -24,9 +24,13 @@ class MainContentSplitter extends AbstractFilter
     ];
 
     private string $chapeau = '';
+
     private string $intro = '';
+
     private string $toc = '';
+
     private string $content = '';
+
     private array $contentParts = [];
 
     /**

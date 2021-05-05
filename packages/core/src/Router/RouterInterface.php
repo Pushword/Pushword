@@ -7,9 +7,9 @@ use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
 
 interface RouterInterface
 {
-    const PATH = 'pushword_page';
+    public const PATH = 'pushword_page';
 
-    const CUSTOM_HOST_PATH = 'custom_host_pushword_page';
+    public const CUSTOM_HOST_PATH = 'custom_host_pushword_page';
 
     public function generatePathForHomePage(?PageInterface $page = null, $canonical = false): string;
 

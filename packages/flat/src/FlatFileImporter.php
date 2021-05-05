@@ -14,12 +14,19 @@ use Pushword\Flat\Importer\PageImporter;
 class FlatFileImporter
 {
     protected AppConfig $app;
+
     protected AppPool $apps;
+
     protected string $projectDir;
+
     protected FlatFileContentDirFinder $contentDirFinder;
+
     protected PageImporter $pageImporter;
+
     protected MediaImporter $mediaImporter;
+
     protected string $mediaDir = '';
+
     protected string $customMediaDir = '';
 
     public function __construct(

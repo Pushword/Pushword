@@ -74,6 +74,7 @@ trait FormTrait
 
     /** @var AppPool */
     protected $apps;
+
     /** @var AppConfig */
     protected $app;
 

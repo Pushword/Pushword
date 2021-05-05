@@ -20,7 +20,9 @@ final class PageBlockController extends AbstractController
 {
     use RequiredApps;
     use RequiredPageClass;
+
     private EntityManagerInterface $em;
+
     private Twig $twig;
 
     public function __construct(EntityManagerInterface $em, Twig $twig)

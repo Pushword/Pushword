@@ -21,10 +21,15 @@ use Vich\UploaderBundle\Event\Event;
 class MediaListener
 {
     protected string $projectDir;
+
     protected int $iterate = 1;
+
     protected EntityManagerInterface $em;
+
     protected EventDispatcherInterface $eventDispatcher;
+
     protected FileSystem $filesystem;
+
     protected ImageManager $imageManager;
 
     public function __construct(

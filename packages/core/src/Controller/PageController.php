@@ -19,10 +19,15 @@ final class PageController extends AbstractController
     use RenderTrait;
 
     private ParameterBagInterface $params;
+
     private AppPool $apps;
+
     private AppConfig $app;
+
     private Twig $twig;
+
     private EntityManagerInterface $em;
+
     private TranslatorInterface $translator; //Symfony\Component\Translation\DataCollectorTranslator
 
     public function __construct(

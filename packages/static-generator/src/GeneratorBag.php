@@ -15,10 +15,13 @@ class GeneratorBag
 {
     /** @required */
     public CNAMEGenerator $cNAMEGenerator;
+
     /** @required */
     public CopierGenerator $copierGenerator;
+
     /** @required */
     public ErrorPageGenerator $errorPageGenerator;
+
     /** @required */
     public HtaccessGenerator $htaccessGenerator;
 

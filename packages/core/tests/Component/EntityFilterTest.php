@@ -16,8 +16,8 @@ class EntityFilterTest extends KernelTestCase
 
         $this->assertSame($this->getPage()->getH1(), $manager->title());
         $this->assertSame($this->getPage()->getH1(), $manager->getTitle());
-        $this->assertSame('',  $manager->getMainContent()->getChapeau());
-        $this->assertSame('<p>',  substr(trim($manager->getMainContent()->getBody()), 0, 3));
+        $this->assertSame('', $manager->getMainContent()->getChapeau());
+        $this->assertSame('<p>', substr(trim($manager->getMainContent()->getBody()), 0, 3));
     }
 
     public function testEncryptedLink()
@@ -60,9 +60,9 @@ class EntityFilterTest extends KernelTestCase
     {
         $manager = $this->getManagerPool()->getManager($this->getPage($this->getContentReadyForToc()));
 
-        $this->assertSame('<p>my intro...</p>',  trim($manager->getMainContent()->getIntro()));
+        $this->assertSame('<p>my intro...</p>', trim($manager->getMainContent()->getIntro()));
         $toCheck = '<h2 id="fist-title">Fist Title</h2>';
-        $this->assertSame($toCheck,  substr(trim($manager->getMainContent()->getContent()), 0, \strlen($toCheck)));
+        $this->assertSame($toCheck, substr(trim($manager->getMainContent()->getContent()), 0, \strlen($toCheck)));
     }
 
     private function getPage($content = null)

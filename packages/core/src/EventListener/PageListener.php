@@ -9,6 +9,7 @@ use Symfony\Component\Security\Core\Security;
 class PageListener
 {
     private Security $security;
+
     private EntityManagerInterface $entityManager;
 
     public function __construct(Security $security, EntityManagerInterface $entityManager)

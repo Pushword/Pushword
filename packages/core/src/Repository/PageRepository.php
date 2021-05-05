@@ -192,7 +192,9 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         }
 
         $key = implode(',', array_map(
-            function ($item) use ($qb) { return $this->getRootAlias($qb).'.'.$item; },
+            function ($item) use ($qb) {
+                return $this->getRootAlias($qb).'.'.$item;
+            },
             explode(',', $orderBy['key'] ?? $orderBy[0])
         ));
 

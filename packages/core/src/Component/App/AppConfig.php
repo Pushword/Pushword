@@ -7,16 +7,27 @@ use Twig\Environment as Twig;
 final class AppConfig
 {
     private bool $isFirstApp = false;
+
     private array $hosts;
+
     private array $customProperties;
+
     private string $locale;
+
     private $locales;
+
     private string $baseUrl;
+
     private string $name;
+
     private string $template;
+
     private array $filters;
+
     private bool $entityCanOverrideFilters;
+
     private array $assets;
+
     private Twig $twig;
 
     private static function normalizePropertyName(string $string): string

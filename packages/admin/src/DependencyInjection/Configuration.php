@@ -38,18 +38,18 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    const DEFAULT_APP_FALLBACK = [
+    public const DEFAULT_APP_FALLBACK = [
         'admin_page_form_fields',
         'admin_user_form_fields',
         'admin_media_form_fields',
     ];
 
-    const DEFAULT_ADMIN_USER_FORM_FIELDS = [
+    public const DEFAULT_ADMIN_USER_FORM_FIELDS = [
         [UserEmailField::class, UserUsernameField::class, UserPasswordField::class, CreatedAtField::class],
         ['admin.user.label.security' => [UserRolesField::class]],
     ];
 
-    const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
+    public const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
         [PageH1Field::class, PageMainContentField::class],
         [
             'admin.page.state.label' => [PagePublishedAtField::class, PageMetaRobotsField::class],
@@ -70,7 +70,7 @@ class Configuration implements ConfigurationInterface
         ],
     ];
 
-    const DEFAULT_ADMIN_MEDIA_FORM_FIELDS = [
+    public const DEFAULT_ADMIN_MEDIA_FORM_FIELDS = [
         [MediaMediaFileField::class, MediaNameField::class, MediaSlugField::class],
         [CustomPropertiesField::class, MediaNamesField::class],
         [MediaPreviewField::class],

@@ -7,6 +7,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 trait KernelTrait
 {
     public static $appKernel;
+
     protected $kernel;
 
     public static function loadKernel(KernelInterface $kernel)

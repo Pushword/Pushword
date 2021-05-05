@@ -10,7 +10,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    const DEFAULT_APP_FALLBACK = [
+    public const DEFAULT_APP_FALLBACK = [
         'conversation_notification_email_to',
         'conversation_notification_email_from',
         'conversation_notification_interval',

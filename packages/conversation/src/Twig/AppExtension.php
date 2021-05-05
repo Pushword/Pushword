@@ -18,6 +18,7 @@ class AppExtension extends AbstractExtension
 
     /** @var \Pushword\Core\Component\App\AppConfig */
     private $app;
+
     /** @var \Pushword\Core\Component\App\AppPool */
     private $apps;
 

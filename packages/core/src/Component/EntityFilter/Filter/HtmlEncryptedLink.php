@@ -4,9 +4,11 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 
 final class HtmlEncryptedLink extends EncryptedLink
 {
-    const HTML_REGEX = '/(<a\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\2(?:[^>]*?\s+)?rel=(["\'])encrypt\4(?:[^>]*?\s+)?>)(((?!<\/a>).)*)<\/a>/i';
-    const HTML_REGEX_HREF_KEY = 3;
-    const HTML_REGEX_ANCHOR_KEY = 5;
+    public const HTML_REGEX = '/(<a\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\2(?:[^>]*?\s+)?rel=(["\'])encrypt\4(?:[^>]*?\s+)?>)(((?!<\/a>).)*)<\/a>/i';
+
+    public const HTML_REGEX_HREF_KEY = 3;
+
+    public const HTML_REGEX_ANCHOR_KEY = 5;
 
     public function convertEncryptedLink($body): string
     {
@@ -36,7 +38,7 @@ final class HtmlEncryptedLink extends EncryptedLink
             $attr = $this->extractClass($matches[1][$k]);
             $attr = $attr ? ['class' => $attr] : [];
             $link = $this->renderLink($matches[$anchorKey][$k], $matches[$hrefKey][$k], $attr);
-            $body = str_replace($matches[0][$k],  $link, $body);
+            $body = str_replace($matches[0][$k], $link, $body);
         }
 
         return $body;

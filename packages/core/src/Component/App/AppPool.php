@@ -10,6 +10,7 @@ final class AppPool
 {
     /** @var array */
     private $apps = [];
+
     /** @var string */
     private $currentApp;
 

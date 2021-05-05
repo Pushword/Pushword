@@ -15,12 +15,19 @@ final class ImageManager
     use ImageImport;
 
     private string $publicDir;
+
     private string $publicMediaDir;
+
     private string $mediaDir;
+
     private string $projectDir;
+
     private array $filterSets;
+
     private OptimizerChain $optimizer;
+
     private ?Image $lastThumb;
+
     private FileSystem $fileSystem;
 
     public function __construct(

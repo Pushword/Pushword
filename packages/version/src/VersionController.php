@@ -14,6 +14,7 @@ class VersionController extends AbstractController
 {
     /** @var Versionner */
     private $versionner;
+
     /** @var string */
     private $pageClass;
 

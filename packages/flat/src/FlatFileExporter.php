@@ -20,17 +20,29 @@ use Symfony\Component\Yaml\Yaml;
 class FlatFileExporter
 {
     protected AppConfig $app;
+
     protected AppPool $apps;
+
     protected string $projectDir;
+
     protected string $mediaDir;
+
     protected string $copyMedia = '';
+
     protected string $exportDir = '';
+
     protected string $mediaClass;
+
     protected string $pageClass;
+
     protected FlatFileContentDirFinder $contentDirFinder;
+
     protected PageImporter $pageImporter;
+
     protected MediaImporter $mediaImporter;
+
     protected EntityManagerInterface $entityManager;
+
     protected Filesystem $filesystem;
 
     public function __construct(

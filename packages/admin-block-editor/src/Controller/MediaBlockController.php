@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class MediaBlockController extends AbstractController
 {
     use RequiredMediaClass;
+
     private EntityManagerInterface $em;
 
     public function __construct(EntityManagerInterface $em)

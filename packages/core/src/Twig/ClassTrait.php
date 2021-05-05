@@ -8,6 +8,7 @@ use Pushword\Core\Entity\PageInterface;
 trait ClassTrait
 {
     private string $defaultContainerClass = 'py-12 px-3';
+
     private string $defaultProseClass = 'prose';
 
     abstract public function getApp(): AppConfig;

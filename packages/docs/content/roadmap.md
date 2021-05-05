@@ -24,6 +24,7 @@ parent: contribute
 
 ## Feature
 
+-   **Page scanner** : test current page anchor link
 -   Toward wiki !
     -   **page authors**
         HUGE BUG: une fois la page mise à jour avec le dernier utilisateur, impossible d'afficher la page d'édition

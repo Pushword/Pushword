@@ -7,7 +7,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    const DEFAULT_APP_FALLBACK = [
+    public const DEFAULT_APP_FALLBACK = [
         'svg_dir',
     ];
 

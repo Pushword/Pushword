@@ -12,6 +12,7 @@ class FlatFileContentDirFinder
 {
     /** @var AppPool */
     protected $apps;
+
     protected $projectDir;
 
     protected $contentDir = [];

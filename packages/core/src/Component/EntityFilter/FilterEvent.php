@@ -11,9 +11,11 @@ use Symfony\Contracts\EventDispatcher\Event;
 final class FilterEvent extends Event
 {
     public const NAME_BEFORE = 'pushword.entity_filter.before_filtering';
+
     public const NAME_AFTER = 'pushword.entity_filter.after_filtering';
 
     private Manager $manager;
+
     private string $property;
 
     public function __construct(Manager $manager, string $property)

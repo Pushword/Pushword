@@ -15,13 +15,21 @@ use Twig\Environment as Twig;
 trait AdminTrait
 {
     protected AppPool $apps;
+
     private ImageManager $imageManager;
+
     protected string $pageClass;
+
     protected string $mediaClass;
+
     protected string $userClass;
+
     protected Twig $twig;
+
     protected EntityManagerInterface $em;
+
     protected RouterInterface $router;
+
     protected TokenStorageInterface $securityTokenStorage;
 
     protected static $thumb = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgaGVpZ2h0PSIzMnB4IiB2ZXJzaW

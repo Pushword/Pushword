@@ -17,8 +17,11 @@ use Symfony\Component\Lock\Store\FlockStore;
 class PageScannerCommand extends Command
 {
     private $filesystem;
+
     private $scanner;
+
     private $pageClass;
+
     private $em;
 
     public function __construct(

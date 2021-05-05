@@ -18,10 +18,12 @@ final class PageScannerService
     use KernelTrait;
 
     private $errors = [];
+
     public static $appKernel;
 
     /** @required */
     public LinkedDocsScanner $linkedDocsScanner;
+
     /** @required */
     public ParentPageScanner $parentPageScanner;
 

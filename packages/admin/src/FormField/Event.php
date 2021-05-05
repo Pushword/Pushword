@@ -14,6 +14,7 @@ class Event extends SfEvent
     public const NAME = 'pushword.admin.load_field';
 
     private AdminInterface $admin;
+
     private array $fields;
 
     public function __construct(AdminInterface $admin, array $fields)

@@ -19,33 +19,46 @@ class PageUpdateNotifier
 {
     /** @var MailerInterface */
     private $mailer;
+
     /** @var string */
     private $emailTo;
+
     /** @var string */
     private $emailFrom;
+
     /** @var string */
     private $appName;
+
     /** @var string */
     private $varDir;
+
     private $interval;
+
     /** @var EntityManagerInterface */
     private $em;
+
     /** @var TranslatorInterface */
     private $translator;
+
     /** @var string */
     private $pageClass;
+
     /** @var AppConfig */
     private $app;
+
     /** @var Twig */
     private $twig;
 
     /** @var AppPool */
     private $apps;
 
-    const ERROR_NO_EMAIL = 1;
-    const ERROR_NO_INTERVAL = 2;
-    const WAS_EVER_RUN_SINCE_INTERVAL = 3;
-    const NOTHING_TO_NOTIFY = 4;
+    public const ERROR_NO_EMAIL = 1;
+
+    public const ERROR_NO_INTERVAL = 2;
+
+    public const WAS_EVER_RUN_SINCE_INTERVAL = 3;
+
+    public const NOTHING_TO_NOTIFY = 4;
 
     public function __construct(
         string $pageClass,

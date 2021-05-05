@@ -12,9 +12,11 @@ class EncryptedLink extends AbstractFilter
     use RequiredAppTrait;
     use RequiredTwigTrait;
 
-    const HTML_REGEX = '/<a\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\1(?:[^>]*?\s+)?rel=(["\'])encrypt\1(?:[^>]*?\s+)?>(((?!<\/a>).)*)<\/a>/i';
-    const HTML_REGEX_HREF_KEY = 2;
-    const HTML_REGEX_ANCHOR_KEY = 4;
+    public const HTML_REGEX = '/<a\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\1(?:[^>]*?\s+)?rel=(["\'])encrypt\1(?:[^>]*?\s+)?>(((?!<\/a>).)*)<\/a>/i';
+
+    public const HTML_REGEX_HREF_KEY = 2;
+
+    public const HTML_REGEX_ANCHOR_KEY = 4;
 
     /**
      * @return string
@@ -49,7 +51,7 @@ class EncryptedLink extends AbstractFilter
             $attr = $matches[3][$k] ?? null;
             $attr = $attr ? [('#' == $attr ? 'id' : 'class') => substr($attr, 1)] : [];
             $link = $this->renderLink($matches[$anchorKey][$k], $matches[$hrefKey][$k], $attr);
-            $body = str_replace($matches[0][$k],  $link, $body);
+            $body = str_replace($matches[0][$k], $link, $body);
         }
 
         return $body;

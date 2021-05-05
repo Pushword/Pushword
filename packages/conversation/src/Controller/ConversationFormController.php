@@ -22,6 +22,7 @@ class ConversationFormController extends AbstractController
 
     /** @var ParameterBagInterface */
     protected $params;
+
     /** @var AppPool */
     protected $apps;
 

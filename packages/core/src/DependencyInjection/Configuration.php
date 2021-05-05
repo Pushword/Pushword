@@ -7,8 +7,9 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 final class Configuration implements ConfigurationInterface
 {
-    const DEFAULT_TEMPLATE = '@Pushword';
-    const DEFAULT_APP_FALLBACK = [
+    public const DEFAULT_TEMPLATE = '@Pushword';
+
+    public const DEFAULT_APP_FALLBACK = [
         'hosts',
         'locale',
         'locales',
@@ -21,26 +22,28 @@ final class Configuration implements ConfigurationInterface
         'assets',
         'custom_properties',
     ];
-    const DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS = true;
 
-    const DEFAULT_FILTERS = [
+    public const DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS = true;
+
+    public const DEFAULT_FILTERS = [
         'main_content' => 'twig,date,email,encryptedLink,htmlEncryptedLink,image,phoneNumber,punctuation,markdown,unprose,mainContentSplitter,extended',
         'name' => 'twig,date,name,extended',
         'title' => 'twig,date,elseH1,extended',
         'string' => 'twig,date,email,encryptedLink,phoneNumber,extended',
     ];
 
-    const DEFAULT_ASSETS = [
+    public const DEFAULT_ASSETS = [
         'stylesheets' => [
             '/bundles/pushwordcore/tailwind.min.css',
         ],
         'javascripts' => ['/bundles/pushwordcore/page.min.js'],
     ];
 
-    const DEFAULT_CUSTOM_PROPERTIES = [];
+    public const DEFAULT_CUSTOM_PROPERTIES = [];
 
-    const DEFAULT_PUBLIC_MEDIA_DIR = 'media';
-    const IMAGE_FILTERS_SET = [
+    public const DEFAULT_PUBLIC_MEDIA_DIR = 'media';
+
+    public const IMAGE_FILTERS_SET = [
         'default' => ['quality' => 90, 'filters' => ['downscale' => [1980, 1280]]],
         'height_300' => [
             'quality' => 82,

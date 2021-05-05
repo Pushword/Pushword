@@ -11,7 +11,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 abstract class AbstractScanner
 {
     protected PageInterface $page;
+
     protected string $pageHtml;
+
     protected array $errors = [];
 
     /** @required */

@@ -14,18 +14,28 @@ class NewMessageMailNotifier
 {
     /** @var MailerInterface */
     private $mailer;
+
     /** @var AppPool */
     private $apps;
+
     /** @var EntityManagerInterface */
     private $em;
+
     /** @var TranslatorInterface */
     private $translator;
+
     private $emailTo;
+
     private $emailFrom;
+
     private $appName;
+
     private $projectDir;
+
     private $interval;
+
     private $message;
+
     private $host;
 
     /**

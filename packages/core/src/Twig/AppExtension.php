@@ -36,11 +36,17 @@ class AppExtension extends AbstractExtension
     use VideoTwigTrait;
 
     private RouterInterface $router;
+
     private EntityManagerInterface $em;
+
     private string $pageClass;
+
     private AppPool $apps;
+
     private Twig $twig;
+
     private ImageManager $imageManager;
+
     private ManagerPoolInterface $entityFilterManagerPool;
 
     public function __construct(EntityManagerInterface $em, string $pageClass, RouterInterface $router, AppPool $apps, Twig $twig, ImageManager $imageManager, ManagerPoolInterface $entityFilterManagerPool)

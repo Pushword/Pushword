@@ -12,10 +12,15 @@ use Twig\Environment as Twig;
 final class Manager
 {
     private $entity;
+
     private AppConfig $app;
+
     private AppPool $apps;
+
     private ManagerPool $managerPool;
+
     private Twig $twig;
+
     private EventDispatcherInterface $eventDispatcher;
 
     public function __construct(

@@ -16,6 +16,7 @@ class MediaImporter extends AbstractImporter
     use ImageImporterTrait;
 
     protected $mediaDir;
+
     protected $projectDir;
 
     private bool $newMedia = false;

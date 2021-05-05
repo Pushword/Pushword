@@ -18,10 +18,15 @@ use Symfony\Component\Serializer\SerializerInterface;
 class Versionner implements EventSubscriber //EventSubscriberInterface
 {
     private Filesystem $fileSystem;
+
     private string $logsDir;
+
     private string $pageClass;
+
     private EntityManagerInterface $entityManager;
+
     public static bool $version = true;
+
     private SerializerInterface $serializer;
 
     public function __construct(
