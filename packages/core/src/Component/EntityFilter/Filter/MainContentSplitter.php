@@ -31,6 +31,8 @@ class MainContentSplitter extends AbstractFilter
 
     private string $content = '';
 
+    private string $originalContent = '';
+
     private array $contentParts = [];
 
     /**
@@ -62,12 +64,21 @@ class MainContentSplitter extends AbstractFilter
     private function splitContentToParts(): void
     {
         $parsedContent = explode('<!--break-->', $this->content);
+
         if (! isset($parsedContent[1])) {
             return;
         }
+
         $this->content = $parsedContent[0];
         unset($parsedContent[0]);
         $this->contentParts = array_values($parsedContent);
+    }
+
+    private function fixSplit(): void
+    {
+        if (str_ends_with(trim($this->intro), '<!--break-->')) {
+            $this->content = '<!--break-->'.$this->content;
+        }
     }
 
     private function parseToc(): void
@@ -76,11 +87,13 @@ class MainContentSplitter extends AbstractFilter
 
         // this is a bit crazy
         // Because if there is a wrapper, it will make shit ?!
-        $content = $this->content;
-        $content = explode('<h', $content, 2);
+        $this->originalContent = $this->content;
+        $content = explode('<h', $this->content, 2);
 
         $this->intro = isset($content[1]) ? $content[0] : '';
         $this->content = isset($content[1]) ? '<h'.$content[1] : $content[0];
+
+        $this->fixSplit();
     }
 
     public function getBody(bool $withChapeau = false): string
@@ -113,7 +126,7 @@ class MainContentSplitter extends AbstractFilter
      */
     public function getToc(bool $html = true)
     {
-        return $html ? (new TocGenerator())->getHtmlMenu($this->content, 2)
-            : (new TocGenerator())->getMenu($this->content, 2);
+        return $html ? (new TocGenerator())->getHtmlMenu($this->originalContent, 2)
+            : (new TocGenerator())->getMenu($this->originalContent, 2);
     }
 }

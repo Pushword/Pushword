@@ -7,6 +7,7 @@ parent: contribute
 
 ## To finish
 
+-   install nested-list https://github.com/editor-js/nested-list
 -   work on blug for **page hero** linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 95%, rgba(0,0,0,0.5) 100%)
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
