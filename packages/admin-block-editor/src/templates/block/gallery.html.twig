@@ -1,7 +1,7 @@
 {% set images = [] %}
 {% for image in data %}
     {% set key = image.caption ? image.caption : image.file.name ~ (images.key is defined ? (' - '~image.file.media) : '') %}
-    {% set images = images|merge({(key): image.file.media}) %}
+    {% set images = images|merge({(key): image.url}) %}
 {% endfor %}
 
 {% apply unprose %}

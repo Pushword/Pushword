@@ -7,6 +7,7 @@ parent: contribute
 
 ## To finish
 
+-   work on blug for **page hero** linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 95%, rgba(0,0,0,0.5) 100%)
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
 -   **Block editor** : édition avancée (template notamment dans pages, prose/unprise)
@@ -15,6 +16,8 @@ parent: contribute
 
 ## BugFix
 
+-   **Block** : Gallery is not keeping the good date in file
+-   **Core** / **Block** : when i copy an image with the same URI, it's create a duplicate in the database
 -   **Admin Block Editor Tools** : encrypt mail only encrypt mailto (normal behaviour) => encrypt content too if mail adress is the content
 -   **Admin** : Restore Admin: Page Tree https://github.com/sonata-project/SonataAdminBundle/issues/7035
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)

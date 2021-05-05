@@ -2,7 +2,7 @@ export function filterImageFormField() {
     const addToHref = function (element) {
         element.href =
             element.href +
-            "&filter[mimeType][value][]=image/jpg&[mimeType][value][]=image/gif&filter[mimeType][value][]=image/png";
+            "&[mimeType][value][]=image/gif&filter[mimeType][value][]=image/png&filter[mimeType][value][]=image/jpg";
     };
 
     let mainImage = document.querySelector('span[id$="_mainImage"] a');
