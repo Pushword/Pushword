@@ -156,7 +156,7 @@ final class AppConfig
             return $path;
         }
 
-        if ('none' == $path) {
+        if ('none' == $path) { // alias
             $path = '/page/raw.twig';
         }
 
@@ -177,12 +177,13 @@ final class AppConfig
         }
     }
 
-    private function getOverridedView(string $name)
+    private function getOverridedView(string $name): ?string
     {
+        $name = ('/' === $name[0] ? '' : '/').$name;
+
         $templateDir = $this->get('template_dir');
 
-        $templateOverridedForHost = $templateDir.'/'.$this->getMainHost().('/' === $name[0] ? '' : '/').$name;
-
+        $templateOverridedForHost = $templateDir.'/'.$this->getMainHost().$name;
         if (file_exists($templateOverridedForHost)) {
             return '/'.$this->getMainHost().$name;
         }
@@ -196,6 +197,8 @@ final class AppConfig
         if (file_exists($globalOverride)) {
             return $name;
         }
+
+        return null;
     }
 
     private function isFullPath($path)

@@ -4,12 +4,12 @@ namespace Pushword\Core\Utils;
 
 class HtmlBeautifer
 {
-    public static function removeHtmlComments(string $content)
+    public static function removeHtmlComments(string $content): string
     {
         return preg_replace('/<!--(.|\s)*?-->/', '', $content);
     }
 
-    public static function punctuationBeautifer($text)
+    public static function punctuationBeautifer(string $text): string
     {
         $text = preg_replace('# ([\!\?\:;])([^a-zA-Z]|$)#', '&nbsp;$1$2', $text);
         // avoid to catch tailwind selector inside ""
