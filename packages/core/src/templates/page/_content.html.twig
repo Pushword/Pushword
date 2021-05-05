@@ -26,10 +26,10 @@
 
 
         {% block main_content %}
-            {% if page.toc is not null %}
+            {% if page.toc is not null or page.tocTitle is not null %}
                 {% block toc %}
                     {{ pw(page).mainContent.intro|raw }}
-                    <h3>{{ page.toc_title|default('Nav')}}</h3>
+                    <h3>{{ page.tocTitle|default('Nav')}}</h3>
                     {{ pw(page).mainContent.toc|raw }}
                     {{ pw(page).mainContent.content|raw }}
                     {% endblock %}
