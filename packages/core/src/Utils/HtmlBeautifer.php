@@ -11,9 +11,12 @@ class HtmlBeautifer
 
     public static function punctuationBeautifer($text)
     {
+        $text = preg_replace('# ([\!\?\:;])([^a-zA-Z]|$)#', '&nbsp;$1$2', $text);
+        // avoid to catch tailwind selector inside ""
+
         return str_replace(
-            [' ;', ' :', ' ?', ' !', '« ', ' »', '&laquo; ', ' &raquo;'],
-            ['&nbsp;;', '&nbsp;:', '&nbsp;?', '&nbsp;!', '«&nbsp;', '&nbsp;»', '&laquo;&nbsp;', '&nbsp;&raquo;'],
+            ['« ', ' »', '&laquo; ', ' &raquo;'],
+            ['«&nbsp;', '&nbsp;»', '&laquo;&nbsp;', '&nbsp;&raquo;'],
             $text
         );
     }
