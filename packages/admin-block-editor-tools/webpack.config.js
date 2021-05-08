@@ -9,6 +9,7 @@ module.exports = {
         Embed: "./src/Embed/Embed.js",
         PagesList: "./src/PagesList/PagesList.js",
         Hyperlink: "./src/Hyperlink/Hyperlink.js",
+        Raw: "./src/Raw/Raw.js",
     },
     module: {
         rules: [

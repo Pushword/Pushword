@@ -1,7 +1,7 @@
 import EditorJS from "@editorjs/editorjs";
 import Header from "editorjs-header-with-anchor"; //from "@editorjs/header";
 import List from "@editorjs/list";
-import Raw from "@editorjs/raw";
+import Raw from "@pushword/editorjs-tools/dist/Raw.js";
 import Delimiter from "@editorjs/delimiter";
 import Quote from "@editorjs/quote";
 import Marker from "@editorjs/marker";
