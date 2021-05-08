@@ -21,6 +21,7 @@
         "@codexteam/ajax": "^4.2.0",
         "@editorjs/attaches": "https://github.com/editor-js/attaches.git",
         "@editorjs/editorjs": "^2.19.1",
+        "@editorjs/nested-list": "https://github.com/editor-js/nested-list.git#6b98fdd87ed12d7e53a0a423e52abfc328874713",
         "@editorjs/image": "https://github.com/editor-js/image.git#8e57e95eb0f9f55d3deb648a695c85e0fd5d526b",
         "@editorjs/raw": "https://github.com/editor-js/raw.git#208cbfd7ea1da507173686e1312f95788fb8f209",
         "@vietlongn/editorjs-carousel": "https://github.com/mr8bit/carousel-editorjs.git#1edd9d09b31d5242ac52984ad695a8a62fcdcc20",

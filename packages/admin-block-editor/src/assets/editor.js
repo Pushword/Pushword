@@ -1,6 +1,6 @@
 import EditorJS from "@editorjs/editorjs";
 import Header from "editorjs-header-with-anchor"; //from "@editorjs/header";
-import List from "@editorjs/list";
+import List from "@pushword/editorjs-tools/dist/NestedList.js"; // "@editorjs/nested-list";
 import Raw from "@pushword/editorjs-tools/dist/Raw.js";
 import Delimiter from "@editorjs/delimiter";
 import Quote from "@editorjs/quote";
@@ -20,6 +20,7 @@ import Image from "@pushword/editorjs-tools/dist/Image.js"; // "@editorjs/image"
 import Embed from "@pushword/editorjs-tools/dist/Embed.js"; //"@editorjs/embed";
 import PagesList from "@pushword/editorjs-tools/dist/PagesList.js";
 import Gallery from "@pushword/editorjs-tools/dist/Gallery.js"; //"@vietlongn/editorjs-carousel";
+import NestedList from "@pushword/editorjs-tools/src/NestedList/NestedList";
 //import Button from "@pushword/editorjs-tools/dist/Button.js"; //import Button from "editorjs-button";
 
 /** Was initially design to permit multiple editor.js in one page */
