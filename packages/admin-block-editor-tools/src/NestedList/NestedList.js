@@ -2,6 +2,30 @@ import ListTool from "@editorjs/nested-list/src/index.js";
 //import css from "@editorjs/raw/src/index.css";
 
 export default class NestedList extends ListTool {
+    constructor({ data, config, api, readOnly }) {
+        data = NestedList.importFromList(data);
+        super({ data, config, api, readOnly });
+    }
+
+    /**
+     * Import from @editorjs/list to @editorjs/nested-list data format
+     *
+     */
+    static importFromList(data) {
+        if (
+            !(data && Object.keys(data).length) ||
+            !(data.items && Object.keys(data.items).length) ||
+            typeof data.items[0] !== "string"
+        )
+            return data;
+
+        const items = data.items;
+        data.items = [];
+        items.forEach(function (item) {
+            data.items.push({ content: item, items: [] });
+        });
+        return data;
+    }
     /**
      * Wait for PR https://github.com/editor-js/nested-list/pull/13 to be merged
      * Allow List Tool to be converted to/from other block
