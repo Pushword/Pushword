@@ -57,6 +57,9 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         $datagridMapper->add('name', null, [
             'label' => 'admin.media.name.label',
         ]);
+        $datagridMapper->add('media', null, [
+            'label' => 'admin.media.mediaFile.label',
+        ]);
 
         /*
         $datagridMapper->add('mimeType', ModelAutocompleteFilter::class, [
