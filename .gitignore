@@ -12,6 +12,7 @@ node_modules/
 # dev tool
 .phpunit.result.cache
 .php_cs.cache
+.php-cs-fixer.cache
 coverage
 coverage.xml
 /debug
