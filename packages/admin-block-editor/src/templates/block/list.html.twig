@@ -1,5 +1,28 @@
 <div class="{{ class('prose', page) }}">
-{{ data.style == 'unordered' ? '<ul>' : '</ol>' }}
-{% for item in data.items %}<li>{{ item|raw }}</li>{% endfor %}
+{{ data.style == 'unordered' ? '<ul>' : '<ol>' }}
+{% for item in data.items %}
+    {% if item.content is defined %}
+        <li>
+            {{ item.content|raw }}
+            {{ _self.nested_list(item.items, data.style) }}
+        </li>
+    {% else %}
+        <li>{{ item|raw }}</li>
+    {% endif %}
+{% endfor %}
 {{ data.style == 'unordered' ? '</ul>' : '</ol>' }}
 </div>
+
+
+{% macro nested_list(items, style) %}
+    {% if items %}
+        {{ style == 'unordered' ? '<ul>' : '<ol>' }}
+            {% for item in items %}
+                    <li>
+                        {{ item.content|raw }}
+                        {{ _self.nested_list(item.items, style) }}
+                    </li>
+            {% endfor %}
+            {{ style == 'unordered' ? '</ul>' : '</ol>' }}
+    {% endif %}
+{% endmacro %}
