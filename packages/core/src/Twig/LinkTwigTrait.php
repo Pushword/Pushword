@@ -26,6 +26,7 @@ trait LinkTwigTrait
                 throw new Exception('attr must contain href for render a link.');
             }
             $path = $attr['href'];
+            unset($attr['href']);
         }
 
         if (\is_string($attr)) {
