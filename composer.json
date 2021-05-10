@@ -32,7 +32,7 @@
         "piedweb/facebook-scraper": "^0.0.74",
         "piedweb/linksimprover": "^0.0.8",
         "piedweb/render-html-attributes": "^2.0.1",
-        "piedweb/url-harvester": "^0.0.27",
+        "piedweb/url-harvester": "^0.0.28",
         "sensio/framework-extra-bundle": "^6.1",
         "sonata-project/admin-bundle": "^4.0",
         "sonata-project/doctrine-orm-admin-bundle": "^4.0",
