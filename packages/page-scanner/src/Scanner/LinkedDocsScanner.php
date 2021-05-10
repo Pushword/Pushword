@@ -74,7 +74,7 @@ final class LinkedDocsScanner extends AbstractScanner
         for ($k = 0; $k < $matchesCount; ++$k) {
             $uri = $matches[4][$k] ?: $matches[5][$k];
             $uri = 'data-rot' == $matches[1][$k] ? AppExtension::decrypt($uri) : $uri;
-            if (strpos($uri, '#') === 0) {
+            if (0 === strpos($uri, '#')) {
                 // anchor link
             } else {
                 $uri = strtok($uri, '#'); // remove everything after #
@@ -132,19 +132,21 @@ final class LinkedDocsScanner extends AbstractScanner
             if (! $this->uriExist($uri)) {
                 $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.not_found'));
             }
+
             return;
         }
 
         // external
-        if (0 === strpos($uri, 'http'))
-            {if (true !== ($errorMsg = $this->urlExist($uri))) {
-            $this->addError('<code>'.$uri.'</code> '.$errorMsg);
+        if (0 === strpos($uri, 'http')) {
+            if (true !== ($errorMsg = $this->urlExist($uri))) {
+                $this->addError('<code>'.$uri.'</code> '.$errorMsg);
             }
+
             return;
         }
 
         // anchor/bookmark/jump link
-        if (strpos($uri, '#')===0) {
+        if (0 === strpos($uri, '#')) {
             if (! $this->targetExist(substr($uri, 1))) {
                 $this->addError('<code>'.$uri.'</code> target not found');
             }
@@ -158,9 +160,10 @@ final class LinkedDocsScanner extends AbstractScanner
     private function targetExist($target): bool
     {
         // todo: prefer a dom explorer
-        $regex = '/(id|name)=(["\'])([^\2]* |)*'.preg_quote($target, '/').'( [^\2]*\2|\2)/i';
-        if (preg_match($regex, $this->pageHtml) !== false)
+        $regex = '/ (?:id|name)=(["\'])(?:[^\1]* |)'.preg_quote($target, '/').'(?: [^\1]*\1|\1)/Ui';
+        if (false !== preg_match($regex, $this->pageHtml)) {
             return true;
+        }
 
         return false;
     }

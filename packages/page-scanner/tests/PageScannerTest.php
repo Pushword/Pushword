@@ -30,7 +30,7 @@ class PageScannerTest extends KernelTestCase
 
         $errors = $scanner->scan($this->getPage());
 
-        $this->assertTrue(
+        $this->assertTrue( // TODO
             \is_array($errors) || true === $errors
         );
     }
