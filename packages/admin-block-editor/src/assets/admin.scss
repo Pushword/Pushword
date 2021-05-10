@@ -7,4 +7,10 @@
     min-height: unset !important;
 }
 
+/* heading anchor size */
+.ce-header::after {
+    font-size: 1rem;
+    padding-top: 2rem;
+}
+
 /* purgecss end ignore */
