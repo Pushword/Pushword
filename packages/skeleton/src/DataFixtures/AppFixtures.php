@@ -79,7 +79,8 @@ class AppFixtures extends Fixture
             ->setParentPage($homepage)
             ->setCreatedAt(new DateTime('1 day ago'))
             ->setUpdatedAt(new DateTime('1 day ago'))
-            ->setMainContent(file_get_contents(__DIR__.'/KitchenSink.md'));
+            ->setMainContent(file_get_contents(__DIR__.'/KitchenSink.md'))
+            ->setCustomProperty('tag', 'testTag123');
 
         if ('localhost.dev' == $this->apps->getMainHost()) {
             $ksPage->setHost('localhost.dev');
