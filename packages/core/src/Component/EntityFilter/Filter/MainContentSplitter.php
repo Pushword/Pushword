@@ -54,7 +54,7 @@ class MainContentSplitter extends AbstractFilter
         $this->chapeau = isset($parsedContent[1]) ? $parsedContent[0] : '';
         $this->content = $parsedContent[1] ?? $parsedContent[0];
 
-        if (null !== $this->entity->getCustomProperty('toc')) {
+        if (null !== $this->entity->getCustomProperty('toc') || null !== $this->entity->getCustomProperty('tocTitle')) {
             $this->parseToc();
         }
 
