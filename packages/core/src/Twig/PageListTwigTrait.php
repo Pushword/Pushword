@@ -65,8 +65,8 @@ trait PageListTwigTrait
             return [['parentPage', '=', $this->apps->getCurrentPage()->getId()]];
         }
 
-        if (strpos($search, 'comment:') === 0) {
-            $search = '<!--'.substr($search, strlen('comment:')).'-->';
+        if (0 === strpos($search, 'comment:')) {
+            $search = '<!--'.substr($search, \strlen('comment:')).'-->';
         }
 
         return [['key' => 'mainContent', 'operator' => 'LIKE', 'value' => '%'.$search.'%']];
