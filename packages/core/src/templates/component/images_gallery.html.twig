@@ -20,7 +20,8 @@
                             media_from_string(image, name),
                             gallery_id, page ?? null,
                             image_filter ?? 'thumb',
-                            image_container ?? null
+                            image_container ?? null,
+                            image_otherAttributes ?? {}
                         ) }}</li>
                 {% endfor %}
             </ul>
@@ -28,9 +29,9 @@
 {% endblock %}
 
 
-{% macro gallery_part(image, gallery_id, page = null, default_filter = 'xs', image_container = null) %}
+{% macro gallery_part(image, gallery_id, page = null, default_filter = 'xs', image_container = null, image_otherAttributes = {}) %}
     {% import view('/component/image_helper.html.twig') as helper %}
-    {% set image_html = helper.thumb(image, page, default_filter) %}
+    {% set image_html = helper.thumb(image, page, default_filter, image_otherAttributes) %}
     {% if image_container is same as('') %}{% else %}<div class="{{ image_container|default('mx-auto max-w-[330px]') }}">{% endif %}
     {{ link(image_html,
         image|image('default'),
