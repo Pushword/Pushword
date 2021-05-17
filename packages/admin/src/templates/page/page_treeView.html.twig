@@ -2,7 +2,7 @@
 
 {% macro renderLink(page) %}
     <a href="{{ path('admin_app_page_edit', {'id': page.id}) }}">
-        <span class="badge btn-primary">{{ page.slug }}</span>
+        <span class="badge btn-primary">{{ page.host }}/{{ page.slug }}</span>
         {{ pw(page).h1|striptags }}
     </a>
     ({{ page.updatedAt|date('d/m/y') }}{{ page.metaRobots == 'noindex' ? ', <span class="badge">noindex</span>' : '' }})
