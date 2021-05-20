@@ -43,9 +43,7 @@ return [
     ],
     'sonata_doctrine_orm_admin' => [
         'templates' => [
-            'form' => [
-                0 => '@pwAdmin/Form/sd_form_admin_fields.html.twig',
-            ],
+            //'form' => [ 0 => '@pwAdmin/Form/sd_form_admin_fields.html.twig', ],
         ],
     ],
     'sonata_block' => [
