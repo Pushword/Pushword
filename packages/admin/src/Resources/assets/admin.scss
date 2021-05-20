@@ -5,6 +5,10 @@
 @import "~easymde/src/css/easymde.css";
 @import "~codemirror-spell-checker/src/css/spell-checker.css";
 
+.fa-external-link:before {
+    content: "\f08e" !important;
+}
+
 /* Column Expanding */
 .mainFields,
 .columnFields {
