@@ -41,11 +41,6 @@ return [
             'user_block' => '@pwAdmin/user_block.html.twig',
         ],
     ],
-    'sonata_doctrine_orm_admin' => [
-        'templates' => [
-            //'form' => [ 0 => '@pwAdmin/Form/sd_form_admin_fields.html.twig', ],
-        ],
-    ],
     'sonata_block' => [
         'blocks' => [
             'sonata.admin.block.admin_list' => [
