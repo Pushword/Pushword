@@ -5,7 +5,7 @@
 
 {% block video %}
     {% set is_embed = embed_code is defined and embed_code is not null %}
-        <div class="relative m-3 aspect-w-16 aspect-h-9"
+        <div class="relative m-3 my-6 aspect-w-16 aspect-h-9"
             {% if is_embed %} replaceBy="{{ embed_code|replace({'"': "'"}) }}"{% endif %}
         >
             {% if false ==  is_embed %}<span data-rot="{{ encrypt(url) }}" data-fslightbox>{% endif %}
