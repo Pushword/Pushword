@@ -2,7 +2,7 @@
 
 {% block hero_content_header %}
     <div
-        class="{{ page.hero_wrapper ?? hero_wrapper|default('w-full relative mb-6') }}"
+        class="{{ page.hero_wrapper ?? hero_wrapper|default('w-full relative') }}"
         style="background:{{ page.mainImage.mainColor }}"
         {% if page.video is not null %}replaceBy="{{ url_to_embed(page.video.embed_code|default(page.video))|replace({'"': "'"}) }}"{% endif %}
     >
