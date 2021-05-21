@@ -17,6 +17,7 @@ class Configuration implements ConfigurationInterface
         //'form',
         'conversation_form_message',
         'conversation_form_multistep_message',
+        'conversation_form_ms_message',
         'conversation_form_newsletter',
         'possible_origins',
     ];
@@ -40,6 +41,9 @@ class Configuration implements ConfigurationInterface
                         ->defaultValue(MessageForm::class)
                     ->end()
                     ->scalarNode('conversation_form_multistep_message')
+                        ->defaultValue(MultiStepMessageForm::class)
+                    ->end()
+                    ->scalarNode('conversation_form_ms_message')
                         ->defaultValue(MultiStepMessageForm::class)
                     ->end()
                     ->scalarNode('conversation_form_newsletter')

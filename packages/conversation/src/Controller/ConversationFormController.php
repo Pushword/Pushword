@@ -11,39 +11,39 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
 
-class ConversationFormController extends AbstractController
+final class ConversationFormController extends AbstractController
 {
-    private $translator;
+    private TranslatorInterface $translator;
 
-    protected $form;
+    private $form;
 
-    /** @var array */
-    protected $possibleOrigins = [];
+    private array $possibleOrigins = [];
 
-    /** @var ParameterBagInterface */
-    protected $params;
+    private ParameterBagInterface $params;
 
-    /** @var AppPool */
-    protected $apps;
+    private AppPool $apps;
 
-    /** @var Twig */
-    protected $twig;
+    private Twig $twig;
+
+    private string $env;
 
     public function __construct(
         TranslatorInterface $translator,
         AppPool $apps,
         ParameterBagInterface $params,
-        Twig $twig
+        Twig $twig,
+        string $env
     ) {
         $this->translator = $translator;
         $this->params = $params;
         $this->apps = $apps;
+        $this->env = $env;
         $this->twig = $twig;
     }
 
-    protected function getFormManagerClass($type)
+    private function getFormManagerClass($type)
     {
-        $param = 'conversation_form_'.$type;
+        $param = 'conversation_form_'.str_replace('-', '_', $type);
 
         if (! $this->apps->get()->has($param)) {
             throw new \Exception('`'.$type.'` does\'nt exist (not configured).');
@@ -60,7 +60,7 @@ class ConversationFormController extends AbstractController
     /**
      * Return current form manager depending on `type` (request).
      */
-    protected function getFormManager(string $type, Request $request)
+    private function getFormManager(string $type, Request $request)
     {
         if (null !== $this->form) {
             return $this->form;
@@ -76,12 +76,12 @@ class ConversationFormController extends AbstractController
             $this->get('form.factory'),
             $this->twig,
             $this->get('router'),
-            $this->get('translator'),
+            $this->translator,
             $this->apps
         );
     }
 
-    protected function getPossibleOrigins(Request $request): array
+    private function getPossibleOrigins(Request $request): array
     {
         //$host = $request->getHost();
         $app = $this->apps->get();
@@ -96,10 +96,11 @@ class ConversationFormController extends AbstractController
 
         //$this->possibleOrigins[] = 'https://'.$request->getHost(); // ???
         //$this->possibleOrigins[] = 'http://'.$request->getHost();
-        // just for dev
-        $this->possibleOrigins[] = 'http://'.$request->getHost().':8000';
-        $this->possibleOrigins[] = 'http://'.$request->getHost().':8001';
-        $this->possibleOrigins[] = 'http://'.$request->getHost().':8002';
+        if ('dev' == $this->env) {
+            $this->possibleOrigins[] = 'http://'.$request->getHost().':8000';
+            $this->possibleOrigins[] = 'http://'.$request->getHost().':8001';
+            $this->possibleOrigins[] = 'http://'.$request->getHost().':8002';
+        }
 
         foreach ($app->getHosts() as $host) {
             $this->possibleOrigins[] = 'https://'.$host;
@@ -108,7 +109,7 @@ class ConversationFormController extends AbstractController
         return $this->possibleOrigins;
     }
 
-    protected function initResponse($request): Response
+    private function initResponse($request): Response
     {
         $response = new Response();
 

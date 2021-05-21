@@ -7,6 +7,7 @@ use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\DependencyInjection\Admin\TaggedAdminInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata;
 use Sonata\AdminBundle\Object\MetadataInterface;
@@ -24,6 +25,8 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
     protected $perPageOptions = [16, 250, 1000];
 
     protected $maxPerPage = 1000;
+
+    private $listModes = TaggedAdminInterface::DEFAULT_LIST_MODES;
 
     protected function configureDefaultSortValues(array &$sortValues): void
     {

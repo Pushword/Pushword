@@ -14,6 +14,8 @@ services:
   # as action arguments even if you don't extend any base controller class
   Pushword\Conversation\Controller\:
     autowire: true
+    bind:
+      $env: "%kernel.environment%"
     resource: '../../../src/Controller'
     tags: ['controller.service_arguments']
 
