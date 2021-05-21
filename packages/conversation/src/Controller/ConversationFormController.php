@@ -94,9 +94,9 @@ final class ConversationFormController extends AbstractController
             $this->possibleOrigins = explode(' ', $app->get('conversation_possible_origins'));
         }
 
-        //$this->possibleOrigins[] = 'https://'.$request->getHost(); // ???
-        //$this->possibleOrigins[] = 'http://'.$request->getHost();
         if ('dev' == $this->env) {
+            $this->possibleOrigins[] = 'http://'.$request->getHost();
+            $this->possibleOrigins[] = 'https://'.$request->getHost();
             $this->possibleOrigins[] = 'http://'.$request->getHost().':8000';
             $this->possibleOrigins[] = 'http://'.$request->getHost().':8001';
             $this->possibleOrigins[] = 'http://'.$request->getHost().':8002';
@@ -114,7 +114,7 @@ final class ConversationFormController extends AbstractController
         $response = new Response();
 
         if (! \in_array($request->headers->get('origin'), $this->getPossibleOrigins($request))) {
-            throw new ErrorException('origin sent is not authorized.');
+            throw new ErrorException('origin sent is not authorized'.' ('.$request->headers->get('origin').') '.json_encode($this->getPossibleOrigins($request)).'.');
         }
 
         $response->headers->set('Access-Control-Allow-Credentials', 'true');
