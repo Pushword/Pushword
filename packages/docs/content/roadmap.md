@@ -17,6 +17,9 @@ parent: contribute
 
 ## BugFix
 
+-   **Template Admin Editor** : storing seems not working
+-   **Block editor** weird movement on code block edition
+
 -   **Block** : Gallery is not keeping the good date in file
 -   **Core** / **Block** : when i copy an image with the same URI, it's create a duplicate in the database
 -   **Admin Block Editor Tools** : encrypt mail only encrypt mailto (normal behaviour) => encrypt content too if mail adress is the content

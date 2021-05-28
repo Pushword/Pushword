@@ -9,16 +9,7 @@ export default class Raw extends RawTool {
         console.log(this.defaultHeight);
     }
 
-    onInput() {
-        if (this.resizeDebounce) {
-            clearTimeout(this.resizeDebounce);
-        }
-
-        this.resizeDebounce = setTimeout(() => {
-            this.resize();
-        }, this.defaultHeight);
-        console.log(this.textarea.scrollHeight);
-    }
+    onInput() {}
 
     // Wait for PR  https://github.com/editor-js/raw/pull/27 merged
     static get conversionConfig() {
