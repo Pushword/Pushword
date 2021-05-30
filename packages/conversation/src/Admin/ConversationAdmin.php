@@ -22,9 +22,9 @@ class ConversationAdmin extends AbstractAdmin
         ];
     }
 
-    protected function configureFormFields(FormMapper $formMapper): void
+    protected function configureFormFields(FormMapper $form): void
     {
-        $formMapper->with('admin.conversation.label.conversation', ['class' => 'col-md-8'])
+        $form->with('admin.conversation.label.conversation', ['class' => 'col-md-8'])
             ->add('content', TextareaType::class, [
                 'attr' => ['rows' => 6],
                 'label' => 'admin.conversation.content.label',
@@ -37,7 +37,7 @@ class ConversationAdmin extends AbstractAdmin
             ])
             ->end();
 
-        $formMapper->with('admin.conversation.label.author', ['class' => 'col-md-4'])
+        $form->with('admin.conversation.label.author', ['class' => 'col-md-4'])
             ->add('authorEmail', null, [
                 'label' => 'admin.conversation.authorEmail.label',
             ])
@@ -54,7 +54,7 @@ class ConversationAdmin extends AbstractAdmin
             ])
             ->end();
 
-        $formMapper->with('admin.conversation.label.publishedAt', ['class' => 'col-md-4'])
+        $form->with('admin.conversation.label.publishedAt', ['class' => 'col-md-4'])
             ->add('publishedAt', DateTimePickerType::class, [
                 'required' => false,
                 'label' => '',
@@ -62,19 +62,19 @@ class ConversationAdmin extends AbstractAdmin
             ->end();
     }
 
-    protected function configureDatagridFilters(DatagridMapper $datagridMapper): void
+    protected function configureDatagridFilters(DatagridMapper $filter): void
     {
-        $datagridMapper->add('referring', null, [
+        $filter->add('referring', null, [
             'label' => 'admin.conversation.from.label',
         ]);
-        $datagridMapper->add('authorEmail', null, [
+        $filter->add('authorEmail', null, [
             'label' => 'admin.conversation.authorEmail.label',
         ]);
     }
 
-    protected function configureListFields(ListMapper $listMapper): void
+    protected function configureListFields(ListMapper $list): void
     {
-        $listMapper
+        $list
             ->add('referring', TextType::class)
             ->addIdentifier('content')
             ->add('authorEmail')

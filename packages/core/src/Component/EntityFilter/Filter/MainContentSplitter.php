@@ -38,9 +38,9 @@ class MainContentSplitter extends AbstractFilter
     /**
      * @return self
      */
-    public function apply($string)
+    public function apply($propertyValue)
     {
-        $this->split($string);
+        $this->split($propertyValue);
 
         return $this;
     }

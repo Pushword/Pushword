@@ -15,11 +15,11 @@ class Email extends AbstractFilter
     /**
      * @return string
      */
-    public function apply($string)
+    public function apply($propertyValue)
     {
-        $string = $this->convertEmail($string);
+        $propertyValue = $this->convertEmail($propertyValue);
 
-        return $string;
+        return $propertyValue;
     }
 
     public function convertEmail(string $body): string

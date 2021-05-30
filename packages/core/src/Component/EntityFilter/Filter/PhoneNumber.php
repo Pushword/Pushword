@@ -15,11 +15,11 @@ class PhoneNumber extends AbstractFilter
     /**
      * @return string
      */
-    public function apply($string)
+    public function apply($propertyValue)
     {
-        $string = $this->convertPhoneNumber($string);
+        $propertyValue = $this->convertPhoneNumber($propertyValue);
 
-        return $string;
+        return $propertyValue;
     }
 
     private function convertPhoneNumber(string $body): string

@@ -28,46 +28,46 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
         return method_exists($this->userClass, 'get'.$name);
     }
 
-    protected function configureFormFields(FormMapper $formMapper): void
+    protected function configureFormFields(FormMapper $form): void
     {
         $fields = $this->getFormFields('admin_user_form_fields');
 
-        $formMapper->with('admin.user.label.id', ['class' => 'col-md-6 mainFields']);
+        $form->with('admin.user.label.id', ['class' => 'col-md-6 mainFields']);
         foreach ($fields[0] as $field) {
-            $this->addFormField($field, $formMapper);
+            $this->addFormField($field, $form);
         }
-        $formMapper->end();
+        $form->end();
 
         foreach ($fields[1]  as $k => $block) {
-            $formMapper->with($k, ['class' => 'col-md-3 columnFields']);
+            $form->with($k, ['class' => 'col-md-3 columnFields']);
             foreach ($block as $field) {
-                $this->addFormField($field, $formMapper);
+                $this->addFormField($field, $form);
             }
 
-            $formMapper->end();
+            $form->end();
         }
     }
 
-    protected function configureDatagridFilters(DatagridMapper $datagridMapper): void
+    protected function configureDatagridFilters(DatagridMapper $filter): void
     {
-        $datagridMapper->add('id')
+        $filter->add('id')
             ->add('email')
             //->add('groups')
         ;
     }
 
-    protected function configureListFields(ListMapper $listMapper): void
+    protected function configureListFields(ListMapper $list): void
     {
-        $listMapper
+        $list
             ->add('username', null, [
                 'label' => 'admin.user.username.label',
             ]);
-        $listMapper
+        $list
             ->add('email', null, [
                 'label' => 'admin.user.email.label',
             ]);
         if ($this->exists('firstname')) {
-            $listMapper->add(
+            $list->add(
                 'firstname',
                 TextType::class,
                 [
@@ -77,7 +77,7 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
             );
         }
         if ($this->exists('lastname')) {
-            $listMapper->add(
+            $list->add(
                 'lastname',
                 TextType::class,
                 [
@@ -87,11 +87,11 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
             );
         }
 
-        $listMapper->add('roles[0]', null, [
+        $list->add('roles[0]', null, [
             'label' => 'admin.user.role.label',
         ]);
 
-        $listMapper
+        $list
             ->add('createdAt', null, [
                 'editable' => true,
                 'label' => 'admin.user.createdAt.label',

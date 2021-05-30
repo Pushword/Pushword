@@ -55,25 +55,25 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         return method_exists($this->pageClass, 'get'.$name);
     }
 
-    protected function configureFormFields(FormMapper $formMapper): void
+    protected function configureFormFields(FormMapper $form): void
     {
         $fields = $this->getFormFields();
 
-        $formMapper->with('admin.page.mainContent.label', ['class' => 'col-md-9 mainFields']);
+        $form->with('admin.page.mainContent.label', ['class' => 'col-md-9 mainFields']);
         foreach ($fields[0] as $field) {
-            $this->addFormField($field, $formMapper);
+            $this->addFormField($field, $form);
         }
-        $formMapper->end();
+        $form->end();
 
         foreach ($fields[1] as $k => $block) {
             $fields = $block['fields'] ?? $block;
             $class = isset($block['expand']) ? 'expand' : '';
-            $formMapper->with($k, ['class' => 'col-md-3 columnFields '.$class, 'label' => $k]);
+            $form->with($k, ['class' => 'col-md-3 columnFields '.$class, 'label' => $k]);
             foreach ($fields as $field) {
-                $this->addFormField($field, $formMapper);
+                $this->addFormField($field, $form);
             }
 
-            $formMapper->end();
+            $form->end();
         }
     }
 
@@ -86,33 +86,33 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         $object->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
     }
 
-    protected function configureDatagridFilters(DatagridMapper $formMapper): void
+    protected function configureDatagridFilters(DatagridMapper $filter): void
     {
-        $formMapper->add('locale', null, ['label' => 'admin.page.locale.label']);
+        $filter->add('locale', null, ['label' => 'admin.page.locale.label']);
 
         if (\count($this->getApps()->getHosts()) > 1) {
-            //$formMapper->add('host', null, ['label' => 'admin.page.host.label']);
-            (new HostField($this))->datagridMapper($formMapper);
+            //$filter->add('host', null, ['label' => 'admin.page.host.label']);
+            (new HostField($this))->datagridMapper($filter);
         }
 
-        $formMapper->add('h1', null, ['label' => 'admin.page.h1.label']);
+        $filter->add('h1', null, ['label' => 'admin.page.h1.label']);
 
-        $formMapper->add('mainContent', null, ['label' => 'admin.page.mainContent.label']);
+        $filter->add('mainContent', null, ['label' => 'admin.page.mainContent.label']);
 
-        $formMapper->add('slug', null, ['label' => 'admin.page.slug.label']);
+        $filter->add('slug', null, ['label' => 'admin.page.slug.label']);
 
-        $formMapper->add('title', null, ['label' => 'admin.page.title.label']);
+        $filter->add('title', null, ['label' => 'admin.page.title.label']);
 
         if ($this->exists('name')) {
-            $formMapper->add('name', null, ['label' => 'admin.page.name.label']);
+            $filter->add('name', null, ['label' => 'admin.page.name.label']);
         }
 
         if ($this->exists('parentPage')) {
-            $formMapper->add('parentPage', null, ['label' => 'admin.page.parentPage.label']);
+            $filter->add('parentPage', null, ['label' => 'admin.page.parentPage.label']);
         }
 
         if ($this->exists('metaRobots')) {
-            $formMapper->add('metaRobots', null, [
+            $filter->add('metaRobots', null, [
                 'choices' => [
                     'admin.page.metaRobots.choice.noIndex' => 'noindex',
                 ],
@@ -121,22 +121,22 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         }
     }
 
-    public function preUpdate(object $page): void
+    public function preUpdate(object $object): void
     {
-        $page->setUpdatedAt(new \Datetime());
+        $object->setUpdatedAt(new \Datetime());
     }
 
-    protected function configureListFields(ListMapper $listMapper): void
+    protected function configureListFields(ListMapper $list): void
     {
-        $listMapper->addIdentifier('h1', 'html', [
+        $list->addIdentifier('h1', 'html', [
             'label' => 'admin.page.title.label',
             'template' => '@pwAdmin/page/page_list_titleField.html.twig',
         ]);
-        $listMapper->add('updatedAt', null, [
+        $list->add('updatedAt', null, [
             'format' => 'd/m à H:m',
             'label' => 'admin.page.updatedAt.label',
         ]);
-        $listMapper->add('_actions', null, [
+        $list->add('_actions', null, [
             'actions' => [
                 'edit' => [],
                 'show' => [],
@@ -148,15 +148,15 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         ]);
     }
 
-    public function getObjectMetadata($page): MetadataInterface
+    public function getObjectMetadata(object $object): MetadataInterface
     {
-        $media = $page->getMainImage();
+        $media = $object->getMainImage();
         if ($media && $this->imageManager->isImage($media)) {
             $thumb = $this->imageManager->getBrowserPath($media, 'thumb');
         } else {
             $thumb = self::$thumb;
         }
 
-        return new Metadata(strip_tags($page->getName(true)), null, $thumb);
+        return new Metadata(strip_tags($object->getName(true)), null, $thumb);
     }
 }

@@ -11,10 +11,11 @@ class Name extends AbstractFilter
     use RequiredManagerTrait;
 
     /** @return ?string */
-    public function apply($name)
+    public function apply($propertyValue)
     {
-        $names = explode("\n", $name);
+        $names = explode("\n", $propertyValue);
 
-        return $names[0] ? trim($names[0]) : (null !== $name && '' !== $name ? $name : $this->entityFilterManager->getH1());
+        return $names[0] ? trim($names[0])
+            : (null !== $propertyValue && '' !== $propertyValue ? $propertyValue : $this->entityFilterManager->getH1());
     }
 }

@@ -25,21 +25,21 @@ class Unprose extends AbstractFilter
     /**
      * @return string
      */
-    public function apply($string)
+    public function apply($propertyValue)
     {
         $closeEncryptedTag = $this->encryptTag('div');
         $openEncryptedTag = $this->encryptTag('/div');
 
         // Remove blank prose added (eg: between to apply unprose ?)
-        //$string = preg_replace('/('.preg_quote($closeEncryptedTag, '/').'\s*'.preg_quote($openEncryptedTag, '/').')/', '', $string);
+        //$propertyValue = preg_replace('/('.preg_quote($closeEncryptedTag, '/').'\s*'.preg_quote($openEncryptedTag, '/').')/', '', $propertyValue);
 
-        $string = str_replace(
+        $propertyValue = str_replace(
             [$closeEncryptedTag, $openEncryptedTag],
             ['</div>', '<div class="'.$this->getClass($this->entity, 'prose').'">'],
-            $string
+            $propertyValue
         );
 
-        return $string;
+        return $propertyValue;
     }
 
     /*

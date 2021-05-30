@@ -14,11 +14,11 @@ class Twig extends AbstractFilter
     /**
      * @return string
      */
-    public function apply($string)
+    public function apply($propertyValue)
     {
-        $string = $this->render($string);
+        $propertyValue = $this->render($propertyValue);
 
-        return $string;
+        return $propertyValue;
     }
 
     protected function render(string $string): string

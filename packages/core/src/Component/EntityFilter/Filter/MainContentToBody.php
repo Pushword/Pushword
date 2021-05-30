@@ -9,9 +9,9 @@ class MainContentToBody extends AbstractFilter
     /**
      * @return self
      */
-    public function apply($string)
+    public function apply($propertyValue)
     {
-        $this->body = $string;
+        $this->body = $propertyValue;
 
         return $this;
     }
