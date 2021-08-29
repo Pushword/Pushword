@@ -1,6 +1,6 @@
 security:
   enable_authenticator_manager: true
-  encoders:
+  password_hashers:
     '%pw.entity_user%':
       algorithm: auto
 

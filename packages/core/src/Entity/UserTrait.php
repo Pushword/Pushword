@@ -199,6 +199,11 @@ trait UserTrait
         return null !== $this->username ? $this->username : $this->email;
     }
 
+    public function getUserIdentifier()
+    {
+        return $this->getUsername();
+    }
+
     /**
      * Set the value of username.
      *

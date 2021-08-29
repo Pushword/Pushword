@@ -44,7 +44,7 @@ class PageListener
             return;
         }
 
-        if ($page->getSlug() && $user->getUsername()) {
+        if ($page->getSlug() && $user->getUserIdentifier()) {
             return;
         } // Remove this when fix bug, only to avoid psalm shouting
 

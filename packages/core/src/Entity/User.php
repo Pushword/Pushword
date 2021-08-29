@@ -5,6 +5,7 @@ namespace Pushword\Core\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface as sfUserInterface;
 
 /**
@@ -14,7 +15,7 @@ use Symfony\Component\Security\Core\User\UserInterface as sfUserInterface;
  *     message="user.email.already_used"
  * )
  */
-class User implements UserInterface, sfUserInterface
+class User implements UserInterface, sfUserInterface, PasswordAuthenticatedUserInterface
 {
     use CustomPropertiesTrait;
     use UserTrait;

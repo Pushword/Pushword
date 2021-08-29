@@ -27,7 +27,8 @@ class ConversationFormControllerTest extends KernelTestCase
     public function getService(string $service)
     {
         self::bootKernel();
+        $container = static::getContainer();
 
-        return self::$kernel->getContainer()->get($service);
+        return $container->get($service);
     }
 }

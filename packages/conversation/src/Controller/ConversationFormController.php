@@ -6,8 +6,11 @@ use ErrorException;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
 
@@ -25,6 +28,12 @@ final class ConversationFormController extends AbstractController
 
     private Twig $twig;
 
+    private FormFactoryInterface $formFactory;
+
+    private TokenStorageInterface $tokenStorage;
+
+    private RouterInterface $router;
+
     private string $env;
 
     public function __construct(
@@ -32,6 +41,9 @@ final class ConversationFormController extends AbstractController
         AppPool $apps,
         ParameterBagInterface $params,
         Twig $twig,
+        FormFactoryInterface $formFactory,
+        TokenStorageInterface $tokenStorage,
+        RouterInterface $router,
         string $env
     ) {
         $this->translator = $translator;
@@ -39,6 +51,9 @@ final class ConversationFormController extends AbstractController
         $this->apps = $apps;
         $this->env = $env;
         $this->twig = $twig;
+        $this->formFactory = $formFactory;
+        $this->tokenStorage = $tokenStorage;
+        $this->router = $router;
     }
 
     private function getFormManagerClass($type)
@@ -72,10 +87,10 @@ final class ConversationFormController extends AbstractController
             $this->params->get('pw.conversation.entity_message'),
             $request,
             $this->get('doctrine'),
-            $this->get('security.token_storage'),
-            $this->get('form.factory'),
+            $this->tokenStorage,
+            $this->formFactory,
             $this->twig,
-            $this->get('router'),
+            $this->router,
             $this->translator,
             $this->apps
         );
