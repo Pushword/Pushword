@@ -1,4 +1,5 @@
 security:
+  enable_authenticator_manager: true
   encoders:
     '%pw.entity_user%':
       algorithm: auto
@@ -31,14 +32,12 @@ security:
     dev:
       pattern: ^/(_(profiler|wdt)|css|images|js)/
       security: false
-    default:
-      anonymous: lazy
+    main:
+      lazy: true
       http_basic:
         realm: Secured Area
-      guard:
-        authenticators:
-          - Pushword\Core\Security\UserAuthenticator
-        entry_point: Pushword\Core\Security\UserAuthenticator
+      custom_authenticator: Pushword\Core\Security\LoginFormAuthenticator
+      entry_point: Pushword\Core\Security\LoginFormAuthenticator
       logout:
         path: pushword_logout
         # where to redirect after logout

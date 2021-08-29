@@ -130,7 +130,7 @@
         "assets": "composer assets-core && composer assets-admin",
         "assets-core": "cd packages/core && yarn && yarn build && cd ../",
         "assets-admin": "cd packages/admin && yarn && cd ../../ && php ./packages/admin/src/Resources/assets/easymde-hack && cd packages/admin && yarn build",
-        "assets-docs": "cd packages/docs && yarn && yarn upgrade && yarn build",
+        "assets-docs": "cd packages/docs/assets && yarn && yarn upgrade && yarn build",
         "generate-docs": "cd packages/skeleton && php bin/console pushword:flat:import pushword.piedweb.com && php bin/console pushword:static:generate pushword.piedweb.com",
         "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish",
         "reset-skeleton": "cd packages/skeleton && rm var/app.db && rm -rf media && cp -r media~ media && php bin/console doctrine:schema:create -q && php bin/console doctrine:fixtures:load -q && php bin/console pushword:image:cache -q && php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN"
