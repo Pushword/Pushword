@@ -2,9 +2,10 @@
 
 namespace Pushword\Core\Entity;
 
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface as BaseUserInterface;
 
-interface UserInterface extends BaseUserInterface
+interface UserInterface extends PasswordAuthenticatedUserInterface, BaseUserInterface
 {
     public const ROLE_DEFAULT = 'ROLE_USER';
 

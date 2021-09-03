@@ -27,7 +27,7 @@ class VersionController extends AbstractController
     /** @required */
     public function setParams(ParameterBagInterface $params): void
     {
-        $this->pageClass = $params->get('pw.entity_page');
+        $this->pageClass = (string) $params->get('pw.entity_page');
     }
 
     /**

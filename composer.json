@@ -78,7 +78,7 @@
         "symfony/test-pack": "^1.0",
         "symplify/monorepo-builder": "^9.0",
         "symplify/vendor-patches": "^9.0",
-        "vimeo/psalm": "^4.3"
+        "vimeo/psalm": "^4"
     },
     "extra": {
         "branch-alias": {

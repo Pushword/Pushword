@@ -69,7 +69,7 @@ abstract class AbstractGenerator
         $this->router = $router;
         $this->router->setUseCustomHostPath(false);
         $this->apps = $apps;
-        $this->publicDir = $params->get('pw.public_dir');
+        $this->publicDir = (string) $params->get('pw.public_dir');
         $this->parser = HtmlCompressor::construct();
 
         if (! method_exists($this->filesystem, 'dumpFile')) {

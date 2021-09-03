@@ -44,8 +44,8 @@ class AppFixtures extends Fixture
         ];
         foreach ($medias as $name => $file) {
             $media[$name] = (new Media())
-            ->setProjectDir($this->params->get('kernel.project_dir'))
-            ->setStoreIn($this->params->get('pw.media_dir'))
+            ->setProjectDir((string) $this->params->get('kernel.project_dir'))
+            ->setStoreIn((string) $this->params->get('pw.media_dir'))
             ->setMimeType('image/'.substr($file, -3))
             ->setSize(2)
             ->setDimensions([1000, 1000])

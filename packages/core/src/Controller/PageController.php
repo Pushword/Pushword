@@ -166,7 +166,7 @@ final class PageController extends AbstractController
 
         $pages = $this->getPageRepository()->getIndexablePagesQuery(
             $this->apps->getMainHost(),
-            $requestedLocale ?: $this->params->get('kernel.default_locale'),
+            $requestedLocale ?: (string) $this->params->get('kernel.default_locale'),
             $limit
         )->getQuery()->getResult();
 
@@ -178,7 +178,7 @@ final class PageController extends AbstractController
      */
     private function getPageRepository()
     {
-        return Repository::getPageRepository($this->em, $this->params->get('pw.entity_page'));
+        return Repository::getPageRepository($this->em, (string) $this->params->get('pw.entity_page'));
     }
 
     private function setApp($host): void

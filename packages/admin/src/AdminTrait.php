@@ -7,6 +7,7 @@ use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Service\ImageManager;
 use Sonata\AdminBundle\Form\FormMapper;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -69,6 +70,8 @@ trait AdminTrait
         $this->eventDispatcher = $eventDispatcher;
     }
 
+    abstract public function getRequest(): Request;
+
     /**
      * Must be a cookie to check before to do that
      * If you click one time to list, stay in liste mode.
@@ -77,8 +80,8 @@ trait AdminTrait
      * */
     protected function setMosaicDefaultListMode(): self
     {
-        if (property_exists($this, 'request') && null !== $this->request) {
-            if ($mode = $this->request->query->get('_list_mode')) {
+        if ($this->getRequest()) {
+            if ($mode = (string) $this->getRequest()->query->get('_list_mode')) {
                 $this->setListMode($mode);
             } else {
                 $this->setListMode('mosaic');
