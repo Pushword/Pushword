@@ -21,7 +21,8 @@
         "sass-loader": "^10.1.0",
         "simple-jekyll-search": "^1.9.1",
         "tailwindcss": "^2.1.0",
-        "tailwindcss-hero-patterns": "^0.0.1"
+        "tailwindcss-hero-patterns": "^0.0.1",
+        "webpack-watch-files-plugin": "^1.1.0"
     },
     "license": "UNLICENSED",
     "private": true,

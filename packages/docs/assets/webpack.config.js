@@ -1,22 +1,22 @@
 var Encore = require("@symfony/webpack-encore");
 const tailwindcss = require("tailwindcss");
+const WatchExternalFilesPlugin = require("webpack-watch-files-plugin").default;
 
-const purgecss = require("@fullhuman/postcss-purgecss")({
-    mode: "all",
-    content: [
-        "./../../core/src/templates/**/*.html.twig",
-        "./../../core/src/templates/*.html.twig",
-        "./../../admin/src/templates/*.html.twig",
-        "./../../skeleton/templates/pushword.piedweb.com/*.html.twig",
-        "./../../skeleton/templates/pushword.piedweb.com/**/*.html.twig",
-        "./../content/*.md",
-        "./*.js",
-        "./../content/**/*.md",
-        "./../../../docs/*.html",
-        "./../../../docs/**/*.html",
-    ],
-    defaultExtractor: (content) => content.match(/[\w-/:]+(?<!:)/g) || [],
-});
+const watchFiles = [
+    "./../../core/src/templates/**/*.html.twig",
+    "./../../core/src/templates/*.html.twig",
+    "./../../admin/src/templates/*.html.twig",
+    "./../../skeleton/templates/pushword.piedweb.com/*.html.twig",
+    "./../../skeleton/templates/pushword.piedweb.com/**/*.html.twig",
+    "./../content/*.md",
+    "./*.js",
+    "./../content/**/*.md",
+    "./../../../docs/*.html",
+    "./../../../docs/**/*.html",
+];
+
+var tailwindConfig = require("./tailwind.config.js");
+tailwindConfig.purge = watchFiles;
 
 Encore.setOutputPath("./../../skeleton/public/assets/")
     .setPublicPath("/assets")
@@ -24,13 +24,15 @@ Encore.setOutputPath("./../../skeleton/public/assets/")
     .enableSassLoader()
     .enableSourceMaps(false)
     .enableVersioning(false)
+    .addPlugin(
+        new WatchExternalFilesPlugin({
+            files: watchFiles,
+        })
+    )
     .enablePostCssLoader((options) => {
         options.postcssOptions = {
-            plugins: [require("postcss-import"), tailwindcss("./tailwind.config.js"), require("autoprefixer")],
+            plugins: [require("postcss-import"), tailwindcss(tailwindConfig), require("autoprefixer")],
         };
-        if (Encore.isProduction()) {
-            options.postcssOptions.plugins.push(purgecss);
-        }
     })
     .disableSingleRuntimeChunk()
     .copyFiles({
