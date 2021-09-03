@@ -1,3 +1,4 @@
+#disable till https://github.com/FriendsOfPHP/PHP-CS-Fixer/pull/5938/commits/aeff4e3c4ed9cee172721c129ed90937adcd6b7a is released
 name: Check & fix styling
 
 on: [push]

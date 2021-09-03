@@ -28,7 +28,7 @@ class MediaGenerator extends AbstractGenerator
             $this->filesystem->mkdir($staticMediaDir);
         }
 
-        $dir = getdir($mediaDir);
+        $dir = dir($mediaDir);
         while (false !== $entry = $dir->read()) {
             if ('.' == $entry || '..' == $entry) {
                 continue;
