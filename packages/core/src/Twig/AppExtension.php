@@ -127,7 +127,7 @@ class AppExtension extends AbstractExtension
         return 0 === strpos($media, '/media/default/') || false === strpos($media, '/');
     }
 
-    public static function normalizeMediaPath(string $src) : string
+    public static function normalizeMediaPath(string $src): string
     {
         if (preg_match('/^[a-z-]$/', $src)) {
             return '/media/default/'.$src.'.jpg';
@@ -144,7 +144,7 @@ class AppExtension extends AbstractExtension
      */
     public function transformStringToMedia($src, string $name = ''): MediaInterface
     {
-        $src = is_string($src) ? self::normalizeMediaPath($src) : $src;
+        $src = \is_string($src) ? self::normalizeMediaPath($src) : $src;
 
         if (\is_string($src) && self::isInternalImage($src)) {
             $media = Media::loadFromSrc($src);

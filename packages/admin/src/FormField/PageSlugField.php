@@ -30,7 +30,7 @@ class PageSlugField extends AbstractField
                         $(".slug_disabled").first().removeAttr("disabled");
                         $(".slug_disabled").first().focus();
                         $("#disabledLinkSlug").first().remove();
-                    }</script> <small><a href="'.$liveUrl.'" target=_blank><small><i class="fa fa-link"></i></small> '.\symfony\component\string\u($url)->truncate(30, '…').'</a></small></div>';
+                    }</script> <small><a href="'.$liveUrl.'"><small><i class="fa fa-link"></i></small> '.\symfony\component\string\u($url)->truncate(30, '…').'</a></small></div>';
     }
 
     public function formField(FormMapper $formMapper): FormMapper

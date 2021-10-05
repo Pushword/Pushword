@@ -21,7 +21,7 @@ class UserListener
      */
     public function preUpdate(UserInterface $user, PreUpdateEventArgs $event = null)
     {
-        if (\strlen($user->getPlainPassword()) > 0) {
+        if ('' !== $user->getPlainPassword()) {
             $user->setPassword($this->passwordEncoder->hashPassword($user, $user->getPlainPassword()));
             $user->eraseCredentials();
         }
