@@ -24,6 +24,7 @@ class MediaGenerator extends AbstractGenerator
 
         $symlink = $this->mustSymlink();
 
+        // TODO : fix when media symlink exist and then, we want to copy
         if (! file_exists($staticMediaDir)) {
             $this->filesystem->mkdir($staticMediaDir);
         }
