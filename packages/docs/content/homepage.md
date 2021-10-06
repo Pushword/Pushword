@@ -195,12 +195,6 @@ Unzip it on a classic Apache/PHP server and play.
 <div class="pt-3 pb-12 prose dark:prose-light">
 {% apply markdown %}
 And many more ({{ link('see dependencies', 'https://github.com/Pushword/Pushword/blob/main/composer.json') }}).
-
-### **You are heavily using Pushword CMS and making money with it ?**
-
-Don't forget to <strong>sponsor</strong> package maintainer.
-
-It will **reward their works** and maybe help to ensure long term support and keep **best feature up to date and open source**.
 {% endapply %}
 
 </div>
