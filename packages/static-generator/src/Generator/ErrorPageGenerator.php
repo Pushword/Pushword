@@ -21,12 +21,13 @@ class ErrorPageGenerator extends AbstractGenerator
         }
     }
 
+    // TODO : make it usefull when using a .htaccess
     protected function generateErrorPage($locale = null, $uri = '404.html')
     {
         if (null !== $locale) {
-            $request = new Request();
+            $request = $this->requestStack->getCurrentRequest();
             $request->setLocale($locale);
-            $this->requesStack->push($request);
+            $this->requestStack->push($request);
         }
 
         $dump = $this->parser->compress($this->twig->render('@Twig/Exception/error.html.twig'));

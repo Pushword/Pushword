@@ -6,7 +6,7 @@ const watchFiles = [
     "./../vendor/pushword/core/src/templates/**/*.html.twig",
     "./../vendor/pushword/core/src/templates/*.html.twig",
     "./../vendor/pushword/conversation/src/templates/*.html.twig",
-    "./../vendor/pushword/admin-block-editor/src/templates/block/*.html.twig",
+    "./../vendor/pushword/admin-block-editor/src/templates/page/*.html.twig",
     "./../templates/*.html.twig",
     "./../templates/**/*.html.twig",
     "./../templates/**/**/*.html.twig",

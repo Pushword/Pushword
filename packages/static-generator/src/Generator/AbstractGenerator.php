@@ -40,7 +40,7 @@ abstract class AbstractGenerator
     /** @var string */
     protected $staticDir;
 
-    protected RequestStack $requesStack;
+    protected RequestStack $requestStack;
 
     protected TranslatorInterface $translator;
 
@@ -54,7 +54,7 @@ abstract class AbstractGenerator
         PageRepositoryInterface $pageRepository,
         Twig $twig,
         ParameterBagInterface $params,
-        RequestStack $requesStack,
+        RequestStack $requestStack,
         TranslatorInterface $translator,
         RouterInterface $router,
         KernelInterface $kernel,
@@ -64,7 +64,7 @@ abstract class AbstractGenerator
         $this->filesystem = new Filesystem();
         $this->twig = $twig;
         $this->params = $params;
-        $this->requesStack = $requesStack;
+        $this->requestStack = $requestStack;
         $this->translator = $translator;
         $this->router = $router;
         $this->router->setUseCustomHostPath(false);

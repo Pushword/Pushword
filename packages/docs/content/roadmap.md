@@ -25,6 +25,7 @@ parent: contribute
 -   **Admin Block Editor Tools** : encrypt mail only encrypt mailto (normal behaviour) => encrypt content too if mail adress is the content
 -   **Admin** : Restore Admin: Page Tree https://github.com/sonata-project/SonataAdminBundle/issues/7035
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
+-   **Static-Generator** : Make ErrorPageGenerator consistent with htaccess (on htaccess, filter by beginning url to return the correct one ?!)
 
 ## Feature
 
