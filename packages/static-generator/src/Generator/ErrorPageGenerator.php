@@ -2,8 +2,6 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
-use Symfony\Component\HttpFoundation\Request;
-
 class ErrorPageGenerator extends AbstractGenerator
 {
     public function generate(?string $host = null): void
