@@ -4,6 +4,7 @@ namespace Pushword\Core\Component\App;
 
 use Exception;
 use Pushword\Core\Entity\PageInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Twig\Environment as Twig;
 
 final class AppPool
@@ -20,12 +21,16 @@ final class AppPool
      *  @var PageInterface */
     private $currentPage;
 
-    public function __construct(array $rawApps, Twig $twig)
+    private ParameterBagInterface $params;
+
+    public function __construct(array $rawApps, Twig $twig, ParameterBagInterface $params)
     {
+        $this->params = $params;
+
         $firstHost = array_key_first($rawApps);
 
         foreach ($rawApps as $mainHost => $app) {
-            $this->apps[$mainHost] = new AppConfig($app, $firstHost == $mainHost ? true : false);
+            $this->apps[$mainHost] = new AppConfig($app, $firstHost == $mainHost ? true : false, $this->params);
             $this->apps[$mainHost]->setTwig($twig);
         }
 

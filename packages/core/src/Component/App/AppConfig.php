@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Component\App;
 
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Twig\Environment as Twig;
 
 final class AppConfig
@@ -30,6 +31,8 @@ final class AppConfig
 
     private Twig $twig;
 
+    private ParameterBagInterface $params;
+
     private static function normalizePropertyName(string $string): string
     {
         $string = str_replace('_', '', ucwords(strtolower($string), '_'));
@@ -38,8 +41,10 @@ final class AppConfig
         return $string;
     }
 
-    public function __construct($properties, $isFirstApp = false)
+    public function __construct($properties, $isFirstApp = false, ParameterBagInterface $params)
     {
+        $this->params = $params;
+
         foreach ($properties as $prop => $value) {
             $prop = static::normalizePropertyName($prop);
             $this->$prop = $value;
@@ -152,6 +157,23 @@ final class AppConfig
     public function getAssets(): array
     {
         return $this->assets;
+    }
+
+    public function getAssetsVersionned(): array
+    {
+        $assetsVersionned = ['javascripts' => [], 'stylesheets' => []];
+        foreach (['javascripts', 'stylesheets'] as $row) {
+            if (! isset($this->assets[$row])) {
+                continue;
+            }
+            foreach ($this->assets[$row] as $key => $asset) {
+                $filepath = $this->params->get('pw.public_dir').$asset;
+                $assetsVersionned[$row][$key] = $asset.
+                    (file_exists($filepath) ? '?'.substr(md5(filemtime($filepath).$filepath), 2, 9) : '');
+            }
+        }
+
+        return $assetsVersionned;
     }
 
     /**

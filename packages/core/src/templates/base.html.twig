@@ -25,7 +25,7 @@
 
 
         {% block css %}
-            {% set stylesheets = apps.get().get('assets').stylesheets %}
+            {% set stylesheets = apps.get().get('assetsVersionned').stylesheets %}
             {% for stylesheet in stylesheets %}
                 <link rel="stylesheet" href="{{ stylesheet }}">
             {% endfor %}
@@ -65,7 +65,7 @@
         {% block body %}{% endblock %}
 
         {% block script %}
-            {% set javascripts = apps.get().get('assets').javascripts %}
+            {% set javascripts = apps.get().get('assetsVersionned').javascripts %}
             {% for javascript in javascripts %}
                 <script src="{{ javascript }}"></script>
             {% endfor %}
