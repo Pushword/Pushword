@@ -2,6 +2,8 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
+use Symfony\Component\HttpFoundation\Request;
+
 class ErrorPageGenerator extends AbstractGenerator
 {
     public function generate(?string $host = null): void
@@ -19,11 +21,14 @@ class ErrorPageGenerator extends AbstractGenerator
         }
     }
 
-    // TODO : make it usefull when using a .htaccess
+    // TODO : make it useful when using a .htaccess else disable it
     protected function generateErrorPage($locale = null, $uri = '404.html')
     {
         if (null !== $locale) {
             $request = $this->requestStack->getCurrentRequest();
+            if (null === $request) {
+                $request = new Request();
+            }
             $request->setLocale($locale);
             $this->requestStack->push($request);
         }

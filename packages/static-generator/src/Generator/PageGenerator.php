@@ -37,7 +37,7 @@ class PageGenerator extends AbstractGenerator
     {
         $slug = '' == $page->getRealSlug() ? 'index' : $page->getRealSlug();
 
-        if (pathinfo($page->getRealSlug(), \PATHINFO_EXTENSION)) {
+        if (preg_match('/.+\.(json|xml)$/i', $page->getRealSlug())) {
             return $this->getStaticDir().'/'.$slug;
         }
 
