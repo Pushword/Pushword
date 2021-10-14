@@ -81,6 +81,7 @@ final class LinkedDocsScanner extends AbstractScanner
             }
             $uri = $uri.($matches[4][$k] ? '' : '#(encrypt)'); // not elegant but permit to remember it's an encrypted link
             $uri = $this->removeBase($uri);
+            $uri = $this->removeParameters($uri);
             if (self::isMailtoOrTelLink($uri) && 'data-rot' != $matches[1][$k]) {
                 $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.encrypt_mail'));
             } elseif ('' !== $uri && self::isWebLink($uri)) {
@@ -98,6 +99,19 @@ final class LinkedDocsScanner extends AbstractScanner
         }
 
         return false;
+    }
+
+    private function removeParameters($url)
+    {
+        if (strpos($url, '?') !== false) {
+            $url = preg_replace('/(\?.*)$/', '', $url);
+        }
+
+        if (strpos($url, '#') !== false) {
+            $url = preg_replace('/(#.*)$/', '', $url);
+        }
+
+        return $url;
     }
 
     private function removeBase($url)
