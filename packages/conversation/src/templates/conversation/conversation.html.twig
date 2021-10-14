@@ -1,4 +1,4 @@
-{% form_theme conversation 'form_div_layout.html.twig' %}
+{% form_theme conversation 'tailwind_2_layout.html.twig' %}
 
 
 <div class="w-full mt-4 live-form">
@@ -18,7 +18,7 @@
         {% block content %}
             {% if conversation.content is defined %}
             <div class="flex flex-wrap mb-3">
-                <div class="pl-4 pr-4 mb-4 lg:w-full step">
+                <div class="mb-4 w-full step">
                 {{ form_row(conversation.content, {
 
                 label_attr: {class: 'sr-only'},
@@ -26,8 +26,8 @@
                     'placeholder': 'Message',
                     onfocus: "this.placeholder = ''",
                     onblur: "this.placeholder = 'Message'",
-                    rows: 5,
-
+                    rows: 8,
+                    class: 'bg-white border-2 border-gray-100 rounded w-full py-2 px-4 text-gray-900 focus:outline-none rounded focus:border-primary focus:ring-primary'
                 }
                 }) }}
                 {{ form_errors(conversation.content) }}
@@ -39,7 +39,7 @@
         {% block authorName %}
             {% if conversation.authorName is defined %}
             <div class="flex flex-wrap mb-3">
-                <div class="relative flex-1 flex-grow max-w-full px-4 pl-4 pr-4 mb-4 md:w-1/2">
+                <div class="md:w-3/4">
                     {{ form_row(conversation.authorName, {
                     label_attr: {class: 'sr-only'},
                     attr: {
@@ -48,6 +48,7 @@
                         onblur: "this.placeholder = '"~'conversation.name.placeholder'|trans~"'",
                         required: "text",
                         type: "text",
+                        class: 'bg-white border-2 border-gray-100 rounded w-full py-2 px-4 text-gray-900 focus:outline-none rounded focus:border-primary focus:ring-primary'
                     }
                 }) }}
                 {{ form_errors(conversation.authorName) }}
@@ -59,7 +60,7 @@
         {% block authorEmail %}
             {% if conversation.authorEmail is defined %}
             <div class="flex flex-wrap mb-3">
-                <div class="pl-4 pr-4 md:w-1/2">
+                <div class="md:w-3/4">
                     {{ form_row(conversation.authorEmail, {
                     label_attr: {class: 'sr-only', style: 'display:none'},
                     attr: {
@@ -68,7 +69,8 @@
                         onblur: "this.placeholder = '"~'conversation.email.placeholder'|trans~"'",
                         required: "text",
                         pattern: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$",
-                        type: "email"
+                        type: "email",
+                        class: 'bg-white border-2 border-gray-100 rounded w-full py-2 px-4 text-gray-900 focus:outline-none rounded focus:border-primary focus:ring-primary'
                     }
                 }) }}
                 {{ form_errors(conversation.authorEmail) }}
@@ -79,7 +81,7 @@
 
         {% block submit %}
         <div class="flex flex-wrap ">
-            <div class="pl-4 pr-4 mb-3 lg:w-full">
+            <div class="mb-3 lg:w-full">
                 <button class="inline-block px-3 py-1 mt-2 font-normal leading-normal text-center text-white no-underline whitespace-no-wrap align-middle border rounded select-none bg-primary hover:bg-opacity-75 letter-spacing">
                     {{ submitLabel|default('conversation.submitLabel'|trans) }}
                 </button>

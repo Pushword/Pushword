@@ -103,11 +103,11 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function removeParameters($url)
     {
-        if (strpos($url, '?') !== false) {
+        if (false !== strpos($url, '?')) {
             $url = preg_replace('/(\?.*)$/', '', $url);
         }
 
-        if (strpos($url, '#') !== false) {
+        if (false !== strpos($url, '#')) {
             $url = preg_replace('/(#.*)$/', '', $url);
         }
 

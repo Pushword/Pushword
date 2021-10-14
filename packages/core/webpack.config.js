@@ -5,7 +5,7 @@ const tailwindcss = require("tailwindcss");
 const watchFiles = [
     "./src/templates/**/*.html.twig",
     "./src/templates/*.html.twig",
-    "./../conversation/src/templates/*.html.twig",
+    "./../conversation/src/templates/conversation/*.html.twig",
     "./../admin-block-editor/src/templates/block/*.html.twig",
 ];
 
