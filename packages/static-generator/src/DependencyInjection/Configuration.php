@@ -60,7 +60,11 @@ class Configuration implements ConfigurationInterface
 
             ->scalarNode('static_dir')
                 ->defaultValue('%kernel.project_dir%/%main_host%')
-                ->info('If null or empty, static dir will be /host.tld/.')
+                ->info('If null or empty, static dir will be %kernel.project_dir%/host.tld/.')
+                ->validate()
+                    ->ifTrue(function ($value) { return ! self::isAbsolutePath($value); })
+                    ->thenInvalid('Invalid static dir path, it must be absolute (eg: /home/pushword/host.tld/)')
+                ->end()
             ->end()
             ->variableNode('static_copy')
                 ->info('file or folder in your public dir to copy in static')
@@ -69,5 +73,10 @@ class Configuration implements ConfigurationInterface
         ->end();
 
         return $treeBuilder;
+    }
+
+    private static function isAbsolutePath(string $path): bool
+    {
+        return ! ('' === $path || \DIRECTORY_SEPARATOR !== $path[0] || false === preg_match('#\A[A-Z]:(?![^/\\\\])#i', $path));
     }
 }
