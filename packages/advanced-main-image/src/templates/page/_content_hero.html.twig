@@ -7,7 +7,7 @@
         {% if page.video is not null %}replaceBy="{{ url_to_embed(page.video.embed_code|default(page.video))|replace({'"': "'"}) }}"{% endif %}
     >
         {# md:min-h-screen-1/3 md:min-h-screen md:min-h-screen-3/4 #}
-        <div class="{{ page.hero_container|default(hero_container ?? 'max-w-screen-sm mx-auto relative md:min-h-' ~ heroSize(page.mainImageFormat) ~ ' py-6') }}">
+        <div class="{{ page.hero_container|default(hero_container ?? 'max-w-screen-sm mx-auto relative md:min-h-' ~ heroSize(page.mainImageFormat) ~ ' pt-6') }}">
             <div class="{{ page.hero_position|default(hero_position ?? 'p-3 text-gray-50 md:absolute md:bottom-4 md:left-4 z-10') }}{{ main_image_blur is defined ? ' blur' : '' }}" style="text-shadow: 0 1px 16px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 50%);">
 
                 {% block subTitle %}
@@ -19,7 +19,7 @@
                 {% endblock %}
 
                 {% block h1 %}
-                    <h1 class="{{ page.h1_class|default(h1_class ?? 'font-bold mb-2 text-lg	lg:text-4xl') }}">{{ pw(page).h1|raw }}</h1>
+                    <h1 class="{{ page.h1_class|default(h1_class ?? 'font-bold mb-2 text-lg	md:text-2xl lg:text-4xl') }}">{{ pw(page).h1|raw }}</h1>
                 {% endblock %}
 
                 {% block description %}
