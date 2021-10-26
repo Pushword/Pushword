@@ -104,23 +104,6 @@ export default class Hyperlink extends HyperlinkTool {
         this.insertLink(value, target, rel, design);
     }
 
-    // To remove when https://github.com/trinhtam/editorjs-hyperlink/pull/11 is merged
-    addProtocol(link) {
-        if (/^(\w+):(\/\/)?/.test(link)) {
-            return link;
-        }
-
-        const isInternal = /^\/[^/\s]?/.test(link),
-            isAnchor = link.substring(0, 1) === "#",
-            isProtocolRelative = /^\/\/[^/\s]/.test(link);
-
-        if (!isInternal && !isAnchor && !isProtocolRelative) {
-            link = "http://" + link;
-        }
-
-        return link;
-    }
-
     insertLink(link, target = "", rel = "", design = "") {
         let anchorTag = this.initSelection ? this.initSelection : this.selection.findParentTag("A");
         if (anchorTag) {

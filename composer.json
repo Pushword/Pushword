@@ -129,7 +129,7 @@
         "format": "vendor/bin/php-cs-fixer fix",
         "assets": "composer assets-core && composer assets-admin && composer assets-admin-block-editor",
         "assets-core": "cd packages/core && yarn && yarn build && cd ../",
-        "assets-admin-block-editor": "cd packages/admin-block-editor && yarn && yarn build && cd ../",
+        "assets-admin-block-editor": "cd packages/admin-block-editor-tools && yarn upgrade && yarn build && cd ../admin-block-editor && yarn upgrade && yarn build && cd ../",
         "assets-admin": "cd packages/admin && yarn && cd ../../ && php ./packages/admin/src/Resources/assets/easymde-hack && cd packages/admin && yarn build",
         "assets-docs": "cd packages/docs/assets && yarn && yarn upgrade && yarn build",
         "generate-docs": "cd packages/skeleton && php bin/console pushword:flat:import pushword.piedweb.com && php bin/console pushword:static:generate pushword.piedweb.com",
