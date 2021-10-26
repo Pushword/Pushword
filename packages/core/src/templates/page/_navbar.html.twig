@@ -32,7 +32,7 @@
 
         {% block toggle_button %}
             {% if toggle_button %}
-            <label class="{{ navbar_toggler_class|default('absolute top-3 lg:hidden right-3 text-primary') }}" type="button" data-toggle="collapse" data-target="#navbar-links" aria-controls="navbar-links" aria-expanded="true" aria-label="{{ 'Toggle navigation'|trans }}" for="navbar-toggler">
+            <label onclick="setTimeout(function(){document.querySelector('#navbar').scrollIntoView();},250)" class="{{ navbar_toggler_class|default('absolute top-3 lg:hidden right-3 text-primary') }}" type="button" data-toggle="collapse" data-target="#navbar-links" aria-controls="navbar-links" aria-expanded="true" aria-label="{{ 'Toggle navigation'|trans }}" for="navbar-toggler">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M2.5 11.5A.5.5 0 0 1 3 11h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 3h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
                 </svg>
