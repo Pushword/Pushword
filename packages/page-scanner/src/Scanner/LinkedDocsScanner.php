@@ -33,7 +33,7 @@ final class LinkedDocsScanner extends AbstractScanner
         $this->linksCheckedCounter = 0;
 
         if (false !== $this->page->getRedirection()) {
-            $this->checkLinkedDoc($this->removeBase($this->page->getRedirection()));
+            $this->checkLinkedDoc($this->page->getRedirection());
 
             return;
         }
@@ -74,14 +74,7 @@ final class LinkedDocsScanner extends AbstractScanner
         for ($k = 0; $k < $matchesCount; ++$k) {
             $uri = $matches[4][$k] ?: $matches[5][$k];
             $uri = 'data-rot' == $matches[1][$k] ? AppExtension::decrypt($uri) : $uri;
-            if (0 === strpos($uri, '#')) {
-                // anchor link
-            } else {
-                $uri = strtok($uri, '#'); // remove everything after #
-            }
             $uri = $uri.($matches[4][$k] ? '' : '#(encrypt)'); // not elegant but permit to remember it's an encrypted link
-            $uri = $this->removeBase($uri);
-            $uri = $this->removeParameters($uri);
             if (self::isMailtoOrTelLink($uri) && 'data-rot' != $matches[1][$k]) {
                 $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.encrypt_mail'));
             } elseif ('' !== $uri && self::isWebLink($uri)) {
@@ -139,36 +132,43 @@ final class LinkedDocsScanner extends AbstractScanner
         }
     }
 
-    private function checkLinkedDoc(string $uri): void
+    private function checkLinkedDoc(string $url): void
     {
         // internal
+        $uri = $this->removeBase($url);
         if ('/' == $uri[0]) {
-            if (! $this->uriExist($uri)) {
-                $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.not_found'));
+            if (! $this->uriExist($this->removeParameters($uri))) {
+                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scan.not_found'));
             }
 
             return;
         }
 
         // external
-        if (0 === strpos($uri, 'http')) {
-            if (true !== ($errorMsg = $this->urlExist($uri))) {
-                $this->addError('<code>'.$uri.'</code> '.$errorMsg);
+        if (0 === strpos($url, 'http')) {
+            if (! $this->isSocialNetwork($url) && true !== ($errorMsg = $this->urlExist($url))) {
+                $this->addError('<code>'.$url.'</code> '.$errorMsg);
             }
 
             return;
         }
 
         // anchor/bookmark/jump link
-        if (0 === strpos($uri, '#')) {
-            if (! $this->targetExist(substr($uri, 1))) {
-                $this->addError('<code>'.$uri.'</code> target not found');
+        if (0 === strpos($url, '#')) {
+            if (! $this->targetExist(substr($url, 1))) {
+                $this->addError('<code>'.$url.'</code> target not found');
             }
 
             return;
         }
 
         // TODO: log unchecked link dump($uri);
+    }
+
+    private function isSocialNetwork(string $url): bool
+    {
+        return preg_match('/^https:\/\/(www)?\.?(wa.me|instagram.com|facebook.com|youtube.com|amazon.fr|support.google.com)/i', $url)
+            ? true : false;
     }
 
     private function targetExist($target): bool
