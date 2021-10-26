@@ -1,5 +1,5 @@
 {% for message in messages %}
-<div class="my-1 p-6 pt-2 shadow-lg {{ loop.index is odd ? 'bg-coolgray-50' : '' }}">
+<div class="{{ message_wrapper_class|default('my-1 p-6 pt-2 shadow-lg '~ (loop.index is odd ? 'bg-coolgray-50' : '')) }}">
         {{ message.content|markdown }}
         <footer class="block text-coolgray-800 text-sm italic">Message posté le
             {{ message.createdAt|date('d/m/Y à H:i') }}
