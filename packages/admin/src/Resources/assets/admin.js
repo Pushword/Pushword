@@ -167,6 +167,10 @@ function memorizeOpenPannel() {
         for (var i in panels) {
             if ($("#" + panels[i]).hasClass("collapse")) {
                 $("#" + panels[i]).collapse("show");
+                console.log($("#" + panels[i] + " .fa-plus"));
+                $("[href='#" + panels[i] + "'] .fa-plus")
+                    .removeClass("fa-plus")
+                    .addClass("fa-minus");
             }
         }
     }

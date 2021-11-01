@@ -12,6 +12,7 @@ parent: contribute
 -   **Page Scanner** : Test is too long... (idem actualiser...)
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
+-   **Admin Block Editor** : document block and add Help link when advanced knowledge is needed
 -   **Admin Block editor** : édition avancée (template notamment dans pages, prose/unprise)
     -   intégrer [.not-prose](https://github.com/tailwindlabs/tailwindcss-typography/pull/205) quand taiwlind-typo 0.0.5 sera stable
     -   rewrite the fullscreen, wide, and max width from prose - [see](https://github.com/tailwindlabs/tailwindcss-typography/pull/204)
