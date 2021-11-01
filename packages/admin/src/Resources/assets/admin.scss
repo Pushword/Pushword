@@ -114,7 +114,7 @@ textarea.autosize {
     justify-content: flex-end;
 }
 .navbar-formactions button[name="btn_update_and_edit"],
-.navbar-formactions button[name="btn_create"] {
+.navbar-formactions button[name="btn_create_and_edit"] {
     .fas {
         margin-right: 8px;
     }
@@ -123,6 +123,9 @@ textarea.autosize {
     margin-right: 10px;
 }
 
+.navbar-formactions button[name="btn_create_and_create"] {
+    display: none;
+}
 .navbar-formactions button[name="btn_update_and_list"],
 .navbar-formactions button[name="btn_create_and_list"] {
     .fas {
