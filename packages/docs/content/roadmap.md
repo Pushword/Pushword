@@ -13,7 +13,7 @@ parent: contribute
     -   intégrer [.not-prose](https://github.com/tailwindlabs/tailwindcss-typography/pull/205) quand taiwlind-typo 0.0.5 sera stable
     -   rewrite the fullscreen, wide, and max width from prose - [see](https://github.com/tailwindlabs/tailwindcss-typography/pull/204)
 -   **Admin Block Editor Tools** : Image > Add link + Alt and redesign Legend
--   **Admin Block Editor Tools** : Hyperlink, save on change
+-   **Admin Block Editor Tools** : Hyperlink, save on change 
 -   **Core** : ImageManager - make optimizer bin path configurable
 -   **pagination** : tester & documenter + bug (2-3...)
 
