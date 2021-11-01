@@ -29,6 +29,19 @@
         display: none;
     }
 }
+.main-header {
+    .logo {
+        display: none;
+    }
+    @media (min-width: 767.1px) {
+        .logo {
+            width: 0px;
+        }
+        .navbar {
+            margin-left: 0px;
+        }
+    }
+}
 
 textarea.autosize {
     height: 34px;

@@ -35,6 +35,7 @@ return [
         'options' => [
             'lock_protection' => true,
             'default_admin_route' => 'edit',
+            'logo_content' => 'icon',
         ],
         'templates' => [
             'layout' => '@pwAdmin/layout.html.twig',
