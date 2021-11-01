@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+
+function getLastAssetsEdit(): int
+{
+    $lastEdit = 0;
+    foreach (new DirectoryIterator(__DIR__.'/../packages/docs/assets') as $file) {
+        if ($file->isDot()) {
+            continue;
+        }
+        $fileLastEdit = filemtime($file->getPathName());
+        if (false !== $fileLastEdit && $lastEdit < $fileLastEdit) {
+            $lastEdit = $fileLastEdit;
+        }
+    }
+
+    return $lastEdit;
+}
+
+function getLastAssetsGeneration(): int
+{
+    $lastGenerationFileCache = __DIR__.'/../packages/docs/.assets-last-build';
+
+    return file_exists($lastGenerationFileCache) ? filemtime($lastGenerationFileCache) : 0;
+}
+
+function updateLastAssetsGeneration(): void
+{
+    $lastGenerationFileCache = __DIR__.'/../packages/docs/.assets-last-build';
+    touch($lastGenerationFileCache);
+}
+
+if (getLastAssetsEdit() >= getLastAssetsGeneration()) {
+    echo 'Generate Assets'.chr(10);
+    exec('cd packages/docs/assets && yarn && yarn upgrade && yarn build');
+    updateLastAssetsGeneration();
+}
+
+echo 'Assets up to date'.chr(10);

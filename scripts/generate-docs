@@ -1,0 +1,13 @@
+#!/bin/sh
+
+php scripts/generate-docs-assets
+
+cd packages/skeleton
+
+cp var/app.db var/app.db~
+
+php bin/console pushword:flat:import pushword.piedweb.com
+php bin/console pushword:static:generate pushword.piedweb.com
+
+cp var/app.db~ var/app.db
+rm var/app.db~
