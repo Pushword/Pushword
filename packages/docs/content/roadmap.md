@@ -5,8 +5,9 @@ toc: true
 parent: contribute
 ---
 
-## To finish
+## BugFix && To finish
 
+-   **Core** : Creating a media with a slug that ever exist does'nt throw error (so erasing the first one and create a second entry in db)
 -   **Page Scanner** : Test is too long...
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
@@ -17,16 +18,6 @@ parent: contribute
 -   **Admin Block Editor Tools** : Hyperlink, save on change
 -   **Core** : ImageManager - make optimizer bin path configurable
 -   **pagination** : tester & documenter + bug (2-3...)
-
-## BugFix
-
--   **Template Admin Editor** : storing seems not working
--   **Block editor** weird movement on code block edition
-
--   **Block** : Gallery is not keeping the good date in file
--   **Core** / **Block** : when i copy an image with the same URI, it's create a duplicate in the database
--   **Admin Block Editor Tools** : encrypt mail only encrypt mailto (normal behaviour) => encrypt content too if mail adress is the content
--   **Admin** : Restore Admin: Page Tree https://github.com/sonata-project/SonataAdminBundle/issues/7035
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
 -   **Static-Generator** : Make ErrorPageGenerator consistent with htaccess (on htaccess, filter by beginning url to return the correct one ?!)
 

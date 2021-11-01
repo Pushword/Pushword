@@ -1,0 +1,10 @@
+#!/bin/sh
+
+cd packages/skeleton
+
+cp var/app.db~ var/app.db
+rm var/app.db~
+
+rm -rf media
+cp -r media~preserve media
+rm -rf media~preserve
