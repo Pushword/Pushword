@@ -1,6 +1,6 @@
 #!/bin/sh
 
-php scripts/generate-docs-assets
+php ./.scripts/generate-docs-assets
 
 cd packages/skeleton
 
