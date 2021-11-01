@@ -9,17 +9,46 @@
 
     <!-- spacer for save btns -->
     <div style="margin-top:40px">&nbsp;</div>
+    <style>
+        .row {
+            margin-left: -29px;
+            margin-right: -29px;
+        }
+    </style>
+    <script>window.addEventListener("load", function () {
+            $("body")
+                    .addClass('sidebar-collapse');
+            document.querySelector('.navbar-formactions').style.width = '110%';
+    })</script>
+{% endblock %}
+
+{% block btn_delete %}
+    <a class="btn btn-danger" href="{{ admin.generateObjectUrl('delete', object) }}">
+        <i class="fas fa-minus-circle" aria-hidden="true"></i> {{ 'link_delete'|trans({}, 'SonataAdminBundle') }}
+    </a>
 {% endblock %}
 
 {% block sonata_tab_content %}
         {{ _self.render_groups(admin, form, admin.formtabs['default'].groups) }}
 {% endblock %}
+
 {% block sonata_pre_fieldsets %}
         <nav class="navbar navbar-default navbar-formactions">
         {{ block('sonata_form_actions') }}
+        <button class="btn btn-default" style="order:10" id="btn-sidebar"><i class="fas fa-cog" aria-label="Hide sidebar"></i></button>
     </nav>
+    <script>
+    document.querySelector("#btn-sidebar").addEventListener("click", function(event) {
+        event.preventDefault();
+        document.querySelector('.mainFields').classList.toggle('col-md-12');
+        document.querySelector('.mainFields').classList.toggle('col-md-9');
+        document.querySelector('.columnFields').classList.toggle('w-0');
+        document.querySelector('.columnFields').classList.toggle('invisible');
+    }, false);
+    </script>
     {{ parent() }}
 {% endblock %}
+
 {% block formactions %}<!--{{ parent() }}-->{% endblock %}
 
 
@@ -41,7 +70,7 @@
 
 {% macro render_group(admin, form, form_group) %}
     <div class="{{ form_group.class|default('col-md-12') }}">
-        <div class="{{ form_group.box_class }}" style="border-top:1px solid #3c8dbc;padding-top:10px">
+        <div class="{{ form_group.box_class }}" style="border:0; padding-top: 10px; border-radius;0">
             <div class="box-body">
                 <div class="sonata-ba-collapsed-fields">
                     {% if form_group.description %}
@@ -82,7 +111,7 @@
                     background-color:#F3F4F6;
                     font-weight:bold;
                     box-shadow:rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
-                    color:#555;
+                    color:#4B5563;
                     font-weight:normal"
                     class="box-title"
                 >

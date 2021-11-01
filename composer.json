@@ -128,9 +128,9 @@
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
         "format": "vendor/bin/php-cs-fixer fix",
         "assets": "composer assets-core && composer assets-admin && composer assets-admin-block-editor",
-        "assets-core": "cd packages/core && yarn && yarn build && cd ../",
+        "assets-core": "cd packages/core && yarn && yarn upgrade  && yarn build && cd ../",
         "assets-admin-block-editor": "cd packages/admin-block-editor-tools && yarn upgrade && yarn build && cd ../admin-block-editor && yarn upgrade && yarn build && cd ../",
-        "assets-admin": "cd packages/admin && yarn && cd ../../ && php ./packages/admin/src/Resources/assets/easymde-hack && cd packages/admin && yarn build",
+        "assets-admin": "cd packages/admin && yarn && yarn upgrade && cd ../../ && php ./packages/admin/src/Resources/assets/easymde-hack && cd packages/admin && yarn build",
         "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish",
         "generate-docs": "./.scripts/generate-docs",
         "reset-skeleton": "./.scripts/reset-skeleton"

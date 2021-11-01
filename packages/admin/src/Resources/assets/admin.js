@@ -27,7 +27,6 @@ window.addEventListener("load", function () {
     // ...
     easyMDEditor();
     showTitlePixelWidth();
-    columnSizeManager();
     memorizeOpenPannel();
     onDomChanged();
     textareaWithoutNewLine();
@@ -123,12 +122,16 @@ function showTitlePixelWidth() {
 function columnSizeManager() {
     if (!$(".expandColumnFields").length) return;
     $(".expandColumnFields").on("click", function () {
-        $(".columnFields").removeClass("col-md-3").addClass("col-md-6");
-        $(".mainFields").removeClass("col-md-9").addClass("col-md-6");
+        if (!$(".columnFields").hasClass("w-0")) {
+            $(".columnFields").removeClass("col-md-3").addClass("col-md-6");
+            $(".mainFields").removeClass("col-md-9").addClass("col-md-6");
+        }
     });
     $(".mainFields").on("click", function () {
-        $(".columnFields").removeClass("col-md-6").addClass("col-md-3");
-        $(".mainFields").removeClass("col-md-6").addClass("col-md-9");
+        if (!$(".columnFields").hasClass("w-0")) {
+            $(".columnFields").removeClass("col-md-6").addClass("col-md-3");
+            $(".mainFields").removeClass("col-md-6").addClass("col-md-9");
+        }
     });
 }
 

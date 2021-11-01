@@ -8,7 +8,10 @@
 /* Column Expanding */
 .mainFields,
 .columnFields {
-    transition: width 1s ease, margin 1s ease;
+    transition: width 0.5s ease, margin 0.5s ease;
+}
+.w-0 {
+    width: 0 !important;
 }
 @media (min-width: 992px) {
     #columnFields {
@@ -72,13 +75,47 @@ textarea.autosize {
     position: fixed;
     padding: 15px;
     //box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-    border-bottom-left-radius: 5px;
-    top: 45px;
     text-align: right;
     right: -5px;
+    bottom: 0;
     width: 100%;
     z-index: 809;
-    background: #cad4e3;
+    background: #d1d5db;
+    margin-bottom: 0 !important;
+
+    @media (min-width: 992px) {
+        bottom: auto;
+        top: 45px;
+    }
+}
+
+.navbar-formactions {
+    display: inline-flex;
+    justify-content: flex-end;
+}
+.navbar-formactions button[name="btn_update_and_edit"],
+.navbar-formactions button[name="btn_create"] {
+    .fas {
+        margin-right: 8px;
+    }
+    font-size: 16px;
+    order: 8;
+    margin-right: 10px;
+}
+
+.navbar-formactions button[name="btn_update_and_list"],
+.navbar-formactions button[name="btn_create_and_list"] {
+    .fas {
+        display: none;
+    }
+    background: transparent;
+    color: #4b5563;
+    border: 0px solid #00a65a;
+    margin-left: 20px;
+    font-size: 16px;
+}
+.navbar-formactions .btn-danger {
+    display: none;
 }
 
 .field-short-description {

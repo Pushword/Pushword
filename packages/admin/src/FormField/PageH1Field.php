@@ -7,8 +7,8 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 class PageH1Field extends AbstractField
 {
-    public const DEFAULT_STYLE = 'border-radius: 5px; font-size: 140%; border: 1px solid #ddd;'
-            .'font-weight: 700; padding: 10px 10px 0px 10px;margin-top:-23px; margin-bottom:-23px';
+    public const DEFAULT_STYLE = 'font-size: 30px !important; border:0;'
+            .'font-weight: 700; padding: 10px 10px 0px 10px; margin:-23px auto; max-width: 640px; color:#111827';
 
     public function formField(FormMapper $formMapper, string $style = ''): FormMapper
     {

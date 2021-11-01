@@ -1,6 +1,6 @@
 {% block editorjs_widget %}
 
-    <div style="border: 1px solid rgb(221, 221, 221); padding: 10px 10px 0px;">
+    <div style="padding: 10px 10px 0px;">
   {% set editor_id = 'editorjs_' ~ id %}
     <input type="hidden" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }} value="{{ value }}">
     <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
