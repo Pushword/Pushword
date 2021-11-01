@@ -159,7 +159,8 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
      *                     Eg:
      *                     ['title', 'LIKE' '%this%'] => works
      *                     [['title', 'LIKE' '%this%']] => works
-     *                     [['key'=>'title', 'operator' => 'LIKE', 'value' => '%this%'], ['key'=>'slug', 'operator' => 'LIKE', 'value' => '%this%']] => works
+     *                     [['key'=>'title', 'operator' => 'LIKE', 'value' => '%this%'], 'OR', ['key'=>'slug', 'operator' => 'LIKE', 'value' => '%this%']] => works
+     *                     See confusing parenthesis DQL doctrine https://symfonycasts.com/screencast/doctrine-queries/and-where-or-where#avoid-orwhere-and-where
      */
     private function andWhere(QueryBuilder $qb, array $where): QueryBuilder
     {
@@ -167,29 +168,54 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         if (! empty($where) && (! isset($where[0]) || ! \is_array($where[0]))) {
             $where = [$where];
         }
+        if (\in_array('OR', $where)) {
+            return $this->andWhereOr($qb, $where);
+        }
 
-        foreach ($where as $k => $w) {
+        foreach ($where as $w) {
             if (! \is_array($w)) {
                 throw new Exception('malformated where params');
             }
 
-            if (($w['value'] ?? $w[2]) === null) {
-                $qb->andWhere(
-                    ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0]).
-                    ' '.($w['operator'] ?? $w[1]).' NULL'
-                );
-
-                continue;
-            }
-
-            $qb->andWhere(
-                ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0])
-                        .' '.($w['operator'] ?? $w[1])
-                        .' :m'.$k
-            )->setParameter('m'.$k, $w['value'] ?? $w[2]);
+            $this->simpleAndWhere($qb, $w);
         }
 
         return $qb;
+    }
+
+    private function andWhereOr(QueryBuilder $qb, array $where): QueryBuilder
+    {
+        $orX = $qb->expr()->orX();
+
+        foreach ($where as $w) {
+            if (! \is_array($w)) {
+                continue;
+            }
+
+            $k = md5(rand());
+            $orX->add($qb->expr()->like(($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0]), ':m'.$k));
+            $qb->setParameter('m'.$k, $w['value'] ?? $w[2]);
+        }
+
+        return $qb->andWhere($orX);
+    }
+
+    private function simpleAndWhere(QueryBuilder $qb, array $w): QueryBuilder
+    {
+        if (($w['value'] ?? $w[2]) === null) {
+            return $qb->andWhere(
+                ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0]).
+                    ' '.($w['operator'] ?? $w[1]).' NULL'
+            );
+        }
+
+        $k = md5(rand());
+
+        return $qb->andWhere(
+            ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0])
+                        .' '.($w['operator'] ?? $w[1])
+                        .' :m'.$k
+        )->setParameter('m'.$k, $w['value'] ?? $w[2]);
     }
 
     /**

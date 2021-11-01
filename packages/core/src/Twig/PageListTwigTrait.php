@@ -42,7 +42,7 @@ trait PageListTwigTrait
         if ($this->getCurrentRequest() && $this->getCurrentRequest()->get('slug')) {
             $params['slug'] = rtrim($this->getCurrentRequest()->get('slug'), '/');
         } elseif ($this->apps->getCurrentPage()) {
-            // normally, only use in admin
+            // normally, only used in admin
             $params['slug'] = $this->apps->getCurrentPage()->getSlug();
             $params['host'] = $this->apps->getCurrentPage()->getHost();
         }
@@ -63,17 +63,53 @@ trait PageListTwigTrait
         return $pagerRouter;
     }
 
-    private function stringToSearch(string $search)
+    /**
+     * TODO: documenter.
+     */
+    private function stringToSearch(string $search): array
+    {
+        $where = [];
+
+        if (false !== strpos($search, ' OR ')) {
+            $searchToParse = explode(' OR ', $search);
+            foreach ($searchToParse as $s) {
+                //$where = array_merge($where, $this->stringToSearch($s), ['OR']);
+                $where[] = $this->simpleStringToSearch($s);
+                $where[] = 'OR';
+            }
+            array_pop($where);
+        }
+        /*elseif (strpos($search, ' AND ') !== false) { // Manage OR and Where seems difficult
+            $searchToParse = explode(' AND ', $search);
+            foreach ($searchToParse as $s) {
+                $where[] = $this->simpleStringToSearch($s);
+            }
+        }*/ else {
+            $where[] = $this->simpleStringToSearch($search);
+        }
+
+        return $where;
+    }
+
+    private function simpleStringToSearch(string $search): array
     {
         if ('children' == strtolower($search) && $this->apps->getCurrentPage()) {
-            return [['parentPage', '=', $this->apps->getCurrentPage()->getId()]];
+            return ['parentPage', '=', $this->apps->getCurrentPage()->getId()];
         }
 
         if (0 === strpos($search, 'comment:')) {
             $search = '<!--'.substr($search, \strlen('comment:')).'-->';
+
+            return ['key' => 'mainContent', 'operator' => 'LIKE', 'value' => '%'.$search.'%'];
         }
 
-        return [['key' => 'mainContent', 'operator' => 'LIKE', 'value' => '%'.$search.'%']];
+        if (0 === strpos($search, 'slug:')) {
+            $search = substr($search, \strlen('slug:'));
+
+            return ['key' => 'slug', 'operator' => 'LIKE', 'value' => $search];
+        }
+
+        return ['key' => 'mainContent', 'operator' => 'LIKE', 'value' => '%'.$search.'%'];
     }
 
     /**
@@ -94,10 +130,6 @@ trait PageListTwigTrait
 
         $search = \is_array($search) ? $search : $this->stringToSearch($search);
 
-        if ($this->apps->getCurrentPage()) {
-            $search[] = ['key' => 'id', 'operator' => '!=', 'value' => $this->apps->getCurrentPage()->getId()];
-        }
-
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
 
@@ -108,6 +140,10 @@ trait PageListTwigTrait
                 $order,
                 $this->getLimit($max)
             );
+
+        if ($this->apps->getCurrentPage()) {
+            $queryBuilder->andWhere('p.slug <> '.$this->apps->getCurrentPage()->getId());
+        }
 
         if (\is_array($max) && isset($max[1]) && $max[1] > 1) {
             $pages = (array) $queryBuilder->getQuery()->getResult();

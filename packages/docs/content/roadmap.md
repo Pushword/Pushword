@@ -7,6 +7,7 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   **Admin** Ajouter l'état de visibilité (publié/hors ligne (publication automatique))
 -   **Core** : Creating a media with a slug that ever exist does'nt throw error (so erasing the first one and create a second entry in db)
 -   **Page Scanner** : Test is too long... (idem actualiser...)
 -   **Admin Block Editor Tools** : prepare translating and transalte

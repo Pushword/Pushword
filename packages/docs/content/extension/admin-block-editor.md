@@ -91,3 +91,16 @@ admin_block_editor_blocks: [
 ```
 
 4. Create `\App\Block\MyCustomBlock` wich implements #[BlockInterface](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/Block/BlockInterface.php) or inherit #[AbstractBlock](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/Block/AbstractBlock.php)
+
+## Usage
+
+### Pages List Block
+
+The search input permit to perfom action like :
+
+-   `CHILDREN` will search for children page
+-   `comment:HELLO-YOU` will search in pages's main content for `<!--HELLO-YOU-->` (case sensitive)
+-   `slug:hellow-world` will search for page with slug being exactly `tagada`
+-   `slug:hellow-world OR slug:hello-me` ... or operator
+-   `slug:hellow-world OR pizza OR comment:HELLO-YOU` ...
+-   `slug:%page%` containing `page` in slug
