@@ -7,13 +7,15 @@ parent: contribute
 
 ## To finish
 
--   install nested-list https://github.com/editor-js/nested-list
--   work on blug for **page hero** linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 95%, rgba(0,0,0,0.5) 100%)
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
--   **Block editor** : édition avancée (template notamment dans pages, prose/unprise)
--   **Core** : ImageManger - make optimizer bin path configurable
--   **pagination** : tester & documenter
+-   **Admin Block editor** : édition avancée (template notamment dans pages, prose/unprise)
+    -   intégrer [.not-prose](https://github.com/tailwindlabs/tailwindcss-typography/pull/205) quand taiwlind-typo 0.0.5 sera stable
+    -   rewrite the fullscreen, wide, and max width from prose - [see](https://github.com/tailwindlabs/tailwindcss-typography/pull/204)
+-   **Admin Block Editor Tools** : Image > Add link + Alt and redesign Legend
+-   **Admin Block Editor Tools** : Hyperlink, save on change
+-   **Core** : ImageManager - make optimizer bin path configurable
+-   **pagination** : tester & documenter + bug (2-3...)
 
 ## BugFix
 

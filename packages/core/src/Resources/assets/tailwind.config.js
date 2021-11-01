@@ -3,7 +3,6 @@ const colors = require("tailwindcss/colors");
 
 module.exports = {
     mode: "jit",
-    purge: {}, // directly in webpack
     theme: {
         minHeight: {
             0: "0",
@@ -34,7 +33,7 @@ module.exports = {
             emerald: colors.emerald,
             teal: colors.teal,
             cyan: colors.cyan,
-            sky: colors.lightBlue,
+            sky: colors.sky,
             blue: colors.blue,
             indigo: colors.indigo,
             violet: colors.violet,
