@@ -89,16 +89,23 @@ textarea.autosize {
     padding: 15px;
     //box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
     text-align: right;
-    right: -5px;
+    left: 0;
     bottom: 0;
     width: 100%;
     z-index: 809;
     background: #d1d5db;
     margin-bottom: 0 !important;
-
+    border-radius: 0 !important;
     @media (min-width: 992px) {
+        padding: 7px;
+        background: #f3f4f6;
         bottom: auto;
-        top: 45px;
+        top: 0;
+        z-index: 1030;
+        left: 37px;
+        .btn-default {
+            margin-right: 40px;
+        }
     }
 }
 

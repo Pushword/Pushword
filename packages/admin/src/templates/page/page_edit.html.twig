@@ -6,9 +6,6 @@
 
 {% block sonata_page_content_header %}
     <div style="display:none">{{ parent() }}</div>
-
-    <!-- spacer for save btns -->
-    <div style="margin-top:40px">&nbsp;</div>
     <style>
         .row {
             margin-left: -29px;
@@ -19,6 +16,7 @@
             $("body")
                     .addClass('sidebar-collapse');
             document.querySelector('.navbar-formactions').style.width = '110%';
+            });
     })</script>
 {% endblock %}
 
@@ -33,9 +31,9 @@
 {% endblock %}
 
 {% block sonata_pre_fieldsets %}
-        <nav class="navbar navbar-default navbar-formactions">
+        <nav class="navbar-formactions">
         {{ block('sonata_form_actions') }}
-        <button class="btn btn-default" style="order:10" id="btn-sidebar"><i class="fas fa-cog" aria-label="Hide sidebar"></i></button>
+        <button class="btn btn-default" style="order:10; background:#fff" id="btn-sidebar"><i class="fas fa-cog" aria-label="Hide sidebar"></i></button>
     </nav>
     <script>
     document.querySelector("#btn-sidebar").addEventListener("click", function(event) {
@@ -46,6 +44,10 @@
         document.querySelector('.columnFields').classList.toggle('invisible');
     }, false);
     </script>
+    <style>@media (min-width: 992px) {
+        .skin-black .main-header .navbar {
+        background: #f3f4f6;}}
+    </style>
     {{ parent() }}
 {% endblock %}
 
