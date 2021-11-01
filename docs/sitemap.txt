@@ -1,3 +1,8 @@
+https://pushword.piedweb.com/override-theme
+https://pushword.piedweb.com/roadmap
+https://pushword.piedweb.com/search.json
+https://pushword.piedweb.com/themes
+https://pushword.piedweb.com/upgrade
 https://pushword.piedweb.com/architecture
 https://pushword.piedweb.com/command
 https://pushword.piedweb.com/component/entity-filter
@@ -23,8 +28,3 @@ https://pushword.piedweb.com/
 https://pushword.piedweb.com/installation
 https://pushword.piedweb.com/license
 https://pushword.piedweb.com/manage-assets
-https://pushword.piedweb.com/override-theme
-https://pushword.piedweb.com/roadmap
-https://pushword.piedweb.com/search.json
-https://pushword.piedweb.com/themes
-https://pushword.piedweb.com/upgrade
