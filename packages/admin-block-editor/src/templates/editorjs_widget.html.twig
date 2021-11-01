@@ -7,9 +7,25 @@
   </div>
 
   <div style="padding-top:10px; text-align:center">
-    <a href="#" onclick="editorJsHelper.toggleEditorJs('{{ editor_id }}')">{{ svg('unlock', {'style': 'width:12px', fill: 'currentColor'}) }}</a>
+    <a href="#" onclick="toggleEditor()">{{ svg('unlock', {'style': 'width:12px', fill: 'currentColor'}) }}</a>
 </div>
     <script>
+function toggleEditor() {
+    editorJsHelper.toggleEditorJs('{{ editor_id }}');
+    var textarea = document.querySelector('textarea[data-editorjs]');
+    if (textarea) {
+        textarea.style.minHeight = '70vh';
+        var ugly = textarea.value;
+        var pretty = JSON.stringify(JSON.parse(ugly), undefined, 4);
+        textarea.value = pretty;
+        textarea.setAttribute('data-editor', 'json');
+        window.aceEditors = aceEditor();
+    } else {
+        console.log(window.aceEditors);
+        var aceEditorElem = document.querySelector('.ace_editor');
+        aceEditorElem.parentNode.removeChild(aceEditorElem);
+    }
+}
 {% block editorjs_config %}
 var editorjsConfig = {
     name: "default",

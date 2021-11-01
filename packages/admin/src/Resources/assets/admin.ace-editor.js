@@ -1,5 +1,5 @@
 export function aceEditor() {
-    $('textarea[data-editor="twig"],textarea[data-editor="yaml"]').each(function () {
+    $('textarea[data-editor="twig"],textarea[data-editor="yaml"],textarea[data-editor="json"]').each(function () {
         return transformTextareaToAce(this);
     });
 }

@@ -10,6 +10,7 @@ import { filterImageFormField } from "./admin.filterImageFormField";
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
+window.aceEditor = aceEditor;
 window.domChanging = false;
 window.copyElementText = copyElementText;
 //var aceEditorElements = null;
@@ -30,7 +31,7 @@ window.addEventListener("load", function () {
     memorizeOpenPannel();
     onDomChanged();
     textareaWithoutNewLine();
-    var aceEditorElements = aceEditor();
+    var aceEditorElements = window.aceEditor();
     onDomChangedAction();
     removePreviewBtn();
     filterParentPageFromHost();
