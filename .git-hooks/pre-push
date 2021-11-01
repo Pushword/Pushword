@@ -1,9 +1,11 @@
 #!/bin/sh
 
-while read -d $'\0' arg ; do
-    if [[ "$arg" == '--tags' ]] ; then
-		composer generate-docs
-		git add .
-		git commit -m '[Docs] Update pushword.piedweb.com'
-    fi
-done < /proc/$PPID/cmdline
+GIT_COMMAND=$(ps -o args= $PPID)
+
+if [ "$GIT_COMMAND" = 'git push --tags' ]
+then
+	echo "$GIT_COMMAND"
+	composer generate-docs
+	git add .
+	git commit -m '[Docs] Update pushword.piedweb.com'
+fi
