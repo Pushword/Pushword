@@ -41,6 +41,10 @@ trait PageListTwigTrait
         $params = [];
         if ($this->getCurrentRequest() && $this->getCurrentRequest()->get('slug')) {
             $params['slug'] = rtrim($this->getCurrentRequest()->get('slug'), '/');
+        } else {
+            // normally, only use in admin
+            $params['slug'] = $this->apps->getCurrentPage()->getSlug();
+            $params['host'] = $this->apps->getCurrentPage()->getHost();
         }
 
         if ($this->getCurrentRequest() && $this->getCurrentRequest()->get('host')) {
