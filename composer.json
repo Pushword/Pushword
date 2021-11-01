@@ -123,7 +123,7 @@
     },
     "scripts": {
         "psalm": "vendor/bin/psalm --no-suggestions",
-        "test": "vendor/bin/phpunit --stop-on-failure",
+        "test": "./.scripts/test",
         "tests": "composer update --prefer-lowest && composer test && composer update && composer test",
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
         "format": "vendor/bin/php-cs-fixer fix",

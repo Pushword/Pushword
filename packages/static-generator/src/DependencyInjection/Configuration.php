@@ -77,6 +77,6 @@ class Configuration implements ConfigurationInterface
 
     private static function isAbsolutePath(string $path): bool
     {
-        return ! ('' === $path || ! \in_array($path[0], [\DIRECTORY_SEPARATOR, '%'], true) || false === preg_match('#\A[A-Z]:(?![^/\\\\])#i', $path));
+        return '' !== $path && (\in_array($path[0], [\DIRECTORY_SEPARATOR, '%'], true) || preg_match('#\A[A-Z]:(?![^/\\\\])#i', $path));
     }
 }

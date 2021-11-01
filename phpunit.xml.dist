@@ -23,9 +23,6 @@
       <directory>packages/*/*/config/packages/</directory>
       <!-- no need to test skeleton -->
       <directory>packages/skeleton/src/</directory>
-      <!-- wip -->
-      <directory>packages/bootstrap5-theme/src/</directory>
-
       <file>packages/core/src/Service/WebPConverter.php</file>
       <directory>packages/*/src/Entity/</directory>
       <directory>packages/installer/src/</directory>

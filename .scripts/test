@@ -1,0 +1,8 @@
+#!/bin/sh
+
+cp packages/skeleton/var/app.db packages/skeleton/var/app.db~
+
+vendor/bin/phpunit --stop-on-failure --debug
+
+cp packages/skeleton/var/app.db~ packages/skeleton/var/app.db
+rm packages/skeleton/var/app.db~
