@@ -94,10 +94,7 @@ trait PageListTwigTrait
             $search[] = ['key' => 'id', 'operator' => '!=', 'value' => $this->apps->getCurrentPage()->getId()];
         }
 
-        if (false !== strpos($order, ' ')) {
-            $order = explode(' ', $order, 2);
-        }
-        $order = \is_string($order) ? ['key' => $order, 'direction' => 'DESC']
+        $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
 
         $queryBuilder = Repository::getPageRepository($this->em, $this->pageClass)

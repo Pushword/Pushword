@@ -1,8 +1,10 @@
-#!/bin/sh
+#!/bin/bash -e
 
-cp packages/skeleton/var/app.db packages/skeleton/var/app.db~
+function restoreData {
+    echo 'restore data...'
+    sh ./.scripts/data-restore
+}
+trap restoreData EXIT
+sh ./.scripts/data-preserve
 
-vendor/bin/phpunit --stop-on-failure --debug
-
-cp packages/skeleton/var/app.db~ packages/skeleton/var/app.db
-rm packages/skeleton/var/app.db~
+XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug

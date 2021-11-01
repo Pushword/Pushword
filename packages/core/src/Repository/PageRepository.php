@@ -51,7 +51,8 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         $queryBuilder = $this->createQueryBuilder($alias)
             ->andWhere($alias.'.publishedAt <=  :nwo')
             ->setParameter('nwo', new \DateTime())
-            ->orderBy($alias.'.publishedAt,'.$alias.'.priority', 'DESC');
+            ->orderBy($alias.'.priority', 'DESC')
+            ->addOrderBy($alias.'.publishedAt', 'DESC');
 
         //$this->andNotRedirection($queryBuilder);
 
@@ -200,16 +201,26 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             return $qb;
         }
 
-        $key = implode(',', array_map(
-            function ($item) use ($qb) {
-                return $this->getRootAlias($qb).'.'.$item;
-            },
-            explode(',', $orderBy['key'] ?? $orderBy[0])
-        ));
-
-        $qb->orderBy($key, $orderBy['direction'] ?? $orderBy[1] ?? 'DESC');
+        $keys = explode(',', $orderBy['key'] ?? $orderBy[0]);
+        foreach ($keys as $i => $key) {
+            $direction = $this->extractDirection($key, $orderBy);
+            $orderByFunc = 0 === $i ? 'orderBy' : 'addOrderBy';
+            $qb->$orderByFunc($this->getRootAlias($qb).'.'.$key, $direction);
+        }
 
         return $qb;
+    }
+
+    private function extractDirection(&$key, $orderBy)
+    {
+        if (false === strpos($key, ' ')) {
+            return $orderBy['direction'] ?? $orderBy[1] ?? 'DESC';
+        }
+
+        $keyDir = explode(' ', $key, 2);
+        $key = $keyDir[0];
+
+        return $keyDir[1];
     }
 
     /**
@@ -274,6 +285,6 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             return $qb->setFirstResult($limit['start'] ?? $limit[0])->setMaxResults($limit['max'] ?? $limit[1]);
         }
 
-        return $qb->setMaxResults($limit + 1);
+        return $qb->setMaxResults($limit);
     }
 }

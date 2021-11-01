@@ -17,7 +17,8 @@ parent: contribute
 -   **Admin Block Editor Tools** : Image > Add link + Alt and redesign Legend
 -   **Admin Block Editor Tools** : Hyperlink, save on change
 -   **Core** : ImageManager - make optimizer bin path configurable
--   **pagination** : tester & documenter + bug (2-3...)
+-   **pagination** : tester & documenter
+    -   Bug quand une page a le même URI qu'une page de la pagination OU sur l'ID (attrapé avant la pagination)
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
 -   **Static-Generator** : Make ErrorPageGenerator consistent with htaccess (on htaccess, filter by beginning url to return the correct one ?!)
 
