@@ -192,7 +192,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
                 continue;
             }
 
-            $k = md5(rand());
+            $k = md5('a'.rand());
             $orX->add($qb->expr()->like(($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0]), ':m'.$k));
             $qb->setParameter('m'.$k, $w['value'] ?? $w[2]);
         }
@@ -209,7 +209,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             );
         }
 
-        $k = md5(rand());
+        $k = md5('a'.rand());
 
         return $qb->andWhere(
             ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0])
