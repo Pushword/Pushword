@@ -65,7 +65,6 @@
     },
     "require-dev": {
         "composer/composer": "^2.0",
-        "cweagans/composer-patches": "^1.7",
         "friendsofphp/php-cs-fixer": "^3.0",
         "friendsoftwig/twigcs": "^5.0",
         "phpunit/phpunit": "^9.5",
