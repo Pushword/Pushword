@@ -130,22 +130,23 @@ class MediaListener
         $sameName = $this->em->getRepository(\get_class($media))->findOneBy(['name' => $media->getName()]);
         $sameMedia = $this->em->getRepository(\get_class($media))->findOneBy(['media' => $mediaString]);
 
-        if (($sameName && $media->getId() != $sameName->getId())
-            || ($sameMedia && $media->getId() != $sameMedia->getId())
+        if (! ($sameName && $media->getId() != $sameName->getId())
+            && ! ($sameMedia && $media->getId() != $sameMedia->getId())
         ) {
-            $newName = (1 === $this->iterate ? $media->getName() : preg_replace('/ \([0-9]+\)$/', '', $media->getName())).' ('.$this->iterate.')';
-            $media->setName($newName);
-            $media->setMedia(null);
-            $media->setSlug($media->getName());
-
-            if (1 === $this->iterate) {
-                $this->flashBag->add('success', $this->translator->trans('media.name_was_changed')); // todo translate
-            }
-            ++$this->iterate;
-            $this->renameIfMediaExists($media);
-
             return;
         }
+
+        $newName = (1 === $this->iterate ? $media->getName() : preg_replace('/ \([0-9]+\)$/', '', $media->getName()))
+            .' ('.$this->iterate.')';
+        $media->setName($newName);
+        $media->setMedia(null);
+        $media->setSlug($media->getName());
+
+        if (1 === $this->iterate) {
+            $this->flashBag->add('success', $this->translator->trans('media.name_was_changed')); // todo translate
+        }
+        ++$this->iterate;
+        $this->renameIfMediaExists($media);
     }
 
     /**

@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+cd packages/admin
+yarn
+yarn upgrade
+cd ../../
+php ./packages/admin/src/Resources/assets/easymde-hack
+cd packages/admin
+yarn build
+sed -i "s/\?v[0-9]/?v$(date '+%s%3N')/" packages/admin/src/templates/layout.html.twig

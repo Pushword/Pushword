@@ -2,10 +2,10 @@
   "entrypoints": {
     "admin.min": {
       "css": [
-        "./admin.min.css"
+        "/bundles/pushwordadmin/admin.min.css"
       ],
       "js": [
-        "./admin.min.js"
+        "/bundles/pushwordadmin/admin.min.js"
       ]
     }
   }
