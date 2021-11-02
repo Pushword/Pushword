@@ -67,7 +67,7 @@
         {% block script %}
             {% set javascripts = apps.get().get('assetsVersionned').javascripts %}
             {% for javascript in javascripts %}
-                <script src="{{ javascript }}"></script>
+                <script src="{{ javascript }}" async></script>
             {% endfor %}
             {# <script src="{{ asset('assets/app.js') }}"></script> #}
         {% endblock %}
