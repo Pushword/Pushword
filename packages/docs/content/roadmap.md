@@ -7,7 +7,6 @@ parent: contribute
 
 ## BugFix && To finish
 
--   **Core** : Creating a media with a slug that ever exist does'nt throw error (so erasing the first one and create a second entry in db)
 -   **Page Scanner** : Test is too long... (idem actualiser...)
 -   **Admin Block Editor Tools** : prepare translating and transalte
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
