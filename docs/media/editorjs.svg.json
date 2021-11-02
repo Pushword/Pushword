@@ -1,0 +1,22 @@
+{
+    "customProperties": [],
+    "mimeType": "image\/svg+xml",
+    "storeIn": "\/home\/robin\/localhost\/Pushword\/packages\/skeleton\/media",
+    "size": 620,
+    "height": null,
+    "width": null,
+    "mainColor": null,
+    "media": "editorjs.svg",
+    "name": "editorjs.svg - 618124ce0120a",
+    "names": null,
+    "createdAt": {
+        "date": "2021-11-02 11:45:18.004613",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    },
+    "updatedAt": {
+        "date": "2021-11-02 11:45:18.004608",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    }
+}

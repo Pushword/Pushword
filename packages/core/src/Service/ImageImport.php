@@ -18,8 +18,13 @@ trait ImageImport
             .'.'.str_replace(['image/', 'jpeg'], ['', 'jpg'], $mimeType);
     }
 
-    public function importExternal(string $image, string $name = '', string $slug = '', $hashInFilename = true): MediaInterface
-    {
+    public function importExternal(
+        string $image,
+        string $name = '',
+        string $slug = '',
+        $hashInFilename = true
+        //, $ifNameIsTaken = null
+    ): MediaInterface {
         $imageLocalImport = $this->cacheExternalImage($image);
 
         $imgSize = getimagesize($imageLocalImport);
@@ -46,6 +51,10 @@ trait ImageImport
 
             $this->generateCache($media);
         }
+        // Else, normally it's an external file ever imported
+        // But SHA1_file may be checked to be sure it's the same file (/!\)
+        // if not, the original file may have change OR we may have an internal file with the same slug.extension (media)
+        // TODO : exception, renaming, callback ???...
 
         return $media;
     }
@@ -62,7 +71,7 @@ trait ImageImport
             return $filePath;
         }
 
-        if (\function_exists('curl_init')) {
+        if (! is_readable($src) && \function_exists('curl_init')) {
             $curl = curl_init($src);
             curl_setopt($curl, \CURLOPT_RETURNTRANSFER, 1);
             /** @var false|string $content */
@@ -76,7 +85,6 @@ trait ImageImport
             return false;
         }
 
-        $filePath = sys_get_temp_dir().'/'.sha1($src);
         if (false === file_put_contents($filePath, $content)) {
             throw new Exception('An error occured caching external resource in system tmp dir.');
         }

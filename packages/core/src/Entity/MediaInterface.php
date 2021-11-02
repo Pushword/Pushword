@@ -31,7 +31,7 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function setSize($size): self;
 
-    public function setSlug($slug): self;
+    public function setSlug(?string $filename): self;
 
     public function setMimeType($mimeType): self;
 
@@ -50,4 +50,9 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
     public function getNameLocalized($getLocalized = null, $onlyLocalized = false): ?string;
 
     public function getMediaFile(): ?File;
+
+    /**
+     * @throws \Exception if mediaFile is null
+     */
+    public function getMediaFileName(): string;
 }

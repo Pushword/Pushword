@@ -10,40 +10,43 @@ use Intervention\Image\Image;
 use League\ColorExtractor\Color;
 use League\ColorExtractor\ColorExtractor;
 use League\ColorExtractor\Palette;
-use LogicException;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Service\ImageManager;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Vich\UploaderBundle\Event\Event;
 
 class MediaListener
 {
-    protected string $projectDir;
+    private string $projectDir;
 
-    protected int $iterate = 1;
+    private int $iterate = 1;
 
-    protected EntityManagerInterface $em;
+    private EntityManagerInterface $em;
 
-    protected EventDispatcherInterface $eventDispatcher;
+    private FileSystem $filesystem;
 
-    protected FileSystem $filesystem;
+    private ImageManager $imageManager;
 
-    protected ImageManager $imageManager;
+    private FlashBagInterface $flashBag;
+
+    private TranslatorInterface $translator;
 
     public function __construct(
         string $projectDir,
         EntityManagerInterface $em,
-        EventDispatcherInterface $eventDispatcher,
         FileSystem $filesystem,
-        ImageManager $imageManager
+        ImageManager $imageManager,
+        FlashBagInterface $flashBag,
+        TranslatorInterface $translator
     ) {
         $this->projectDir = $projectDir;
         $this->em = $em;
-        $this->eventDispatcher = $eventDispatcher;
         $this->filesystem = $filesystem;
         $this->imageManager = $imageManager;
+        $this->flashBag = $flashBag;
+        $this->translator = $translator;
     }
 
     /**
@@ -52,9 +55,13 @@ class MediaListener
     public function onVichUploaderPreUpload(Event $event)
     {
         $media = $event->getObject();
+        $this->beforeToImportAndStore($media);
+    }
 
-        $this->checkIfThereIsAName($media);
-        $this->checkIfNameEverExistInDatabase($media);
+    public function beforeToImportAndStore(MediaInterface $media)
+    {
+        $this->setNameIfEmpty($media);
+        $this->renameIfMediaExists($media);
     }
 
     public function postLoad(MediaInterface $media)
@@ -68,7 +75,7 @@ class MediaListener
     public function preUpdate(MediaInterface $media, PreUpdateEventArgs $event)
     {
         if ($event->hasChangedField('media')) {
-            $this->checkIfNameEverExistInDatabase($media);
+            $this->renameIfMediaExists($media);
 
             if (file_exists($media->getPath())) {
                 $media->setMedia($media->getMediaBeforeUpdate());
@@ -97,37 +104,47 @@ class MediaListener
         $this->imageManager->remove($media);
     }
 
-    /**
-     * Si l'utilisateur ne propose pas de nom pour l'image,
-     * on récupère celui d'origine duquel on enlève son extension.
-     *
-     * @psalm-suppress  UndefinedMethod
-     */
-    protected function checkIfThereIsAName(MediaInterface $media): void
+    private function setNameIfEmpty(MediaInterface $media): void
     {
-        if (empty($media->getName())) {
-            if (! $media->getMediaFile() instanceof UploadedFile) {
-                throw new LogicException('You must set a name if you are not using UploadedFile');
-            }
-
-            $name = $media->getMediaFile()->getClientOriginalName();
-
-            $media->setName(preg_replace('/\\.[^.\\s]{3,4}$/', '', $name));
+        if (! empty($media->getName())) {
+            return;
         }
+
+        $media->setName(preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFileName()));
     }
 
-    protected function checkIfNameEverExistInDatabase(MediaInterface $media): void
+    private function getMediaString(MediaInterface $media): string
     {
-        $same = $this->em->getRepository(\get_class($media))->findOneBy(['name' => $media->getName()]);
-        $sameMedia = $this->em->getRepository(\get_class($media))->findOneBy(['media' => $media->getName()]);
-        if ($same && (null == $media->getId() || $media->getId() != $same->getId())) {
-            $media->setName(preg_replace('/\([0-9]+\)$/', '', $media->getName()).' ('.$this->iterate.')');
+        if ($media->getMedia()) {
+            return $media->getMedia();
+        }
+        $extension = $media->getMediaFile()->guessExtension();
+
+        return $media->getName().($extension ? '.'.$extension : '');
+    }
+
+    private function renameIfMediaExists(MediaInterface $media): void
+    {
+        $mediaString = $this->getMediaString($media);
+
+        $sameName = $this->em->getRepository(\get_class($media))->findOneBy(['name' => $media->getName()]);
+        $sameMedia = $this->em->getRepository(\get_class($media))->findOneBy(['media' => $mediaString]);
+
+        if (($sameName && $media->getId() != $sameName->getId())
+            || ($sameMedia && $media->getId() != $sameMedia->getId())
+        ) {
+            $newName = (1 === $this->iterate ? $media->getName() : preg_replace('/ \([0-9]+\)$/', '', $media->getName())).' ('.$this->iterate.')';
+            $media->setName($newName);
+            $media->setMedia(null);
+            $media->setSlug($media->getName());
+
+            if (1 === $this->iterate) {
+                $this->flashBag->add('success', $this->translator->trans('media.name_was_changed')); // todo translate
+            }
             ++$this->iterate;
-            $this->checkIfNameEverExistInDatabase($media);
-        } elseif ($sameMedia && (null == $media->getId() || $media->getId() != $sameMedia->getId())) {
-            $media->setSlug(preg_replace('/-[0-9]+\\.[^.\\s]{3,4}$/', '', $media->getSlug()).'-'.$this->iterate);
-            ++$this->iterate;
-            $this->checkIfNameEverExistInDatabase($media);
+            $this->renameIfMediaExists($media);
+
+            return;
         }
     }
 

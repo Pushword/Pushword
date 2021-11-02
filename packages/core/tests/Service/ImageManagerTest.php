@@ -3,19 +3,14 @@
 namespace Pushword\Core\Tests\Service;
 
 use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class ImageManagerTest extends KernelTestCase
 {
+    use PathTrait;
+
     private $imageManager;
-
-    private $publicDir = __DIR__.'/../../../skeleton/public';
-
-    private $projectDir = __DIR__.'/../../../skeleton';
-
-    private $publicMediaDir = 'media';
-
-    private $mediaDir = __DIR__.'/../../../skeleton/media';
 
     private function getManager(): ImageManager
     {

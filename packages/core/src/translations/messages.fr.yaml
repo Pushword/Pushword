@@ -39,3 +39,7 @@ error:
 feed:
   description: Dernière page publiée.
   alternate_title: Flux
+
+
+media:
+  name_was_changed: Le nom a été changé du fait d'un média similaire.

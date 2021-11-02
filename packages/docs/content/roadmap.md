@@ -7,7 +7,6 @@ parent: contribute
 
 ## BugFix && To finish
 
--   **Admin** Ajouter l'état de visibilité (publié/hors ligne (publication automatique))
 -   **Core** : Creating a media with a slug that ever exist does'nt throw error (so erasing the first one and create a second entry in db)
 -   **Page Scanner** : Test is too long... (idem actualiser...)
 -   **Admin Block Editor Tools** : prepare translating and transalte
@@ -24,6 +23,8 @@ parent: contribute
         => En fait, c'est paginer la page d'accueil qui fait le max de bordel
 -   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
 -   **Static-Generator** : Make ErrorPageGenerator consistent with htaccess (on htaccess, filter by beginning url to return the correct one ?!)
+
+-   **Admin** Ajouter l'état de visibilité (publié/hors ligne (publication automatique))
 
 ## Feature
 

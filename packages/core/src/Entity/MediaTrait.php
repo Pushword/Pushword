@@ -115,14 +115,6 @@ trait MediaTrait
         return preg_replace('/.*(\\.[^.\\s]{3,4})$/', '$1', $string);
     }
 
-    protected function slugifyPreservingExtension($string)
-    {
-        $extension = $this->getExtension($string);
-        $stringSlugify = (new Slugify())->slugify(Filepath::removeExtension($string));
-
-        return $stringSlugify.$extension;
-    }
-
     public function getSlugForce()
     {
         return $this->slug;
@@ -148,20 +140,36 @@ trait MediaTrait
 
     /**
      * Used by VichUploader.
+     * Permit to setMedia from filename.
      */
-    public function setSlug($slug): self
+    public function setSlug(?string $filename): self
     {
-        if (! $slug) {
-            return $this;
+        if (! $this->getMediaFile()) {
+            throw new Exception('debug... thinking setSlug was only used by Vich ???');
         }
 
-        $slugSlugify = $this->slugifyPreservingExtension($slug);
+        $filename = $filename ?? $this->getMediaFileName();
+        if (! $filename) {
+            throw new Exception('debug... '); //dd($this->mediaFile);
+        }
 
-        if ($this->getExtension($this->media) != $this->getExtension($slugSlugify)) {
-            $this->setMedia($slugSlugify);
+        $extension = $this->getMediaFile()->guessExtension(); // From MimeType
+        $slugSlugified = $this->slugifyPreservingExtension($filename, ($extension ? '.' : '').$extension);
+
+        if (null === $this->media || $this->getExtension($this->media) != $extension) { //$this->getExtension($slugSlugify)) {
+            $this->setMedia($slugSlugified);
+            $this->slug = Filepath::removeExtension($slugSlugified);
         }
 
         return $this;
+    }
+
+    protected function slugifyPreservingExtension(string $string, ?string $extension = null): string
+    {
+        $extension = null === $extension ? $this->getExtension($string) : $extension;
+        $stringSlugify = (new Slugify())->slugify(Filepath::removeExtension($string));
+
+        return $stringSlugify.$extension;
     }
 
     /**
@@ -206,6 +214,18 @@ trait MediaTrait
     public function getMediaFile(): ?File
     {
         return $this->mediaFile;
+    }
+
+    public function getMediaFileName(): string
+    {
+        if (null === $this->mediaFile) {
+            throw new Exception('MediaFile is not setted');
+        }
+        if ($this->mediaFile instanceof UploadedFile) {
+            return $this->mediaFile->getClientOriginalName();
+        }
+
+        return $this->mediaFile->getFilename();
     }
 
     public function getMedia(): ?string
