@@ -28,10 +28,13 @@ export default class make {
         return input;
     }
 
-    static option(select, key, value = null) {
+    static option(select, key, value = null, attributes = {}) {
         const option = document.createElement("option");
         option.text = value || key;
         option.value = key;
+        for (const attrName in attributes) {
+            option.setAttribute(attrName, attributes[attrName]);
+        }
         select.add(option);
     }
 
@@ -65,15 +68,14 @@ export default class make {
         return buttonWrapper;
     }
 
-    createPaginateCheckbox() {
-        const checkbox = make.element("div", ["checkbox", "cdx-checkbox"]);
-        const label = e.element("label");
-        label.textContent = "Paginate";
-        this.nodes.paginateCheckbox = document.createElement("input");
-        this.nodes.paginateCheckbox.type = "checkbox";
-        this.nodes.paginateCheckbox.value = this._data.display || 0;
-        checkbox.appendChild(this.nodes.paginateCheckbox), checkbox.appendChild(label);
+    static switchInput(name, labelText) {
+        let wrapper = make.element("div", "editor-switch");
+        let checkbox = make.element("input", null, { type: "checkbox", id: name });
+        let switchElement = make.element("label", "label-default", { for: name });
+        let label = make.element("label", "", { for: name });
+        label.innerHTML = labelText;
+        wrapper.append(checkbox, switchElement, label);
 
-        return checkbox;
+        return wrapper;
     }
 }

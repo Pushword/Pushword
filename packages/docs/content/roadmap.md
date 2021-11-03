@@ -12,8 +12,8 @@ parent: contribute
 -   **Admin Block editor** : édition avancée (template notamment dans pages, prose/unprise)
     -   intégrer [.not-prose](https://github.com/tailwindlabs/tailwindcss-typography/pull/205) quand taiwlind-typo 0.0.5 sera stable
     -   rewrite the fullscreen, wide, and max width from prose - [see](https://github.com/tailwindlabs/tailwindcss-typography/pull/204)
--   **Admin Block Editor Tools** : Hyperlink, save on change
 -   **Core** : ImageManager - make optimizer bin path configurable
+
 -   **pagination** : tester & documenter
     -   Bug quand une page a le même URI qu'une page de la pagination OU sur l'ID (attrapé avant la pagination)
         => En fait, c'est paginer la page d'accueil qui fait le max de bordel

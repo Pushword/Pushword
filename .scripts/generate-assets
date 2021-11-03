@@ -1,0 +1,68 @@
+#!/bin/bash -e
+
+TYPE="$1"
+DEV="$2"
+
+function installDependencies {
+    if [ "$DEV" = "watch" ]; then yarn; else yarn && yarn upgrade; fi
+}
+function buildAssets {
+    if [ "$DEV" = "watch" ]
+    then
+        yarn watch &
+    else
+        yarn build
+    fi
+}
+
+echo "Generate Assets for $1"
+if [ "$DEV" = "watch" ]
+then
+    echo 'Watch mode activate'
+fi
+echo '------------------'
+
+
+#####################
+## ADMIN BLOCK EDITOR
+#####################
+
+if [ "$TYPE" = "admin-block-editor" ] || [ "$TYPE" = "editor" ] || [ "$TYPE" = "all" ]
+then
+    cd packages/admin-block-editor-tools
+    installDependencies
+    buildAssets
+    cd ../admin-block-editor
+    installDependencies
+    buildAssets
+    cd ../../
+fi
+
+
+########
+## ADMIN
+########
+
+if [ "$TYPE" = "admin" ] || [ "$TYPE" = "all" ]
+then
+    cd packages/admin
+    installDependencies
+    cd ../../
+    php ./packages/admin/src/Resources/assets/easymde-hack
+    cd packages/admin
+    buildAssets
+    sed -i "s/\?v[0-9]/?v$(date '+%s%3N')/" packages/admin/src/templates/layout.html.twig
+    cd ../../
+fi
+
+########
+## CORE
+########
+
+if [ "$TYPE" = "core" ] || [ "$TYPE" = "all" ]
+then
+    cd packages/core
+    installDependencies
+    buildAssets
+    cd ../../
+fi

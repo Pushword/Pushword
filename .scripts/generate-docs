@@ -1,6 +1,5 @@
 #!/bin/bash -e
 
-
 function restoreData {
     echo "restore data..."
      if [[ $CURRENT_DIR = 'packages/skeleton' ]]
