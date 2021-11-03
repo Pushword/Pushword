@@ -140,7 +140,7 @@ final class ConversationFormController extends AbstractController
         return $response;
     }
 
-    public function show(string $type, ?string $host = null, Request $request): Response
+    public function show(Request $request, string $type, ?string $host = null): Response
     {
         //$host = $host ?? $request->getHost();
         $this->apps->switchCurrentApp($host);

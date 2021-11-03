@@ -41,7 +41,7 @@ final class AppConfig
         return $string;
     }
 
-    public function __construct($properties, $isFirstApp = false, ParameterBagInterface $params)
+    public function __construct(ParameterBagInterface $params, $properties, $isFirstApp = false)
     {
         $this->params = $params;
 

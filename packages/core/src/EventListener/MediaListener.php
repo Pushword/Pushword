@@ -34,6 +34,7 @@ class MediaListener
 
     private TranslatorInterface $translator;
 
+    /** @psalm-suppress  UndefinedInterfaceMethod */
     public function __construct(
         string $projectDir,
         EntityManagerInterface $em,

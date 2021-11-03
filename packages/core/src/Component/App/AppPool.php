@@ -30,7 +30,7 @@ final class AppPool
         $firstHost = array_key_first($rawApps);
 
         foreach ($rawApps as $mainHost => $app) {
-            $this->apps[$mainHost] = new AppConfig($app, $firstHost == $mainHost ? true : false, $this->params);
+            $this->apps[$mainHost] = new AppConfig($this->params, $app, $firstHost == $mainHost ? true : false);
             $this->apps[$mainHost]->setTwig($twig);
         }
 

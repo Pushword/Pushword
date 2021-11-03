@@ -11,39 +11,39 @@ class PageControllerTest extends KernelTestCase
     public function testShowHomepage()
     {
         $slug = 'homepage';
-        $response = $this->getPageController()->show($slug, 'localhost.dev', Request::create($slug));
+        $response = $this->getPageController()->show(Request::create($slug), $slug, 'localhost.dev');
         $this->assertSame(200, $response->getStatusCode());
     }
 
     public function testShowAnotherPage()
     {
         $slug = 'kitchen-sink';
-        $response = $this->getPageController()->show($slug, '', Request::create('/en/'.$slug));
+        $response = $this->getPageController()->show(Request::create('/en/'.$slug), $slug, '');
         $this->assertSame(301, $response->getStatusCode());
     }
 
     public function testShowFeed()
     {
         $slug = 'homepage';
-        $response = $this->getPageController()->showFeed($slug, 'localhost.dev', Request::create('/'.$slug.'.xml'));
+        $response = $this->getPageController()->showFeed(Request::create('/'.$slug.'.xml'), $slug, 'localhost.dev');
         $this->assertSame(301, $response->getStatusCode());
     }
 
     public function testShowMainFeed()
     {
-        $response = $this->getPageController()->showMainFeed('localhost.dev', Request::create('/feed.xml'));
+        $response = $this->getPageController()->showMainFeed(Request::create('/feed.xml'), 'localhost.dev');
         $this->assertSame(200, $response->getStatusCode());
     }
 
     public function testShowSitemap()
     {
-        $response = $this->getPageController()->showSitemap('xml', 'localhost.dev', Request::create('/sitemap.xml'));
+        $response = $this->getPageController()->showSitemap(Request::create('/sitemap.xml'), 'xml', 'localhost.dev');
         $this->assertSame(200, $response->getStatusCode());
     }
 
     public function testShowRobotsTxt()
     {
-        $response = $this->getPageController()->showRobotsTxt('localhost.dev', Request::create('/robots.txt'));
+        $response = $this->getPageController()->showRobotsTxt(Request::create('/robots.txt'), 'localhost.dev');
         $this->assertSame(200, $response->getStatusCode());
     }
 

@@ -42,7 +42,7 @@ final class PageController extends AbstractController
         $this->translator = $translator;
     }
 
-    public function show(?string $slug, string $host = '', Request $request): Response
+    public function show(Request $request, ?string $slug, string $host = ''): Response
     {
         $page = $this->getPage($slug, $host, true, true, $request);
 
@@ -79,7 +79,7 @@ final class PageController extends AbstractController
         return $this->app->getView($path);
     }
 
-    public function showFeed(?string $slug, ?string $host, Request $request)
+    public function showFeed(Request $request, ?string $slug, ?string $host)
     {
         $page = $this->getPage($slug, $host);
 
@@ -106,7 +106,7 @@ final class PageController extends AbstractController
     /**
      * Show Last created page in an XML Feed.
      */
-    public function showMainFeed(?string $host, Request $request)
+    public function showMainFeed(Request $request, ?string $host)
     {
         $this->setApp($host);
         $locale = $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->app->getDefaultLocale();
@@ -126,7 +126,7 @@ final class PageController extends AbstractController
         );
     }
 
-    public function showSitemap($_format, ?string $host, Request $request)
+    public function showSitemap(Request $request, $_format, ?string $host)
     {
         $this->setApp($host);
         $pages = $this->getPages(null, $request);

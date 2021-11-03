@@ -17,6 +17,7 @@ coverage
 coverage.xml
 /debug
 /drivers
+.vs-code
 
 # Future packages
 related-pages
