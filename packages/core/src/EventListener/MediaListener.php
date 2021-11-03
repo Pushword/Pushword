@@ -13,6 +13,7 @@ use League\ColorExtractor\Palette;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Service\ImageManager;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Vich\UploaderBundle\Event\Event;
@@ -29,7 +30,7 @@ class MediaListener
 
     private ImageManager $imageManager;
 
-    private FlashBagInterface $flashBag;
+    private ?FlashBagInterface $flashBag = null;
 
     private TranslatorInterface $translator;
 
@@ -38,14 +39,16 @@ class MediaListener
         EntityManagerInterface $em,
         FileSystem $filesystem,
         ImageManager $imageManager,
-        FlashBagInterface $flashBag,
+        RequestStack $requestStack,
         TranslatorInterface $translator
     ) {
         $this->projectDir = $projectDir;
         $this->em = $em;
         $this->filesystem = $filesystem;
         $this->imageManager = $imageManager;
-        $this->flashBag = $flashBag;
+        if ($requestStack->getCurrentRequest()) {
+            $this->flashBag = $requestStack->getSession()->getFlashBag();
+        }
         $this->translator = $translator;
     }
 
@@ -142,7 +145,7 @@ class MediaListener
         $media->setMedia(null);
         $media->setSlug($media->getName());
 
-        if (1 === $this->iterate) {
+        if (1 === $this->iterate && null !== $this->flashBag) {
             $this->flashBag->add('success', $this->translator->trans('media.name_was_changed')); // todo translate
         }
         ++$this->iterate;

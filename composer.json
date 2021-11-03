@@ -121,6 +121,7 @@
         }
     },
     "scripts": {
+        "console": "cd packages/skeleton && php bin/console $2",
         "dev": "cd packages/skeleton && symfony server:start -d",
         "psalm": "vendor/bin/psalm --no-suggestions",
         "test": "./.scripts/test",
