@@ -62,7 +62,7 @@ class AppExtension extends AbstractExtension
     public function showConversation(
         Twig $env,
         string $referring,
-        string $orderBy = 'createdAt DESC',
+        string $orderBy = 'createdAt ASC',
         $limit = 0,
         string $view = '/conversation/messages_list.html.twig'
     ) {
