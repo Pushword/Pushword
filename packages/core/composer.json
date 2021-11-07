@@ -19,7 +19,7 @@
         "michelf/php-markdown": "^1.9",
         "pagerfanta/twig": "^3.0",
         "piedweb/render-html-attributes": "^2.0.1",
-        "piedweb/url-harvester": "^0.0.28",
+        "piedweb/url-harvester": "^0.0.31",
         "pushword/skeleton": "*",
         "sensio/framework-extra-bundle": "^5.6",
         "spatie/image-optimizer": "^1.3",

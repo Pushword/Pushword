@@ -1,7 +1,7 @@
-pagescan:
+page_scan:
   different_host: Parent page has a different host
   encrypt_mail: to prevent spam, encrypt this link.
   not_found: not found
-  unreachable: unreacheable...
+  unreachable: unreacheable - %errorCode%
   status_code: Unexpected status code
   canonical: Canonical is different

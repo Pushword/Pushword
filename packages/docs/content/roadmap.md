@@ -7,7 +7,6 @@ parent: contribute
 
 ## BugFix && To finish
 
--   **Static Generator** Avoid "empty time" by create in a temporary folder before deleting the current one
 -   **Admin Block Editor Tools** : Image > Add link + Alt and redesign Legend
 -   **Admin Block Editor** : document block and add Help link when advanced knowledge is needed
 -   **Admin Block editor** : édition avancée (template notamment dans pages, prose/unprise)

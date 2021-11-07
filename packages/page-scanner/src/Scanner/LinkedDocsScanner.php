@@ -22,6 +22,8 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private string $publicDir;
 
+    private array $urlExistCache = [];
+
     public function __construct(EntityManagerInterface $entityManager, string $publicDir)
     {
         $this->publicDir = $publicDir;
@@ -146,7 +148,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
         // external
         if (0 === strpos($url, 'http')) {
-            if (! $this->isSocialNetwork($url) && true !== ($errorMsg = $this->urlExist($url))) {
+            if (! $this->patchUnreachableDomain($url) && true !== ($errorMsg = $this->urlExist($url))) {
                 $this->addError('<code>'.$url.'</code> '.$errorMsg);
             }
 
@@ -165,9 +167,9 @@ final class LinkedDocsScanner extends AbstractScanner
         // TODO: log unchecked link dump($uri);
     }
 
-    private function isSocialNetwork(string $url): bool
+    private function patchUnreachableDomain(string $url): bool
     {
-        return preg_match('/^https:\/\/(www)?\.?(wa.me|instagram.com|facebook.com|youtube.com|amazon.fr|support.google.com)/i', $url)
+        return preg_match('/^https:\/\/(www)?\.?(example.tld|instragram.com)/i', $url)
             ? true : false;
     }
 
@@ -189,6 +191,10 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private function urlExist(string $uri)
     {
+        if (isset($this->urlExistCache[$uri])) {
+            return $this->urlExistCache[$uri];
+        }
+
         $harvest = Harvest::fromUrl(
             $uri,
             'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.107 Safari/537.36',
@@ -197,20 +203,27 @@ final class LinkedDocsScanner extends AbstractScanner
         );
 
         if (\is_int($harvest)) {
-            return $this->trans('page_scan.unreachable');
+            $return = $this->trans('page_scan.unreachable', ['%nerrorCode%n' => $harvest]);
         } elseif (200 !== $errorCode = $harvest->getResponse()->getStatusCode()) {
-            return $this->trans('page_scan.status_code').' ('.$errorCode.')';
+            $return = $this->trans('page_scan.status_code').' ('.$errorCode.')';
         } elseif (! $harvest->isCanonicalCorrect()) {
-            return $this->trans('page_scan.canonical').' ('.$harvest->getCanonical().')';
+            $return = $this->trans('page_scan.canonical').' ('.$harvest->getCanonical().')';
+        } else {
+            $this->previousRequest = $harvest->getResponse()->getRequest();
+            $return = true;
         }
 
-        $this->previousRequest = $harvest->getResponse()->getRequest();
+        $this->urlExistCache[$uri] = $return;
 
-        return true;
+        return $return;
     }
 
     private function uriExist(string $uri): bool
     {
+        if (isset($this->urlExistCache[$uri])) {
+            return $this->urlExistCache[$uri];
+        }
+
         $slug = ltrim($uri, '/');
 
         if (isset($this->everChecked[$slug])) {
