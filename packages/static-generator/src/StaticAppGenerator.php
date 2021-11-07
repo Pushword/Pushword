@@ -64,6 +64,7 @@ class StaticAppGenerator
     /**
      * @throws \RuntimeException
      * @throws \LogicException
+     * @psalm-suppress  UndefinedPropertyAssignment
      */
     protected function generateHost(?string $host)
     {
