@@ -69,13 +69,20 @@ class StaticAppGenerator
     {
         $app = $this->apps->switchCurrentApp($host)->get();
 
+        $staticDir = $app->get('static_dir');
+        $app->staticDir = $staticDir.'~';
+
         $filesystem = new Filesystem();
-        $filesystem->remove($app->get('static_dir'));
-        $filesystem->mkdir($app->get('static_dir'));
+        $filesystem->remove($staticDir.'~');
+        $filesystem->mkdir($staticDir.'~');
 
         foreach ($app->get('static_generators') as $generator) {
             //dump($generator);
             $this->generatorBag->get($generator)->generate();
         }
+
+        $filesystem->remove($staticDir);
+        $filesystem->rename($staticDir.'~', $staticDir);
+        $filesystem->remove($staticDir.'~');
     }
 }

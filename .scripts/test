@@ -1,17 +1,5 @@
 #!/bin/bash -e
 
-trap restoreData EXIT
-sh ./.scripts/data-preserve
-
-XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug
-
-if [ "$DEV" = "watch" ]
-then
-    trap restoreDataAndComposerDependencies EXIT
-    composer update --prefer-lowest
-    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug
-fi
-
 function restoreDataAndComposerDependencies {
     echo 'restore data and dependencies...'
     sh ./.scripts/data-restore
@@ -22,3 +10,15 @@ function restoreData {
     echo 'restore data...'
     sh ./.scripts/data-restore
 }
+
+trap restoreData EXIT
+sh ./.scripts/data-preserve
+
+XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug
+
+if [ "$1" = "full" ]
+then
+    trap restoreDataAndComposerDependencies EXIT
+    composer update --prefer-lowest
+    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug
+fi
