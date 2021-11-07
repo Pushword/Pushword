@@ -169,7 +169,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function patchUnreachableDomain(string $url): bool
     {
-        return preg_match('/^https:\/\/(www)?\.?(example.tld|instragram.com)/i', $url)
+        return preg_match('/^https:\/\/(www)?\.?(example.tld|instagram.com)/i', $url)
             ? true : false;
     }
 
@@ -220,10 +220,6 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function uriExist(string $uri): bool
     {
-        if (isset($this->urlExistCache[$uri])) {
-            return $this->urlExistCache[$uri];
-        }
-
         $slug = ltrim($uri, '/');
 
         if (isset($this->everChecked[$slug])) {
