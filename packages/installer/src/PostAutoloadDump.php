@@ -32,7 +32,7 @@ class PostAutoloadDump extends PostInstall
                 && 'install' !== basename($script, '.php')
             ) {
                 echo '~ Executing '.$package.' update ('.$i++.').'.\chr(10);
-                $className = 'Pushword\\'.$package.'\\Installer\\'.basename($script, '.php');
+                $className = '\\Pushword\\'.$package.'\\Installer\\'.basename($script, '.php');
                 (new $className())->run(); // @phpstan-ignore-line
 
                 // TODO find a way to use autowiring
