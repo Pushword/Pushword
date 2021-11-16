@@ -43,15 +43,17 @@ class Update975
                     if (! isset($block['data']) || ! isset($block['data']['anchor'])) {
                         continue;
                     }
+
                     $jsonContent['blocks'][$blockKey]['tunes']['anchor'] = $block['data']['anchor'];
                     unset($jsonContent['blocks'][$blockKey]['data']['anchor']);
                     $contentHasChanged = true;
                 }
 
-                if (true === $contentHasChanged) {
+                if ($contentHasChanged) {
                     if (($content = json_encode($jsonContent)) === false) {
                         throw new LogicException((string) $page->getId());
                     }
+
                     $page->setMainContent($content);
                 }
             }

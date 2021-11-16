@@ -36,7 +36,7 @@ class PostInstall
             throw new LogicException();
         }
 
-        return array_filter($dir, function ($path) { return ! \in_array($path, ['.', '..'], true); });
+        return array_filter($dir, function (string $path): bool { return ! \in_array($path, ['.', '..'], true); });
     }
 
     public static function mirror(string $source, string $dest): void
@@ -63,11 +63,13 @@ class PostInstall
         if (false === $content) {
             throw new Exception('`'.$file.'` not found');
         }
+
         $count = 0;
         $content = str_replace($search, $replace, $content, $count);
         if (1 !== $count) {
             throw new Exception('Error on replacing `'.$search.'` by `'.$replace.'`');
         }
+
         file_put_contents($file, $content);
     }
 
@@ -77,6 +79,7 @@ class PostInstall
         if (false !== strpos($content, $toAdd)) {
             return;
         }
+
         $content = $toAdd.$content;
         self::dumpFile($file, $content);
     }
