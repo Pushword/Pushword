@@ -10,11 +10,13 @@ trait TimestampableTrait
 {
     /**
      * @ORM\Column(type="datetime")
+     * @noRector
      */
     protected ?DateTimeInterface $createdAt = null; // @phpstan-ignore-line
 
     /**
      * @ORM\Column(type="datetime")
+     * @noRector
      */
     protected ?DateTimeInterface $updatedAt = null; // @phpstan-ignore-line
 

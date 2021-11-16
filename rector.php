@@ -49,6 +49,7 @@ use Rector\TypeDeclaration\Rector\FunctionLike\ReturnTypeDeclarationRector;
 use Rector\TypeDeclaration\Rector\Property\PropertyTypeDeclarationRector;
 use Rector\TypeDeclaration\Rector\Property\TypedPropertyFromStrictConstructorRector;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symplify\PHPStanTwigRules\Rules\NoTwigMissingVariableRule;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     // get parameters
@@ -146,6 +147,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->call('configure', [[
             DisallowedShortTernaryRuleFixerRector::TREAT_AS_NON_EMPTY => false,
         ]]);
+    //$services->set(NoTwigMissingVariableRule::class)
     //$services->set(ChangeLocalPropertyToVariableRector::class);
     //$services->set(RemoveUselessReturnTagRector::class); // remove array<mixed> OK is useless, need to configure PHPstan before
 };

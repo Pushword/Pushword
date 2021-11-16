@@ -56,7 +56,7 @@
         "symfony/phpunit-bridge": "^5.0",
         "vimeo/psalm": "^4.3",
         "symfony/dotenv": "^5.2",
-        "symfony/maker-bundle": "^1.26",
+        "symfony/maker-bundle": "^1.35",
         "symfony/profiler-pack": "^1.0",
         "symplify/monorepo-builder": "^9.0"
     },

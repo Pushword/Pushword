@@ -7,6 +7,7 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   When simplify 10 will be stable, add phpstan-twig-rules
 -   // TODO check a new blank installation
 -   **Admin** Fix collapse right bar not working (not storing previous session)
 -   **Admin Block Editor Tools** : Image > Add link + Alt and redesign Legend
