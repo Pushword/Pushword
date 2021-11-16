@@ -2,11 +2,11 @@
 <!-- https://phpunit.de/manual/current/en/appendixes.configuration.html -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd" colors="true" stopOnFailure="false" bootstrap="packages/core/tests/bootstrap.php">
   <php>
-    <ini name="error_reporting" value="-1"/>
-    <server name="APP_ENV" value="test" force="true"/>
-    <server name="SHELL_VERBOSITY" value="-1"/>
-    <server name="KERNEL_CLASS" value="App\Kernel"/>
-    <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak"/>
+    <server name="APP_ENV" value="test" force="true" />
+    <server name="SHELL_VERBOSITY" value="-1" />
+    <server name="KERNEL_CLASS" value="App\Kernel" />
+    <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak" />
+    <!-- <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/> -->
   </php>
   <testsuites>
     <testsuite name="all">

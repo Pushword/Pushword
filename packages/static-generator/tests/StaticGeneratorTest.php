@@ -7,6 +7,7 @@ use Pushword\Core\Repository\PageRepositoryInterface;
 use Pushword\StaticGenerator\Generator\CNAMEGenerator;
 use Pushword\StaticGenerator\Generator\CopierGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
+use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
@@ -21,6 +22,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 class StaticGeneratorTest extends KernelTestCase
 {
+    private ?StaticAppGenerator $staticAppGenerator = null;
+
     public function testStaticCommand()
     {
         $kernel = static::createKernel();
@@ -46,21 +49,27 @@ class StaticGeneratorTest extends KernelTestCase
         $filesystem->remove($staticDir);
     }
 
-    public function testIt()
+    private function getStaticAppGenerator()
     {
-        self::bootKernel();
-
+        if (null !== $this->staticAppGenerator) {
+            return $this->staticAppGenerator;
+        }
         //$staticAppGenerator = self::$kernel->getContainer()->get('pushword.static_app_generator');
 
         $generatorBag = $this->getGeneratorBag();
 
-        $staticAppGenerator = new StaticAppGenerator(
+        return new StaticAppGenerator(
             self::$kernel->getContainer()->get('pushword.apps'),
             $generatorBag,
             $generatorBag->get(RedirectionManager::class)
         );
+    }
 
-        $staticAppGenerator->generate('localhost.dev');
+    public function testIt()
+    {
+        self::bootKernel();
+
+        $this->getStaticAppGenerator()->generate('localhost.dev');
 
         $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev'));
 
@@ -70,11 +79,16 @@ class StaticGeneratorTest extends KernelTestCase
         $filesystem->mkdir($staticDir);
     }
 
+    private function getGenerator(string $name): GeneratorInterface
+    {
+        return $this->getGeneratorBag()->get($name)->setStaticAppGenerator($this->getStaticAppGenerator());
+    }
+
     public function testGenerateHtaccess()
     {
         self::bootKernel();
 
-        $generator = $this->getGeneratorBag()->get(HtaccessGenerator::class);
+        $generator = $this->getGenerator(HtaccessGenerator::class);
 
         $generator->generate('localhost.dev');
 
@@ -85,7 +99,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $generator = $this->getGeneratorBag()->get(CNAMEGenerator::class);
+        $generator = $this->getGenerator(CNAMEGenerator::class);
 
         $generator->generate('localhost.dev');
 
@@ -96,7 +110,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $generator = $this->getGeneratorBag()->get(CopierGenerator::class);
+        $generator = $this->getGenerator(CopierGenerator::class);
 
         $generator->generate('localhost.dev');
 
@@ -107,7 +121,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $generator = $this->getGeneratorBag()->get(ErrorPageGenerator::class);
+        $generator = $this->getGenerator(ErrorPageGenerator::class);
 
         $generator->generate('localhost.dev');
 
@@ -118,7 +132,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $generator = $this->getGeneratorBag()->get(MediaGenerator::class);
+        $generator = $this->getGenerator(MediaGenerator::class);
 
         $generator->generate('localhost.dev');
 
@@ -129,7 +143,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $generator = $this->getGeneratorBag()->get(PagesGenerator::class);
+        $generator = $this->getGenerator(PagesGenerator::class);
 
         $generator->generate('localhost.dev');
 
@@ -151,7 +165,7 @@ class StaticGeneratorTest extends KernelTestCase
         ];
 
         foreach ($generators as $name => $class) {
-            $generatorBag->$name = new $class(
+            $generator = new $class(
                 $this->getPageRepo(),
                 static::getContainer()->get('twig'),
                 $this->getParameterBag(),
@@ -162,9 +176,11 @@ class StaticGeneratorTest extends KernelTestCase
                 self::$kernel->getContainer()->get('pushword.apps')
             );
 
-            if (property_exists($generatorBag->$name, 'redirectionManager')) {
-                $generatorBag->$name->redirectionManager = $generatorBag->redirectionManager;
+            if (property_exists($generator, 'redirectionManager')) {
+                $generator->redirectionManager = $generatorBag->get('redirectionManager');
             }
+
+            $generatorBag->set($generator);
         }
 
         return $generatorBag;

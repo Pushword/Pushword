@@ -25,24 +25,28 @@ final class PageBlockController extends AbstractController
 
     private Twig $twig;
 
-    public function __construct(EntityManagerInterface $em, Twig $twig)
+    public function __construct(EntityManagerInterface $entityManager, Twig $twig)
     {
-        $this->em = $em;
+        $this->em = $entityManager;
         $this->twig = $twig;
     }
 
-    public function manage($id, Request $request): Response
+    /**
+     * @param int|string $id
+     */
+    public function manage(Request $request, $id = ''): Response
     {
         $content = $request->toArray();
 
         $request->attributes->set('_route', 'pushword_page'); //'custom_host_pushword_page'
         // TODO: sanitize
 
-        if ($id) {
+        if ('' !== $id) {
             $currentPage = Repository::getPageRepository($this->em, $this->pageClass)->findOneBy(['id' => $id]);
-            if (! $currentPage) {
+            if (null === $currentPage) {
                 throw new Exception('Page not found');
             }
+
             $this->apps->switchCurrentApp($currentPage);
         }
 
@@ -51,7 +55,7 @@ final class PageBlockController extends AbstractController
             ['page' => $currentPage ?? null, 'data' => $content]
         );
 
-        return new Response(json_encode([
+        return new Response(\Safe\json_encode([
             'success' => 1,
             'content' => $htmlContent,
         ]));

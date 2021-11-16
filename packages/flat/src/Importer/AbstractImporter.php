@@ -8,31 +8,36 @@ use Pushword\Core\Component\App\AppPool;
 
 /**
  * Permit to find error in image or link.
+ *
+ * @template T of object
  */
 abstract class AbstractImporter
 {
-    /** @var string */
-    protected $entityClass;
+    /**
+     * @var class-string<T>
+     */
+    protected string $entityClass;
 
-    /** @var EntityManagerInterface */
-    protected $em;
+    protected \Doctrine\ORM\EntityManagerInterface $em;
 
-    /** @var AppPool */
-    protected $apps;
+    protected \Pushword\Core\Component\App\AppPool $apps;
 
+    /**
+     * @param class-string<T> $entityClass
+     */
     public function __construct(
-        EntityManagerInterface $em,
-        AppPool $apps,
+        EntityManagerInterface $entityManager,
+        AppPool $appPool,
         string $entityClass
     ) {
         $this->entityClass = $entityClass;
-        $this->apps = $apps;
-        $this->em = $em;
+        $this->apps = $appPool;
+        $this->em = $entityManager;
     }
 
-    abstract public function import(string $filePath, DateTimeInterface $lastEditDatetime);
+    abstract public function import(string $filePath, DateTimeInterface $dateTime): void;
 
-    public function finishImport()
+    public function finishImport(): void
     {
         $this->em->flush();
     }

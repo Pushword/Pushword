@@ -7,6 +7,8 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   // TODO check a new blank installation
+-   **Admin** Fix collapse right bar not working (not storing previous session)
 -   **Admin Block Editor Tools** : Image > Add link + Alt and redesign Legend
 -   **Admin Block Editor** : document block and add Help link when advanced knowledge is needed
 -   **Admin Block editor** : édition avancée (template notamment dans pages, prose/unprise)

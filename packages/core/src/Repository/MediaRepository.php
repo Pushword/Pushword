@@ -3,18 +3,28 @@
 namespace Pushword\Core\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Selectable;
 use Doctrine\Persistence\ObjectRepository;
+use Pushword\Core\Entity\MediaInterface;
 
+/**
+ * @extends ServiceEntityRepository<MediaInterface>
+ * @implements Selectable<int, MediaInterface>
+ * @implements ObjectRepository<MediaInterface>
+ */
 class MediaRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
-    public function getMimeTypes()
+    /**
+     * @return string[]
+     */
+    public function getMimeTypes(): array
     {
-        $qb = $this->createQueryBuilder('m');
-        $qb->select('m.mimeType');
-        $qb->groupBy('m.mimeType');
-        $qb->orderBy('m.mimeType', 'ASC');
+        $queryBuilder = $this->createQueryBuilder('m');
+        $queryBuilder->select('m.mimeType');
+        $queryBuilder->groupBy('m.mimeType');
+        $queryBuilder->orderBy('m.mimeType', Criteria::ASC);
 
-        return array_column($qb->getQuery()->getResult(), 'mimeType');
+        return array_column($queryBuilder->getQuery()->getResult(), 'mimeType'); // @phpstan-ignore-line
     }
 }

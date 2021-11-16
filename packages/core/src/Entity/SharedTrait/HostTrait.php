@@ -9,9 +9,9 @@ trait HostTrait
     /**
      * @ORM\Column(type="string", length=253)
      */
-    protected $host = '';
+    protected string $host = '';
 
-    public function getHost(): ?string
+    public function getHost(): string
     {
         return $this->host;
     }

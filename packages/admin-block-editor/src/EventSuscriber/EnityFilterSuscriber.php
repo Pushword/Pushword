@@ -8,11 +8,17 @@ use Pushword\Core\Component\EntityFilter\FilterEvent;
 use Pushword\Core\Entity\PageInterface;
 use Twig\Environment as Twig;
 
+/**
+ * @template T of object
+ */
 class EnityFilterSuscriber extends AbstractEventSuscriber
 {
     /** @required */
     public Twig $twig;
 
+    /**
+     * @return array<string, string>
+     */
     public static function getSubscribedEvents(): array
     {
         return [
@@ -20,34 +26,35 @@ class EnityFilterSuscriber extends AbstractEventSuscriber
         ];
     }
 
-    public function convertJsBlockToHtml(FilterEvent $event): void
+    /**
+     * @param FilterEvent<T> $filterEvent
+     */
+    public function convertJsBlockToHtml(FilterEvent $filterEvent): void
     {
-        $page = $event->getManager()->getEntity();
-        $app = $this->apps->get($page->getHost());
+        $page = $filterEvent->getManager()->getEntity();
 
         if (! $page instanceof PageInterface
-            || 'MainContent' != $event->getProperty()
+            || 'MainContent' != $filterEvent->getProperty()
             || ! $this->mayUseEditorBlock($page)
-            || true === $app->get('admin_block_editor_disable_listener')) {
+            || true === ($appConfig = $this->apps->get($page->getHost()))->get('admin_block_editor_disable_listener')) {
             return;
         }
 
-        $this->removeMarkdownFilter($app);
+        $this->removeMarkdownFilter($appConfig);
 
         $blockEditorFilter = (new BlockEditorFilter())
-            ->setApp($app)
+            ->setApp($appConfig)
             ->setEntity($page)
             ->setTwig($this->twig)
         ;
 
-        $page->setMainContent($blockEditorFilter->apply($page->getMainContent()));
-        //dump($page->getMainContent());
+        $page->setMainContent($blockEditorFilter->apply($page->getMainContent())); // @phpstan-ignore-line
     }
 
-    private function removeMarkdownFilter(AppConfig $app): void
+    private function removeMarkdownFilter(AppConfig $appConfig): void
     {
-        $filters = $app->getFilters();
+        $filters = $appConfig->getFilters();
         $filters['main_content'] = str_replace(',markdown', '', $filters['main_content']);
-        $app->setFilters($filters);
+        $appConfig->setFilters($filters);
     }
 }

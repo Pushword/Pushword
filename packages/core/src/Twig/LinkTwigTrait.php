@@ -13,7 +13,11 @@ trait LinkTwigTrait
 
     abstract public function getApp(): AppConfig;
 
-    public function renderLink($anchor, $path, $attr = [], bool $encrypt = true): string
+    /**
+     * @param array<string, string>|string|PageInterface $path
+     * @param array<string, string>|bool|string          $attr
+     */
+    public function renderLink(string $anchor, $path, $attr = [], bool $encrypt = true): string
     {
         if (\is_bool($attr)) {
             $encrypt = $attr;
@@ -25,6 +29,7 @@ trait LinkTwigTrait
             if (! isset($attr['href'])) {
                 throw new Exception('attr must contain href for render a link.');
             }
+
             $path = $attr['href'];
             unset($attr['href']);
         }
@@ -38,9 +43,10 @@ trait LinkTwigTrait
         }
 
         if ($encrypt) {
-            if (false !== strpos($path, 'mailto:') && filter_var($anchor, \FILTER_VALIDATE_EMAIL)) {
+            if (str_contains($path, 'mailto:') && false !== filter_var($anchor, \FILTER_VALIDATE_EMAIL)) {
                 return $this->renderEncodedMail($anchor);
             }
+
             $attr = array_merge($attr, ['data-rot' => self::encrypt($path)]);
             $template = $this->getApp()->getView('/component/link_js.html.twig');
             $renderedLink = $this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]);
@@ -55,33 +61,36 @@ trait LinkTwigTrait
 
     public static function encrypt(string $path): string
     {
-        if (0 === strpos($path, 'http://')) {
-            $path = '-'.substr($path, 7);
-        } elseif (0 === strpos($path, 'https://')) {
-            $path = '_'.substr($path, 8);
-        } elseif (0 === strpos($path, 'mailto:')) {
-            $path = '@'.substr($path, 7);
+        if (str_starts_with($path, 'http://')) {
+            $path = '-'.\Safe\substr($path, 7);
+        } elseif (str_starts_with($path, 'https://')) {
+            $path = '_'.\Safe\substr($path, 8);
+        } elseif (str_starts_with($path, 'mailto:')) {
+            $path = '@'.\Safe\substr($path, 7);
         }
 
         return str_rot13($path);
     }
 
+    /**
+     * @return string
+     */
     public static function decrypt(string $string)
     {
         $path = str_rot13($string);
 
-        if (0 === strpos($path, '-')) {
-            $path = 'http://'.substr($path, 1);
-        } elseif (0 === strpos($path, '_')) {
-            $path = 'https://'.substr($path, 1);
-        } elseif (0 === strpos($path, '@')) {
-            $path = 'mailto:'.substr($path, 1);
+        if (str_starts_with($path, '-')) {
+            $path = 'http://'.\Safe\substr($path, 1);
+        } elseif (str_starts_with($path, '_')) {
+            $path = 'https://'.\Safe\substr($path, 1);
+        } elseif (str_starts_with($path, '@')) {
+            $path = 'mailto:'.\Safe\substr($path, 1);
         }
 
         return $path;
     }
 
-    public function renderEncodedMail($mail, $class = '')
+    public function renderEncodedMail(string $mail, string $class = ''): string
     {
         $template = $this->getApp()->getView('/component/encoded_mail.html.twig');
 
@@ -93,7 +102,7 @@ trait LinkTwigTrait
         ]);
     }
 
-    public static function readableEncodedMail(string $mail)
+    public static function readableEncodedMail(string $mail): string
     {
         return str_replace('@', '<svg width="1em" height="1em" viewBox="0 0 16 16" class="inline-block" '
         .'fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M13.106 '

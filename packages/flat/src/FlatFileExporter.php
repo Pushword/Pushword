@@ -31,8 +31,14 @@ class FlatFileExporter
 
     protected string $exportDir = '';
 
+    /**
+     * @var class-string<MediaInterface>
+     */
     protected string $mediaClass;
 
+    /**
+     * @var class-string<PageInterface>
+     */
     protected string $pageClass;
 
     protected FlatFileContentDirFinder $contentDirFinder;
@@ -45,14 +51,18 @@ class FlatFileExporter
 
     protected Filesystem $filesystem;
 
+    /**
+     * @param class-string<PageInterface>  $pageClass
+     * @param class-string<MediaInterface> $mediaClass
+     */
     public function __construct(
         string $projectDir,
         string $mediaDir,
         string $pageClass,
         string $mediaClass,
-        AppPool $apps,
+        AppPool $appPool,
         EntityManagerInterface $entityManager,
-        FlatFileContentDirFinder $contentDirFinder,
+        FlatFileContentDirFinder $flatFileContentDirFinder,
         PageImporter $pageImporter,
         MediaImporter $mediaImporter
     ) {
@@ -61,8 +71,8 @@ class FlatFileExporter
         $this->pageClass = $pageClass;
         $this->mediaClass = $mediaClass;
         $this->entityManager = $entityManager;
-        $this->apps = $apps;
-        $this->contentDirFinder = $contentDirFinder;
+        $this->apps = $appPool;
+        $this->contentDirFinder = $flatFileContentDirFinder;
         $this->pageImporter = $pageImporter;
         $this->mediaImporter = $mediaImporter;
         $this->filesystem = new Filesystem();
@@ -77,9 +87,12 @@ class FlatFileExporter
 
     public function run(?string $host): string
     {
-        $this->app = $this->apps->switchCurrentApp($host)->get();
+        if (null !== $host) {
+            $this->app = $this->apps->switchCurrentApp($host)->get();
+        }
 
-        $this->exportDir = $this->exportDir ?: ($this->contentDirFinder->has($this->app->getMainHost())
+        $this->exportDir = '' !== $this->exportDir ? $this->exportDir
+            : ($this->contentDirFinder->has($this->app->getMainHost())
                 ? $this->contentDirFinder->get($this->app->getMainHost())
                 : $this->projectDir.'/var/export/'.uniqid());
 
@@ -105,15 +118,17 @@ class FlatFileExporter
 
         $data = [];
         foreach ($properties as $property) {
-            if (\in_array($property, ['mainContent', 'id'])) {
+            if (\in_array($property, ['mainContent', 'id'], true)) {
                 continue;
             }
+
             $getter = 'get'.ucfirst($property);
-            $value = $page->$getter();
+            $value = $page->$getter(); // @phpstan-ignore-line
             if (null === $value
-            || ('customProperties' == $property && empty($value))) {
+            || ('customProperties' == $property && empty($value))) { // @phpstan-ignore-line
                 continue;
             }
+
             $data[$property] = $value;
         }
 
@@ -125,8 +140,8 @@ class FlatFileExporter
 
     private function exportMedias(): void
     {
-        $repo = Repository::getMediaRepository($this->entityManager, $this->mediaClass);
-        $medias = $repo->findAll();
+        $mediaRepository = Repository::getMediaRepository($this->entityManager, $this->mediaClass);
+        $medias = $mediaRepository->findAll();
 
         foreach ($medias as $media) {
             $this->exportMedia($media);
@@ -139,20 +154,21 @@ class FlatFileExporter
 
         $data = [];
         foreach ($properties as $property) {
-            if (\in_array($property, ['id'])) {
+            if ('id' == $property) {
                 continue;
             }
+
             $getter = 'get'.ucfirst($property);
-            $data[$property] = $media->$getter();
+            $data[$property] = $media->$getter(); // @phpstan-ignore-line
         }
 
-        if ($this->copyMedia) {
+        if ('' !== $this->copyMedia && '0' !== $this->copyMedia) {
             $destination = $this->exportDir.'/'.$this->copyMedia.'/'.$media->getMedia();
             $this->filesystem->copy($media->getPath(), $destination);
         }
 
-        $jsonContent = json_encode($data, \JSON_PRETTY_PRINT);
-        $jsonFile = ($this->copyMedia ? $this->exportDir.'/'.$this->copyMedia : $this->mediaDir).'/'.$media->getMedia().'.json';
+        $jsonContent = \Safe\json_encode($data, \JSON_PRETTY_PRINT);
+        $jsonFile = ('' !== $this->copyMedia && '0' !== $this->copyMedia ? $this->exportDir.'/'.$this->copyMedia : $this->mediaDir).'/'.$media->getMedia().'.json';
         $this->filesystem->dumpFile($jsonFile, $jsonContent);
     }
 

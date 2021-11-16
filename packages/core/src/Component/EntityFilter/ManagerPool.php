@@ -2,10 +2,16 @@
 
 namespace Pushword\Core\Component\EntityFilter;
 
+use Exception;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment as Twig;
 
+/**
+ * @template T of object
+ * @implements ManagerPoolInterface<T>
+ */
 final class ManagerPool implements ManagerPoolInterface
 {
     /** @required */
@@ -17,27 +23,39 @@ final class ManagerPool implements ManagerPoolInterface
     /** @required */
     public EventDispatcherInterface $eventDispatcher;
 
+    /** @var array<(string|int), Manager<T>> */
     private array $entityFilterManagers = [];
 
-    public function getManager(object $entity): Manager
+    /**
+     * @return Manager<T>
+     * @psalm-suppress InvalidArgument
+     */
+    public function getManager(IdInterface $id): Manager
     {
-        if ($entity->getId() && isset($this->entityFilterManagers[$entity->getId()])) {
-            return $this->entityFilterManagers[$entity->getId()];
+        if (null !== $id->getId() && isset($this->entityFilterManagers[$id->getId()])) {
+            return $this->entityFilterManagers[$id->getId()];
         }
 
-        $this->entityFilterManagers[$entity->getId()] = new Manager($this, $this->eventDispatcher, $entity);
+        $this->entityFilterManagers[$id->getId()] = new Manager($this, $this->eventDispatcher, $id); // @phpstan-ignore-line
 
-        return $this->entityFilterManagers[$entity->getId()];
+        return $this->entityFilterManagers[$id->getId()]; // @phpstan-ignore-line
     }
 
-    public function getProperty(object $entity, string $property = '')
+    /**
+     * @return mixed|\Pushword\Core\Component\EntityFilter\Manager
+     */
+    public function getProperty(IdInterface $id, string $property = '')
     {
-        $manager = $this->getManager($entity);
+        $manager = $this->getManager($id);
 
-        if (! $property) {
+        if ('' === $property) {
             return $manager;
         }
 
-        return $manager->$property();
+        if (! method_exists($manager, $property)) {
+            throw new Exception('Property `'.$property.'` doesn\'t exist');
+        }
+
+        return $manager->$property(); // @phpstan-ignore-line
     }
 }

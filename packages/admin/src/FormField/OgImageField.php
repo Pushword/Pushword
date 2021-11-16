@@ -2,14 +2,23 @@
 
 namespace Pushword\Admin\FormField;
 
+use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
+/**
+ * @extends AbstractField<PageInterface>
+ */
 class OgImageField extends AbstractField
 {
-    public function formField(FormMapper $formMapper): FormMapper
+    /**
+     * @param FormMapper<PageInterface> $form
+     *
+     * @return FormMapper<PageInterface>
+     */
+    public function formField(FormMapper $form): FormMapper
     {
-        return $formMapper->add('ogImage', TextType::class, [
+        return $form->add('ogImage', TextType::class, [
             'required' => false,
             'label' => 'admin.page.ogImage.label',
             'help_html' => true,

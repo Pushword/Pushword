@@ -3,14 +3,18 @@
 namespace Pushword\Core\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use LogicException;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Entity\PageInterface as Page;
+use Pushword\Core\Entity\PageInterface;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Repository\Repository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Translation\DataCollectorTranslator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
 
@@ -28,48 +32,59 @@ final class PageController extends AbstractController
 
     private EntityManagerInterface $em;
 
-    private TranslatorInterface $translator; //Symfony\Component\Translation\DataCollectorTranslator
+    /** @var DataCollectorTranslator|Translator */
+    private TranslatorInterface $translator;
 
     public function __construct(
-        ParameterBagInterface $params,
-        EntityManagerInterface $em,
-        AppPool $apps,
+        ParameterBagInterface $parameterBag,
+        EntityManagerInterface $entityManager,
+        AppPool $appPool,
         TranslatorInterface $translator
     ) {
-        $this->em = $em;
-        $this->params = $params;
-        $this->apps = $apps;
+        $this->em = $entityManager;
+        $this->params = $parameterBag;
+        $this->apps = $appPool;
+
+        if (! $translator instanceof DataCollectorTranslator && ! $translator instanceof Translator) {
+            throw new LogicException('A symfony codebase changed make this hack impossible (cf setLocale). Get `'.\get_class($translator).'`');
+        }
+
         $this->translator = $translator;
     }
 
-    public function show(?string $slug, string $host = '', Request $request): Response
+    public function show(Request $request, ?string $slug, string $host = ''): Response
     {
-        $page = $this->getPage($slug, $host, true, true, $request);
+        $page = $this->getPageElse404($request, $slug, $host, true);
 
         // SEO redirection if we are not on the good URI (for exemple /fr/tagada instead of /tagada)
-        if ((! $host || $host == $request->getHost())
+        if (
+            ('' !== $host && $host === $request->getHost()) // avoid redir when using custom_host route
             && false !== $redirect = $this->checkIfUriIsCanonical($request, $page)) {
-            return $this->redirect($redirect[0], $redirect[1]);
+            return $this->redirect($redirect, 301);
         }
 
         // Maybe the page is a redirection
-        if ($page->getRedirection()) {
+        if ($page->hasRedirection()) {
             return $this->redirect($page->getRedirection(), $page->getRedirectionCode());
         }
 
+        $request->setLocale($page->getLocale()); // TODO: move it to event (onRequest + onPageLoad)
+
+        return $this->showPage($page);
+    }
+
+    public function showPage(PageInterface $page): Response
+    {
         $params = array_merge(['page' => $page], $this->app->getParamsForRendering());
 
-        $view = $this->getView($page->getTemplate() ?: '/page/page.html.twig');
+        $view = $this->getView(null !== $page->getTemplate() ? $page->getTemplate() : '/page/page.html.twig');
 
         $response = new Response();
-        if ($page->getCustomProperty('headers')) {
-            $headers = $page->getCustomProperty('headers');
+        if (\is_array($headers = $page->getCustomProperty('headers'))) {
             foreach ($headers as $header) {
                 $response->headers->set($header[0], $header[1]);
             }
         }
-
-        $request->setLocale($page->getLocale()); // TODO: move it to event (onRequest + onPageLoad)
 
         return $this->render($view, $params, $response);
     }
@@ -79,18 +94,18 @@ final class PageController extends AbstractController
         return $this->app->getView($path);
     }
 
-    public function showFeed(?string $slug, ?string $host, Request $request)
+    public function showFeed(Request $request, string $slug = '', string $host = ''): Response
     {
-        $page = $this->getPage($slug, $host);
-
         if ('homepage' == $slug) {
             return $this->redirect($this->generateUrl('pushword_page_feed', ['slug' => 'index']), 301);
         }
 
+        $page = $this->getPageElse404($request, $slug, $host);
+
         $response = new Response();
         $response->headers->set('Content-Type', 'text/xml');
 
-        if (! \count($page->getChildrenPages())) {
+        if (! $page->hasChildrenPages()) {
             throw $this->createNotFoundException();
         }
 
@@ -106,13 +121,13 @@ final class PageController extends AbstractController
     /**
      * Show Last created page in an XML Feed.
      */
-    public function showMainFeed(?string $host, Request $request)
+    public function showMainFeed(Request $request, string $host = ''): Response
     {
         $this->setApp($host);
-        $locale = $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->app->getDefaultLocale();
-        $LocaleHomepage = $this->getPage($locale, $host, false);
+        $locale = '' !== $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->app->getDefaultLocale();
+        $LocaleHomepage = $this->getPage($request, $locale, $host, false);
         $slug = 'homepage';
-        $page = $LocaleHomepage ?: $this->getPage($slug, $host);
+        $page = null !== $LocaleHomepage ? $LocaleHomepage : $this->getPage($request, $slug, $host);
 
         $params = [
             'pages' => $this->getPages(5, $request),
@@ -126,12 +141,12 @@ final class PageController extends AbstractController
         );
     }
 
-    public function showSitemap($_format, ?string $host, Request $request)
+    public function showSitemap(Request $request, string $_format, string $host = ''): Response
     {
         $this->setApp($host);
         $pages = $this->getPages(null, $request);
 
-        if (! $pages) {
+        if (! \is_array($pages) || ! isset($pages[0])) {
             throw $this->createNotFoundException();
         }
 
@@ -144,7 +159,7 @@ final class PageController extends AbstractController
         );
     }
 
-    public function showRobotsTxt(?string $host)
+    public function showRobotsTxt(string $host = ''): Response
     {
         $this->setApp($host);
 
@@ -160,47 +175,79 @@ final class PageController extends AbstractController
         );
     }
 
+    /**
+     .
+     *
+     * @return mixed //array<PageInterface>
+     */
     private function getPages(?int $limit = null, Request $request)
     {
         $requestedLocale = rtrim($request->getLocale(), '/');
 
-        $pages = $this->getPageRepository()->getIndexablePagesQuery(
-            $this->apps->getMainHost(),
-            $requestedLocale ?: (string) $this->params->get('kernel.default_locale'),
+        return $this->getPageRepository()->getIndexablePagesQuery(
+            (string) $this->apps->getMainHost(),
+            '' !== $requestedLocale ? $requestedLocale : $this->params->get('kernel.default_locale'),
             $limit
         )->getQuery()->getResult();
+    }
 
-        return $pages;
+    private function getPageRepository(): PageRepository
+    {
+        return Repository::getPageRepository($this->em, $this->params->get('pw.entity_page')); // @phpstan-ignore-line
     }
 
     /**
-     * @return \Pushword\Core\Repository\PageRepository
+     * @param string|PageInterface $host
      */
-    private function getPageRepository()
-    {
-        return Repository::getPageRepository($this->em, (string) $this->params->get('pw.entity_page'));
-    }
-
-    private function setApp($host): void
+    public function setApp($host): void
     {
         $this->app = $this->apps->switchCurrentApp($host)->get();
     }
 
-    /** @psalm-suppress UndefinedInterfaceMethod */
-    private function getPage(?string &$slug, string $host = '', bool $throwException = true, bool $extractPager = false, ?Request $request = null): ?Page
+    /**
+     * @psalm-suppress NullableReturnStatement
+     * @psalm-suppress InvalidNullableReturnType
+     * @noRector
+     */
+    private function getPageElse404(Request $request, ?string &$slug, string $host, bool $extractPager = false): PageInterface
     {
+        return $this->getPage($request, $slug, $host, true, $extractPager); // @phpstan-ignore-line
+    }
+
+    private function extractPager(
+        Request $request,
+        string &$slug,
+        string $host,
+        bool $throwException
+    ): ?PageInterface {
+        if (1 !== \Safe\preg_match('#(/([1-9][0-9]*)|^([1-9][0-9]*))$#', $slug, $match)) {
+            return null;
+        }
+
+        $unpaginatedSlug = \Safe\substr($slug, 0, -(\strlen($match[1])));
+        $request->attributes->set('pager', (int) $match[2] >= 1 ? $match[2] : $match[3]);
+        $request->attributes->set('slug', $unpaginatedSlug);
+
+        return $this->getPage($request, $unpaginatedSlug, $host, $throwException);
+    }
+
+    /** @psalm-suppress UndefinedInterfaceMethod */
+    private function getPage(
+        Request $request,
+        ?string &$slug,
+        string $host,
+        bool $throwException = true,
+        bool $extractPager = false
+    ): ?PageInterface {
         $slug = $this->noramlizeSlug($slug);
-        $page = $this->getPageRepository()->getPage($slug, $host, true);
+        $page = $this->getPageRepository()->getPage($slug, '' !== $host ? $host : [(string) $this->apps->getMainHost(), ''], true);
+
+        if (! $page instanceof PageInterface && $extractPager) {
+            $page = $this->extractPager($request, $slug, $host, $throwException);
+        }
 
         // Check if page exist
-        if (null === $page) {
-            if ($extractPager && preg_match('#(/([1-9][0-9]*)|^([1-9][0-9]*))$#', $slug, $match)) {
-                $unpaginatedSlug = substr($slug, 0, -(\strlen($match[1])));
-                $request->attributes->set('pager', (int) $match[2] ?: $match[3]);
-                $request->attributes->set('slug', $unpaginatedSlug);
-
-                return $this->getPage($unpaginatedSlug, $host, $throwException);
-            }
+        if (! $page instanceof PageInterface) {
             if ($throwException) {
                 throw $this->createNotFoundException();
             } else {
@@ -208,7 +255,7 @@ final class PageController extends AbstractController
             }
         }
 
-        if (! $page->getLocale()) { // avoid bc break
+        if ('' === $page->getLocale()) { // avoid bc break
             $page->setLocale($this->app->getDefaultLocale());
         }
 
@@ -228,19 +275,24 @@ final class PageController extends AbstractController
         return $page;
     }
 
-    private function noramlizeSlug($slug): string
+    private function noramlizeSlug(?string $slug): string
     {
         return (null === $slug || '' === $slug) ? 'homepage' : rtrim(strtolower($slug), '/');
     }
 
-    private function checkIfUriIsCanonical(Request $request, Page $page)
+    /**
+     * @noRector
+     *
+     * @return false|string
+     */
+    private function checkIfUriIsCanonical(Request $request, PageInterface $page)
     {
-        $real = $request->getRequestUri();
+        $requestUri = $request->getRequestUri();
 
         $expected = $this->generateUrl('pushword_page', ['slug' => $page->getRealSlug()]);
 
-        if ($real != $expected) {
-            return [$request->getBasePath().$expected, 301];
+        if ($requestUri !== $expected) {
+            return $request->getBasePath().$expected;
         }
 
         return false;

@@ -7,6 +7,7 @@ use Pushword\Core\Router\RouterInterface as PwRouter;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
@@ -17,9 +18,10 @@ final class PageScannerService
     use GenerateLivePathForTrait;
     use KernelTrait;
 
-    private $errors = [];
-
-    public static $appKernel;
+    /**
+     * @var mixed[]
+     */
+    private array $errors = [];
 
     /** @required */
     public LinkedDocsScanner $linkedDocsScanner;
@@ -28,54 +30,60 @@ final class PageScannerService
     public ParentPageScanner $parentPageScanner;
 
     public function __construct(
-        PwRouter $router, // required for GenerateLivePathForTrait
+        PwRouter $pwRouter, // required for GenerateLivePathForTrait
         KernelInterface $kernel // required for KernelTrait
     ) {
-        $this->router = $router;
+        $this->router = $pwRouter;
         $this->router->setUseCustomHostPath(false);
 
         static::loadKernel($kernel);
-        static::$appKernel->getContainer()->get('pushword.router')->setUseCustomHostPath(false);
+        static::getKernel()->getContainer()->get('pushword.router')->setUseCustomHostPath(false);
     }
 
-    private function resetErrors()
+    private function resetErrors(): void
     {
         $this->errors = [];
     }
 
     /**
-     * @return true|array
+     * @return mixed[]|true
+     * @noRector
      */
     public function scan(PageInterface $page)
     {
         $this->resetErrors();
 
-        $pageHtml = false === $page->getRedirection() ? $this->getHtml($page, $this->generateLivePathFor($page)) : '';
+        $pageHtml = $page->hasRedirection() ? '' : $this->getHtml($page, $this->generateLivePathFor($page));
 
         $this->addErrors($page, $this->linkedDocsScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->parentPageScanner->scan($page, $pageHtml));
 
-        return empty($this->errors) ? true : $this->errors;
+        return [] === $this->errors ? true : $this->errors;
     }
 
     private function getHtml(PageInterface $page, string $liveUri): string
     {
         $request = Request::create($liveUri);
-        $response = static::$appKernel->handle($request);
+        $response = static::getKernel()->handle($request);
 
         if ($response->isRedirect()) {
             // todo: log: not normal, it must be caught before by doctrine
             return '';
-        } elseif (200 != $response->getStatusCode()) {
-            file_put_contents('debug', $response);
+        }
+
+        if (false === $response->getContent() || Response::HTTP_OK != $response->getStatusCode()) {
             $this->addError($page, 'error occured generating the page ('.$response->getStatusCode().')');
 
             return '';
         }
 
+        /** @psalm-suppress FalsableReturnStatement */
         return $response->getContent();
     }
 
+    /**
+     * @param string[] $messages
+     */
     private function addErrors(PageInterface $page, array $messages): void
     {
         foreach ($messages as $message) {

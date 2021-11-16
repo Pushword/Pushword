@@ -2,20 +2,30 @@
 
 namespace Pushword\Core\AutowiringTrait;
 
+use Pushword\Core\Entity\PageInterface;
+
 trait RequiredPageClass
 {
+    /**
+     * @var class-string<PageInterface>
+     */
     private string $pageClass;
 
-    /** @required */
-    public function setMediaClass(string $pageClass): self
+    /**
+     * @required
+     *
+     * @param class-string<PageInterface> $pageClass
+     */
+    public function setPageClass(string $pageClass): void
     {
         $this->pageClass = $pageClass;
-
-        return $this;
     }
 
+    /**
+     * @return class-string<PageInterface>
+     */
     public function getPageClass(): string
     {
-        return $this->pageClass;
+        return $this->pageClass; // @phpstan-ignore-line
     }
 }

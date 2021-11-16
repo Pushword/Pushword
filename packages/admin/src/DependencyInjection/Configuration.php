@@ -16,6 +16,7 @@ use Pushword\Admin\FormField\OgTitleField;
 use Pushword\Admin\FormField\OgTwitterCardField;
 use Pushword\Admin\FormField\OgTwitterCreatorField;
 use Pushword\Admin\FormField\OgTwitterSiteField;
+use Pushword\Admin\FormField\PageEditMessageField;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageLocaleField;
 use Pushword\Admin\FormField\PageMainContentField;
@@ -36,8 +37,14 @@ use Pushword\Admin\FormField\UserUsernameField;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
+/**
+ * @template T of object
+ */
 class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var string[]
+     */
     public const DEFAULT_APP_FALLBACK = [
         'admin_page_form_fields',
         'admin_user_form_fields',
@@ -52,6 +59,7 @@ class Configuration implements ConfigurationInterface
     public const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
         [PageH1Field::class, PageMainContentField::class],
         [
+            'admin.page.revisions' => [PageEditMessageField::class],
             'admin.page.state.label' => [PagePublishedAtField::class, PageMetaRobotsField::class],
             'admin.page.permanlien.label' => [HostField::class, PageSlugField::class],
             'admin.page.mainImage.label' => [PageMainImageField::class],
@@ -70,13 +78,14 @@ class Configuration implements ConfigurationInterface
         ],
     ];
 
+    /** @noRector */
     public const DEFAULT_ADMIN_MEDIA_FORM_FIELDS = [
         [MediaMediaFileField::class, MediaNameField::class, MediaSlugField::class],
         [CustomPropertiesField::class, MediaNamesField::class],
         [MediaPreviewField::class],
     ];
 
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('pushword_admin');
         $treeBuilder

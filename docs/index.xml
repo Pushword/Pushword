@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Pushword - Modern CMS to build rapidly Websites (powered by Symfony)</title>
+        <link>https://pushword.piedweb.com/</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/index.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Themes]]></title>
+                    <link>https://pushword.piedweb.com/themes</link>
+                    <guid>https://pushword.piedweb.com/themes</guid>
+                    <pubDate>Fri, 12 Nov 2021 20:47:15 +0100</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Installation]]></title>
+                    <link>https://pushword.piedweb.com/installation</link>
+                    <guid>https://pushword.piedweb.com/installation</guid>
+                    <pubDate>Fri, 12 Nov 2021 20:47:15 +0100</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Find your missing feature with a Pushword Extension]]></title>
+                    <link>https://pushword.piedweb.com/extensions</link>
+                    <guid>https://pushword.piedweb.com/extensions</guid>
+                    <pubDate>Fri, 12 Nov 2021 20:47:15 +0100</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Editor Hidden Super Powerand Markdown Cheatsheet]]></title>
+                    <link>https://pushword.piedweb.com/editor</link>
+                    <guid>https://pushword.piedweb.com/editor</guid>
+                    <pubDate>Fri, 12 Nov 2021 20:47:15 +0100</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Contribute]]></title>
+                    <link>https://pushword.piedweb.com/contribute</link>
+                    <guid>https://pushword.piedweb.com/contribute</guid>
+                    <pubDate>Fri, 12 Nov 2021 20:47:15 +0100</pubDate>
+                </item>
+                            
+    </channel>
+</rss>

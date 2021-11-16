@@ -13,7 +13,7 @@ trait PageEditorTrait
      *     targetEntity="Pushword\Core\Entity\UserInterface",
      * )
      */
-    protected $editedBy;
+    protected ?UserInterface $editedBy = null;
 
     /*
      * @ORM\OneToMany(
@@ -23,15 +23,21 @@ trait PageEditorTrait
      *     orphanRemoval=true
      * )
      * @ORM\OrderBy({"editedAt": "DESC"})
-     */
-    //protected ArrayCollection $pageHasEditors;
+     *
+    protected ?ArrayCollection $pageHasEditors;
+    /**/
 
     /**
      * @ORM\ManyToOne(
      *     targetEntity="Pushword\Core\Entity\UserInterface",
      * )
      */
-    protected $createdBy;
+    protected ?UserInterface $createdBy = null;
+
+    /**
+     * @ORM\Column(type="text", options={"default": ""})
+     */
+    protected string $editMessage = '';
 
     public function getEditedBy(): ?UserInterface
     {
@@ -59,7 +65,7 @@ trait PageEditorTrait
         $this->createdBy = $user;
     }
 
-    /*
+    /**
     public function setPageHasEditors($pageHasEditors): void
     {
         $this->pageHasEditors = new ArrayCollection();
@@ -68,27 +74,46 @@ trait PageEditorTrait
         }
     }
 
-    public function getPageHasEditors(): ?ArrayCollection
+    public function getPageHasEditors(): ArrayCollection
     {
-        return $this->pageHasEditors;
+        return $this->pageHasEditors ?? new ArrayCollection();
     }
 
     public function addPageHasEditor(PageHasEditor $pageHasEditor): void
     {
+        $this->getPageHasEditors();
         $pageHasEditor->setPage($this);
         $this->pageHasEditors[] = $pageHasEditor;
     }
 
     public function resetPageHasEditors(): void
     {
-        foreach ($this->pageHasEditors as $pageHasEditor) {
+        foreach ($this->getPageHasEditors() as $pageHasEditor) {
             $this->removePageHasEditor($pageHasEditor);
         }
     }
 
     public function removePageHasEditor(PageHasEditor $pageHasEditor): void
     {
-        $this->pageHasEditors->removeElement($pageHasEditor);
+        $this->getPageHasEditors()->removeElement($pageHasEditor);
     }
-    */
+    /**/
+
+    /**
+     * Get the value of editMessage.
+     */
+    public function getEditMessage(): string
+    {
+        return $this->editMessage;
+    }
+
+    /**
+     * Set the value of editMessage.
+     */
+    public function setEditMessage(?string $editMessage): self
+    {
+        $this->editMessage = (string) $editMessage;
+
+        return $this;
+    }
 }

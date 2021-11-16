@@ -10,22 +10,22 @@ final class UserController extends AbstractController
 {
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
-        if ($this->getUser()) {
+        if (null !== $this->getUser()) {
             return $this->redirectToRoute('pushword_admin_dashboard');
         }
 
         // get the login error if there is one
-        $error = $authenticationUtils->getLastAuthenticationError();
+        $authenticationException = $authenticationUtils->getLastAuthenticationError();
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();
 
         return $this->render('@Pushword/user/login.html.twig', [
             'last_username' => $lastUsername,
-            'error' => $error,
+            'error' => $authenticationException,
         ]);
     }
 
-    public function logout()
+    public function logout(): void
     {
         throw new \LogicException('This method can be blank');
     }

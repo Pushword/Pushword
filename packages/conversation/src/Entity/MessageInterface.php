@@ -2,21 +2,22 @@
 
 namespace Pushword\Conversation\Entity;
 
-interface MessageInterface
+use Pushword\Core\Entity\SharedTrait\HostInterface;
+use Pushword\Core\Entity\SharedTrait\IdInterface;
+
+interface MessageInterface extends IdInterface, HostInterface
 {
-    public function getAuthorName();
+    public function getAuthorName(): ?string;
 
-    public function getAuthorEmail();
+    public function getAuthorEmail(): ?string;
 
-    public function getAuthorIp();
+    public function getAuthorIp(): ?int;
 
-    public function getContent();
+    public function setAuthorIpRaw(string $authorIp): self;
 
-    public function getId();
+    public function setReferring(string $referring): self;
 
-    public function getHost();
+    public function getContent(): ?string;
 
-    public function setHost($host);
-
-    public function setContent(string $content);
+    public function setContent(string $content): self;
 }

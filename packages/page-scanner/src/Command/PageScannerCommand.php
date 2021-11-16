@@ -3,6 +3,7 @@
 namespace Pushword\PageScanner\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\PageScanner\Controller\PageScannerController;
 use Pushword\PageScanner\Scanner\PageScannerService;
@@ -16,38 +17,47 @@ use Symfony\Component\Lock\Store\FlockStore;
 
 class PageScannerCommand extends Command
 {
-    private $filesystem;
+    /**
+     * @var string|null
+     */
+    protected static $defaultName = 'pushword:page-scanner:scan';
 
-    private $scanner;
+    private \Symfony\Component\Filesystem\Filesystem $filesystem;
 
-    private $pageClass;
+    private \Pushword\PageScanner\Scanner\PageScannerService $scanner;
 
-    private $em;
+    /**
+     * @var class-string<PageInterface>
+     */
+    private string $pageClass;
 
+    private \Doctrine\ORM\EntityManagerInterface $em;
+
+    /**
+     * @param class-string<PageInterface> $pageClass
+     */
     public function __construct(
-        PageScannerService $scanner,
+        PageScannerService $pageScannerService,
         Filesystem $filesystem,
-        EntityManagerInterface $em,
+        EntityManagerInterface $entityManager,
         string $pageClass,
         string $varDir
     ) {
         parent::__construct();
-        $this->scanner = $scanner;
+        $this->scanner = $pageScannerService;
         $this->pageClass = $pageClass;
-        $this->em = $em;
+        $this->em = $entityManager;
         $this->filesystem = $filesystem;
         PageScannerController::setFileCache($varDir);
     }
 
-    protected function configure()
+    protected function configure(): void
     {
-        $this
-            ->setName('pushword:page-scanner:scan')
-            ->setDescription('Find dead links, 404, 301 and more in your content.')
+        $this->setDescription('Find dead links, 404, 301 and more in your content.')
             ->addArgument('host', InputArgument::OPTIONAL, '');
     }
 
-    protected function scanAllWithLock(string $host)
+    protected function scanAllWithLock(string $host): bool
     {
         $lock = (new LockFactory(new FlockStore()))->createLock('page-scan');
         if ($lock->acquire()) {
@@ -63,7 +73,10 @@ class PageScannerCommand extends Command
         return false;
     }
 
-    protected function scanAll(string $host)
+    /**
+     * @return array<int, mixed[]>
+     */
+    protected function scanAll(string $host): array
     {
         $pages = Repository::getPageRepository($this->em, $this->pageClass)->getPublishedPages($host);
 
@@ -73,8 +86,8 @@ class PageScannerCommand extends Command
         foreach ($pages as $page) {
             $scan = $this->scanner->scan($page);
             if (true !== $scan) {
-                $errors[$page->getId()] = $scan;
-                $errorNbr = $errorNbr + \count($errors[$page->getId()]);
+                $errors[(int) $page->getId()] = $scan;
+                $errorNbr += \count($errors[$page->getId()]);
             }
 
             if ($errorNbr > 500) {
@@ -85,7 +98,7 @@ class PageScannerCommand extends Command
         return $errors;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Acquiring page scanner lock to start the scan...');
 

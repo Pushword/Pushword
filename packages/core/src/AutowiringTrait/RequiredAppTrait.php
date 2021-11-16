@@ -8,9 +8,9 @@ trait RequiredAppTrait
 {
     private AppConfig $app;
 
-    public function setApp(AppConfig $app): self
+    public function setApp(AppConfig $appConfig): self
     {
-        $this->app = $app;
+        $this->app = $appConfig;
 
         return $this;
     }

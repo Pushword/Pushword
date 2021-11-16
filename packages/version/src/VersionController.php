@@ -8,15 +8,20 @@ use Pushword\Core\Repository\Repository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class VersionController extends AbstractController
 {
-    /** @var Versionner */
-    private $versionner;
+    private Versionner $versionner;
 
-    /** @var string */
-    private $pageClass;
+    private TranslatorInterface $translator;
+
+    /**
+     * @var class-string<PageInterface>
+     */
+    private string $pageClass;
 
     /** @required */
     public function setVersionner(Versionner $versionner): void
@@ -25,24 +30,36 @@ class VersionController extends AbstractController
     }
 
     /** @required */
-    public function setParams(ParameterBagInterface $params): void
+    public function setTranslator(TranslatorInterface $translator): void
     {
-        $this->pageClass = (string) $params->get('pw.entity_page');
+        $this->translator = $translator;
+    }
+
+    /**
+     * @required
+     * @psalm-suppress PossiblyInvalidArgument
+     * @psalm-suppress InvalidPropertyAssignmentValue
+     */
+    public function setParams(ParameterBagInterface $parameterBag): void
+    {
+        $this->pageClass = $parameterBag->get('pw.entity_page'); // @phpstan-ignore-line
     }
 
     /**
      * @Security("is_granted('ROLE_PUSHWORD_ADMIN')")
      */
-    public function loadVersion(string $id, string $version): Response
+    public function loadVersion(string $id, string $version): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         $this->versionner->loadVersion($id, $version);
 
         return $this->redirectToRoute('admin_app_page_edit', ['id' => $id]);
     }
 
-    public function resetVersioning(string $id): Response
+    /** @psalm-suppress  UndefinedInterfaceMethod */
+    public function resetVersioning(Request $request, int $id): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         $this->versionner->reset($id);
+        $request->getSession()->getFlashBag()->add('success', $this->translator->trans('version.reset_history')); // @phpstan-ignore-line
 
         return $this->redirectToRoute('admin_app_page_edit', ['id' => $id]);
     }
@@ -51,7 +68,7 @@ class VersionController extends AbstractController
     {
         $page = Repository::getPageRepository($this->get('doctrine'), $this->pageClass)->findOneBy(['id' => $id]);
 
-        if (! $page) {
+        if (null === $page) {
             throw new Exception('Page not found `'.$id.'`');
         }
 
@@ -60,12 +77,8 @@ class VersionController extends AbstractController
         $pageVersions = [];
         $entity = $this->pageClass;
         foreach ($versions as $version) {
-            /**
-             * @var PageInterface $object
-             * @psalm-suppress InvalidStringClass
-             */
             $object = new $entity();
-            $pageVersions[$version] = $this->versionner->populate($object, $page->getId(), $version);
+            $pageVersions[$version] = $this->versionner->populate($object, $version, (int) $page->getId());
         }
 
         return $this->render('@PushwordVersion/list.html.twig', [

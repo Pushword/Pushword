@@ -3,7 +3,10 @@
 namespace Pushword\Conversation\Service;
 
 use DateInterval;
+use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use LogicException;
+use Pushword\Conversation\Entity\MessageInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Utils\LastTime;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -12,51 +15,50 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class NewMessageMailNotifier
 {
-    /** @var MailerInterface */
-    private $mailer;
+    private \Symfony\Component\Mailer\MailerInterface $mailer;
 
-    /** @var AppPool */
-    private $apps;
+    private \Pushword\Core\Component\App\AppPool $apps;
 
-    /** @var EntityManagerInterface */
-    private $em;
+    private \Doctrine\ORM\EntityManagerInterface $em;
 
-    /** @var TranslatorInterface */
-    private $translator;
+    private \Symfony\Contracts\Translation\TranslatorInterface $translator;
 
-    private $emailTo;
+    private string $emailTo;
 
-    private $emailFrom;
+    private string $emailFrom;
 
-    private $appName;
+    private string $appName;
 
-    private $projectDir;
+    private string $projectDir;
 
-    private $interval;
-
-    private $message;
-
-    private $host;
+    private string $interval;
 
     /**
-     * Undocumented function.
+     * @var class-string<MessageInterface>
+     */
+    private string $message;
+
+    private string $host;
+
+    /**
+     .
      *
-     * @param string $message Entity
+     * @param class-string<MessageInterface> $message Entity
      */
     public function __construct(
-        $message,
+        string $message,
         MailerInterface $mailer,
-        AppPool $apps,
-        $projectDir,
+        AppPool $appPool,
+        string $projectDir,
         EntityManagerInterface $entityManager,
         TranslatorInterface $translator
     ) {
         $this->mailer = $mailer;
-        $this->apps = $apps;
-        $this->emailTo = $this->apps->get()->get('conversation_notification_email_to');
-        $this->emailFrom = $this->apps->get()->get('conversation_notification_email_from');
-        $this->interval = $this->apps->get()->get('conversation_notification_interval');
-        $this->appName = $this->apps->get()->get('name');
+        $this->apps = $appPool;
+        $this->emailTo = \strval($this->apps->get()->get('conversation_notification_email_to'));
+        $this->emailFrom = \strval($this->apps->get()->get('conversation_notification_email_from'));
+        $this->interval = \strval($this->apps->get()->get('conversation_notification_interval'));
+        $this->appName = \strval($this->apps->get()->get('name'));
         $this->host = $this->apps->get()->getMainHost();
         $this->projectDir = $projectDir;
         $this->em = $entityManager;
@@ -64,33 +66,43 @@ class NewMessageMailNotifier
         $this->message = $message;
     }
 
-    protected function getMessagesPostedSince($datetime)
+    /**
+     * @return MessageInterface[]
+     */
+    protected function getMessagesPostedSince(DateTimeInterface $datetime)
     {
         $query = 'SELECT m FROM '.$this->message.' m WHERE m.host = :host AND m.createdAt > :lastNotificationTime';
         $query = $this->em->createQuery($query)
-            ->setParameter('lastNotificationTime', $datetime)
+            ->setParameter('lastNotificationTime', $datetime, 'datetime')
             ->setParameter('host', $this->host);
 
-        return $query->getResult();
+        return $query->getResult(); // @phpstan-ignore-line
     }
 
+    /**
+     * @return bool|void
+     */
     public function send()
     {
-        if (! $this->emailTo) {
+        if ('' === $this->emailTo) {
             return;
         }
 
         $lastTime = new LastTime($this->projectDir.'/var/lastNewMessageNotification');
-        if (false === $lastTime->wasRunSince(new DateInterval($this->interval))) {
+        if (! $lastTime->wasRunSince(new DateInterval($this->interval))) {
             return;
         }
 
-        $messages = $this->getMessagesPostedSince($lastTime->get('15 minutes ago'));
-        if (empty($messages)) {
+        if (($since = $lastTime->get($this->interval)) === null) {
+            throw new LogicException();
+        }
+
+        $messages = $this->getMessagesPostedSince($since);
+        if ([] === $messages) {
             return;
         }
 
-        $message = (new TemplatedEmail())
+        $templatedEmail = (new TemplatedEmail())
             ->subject(
                 $this->translator->trans(
                     'admin.conversation.notification.title.'.(\count($messages) > 1 ? 'plural' : 'singular'),
@@ -106,7 +118,7 @@ class NewMessageMailNotifier
             ]);
 
         $lastTime->set();
-        $this->mailer->send($message);
+        $this->mailer->send($templatedEmail);
 
         return true;
     }

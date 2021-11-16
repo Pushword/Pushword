@@ -10,5 +10,5 @@ final class StaticGeneratorExtension extends ConfigurableExtension implements Pr
 {
     use ExtensionTrait;
 
-    protected $configFolder = __DIR__.'/../config';
+    protected string $configFolder = __DIR__.'/../config';
 }

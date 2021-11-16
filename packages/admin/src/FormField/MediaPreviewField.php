@@ -2,25 +2,36 @@
 
 namespace Pushword\Admin\FormField;
 
+use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Form\FormMapper;
 
+/**
+ * @extends AbstractField<MediaInterface>
+ */
 final class MediaPreviewField extends AbstractField
 {
-    /** @var array|null */
-    private $relatedPages;
+    /**
+     * @var array<string, mixed>
+     */
+    private ?array $relatedPages = null;
 
-    public function formField(FormMapper $formMapper): FormMapper
+    /**
+     * @param FormMapper<MediaInterface> $form
+     *
+     * @return FormMapper<MediaInterface>
+     */
+    public function formField(FormMapper $form): FormMapper
     {
-        if ($this->admin->getSubject()->getMedia()) {
-            $formMapper->with('admin.media.preview.label', [
+        if (null !== $this->admin->getSubject()->getMedia()) {
+            $form->with('admin.media.preview.label', [
                 'class' => 'col-md-12',
                 'description' => $this->showMediaPreview(),
                 'empty_message' => false,
             ])->end();
 
             if ($this->issetRelatedPages()) {
-                $formMapper->with('admin.media.related.label', [
+                $form->with('admin.media.related.label', [
                     'class' => 'col-md-12',
                     'description' => $this->showRelatedPages(),
                     'empty_message' => false,
@@ -28,21 +39,20 @@ final class MediaPreviewField extends AbstractField
             }
         }
 
-        return $formMapper;
+        return $form;
     }
 
     private function issetRelatedPages(): bool
     {
         $relatedPages = $this->getRelatedPages();
 
-        if (! empty($relatedPages['content']) || $relatedPages['mainImage']->count() > 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return [] !== $relatedPages['content'] || $relatedPages['mainImage']->count() > 0; // @phpstan-ignore-line
     }
 
-    private function getRelatedPages(): ?array
+    /**
+     * @return mixed[]|array<string, mixed>
+     */
+    private function getRelatedPages(): array
     {
         if (null !== $this->relatedPages) {
             return $this->relatedPages;
@@ -51,7 +61,7 @@ final class MediaPreviewField extends AbstractField
         $media = $this->admin->getSubject();
 
         $pages = Repository::getPageRepository($this->admin->getEntityManager(), $this->admin->getPageClass())
-            ->getPagesUsingMedia($media->getMedia()); //$this->imageManager->getBrowserPath($media));
+            ->getPagesUsingMedia((string) $media->getMedia());
 
         $this->relatedPages = [
             'content' => $pages,

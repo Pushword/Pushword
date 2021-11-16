@@ -7,11 +7,14 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var string[]
+     */
     public const DEFAULT_APP_FALLBACK = [
         'svg_dir',
     ];
 
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('svg');
         $treeBuilder->getRootNode()->children()

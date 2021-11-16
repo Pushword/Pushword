@@ -13,26 +13,26 @@ use Symfony\Component\Console\Output\OutputInterface;
 class NotificationCommand extends Command
 {
     /**
-     * @var NewMessageMailNotifier
+     * @var string|null
      */
-    protected $notifier;
+    protected static $defaultName = 'pushword:conversation:notify';
+
+    protected \Pushword\Conversation\Service\NewMessageMailNotifier $notifier;
 
     public function __construct(
-        NewMessageMailNotifier $notifier
+        NewMessageMailNotifier $newMessageMailNotifier
     ) {
-        $this->notifier = $notifier;
+        $this->notifier = $newMessageMailNotifier;
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
-        $this
-            ->setName('pushword:conversation:notify')
-            ->setDescription('Send a mail (notification) with the latests messages stored (this comand is useful to program a cron).')
+        $this->setDescription('Send a mail (notification) with the latests messages stored (this comand is useful to program a cron).')
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (true === $this->notifier->send()) {
             $output->writeln('Notification sent with success.');

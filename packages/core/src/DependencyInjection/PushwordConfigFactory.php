@@ -6,27 +6,30 @@ use InvalidArgumentException;
 use LogicException;
 use Pushword\Core\Utils\IsAssociativeArray;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 final class PushwordConfigFactory
 {
-    /** @var ContainerBuilder */
-    private $container;
+    private ContainerBuilder $container;
 
-    /** @var string */
-    private $prefix;
+    private string $prefix;
 
-    /** @var array */
-    private $config;
+    /** @var array<mixed> */
+    private array $config;
 
-    /** @var ConfigurationInterface */
-    private $configuration;
+    private ConfigurationInterface $configuration;
 
-    public function __construct(ContainerBuilder $container, array $configs, ?ConfigurationInterface $configuration = null, string $prefix = '')
-    {
-        $this->container = $container;
+    /** @param array<mixed> $configs */
+    public function __construct(
+        ContainerBuilder $containerBuilder,
+        array $configs,
+        ConfigurationInterface $configuration,
+        string $prefix = ''
+    ) {
+        $this->container = $containerBuilder;
         $this->config = $configs;
-        $this->prefix = 'pw.'.($prefix ? $prefix.'.' : '');
+        $this->prefix = 'pw.'.('' !== $prefix ? $prefix.'.' : '');
         $this->configuration = $configuration;
     }
 
@@ -37,6 +40,9 @@ final class PushwordConfigFactory
         return $this;
     }
 
+    /**
+     * @return array<string>
+     */
     private function getAppFallbackConfig(): array
     {
         if (! isset($this->config['app_fallback_properties'])) {
@@ -47,7 +53,7 @@ final class PushwordConfigFactory
             $this->config['app_fallback_properties'] = explode(',', $this->config['app_fallback_properties']);
         }
 
-        return $this->config['app_fallback_properties'];
+        return $this->config['app_fallback_properties'];  // @phpstan-ignore-line
     }
 
     /**
@@ -61,24 +67,25 @@ final class PushwordConfigFactory
             return $this;
         }
 
-        if ($this->container->hasParameter('pw.apps')) {
+        if ($this->container->hasParameter('pw.apps')) { // @phpstan-ignore-line
             throw new InvalidArgumentException('Invalid "apps" name: parameter is ever registered.');
         }
 
-        $this->setParameter('pw.apps', $this->parseApps($this->config['apps']));
+        $this->setParameter('pw.apps', $this->parseApps($this->config['apps'])); // @phpstan-ignore-line
 
         return $this;
     }
 
-    public function processAppsConfiguration()
+    public function processAppsConfiguration(): void
     {
-        if (! $this->getAppFallbackConfig()) {
+        if ([] === $this->getAppFallbackConfig()) {
             return;
         }
 
-        if (! $this->container->hasParameter('pw.apps')) {
+        if (! $this->container->hasParameter('pw.apps')) { // @phpstan-ignore-line
             throw new LogicException('You must register Pushword/CoreBundle in first (`pw.apps` is not loaded in ParameterBag.');
         }
+
         $apps = $this->container->getParameter('pw.apps');
 
         foreach ($apps as $host => $app) {
@@ -88,34 +95,52 @@ final class PushwordConfigFactory
         $this->container->setParameter('pw.apps', $apps);
     }
 
+    /**
+     * @param array<array<mixed>> $apps
+     *
+     * @return array<mixed>
+     */
     private function parseApps(array $apps): array
     {
         $result = [];
         foreach ($apps as $app) {
             $app = $this->processAppConfig($app);
-            if (! isset($app['hosts'][0])) { // normally, it's impossible to reach this
+            if (! isset($app['hosts']) || ! \is_array($app['hosts']) || ! isset($app['hosts'][0])) { // normally, it's impossible to reach this
                 throw new InvalidArgumentException('Something is badly configured in your pushword configuration file.');
             }
+
             $result[$app['hosts'][0]] = $app;
         }
 
         return $result;
     }
 
+    /**
+     * @param array<mixed> $app
+     *
+     * @return array<mixed>
+     */
     private function processAppConfig(array $app): array
     {
         $fallbackProperties = $this->getAppFallbackConfig();
 
-        if ($this->configuration) {
-            $configTree = $this->configuration->getConfigTreeBuilder()->buildTree();
-            $configTree->finalize($app); // it will check value
+        $node = $this->configuration->getConfigTreeBuilder()->buildTree();
+        $node->finalize($app); // it will check value
+
+        if (! isset($app['hosts']) || ! \is_array($app['hosts'])) {
+            $app = (new Processor())->processConfiguration($this->configuration, $app);
+            //throw new LogicException();
         }
 
-        foreach ($fallbackProperties as $p) {
-            if (! isset($app[$p])) {
-                $app[$p] = ! \is_string($this->config[$p]) ? $this->config[$p]
-                    : str_replace('%main_host%', $app['hosts'][0], $this->config[$p]); //'%'.'pw.'.$p.'%';
-            } elseif ('custom_properties' == $p) {
+        foreach ($fallbackProperties as $fallbackProperty) {
+            if (! isset($app[$fallbackProperty])) {
+                $app[$fallbackProperty] = \is_string($this->config[$fallbackProperty]) ? str_replace('%main_host%', $app['hosts'][0], $this->config[$fallbackProperty])
+                    : $this->config[$fallbackProperty];
+            } elseif ('custom_properties' == $fallbackProperty) {
+                if (! \is_array($this->config['custom_properties']) || ! \is_array($app['custom_properties'])) {
+                    throw new LogicException();
+                }
+
                 $app['custom_properties'] = array_merge($this->config['custom_properties'], $app['custom_properties']);
             }
         }
@@ -123,6 +148,9 @@ final class PushwordConfigFactory
         return $app;
     }
 
+    /**
+     * @param array<mixed> $config
+     */
     private function loadToParameters(array $config, string $prefix = ''): void
     {
         $fallbackProperties = $this->getAppFallbackConfig();
@@ -132,12 +160,12 @@ final class PushwordConfigFactory
                 continue; // We don't process Apps this way
             }
 
-            if (\in_array($key, $fallbackProperties)) {
+            if (\in_array($key, $fallbackProperties, true)) {
                 continue; // We don't load configuration we use in App
             }
 
             if (\is_array($value)
-            && ! \in_array($key, ['image_filter_sets'])
+            && 'image_filter_sets' !== $key
                 && IsAssociativeArray::test($value)
                 ) {
                 $this->loadToParameters($value, $prefix.$key.'.');
@@ -145,14 +173,17 @@ final class PushwordConfigFactory
                 continue;
             }
 
-            $this->setParameter($prefix.$key, $value);
+            $this->setParameter($prefix.$key, $value); // @phpstan-ignore-line
         }
     }
 
-    private function setParameter($key, $value)
+    /**
+     * @param array<mixed>|bool|string|int|float|null $value The parameter value
+     */
+    private function setParameter(string $key, $value): void
     {
         if ($this->container->hasParameter($key)) {
-            throw new InvalidArgumentException(sprintf('Invalid "%s" name: parameter is ever registered.', $key));
+            throw new InvalidArgumentException(\Safe\sprintf('Invalid "%s" name: parameter is ever registered.', $key));
         }
 
         $this->container->setParameter($key, $value);

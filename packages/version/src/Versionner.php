@@ -21,6 +21,9 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
 
     private string $logsDir;
 
+    /**
+     * @var class-string<PageInterface>
+     */
     private string $pageClass;
 
     private EntityManagerInterface $entityManager;
@@ -29,6 +32,9 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
 
     private SerializerInterface $serializer;
 
+    /**
+     * @param class-string<PageInterface> $pageClass
+     */
     public function __construct(
         string $logDir,
         string $pageClass,
@@ -42,7 +48,10 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
         $this->serializer = $serializer;
     }
 
-    public function getSubscribedEvents()
+    /**
+     * @return string[]
+     */
+    public function getSubscribedEvents(): array
     {
         // return the subscribed events, their methods and priorities
         return [
@@ -51,18 +60,18 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
         ];
     }
 
-    public function postPersist(LifecycleEventArgs $args): void
+    public function postPersist(LifecycleEventArgs $lifecycleEventArgs): void
     {
-        $this->postUpdate($args);
+        $this->postUpdate($lifecycleEventArgs);
     }
 
-    public function postUpdate(LifecycleEventArgs $args): void
+    public function postUpdate(LifecycleEventArgs $lifecycleEventArgs): void
     {
-        if (false === static::$version) {
+        if (! static::$version) {
             return;
         }
 
-        $entity = $args->getObject();
+        $entity = $lifecycleEventArgs->getObject();
 
         if (! $entity instanceof PageInterface) {
             return;
@@ -87,74 +96,75 @@ class Versionner implements EventSubscriber //EventSubscriberInterface
 
         $page = Repository::getPageRepository($this->entityManager, $this->pageClass)->findOneBy(['id' => $pageId]);
 
-        if (! $page) {
+        if (null === $page) {
             throw new Exception('Page not found `'.$pageId.'`');
         }
 
-        $this->populate($page, $page->getId(), $version);
+        $this->populate($page, $version);
 
         $this->entityManager->flush();
 
         static::$version = true;
     }
 
-    /** @param PageInterface|string $id */
-    public function populate(PageInterface $page, $id, string $version): PageInterface
+    public function populate(PageInterface $page, string $version, ?int $pageId = null): PageInterface
     {
-        $pageVersionned = $this->getPageVersion($id, $version);
+        $pageVersionned = $this->getPageVersion(null !== $pageId ? $pageId : $page, $version);
 
         $this->serializer->deserialize($pageVersionned, \get_class($page), 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $page]);
 
         return $page;
     }
 
-    /** @param PageInterface|string $page */
+    /** @param PageInterface|int $page */
     private function getPageVersion($page, string $version): string
     {
         $versionFile = $this->getVersionFile($page, $version);
-        $content = file_get_contents($versionFile);
 
-        if (false === $content) {
-            throw new Exception('Version not found');
-        }
-
-        return $content;
+        return \Safe\file_get_contents($versionFile);
     }
 
-    /** @param PageInterface|string $pageId */
+    /** @param PageInterface|int $pageId */
     public function reset($pageId): void
     {
         $this->fileSystem->remove($this->getVersionDir($pageId));
     }
 
-    /** @param PageInterface|string $page */
+    /**
+     * @param PageInterface|int $page
+     *
+     * @return string[]
+     */
     public function getPageVersions($page): array
     {
         $dir = $this->getVersionDir($page);
 
-        if (! file_exists($dir)) {
+        if (! file_exists($dir) || ! \is_array($scandir = \Safe\scandir($dir))) {
             return [];
         }
 
-        $versions = array_filter(scandir($dir), function (string $item) {
-            return ! \in_array($item, ['.', '..']);
-        });
+        $versions = array_filter($scandir, fn (string $item): bool => ! \in_array($item, ['.', '..'], true));
 
         return array_values($versions);
     }
 
-    /** @param PageInterface|string $page */
+    /** @param PageInterface|int $page */
     private function getVersionDir($page): string
     {
-        return $this->logsDir.'/version/'.($page instanceof PageInterface ? (string) $page->getId() : $page);
+        $pageId = ($page instanceof PageInterface ? (string) $page->getId() : $page);
+
+        return $this->logsDir.'/version/'.$pageId;
     }
 
-    /** @param PageInterface|string $page */
-    private function getVersionFile($page, string $version = ''): string
+    /** @param PageInterface|int $page */
+    private function getVersionFile($page, ?string $version = null): string
     {
-        return $this->getVersionDir($page).'/'.($version ?: uniqid());
+        return $this->getVersionDir($page).'/'.($version ?? uniqid());
     }
 
+    /**
+     * @return array<string>
+     */
     private function getProperties(PageInterface $page): array
     {
         return Entity::getProperties($page);

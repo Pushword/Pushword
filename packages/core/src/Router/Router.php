@@ -11,25 +11,22 @@ use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
 
 final class Router implements RouterInterface
 {
-    /** @var SfRouterInterface */
-    private $router;
+    private SfRouterInterface $router;
 
-    private $useCustomHostPath = true; // TODO make it true on special request, same with absolute
+    private bool $useCustomHostPath = true;
 
-    /** @var AppPool */
-    private $apps;
+    private \Pushword\Core\Component\App\AppPool $apps;
 
-    /** @var string */
-    private $currentHost;
+    private string $currentHost;
 
     public function __construct(
-        SfRouterInterface $router,
-        AppPool $apps,
+        SfRouterInterface $sfRouter,
+        AppPool $appPool,
         RequestStack $requestStack
     ) {
-        $this->router = $router;
-        $this->apps = $apps;
-        $this->currentHost = $requestStack->getCurrentRequest() ? $requestStack->getCurrentRequest()->getHost() : '';
+        $this->router = $sfRouter;
+        $this->apps = $appPool;
+        $this->currentHost = null !== $requestStack->getCurrentRequest() ? $requestStack->getCurrentRequest()->getHost() : '';
     }
 
     /**
@@ -37,14 +34,15 @@ final class Router implements RouterInterface
      * and / for YY page home if your default language is YY
      * X/Y may be en/fr/...
      */
-    public function generatePathForHomePage(?PageInterface $page = null, $canonical = false): string
+    public function generatePathForHomePage(?PageInterface $page = null, bool $canonical = false): string
     {
         $homepage = (new Page())->setSlug('');
 
         if (null !== $page) {
-            if ($page->getLocale() != $this->apps->get()->getDefaultLocale()) {
+            if ($page->getLocale() !== $this->apps->get()->getDefaultLocale()) {
                 $homepage->setSlug($page->getLocale());
             }
+
             $homepage->setHost($page->getHost());
         } else {
             $homepage->setLocale($this->apps->get()->getLocale())->setHost($this->apps->get()->getMainHost());
@@ -53,7 +51,11 @@ final class Router implements RouterInterface
         return $this->generate($homepage, $canonical);
     }
 
-    public function generate($slug = 'homepage', $canonical = false, $pager = null): string
+    /**
+     * @param string|PageInterface $slug
+     * @param int|string|null      $pager
+     */
+    public function generate($slug = 'homepage', bool $canonical = false, $pager = null): string
     {
         $page = null;
 
@@ -67,44 +69,40 @@ final class Router implements RouterInterface
         if (! $canonical) {
             if ($this->mayUseCustomPath()) {
                 return $this->router->generate(self::CUSTOM_HOST_PATH, [
-                    'host' => $this->apps->getCurrentPage()->getHost(),
+                    'host' => $this->apps->getCurrentPageSafely()->getHost(),
                     'slug' => $slug,
                 ]);
-            } elseif ($page && ! $this->apps->sameHost($page->getHost())) { // maybe we force canonical - useful for views
+            } elseif (null !== $page && ! $this->apps->sameHost($page->getHost())) { // maybe we force canonical - useful for views
                 $canonical = true;
             }
         }
 
-        if ($canonical && $page) {
+        if ($canonical && null !== $page) {
             $baseUrl = $this->apps->getAppValue('baseUrl', $page->getHost());
         }
 
         $url = ($baseUrl ?? '').$this->router->generate(self::PATH, ['slug' => $slug]);
 
-        if ($pager && '1' !== (string) $pager) {
+        if (null !== $pager && '1' !== (string) $pager) {
             $url = rtrim($url, '/').'/'.$pager;
         }
 
         return $url;
     }
 
-    private function mayUseCustomPath()
+    private function mayUseCustomPath(): bool
     {
         return $this->useCustomHostPath
-            && $this->currentHost // we have a request
-            && $this->apps->getCurrentPage() // a page is loaded
-            && $this->apps->getCurrentPage()->getHost()
+            && '' !== $this->currentHost // we have a request
+            && null !== $this->apps->getCurrentPage() // a page is loaded
+            && '' !== $this->apps->getCurrentPage()->getHost()
             && ! $this->apps->get()->isMainHost($this->currentHost);
     }
 
     /**
      * Set the value of isLive.
-     *
-     * @param bool $isLive
-     *
-     * @return self
      */
-    public function setUseCustomHostPath($useCustomHostPath)
+    public function setUseCustomHostPath(bool $useCustomHostPath = true): self
     {
         $this->useCustomHostPath = $useCustomHostPath;
 

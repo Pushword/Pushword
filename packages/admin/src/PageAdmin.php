@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use LogicException;
 use Pushword\Admin\FormField\HostField;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
@@ -9,21 +10,35 @@ use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata;
-use Sonata\AdminBundle\Object\MetadataInterface;
 
+/**
+ * @extends AbstractAdmin<PageInterface>
+ */
 class PageAdmin extends AbstractAdmin implements PageAdminInterface
 {
+    /**
+     * @use AdminTrait<PageInterface>
+     */
     use AdminTrait;
 
+    /**
+     * @var bool
+     */
     public $supportsPreviewMode = true;
 
-    protected $messagePrefix = 'admin.page';
+    protected string $messagePrefix = 'admin.page';
 
+    /**
+     * @var string[]
+     */
     protected array $fields = [];
 
-    protected $perPageOptions = [16, 250, 1000];
+    /**
+     * @var int[]
+     */
+    protected array $perPageOptions = [16, 250, 1000];
 
-    protected $maxPerPage = 1000;
+    protected int $maxPerPage = 1000;
 
     protected function configureDefaultSortValues(array &$sortValues): void
     {
@@ -35,7 +50,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         ];
     }
 
-    public function __construct($code, $class, $baseControllerName)
+    public function __construct(string $code, string $class, string $baseControllerName)
     {
         parent::__construct($code, $class, $baseControllerName);
     }
@@ -55,17 +70,28 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         return method_exists($this->pageClass, 'get'.$name);
     }
 
+    /**
+     * @psalm-suppress InvalidArgument
+     */
     protected function configureFormFields(FormMapper $form): void
     {
         $fields = $this->getFormFields();
+        if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) {
+            throw new LogicException();
+        }
 
         $form->with('admin.page.mainContent.label', ['class' => 'col-md-9 mainFields']);
         foreach ($fields[0] as $field) {
             $this->addFormField($field, $form);
         }
+
         $form->end();
 
         foreach ($fields[1] as $k => $block) {
+            if (null === $this->getSubject()->getId() && 'admin.page.revisions' == $k) {
+                continue;
+            }
+
             $fields = $block['fields'] ?? $block;
             $class = isset($block['expand']) ? 'expand' : '';
             $form->with($k, ['class' => 'col-md-3 columnFields '.$class, 'label' => $k]);
@@ -79,20 +105,19 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
     protected function alterNewInstance(object $object): void
     {
-        if (! $object instanceof PageInterface) {
-            return;
-        }
-
         $object->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
     }
 
+    /**
+     * @psalm-suppress InvalidArgument
+     */
     protected function configureDatagridFilters(DatagridMapper $filter): void
     {
         $filter->add('locale', null, ['label' => 'admin.page.locale.label']);
 
         if (\count($this->getApps()->getHosts()) > 1) {
             //$filter->add('host', null, ['label' => 'admin.page.host.label']);
-            (new HostField($this))->datagridMapper($filter);
+            (new HostField($this))->datagridMapper($filter); // @phpstan-ignore-line
         }
 
         $filter->add('h1', null, ['label' => 'admin.page.h1.label']);
@@ -121,9 +146,9 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         }
     }
 
-    public function preUpdate(object $object): void
+    protected function preUpdate(object $object): void
     {
-        $object->setUpdatedAt(new \Datetime());
+        $object->setUpdatedAt(new \DateTime());
     }
 
     protected function configureListFields(ListMapper $list): void
@@ -148,15 +173,21 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         ]);
     }
 
-    public function getObjectMetadata(object $object): MetadataInterface
+    /**
+     * @param PageInterface $object
+     * @psalm-suppress MoreSpecificImplementedParamType
+     */
+    public function getObjectMetadata(object $object): Metadata
     {
         $media = $object->getMainImage();
-        if ($media && $this->imageManager->isImage($media)) {
+        if (null !== $media && $this->imageManager->isImage($media)) {
             $thumb = $this->imageManager->getBrowserPath($media, 'thumb');
         } else {
             $thumb = self::$thumb;
         }
 
-        return new Metadata(strip_tags($object->getName(true)), null, $thumb);
+        $name = \in_array($object->getName(), ['', null], true) ? $object->getH1() : $object->getName();
+
+        return new Metadata(strip_tags((string) $name), null, $thumb);
     }
 }

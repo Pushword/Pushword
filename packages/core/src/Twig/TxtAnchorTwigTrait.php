@@ -7,9 +7,11 @@ use Pushword\Core\Component\App\AppConfig;
 
 trait TxtAnchorTwigTrait
 {
+    private \Twig\Environment $twig;
+
     abstract public function getApp(): AppConfig;
 
-    public function renderTxtAnchor($name)
+    public function renderTxtAnchor(string $name): string
     {
         $template = $this->getApp()->getView('/component/txt_anchor.html.twig');
 

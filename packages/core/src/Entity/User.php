@@ -23,7 +23,10 @@ class User implements UserInterface, sfUserInterface, PasswordAuthenticatedUserI
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
+     * @ORM\GeneratedValue
      * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @var int
      */
     protected $id;
 }

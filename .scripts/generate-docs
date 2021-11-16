@@ -1,17 +1,20 @@
 #!/bin/bash -e
 
+#composer reset-skeleton
+
 function restoreData {
     echo "restore data..."
      if [[ $CURRENT_DIR = 'packages/skeleton' ]]
     then
         cd ../../
     fi
-    sh ./.scripts/data-restore
+    bash ./.scripts/data-restore no-docs
 }
 trap restoreData EXIT
-sh ./.scripts/data-preserve
+bash ./.scripts/data-preserve no-docs
 
 php ./.scripts/generate-docs-assets
+
 
 CURRENT_DIR='packages/skeleton'
 cd packages/skeleton

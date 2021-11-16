@@ -9,8 +9,8 @@ trait RequiredApps
     protected AppPool $apps;
 
     /** @Required */
-    public function setApps(AppPool $apps): void
+    public function setApps(AppPool $appPool): void
     {
-        $this->apps = $apps;
+        $this->apps = $appPool;
     }
 }

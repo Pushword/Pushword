@@ -6,11 +6,14 @@ use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
+/**
+ * @extends AbstractField<PageInterface>
+ */
 class PageSlugField extends AbstractField
 {
-    protected function getSlugHelp()
+    protected function getSlugHelp(): string
     {
-        if (! $this->admin->hasSubject() || ! $this->admin->getSubject()->getSlug()) {
+        if ('' === $this->admin->getSubject()->getSlug()) {
             return 'admin.page.slug.help';
         }
 
@@ -18,7 +21,7 @@ class PageSlugField extends AbstractField
         $page = $this->admin->getSubject();
 
         $url = $this->admin->getRouter()->generate('pushword_page', ['slug' => $page->getRealSlug()]);
-        $liveUrl = $page->getHost() ?
+        $liveUrl = '' !== $page->getHost() ?
             $this->admin->getRouter()->generate(
                 'custom_host_pushword_page',
                 ['host' => $page->getHost(), 'slug' => $page->getRealSlug()]
@@ -30,19 +33,24 @@ class PageSlugField extends AbstractField
                         $(".slug_disabled").first().removeAttr("disabled");
                         $(".slug_disabled").first().focus();
                         $("#disabledLinkSlug").first().remove();
-                    }</script> <small><a href="'.$liveUrl.'"><small><i class="fa fa-link"></i></small> '.\symfony\component\string\u($url)->truncate(30, '…').'</a></small></div>';
+                    }</script> <small><a href="'.$liveUrl.'"><small><i class="fa fa-link"></i></small> '.\Symfony\Component\String\u($url)->truncate(30, '…').'</a></small></div>';
     }
 
-    public function formField(FormMapper $formMapper): FormMapper
+    /**
+     * @param FormMapper<PageInterface> $form
+     *
+     * @return FormMapper<PageInterface>
+     */
+    public function formField(FormMapper $form): FormMapper
     {
-        return $formMapper->add('slug', TextType::class, [
+        return $form->add('slug', TextType::class, [
             'required' => false,
             'label' => 'admin.page.slug.label',
             'help_html' => true,
             'help' => $this->getSlugHelp(),
             'attr' => [
                 'class' => 'slug_disabled',
-                ($this->admin->getSubject() ? ($this->admin->getSubject()->getSlug() ? 'disabled' : 't') : 't') => '',
+                ('' !== $this->admin->getSubject()->getSlug() ? 'disabled' : 't') => '',
             ],
         ]);
     }

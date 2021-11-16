@@ -9,7 +9,11 @@ trait GenerateLivePathForTrait
 {
     protected RouterInterface $router;
 
-    public function generateLivePathFor($host, $route = 'pushword_page', $params = [])
+    /**
+     * @param string|PageInterface  $host
+     * @param array<string, string> $params
+     */
+    public function generateLivePathFor($host, string $route = 'pushword_page', array $params = []): string
     {
         if (isset($params['locale'])) {
             $params['_locale'] = $params['locale'].'/';
@@ -25,7 +29,7 @@ trait GenerateLivePathForTrait
             $params['slug'] = $page->getRealSlug();
         }
 
-        if ($host) {
+        if ('' !== $host) {
             $params['host'] = $host;
             $route = 'custom_host_'.$route;
         }

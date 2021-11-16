@@ -2,16 +2,24 @@
 
 namespace Pushword\Admin\FormField;
 
-use Pushword\Version\PushwordVersionBundle;
+use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\Form\Type\DateTimePickerType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
+/**
+ * @extends AbstractField<PageInterface>
+ */
 class PagePublishedAtField extends AbstractField
 {
-    public function formField(FormMapper $formMapper): FormMapper
+    /**
+     * @param FormMapper<PageInterface> $form
+     *
+     * @return FormMapper<PageInterface>
+     */
+    public function formField(FormMapper $form): FormMapper
     {
-        return $formMapper->add('publishedAt', DateTimePickerType::class, [
+        return $form->add('publishedAt', DateTimePickerType::class, [
             'format' => DateTimeType::HTML5_FORMAT,
             'dp_side_by_side' => true,
             'dp_use_current' => true,
@@ -28,19 +36,20 @@ class PagePublishedAtField extends AbstractField
 
     private function getHelp(): string
     {
+        $published = $this->getSubject()->getPublishedAt() <= new \DateTime('now');
         // TODO: translate
-        return $this->getSubject() && $this->getSubject()->getSlug() ?
-            'Dernière édition le '.$this->getSubject()->getUpdatedAt()->format('d/m à H:m')
-            .($this->getSubject()->getEditedBy() ? ' par '.$this->getSubject()->getEditedBy()->getUsername() : '')
-            .(class_exists(PushwordVersionBundle::class)
-                ? '<br><a href="'
-                .$this->admin->getRouter()->generate('pushword_version_list', ['id' => $this->getSubject()->getId()])
-                .'">Voir l\'historique</a>' : '')
+        return null !== $this->getSubject()->getId() ?
+            $this->trans($this->admin->getMessagePrefix().'.publishedAt.'.($published ? 'online' : 'draft'))
             : '';
     }
 
-    private function getSubject()
+    private function getSubject(): PageInterface
     {
         return $this->admin->getSubject();
+    }
+
+    private function trans(string $id): string
+    {
+        return $this->admin->getTranslator()->trans($id);
     }
 }

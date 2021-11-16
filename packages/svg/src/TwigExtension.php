@@ -13,46 +13,50 @@ class TwigExtension extends AbstractExtension
     use AttributesTrait;
     use RequiredApps;
 
-    public function getFunctions()
+    /**
+     * @return \Twig\TwigFunction[]
+     */
+    public function getFunctions(): array
     {
         return [
             new TwigFunction('svg', [$this, 'getSvg'], ['needs_environment' => false, 'is_safe' => ['html']]),
         ];
     }
 
-    public function getSvg(string $name, $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], string $dir = ''): string
+    /**
+     * @param array<string, string> $attr
+     */
+    public function getSvg(string $name, array $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], string $dir = ''): string
     {
-        $dirs = $dir ?: $this->apps->get()->get('svg_dir');
+        $dirs = '' !== $dir ? $dir : $this->apps->get()->get('svg_dir');
 
         if (! \is_array($dirs)) {
             $dirs = [$dirs];
         }
 
         $file = null;
-        foreach ($dirs as $dirPath) {
-            $file = $dirPath.'/'.$name.'.svg';
+        foreach ($dirs as $d) {
+            $file = $d.'/'.$name.'.svg';
             if (file_exists($file)) {
                 break;
             }
+
             $file = null;
         }
 
-        if (! $file) {
+        if (null === $file) {
             throw new Exception('`'.$name.'` (svg) not found.');
         }
 
-        if (! \in_array(mime_content_type($file), ['image/svg+xml', 'image/svg'])) {
+        if (! \in_array(\Safe\mime_content_type($file), ['image/svg+xml', 'image/svg'], true)
+            || ($svg = file_get_contents($file)) === false) {
             throw new Exception('`'.$name.'` seems not be a valid svg file.');
         }
 
-        $svg = file_get_contents($file);
-
-        $svg = self::replaceOnce('<svg ', '<svg '.self::mapAttributes($attr).' ', $svg);
-
-        return $svg;
+        return self::replaceOnce('<svg ', '<svg '.self::mapAttributes($attr).' ', $svg);
     }
 
-    private static function replaceOnce(string $needle, string $replace, string $haystack)
+    private static function replaceOnce(string $needle, string $replace, string $haystack): string
     {
         $pos = strpos($haystack, $needle);
         if (false !== $pos) {

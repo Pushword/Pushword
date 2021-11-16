@@ -9,6 +9,9 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var string[]
+     */
     public const DEFAULT_APP_FALLBACK = [
         'admin_block_editor',
         'admin_block_editor_disable_listener',
@@ -16,9 +19,12 @@ class Configuration implements ConfigurationInterface
         'admin_block_editor_type_to_prose',
     ];
 
+    /**
+     * @var string[]
+     */
     public const DEFAULT_TYPE_TO_PROSE = ['paragraph', 'image', 'list', 'blockquote', 'code', 'delimiter', 'header'];
 
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('admin_block_editor');
         $treeBuilder->getRootNode()->children()

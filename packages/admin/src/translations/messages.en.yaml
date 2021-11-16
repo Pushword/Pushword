@@ -25,6 +25,8 @@ md_cs:
 #---
 # Admin
 #---
+datetimeMediumFormat: 'Y-m-d \a\t H:m'
+
 Page List: Liste des pages
 
 admin:
@@ -48,6 +50,7 @@ admin:
   edition: Edition # not good
 
   page:
+    revisions: Revisions
     gallery:
       label: Galerie d'images
     state:
@@ -96,13 +99,19 @@ admin:
       choice:
         noIndex: Interdire l'indexation
     author:
-      label: Auteur
+      label: Author
     parentPage:
-      label: Page Parente
+      label: Parent Page
     publishedAt:
-      label: Publié le
+      label: Published at
+      online: Online
+      draft: Draft
+    editMessage:
+      label: Reason of modification
+      help:           Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em>
+      helpVersionned: Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">See hitory</a>
     createdAt:
-      label: Créé le
+      label: Created At
     updatedAt:
       label: Mise à jour le
     template:

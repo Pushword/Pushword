@@ -22,6 +22,10 @@ interface PageEditorInterface
      */
     public function setCreatedBy(?UserInterface $user): void;
 
+    public function getEditMessage(): string;
+
+    public function setEditMessage(?string $editMessage): self;
+
     /*
     public function setPageHasEditors($pageHasEditors): void;
 

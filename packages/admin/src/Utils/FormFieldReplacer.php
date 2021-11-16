@@ -6,11 +6,16 @@ class FormFieldReplacer
 {
     private int $replaced = 0;
 
-    public function count()
+    public function count(): int
     {
         return $this->replaced;
     }
 
+    /**
+     * @param mixed[] $fields
+     *
+     * @return mixed[]
+     */
     public function run(string $formFieldClass, string $newFormFieldClass, array $fields): array
     {
         foreach ($fields as $k => $field) {
@@ -26,16 +31,6 @@ class FormFieldReplacer
 
                 break;
             }
-        }
-
-        return $fields;
-    }
-
-    public static function run2(string $formFieldClass, string $newFormFieldClass, $fields): array
-    {
-        $key = array_search($formFieldClass, $fields[0]);
-        if (false !== $key) {
-            $fields[0][$key] = $newFormFieldClass;
         }
 
         return $fields;

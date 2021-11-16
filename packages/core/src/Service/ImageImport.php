@@ -13,8 +13,8 @@ trait ImageImport
     {
         $slug = (new Slugify())->slugify($slug);
 
-        return ($slug ?: pathinfo($url, \PATHINFO_BASENAME))
-            .($hashInFilename ? '-'.substr(md5(sha1($url)), 0, 4) : '')
+        return ('' !== $slug ? $slug : pathinfo($url, \PATHINFO_BASENAME))
+            .($hashInFilename ? '-'.\Safe\substr(md5(sha1($url)), 0, 4) : '')
             .'.'.str_replace(['image/', 'jpeg'], ['', 'jpg'], $mimeType);
     }
 
@@ -22,17 +22,16 @@ trait ImageImport
         string $image,
         string $name = '',
         string $slug = '',
-        $hashInFilename = true
+        bool $hashInFilename = true
         //, $ifNameIsTaken = null
     ): MediaInterface {
         $imageLocalImport = $this->cacheExternalImage($image);
 
-        $imgSize = getimagesize($imageLocalImport);
-        if (false === $imgSize) {
+        if (false === $imageLocalImport || ($imgSize = getimagesize($imageLocalImport)) === false) {
             throw new Exception('Image `'.$image.'` was not imported.');
         }
 
-        $fileName = $this->generateFileName($image, $imgSize['mime'], $slug ?: $name, $hashInFilename);
+        $fileName = $this->generateFileName($image, $imgSize['mime'], '' !== $slug ? $slug : $name, $hashInFilename);
 
         $newFilePath = $this->mediaDir.'/'.$fileName;
 
@@ -41,7 +40,7 @@ trait ImageImport
             ->setProjectDir($this->projectDir)
                 ->setStoreIn($this->mediaDir)
                 ->setMimeType($imgSize['mime'])
-                ->setSize(filesize($imageLocalImport))
+                ->setSize(\Safe\filesize($imageLocalImport))
                 ->setDimensions([$imgSize[0], $imgSize[1]])
                 ->setMedia($fileName)
                 ->setName(str_replace(["\n", '"'], ' ', $name));
@@ -51,6 +50,7 @@ trait ImageImport
 
             $this->generateCache($media);
         }
+
         // Else, normally it's an external file ever imported
         // But SHA1_file may be checked to be sure it's the same file (/!\)
         // if not, the original file may have change OR we may have an internal file with the same slug.extension (media)
@@ -60,7 +60,7 @@ trait ImageImport
     }
 
     /**
-     * Undocumented function.
+     * @noRector
      *
      * @return false|string
      */
@@ -73,10 +73,10 @@ trait ImageImport
 
         if (! is_readable($src) && \function_exists('curl_init')) {
             $curl = curl_init($src);
-            curl_setopt($curl, \CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($curl, \CURLOPT_RETURNTRANSFER, 1); // @phpstan-ignore-line
             /** @var false|string $content */
-            $content = curl_exec($curl);
-            curl_close($curl);
+            $content = curl_exec($curl); // @phpstan-ignore-line
+            curl_close($curl); // @phpstan-ignore-line
         } else {
             $content = file_get_contents($src);
         }
@@ -85,9 +85,7 @@ trait ImageImport
             return false;
         }
 
-        if (false === file_put_contents($filePath, $content)) {
-            throw new Exception('An error occured caching external resource in system tmp dir.');
-        }
+        \Safe\file_put_contents($filePath, $content);
 
         return $filePath;
     }

@@ -7,7 +7,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class PushwordConversationBundle extends Bundle
 {
-    public function getContainerExtension()
+    public function getContainerExtension(): ?PushwordConversationExtension
     {
         if (null === $this->extension) {
             $this->extension = new PushwordConversationExtension();

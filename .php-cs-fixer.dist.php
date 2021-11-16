@@ -39,6 +39,8 @@ return (new PhpCsFixer\Config())
             'keep_multiple_spaces_after_comma' => true,
         ],
         'single_trait_insert_per_statement' => true,
+        'modernize_types_casting' => false, // PHPStan...*
+        'phpdoc_to_comment' => false, // see here to add use to structural element https://github.com/FriendsOfPHP/PHP-CS-Fixer/blob/402b34d4ab33146eaab0f17d60c928eaa7e332b9/src/Tokenizer/Analyzer/CommentsAnalyzer.php#L155
     ])
     ->setRiskyAllowed(true)
     ->setFinder($finder);

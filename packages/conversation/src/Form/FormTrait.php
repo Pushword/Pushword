@@ -3,19 +3,21 @@
 namespace Pushword\Conversation\Form;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
-use Pushword\Conversation\Entity\MessageInterface as Message;
+use Pushword\Conversation\Entity\MessageInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormFactory;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -27,7 +29,7 @@ trait FormTrait
     /**
      * Permit to convert integer step to text string for a better readability.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected static $step = [
         1 => 'One',
@@ -39,66 +41,62 @@ trait FormTrait
     /** @var string */
     protected $successMessage = 'conversation.send.success';
 
-    /** @var Request */
-    protected $request;
+    protected \Symfony\Component\HttpFoundation\Request $request;
 
-    /** @var \Doctrine\Bundle\DoctrineBundle\Registry */
-    protected $doctrine;
+    protected \Doctrine\Bundle\DoctrineBundle\Registry $doctrine;
 
-    /** @var Twig */
-    protected $twig;
+    protected Twig $twig;
 
-    /** @var TokenStorageInterface */
-    protected $security;
+    protected \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface $security;
 
-    /** @var FormFactory */
-    protected $formFactory;
+    protected \Symfony\Component\Form\FormFactory $formFactory;
 
-    /** @var TranslatorInterface */
-    protected $translator;
+    protected \Symfony\Contracts\Translation\TranslatorInterface $translator;
 
-    /** @var Router */
-    protected $router;
+    protected \Symfony\Bundle\FrameworkBundle\Routing\Router $router;
 
     /** @var int */
     protected $currentStep;
 
-    /** @var int */
-    protected $messageId;
+    protected ?int $messageId = null;
 
-    /** @var string */
-    protected $messageEntity;
+    /**
+     * @var class-string<MessageInterface>
+     */
+    protected string $messageEntity;
 
-    /** @var Message */
+    /** @var MessageInterface */
     protected $message;
 
-    /** @var AppPool */
-    protected $apps;
+    protected \Pushword\Core\Component\App\AppPool $apps;
 
     /** @var AppConfig */
     protected $app;
 
+    /**
+     * @param class-string<MessageInterface> $messageEntity
+     */
     public function __construct(
         string $messageEntity,
         Request $request,
-        Registry $doctrine,
-        TokenStorageInterface $security,
+        Registry $registry,
+        TokenStorageInterface $tokenStorage,
         FormFactory $formFactory,
         Twig $twig,
         Router $router,
         TranslatorInterface $translator,
-        AppPool $apps
+        AppPool $appPool
     ) {
         $this->request = $request;
-        $this->doctrine = $doctrine;
-        $this->security = $security;
+        $this->doctrine = $registry;
+        $this->security = $tokenStorage;
         $this->formFactory = $formFactory;
         $this->twig = $twig;
         $this->router = $router;
         $this->translator = $translator;
         $this->messageEntity = $messageEntity;
-        $this->apps = $apps;
-        $this->app = $apps->get();
+        $this->apps = $appPool;
+        $this->app = $appPool->get();
     }
 
     /**
@@ -109,14 +107,15 @@ trait FormTrait
     {
         if (1 === $this->getStep()) {
             $this->message = new $this->messageEntity(); // todo, permit to configure it
-            $this->message->setAuthorIpRaw($this->request->getClientIp() ?? '');
-            $this->message->setReferring($this->getReferring());
+            $this->message->setAuthorIpRaw((string) $this->request->getClientIp());
+            $this->message->setReferring((string) $this->getReferring());
             $this->message->setHost($this->app->getMainHost());
         } else {
-            $this->message = $this->doctrine->getRepository($this->messageEntity)->find($this->getId());
-            if (! $this->message) {
+            $this->message = $this->doctrine->getRepository($this->messageEntity)->find($this->getId()); // @phpstan-ignore-line ???
+            if (null === $this->message) {
                 throw new NotFoundHttpException('An error occured during the validation ('.$this->getId().')');
             }
+
             // add a security check ? Comparing current IP and previous one
             // IPUtils::checkIp($request->getClientIp()), $this->message->getAuthorIpRaw())
             // sinon, passer l'id dans la session plutôt que dans la requête
@@ -138,7 +137,7 @@ trait FormTrait
     {
         $currentStepMethod = 'getStep'.self::$step[$this->getStep()];
 
-        return $this->$currentStepMethod();
+        return $this->$currentStepMethod(); // @phpstan-ignore-line
     }
 
     abstract protected function getStepOne(): FormBuilderInterface;
@@ -146,28 +145,28 @@ trait FormTrait
     /**
      * Return rendered response (success or error).
      */
-    public function validCurrentStep($form): string
+    public function validCurrentStep(FormInterface $form): string
     {
         $currentStepMethod = 'valid'.self::$step[$this->getStep()];
         if (method_exists($this, $currentStepMethod)) {
-            return $this->$currentStepMethod($form);
+            return $this->$currentStepMethod($form); // @phpstan-ignore-line
         }
 
         return $this->defaultStepValidator($form);
     }
 
-    protected function validStepOne($form)
+    protected function validStepOne(FormInterface $form): string
     {
         return $this->defaultStepValidator($form);
     }
 
-    protected function defaultStepValidator($form): string
+    protected function defaultStepValidator(FormInterface $form): string
     {
         if ($form->isValid()) {
             $this->sanitizeConversation();
             $this->getDoctrine()->getManager()->persist($this->message);
             $this->getDoctrine()->getManager()->flush();
-            $this->messageId = $this->message->getId();
+            $this->messageId = (int) $this->message->getId();
 
             if (false !== $this->getNextStepFunctionName()) {
                 $this->incrementStep();
@@ -180,6 +179,7 @@ trait FormTrait
                     'step' => $this->getStep() + 1,
                 ]);*/
             }
+
             //$form = $form->createView();
 
             return $this->showSuccess();
@@ -209,7 +209,7 @@ trait FormTrait
         return $view;
     }
 
-    public function showForm($form): string
+    public function showForm(FormInterface $form): string
     {
         return $this->twig->render($this->getShowFormTemplate(), [
             'conversation' => $form->createView(),
@@ -226,6 +226,9 @@ trait FormTrait
         ]);
     }
 
+    /**
+     * @return false|string
+     */
     protected function getNextStepFunctionName()
     {
         $getFormMethod = 'getStep'.self::$step[$this->getNextStep()];
@@ -236,19 +239,19 @@ trait FormTrait
         return $getFormMethod;
     }
 
-    protected function getNextStep()
+    protected function getNextStep(): int
     {
         return $this->getStep() + 1;
     }
 
-    protected function sanitizeConversation()
+    protected function sanitizeConversation(): void
     {
         $this->message->setContent(
-            htmlspecialchars($this->message->getContent())
+            htmlspecialchars((string) $this->message->getContent())
         );
     }
 
-    protected function getStep()
+    protected function getStep(): int
     {
         if (null !== $this->currentStep) {
             return $this->currentStep;
@@ -257,32 +260,38 @@ trait FormTrait
         return $this->currentStep = $this->request->query->getInt('step', 1);
     }
 
-    protected function incrementStep()
+    protected function incrementStep(): void
     {
         //$this->request->set('step', $this->getStep()+1)
         ++$this->currentStep;
     }
 
-    protected function getId()
+    protected function getId(): int
     {
-        return $this->messageId ? $this->messageId : $this->request->query->getInt('id', 0);
+        return null !== $this->messageId ? $this->messageId : $this->request->query->getInt('id', 0);
     }
 
-    protected function getReferring()
+    protected function getReferring(): ?string
     {
-        return $this->request->get('referring');
+        return \strval($this->request->get('referring'));
     }
 
-    protected function getType()
+    protected function getType(): ?string
     {
-        return $this->request->get('type');
+        return \strval($this->request->get('type'));
     }
 
+    /**
+     * @return \Doctrine\Bundle\DoctrineBundle\Registry
+     */
     protected function getDoctrine()
     {
         return $this->doctrine;
     }
 
+    /**
+     * @return Constraint[]
+     */
     protected function getAuthorNameConstraints()
     {
         return [
@@ -294,6 +303,9 @@ trait FormTrait
         ];
     }
 
+    /**
+     * @return Constraint[]
+     */
     protected function getAuthorEmailConstraints()
     {
         return [

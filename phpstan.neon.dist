@@ -1,0 +1,24 @@
+parameters:
+    level: max
+    paths:
+        - packages/core/src
+        - packages/conversation/src
+        - packages/admin/src
+        - packages/flat/src
+        - packages/page-scanner/src
+        - packages/page-update-notifier/src
+        - packages/static-generator/src
+        - packages/template-editor/src
+        - packages/skeleton/src
+        - packages/svg/src
+        - packages/installer/src
+        - packages/facebook/src
+        - packages/js-helper/src
+        - packages/version/src
+        - packages/admin-block-editor/src
+        - packages/advanced-main-image/src
+    symfony:
+        container_xml_path: /tmp/com.github.pushword.pushword/tests/var/dev/cache/App_KernelDevDebugContainer.xml
+        console_application_loader: packages/skeleton/bin/console-test.php
+    doctrine:
+        objectManagerLoader: packages/skeleton/bin/object-test.php

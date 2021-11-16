@@ -37,7 +37,7 @@ trait PageSearchTrait
 
     public function getTemplate(): ?string
     {
-        return $this->getCustomProperty('template');
+        return $this->getCustomProperty('template'); // @phpstan-ignore-line
     }
 
     /*
@@ -65,7 +65,7 @@ trait PageSearchTrait
 
     public function getSearchExcrept(): ?string
     {
-        return $this->getCustomProperty('searchExcrept');
+        return $this->getCustomProperty('searchExcrept'); // @phpstan-ignore-line
     }
 
     public function setSearchExcrept(?string $searchExcrept): self
@@ -104,9 +104,9 @@ trait PageSearchTrait
         return $this->priority;
     }
 
-    public function setPriority($priority): self
+    public function setPriority(int $priority): self
     {
-        $this->priority = (int) $priority;
+        $this->priority = $priority;
 
         return $this;
     }

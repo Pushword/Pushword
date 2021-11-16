@@ -7,7 +7,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class PushwordFlatBundle extends Bundle
 {
-    public function getContainerExtension()
+    public function getContainerExtension(): ?PushwordFlatExtension
     {
         if (null === $this->extension) {
             $this->extension = new PushwordFlatExtension();

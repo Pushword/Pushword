@@ -3,6 +3,8 @@
 namespace Pushword\Core\Twig;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use LogicException;
 use Pagerfanta\Adapter\ArrayAdapter;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\PagerfantaInterface;
@@ -10,6 +12,7 @@ use Pagerfanta\RouteGenerator\RouteGeneratorFactoryInterface;
 use Pagerfanta\Twig\View\TwigView;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -17,6 +20,9 @@ use Twig\Environment as Twig;
 
 trait PageListTwigTrait
 {
+    /**
+     * @var class-string<PageInterface>
+     */
     private string $pageClass;
 
     private EntityManagerInterface $em;
@@ -36,19 +42,22 @@ trait PageListTwigTrait
         return $this->requestStack->getCurrentRequest();
     }
 
+    /**
+     * @return array<string, string|null>
+     */
     private function getPagerRouteParams(): array
     {
         $params = [];
-        if ($this->getCurrentRequest() && $this->getCurrentRequest()->get('slug')) {
+        if (null !== $this->getCurrentRequest() && \is_string($this->getCurrentRequest()->get('slug'))) {
             $params['slug'] = rtrim($this->getCurrentRequest()->get('slug'), '/');
-        } elseif ($this->apps->getCurrentPage()) {
+        } elseif (null !== $this->apps->getCurrentPage()) {
             // normally, only used in admin
             $params['slug'] = $this->apps->getCurrentPage()->getSlug();
             $params['host'] = $this->apps->getCurrentPage()->getHost();
         }
 
-        if ($this->getCurrentRequest() && $this->getCurrentRequest()->get('host')) {
-            $params['host'] = $this->requestStack->getCurrentRequest()->get('host');
+        if (null !== ($request = $this->getCurrentRequest()) && null !== ($host = $request->get('host'))) {
+            $params['host'] = \strval($host);
         }
 
         return $params;
@@ -56,8 +65,8 @@ trait PageListTwigTrait
 
     private function getPagerRouteName(): string
     {
-        $pagerRouter = $this->getCurrentRequest() ? $this->getCurrentRequest()->get('_route') : 'pushword_page';
-        $pagerRouter .= $this->getCurrentRequest() && '' === $this->getCurrentRequest()->get('slug') ? '_homepage' : '';
+        $pagerRouter = null !== $this->getCurrentRequest() ? $this->getCurrentRequest()->get('_route') : 'pushword_page';
+        $pagerRouter .= null !== $this->getCurrentRequest() && '' === $this->getCurrentRequest()->get('slug') ? '_homepage' : '';
         $pagerRouter .= '_pager';
 
         return $pagerRouter;
@@ -65,18 +74,21 @@ trait PageListTwigTrait
 
     /**
      * TODO: documenter.
+     *
+     * @return array<mixed>
      */
     private function stringToSearch(string $search): array
     {
         $where = [];
 
-        if (false !== strpos($search, ' OR ')) {
+        if (str_contains($search, ' OR ')) {
             $searchToParse = explode(' OR ', $search);
-            foreach ($searchToParse as $s) {
+            foreach ($searchToParse as $singleSearchToParse) {
                 //$where = array_merge($where, $this->stringToSearch($s), ['OR']);
-                $where[] = $this->simpleStringToSearch($s);
+                $where[] = $this->simpleStringToSearch($singleSearchToParse);
                 $where[] = 'OR';
             }
+
             array_pop($where);
         }
         /*elseif (strpos($search, ' AND ') !== false) { // Manage OR and Where seems difficult
@@ -91,20 +103,23 @@ trait PageListTwigTrait
         return $where;
     }
 
+    /**
+     * @return array<mixed>
+     */
     private function simpleStringToSearch(string $search): array
     {
-        if ('children' == strtolower($search) && $this->apps->getCurrentPage()) {
+        if ('children' == strtolower($search) && null !== $this->apps->getCurrentPage()) {
             return ['parentPage', '=', $this->apps->getCurrentPage()->getId()];
         }
 
-        if (0 === strpos($search, 'comment:')) {
-            $search = '<!--'.substr($search, \strlen('comment:')).'-->';
+        if (str_starts_with($search, 'comment:')) {
+            $search = '<!--'.\Safe\substr($search, \strlen('comment:')).'-->';
 
             return ['key' => 'mainContent', 'operator' => 'LIKE', 'value' => '%'.$search.'%'];
         }
 
-        if (0 === strpos($search, 'slug:')) {
-            $search = substr($search, \strlen('slug:'));
+        if (str_starts_with($search, 'slug:')) {
+            $search = \Safe\substr($search, \strlen('slug:'));
 
             return ['key' => 'slug', 'operator' => 'LIKE', 'value' => $search];
         }
@@ -113,8 +128,11 @@ trait PageListTwigTrait
     }
 
     /**
-     * @param int|array $max if max is int => max result,
-     *                       if max is array => paginate where 0 => item per page and 1 (fac) maxPage
+     * @param string|array<mixed> $search
+     * @param string|array<(string|int), string> $order
+     * @param string|string[] $host
+     * @param int|array<(string|int), int>    $max    if max is int => max result,
+     *                                        if max is array => paginate where 0 => item per page and 1 (fac) maxPage
      */
     public function renderPagesList(
         Twig $twig,
@@ -135,28 +153,32 @@ trait PageListTwigTrait
 
         $queryBuilder = Repository::getPageRepository($this->em, $this->pageClass)
             ->getPublishedPageQueryBuilder(
-                $host ?: [$this->getApp()->getMainHost(), ''],
+                '' !== $host ? $host : [$this->getApp()->getMainHost(), ''],
                 $search,
                 $order,
                 $this->getLimit($max)
             );
 
-        if ($this->apps->getCurrentPage()) {
+        if (null !== $this->apps->getCurrentPage()) {
             $queryBuilder->andWhere('p.slug <> '.$this->apps->getCurrentPage()->getId());
         }
 
         if (\is_array($max) && isset($max[1]) && $max[1] > 1) {
             $pages = (array) $queryBuilder->getQuery()->getResult();
             $limit = $this->getLimit($max);
-            if ($limit) {
+            if (0 !== $limit) {
                 $pages = \array_slice($pages, 0, $limit);
             }
 
-            $pager = (new Pagerfanta(new ArrayAdapter($pages)))
-                ->setMaxNbPages($max[1] ?? 0)
+            if ($max[0] < 1) {
+                throw new LogicException();
+            }
+
+            $pagerfanta = (new Pagerfanta(new ArrayAdapter($pages)))
+                ->setMaxNbPages($max[1])
                 ->setMaxPerPage($max[0])
-                ->setCurrentPage($this->getCurrentPage());
-            $pages = $pager->getCurrentPageResults();
+                ->setCurrentPage($this->getCurrentPage()); // @phpstan-ignore-line
+            $pages = $pagerfanta->getCurrentPageResults();
         } else {
             $pages = $queryBuilder->getQuery()->getResult();
         }
@@ -167,12 +189,13 @@ trait PageListTwigTrait
             'pager_route' => $this->getPagerRouteName(),
             'pager_route_params' => $this->getPagerRouteParams(),
             'pages' => $pages,
-            'pager' => $pager ?? null,
+            'pager' => $pagerfanta ?? null,
         ]);
     }
 
     /**
-     * @param string|array|null $viewName the view name
+     * @param array<mixed>               $options
+     * @param PagerfantaInterface<mixed> $pagerfanta
      *
      * @throws \InvalidArgumentException if the $viewName argument is an invalid type
      */
@@ -184,17 +207,26 @@ trait PageListTwigTrait
     ): string {
         $pagerFantaTwigView = new TwigView($twig, $this->getApp()->getView($template));
 
-        return $pagerFantaTwigView->render($pagerfanta, $this->routeGeneratorFactory->create($options), $options)
+        return $pagerFantaTwigView
+            ->render($pagerfanta, $this->routeGeneratorFactory->create($options), $options)
             .($pagerfanta->hasNextPage() ? '<!-- pager:'.$pagerfanta->getNextPage().' -->' : '');
     }
 
+    /**
+     * @param int|array<(string|int), int> $max
+     */
     private function getLimit($max): int
     {
-        return \is_int($max) ? $max : (\is_array($max) && isset($max[1]) ? $max[1] * $max[0] : 0);
+        return \is_int($max) ? $max : (\is_array($max) && isset($max[1]) ? $max[1] * $max[0] : 0); // @phpstan-ignore-line
     }
 
     private function getCurrentPage(): int
     {
-        return (int) $this->requestStack->getCurrentRequest()->attributes->get('pager', 1);
+        if (null === $this->requestStack->getCurrentRequest()) {
+            //throw new Exception('no current request'); // only in test ?!
+            return 1;
+        }
+
+        return \intval($this->requestStack->getCurrentRequest()->attributes->get('pager', 1));
     }
 }

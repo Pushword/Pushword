@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Entity;
 
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -10,22 +11,21 @@ trait UserTrait
     /**
      * @ORM\Column(type="datetime", nullable=true)
      */
-    protected $createdAt;
+    protected DateTimeInterface $createdAt;
 
     /**
-     * @var string
      * @ORM\Column(type="string", length=180, unique=true)
      * @Assert\Email(
      *     message="user.email.invalid",
      *     mode="strict"
      * )
      */
-    protected $email;
+    protected string $email = '';
 
     /**
      * @ORM\Column(type="string", length=150, nullable=true)
      */
-    protected $username;
+    protected ?string $username = null;
 
     /**
      * Loaded From BaseUser.
@@ -36,20 +36,22 @@ trait UserTrait
      *     minMessage="user.password.short"
      * )
      */
-    protected $plainPassword;
+    protected ?string $plainPassword = null;
 
     /**
      * @ORM\Column(type="json")
+     *
+     * @var string[]
      */
-    private $roles = [];
+    private array $roles = [];
 
     /**
      * @var string The hashed password
      * @ORM\Column(type="string", nullable=true)
      */
-    private $password;
+    private ?string $password = null;
 
-    public function __toString()
+    public function __toString(): string
     {
         return $this->email;
     }
@@ -71,7 +73,7 @@ trait UserTrait
         return $this;
     }
 
-    public function setPlainPassword($password)
+    public function setPlainPassword(?string $password): self
     {
         $this->plainPassword = $password;
         $this->password = '';
@@ -79,19 +81,19 @@ trait UserTrait
         return $this;
     }
 
-    public function getPlainPassword()
+    public function getPlainPassword(): ?string
     {
         return $this->plainPassword;
     }
 
     /**
-     * @see UserInterface
+     *  @return string[] The user roles
      */
-    public function getRoles()
+    public function getRoles(): array
     {
         $roles = $this->roles;
         // guarantee every user at least has ROLE_USER
-        $roles[] = static::ROLE_DEFAULT;
+        $roles[] = UserInterface::ROLE_DEFAULT;
 
         return array_unique($roles);
     }
@@ -103,47 +105,17 @@ trait UserTrait
         return $this;
     }
 
-    public function hasRole($role)
+    public function hasRole(string $role): bool
     {
         return \in_array(strtoupper($role), $this->getRoles(), true);
     }
 
     /**
-        public function __construct()
-    {
-        $this->roles = [];
-    }
-    public function addRole($role)
-    {
-        $role = strtoupper($role);
-        if ($role === static::ROLE_DEFAULT) {
-            return $this;
-        }
-
-        if (!in_array($role, $this->roles, true)) {
-            $this->roles[] = $role;
-        }
-
-        return $this;
-    }
-
-
-    public function removeRole($role)
-    {
-        if (false !== $key = array_search(strtoupper($role), $this->roles, true)) {
-            unset($this->roles[$key]);
-            $this->roles = array_values($this->roles);
-        }
-
-        return $this;
-    }/**/
-
-    /**
      * @see UserInterface
      */
-    public function getPassword(): string
+    public function getPassword(): ?string
     {
-        return (string) $this->password;
+        return $this->password;
     }
 
     public function setPassword(string $password): self
@@ -155,16 +127,19 @@ trait UserTrait
 
     /**
      * @see UserInterface
+     *
+     * @return string
      */
     public function getSalt()
     {
         // not needed when using the "bcrypt" algorithm in security.yaml
+        return '';
     }
 
     /**
      * @see UserInterface
      */
-    public function eraseCredentials()
+    public function eraseCredentials(): void
     {
         $this->plainPassword = null;
     }
@@ -179,12 +154,12 @@ trait UserTrait
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    public function setCreatedAt(DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 
@@ -194,22 +169,20 @@ trait UserTrait
     /**
      * Get the value of username.
      */
-    public function getUsername()
+    public function getUsername(): string
     {
         return null !== $this->username ? $this->username : $this->email;
     }
 
-    public function getUserIdentifier()
+    public function getUserIdentifier(): string
     {
         return $this->getUsername();
     }
 
     /**
      * Set the value of username.
-     *
-     * @return self
      */
-    public function setUsername($username)
+    public function setUsername(?string $username): self
     {
         $this->username = $username;
 

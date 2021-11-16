@@ -2,15 +2,24 @@
 
 namespace Pushword\Admin\FormField;
 
+use Pushword\Core\Entity\MediaInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
+/**
+ * @extends AbstractField<MediaInterface>
+ */
 final class MediaNameField extends AbstractField
 {
-    public function formField(FormMapper $formMapper): FormMapper
+    /**
+     * @param FormMapper<MediaInterface> $form
+     *
+     * @return FormMapper<MediaInterface>
+     */
+    public function formField(FormMapper $form): FormMapper
     {
-        return $formMapper->add('name', TextType::class, [
-            'required' => $this->admin->getSubject() && $this->admin->getSubject()->getMedia() ? true : false,
+        return $form->add('name', TextType::class, [
+            'required' => null !== $this->admin->getSubject()->getId(),
             'help_html' => true,
             'help' => 'admin.media.name.help',
             'label' => 'admin.media.name.label',

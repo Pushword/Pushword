@@ -5,45 +5,52 @@ namespace Pushword\Core\Tests\Controller;
 use Pushword\Core\Controller\PageController;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PageControllerTest extends KernelTestCase
 {
     public function testShowHomepage()
     {
         $slug = 'homepage';
-        $response = $this->getPageController()->show($slug, 'localhost.dev', Request::create($slug));
+        $response = $this->getPageController()->show(Request::create($slug), $slug, 'localhost.dev');
         $this->assertSame(200, $response->getStatusCode());
     }
 
     public function testShowAnotherPage()
     {
         $slug = 'kitchen-sink';
-        $response = $this->getPageController()->show($slug, '', Request::create('/en/'.$slug));
-        $this->assertSame(301, $response->getStatusCode());
+        $response = $this->getPageController()->show(Request::create($slug), $slug, '');
+        //file_put_contents('debug.html', $response->getContent());
+        $this->assertSame(200, $response->getStatusCode());
+
+        $slug = 'kitchen-sink';
+        $this->expectException(NotFoundHttpException::class);
+        $response = $this->getPageController()->show(Request::create('/en/'.$slug), '/en/'.$slug, '');
+        //$this->assertSame(404, $response->getStatusCode());
     }
 
     public function testShowFeed()
     {
         $slug = 'homepage';
-        $response = $this->getPageController()->showFeed($slug, 'localhost.dev', Request::create('/'.$slug.'.xml'));
+        $response = $this->getPageController()->showFeed(Request::create('/'.$slug.'.xml'), $slug, 'localhost.dev');
         $this->assertSame(301, $response->getStatusCode());
     }
 
     public function testShowMainFeed()
     {
-        $response = $this->getPageController()->showMainFeed('localhost.dev', Request::create('/feed.xml'));
+        $response = $this->getPageController()->showMainFeed(Request::create('/feed.xml'), 'localhost.dev');
         $this->assertSame(200, $response->getStatusCode());
     }
 
     public function testShowSitemap()
     {
-        $response = $this->getPageController()->showSitemap('xml', 'localhost.dev', Request::create('/sitemap.xml'));
+        $response = $this->getPageController()->showSitemap(Request::create('/sitemap.xml'), 'xml', 'localhost.dev');
         $this->assertSame(200, $response->getStatusCode());
     }
 
     public function testShowRobotsTxt()
     {
-        $response = $this->getPageController()->showRobotsTxt('localhost.dev', Request::create('/robots.txt'));
+        $response = $this->getPageController()->showRobotsTxt(Request::create('/robots.txt'), 'localhost.dev');
         $this->assertSame(200, $response->getStatusCode());
     }
 

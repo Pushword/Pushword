@@ -18,18 +18,18 @@ class AppFixtures extends Fixture
     private AppPool $apps;
 
     /** @required */
-    public function setParameterBag(ParameterBagInterface $params)
+    public function setParameterBag(ParameterBagInterface $params): void
     {
         $this->params = $params;
     }
 
     /** @required */
-    public function setApps(AppPool $apps)
+    public function setApps(AppPool $apps): void
     {
         $this->apps = $apps;
     }
 
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
         $user = (new User())
             ->setEmail('contact@piedweb.com')
@@ -42,10 +42,11 @@ class AppFixtures extends Fixture
             'Demo 1' => '1.jpg',
             'Demo 2' => '2.jpg',
         ];
+        $media = [];
         foreach ($medias as $name => $file) {
             $media[$name] = (new Media())
-            ->setProjectDir((string) $this->params->get('kernel.project_dir'))
-            ->setStoreIn((string) $this->params->get('pw.media_dir'))
+            ->setProjectDir($this->params->get('kernel.project_dir'))
+            ->setStoreIn($this->params->get('pw.media_dir'))
             ->setMimeType('image/'.substr($file, -3))
             ->setSize(2)
             ->setDimensions([1000, 1000])
@@ -62,7 +63,7 @@ class AppFixtures extends Fixture
             ->setLocale('en')
             ->setCreatedAt(new DateTime('2 days ago'))
             ->setUpdatedAt(new DateTime('2 days ago'))
-            ->setMainContent(file_get_contents(__DIR__.'/WelcomePage.md'));
+            ->setMainContent((string) file_get_contents(__DIR__.'/WelcomePage.md'));
 
         if ('localhost.dev' == $this->apps->getMainHost()) {
             $homepage->setHost('localhost.dev');
@@ -79,7 +80,7 @@ class AppFixtures extends Fixture
             ->setParentPage($homepage)
             ->setCreatedAt(new DateTime('1 day ago'))
             ->setUpdatedAt(new DateTime('1 day ago'))
-            ->setMainContent(file_get_contents(__DIR__.'/KitchenSink.md'))
+            ->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.md'))
             ->setCustomProperty('tag', 'testTag123');
 
         if ('localhost.dev' == $this->apps->getMainHost()) {

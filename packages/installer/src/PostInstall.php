@@ -4,6 +4,7 @@ namespace Pushword\Installer;
 
 use Composer\Script\Event;
 use Exception;
+use LogicException;
 use Symfony\Component\Filesystem\Filesystem;
 
 if (! class_exists(Filesystem::class)) {
@@ -14,7 +15,10 @@ class PostInstall
 {
     public static function postUpdateCommand(): void //Event $event
     {
-        $packages = array_filter(scandir('vendor/pushword'), function ($package) { return ! \in_array($package, ['.', '..']); });
+        if (($dir = scandir('vendor/pushword')) === false) {
+            throw new LogicException();
+        }
+        $packages = array_filter($dir, function ($package) { return ! \in_array($package, ['.', '..'], true); });
 
         foreach ($packages as $package) {
             if (file_exists('vendor/pushword/'.$package) && ! file_exists('var/installer/'.md5($package))) {
@@ -29,17 +33,17 @@ class PostInstall
         }
     }
 
-    public static function mirror(string $source, string $dest)
+    public static function mirror(string $source, string $dest): void
     {
         (new Filesystem())->mirror($source, $dest);
     }
 
-    public static function remove($path)
+    public static function remove(string $path): void
     {
         (new Filesystem())->remove($path);
     }
 
-    public static function dumpFile(string $path, string $content)
+    public static function dumpFile(string $path, string $content): void
     {
         (new Filesystem())->dumpFile($path, $content);
     }

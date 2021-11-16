@@ -7,9 +7,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    //const DEFAULT_APP_FALLBACK = [ ];
-
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('pushword_page_scanner');
         $treeBuilder
@@ -18,8 +16,8 @@ class Configuration implements ConfigurationInterface
                     //->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
                     ->scalarNode('min_interval_between_scan')
                         ->defaultValue('PT5M')->cannotBeEmpty()
-                    ->end()
-                ->end()
+                    //->end()
+                //->end()
         ;
 
         return $treeBuilder;

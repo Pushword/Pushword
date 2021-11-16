@@ -13,13 +13,22 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use Twig\Environment as Twig;
 
 /**
  * @IsGranted("ROLE_PUSHWORD_ADMIN_THEME")
  */
-class ElementAdmin extends AbstractController
+final class ElementAdmin extends AbstractController
 {
-    protected KernelInterface $kernel;
+    private KernelInterface $kernel;
+
+    private twig $twig;
+
+    /** @required */
+    public function setTwig(Twig $twig): void
+    {
+        $this->twig = $twig;
+    }
 
     /** @required */
     public function setKernel(KernelInterface $kernel): void
@@ -27,7 +36,7 @@ class ElementAdmin extends AbstractController
         $this->kernel = $kernel;
     }
 
-    protected function getElements(): ElementRepository
+    private function getElements(): ElementRepository
     {
         return new ElementRepository($this->kernel->getProjectDir().'/templates');
     }
@@ -37,11 +46,11 @@ class ElementAdmin extends AbstractController
         return $this->render('@pwTemplateEditor/list.html.twig', ['elements' => $this->getElements()->getAll()]);
     }
 
-    protected function getElement(?string $encodedPath): Element
+    private function getElement(?string $encodedPath): Element
     {
         if (null !== $encodedPath) {
             $element = $this->getElements()->getOneByEncodedPath($encodedPath);
-            if (! $element) {
+            if (! $element instanceof \Pushword\TemplateEditor\Element) {
                 throw $this->createNotFoundException('`'.$encodedPath.'` element does not exist...');
             }
         }
@@ -49,9 +58,9 @@ class ElementAdmin extends AbstractController
         return $element ?? new Element($this->kernel->getProjectDir().'/templates');
     }
 
-    protected function clearTwigCache(): void
+    private function clearTwigCache(): void
     {
-        $twigCacheFolder = $this->get('twig')->getCache(true);
+        $twigCacheFolder = $this->twig->getCache(true);
 
         $process = new Process(['rm', '-rf', $twigCacheFolder]);
         $process->run();
@@ -70,6 +79,11 @@ class ElementAdmin extends AbstractController
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $element = $form->getData();
+
+            if (! $element instanceof Element) {
+                throw new \Exception('an error occured');
+            }
+
             $element->storeElement();
 
             $this->clearTwigCache();
@@ -91,7 +105,7 @@ class ElementAdmin extends AbstractController
         );
     }
 
-    protected function editElementForm(Element $element): FormInterface
+    private function editElementForm(Element $element): FormInterface
     {
         return $this->createFormBuilder($element)
             ->add('path', TextType::class)

@@ -5,7 +5,7 @@ namespace Pushword\Conversation\Form;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\FormBuilderInterface;
 
-class NewsletterForm
+class NewsletterForm implements ConversationFormInterface
 {
     use FormTrait;
 

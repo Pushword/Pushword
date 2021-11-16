@@ -8,7 +8,10 @@ use Twig\TwigFunction;
 
 class AppExtension extends AbstractExtension
 {
-    public function getFunctions()
+    /**
+     * @return \Twig\TwigFunction[]
+     */
+    public function getFunctions(): array
     {
         return [
             new TwigFunction('heroSize', [PageAdvancedMainImageFormField::class, 'formatToRatio']),

@@ -7,8 +7,14 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 final class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var string
+     */
     public const DEFAULT_TEMPLATE = '@Pushword';
 
+    /**
+     * @var string[]|class-string<\locale>[]
+     */
     public const DEFAULT_APP_FALLBACK = [
         'hosts',
         'locale',
@@ -23,8 +29,14 @@ final class Configuration implements ConfigurationInterface
         'custom_properties',
     ];
 
+    /**
+     * @var bool
+     */
     public const DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS = true;
 
+    /**
+     * @var array<string, string>
+     */
     public const DEFAULT_FILTERS = [
         'main_content' => 'twig,date,email,encryptedLink,htmlEncryptedLink,image,phoneNumber,punctuation,markdown,unprose,mainContentSplitter,extended',
         'name' => 'twig,date,name,extended',
@@ -32,6 +44,9 @@ final class Configuration implements ConfigurationInterface
         'string' => 'twig,date,email,encryptedLink,phoneNumber,extended',
     ];
 
+    /**
+     * @var array<string, array<string>>
+     */
     public const DEFAULT_ASSETS = [
         'stylesheets' => [
             '/bundles/pushwordcore/tailwind.min.css',
@@ -39,10 +54,19 @@ final class Configuration implements ConfigurationInterface
         'javascripts' => ['/bundles/pushwordcore/page.min.js'],
     ];
 
+    /**
+     * @var mixed[]
+     */
     public const DEFAULT_CUSTOM_PROPERTIES = [];
 
+    /**
+     * @var string
+     */
     public const DEFAULT_PUBLIC_MEDIA_DIR = 'media';
 
+    /**
+     * @var array<string, array<string, mixed>>
+     */
     public const IMAGE_FILTERS_SET = [
         'default' => ['quality' => 90, 'filters' => ['downscale' => [1980, 1280]]],
         'height_300' => [
@@ -110,7 +134,7 @@ final class Configuration implements ConfigurationInterface
         ],
     ];
 
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('pushword');
         $treeBuilder->getRootNode()->children()

@@ -9,7 +9,7 @@ trait RenderTrait
     private Twig $twig;
 
     /** @required */
-    public function setTwig(Twig $twig)
+    public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;
     }
@@ -17,6 +17,8 @@ trait RenderTrait
     /**
      * Returns a rendered view.
      * Use by abstract controller without de deprecation message.
+     *
+     * @param array<mixed> $parameters
      */
     protected function renderView(string $view, array $parameters = []): string
     {

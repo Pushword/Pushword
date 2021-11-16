@@ -12,24 +12,30 @@ use Pushword\Core\Entity\PageInterface;
 class Extended extends AbstractFilter
 {
     use RequiredEntityTrait;
+    /**
+     * @use RequiredManagerPoolTrait<PageInterface>
+     */
     use RequiredManagerPoolTrait;
     use RequiredPropertyTrait;
 
-    /**
-     * @return string
-     */
     public function apply($propertyValue)
     {
         return $this->loadExtendedValue($propertyValue);
     }
 
+    /**
+     * @param mixed $propertyValue
+     *
+     * @return mixed
+     */
     private function loadExtendedValue($propertyValue)
     {
-        if ($propertyValue || ! $this->entity instanceof PageInterface || ! $this->entity->getExtendedPage() instanceof PageInterface) {
+        if ('' !== $propertyValue || ! $this->entity instanceof PageInterface || ! $this->entity->getExtendedPage() instanceof PageInterface) {
             return $propertyValue;
         }
 
         $getter = 'get'.ucfirst($this->getProperty());
-        $this->entityFilterManagerPool->getManager($this->entity)->$getter();
+
+        return $this->entityFilterManagerPool->getManager($this->entity)->$getter(); // @phpstan-ignore-line
     }
 }

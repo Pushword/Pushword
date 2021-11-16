@@ -10,13 +10,18 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Permit to find error in image or link.
+ *
+ * @extends AbstractImporter<MediaInterface>
  */
 class MediaImporter extends AbstractImporter
 {
     use ImageImporterTrait;
 
-    protected $mediaDir;
+    protected ?string $mediaDir = null;
 
+    /**
+     * @var string
+     */
     protected $projectDir;
 
     private bool $newMedia = false;
@@ -37,30 +42,32 @@ class MediaImporter extends AbstractImporter
         return $this;
     }
 
-    public function import(string $filePath, DateTimeInterface $lastEditDatetime): void
+    public function import(string $filePath, DateTimeInterface $dateTime): void
     {
         if (! $this->isImage($filePath)) {
-            if (str_ends_with($filePath, '.json') && file_exists(substr($filePath, 0, -5))) { // data file
+            if (str_ends_with($filePath, '.json') && file_exists(\Safe\substr($filePath, 0, -5))) { // data file
                 return;
             }
-            $this->importMedia($filePath, $lastEditDatetime);
+
+            $this->importMedia($filePath, $dateTime);
 
             return;
         }
-        $this->importImage($filePath, $lastEditDatetime);
+
+        $this->importImage($filePath, $dateTime);
     }
 
-    private function isImage($filePath): bool
+    private function isImage(string $filePath): bool
     {
         return false !== getimagesize($filePath);
         //0 !== strpos(finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $filePath), 'image/') || preg_match('/\.webp$/', $filePath);
     }
 
-    public function importMedia(string $filePath, DateTimeInterface $lastEditDatetime): void
+    public function importMedia(string $filePath, DateTimeInterface $dateTime): void
     {
         $media = $this->getMedia($this->getFilename($filePath));
 
-        if (1 == 2 && false === $this->newMedia && $media->getUpdatedAt() >= $lastEditDatetime) {
+        if (1 == 2 && ! $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
             return; // no update needed
         }
 
@@ -69,14 +76,17 @@ class MediaImporter extends AbstractImporter
         $media
             ->setProjectDir($this->projectDir)
             ->setStoreIn(\dirname($filePath))
-            ->setSize(filesize($filePath))
-            ->setMimeType(finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $filePath));
+            ->setSize(\Safe\filesize($filePath))
+            ->setMimeType((string) finfo_file(\Safe\finfo_open(\FILEINFO_MIME_TYPE), $filePath));
 
         $data = $this->getData($filePath);
 
         $this->setData($media, $data);
     }
 
+    /**
+     * @param array<mixed> $data
+     */
     private function setData(MediaInterface $media, array $data): void
     {
         $media->setCustomProperties([]);
@@ -86,43 +96,48 @@ class MediaImporter extends AbstractImporter
 
             $setter = 'set'.ucfirst($key);
             if (method_exists($media, $setter)) {
-                if (\in_array($key, ['createdAt', 'updatedAt'])) {
+                if (\in_array($key, ['createdAt', 'updatedAt'], true)
+                    && \is_array($value) && isset($value['date'])) {
                     $value = new DateTime($value['date']);
                 }
 
-                $media->$setter($value);
+                $media->$setter($value); // @phpstan-ignore-line
 
                 continue;
             }
+
             $media->setCustomProperty($key, $value);
         }
 
-        if (true === $this->newMedia) {
+        if ($this->newMedia) {
             $this->em->persist($media);
         }
     }
 
-    private function getData($filePath): array
+    /**
+     * @return mixed[]
+     */
+    private function getData(string $filePath): array
     {
         if (! file_exists($filePath.'.json')) {
             return [];
         }
 
-        $jsonData = json_decode(file_get_contents($filePath.'.json'), true);
+        $jsonData = \Safe\json_decode(\Safe\file_get_contents($filePath.'.json'), true);
 
-        return $jsonData ?: [];
+        return \is_array($jsonData) ? $jsonData : [];
     }
 
-    public function getFilename($filePath): string
+    public function getFilename(string $filePath): string
     {
         return str_replace(\dirname($filePath).'/', '', $filePath);
     }
 
-    private function copyToMediaDir($filePath): string
+    private function copyToMediaDir(string $filePath): string
     {
         $newFilePath = $this->mediaDir.'/'.$this->getFilename($filePath);
 
-        if ($this->mediaDir && $filePath != $newFilePath) {
+        if (null !== $this->mediaDir && $filePath != $newFilePath) {
             (new Filesystem())->copy($filePath, $newFilePath);
 
             return $newFilePath;
@@ -131,12 +146,12 @@ class MediaImporter extends AbstractImporter
         return $filePath;
     }
 
-    private function getMedia(string $media): ?MediaInterface
+    protected function getMedia(string $media): MediaInterface
     {
         $mediaEntity = Repository::getMediaRepository($this->em, $this->entityClass)->findOneBy(['media' => $media]);
         $this->newMedia = false;
 
-        if (! $mediaEntity) {
+        if (null === $mediaEntity) {
             $this->newMedia = true;
             $mediaClass = $this->entityClass;
             $mediaEntity = new $mediaClass();

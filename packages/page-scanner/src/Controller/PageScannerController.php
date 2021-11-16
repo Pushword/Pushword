@@ -4,6 +4,7 @@ namespace Pushword\PageScanner\Controller;
 
 use DateInterval;
 use Exception;
+use LogicException;
 use Pushword\Core\Utils\LastTime;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,7 +20,7 @@ final class PageScannerController extends AbstractController
 
     private string $pageScanInterval;
 
-    private static $fileCache;
+    private static ?string $fileCache = null;
 
     public function __construct(
         Filesystem $filesystem,
@@ -28,12 +29,12 @@ final class PageScannerController extends AbstractController
     ) {
         $this->filesystem = $filesystem;
         $this->pageScanInterval = $pageScanInterval;
-        $this->setFileCache($varDir);
+        self::setFileCache($varDir);
     }
 
     public static function setFileCache(string $varDir): void
     {
-        self::$fileCache = self::$fileCache ?: $varDir.'/page-scan';
+        self::$fileCache = null !== self::$fileCache && '' !== self::$fileCache ? self::$fileCache : $varDir.'/page-scan';
     }
 
     public static function fileCache(): string
@@ -45,18 +46,24 @@ final class PageScannerController extends AbstractController
         return self::$fileCache;
     }
 
-    public function scanAction($force = 0): Response
+    public function scanAction(int $force = 0): Response
     {
+        $force = (bool) $force;
+
+        if (null === self::$fileCache) {
+            throw new LogicException();
+        }
+
         if ($this->filesystem->exists(self::$fileCache)) {
-            $errors = unserialize(file_get_contents(self::$fileCache));
-            $lastEdit = filemtime(self::$fileCache);
+            $errors = unserialize(\Safe\file_get_contents(self::$fileCache));
+            $lastEdit = \Safe\filemtime(self::$fileCache);
         } else {
             $lastEdit = 0;
             $errors = [];
         }
 
         $lastTime = new LastTime(self::$fileCache);
-        if ($force || false === $lastTime->wasRunSince(new DateInterval($this->pageScanInterval))) {
+        if ($force || ! $lastTime->wasRunSince(new DateInterval($this->pageScanInterval))) {
             exec('cd ../ && php bin/console pushword:page-scanner:scan > /dev/null 2>/dev/null &');
             $newRunLaunched = true;
             $lastTime->setWasRun('now', false);

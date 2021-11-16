@@ -2,15 +2,33 @@
 
 namespace Pushword\Core\Repository;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
+use Pushword\Core\Entity\MediaInterface;
+use Pushword\Core\Entity\PageInterface;
+
 class Repository
 {
-    public static function getPageRepository($doctrine, string $pageEntity): PageRepositoryInterface
+    /**
+     * @param ManagerRegistry|EntityManagerInterface $doctrine
+     * @param class-string<PageInterface>            $pageEntity
+     * @template T as PageInterface
+     * @psalm-suppress InvalidReturnStatement
+     * @psalm-suppress InvalidReturnType
+     */
+    public static function getPageRepository($doctrine, string $pageEntity): PageRepository // @phpstan-ignore-line
     {
-        return $doctrine->getRepository($pageEntity);
+        return $doctrine->getRepository($pageEntity); // @phpstan-ignore-line
     }
 
-    public static function getMediaRepository($doctrine, string $pageEntity): MediaRepository
+    /**
+     * @param ManagerRegistry|EntityManagerInterface $doctrine
+     * @param class-string<MediaInterface>           $mediaEntity
+     * @psalm-suppress InvalidReturnStatement
+     * @psalm-suppress InvalidReturnType
+     */
+    public static function getMediaRepository($doctrine, string $mediaEntity): MediaRepository
     {
-        return $doctrine->getRepository($pageEntity);
+        return $doctrine->getRepository($mediaEntity); // @phpstan-ignore-line
     }
 }

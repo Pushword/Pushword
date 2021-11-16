@@ -10,19 +10,21 @@ use Pushword\Core\Component\App\AppPool;
  */
 class FlatFileContentDirFinder
 {
-    /** @var AppPool */
-    protected $apps;
+    protected \Pushword\Core\Component\App\AppPool $apps;
 
-    protected $projectDir;
+    protected string $projectDir;
 
-    protected $contentDir = [];
+    /**
+     * @var array<string, string>
+     */
+    protected array $contentDir = [];
 
     public function __construct(
-        AppPool $apps,
+        AppPool $appPool,
         string $projectDir
     ) {
         $this->projectDir = $projectDir;
-        $this->apps = $apps;
+        $this->apps = $appPool;
     }
 
     public function get(string $host): string
@@ -34,8 +36,8 @@ class FlatFileContentDirFinder
         $app = $this->apps->get($host);
 
         $dir = $app->get('flat_content_dir');
-        if (! $dir) {
-            throw new Exception('No content dir in app\'s param.');
+        if ('' === $dir || ! \is_string($dir)) {
+            throw new Exception('No `flat_content_dir` dir in `'.$app->getMainHost().'`\'s params.');
         }
 
         $this->contentDir[$host] = $dir;
@@ -50,16 +52,13 @@ class FlatFileContentDirFinder
     public function has(string $host): bool
     {
         if (isset($this->contentDir[$host])) {
-            return $this->contentDir[$host];
+            return (bool) $this->contentDir[$host];
         }
 
         $app = $this->apps->get($host);
 
         $dir = $app->get('flat_content_dir');
-        if (! $dir) {
-            return false;
-        }
 
-        return true;
+        return (bool) $dir;
     }
 }

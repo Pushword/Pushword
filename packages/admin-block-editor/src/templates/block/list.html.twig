@@ -1,4 +1,4 @@
-<div class="{{ class('prose', page) }}">
+<div class="{{ class(page, 'prose') }}">
 {{ data.style == 'unordered' ? '<ul>' : '<ol>' }}
 {% for item in data.items %}
     {% if item.content is defined %}

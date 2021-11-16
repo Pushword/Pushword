@@ -3,5 +3,3 @@ services:
     tags:
       - 'twig.extension'
     autowire: true
-    calls:
-      - [setMediaDir, ['%pw.media_dir%']]

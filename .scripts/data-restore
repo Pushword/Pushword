@@ -1,4 +1,10 @@
-#!/bin/sh
+#!/bin/bash -e
+
+if [ "$1" != "no-docs" ]; then
+    rm -rf docs
+    cp -r docs~preserve docs
+    rm -rf docs~preserve
+fi
 
 cd packages/skeleton
 
@@ -8,3 +14,8 @@ rm var/app.db~
 rm -rf media
 cp -r media~preserve media
 rm -rf media~preserve
+
+if [ -e '/tmp/com.github.pushword.pushword/tests/var/dev/cache~' ]; then
+ cp -r '/tmp/com.github.pushword.pushword/tests/var/dev/cache~' '/tmp/com.github.pushword.pushword/tests/var/dev/cache'
+ rm -rf '/tmp/com.github.pushword.pushword/tests/var/dev/cache~'
+fi

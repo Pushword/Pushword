@@ -3,20 +3,18 @@
 namespace Pushword\AdvancedMainImage;
 
 use Pushword\Admin\FormField\PageMainImageField;
-use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 class PageAdvancedMainImageFormField extends PageMainImageField
 {
-    public function formField(FormMapper $formMapper): FormMapper
+    public function formField(FormMapper $form): FormMapper
     {
-        parent::formField($formMapper);
+        parent::formField($form);
 
-        /** @var PageInterface $page */
-        $page = $this->admin->getSubject();
+        $subject = $this->admin->getSubject();
 
-        $formMapper->add('mainImageFormat', ChoiceType::class, [
+        $form->add('mainImageFormat', ChoiceType::class, [
             'required' => false,
             'mapped' => false,
             'label' => 'admin.page.mainImageFormat.label',
@@ -27,13 +25,13 @@ class PageAdvancedMainImageFormField extends PageMainImageField
                 'admin.page.mainImageFormat.34fullscreen' => 3,
                 //'admin.page.mainImageFormat.fullscreen' => 4,
             ],
-            'data' => (int) ($page->getCustomProperty('mainImageFormat')),
+            'data' => \intval($subject->getCustomProperty('mainImageFormat')),
         ]);
 
-        return $formMapper;
+        return $form;
     }
 
-    public static function formatToRatio($format): string
+    public static function formatToRatio(int $format): string
     {
         switch ($format) {
             case 2: return 'screen-1/3';

@@ -3,13 +3,22 @@
 namespace Pushword\AdminBlockEditor\FormField;
 
 use Pushword\Admin\FormField\AbstractField;
+use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 
+/**
+ * @extends AbstractField<PageInterface>
+ */
 class PageImageFormField extends AbstractField
 {
-    public function formField(FormMapper $formMapper): FormMapper
+    /**
+     * @param FormMapper<PageInterface> $form
+     *
+     * @return FormMapper<PageInterface>
+     */
+    public function formField(FormMapper $form): FormMapper
     {
-        $formMapper->add('inline_image', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
+        $form->add('inline_image', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
             'required' => false,
             'class' => $this->admin->getMediaClass(),
             //'label' => 'admin.page.mainImage.label',
@@ -20,7 +29,7 @@ class PageImageFormField extends AbstractField
             'admin_code' => 'pushword.admin.media',
         ]);
 
-        return $formMapper->add('inline_attaches', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
+        return $form->add('inline_attaches', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
             'required' => false,
             'class' => $this->admin->getMediaClass(),
             //'label' => 'admin.page.mainImage.label',

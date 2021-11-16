@@ -11,7 +11,7 @@ trait PageOpenGraphTrait
 {
     public function getOgTitle(): ?string
     {
-        return $this->getCustomProperty('ogTitle');
+        return $this->getCustomProperty('ogTitle'); // @phpstan-ignore-line
     }
 
     public function setOgTitle(?string $ogTitle): self
@@ -23,7 +23,7 @@ trait PageOpenGraphTrait
 
     public function getOgDescription(): ?string
     {
-        return $this->getCustomProperty('ogDescription');
+        return $this->getCustomProperty('ogDescription'); // @phpstan-ignore-line
     }
 
     public function setOgDescription(?string $ogDescription): self
@@ -35,7 +35,7 @@ trait PageOpenGraphTrait
 
     public function getOgImage(): ?string
     {
-        return $this->getCustomProperty('ogImage');
+        return $this->getCustomProperty('ogImage'); // @phpstan-ignore-line
     }
 
     public function setOgImage(?string $ogImage): self

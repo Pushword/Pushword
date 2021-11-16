@@ -12,21 +12,16 @@ class Email extends AbstractFilter
     use RequiredAppTrait;
     use RequiredTwigTrait;
 
-    /**
-     * @return string
-     */
-    public function apply($propertyValue)
+    public function apply($propertyValue): string
     {
-        $propertyValue = $this->convertEmail($propertyValue);
-
-        return $propertyValue;
+        return $this->convertEmail(\strval($propertyValue));
     }
 
     public function convertEmail(string $body): string
     {
         $rgx = '/ ([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}) /i';
 
-        preg_match_all($rgx, $body, $matches);
+        \Safe\preg_match_all($rgx, $body, $matches);
 
         $nbrMatch = \count($matches[0]);
         for ($k = 0; $k < $nbrMatch; ++$k) {

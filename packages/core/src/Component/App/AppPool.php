@@ -3,34 +3,29 @@
 namespace Pushword\Core\Component\App;
 
 use Exception;
+use LogicException;
 use Pushword\Core\Entity\PageInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Twig\Environment as Twig;
 
 final class AppPool
 {
-    /** @var array */
+    /** @var array<string, AppConfig> */
     private $apps = [];
 
-    /** @var string */
-    private $currentApp;
+    private ?string $currentApp = null;
 
     /**
-     * Why there ? Because often, need to check current page don't override App Config.
-     *
-     *  @var PageInterface */
-    private $currentPage;
+     * Why there ? Because often, need to check current page don't override App Config. */
+    private ?\Pushword\Core\Entity\PageInterface $currentPage = null;
 
-    private ParameterBagInterface $params;
-
-    public function __construct(array $rawApps, Twig $twig, ParameterBagInterface $params)
+    /** @param array<string, array<string, mixed>> $rawApps */
+    public function __construct(array $rawApps, Twig $twig, ParameterBagInterface $parameterBag)
     {
-        $this->params = $params;
-
-        $firstHost = array_key_first($rawApps);
+        $firstHost = \strval(array_key_first($rawApps));
 
         foreach ($rawApps as $mainHost => $app) {
-            $this->apps[$mainHost] = new AppConfig($app, $firstHost == $mainHost ? true : false, $this->params);
+            $this->apps[$mainHost] = new AppConfig($parameterBag, $app, $firstHost === $mainHost);
             $this->apps[$mainHost]->setTwig($twig);
         }
 
@@ -56,29 +51,32 @@ final class AppPool
 
     public function get(?string $host = ''): AppConfig
     {
-        $host = ! $host ? $this->currentApp : $host;
+        $host = \in_array($host, [null, ''], true) ? $this->currentApp : $host;
         if (isset($this->apps[$host])) {
             return $this->apps[$host];
         }
 
         $apps = array_reverse($this->apps, true);
         foreach ($apps as $app) {
-            if (\in_array($host, $app->getHosts())) {
+            if (\in_array($host, $app->getHosts(), true)) {
                 return $app;
             }
         }
 
-        return $app; //throw new Exception('No AppConfig found (`'.$host.'`)');
+        if (! isset($app)) {
+            throw new Exception('No AppConfig found (`'.$host.'`)');
+        }
+
+        return $app;
     }
 
+    /** @return string[] */
     public function getHosts(): array
     {
         return array_keys($this->apps);
     }
 
-    /**
-     * Get the value of apps.
-     */
+    /** @return array<string, AppConfig> */
     public function getApps(): array
     {
         return $this->apps;
@@ -89,6 +87,16 @@ final class AppPool
         return $this->currentPage;
     }
 
+    public function getCurrentPageSafely(): PageInterface
+    {
+        if (null === $this->currentPage) {
+            throw new LogicException();
+        }
+
+        return $this->currentPage;
+    }
+
+    /** @param string|array<string>|null $host */
     public function isFirstApp($host = null): bool
     {
         $firstApp = array_key_first($this->apps);
@@ -101,13 +109,7 @@ final class AppPool
             return $firstApp === $host;
         }
 
-        foreach ($host as $h) {
-            if ($firstApp === $h) {
-                return true;
-            }
-        }
-
-        return false;
+        return \in_array($firstApp, $host, true);
     }
 
     /**
@@ -118,29 +120,26 @@ final class AppPool
         return $this->currentApp;
     }
 
-    public function sameHost($host): bool
+    public function sameHost(?string $host): bool
     {
         if ($this->isFirstApp() && null === $host) {
             return true;
         }
 
-        if ($host === $this->currentApp) {
-            return true;
-        }
-
-        return false;
+        return $host === $this->currentApp;
     }
 
     public function getApp(string $host = ''): AppConfig
     {
-        if (! $host) {
+        if ('' === $host) {
             $host = $this->currentApp;
         }
 
         return $this->get($host);
     }
 
-    public function getAppValue(?string $key = null, string $host = '')
+    /** @return mixed */
+    public function getAppValue(string $key, string $host = '')
     {
         return $this->getApp($host)->get($key);
     }

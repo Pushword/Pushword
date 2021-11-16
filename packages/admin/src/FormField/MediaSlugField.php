@@ -2,18 +2,27 @@
 
 namespace Pushword\Admin\FormField;
 
+use Pushword\Core\Entity\MediaInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
+/**
+ * @extends AbstractField<MediaInterface>
+ */
 class MediaSlugField extends AbstractField
 {
-    public function formField(FormMapper $formMapper): FormMapper
+    /**
+     * @param FormMapper<MediaInterface> $form
+     *
+     * @return FormMapper<MediaInterface>
+     */
+    public function formField(FormMapper $form): FormMapper
     {
-        return $formMapper->add('slugForce', TextType::class, [
+        return $form->add('slugForce', TextType::class, [
             'label' => 'admin.page.slug.label',
             'help_html' => true,
             'required' => false,
-            'help' => $this->admin->getSubject() && $this->admin->getSubject()->getSlug()
+            'help' => '' !== $this->admin->getSubject()->getSlug()
                 ? '<span class="btn btn-link" onclick="toggleDisabled()" id="disabledLinkSlug">
                     <i class="fa fa-unlock"></i></span>
                     <script>function toggleDisabled() {
@@ -25,7 +34,7 @@ class MediaSlugField extends AbstractField
                 : 'admin.page.slug.help',
             'attr' => [
                 'class' => 'slug_disabled',
-                ($this->admin->getSubject() ? ($this->admin->getSubject()->getSlug() ? 'disabled' : 't') : 't') => '',
+                ('' !== $this->admin->getSubject()->getSlug() ? 'disabled' : 't') => '',
             ],
         ]);
     }

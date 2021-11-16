@@ -10,7 +10,7 @@ class UserTest extends TestCase
     public function testBasics()
     {
         $user = new User();
-        $this->assertNull($user->getEmail());
+        $this->assertEmpty($user->getEmail());
 
         $user->setEmail('test@example.tld');
         $this->assertSame('test@example.tld', (string) $user);

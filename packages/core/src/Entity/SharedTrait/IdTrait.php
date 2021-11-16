@@ -11,7 +11,7 @@ trait IdTrait
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
-    protected $id;
+    protected ?int $id = null;
 
     public function getId(): ?int
     {

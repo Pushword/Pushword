@@ -17,7 +17,7 @@ class PushwordConfigFactoryTest extends TestCase
     {
         $container = new ContainerBuilder(new ParameterBag([]));
         $config = (new Processor())->processConfiguration(new Configuration(), []);
-        $factory = new PushwordConfigFactory($container, $config);
+        $factory = new PushwordConfigFactory($container, $config, new Configuration());
         $factory->loadConfigToParams();
         $factory->loadApps();
         $this->assertSame('App\Entity\Page', $container->getParameter('pw.entity_page'));
@@ -28,7 +28,7 @@ class PushwordConfigFactoryTest extends TestCase
     {
         $container = new ContainerBuilder(new ParameterBag([]));
 
-        $factory = new PushwordConfigFactory($container, $this->getConfigArray());
+        $factory = new PushwordConfigFactory($container, $this->getConfigArray(), new Configuration());
         $factory->loadConfigToParams();
 
         $this->assertSame('App\Entity\Page', $container->getParameter('pw.entity_page'));
@@ -46,7 +46,7 @@ class PushwordConfigFactoryTest extends TestCase
 
         $this->assertSame($apps, $container->getParameter('pw.apps'));
 
-        $factory = new PushwordConfigFactory($container, $this->getPwExtensionConfig(), null, 'anPushwordExtension');
+        $factory = new PushwordConfigFactory($container, $this->getPwExtensionConfig(), new Configuration(), 'anPushwordExtension');
         $factory->processAppsConfiguration(); // no need for it because loadApps ever did it
 
         $this->assertFalse($container->hasParameter('pw.anPushwordExtension.randomConfigParamsNeededForApp'));

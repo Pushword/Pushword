@@ -13,22 +13,24 @@ class ErrorPageGenerator extends AbstractGenerator
         $this->generateErrorPage();
 
         foreach ($this->app->getLocales() as $locale) {
-            if ($this->app->getLocale() == $locale) {
+            if ($this->app->getLocale() === $locale) {
                 continue;
             }
+
             $this->filesystem->mkdir($this->getStaticDir().'/'.$locale);
             $this->generateErrorPage($locale);
         }
     }
 
     // TODO : make it useful when using a .htaccess else disable it
-    protected function generateErrorPage($locale = null, $uri = '404.html')
+    protected function generateErrorPage(?string $locale = null, string $uri = '404.html'): void
     {
         if (null !== $locale) {
             $request = $this->requestStack->getCurrentRequest();
             if (null === $request) {
                 $request = new Request();
             }
+
             $request->setLocale($locale);
             $this->requestStack->push($request);
         }

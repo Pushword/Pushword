@@ -10,6 +10,9 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var string[]
+     */
     public const DEFAULT_APP_FALLBACK = [
         'conversation_notification_email_to',
         'conversation_notification_email_from',
@@ -22,7 +25,7 @@ class Configuration implements ConfigurationInterface
         'possible_origins',
     ];
 
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('conversation');
         $treeBuilder

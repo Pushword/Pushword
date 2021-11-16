@@ -10,12 +10,12 @@ trait MediaLoaderTrait
      */
     public static function loadFromSrc(string $src): MediaInterface
     {
-        $src = false !== strpos($src, '/') ? substr($src, \strlen('/media/default/')) : $src;
+        $src = str_contains($src, '/') ? \Safe\substr($src, \strlen('/media/default/')) : $src;
 
         /** @var MediaInterface $media */
-        $media = new self();
-        $media->setMedia($src);
+        $self = new self(); // @phpstan-ignore-line
+        $self->setMedia($src);
 
-        return $media;
+        return $self;
     }
 }

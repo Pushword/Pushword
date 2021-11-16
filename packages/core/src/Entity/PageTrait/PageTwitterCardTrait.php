@@ -12,19 +12,19 @@ trait PageTwitterCardTrait
 {
     public function getTwitterCard(): ?string
     {
-        return $this->getCustomProperty('twitterCard');
+        return $this->getCustomProperty('twitterCard'); // @phpstan-ignore-line
     }
 
     public function setTwitterCard(?string $twitterCard): self
     {
-        $this->setCustomProperty('twitterCard', $twitterCard);
+        $this->setCustomProperty('twitterCard', $twitterCard); // @phpstan-ignore-line
 
         return $this;
     }
 
     public function getTwitterSite(): ?string
     {
-        return $this->getCustomProperty('twitterSite');
+        return $this->getCustomProperty('twitterSite'); // @phpstan-ignore-line
     }
 
     public function setTwitterSite(?string $twitterSite): self
@@ -36,7 +36,7 @@ trait PageTwitterCardTrait
 
     public function getTwitterCreator(): ?string
     {
-        return $this->getCustomProperty('twitterCreator');
+        return $this->getCustomProperty('twitterCreator'); // @phpstan-ignore-line
     }
 
     public function setTwitterCreator(?string $twitterCreator): self

@@ -1,24 +1,40 @@
 <?xml version="1.0"?>
-<psalm
-    errorLevel="4"
-    findUnusedVariablesAndParams="true"
-    resolveFromConfigFile="true"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns="https://getpsalm.org/schema/config"
-    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
->
+<psalm errorLevel="4" findUnusedVariablesAndParams="true" resolveFromConfigFile="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="https://getpsalm.org/schema/config" xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd">
     <projectFiles>
-        <directory name="packages/**/src"/>
+        <directory name="packages/**/src" />
         <ignoreFiles>
-            <directory name="vendor"/>
+            <directory name="vendor" />
         </ignoreFiles>
 
     </projectFiles>
     <issueHandlers>
-            <InvalidDocblock>
-                <errorLevel type="suppress">
+        <InvalidDocblock>
+            <errorLevel type="suppress">
                 <file name="vendor/doctrine/orm/lib/Doctrine/ORM/EntityRepository.php" />
-                </errorLevel>
-            </InvalidDocblock>
-        </issueHandlers>
+            </errorLevel>
+        </InvalidDocblock>
+        <MethodSignatureMismatch>
+            <errorLevel type="suppress">
+                <file name="vendor/doctrine/orm/lib/Doctrine/ORM/EntityRepository.php" />
+                <file name="vendor/sonata-project/admin-bundle/src/Admin/AbstractAdmin.php" />
+            </errorLevel>
+        </MethodSignatureMismatch>
+        <PossiblyUndefinedMethod>
+            <errorLevel type="info">
+                <referencedMethod name="Symfony\Component\Config\Definition\Builder\NodeDefinition::arrayNode" />
+                <referencedMethod name="Symfony\Component\Config\Definition\Builder\NodeDefinition::booleanNode" />
+                <referencedMethod name="Symfony\Component\Config\Definition\Builder\NodeDefinition::children" />
+                <referencedMethod name="Symfony\Component\Config\Definition\Builder\NodeDefinition::integerNode" />
+                <referencedMethod name="Symfony\Component\Config\Definition\Builder\NodeDefinition::scalarNode" />
+                <referencedMethod name="Symfony\Component\Config\Definition\Builder\NodeDefinition::variableNode" />
+                <referencedMethod name="Symfony\Component\Config\Definition\Builder\NodeParentInterface::end" />
+            </errorLevel>
+        </PossiblyUndefinedMethod>
+    </issueHandlers>
+    <plugins>
+        <pluginClass class="Psalm\SymfonyPsalmPlugin\Plugin">
+            <containerXml>/tmp/com.github.pushword.pushword/tests/var/dev/cache/App_KernelDevDebugContainer.xml</containerXml>
+        </pluginClass>
+        <pluginClass class="Weirdan\DoctrinePsalmPlugin\Plugin" />
+    </plugins>
 </psalm>

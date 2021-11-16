@@ -14,32 +14,28 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * @ORM\Entity(repositoryClass=MessageRepository::class)
  */
-class Message
+class Message implements MessageInterface
 {
     use HostTrait;
     use IdTrait;
     use TimestampableTrait;
 
     /**
-     * @var string
      * @ORM\Column(type="string", length=180, nullable=true)
      */
-    protected $authorName = '';
+    protected ?string $authorName = '';
 
     /**
-     * @var string
      * @ORM\Column(type="string", length=180, nullable=true)
      */
-    protected $authorEmail = '';
+    protected ?string $authorEmail = '';
 
     /**
-     * @var int
      * @ORM\Column(type="integer", nullable=true)
      */
-    protected $authorIp;
+    protected ?int $authorIp = null;
 
     /**
-     * @var string
      * @ORM\Column(type="string", nullable=true)
      * @Assert\NotBlank
      * @Assert\Length(
@@ -49,21 +45,19 @@ class Message
      *     maxMessage="conversation.content.long"
      * )
      */
-    protected $content;
+    protected ?string $content = null;
 
     /**
      * Identifier referring (most of time, URI).
      *
      * @ORM\Column(type="string", length=180)
-     *
-     * @var string
      */
-    protected $referring;
+    protected string $referring = '';
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
      */
-    protected $publishedAt;
+    protected ?\DateTimeInterface $publishedAt = null;
 
     public function __construct()
     {
@@ -95,10 +89,8 @@ class Message
 
     /**
      * Get message content.
-     *
-     * @return string|null
      */
-    public function getContent()
+    public function getContent(): ?string
     {
         return $this->content;
     }
@@ -106,19 +98,17 @@ class Message
     /**
      * Get the value of authorName.
      *
-     * @return string
+     * @return ?string
      */
-    public function getAuthorName()
+    public function getAuthorName(): ?string
     {
         return $this->authorName;
     }
 
     /**
      * Set the value of authorName.
-     *
-     * @return self
      */
-    public function setAuthorName(?string $authorName)
+    public function setAuthorName(?string $authorName): self
     {
         $this->authorName = $authorName;
 
@@ -128,19 +118,17 @@ class Message
     /**
      * Get the value of authorEmail.
      *
-     * @return string
+     * @return ?string
      */
-    public function getAuthorEmail()
+    public function getAuthorEmail(): ?string
     {
         return $this->authorEmail;
     }
 
     /**
      * Set the value of authorEmail.
-     *
-     * @return self
      */
-    public function setAuthorEmail(?string $authorEmail)
+    public function setAuthorEmail(?string $authorEmail): self
     {
         $this->authorEmail = $authorEmail;
 
@@ -149,22 +137,16 @@ class Message
 
     /**
      * Get identifier referring.
-     *
-     * @return string
      */
-    public function getReferring()
+    public function getReferring(): string
     {
         return $this->referring;
     }
 
     /**
      * Set identifier referring.
-     *
-     * @param string $from Identifier referring
-     *
-     * @return self
      */
-    public function setReferring(string $referring)
+    public function setReferring(string $referring): self
     {
         $this->referring = $referring;
 
@@ -173,20 +155,16 @@ class Message
 
     /**
      * Get the value of authorIp.
-     *
-     * @return int
      */
-    public function getAuthorIp()
+    public function getAuthorIp(): ?int
     {
         return $this->authorIp;
     }
 
     /**
      * Set the value of authorIp.
-     *
-     * @return self
      */
-    public function setAuthorIp(?int $authorIp)
+    public function setAuthorIp(?int $authorIp): self
     {
         if (null !== $authorIp) {
             $this->authorIp = $authorIp;
@@ -195,14 +173,17 @@ class Message
         return $this;
     }
 
-    public function setAuthorIpRaw(string $authorIp)
+    public function setAuthorIpRaw(string $authorIp): self
     {
-        return $this->setAuthorIp(ip2long(IPUtils::anonymize($authorIp)));
+        return $this->setAuthorIp((int) ip2long(IPUtils::anonymize($authorIp)));
     }
 
+    /**
+     * @return bool|string
+     */
     public function getAuthorIpRaw()
     {
-        return long2ip($this->getAuthorIp());
+        return long2ip((int) $this->getAuthorIp());
     }
 
     public function __toString()

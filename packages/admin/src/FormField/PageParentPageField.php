@@ -2,15 +2,25 @@
 
 namespace Pushword\Admin\FormField;
 
+use Doctrine\ORM\QueryBuilder;
+use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\PageRepository;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 
+/**
+ * @extends AbstractField<PageInterface>
+ */
 class PageParentPageField extends AbstractField
 {
-    public function formField(FormMapper $formMapper): FormMapper
+    /**
+     * @param FormMapper<PageInterface> $form
+     *
+     * @return FormMapper<PageInterface>
+     */
+    public function formField(FormMapper $form): FormMapper
     {
-        return $formMapper->add(
+        return $form->add(
             'parentPage',
             EntityType::class,
             array_merge(
@@ -19,15 +29,9 @@ class PageParentPageField extends AbstractField
                     'label' => 'admin.page.parentPage.label',
                     'required' => false,
                 ],
-                ($this->admin->getSubject()->getId() ? ['query_builder' => function (PageRepository $er) {
-                    $qb = $er->createQueryBuilder('p')
-                        ->andWhere('p.id != :id')
-                        ->setParameter('id', $this->admin->getSubject()->getId());
-
-                    //$qb->andWhere('p.parentPage != :page')->setParameter('page', $this->admin->getSubject()->getId());
-
-                    return $qb;
-                }] : [])
+                (null !== $this->admin->getSubject()->getId() ? ['query_builder' => fn (PageRepository $er): QueryBuilder => $er->createQueryBuilder('p')
+                    ->andWhere('p.id != :id')
+                    ->setParameter('id', $this->admin->getSubject()->getId()), ] : [])
             )
         );
     }

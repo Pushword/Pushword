@@ -11,53 +11,52 @@ use DateTime;
  */
 class LastTime
 {
-    protected $filePath;
+    protected string $filePath;
 
     public function __construct(string $filePath)
     {
         $this->filePath = $filePath;
     }
 
-    public function wasRunSince(DateInterval $interval): bool
+    public function wasRunSince(DateInterval $dateInterval): bool
     {
-        $previous = $this->get();
+        $dateTime = $this->get();
 
-        if (false === $previous || $previous->add($interval) < new DateTime('now')) {
-            return false;
-        }
-
-        return true;
+        return null !== $dateTime && $dateTime->add($dateInterval) >= new DateTime('now');
     }
 
     /**
      * Return false if never runned else last datetime it was runned.
      * If $default is set, return $default time if never runned.
+     *
+     * @return \DateTime|\DateTimeImmutable|null
      */
-    public function get($default = false)
+    public function get(?string $default = null): ?\DateTimeInterface
     {
         if (! file_exists($this->filePath)) {
-            return false === $default ? false : new DateTime($default);
+            return null === $default ? null : new DateTime($default);
         }
 
-        return new DateTime('@'.filemtime($this->filePath));
+        return new DateTime('@'.\Safe\filemtime($this->filePath));
     }
 
-    public function setWasRun($datetime = 'now', $setIfNotExist = true): void
+    public function setWasRun(string $datetime = 'now', bool $setIfNotExist = true): void
     {
         if (! file_exists($this->filePath)) {
-            if (false === $setIfNotExist) {
+            if (! $setIfNotExist) {
                 return;
             }
-            file_put_contents($this->filePath, '');
+
+            \Safe\file_put_contents($this->filePath, '');
         }
 
-        touch($this->filePath, (new DateTime($datetime))->getTimestamp());
+        \Safe\touch($this->filePath, (new DateTime($datetime))->getTimestamp());
     }
 
     /**
      * alias for set was run.
      */
-    public function set($datetime = 'now')
+    public function set(string $datetime = 'now'): void
     {
         $this->setWasRun($datetime);
     }

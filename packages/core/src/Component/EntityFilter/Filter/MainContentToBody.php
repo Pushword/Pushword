@@ -6,17 +6,14 @@ class MainContentToBody extends AbstractFilter
 {
     private string $body = '';
 
-    /**
-     * @return self
-     */
-    public function apply($propertyValue)
+    public function apply($propertyValue): self
     {
-        $this->body = $propertyValue;
+        $this->body = \strval($propertyValue);
 
         return $this;
     }
 
-    public function getBody()
+    public function getBody(): string
     {
         return $this->body;
     }

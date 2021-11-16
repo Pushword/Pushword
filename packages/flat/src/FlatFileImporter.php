@@ -3,13 +3,17 @@
 namespace Pushword\Flat;
 
 use DateTime;
+use LogicException;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Flat\Importer\AbstractImporter;
 use Pushword\Flat\Importer\MediaImporter;
 use Pushword\Flat\Importer\PageImporter;
 
 /**
  * Permit to find error in image or link.
+ *
+ * @template T of object
  */
 class FlatFileImporter
 {
@@ -32,29 +36,31 @@ class FlatFileImporter
     public function __construct(
         string $projectDir,
         string $mediaDir,
-        AppPool $apps,
-        FlatFileContentDirFinder $contentDirFinder,
+        AppPool $appPool,
+        FlatFileContentDirFinder $flatFileContentDirFinder,
         PageImporter $pageImporter,
         MediaImporter $mediaImporter
     ) {
         $this->projectDir = $projectDir;
         $this->mediaDir = $mediaDir;
-        $this->apps = $apps;
-        $this->contentDirFinder = $contentDirFinder;
+        $this->apps = $appPool;
+        $this->contentDirFinder = $flatFileContentDirFinder;
         $this->pageImporter = $pageImporter;
         $this->mediaImporter = $mediaImporter;
     }
 
     public function run(?string $host): void
     {
-        $this->app = $this->apps->switchCurrentApp($host)->get();
+        if (null !== $host) {
+            $this->app = $this->apps->switchCurrentApp($host)->get();
+        }
 
         $contentDir = $this->contentDirFinder->get($this->app->getMainHost());
 
         $this->importFiles($this->mediaDir, 'media');
         $this->mediaImporter->finishImport();
 
-        $this->importFiles($this->customMediaDir ? $contentDir.$this->customMediaDir : $contentDir.'/media', 'media');
+        $this->importFiles('' !== $this->customMediaDir && '0' !== $this->customMediaDir ? $contentDir.$this->customMediaDir : $contentDir.'/media', 'media');
         $this->mediaImporter->finishImport();
 
         $this->importFiles($contentDir, 'page');
@@ -71,17 +77,18 @@ class FlatFileImporter
         $this->mediaImporter->setMediaDir($dir);
     }
 
-    private function importFiles($dir, string $type): void
+    private function importFiles(string $dir, string $type): void
     {
         if (! file_exists($dir)) {
             return;
         }
 
-        $files = scandir($dir);
+        $files = \Safe\scandir($dir);
         foreach ($files as $file) {
-            if (\in_array($file, ['.', '..'])) {
+            if (\in_array($file, ['.', '..'], true)) {
                 continue;
             }
+
             if (is_dir($dir.'/'.$file)) {
                 $this->importFiles($dir.'/'.$file, $type);
 
@@ -92,12 +99,27 @@ class FlatFileImporter
         }
     }
 
-    private function importFile($filePath, $type)
+    private function importFile(string $filePath, string $type): void
     {
-        $lastEdit = (new DateTime())->setTimestamp(filemtime($filePath));
+        $dateTime = (new DateTime())->setTimestamp(\Safe\filemtime($filePath));
 
+        $this->getImporter($type)->import($filePath, $dateTime);
+    }
+
+    /**
+     * @return AbstractImporter<T>
+     * @psalm-suppress InvalidReturnStatement
+     * @psalm-suppress InvalidReturnType
+     */
+    private function getImporter(string $type): AbstractImporter
+    {
         $importer = $type.'Importer';
 
-        return $this->$importer->import($filePath, $lastEdit);
+        if (! property_exists($this, $importer)
+            || ! ($importer = $this->$importer) instanceof AbstractImporter) { // @phpstan-ignore-line
+            throw new LogicException();
+        }
+
+        return $importer;
     }
 }

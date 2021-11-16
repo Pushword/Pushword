@@ -38,7 +38,7 @@ class PageHasEditor //implements PageHasEditorInterface
 
     public function __toString()
     {
-        return $this->getPage().'|'.$this->getEditor().'|'.$this->getEditedAt()->format('d/m/Y');
+        return $this->getPage()->__toString().'|'.$this->getEditor()->__toString().'|'.$this->getEditedAt()->format('d/m/Y');
     }
 
     public function setPage(?PageInterface $page = null): self

@@ -14,6 +14,9 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var string[]
+     */
     public const DEFAULT_APP_FALLBACK = [
         'static_generators',
         'static_symlink',
@@ -21,6 +24,9 @@ class Configuration implements ConfigurationInterface
         'static_copy',
     ];
 
+    /**
+     * @var array<class-string<\Pushword\StaticGenerator\Generator\GeneratorInterface>>
+     */
     public const DEFAULT_GENERATOR = [
         PagesGenerator::class,
         RobotsGenerator::class,
@@ -30,6 +36,9 @@ class Configuration implements ConfigurationInterface
         HtaccessGenerator::class,
     ];
 
+    /**
+     * @var array<class-string<\Pushword\StaticGenerator\Generator\GeneratorInterface>>
+     */
     public const DEFAULT_GENERATOR_GITHUB = [
         PagesGenerator::class,
         RobotsGenerator::class,
@@ -39,9 +48,12 @@ class Configuration implements ConfigurationInterface
         CNAMEGenerator::class,
     ];
 
+    /**
+     * @var string[]
+     */
     public const DEFAULT_COPY = ['assets', 'bundles', 'media'];
 
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('static_generator');
         $treeBuilder->getRootNode()->children()
@@ -53,8 +65,8 @@ class Configuration implements ConfigurationInterface
             ->variableNode('static_generators')
                 ->defaultValue(static::DEFAULT_GENERATOR)
                 ->validate()
-                    ->ifInArray(['apache'])->then(function () { return static::DEFAULT_GENERATOR; })
-                    ->ifInArray(['github'])->then(function () { return static::DEFAULT_GENERATOR_GITHUB; })
+                    ->ifInArray(['apache'])->then(fn (): array => static::DEFAULT_GENERATOR)
+                    ->ifInArray(['github'])->then(fn (): array => static::DEFAULT_GENERATOR_GITHUB)
                 ->end()
             ->end()
 
@@ -62,7 +74,7 @@ class Configuration implements ConfigurationInterface
                 ->defaultValue('%kernel.project_dir%/%main_host%')
                 ->info('If null or empty, static dir will be %kernel.project_dir%/host.tld/.')
                 ->validate()
-                    ->ifTrue(function ($value) { return ! self::isAbsolutePath($value); })
+                    ->ifTrue(fn ($value): bool => ! self::isAbsolutePath($value))
                     ->thenInvalid('Invalid static dir path `%s`, it must be absolute (eg: /home/pushword/host.tld/)')
                 ->end()
             ->end()
@@ -77,6 +89,6 @@ class Configuration implements ConfigurationInterface
 
     private static function isAbsolutePath(string $path): bool
     {
-        return '' !== $path && (\in_array($path[0], [\DIRECTORY_SEPARATOR, '%'], true) || preg_match('#\A[A-Z]:(?![^/\\\\])#i', $path));
+        return '' !== $path && (\in_array($path[0], [\DIRECTORY_SEPARATOR, '%'], true) || 1 === \Safe\preg_match('#\A[A-Z]:(?![^/\\\\])#i', $path));
     }
 }

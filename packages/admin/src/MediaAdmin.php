@@ -2,24 +2,29 @@
 
 namespace Pushword\Admin;
 
+use LogicException;
+use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
-use Sonata\AdminBundle\Form\FormMapper;
-use Sonata\AdminBundle\Object\Metadata; //use Sonata\BlockBundle\Meta\Metadata;
-use Sonata\AdminBundle\Object\MetadataInterface;
+use Sonata\AdminBundle\Form\FormMapper; //use Sonata\BlockBundle\Meta\Metadata;
+use Sonata\AdminBundle\Object\Metadata;
 use Sonata\DoctrineORMAdminBundle\Filter\ChoiceFilter;
 use Sonata\DoctrineORMAdminBundle\Filter\ModelAutocompleteFilter;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
+/**
+ * @extends AbstractAdmin<MediaInterface>
+ */
 final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
 {
+    /**
+     * @use AdminTrait<MediaInterface>
+     */
     use AdminTrait;
 
-    private $relatedPages;
-
-    private $messagePrefix = 'admin.media';
+    private string $messagePrefix = 'admin.media';
 
     protected function configureDefaultSortValues(array &$sortValues): void
     {
@@ -30,20 +35,28 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         ];
     }
 
+    /**
+     * @psalm-suppress InvalidArgument
+     */
     protected function configureFormFields(FormMapper $form): void
     {
         $fields = $this->getFormFields('admin_media_form_fields');
+        if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1]) || ! isset($fields[2]) || ! \is_array($fields[2])) {
+            throw new LogicException();
+        }
 
         $form->with('Media', ['class' => 'col-md-8']);
         foreach ($fields[0] as $field) {
             $this->addFormField($field, $form);
         }
+
         $form->end();
 
         $form->with('Params', ['class' => 'col-md-4']);
         foreach ($fields[1] as $field) {
             $this->addFormField($field, $form);
         }
+
         $form->end();
 
         // preview
@@ -72,11 +85,11 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         ]);* */
 
         $mimeTypes = Repository::getMediaRepository($this->getEntityManager(), $this->mediaClass)->getMimeTypes();
-        if ($mimeTypes) {
+        if ([] !== $mimeTypes) {
             $filter->add('mimeType', ChoiceFilter::class, [
                 'field_type' => ChoiceType::class,
                 'field_options' => [
-                    'choices' => array_combine($mimeTypes, $mimeTypes),
+                    'choices' => \Safe\array_combine($mimeTypes, $mimeTypes),
                     'multiple' => true,
                 ],
                 'label' => 'admin.media.filetype.label',
@@ -110,13 +123,9 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
         ]);
     }
 
-    public function getObjectMetadata(object $object): MetadataInterface
+    public function getObjectMetadata(object $object): Metadata
     {
-        if ($this->imageManager->isImage($object)) {
-            $thumb = $this->imageManager->getBrowserPath($object, 'thumb');
-        } else {
-            $thumb = self::$thumb;
-        }
+        $thumb = $this->imageManager->isImage($object) ? $this->imageManager->getBrowserPath($object, 'thumb') : self::$thumb;
 
         return new Metadata($object->getName(), null, $thumb);
     }

@@ -8,7 +8,7 @@ use Symfony\Component\Process\Process;
 
 class Mozjpeg extends BaseOptimizer
 {
-    public $binaryName = 'cjpeg';
+    public string $binaryName = 'cjpeg';
 
     public function canHandle(Image $image): bool
     {
@@ -28,7 +28,7 @@ class Mozjpeg extends BaseOptimizer
             ->run();
 
         if (0 === $status) {
-            file_put_contents($this->imagePath, $process->getOutput());
+            \Safe\file_put_contents($this->imagePath, $process->getOutput());
         }
 
         return 'echo ""';

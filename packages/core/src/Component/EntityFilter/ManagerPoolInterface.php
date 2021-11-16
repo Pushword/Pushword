@@ -2,10 +2,18 @@
 
 namespace Pushword\Core\Component\EntityFilter;
 
+use Pushword\Core\Entity\SharedTrait\IdInterface;
+
+/**
+ * @template T of object
+ */
 interface ManagerPoolInterface
 {
     /** @return mixed */
-    public function getProperty(object $entity, string $property = '');
+    public function getProperty(IdInterface $id, string $property = '');
 
-    public function getManager(object $entity): Manager;
+    /**
+     * @return Manager<T>
+     */
+    public function getManager(IdInterface $id): Manager;
 }

@@ -1,6 +1,14 @@
-#!/bin/sh
+#!/bin/bash -e
+
+if [ "$1" != "no-docs" ]; then
+    echo 'preserve docs'
+    cp -r docs docs~preserve
+fi
 
 cd packages/skeleton
-
 cp var/app.db var/app.db~
 cp -r media media~preserve
+
+if [ -e '/tmp/com.github.pushword.pushword/tests/var/dev/cache' ]; then
+    cp -r '/tmp/com.github.pushword.pushword/tests/var/dev/cache' '/tmp/com.github.pushword.pushword/tests/var/dev/cache~'
+fi

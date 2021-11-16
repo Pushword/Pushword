@@ -19,7 +19,7 @@ final class MediaController extends AbstractController
         $this->kernel = $kernel;
     }
 
-    public function download(string $media)
+    public function download(string $media): BinaryFileResponse
     {
         $projectDir = $this->kernel->getProjectDir();
         $pathToFile = $projectDir.'/'.$this->publicMediaDir.'/'.str_replace('..', '', $media);
@@ -28,14 +28,14 @@ final class MediaController extends AbstractController
             throw $this->createNotFoundException('The media does not exist...');
         }
 
-        $response = new BinaryFileResponse($pathToFile);
+        $binaryFileResponse = new BinaryFileResponse($pathToFile);
         //$response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT); ResponseHeaderBag::DISPOSITION_INLINE);
 
         // temporary hack until I dig why svg+xml file are return with this mimeType...
-        if ('image/svg' == $response->getFile()->getMimeType()) {
-            $response->headers->set('content-type', 'image/svg+xml');
+        if ('image/svg' == $binaryFileResponse->getFile()->getMimeType()) {
+            $binaryFileResponse->headers->set('content-type', 'image/svg+xml');
         }
 
-        return $response;
+        return $binaryFileResponse;
     }
 }

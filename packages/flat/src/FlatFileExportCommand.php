@@ -9,39 +9,43 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class FlatFileExportCommand extends Command
 {
+    /**
+     * @noRector
+     */
+    protected static $defaultName = 'pushword:flat:export';
+
     protected FlatFileExporter $exporter;
 
     public function __construct(
-        FlatFileExporter $exporter
+        FlatFileExporter $flatFileExporter
     ) {
-        $this->exporter = $exporter;
+        $this->exporter = $flatFileExporter;
 
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
-        $this
-            ->setName('pushword:flat:export')
-            ->setDescription('Exporting database toward flat yaml files (and json for media).')
+        $this->setDescription('Exporting database toward flat yaml files (and json for media).')
             ->addArgument('host', InputArgument::OPTIONAL, '')
             ->addArgument('exportDir', InputArgument::OPTIONAL, '');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Import will start in few seconds...');
 
-        if ($input->getArgument('exportDir')) {
-            $this->exporter->setExportDir($input->getArgument('exportDir'));
+        if ('' !== $input->getArgument('exportDir')) {
+            $this->exporter->setExportDir($input->getArgument('exportDir')); // @phpstan-ignore-line
         }
 
         $exportDir = $this->exporter->run($input->getArgument('host'));
 
-        if (! $input->getArgument('exportDir')) {
+        if ('' !== $input->getArgument('exportDir')) {
             $output->writeln('Results:');
             $output->writeln($exportDir);
         }
+
         $output->writeln('Import ended.');
 
         return 0;

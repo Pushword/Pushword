@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Entity\SharedTrait;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 trait TimestampableTrait
@@ -23,7 +24,7 @@ trait TimestampableTrait
      *
      * @return $this
      */
-    public function setCreatedAt(\DateTime $createdAt)
+    public function setCreatedAt(\DateTimeInterface $createdAt)
     {
         $this->createdAt = $createdAt;
 
@@ -33,7 +34,7 @@ trait TimestampableTrait
     /**
      * Returns createdAt.
      *
-     * @return \DateTime
+     * @return \DateTimeInterface
      */
     public function getCreatedAt()
     {
@@ -45,7 +46,7 @@ trait TimestampableTrait
      *
      * @return $this
      */
-    public function setUpdatedAt(\DateTime $updatedAt)
+    public function setUpdatedAt(\DateTimeInterface $updatedAt)
     {
         $this->updatedAt = $updatedAt;
 
@@ -55,14 +56,14 @@ trait TimestampableTrait
     /**
      * Returns updatedAt.
      *
-     * @return \DateTime
+     * @return \DateTimeInterface
      */
     public function getUpdatedAt()
     {
         return $this->updatedAt;
     }
 
-    public function __constructTimestampable()
+    public function __constructTimestampable(): void
     {
         $this->updatedAt = null !== $this->updatedAt ? $this->updatedAt : new \DateTime();
         $this->createdAt = null !== $this->createdAt ? $this->createdAt : new \DateTime();

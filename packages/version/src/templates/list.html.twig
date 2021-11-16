@@ -36,6 +36,10 @@
                <th class="sonata-ba-list-field-header-text">
                     {{ 'Date' }}
                </th>
+
+               <th class="sonata-ba-list-field-header-text">
+                    {{ 'Reason' }}
+               </th>
                <th class="text-right sonata-ba-list-field-header-text">
                   Action
                </th>
@@ -51,6 +55,10 @@
                </td>
                <td class="sonata-ba-list-field sonata-ba-list-field-text">
                   {{ p.updatedAt|date }} {{ p.editedBy ? '(<small>' ~ p.editedBy.username ~ ')</small>':'' }}
+               </td>
+
+               <td class="sonata-ba-list-field sonata-ba-list-field-text">
+                  {{ p.editMessage }}
                </td>
                <td class="sonata-ba-list-field sonata-ba-list-field-text" objectid="34" style="text-align:right">
                   <div class="btn-group">

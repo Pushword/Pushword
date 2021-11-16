@@ -8,15 +8,17 @@ use Twig\TwigFunction;
 
 final class RouterTwigExtension extends AbstractExtension
 {
-    /** @var RouterInterface */
-    private $router;
+    private \Pushword\Core\Router\RouterInterface $router;
 
     public function __construct(RouterInterface $router)
     {
         $this->router = $router;
     }
 
-    public function getFunctions()
+    /**
+     * @return \Twig\TwigFunction[]
+     */
+    public function getFunctions(): array
     {
         return [
             new TwigFunction('homepage', [$this->router, 'generatePathForHomePage']),

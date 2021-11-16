@@ -10,5 +10,5 @@ final class PushwordSvgExtension extends ConfigurableExtension implements Prepen
 {
     use ExtensionTrait;
 
-    protected $configFolder = __DIR__.'/../config';
+    protected string $configFolder = __DIR__.'/../config';
 }

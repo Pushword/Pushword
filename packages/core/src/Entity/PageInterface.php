@@ -3,7 +3,7 @@
 namespace Pushword\Core\Entity;
 
 use DateTimeInterface;
-use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Pushword\Core\Entity\PageTrait\PageEditorInterface;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\HostInterface;
@@ -17,11 +17,11 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
 
     public function getRealSlug(): string;
 
-    public function setSlug($slug, $set = false): self;
+    public function setSlug(?string $slug): self;
 
     public function getMainContent(): string;
 
-    public function setMainContent($mainContent): self;
+    public function setMainContent(?string $mainContent): self;
 
     public function getPublishedAt(): DateTimeInterface;
 
@@ -32,38 +32,58 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
     // ParentTrait
     public function getParentPage(): ?self;
 
-    public function setParentPage(?self $parentPage): self;
+    /**
+     * @param \Pushword\Core\Entity\PageInterface|null $page
+     */
+    public function setParentPage(?self $page): self;
 
     /**
-     * @return ArrayCollection|PageInterface[]
+     * @return PageInterface[]|Collection<int, PageInterface>|array
      */
     public function getChildrenPages();
 
-    public function getRedirection();
+    public function hasChildrenPages(): bool;
 
-    public function getRedirectionCode();
+    public function hasRedirection(): bool;
+
+    public function getRedirection(): string;
+
+    public function getRedirectionCode(): int;
 
     public function getCreatedAt();
 
-    public function getTemplate();
+    public function getTemplate(): ?string;
 
-    public function getH1();
+    public function getH1(): ?string;
 
-    public function getTitle();
+    public function getTitle(): ?string;
 
-    public function getName();
+    public function getName(): ?string;
 
     public function getPriority(): int;
-
-    // PageI18n
-    public function getLocale();
-
-    public function setLocale($locale);
 
     // Page Extended
     public function getExtendedPage(): ?self;
 
-    public function setExtendPage(?self $extendedPage): self;
+    /**
+     * @param \Pushword\Core\Entity\PageInterface|null $page
+     */
+    public function setExtendPage(?self $page): self;
 
     public function getMetaRobots(): string;
+
+    public function getMainImage(): ?MediaInterface;
+
+    public function setMainImage(?MediaInterface $media): self;
+
+    public function __toString(): string;
+
+    // PageI18n
+    public function getLocale(): string;
+
+    public function setLocale(string $locale): self;
+
+    public function addTranslation(self $page, bool $recursive = true): self;
+
+    public function removeTranslation(self $page, bool $recursive = true): self;
 }

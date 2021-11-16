@@ -3,8 +3,11 @@
 namespace Pushword\StaticGenerator\Generator;
 
 use Exception;
+use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Core\Entity\PageInterface as Page;
+use Pushword\Core\Utils\F;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class PageGenerator extends AbstractGenerator
 {
@@ -22,8 +25,8 @@ class PageGenerator extends AbstractGenerator
 
     public function generatePage(Page $page): void
     {
-        if (false !== $page->getRedirection()) {
-            $this->redirectionManager->add($page);
+        if ($page->hasRedirection()) {
+            $this->redirectionManager->addPage($page);
 
             return;
         }
@@ -33,16 +36,16 @@ class PageGenerator extends AbstractGenerator
         $this->generateFeedFor($page);
     }
 
-    protected function generateFilePath(Page $page, ?int $pager = null)
+    protected function generateFilePath(Page $page, ?int $pager = null): string
     {
         $slug = '' == $page->getRealSlug() ? 'index' : $page->getRealSlug();
 
-        if (preg_match('/.+\.(json|xml)$/i', $page->getRealSlug())) {
+        if (\Safe\preg_match('/.+\.(json|xml)$/i', $page->getRealSlug()) >= 1) {
             return $this->getStaticDir().'/'.$slug;
         }
 
         $filePath = $this->getStaticDir().'/';
-        if ($pager) {
+        if ($pager >= 1) {
             $filePath .= 'index' == $slug ? '' : rtrim($slug, '/');
 
             return $filePath.'/'.$pager.'.html';
@@ -54,62 +57,81 @@ class PageGenerator extends AbstractGenerator
     /**
      * Generate static file for feed indexing children pages
      * (only if children pages exists).
-     *
-     * @return void
      */
-    protected function generateFeedFor(Page $page)
+    protected function generateFeedFor(Page $page): void
     {
         $liveUri = $this->generateLivePathFor($page, 'pushword_page_feed');
-        $staticFile = preg_replace('/.html$/', '.xml', $this->generateFilePath($page));
-        if (! \is_array($page->getChildrenPages()) || ! \count($page->getChildrenPages())) {
+        $staticFile = F::preg_replace_str('/.html$/', '.xml', $this->generateFilePath($page));
+        if (\count($page->getChildrenPages()) < 1) {
             return;
         }
 
-        $this->saveAsStatic($liveUri, $staticFile);
+        $this->saveAsStatic($liveUri, $staticFile, $page);
     }
 
-    protected function saveAsStatic($liveUri, $destination, ?Page $page = null)
+    protected function saveAsStatic(string $liveUri, string $destination, ?Page $page = null): void
     {
         $request = Request::create($liveUri);
         //$request->headers->set('host', $this->app->getMainHost());
 
-        $response = static::$appKernel->handle($request);
+        $response = static::getKernel()->handle($request);
 
         if ($response->isRedirect()) {
-            if ($response->headers->get('location')) {
+            if (null !== $response->headers->get('location')) {
                 $this->redirectionManager->add($liveUri, $response->headers->get('location'), $response->getStatusCode());
-            }
-
-            return;
-        } elseif (200 != $response->getStatusCode()) {
-            //$this->kernel = static::$appKernel;
-            if (500 === $response->getStatusCode() && 'dev' == $this->kernel->getEnvironment()) {
-                throw new Exception('An error occured when generating `'.$liveUri.'`'); //exit($this->kernel->handle($request));
             }
 
             return;
         }
 
-        if (false !== strpos($response->headers->all()['content-type'][0] ?? '', 'html')) {
-            if (false !== strpos($response->getContent(), '<!-- pager:')) {
-                $this->extractPager($page, $response->getContent());
+        if (Response::HTTP_OK != $response->getStatusCode()) {
+            if (Response::HTTP_INTERNAL_SERVER_ERROR === $response->getStatusCode() && 'dev' == $this->kernel->getEnvironment()) {
+                $this->setErrorFor($liveUri, $page);
             }
-            $content = $this->compress($response->getContent());
-        } else {
-            $content = $response->getContent();
+
+            return;
+        }
+
+        $content = $response->getContent();
+        if (false === $content) {
+            $this->setErrorFor($liveUri, $page);
+
+            return;
+        }
+
+        if ($this->responseIsHtml($response) && null !== $page) {
+            if (str_contains($content, '<!-- pager:')) {
+                $this->extractPager($page, $content);
+            }
+
+            $content = $this->compress($content);
         }
 
         $this->filesystem->dumpFile($destination, $content);
     }
 
+    private function setErrorFor(string $liveUri, ?Page $page = null): void
+    {
+        $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
+                     '['.$liveUri.']('.$this->router->getRouter()->generate('admin_app_page_edit', ['id' => $page->getId()]).')'
+                     : $liveUri;
+        $this->setError('An error occured when generating '.$identifier.'');
+        //throw new Exception('An error occured when generating `'.$liveUri.'`'); //exit($this->kernel->handle($request));
+    }
+
+    private function responseIsHtml(Response $response): bool
+    {
+        return str_contains($response->headers->all()['content-type'][0] ?? '', 'html');
+    }
+
     private function extractPager(Page $page, string $content): void
     {
-        preg_match('#<!-- pager:([0-9]+) -->#', $content, $match);
+        \Safe\preg_match('#<!-- pager:([0-9]+) -->#', $content, $match);
         $pager = (int) $match[1];
         $this->saveAsStatic(rtrim($this->generateLivePathFor($page), '/').'/'.$pager, $this->generateFilePath($page, $pager), $page);
     }
 
-    protected function compress($html)
+    protected function compress(string $html): string
     {
         return $this->parser->compress($html);
     }

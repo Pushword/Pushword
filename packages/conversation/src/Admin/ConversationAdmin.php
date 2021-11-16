@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Admin;
 
+use Pushword\Conversation\Entity\MessageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -10,6 +11,9 @@ use Sonata\Form\Type\DateTimePickerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
+/**
+ * @extends AbstractAdmin<MessageInterface>
+ */
 class ConversationAdmin extends AbstractAdmin
 {
     protected function configureDefaultSortValues(array &$sortValues): void
@@ -49,7 +53,7 @@ class ConversationAdmin extends AbstractAdmin
                 'required' => false,
                 'label' => 'admin.conversation.authorIp.label',
                 'attr' => [
-                    ($this->getSubject() ? ($this->getSubject()->getAuthorIp() ? 'disabled' : 't') : 't') => '',
+                    (0 !== (int) $this->getSubject()->getAuthorIp() ? 'disabled' : 't') => '',
                 ],
             ])
             ->end();

@@ -12,20 +12,15 @@ class PhoneNumber extends AbstractFilter
     use RequiredAppTrait;
     use RequiredTwigTrait;
 
-    /**
-     * @return string
-     */
-    public function apply($propertyValue)
+    public function apply($propertyValue): string
     {
-        $propertyValue = $this->convertPhoneNumber($propertyValue);
-
-        return $propertyValue;
+        return $this->convertPhoneNumber(\strval($propertyValue));
     }
 
     private function convertPhoneNumber(string $body): string
     {
         $rgx = '/ (?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4} /iU';
-        preg_match_all($rgx, $body, $matches);
+        \Safe\preg_match_all($rgx, $body, $matches);
 
         if (! isset($matches[0])) {
             return $body;

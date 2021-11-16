@@ -7,7 +7,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class PushwordStaticGeneratorBundle extends Bundle
 {
-    public function getContainerExtension()
+    public function getContainerExtension(): ?StaticGeneratorExtension
     {
         if (null === $this->extension) {
             $this->extension = new StaticGeneratorExtension();

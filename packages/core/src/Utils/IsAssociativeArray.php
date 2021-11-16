@@ -4,7 +4,10 @@ namespace Pushword\Core\Utils;
 
 class IsAssociativeArray
 {
-    public static function test(array $array)
+    /**
+     * @param array<mixed> $array
+     */
+    public static function test(array $array): bool
     {
         if ([] === $array) {
             return false;

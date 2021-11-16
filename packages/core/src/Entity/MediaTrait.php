@@ -3,10 +3,12 @@
 namespace Pushword\Core\Entity;
 
 use Cocur\Slugify\Slugify;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
 use InvertColor\Color;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
+use Pushword\Core\Utils\F;
 use Pushword\Core\Utils\Filepath;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -22,44 +24,42 @@ trait MediaTrait
     /**
      * @ORM\Column(type="string", length=50)
      */
-    protected $mimeType;
+    protected ?string $mimeType = null;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
-    protected $storeIn;
+    protected string $storeIn;
 
     /**
      * @ORM\Column(type="integer")
      */
-    protected $size;
+    protected int $size;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
      */
-    protected $height;
+    protected ?int $height = null;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
      */
-    protected $width;
+    protected ?int $width = null;
 
     /**
      * @ORM\Column(type="string", nullable=true)
      */
-    protected $mainColor;
+    protected ?string $mainColor = null;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
-    protected $media;
+    protected ?string $media = null;
 
     /**
      * NOTE : this is used only for media renaming.
-     *
-     * @var string
      */
-    protected $mediaBeforeUpdate;
+    protected ?string $mediaBeforeUpdate = null;
 
     /**
      * NOTE: This is not a mapped field of entity metadata, just a simple property.
@@ -72,9 +72,9 @@ trait MediaTrait
      *     dimensions="dimensions"
      * )
      *
-     * @var UploadedFile|File
+     * @var UploadedFile|File|null
      */
-    protected $mediaFile;
+    protected $mediaFile = null;
 
     /**
      * @ORM\Column(type="string", length=100, unique=true)
@@ -84,15 +84,17 @@ trait MediaTrait
     /**
      * @ORM\Column(type="text", nullable=true)
      */
-    protected $names;
+    protected ?string $names = null;
 
-    protected $slug;
+    protected string $slug = '';
 
     /**
      * @ORM\OneToMany(
      *     targetEntity="Pushword\Core\Entity\PageInterface",
      *     mappedBy="mainImage"
      * )
+     *
+     * @var PageInterface[]|Collection<int, PageInterface>
      */
     protected $mainImagePages;
 
@@ -110,12 +112,13 @@ trait MediaTrait
         return $this->name.' ';
     }
 
-    protected function getExtension($string)
+    /** @psalm-suppress InvalidReturnType */
+    protected function getExtension(string $string): string
     {
-        return preg_replace('/.*(\\.[^.\\s]{3,4})$/', '$1', $string);
+        return F::preg_replace_str('/.*(\\.[^.\\s]{3,4})$/', '$1', $string);
     }
 
-    public function getSlugForce()
+    public function getSlugForce(): string
     {
         return $this->slug;
     }
@@ -123,15 +126,15 @@ trait MediaTrait
     /**
      * Used by MediaAdmin.
      */
-    public function setSlugForce($slug)
+    public function setSlugForce(?string $slug): self
     {
-        if (! $slug) {
+        if (\in_array($slug, ['', null], true)) {
             return $this;
         }
 
         $this->slug = (new Slugify(['regexp' => '/([^A-Za-z0-9\.]|-)+/']))->slugify($slug);
 
-        if ($this->media) {
+        if (null !== $this->media) {
             $this->setMedia($this->slug.$this->getExtension($this->media));
         }
 
@@ -144,17 +147,17 @@ trait MediaTrait
      */
     public function setSlug(?string $filename): self
     {
-        if (! $this->getMediaFile()) {
+        if (null === $this->getMediaFile()) {
             throw new Exception('debug... thinking setSlug was only used by Vich ???');
         }
 
-        $filename = $filename ?? $this->getMediaFileName();
-        if (! $filename) {
+        $filename ??= $this->getMediaFileName();
+        if ('' === $filename) {
             throw new Exception('debug... '); //dd($this->mediaFile);
         }
 
         $extension = $this->getMediaFile()->guessExtension(); // From MimeType
-        $slugSlugified = $this->slugifyPreservingExtension($filename, ($extension ? '.' : '').$extension);
+        $slugSlugified = $this->slugifyPreservingExtension($filename, (null !== $extension ? '.' : '').$extension);
 
         if (null === $this->media || $this->getExtension($this->media) != $extension) { //$this->getExtension($slugSlugify)) {
             $this->setMedia($slugSlugified);
@@ -175,10 +178,10 @@ trait MediaTrait
     /**
      * @Assert\Callback
      */
-    public function validate(ExecutionContextInterface $context, $payload)
+    public function validate(ExecutionContextInterface $executionContext): void
     {
-        if ($this->getMimeType() && $this->mediaFile && $this->mediaFile->getMimeType() != $this->getMimeType()) {
-            $context
+        if (null !== $this->getMimeType() && null !== $this->mediaFile && $this->mediaFile->getMimeType() != $this->getMimeType()) {
+            $executionContext
                 ->buildViolation('Attention ! Vous essayez de remplacer un fichier d\'un type ('
                     .$this->getMimeType().') par un fichier d\'une autre type ('.$this->mediaFile->getMimeType().')')
                 ->atPath('fileName')
@@ -189,11 +192,11 @@ trait MediaTrait
 
     public function getSlug(): string
     {
-        if ($this->slug) {
+        if ('' !== $this->slug) {
             return $this->slug;
         }
 
-        if ($this->media) {
+        if (null !== $this->media) {
             return $this->slug = Filepath::removeExtension($this->media);
         }
 
@@ -202,11 +205,11 @@ trait MediaTrait
         return $this->slug;
     }
 
-    public function setMediaFile(?File $media = null): void
+    public function setMediaFile(?File $file = null): void
     {
-        $this->mediaFile = $media;
+        $this->mediaFile = $file;
 
-        if (null !== $media) {
+        if (null !== $file) {
             $this->updatedAt = new \DateTimeImmutable();
         }
     }
@@ -218,9 +221,10 @@ trait MediaTrait
 
     public function getMediaFileName(): string
     {
-        if (null === $this->mediaFile) {
+        if (! $this->mediaFile instanceof \Symfony\Component\HttpFoundation\File\File) {
             throw new Exception('MediaFile is not setted');
         }
+
         if ($this->mediaFile instanceof UploadedFile) {
             return $this->mediaFile->getClientOriginalName();
         }
@@ -233,9 +237,9 @@ trait MediaTrait
         return $this->media;
     }
 
-    public function setMedia($media): self
+    public function setMedia(?string $media): self
     {
-        if (! $media) {
+        if (null === $media) {
             return $this;
         }
 
@@ -250,21 +254,38 @@ trait MediaTrait
 
     public function getName(): string
     {
-        return $this->name;
+        return '' === $this->name && null !== $this->getMediaFile() ? $this->getMediaFileName() : $this->name;
     }
 
-    public function getNameLocalized($getLocalized = null, $onlyLocalized = false): string
+    public function getNameLocalized(?string $getLocalized = null, bool $onlyLocalized = false): string
     {
-        $names = $this->getNames(true);
+        $names = $this->getNamesParsed();
 
-        return $getLocalized ?
+        return null !== $getLocalized ?
             (isset($names[$getLocalized]) ? $names[$getLocalized] : ($onlyLocalized ? '' : $this->name))
             : $this->name;
     }
 
-    public function getNames($yaml = false)
+    /**
+     * @return array<string, string>
+     */
+    public function getNamesParsed(): array
     {
-        return true === $yaml && null !== $this->names ? Yaml::parse($this->names) : $this->names;
+        $return = null !== $this->names ? Yaml::parse($this->names) : [];
+
+        if (! \is_array($return)) {
+            throw new Exception('Names malformatted');
+        }
+
+        return $return;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getNames(bool $yamlParsed = false)
+    {
+        return $yamlParsed && null !== $this->names ? Yaml::parse($this->names) : $this->names;
     }
 
     public function setNames(?string $names): self
@@ -274,9 +295,9 @@ trait MediaTrait
         return $this;
     }
 
-    public function getNameByLocale($locale)
+    public function getNameByLocale(string $locale): string
     {
-        $names = $this->getNames(true);
+        $names = $this->getNamesParsed();
 
         return $names[$locale] ?? $this->getName();
     }
@@ -318,54 +339,68 @@ trait MediaTrait
         return $this->mimeType;
     }
 
-    public function setMimeType($mimeType): self
+    public function setMimeType(?string $mimeType): self
     {
         $this->mimeType = $mimeType;
 
         return $this;
     }
 
-    public function getSize()
+    public function getSize(): int
     {
         return $this->size;
     }
 
-    public function setSize($size): self
+    public function setSize(int $size): self
     {
         $this->size = $size;
 
         return $this;
     }
 
-    public function setDimensions($dimensions): self
+    /**
+     * @param array<int> $dimensions
+     */
+    public function setDimensions(array $dimensions): self
     {
         if (isset($dimensions[0])) {
-            $this->width = (int) $dimensions[0];
+            $this->width = $dimensions[0];
         }
 
         if (isset($dimensions[1])) {
-            $this->height = (int) $dimensions[1];
+            $this->height = $dimensions[1];
         }
 
         return $this;
     }
 
-    public function getDimensions(): array
+    /**
+     * @return array<int>
+     */
+    public function getDimensions(): ?array
     {
+        if (null === $this->height || null === $this->width) {
+            return null;
+        }
+
         return [$this->width, $this->height];
     }
 
-    public function getRatio(): float
+    public function getRatio(): ?float
     {
+        if (null === $this->height || null === $this->width) {
+            return null;
+        }
+
         return $this->height / $this->width;
     }
 
-    public function getWidth()
+    public function getWidth(): ?int
     {
         return $this->width;
     }
 
-    public function getHeight()
+    public function getHeight(): ?int
     {
         return $this->height;
     }
@@ -375,10 +410,10 @@ trait MediaTrait
         return $this->mainColor;
     }
 
-    public function getMainColorOpposite()
+    public function getMainColorOpposite(): ?string
     {
         if (null === $this->getMainColor()) {
-            return;
+            return null;
         }
 
         return Color::fromHex($this->getMainColor())->invert(true);
@@ -391,6 +426,9 @@ trait MediaTrait
         return $this;
     }
 
+    /**
+     * @return PageInterface[]|Collection<int, PageInterface>
+     */
     public function getMainImagePages()
     {
         return $this->mainImagePages;
@@ -399,7 +437,7 @@ trait MediaTrait
     /**
      * @ORM\PreRemove
      */
-    public function removeMainImageFromPages()
+    public function removeMainImageFromPages(): void
     {
         foreach ($this->mainImagePages as $page) {
             $page->setMainImage(null);
@@ -408,10 +446,8 @@ trait MediaTrait
 
     /**
      * this is used only for media renaming.
-     *
-     * @return string
      */
-    public function getMediaBeforeUpdate()
+    public function getMediaBeforeUpdate(): ?string
     {
         return $this->mediaBeforeUpdate;
     }
@@ -420,10 +456,8 @@ trait MediaTrait
      * this is used only for media renaming.
      *
      * @param string $mediaBeforeUpdate NOTE : this is used only for media renaming
-     *
-     * @return self
      */
-    public function setMediaBeforeUpdate(string $mediaBeforeUpdate)
+    public function setMediaBeforeUpdate(string $mediaBeforeUpdate): self
     {
         $this->mediaBeforeUpdate = $mediaBeforeUpdate;
 

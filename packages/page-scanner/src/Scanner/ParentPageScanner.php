@@ -14,13 +14,16 @@ final class ParentPageScanner extends AbstractScanner
         $this->checkParentPageHost($this->page);
     }
 
-    private function checkParentPageHost(Pageinterface $page): void
+    private function checkParentPageHost(Pageinterface $pageinterface): void
     {
-        $parent = $page->getParentPage();
+        $parent = $pageinterface->getParentPage();
 
-        if ($parent && $parent->getHost() && $page->getHost() && $page->getHost() != $parent->getHost()) {
+        if (null !== $parent
+            && '' !== $parent->getHost()
+             && '' !== $pageinterface->getHost()
+              && $pageinterface->getHost() !== $parent->getHost()) {
             $this->addError($this->trans('page_scan.different_host')
-                .' : <code>'.$parent->getHost().'</code> vs <code>'.$page->getHost().'</code>');
+                .' : <code>'.$parent->getHost().'</code> vs <code>'.$pageinterface->getHost().'</code>');
         }
     }
 }

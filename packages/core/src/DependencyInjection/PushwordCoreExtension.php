@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\DependencyInjection;
 
+use LogicException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\ConfigurableExtension;
@@ -10,34 +11,41 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
 {
     use ExtensionTrait;
 
-    private $configFolder = __DIR__.'/../Resources/config';
+    private string $configFolder = __DIR__.'/../Resources/config';
 
-    protected function loadInternal(array $mergedConfig, ContainerBuilder $container)
+    /**
+     * @param array<mixed> $mergedConfig
+     */
+    protected function loadInternal(array $mergedConfig, ContainerBuilder $container): void
     {
         $this->setPathParameters($container);
 
-        (new PushwordConfigFactory($container, $mergedConfig, $this->getConfiguration($mergedConfig, $container)))
+        if (($configuration = $this->getConfiguration($mergedConfig, $container)) === null) {
+            throw new LogicException();
+        }
+
+        (new PushwordConfigFactory($container, $mergedConfig, $configuration))
             ->loadConfigToParams()
             ->loadApps();
 
         $this->loadService($container);
     }
 
-    private function setPathParameters(ContainerBuilder $container): void
+    private function setPathParameters(ContainerBuilder $containerBuilder): void
     {
-        if (file_exists($container->getParameter('kernel.project_dir').'/vendor/pushword')) {
+        if (file_exists($containerBuilder->getParameter('kernel.project_dir').'/vendor/pushword')) {
             // false !== strpos(__DIR__, '/vendor/')) {
-            $container->setParameter('pw.package_dir', '%kernel.project_dir%/vendor/pushword');
-            $container->setParameter('vendor_dir', '%kernel.project_dir%/vendor');
+            $containerBuilder->setParameter('pw.package_dir', '%kernel.project_dir%/vendor/pushword');
+            $containerBuilder->setParameter('vendor_dir', '%kernel.project_dir%/vendor');
 
             return;
         }
 
-        $container->setParameter('vendor_dir', '%kernel.project_dir%/../../vendor');
-        $container->setParameter('pw.package_dir', '%kernel.project_dir%/..');
+        $containerBuilder->setParameter('vendor_dir', '%kernel.project_dir%/../../vendor');
+        $containerBuilder->setParameter('pw.package_dir', '%kernel.project_dir%/..');
     }
 
-    public function getAlias()
+    public function getAlias(): string
     {
         return 'pushword';
     }

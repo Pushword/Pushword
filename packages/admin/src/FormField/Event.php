@@ -8,31 +8,57 @@ use Symfony\Contracts\EventDispatcher\Event as SfEvent;
 /**
  * The order.placed event is dispatched each time an order is created
  * in the system.
+ *
+ * @template T of object
  */
 class Event extends SfEvent
 {
+    /**
+     * @var string
+     */
     public const NAME = 'pushword.admin.load_field';
 
+    /**
+     * @var AdminInterface<T>
+     */
     private AdminInterface $admin;
 
+    /**
+     * @var mixed[]
+     */
     private array $fields;
 
+    /**
+     * @param AdminInterface<T> $admin
+     * @param mixed[]           $fields
+     */
     public function __construct(AdminInterface $admin, array $fields)
     {
         $this->admin = $admin;
         $this->fields = $fields;
     }
 
+    /**
+     * @return AdminInterface<T>
+     */
     public function getAdmin(): AdminInterface
     {
         return $this->admin;
     }
 
+    /**
+     * @return mixed[]
+     */
     public function getFields(): array
     {
         return $this->fields;
     }
 
+    /**
+     * @param mixed[] $fields
+     *
+     * @return self<T>
+     */
     public function setFields(array $fields): self
     {
         $this->fields = $fields;

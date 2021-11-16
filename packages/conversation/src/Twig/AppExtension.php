@@ -4,6 +4,7 @@ namespace Pushword\Conversation\Twig;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use Pushword\Conversation\Entity\MessageInterface;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Component\Routing\RouterInterface;
@@ -13,42 +14,50 @@ use Twig\TwigFunction;
 
 class AppExtension extends AbstractExtension
 {
-    /** @var EntityManagerInterface */
-    private $em;
+    private \Doctrine\ORM\EntityManagerInterface $em;
 
-    /** @var \Pushword\Core\Component\App\AppConfig */
-    private $app;
+    private \Pushword\Core\Component\App\AppConfig $app;
 
-    /** @var \Pushword\Core\Component\App\AppPool */
-    private $apps;
+    private \Pushword\Core\Component\App\AppPool $apps;
 
-    /** @var string */
-    private $messageEntity;
+    /**
+     * @var class-string<MessageInterface>
+     */
+    private string $messageEntity;
 
-    /** @var RouterInterface */
-    private $router;
+    private \Symfony\Component\Routing\RouterInterface $router;
 
-    public function __construct(EntityManagerInterface $em, string $messageEntity, AppPool $apps, RouterInterface $router)
+    /**
+     * @param class-string<MessageInterface> $messageEntity
+     */
+    public function __construct(EntityManagerInterface $entityManager, string $messageEntity, AppPool $appPool, RouterInterface $router)
     {
-        $this->em = $em;
-        $this->apps = $apps;
-        $this->app = $apps->get();
+        $this->em = $entityManager;
+        $this->apps = $appPool;
+        $this->app = $appPool->get();
         $this->messageEntity = $messageEntity;
         $this->router = $router;
     }
 
-    public function getFunctions()
+    /**
+     * @return \Twig\TwigFunction[]
+     */
+    public function getFunctions(): array
     {
         return [
-            new TwigFunction('showConversation', [$this, 'showConversation'], ['is_safe' => ['html'], 'needs_environment' => true]),
-            new TwigFunction('conversation', [$this, 'getConversationRoute']),
+            new TwigFunction('showConversation', function (Twig $twig, string $referring, string $orderBy, $limit, string $view): string {
+                return $this->showConversation($twig, $referring, $orderBy, $limit, $view);
+            }, ['is_safe' => ['html'], 'needs_environment' => true]),
+            new TwigFunction('conversation', function ($type): string {
+                return $this->getConversationRoute($type);
+            }),
         ];
     }
 
-    public function getConversationRoute($type)
+    public function getConversationRoute(string $type): string
     {
         $page = $this->apps->getCurrentPage();
-        if (null === $page) {
+        if (! $page instanceof \Pushword\Core\Entity\PageInterface) {
             throw new Exception('A page must be defined...');
         }
 
@@ -60,12 +69,12 @@ class AppExtension extends AbstractExtension
     }
 
     public function showConversation(
-        Twig $env,
+        Twig $twig,
         string $referring,
-        string $orderBy = 'createdAt DESC',
-        $limit = 0,
+        string $orderBy = 'createdAt ASC',
+        int $limit = 0,
         string $view = '/conversation/messages_list.html.twig'
-    ) {
+    ): string {
         /** @var MessageRepository $msgRepo */
         $msgRepo = $this->em->getRepository($this->messageEntity);
 
@@ -73,6 +82,6 @@ class AppExtension extends AbstractExtension
 
         $view = $this->app->getView($view, '@PushwordConversation');
 
-        return $env->render($view, ['messages' => $messages]);
+        return $twig->render($view, ['messages' => $messages]);
     }
 }

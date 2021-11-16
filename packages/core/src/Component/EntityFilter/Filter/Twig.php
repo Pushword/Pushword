@@ -11,25 +11,19 @@ class Twig extends AbstractFilter
     use RequiredEntityTrait;
     use RequiredTwigTrait;
 
-    /**
-     * @return string
-     */
-    public function apply($propertyValue)
+    public function apply($propertyValue): string
     {
-        $propertyValue = $this->render($propertyValue);
-
-        return $propertyValue;
+        return $this->render(\strval($propertyValue));
     }
 
     protected function render(string $string): string
     {
-        if (! $string || false === strpos($string, '{')) {
+        if (! str_contains($string, '{')) {
             return $string;
         }
 
-        $tmpl = $this->twig->createTemplate($string);
-        $string = $tmpl->render($this->entity instanceof PageInterface ? ['page' => $this->entity] : []);
+        $templateWrapper = $this->twig->createTemplate($string);
 
-        return $string;
+        return $templateWrapper->render($this->entity instanceof PageInterface ? ['page' => $this->entity] : []);
     }
 }

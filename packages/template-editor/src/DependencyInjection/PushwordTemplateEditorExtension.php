@@ -10,5 +10,5 @@ final class PushwordTemplateEditorExtension extends ConfigurableExtension implem
 {
     use ExtensionTrait;
 
-    protected $configFolder = __DIR__.'/../config';
+    protected string $configFolder = __DIR__.'/../config';
 }

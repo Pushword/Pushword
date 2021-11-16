@@ -11,11 +11,13 @@ use Pushword\Core\Entity\MediaInterface;
  */
 trait ImageImporterTrait
 {
-    public function importImage(string $filePath, DateTimeInterface $lastEditDatetime)
+    abstract protected function getMedia(string $media): MediaInterface;
+
+    public function importImage(string $filePath, DateTimeInterface $dateTime): void
     {
         $media = $this->getMedia($this->getFilename($filePath));
 
-        if (false === $this->newMedia && $media->getUpdatedAt() >= $lastEditDatetime) {
+        if (false === $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
             return; // no update needed
         }
 
@@ -24,6 +26,9 @@ trait ImageImporterTrait
         $this->importImageMediaData($media, $filePath);
     }
 
+    /**
+     * @return mixed[]
+     */
     private function getImageData(string $filePath): array
     {
         $data = [];
@@ -37,24 +42,22 @@ trait ImageImporterTrait
 
         $reader = \PHPExif\Reader\Reader::factory(\PHPExif\Reader\Reader::TYPE_NATIVE);
         $exif = $reader->read($filePath);
-        if ($exif) {
+        if ($exif) { // @phpstan-ignore-line
             $data = array_merge($data, $exif->getData());
         }
 
-        $data = array_merge($data, $this->getData($filePath));
-
-        return $data;
+        return array_merge($data, $this->getData($filePath));
     }
 
     private function importImageMediaData(MediaInterface $media, string $filePath): void
     {
-        $imgSize = getimagesize($filePath);
+        $imgSize = \Safe\getimagesize($filePath);
 
         $media
                 ->setProjectDir($this->projectDir)
                 ->setStoreIn(\dirname($filePath))
                 ->setMimeType($imgSize['mime'])
-                ->setSize(filesize($filePath))
+                ->setSize(\Safe\filesize($filePath))
                 ->setDimensions([$imgSize[0], $imgSize[1]]);
 
         $data = $this->getImageData($filePath); //, $imgSize['mime']);

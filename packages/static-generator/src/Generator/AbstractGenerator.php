@@ -9,6 +9,7 @@ use Pushword\Core\Repository\PageRepositoryInterface;
 use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
+use Pushword\StaticGenerator\StaticAppGenerator;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -18,7 +19,7 @@ use Twig\Environment as Twig;
 use WyriHaximus\HtmlCompress\Factory as HtmlCompressor;
 use WyriHaximus\HtmlCompress\HtmlCompressorInterface;
 
-abstract class AbstractGenerator
+abstract class AbstractGenerator implements GeneratorInterface
 {
     use GenerateLivePathForTrait;
     use KernelTrait;
@@ -35,10 +36,7 @@ abstract class AbstractGenerator
 
     protected AppConfig $app;
 
-    protected $staticDomain;
-
-    /** @var string */
-    protected $staticDir;
+    protected string $staticDir;
 
     protected RequestStack $requestStack;
 
@@ -50,35 +48,35 @@ abstract class AbstractGenerator
 
     protected RouterInterface $router;
 
+    protected StaticAppGenerator $staticAppGenerator;
+
     public function __construct(
         PageRepositoryInterface $pageRepository,
         Twig $twig,
-        ParameterBagInterface $params,
+        ParameterBagInterface $parameterBag,
         RequestStack $requestStack,
         TranslatorInterface $translator,
         RouterInterface $router,
         KernelInterface $kernel,
-        AppPool $apps
+        AppPool $appPool
     ) {
         $this->pageRepository = $pageRepository;
         $this->filesystem = new Filesystem();
         $this->twig = $twig;
-        $this->params = $params;
+        $this->params = $parameterBag;
         $this->requestStack = $requestStack;
         $this->translator = $translator;
         $this->router = $router;
         $this->router->setUseCustomHostPath(false);
-        $this->apps = $apps;
-        $this->publicDir = (string) $params->get('pw.public_dir');
+        $this->apps = $appPool;
+        $this->publicDir = \strval($parameterBag->get('pw.public_dir'));
         $this->parser = HtmlCompressor::construct();
-
-        if (! method_exists($this->filesystem, 'dumpFile')) {
-            throw new \RuntimeException('Method dumpFile() is not available. Upgrade your Filesystem.');
-        }
 
         static::loadKernel($kernel);
         $this->kernel = $kernel;
-        static::$appKernel->getContainer()->get('pushword.router')->setUseCustomHostPath(false);
+
+        $newKernelRouter = static::getKernel()->getContainer()->get('pushword.router');
+        $newKernelRouter->setUseCustomHostPath(false);
     }
 
     public function generate(?string $host = null): void
@@ -96,15 +94,16 @@ abstract class AbstractGenerator
      */
     protected function mustSymlink(): bool
     {
-        return \in_array(CNAMEGenerator::class, $this->app->get('static_generators')) ? false
-            : $this->app->get('static_symlink');
+        return \is_array($this->app->get('static_generators'))
+            && \in_array(CNAMEGenerator::class, $this->app->get('static_generators'), true) ? false
+            : \boolval($this->app->get('static_symlink'));
     }
 
     protected function copy(string $file): void
     {
         if (file_exists($file)) {
-            copy(
-                str_replace($this->params->get('kernel.project_dir').'/', '../', $this->publicDir.'/'.$file),
+            \Safe\copy(
+                str_replace(\strval($this->params->get('kernel.project_dir')).'/', '../', $this->publicDir.'/'.$file),
                 $this->getStaticDir().'/'.$file
             );
         }
@@ -112,11 +111,23 @@ abstract class AbstractGenerator
 
     protected function getStaticDir(): string
     {
-        return $this->app->get('static_dir');
+        return \strval($this->app->get('static_dir'));
     }
 
     protected function getPageRepository(): PageRepositoryInterface
     {
         return $this->pageRepository;
+    }
+
+    public function setStaticAppGenerator(StaticAppGenerator $staticAppGenerator): self
+    {
+        $this->staticAppGenerator = $staticAppGenerator;
+
+        return $this;
+    }
+
+    protected function setError(string $errorMessage): void
+    {
+        $this->staticAppGenerator->setError($errorMessage);
     }
 }

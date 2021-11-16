@@ -15,52 +15,56 @@ class TwigExtension extends AbstractExtension
 {
     use RequiredApps;
 
-    private string $mediaDir;
-
     /** @required */
     public ImageManager $imageManager;
 
-    public function setMediaDir(string $mediaDir)
-    {
-        $this->mediaDir = $mediaDir;
-    }
-
-    public function getFunctions()
+    /**
+     * @return \Twig\TwigFunction[]
+     */
+    public function getFunctions(): array
     {
         return [
-            new TwigFunction('facebook_last_post', [$this, 'showFacebookLastPost'], ['needs_environment' => true, 'is_safe' => ['html']]),
+            new TwigFunction('facebook_last_post', function (Twig $twig, string $id, string $template) {
+                return $this->showFacebookLastPost($twig, $id, $template);
+            }, ['needs_environment' => true, 'is_safe' => ['html']]),
         ];
     }
 
+    /**
+     * @return array<mixed>|null
+     */
     protected function getFacebookLastPost(string $id): ?array
     {
-        $fbScraper = new FacebookScraper($id);
-        $posts = $fbScraper->getPosts();
+        $facebookScraper = new FacebookScraper($id);
+        $posts = $facebookScraper->getPosts();
 
         // We retry getting the last result wich succeed to request facebook
         if (! isset($posts[0])) {
             $defaultCacheExpir = Client::$cacheExpir;
             Client::$cacheExpir = 0;
-            $posts = $fbScraper->getPosts();
+            $posts = $facebookScraper->getPosts();
             Client::$cacheExpir = $defaultCacheExpir;
         }
 
         return $posts[0] ?? null;
     }
 
+    /**
+     * @return mixed[]|string|null
+     */
     public function showFacebookLastPost(Twig $twig, string $id, string $template = '/component/FacebookLastPost.html.twig')
     {
         $lastPost = $this->getFacebookLastPost($id);
 
-        if (! $lastPost) {
+        if (null === $lastPost) {
             return null;
         }
 
-        if (! $template) {
+        if ('' === $template || '0' === $template) {
             return $lastPost;
         }
 
-        if ($lastPost['images_hd']) {
+        if (isset($lastPost['images_hd'])) {
             $lastPost['images_hd'] = $this->importImages($lastPost);
         }
 
@@ -69,15 +73,20 @@ class TwigExtension extends AbstractExtension
         return $twig->render($view, ['pageId' => $id, 'post' => $lastPost]);
     }
 
-    private function importImages($post): array
+    /**
+     * @param mixed[] $post
+     *
+     * @return \Pushword\Core\Entity\MediaInterface[]
+     */
+    private function importImages(array $post): array
     {
         $return = [];
 
-        $text = new UnicodeString($post['text']);
+        $unicodeString = new UnicodeString($post['text']); // @phpstan-ignore-line TODO switch to Object...
 
-        foreach ($post['images_hd'] as $i => $image) {
-            $name = $text->truncate(25, '...').($i ? ' '.$i : '');
-            $return[] = $this->imageManager->importExternal($image, $name, 'fb-'.$name);
+        foreach ($post['images_hd'] as $i => $image) { // @phpstan-ignore-line TODO switch to Object...
+            $name = $unicodeString->truncate(25, '...').($i ? ' '.$i : '');  // @phpstan-ignore-line TODO switch to Object...
+            $return[] = $this->imageManager->importExternal($image, $name, 'fb-'.$name); // @phpstan-ignore-line TODO switch to Object...
         }
 
         return $return;

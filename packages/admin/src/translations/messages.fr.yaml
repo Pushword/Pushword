@@ -27,6 +27,8 @@ md_cs:
 #---
 # Admin
 #---
+datetimeMediumFormat: 'd/m/Y à H:m'
+
 Page List: Liste des pages
 
 admin:
@@ -51,6 +53,7 @@ admin:
   edition: Edition # not good
 
   page:
+    revisions: Révisions
     gallery:
       label: Galerie d'images
     state:
@@ -104,6 +107,12 @@ admin:
       label: Page Parente
     publishedAt:
       label: Publié le
+      online: <span style="color:#449d44">Publié</span>
+      draft: Brouillon
+    editMessage:
+      label: Motif d'édition
+      help:           Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>
+      helpVersionned: Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">Voir l'historique</a>
     createdAt:
       label: Créé le
     updatedAt:

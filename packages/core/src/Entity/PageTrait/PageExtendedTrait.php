@@ -10,16 +10,16 @@ trait PageExtendedTrait
     /**
      * @ORM\ManyToOne(targetEntity="Pushword\Core\Entity\PageInterface")
      */
-    protected ?PageInterface $extendedPage;
+    protected ?PageInterface $extendedPage = null;
 
     public function getExtendedPage(): ?PageInterface
     {
         return $this->extendedPage;
     }
 
-    public function setExtendPage(?PageInterface $extendedPage): PageInterface
+    public function setExtendPage(?PageInterface $page): PageInterface
     {
-        $this->extendedPage = $extendedPage;
+        $this->extendedPage = $page;
 
         return $this;
     }

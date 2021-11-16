@@ -13,20 +13,20 @@ trait ClassTrait
 
     abstract public function getApp(): AppConfig;
 
-    public function getClass($page = null, string $containerName = 'container', string $default = ''): string
+    public function getClass(?object $page = null, string $containerName = 'container', string $default = ''): string
     {
         if (null !== $page && $page instanceof PageInterface && null !== $page->getCustomProperty($containerName)) {
-            return $page->getCustomProperty($containerName);
+            return \strval($page->getCustomProperty($containerName));
         }
 
         if (null !== $this->getApp()->getCustomProperty('page_'.$containerName)) {
-            return $this->getApp()->getCustomProperty('page_'.$containerName);
+            return \strval($this->getApp()->getCustomProperty('page_'.$containerName));
         }
 
         return '' !== $default ? $default : $this->getDefault($containerName);
     }
 
-    public function getHtmlClass($page = null, string $containerName = 'container', string $default = ''): string
+    public function getHtmlClass(?object $page = null, string $containerName = 'container', string $default = ''): string
     {
         $class = $this->getClass($page, $containerName, $default);
 
@@ -37,6 +37,6 @@ trait ClassTrait
     {
         $name = 'default'.ucfirst($containerName).'Class';
 
-        return property_exists($this, $name) ? $this->$name : '';
+        return property_exists($this, $name) ? $this->$name : ''; // @phpstan-ignore-line
     }
 }

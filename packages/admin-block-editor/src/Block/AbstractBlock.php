@@ -13,6 +13,11 @@ abstract class AbstractBlock implements BlockInterface
     use RequiredEntityTrait;
     use RequiredTwigTrait;
 
+    /**
+     * @var string
+     */
+    public const NAME = 'NotDefined!';
+
     public string $name;
 
     public function __construct(string $name)
@@ -22,6 +27,9 @@ abstract class AbstractBlock implements BlockInterface
         }
     }
 
+    /**
+     * @param mixed $data
+     */
     public function render($data): string
     {
         $view = $this->getApp()->getView('/block/'.$this->name.'.html.twig', '@PushwordAdminBlockEditor');

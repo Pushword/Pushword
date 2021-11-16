@@ -13,14 +13,17 @@ class ElementRepository
         $this->templateDir = $templateDir;
     }
 
+    /**
+     * @return array<int, Element>
+     */
     public function getAll(): array
     {
         $finder = new Finder();
         $finder->files()->in($this->templateDir);
         $elements = [];
 
-        foreach ($finder as $file) {
-            $elements[] = new Element($this->templateDir, substr($file, \strlen($this->templateDir)));
+        foreach ($finder as $singleFinder) {
+            $elements[] = new Element($this->templateDir, \Safe\substr(\strval($singleFinder), \strlen($this->templateDir)));
         }
 
         return $elements;

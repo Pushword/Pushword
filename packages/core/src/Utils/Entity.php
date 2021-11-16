@@ -4,23 +4,26 @@ namespace Pushword\Core\Utils;
 
 class Entity
 {
-    public static function getProperties($object): array
+    /**
+     * @return list<string>
+     */
+    public static function getProperties(object $object): array
     {
-        $reflClass = new \ReflectionClass(\get_class($object));
-        $properties = array_filter($reflClass->getProperties(), function (\ReflectionProperty $property) {
-            if (false !== strpos($property->getDocComment(), '@ORM\Column')) {
+        $reflectionClass = new \ReflectionClass(\get_class($object));
+        $properties = array_filter($reflectionClass->getProperties(), function (\ReflectionProperty $property) {
+            if (str_contains((string) $property->getDocComment(), '@ORM\Column')) {
                 return true;
             }
         });
-        foreach ($properties as $key => $property) {
-            if ('id' == $property->getName()) {
-                unset($properties[$key]);
-
+        $propertyNames = [];
+        foreach ($properties as $property) {
+            if ('id' === $property->getName()) {
                 continue;
             }
-            $properties[$key] = $property->getName();
+
+            $propertyNames[] = $property->getName();
         }
 
-        return array_values($properties);
+        return $propertyNames;
     }
 }

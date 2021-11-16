@@ -2,24 +2,22 @@
 
 namespace Pushword\Core\EventListener;
 
-use Doctrine\ORM\Event\LifecycleEventArgs;
-use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Pushword\Core\Entity\UserInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-class UserListener
+final class UserListener
 {
-    protected $passwordEncoder;
+    private UserPasswordHasherInterface $passwordEncoder;
 
-    public function __construct(UserPasswordHasherInterface $passwordEncoder)
+    public function __construct(UserPasswordHasherInterface $userPasswordHasher)
     {
-        $this->passwordEncoder = $passwordEncoder;
+        $this->passwordEncoder = $userPasswordHasher;
     }
 
     /**
      * Set Password on database update if PlainPassword is set.
      */
-    public function preUpdate(UserInterface $user, PreUpdateEventArgs $event = null)
+    public function preUpdate(UserInterface $user): void
     {
         if (\is_string($user->getPlainPassword()) && '' !== $user->getPlainPassword()) {
             $user->setPassword($this->passwordEncoder->hashPassword($user, $user->getPlainPassword()));
@@ -27,8 +25,8 @@ class UserListener
         }
     }
 
-    public function prePersist(UserInterface $user, LifecycleEventArgs $event)
+    public function prePersist(UserInterface $user): void
     {
-        return $this->preUpdate($user);
+        $this->preUpdate($user);
     }
 }

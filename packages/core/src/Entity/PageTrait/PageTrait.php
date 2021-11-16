@@ -24,14 +24,14 @@ trait PageTrait
      *
      * @ORM\Column(type="text")
      */
-    protected $mainContent = '';
+    protected string $mainContent = '';
 
     /**
      * @ORM\Column(type="datetime", options={"default": "CURRENT_TIMESTAMP"})
      */
     protected DateTimeInterface $publishedAt;
 
-    public function __toString()
+    public function __toString(): string
     {
         return trim($this->host.'/'.$this->getSlug().' ');
     }
@@ -50,46 +50,39 @@ trait PageTrait
 
     public function getSlug(): string
     {
-        return ! $this->slug ? (string) $this->id : $this->slug;
+        return '' === $this->slug ? (string) $this->id : $this->slug;
     }
 
     public function getRealSlug(): string
     {
-        return 'homepage' == $this->getSlug() ? '' : $this->getSlug();
+        return 'homepage' === $this->getSlug() ? '' : $this->getSlug();
     }
 
     public static function normalizeSlug(string $slug): string
     {
-        $slugifier = new Slugify(['regexp' => '/[^A-Za-z0-9_\/\.]+/']);
-        $slug = $slugifier->slugify($slug);
-        $slug = trim($slug, '/');
+        $slugify = new Slugify(['regexp' => '/[^A-Za-z0-9_\/\.]+/']);
+        $slug = $slugify->slugify($slug);
 
-        return $slug;
+        return trim($slug, '/');
     }
 
-    public function setSlug($slug, $set = false): self
+    public function setSlug(?string $slug): self
     {
-        if (true === $set) {
-            $this->slug = $slug;
-        } elseif (null === $slug) { // work around for disabled input in sonata admin
+        if (null === $slug) { // work around for disabled input in sonata admin
             //if ('' === $this->slug) throw new \ErrorException('slug cant be empty.');
         } else {
-            $this->slug = static::normalizeSlug($slug); //$this->setSlug(trim($slug, '/'), true);
+            $this->slug = static::normalizeSlug($slug);
         }
 
         return $this;
     }
 
-    /** @return string */
     public function getMainContent(): string
     {
         return $this->mainContent;
     }
 
-    /**
-     * @param string $mainContent
-     */
-    public function setMainContent($mainContent): self
+    public function setMainContent(?string $mainContent): self
     {
         $this->mainContent = (string) $mainContent;
 

@@ -1,12 +1,42 @@
-name: Psalm
+name: 'Static Code Analysis'
 
-on:
-  push:
-    paths:
-      - '**.php'
-      - 'psalm.xml.dist'
+on: [push, pull_request]
 
 jobs:
+  phpstan:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        php: [7.4, 8.0]
+        stability: [prefer-stable] #prefer-lowest,
+
+    name: PHPStan - P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install PHP with extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Install Composer dependencies (highest)
+        uses: ramsey/composer-install@v1
+        with:
+          dependency-versions: highest
+          composer-options: --prefer-dist --${{ matrix.stability }} --no-interaction
+
+      - name: Build container
+        run: cd packages/skeleton && php ./bin/console cache:clear
+
+      - name: PHPStan
+        run: vendor/bin/phpstan --memory-limit=1G analyse --error-format=github --debug
+
   psalm:
     name: psalm
     runs-on: ubuntu-latest
@@ -16,7 +46,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
+          php-version: "7.4"
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick
           coverage: none
 
@@ -29,8 +59,12 @@ jobs:
       - name: Run composer install
         run: composer install -n --prefer-dist
 
+      - name: Build container
+        run: cd packages/skeleton && php ./bin/console cache:clear
+
       - name: Run psalm
         run: ./vendor/bin/psalm --output-format=github --shepherd
+
         # uses: docker://vimeo/psalm-github-actions
         # with:
         #   args: --shepherd
