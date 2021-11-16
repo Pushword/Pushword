@@ -19,6 +19,7 @@ parameters:
         - packages/advanced-main-image/src
     excludePaths:
         - packages/*/src/Installer/install.php
+        - packages/installer/src/PostInstall.php
     symfony:
         container_xml_path: /tmp/com.github.pushword.pushword/tests/var/dev/cache/App_KernelDevDebugContainer.xml
         console_application_loader: packages/skeleton/bin/console-test.php
