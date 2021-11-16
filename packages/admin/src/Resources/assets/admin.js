@@ -147,6 +147,10 @@ function memorizeOpenPannel() {
                 : JSON.parse(localStorage.panels);
         if ($.inArray(active, panels) == -1) panels.push(active);
         localStorage.panels = JSON.stringify(panels);
+
+        $("[href='#" + active + "'] .fa-plus")
+            .removeClass("fa-plus")
+            .addClass("fa-minus");
     });
 
     $(".collapse").on("hidden.bs.collapse", function () {
@@ -160,6 +164,10 @@ function memorizeOpenPannel() {
             panels.splice(elementIndex, 1);
         }
         localStorage.panels = JSON.stringify(panels);
+
+        $("[href='#" + active + "'] .fa-minus")
+            .removeClass("fa-minus")
+            .addClass("fa-plus");
     });
 
     function onInit() {
@@ -167,11 +175,9 @@ function memorizeOpenPannel() {
             localStorage.panels === "undefined" || localStorage.panels === undefined
                 ? new Array()
                 : JSON.parse(localStorage.panels);
-
         for (var i in panels) {
             if ($("#" + panels[i]).hasClass("collapse")) {
                 $("#" + panels[i]).collapse("show");
-                console.log($("#" + panels[i] + " .fa-plus"));
                 $("[href='#" + panels[i] + "'] .fa-plus")
                     .removeClass("fa-plus")
                     .addClass("fa-minus");

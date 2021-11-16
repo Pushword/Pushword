@@ -86,6 +86,7 @@ class AppExtension extends AbstractExtension
     public function getFilters(): array
     {
         return [
+            new TwigFilter('md5', 'md5'),
             new TwigFilter('html_entity_decode', 'html_entity_decode'),
             new TwigFilter('slugify', [(new Slugify()), 'slugify']),
             new TwigFilter('preg_replace', [self::class, 'pregReplace']),

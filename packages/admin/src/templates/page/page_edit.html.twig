@@ -93,12 +93,14 @@
         <div class="{{ form_group.class|default('col-md-12') }}" id="columnFields">
     {% endif %}
 
+    {% set identifier = form_group.label|md5| slice(0, 4) %}
+
     <div class="box {{ 'expand' in form_group.class ? 'expandColumnFields' : '' }}" style="margin:0;border:0">
-        <div class="box-header" style="padding:0;" data-widget="collapse"
+        <div class="box-header" style="padding:0;" data-toggle="collapse"
                     data-parent="#columnFields"
-                    href="#cf-{{ loop.index }}"
+                    href="#cf-{{ identifier }}"
                     aria-expanded="{{ columnFieldOpen == false ? 'true' : 'false' }}"
-                    aria-controls="cf-{{ loop.index }}">
+                    aria-controls="cf-{{ identifier }}">
             <h4 style="margin:0">
                 <a style="
                     display:block;
@@ -115,11 +117,11 @@
 
                 </a>
             </h4>
-            <div class="box-tools" style="margin-top:-35px; margin-right:15px">
-                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-{{ columnFieldOpen == false ? 'minus' : 'plus' }}"></i> </button>
+            <div class="box-tools" style="margin-top:-40px; margin-right:15px">
+                <button type="button" class="btn btn-box-tool" data-toggle="collapse"><i class="fa fa-plus"></i> </button>
             </div>
         </div>
-        <div class="box-body collapse {{ columnFieldOpen == false ? ' in' : '' }}" id="cf-{{ loop.index }}"
+        <div class="box-body collapse" id="cf-{{ identifier }}"
             role="tabpanel" style="
                 margin-bottom:-2px;
                 padding-bottom:30px;
