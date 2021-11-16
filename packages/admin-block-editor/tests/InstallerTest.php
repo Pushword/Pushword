@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pushword\AdminBlockEditor\Tests;
 
 use App\Entity\Page;
-use Pushword\AdminBlockEditor\Installer\Update975;
+use Pushword\AdminBlockEditor\Installer\Update795;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class InstallerTest extends KernelTestCase
@@ -16,7 +16,7 @@ class InstallerTest extends KernelTestCase
         $page = $this->createPage();
         $em = self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager');
 
-        (new Update975())->run();
+        (new Update795())->run();
 
         $em->refresh($page);
         $this->assertTrue('test' === json_decode($page->getMainContent())->blocks[0]->tunes->anchor, 'updater is not working as expectd');

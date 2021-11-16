@@ -11,7 +11,7 @@ use Pushword\Installer\PostAutoloadDump;
 /**
  * Executed via Pushword\Installer\PostAutoloadDump::postAutoloadDump.
  */
-class Update975
+class Update795
 {
     // TODO find a way to use autowiring
     /** @var class-string<PageInterface> */

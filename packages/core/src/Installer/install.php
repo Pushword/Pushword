@@ -1,9 +1,8 @@
 <?php
 
 /**
- * Execute via Pushword\Installer\PostInstall::postUpdateCommand
+ * Execute via Pushword\Installer\PostInstall::postUpdateCommand.
  */
-
 if (! file_exists('vendor')) {
     throw new Exception('installer mus be run from root');
 }
