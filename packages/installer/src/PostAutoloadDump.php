@@ -24,11 +24,11 @@ class PostAutoloadDump extends PostInstall
             return;
         }
 
-        self::getKernel();
-
         $scriptsToRun = self::scanDir('vendor/pushword/'.$package.'/src/Installer');
         foreach ($scriptsToRun as $i => $script) {
-            if (! file_exists($isInstalledFile = 'var/installer/'.md5($package.$script))) {
+            if (! file_exists($isInstalledFile = 'var/installer/'.md5($package.$script)) && '~' !== substr($script, -1)) {
+                self::getKernel();
+
                 echo '~ Executing '.$package.' update ('.$i++.').'.\chr(10);
                 $className = '\\Pushword\\'.$package.'\\Installer\\'.basename($script, '.php');
                 (new $className())->run(); // @phpstan-ignore-line
@@ -48,7 +48,9 @@ class PostAutoloadDump extends PostInstall
             return self::$kernel;
         }
 
-        require_once 'vendor/autoload.php';
+        if (! class_exists(Kernel::class)) {
+            include 'vendor/autoload.php';
+        }
 
         (new Dotenv())->loadEnv(file_exists('.env') ? '.env' : 'packages/skeleton/.env');
         if (class_exists(Debug::class)) {
