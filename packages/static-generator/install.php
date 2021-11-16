@@ -4,7 +4,7 @@
  * Execute via Pushword\Installer\PostInstall::postUpdateCommand
  */
 
-if (! \Pushword\Installer\PostInstall::isRoot()) {
+if (!isset($postInstallRunning)) return;if (! \Pushword\Installer\PostInstall::isRoot()) {
     throw new Exception('installer mus be run from root');
 }
 
