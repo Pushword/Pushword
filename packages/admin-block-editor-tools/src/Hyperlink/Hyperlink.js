@@ -47,8 +47,8 @@ export default class Hyperlink {
         this.nodes.button = document.createElement("button");
         this.nodes.button.type = "button";
         this.nodes.button.classList.add(this.CSS.button, this.CSS.buttonModifier);
-        this.nodes.button.appendChild(this.iconSvg("link", 14, 10));
-        this.nodes.button.appendChild(this.iconSvg("unlink", 15, 11));
+        this.nodes.button.appendChild(Hyperlink.iconSvg("link", 14, 10));
+        this.nodes.button.appendChild(Hyperlink.iconSvg("unlink", 15, 11));
         return this.nodes.button;
     }
 
@@ -256,7 +256,7 @@ export default class Hyperlink {
         document.execCommand(this.commandUnlink);
     }
 
-    iconSvg(name, width = 14, height = 14) {
+    static iconSvg(name, width = 14, height = 14) {
         const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         icon.classList.add("icon", "icon--" + name);
         icon.setAttribute("width", width + "px");

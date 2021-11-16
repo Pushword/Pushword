@@ -21,6 +21,7 @@ import Embed from "@pushword/editorjs-tools/dist/Embed.js"; //"@editorjs/embed";
 import PagesList from "@pushword/editorjs-tools/dist/PagesList.js";
 import Gallery from "@pushword/editorjs-tools/dist/Gallery.js"; //"@vietlongn/editorjs-carousel";
 import Anchor from "@pushword/editorjs-tools/dist/Anchor.js";
+import HyperlinkTune from "@pushword/editorjs-tools/dist/HyperlinkTune.js";
 
 /** Was initially design to permit multiple editor.js in one page */
 export class editorJs {
@@ -32,6 +33,7 @@ export class editorJs {
             typeof editorjsTools !== "undefined"
                 ? editorjsTools
                 : {
+                      HyperlinkTune: HyperlinkTune,
                       Anchor: Anchor,
                       Bold: StrongInlineTool,
                       Italic: ItalicInlineTool,

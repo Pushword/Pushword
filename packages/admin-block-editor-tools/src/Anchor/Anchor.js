@@ -25,7 +25,6 @@ export default class Anchor {
      * @param data — previously saved data
      */
     constructor({ api, data }) {
-        this.anchorIsChecker = false;
         this.api = api;
         this.data = data || "";
 

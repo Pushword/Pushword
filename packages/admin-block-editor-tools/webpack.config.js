@@ -11,6 +11,7 @@ module.exports = {
         Raw: "./src/Raw/Raw.js",
         NestedList: "./src/NestedList/NestedList.js",
         Anchor: "./src/Anchor/Anchor.js",
+        HyperlinkTune: "./src/HyperlinkTune/HyperlinkTune.js",
     },
     module: {
         rules: [
