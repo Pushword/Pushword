@@ -15,17 +15,6 @@ export default class Anchor {
     }
 
     getAnchor() {
-        // permit to avoid BC break with editorjs-header-with-ancho
-        if (false === this.anchorIsChecker && !this.data) {
-            var currentObject = this;
-            this.api.blocks
-                .getBlockByIndex(this.api.blocks.getCurrentBlockIndex())
-                .save()
-                .then(function (block) {
-                    if (typeof block.data.anchor !== "undefined") currentObject.input.value = block.data.anchor || "";
-                });
-        }
-
         return this.data || "";
     }
 

@@ -6,6 +6,7 @@ class AdminTest extends AbstractAdminTest
 {
     public function testLogin()
     {
+        $this->tearDown();
         $client = static::createClient();
 
         $client->request('GET', '/admin/');

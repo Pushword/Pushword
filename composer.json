@@ -109,7 +109,8 @@
             "Pushword\\Version\\": "packages/version/src",
             "Pushword\\AdminBlockEditor\\": "packages/admin-block-editor/src",
             "Pushword\\TemplateEditor\\": "packages/template-editor/src",
-            "Pushword\\AdvancedMainImage\\": "packages/advanced-main-image/src"
+            "Pushword\\AdvancedMainImage\\": "packages/advanced-main-image/src",
+            "Pushword\\Installer\\": "packages/installer/src"
         }
     },
     "autoload-dev": {

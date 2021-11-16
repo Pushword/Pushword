@@ -2,8 +2,13 @@
 
 namespace Pushword\Installer;
 
+use App\Kernel;
+use Symfony\Component\Dotenv\Dotenv;
+
 class PostAutoloadDump extends PostInstall
 {
+    private static ?Kernel $kernel = null;
+
     public static function run(): void
     {
         $packages = self::scanDir('vendor/pushword');
@@ -25,10 +30,38 @@ class PostAutoloadDump extends PostInstall
                 && ! str_ends_with($script, '/install.php')
             ) {
                 echo '~ Executing '.$package.' update ('.$i++.').'.\chr(10);
-                include $script;
+                $classname = 'Pushword\\'.$package.'\\Installer\\'.basename($script, '.php');
+                (new $className())->run(); // @phpstan-ignore-line
+
+                // TODO find a way to use autowiring
+                //self::getKernel()->getContainer()->get($classname)->run();
+                //include $script;
 
                 self::dumpFile($isInstalledFile, 'done');
             }
         }
+    }
+
+    public static function getKernel(): Kernel
+    {
+        if (null !== self::$kernel) {
+            return self::$kernel;
+        }
+
+        $file = 'vendor/autoload.php';
+
+        if (! class_exists(Kernel::class)) {
+            include 'vendor/autoload.php';
+        }
+        (new Dotenv())->loadEnv(file_exists('.env') ? '.env' : 'packages/skeleton/.env');
+        if (class_exists(Debug::class)) {
+            Debug::enable();
+        }
+
+        self::$kernel = new Kernel('dev', true);
+
+        self::$kernel->boot();
+
+        return self::$kernel;
     }
 }

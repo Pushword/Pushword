@@ -5,4 +5,4 @@ services:
 
   Pushword\AdvancedMainImage\:
     resource: "../*"
-    exclude: "../{DependencyInjection,Entity,Migrations,Tests,config,Kernel.php}"
+    exclude: "../{DependencyInjection,Entity,Migrations,Tests,config,Kernel.php,Installer/install.php}"

@@ -5,7 +5,7 @@ services:
 
   Pushword\Version\:
     resource: "../*"
-    exclude: "../{DependencyInjection,Entity,Migrations,Tests,Kernel.php}"
+    exclude: "../{DependencyInjection,Entity,Migrations,Tests,Kernel.php,Installer/install.php}"
 
   Pushword\Version\Versionner:
     alias: pushword.version.versionner

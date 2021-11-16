@@ -11,7 +11,7 @@ services:
 
   Pushword\PageScanner\:
     resource: "../*"
-    exclude: "../{DependencyInjection,Entity,Migrations,Tests,config,Kernel.php}"
+    exclude: "../{DependencyInjection,Entity,Migrations,Tests,config,Kernel.php,Installer/install.php}"
 
   Pushword\PageScanner\Controller\:
     resource: "../Controller/"

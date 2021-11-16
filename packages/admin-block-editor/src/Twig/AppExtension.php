@@ -30,11 +30,6 @@ class AppExtension extends AbstractExtension
     {
         $blockData = (array) $blockData;
 
-        // Avoid BC break... editorjs-header-with-anchor
-        if (isset($blockData['anchor']) && '' !== $blockData['anchor'] && (! isset($blockData['tunes']['anchor']) || '' === $blockData['tunes']['anchor'])) {
-            $blockData['tunes']['anchor'] = $blockData['anchor'];
-        }
-
         if (isset($blockData['tunes']) && isset($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) {
             $attributes['id'] = (isset($attributes['id']) ? $attributes['id'] : '').' '.$blockData['tunes']['anchor'];
         }

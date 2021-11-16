@@ -10,7 +10,6 @@ module.exports = {
         Hyperlink: "./src/Hyperlink/Hyperlink.js",
         Raw: "./src/Raw/Raw.js",
         NestedList: "./src/NestedList/NestedList.js",
-        Header: "./src/Header/Header.js",
         Anchor: "./src/Anchor/Anchor.js",
     },
     module: {

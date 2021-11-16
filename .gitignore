@@ -16,6 +16,7 @@ node_modules/
 coverage
 coverage.xml
 /debug
+/debug-container
 /drivers
 .vs-code
 

@@ -1,0 +1,76 @@
+<?php
+
+namespace Pushword\AdminBlockEditor\Installer;
+
+use Doctrine\ORM\EntityManagerInterface;
+use LogicException;
+use Pushword\Core\Entity\PageInterface;
+use Pushword\Core\Repository\Repository;
+use Pushword\Installer\PostAutoloadDump;
+
+/**
+ * Executed via Pushword\Installer\PostAutoloadDump::postAutoloadDump.
+ */
+class Update975
+{
+    // TODO find a way to use autowiring
+    /** @var class-string<PageInterface> */
+    public string $pageClass;
+
+    public EntityManagerInterface $entityManager;
+
+    public function run(): void
+    {
+        $this->moveBlockDataAnchorToBlockTunesAnchor();
+    }
+
+    private function moveBlockDataAnchorToBlockTunesAnchor(): void
+    {
+        /** @var class-string<PageInterface> $pageClass */
+        $pageClass = PostAutoloadDump::getKernel()->getContainer()->getParameter('pw.entity_page');
+        /** @var EntityManagerInterface $entityManager */
+        $entityManager = PostAutoloadDump::getKernel()->getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $pageRepo = Repository::getPageRepository($entityManager, $pageClass);
+
+        $pages = $pageRepo->findAll();
+
+        foreach ($pages as $page) {
+            if (($jsonContent = json_decode($page->getMainContent(), true)) !== null
+        && \is_array($jsonContent) && isset($jsonContent['blocks'])) {
+                $contentHasChanged = false;
+                foreach ($jsonContent['blocks'] as $blockKey => $block) {
+                    if (! isset($block['data']) || ! isset($block['data']['anchor'])) {
+                        continue;
+                    }
+                    $jsonContent['blocks'][$blockKey]['tunes']['anchor'] = $block['data']['anchor'];
+                    unset($jsonContent['blocks'][$blockKey]['data']['anchor']);
+                    $contentHasChanged = true;
+                }
+
+                if (true === $contentHasChanged) {
+                    if (($content = json_encode($jsonContent)) === false) {
+                        throw new LogicException((string) $page->getId());
+                    }
+                    $page->setMainContent($content);
+                }
+            }
+        }
+
+        $entityManager->flush();
+    }
+}
+
+/*
+if (! class_exists(PostAutoloadDump::class)) { // we are debugging from monorepo
+    require_once 'packages/installer/src/PostInstall.php';
+    require_once 'packages/installer/src/PostAutoloadDump.php';
+}
+
+ $kernel = PostAutoloadDump::getKernel();
+ /** @var class-string<PageInterface> $pageClass *
+ $pageClass = $kernel->getContainer()->getParameter('pw.entity_page');
+ $entityManager = $kernel->getContainer()->get('doctrine.orm.default_entity_manager');
+
+
+*/

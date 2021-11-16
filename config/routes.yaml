@@ -1,0 +1,6 @@
+version:
+    resource: '@PushwordVersionBundle/VersionRoutes.yaml'
+conversation:
+    resource: '@PushwordConversationBundle/Resources/config/routes/conversation.yaml'
+page_scanner:
+    resource: '@PushwordPageScannerBundle/PageScannerRoutes.yaml'
