@@ -17,6 +17,8 @@ parameters:
         - packages/version/src
         - packages/admin-block-editor/src
         - packages/advanced-main-image/src
+	excludePaths:
+		- packages/*/src/Installer/install.php
     symfony:
         container_xml_path: /tmp/com.github.pushword.pushword/tests/var/dev/cache/App_KernelDevDebugContainer.xml
         console_application_loader: packages/skeleton/bin/console-test.php
