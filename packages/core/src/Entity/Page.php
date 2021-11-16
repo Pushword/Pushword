@@ -47,9 +47,11 @@ class Page implements PageInterface
     use PageTwitterCardTrait;
     use TimestampableTrait;
 
-    public function __construct()
+    public function __construct(bool $initDateTimeProperties = true)
     {
-        $this->__constructTimestampable();
-        $this->publishedAt = new \DateTime();
+        if ($initDateTimeProperties) {
+            $this->initTimestampableProperties();
+            $this->publishedAt = new \DateTime();
+        }
     }
 }

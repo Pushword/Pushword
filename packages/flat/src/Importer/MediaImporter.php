@@ -42,19 +42,19 @@ class MediaImporter extends AbstractImporter
         return $this;
     }
 
-    public function import(string $filePath, DateTimeInterface $dateTime): void
+    public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
     {
         if (! $this->isImage($filePath)) {
             if (str_ends_with($filePath, '.json') && file_exists(\Safe\substr($filePath, 0, -5))) { // data file
                 return;
             }
 
-            $this->importMedia($filePath, $dateTime);
+            $this->importMedia($filePath, $lastEditDateTime);
 
             return;
         }
 
-        $this->importImage($filePath, $dateTime);
+        $this->importImage($filePath, $lastEditDateTime);
     }
 
     private function isImage(string $filePath): bool

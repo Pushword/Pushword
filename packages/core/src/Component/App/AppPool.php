@@ -87,7 +87,7 @@ final class AppPool
         return $this->currentPage;
     }
 
-    public function getCurrentPageSafely(): PageInterface
+    public function safegetCurrentPage(): PageInterface
     {
         if (null === $this->currentPage) {
             throw new LogicException();

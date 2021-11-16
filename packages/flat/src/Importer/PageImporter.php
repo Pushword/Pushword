@@ -69,7 +69,7 @@ class PageImporter extends AbstractImporter
         return $this->getContentDirFinder()->get($host);
     }
 
-    public function import(string $filePath, DateTimeInterface $dateTime): void
+    public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
     {
         if (! str_starts_with((string) finfo_file(\Safe\finfo_open(\FILEINFO_MIME_TYPE), $filePath), 'text/')) {
             return;
@@ -84,7 +84,7 @@ class PageImporter extends AbstractImporter
 
         $slug = $document->matter('slug') ?? $this->filePathToSlug($filePath);
 
-        $this->editPage($slug, $document->matter(), $document->body(), $dateTime);
+        $this->editPage($slug, $document->matter(), $document->body(), $lastEditDateTime);
     }
 
     private function filePathToSlug(string $filePath): string
@@ -107,7 +107,8 @@ class PageImporter extends AbstractImporter
 
         if (null === $page) {
             $pageClass = $this->entityClass;
-            $page = new $pageClass();
+            $initDateTimeProperties = false;
+            $page = new $pageClass($initDateTimeProperties);
             $this->newPage = true;
         }
 
@@ -115,14 +116,14 @@ class PageImporter extends AbstractImporter
     }
 
     /**
-     * @param \DateTime|\DateTimeImmutable $dateTime
+     * @param \DateTime|\DateTimeImmutable $lastEditDateTime
      * @param mixed[]                      $data
      */
-    private function editPage(string $slug, array $data, string $content, DateTimeInterface $dateTime): void
+    private function editPage(string $slug, array $data, string $content, DateTimeInterface $lastEditDateTime): void
     {
         $page = $this->getPageFromSlug($slug);
 
-        if (! $this->newPage && $page->getUpdatedAt() >= $dateTime) {
+        if (! $this->newPage && $page->getUpdatedAt() >= $lastEditDateTime) {
             return; // no update needed
         }
 
@@ -161,7 +162,23 @@ class PageImporter extends AbstractImporter
         $page->setMainContent($content);
 
         if ($this->newPage) {
+            $this->initDateTimeProperties($page, $lastEditDateTime);
             $this->em->persist($page);
+        }
+    }
+
+    private function initDateTimeProperties(PageInterface $page, DateTimeInterface $lastEditDateTime): void
+    {
+        if (null === $page->getPublishedAt(false)) {
+            $page->setPublishedAt($lastEditDateTime);
+        }
+
+        if (null === $page->getCreatedAt(false)) {
+            $page->setCreatedAt($lastEditDateTime);
+        }
+
+        if (null === $page->getUpdatedAt(false)) {
+            $page->setUpdatedAt($lastEditDateTime);
         }
     }
 

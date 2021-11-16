@@ -35,7 +35,7 @@ abstract class AbstractImporter
         $this->em = $entityManager;
     }
 
-    abstract public function import(string $filePath, DateTimeInterface $dateTime): void;
+    abstract public function import(string $filePath, DateTimeInterface $lastEditDateTime): void;
 
     public function finishImport(): void
     {

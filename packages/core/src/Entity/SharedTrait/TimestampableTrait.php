@@ -3,67 +3,72 @@
 namespace Pushword\Core\Entity\SharedTrait;
 
 use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 trait TimestampableTrait
 {
     /**
-     * @var \DateTimeInterface
      * @ORM\Column(type="datetime")
      */
-    protected $createdAt;
+    protected ?DateTimeInterface $createdAt = null; // @phpstan-ignore-line
 
     /**
-     * @var \DateTimeInterface
      * @ORM\Column(type="datetime")
      */
-    protected $updatedAt;
+    protected ?DateTimeInterface $updatedAt = null; // @phpstan-ignore-line
 
-    /**
-     * Sets createdAt.
-     *
-     * @return $this
-     */
-    public function setCreatedAt(\DateTimeInterface $createdAt)
+    public function setCreatedAt(DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    /**
-     * Returns createdAt.
-     *
-     * @return \DateTimeInterface
-     */
-    public function getCreatedAt()
+    public function getCreatedAt(bool $safe = true): ?DateTimeInterface
     {
+        if ($safe) {
+            return $this->safegetCreatedAt();
+        }
+
         return $this->createdAt;
     }
 
-    /**
-     * Sets updatedAt.
-     *
-     * @return $this
-     */
-    public function setUpdatedAt(\DateTimeInterface $updatedAt)
+    public function safegetCreatedAt(): DateTimeInterface
+    {
+        if (null === $this->createdAt) {
+            return new \DateTime();
+        }
+
+        return $this->createdAt;
+    }
+
+    public function setUpdatedAt(DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
 
         return $this;
     }
 
-    /**
-     * Returns updatedAt.
-     *
-     * @return \DateTimeInterface
-     */
-    public function getUpdatedAt()
+    public function safegetUpdatedAt(): DateTimeInterface
     {
+        if (null === $this->updatedAt) {
+            return new \DateTime();
+        }
+
         return $this->updatedAt;
     }
 
-    public function __constructTimestampable(): void
+    public function getUpdatedAt(bool $safe = true): ?DateTimeInterface
+    {
+        if ($safe) {
+            return $this->safegetUpdatedAt();
+        }
+
+        return $this->updatedAt;
+    }
+
+    public function initTimestampableProperties(): void
     {
         $this->updatedAt = null !== $this->updatedAt ? $this->updatedAt : new \DateTime();
         $this->createdAt = null !== $this->createdAt ? $this->createdAt : new \DateTime();

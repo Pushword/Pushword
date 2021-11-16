@@ -10,22 +10,22 @@
             type="application/rss+xml"
         />
                                                             <item>
-                    <title><![CDATA[Upgrade Guide]]></title>
-                    <link>https://pushword.piedweb.com/upgrade</link>
-                    <guid>https://pushword.piedweb.com/upgrade</guid>
-                    <pubDate>Fri, 12 Nov 2021 20:47:15 +0100</pubDate>
-                </item>
-                                                                <item>
                     <title><![CDATA[License and contributors]]></title>
                     <link>https://pushword.piedweb.com/license</link>
                     <guid>https://pushword.piedweb.com/license</guid>
-                    <pubDate>Fri, 12 Nov 2021 20:47:15 +0100</pubDate>
+                    <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
                 </item>
                                                                 <item>
                     <title><![CDATA[Configuration]]></title>
                     <link>https://pushword.piedweb.com/configuration</link>
                     <guid>https://pushword.piedweb.com/configuration</guid>
-                    <pubDate>Fri, 12 Nov 2021 20:47:15 +0100</pubDate>
+                    <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade Guide]]></title>
+                    <link>https://pushword.piedweb.com/upgrade</link>
+                    <guid>https://pushword.piedweb.com/upgrade</guid>
+                    <pubDate>Tue, 04 May 2021 09:48:09 +0200</pubDate>
                 </item>
                             
     </channel>

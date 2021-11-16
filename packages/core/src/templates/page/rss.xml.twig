@@ -19,7 +19,7 @@
                     <title><![CDATA[{{ pw(page).h1|striptags|html_entity_decode }}]]></title>
                     <link>{{ page(page, true) }}</link>
                     <guid>{{ page(page, true) }}</guid>
-                    <pubDate>{{ page.createdAt|date('D, d M Y H:i:s O') }}</pubDate>
+                    <pubDate>{{ page.publishedAt|date('D, d M Y H:i:s O') }}</pubDate>
                 </item>
             {% endif %}
         {% endblock %}

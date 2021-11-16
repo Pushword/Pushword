@@ -69,7 +69,7 @@ final class Router implements RouterInterface
         if (! $canonical) {
             if ($this->mayUseCustomPath()) {
                 return $this->router->generate(self::CUSTOM_HOST_PATH, [
-                    'host' => $this->apps->getCurrentPageSafely()->getHost(),
+                    'host' => $this->apps->safegetCurrentPage()->getHost(),
                     'slug' => $slug,
                 ]);
             } elseif (null !== $page && ! $this->apps->sameHost($page->getHost())) { // maybe we force canonical - useful for views

@@ -27,9 +27,9 @@ trait PageTrait
     protected string $mainContent = '';
 
     /**
-     * @ORM\Column(type="datetime", options={"default": "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime") //, options={"default": "CURRENT_TIMESTAMP"}
      */
-    protected DateTimeInterface $publishedAt;
+    protected ?DateTimeInterface $publishedAt = null;
 
     public function __toString(): string
     {
@@ -92,8 +92,12 @@ trait PageTrait
     /**
      * Get the value of publishedAt.
      */
-    public function getPublishedAt(): DateTimeInterface
+    public function getPublishedAt(bool $safe = true): ?DateTimeInterface
     {
+        if ($safe && null === $this->publishedAt) {
+            return new DateTime();
+        }
+
         return $this->publishedAt;
     }
 

@@ -23,7 +23,7 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
 
     public function setMainContent(?string $mainContent): self;
 
-    public function getPublishedAt(): DateTimeInterface;
+    public function getPublishedAt(bool $safe = true): ?DateTimeInterface;
 
     public function setPublishedAt(DateTimeInterface $publishedAt): self;
 
@@ -49,8 +49,6 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
     public function getRedirection(): string;
 
     public function getRedirectionCode(): int;
-
-    public function getCreatedAt();
 
     public function getTemplate(): ?string;
 

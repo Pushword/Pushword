@@ -101,9 +101,9 @@ class FlatFileImporter
 
     private function importFile(string $filePath, string $type): void
     {
-        $dateTime = (new DateTime())->setTimestamp(\Safe\filemtime($filePath));
+        $lastEditDateTime = (new DateTime())->setTimestamp(\Safe\filemtime($filePath));
 
-        $this->getImporter($type)->import($filePath, $dateTime);
+        $this->getImporter($type)->import($filePath, $lastEditDateTime);
     }
 
     /**

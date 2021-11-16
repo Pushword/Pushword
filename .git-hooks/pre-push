@@ -4,7 +4,7 @@ GIT_COMMAND=$(ps -o args= $PPID)
 
 if [ "$GIT_COMMAND" = 'git push --tags' ]
 then
-	composer generate-docs
+	composer docs
 	git add .
 	git commit -m '[Docs] Update pushword.piedweb.com'
 fi

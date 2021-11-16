@@ -35,7 +35,7 @@ class PageEditMessageField extends AbstractField
 
         return null !== $this->getSubject()->getId() ?
             $this->admin->getTranslator()->trans($this->admin->getMessagePrefix().'.editMessage.help'.(class_exists(PushwordVersionBundle::class) ? 'Versionned' : ''), [
-                '%lastEditDatetime%' => $this->getSubject()->getUpdatedAt()->format($this->admin->getTranslator()->trans('datetimeMediumFormat')),
+                '%lastEditDatetime%' => $this->getSubject()->safegetUpdatedAt()->format($this->admin->getTranslator()->trans('datetimeMediumFormat')),
                 '%lastEditMessage%' => '' !== $editMessage ? '«&nbsp;'.$editMessage.'&nbsp;»' : '-',
                 '%seeVersionLink%' => class_exists(PushwordVersionBundle::class)
                     ? $this->admin->getRouter()->generate('pushword_version_list', ['id' => $this->getSubject()->getId()])
