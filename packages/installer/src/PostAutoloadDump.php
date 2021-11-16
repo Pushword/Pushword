@@ -24,6 +24,8 @@ class PostAutoloadDump extends PostInstall
             return;
         }
 
+        self::getKernel();
+
         $scriptsToRun = self::scanDir('vendor/pushword/'.$package.'/src/Installer');
         foreach ($scriptsToRun as $i => $script) {
             if (! file_exists($isInstalledFile = 'var/installer/'.md5($package.$script))
