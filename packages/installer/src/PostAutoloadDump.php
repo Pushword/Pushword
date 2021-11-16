@@ -27,7 +27,7 @@ class PostAutoloadDump extends PostInstall
         $scriptsToRun = self::scanDir('vendor/pushword/'.$package.'/src/Installer');
         foreach ($scriptsToRun as $i => $script) {
             if (! file_exists($isInstalledFile = 'var/installer/'.md5($package.$script))
-                && ! str_ends_with($script, '/install.php')
+                && 0 !== substr_compare($script, ($needle = '/install.php'), -\strlen($needle)
             ) {
                 echo '~ Executing '.$package.' update ('.$i++.').'.\chr(10);
                 $className = 'Pushword\\'.$package.'\\Installer\\'.basename($script, '.php');

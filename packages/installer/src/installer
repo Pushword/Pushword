@@ -15,8 +15,8 @@ composer create-project symfony/skeleton ${folder}  ^5.2 -q
 cd ${folder}
 
 composer require pushword/installer -q
-sed -i -e 's/"scripts": {/"scripts": {\n        "post-package-install": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::postPackageInstall"\n        \],/' composer.json
-sed -i -e 's/"post-update-cmd": \[/"post-update-cmd": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::beforeCacheClear",/' composer.json
+sed -i -e 's/"scripts": {/"scripts": {\n        "post-package-install": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::run"\n        \],/' composer.json
+sed -i -e 's/"post-update-cmd": \[/"post-update-cmd": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::run",/' composer.json
 
 # Enable flex recipes from contrib repo
 composer config extra.symfony.allow-contrib true
@@ -77,8 +77,6 @@ rm package.json
 rm -rf assets
 cp -r vendor/pushword/skeleton/assets assets
 
-sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::postPackageInstall"/d' composer.json
-sed -i -e '/"Pushword\\\\\Installer\\\\PostInstall::beforeCacheClear",/d' composer.json
 composer remove pushword/installer pushword/skeleton -q
 
 # Launch Server and Play
