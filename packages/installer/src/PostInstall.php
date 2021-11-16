@@ -13,24 +13,30 @@ if (! class_exists(Filesystem::class)) {
 
 class PostInstall
 {
-    public static function postUpdateCommand(): void //Event $event
+    public static function run(): void //Event $event
     {
-        if (($dir = scandir('vendor/pushword')) === false) {
-            throw new LogicException();
-        }
-        $packages = array_filter($dir, function ($package) { return ! \in_array($package, ['.', '..'], true); });
+        $packages = self::scanDir('vendor/pushword');
 
         foreach ($packages as $package) {
-            if (file_exists('vendor/pushword/'.$package) && ! file_exists('var/installer/'.md5($package))) {
-                $installer = 'vendor/pushword/'.$package.'/install.php';
-                if (file_exists($installer)) {
-                    echo '~ Executing '.$package.' post update command install action.'.\chr(10);
-                    include $installer;
-                }
+            if (! file_exists('var/installer/'.md5($package)) && file_exists($installer = 'vendor/pushword/'.$package.'/src/Installer/install.php')) {
+                echo '~ Executing '.$package.' post update command install action.'.\chr(10);
+                include $installer;
 
                 self::dumpFile('var/installer/'.md5($package), 'done');
             }
         }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function scanDir(string $dirPath): array
+    {
+        if (($dir = scandir($dirPath)) === false) {
+            throw new LogicException();
+        }
+
+        return array_filter($dir, function ($path) { return ! \in_array($path, ['.', '..'], true); });
     }
 
     public static function mirror(string $source, string $dest): void
@@ -38,7 +44,10 @@ class PostInstall
         (new Filesystem())->mirror($source, $dest);
     }
 
-    public static function remove(string $path): void
+    /**
+     * @param string|string[] $path
+     */
+    public static function remove($path): void
     {
         (new Filesystem())->remove($path);
     }

@@ -36,6 +36,7 @@ var editorjsConfig = {
             name: "header",
             className: "Header",
             inlineToolbar: ['italic', 'inline-code', 'marker', 'link'],
+            tunes: ['anchor'],
             config: {
                 placeholder: "...",
                 levels: [2, 3, 4],
@@ -46,10 +47,12 @@ var editorjsConfig = {
             name: "list",
             className: "List",
             inlineToolbar: true,
+            tunes: ['anchor'],
         },
         attaches: {
             name: "attaches",
             className: "Attaches",
+            tunes: ['anchor'],
             config: {
                 onSelectFile: editorJsHelper.onSelectFile,
                 onUploadFile: editorJsHelper.onUploadFile,
@@ -58,6 +61,7 @@ var editorjsConfig = {
         image: {
             name: "image",
             className: "Image",
+            tunes: ['anchor'],
             config: {
                 endpoints: {
                     byFile: "/admin/media/block",
@@ -70,6 +74,7 @@ var editorjsConfig = {
         gallery: {
             name: "gallery",
             className: "Gallery",
+            tunes: ['anchor'],
             config: {
                 endpoints: {
                     byFile: "/admin/media/block",
@@ -82,6 +87,7 @@ var editorjsConfig = {
         embed: {
             name: "embed",
             className: "Embed",
+            tunes: ['anchor'],
             config: {
                 onSelectFile: editorJsHelper.onSelectImage,
                 onUploadFile: editorJsHelper.onUploadImage,
@@ -102,12 +108,34 @@ var editorjsConfig = {
         quote: {
             name: "quote",
             className: "Quote",
+            tunes: ['anchor'],
             config: {
                 inlineToolbar: true,
                 quotePlaceholder: "...",
                 captionPlaceholder: "...",
             },
         },
+        paragraph: {
+            name: "paragraph",
+            className: "Paragraph",
+            tunes: ['anchor'],
+        },
+        table: {
+            name: "table",
+            className: "Table",
+            tunes: ['anchor'],
+        },
+        pages_list: {
+            name: "pages_list",
+            className: "PagesList",
+            tunes: ['anchor'],
+            config: {
+                preview: "/admin/page/block/{{ attr.page_id }}",
+            }
+        },
+
+        /** Inline Tool */
+
         "inline-code": {
             name: "inline-code",
             className: "InlineCode",
@@ -135,28 +163,15 @@ var editorjsConfig = {
             name: "underline",
             className: "Underline",
         },
-        paragraph: {
-            name: "paragraph",
-            className: "Paragraph",
-        },
-        table: {
-            name: "table",
-            className: "Table",
-        },
-        pages_list: {
-            name: "pages_list",
-            className: "PagesList",
-            config: {
-                preview: "/admin/page/block/{{ attr.page_id }}",
-            }
-        },
+
+        /** Tune */
         anchor: {
             name: "anchor",
             className: "Anchor",
         }
         {% block editorjs_block_to_add_new_plugin %}{% endblock %}
     },
-    tunes: ['anchor'],
+
     data: {{ (value ? value : "{}")|raw }},
     logLevel: "ERROR",
     holder: "{{ editor_id }}",

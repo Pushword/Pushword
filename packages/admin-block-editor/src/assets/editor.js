@@ -20,7 +20,6 @@ import Image from "@pushword/editorjs-tools/dist/Image.js"; // "@editorjs/image"
 import Embed from "@pushword/editorjs-tools/dist/Embed.js"; //"@editorjs/embed";
 import PagesList from "@pushword/editorjs-tools/dist/PagesList.js";
 import Gallery from "@pushword/editorjs-tools/dist/Gallery.js"; //"@vietlongn/editorjs-carousel";
-import NestedList from "@pushword/editorjs-tools/src/NestedList/NestedList";
 import Anchor from "@pushword/editorjs-tools/dist/Anchor.js";
 
 /** Was initially design to permit multiple editor.js in one page */
