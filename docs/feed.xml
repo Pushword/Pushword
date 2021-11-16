@@ -10,6 +10,12 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[Upgrade Guide]]></title>
+                    <link>https://pushword.piedweb.com/upgrade</link>
+                    <guid>https://pushword.piedweb.com/upgrade</guid>
+                    <pubDate>Wed, 17 Nov 2021 00:12:05 +0100</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Build modern Content First websites rapidly  Manage and maintain it as quickly]]></title>
                     <link>https://pushword.piedweb.com/</link>
                     <guid>https://pushword.piedweb.com/</guid>
@@ -26,12 +32,6 @@
                     <link>https://pushword.piedweb.com/extension/admin-block-editor</link>
                     <guid>https://pushword.piedweb.com/extension/admin-block-editor</guid>
                     <pubDate>Mon, 01 Nov 2021 15:42:23 +0100</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Upgrade Guide]]></title>
-                    <link>https://pushword.piedweb.com/upgrade</link>
-                    <guid>https://pushword.piedweb.com/upgrade</guid>
-                    <pubDate>Tue, 04 May 2021 09:48:09 +0200</pubDate>
                 </item>
                                                                 <item>
                     <title><![CDATA[The Code Architecture]]></title>
