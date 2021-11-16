@@ -30,7 +30,7 @@ class PostAutoloadDump extends PostInstall
                 && ! str_ends_with($script, '/install.php')
             ) {
                 echo '~ Executing '.$package.' update ('.$i++.').'.\chr(10);
-                $classname = 'Pushword\\'.$package.'\\Installer\\'.basename($script, '.php');
+                $className = 'Pushword\\'.$package.'\\Installer\\'.basename($script, '.php');
                 (new $className())->run(); // @phpstan-ignore-line
 
                 // TODO find a way to use autowiring
@@ -47,8 +47,6 @@ class PostAutoloadDump extends PostInstall
         if (null !== self::$kernel) {
             return self::$kernel;
         }
-
-        $file = 'vendor/autoload.php';
 
         if (! class_exists(Kernel::class)) {
             include 'vendor/autoload.php';
