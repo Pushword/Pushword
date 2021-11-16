@@ -37,7 +37,7 @@ class Update795
 
         foreach ($pages as $page) {
             if (($jsonContent = json_decode($page->getMainContent(), true)) !== null
-        && \is_array($jsonContent) && isset($jsonContent['blocks'])) {
+                && \is_array($jsonContent) && isset($jsonContent['blocks'])) {
                 $contentHasChanged = false;
                 foreach ($jsonContent['blocks'] as $blockKey => $block) {
                     if (! isset($block['data']) || ! isset($block['data']['anchor'])) {
@@ -63,16 +63,12 @@ class Update795
     }
 }
 
-/*
-if (! class_exists(PostAutoloadDump::class)) { // we are debugging from monorepo
-    require_once 'packages/installer/src/PostInstall.php';
-    require_once 'packages/installer/src/PostAutoloadDump.php';
+/***/
+if (! class_exists(PostAutoloadDump::class)) {
+    require_once 'vendor/autoload.php';
 }
 
- $kernel = PostAutoloadDump::getKernel();
- /** @var class-string<PageInterface> $pageClass *
- $pageClass = $kernel->getContainer()->getParameter('pw.entity_page');
- $entityManager = $kernel->getContainer()->get('doctrine.orm.default_entity_manager');
+(new Update795())->run();
 
 
-*/
+/**/

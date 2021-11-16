@@ -11,6 +11,20 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 0.0.800
+
+-   Update doctrine
+
+```
+php bin/console make:migration && php bin/console doctrine:migrations:migrate
+```
+
+-   Update main content's block
+
+```
+php vendor/pushword/admin-block-editor/src/Installer/Update795.php~
+```
+
 ## To 0.0.728
 
 -   Update stylesheets
