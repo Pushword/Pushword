@@ -6,5 +6,5 @@ if [ "$GIT_COMMAND" = 'git push --tags' ]
 then
 	composer docs
 	git add .
-	git commit -m '[Docs] Update pushword.piedweb.com'
+	git commit -m '[Docs] Update pushword.piedweb.com' || true
 fi
