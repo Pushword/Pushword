@@ -1,4 +1,4 @@
-<blockquote{% if data.alignment is defined and data.alignment %} class="{{ 'text-' ~ data.alignment }}"{% endif %}>
+<blockquote{{ blockWrapperAttr(data, data.alignment is defined and data.alignment and data.alignment != 'left' ? {class: 'text-' ~ data.alignment} : {}) }}>
 {# for tawildind compression : text-right text-left #}
     <p>{{ data.text|raw }}</p>
     <cite>{{ data.caption|raw }}</cite>

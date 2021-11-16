@@ -24,7 +24,6 @@
         "core-js": "^3.8.1",
         "editorjs-button": "^1.0.3",
         "editorjs-drag-drop": "^0.2.2",
-        "editorjs-header-with-anchor": "^2.6.0",
         "editorjs-hyperlink": "^1.0.5",
         "editorjs-inline-tool": "^0.4.0",
         "editorjs-paragraph-with-alignment": "^3.0.0",

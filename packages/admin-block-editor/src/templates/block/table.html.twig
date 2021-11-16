@@ -1,4 +1,4 @@
-<table class="min-w-full divide-y divide-gray-200">
+<table{{ blockWrapperAttr(data, {class: 'min-w-full divide-y divide-gray-200'}) }}>
     {% for row in data.content %}
         <tr>
             {% for cell in row %}

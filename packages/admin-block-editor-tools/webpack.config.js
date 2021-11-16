@@ -2,7 +2,6 @@ const path = require("path");
 
 module.exports = {
     entry: {
-        Button: "./src/Button/Button.js",
         Image: "./src/Image/Image.js",
         Attaches: "./src/Attaches/Attaches.js",
         Gallery: "./src/Gallery/Gallery.js",
@@ -12,6 +11,7 @@ module.exports = {
         Raw: "./src/Raw/Raw.js",
         NestedList: "./src/NestedList/NestedList.js",
         Header: "./src/Header/Header.js",
+        Anchor: "./src/Anchor/Anchor.js",
     },
     module: {
         rules: [

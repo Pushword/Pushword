@@ -32,7 +32,6 @@ var editorjsConfig = {
     initialBlock: "paragraph",
     placeholder: "...",
     tools: {
-        {% block editorjs_tools %}
         header: {
             name: "header",
             className: "Header",
@@ -151,11 +150,13 @@ var editorjsConfig = {
                 preview: "/admin/page/block/{{ attr.page_id }}",
             }
         },
-        //button: { name: "button", className: "Button", },
-        // "inline-style": { name: "inline-style", className: "StyleInlineTool", },
-        {% endblock %}
+        anchor: {
+            name: "anchor",
+            className: "Anchor",
+        }
         {% block editorjs_block_to_add_new_plugin %}{% endblock %}
     },
+    tunes: ['anchor'],
     data: {{ (value ? value : "{}")|raw }},
     logLevel: "ERROR",
     holder: "{{ editor_id }}",

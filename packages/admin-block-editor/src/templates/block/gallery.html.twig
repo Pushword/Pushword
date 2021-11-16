@@ -5,5 +5,11 @@
 {% endfor %}
 
 {% apply unprose %}
+
+{% if (needBlockWrapper(data)) %}<div{{ blockWrapperAttr(data) }}>{% endif %}
+
 {% include view('/component/images_gallery.html.twig') with {'images': images} only %}
+
+{% if (needBlockWrapper(data)) %}</div>{% endif %}
+
 {% endapply %}

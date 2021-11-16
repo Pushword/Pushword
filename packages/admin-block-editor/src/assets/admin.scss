@@ -16,4 +16,25 @@
 a[rel="encrypt"]:not(.link-btn) {
     color: #059669;
 }
+
+@media screen and (min-width: 980px) {
+    .ce-settings {
+        right: unset;
+        min-width: calc(100vh / 12 * 3);
+    }
+    .ce-toolbar__settings-btn {
+        width: 39px;
+        height: 39px;
+        margin-top: -4px;
+        box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px,
+            rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+    }
+    .ce-toolbar__settings-btn svg {
+        transform: scale(1.2);
+    }
+}
+.ce-settings__plugin-zone > div + div,
+.ce-settings__default-zone {
+    margin-top: 10px;
+}
 /* purgecss end ignore */

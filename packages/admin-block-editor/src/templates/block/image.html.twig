@@ -1,3 +1,5 @@
+{% if (needBlockWrapper(data)) %}<div{{ blockWrapperAttr(data) }}>{% endif %}
+
 {% if data.stretched %}<div class="w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw]">{% endif %}
 {% if data.withBackground %}<div class="px-12 py-1 text-center bg-gray-200 rounded">{% endif %}
 
@@ -9,3 +11,5 @@
 
 {% if data.withBackground %}</div>{% endif %}
 {% if data.stretched %}</div>{% endif %}
+
+{% if (needBlockWrapper(data)) %}</div>{% endif %}

@@ -1,18 +1,26 @@
-import HeaderTool from "editorjs-header-with-anchor/src/index.js";
-//import css from "@editorjs/raw/src/index.css";
+import HeaderTool from "@editorjs/header/src/index.js";
 
+// This class permit avoid BC break from previous 0.0.974 using  editorjs-header-with-anchor
 export default class Header extends HeaderTool {
-    /**
-     * Allow Header to be converted to/from other blocks
-     */
-    static get conversionConfig() {
-        return {
-            export: "text", // use 'text' property for other blocks
-            import: "text", // fill 'text' property from other block's export string
-        };
+    normalizeData(data) {
+        const newData = {};
+
+        if (typeof data !== "object") {
+            data = {};
+        }
+
+        newData.text = data.text || "";
+        newData.level = parseInt(data.level) || this.defaultLevel.number;
+        newData.anchor = data.anchor || "";
+
+        return newData;
     }
 
-    static get isReadOnlySupported() {
-        return true;
+    save(toolsContent) {
+        return {
+            text: toolsContent.innerHTML,
+            level: this.currentLevel.number,
+            anchor: this.data.anchor,
+        };
     }
 }

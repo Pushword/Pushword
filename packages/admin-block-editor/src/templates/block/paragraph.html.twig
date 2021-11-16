@@ -1,2 +1,2 @@
 
-<p{% if data.alignment is defined and data.alignment and data.alignment != 'left' %} class="{{ 'text-' ~ data.alignment }}"{% endif %}>{{ data.text|raw }}</p>
+<p {{ blockWrapperAttr(data, data.alignment is defined and data.alignment and data.alignment != 'left' ? {class: 'text-' ~ data.alignment} : {}) }}>{{ data.text|raw }}</p>

@@ -28,7 +28,6 @@
         "babel-loader": "^8.1.0",
         "cross-env": "^7.0.3",
         "css-loader": "^3.5.3",
-        "editorjs-header-with-anchor": "https://github.com/Aleksst95/header-with-anchor.git#79e9b77097cdc12e6a248417ba9d322da529df62",
         "editorjs-hyperlink": "https://github.com/trinhtam/editorjs-hyperlink.git#4ada6b531a5478b426f062f576aaab9e3b8042b9",
         "postcss-loader": "^3.0.0",
         "postcss-nested": "^4.1.0",
@@ -44,7 +43,9 @@
         "url": "https://github.com/pushword/pushword/issues"
     },
     "homepage": "https://puswhord.piedweb.com",
-    "dependencies": {},
+    "dependencies": {
+        "@editorjs/header": "https://github.com/editor-js/header"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/pushword/pushword.git"

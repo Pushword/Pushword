@@ -1,3 +1,3 @@
-<h{{ data.level }}{{ data.anchor is defined and data.anchor ? (' id="' ~ data.anchor ~ '"')|raw : '' }}>
+<h{{ data.level }}{{ blockWrapperAttr(data) }}>
 {{ data.text|raw }}
 </h{{ data.level }}>

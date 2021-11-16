@@ -9,7 +9,6 @@ parent: contribute
 
 -   When simplify 10 will be stable, add phpstan-twig-rules
 -   // TODO check a new blank installation
--   **Admin** Fix collapse right bar not working (not storing previous session)
 -   **Admin Block Editor Tools** : Image > Add link + Alt and redesign Legend
 -   **Admin Block Editor** : document block and add Help link when advanced knowledge is needed
 -   **Admin Block editor** : édition avancée (template notamment dans pages, prose/unprise)
@@ -25,8 +24,6 @@ parent: contribute
 
 -   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
 -   **Admin Block Editor Tools** : prepare translating and transalte
--   **Page Scanner** : Test is too long... (idem actualiser...)
--   **Admin** Ajouter l'état de visibilité (publié/hors ligne (publication automatique))
 
 ## Feature
 

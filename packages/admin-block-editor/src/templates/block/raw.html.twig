@@ -1,1 +1,5 @@
+{% if (needBlockWrapper(data)) %}<div{{ blockWrapperAttr(data) }}>{% endif %}
+
 {{ data.html|raw }}
+
+{% if (needBlockWrapper(data)) %}</div>{% endif %}

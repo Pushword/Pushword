@@ -1,7 +1,11 @@
 {% apply unprose %}
-{% if data.stretched is defined and data.stretched %}<div class="w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw]">{% endif %}
 
-{{ video(data.serviceUrl, data.image.url, data.alternativeText) }}
+{% if (needBlockWrapper(data) or (data.stretched is defined and data.stretched)) %}<div{{ blockWrapperAttr(data,
+    data.stretched is defined and data.stretched
+        ? {'class':'w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw]'} : {}) }}>{% endif %}
 
-{% if data.stretched is defined and data.stretched %}</div>{% endif %}
+    {{ video(data.serviceUrl, data.image.url, data.alternativeText) }}
+
+{% if (needBlockWrapper(data) or (data.stretched is defined and data.stretched)) %}</div>{% endif %}
+
 {% endapply %}
