@@ -52,11 +52,11 @@
             "@auto-scripts"
         ],
         "post-update-cmd": [
-            "Pushword\\Installer\\PostInstall::run",
+            "Pushword\\Installer\\PostInstall::runPostUpdate",
             "@auto-scripts"
         ],
         "post-autoload-dump": [
-            "Pushword\\Installer\\PostAutoloadDump::run"
+            "Pushword\\Installer\\PostAutoloadDump::runPostAutoload"
         ]
     },
     "conflict": {

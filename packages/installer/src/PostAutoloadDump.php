@@ -3,14 +3,18 @@
 namespace Pushword\Installer;
 
 use App\Kernel;
+use Composer\Script\Event;
 use Symfony\Component\Dotenv\Dotenv;
 
 class PostAutoloadDump extends PostInstall
 {
     private static ?Kernel $kernel = null;
 
-    public static function run(): void
+    public static function runPostAutoload(Event $event): void
     {
+        $vendorDir = $event->getComposer()->getConfig()->get('vendor-dir');
+        require $vendorDir.'/autoload.php';
+
         $packages = self::scanDir('vendor/pushword');
 
         foreach ($packages as $package) {
@@ -46,10 +50,6 @@ class PostAutoloadDump extends PostInstall
     {
         if (null !== self::$kernel) {
             return self::$kernel;
-        }
-
-        if (! class_exists(Kernel::class)) {
-            include 'vendor/autoload.php';
         }
 
         (new Dotenv())->loadEnv(file_exists('.env') ? '.env' : 'packages/skeleton/.env');
