@@ -20,7 +20,7 @@ abstract class AbstractEventSuscriber implements EventSubscriberInterface
 
     protected function mayUseEditorBlock(?PageInterface $page): bool
     {
-        if (null !== $page && '' !== $page->getMainContent() && false === json_decode($page->getMainContent())) {
+        if (null !== $page && '' !== $page->getMainContent() && null === json_decode($page->getMainContent())) {
             return false;
         }
 

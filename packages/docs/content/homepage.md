@@ -19,7 +19,7 @@ Bonus, managing <strong>multi-site</strong>, <strong>internationalization</stron
 
 <strong>Want a demo ?</strong> This website is built with _Pushword_ with flat file management. You may prefer a <strong>block editor</strong> with an admin dashboard, it's possible with **simply installing an extension**.
 
-See [how to install and test Pushword in less than one minute](/installation).
+See [how to install and test Pushword in less than one minute](/installation). test
 
 Or look at the <strong>detailled features</strong>.
 
