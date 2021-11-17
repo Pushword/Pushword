@@ -12,9 +12,7 @@ class InstallerTest extends KernelTestCase
 {
     public function testIt()
     {
-        $this->assertTrue(true);
-
-        return;
+        require_once __DIR__.'/../src/Installer/Update795.php~';
 
         self::bootKernel();
         $page = $this->createPage();

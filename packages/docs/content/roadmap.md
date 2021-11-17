@@ -7,6 +7,7 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   Move to PHP configuration (rector ?!)
 -   When simplify 10 will be stable, add phpstan-twig-rules
 -   // TODO check a new blank installation
 -   **Admin Block Editor Tools** : Image > Add link + Alt and redesign Legend
@@ -33,7 +34,6 @@ parent: contribute
     -   **page authors**
         HUGE BUG: une fois la page mise à jour avec le dernier utilisateur, impossible d'afficher la page d'édition
         de Admin sans être déconnecté
-    -   **edit message** (with secret msg to not write historic)
     -   **Change requester**
     -   **Public Historic** (or make accessible historic from page object)
 -   Youtube Importer (from a youtube hash, create a page with video and text is imported from subtitle)
@@ -44,6 +44,7 @@ parent: contribute
         -   texte alternatif manquant
         -   Check there is no translation with the same language than current page
     -   add <!-- page-scanner-ignore: what to ignore --> ou plutôt dans othersParameters
+    -   page scanner --alter :)
 -   **name suggester**: parse content, find words or multiple words used only in this doc, suggest it as potential name, s'active au moment du clic sur l'input name
 -   **eCommerce** bridge with sylius ?!
 -   **Advanced main image** : associé un champ vidéo à l'image d'en-tête
@@ -65,20 +66,17 @@ parent: contribute
 
 ## One day (maybe)
 
--   Auto-update npm package (js-helper and editorjs-tool) via Github Actions
+-   Auto-update npm package (js-helper and editorjs-tool) via Github Actions (or at least git hooks)
 -   **Best testing** Fluidifier le process de test et deploiement (tester avec les vrais données)
 -   Move global app_base_url, name and color to à better spot (like évent suscriber)
 -   Move weird entity trait constructor to lificycle callback
 -   Move notify to messenger bus ? : https://symfony.com/doc/current/the-fast-track/fr/18-async.html
 
-*   **Pagination** : move to extension and drop pagerfanta
 *   **Admin** : Automatic save without flooding version
 *   **Version** : Rewrite to load in an entity versionned version and used sonata filters
 *   **Admin** (and admin extensions): Manage SonataAdminMenuOrder a better way than randomly
 *   **Wordpress** to Pushword/Core (and vice versa)
 *   **Flat** (spatie/yaml-front-matter, vérif à chaque requête pour une sync constante admin <-> flat files)
-*   Create a page from a Media (media edit) => button to create a new page with title = name and mainImage = Media
-    (useful for photographer website)... or create a dynamic page /media/[slug]/ showing data from Media
 
 ### Smart image optimizer (global - piedweb package)
 

@@ -11,9 +11,7 @@ class InstallerTest extends KernelTestCase
 {
     public function testIt()
     {
-        $this->assertTrue(true);
-
-        return;
+        require_once __DIR__.'/../src/Installer/Update795.php~';
 
         (new Update795())->run();
         $this->assertTrue(file_exists(__DIR__.'/../../skeleton/src/Migrations'));
