@@ -12,17 +12,17 @@
         "symfony/flex": "^1.3.1"
     },
     "flex-require": {
-        "symfony/console": "^5.2",
-        "symfony/dotenv": "^5.2",
-        "symfony/framework-bundle": "^5.2",
+        "symfony/console": "^5.3",
+        "symfony/dotenv": "^5.3",
+        "symfony/framework-bundle": "^5.3",
         "symfony/runtime": "*",
-        "symfony/yaml": "^5.2",
+        "symfony/yaml": "^5.3",
         "pushword/core": "*"
     },
     "require-dev": {
         "symfony/profiler-pack": "*",
         "pushword/installer": "*",
-        "symfony/phpunit-bridge": "^5.2"
+        "symfony/phpunit-bridge": "^5.3"
     },
     "config": {
         "optimize-autoloader": true,
