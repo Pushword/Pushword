@@ -51,7 +51,7 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function getMimeType(): ?string;
 
-    public function getName(): string;
+    public function getName(bool $onlyName = false): string;
 
     public function getNameLocalized(?string $getLocalized = null, bool $onlyLocalized = false): string;
 

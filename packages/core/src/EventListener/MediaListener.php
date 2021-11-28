@@ -122,7 +122,7 @@ class MediaListener
 
     private function setNameIfEmpty(MediaInterface $media): void
     {
-        if ('' === $media->getName()) {
+        if ('' !== $media->getName(true)) {
             return;
         }
 

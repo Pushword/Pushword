@@ -253,8 +253,12 @@ trait MediaTrait
         return $this;
     }
 
-    public function getName(): string
+    public function getName(bool $onlyName = false): string
     {
+        if (true === $onlyName) {
+            return $this->name;
+        }
+
         return '' === $this->name && null !== $this->getMediaFile() ? $this->getMediaFileName() : $this->name;
     }
 
