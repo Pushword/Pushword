@@ -1,11 +1,11 @@
 {% apply unprose %}
 
-{% if (needBlockWrapper(data) or (data.stretched is defined and data.stretched)) %}<div{{ blockWrapperAttr(data,
-    data.stretched is defined and data.stretched
+{% if (needBlockWrapper(block) or (block.data.stretched is defined and block.data.stretched)) %}<div{{ blockWrapperAttr(block.data,
+    block.data.stretched is defined and block.data.stretched
         ? {'class':'w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw]'} : {}) }}>{% endif %}
 
-    {{ video(data.serviceUrl, data.image.url, data.alternativeText) }}
+    {{ video(block.data.serviceUrl, block.data.image.url, block.data.alternativeText) }}
 
-{% if (needBlockWrapper(data) or (data.stretched is defined and data.stretched)) %}</div>{% endif %}
+{% if (needBlockWrapper(block) or (block.data.stretched is defined and block.data.stretched)) %}</div>{% endif %}
 
 {% endapply %}

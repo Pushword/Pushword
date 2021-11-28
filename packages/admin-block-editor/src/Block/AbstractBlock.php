@@ -28,14 +28,14 @@ abstract class AbstractBlock implements BlockInterface
     }
 
     /**
-     * @param mixed $data
+     * @param mixed $block
      */
-    public function render($data): string
+    public function render($block): string
     {
         $view = $this->getApp()->getView('/block/'.$this->name.'.html.twig', '@PushwordAdminBlockEditor');
 
         return $this->getTwig()->render($view, [
-            'data' => $data,
+            'block' => $block,
             'page' => $this->getEntity(),
         ]);
     }

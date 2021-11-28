@@ -1,4 +1,4 @@
-{% if (data.display == 'card') %}
+{% if (block.data.display == 'card') %}
 {# show preview for a 1024px screen max (else client screen width) #}
 <div style="text-align: center; max-width:100%;overflow-x:auto; overflow-y:hidden">
 <iframe seamless height="auto" style="width:100vw;max-width:1024px; border: none;transform-origin: 0 0;"
@@ -18,7 +18,7 @@ srcdoc='
 {{ block("css", view('/base.html.twig')) }}
 
 
-{{ pages_list(data.kw, [data.max|default(9), data.maxPages|default(1)], data.order, 'card') }}
+{{ pages_list(block.data.kw, [block.data.max|default(9), block.data.maxPages|default(1)], block.data.order, 'card') }}
 
 {% endapply %}
 

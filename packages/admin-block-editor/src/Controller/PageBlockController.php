@@ -52,7 +52,7 @@ final class PageBlockController extends AbstractController
 
         $htmlContent = $this->twig->render(
             $this->apps->getApp()->getView('/block/pages_list_preview.html.twig', '@PushwordAdminBlockEditor'),
-            ['page' => $currentPage ?? null, 'data' => $content]
+            ['page' => $currentPage ?? null, 'block' => ['data' => $content]]
         );
 
         return new Response(\Safe\json_encode([

@@ -44,7 +44,7 @@ final class BlockEditorFilter extends AbstractFilter
 
         foreach ($blocks as $block) {
             $classBlock = $this->getBlockManager($block->type);
-            $blockRendered = $classBlock->render($block->data);
+            $blockRendered = $classBlock->render($block);
             $renderValue .= $blockRendered."\n";
         }
 

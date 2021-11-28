@@ -1,15 +1,15 @@
-{% if (needBlockWrapper(data)) %}<div{{ blockWrapperAttr(data) }}>{% endif %}
+{% if (needBlockWrapper(block)) %}<div{{ blockWrapperAttr(block) }}>{% endif %}
 
-{% if data.stretched %}<div class="w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw]">{% endif %}
-{% if data.withBackground %}<div class="px-12 py-1 text-center bg-gray-200 rounded">{% endif %}
+{% if block.data.stretched %}<div class="w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw]">{% endif %}
+{% if block.data.withBackground %}<div class="px-12 py-1 text-center bg-gray-200 rounded">{% endif %}
 
     {% include view('/component/image_inline.html.twig') with {
-        'image_src': data.file.media|image('default'),
-        'image_alt': data.caption,
-        'image_class' : ('w-full h-auto max-h-screen max-w-[1600px] mx-auto ' ~ (data.withBorder ? 'border border-gray-500' : ''))|trim
+        'image_src': block.data.file.media|image('default'),
+        'image_alt': block.data.caption,
+        'image_class' : ('w-full h-auto max-h-screen max-w-[1600px] mx-auto ' ~ (block.data.withBorder ? 'border border-gray-500' : ''))|trim
     } only %}
 
-{% if data.withBackground %}</div>{% endif %}
-{% if data.stretched %}</div>{% endif %}
+{% if block.data.withBackground %}</div>{% endif %}
+{% if block.data.stretched %}</div>{% endif %}
 
-{% if (needBlockWrapper(data)) %}</div>{% endif %}
+{% if (needBlockWrapper(block)) %}</div>{% endif %}

@@ -53,8 +53,9 @@ class ControllerTest extends AbstractAdminTest
             [],
             [],
             [],
-            json_encode(['kw' => 'fun', 'display' => 'list', 'order' => 'priority,publishedAt DESC', 'max' => '', 'maxPages' => ''])
+            json_encode(['kw' => 'fun', 'display' => 'list', 'order' => 'priority ↓,publishedAt ↓', 'max' => '', 'maxPages' => ''])
         );
+
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
         //dd(str_replace([' ', '\n'], '', $client->getResponse()->getContent()));
         $this->assertStringStartsWith(
@@ -68,7 +69,7 @@ class ControllerTest extends AbstractAdminTest
             [],
             [],
             [],
-            json_encode(['kw' => 'fun', 'display' => 'list', 'order' => 'priority,publishedAt DESC', 'max' => '', 'maxPages' => ''])
+            json_encode(['kw' => 'fun', 'display' => 'list', 'order' => 'priority ↓,publishedAt ↓', 'max' => '', 'maxPages' => ''])
         );
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
     }

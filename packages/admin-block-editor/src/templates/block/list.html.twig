@@ -1,16 +1,16 @@
-<div{{ blockWrapperAttr(data, {class: class(page, 'prose')}) }}>
-{{ data.style == 'unordered' ? '<ul>' : '<ol>' }}
-{% for item in data.items %}
+<div{{ blockWrapperAttr(block, {class: class(page, 'prose')}) }}>
+{{ block.data.style == 'unordered' ? '<ul>' : '<ol>' }}
+{% for item in block.data.items %}
     {% if item.content is defined %}
         <li>
             {{ item.content|raw }}
-            {{ _self.nested_list(item.items, data.style) }}
+            {{ _self.nested_list(item.items, block.data.style) }}
         </li>
     {% else %}
         <li>{{ item|raw }}</li>
     {% endif %}
 {% endfor %}
-{{ data.style == 'unordered' ? '</ul>' : '</ol>' }}
+{{ block.data.style == 'unordered' ? '</ul>' : '</ol>' }}
 </div>
 
 

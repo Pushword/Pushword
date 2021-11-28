@@ -1,15 +1,15 @@
 {% set images = [] %}
-{% for image in data %}
+{% for image in block.data %}
     {% set key = image.caption ? image.caption : image.file.name ~ (images.key is defined ? (' - '~image.file.media) : '') %}
     {% set images = images|merge({(key): image.url}) %}
 {% endfor %}
 
 {% apply unprose %}
 
-{% if (needBlockWrapper(data)) %}<div{{ blockWrapperAttr(data) }}>{% endif %}
+{% if (needBlockWrapper(block)) %}<div{{ blockWrapperAttr(block) }}>{% endif %}
 
 {% include view('/component/images_gallery.html.twig') with {'images': images} only %}
 
-{% if (needBlockWrapper(data)) %}</div>{% endif %}
+{% if (needBlockWrapper(block)) %}</div>{% endif %}
 
 {% endapply %}

@@ -1,5 +1,5 @@
-{% if (needBlockWrapper(data)) %}<div{{ blockWrapperAttr(data) }}>{% endif %}
+{% if (needBlockWrapper(block)) %}<div{{ blockWrapperAttr(block) }}>{% endif %}
 
-{{ data.html|raw }}
+{{ block.data.html|raw }}
 
-{% if (needBlockWrapper(data)) %}</div>{% endif %}
+{% if (needBlockWrapper(block)) %}</div>{% endif %}

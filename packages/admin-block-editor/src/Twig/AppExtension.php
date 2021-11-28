@@ -28,10 +28,10 @@ class AppExtension extends AbstractExtension
      */
     public function blockWrapperAttr($blockData, array $attributes = []): string
     {
-        $blockData = (array) $blockData;
+        $blockData = (array) \Safe\json_decode(\Safe\json_encode($blockData), true);
 
-        if (isset($blockData['tunes']) && isset($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) {
-            $attributes['id'] = (isset($attributes['id']) ? $attributes['id'] : '').' '.$blockData['tunes']['anchor'];
+        if (isset($blockData['tunes']) && isset($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) { // @phpstan-ignore-line
+            $attributes['id'] = (isset($attributes['id']) ? $attributes['id'] : '').' '.$blockData['tunes']['anchor']; // @phpstan-ignore-line
         }
 
         return self::mapAttributes($attributes);

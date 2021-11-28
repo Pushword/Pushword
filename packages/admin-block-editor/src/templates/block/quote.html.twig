@@ -1,5 +1,5 @@
-<blockquote{{ blockWrapperAttr(data, data.alignment is defined and data.alignment and data.alignment != 'left' ? {class: 'text-' ~ data.alignment} : {}) }}>
+<blockquote{{ blockWrapperAttr(block, block.data.alignment is defined and block.data.alignment and block.data.alignment != 'left' ? {class: 'text-' ~ block.data.alignment} : {}) }}>
 {# for tawildind compression : text-right text-left #}
-    <p>{{ data.text|raw }}</p>
-    <cite>{{ data.caption|raw }}</cite>
+    <p>{{ block.data.text|raw }}</p>
+    <cite>{{ block.data.caption|raw }}</cite>
 </blockquote>
