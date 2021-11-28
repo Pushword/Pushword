@@ -148,7 +148,8 @@ trait MediaTrait
     public function setSlug(?string $filename): self
     {
         if (null === $this->getMediaFile()) {
-            throw new Exception('debug... thinking setSlug was only used by Vich ???');
+            //throw new Exception('debug... thinking setSlug was only used by Vich ???');
+            return $this;
         }
 
         $filename ??= $this->getMediaFileName();
@@ -351,18 +352,22 @@ trait MediaTrait
         return $this->size;
     }
 
-    public function setSize(int $size): self
+    public function setSize(?int $size): self
     {
-        $this->size = $size;
+        $this->size = (int) $size;
 
         return $this;
     }
 
     /**
-     * @param array<int> $dimensions
+     * @param array<int>|null $dimensions
      */
-    public function setDimensions(array $dimensions): self
+    public function setDimensions(?array $dimensions): self
     {
+        if (null === $dimensions) {
+            return $this;
+        }
+
         if (isset($dimensions[0])) {
             $this->width = $dimensions[0];
         }

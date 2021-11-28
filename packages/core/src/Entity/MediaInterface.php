@@ -32,20 +32,20 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function getMainColor(): ?string;
 
-    public function setSize(int $size): self;
+    public function setSize(?int $size): self;
 
     public function setSlug(?string $filename): self;
 
     public function setMimeType(?string $mimeType): self;
 
     /**
-     * @param array<int> $dimensions
+     * @param array<int>|null $dimensions
      */
-    public function setDimensions(array $dimensions): self;
+    public function setDimensions(?array $dimensions): self;
 
     public function setMedia(?string $media): self;
 
-    public function setName(string $name): self;
+    public function setName(?string $name): self;
 
     public function setMediaFile(?File $file = null): void;
 

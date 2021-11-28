@@ -1,0 +1,249 @@
+
+Registered Listeners Grouped by Event
+=====================================
+
+"Symfony\Component\Mailer\Event\MessageEvent" event
+---------------------------------------------------
+
+ ------- --------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                    Priority  
+ ------- --------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\Mailer\EventListener\MessageListener::onMessage()         0         
+  #2      Symfony\Component\Mailer\EventListener\EnvelopeListener::onMessage()        -255      
+  #3      Symfony\Component\Mailer\EventListener\MessageLoggerListener::onMessage()   -255      
+ ------- --------------------------------------------------------------------------- ---------- 
+
+"Symfony\Component\Security\Http\Event\CheckPassportEvent" event
+----------------------------------------------------------------
+
+ ------- ----------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                  Priority  
+ ------- ----------------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\Security\Http\EventListener\UserProviderListener::checkPassport()       1024      
+  #2      Symfony\Component\Security\Http\EventListener\CsrfProtectionListener::checkPassport()     512       
+  #3      Symfony\Component\Security\Http\EventListener\CheckCredentialsListener::checkPassport()   0         
+ ------- ----------------------------------------------------------------------------------------- ---------- 
+
+"Symfony\Component\Security\Http\Event\LoginSuccessEvent" event
+---------------------------------------------------------------
+
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                    Priority  
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\Security\Http\EventListener\PasswordMigratingListener::onLoginSuccess()   0         
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+
+"Symfony\Component\Security\Http\Event\LogoutEvent" event
+---------------------------------------------------------
+
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                    Priority  
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\Security\Http\EventListener\CsrfTokenClearingLogoutListener::onLogout()   0         
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+
+"console.command" event
+-----------------------
+
+ ------- ------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                        Priority  
+ ------- ------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\HttpKernel\EventListener\DebugHandlersListener::configure()   2048      
+ ------- ------------------------------------------------------------------------------- ---------- 
+
+"console.error" event
+---------------------
+
+ ------- ------------------------------------------------------------------------------------------------ ---------- 
+  Order   Callable                                                                                         Priority  
+ ------- ------------------------------------------------------------------------------------------------ ---------- 
+  #1      Symfony\Bundle\FrameworkBundle\EventListener\SuggestMissingPackageSubscriber::onConsoleError()   0         
+  #2      Symfony\Bundle\MakerBundle\Event\ConsoleErrorSubscriber::onConsoleError()                        0         
+  #3      Symfony\Component\Console\EventListener\ErrorListener::onConsoleError()                          -128      
+ ------- ------------------------------------------------------------------------------------------------ ---------- 
+
+"console.terminate" event
+-------------------------
+
+ ------- ------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                        Priority  
+ ------- ------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Bundle\MakerBundle\Event\ConsoleErrorSubscriber::onConsoleTerminate()   0         
+  #2      Symfony\Component\Console\EventListener\ErrorListener::onConsoleTerminate()     -128      
+ ------- ------------------------------------------------------------------------------- ---------- 
+
+"debug.security.authorization.vote" event
+-----------------------------------------
+
+ ------- ------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                  Priority  
+ ------- ------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Bundle\SecurityBundle\EventListener\VoteListener::onVoterVote()   0         
+ ------- ------------------------------------------------------------------------- ---------- 
+
+"kernel.controller" event
+-------------------------
+
+ ------- ----------------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                        Priority  
+ ------- ----------------------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Bundle\FrameworkBundle\DataCollector\RouterDataCollector::onKernelController()          0         
+  #2      Symfony\Component\HttpKernel\DataCollector\RequestDataCollector::onKernelController()           0         
+  #3      Sensio\Bundle\FrameworkExtraBundle\EventListener\ControllerListener::onKernelController()       0         
+  #4      Sensio\Bundle\FrameworkExtraBundle\EventListener\ParamConverterListener::onKernelController()   0         
+  #5      Sensio\Bundle\FrameworkExtraBundle\EventListener\HttpCacheListener::onKernelController()        0         
+  #6      Sonata\AdminBundle\EventListener\ConfigureCRUDControllerListener::onKernelController()          0         
+  #7      Sensio\Bundle\FrameworkExtraBundle\EventListener\TemplateListener::onKernelController()         -128      
+ ------- ----------------------------------------------------------------------------------------------- ---------- 
+
+"kernel.controller_arguments" event
+-----------------------------------
+
+ ------- --------------------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                            Priority  
+ ------- --------------------------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\HttpKernel\EventListener\ErrorListener::onControllerArguments()                   0         
+  #2      Sensio\Bundle\FrameworkExtraBundle\EventListener\SecurityListener::onKernelControllerArguments()    0         
+  #3      Sensio\Bundle\FrameworkExtraBundle\EventListener\IsGrantedListener::onKernelControllerArguments()   0         
+ ------- --------------------------------------------------------------------------------------------------- ---------- 
+
+"kernel.exception" event
+------------------------
+
+ ------- --------------------------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                                  Priority  
+ ------- --------------------------------------------------------------------------------------------------------- ---------- 
+  #1      BabDev\PagerfantaBundle\EventListener\ConvertNotValidCurrentPageToNotFoundListener::onKernelException()   512       
+  #2      BabDev\PagerfantaBundle\EventListener\ConvertNotValidMaxPerPageToNotFoundListener::onKernelException()    512       
+  #3      Symfony\Component\HttpKernel\EventListener\ErrorListener::logKernelException()                            0         
+  #4      Symfony\Component\HttpKernel\EventListener\ProfilerListener::onKernelException()                          0         
+  #5      Symfony\Component\HttpKernel\EventListener\RouterListener::onKernelException()                            -64       
+  #6      Symfony\Component\HttpKernel\EventListener\ErrorListener::onKernelException()                             -128      
+ ------- --------------------------------------------------------------------------------------------------------- ---------- 
+
+"kernel.finish_request" event
+-----------------------------
+
+ ------- ----------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                  Priority  
+ ------- ----------------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\HttpKernel\EventListener\LocaleListener::onKernelFinishRequest()        0         
+  #2      Symfony\Component\HttpKernel\EventListener\SessionListener::onFinishRequest()             0         
+  #3      Symfony\Component\HttpKernel\EventListener\RouterListener::onKernelFinishRequest()        0         
+  #4      Symfony\Bundle\SecurityBundle\Debug\TraceableFirewallListener::onKernelFinishRequest()    0         
+  #5      Symfony\Component\HttpKernel\EventListener\LocaleAwareListener::onKernelFinishRequest()   -15       
+ ------- ----------------------------------------------------------------------------------------- ---------- 
+
+"kernel.request" event
+----------------------
+
+ ------- ---------------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                       Priority  
+ ------- ---------------------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\HttpKernel\EventListener\DebugHandlersListener::configure()                  2048      
+  #2      Symfony\Component\HttpKernel\EventListener\ValidateRequestListener::onKernelRequest()          256       
+  #3      Symfony\Component\HttpKernel\EventListener\SessionListener::onKernelRequest()                  128       
+  #4      Symfony\Component\HttpKernel\EventListener\LocaleListener::setDefaultLocale()                  100       
+  #5      Symfony\Component\HttpKernel\EventListener\RouterListener::onKernelRequest()                   32        
+  #6      Symfony\Component\HttpKernel\EventListener\LocaleListener::onKernelRequest()                   16        
+  #7      Symfony\Component\HttpKernel\EventListener\LocaleAwareListener::onKernelRequest()              15        
+  #8      Symfony\Bundle\SecurityBundle\Debug\TraceableFirewallListener::configureLogoutUrlGenerator()   8         
+  #9      Symfony\Bundle\SecurityBundle\Debug\TraceableFirewallListener::onKernelRequest()               8         
+ ------- ---------------------------------------------------------------------------------------------- ---------- 
+
+"kernel.response" event
+-----------------------
+
+ ------- -------------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                     Priority  
+ ------- -------------------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\Security\Http\Firewall\ContextListener::onKernelResponse()                 0         
+  #2      Sonata\BlockBundle\Cache\HttpCacheHandler::onKernelResponse()                                0         
+  #3      Symfony\Component\HttpKernel\EventListener\ResponseListener::onKernelResponse()              0         
+  #4      Symfony\Component\HttpKernel\DataCollector\RequestDataCollector::onKernelResponse()          0         
+  #5      Symfony\Component\WebLink\EventListener\AddLinkHeaderListener::onKernelResponse()            0         
+  #6      Symfony\Component\Security\Http\RememberMe\ResponseListener::onKernelResponse()              0         
+  #7      Sensio\Bundle\FrameworkExtraBundle\EventListener\HttpCacheListener::onKernelResponse()       0         
+  #8      Symfony\Component\HttpKernel\EventListener\ProfilerListener::onKernelResponse()              -100      
+  #9      Symfony\Component\HttpKernel\EventListener\ErrorListener::removeCspHeader()                  -128      
+  #10     Symfony\Bundle\WebProfilerBundle\EventListener\WebDebugToolbarListener::onKernelResponse()   -128      
+  #11     Symfony\Component\HttpKernel\EventListener\DisallowRobotsIndexingListener::onResponse()      -255      
+  #12     Symfony\Component\HttpKernel\EventListener\SessionListener::onKernelResponse()               -1000     
+  #13     Symfony\Component\HttpKernel\EventListener\StreamedResponseListener::onKernelResponse()      -1024     
+ ------- -------------------------------------------------------------------------------------------- ---------- 
+
+"kernel.terminate" event
+------------------------
+
+ ------- ---------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                           Priority  
+ ------- ---------------------------------------------------------------------------------- ---------- 
+  #1      Symfony\Component\HttpKernel\EventListener\ProfilerListener::onKernelTerminate()   -1024     
+ ------- ---------------------------------------------------------------------------------- ---------- 
+
+"kernel.view" event
+-------------------
+
+ ------- ----------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                            Priority  
+ ------- ----------------------------------------------------------------------------------- ---------- 
+  #1      Sensio\Bundle\FrameworkExtraBundle\EventListener\TemplateListener::onKernelView()   0         
+ ------- ----------------------------------------------------------------------------------- ---------- 
+
+"pushword.admin.load_field" event
+---------------------------------
+
+ ------- ------------------------------------------------------------------------------------ ---------- 
+  Order   Callable                                                                             Priority  
+ ------- ------------------------------------------------------------------------------------ ---------- 
+  #1      Pushword\AdminBlockEditor\EventSuscriber\AdminFormEventSuscriber::replaceFields()    0         
+  #2      Pushword\AdvancedMainImage\EventSuscriber\AdminFormEventSuscriber::replaceFields()   0         
+ ------- ------------------------------------------------------------------------------------ ---------- 
+
+"pushword.entity_filter.before_filtering" event
+-----------------------------------------------
+
+ ------- --------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                Priority  
+ ------- --------------------------------------------------------------------------------------- ---------- 
+  #1      Pushword\AdminBlockEditor\EventSuscriber\EnityFilterSuscriber::convertJsBlockToHtml()   0         
+ ------- --------------------------------------------------------------------------------------- ---------- 
+
+"sonata.admin.event.persistence.pre_persist" event
+--------------------------------------------------
+
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                    Priority  
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+  #1      Pushword\AdminBlockEditor\EventSuscriber\AdminFormEventSuscriber::setMainContent()          0         
+  #2      Pushword\AdvancedMainImage\EventSuscriber\AdminFormEventSuscriber::setAdvancedMainImage()   0         
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+
+"sonata.admin.event.persistence.pre_update" event
+-------------------------------------------------
+
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                                    Priority  
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+  #1      Pushword\AdminBlockEditor\EventSuscriber\AdminFormEventSuscriber::setMainContent()          0         
+  #2      Pushword\AdvancedMainImage\EventSuscriber\AdminFormEventSuscriber::setAdvancedMainImage()   0         
+ ------- ------------------------------------------------------------------------------------------- ---------- 
+
+"vich_uploader.post_upload" event
+---------------------------------
+
+ ------- ----------------------------------------------------------------------- ---------- 
+  Order   Callable                                                                Priority  
+ ------- ----------------------------------------------------------------------- ---------- 
+  #1      Pushword\Core\EventListener\MediaListener::onVichUploaderPostUpload()   0         
+ ------- ----------------------------------------------------------------------- ---------- 
+
+"vich_uploader.pre_upload" event
+--------------------------------
+
+ ------- ---------------------------------------------------------------------- ---------- 
+  Order   Callable                                                               Priority  
+ ------- ---------------------------------------------------------------------- ---------- 
+  #1      Pushword\Core\EventListener\MediaListener::onVichUploaderPreUpload()   0         
+ ------- ---------------------------------------------------------------------- ---------- 
+
