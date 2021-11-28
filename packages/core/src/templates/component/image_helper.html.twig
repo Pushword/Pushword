@@ -7,7 +7,7 @@
             loading="lazy"
             width="10000" height="10000"
             {% if otherAttributes.alt is not defined %}
-                alt="{{ image.nameByLocale(page is not null ? page.locale : null) }}"
+                alt="{{ image.nameByLocale(page is not null ? page.locale : '') }}"
             {% endif %}
             {{ otherAttributes ? attr(otherAttributes) : '' }} />
     </picture>
