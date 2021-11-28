@@ -7,8 +7,8 @@ use Twig\Environment as Twig;
 
 interface BlockInterface
 {
-    /** @param mixed $data */
-    public function render($data): string;
+    /** @param mixed $block */
+    public function render($block): string;
 
     public function setApp(AppConfig $appConfig): self;
 

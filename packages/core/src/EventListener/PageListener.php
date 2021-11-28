@@ -34,27 +34,32 @@ final class PageListener
         $this->updatePageEditor($page);
     }
 
+    /**
+     * @psalm-suppress UnevaluatedCode
+     * @psalm-suppress UnusedVariable
+     * @psalm-suppress UnusedParam
+     */
     private function updatePageEditor(PageInterface $page): void
     {
         if (null === ($user = $this->security->getUser())) {
             return;
         }
 
-        if ('' !== $page->getSlug() && '' !== $user->getUserIdentifier()) { // Remove this when fix bug, only to avoid psalm shouting
-            return;
-        }
+        //  Remove this when fix bug, only to avoid psalm shouting
+        return;
 
         /*
         HUGE BUG: une fois la page mise à jour avec ce code, impossible d'afficher la page d'édition
-        de Admin sans être déconnecté */
+        de Admin sans être déconnecté
 
         if (null === $page->getCreatedBy()) {
-            $page->setCreatedBy($user); // @phpstan-ignore-line
+            $page->setCreatedBy($user);
         }
 
-        if ($page->getEditedBy() !== $user) {
-            $page->setEditedBy($user); // @phpstan-ignore-line
+        if ($page->getEditedBy()->getId() !== $user->getId()) {
+            $page->setEditedBy($user);
         }
+        /**/
 
         //$this->entityManager->flush();
         //$pageHasEditor = (new PageHasEditor())->setPage($page)->setEditor($user)->setEditedAt(new \DateTime());
