@@ -31,7 +31,7 @@ class AppExtension extends AbstractExtension
         $blockData = (array) \Safe\json_decode(\Safe\json_encode($blockData), true);
 
         if (isset($blockData['tunes']) && isset($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) { // @phpstan-ignore-line
-            $attributes['id'] = (isset($attributes['id']) ? $attributes['id'] : '').' '.$blockData['tunes']['anchor']; // @phpstan-ignore-line
+            $attributes['id'] = trim((isset($attributes['id']) ? $attributes['id'] : '').' '.$blockData['tunes']['anchor']); // @phpstan-ignore-line
         }
 
         return self::mapAttributes($attributes);
