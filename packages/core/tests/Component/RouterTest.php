@@ -27,7 +27,7 @@ class RouterTest extends KernelTestCase
     public function testRouterTwigExtension()
     {
         self::bootKernel();
-        $twig = self::$kernel->getContainer()->get('twig');
+        $twig = self::$kernel->getContainer()->get('test.service_container')->get('twig');
 
         $this->assertSame($twig->createTemplate('{{ homepage() }}', null)->render(), '/');
         $this->assertSame($twig->createTemplate('{{ page("homepage") }}', null)->render(), '/');

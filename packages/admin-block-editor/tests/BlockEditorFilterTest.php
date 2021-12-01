@@ -25,7 +25,7 @@ class BlockEditorFilterTest extends KernelTestCase
         self::bootKernel();
         $filter = new BlockEditorFilter();
         $filter->setApp(self::$kernel->getContainer()->get('pushword.apps')->get());
-        $filter->setTwig(static::getContainer()->get('twig'));
+        $filter->setTwig(static::getContainer()->get('test.service_container')->get('twig'));
         $filter->setEntity($this->getPage());
 
         return $filter;

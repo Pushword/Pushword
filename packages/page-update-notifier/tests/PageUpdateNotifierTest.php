@@ -22,7 +22,7 @@ class PageUpdateNotifierTest extends KernelTestCase
         $entityManager = self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager');
         $apps = $this->getApps();
         $translator = self::$kernel->getContainer()->get('translator');
-        $twig = self::$kernel->getContainer()->get('twig');
+        $twig = self::$kernel->getContainer()->get('test.service_container')->get('twig');
         $mailer = new Mailer($this->getTransporter());
 
         return new PageUpdateNotifier(

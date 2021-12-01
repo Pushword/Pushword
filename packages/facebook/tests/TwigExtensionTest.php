@@ -14,7 +14,7 @@ class TwigExtensionTest extends KernelTestCase
         self::bootKernel();
         $twig = new TwigExtension();
         $twig->setApps(self::$kernel->getContainer()->get('pushword.apps'));
-        $twigEnv = self::$kernel->getContainer()->get('twig');
+        $twigEnv = self::$kernel->getContainer()->get('test.service_container')->get('twig');
         $this->assertIsBool(\is_string($twig->showFacebookLastPost($twigEnv, 'Google')));
         //$this->assertIsString($twig->showFacebookLastPost($twigEnv, 'Google')); disabled because GhA IP is kicked by FB
     }

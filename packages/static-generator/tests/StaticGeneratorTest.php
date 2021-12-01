@@ -167,7 +167,7 @@ class StaticGeneratorTest extends KernelTestCase
         foreach ($generators as $name => $class) {
             $generator = new $class(
                 $this->getPageRepo(),
-                static::getContainer()->get('twig'),
+                static::getContainer()->get('test.service_container')->get('twig'),
                 $this->getParameterBag(),
                 new RequestStack(),
                 self::$kernel->getContainer()->get('translator'),
