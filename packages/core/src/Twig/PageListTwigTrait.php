@@ -48,15 +48,15 @@ trait PageListTwigTrait
     private function getPagerRouteParams(): array
     {
         $params = [];
-        if (null !== $this->getCurrentRequest() && \is_string($this->getCurrentRequest()->get('slug'))) {
-            $params['slug'] = rtrim($this->getCurrentRequest()->get('slug'), '/');
+        if (null !== $this->getCurrentRequest() && \is_string($slug = $this->getCurrentRequest()->attributes->get('slug'))) {
+            $params['slug'] = rtrim($slug, '/');
         } elseif (null !== $this->apps->getCurrentPage()) {
             // normally, only used in admin
             $params['slug'] = $this->apps->getCurrentPage()->getSlug();
             $params['host'] = $this->apps->getCurrentPage()->getHost();
         }
 
-        if (null !== ($request = $this->getCurrentRequest()) && null !== ($host = $request->get('host'))) {
+        if (null !== ($currentRequest = $this->getCurrentRequest()) && null !== ($host = $currentRequest->request->get('host'))) {
             $params['host'] = \strval($host);
         }
 
@@ -65,8 +65,8 @@ trait PageListTwigTrait
 
     private function getPagerRouteName(): string
     {
-        $pagerRouter = null !== $this->getCurrentRequest() ? $this->getCurrentRequest()->get('_route') : 'pushword_page';
-        $pagerRouter .= null !== $this->getCurrentRequest() && '' === $this->getCurrentRequest()->get('slug') ? '_homepage' : '';
+        $pagerRouter = null !== $this->getCurrentRequest() ? $this->getCurrentRequest()->attributes->get('_route') : 'pushword_page';
+        $pagerRouter .= null !== $this->getCurrentRequest() && '' === $this->getCurrentRequest()->attributes->get('slug') ? '_homepage' : '';
         $pagerRouter .= '_pager';
 
         return $pagerRouter;

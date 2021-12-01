@@ -7,7 +7,6 @@ parent: contribute
 
 ## BugFix && To finish
 
--   [Core] Bug : setName is erased by media file name
 -   Move to PHP configuration (rector ?!)
 -   When simplify 10 will be stable, add phpstan-twig-rules
 -   // TODO check a new blank installation

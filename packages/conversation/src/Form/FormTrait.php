@@ -273,12 +273,12 @@ trait FormTrait
 
     protected function getReferring(): ?string
     {
-        return \strval($this->request->get('referring'));
+        return \strval($this->request->request->get('referring'));
     }
 
     protected function getType(): ?string
     {
-        return \strval($this->request->get('type'));
+        return \strval($this->request->request->get('type'));
     }
 
     /**

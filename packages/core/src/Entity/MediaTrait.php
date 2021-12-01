@@ -255,7 +255,7 @@ trait MediaTrait
 
     public function getName(bool $onlyName = false): string
     {
-        if (true === $onlyName) {
+        if ($onlyName) {
             return $this->name;
         }
 

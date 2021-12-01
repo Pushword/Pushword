@@ -39,7 +39,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
 
     public function listAction(Request $request): Response
     {
-        if (($listMode = $request->get('_list_mode')) !== null) {
+        if (($listMode = $request->request->get('_list_mode')) !== null) {
             $this->admin->setListMode(\strval($listMode));
         }
 

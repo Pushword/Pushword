@@ -40,10 +40,10 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
             return;
         }
 
-        $requestUniqId = \strval($persistenceEvent->getAdmin()->getRequest()->get('uniqid'));
-        $returnValues = $persistenceEvent->getAdmin()->getRequest()->get($requestUniqId);
+        $requestUniqId = \strval($persistenceEvent->getAdmin()->getRequest()->query->get('uniqid'));
+        $returnValues = $persistenceEvent->getAdmin()->getRequest()->request->all($requestUniqId);
 
-        if (\is_array($returnValues) && isset($returnValues['mainContent'])) {
+        if (isset($returnValues['mainContent']) && \is_string($returnValues['mainContent'])) {
             // sanitize with https://github.com/editor-js/editorjs-php
             $persistenceEvent->getAdmin()->getSubject()->setMainContent($returnValues['mainContent']);
         }

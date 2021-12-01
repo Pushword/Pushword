@@ -65,8 +65,8 @@ final class AdminFormEventSuscriber implements EventSubscriberInterface
             return;
         }
 
-        $returnValues = $persistenceEvent->getAdmin()->getRequest()
-            ->get($persistenceEvent->getAdmin()->getRequest()->get('uniqid')); // @phpstan-ignore-line
+        $returnValues = $persistenceEvent->getAdmin()->getRequest()->request
+            ->all($persistenceEvent->getAdmin()->getRequest()->query->get('uniqid'));
 
         $persistenceEvent->getAdmin()->getSubject()->setCustomProperty(
             'mainImageFormat',
