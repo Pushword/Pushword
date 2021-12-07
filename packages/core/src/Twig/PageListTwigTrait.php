@@ -169,7 +169,7 @@ trait PageListTwigTrait
             );
 
         if (null !== $this->apps->getCurrentPage()) {
-            $queryBuilder->andWhere('p.slug <> '.$this->apps->getCurrentPage()->getId());
+            $queryBuilder->andWhere('p.id <> '.$this->apps->getCurrentPage()->getId());
         }
 
         if (\is_array($max) && isset($max[1]) && $max[1] > 1) {
