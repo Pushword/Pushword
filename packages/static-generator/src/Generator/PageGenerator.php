@@ -86,7 +86,7 @@ class PageGenerator extends AbstractGenerator
 
         if (Response::HTTP_OK != $response->getStatusCode()) {
             if (Response::HTTP_INTERNAL_SERVER_ERROR === $response->getStatusCode() && 'dev' == $this->kernel->getEnvironment()) {
-                $this->setErrorFor($liveUri, $page);
+                $this->setErrorFor($liveUri, $page, 'status code '.$response->getStatusCode());
             }
 
             return;
@@ -94,7 +94,7 @@ class PageGenerator extends AbstractGenerator
 
         $content = $response->getContent();
         if (false === $content) {
-            $this->setErrorFor($liveUri, $page);
+            $this->setErrorFor($liveUri, $page, 'no content');
 
             return;
         }
@@ -110,12 +110,12 @@ class PageGenerator extends AbstractGenerator
         $this->filesystem->dumpFile($destination, $content);
     }
 
-    private function setErrorFor(string $liveUri, ?Page $page = null): void
+    private function setErrorFor(string $liveUri, ?Page $page = null, string $msg = ''): void
     {
         $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
                      '['.$liveUri.']('.$this->router->getRouter()->generate('admin_app_page_edit', ['id' => $page->getId()]).')'
                      : $liveUri;
-        $this->setError('An error occured when generating '.$identifier.'');
+        $this->setError('An error occured when generating '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));
         //throw new Exception('An error occured when generating `'.$liveUri.'`'); //exit($this->kernel->handle($request));
     }
 

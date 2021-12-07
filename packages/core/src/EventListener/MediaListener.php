@@ -35,6 +35,8 @@ class MediaListener
 
     private ?FlashBagInterface $flashBag = null;
 
+    private RequestStack $requestStack;
+
     private TranslatorInterface $translator;
 
     /** @psalm-suppress  UndefinedInterfaceMethod */
@@ -50,9 +52,7 @@ class MediaListener
         $this->em = $entityManager;
         $this->filesystem = $filesystem;
         $this->imageManager = $imageManager;
-        if (null !== $requestStack->getCurrentRequest() && method_exists($requestStack->getSession(), 'getFlashBag')) {
-            $this->flashBag = $requestStack->getSession()->getFlashBag();
-        }
+        $this->requestStack = $requestStack;
 
         $this->translator = $translator;
     }
@@ -160,12 +160,22 @@ class MediaListener
         $media->setMedia(null);
         $media->setSlug($media->getName());
 
-        if (1 === $this->iterate && null !== $this->flashBag) {
-            $this->flashBag->add('success', $this->translator->trans('media.name_was_changed')); // todo translate
+        if (1 === $this->iterate && null !== ($flashBag = $this->getFlashBag())) {
+            $flashBag->add('success', $this->translator->trans('media.name_was_changed')); // todo translate
         }
 
         ++$this->iterate;
         $this->renameIfMediaExists($media);
+    }
+
+    private function getFlashBag(): ?FlashBagInterface
+    {
+        if (null !== $this->flashBag) {
+            return $this->flashBag;
+        }
+
+        return null !== ($request = $this->requestStack->getCurrentRequest()) && method_exists($request->getSession(), 'getFlashBag') ?
+                $this->flashBag = $request->getSession()->getFlashBag() : null;
     }
 
     /**

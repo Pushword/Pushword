@@ -7,6 +7,7 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   [StaticGenerator] Next request is logged out...
 -   Move to PHP configuration (rector ?!)
 -   When simplify 10 will be stable, add phpstan-twig-rules
 -   // TODO check a new blank installation

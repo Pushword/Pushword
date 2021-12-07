@@ -106,7 +106,7 @@ trait PageListTwigTrait
     /**
      * @return array<mixed>
      */
-    private function simpleStringToSearch(string $search): array
+    private function simpleStringToSearchChildren(string $search): ?array
     {
         if ('children' == strtolower($search) && null !== $this->apps->getCurrentPage()) {
             return ['parentPage', '=', $this->apps->getCurrentPage()->getId()];
@@ -118,6 +118,26 @@ trait PageListTwigTrait
             }
 
             return ['parentPage', '=', $parentPage->getId()];
+        }
+
+        if ('children_children' == strtolower($search)
+            && null !== $this->apps->getCurrentPage()
+            && $this->apps->getCurrentPage()->hasChildrenPages()) {
+            $childrenPage = $this->apps->getCurrentPage()->getChildrenPages()->map(function ($page) { return $page->getId(); })->toArray();
+
+            return ['parentPage', 'IN', $childrenPage];
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private function simpleStringToSearch(string $search): array
+    {
+        if (($return = $this->simpleStringToSearchChildren($search)) !== null) {
+            return $return;
         }
 
         if (str_starts_with($search, 'comment:')) {

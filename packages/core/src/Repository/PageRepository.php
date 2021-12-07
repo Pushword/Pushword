@@ -259,7 +259,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         return $queryBuilder->andWhere(
             ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0])
                         .' '.($w['operator'] ?? $w[1])
-                        .' :m'.$k
+                        .(($w['operator'] ?? $w[1]) === 'IN' ? '('.' :m'.$k.')' : ' :m'.$k)
         )->setParameter('m'.$k, $w['value'] ?? $w[2]);
     }
 
