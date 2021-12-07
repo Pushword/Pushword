@@ -148,6 +148,7 @@ trait PageListTwigTrait
 
         $search = \is_array($search) ? $search : $this->stringToSearch($search);
 
+        $order = '' === $order ? 'publishedAt,priority' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
 
