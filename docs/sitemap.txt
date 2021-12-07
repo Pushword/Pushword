@@ -1,3 +1,4 @@
+https://pushword.piedweb.com/extension/static-generator
 https://pushword.piedweb.com/roadmap
 https://pushword.piedweb.com/upgrade
 https://pushword.piedweb.com/
@@ -17,7 +18,6 @@ https://pushword.piedweb.com/extension/flat
 https://pushword.piedweb.com/extension
 https://pushword.piedweb.com/extension/page-scanner
 https://pushword.piedweb.com/extension/page-update-notifier
-https://pushword.piedweb.com/extension/static-generator
 https://pushword.piedweb.com/extension/svg
 https://pushword.piedweb.com/extension/template-editor
 https://pushword.piedweb.com/extension/version

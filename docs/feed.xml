@@ -10,6 +10,12 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[Static Generator]]></title>
+                    <link>https://pushword.piedweb.com/extension/static-generator</link>
+                    <guid>https://pushword.piedweb.com/extension/static-generator</guid>
+                    <pubDate>Tue, 07 Dec 2021 13:24:56 +0100</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Roadmap]]></title>
                     <link>https://pushword.piedweb.com/roadmap</link>
                     <guid>https://pushword.piedweb.com/roadmap</guid>
@@ -32,12 +38,6 @@
                     <link>https://pushword.piedweb.com/extension/admin-block-editor</link>
                     <guid>https://pushword.piedweb.com/extension/admin-block-editor</guid>
                     <pubDate>Mon, 01 Nov 2021 15:42:23 +0100</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[The Code Architecture]]></title>
-                    <link>https://pushword.piedweb.com/architecture</link>
-                    <guid>https://pushword.piedweb.com/architecture</guid>
-                    <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
                 </item>
                             
     </channel>
