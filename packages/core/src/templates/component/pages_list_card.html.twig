@@ -1,6 +1,6 @@
 {% block list %}{% apply spaceless %}
     {% if pages is not empty %}
-        <ul class="flex flex-row my-5">
+        <ul class="flex flex-row my-5 max-w-screen-md flex-wrap justify-center mx-auto">
             {% for p in pages %}
                 <li class="w-full px-1 my-1 sm:w-1/2">
                     {% include view('/component/card.html.twig') with {'page': p} only %}

@@ -112,6 +112,14 @@ trait PageListTwigTrait
             return ['parentPage', '=', $this->apps->getCurrentPage()->getId()];
         }
 
+        if ('parent_children' == strtolower($search) && null !== $this->apps->getCurrentPage()) {
+            if (($parentPage = $this->apps->getCurrentPage()->getParentPage()) === null) {
+                throw new Exception('no parent page');
+            }
+
+            return ['parentPage', '=', $parentPage->getId()];
+        }
+
         if (str_starts_with($search, 'comment:')) {
             $search = '<!--'.\Safe\substr($search, \strlen('comment:')).'-->';
 

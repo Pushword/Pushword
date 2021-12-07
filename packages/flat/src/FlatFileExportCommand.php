@@ -27,13 +27,13 @@ class FlatFileExportCommand extends Command
     protected function configure(): void
     {
         $this->setDescription('Exporting database toward flat yaml files (and json for media).')
-            ->addArgument('host', InputArgument::OPTIONAL, '')
-            ->addArgument('exportDir', InputArgument::OPTIONAL, '');
+            ->addArgument('host', InputArgument::OPTIONAL, '', '')
+            ->addArgument('exportDir', InputArgument::OPTIONAL, '', '');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $output->writeln('Import will start in few seconds...');
+        $output->writeln('Export will start in few seconds...');
 
         if ('' !== $input->getArgument('exportDir')) {
             $this->exporter->setExportDir($input->getArgument('exportDir')); // @phpstan-ignore-line

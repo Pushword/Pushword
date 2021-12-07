@@ -10,7 +10,7 @@ Generate a static website serve by github pages, apaches with one command or via
 ## Install
 
 ```shell
-composer require pushword/template-editor
+composer require pushword/static-generator
 ```
 
 That's it ! If you have a custom installation (not used the [default installer](/installation)),

@@ -18,7 +18,7 @@ class Name extends AbstractFilter
     {
         $names = explode("\n", \strval($propertyValue));
 
-        return isset($names[0]) ? trim($names[0])
+        return isset($names[0]) && '' !== $names[0] ? trim($names[0])
             : ('' !== $propertyValue ? $propertyValue : $this->entityFilterManager->getH1()); // @phpstan-ignore-line
     }
 }
