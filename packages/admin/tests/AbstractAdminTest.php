@@ -39,7 +39,7 @@ abstract class AbstractAdminTest extends PantherTestCase
             return;
         }
 
-        $userRepository = static::$container->get(UserRepository::class);
+        $userRepository = static::getContainer()->get(UserRepository::class);
         $testUser = $userRepository->findOneByEmail('admin@example.tld');
 
         if ($testUser) {

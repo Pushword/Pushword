@@ -81,7 +81,7 @@
         "symfony/debug": "^4.4",
         "symfony/dotenv": "^5.4 || ^6.0",
         "symfony/maker-bundle": "^1.35",
-        "symfony/panther": "^1.0 || ^2.0",
+        "symfony/panther": "^1 || ^2.0",
         "symfony/phpunit-bridge": "^5.0",
         "symfony/profiler-pack": "^1.0",
         "symfony/test-pack": "^1.0",
