@@ -51,6 +51,9 @@ class MainContentSplitter extends AbstractFilter
         $this->splitContentToParts();
     }
 
+    /**
+     * @psalm-suppress RedundantCast
+     */
     private function splitContentToParts(): void
     {
         $parsedContent = explode('<!--break-->', $this->content);

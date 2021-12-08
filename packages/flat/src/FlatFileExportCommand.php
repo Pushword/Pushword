@@ -36,7 +36,7 @@ class FlatFileExportCommand extends Command
         $output->writeln('Export will start in few seconds...');
 
         if ('' !== $input->getArgument('exportDir')) {
-            $this->exporter->setExportDir($input->getArgument('exportDir')); // @phpstan-ignore-line
+            $this->exporter->setExportDir($input->getArgument('exportDir'));
         }
 
         $exportDir = $this->exporter->run($input->getArgument('host'));

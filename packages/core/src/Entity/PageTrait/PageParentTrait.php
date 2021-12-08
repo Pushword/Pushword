@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Entity\PageTrait;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use LogicException;
@@ -19,7 +20,7 @@ trait PageParentTrait
      * @ORM\OneToMany(targetEntity="Pushword\Core\Entity\PageInterface", mappedBy="parentPage")
      * @ORM\OrderBy({"publishedAt": "DESC", "priority": "DESC"})
      *
-     * @var PageInterface[]|Collection<int, PageInterface>|null
+     * @var Collection<int, PageInterface>
      */
     protected $childrenPages;
 
@@ -50,11 +51,11 @@ trait PageParentTrait
     }
 
     /**
-     * @return PageInterface[]|Collection<int, PageInterface>|array
+     * @return Collection<int, PageInterface>
      */
     public function getChildrenPages()
     {
-        return null !== $this->childrenPages ? $this->childrenPages : [];
+        return null !== $this->childrenPages ? $this->childrenPages : new ArrayCollection([]);
     }
 
     public function hasChildrenPages(): bool
