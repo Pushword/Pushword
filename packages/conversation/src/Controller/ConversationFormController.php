@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Controller;
 
+use Doctrine\Persistence\ManagerRegistry;
 use ErrorException;
 use Pushword\Conversation\Form\ConversationFormInterface;
 use Pushword\Core\Component\App\AppPool;
@@ -41,6 +42,8 @@ final class ConversationFormController extends AbstractController
 
     private string $env;
 
+    private ManagerRegistry $doctrine;
+
     public function __construct(
         TranslatorInterface $translator,
         AppPool $appPool,
@@ -49,6 +52,7 @@ final class ConversationFormController extends AbstractController
         FormFactoryInterface $formFactory,
         TokenStorageInterface $tokenStorage,
         RouterInterface $router,
+        ManagerRegistry $doctrine,
         string $env
     ) {
         $this->translator = $translator;
@@ -59,6 +63,7 @@ final class ConversationFormController extends AbstractController
         $this->formFactory = $formFactory;
         $this->tokenStorage = $tokenStorage;
         $this->router = $router;
+        $this->doctrine = $doctrine;
     }
 
     /**
@@ -95,7 +100,7 @@ final class ConversationFormController extends AbstractController
         return $this->form = new $class(
             $this->params->get('pw.conversation.entity_message'),
             $request,
-            $this->get('doctrine'),
+            $this->doctrine,
             $this->tokenStorage,
             $this->formFactory,
             $this->twig,

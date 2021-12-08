@@ -2,6 +2,7 @@
 
 namespace Pushword\Version;
 
+use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
@@ -22,6 +23,14 @@ class VersionController extends AbstractController
      * @var class-string<PageInterface>
      */
     private string $pageClass;
+
+    private ManagerRegistry $doctrine;
+
+    /** @required */
+    public function setDoctrine(ManagerRegistry $doctrine): void
+    {
+        $this->doctrine = $doctrine;
+    }
 
     /** @required */
     public function setVersionner(Versionner $versionner): void
@@ -66,7 +75,7 @@ class VersionController extends AbstractController
 
     public function listVersion(string $id): Response
     {
-        $page = Repository::getPageRepository($this->get('doctrine'), $this->pageClass)->findOneBy(['id' => $id]);
+        $page = Repository::getPageRepository($this->doctrine, $this->pageClass)->findOneBy(['id' => $id]);
 
         if (null === $page) {
             throw new Exception('Page not found `'.$id.'`');
