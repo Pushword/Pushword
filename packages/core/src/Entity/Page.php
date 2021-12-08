@@ -19,6 +19,7 @@ use Pushword\Core\Entity\SharedTrait\IdTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Core\Validator\Constraints\PageRendering;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 /**
  * @ORM\MappedSuperclass
@@ -28,7 +29,6 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *     errorPath="slug",
  *     message="page.slug.already_used"
  * )
- * @PageRendering
  */
 class Page implements PageInterface
 {
@@ -53,5 +53,11 @@ class Page implements PageInterface
             $this->initTimestampableProperties();
             $this->publishedAt = new \DateTime();
         }
+    }
+
+    public static function loadValidatorMetadata(ClassMetadata $metadata): void
+    {
+        // TODO : fix why on admin, it's not throwing exception on submit
+        //$metadata->addConstraint( new PageRendering());
     }
 }
