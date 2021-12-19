@@ -7,23 +7,6 @@ module.exports = {
         heroPatterns: {
             bubbles: heropatterns.bubbles,
         },
-        colors: {
-            "blue-gray": colors.blueGray,
-            "cool-gray": colors.coolGray,
-            gray: colors.gray,
-            transparent: "transparent",
-            current: "currentColor",
-            black: colors.black,
-            white: colors.white,
-            gray: colors.coolGray,
-            red: colors.red,
-            yellow: colors.amber,
-            green: colors.emerald,
-            blue: colors.blue,
-            indigo: colors.indigo,
-            purple: colors.violet,
-            pink: colors.pink,
-        },
         flex: {
             1: "1 1 0%",
             auto: "1 1 auto",

@@ -13,7 +13,8 @@ class StaticController extends AbstractController
      */
     public function generateStatic(StaticAppGenerator $staticAppGenerator, ?string $host = null): Response
     {
-        $staticAppGenerator->generate($host);
+        exec('cd ../ && php bin/console pushword:static:generate '.$host.' > /dev/null 2>/dev/null &');
+        //$staticAppGenerator->generate($host); // TODO : fixed why it's logged me out
 
         return $this->render('@pwStaticGenerator/results.html.twig', ['errors' => $staticAppGenerator->getErrors()]);
     }

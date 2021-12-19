@@ -21,7 +21,7 @@ module.exports = {
                 use: [
                     {
                         loader: "babel-loader",
-                        query: {
+                        options: {
                             presets: ["@babel/preset-env"],
                         },
                     },

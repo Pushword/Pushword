@@ -20,6 +20,10 @@ trait KernelTrait
             static::$appKernel = new $kernelClass('test' == $env ? 'test' : 'prod', true);
             //static::$appKernel = clone $kernel;
             // NOTE: If we clone, it's take too much time in dev mod
+
+            //$warmupDir = static::$appKernel->getBuildDir();
+            //dd( $warmupDir);
+            //static::$appKernel->reboot($warmupDir);
             static::$appKernel->boot();
         }
     }

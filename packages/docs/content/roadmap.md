@@ -7,7 +7,11 @@ parent: contribute
 
 ## BugFix && To finish
 
--   [StaticGenerator] Next request is logged out...
+-   [StaticGenerator] Generation from admin ... Next request is logged out... (partially fixed)
+
+-   [MultiSiteEditor] : Make admin with better isolation
+    -   parent page
+    -   admin page list with only 1 domain listing + default correct selected domain on click add new
 -   Move to PHP configuration (rector ?!)
 -   When simplify 10 will be stable, add phpstan-twig-rules
 -   // TODO check a new blank installation

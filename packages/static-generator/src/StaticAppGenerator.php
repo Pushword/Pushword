@@ -82,7 +82,7 @@ final class StaticAppGenerator
         $filesystem->remove($staticDir.'~');
         $filesystem->mkdir($staticDir.'~');
 
-        foreach ($app->get('static_generators') as $generator) { // @phpstan-ignore-line
+        foreach ($app->get('static_generators') as $k => $generator) { // @phpstan-ignore-line
             //dump($generator);
             $this->getGenerator(\strval($generator))->generate();
         }
