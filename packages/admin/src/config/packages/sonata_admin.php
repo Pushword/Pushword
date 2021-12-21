@@ -1,7 +1,5 @@
 <?php
 
-use Pushword\Admin\PageAdminInterface;
-
 return [
     'sonata_admin' => [
         'security' => [
@@ -15,12 +13,7 @@ return [
             'blocks' => null, //- { type: sonata.admin.block.admin_list, position: left }
             'groups' => [
                 'app.admin.group.page' => [
-                    'label' => 'admin.label.content',
-                    'label_catalogue' => 'messages',
-                    'items' => [
-                        0 => PageAdminInterface::class,
-                        1 => 'pushword.admin.media',
-                    ],
+                    'provider' => 'page_admin_menu',
                 ],
                 'app.admin.group.setting' => [
                     'label' => 'admin.label.params',

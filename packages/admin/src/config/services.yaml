@@ -3,6 +3,13 @@ services:
   # Page
   # ---
 
+  pushword.admin.page_menu:
+        class: Pushword\Admin\Menu\PageMenuProvider
+        autowire: true
+        autoconfigure: true
+        tags:
+            - { name: knp_menu.menu_builder, method: getMenu, alias: page_admin_menu }
+
   Sonata\AdminBundle\Bridge\Exporter\AdminExporter:
     autowire: true
 
