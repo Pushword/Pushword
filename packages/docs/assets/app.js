@@ -1,5 +1,3 @@
-//import 'alpinejs';
-
 //require("fslightbox");
 import hljs from "highlight.js";
 

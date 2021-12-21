@@ -16,7 +16,7 @@
         "@editorjs/table": "^2.0.1",
         "@pushword/editorjs-tools": "file:../admin-block-editor-tools",
         "@pushword/js-helper": "file:../js-helper",
-        "@symfony/webpack-encore": "^1.6.1",
+        "@symfony/webpack-encore": "^1.7",
         "@vietlongn/editorjs-carousel": "^2.3.6",
         "ace-builds": "^1.4.12",
         "autoprefixer": "^10.1.0",

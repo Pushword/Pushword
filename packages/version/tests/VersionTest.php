@@ -7,6 +7,8 @@ namespace Pushword\Version\Tests;
 use Pushword\Core\Repository\Repository;
 use Pushword\Version\Versionner;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Serializer;
 
 class VersionTest extends KernelTestCase
 {
@@ -30,7 +32,7 @@ class VersionTest extends KernelTestCase
             self::$kernel->getLogDir(),
             $pageClass,
             self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
-            self::$kernel->getContainer()->get('serializer')
+            new Serializer([], ['json' => new JsonEncoder()])
         );
 
         $pageVersions = $versionner->getPageVersions($page);

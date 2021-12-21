@@ -4,6 +4,8 @@ namespace Pushword\Version\Tests;
 
 use Pushword\Admin\Tests\AbstractAdminTest;
 use Pushword\Version\Versionner;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Serializer;
 
 class ControllerTest extends AbstractAdminTest
 {
@@ -20,7 +22,7 @@ class ControllerTest extends AbstractAdminTest
             self::$kernel->getLogDir(),
             $pageClass,
             self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
-            self::$kernel->getContainer()->get('serializer')
+            new Serializer([], ['json' => new JsonEncoder()])
         );
 
         $pageVersions = $versionner->getPageVersions(1);

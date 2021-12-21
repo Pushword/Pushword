@@ -2,7 +2,7 @@
     "devDependencies": {
         "140.css": "^1.0",
         "@pushword/js-helper": "^0.0",
-        "@symfony/webpack-encore": "^0.33",
+        "@symfony/webpack-encore": "^1.7",
         "@tailwindcss/aspect-ratio": "^0.2",
         "@tailwindcss/forms": "^0.2",
         "@tailwindcss/typography": "^0.3",
