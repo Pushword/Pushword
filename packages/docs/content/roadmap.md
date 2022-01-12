@@ -9,6 +9,8 @@ parent: contribute
 
 -   [StaticGenerator] Generation from admin ... Next request is logged out... (partially fixed)
 
+    -   Very long CopierGenerator, MediaGenerator
+
 -   [MultiSiteEditor] : Make admin with better isolation
     -   parent page
     -   admin page list with only 1 domain listing + default correct selected domain on click add new

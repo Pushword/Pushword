@@ -51,7 +51,7 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    public const DEFAULT_COPY = ['assets', 'bundles', 'media', 'favicon.ico'];
+    public const DEFAULT_COPY = ['assets', 'bundles', 'media'];
 
     public function getConfigTreeBuilder(): TreeBuilder
     {
