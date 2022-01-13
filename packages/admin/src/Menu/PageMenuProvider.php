@@ -68,10 +68,27 @@ final class PageMenuProvider implements ContainerAwareInterface
     private function isEditing(string $host): bool
     {
         if (($request = $this->requestStack->getCurrentRequest()) !== null
-            && ($filter = $request->query->get('filter')) !== null) {
-            return $filter['host']['value'][0] === $host; // @phpstan-ignore-line
+            && ($hostInRequest = $this->extractHostFilter($request->query->all())) !== null) {
+            return $hostInRequest === $host;
         }
 
         return false;
+    }
+
+    /**
+     * @param mixed[] $query
+     */
+    private function extractHostFilter(array $query): ?string
+    {
+        if (
+            isset($query['filter']) && \is_array($query['filter']) &&
+            isset($query['host']) && \is_array($query['host']) &&
+            isset($query['value']) && \is_array($query['value']) &&
+            isset($query[0]) && \is_string($query[0])
+            ) {
+            return $query['filter']['host']['value'][0];
+        }
+
+        return null;
     }
 }
