@@ -179,6 +179,8 @@ class MediaListener
     }
 
     /**
+     * @psalm-suppress InternalMethod
+     *
      * Update storeIn.
      */
     public function onVichUploaderPostUpload(Event $event): void
@@ -187,7 +189,6 @@ class MediaListener
         $media = $event->getObject();
         $propertyMapping = $event->getMapping();
 
-        // @psalm-suppress InternalMethod
         $absoluteDir = $propertyMapping->getUploadDestination().'/'.$propertyMapping->getUploadDir($media);
         $media->setProjectDir($this->projectDir)->setStoreIn($absoluteDir);
 

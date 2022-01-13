@@ -52,7 +52,7 @@ class MainContentSplitter extends AbstractFilter
     }
 
     /**
-     * @psalm-suppress RedundantCast
+     * @psalm-suppress RedundantCast, RedundantFunctionCall
      */
     private function splitContentToParts(): void
     {
@@ -64,7 +64,7 @@ class MainContentSplitter extends AbstractFilter
 
         $this->content = $parsedContent[0];
         unset($parsedContent[0]);
-        $this->contentParts = array_values($parsedContent); // @psalm-suppress RedundantFunctionCall
+        $this->contentParts = array_values($parsedContent);
     }
 
     private function fixSplit(): void
