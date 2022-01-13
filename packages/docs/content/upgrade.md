@@ -1,5 +1,5 @@
 ---
-title: Upgrade a Pushword installation
+title: Upgrade a Pushword installation | Changelog
 h1: Upgrade Guide
 toc: true
 parent: installation
@@ -25,7 +25,15 @@ php bin/console make:migration && php bin/console doctrine:migrations:migrate
 php vendor/pushword/admin-block-editor/src/Installer/Update795.php~
 ```
 
--   Update front-end to tw3 and now leave `@pushword/js-helper` manage dependencies by keeping only this package in your `assets/package.json`
+-   **Update front-end to tailwind 3** by keeping only `@pushword/js-helper` as dependency in your `assets/package.json`
+    -   in your `tailwind.config.js` remove `colors`
+    -   in your `tailwind.config.js` and `webpack.config.js` replace `purge` by `content`
+    -   in your template files, check you are not using `(bluegray|coolgray|truegray|warmgray)`
+        -   `blueGray` wich is now `slate`
+        -   `coolGray` wich is now `gray`.
+        -   `trueGray` wich is now `neutral`.
+        -   `warmGray` wich is now `stone`.
+    -   in your template files, replace `{% apply unprose %}` by a wrapper like `<div class="not-prose w-screen relative left-[49%] ml-[-50vw]">`
 
 ## To 0.0.728
 

@@ -38,7 +38,7 @@ final class Configuration implements ConfigurationInterface
      * @var array<string, string>
      */
     public const DEFAULT_FILTERS = [
-        'main_content' => 'twig,date,email,encryptedLink,htmlEncryptedLink,image,phoneNumber,punctuation,markdown,unprose,mainContentSplitter,extended',
+        'main_content' => 'twig,date,email,encryptedLink,htmlEncryptedLink,image,phoneNumber,punctuation,markdown,mainContentSplitter,extended',
         'name' => 'twig,date,name,extended',
         'title' => 'twig,date,elseH1,extended',
         'string' => 'twig,date,email,encryptedLink,phoneNumber,extended',

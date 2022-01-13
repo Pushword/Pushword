@@ -4,16 +4,13 @@ namespace Pushword\Core\Twig;
 
 trait UnproseTwigTrait
 {
-    public function encryptTag(string $tag): string
-    {
-        return '<'.$tag.' '.sha1($tag.date('Y')).'>';
-    }
-
     /**
      * Twig filters.
      */
     public function unprose(string $html): string
     {
-        return $this->encryptTag('div').str_replace("\n", '', $html).$this->encryptTag('/div');
+        $unproseClass = 'not-prose w-screen relative left-[49%] ml-[-50vw]';
+
+        return '<div class="'.$unproseClass.'">'.$html.'</div>';
     }
 }
