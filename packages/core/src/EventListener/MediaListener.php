@@ -187,6 +187,7 @@ class MediaListener
         $media = $event->getObject();
         $propertyMapping = $event->getMapping();
 
+        // @psalm-suppress InternalMethod
         $absoluteDir = $propertyMapping->getUploadDestination().'/'.$propertyMapping->getUploadDir($media);
         $media->setProjectDir($this->projectDir)->setStoreIn($absoluteDir);
 
