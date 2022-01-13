@@ -45,7 +45,7 @@
 {% block content_part %}
     {% if pw(page).mainContent.contentParts %}
         {% for contentPart in pw(page).mainContent.contentParts %}
-        <div class="py-12 px-3 {{ cycle([page_delimiter_cycle|default('bg-gray-200'), ''], loop.index0)) }}">
+        <div class="py-12 px-3 {{ cycle([page_delimiter_cycle|default('bg-gray-200'), ''], loop.index0) }}">
             <div class="prose mx-auto">
             {{ contentPart|raw }}
             </div>
