@@ -122,7 +122,17 @@ class AppExtension extends AbstractExtension
             new TwigFunction('pages', [$this, 'getPublishedPages'], self::options()),
             new TwigFunction('pw', [$this->entityFilterManagerPool, 'getProperty'], self::options()),
             new TwigFunction('filesize', [FilesizeFormatter::class, 'formatBytes'], self::options()),
+            new TwigFunction('page_position', [$this, 'getPagePosition'], self::options()),
         ];
+    }
+
+    public function getPagePosition(PageInterface $page): int
+    {
+        if (null !== $page->getParentPage()) {
+            return $this->getPagePosition($page->getParentPage()) + 1;
+        }
+
+        return 1;
     }
 
     /**

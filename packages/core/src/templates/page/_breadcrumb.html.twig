@@ -2,10 +2,11 @@
 {% if page.parentPage is defined and page.parentPage is not null %}
     {% if page.parentPage.parentPage is not null %} {#We don't generate a breadcrumb for only one parent Page#}
         <nav aria-label="breadcrumb" class="{{ breadcrumb_class|default('max-w-3xl p-3 mx-auto text-sm font-light text-gray-700 dark:text-gray-300') }}">
-            <ul>
+            <ol itemscope itemtype="https://schema.org/BreadcrumbList">
                 {{ _self.breadcrumbPart(page.parentPage, true) }}
-                <!--<li aria-current="page" class="inline-block"> › {{ pw(page).name|raw|striptags }}</li>-->
-            </ul>
+                <!--<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" class="inline-block"> › <span itemprop="name">{{ pw(page).name|raw|striptags }}</span>
+                    <meta itemprop="position" content="{{ page_position(page) }}" /></li>-->
+            </ol>
         </nav>
     {% endif %}
 {% endif %}
@@ -14,8 +15,10 @@
     {% if page.parentPage is not null %}
         {{ _self.breadcrumbPart(page.parentPage) }}
     {% endif %}
-    <li class="inline-block">
-        <a href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}" class="hover:underline">{{ pw(page).name|raw|striptags }}</a>
+    <li class="inline-block" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}" class="hover:underline">
+            <span itemprop="name">{{ pw(page).name|raw|striptags }}</span></a>
+            <meta itemprop="position" content="{{ page_position(page) }}" />
         {% if first != true %}<span class="inline-block px-1">›</span>{% endif %}
     </li>
 {% endmacro %}
