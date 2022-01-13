@@ -120,7 +120,10 @@ class MainContentSplitter extends AbstractFilter
      */
     public function getToc(bool $html = true)
     {
-        return $html ? (new TocGenerator())->getHtmlMenu($this->originalContent, 2)
-            : (new TocGenerator())->getMenu($this->originalContent, 2);
+        $content = explode('<!--end-toc-->', $this->originalContent);
+        $content = $content[0];
+
+        return $html ? (new TocGenerator())->getHtmlMenu($content, 2)
+            : (new TocGenerator())->getMenu($content, 2);
     }
 }

@@ -25,6 +25,8 @@ php bin/console make:migration && php bin/console doctrine:migrations:migrate
 php vendor/pushword/admin-block-editor/src/Installer/Update795.php~
 ```
 
+-   Update front-end to tw3 and now leave `@pushword/js-helper` manage dependencies by keeping only this package in your `assets/package.json`
+
 ## To 0.0.728
 
 -   Update stylesheets

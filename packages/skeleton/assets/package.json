@@ -1,22 +1,6 @@
 {
     "devDependencies": {
-        "140.css": "^1.0",
-        "@pushword/js-helper": "^0.0",
-        "@symfony/webpack-encore": "^1.7",
-        "@tailwindcss/aspect-ratio": "^0.2",
-        "@tailwindcss/forms": "^0.2",
-        "@tailwindcss/typography": "^0.3",
-        "autoprefixer": "^10.1.0",
-        "babel-preset-stage-2": "^6.24.1",
-        "core-js": "^3.8.1",
-        "fslightbox": "^3.2.2",
-        "node-sass": "^5.0.0",
-        "postcss": "^8.2.1",
-        "postcss-import": "^14.0.0",
-        "postcss-loader": "^4.1",
-        "sass-loader": "^10.1.0",
-        "tailwindcss": "^3",
-        "webpack-watch-files-plugin": "^1.1.0"
+        "@pushword/js-helper": "^0.0"
     },
     "license": "UNLICENSED",
     "private": true,
