@@ -4,7 +4,7 @@
 {% for page in pages %}
   <url>
     <loc>{{ page(page, true) }}</loc>
-    <lastmod>{{ page.updatedAt|date('Y-m-d') }}</lastmod>
+    {# <lastmod>{{ page.updatedAt|date('Y-m-d') }}</lastmod> TODO : make it coherent if content contain a date(Y) or 'now'|date... #}
     {% if page.locale and page.translations.count > 0 %}
         <xhtml:link rel="alternate" hreflang="{{ page.locale }}" href="{{ page(page, true) }}"/>
         {% for translation in page.translations %}
