@@ -1,4 +1,5 @@
 const plugin = require("tailwindcss/plugin");
+import { extendTailwindTypography } from "@pushword/js-helper/src/tailwind.helpers.js";
 
 module.exports = {
     mode: "jit",
@@ -14,19 +15,7 @@ module.exports = {
             full: "100%",
         },
         extend: {
-            typography: {
-                DEFAULT: {
-                    css: {
-                        color: "#333",
-                        "a, span[data-rot]": {
-                            color: "var(--primary)",
-                            "&:hover": {
-                                opacity: ".75",
-                            },
-                        },
-                    },
-                },
-            },
+            typography: extendTailwindTypography(),
             colors: {
                 primary: "var(--primary)",
                 secondary: "var(--secondary)",

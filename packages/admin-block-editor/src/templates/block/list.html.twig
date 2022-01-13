@@ -1,4 +1,4 @@
-<div{{ blockWrapperAttr(block, {class: class(page, 'prose')}) }}>
+<div{{ blockWrapperAttr(block, {class: 'prose mx-auto'}) }}>
 {{ block.data.style == 'unordered' ? '<ul>' : '<ol>' }}
 {% for item in block.data.items %}
     {% if item.content is defined %}

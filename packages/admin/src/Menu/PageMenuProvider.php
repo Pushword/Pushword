@@ -69,7 +69,7 @@ final class PageMenuProvider implements ContainerAwareInterface
     {
         if (($request = $this->requestStack->getCurrentRequest()) !== null
             && ($filter = $request->query->get('filter')) !== null) {
-            return $filter['host']['value'][0] === $host;
+            return $filter['host']['value'][0] === $host; // @phpstan-ignore-line
         }
 
         return false;

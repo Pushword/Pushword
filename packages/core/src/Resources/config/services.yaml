@@ -129,12 +129,12 @@ services:
 
   # Vich
   # --------
+# todo : to delete
+  # vich_uploader.pushword.namer_property:
+  #   class: Pushword\Core\Service\VichUploadPropertyNamer
+  #   public: true
+  #   arguments: ['@Vich\UploaderBundle\Util\Transliterator']
 
-  vich_uploader.pushword.namer_property:
-    class: Pushword\Core\Service\VichUploadPropertyNamer
-    public: true
-    arguments: ['@Vich\UploaderBundle\Util\Transliterator']
-
-  Pushword\Core\Service\VichUploadPropertyNamer:
-    alias: vich_uploader.pushword.namer_property
-    public: true
+  # Pushword\Core\Service\VichUploadPropertyNamer:
+  #   alias: vich_uploader.pushword.namer_property
+  #   public: true

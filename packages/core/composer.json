@@ -21,7 +21,7 @@
         "piedweb/render-html-attributes": "^2.0.1",
         "piedweb/url-harvester": "^0.0.31",
         "pushword/skeleton": "*",
-        "thecodingmachine/safe": "^1.3",
+        "thecodingmachine/safe": "^1.3 || ^2.0",
         "sensio/framework-extra-bundle": "^5.6",
         "spatie/image-optimizer": "^1.3",
         "symfony/asset": "^5.3 || ^6.0",

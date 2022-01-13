@@ -31,7 +31,6 @@ class AppExtension extends AbstractExtension
 {
     // TODO switch from Trait to service (will be better to test and add/remove twig extension)
     //use AttributesTrait;
-    use ClassTrait;
     use GalleryTwigTrait;
     use LinkTwigTrait;
     use PageListTwigTrait;
@@ -121,7 +120,6 @@ class AppExtension extends AbstractExtension
             new TwigFunction('pager', [$this, 'renderPager'], self::options(true)),
             new TwigFunction('pages_list', [$this, 'renderPagesList'], self::options(true)),
             new TwigFunction('pages', [$this, 'getPublishedPages'], self::options()),
-            new TwigFunction('class', [$this, 'getHtmlClass'], self::options()),
             new TwigFunction('pw', [$this->entityFilterManagerPool, 'getProperty'], self::options()),
             new TwigFunction('filesize', [FilesizeFormatter::class, 'formatBytes'], self::options()),
         ];

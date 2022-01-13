@@ -11,11 +11,9 @@ use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredEntityTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use Pushword\Core\Component\EntityFilter\Filter\AbstractFilter;
-use Pushword\Core\Twig\ClassTrait;
 
 final class BlockEditorFilter extends AbstractFilter
 {
-    use ClassTrait;
     use RequiredAppTrait;
     use RequiredEntityTrait;
     use RequiredTwigTrait;
