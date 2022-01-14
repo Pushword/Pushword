@@ -1,6 +1,6 @@
 import RawTool from "@editorjs/raw/src/index.js";
 import { transformTextareaToAce } from "./../../../admin/src/Resources/assets/admin.ace-editor.js";
-//import css from "@editorjs/raw/src/index.css";
+import css from "@editorjs/raw/src/index.css";
 
 export default class Raw extends RawTool {
     // Wait for PR  https://github.com/editor-js/raw/pull/25 merged

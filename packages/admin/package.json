@@ -1,6 +1,6 @@
 {
     "devDependencies": {
-        "@pushword/js-helper": "file:../js-helper",
+        "@pushword/js-helper": "file:../js-helper"
     },
     "license": "UNLICENSED",
     "private": true,

@@ -1,6 +1,8 @@
+//require("./index.css").toString(); /
+import css from "./index.css";
+
 import CarouselTool from "@vietlongn/editorjs-carousel/src/index.js";
 import make from "./../Abstract/make.js";
-import css from "./index.css";
 import ToolboxIcon from "./toolbox-icon.svg";
 
 export default class Gallery extends CarouselTool {
