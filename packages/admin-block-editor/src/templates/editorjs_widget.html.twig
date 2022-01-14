@@ -176,7 +176,7 @@ var editorjsConfig = {
         {% block editorjs_block_to_add_new_plugin %}{% endblock %}
     },
 
-    data: {{ (value ? value : "{}")|raw }},
+    data: JSON.parse("{{ (value ? value : "{}")|raw|e('js') }}"),
     logLevel: "ERROR",
     holder: "{{ editor_id }}",
 };
