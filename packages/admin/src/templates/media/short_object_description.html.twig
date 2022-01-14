@@ -1,4 +1,5 @@
-<img src="{{ object|image('xs') }}" style="width:100%;">
-<style>
-
-</style>
+{% if object.isImage %}
+    <img src="{{ object|image('xs') }}" style="width:100%;">
+{% else %}
+    <img src="/media/{{ object.media }}" style="width:100%;"> {# to avoid a bug with Attaches.js, #}
+{% endif %}

@@ -62,8 +62,7 @@ final class ImageManager
 
     public function isImage(MediaInterface $media): bool
     {
-        return str_contains((string) $media->getMimeType(), 'image/')
-            && \in_array(strtolower(str_replace('image/', '', (string) $media->getMimeType())), ['jpg', 'jpeg', 'png', 'gif'], true);
+        return $media->isImage();
     }
 
     public function generateCache(MediaInterface $media): void

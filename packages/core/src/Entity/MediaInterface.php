@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\File\File;
 
 interface MediaInterface extends IdInterface, TimestampableInterface, CustomPropertiesInterface
 {
+    public function isImage(): bool;
+
     public function getWidth(): ?int;
 
     public function getHeight(): ?int;

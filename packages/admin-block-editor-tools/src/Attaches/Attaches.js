@@ -15,9 +15,9 @@ export default class Attaches extends AttachesTool {
         //this.onSelectFile();
     }
     onUpload(response) {
-        response = { body: response };
+        response.file.title = response.file.name;
         super.onUpload(response);
-        if (response.body.success && response.body.file) this.nodes.buttonWrapper.remove();
+        if (response.success && response.file) this.nodes.buttonWrapper.remove();
     }
 
     prepareUploadButton() {
