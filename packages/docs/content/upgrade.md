@@ -33,7 +33,7 @@ php vendor/pushword/admin-block-editor/src/Installer/Update795.php~
         -   `coolGray` wich is now `gray`.
         -   `trueGray` wich is now `neutral`.
         -   `warmGray` wich is now `stone`.
-    -   in your template files, replace `{% apply unprose %}` by a wrapper like `<div class="not-prose w-screen relative left-[49%] ml-[-50vw]">`
+    -   in your template files, replace `apply unprose` by a wrapper like `<div class="not-prose w-screen relative left-[49%] ml-[-50vw]">`
 
 ## To 0.0.728
 
