@@ -10,7 +10,7 @@ const watchFiles = [
 ];
 
 var TailwindConfig = require("./src/Resources/assets/tailwind.config.js");
-TailwindConfig.purge = watchFiles;
+TailwindConfig.content = watchFiles;
 
 Encore.setOutputPath("./src/Resources/public/")
     .setPublicPath("./")

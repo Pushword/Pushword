@@ -1,5 +1,5 @@
 const plugin = require("tailwindcss/plugin");
-import { extendTailwindTypography } from "@pushword/js-helper/src/tailwind.helpers.js";
+const pushwordHelper = require("@pushword/js-helper/src/tailwind.helpers.js");
 
 module.exports = {
     mode: "jit",
@@ -15,7 +15,7 @@ module.exports = {
             full: "100%",
         },
         extend: {
-            typography: extendTailwindTypography(),
+            typography: pushwordHelper.extendTailwindTypography(),
             colors: {
                 primary: "var(--primary)",
                 secondary: "var(--secondary)",
@@ -27,19 +27,7 @@ module.exports = {
         require("@tailwindcss/typography"),
         require("@tailwindcss/aspect-ratio"),
         require("@tailwindcss/forms"),
-        plugin(function ({ addVariant, e }) {
-            addVariant("first-letter", ({ modifySelectors, separator }) => {
-                modifySelectors(({ className }) => {
-                    return `.${e(`first-letter${separator}${className}`)}:first-letter`;
-                });
-            });
-        }),
-        plugin(function ({ addVariant, e }) {
-            addVariant("first-child", ({ modifySelectors, separator }) => {
-                modifySelectors(({ className }) => {
-                    return `.${e(`first-child${separator}${className}`)}:first-child`;
-                });
-            });
-        }),
+        plugin(pushwordHelper.twFirstLetterPlugin),
+        plugin(pushwordHelper.twFirstChildPlugin),
     ],
 };
