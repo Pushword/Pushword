@@ -12,10 +12,7 @@ const watchFiles = [
     "./../templates/**/**/*.html.twig",
 ];
 
-// if yarn is shouting at you :
-// $ cp ./../vendor/pushword/core/src/Resources/assets/tailwind.config.js ./tailwind.config.js
-// Then edit the next line :
-var tailwindConfig = require("./../vendor/pushword/core/src/Resources/assets/tailwind.config.js");
+var tailwindConfig = require("@pushword/js-helper/src/tailwind.config.js");
 tailwindConfig.purge = watchFiles;
 
 Encore.setOutputPath("./../public/assets/")

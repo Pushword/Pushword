@@ -9,7 +9,7 @@ const watchFiles = [
     "./../admin-block-editor/src/templates/block/*.html.twig",
 ];
 
-var TailwindConfig = require("./src/Resources/assets/tailwind.config.js");
+var TailwindConfig = require("@pushword/js-helper/src/tailwind.config.js");
 TailwindConfig.content = watchFiles;
 
 Encore.setOutputPath("./src/Resources/public/")
