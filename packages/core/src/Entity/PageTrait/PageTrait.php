@@ -27,7 +27,7 @@ trait PageTrait
     protected string $mainContent = '';
 
     /**
-     * @ORM\Column(type="datetime") //, options={"default": "CURRENT_TIMESTAMP"}
+     * @ORM\Column(type="datetime", options={"default": "CURRENT_TIMESTAMP"})
      */
     protected ?DateTimeInterface $publishedAt = null;
 

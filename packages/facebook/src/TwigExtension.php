@@ -24,9 +24,7 @@ class TwigExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('facebook_last_post', function (Twig $twig, string $id, string $template) {
-                return $this->showFacebookLastPost($twig, $id, $template);
-            }, ['needs_environment' => true, 'is_safe' => ['html']]),
+            new TwigFunction('facebook_last_post', [$this, 'showFacebookLastPost'], ['needs_environment' => true, 'is_safe' => ['html']]),
         ];
     }
 
@@ -35,6 +33,7 @@ class TwigExtension extends AbstractExtension
      */
     protected function getFacebookLastPost(string $id): ?array
     {
+        Client::$userAgent = 'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/W.X.Y.Z Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
         $facebookScraper = new FacebookScraper($id);
         $posts = $facebookScraper->getPosts();
 

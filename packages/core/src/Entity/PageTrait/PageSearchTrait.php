@@ -10,7 +10,7 @@ trait PageSearchTrait
     /**
      * may Index ?
      *
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column(type="string", length=50, options={"default": ""})
      */
     protected string $metaRobots = '';
 
@@ -31,7 +31,7 @@ trait PageSearchTrait
     /**
      * priority.
      *
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="integer", options={"default": 0})
      */
     protected int $priority = 0;
 
