@@ -5,9 +5,9 @@
         "./page.min.js"
       ]
     },
-    "tailwind.min": {
+    "talwind.min": {
       "css": [
-        "./tailwind.min.css"
+        "./talwind.min.css"
       ]
     }
   }
