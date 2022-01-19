@@ -37,6 +37,12 @@ module.exports = {
                 transform: "translateX(-50%)",
                 "max-width": "none",
             },
+            ".bleed-disable": {
+                width: "inherit",
+                "margin-inline-start": "inherit",
+                "margin-inline-end": "inherit",
+                transform: "default",
+            },
         });
     },
 };

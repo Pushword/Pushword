@@ -43,10 +43,12 @@
         "symfony/web-link": "^5.3 || ^6.0",
         "symfony/webpack-encore-bundle": "^1.8",
         "symfony/yaml": "^5.3 || ^6.0",
+        "symfony/dotenv": "^5.3 || ^6.0",
+        "symfony/runtime": "^5.3 || ^6.0",
         "twig/intl-extra": "^3.2",
         "vich/uploader-bundle": "^1.16",
         "villfa/invert-color": "^0.5",
-        "wyrihaximus/html-compress": "^4.1"
+        "wyrihaximus/html-compress": "^4.1",
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.17",
