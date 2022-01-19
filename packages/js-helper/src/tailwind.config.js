@@ -29,5 +29,6 @@ module.exports = {
         require("@tailwindcss/forms"),
         plugin(pushwordHelper.twFirstLetterPlugin),
         plugin(pushwordHelper.twFirstChildPlugin),
+        plugin(pushwordHelper.twBleedPlugin),
     ],
 };

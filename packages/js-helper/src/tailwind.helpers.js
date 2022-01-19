@@ -28,4 +28,15 @@ module.exports = {
             });
         });
     },
+    twBleedPlugin: function ({ addUtilities }) {
+        addUtilities({
+            ".bleed": {
+                width: "100vw",
+                "margin-inline-start": "50%",
+                "margin-inline-end": "unset",
+                transform: "translateX(-50%)",
+                "max-width": "none",
+            },
+        });
+    },
 };
