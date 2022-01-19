@@ -49,9 +49,9 @@ final class Configuration implements ConfigurationInterface
      */
     public const DEFAULT_ASSETS = [
         'stylesheets' => [
-            '/bundles/pushwordcore/tailwind.min.css',
+            '/bundles/pushwordcore/style.css',
         ],
-        'javascripts' => ['/bundles/pushwordcore/page.min.js'],
+        'javascripts' => ['/bundles/pushwordcore/app.js'],
     ];
 
     /**

@@ -1,6 +1,3 @@
-const WatchExternalFilesPlugin = require("webpack-watch-files-plugin").default;
-const Encore = require("@symfony/webpack-encore");
-const tailwindcss = require("tailwindcss");
 const EncoreHelper = require("@pushword/js-helper/src/encore.js");
 
 var watchFiles = [
@@ -25,9 +22,7 @@ module.exports = EncoreHelper.getEncore(
         },
     ],
     [
-        { name: "page.min", file: "./src/Resources/assets/page.js" }, // {{ asset('bundles/pushwordcore/page.min.js') }}
+        { name: "app", file: "./src/Resources/assets/page.js" }, // {{ asset('bundles/pushwordcore/page.min.js') }}
     ],
-    [{ name: "talwind.min", file: "./src/Resources/assets/tailwind.css" }]
+    [{ name: "style", file: "./src/Resources/assets/tailwind.css" }]
 ).getWebpackConfig();
-
-module.exports = Encore.getWebpackConfig();
