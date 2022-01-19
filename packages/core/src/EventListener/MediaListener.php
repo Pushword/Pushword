@@ -174,7 +174,7 @@ class MediaListener
             return $this->flashBag;
         }
 
-        return null !== ($request = $this->requestStack->getCurrentRequest()) && method_exists($request->getSession(), 'getFlashBag') ?
+        return null !== ($request = $this->requestStack->getCurrentRequest()) && $request->hasSession() ?
                 $this->flashBag = $request->getSession()->getFlashBag() : null;
     }
 

@@ -68,7 +68,7 @@ class VersionController extends AbstractController
     public function resetVersioning(Request $request, int $id): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         $this->versionner->reset($id);
-        $request->getSession()->getFlashBag()->add('success', $this->translator->trans('version.reset_history')); // @phpstan-ignore-line
+        $request->getSession()->getFlashBag()->add('success', $this->translator->trans('version.reset_history'));
 
         return $this->redirectToRoute('admin_app_page_edit', ['id' => $id]);
     }

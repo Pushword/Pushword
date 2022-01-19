@@ -50,13 +50,13 @@ trait PageI18nTrait
      */
     public function getTranslations(): Collection
     {
-        return null !== $this->translations ? $this->translations : new ArrayCollection();
+        return null !== $this->translations ? $this->translations : ($this->translations = new ArrayCollection());
     }
 
     public function addTranslation(PageInterface $page, bool $recursive = true): self
     {
         if (! $this->getTranslations()->contains($page) && $this != $page) {
-            $this->translations[] = $page;
+            $this->getTranslations()->add($page);
         }
 
         // Add the other ('ever exist') translations to the new added Translation
