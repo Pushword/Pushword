@@ -7,35 +7,31 @@ parent: contribute
 
 ## BugFix && To finish
 
--   [StaticGenerator] Generation from admin ... Next request is logged out... (partially fixed)
+-   [AdminBlockEditor] Add Layout https://github.com/hata6502/editorjs-layout#readme
 
-    -   Very long CopierGenerator, MediaGenerator
+-   [StaticGenerator] Very long CopierGenerator, MediaGenerator -> set a warning in docs
 
 -   [MultiSiteEditor] : Make admin with better isolation
     -   parent page
     -   admin page list with only 1 domain listing + default correct selected domain on click add new
--   Move to PHP configuration (rector ?!)
 -   When simplify 10 will be stable, add phpstan-twig-rules
 -   // TODO check a new blank installation
--   **Admin Block Editor Tools** : Image > Add link + Alt and redesign Legend
--   **Admin Block Editor** : document block and add Help link when advanced knowledge is needed
--   **Admin Block editor** : édition avancée (template notamment dans pages, prose/unprise)
-    -   intégrer [.not-prose](https://github.com/tailwindlabs/tailwindcss-typography/pull/205) quand taiwlind-typo 0.0.5 sera stable
+-   [AdminBlockEditor] Image > Add link + Alt and redesign Legend
+-   [AdminBlockEditor] document block and add Help link when advanced knowledge is needed
+-   [AdminBlockEditor] édition avancée (template notamment dans pages, prose/unprise)
     -   rewrite the fullscreen, wide, and max width from prose - [see](https://github.com/tailwindlabs/tailwindcss-typography/pull/204)
--   **Core** : ImageManager - make optimizer bin path configurable
+-   [Core] : ImageManager - make optimizer bin path configurable
 
--   **pagination** : tester & documenter
+-   {Core] **pagination** : tester & documenter
     -   Bug quand une page a le même URI qu'une page de la pagination OU sur l'ID (attrapé avant la pagination)
         => En fait, c'est paginer la page d'accueil qui fait le max de bordel
--   **Prose/Unprose** : Avoid empty prose div : (see two block unprose one after the other)
--   **Static-Generator** : Make ErrorPageGenerator consistent with htaccess (on htaccess, filter by beginning url to return the correct one ?!)
+-   [StaticGenerator] Make ErrorPageGenerator consistent with htaccess (on htaccess, filter by beginning url to return the correct one ?!)
 
--   **Admin Block Editor** : sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
--   **Admin Block Editor Tools** : prepare translating and transalte
+-   [AdminBlockEditor] sanitize with https://github.com/editor-js/editorjs-php (see AdminFormEventSuscriber.php)
+-   [AdminBlockEditor] prepare translating and transalte
 
 ## Feature
 
--   **Admin Menu** ? https://github.com/nan-guo/Sonata-Menu-Bundle
 -   **Page scanner** : test current page anchor link
 -   Toward wiki !
     -   **page authors**

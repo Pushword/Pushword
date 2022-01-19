@@ -55,7 +55,7 @@ Unzip it on a classic Apache/PHP server and play.
 
 {% apply unprose %}
 
-<div class="relative mb-6 shadow-sm bg-gray-50 dark:bg-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-cool-gray-900 dark:to-cool-gray-800">
+<div class="relative mb-6 shadow-sm bg-gray-50 dark:bg-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
     <div class="max-w-screen-sm mx-auto">
         <h2 class="pt-12 pb-6 text-4xl">Features<br><small class="text-lg">Create content and publish it on the web smoothly</small></h2>
     </div>

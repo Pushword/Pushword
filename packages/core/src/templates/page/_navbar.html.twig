@@ -21,6 +21,7 @@
     lg:items-center lg:justify-start lg:max-h-full lg:flex-row lg:space-x-6 lg:space-y-0 lg:pt-0' :
     'flex flex-row space-x-6 text-center items-center pt-3 lg:pt-0') %}
 
+{% block before_navbar %}{% endblock %}
 
 <div class="{{ navbar_wrapper_class|default('flex flex-col justify-between p-4 border-b-2 border-gray-200 lg:flex-row order-first w-full' ~ (toggle_button == false ? ' items-center' : '')) }}" id="navbar">
     {{ (navbar_container is defined ? ('<div class="'~navbar_container|default('') ~'">') : '') }}
@@ -45,7 +46,9 @@
             {% if navbar_items is defined and navbar_items is not empty %}
                 <nav id="navbar-links" class="{{ navbar_nav_class }}">
                     {% for item in navbar_items %}
-                        {% if is_current_page(item.attr.href, page) %}
+                        {% if item.html is defined %}
+                            {{ item.html|raw }}
+                        {% elseif is_current_page(item.attr.href, page) %}
                             <span class="text-light {{ (navbar_nav_item_class_active ?? navbar_nav_item_class)|default('text-primary') }}" aria-current="page">
                                 {{ item.anchor|raw }}
                             </span>
