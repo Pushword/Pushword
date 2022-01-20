@@ -233,7 +233,7 @@ export async function uncloakLinks(attribute = "data-rot", when = "onEvent") {
         } else {
             var element = convertLink(event.target);
         }
-        fireEventLinksBuilt(element, event);
+        if (element) fireEventLinksBuilt(element, event);
     };
 
     if (when == "onEvent") {
