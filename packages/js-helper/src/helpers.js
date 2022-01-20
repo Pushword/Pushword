@@ -199,7 +199,7 @@ export async function uncloakLinks(attribute = "data-rot", when = "onEvent") {
         if (element.getAttribute(attribute) === null) {
             var element = element.closest("[" + attribute + "]");
         }
-        if (element.getAttribute(attribute) === null) return;
+        if (element === null || element.getAttribute(attribute) === null) return;
         var link = document.createElement("a");
         var href = element.getAttribute(attribute);
         element.removeAttribute(attribute);
