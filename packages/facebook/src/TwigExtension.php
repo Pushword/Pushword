@@ -3,6 +3,7 @@
 namespace Pushword\Facebook;
 
 use PiedWeb\FacebookScraper\Client;
+use PiedWeb\FacebookScraper\FacebookLikeboxScraper;
 use PiedWeb\FacebookScraper\FacebookScraper;
 use Pushword\Core\AutowiringTrait\RequiredApps;
 use Pushword\Core\Service\ImageManager;
@@ -33,17 +34,33 @@ class TwigExtension extends AbstractExtension
      */
     protected function getFacebookLastPost(string $id): ?array
     {
-        //Client::$userAgent = 'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/W.X.Y.Z Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+        $facebookLikeboxScraper = new FacebookLikeboxScraper($id);
+        $posts = $facebookLikeboxScraper->getPosts();
+
+        if (isset($posts[0])) {
+            return $posts[0];
+        }
+
         $facebookScraper = new FacebookScraper($id);
         $posts = $facebookScraper->getPosts();
 
-        // We retry getting the last result wich succeed to request facebook
-        if (! isset($posts[0])) {
-            $defaultCacheExpir = Client::$cacheExpir;
-            Client::$cacheExpir = 0;
-            $posts = $facebookScraper->getPosts();
-            Client::$cacheExpir = $defaultCacheExpir;
+        if (isset($posts[0])) {
+            return $posts[0];
         }
+
+        $defaultCacheExpir = Client::$cacheExpir;
+        Client::$cacheExpir = 0;
+        $posts = $facebookLikeboxScraper->getPosts();
+        Client::$cacheExpir = $defaultCacheExpir;
+
+        if (isset($posts[0])) {
+            return $posts[0];
+        }
+
+        $defaultCacheExpir = Client::$cacheExpir;
+        Client::$cacheExpir = 0;
+        $posts = $facebookScraper->getPosts();
+        Client::$cacheExpir = $defaultCacheExpir;
 
         return $posts[0] ?? null;
     }

@@ -8,7 +8,7 @@
     "require": {
         "pushword/core": "^0.0",
         "pushword/svg": "^0.0",
-        "piedweb/facebook-scraper": "^0.0.74"
+        "piedweb/facebook-scraper": "^0.0.75"
     },
     "extra": {
         "branch-alias": {

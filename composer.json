@@ -32,7 +32,7 @@
         "phpstan/extension-installer": "^1.1",
         "phpstan/phpstan-phpunit": "^1.0",
         "phpstan/phpstan-strict-rules": "^1.0",
-        "piedweb/facebook-scraper": "^0.0.74",
+        "piedweb/facebook-scraper": "^0.0.75",
         "piedweb/linksimprover": "^0.0.8",
         "piedweb/render-html-attributes": "^2.0.1",
         "piedweb/url-harvester": "^0.0.31",
