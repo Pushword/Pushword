@@ -24,6 +24,7 @@ module.exports = {
     },
     variants: {},
     plugins: [
+        require("tailwindcss-multi-column")(),
         require("@tailwindcss/typography"),
         require("@tailwindcss/aspect-ratio"),
         require("@tailwindcss/forms"),
