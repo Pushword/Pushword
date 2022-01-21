@@ -9,7 +9,7 @@ trait UnproseTwigTrait
      */
     public function unprose(string $html): string
     {
-        $unproseClass = 'not-prose w-screen relative left-[49%] ml-[-50vw]';
+        $unproseClass = 'not-prose bleed my-6';
 
         return '<div class="'.$unproseClass.'">'.$html.'</div>';
     }

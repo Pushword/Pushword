@@ -2,7 +2,7 @@
 
 {% if (needBlockWrapper(block) or (block.data.stretched is defined and block.data.stretched)) %}<div{{ blockWrapperAttr(block.data,
     block.data.stretched is defined and block.data.stretched
-        ? {'class':'w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw]'} : {}) }}>{% endif %}
+        ? {'class':'bleed'} : {}) }}>{% endif %}
 
     {{ video(block.data.serviceUrl, block.data.image.url, block.data.alternativeText) }}
 
