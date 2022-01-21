@@ -8,6 +8,7 @@ use PiedWeb\UrlHarvester\Harvest;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Twig\AppExtension;
 use Pushword\Core\Utils\F;
+use Symfony\Component\DomCrawler\Crawler as DomCrawler;
 
 /**
  * Permit to find error in image or link.
@@ -27,6 +28,8 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private string $publicDir;
 
+    private ?DomCrawler $domPage = null;
+
     /**
      * @var array<string, mixed>
      */
@@ -38,6 +41,7 @@ final class LinkedDocsScanner extends AbstractScanner
         $this->entityManager = $entityManager;
     }
 
+    // Starting point called from AbstractSanner::scan
     protected function run(): void
     {
         $this->linksCheckedCounter = 0;
@@ -184,12 +188,20 @@ final class LinkedDocsScanner extends AbstractScanner
         return (bool) \Safe\preg_match('/^https:\/\/(www)?\.?(example.tld|instagram.com)/i', $url);
     }
 
+    private function getDomPage(): DomCrawler
+    {
+        if (null !== $this->domPage) {
+            return $this->domPage;
+        }
+
+        return new DomCrawler($this->pageHtml);
+    }
+
     private function targetExist(string $target): bool
     {
-        // todo: prefer a dom explorer
-        $regex = '/ (?:id|name)=(["\'])(?:[^\1]* |)'.preg_quote($target, '/').'(?: [^\1]*\1|\1)/Ui';
-
-        return false !== preg_match($regex, $this->pageHtml);
+        return null !== $this->getDomPage()->filter('[name*="install"],[id*="install"]')->getNode(0);
+        //$regex = '/ (?:id|name)=(["\'])(?:[^\1]* |)'.preg_quote($target, '/').'(?: [^\1]*\1|\1)/Ui';
+        //return false !== preg_match($regex, $this->pageHtml);
     }
 
     /**
@@ -211,7 +223,7 @@ final class LinkedDocsScanner extends AbstractScanner
         );
 
         if (\is_int($harvest)) {
-            $return = $this->trans('page_scan.unreachable', ['%nerrorCode%n' => $harvest]);
+            $return = $this->trans('page_scan.unreachable', ['errorCode' => curl_strerror($harvest)]);
         } elseif (200 !== $errorCode = $harvest->getResponse()->getStatusCode()) {
             $return = $this->trans('page_scan.status_code').' ('.$errorCode.')';
         } elseif (! $harvest->isCanonicalCorrect()) {

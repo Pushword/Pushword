@@ -93,6 +93,7 @@ class AppExtension extends AbstractExtension
             new TwigFilter('unprose', [$this, 'unprose'], self::options()),
             new TwigFilter('image', [$this->imageManager, 'getBrowserPath'], self::options()),
             new TwigFilter('markdown', [(new MarkdownParser()), 'transform'], self::options()),
+            new TwigFilter('view', [$this, 'getView'], ['needs_environment' => false]),
         ];
     }
 

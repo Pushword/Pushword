@@ -16,6 +16,7 @@ sh ./.scripts/data-preserve
 
 #XDEBUG_MODE=off php -dxdebug.mode=off
 vendor/bin/phpunit --stop-on-failure
+# packages/page-scanner/tests/LinkedDocsScannerTest.php
 #--debug
 
 if [ "$1" = "full" ]
