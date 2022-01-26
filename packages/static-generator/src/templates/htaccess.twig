@@ -6,6 +6,9 @@ DirectorySlash Off
 
 AddDefaultCharset UTF-8
 
+{% block before_rules %}
+{% endblock %}
+
 #---
 # Redirect www subfolder (or other) to domain.tld
 #---
@@ -103,3 +106,6 @@ Header set Cache-Control "max-age=14400, must-revalidate"
   AddOutputFilterByType DEFLATE text/plain
   AddOutputFilterByType DEFLATE text/xml
 </IfModule>
+
+{% block after_rules %}
+{% endblock %}

@@ -8,7 +8,7 @@ class HtaccessGenerator extends PageGenerator
     {
         $this->init($host);
 
-        $htaccess = $this->twig->render('@pwStaticGenerator/htaccess.twig', [
+        $htaccess = $this->twig->render($this->apps->get()->getView('/htaccess.twig', '@pwStaticGenerator'), [
             'domain' => $this->app->getMainHost(),
             'redirections' => $this->getRedirections(),
         ]);

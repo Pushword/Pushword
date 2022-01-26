@@ -12,8 +12,12 @@ parent: contribute
 -   [StaticGenerator] Very long CopierGenerator, MediaGenerator -> set a warning in docs
 
 -   [MultiSiteEditor] : Make admin with better isolation
+
     -   parent page
+    -   menu when editing a page
     -   admin page list with only 1 domain listing + default correct selected domain on click add new
+    -   preview : manage page link to be OK when it's not the fist domain
+
 -   When simplify 10 will be stable, add phpstan-twig-rules
 -   // TODO check a new blank installation
 -   [AdminBlockEditor] Image > Add link + Alt and redesign Legend
