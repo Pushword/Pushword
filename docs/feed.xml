@@ -10,6 +10,12 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[Upgrade Guide]]></title>
+                    <link>https://pushword.piedweb.com/upgrade</link>
+                    <guid>https://pushword.piedweb.com/upgrade</guid>
+                    <pubDate>Wed, 26 Jan 2022 14:23:13 +0100</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Build modern Content First websites rapidly  Manage and maintain it as quickly]]></title>
                     <link>https://pushword.piedweb.com/</link>
                     <guid>https://pushword.piedweb.com/</guid>
@@ -20,12 +26,6 @@
                     <link>https://pushword.piedweb.com/roadmap</link>
                     <guid>https://pushword.piedweb.com/roadmap</guid>
                     <pubDate>Wed, 19 Jan 2022 18:33:07 +0100</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Upgrade Guide]]></title>
-                    <link>https://pushword.piedweb.com/upgrade</link>
-                    <guid>https://pushword.piedweb.com/upgrade</guid>
-                    <pubDate>Fri, 14 Jan 2022 09:55:53 +0100</pubDate>
                 </item>
                                                                 <item>
                     <title><![CDATA[Configuration]]></title>
