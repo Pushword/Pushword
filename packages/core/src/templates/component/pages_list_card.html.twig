@@ -3,7 +3,7 @@
         <ul class="flex flex-row my-5 max-w-screen-md flex-wrap justify-center mx-auto">
             {% for p in pages %}
                 <li class="w-full px-1 my-1 sm:w-1/2 md:w-1/3">
-                    {% include view('/component/card.html.twig') with {'page': p} only %}
+                    {% include view('/component/card.html.twig') with {'p': p} %}
                 </li>
             {% endfor %}
         </ul>

@@ -4,11 +4,11 @@
     hLevel
     title
 #}
-{% if page is defined %}
- {% set image = page.mainImage %}
- {% set date = page.createdAt %}
- {% set title = pw(page).h1 %}
- {% set link = page(page) %}
+{% if p is defined %}
+ {% set image = p.mainImage %}
+ {% set date = p.createdAt %}
+ {% set title = pw(p).h1 %}
+ {% set link = p(p) %}
 {% endif %}
 
 
@@ -17,7 +17,7 @@
 <article class="overflow-hidden rounded-lg shadow-lg">
 
     {% if image is defined and image is not null %}
-        {{ helper.thumb(media_from_string(image), page ?? null, 'thumb', {'class': 'block w-full h-auto m-0'}) }}
+        {{ helper.thumb(media_from_string(image), p ?? null, 'thumb', {'class': 'block w-full h-auto m-0'}) }}
     {% endif %}
         {% if page.showCardDate|default('true') %}
         <span class="block p-2 text-sm text-white bg-primary">
