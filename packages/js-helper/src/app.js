@@ -1,5 +1,4 @@
 require("fslightbox");
-
 import {
     uncloakLinks,
     readableEmail,
@@ -7,13 +6,7 @@ import {
     replaceOn,
     liveBlock,
 } from "@pushword/js-helper/src/helpers.js";
-
 import { allClickable } from "@pushword/js-helper/src/clickable.js";
-
-function onPageLoaded() {
-    onDomChanged();
-    new FsLightbox();
-}
 
 function onDomChanged() {
     liveBlock();
@@ -25,6 +18,10 @@ function onDomChanged() {
     allClickable(".clickable");
 }
 
-document.addEventListener("DOMContentLoaded", onPageLoaded());
+function onPageLoaded() {
+    onDomChanged();
+    new FsLightbox();
+}
 
+document.addEventListener("DOMContentLoaded", onPageLoaded());
 document.addEventListener("DOMChanged", onDomChanged);

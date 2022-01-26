@@ -20,9 +20,5 @@ module.exports = EncoreHelper.getEncore(
             from: "./src/Resources/assets/favicons",
             to: "favicons/[name].[ext]",
         },
-    ],
-    [
-        { name: "app", file: "./src/Resources/assets/page.js" }, // {{ asset('bundles/pushwordcore/page.min.js') }}
-    ],
-    [{ name: "style", file: "./src/Resources/assets/tailwind.css" }]
+    ]
 ).getWebpackConfig();

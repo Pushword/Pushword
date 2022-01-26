@@ -31,22 +31,12 @@ module.exports = {
         manifestKeyPrefix = null,
         filesToCopy = [
             {
-                from: "./media/", // todo explain
-                to: "[name].[ext]",
-                pattern: /svg$/,
-            },
-            {
-                from: "./img/",
-                to: "[name].[ext]",
-                pattern: /header.jpg$/,
-            },
-            {
                 from: "./favicons",
                 to: "[name].[ext]",
             },
         ],
-        entries = [{ name: "app", file: "./app.js" }],
-        styleEntries = [{ name: "style", file: "./app.css" }]
+        entries = null,
+        styleEntries = null
     ) {
         if (watchFiles === null) {
             watchFiles = getFilesToWatch();
@@ -54,6 +44,18 @@ module.exports = {
 
         if (tailwindConfig === null) {
             tailwindConfig = getTailwindConfig(watchFiles);
+        }
+
+        if (entries === null) {
+            entries = [{ name: "app", file: __dirname + "/app.js" }];
+        } else if (typeof entries === "string") {
+            entries = [{ name: "app", file: entries }];
+        }
+
+        if (styleEntries === null) {
+            styleEntries = [{ name: "style", file: __dirname + "/app.css" }];
+        } else if (typeof styleEntries === "string") {
+            styleEntries = [{ name: "style", file: styleEntries }];
         }
 
         Encore.setOutputPath(outputPath)
