@@ -29,12 +29,7 @@ module.exports = {
         outputPath = "./../public/assets/",
         publicPath = "/assets",
         manifestKeyPrefix = null,
-        filesToCopy = [
-            {
-                from: "./favicons",
-                to: "[name].[ext]",
-            },
-        ],
+        filesToCopy = null,
         entries = null,
         styleEntries = null
     ) {
@@ -44,6 +39,15 @@ module.exports = {
 
         if (tailwindConfig === null) {
             tailwindConfig = getTailwindConfig(watchFiles);
+        }
+
+        if (filesToCopy === null) {
+            filesToCopy = [
+                {
+                    from: "./favicons",
+                    to: "[name].[ext]",
+                },
+            ];
         }
 
         if (entries === null) {
