@@ -199,9 +199,9 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function targetExist(string $target): bool
     {
-        return null !== $this->getDomPage()->filter('[name*="'.$target.'"],[id*="'.$target.'"]')->getNode(0);
-        //$regex = '/ (?:id|name)=(["\'])(?:[^\1]* |)'.preg_quote($target, '/').'(?: [^\1]*\1|\1)/Ui';
-        //return false !== preg_match($regex, $this->pageHtml);
+        return null !== $this->getDomPage()
+            ->filter('[name*="'.$target.'"],[id*="'.$target.'"]')
+            ->getNode(0);
     }
 
     /**

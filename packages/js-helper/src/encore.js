@@ -2,15 +2,15 @@ const WatchExternalFilesPlugin = require("webpack-watch-files-plugin").default;
 const Encore = require("@symfony/webpack-encore");
 const tailwindcss = require("tailwindcss");
 
-function getFilesToWatch() {
+function getFilesToWatch(basePath = "./..") {
     return [
-        "./../vendor/pushword/core/src/templates/**/*.html.twig",
-        "./../vendor/pushword/core/src/templates/*.html.twig",
-        "./../vendor/pushword/conversation/src/templates/*.html.twig",
-        "./../vendor/pushword/admin-block-editor/src/templates/page/*.html.twig",
-        "./../templates/*.html.twig",
-        "./../templates/**/*.html.twig",
-        "./../templates/**/**/*.html.twig",
+        basePath + "/vendor/pushword/core/src/templates/**/*.html.twig",
+        basePath + "/vendor/pushword/core/src/templates/*.html.twig",
+        basePath + "/vendor/pushword/conversation/src/templates/*.html.twig",
+        basePath + "/vendor/pushword/admin-block-editor/src/templates/page/*.html.twig",
+        basePath + "/templates/*.html.twig",
+        basePath + "/templates/**/*.html.twig",
+        basePath + "/templates/**/**/*.html.twig",
     ];
 }
 function getTailwindConfig(watchFiles = null) {
