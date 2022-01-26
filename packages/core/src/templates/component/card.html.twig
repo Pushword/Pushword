@@ -19,10 +19,11 @@
     {% if image is defined and image is not null %}
         {{ helper.thumb(media_from_string(image), page ?? null, 'thumb', {'class': 'block w-full h-auto m-0'}) }}
     {% endif %}
-
+        {% if page.showCardDate|default('true') %}
         <span class="block p-2 text-sm text-white bg-primary">
             {{ date|date('d/m/Y à H:i') }}
         </span>
+        {% endif %}
         <h{{ hLevel|default(2) }} class="p-2 mt-0 text-md" style="margin-bottom:0.5rem">
             {% if encrypted_link is defined %}{{ link(title, link) }}{% else %}
                 <a href="{{ link }}" style="text-decoration:none">
