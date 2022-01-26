@@ -26,7 +26,7 @@ class LinkedDocsScannerTest extends KernelTestCase
                 "<code>https://localhost.dev/</code> unreacheable - Couldn't resolve host name",
                 '<code>#install</code> target not found',
             ],
-            $errors
+            \array_slice($errors, 0, 3)
         );
     }
 
