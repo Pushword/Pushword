@@ -111,7 +111,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
         $qb = $this->createQueryBuilder('p');
         $this->andHost($qb, $host);
 
-        return $qb->getQuery()->getResult(); // @phpstan-ignore-line
+        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -150,7 +150,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             ->orderBy('p.slug', Criteria::DESC)
             ->getQuery();
 
-        return $query->getResult(); // @phpstan-ignore-line
+        return $query->getResult();
     }
 
     /**

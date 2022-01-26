@@ -50,6 +50,9 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         ];
     }
 
+    /**
+     * @param class-string<PageInterface> $class
+     */
     public function __construct(string $code, string $class, string $baseControllerName)
     {
         parent::__construct($code, $class, $baseControllerName);
