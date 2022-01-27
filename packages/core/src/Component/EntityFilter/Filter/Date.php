@@ -24,6 +24,7 @@ class Date extends AbstractFilter
 
         //$string = preg_replace('/date\([\'"]?([a-z% ]+)[\'"]?\)/i',
         //  strftime(strpos('\1', '%') ? '\1': '%\1'), $string);
+        $string = F::preg_replace_str('/date\([\'"]?%?W[\'"]?\)/i', $this->getWinterYear(), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?Y-1[\'"]?\)/i', date('Y', strtotime('-1 year')), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?Y+1[\'"]?\)/i', date('Y', strtotime('next year')), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?Y[\'"]?\)/i', (string) strftime('%Y'), $string);
@@ -31,6 +32,11 @@ class Date extends AbstractFilter
         $string = F::preg_replace_str('/date\([\'"]?%?A[\'"]?\)/i', (string) strftime('%A'), $string);
 
         return F::preg_replace_str('/date\([\'"]?%?e[\'"]?\)/i', (string) strftime('%e'), $string);
+    }
+
+    private function getWinterYear()
+    {
+        return date('m') < 4 ? date('Y') : date('Y', strtotime('next year'));
     }
 
     private function convertLocale(string $locale): string
