@@ -1,7 +1,7 @@
 {% if (needBlockWrapper(block)) %}<div{{ blockWrapperAttr(block) }}>{% endif %}
 
 {% if block.data.stretched %}<div class="w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw]">{% endif %}
-{% if block.data.withBackground %}<div class="px-12 py-1 text-center bg-gray-200 rounded">{% endif %}
+{% if block.data.withBackground %}<div class="px-6 sm:px-12 py-1 text-center bg-gray-200 rounded">{% endif %}
 
     {% include view('/component/image_inline.html.twig') with {
         'image_src': block.data.file.media|image('default'),
