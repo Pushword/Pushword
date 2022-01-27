@@ -24,6 +24,8 @@ class Date extends AbstractFilter
 
         //$string = preg_replace('/date\([\'"]?([a-z% ]+)[\'"]?\)/i',
         //  strftime(strpos('\1', '%') ? '\1': '%\1'), $string);
+        $string = F::preg_replace_str('/date\([\'"]?%?Y-1[\'"]?\)/i', date('Y', strtotime('-1 year')), $string);
+        $string = F::preg_replace_str('/date\([\'"]?%?Y+1[\'"]?\)/i', date('Y', strtotime('next year')), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?Y[\'"]?\)/i', (string) strftime('%Y'), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?(B|M)[\'"]?\)/i', (string) strftime('%B'), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?A[\'"]?\)/i', (string) strftime('%A'), $string);
