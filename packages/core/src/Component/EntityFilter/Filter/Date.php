@@ -34,7 +34,7 @@ class Date extends AbstractFilter
         return F::preg_replace_str('/date\([\'"]?%?e[\'"]?\)/i', (string) strftime('%e'), $string);
     }
 
-    private function getWinterYear()
+    private function getWinterYear(): string
     {
         return date('m') < 4 ? date('Y') : date('Y', strtotime('next year'));
     }
