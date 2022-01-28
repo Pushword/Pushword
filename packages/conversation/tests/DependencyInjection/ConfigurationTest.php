@@ -24,7 +24,7 @@ class ConfigurationTest extends KernelTestCase
         $this->assertSame(Message::class, $msgEntity);
 
         $this->assertSame(
-            'P12H',
+            'P1D',
             self::$kernel->getContainer()->get('pushword.apps')->get()->get('conversation_notification_interval')
         );
 
