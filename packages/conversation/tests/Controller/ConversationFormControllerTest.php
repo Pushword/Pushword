@@ -10,7 +10,7 @@ class ConversationFormControllerTest extends KernelTestCase
 {
     public function testShowHomepage()
     {
-        $request = Request::create('/testit?referring=test');
+        $request = Request::create('/testit?referring=test&type=ms-message');
         $request->headers->set('origin', 'https://localhost.dev');
         $response = $this->getController()->show($request, 'message', 'localhost.dev');
         $this->assertSame(200, $response->getStatusCode());

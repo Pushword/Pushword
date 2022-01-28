@@ -272,24 +272,25 @@ trait FormTrait
         return null !== $this->messageId ? $this->messageId : $this->request->query->getInt('id', 0);
     }
 
-    protected function getReferring(): ?string
+    private function get(string $key): string
     {
         $attributes = $this->request->attributes->all();
-        if (! isset($attributes['referring'])) {
-            throw new Exception();
+        $query = $this->request->query->all();
+        if (! isset($attributes[$key]) && ! isset($query[$key])) {
+            throw new Exception($key.' not found');
         }
 
-        return \strval($attributes['type']);
+        return \strval(isset($attributes[$key]) ? $attributes[$key] : $query[$key]);
+    }
+
+    protected function getReferring(): ?string
+    {
+        return $this->get('referring');
     }
 
     protected function getType(): ?string
     {
-        $attributes = $this->request->attributes->all();
-        if (! isset($attributes['type'])) {
-            throw new Exception();
-        }
-
-        return \strval($attributes['type']);
+        return $this->get('type');
     }
 
     /**
