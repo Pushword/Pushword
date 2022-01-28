@@ -28,7 +28,9 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
     };
 
     var getLiveBlock = function (item) {
-        fetch(item.getAttribute(liveBlockAttribute), {
+        var url = item.getAttribute(liveBlockAttribute);
+        url = (url.startsWith("http") ? "" : "https://") + url;
+        fetch(url, {
             //headers: { "Content-Type": "application/json", Accept: "text/plain" },
             method: "POST",
             credentials: "include",
