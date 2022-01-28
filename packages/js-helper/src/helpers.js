@@ -29,7 +29,7 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
 
     var getLiveBlock = function (item) {
         var url = item.getAttribute(liveBlockAttribute);
-        url = (url.startsWith("http") ? "" : "https://") + url;
+        url = url.startsWith("e:") ? convertShortchutForLink(rot13ToText(url.substring(2))) : url;
         fetch(url, {
             //headers: { "Content-Type": "application/json", Accept: "text/plain" },
             method: "POST",
@@ -47,13 +47,14 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
             });
     };
 
-    var htmlLoader =
-        '<div style="width:1em;height:1em;border: 2px solid #222;border-top-color: #fff;border-radius: 50%;  animation: 1s spin linear infinite;"></div><style>@keyframes spin {from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>';
+    const spinner =
+        '<span class="border-top-color: transparent;" class="inline-block w-5 h-5 border-4 border-gray-50 border-solid rounded-full animate-spin"></span>';
+    const htmlLoader = "<div>" + spinner + "</div>";
 
     var setLoader = function (form) {
         var $submitButton = getSubmitButton(form);
         if ($submitButton !== undefined) {
-            var initialButton = $submitButton.outerHTML;
+            //var initialButton = $submitButton.outerHTML;
             $submitButton.innerHTML = "";
             $submitButton.outerHTML = htmlLoader;
         }
@@ -97,6 +98,10 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
     // Listen button src-data-live
     document.querySelectorAll("[src-" + liveBlockAttribute + "]").forEach((item) => {
         item.addEventListener("click", (event) => {
+            if (item.tagName == "BUTTON") {
+                item.innerHTML = spinner;
+                item.setAttribute("disabled", true);
+            }
             btnToBlock(event, item);
         });
     });

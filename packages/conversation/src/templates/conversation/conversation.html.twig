@@ -1,6 +1,6 @@
 {% form_theme conversation 'tailwind_2_layout.html.twig' %}
 
-
+{# spinner : <span class="border-top: transparent;" class="inline-block w-5 h-5 border-4 border-gray-50 border-solid rounded-full animate-spin"></span> #}
 <div class="w-full mt-4 live-form">
 {{ form_start(conversation) }}
 
@@ -82,7 +82,8 @@
         {% block submit %}
         <div class="flex flex-wrap ">
             <div class="mb-3 lg:w-full">
-                <button class="inline-block px-3 py-1 mt-2 font-normal leading-normal text-center text-white no-underline whitespace-no-wrap align-middle border rounded select-none bg-primary hover:bg-opacity-75 letter-spacing">
+            {# inline-block px-3 py-1 mt-2 font-normal leading-normal text-center text-white no-underline whitespace-no-wrap align-middle border rounded select-none bg-primary hover:bg-opacity-75 letter-spacing #}
+                <button class="link-btn">
                     {{ submitLabel|default('conversation.submitLabel'|trans) }}
                 </button>
             </div>
