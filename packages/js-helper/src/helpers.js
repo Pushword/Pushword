@@ -49,7 +49,7 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
 
     const spinner =
         '<span style="border-top-color: transparent" class="inline-block w-5 h-5 border-4 border-gray-50 border-solid rounded-full animate-spin"></span>';
-    const htmlLoader = "<div class=btn-link>" + spinner + "</div>";
+    const htmlLoader = "<div>" + spinner.replace("border-gray-50", "border-gray-800") + "</div>";
 
     var setLoader = function (form) {
         var $submitButton = getSubmitButton(form);
