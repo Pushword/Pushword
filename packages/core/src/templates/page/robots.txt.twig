@@ -3,6 +3,8 @@ Hello :)
 Sitemap: {{ app_base_url }}/sitemap.xml
 {% for locale in apps.get().locales %}
 {% if locale != apps.get().locale %}
+{% if pages(apps.get().mainHost, ['locale', '=', locale]) %}
 Sitemap: {{ app_base_url }}/{{ locale }}/sitemap.xml
+{% endif %}
 {% endif %}
 {% endfor %}
