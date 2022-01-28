@@ -54,10 +54,12 @@ liveBlock();
 
 ### Get mail notification for new message
 
-Configure the bundle (`piedweb_conversation.notification_email_to`) and programm a cron :
+Configure the bundle directly in app configuration
 
-```
-bin/console pushword:conversation:notify
+```yaml
+    conversation_notification_email_to: "example@example.tld",
+    conversation_notification_email_from: "example@example.tld",
+    conversation_notification_interval: "PT1S" #each 1s, default 1 time per day
 ```
 
 ## Customization

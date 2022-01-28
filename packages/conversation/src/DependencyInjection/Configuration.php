@@ -36,7 +36,7 @@ class Configuration implements ConfigurationInterface
                     ->scalarNode('conversation_notification_email_to')->defaultNull()->end()
                     ->scalarNode('conversation_notification_email_from')->defaultNull()->end()
                     ->scalarNode('conversation_notification_interval')
-                        ->defaultValue('P12H')
+                        ->defaultValue('P1D')
                         ->info("DateInterval's format")
                     ->end()
                     //->arrayNode('form')->end()

@@ -39,6 +39,8 @@ services:
 
   pushword.conversation.notifier:
     class: Pushword\Conversation\Service\NewMessageMailNotifier
+    tags:
+      - { name: doctrine.orm.entity_listener, entity: "%pw.conversation.entity_message%", event: postPersist }
 
   pushword.conversation.notification_command:
     arguments:

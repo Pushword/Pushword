@@ -5,7 +5,7 @@ namespace Pushword\Conversation\Service;
 use DateInterval;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
+use Psr\Log\LoggerInterface;
 use Pushword\Conversation\Entity\MessageInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Utils\LastTime;
@@ -40,6 +40,8 @@ class NewMessageMailNotifier
 
     private string $host;
 
+    private LoggerInterface $logger;
+
     /**
      .
      *
@@ -51,7 +53,8 @@ class NewMessageMailNotifier
         AppPool $appPool,
         string $projectDir,
         EntityManagerInterface $entityManager,
-        TranslatorInterface $translator
+        TranslatorInterface $translator,
+        LoggerInterface $logger
     ) {
         $this->mailer = $mailer;
         $this->apps = $appPool;
@@ -64,6 +67,7 @@ class NewMessageMailNotifier
         $this->em = $entityManager;
         $this->translator = $translator;
         $this->message = $message;
+        $this->logger = $logger;
     }
 
     /**
@@ -79,26 +83,35 @@ class NewMessageMailNotifier
         return $query->getResult(); // @phpstan-ignore-line
     }
 
+    public function postPersist(): void
+    {
+        $this->send();
+    }
+
     /**
      * @return bool|void
      */
     public function send()
     {
         if ('' === $this->emailTo) {
+            $this->logger->info('Not sending conversation notification : `conversation_notification_email_to` is not configured.');
+
             return;
         }
 
         $lastTime = new LastTime($this->projectDir.'/var/lastNewMessageNotification');
-        if (! $lastTime->wasRunSince(new DateInterval($this->interval))) {
+        if (true === $lastTime->wasRunSince(new DateInterval($this->interval))) {
+            $this->logger->info('Not sending conversation notification : a previous notification was send not a long time ago ('.$this->interval.', see `conversation_notification_interval`).');
+
             return;
         }
 
-        if (($since = $lastTime->get($this->interval)) === null) {
-            throw new LogicException();
-        }
+        $since = $lastTime->safeGet('2000-01-01');
 
         $messages = $this->getMessagesPostedSince($since);
         if ([] === $messages) {
+            $this->logger->info('Not sending conversation notification : nothing to notify.');
+
             return;
         }
 
@@ -111,7 +124,7 @@ class NewMessageMailNotifier
             )
             ->from($this->emailFrom)
             ->to($this->emailTo)
-            ->htmlTemplate('@PushwordConversation/notification.html.twig')
+            ->htmlTemplate('@PushwordConversation/conversation/notification.html.twig')
             ->context([
                 'appName' => $this->appName,
                 'messages' => $messages,

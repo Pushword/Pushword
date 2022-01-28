@@ -50,6 +50,7 @@
         "symfony/framework-bundle": "^5.4 || ^6.0",
         "symfony/lock": "^5.4 || ^6.0",
         "symfony/mailer": "^5.4 || ^6.0",
+        "symfony/monolog-bundle": "^3.7",
         "symfony/process": "^5.4 || ^6.0",
         "symfony/security-bundle": "^5.4 || ^6.0",
         "symfony/security-csrf": "^5.4 || ^6.0",

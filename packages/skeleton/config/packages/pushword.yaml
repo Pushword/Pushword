@@ -8,7 +8,7 @@ pushword:
         randomTest: 123,
         admin_block_editor: false,
         admin_block_editor_disable_listener: true,
-        locales: 'fr|en',
+        locales: 'fr|en'
       }
     - {
         hosts: [pushword.piedweb.com],
@@ -30,4 +30,7 @@ pushword:
         color_bg: "#fff",
         static_copy: ["assets"],
       }
-    - { hosts: [admin-block-editor.test], base_url: "https://admin-block-editor.test" }
+    - {
+        hosts: [admin-block-editor.test],
+        base_url: "https://admin-block-editor.test"
+      }

@@ -40,6 +40,11 @@ class LastTime
         return new DateTime('@'.\Safe\filemtime($this->filePath));
     }
 
+    public function safeGet(string $default): \DateTimeInterface
+    {
+        return $this->get($default); // @phpstan-ignore-line
+    }
+
     public function setWasRun(string $datetime = 'now', bool $setIfNotExist = true): void
     {
         if (! file_exists($this->filePath)) {

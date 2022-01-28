@@ -15,7 +15,6 @@ To get more details on each command line, just type -h (eg `php bin/console push
 
 ```shell
  pushword
-  pushword:conversation:notify               Send a mail (notification) with the latests messages stored (this comand is useful to program a cron).
   pushword:flat:import                       Syncing flat file inside database
   pushword:flat:export                       Export database toward file (yaml+json)
   pushword:image:cache                       Generate all images cache

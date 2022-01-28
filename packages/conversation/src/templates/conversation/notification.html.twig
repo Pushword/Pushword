@@ -1,8 +1,14 @@
+
+<h1>Nouveau message</h1>
+
 {% for message in messages %}
 <div class="mb-4">
-    <div style="padding:10px; background:#eee; border-radius:5px; margin-bottom:10px;">{{ message.content|markdown }}</div>
+    <div style="padding:10px; background:#eee; border-radius:5px; margin-bottom:10px;">{{ message.content||u.truncate(250, '...')|markdown }}</div>
 
-    <p>Envoyé par &lt;{{ message.authorEmail }} {{ message.authorName }}&gt;<br>
-    <a href="#">Editer</a></p>
+
+    <p>
+        {% if (message.authorEmail) %}Envoyé par &lt;{{ message.authorEmail }} {{ message.authorName }}&gt;<br>{% endif %}
+        <a href="{{ url('admin_pushword_conversation_message_edit', {id: message.id}) }}">Editer</a>
+    </p>
 </div>
 {% endfor %}
