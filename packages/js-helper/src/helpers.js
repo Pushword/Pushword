@@ -29,7 +29,10 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
 
     var getLiveBlock = function (item) {
         var url = item.getAttribute(liveBlockAttribute);
+        console.log(url);
+        console.log(url.startsWith("e:"));
         url = url.startsWith("e:") ? convertShortchutForLink(rot13ToText(url.substring(2))) : url;
+        console.log(url);
         fetch(url, {
             //headers: { "Content-Type": "application/json", Accept: "text/plain" },
             method: "POST",
@@ -48,8 +51,8 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
     };
 
     const spinner =
-        '<span class="border-top-color: transparent;" class="inline-block w-5 h-5 border-4 border-gray-50 border-solid rounded-full animate-spin"></span>';
-    const htmlLoader = "<div>" + spinner + "</div>";
+        '<span style="border-top-color: transparent" class="inline-block w-5 h-5 border-4 border-gray-50 border-solid rounded-full animate-spin"></span>';
+    const htmlLoader = "<div class=btn-link>" + spinner + "</div>";
 
     var setLoader = function (form) {
         var $submitButton = getSubmitButton(form);
@@ -285,13 +288,13 @@ export function convertFormFromRot13(attribute = "data-frot") {
 
 export function convertShortchutForLink(str) {
     if (str.charAt(0) == "-") {
-        return str.replace("-", "http://");
+        return "http://" + str.substring(1);
     }
     if (str.charAt(0) == "_") {
-        return str.replace("_", "https://");
+        return "https://" + str.substring(1);
     }
     if (str.charAt(0) == "@") {
-        return str.replace("@", "mailto:");
+        return "mailto:" + str.substring(1);
     }
     return str;
 }

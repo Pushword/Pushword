@@ -1,5 +1,5 @@
 {
-    "devDependencies": {
+    "dependencies": {
         "@pushword/js-helper": "file:../js-helper"
     },
     "license": "UNLICENSED",
