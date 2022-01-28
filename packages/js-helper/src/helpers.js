@@ -29,10 +29,7 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
 
     var getLiveBlock = function (item) {
         var url = item.getAttribute(liveBlockAttribute);
-        console.log(url);
-        console.log(url.startsWith("e:"));
         url = url.startsWith("e:") ? convertShortchutForLink(rot13ToText(url.substring(2))) : url;
-        console.log(url);
         fetch(url, {
             //headers: { "Content-Type": "application/json", Accept: "text/plain" },
             method: "POST",
