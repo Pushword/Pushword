@@ -3,6 +3,7 @@
 namespace Pushword\Conversation\Form;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
+use Exception;
 use Pushword\Conversation\Entity\MessageInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
@@ -273,12 +274,22 @@ trait FormTrait
 
     protected function getReferring(): ?string
     {
-        return \strval($this->request->get('referring'));
+        $attributes = $this->request->attributes->all();
+        if (! isset($attributes['referring'])) {
+            throw new Exception();
+        }
+
+        return \strval($attributes['type']);
     }
 
     protected function getType(): ?string
     {
-        return \strval($this->request->get('type'));
+        $attributes = $this->request->attributes->all();
+        if (! isset($attributes['type'])) {
+            throw new Exception();
+        }
+
+        return \strval($attributes['type']);
     }
 
     /**
