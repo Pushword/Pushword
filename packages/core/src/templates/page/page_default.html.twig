@@ -38,9 +38,9 @@
 
 
 {% block open_graph %}
-	<meta name="og:title" content="{{ page.ogTitle|default(page.getTitle(true))|striptags }}">
+	<meta name="og:title" content="{{ page.ogTitle|default(pw(page).title)|striptags }}">
 	<meta name="og:url" content="{{ page(page, true) }}">
-	{% if page.searchExcrept %}
+	{% if page.searchExcrept or page.ogDescription %}
 		<meta name="og:description" content="{{ page.ogDescription|default(page.searchExcrept)|striptags }}">
 	{% endif %}
 	{% if page.mainImage is defined and page.mainImage is not null %}
