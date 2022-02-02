@@ -48,13 +48,13 @@ trait FormTrait
 
     protected Twig $twig;
 
-    protected \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface $security;
+    protected TokenStorageInterface $security;
 
-    protected \Symfony\Component\Form\FormFactory $formFactory;
+    protected FormFactory $formFactory;
 
-    protected \Symfony\Contracts\Translation\TranslatorInterface $translator;
+    protected TranslatorInterface $translator;
 
-    protected \Symfony\Bundle\FrameworkBundle\Routing\Router $router;
+    protected Router $router;
 
     /** @var int */
     protected $currentStep;
@@ -66,13 +66,11 @@ trait FormTrait
      */
     protected string $messageEntity;
 
-    /** @var MessageInterface */
-    protected $message;
+    protected MessageInterface $message;
 
-    protected \Pushword\Core\Component\App\AppPool $apps;
+    protected AppPool $apps;
 
-    /** @var AppConfig */
-    protected $app;
+    protected AppConfig $app;
 
     /**
      * @param class-string<MessageInterface> $messageEntity

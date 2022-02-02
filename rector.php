@@ -124,7 +124,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(RecastingRemovalRector::class);
     $services->set(RemoveAlwaysTrueIfConditionRector::class);
     $services->set(RemoveAndTrueRector::class);
-    $services->set(RemoveAssignOfVoidReturnFunctionRector::class);
     $services->set(RemoveDeadIfForeachForRector::class);
     $services->set(AddArrayParamDocTypeRector::class);
     $services->set(AddClosureReturnTypeRector::class);

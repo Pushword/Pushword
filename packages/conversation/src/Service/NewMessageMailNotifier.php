@@ -100,7 +100,7 @@ class NewMessageMailNotifier
         }
 
         $lastTime = new LastTime($this->projectDir.'/var/lastNewMessageNotification');
-        if (true === $lastTime->wasRunSince(new DateInterval($this->interval))) {
+        if ($lastTime->wasRunSince(new DateInterval($this->interval))) {
             $this->logger->info('Not sending conversation notification : a previous notification was send not a long time ago ('.$this->interval.', see `conversation_notification_interval`).');
 
             return;

@@ -98,7 +98,7 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             // todo log exception
         }
     }
