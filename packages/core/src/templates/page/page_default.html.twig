@@ -18,7 +18,7 @@
 		<meta name="description" content="{{ page.searchExcrept|escape }}">
 	{% endif %}
 
-	{% if page.metaRobots is defined and page.metaRobots is not null %}
+	{% if page.metaRobots %}
 		<meta name="robots" content="{{ page.metaRobots }}">
 	{% endif %}
 
