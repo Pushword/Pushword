@@ -7,11 +7,20 @@ use Symfony\Component\Panther\PantherTestCase;
 
 class ConversationFormControllerTest extends PantherTestCase
 {
-    public function testShowHomepage()
+    public function testMessageForm()
     {
         $client = static::createClient();
 
-        $client->request('POST', '/conversation/message/test', [], [], ['HTTP_ORIGIN' => 'https://localhost.dev']);
+        $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
+        $crawler = $client->request('POST', '/conversation/message/test', [], [], $server);
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+
+        $form = $crawler->filter('[name="form"]')->form([
+            'form[content]' => 'Ceci est un message de test',
+        ]);
+        $client->catchExceptions(false);
+        $client->submit($form, [], $server);
+
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
     }
 
