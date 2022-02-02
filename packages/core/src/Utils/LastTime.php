@@ -42,6 +42,7 @@ class LastTime
 
     /**
      * @psalm-suppress InvalidNullableReturnType
+     * @psalm-suppress NullableReturnStatement
      */
     public function safeGet(string $default): \DateTimeInterface
     {
