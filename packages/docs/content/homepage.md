@@ -9,7 +9,7 @@ prose: "max-w-screen-sm prose-sm md:prose-lg mx-auto p-3 prose dark:prose-light"
 
 <div class="flex flex-row max-w-screen-lg mx-auto mb-6">
 
-<div class="pr-6 -mt-3" markdown=1>
+<div class="p-3 pr-6 -mt-3" markdown=1>
 
 Puswhord is a PHP <strong>CMS</strong> to <strong>rapidly</strong> create, manage and maintain <strong>extandable Website(s)</strong>.
 

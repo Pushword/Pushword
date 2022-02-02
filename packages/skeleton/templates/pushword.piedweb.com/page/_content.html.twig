@@ -38,8 +38,8 @@
 
     </div>
     {% else %}
-            <div class="{{ page.slug == 'homepage' ? 'max-w-screen-lg prose-lg mx-auto' : 'max-w-3xl' }} p-3 prose dark:prose-light">
-                <h1>{{ pw(page).h1|raw }}</h1>
+            <div class="{{ page.slug == 'homepage' ? 'prose-lg max-w-none' : 'max-w-3xl p-3' }} prose dark:prose-light">
+                <h1 class="max-w-screen-lg mx-auto p-3">{{ pw(page).h1|raw }}</h1>
                 {{ pw(page).mainContent.chapeau|raw }}
                 {{ pw(page).mainContent.body|raw }}
             </div>
