@@ -10,6 +10,24 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[Facebook]]></title>
+                    <link>https://pushword.piedweb.com/extension/facebook</link>
+                    <guid>https://pushword.piedweb.com/extension/facebook</guid>
+                    <pubDate>Wed, 02 Feb 2022 17:38:06 +0100</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Find your missing feature with a Pushword Extension]]></title>
+                    <link>https://pushword.piedweb.com/extensions</link>
+                    <guid>https://pushword.piedweb.com/extensions</guid>
+                    <pubDate>Wed, 02 Feb 2022 17:37:35 +0100</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Build modern Content First websites rapidly  Manage and maintain it as quickly]]></title>
+                    <link>https://pushword.piedweb.com/</link>
+                    <guid>https://pushword.piedweb.com/</guid>
+                    <pubDate>Wed, 02 Feb 2022 16:51:50 +0100</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Roadmap]]></title>
                     <link>https://pushword.piedweb.com/roadmap</link>
                     <guid>https://pushword.piedweb.com/roadmap</guid>
@@ -20,24 +38,6 @@
                     <link>https://pushword.piedweb.com/extension/conversation</link>
                     <guid>https://pushword.piedweb.com/extension/conversation</guid>
                     <pubDate>Fri, 28 Jan 2022 17:08:41 +0100</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Command]]></title>
-                    <link>https://pushword.piedweb.com/command</link>
-                    <guid>https://pushword.piedweb.com/command</guid>
-                    <pubDate>Fri, 28 Jan 2022 17:06:29 +0100</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Upgrade Guide]]></title>
-                    <link>https://pushword.piedweb.com/upgrade</link>
-                    <guid>https://pushword.piedweb.com/upgrade</guid>
-                    <pubDate>Wed, 26 Jan 2022 14:23:13 +0100</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Build modern Content First websites rapidly  Manage and maintain it as quickly]]></title>
-                    <link>https://pushword.piedweb.com/</link>
-                    <guid>https://pushword.piedweb.com/</guid>
-                    <pubDate>Wed, 19 Jan 2022 18:42:58 +0100</pubDate>
                 </item>
                             
     </channel>
