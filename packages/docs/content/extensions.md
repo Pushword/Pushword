@@ -14,8 +14,6 @@ name: Extensions
     Supercharge the Pushword Admin with a new admin form field to customize the main image format from not visible to HERO + default template files.
 -   [Conversation](/extension/conversation)
     Extend your Pushword website with **comments**, a **contact** form or just an **user input**.
--   [Facebook](/extension/facebook)
-    Write from Facebook on your page managed by Pushword.
 -   [Flat](/extension/flat)
     Transform Pushword in a FlatFile CMS.
 -   [Page Scanner](/extension/page-scanner)

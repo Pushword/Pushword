@@ -12,7 +12,6 @@ parameters:
         - packages/skeleton/src
         - packages/svg/src
         - packages/installer/src
-        - packages/facebook/src
         - packages/js-helper/src
         - packages/version/src
         - packages/admin-block-editor/src

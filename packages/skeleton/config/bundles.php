@@ -14,7 +14,6 @@ return [
     Pushword\Flat\PushwordFlatBundle::class => ['all' => true],
     Pushword\Conversation\PushwordConversationBundle::class => ['all' => true],
     Pushword\Svg\PushwordSvgBundle::class => ['all' => true],
-    Pushword\Facebook\PushwordFacebookBundle::class => ['all' => true],
     Pushword\Version\PushwordVersionBundle::class => ['all' => true],
     Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle::class => ['all' => true],
     Pushword\AdvancedMainImage\PushwordAdvancedMainImageBundle::class => ['all' => true],

@@ -5,6 +5,8 @@ toc: true
 parent: extensions
 ---
 
+**Extension not maintained anymore**
+
 Write from Facebook on your page managed by Pushword.
 
 ## Install

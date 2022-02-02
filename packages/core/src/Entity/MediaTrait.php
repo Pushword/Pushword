@@ -370,9 +370,10 @@ trait MediaTrait
 
     public function setMimeType(?string $mimeType): self
     {
-        if ($this->getMediaFile() instanceof UploadedFile
-            && \in_array($this->getMediaFile()->getClientMimeType(), $this->safeClientMimeType, true)) {
-            $mimeType = $this->getMediaFile()->getClientMimeType();
+        $uploadedFile = $this->getMediaFile();
+        if ($uploadedFile instanceof UploadedFile
+            && \in_array($uploadedFile->getClientMimeType(), $this->safeClientMimeType, true)) {
+            $mimeType = $uploadedFile->getClientMimeType();
         }
 
         $this->mimeType = $mimeType;
