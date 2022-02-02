@@ -7,6 +7,8 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   Implement ESlint
+
 -   [AdminBlockEditor] Add Layout https://github.com/hata6502/editorjs-layout#readme
 
 -   [StaticGenerator] Very long CopierGenerator, MediaGenerator -> set a warning in docs

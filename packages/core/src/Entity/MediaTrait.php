@@ -21,6 +21,12 @@ trait MediaTrait
 {
     use TimestampableTrait;
 
+    /** @var string[] */
+    private array $safeClientMimeType = [
+        'application/gpx+xml',
+        'image/svg+xml',
+    ];
+
     /**
      * @ORM\Column(type="string", length=50)
      */
@@ -141,6 +147,23 @@ trait MediaTrait
         return $this;
     }
 
+    private function getExtensionFromMediaFile(): string
+    {
+        if (null === $this->getMediaFile()) {
+            throw new Exception();
+        }
+
+        $extension = $this->getMediaFile()->guessExtension(); // From MimeType
+        $extension = null === $extension ? '' : '.'.$extension;
+
+        // Todo : when using guessExtension, it's using safe mymetype and returning gpx as txt
+        if ('.txt' === $extension && '.gpx' === $this->getExtension($this->getMediaFileName())) {
+            $extension = '.gpx';
+        }
+
+        return $extension;
+    }
+
     /**
      * Used by VichUploader.
      * Permit to setMedia from filename.
@@ -157,8 +180,9 @@ trait MediaTrait
             throw new Exception('debug... '); //dd($this->mediaFile);
         }
 
-        $extension = $this->getMediaFile()->guessExtension(); // From MimeType
-        $slugSlugified = $this->slugifyPreservingExtension($filename, (null !== $extension ? '.' : '').$extension);
+        $extension = $this->getExtensionFromMediaFile();
+
+        $slugSlugified = $this->slugifyPreservingExtension($filename, $extension);
 
         if (null === $this->media || $this->getExtension($this->media) != $extension) { //$this->getExtension($slugSlugify)) {
             $this->setMedia($slugSlugified);
@@ -168,9 +192,9 @@ trait MediaTrait
         return $this;
     }
 
-    protected function slugifyPreservingExtension(string $string, ?string $extension = null): string
+    protected function slugifyPreservingExtension(string $string, string $extension = ''): string
     {
-        $extension = null === $extension ? $this->getExtension($string) : $extension;
+        $extension = '' === $extension ? $this->getExtension($string) : $extension;
         $stringSlugify = (new Slugify())->slugify(Filepath::removeExtension($string));
 
         return $stringSlugify.$extension;
@@ -346,6 +370,11 @@ trait MediaTrait
 
     public function setMimeType(?string $mimeType): self
     {
+        if ($this->getMediaFile() instanceof UploadedFile
+            && \in_array($this->getMediaFile()->getClientMimeType(), $this->safeClientMimeType, true)) {
+            $mimeType = $this->getMediaFile()->getClientMimeType();
+        }
+
         $this->mimeType = $mimeType;
 
         return $this;
