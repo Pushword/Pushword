@@ -40,6 +40,9 @@ class LastTime
         return new DateTime('@'.\Safe\filemtime($this->filePath));
     }
 
+    /**
+     * @psalm-suppress InvalidNullableReturnType
+     */
     public function safeGet(string $default): \DateTimeInterface
     {
         return $this->get($default); // @phpstan-ignore-line

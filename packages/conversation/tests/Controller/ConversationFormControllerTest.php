@@ -3,17 +3,16 @@
 namespace Pushword\Conversation\Tests\Controller;
 
 use Pushword\Conversation\Controller\ConversationFormController;
-use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Panther\PantherTestCase;
 
-class ConversationFormControllerTest extends KernelTestCase
+class ConversationFormControllerTest extends PantherTestCase
 {
     public function testShowHomepage()
     {
-        $request = Request::create('/testit?referring=test&type=ms-message');
-        $request->headers->set('origin', 'https://localhost.dev');
-        $response = $this->getController()->show($request, 'message', 'localhost.dev');
-        $this->assertSame(200, $response->getStatusCode());
+        $client = static::createClient();
+
+        $client->request('POST', '/conversation/message/test', [], [], ['HTTP_ORIGIN' => 'https://localhost.dev']);
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
     }
 
     /**
