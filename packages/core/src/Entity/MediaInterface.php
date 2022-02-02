@@ -38,6 +38,8 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function setSlug(?string $filename): self;
 
+    public function setSlugForce(?string $slug): self;
+
     public function setMimeType(?string $mimeType): self;
 
     /**
@@ -46,6 +48,8 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
     public function setDimensions(?array $dimensions): self;
 
     public function setMedia(?string $media): self;
+
+    public function resetMedia(): self;
 
     public function setName(?string $name): self;
 

@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Tests\Controller;
 
-use App\Entity\Media;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Tests\PathTrait;
@@ -26,29 +25,31 @@ class MediaListenerTest extends KernelTestCase
         $em->flush();
     }
 
-    // A tester
-    // 1. Si une nouvelle image se renomme bien dans le cas d'une image existante avec le même nom (pas d'écrasement)
-        // Ok via Admin (VichUploader listener)
-    // 1.2 ... avec une image sans extension
-        // OK viaAdmin (VichUploader listener)
-    // 1.3 ... avec une image avec extension mais sans MimeType
-        // Ok viaAdmin (VichUploader listener)
-    // Idem 3 précédent mais sur un edit d'image
-        // OK bloquer par UniqueEntity
-
-    /*
     public function testRenameAndCo()
     {
         self::bootKernel();
         $em = self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager');
 
-        $mediaEntity = $this->getImageManager()->importExternal(__DIR__.'/media/2', '1', '', false);
-        $em->persist($mediaEntity);
-        $em->flush();
+        $mediaEntity = $this->getImageManager()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
+        //$em->persist($mediaEntity);
+
+        $this->assertFileExists($this->mediaDir.'/1-1.jpg');
+
+        $mediaEntity = $this->getImageManager()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
+        $this->assertFileDoesNotExist($this->mediaDir.'/1-2.jpg');
     }
 
+    // A tester
+    // 1. Si une nouvelle image se renomme bien dans le cas d'une image existante avec le même nom (pas d'écrasement)
+    // Ok via Admin (VichUploader listener)
+    // 1.2 ... avec une image sans extension
+    // OK viaAdmin (VichUploader listener)
+    // 1.3 ... avec une image avec extension mais sans MimeType
+    // Ok viaAdmin (VichUploader listener)
+    // Idem 3 précédent mais sur un edit d'image
+    // OK bloquer par UniqueEntity
 
-    private $imageManager;
+    private ?ImageManager $imageManager = null;
 
     private function getImageManager(): ImageManager
     {
@@ -57,5 +58,5 @@ class MediaListenerTest extends KernelTestCase
         }
 
         return $this->imageManager = new ImageManager([], $this->publicDir, $this->projectDir, $this->publicMediaDir, $this->mediaDir);
-    }*/
+    }
 }

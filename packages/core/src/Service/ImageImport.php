@@ -6,6 +6,7 @@ use Cocur\Slugify\Slugify;
 use Exception;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaInterface;
+use Pushword\Core\Utils\MediaRenamer;
 
 trait ImageImport
 {
@@ -18,6 +19,8 @@ trait ImageImport
             .'.'.str_replace(['image/', 'jpeg'], ['', 'jpg'], $mimeType);
     }
 
+    private MediaRenamer $renamer;
+
     public function importExternal(
         string $image,
         string $name = '',
@@ -25,6 +28,8 @@ trait ImageImport
         bool $hashInFilename = true
         //, $ifNameIsTaken = null
     ): MediaInterface {
+        $this->renamer = new MediaRenamer();
+
         $imageLocalImport = $this->cacheExternalImage($image);
 
         if (false === $imageLocalImport || ($imgSize = getimagesize($imageLocalImport)) === false) {
@@ -32,8 +37,6 @@ trait ImageImport
         }
 
         $fileName = $this->generateFileName($image, $imgSize['mime'], '' !== $slug ? $slug : $name, $hashInFilename);
-
-        $newFilePath = $this->mediaDir.'/'.$fileName;
 
         $media = new Media();
         $media
@@ -45,19 +48,32 @@ trait ImageImport
                 ->setMedia($fileName)
                 ->setName(str_replace(["\n", '"'], ' ', $name));
 
-        if (! file_exists($newFilePath)) {
-            $this->fileSystem->copy($imageLocalImport, $newFilePath);
-
-            $this->generateCache($media);
-        }
-
-        // Else, normally it's an external file ever imported
-        // But SHA1_file may be checked to be sure it's the same file (/!\)
-        // if not, the original file may have change OR we may have an internal file with the same slug.extension (media)
-        // TODO : exception, renaming, callback ???...
+        $this->finishImportExternalByCopyingLocally($media, $imageLocalImport);
 
         return $media;
     }
+
+    private function finishImportExternalByCopyingLocally(MediaInterface $media, string $imageLocalImport): void
+    {
+        $newFilePath = $this->mediaDir.'/'.$media->getMedia();
+
+        if (file_exists($newFilePath)) {
+            if (sha1_file($newFilePath) !== sha1_file($imageLocalImport)) {
+                // an image exist locally with same name/slug but is a different file
+                $this->renamer->rename($media);
+                $this->finishImportExternalByCopyingLocally($media, $imageLocalImport);
+
+                return;
+            }
+
+            return; // same image is ever exist locally
+        }
+
+        $this->fileSystem->copy($imageLocalImport, $newFilePath);
+        $this->generateCache($media);
+    }
+
+    abstract public function generateCache(MediaInterface $media): void;
 
     /**
      * @noRector

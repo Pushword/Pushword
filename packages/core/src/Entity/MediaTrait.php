@@ -134,6 +134,12 @@ trait MediaTrait
      */
     public function setSlugForce(?string $slug): self
     {
+        if (null !== $this->getMediaFile()) {
+            $this->media = null;
+
+            return $this->setSlug($slug);
+        }
+
         if (\in_array($slug, ['', null], true)) {
             return $this;
         }
@@ -260,6 +266,13 @@ trait MediaTrait
     public function getMedia(): ?string
     {
         return $this->media;
+    }
+
+    public function resetMedia(): self
+    {
+        $this->media = null;
+
+        return $this;
     }
 
     public function setMedia(?string $media): self

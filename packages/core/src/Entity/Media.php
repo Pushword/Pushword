@@ -12,7 +12,7 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
  * @ORM\MappedSuperclass
  * @Vich\Uploadable
  * @ORM\HasLifecycleCallbacks
- * @UniqueEntity({"media"}, message="Ce media semble déjà présent.")
+ * #UniqueEntity({"media"}, message="Ce media semble déjà présent.")
  */
 class Media implements MediaInterface
 {

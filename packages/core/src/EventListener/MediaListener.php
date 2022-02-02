@@ -13,7 +13,7 @@ use League\ColorExtractor\Palette;
 use LogicException;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Service\ImageManager;
-use Pushword\Core\Utils\F;
+use Pushword\Core\Utils\MediaRenamer;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -39,6 +39,8 @@ class MediaListener
 
     private TranslatorInterface $translator;
 
+    private MediaRenamer $renamer;
+
     /** @psalm-suppress  UndefinedInterfaceMethod */
     public function __construct(
         string $projectDir,
@@ -53,7 +55,7 @@ class MediaListener
         $this->filesystem = $filesystem;
         $this->imageManager = $imageManager;
         $this->requestStack = $requestStack;
-
+        $this->renamer = new MediaRenamer();
         $this->translator = $translator;
     }
 
@@ -148,23 +150,19 @@ class MediaListener
         $sameName = $this->em->getRepository(\get_class($media))->findOneBy(['name' => $media->getName()]);
         $sameMedia = $this->em->getRepository(\get_class($media))->findOneBy(['media' => $mediaString]);
 
-        if (! (null !== $sameName && $media->getId() !== $sameName->getId())
-            && ! (null !== $sameMedia && $media->getId() !== $sameMedia->getId())
-        ) {
+        if ((null === $sameName || $media->getId() === $sameName->getId()) &&
+             (null === $sameMedia || $media->getId() === $sameMedia->getId())) {
+            $this->renamer->reset();
+
             return;
         }
 
-        $newName = (1 === $this->iterate ? $media->getName() : F::preg_replace_str('/ \([0-9]+\)$/', '', $media->getName()))
-            .' ('.$this->iterate.')';
-        $media->setName($newName);
-        $media->setMedia(null);
-        $media->setSlug($media->getName());
+        $this->renamer->rename($media);
 
-        if (1 === $this->iterate && null !== ($flashBag = $this->getFlashBag())) {
+        if (1 === $this->renamer->getIteration() && null !== ($flashBag = $this->getFlashBag())) {
             $flashBag->add('success', $this->translator->trans('media.name_was_changed')); // todo translate
         }
 
-        ++$this->iterate;
         $this->renameIfMediaExists($media);
     }
 
