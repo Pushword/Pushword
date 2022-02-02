@@ -25,8 +25,6 @@ class MediaListener
 {
     private string $projectDir;
 
-    private int $iterate = 1;
-
     private EntityManagerInterface $em;
 
     private FileSystem $filesystem;
