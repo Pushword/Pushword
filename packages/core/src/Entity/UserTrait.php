@@ -11,7 +11,7 @@ trait UserTrait
     /**
      * @ORM\Column(type="datetime", nullable=true)
      */
-    protected DateTimeInterface $createdAt;
+    protected ?DateTimeInterface $createdAt = null;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
