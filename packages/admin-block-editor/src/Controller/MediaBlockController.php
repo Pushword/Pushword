@@ -4,7 +4,6 @@ namespace Pushword\AdminBlockEditor\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
-use Psr\Log\LoggerInterface;
 use Pushword\Core\AutowiringTrait\RequiredMediaClass;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
@@ -26,14 +25,10 @@ final class MediaBlockController extends AbstractController
 
     private EntityManagerInterface $em;
 
-    private LoggerInterface $logger;
-
     public function __construct(
-        EntityManagerInterface $entityManager,
-        LoggerInterface $logger
+        EntityManagerInterface $entityManager
     ) {
         $this->em = $entityManager;
-        $this->logger = $logger;
     }
 
     public function manage(Request $request, ImageManager $imageManager, string $publicMediaDir): Response
@@ -59,8 +54,6 @@ final class MediaBlockController extends AbstractController
                 $media = $duplicate;
             }
         }
-
-        $this->logger->info('`'.$media->getName(true).'` loaded');
 
         $url = $imageManager->isImage($media) ? $imageManager->getBrowserPath((string) $media->getMedia())
              : '/'.$publicMediaDir.'/'.$media->getMedia();
