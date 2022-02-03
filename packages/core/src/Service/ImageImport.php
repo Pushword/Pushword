@@ -6,6 +6,7 @@ use Cocur\Slugify\Slugify;
 use Exception;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaInterface;
+use Pushword\Core\Utils\Filepath;
 use Pushword\Core\Utils\MediaRenamer;
 
 trait ImageImport
@@ -46,9 +47,11 @@ trait ImageImport
                 ->setSize(\Safe\filesize($imageLocalImport))
                 ->setDimensions([$imgSize[0], $imgSize[1]])
                 ->setMedia($fileName)
+                ->setSlug(Filepath::removeExtension($fileName))
                 ->setName(str_replace(["\n", '"'], ' ', $name));
 
         $this->finishImportExternalByCopyingLocally($media, $imageLocalImport);
+        $this->renamer->reset();
 
         return $media;
     }

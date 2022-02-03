@@ -10,7 +10,9 @@
          <code>{{ media|image('default') }}</code>
          <br><br>Markdown:<br>
          <pre>![{{ media.name|replace({'[': '', ']': ''}) }}]({{ media|image('default') }})</pre>
+
          Couleur dominante:<br>
          <pre style="background-color:{{media.getMainColor}};color:{{media.mainColorOpposite}}">{{media.getMainColor}}</pre>
+
     </div>
 </div>

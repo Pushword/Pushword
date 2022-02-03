@@ -43,5 +43,6 @@ feed:
 
 media:
   name_was_changed: Le nom a été changé du fait d'un média similaire.
+  duplicate_warning: Le fichier semble déjà être présent sur le disque.
 
 powered_by: Propulsé par

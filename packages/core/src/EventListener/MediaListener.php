@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Vich\UploaderBundle\Event\Event;
 
-class MediaListener
+final class MediaListener
 {
     private string $projectDir;
 
@@ -57,28 +57,65 @@ class MediaListener
         $this->translator = $translator;
     }
 
-    /**
-     * Check if name exist.
-     */
-    public function onVichUploaderPreUpload(Event $event): void
+    private function getMediaFromEvent(Event $event): MediaInterface
     {
         $media = $event->getObject();
         if (! $media instanceof MediaInterface) {
             throw new LogicException();
         }
 
-        $this->beforeToImportAndStore($media);
+        return $media;
     }
 
-    public function beforeToImportAndStore(MediaInterface $media): void
+    /**
+     * - warned if file ever exist
+     * - Set Name if not setted (from filename)
+     * - Check if name exist.
+     */
+    public function onVichUploaderPreUpload(Event $event): void
     {
+        $media = $this->getMediaFromEvent($event);
+        $propertyMapping = $event->getMapping();
+
+        $absoluteDir = $propertyMapping->getUploadDestination().'/'.$propertyMapping->getUploadDir($media);
+        $media->setProjectDir($this->projectDir)->setStoreIn($absoluteDir);
+
+        if (($duplicate = $this->getDuplicate($media)) !== null) {
+            $this->alert('warning', 'media.duplicate_warning', ['duplicateMedia' => $duplicate]);
+        }
+
         $this->setNameIfEmpty($media);
-        $this->renameIfMediaExists($media);
+        $this->renameIfIdentifiersAreToken($media);
+    }
+
+    /**
+     * @psalm-suppress InternalMethod
+     *
+     * - Update storeIn
+     * - generate image cache
+     * - updateMainColor
+     */
+    public function onVichUploaderPostUpload(Event $event): void
+    {
+        $media = $this->getMediaFromEvent($event);
+
+        if ($this->imageManager->isImage($media)) {
+            $this->imageManager->remove($media);
+            $this->imageManager->generateCache($media);
+            $image = $this->imageManager->getLastThumb();
+            $this->updateMainColor($media, $image);
+            //exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+        }
     }
 
     public function postLoad(MediaInterface $media): void
     {
         $media->setProjectDir($this->projectDir);
+    }
+
+    public function prePersist(MediaInterface $media): void
+    {
+        $media->setHash();
     }
 
     /**
@@ -87,7 +124,7 @@ class MediaListener
     public function preUpdate(MediaInterface $media, PreUpdateEventArgs $preUpdateEventArgs): void
     {
         if ($preUpdateEventArgs->hasChangedField('media')) {
-            $this->renameIfMediaExists($media);
+            $this->renameIfIdentifiersAreToken($media);
 
             if (file_exists($media->getPath())) {
                 $media->setMedia($media->getMediaBeforeUpdate());
@@ -96,6 +133,7 @@ class MediaListener
             }
 
             if (! \is_string($media->getMediaBeforeUpdate())) {
+                //dd($media->getMediaBeforeUpdate());
                 throw new LogicException();
             }
 
@@ -103,11 +141,13 @@ class MediaListener
                 $media->getStoreIn().'/'.$media->getMediaBeforeUpdate(),
                 $media->getStoreIn().'/'.$media->getMedia()
             );
-
             $this->imageManager->remove($media->getMediaBeforeUpdate());
+            $media->setMediaBeforeUpdate(null);
 
             $this->imageManager->generateCache($media);
             //exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+
+            $media->setHash();
         }
     }
 
@@ -126,6 +166,10 @@ class MediaListener
             return;
         }
 
+        if ('' !== $media->getSlug()) {
+            $media->setName($media->getSlug());
+        }
+
         $media->setName(\strval(\Safe\preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFileName())));
     }
 
@@ -141,15 +185,39 @@ class MediaListener
         return $media->getName().('' !== $extension ? '.'.$extension : '');
     }
 
-    private function renameIfMediaExists(MediaInterface $media): void
+    private function getDuplicate(MediaInterface $media): ?MediaInterface
     {
-        $mediaString = $this->getMediaString($media);
+        return $this->em->getRepository(\get_class($media))->findOneBy(['hash' => $media->getHash()]);
+    }
+
+    private function identifiersAreToken(MediaInterface $media): bool
+    {
+        /*
+        if (substr($media->getPath(), -1) !== '/' // debug why path is not always
+            && file_exists($media->getPath())) {
+            //dump('file exist: '.$media->getPath());
+            return true;
+        }*/
 
         $sameName = $this->em->getRepository(\get_class($media))->findOneBy(['name' => $media->getName()]);
-        $sameMedia = $this->em->getRepository(\get_class($media))->findOneBy(['media' => $mediaString]);
+        if (null !== $sameName && $media->getId() !== $sameName->getId()) {
+            //dump('sameName '.$sameName->getId());
+            return true;
+        }
 
-        if ((null === $sameName || $media->getId() === $sameName->getId()) &&
-             (null === $sameMedia || $media->getId() === $sameMedia->getId())) {
+        $mediaString = $this->getMediaString($media);
+        $sameMedia = $this->em->getRepository(\get_class($media))->findOneBy(['media' => $mediaString]);
+        if (null !== $sameMedia && $media->getId() !== $sameMedia->getId()) {
+            //dump('sameMedia '.$sameMedia->getId());
+            return true;
+        }
+
+        return false;
+    }
+
+    private function renameIfIdentifiersAreToken(MediaInterface $media): void
+    {
+        if (! $this->identifiersAreToken($media)) {
             $this->renamer->reset();
 
             return;
@@ -157,11 +225,23 @@ class MediaListener
 
         $this->renamer->rename($media);
 
-        if (1 === $this->renamer->getIteration() && null !== ($flashBag = $this->getFlashBag())) {
-            $flashBag->add('success', $this->translator->trans('media.name_was_changed')); // todo translate
+        if (10 === $this->renamer->getIteration()) {
+            throw new Exception('Too much file with similar name `'.$media->getMedia().'`');
         }
 
-        $this->renameIfMediaExists($media);
+        if (1 === $this->renamer->getIteration()) {
+            $this->alert('success', 'media.name_was_changed');
+        }
+
+        $this->renameIfIdentifiersAreToken($media);
+    }
+
+    private function alert(string $type, string $message, array $parameters = []): void // @phpstan-ignore-line
+    {
+        if (null !== ($flashBag = $this->getFlashBag())) {
+            $flashBag->add($type, $this->translator->trans($message, $parameters));
+        }
+        // else log TODO
     }
 
     private function getFlashBag(): ?FlashBagInterface
@@ -172,29 +252,6 @@ class MediaListener
 
         return null !== ($request = $this->requestStack->getCurrentRequest()) && method_exists($request->getSession(), 'getFlashBag') ? // @phpstan-ignore-line
                 $this->flashBag = $request->getSession()->getFlashBag() : null;
-    }
-
-    /**
-     * @psalm-suppress InternalMethod
-     *
-     * Update storeIn.
-     */
-    public function onVichUploaderPostUpload(Event $event): void
-    {
-        /** @var MediaInterface */
-        $media = $event->getObject();
-        $propertyMapping = $event->getMapping();
-
-        $absoluteDir = $propertyMapping->getUploadDestination().'/'.$propertyMapping->getUploadDir($media);
-        $media->setProjectDir($this->projectDir)->setStoreIn($absoluteDir);
-
-        if ($this->imageManager->isImage($media)) {
-            $this->imageManager->remove($media);
-            $this->imageManager->generateCache($media);
-            $image = $this->imageManager->getLastThumb();
-            $this->updateMainColor($media, $image);
-            //exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
-        }
     }
 
     private function updateMainColor(MediaInterface $media, ?Image $image = null): void

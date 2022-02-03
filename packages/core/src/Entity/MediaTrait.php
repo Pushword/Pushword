@@ -106,6 +106,13 @@ trait MediaTrait
 
     protected string $projectDir = '';
 
+    /**
+     * @ORM\Column(type="binary", length=20)
+     *
+     * @var ?string
+     */
+    protected $hash = null;
+
     public function setProjectDir(string $projectDir): self
     {
         $this->projectDir = $projectDir;
@@ -121,36 +128,16 @@ trait MediaTrait
     /** @psalm-suppress InvalidReturnType */
     protected function getExtension(string $string): string
     {
+        if (! str_contains($string, '.') || 0 === preg_match('/.*(\\.[^.\\s]{3,4})$/', $string)) {
+            return '';
+        }
+
         return F::preg_replace_str('/.*(\\.[^.\\s]{3,4})$/', '$1', $string);
     }
 
     public function getSlugForce(): string
     {
-        return $this->slug;
-    }
-
-    /**
-     * Used by MediaAdmin.
-     */
-    public function setSlugForce(?string $slug): self
-    {
-        if (null !== $this->getMediaFile()) {
-            $this->media = null;
-
-            return $this->setSlug($slug);
-        }
-
-        if (\in_array($slug, ['', null], true)) {
-            return $this;
-        }
-
-        $this->slug = (new Slugify(['regexp' => '/([^A-Za-z0-9\.]|-)+/']))->slugify($slug);
-
-        if (null !== $this->media) {
-            $this->setMedia($this->slug.$this->getExtension($this->media));
-        }
-
-        return $this;
+        return $this->getSlug();
     }
 
     private function getExtensionFromMediaFile(): string
@@ -170,18 +157,60 @@ trait MediaTrait
         return $extension;
     }
 
+    public function setSlug(?string $slug): self
+    {
+        if ('' !== $this->slug) {
+            return $this->changeSlug((string) $slug);
+        }
+
+        $this->slug = $this->slugify((string) $slug);
+
+        return $this;
+    }
+
+    /**
+     * Used by MediaAdmin.
+     */
+    public function setSlugForce(?string $slug): self
+    {
+        if ('' === $this->name && null !== $slug) {
+            $this->name = $slug;
+        }
+
+        return $this->changeSlug((string) $slug);
+    }
+
+    private function changeSlug(string $slug): self
+    {
+        if ('' === $slug) {
+            return $this;
+        }
+
+        if (null !== $this->getMediaFile()) {
+            return $this->setSlugForNewMedia($slug);
+        }
+
+        $this->slug = $this->slugify($slug);
+
+        if (null !== $this->media) {
+            $this->setMedia($this->slug.$this->getExtension($this->media));
+        }
+
+        return $this;
+    }
+
     /**
      * Used by VichUploader.
      * Permit to setMedia from filename.
      */
-    public function setSlug(?string $filename): self
+    private function setSlugForNewMedia(string $filename): self
     {
         if (null === $this->getMediaFile()) {
             //throw new Exception('debug... thinking setSlug was only used by Vich ???');
             return $this;
         }
 
-        $filename ??= $this->getMediaFileName();
+        $filename = '' !== $filename ? $filename : $this->getMediaFileName();
         if ('' === $filename) {
             throw new Exception('debug... '); //dd($this->mediaFile);
         }
@@ -190,18 +219,22 @@ trait MediaTrait
 
         $slugSlugified = $this->slugifyPreservingExtension($filename, $extension);
 
-        if (null === $this->media || $this->getExtension($this->media) != $extension) { //$this->getExtension($slugSlugify)) {
-            $this->setMedia($slugSlugified);
-            $this->slug = Filepath::removeExtension($slugSlugified);
-        }
+        $this->setMedia($slugSlugified);
+        $this->slug = \Safe\substr($slugSlugified, 0, \strlen($slugSlugified) - \strlen($extension));
 
         return $this;
+    }
+
+    private function slugify(string $slug): string
+    {
+        return (new Slugify(['regexp' => '/([^A-Za-z0-9\.]|-)+/']))->slugify($slug);
     }
 
     protected function slugifyPreservingExtension(string $string, string $extension = ''): string
     {
         $extension = '' === $extension ? $this->getExtension($string) : $extension;
-        $stringSlugify = (new Slugify())->slugify(Filepath::removeExtension($string));
+        $string = str_ends_with($string, $extension) ? \Safe\substr($string, 0, \strlen($string) - \strlen($extension)) : $string;
+        $stringSlugify = $this->slugify($string);
 
         return $stringSlugify.$extension;
     }
@@ -228,12 +261,10 @@ trait MediaTrait
         }
 
         if (null !== $this->media) {
-            return $this->slug = Filepath::removeExtension($this->media);
+            return $this->slugify(Filepath::removeExtension($this->media));
         }
 
-        $this->slug = (new Slugify())->slugify($this->getName()); //Urlizer::urlize($this->getName());
-
-        return $this->slug;
+        return $this->slugify($this->getName());
     }
 
     public function setMediaFile(?File $file = null): void
@@ -266,13 +297,6 @@ trait MediaTrait
     public function getMedia(): ?string
     {
         return $this->media;
-    }
-
-    public function resetMedia(): self
-    {
-        $this->media = null;
-
-        return $this;
     }
 
     public function setMedia(?string $media): self
@@ -366,7 +390,7 @@ trait MediaTrait
             throw new Exception('must set project dir before');
         }
 
-        $this->storeIn = str_replace($this->projectDir, '%kernel.project_dir%', $pathToDir);
+        $this->storeIn = rtrim(str_replace($this->projectDir, '%kernel.project_dir%', $pathToDir), '/');
 
         return $this;
     }
@@ -491,8 +515,10 @@ trait MediaTrait
      */
     public function removeMainImageFromPages(): void
     {
-        foreach ($this->mainImagePages as $page) {
-            $page->setMainImage(null);
+        if ($this->mainImagePages) { // @phpstan-ignore-line
+            foreach ($this->mainImagePages as $page) {
+                $page->setMainImage(null);
+            }
         }
     }
 
@@ -509,9 +535,11 @@ trait MediaTrait
      *
      * @param string $mediaBeforeUpdate NOTE : this is used only for media renaming
      */
-    public function setMediaBeforeUpdate(string $mediaBeforeUpdate): self
+    public function setMediaBeforeUpdate(?string $mediaBeforeUpdate): self
     {
-        $this->mediaBeforeUpdate = $mediaBeforeUpdate;
+        if (null === $this->mediaBeforeUpdate || null === $mediaBeforeUpdate) {
+            $this->mediaBeforeUpdate = $mediaBeforeUpdate;
+        }
 
         return $this;
     }
@@ -520,5 +548,24 @@ trait MediaTrait
     {
         return str_contains((string) $this->getMimeType(), 'image/')
             && \in_array(strtolower(str_replace('image/', '', (string) $this->getMimeType())), ['jpg', 'jpeg', 'png', 'gif'], true);
+    }
+
+    /**
+     * @return ?string
+     */
+    public function getHash()
+    {
+        return null !== $this->getMediaFile() ? \Safe\sha1_file($this->getMediaFile()->getPathname(), true) : $this->hash;
+    }
+
+    /**
+     * @param ?string $hash
+     */
+    public function setHash($hash = null): self
+    {
+        $hash = null === $hash ? $this->getHash() : null;
+        $this->hash = null === $hash ? \Safe\sha1_file($this->getStoreIn().'/'.$this->getMedia(), true) : $hash;
+
+        return $this;
     }
 }

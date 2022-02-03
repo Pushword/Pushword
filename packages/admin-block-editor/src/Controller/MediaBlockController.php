@@ -4,6 +4,7 @@ namespace Pushword\AdminBlockEditor\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\AutowiringTrait\RequiredMediaClass;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
@@ -14,9 +15,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+ use Symfony\Component\HttpFoundation\Response;
 
-/**
+ /**
  * @IsGranted("ROLE_EDITOR")
  */
 final class MediaBlockController extends AbstractController
@@ -25,9 +26,15 @@ final class MediaBlockController extends AbstractController
 
     private EntityManagerInterface $em;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    private LoggerInterface $logger;
+
+    public function __construct(
+        EntityManagerInterface $entityManager,
+        LoggerInterface $logger
+    )
     {
         $this->em = $entityManager;
+        $this->logger = $logger;
     }
 
     public function manage(Request $request, ImageManager $imageManager, string $publicMediaDir): Response
@@ -44,9 +51,17 @@ final class MediaBlockController extends AbstractController
             $mediaClass = $this->mediaClass;
             $media = new $mediaClass();
             $media->setMediaFile($mediaFile);
-            $this->em->persist($media);
-            $this->em->flush();
+
+            $duplicate = Repository::getMediaRepository($this->em, $this->mediaClass)->findOneBy(['hash' => $media->getHash()]);
+            if (null === $duplicate) {
+                $this->em->persist($media);
+                $this->em->flush();
+            } else {
+                $media = $duplicate;
+            }
         }
+
+        $this->logger->info($media->getName());
 
         $url = $imageManager->isImage($media) ? $imageManager->getBrowserPath((string) $media->getMedia())
              : '/'.$publicMediaDir.'/'.$media->getMedia();
@@ -66,7 +81,7 @@ final class MediaBlockController extends AbstractController
 
         $data = [];
         foreach ($properties as $property) {
-            if ('id' == $property) {
+            if (\in_array($property, ['hash', 'id', 'storeIn'], true)) { // properties to ignore for export
                 continue;
             }
 

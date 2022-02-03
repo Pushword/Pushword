@@ -17,10 +17,10 @@ class MediaRenamer
     {
         $newName = (1 === $this->iterate ? $media->getName()
             : F::preg_replace_str('/ \([0-9]+\)$/', '', $media->getName()));
-        $newName .= ' ('.$this->iterate.')';
+        $newName .= ' ('.($this->iterate + 1).')';
 
         $media->setName($newName);
-        $media->setSlugForce($newName);
+        $media->setSlug($newName);
 
         ++$this->iterate;
 

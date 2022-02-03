@@ -154,7 +154,7 @@ class FlatFileExporter
 
         $data = [];
         foreach ($properties as $property) {
-            if ('id' == $property) {
+            if (\in_array($property, ['id', 'hash'], true)) {
                 continue;
             }
 

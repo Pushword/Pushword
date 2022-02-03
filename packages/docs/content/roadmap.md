@@ -1,5 +1,5 @@
 ---
-title: "Where Pushword is going ? Roadmap, TODO and Ideas"
+title: 'Where Pushword is going ? Roadmap, TODO and Ideas'
 h1: Roadmap
 toc: true
 parent: contribute
@@ -9,6 +9,9 @@ parent: contribute
 
 -   Implement ESlint
 
+-   [Admin/AdminBlockEditor] If sending a media ever in the filesystem, doesn't upload it but return the media object existing
+    -   Admin : event on create new checking sha1_file ? WIP => move to preInsert
+    -   https://www.php.net/manual/en/function.hex2bin.php
 -   [AdminBlockEditor] Add Layout https://github.com/hata6502/editorjs-layout#readme
 
 -   [StaticGenerator] Very long CopierGenerator, MediaGenerator -> set a warning in docs

@@ -36,9 +36,7 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function setSize(?int $size): self;
 
-    public function setSlug(?string $filename): self;
-
-    public function setSlugForce(?string $slug): self;
+    public function setSlug(?string $slug): self;
 
     public function setMimeType(?string $mimeType): self;
 
@@ -49,7 +47,7 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function setMedia(?string $media): self;
 
-    public function resetMedia(): self;
+    public function setMediaBeforeUpdate(?string $mediaBeforeUpdate): self;
 
     public function setName(?string $name): self;
 
@@ -72,4 +70,14 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
      * @return PageInterface[]|Collection<int, PageInterface>
      */
     public function getMainImagePages();
+
+    /**
+     * @return ?string
+     */
+    public function getHash();
+
+    /**
+     * @param ?string $hash
+     */
+    public function setHash($hash = null): self;
 }
