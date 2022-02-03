@@ -10,6 +10,12 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[Upgrade Guide]]></title>
+                    <link>https://pushword.piedweb.com/upgrade</link>
+                    <guid>https://pushword.piedweb.com/upgrade</guid>
+                    <pubDate>Thu, 03 Feb 2022 15:40:55 +0100</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Roadmap]]></title>
                     <link>https://pushword.piedweb.com/roadmap</link>
                     <guid>https://pushword.piedweb.com/roadmap</guid>
@@ -32,12 +38,6 @@
                     <link>https://pushword.piedweb.com/</link>
                     <guid>https://pushword.piedweb.com/</guid>
                     <pubDate>Wed, 02 Feb 2022 16:51:50 +0100</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Conversation]]></title>
-                    <link>https://pushword.piedweb.com/extension/conversation</link>
-                    <guid>https://pushword.piedweb.com/extension/conversation</guid>
-                    <pubDate>Fri, 28 Jan 2022 17:08:41 +0100</pubDate>
                 </item>
                             
     </channel>
