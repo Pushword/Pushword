@@ -68,6 +68,8 @@ final class MediaListener
     }
 
     /**
+     * @psalm-suppress InternalMethod
+     *
      * - warned if file ever exist
      * - Set Name if not setted (from filename)
      * - Check if name exist.
