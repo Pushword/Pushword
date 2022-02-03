@@ -99,6 +99,10 @@ final class MediaListener
     {
         $media = $this->getMediaFromEvent($event);
 
+        if (null === $media->getMedia()) {
+            $media->setMedia($event->getMapping()->getFileName($media));
+        }
+
         if ($this->imageManager->isImage($media)) {
             $this->imageManager->remove($media);
             $this->imageManager->generateCache($media);

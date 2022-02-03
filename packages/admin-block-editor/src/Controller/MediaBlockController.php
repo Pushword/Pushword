@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
  use Symfony\Component\HttpFoundation\Response;
 
- /**
+/**
  * @IsGranted("ROLE_EDITOR")
  */
 final class MediaBlockController extends AbstractController
@@ -31,8 +31,7 @@ final class MediaBlockController extends AbstractController
     public function __construct(
         EntityManagerInterface $entityManager,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->em = $entityManager;
         $this->logger = $logger;
     }
@@ -61,7 +60,7 @@ final class MediaBlockController extends AbstractController
             }
         }
 
-        $this->logger->info($media->getName());
+        $this->logger->info('`'.$media->getName(true).'` loaded');
 
         $url = $imageManager->isImage($media) ? $imageManager->getBrowserPath((string) $media->getMedia())
              : '/'.$publicMediaDir.'/'.$media->getMedia();

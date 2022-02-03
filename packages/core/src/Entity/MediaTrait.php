@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
 use InvertColor\Color;
+use LogicException;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Core\Utils\F;
 use Pushword\Core\Utils\Filepath;
@@ -107,7 +108,7 @@ trait MediaTrait
     protected string $projectDir = '';
 
     /**
-     * @ORM\Column(type="binary", length=20)
+     * @ORM\Column(type="binary", length=20, options={"default": ""})
      *
      * @var ?string
      */
@@ -397,6 +398,10 @@ trait MediaTrait
 
     public function getPath(): string
     {
+        if (null === $this->media) {
+            throw new LogicException();
+        }
+
         return $this->getStoreIn().'/'.$this->media;
     }
 
