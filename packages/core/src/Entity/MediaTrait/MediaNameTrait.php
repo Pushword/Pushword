@@ -14,7 +14,7 @@ trait MediaNameTrait
     protected string $name = '';
 
     /**
-     * @ORM\Column(type="text", options={"default": ""})
+     * @ORM\Column(type="text", options={"default": ""}, nullable=true)
      */
     protected string $names = '';
 
