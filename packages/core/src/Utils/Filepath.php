@@ -8,7 +8,7 @@ class Filepath
     {
         $pos = strrpos($filepath, '.');
 
-        return false !== $pos && $pos < 5 ? \Safe\substr($filepath, 0, $pos) : $filepath;
+        return false !== $pos && (\strlen($filepath) - $pos) < 5 ? \Safe\substr($filepath, 0, $pos) : $filepath;
     }
 
     public static function filename(string $filepath): string

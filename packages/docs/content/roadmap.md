@@ -9,7 +9,7 @@ parent: contribute
 
 -   Implement ESlint
 
--   [Core] Rewrite MediaTrait and MediaListener
+-   [Core] Rewrite MediaTrait/MediaSlugTrait and MediaListener
 
 -   [AdminBlockEditor] Add Layout https://github.com/hata6502/editorjs-layout#readme
 
