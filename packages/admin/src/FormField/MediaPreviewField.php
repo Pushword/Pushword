@@ -3,6 +3,7 @@
 namespace Pushword\Admin\FormField;
 
 use Pushword\Core\Entity\MediaInterface;
+use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Form\FormMapper;
 
@@ -12,7 +13,7 @@ use Sonata\AdminBundle\Form\FormMapper;
 final class MediaPreviewField extends AbstractField
 {
     /**
-     * @var array<string, mixed>
+     * @var ?PageInterface[]
      */
     private ?array $relatedPages = null;
 
@@ -46,11 +47,11 @@ final class MediaPreviewField extends AbstractField
     {
         $relatedPages = $this->getRelatedPages();
 
-        return [] !== $relatedPages || $relatedPages['mainImage']->count() > 0; // @phpstan-ignore-line
+        return [] !== $relatedPages;
     }
 
     /**
-     * @return mixed[]|array<string, mixed>
+     * @return PageInterface[]
      */
     private function getRelatedPages(): array
     {

@@ -11,6 +11,8 @@ parent: contribute
 
 -   [Core] Rewrite MediaTrait/MediaSlugTrait and MediaListener
 
+    -   Reference tag 0.0.859
+
 -   [AdminBlockEditor] Add Layout https://github.com/hata6502/editorjs-layout#readme
 
 -   [StaticGenerator] Very long CopierGenerator, MediaGenerator -> set a warning in docs
