@@ -16,7 +16,7 @@ trait MediaNameTrait
     /**
      * @ORM\Column(type="text", options={"default": ""}, nullable=true)
      */
-    protected string $names = '';
+    protected ?string $names = '';
 
     public function __toString(): string
     {
@@ -60,6 +60,8 @@ trait MediaNameTrait
      */
     public function getNames(bool $yamlParsed = false)
     {
+        $this->names = (string) $this->names;
+
         return $yamlParsed && '' !== $this->names ? Yaml::parse($this->names) : $this->names;
     }
 
