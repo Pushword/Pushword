@@ -3,6 +3,7 @@
 namespace Pushword\Core\Entity\MediaTrait;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
 
 /** @noRector */
 trait MediaHashTrait
@@ -13,6 +14,12 @@ trait MediaHashTrait
      * @var ?string
      */
     protected $hash = null;
+
+    abstract public function getMediaFile(): ?File;
+
+    abstract public function getStoreIn(): ?string;
+
+    abstract public function getMedia(): ?string;
 
     /**
      * @return ?string

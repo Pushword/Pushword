@@ -46,7 +46,8 @@ trait MediaNameTrait
      */
     public function getNamesParsed(): array
     {
-        $return = $this->getNames(true);
+        $this->names = (string) $this->names;
+        $return = '' !== $this->names ? Yaml::parse($this->names) : [];
 
         if (! \is_array($return)) {
             throw new Exception('Names malformatted');

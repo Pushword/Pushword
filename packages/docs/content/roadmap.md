@@ -9,9 +9,7 @@ parent: contribute
 
 -   Implement ESlint
 
--   [Core] Rewrite MediaTrait/MediaSlugTrait and MediaListener
-
-    -   Reference tag 0.0.859
+-   [Core] Rewrite MediaTrait/MediaSlugTrait and MediaListener (tag reference before starting refactoring 0.0.859)
 
 -   [AdminBlockEditor] Add Layout https://github.com/hata6502/editorjs-layout#readme
 

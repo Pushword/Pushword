@@ -22,6 +22,8 @@ trait ImageTrait
      */
     protected ?string $mainColor = null;
 
+    abstract public function getMimeType(): ?string;
+
     public function isImage(): bool
     {
         return str_contains((string) $this->getMimeType(), 'image/')

@@ -5,11 +5,16 @@ namespace Pushword\Core\Entity\MediaTrait;
 use Cocur\Slugify\Slugify;
 use Exception;
 use Pushword\Core\Utils\Filepath;
+use Symfony\Component\HttpFoundation\File\File;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 trait MediaSlugTrait
 {
     protected string $slug = '';
+
+    abstract public function getMediaFile(): ?File;
+
+    abstract public function getMedia(): ?string;
 
     public function setSlug(?string $slug): self
     {
@@ -51,8 +56,8 @@ trait MediaSlugTrait
 
         $this->slug = $this->slugify($slug);
 
-        if (null !== $this->media) {
-            $this->setMedia($this->slug.$this->extractExtension($this->media));
+        if (null !== $this->getMedia()) {
+            $this->setMedia($this->slug.$this->extractExtension($this->getMedia()));
         }
 
         return $this;
@@ -104,8 +109,8 @@ trait MediaSlugTrait
             return $this->slug;
         }
 
-        if (null !== $this->media) {
-            return $this->slug = Filepath::removeExtension($this->media);
+        if (null !== $this->getMedia()) {
+            return $this->slug = Filepath::removeExtension($this->getMedia());
         }
 
         $this->slug = (new Slugify())->slugify($this->getName());
