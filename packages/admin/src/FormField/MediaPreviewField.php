@@ -46,7 +46,7 @@ final class MediaPreviewField extends AbstractField
     {
         $relatedPages = $this->getRelatedPages();
 
-        return [] !== $relatedPages['content'] || $relatedPages['mainImage']->count() > 0; // @phpstan-ignore-line
+        return [] !== $relatedPages || $relatedPages['mainImage']->count() > 0; // @phpstan-ignore-line
     }
 
     /**
@@ -60,13 +60,8 @@ final class MediaPreviewField extends AbstractField
 
         $media = $this->admin->getSubject();
 
-        $pages = Repository::getPageRepository($this->admin->getEntityManager(), $this->admin->getPageClass())
-            ->getPagesUsingMedia((string) $media->getMedia());
-
-        $this->relatedPages = [
-            'content' => $pages,
-            'mainImage' => $media->getMainImagePages(),
-        ];
+        $this->relatedPages = Repository::getPageRepository($this->admin->getEntityManager(), $this->admin->getPageClass())
+            ->getPagesUsingMedia($media);
 
         return $this->relatedPages;
     }
@@ -75,7 +70,7 @@ final class MediaPreviewField extends AbstractField
     {
         return $this->admin->getTwig()->render(
             '@pwAdmin/media/media_show.relatedPages.html.twig',
-            $this->getRelatedPages()
+            ['related_pages' => $this->getRelatedPages()]
         );
     }
 

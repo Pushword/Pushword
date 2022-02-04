@@ -1,21 +1,13 @@
-{% if mainImage.count > 0 %}
-    <h4>Via l'illustration principale</h4>
-    <ul>
-        {% for page in mainImage %}
-            {% block item %}
-                <li><a href="{{ path('admin_app_page_edit', {'id': page.id}) }}">{{ pw(page).h1|raw }}</a></li>
-            {% endblock %}
-        {% endfor %}
-    </ul>
-{% endif %}
-
-{% if content %}
-    <h4>Via le contenu</h4>
-    <ul>
-        {% for page in content %}
-            {% block item3 %}
-                <li><a href="{{ path('admin_app_page_edit', {'id': page.id}) }}">{{ pw(page).h1|raw }}</a></li>
-            {% endblock %}
-        {% endfor %}
-    </ul>
+{% if related_pages %}
+<ul>
+    {% for related_page in related_pages %}
+        {% block item3 %}
+            <li>
+                <a href="{{ path('admin_app_page_edit', {'id': related_page.id}) }}">
+                    {{ pw(related_page).h1|raw }}
+                </a>
+            </li>
+        {% endblock %}
+    {% endfor %}
+</ul>
 {% endif %}

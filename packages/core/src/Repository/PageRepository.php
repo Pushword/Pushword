@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\QueryBuilder;
 use Exception;
 use LogicException;
+use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface;
 
 /**
@@ -158,20 +159,24 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
      *
      * @return PageInterface[]
      */
-    public function getPagesUsingMedia(string $media): array
+    public function getPagesUsingMedia(MediaInterface $media): array
     {
         $qb = $this->createQueryBuilder('p');
 
         $orx = $qb->expr()->orX();
+        $orx->add($qb->expr()->eq('p.mainImage', ':idMedia'));
+        $orx->add($qb->expr()->like('p.mainContent', ':nameMedia')); // catch: 'example'
         $orx->add($qb->expr()->like('p.mainContent', ':apostrophMedia')); // catch: 'example.jpg'
         $orx->add($qb->expr()->like('p.mainContent', ':quotedMedia')); // catch: "example.jpg'
         $orx->add($qb->expr()->like('p.mainContent', ':defaultMedia')); // catch: media/default/example.jpg
         $orx->add($qb->expr()->like('p.mainContent', ':thumbMedia'));
         $query = $qb->where($orx)->setParameters([ // @phpstan-ignore-line
-            'apostrophMedia' => '%\''.$media.'\'%',
-            'quotedMedia' => '%"'.$media.'"%',
-            'defaultMedia' => '/media/default/'.$media.'%',
-            'thumbMedia' => '/media/thumb/'.$media.'%',
+            'idMedia' => $media->getId(),
+            'nameMedia' => '%\''.$media->getName().'\'%',
+            'apostrophMedia' => '%\''.$media->getMedia().'\'%',
+            'quotedMedia' => '%"'.$media->getMedia().'"%',
+            'defaultMedia' => '/media/default/'.$media->getMedia().'%',
+            'thumbMedia' => '/media/thumb/'.$media->getMedia().'%',
         ])->getQuery();
 
         return $query->getResult(); // @phpstan-ignore-line

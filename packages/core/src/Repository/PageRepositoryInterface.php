@@ -6,6 +6,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface;
 use Doctrine\Common\Collections\Selectable;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ObjectRepository;
+use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface;
 
 /**
@@ -71,7 +72,7 @@ interface PageRepositoryInterface extends ServiceEntityRepositoryInterface, Obje
     /**
      * @return PageInterface[]
      */
-    public function getPagesUsingMedia(string $media): array;
+    public function getPagesUsingMedia(MediaInterface $media): array;
 
     /**
      * @param string|string[] $host

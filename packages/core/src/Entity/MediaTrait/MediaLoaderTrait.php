@@ -1,6 +1,8 @@
 <?php
 
-namespace Pushword\Core\Entity;
+namespace Pushword\Core\Entity\MediaTrait;
+
+use Pushword\Core\Entity\MediaInterface;
 
 trait MediaLoaderTrait
 {
