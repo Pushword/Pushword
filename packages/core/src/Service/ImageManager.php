@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Service;
 
+use Exception;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
 use Pushword\Core\Entity\MediaInterface;
@@ -190,6 +191,23 @@ final class ImageManager
     public function getBrowserPath($media, string $filterName = 'default', ?string $extension = null): string
     {
         return $this->getFilterPath($media, $filterName, $extension, true);
+    }
+
+    /**
+     * @param MediaInterface|string $media
+     *
+     * @return int[] index 0 contains width, index 1 height
+     */
+    public function getDimensions($media): array
+    {
+        $path = $this->getFilterPath($media, 'xs');
+
+        $size = getimagesize($path);
+        if (false === $size) {
+            throw new Exception('`'.$path.'` not found');
+        }
+
+        return [$size[0], $size[1]];
     }
 
     /**

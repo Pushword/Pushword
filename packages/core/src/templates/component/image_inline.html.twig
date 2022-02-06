@@ -20,7 +20,8 @@
         {% endif %}
 
         {% set image =  media_from_string(image_src, image_alt ?? '') %}
-        {% set image_html =  _self.renderImage(image, image_class ?? null, image_attr ?? null, image_alt ?? null, lazy|default(true)) %}
+        {% set image_html =  _self.renderImage(image, image_class ?? null,
+            image_attr ?? null, image_alt ?? null, lazy ?? true) %}
 
         {% if image_link is not defined or image_link != false %}
 
@@ -37,6 +38,14 @@
 
 
 {% macro renderImage(image, image_class = null, image_attr = null, image_alt = null, lazy = true) %}
+{% if image.width is null %}
+    {% set dimensions = image_dimensions(image) %}
+    {% set width = dimensions[0] %}
+    {% set height = dimensions[1] %}
+{% else %}
+    {% set width = image.width %}
+    {% set height = image.height %}
+{% endif %}
 <picture>
     <source type="image/webp"
         srcset="{{ image|image('xs', 'webp') ~' 576w'
@@ -51,8 +60,8 @@
             ~','~ image|image('xl') ~' 1600w',
         src: image|image('default'),
         class: image_class is defined and image_class ? image_class : 'w-full h-auto',
-        width: 100000,
-        height: 100000,
+        width: width,
+        height: height,
         alt: image_alt|default(image.alt)
     }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }} />
 </picture>
