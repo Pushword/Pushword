@@ -204,10 +204,7 @@ final class ImageManager
 
         $size = @getimagesize($path);
         if (false === $size) {
-            $size = $media instanceof MediaInterface ? @getimagesize($this->mediaDir.'/'.$media->getMedia()) : false;
-            if (false === $size) {
-                throw new Exception('`'.$path.'` not found');
-            }
+            throw new Exception('`'.$path.'` not found');
         }
 
         return [$size[0], $size[1]];

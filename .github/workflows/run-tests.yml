@@ -37,6 +37,10 @@ jobs:
       #- name: Install browsers
       #  run: vendor/bin/bdi detect drivers
 
+
+      - name: Generate Images Cache
+        run: composer console pushword:image:cache
+
       - name: Execute tests
         run: vendor/bin/phpunit --coverage-clover coverage.xml
 
