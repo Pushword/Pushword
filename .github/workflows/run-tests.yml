@@ -9,7 +9,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest]
-        php: [7.4, 8.0]
+        php: [7.4, 8.0, 8.1]
         stability: [prefer-stable] #prefer-lowest,
 
     name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
@@ -39,7 +39,7 @@ jobs:
 
 
       - name: Generate Images Cache
-        run: composer console pushword:image:cache
+        run: cd packages/skeleton && php bin/console pushword:image:cache
 
       - name: Execute tests
         run: vendor/bin/phpunit --coverage-clover coverage.xml

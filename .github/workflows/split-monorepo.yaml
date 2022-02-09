@@ -1,6 +1,6 @@
 name: Split Monorepo
 
-on: [push]
+on: push
 
 jobs:
   provide_packages_json:
