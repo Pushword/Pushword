@@ -9,14 +9,15 @@ final class HtmlEncryptedLink extends EncryptedLink
     /**
      * @var string
      *             Attr Regex :     (?<=href=)((?P<hrefQuote>'|")(?P<href>.*?)(?P=hrefQuote)|(?P<href>[^"'>][^> \r\n\t\f\v]*))
+     *             Attr Regex :     (?<=href=)((?P<hrefQuote>'|")(?P<href1>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href>[^"'>][^> \r\n\t\f\v]*))
      *             Attr Regex :     (?<=rel=)((?P<relQuote>'|")encrypt(?P=relQuote)|encrypt)
      *             Between Attr :   \s+(?:[^>]*\s{0,1})
      *             or between Tag and attr
      *             End Attr :       (?:[^>]*)?
      *             /(<a\s+(?:[^>]*\s{0,1})(HREF-ESPACE-ENCRYPT|ENCRYPT-ESPACE-HREF)(?:[^>]*)?>(?P<anchor>((?!<\/a>).)*)<\/a>)/iJ
-     *             /(<a\s+(?:[^>]*\s{0,1})((?<=href=)((?P<hrefQuote>'|")(?P<href>.*?)(?P=hrefQuote)|(?P<href>[^"'>][^> \r\n\t\f\v]*))\s+(?:[^>]*\s{0,1})(?<=rel=)((?P<relQuote>'|")encrypt(?P=relQuote)|encrypt)|(?<=rel=)((?P<relQuote>'|")encrypt(?P=relQuote)|encrypt)\s+(?:[^>]*\s{0,1})(?<=href=)((?P<hrefQuote>'|")(?P<href>.*?)(?P=hrefQuote)|(?P<href>[^"'>][^> \r\n\t\f\v]*)))(?:[^>]*)?>(?P<anchor>((?!<\/a>).)*)<\/a>)/iJ
+     *             /(<a\s+(?:[^>]*\s{0,1})((?<=href=)((?P<hrefQuote>'|")(?P<href1>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href>[^"'>][^> \r\n\t\f\v]*))\s+(?:[^>]*\s{0,1})(?<=rel=)((?P<relQuote>'|")encrypt(?P=relQuote)|encrypt)|(?<=rel=)((?P<relQuote>'|")encrypt(?P=relQuote)|encrypt)\s+(?:[^>]*\s{0,1})(?<=href=)((?P<hrefQuote>'|")(?P<href1>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href>[^"'>][^> \r\n\t\f\v]*)))(?:[^>]*)?>(?P<anchor>((?!<\/a>).)*)<\/a>)/iJ
      */
-    public const HTML_REGEX = '/(<a\s+(?:[^>]*\s{0,1})((?<=href=)((?P<hrefQuote>\'|")(?P<href1>.*?)(?P=hrefQuote)|(?P<href2>[^"\'>][^> \r\n\t\f\v]*))\s+(?:[^>]*\s{0,1})(?<=rel=)((?P<relQuote>\'|")encrypt(?P=relQuote)|encrypt)|(?<=rel=)((?P<relQuote>\'|")encrypt(?P=relQuote)|encrypt)\s+(?:[^>]*\s{0,1})(?<=href=)((?P<hrefQuote>\'|")(?P<href3>.*?)(?P=hrefQuote)|(?P<href4>[^"\'>][^> \r\n\t\f\v]*)))(?:[^>]*)?>(?P<anchor>((?!<\/a>).)*)<\/a>)/iJ';
+    public const HTML_REGEX = '/(<a\s+(?:[^>]*\s{0,1})((?<=href=)((?P<hrefQuote>\'|")(?P<href1>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href2>[^"\'>][^> \r\n\t\f\v]*))\s+(?:[^>]*\s{0,1})(?<=rel=)((?P<relQuote>\'|")encrypt(?P=relQuote)|encrypt)|(?<=rel=)((?P<relQuote>\'|")encrypt(?P=relQuote)|encrypt)\s+(?:[^>]*\s{0,1})(?<=href=)((?P<hrefQuote>\'|")(?P<href3>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href4>[^"\'>][^> \r\n\t\f\v]*)))(?:[^>]*)?>(?P<anchor>((?!<\/a>).)*)<\/a>)/iJ';
 
     /**
      * @var string

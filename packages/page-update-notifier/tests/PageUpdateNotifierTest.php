@@ -46,7 +46,7 @@ class PageUpdateNotifierTest extends KernelTestCase
         return (new Page())
             ->setSlug('page-updater')
             ->setTitle('Just created')
-            ->setCreatedAt(new \Datetime())
+            ->setCreatedAt(new \DateTime())
             ->setLocale('en')
             ->setHost('localhost.dev');
     }

@@ -43,6 +43,11 @@ class EntityFilterTest extends KernelTestCase
             'Lorem <span class="link-btn btn-plus" data-rot=&>Test</span> ipsum',
             $filter->convertHtmlRelEncryptedLink('Lorem <a class="link-btn btn-plus" href="&" rel="encrypt">Test</a> ipsum')
         );
+
+        $this->assertSame(
+            'Lorem <a href="/a1" class="ninja">Test</a> <span data-rot=_cvrqjro.pbz/>Anchor 2</span>',
+            $filter->convertHtmlRelEncryptedLink('Lorem <a href="/a1" class="ninja">Test</a> <a href="https://piedweb.com/" rel="encrypt">Anchor 2</a>')
+        );
     }
 
     private function getManagerPool()
