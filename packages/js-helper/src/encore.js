@@ -62,8 +62,11 @@ module.exports = {
             styleEntries = [{ name: 'style', file: styleEntries }];
         }
 
-        Encore.setOutputPath(outputPath ?? './../public/assets/')
-            .setPublicPath(publicPath ?? '/assets')
+        outputPath = outputPath ? outputPath : './../public/assets/';
+        publicPath = publicPath ? publicPath : '/assets';
+
+        Encore.setOutputPath(outputPath)
+            .setPublicPath(publicPath)
             .cleanupOutputBeforeBuild()
             .enableSassLoader()
             .enableSourceMaps(false)
