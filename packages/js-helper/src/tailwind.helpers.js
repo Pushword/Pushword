@@ -5,16 +5,21 @@ module.exports = {
                 css: {
                     a: {
                         textDecoration: 'none',
-                    },
-                    ':where(a):not(:where([class~=not-prose] *)), :where(span[data-rot]):not(:where([class~=not-prose] *))':
-                        {
-                            color: 'var(--primary)',
-                            fontWeight: 500,
-                            borderBottom: '1px solid;',
-                            '&:hover': {
-                                opacity: '.75',
-                            },
+                        color: 'var(--primary)',
+                        fontWeight: 500,
+                        borderBottom: '1px solid;',
+                        '&:hover': {
+                            opacity: '.75',
                         },
+                    },
+                    'span[data-rot]': {
+                        color: 'var(--primary)',
+                        fontWeight: 500,
+                        borderBottom: '1px solid;',
+                        '&:hover': {
+                            opacity: '.75',
+                        },
+                    },
                 },
             },
         };
