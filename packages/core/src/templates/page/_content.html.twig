@@ -1,6 +1,6 @@
 {% block content %}
 <!--{{ pw(page).mainContent.chapeau|raw }}--> {# TODO: fix bug, if pw(page).ma... is not called before we really need it, it don't work #}
-<div class="prose mx-auto py-12 px-3 md:px-0">
+<div class="{{ content_container_class|default('prose mx-auto py-12 px-3 md:px-0') }}">
 
     {% block content_header %}
         {% block h1 %}
