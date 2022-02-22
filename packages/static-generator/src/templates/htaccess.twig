@@ -47,13 +47,15 @@ RewriteCond %{REQUEST_URI} ^/(.*)/$
 RewriteCond %{DOCUMENT_ROOT}/%1.html -f
 RewriteRule ^(.+)/$ /$1 [NC,L,R=301,END]
 
-RewriteCond %{REQUEST_FILENAME} ([a-zA-Z0-9][\-A-Za-z0-9_\/\.]*$)
-RewriteCond %{REQUEST_FILENAME}.html -f
-#RewriteCond %{REQUEST_FILENAME} !-d
-#RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^([^\.]+)$ $1.html [NC,L,END]
+# Static generator generate slug in slug.html
+# So we redirect request /slug to slug.html if file exists
+RewriteCond %{REQUEST_URI} ([a-zA-Z0-9][\-A-Za-z0-9_\/\.]*$)
+RewriteCond %{DOCUMENT_ROOT}/%1.html -f
+RewriteRule ^(.+)$ $1.html [NC,L,END]
 
+# Permit to redirect slug.html to slug (except if slug is slug.html)
 RewriteCond %{REQUEST_URI} ^/?(.*).(html)$
+RewriteCond %{DOCUMENT_ROOT}/%1.html -f
 RewriteRule ^/?(.*).(html)$ /$1 [R=301,NC,L,END]
 
 #---

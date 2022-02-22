@@ -49,7 +49,7 @@
                         {% if item.html is defined %}
                             {{ item.html|raw }}
                         {% elseif is_current_page(item.attr.href, page) %}
-                            <span class="text-light {{ (navbar_nav_item_class_active ?? navbar_nav_item_class)|default('text-primary') }}" aria-current="page">
+                            <span class="text-light {{ (navbar_nav_item_class_active ?? navbar_nav_item_class|default('text-primary'))|default('text-primary') }}" aria-current="page">
                                 {{ item.anchor|raw }}
                             </span>
                         {% else %}
