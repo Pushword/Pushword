@@ -1,4 +1,5 @@
 https://pushword.piedweb.com/roadmap
+https://pushword.piedweb.com/extension/admin-block-editor
 https://pushword.piedweb.com/upgrade
 https://pushword.piedweb.com/extension/facebook
 https://pushword.piedweb.com/extensions
@@ -7,7 +8,6 @@ https://pushword.piedweb.com/extension/conversation
 https://pushword.piedweb.com/command
 https://pushword.piedweb.com/configuration
 https://pushword.piedweb.com/extension/static-generator
-https://pushword.piedweb.com/extension/admin-block-editor
 https://pushword.piedweb.com/architecture
 https://pushword.piedweb.com/component/entity-filter
 https://pushword.piedweb.com/contribute

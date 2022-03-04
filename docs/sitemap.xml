@@ -4,6 +4,9 @@
     <loc>https://pushword.piedweb.com/roadmap</loc>
           </url>
   <url>
+    <loc>https://pushword.piedweb.com/extension/admin-block-editor</loc>
+          </url>
+  <url>
     <loc>https://pushword.piedweb.com/upgrade</loc>
           </url>
   <url>
@@ -26,9 +29,6 @@
           </url>
   <url>
     <loc>https://pushword.piedweb.com/extension/static-generator</loc>
-          </url>
-  <url>
-    <loc>https://pushword.piedweb.com/extension/admin-block-editor</loc>
           </url>
   <url>
     <loc>https://pushword.piedweb.com/architecture</loc>
