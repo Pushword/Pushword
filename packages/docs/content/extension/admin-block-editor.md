@@ -1,5 +1,5 @@
 ---
-title: "Admin block editor to supercharge the default markdown admin with a rich text editor"
+title: 'Admin block editor to supercharge the default markdown admin with a rich text editor'
 h1: Admin Block Editor
 toc: true
 parent: extensions
@@ -39,7 +39,7 @@ admin_block_editor_disable_listener: false
 # permit to use all the blocks pre-configured in this extension
 admin_block_editor_blocks: \Pushword\AdminBlockEditor\Block\DefaultBlock::AVAILABLE_BLOCKS
 
-admin_block_editor_type_to_prose: ["paragraph", "image", "list", "blockquote", "code"] # leave empty if you don't want a prose container around this blocks
+admin_block_editor_type_to_prose: ['paragraph', 'image', 'list', 'blockquote', 'code'] # leave empty if you don't want a prose container around this blocks
 ```
 
 ### Disable Listener and use filter
@@ -99,6 +99,7 @@ admin_block_editor_blocks: [
 The search input permit to perfom action like :
 
 -   `CHILDREN` will search for children page
+-   `parent_children` will search for children page from the parent page
 -   `comment:HELLO-YOU` will search in pages's main content for `<!--HELLO-YOU-->` (case sensitive)
 -   `slug:hellow-world` will search for page with slug being exactly `tagada`
 -   `slug:hellow-world OR slug:hello-me` ... or operator

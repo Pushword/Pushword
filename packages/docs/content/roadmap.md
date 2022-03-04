@@ -8,7 +8,7 @@ parent: contribute
 ## BugFix && To finish
 
 -   Implement ESlint
-
+-   https://github.com/jolicode/JoliTypo
 -   [Core] Rewrite MediaTrait/MediaSlugTrait and MediaListener (tag reference before starting refactoring 0.0.859)n
 
 -   [AdminBlockEditor] Add Layout https://github.com/hata6502/editorjs-layout#readme

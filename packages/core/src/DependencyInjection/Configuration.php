@@ -40,7 +40,7 @@ final class Configuration implements ConfigurationInterface
     public const DEFAULT_FILTERS = [
         'main_content' => 'twig,date,email,encryptedLink,htmlEncryptedLink,image,phoneNumber,punctuation,markdown,mainContentSplitter,extended',
         'name' => 'twig,date,name,extended',
-        'title' => 'twig,date,elseH1,extended',
+        'title' => 'elseH1,twig,date,extended',
         'string' => 'twig,date,email,encryptedLink,phoneNumber,extended',
     ];
 
