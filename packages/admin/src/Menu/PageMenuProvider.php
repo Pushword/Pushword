@@ -57,10 +57,12 @@ final class PageMenuProvider implements ContainerAwareInterface
                     'route' => 'admin_app_page_list',
                     'routeParameters' => ['filter[host][value][]' => $host],
                 ]);
-                if ($this->isEditing($host)) {
+                if ($this->isRequestingPageEdit($host)) {
                     $hostMenu->setCurrent(true);
                 }
             }
+        } elseif ($this->isRequestingPageEdit()) {
+            $pageMenu->setCurrent(true);
         }
 
         $menu->addChild($this->translator->trans('admin.label.media'), ['route' => 'admin_app_media_list']);
@@ -72,8 +74,12 @@ final class PageMenuProvider implements ContainerAwareInterface
         return $menu;
     }
 
-    private function isEditing(string $host): bool
+    private function isRequestingPageEdit(string $host = ''): bool
     {
+        if ('' === $host) {
+            return null !== $this->apps->getCurrentPage();
+        }
+
         if (null !== $this->apps->getCurrentPage() && $this->apps->getCurrentPage()->getHost() === $host) {
             return true;
         }
