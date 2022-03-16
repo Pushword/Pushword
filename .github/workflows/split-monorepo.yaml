@@ -4,8 +4,6 @@ on: push
 
 jobs:
   provide_packages_json:
-    # see json juggling: https://docs.github.com/en/free-pro-team@latest/actions/reference/context-and-expression-syntax-for-github-actions#example-6
-    # see https://stackoverflow.com/a/62953566/1348344
     runs-on: ubuntu-latest
 
     steps:
@@ -14,7 +12,7 @@ jobs:
       # required for matrix of packages set
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 7.4
+          php-version: 8.0
           coverage: none
 
       - run: composer install --no-progress --ansi
