@@ -78,6 +78,8 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
      */
     protected function configureFormFields(FormMapper $form): void
     {
+        $this->apps->switchCurrentApp($this->getSubject());
+
         $fields = $this->getFormFields();
         if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) {
             throw new LogicException();

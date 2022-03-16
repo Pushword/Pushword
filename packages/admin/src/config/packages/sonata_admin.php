@@ -34,6 +34,7 @@ return [
             'layout' => '@pwAdmin/layout.html.twig',
             'knp_menu_template' => '@pwAdmin/Menu/menu.html.twig',
             'user_block' => '@pwAdmin/user_block.html.twig',
+            'button_create' => '@pwAdmin/Button/create_button.html.twig',
         ],
         'global_search' => ['admin_route' => 'edit'],
         'breadcrumbs' => ['child_admin_route' => 'edit'],

@@ -44,15 +44,22 @@ final class PageMenuProvider implements ContainerAwareInterface
             'label' => $this->translator->trans('admin.label.content'),
         ]);
 
-        $pageMenu = $menu->addChild($this->translator->trans('admin.label.page'), ['route' => 'admin_app_page_list']);
+        $pageMenu = $menu->addChild(
+            $this->translator->trans('admin.label.page'),
+            [
+                'route' => 'admin_app_page_list',
+            ]
+        );
 
         if (\count($hosts) > 1) {
             foreach ($hosts as $host) {
-                $pageMenu->addChild($host, [
+                $hostMenu = $pageMenu->addChild($host, [
                     'route' => 'admin_app_page_list',
                     'routeParameters' => ['filter[host][value][]' => $host],
-                    'attributes' => $this->isEditing($host) ? ['class' => 'active'] : [],
                 ]);
+                if ($this->isEditing($host)) {
+                    $hostMenu->setCurrent(true);
+                }
             }
         }
 
@@ -67,6 +74,10 @@ final class PageMenuProvider implements ContainerAwareInterface
 
     private function isEditing(string $host): bool
     {
+        if (null !== $this->apps->getCurrentPage() && $this->apps->getCurrentPage()->getHost() === $host) {
+            return true;
+        }
+
         if (($request = $this->requestStack->getCurrentRequest()) !== null
             && ($hostInRequest = $this->extractHostFilter($request->query->all())) !== null) {
             return $hostInRequest === $host;
@@ -82,11 +93,14 @@ final class PageMenuProvider implements ContainerAwareInterface
     {
         if (
             isset($query['filter']) && \is_array($query['filter']) &&
-            isset($query['host']) && \is_array($query['host']) &&
-            isset($query['value']) && \is_array($query['value']) &&
-            isset($query[0]) && \is_string($query[0])
-            ) {
-            return $query['filter']['host']['value'][0];
+            isset($query['filter']['host']) && \is_array($query['filter']['host']) &&
+            isset($query['filter']['host']['value'])) {
+            if (\is_array($query['filter']['host']['value']) && isset($query['filter']['host']['value'][0]) && \is_string($query['filter']['host']['value'][0])) {
+                return $query['filter']['host']['value'][0];
+            }
+            if (\is_string($query['value'])) {
+                return $query['value'];
+            }
         }
 
         return null;
