@@ -9,7 +9,7 @@ trait UnproseTwigTrait
      */
     public function unprose(string $html): string
     {
-        $unproseClass = 'not-prose lg:-mx-32 my-6';
+        $unproseClass = 'not-prose lg:-mx-40 my-6';
 
         return '<div class="'.$unproseClass.'">'.$html.'</div>';
     }
