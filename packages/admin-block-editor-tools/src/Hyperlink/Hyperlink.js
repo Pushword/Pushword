@@ -1,6 +1,6 @@
-import css2 from "./Hyperlink.css";
-import make from "./../Abstract/make.js";
-import SelectionUtils from "editorjs-hyperlink/src/SelectionUtils";
+import css2 from './Hyperlink.css';
+import make from './../Abstract/make.js';
+import SelectionUtils from 'editorjs-hyperlink/src/SelectionUtils';
 // todo get selection utils https://github.com/codex-team/editor.js/blob/next/src/components/selection.ts
 // and drop editorjs-hyperlink dependency
 
@@ -13,23 +13,23 @@ export default class Hyperlink {
         this.config = config;
         this.selection = new SelectionUtils();
 
-        this.commandLink = "createLink";
-        this.commandUnlink = "unlink";
+        this.commandLink = 'createLink';
+        this.commandUnlink = 'unlink';
 
         this.CSS = {
-            wrapper: "plugin-options-wrapper",
-            wrapperShowed: "plugin-options-wrapper-showed",
-            button: "ce-inline-tool",
-            buttonActive: "ce-inline-tool--active",
-            buttonModifier: "ce-inline-tool--link",
-            buttonUnlink: "ce-inline-tool--unlink",
-            input: "plugin-option-input",
-            select: "plugin-option-input",
+            wrapper: 'plugin-options-wrapper',
+            wrapperShowed: 'plugin-options-wrapper-showed',
+            button: 'ce-inline-tool',
+            buttonActive: 'ce-inline-tool--active',
+            buttonModifier: 'ce-inline-tool--link',
+            buttonUnlink: 'ce-inline-tool--unlink',
+            input: 'plugin-option-input',
+            select: 'plugin-option-input',
         };
 
         this.avalaibleDesign = this.config.avalaibleDesign || [
-            ["bouton", "link-btn"],
-            ["dissimulé", "ninja"], //text-current no-underline border-0 font-normal
+            ['bouton', 'link-btn'],
+            ['dissimulé', 'ninja'], //text-current no-underline border-0 font-normal
         ];
 
         this.nodes = {
@@ -44,31 +44,41 @@ export default class Hyperlink {
     }
 
     render() {
-        this.nodes.button = document.createElement("button");
-        this.nodes.button.type = "button";
+        this.nodes.button = document.createElement('button');
+        this.nodes.button.type = 'button';
         this.nodes.button.classList.add(this.CSS.button, this.CSS.buttonModifier);
-        this.nodes.button.appendChild(Hyperlink.iconSvg("link", 14, 10));
-        this.nodes.button.appendChild(Hyperlink.iconSvg("unlink", 15, 11));
+        this.nodes.button.appendChild(Hyperlink.iconSvg('link', 14, 10));
+        this.nodes.button.appendChild(Hyperlink.iconSvg('unlink', 15, 11));
         return this.nodes.button;
     }
 
     renderActions() {
-        this.nodes.input = make.element("input", this.CSS.input, { placeholder: "https://..." });
+        this.nodes.input = make.element('input', this.CSS.input, { placeholder: 'https://...' });
 
-        this.nodes.hideForBot = make.switchInput("hideForBot", this.i18n.t("Dissimuler pour les robots"));
-        this.nodes.targetBlank = make.switchInput("targetBlank", this.i18n.t("Ouvrir dans un nouvel onglet"));
+        this.nodes.hideForBot = make.switchInput(
+            'hideForBot',
+            this.i18n.t('Dissimuler pour les robots')
+        );
+        this.nodes.targetBlank = make.switchInput(
+            'targetBlank',
+            this.i18n.t('Ouvrir dans un nouvel onglet')
+        );
 
-        this.nodes.selectDesign = make.element("select", this.CSS.select);
-        make.option(this.nodes.selectDesign, "0", this.i18n.t("Style"), { disabled: "disabled" });
-        make.option(this.nodes.selectDesign, "");
+        this.nodes.selectDesign = make.element('select', this.CSS.select);
+        make.option(this.nodes.selectDesign, '0', this.i18n.t('Style'), { disabled: 'disabled' });
+        make.option(this.nodes.selectDesign, '');
         for (let i = 0; i < this.avalaibleDesign.length; i++) {
-            make.option(this.nodes.selectDesign, this.avalaibleDesign[i][1], this.avalaibleDesign[i][0]);
+            make.option(
+                this.nodes.selectDesign,
+                this.avalaibleDesign[i][1],
+                this.avalaibleDesign[i][0]
+            );
         }
         if (!!this.config.design) {
             this.nodes.selectDesign.value = this.config.design;
         }
 
-        this.nodes.wrapper = document.createElement("div");
+        this.nodes.wrapper = document.createElement('div');
         this.nodes.wrapper.classList.add(this.CSS.wrapper);
         this.nodes.wrapper.append(
             this.nodes.input,
@@ -77,11 +87,11 @@ export default class Hyperlink {
             this.nodes.selectDesign
         );
 
-        this.nodes.wrapper.addEventListener("change", (event) => {
+        this.nodes.wrapper.addEventListener('change', (event) => {
             this.save(event);
         });
         /** */
-        this.nodes.wrapper.addEventListener("keydown", (event) => {
+        this.nodes.wrapper.addEventListener('keydown', (event) => {
             if (event.keyCode === 13) {
                 this.save(event);
                 this.selection.collapseToEnd();
@@ -101,7 +111,7 @@ export default class Hyperlink {
                 this.selection.restore();
                 this.selection.removeFakeBackground();
             }
-            const parentAnchor = this.selection.findParentTag("A");
+            const parentAnchor = this.selection.findParentTag('A');
             if (parentAnchor) {
                 this.selection.expandToTag(parentAnchor);
                 this.unlink();
@@ -115,11 +125,11 @@ export default class Hyperlink {
     }
 
     get shortcut() {
-        return this.config.shortcut || "CMD+K";
+        return this.config.shortcut || 'CMD+K';
     }
 
     get title() {
-        return "Hyperlink";
+        return 'Hyperlink';
     }
 
     static get isInline() {
@@ -138,19 +148,19 @@ export default class Hyperlink {
     }
 
     checkState(selection = null) {
-        const anchorTag = this.selection.findParentTag("A");
+        const anchorTag = this.selection.findParentTag('A');
         if (anchorTag) {
             this.nodes.button.classList.add(this.CSS.buttonUnlink);
             this.nodes.button.classList.add(this.CSS.buttonActive);
             this.openActions();
-            const hrefAttr = anchorTag.getAttribute("href");
-            const targetAttr = anchorTag.getAttribute("target");
-            const relAttr = anchorTag.getAttribute("rel");
-            const designAttr = anchorTag.getAttribute("class");
-            this.nodes.input.value = !!hrefAttr ? hrefAttr : "";
-            this.nodes.hideForBot.querySelector("input").checked = !!relAttr ? true : false;
-            this.nodes.targetBlank.querySelector("input").checked = !!targetAttr ? true : false;
-            this.nodes.selectDesign.value = designAttr ? designAttr : "0";
+            const hrefAttr = anchorTag.getAttribute('href');
+            const targetAttr = anchorTag.getAttribute('target');
+            const relAttr = anchorTag.getAttribute('rel');
+            const designAttr = anchorTag.getAttribute('class');
+            this.nodes.input.value = !!hrefAttr ? hrefAttr : '';
+            this.nodes.hideForBot.querySelector('input').checked = !!relAttr ? true : false;
+            this.nodes.targetBlank.querySelector('input').checked = !!targetAttr ? true : false;
+            this.nodes.selectDesign.value = designAttr ? designAttr : '0';
             this.selection.save();
         } else {
             this.nodes.button.classList.remove(this.CSS.buttonUnlink);
@@ -187,10 +197,10 @@ export default class Hyperlink {
             currentSelection.restore();
         }
         this.nodes.wrapper.classList.remove(this.CSS.wrapperShowed);
-        this.nodes.input.value = "";
-        this.nodes.targetBlank.querySelector("input").checked = false;
-        this.nodes.hideForBot.querySelector("input").checked = false;
-        this.nodes.selectDesign.value = "";
+        this.nodes.input.value = '';
+        this.nodes.targetBlank.querySelector('input').checked = false;
+        this.nodes.hideForBot.querySelector('input').checked = false;
+        this.nodes.selectDesign.value = '';
 
         if (clearSavedSelection) {
             this.selection.clearSaved();
@@ -203,9 +213,9 @@ export default class Hyperlink {
         event.stopPropagation();
         event.stopImmediatePropagation();
 
-        let value = this.nodes.input.value || "";
+        let value = this.nodes.input.value || '';
         if (!value.trim()) {
-            console.log("unlink");
+            console.log('unlink');
             this.selection.restore();
             this.unlink();
             return;
@@ -217,37 +227,37 @@ export default class Hyperlink {
     }
 
     insertLink() {
-        let href = this.nodes.input.value || "";
-        let target = this.nodes.targetBlank.querySelector("input").checked ? "_blank" : "";
-        let rel = this.nodes.hideForBot.querySelector("input").checked ? "encrypt" : "";
-        let design = this.nodes.selectDesign.value || "";
+        let href = this.nodes.input.value || '';
+        let target = this.nodes.targetBlank.querySelector('input').checked ? '_blank' : '';
+        let rel = this.nodes.hideForBot.querySelector('input').checked ? 'encrypt' : '';
+        let design = this.nodes.selectDesign.value || '';
 
-        let anchorTag = this.initSelection ? this.initSelection : this.selection.findParentTag("A");
+        let anchorTag = this.initSelection ? this.initSelection : this.selection.findParentTag('A');
         if (anchorTag) {
             this.selection.expandToTag(anchorTag);
         } else {
-            document.execCommand(this.commandLink, false, "#");
-            anchorTag = this.selection.findParentTag("A");
+            document.execCommand(this.commandLink, false, '#');
+            anchorTag = this.selection.findParentTag('A');
             this.initSelection = anchorTag;
         }
 
         if (anchorTag) {
-            anchorTag["href"] = href;
-            anchorTag["href"] = href;
+            anchorTag['href'] = href;
+            anchorTag['href'] = href;
             if (!!target) {
-                anchorTag["target"] = target;
+                anchorTag['target'] = target;
             } else {
-                anchorTag.removeAttribute("target");
+                anchorTag.removeAttribute('target');
             }
             if (!!rel) {
-                anchorTag["rel"] = rel;
+                anchorTag['rel'] = rel;
             } else {
-                anchorTag.removeAttribute("rel");
+                anchorTag.removeAttribute('rel');
             }
             if (!!design) {
                 anchorTag.className = design;
             } else {
-                anchorTag.removeAttribute("class");
+                anchorTag.removeAttribute('class');
             }
         }
         return anchorTag;
@@ -257,10 +267,10 @@ export default class Hyperlink {
     }
 
     static iconSvg(name, width = 14, height = 14) {
-        const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        icon.classList.add("icon", "icon--" + name);
-        icon.setAttribute("width", width + "px");
-        icon.setAttribute("height", height + "px");
+        const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        icon.classList.add('icon', 'icon--' + name);
+        icon.setAttribute('width', width + 'px');
+        icon.setAttribute('height', height + 'px');
         icon.innerHTML = `<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#${name}"></use>`;
         return icon;
     }

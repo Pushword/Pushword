@@ -49,15 +49,6 @@ var editorjsConfig = {
             inlineToolbar: true,
             tunes: ['anchor'],
         },
-        attaches: {
-            name: "attaches",
-            className: "Attaches",
-            tunes: ['anchor'],
-            config: {
-                onSelectFile: editorJsHelper.onSelectFile,
-                onUploadFile: editorJsHelper.onUploadFile,
-            },
-        },
         image: {
             name: "image",
             className: "Image",
@@ -124,6 +115,15 @@ var editorjsConfig = {
             name: "table",
             className: "Table",
             tunes: ['anchor'],
+        },
+        attaches: {
+            name: "attaches",
+            className: "Attaches",
+            tunes: ['anchor'],
+            config: {
+                onSelectFile: editorJsHelper.onSelectFile,
+                onUploadFile: editorJsHelper.onUploadFile,
+            },
         },
         pages_list: {
             name: "pages_list",
