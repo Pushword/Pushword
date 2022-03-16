@@ -50,7 +50,7 @@ class CustomPropertiesTraitTest extends TestCase
     protected function getCustomPropertiesTrait()
     {
         $mock = $this->getMockForTrait(CustomPropertiesTrait::class);
-        //$mock->method('getTitle')->willReturn(true);
+        // $mock->method('getTitle')->willReturn(true);
 
         return $mock;
     }

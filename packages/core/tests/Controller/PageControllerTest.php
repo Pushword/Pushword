@@ -20,13 +20,13 @@ class PageControllerTest extends KernelTestCase
     {
         $slug = 'kitchen-sink';
         $response = $this->getPageController()->show(Request::create($slug), $slug, '');
-        //file_put_contents('debug.html', $response->getContent());
+        // file_put_contents('debug.html', $response->getContent());
         $this->assertSame(200, $response->getStatusCode());
 
         $slug = 'kitchen-sink';
         $this->expectException(NotFoundHttpException::class);
         $response = $this->getPageController()->show(Request::create('/en/'.$slug), '/en/'.$slug, '');
-        //$this->assertSame(404, $response->getStatusCode());
+        // $this->assertSame(404, $response->getStatusCode());
     }
 
     public function testShowFeed()

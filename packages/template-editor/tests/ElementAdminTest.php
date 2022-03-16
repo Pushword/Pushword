@@ -19,7 +19,7 @@ class ElementAdminTest extends AbstractAdminTest
         $repo = new ElementRepository(self::$kernel->getProjectDir().'/templates');
         $element = $repo->getAll()[0];
 
-        $client->request('GET', '/admin/template/edit/'.$element->getEncodedPath()); ///pushword.piedweb.com/page/_content.html.twig
+        $client->request('GET', '/admin/template/edit/'.$element->getEncodedPath()); // /pushword.piedweb.com/page/_content.html.twig
         $this->assertResponseIsSuccessful();
     }
 }

@@ -38,7 +38,7 @@ class LinkedDocsScannerTest extends KernelTestCase
             ->setSlug('homepage')
             ->setLocale('en')
             ->setCreatedAt(new \DateTime('2 days ago'))
-            ->setMainContent('...'); //\Safe\file_get_contents( __DIR__.'/../../skeleton/src/DataFixtures/WelcomePage.md')
+            ->setMainContent('...'); // \Safe\file_get_contents( __DIR__.'/../../skeleton/src/DataFixtures/WelcomePage.md')
 
         return $page;
     }

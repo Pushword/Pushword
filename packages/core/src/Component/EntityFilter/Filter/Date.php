@@ -17,12 +17,12 @@ class Date extends AbstractFilter
     /** @psalm-suppress RedundantCast */
     private function convertDateShortCode(string $string, ?string $locale = null): string
     {
-        //var_dump($string); exit;
+        // var_dump($string); exit;
         if (null !== $locale) {
             setlocale(\LC_TIME, $this->convertLocale($locale));
         }
 
-        //$string = preg_replace('/date\([\'"]?([a-z% ]+)[\'"]?\)/i',
+        // $string = preg_replace('/date\([\'"]?([a-z% ]+)[\'"]?\)/i',
         //  strftime(strpos('\1', '%') ? '\1': '%\1'), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?W[\'"]?\)/i', $this->getWinterYear(), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?Y-1[\'"]?\)/i', date('Y', strtotime('-1 year')), $string);

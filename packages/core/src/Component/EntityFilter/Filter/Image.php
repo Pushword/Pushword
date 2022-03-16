@@ -28,7 +28,7 @@ class Image extends AbstractFilter
             $renderImg = '<div>'.$this->twig->render(
                 $this->app->getView('/component/image_inline.html.twig'),
                 [
-                    //"image_wrapper_class" : "mimg",'
+                    // "image_wrapper_class" : "mimg",'
                     'image_src' => $matches[2][$k],
                     'image_alt' => htmlspecialchars($matches[1][$k]),
                 ]

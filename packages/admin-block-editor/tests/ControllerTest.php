@@ -10,7 +10,7 @@ class ControllerTest extends AbstractAdminTest
     public function testBasics()
     {
         $client = $this->loginUser(
-            //static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
+            // static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
         );
 
         $id = $this->createNewPage();
@@ -45,7 +45,7 @@ class ControllerTest extends AbstractAdminTest
     public function testPageController()
     {
         $client = $this->loginUser(
-            //static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
+            // static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
         );
         $client->request(
             'POST',
@@ -57,7 +57,7 @@ class ControllerTest extends AbstractAdminTest
         );
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        //dd(str_replace([' ', '\n'], '', $client->getResponse()->getContent()));
+        // dd(str_replace([' ', '\n'], '', $client->getResponse()->getContent()));
         $this->assertStringStartsWith(
             '{"success":1,"content":"<ul><li><ahref=\"',
             str_replace([' ', '\n'], '', $client->getResponse()->getContent())
@@ -77,7 +77,7 @@ class ControllerTest extends AbstractAdminTest
     public function testMediaController()
     {
         $client = $this->loginUser(
-            //static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
+            // static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
         );
         $client->request(
             'POST',

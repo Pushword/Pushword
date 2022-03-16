@@ -19,7 +19,7 @@ class Mozjpeg extends BaseOptimizer
     {
         $command = parent::getCommand();
 
-        //return $command.' > '.escapeshellarg($this->imagePath);
+        // return $command.' > '.escapeshellarg($this->imagePath);
 
         $process = Process::fromShellCommandline($command);
 

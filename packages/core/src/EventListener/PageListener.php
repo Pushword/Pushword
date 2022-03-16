@@ -61,12 +61,12 @@ final class PageListener
         }
         /**/
 
-        //$this->entityManager->flush();
-        //$pageHasEditor = (new PageHasEditor())->setPage($page)->setEditor($user)->setEditedAt(new \DateTime());
-        //$this->entityManager->persist($pageHasEditor);
-        //$this->entityManager->flush();
+        // $this->entityManager->flush();
+        // $pageHasEditor = (new PageHasEditor())->setPage($page)->setEditor($user)->setEditedAt(new \DateTime());
+        // $this->entityManager->persist($pageHasEditor);
+        // $this->entityManager->flush();
 
-        //$page->addPageHasEditor($pageHasEditor);
-        //$this->entityManager->flush();
+        // $page->addPageHasEditor($pageHasEditor);
+        // $this->entityManager->flush();
     }
 }

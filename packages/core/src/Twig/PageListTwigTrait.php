@@ -84,7 +84,7 @@ trait PageListTwigTrait
         if (str_contains($search, ' OR ')) {
             $searchToParse = explode(' OR ', $search);
             foreach ($searchToParse as $singleSearchToParse) {
-                //$where = array_merge($where, $this->stringToSearch($s), ['OR']);
+                // $where = array_merge($where, $this->stringToSearch($s), ['OR']);
                 $where[] = $this->simpleStringToSearch($singleSearchToParse);
                 $where[] = 'OR';
             }
@@ -252,7 +252,7 @@ trait PageListTwigTrait
     private function getCurrentPage(): int
     {
         if (null === $this->requestStack->getCurrentRequest()) {
-            //throw new Exception('no current request'); // only in test ?!
+            // throw new Exception('no current request'); // only in test ?!
             return 1;
         }
 

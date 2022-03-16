@@ -15,7 +15,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 
-class Versionner implements EventSubscriber //EventSubscriberInterface
+class Versionner implements EventSubscriber // EventSubscriberInterface
 {
     private Filesystem $fileSystem;
 

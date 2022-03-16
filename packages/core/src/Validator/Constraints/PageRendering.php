@@ -9,7 +9,7 @@ use Symfony\Component\Validator\Constraint;
  */
 class PageRendering extends Constraint
 {
-    //public $message = 'The page is not rendering as expected... You may done an error in the main content.';
+    // public $message = 'The page is not rendering as expected... You may done an error in the main content.';
     public string $message = 'page.pageRendering';
 
     public function validatedBy(): string

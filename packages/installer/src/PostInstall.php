@@ -13,7 +13,7 @@ if (! class_exists(Filesystem::class)) {
 
 class PostInstall
 {
-    public static function runPostUpdate(): void //Event $event
+    public static function runPostUpdate(): void // Event $event
     {
         $packages = self::scanDir('vendor/pushword');
 

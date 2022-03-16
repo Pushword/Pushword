@@ -70,13 +70,13 @@ trait MediaSlugTrait
     private function setSlugForNewMedia(string $filename): self
     {
         if (null === $this->getMediaFile()) {
-            //throw new Exception('debug... thinking setSlug was only used by Vich ???');
+            // throw new Exception('debug... thinking setSlug was only used by Vich ???');
             return $this;
         }
 
         $filename = '' !== $filename ? $filename : $this->getMediaFileName();
         if ('' === $filename) {
-            throw new Exception('debug... '); //dd($this->mediaFile);
+            throw new Exception('debug... '); // dd($this->mediaFile);
         }
 
         $extension = $this->extractExtensionFromFile();

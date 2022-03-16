@@ -18,7 +18,7 @@ use Pushword\Core\Entity\PageInterface;
  * @method list<\Pushword\Core\Entity\PageInterface> findAll()
  * @method list<\Pushword\Core\Entity\PageInterface> findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class PageRepository extends ServiceEntityRepository implements PageRepositoryInterface //@phpstan-ignore-line
+class PageRepository extends ServiceEntityRepository implements PageRepositoryInterface // @phpstan-ignore-line
 {
     protected bool $hostCanBeNull = false;
 
@@ -76,7 +76,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
 
     private function buildPublishedPageQuery(string $alias = 'p'): QueryBuilder
     {
-        //$this->andNotRedirection($queryBuilder);
+        // $this->andNotRedirection($queryBuilder);
 
         return $this->createQueryBuilder($alias)
             ->andWhere($alias.'.publishedAt <=  :now')

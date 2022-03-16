@@ -29,7 +29,7 @@ final class MediaController extends AbstractController
         }
 
         $binaryFileResponse = new BinaryFileResponse($pathToFile);
-        //$response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT); ResponseHeaderBag::DISPOSITION_INLINE);
+        // $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT); ResponseHeaderBag::DISPOSITION_INLINE);
 
         // temporary hack until I dig why svg+xml file are return with this mimeType...
         if ('image/svg' == $binaryFileResponse->getFile()->getMimeType()) {

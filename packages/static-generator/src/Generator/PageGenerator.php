@@ -72,7 +72,7 @@ class PageGenerator extends AbstractGenerator
     protected function saveAsStatic(string $liveUri, string $destination, ?Page $page = null): void
     {
         $request = Request::create($liveUri);
-        //$request->headers->set('host', $this->app->getMainHost());
+        // $request->headers->set('host', $this->app->getMainHost());
 
         $response = static::getKernel()->handle($request);
 
@@ -116,7 +116,7 @@ class PageGenerator extends AbstractGenerator
                      '['.$liveUri.']('.$this->router->getRouter()->generate('admin_app_page_edit', ['id' => $page->getId()]).')'
                      : $liveUri;
         $this->setError('An error occured when generating '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));
-        //throw new Exception('An error occured when generating `'.$liveUri.'`'); //exit($this->kernel->handle($request));
+        // throw new Exception('An error occured when generating `'.$liveUri.'`'); //exit($this->kernel->handle($request));
     }
 
     private function responseIsHtml(Response $response): bool

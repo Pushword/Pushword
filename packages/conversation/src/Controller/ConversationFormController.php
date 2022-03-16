@@ -115,7 +115,7 @@ final class ConversationFormController extends AbstractController
      */
     private function getPossibleOrigins(Request $request): array
     {
-        //$host = $request->getHost();
+        // $host = $request->getHost();
         $app = $this->apps->get();
 
         if ([] !== $this->possibleOrigins) {
@@ -159,7 +159,7 @@ final class ConversationFormController extends AbstractController
 
     public function show(Request $request, string $type, ?string $host = null): Response
     {
-        //$host = $host ?? $request->getHost();
+        // $host = $host ?? $request->getHost();
         if (null !== $host) {
             $this->apps->switchCurrentApp($host);
         }

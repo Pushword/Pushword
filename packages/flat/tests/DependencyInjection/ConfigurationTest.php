@@ -13,8 +13,8 @@ class ConfigurationTest extends KernelTestCase
     {
         self::bootKernel();
 
-        //$msgEntity = self::$kernel->getContainer()->getParameter('pw.conversation.entity_message');
-        //$this->assertSame(Message::class, $msgEntity);
+        // $msgEntity = self::$kernel->getContainer()->getParameter('pw.conversation.entity_message');
+        // $this->assertSame(Message::class, $msgEntity);
         $this->assertSame(
             '',
             self::$kernel->getContainer()->get('pushword.apps')->get()->get('flat_content_dir')

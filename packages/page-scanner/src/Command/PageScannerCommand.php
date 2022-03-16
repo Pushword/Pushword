@@ -61,9 +61,9 @@ class PageScannerCommand extends Command
     {
         $lock = (new LockFactory(new FlockStore()))->createLock('page-scan');
         if ($lock->acquire()) {
-            //sleep(30);
+            // sleep(30);
             $errors = $this->scanAll($host);
-            //dd($errors);
+            // dd($errors);
             $this->filesystem->dumpFile(PageScannerController::fileCache(), serialize($errors));
             $lock->release();
 

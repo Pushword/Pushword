@@ -121,7 +121,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         $filter->add('locale', null, ['label' => 'admin.page.locale.label']);
 
         if (\count($this->getApps()->getHosts()) > 1) {
-            //$filter->add('host', null, ['label' => 'admin.page.host.label']);
+            // $filter->add('host', null, ['label' => 'admin.page.host.label']);
             (new HostField($this))->datagridMapper($filter); // @phpstan-ignore-line
         }
 

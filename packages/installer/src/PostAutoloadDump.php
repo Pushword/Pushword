@@ -38,8 +38,8 @@ class PostAutoloadDump extends PostInstall
                 (new $className())->run(); // @phpstan-ignore-line
 
                 // TODO find a way to use autowiring
-                //self::getKernel()->getContainer()->get($classname)->run();
-                //include $script;
+                // self::getKernel()->getContainer()->get($classname)->run();
+                // include $script;
 
                 self::dumpFile($isInstalledFile, 'done');
             }

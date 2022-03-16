@@ -3,7 +3,7 @@
 namespace Pushword\Flat\Importer;
 
 use DateTimeInterface;
-//use iBudasov\Iptc\Manager as Iptc;
+// use iBudasov\Iptc\Manager as Iptc;
 use Pushword\Core\Entity\MediaInterface;
 
 /**
@@ -60,7 +60,7 @@ trait ImageImporterTrait
                 ->setSize(\Safe\filesize($filePath))
                 ->setDimensions([$imgSize[0], $imgSize[1]]);
 
-        $data = $this->getImageData($filePath); //, $imgSize['mime']);
+        $data = $this->getImageData($filePath); // , $imgSize['mime']);
 
         $this->setData($media, $data);
     }

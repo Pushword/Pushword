@@ -16,14 +16,14 @@ trait KernelTrait
         if (null === static::$appKernel) {
             $kernelClass = \get_class($kernel);
             $env = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'];
-            //file_put_contents('debug', $env, FILE_APPEND);
+            // file_put_contents('debug', $env, FILE_APPEND);
             static::$appKernel = new $kernelClass('test' == $env ? 'test' : 'prod', true);
-            //static::$appKernel = clone $kernel;
+            // static::$appKernel = clone $kernel;
             // NOTE: If we clone, it's take too much time in dev mod
 
-            //$warmupDir = static::$appKernel->getBuildDir();
-            //dd( $warmupDir);
-            //static::$appKernel->reboot($warmupDir);
+            // $warmupDir = static::$appKernel->getBuildDir();
+            // dd( $warmupDir);
+            // static::$appKernel->reboot($warmupDir);
             static::$appKernel->boot();
         }
     }

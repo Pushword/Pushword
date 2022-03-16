@@ -38,7 +38,7 @@ class ConfigurationTest extends KernelTestCase
         $extension->prepend($containerBuilder);
         $this->assertContains('PushwordConversation', $containerBuilder->getExtensionConfig('twig')[0]['paths']);
 
-        //$this->assertSame('', $parameterBag->get(''));
+        // $this->assertSame('', $parameterBag->get(''));
 
         $configuration = new Configuration();
         $this->assertSame(TreeBuilder::class, \get_class($configuration->getConfigTreeBuilder()));

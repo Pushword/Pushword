@@ -27,7 +27,7 @@ trait ImageImport
         string $name = '',
         string $slug = '',
         bool $hashInFilename = true
-        //, $ifNameIsTaken = null
+        // , $ifNameIsTaken = null
     ): MediaInterface {
         $this->renamer = new MediaRenamer();
 

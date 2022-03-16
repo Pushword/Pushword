@@ -129,7 +129,7 @@ final class PushwordConfigFactory
 
         if (! isset($app['hosts']) || ! \is_array($app['hosts'])) {
             $app = (new Processor())->processConfiguration($this->configuration, $app);
-            //throw new LogicException();
+            // throw new LogicException();
         }
 
         foreach ($fallbackProperties as $fallbackProperty) {

@@ -20,7 +20,7 @@ class PageMainImageField extends AbstractField
         $form->add('mainImage', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
             'required' => false,
             'class' => $this->admin->getMediaClass(),
-            'label' => ' ', //'admin.page.mainImage.label',
+            'label' => ' ', // 'admin.page.mainImage.label',
             'btn_edit' => false,
         ]);
 

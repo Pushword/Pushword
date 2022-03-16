@@ -10,7 +10,7 @@ return [
         'title' => 'Admin',
         'title_logo' => '/bundles/pushwordadmin/logo.svg',
         'dashboard' => [
-            'blocks' => null, //- { type: sonata.admin.block.admin_list, position: left }
+            'blocks' => null, // - { type: sonata.admin.block.admin_list, position: left }
             'groups' => [
                 'app.admin.group.page' => [
                     'provider' => 'page_admin_menu',

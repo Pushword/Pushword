@@ -30,7 +30,7 @@ use Twig\TwigFunction;
 class AppExtension extends AbstractExtension
 {
     // TODO switch from Trait to service (will be better to test and add/remove twig extension)
-    //use AttributesTrait;
+    // use AttributesTrait;
     use GalleryTwigTrait;
     use LinkTwigTrait;
     use PageListTwigTrait;

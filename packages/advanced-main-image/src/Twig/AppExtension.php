@@ -15,7 +15,7 @@ class AppExtension extends AbstractExtension
     {
         return [
             new TwigFunction('heroSize', [PageAdvancedMainImageFormField::class, 'formatToRatio']),
-            //, ['is_safe' => false, 'needs_environment' => true]),
+            // , ['is_safe' => false, 'needs_environment' => true]),
         ];
     }
 }

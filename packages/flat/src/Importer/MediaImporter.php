@@ -60,14 +60,14 @@ class MediaImporter extends AbstractImporter
     private function isImage(string $filePath): bool
     {
         return false !== getimagesize($filePath);
-        //0 !== strpos(finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $filePath), 'image/') || preg_match('/\.webp$/', $filePath);
+        // 0 !== strpos(finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $filePath), 'image/') || preg_match('/\.webp$/', $filePath);
     }
 
     public function importMedia(string $filePath, DateTimeInterface $dateTime): void
     {
         $media = $this->getMedia($this->getFilename($filePath));
 
-        if (1 == 2 && ! $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
+        if ($this->newMedia && $media->getUpdatedAt() >= $dateTime) {
             return; // no update needed
         }
 

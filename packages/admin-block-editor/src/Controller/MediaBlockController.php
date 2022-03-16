@@ -37,7 +37,7 @@ final class MediaBlockController extends AbstractController
         $mediaFile = '' !== $request->getContent() && '0' !== $request->getContent() ? $this->getMediaFrom($request->getContent())
             : $request->files->get('image');
 
-        //if (false === strpos($mediaFile->getMimeType(), 'image/')) { return new Response(json_encode(['error' => 'media sent is not an image'])); }
+        // if (false === strpos($mediaFile->getMimeType(), 'image/')) { return new Response(json_encode(['error' => 'media sent is not an image'])); }
 
         if ($mediaFile instanceof MediaInterface) {
             $media = $mediaFile;

@@ -54,7 +54,7 @@ class StaticGeneratorTest extends KernelTestCase
         if (null !== $this->staticAppGenerator) {
             return $this->staticAppGenerator;
         }
-        //$staticAppGenerator = self::$kernel->getContainer()->get('pushword.static_app_generator');
+        // $staticAppGenerator = self::$kernel->getContainer()->get('pushword.static_app_generator');
 
         $generatorBag = $this->getGeneratorBag();
 
@@ -172,7 +172,7 @@ class StaticGeneratorTest extends KernelTestCase
                 new RequestStack(),
                 self::$kernel->getContainer()->get('translator'),
                 self::$kernel->getContainer()->get('pushword.router'),
-                self::$kernel,//->getContainer()->get('kernel'),
+                self::$kernel,// ->getContainer()->get('kernel'),
                 self::$kernel->getContainer()->get('pushword.apps')
             );
 

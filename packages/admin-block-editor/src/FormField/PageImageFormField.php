@@ -21,7 +21,7 @@ class PageImageFormField extends AbstractField
         $form->add('inline_image', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
             'required' => false,
             'class' => $this->admin->getMediaClass(),
-            //'label' => 'admin.page.mainImage.label',
+            // 'label' => 'admin.page.mainImage.label',
             'btn_edit' => false,
             'mapped' => false,
             'row_attr' => ['style' => 'display:none'],
@@ -32,7 +32,7 @@ class PageImageFormField extends AbstractField
         return $form->add('inline_attaches', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
             'required' => false,
             'class' => $this->admin->getMediaClass(),
-            //'label' => 'admin.page.mainImage.label',
+            // 'label' => 'admin.page.mainImage.label',
             'btn_edit' => false,
             'mapped' => false,
             'row_attr' => ['style' => 'display:none'],

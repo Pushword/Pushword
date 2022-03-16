@@ -23,7 +23,7 @@ class PageAdvancedMainImageFormField extends PageMainImageField
                 'admin.page.mainImageFormat.normal' => 0,
                 'admin.page.mainImageFormat.13fullscreen' => 2,
                 'admin.page.mainImageFormat.34fullscreen' => 3,
-                //'admin.page.mainImageFormat.fullscreen' => 4,
+                // 'admin.page.mainImageFormat.fullscreen' => 4,
             ],
             'data' => \intval($subject->getCustomProperty('mainImageFormat')),
         ]);

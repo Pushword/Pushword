@@ -58,6 +58,6 @@ class Page implements PageInterface
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
     {
         // TODO : fix why on admin, it's not throwing exception on submit
-        //$metadata->addConstraint( new PageRendering());
+        // $metadata->addConstraint( new PageRendering());
     }
 }

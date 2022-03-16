@@ -64,7 +64,7 @@ class PushwordConfigFactoryTest extends TestCase
 
         $this->expectException(InvalidConfigurationException::class);
         $factory->loadApps();
-        //dd ($container->getParameter('pw.apps'));
+        // dd ($container->getParameter('pw.apps'));
     }
 
     private function getConfigArray(): array

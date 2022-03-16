@@ -37,10 +37,10 @@ final class AppsConfigParser
 
         foreach ($properties as $property) {
             if (! isset($app[$property])) {
-                $app[$property] = $containerBuilder->getParameter('pw.'.$property); //'%'.'pw.'.$p.'%';
+                $app[$property] = $containerBuilder->getParameter('pw.'.$property); // '%'.'pw.'.$p.'%';
             } elseif ('custom_properties' == $property) {
                 $app[$property] = array_merge(self::getParameterArray($containerBuilder, 'pw.'.$property), $app[$property]); // @phpstan-ignore-line
-                //var_dump($app[$p]); exit;
+                // var_dump($app[$p]); exit;
             }
         }
 

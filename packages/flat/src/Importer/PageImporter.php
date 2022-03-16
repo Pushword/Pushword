@@ -79,7 +79,7 @@ class PageImporter extends AbstractImporter
         $document = YamlFrontMatter::parse($content);
 
         if (empty($document->matter())) { // @phpstan-ignore-line
-            return; //throw new Exception('No content found in `'.$filePath.'`');
+            return; // throw new Exception('No content found in `'.$filePath.'`');
         }
 
         $slug = $document->matter('slug') ?? $this->filePathToSlug($filePath);

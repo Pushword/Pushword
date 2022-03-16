@@ -5,9 +5,9 @@ return [
         'dashboard' => [
             'groups' => [
                 'app.admin.group.setting' => [
-                    //'label' => 'admin.label.params',
-                    //'label_catalogue' => 'messages',
-                    //'icon' => '<i class="fa fa-wrench"></i>',
+                    // 'label' => 'admin.label.params',
+                    // 'label_catalogue' => 'messages',
+                    // 'icon' => '<i class="fa fa-wrench"></i>',
                     'items' => [
                         0 => [
                             'route' => 'pushword_template_editor_list',

@@ -179,7 +179,7 @@ class PageUpdateNotifier
         }
 
         $pages = $this->getPageUpdatedSince($lastTime30min);
-        //dd($pages);
+        // dd($pages);
         if ([] === $pages) {
             return self::NOTHING_TO_NOTIFY;
         }

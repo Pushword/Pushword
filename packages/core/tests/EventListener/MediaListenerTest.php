@@ -9,7 +9,7 @@ use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Panther\PantherTestCase;
 
-class MediaListenerTest extends AbstractAdminTest //PantherTestCase // KernelTestCase
+class MediaListenerTest extends AbstractAdminTest // PantherTestCase // KernelTestCase
 {
     use PathTrait;
 
@@ -36,7 +36,7 @@ class MediaListenerTest extends AbstractAdminTest //PantherTestCase // KernelTes
         $em = self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager');
 
         $mediaEntity = $this->getImageManager()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
-        //$em->persist($mediaEntity);
+        // $em->persist($mediaEntity);
         $this->assertFileExists($this->mediaDir.'/1-2.jpg');
 
         // If import twice, return the existing one and not create a new copy
@@ -53,11 +53,11 @@ class MediaListenerTest extends AbstractAdminTest //PantherTestCase // KernelTes
         $files = [
             __DIR__.'/media/2.jpg',
             __DIR__.'/media/2',
-            //__DIR__.'/media/2.withoutMimeType.jpg', //=> this will create 1
+            // __DIR__.'/media/2.withoutMimeType.jpg', //=> this will create 1
         ];
 
         foreach ($files as $file) {
-            //dump($file);
+            // dump($file);
             $client = $this->loginUser();
             $client->catchExceptions(false);
             $crawler = $client->request('GET', '/admin/app/media/create');

@@ -110,7 +110,7 @@ final class MediaListener
             $this->imageManager->generateCache($media);
             $image = $this->imageManager->getLastThumb();
             $this->updateMainColor($media, $image);
-            //exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+            // exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
         }
     }
 
@@ -139,7 +139,7 @@ final class MediaListener
             }
 
             if (! \is_string($media->getMediaBeforeUpdate())) {
-                //dd($media->getMediaBeforeUpdate());
+                // dd($media->getMediaBeforeUpdate());
                 throw new LogicException();
             }
 
@@ -151,7 +151,7 @@ final class MediaListener
             $media->setMediaBeforeUpdate(null);
 
             $this->imageManager->generateCache($media);
-            //exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+            // exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
 
             $media->setHash();
         }
@@ -207,14 +207,14 @@ final class MediaListener
 
         $sameName = $this->em->getRepository(\get_class($media))->findOneBy(['name' => $media->getName()]);
         if (null !== $sameName && $media->getId() !== $sameName->getId()) {
-            //dump('sameName '.$sameName->getId());
+            // dump('sameName '.$sameName->getId());
             return true;
         }
 
         $mediaString = $this->getMediaString($media);
         $sameMedia = $this->em->getRepository(\get_class($media))->findOneBy(['media' => $mediaString]);
         if (null !== $sameMedia && $media->getId() !== $sameMedia->getId()) {
-            //dump('sameMedia '.$sameMedia->getId());
+            // dump('sameMedia '.$sameMedia->getId());
             return true;
         }
 

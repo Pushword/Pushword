@@ -67,7 +67,7 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
     {
         $filter->add('id')
             ->add('email')
-            //->add('groups')
+            // ->add('groups')
         ;
     }
 

@@ -118,16 +118,16 @@ trait CustomPropertiesTrait
         try {
             $this->mergeStandAloneCustomProperties();
         } catch (ParseException $parseException) {
-            $executionContext->buildViolation('page.customProperties.malformed') //'$exception->getMessage())
+            $executionContext->buildViolation('page.customProperties.malformed') // '$exception->getMessage())
                     ->atPath($this->buildValidationAtPath)
                     ->addViolation();
         } catch (CustomPropertiesException $customPropertiesException) {
-            $executionContext->buildViolation('page.customProperties.notStandAlone') //'$exception->getMessage())
+            $executionContext->buildViolation('page.customProperties.notStandAlone') // '$exception->getMessage())
                     ->atPath($this->buildValidationAtPath)
                     ->addViolation();
         }
 
-        //$this->validateCustomProperties($context); // too much
+        // $this->validateCustomProperties($context); // too much
     }
 
     public function isStandAloneCustomProperty(string $name): bool
