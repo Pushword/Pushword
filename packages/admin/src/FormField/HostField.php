@@ -28,13 +28,17 @@ class HostField extends AbstractField
 
         if ('' === $this->admin->getSubject()->getHost()) {
             $this->admin->getSubject()->setHost($this->getDefaultHost());
+
+            return $form;
         }
 
+        return $form;
+        /*
         return $form->add('host', ChoiceType::class, [
             'choices' => \Safe\array_combine($this->getHosts(), $this->getHosts()),
             'required' => false,
             'label' => 'admin.page.host.label',
-        ]);
+        ]);*/
     }
 
     private function getDefaultHost(): string

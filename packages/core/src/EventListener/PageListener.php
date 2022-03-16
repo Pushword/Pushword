@@ -26,6 +26,7 @@ final class PageListener
 
     public function prePersist(PageInterface $page): void
     {
+        $this->setIdAsSlugIfNotDefined($page);
         $this->updatePageEditor($page);
     }
 
@@ -68,5 +69,12 @@ final class PageListener
 
         // $page->addPageHasEditor($pageHasEditor);
         // $this->entityManager->flush();
+    }
+
+    public function setIdAsSlugIfNotDefined(PageInterface $page): void
+    {
+        if ('' === $page->getSlug()) {
+            $page->setSlug(substr(sha1(uniqid().rand()), 0, 8));
+        }
     }
 }

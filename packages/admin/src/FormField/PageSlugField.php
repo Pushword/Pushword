@@ -20,7 +20,7 @@ class PageSlugField extends AbstractField
         /** @param PageInterface $page */
         $page = $this->admin->getSubject();
 
-        $url = $this->admin->getRouter()->generate('pushword_page', ['slug' => $page->getRealSlug()]);
+        $url = $page->getHost().$this->admin->getRouter()->generate('pushword_page', ['slug' => $page->getRealSlug()]);
         $liveUrl = '' !== $page->getHost() ?
             $this->admin->getRouter()->generate(
                 'custom_host_pushword_page',

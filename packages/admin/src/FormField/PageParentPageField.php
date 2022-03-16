@@ -29,9 +29,12 @@ class PageParentPageField extends AbstractField
                     'label' => 'admin.page.parentPage.label',
                     'required' => false,
                 ],
-                (null !== $this->admin->getSubject()->getId() ? ['query_builder' => fn (PageRepository $er): QueryBuilder => $er->createQueryBuilder('p')
+                ['query_builder' => fn (PageRepository $er): QueryBuilder => $er->createQueryBuilder('p')
                     ->andWhere('p.id != :id')
-                    ->setParameter('id', $this->admin->getSubject()->getId()), ] : [])
+                    ->andWhere('p.host = :host')
+                    ->setParameter('id', (int) $this->admin->getSubject()->getId())
+                    ->setParameter('host', $this->admin->getSubject()->getHost()),
+                ]
             )
         );
     }
