@@ -10,3 +10,13 @@
         {% endblock %}
     </div>
 </footer>
+
+{% block edit_button %}
+    {% if class_exists('\\Pushword\\Admin\\PushwordAdminBundle')
+        and class_exists('\\Pushword\\Svg\\PushwordSvgBundle')
+        and    is_granted('IS_AUTHENTICATED_REMEMBERED') %}
+        <a href="{{ path('admin_app_page_edit', {id: page.id}) }}" class="hidden md:block fixed w-10 shadow-lg top-1/2 right-2 mx-3 text-gray-50 bg-gray-500 rounded-full z-10 hover:bg-gray-800 opacity-25">
+            {{ svg('edit', {class: 'w-10 p-2 fill-current'}) }}
+        </a>
+    {% endif %}
+    {% endblock %}

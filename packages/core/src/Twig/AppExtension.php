@@ -125,6 +125,7 @@ class AppExtension extends AbstractExtension
             new TwigFunction('filesize', [FilesizeFormatter::class, 'formatBytes'], self::options()),
             new TwigFunction('page_position', [$this, 'getPagePosition'], self::options()),
             new TwigFunction('image_dimensions', [$this->imageManager, 'getDimensions'], self::options()),
+            new TwigFunction('class_exists', 'class_exists'),
         ];
     }
 

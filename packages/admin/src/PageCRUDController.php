@@ -8,6 +8,7 @@ use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Controller\CRUDController as SonataCRUDController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -64,5 +65,17 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
             'base_template' => $this->getBaseTemplate(),
             'action' => 'list',
         ]);
+    }
+
+    protected function redirectTo(Request $request, object $object): RedirectResponse
+    {
+        if (null !== $request->get('btn_update_and_list')) {
+            return new RedirectResponse($this->admin->generateObjectUrl('show', $object));
+        }
+        if (null !== $request->get('btn_create_and_list')) {
+            return new RedirectResponse($this->admin->generateObjectUrl('show', $object));
+        }
+
+        return parent::redirectTo($request, $object);
     }
 }
