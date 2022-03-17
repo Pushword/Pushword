@@ -13,9 +13,11 @@ return [
             'blocks' => null, // - { type: sonata.admin.block.admin_list, position: left }
             'groups' => [
                 'app.admin.group.page' => [
+                    'keep_open' => true,
                     'provider' => 'page_admin_menu',
                 ],
                 'app.admin.group.setting' => [
+                    'keep_open' => true,
                     'label' => 'admin.label.params',
                     'label_catalogue' => 'messages',
                     'icon' => '<i class="fa fa-wrench"></i>',
@@ -29,6 +31,8 @@ return [
             'lock_protection' => true,
             'default_admin_route' => 'edit',
             'logo_content' => 'icon',
+            'sort_admins' => true,
+            'confirm_exit' => false,
         ],
         'templates' => [
             'layout' => '@pwAdmin/layout.html.twig',

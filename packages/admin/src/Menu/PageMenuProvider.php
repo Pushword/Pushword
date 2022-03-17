@@ -42,7 +42,9 @@ final class PageMenuProvider implements ContainerAwareInterface
 
         $menu = $factory->createItem('content', [
             'label' => $this->translator->trans('admin.label.content'),
-        ]);
+        ])
+            ->setCurrent(true) // dirty hack to prevent bug
+            ->setExtra('keep_open', true);
 
         $pageMenu = $menu->addChild(
             $this->translator->trans('admin.label.page'),
