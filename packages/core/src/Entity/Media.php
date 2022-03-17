@@ -14,7 +14,8 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
  * @ORM\MappedSuperclass
  * @Vich\Uploadable
  * @ORM\HasLifecycleCallbacks
- * #UniqueEntity({"media"}, message="Ce media semble déjà présent.")
+ * #UniqueEntity({"media"}, message="Media name is ever taken by another media.")
+ * #UniqueEntity({"name"}, message="Name is ever taken by another media..")
  */
 class Media implements MediaInterface
 {
