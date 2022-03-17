@@ -18,6 +18,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Vich\UploaderBundle\Event\Event;
 
@@ -39,6 +40,8 @@ final class MediaListener
 
     private MediaRenamer $renamer;
 
+    private RouterInterface $router;
+
     /** @psalm-suppress  UndefinedInterfaceMethod */
     public function __construct(
         string $projectDir,
@@ -46,6 +49,7 @@ final class MediaListener
         FileSystem $filesystem,
         ImageManager $imageManager,
         RequestStack $requestStack,
+        RouterInterface $router,
         TranslatorInterface $translator
     ) {
         $this->projectDir = $projectDir;
@@ -53,6 +57,7 @@ final class MediaListener
         $this->filesystem = $filesystem;
         $this->imageManager = $imageManager;
         $this->requestStack = $requestStack;
+        $this->router = $router;
         $this->renamer = new MediaRenamer();
         $this->translator = $translator;
     }
@@ -77,14 +82,12 @@ final class MediaListener
     public function onVichUploaderPreUpload(Event $event): void
     {
         $media = $this->getMediaFromEvent($event);
+        $media->resetHash();
+        $media->setHash();
         $propertyMapping = $event->getMapping();
 
         $absoluteDir = $propertyMapping->getUploadDestination().'/'.$propertyMapping->getUploadDir($media);
         $media->setProjectDir($this->projectDir)->setStoreIn($absoluteDir);
-
-        if (($duplicate = $this->getDuplicate($media)) !== null) {
-            $this->alert('warning', 'media.duplicate_warning', ['duplicateMedia' => $duplicate]);
-        }
 
         $this->setNameIfEmpty($media);
         $this->renameIfIdentifiersAreToken($media);
@@ -122,6 +125,17 @@ final class MediaListener
     public function prePersist(MediaInterface $media): void
     {
         $media->setHash();
+    }
+
+    public function postPersist(MediaInterface $media): void
+    {
+        if (($duplicate = $this->getDuplicate($media)) !== null) {
+            $this->alert('warning', 'media.duplicate_warning', [
+                '%deleteMediaUrl%' => $this->router->generate('admin_app_media_delete', ['id' => $media->getId()]),
+                '%sameMediaEditUrl%' => $this->router->generate('admin_app_media_edit', ['id' => $duplicate->getId()]),
+                '%name%' => $duplicate->getName(),
+            ]);
+        }
     }
 
     /**

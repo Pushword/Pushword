@@ -21,21 +21,27 @@ trait MediaHashTrait
 
     abstract public function getMedia(): ?string;
 
-    /**
-     * @return ?string
-     */
-    public function getHash()
+    public function getHash(): string
     {
-        return null !== $this->getMediaFile() ? \Safe\sha1_file($this->getMediaFile()->getPathname(), true) : $this->hash;
+        return null === $this->hash ? $this->setHash()->getHash() : $this->hash;
     }
 
-    /**
-     * @param ?string $hash
-     */
-    public function setHash($hash = null): self
+    public function resetHash(): self
     {
-        $hash = null === $hash ? $this->getHash() : null;
-        $this->hash = null === $hash ? \Safe\sha1_file($this->getStoreIn().'/'.$this->getMedia(), true) : $hash;
+        $this->hash = null;
+
+        return $this;
+    }
+
+    public function setHash(): self
+    {
+        if (($mediaFile = $this->getMediaFile()) !== null && file_exists($mediaFile)) {
+            $this->hash = \Safe\sha1_file($mediaFile->getPathname(), true);
+
+            return $this;
+        }
+
+        $this->hash = \Safe\sha1_file($this->getStoreIn().'/'.$this->getMedia(), true);
 
         return $this;
     }

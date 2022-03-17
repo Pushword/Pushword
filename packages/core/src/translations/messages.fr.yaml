@@ -43,6 +43,6 @@ feed:
 
 media:
   name_was_changed: Le nom a été changé du fait d'un média similaire.
-  duplicate_warning: Le fichier semble déjà être présent sur le disque.
+  duplicate_warning: "It looks like file was ever added on the disk : <a href=\"%sameMediaEditUrl%\">%name%</a>.<br><a class=\"btn btn-danger\" style=\"text-decoration:none;display:inline-block;margin-top:5px\" href=\"%deleteMediaUrl%\">Delete</a>"
 
 powered_by: Propulsé par
