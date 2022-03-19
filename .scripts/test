@@ -15,7 +15,7 @@ trap restoreData EXIT
 sh ./.scripts/data-preserve
 
 #XDEBUG_MODE=off php -dxdebug.mode=off
-vendor/bin/phpunit --stop-on-failure #packages/core/tests/EventListener/MediaListenerTest.php
+vendor/bin/phpunit --stop-on-failure #packages/core/tests/Repository/MediaRepositoryTest.php
 #--debug
 
 if [ "$1" = "full" ]

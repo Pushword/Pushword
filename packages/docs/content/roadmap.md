@@ -7,6 +7,8 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   Scan : ajouter un check des liens vides `"></a`
+-   AdminBlockEditor : new list item, évitez d'ajouter le lien d'avant sans ancre...
 -   Implement ESlint
 -   https://github.com/jolicode/JoliTypo
 

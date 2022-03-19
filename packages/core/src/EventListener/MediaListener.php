@@ -129,7 +129,10 @@ final class MediaListener
 
     public function postPersist(MediaInterface $media): void
     {
-        if (($duplicate = $this->getDuplicate($media)) !== null) {
+        $duplicate = $this->em->getRepository(\get_class($media)) // @phpstan-ignore-line
+            ->findDuplicate($media);
+
+        if (null !== $duplicate) {
             $this->alert('warning', 'media.duplicate_warning', [
                 '%deleteMediaUrl%' => $this->router->generate('admin_app_media_delete', ['id' => $media->getId()]),
                 '%sameMediaEditUrl%' => $this->router->generate('admin_app_media_edit', ['id' => $duplicate->getId()]),
@@ -203,11 +206,6 @@ final class MediaListener
             ? (string) $media->getMediaFile()->guessExtension() : '';
 
         return $media->getName().('' !== $extension ? '.'.$extension : '');
-    }
-
-    private function getDuplicate(MediaInterface $media): ?MediaInterface
-    {
-        return $this->em->getRepository(\get_class($media))->findOneBy(['hash' => $media->getHash()]);
     }
 
     private function identifiersAreToken(MediaInterface $media): bool

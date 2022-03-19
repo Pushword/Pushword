@@ -51,7 +51,8 @@ class AppFixtures extends Fixture
             ->setSize(2)
             ->setDimensions([1000, 1000])
             ->setMedia($file)
-            ->setName($name);
+            ->setName($name)
+            ->setHash();
 
             $manager->persist($media[$name]);
         }

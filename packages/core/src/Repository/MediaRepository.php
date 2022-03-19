@@ -27,4 +27,17 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         return array_column($queryBuilder->getQuery()->getResult(), 'mimeType');
     }
+
+    public function findDuplicate(MediaInterface $media): ?MediaInterface
+    {
+        $duplicates = $this->findBy(['hash' => $media->getHash()]);
+
+        foreach ($duplicates as $duplicate) {
+            if ($media->getId() !== $duplicate->getId()) {
+                return $duplicate;
+            }
+        }
+
+        return null;
+    }
 }

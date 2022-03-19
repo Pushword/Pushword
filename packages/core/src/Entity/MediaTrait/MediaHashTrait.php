@@ -33,8 +33,13 @@ trait MediaHashTrait
         return $this;
     }
 
-    public function setHash(): self
+    public function setHash(?string $hash = null): self
     {
+        if (null !== $hash) {
+            $this->hash = $hash;
+
+            return $this;
+        }
         if (($mediaFile = $this->getMediaFile()) !== null && file_exists($mediaFile)) {
             $this->hash = \Safe\sha1_file($mediaFile->getPathname(), true);
 
