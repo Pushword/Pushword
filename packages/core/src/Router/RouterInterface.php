@@ -20,10 +20,9 @@ interface RouterInterface
     public function generatePathForHomePage(?PageInterface $page = null, bool $canonical = false): string;
 
     /**
-     * @param string|PageInterface $slug
-     * @param int|string|null      $pager
+     * @param int|string|null $pager
      */
-    public function generate($slug = 'homepage', bool $canonical = false, $pager = null): string;
+    public function generate(PageInterface|string $slug = 'homepage', bool $canonical = false, $pager = null): string;
 
     public function setUseCustomHostPath(bool $useCustomHostPath = true): self;
 

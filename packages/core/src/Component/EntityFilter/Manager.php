@@ -17,37 +17,22 @@ use Twig\Environment as Twig;
  */
 final class Manager
 {
-    /**
-     * @var T
-     */
-    private object $entity;
-
     private AppConfig $app;
 
     private AppPool $apps;
 
-    /**
-     * @var ManagerPool<T>
-     */
-    private ManagerPool $managerPool;
-
     private Twig $twig;
-
-    private EventDispatcherInterface $eventDispatcher;
 
     /** @param T $entity
      * @param ManagerPool<T> $managerPool
      */
     public function __construct(
-        ManagerPool $managerPool,
-        EventDispatcherInterface $eventDispatcher,
-        object $entity
+        private ManagerPool $managerPool,
+        private EventDispatcherInterface $eventDispatcher,
+        private object $entity
     ) {
-        $this->managerPool = $managerPool;
         $this->apps = $managerPool->apps;
         $this->twig = $managerPool->twig;
-        $this->entity = $entity;
-        $this->eventDispatcher = $eventDispatcher;
         $this->app = method_exists($entity, 'getHost') ? $this->apps->get($entity->getHost()) : $this->apps->get();
     }
 

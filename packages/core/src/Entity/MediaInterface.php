@@ -67,9 +67,9 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
     public function getMediaFileName(): string;
 
     /**
-     * @return PageInterface[]|Collection<int, PageInterface>
+     * @return array<PageInterface>|Collection<int, PageInterface>
      */
-    public function getMainImagePages();
+    public function getMainImagePages(): array|Collection;
 
     public function getHash(): string;
 

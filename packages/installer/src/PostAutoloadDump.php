@@ -30,7 +30,7 @@ class PostAutoloadDump extends PostInstall
 
         $scriptsToRun = self::scanDir('vendor/pushword/'.$package.'/src/Installer');
         foreach ($scriptsToRun as $i => $script) {
-            if (! file_exists($isInstalledFile = 'var/installer/'.md5($package.$script)) && '~' !== substr($script, -1)) {
+            if (! file_exists($isInstalledFile = 'var/installer/'.md5($package.$script)) && ! str_ends_with($script, '~')) {
                 self::getKernel();
 
                 echo '~ Executing '.$package.' update ('.$i++.').'.\chr(10);

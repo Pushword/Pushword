@@ -11,21 +11,15 @@ use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
 
 final class Router implements RouterInterface
 {
-    private SfRouterInterface $router;
-
     private bool $useCustomHostPath = true;
-
-    private \Pushword\Core\Component\App\AppPool $apps;
 
     private string $currentHost;
 
     public function __construct(
-        SfRouterInterface $sfRouter,
-        AppPool $appPool,
+        private SfRouterInterface $router,
+        private AppPool $apps,
         RequestStack $requestStack
     ) {
-        $this->router = $sfRouter;
-        $this->apps = $appPool;
         $this->currentHost = null !== $requestStack->getCurrentRequest() ? $requestStack->getCurrentRequest()->getHost() : '';
     }
 

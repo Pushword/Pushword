@@ -19,34 +19,10 @@ class FlatFileImporter
 {
     protected AppConfig $app;
 
-    protected AppPool $apps;
-
-    protected string $projectDir;
-
-    protected FlatFileContentDirFinder $contentDirFinder;
-
-    protected PageImporter $pageImporter;
-
-    protected MediaImporter $mediaImporter;
-
-    protected string $mediaDir = '';
-
     protected string $customMediaDir = '';
 
-    public function __construct(
-        string $projectDir,
-        string $mediaDir,
-        AppPool $appPool,
-        FlatFileContentDirFinder $flatFileContentDirFinder,
-        PageImporter $pageImporter,
-        MediaImporter $mediaImporter
-    ) {
-        $this->projectDir = $projectDir;
-        $this->mediaDir = $mediaDir;
-        $this->apps = $appPool;
-        $this->contentDirFinder = $flatFileContentDirFinder;
-        $this->pageImporter = $pageImporter;
-        $this->mediaImporter = $mediaImporter;
+    public function __construct(protected string $projectDir, protected string $mediaDir, protected AppPool $apps, protected FlatFileContentDirFinder $contentDirFinder, protected PageImporter $pageImporter, protected MediaImporter $mediaImporter)
+    {
     }
 
     public function run(?string $host): void

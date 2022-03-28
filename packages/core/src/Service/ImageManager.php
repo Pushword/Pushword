@@ -15,19 +15,6 @@ final class ImageManager
 {
     use ImageImport;
 
-    private string $publicDir;
-
-    private string $publicMediaDir;
-
-    private string $mediaDir;
-
-    private string $projectDir;
-
-    /**
-     * @var array<string, array<string, mixed>>
-     */
-    private array $filterSets;
-
     private OptimizerChain $optimizer;
 
     private ?Image $lastThumb = null;
@@ -38,18 +25,13 @@ final class ImageManager
      * @param array<string, array<string, mixed>> $filterSets
      */
     public function __construct(
-        array $filterSets,
-        string $publicDir,
-        string $projectDir,
-        string $publicMediaDir,
-        string $mediaDir
+        private array $filterSets,
+        private string $publicDir,
+        private string $projectDir,
+        private string $publicMediaDir,
+        private string $mediaDir
     ) {
-        $this->filterSets = $filterSets;
-        $this->publicDir = $publicDir;
-        $this->projectDir = $projectDir;
-        $this->publicMediaDir = $publicMediaDir;
         $this->fileSystem = new FileSystem();
-        $this->mediaDir = $mediaDir;
         $this->optimizer = OptimizerChainFactory::create(); // t o d o make optimizer bin path configurable
     }
 
@@ -87,10 +69,9 @@ final class ImageManager
     }
 
     /**
-     * @param MediaInterface|string $media
-     * @param string|array<mixed>   $filter
+     * @param array<string, mixed>|string $filter
      */
-    public function generateFilteredCache($media, $filter, ?Image $originalImage = null): Image
+    public function generateFilteredCache(MediaInterface|string $media, array|string $filter, ?Image $originalImage = null): Image
     {
         if (\is_array($filter)) {
             $filterName = array_keys($filter)[0];
@@ -172,10 +153,7 @@ final class ImageManager
         }
     }
 
-    /**
-     * @param MediaInterface|string $media
-     */
-    public function getFilterPath($media, string $filterName, ?string $extension = null, bool $browserPath = false): string
+    public function getFilterPath(MediaInterface|string $media, string $filterName, ?string $extension = null, bool $browserPath = false): string
     {
         /** @var string $media */
         $media = $media instanceof MediaInterface ? $media->getMedia() : Filepath::filename($media);
@@ -185,20 +163,15 @@ final class ImageManager
         return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/'.$filterName.'/'.$fileName;
     }
 
-    /**
-     * @param MediaInterface|string $media
-     */
-    public function getBrowserPath($media, string $filterName = 'default', ?string $extension = null): string
+    public function getBrowserPath(MediaInterface|string $media, string $filterName = 'default', ?string $extension = null): string
     {
         return $this->getFilterPath($media, $filterName, $extension, true);
     }
 
     /**
-     * @param MediaInterface|string $media
-     *
      * @return int[] index 0 contains width, index 1 height
      */
-    public function getDimensions($media): array
+    public function getDimensions(MediaInterface|string $media): array
     {
         $path = $this->getFilterPath($media, 'xs');
 
@@ -213,17 +186,14 @@ final class ImageManager
     /**
      * @param MediaInterface|string $media string must be the accessible path (absolute) to the image file
      */
-    private function getImage($media): Image
+    private function getImage(MediaInterface|string $media): Image
     {
         $path = $media instanceof MediaInterface ? $media->getPath() : $media;
 
         return (new InteventionImageManager())->make($path); // default driver GD
     }
 
-    /**
-     * @param MediaInterface|string $media
-     */
-    public function remove($media): void
+    public function remove(MediaInterface|string $media): void
     {
         /** @var string $media */
         $media = $media instanceof MediaInterface ? $media->getMedia() : Filepath::filename($media);

@@ -7,11 +7,8 @@ use Symfony\Component\Security\Core\Security;
 
 final class PageListener
 {
-    private Security $security;
-
-    public function __construct(Security $security)
+    public function __construct(private Security $security)
     {
-        $this->security = $security;
     }
 
     public function preRemove(PageInterface $page): void

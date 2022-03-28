@@ -23,19 +23,10 @@ final class FilterEvent extends Event
     public const NAME_AFTER = 'pushword.entity_filter.after_filtering';
 
     /**
-     * @var Manager<T>
-     */
-    private Manager $manager;
-
-    private string $property;
-
-    /**
      * @param Manager<T> $manager
      */
-    public function __construct(Manager $manager, string $property)
+    public function __construct(private Manager $manager, private string $property)
     {
-        $this->manager = $manager;
-        $this->property = $property;
     }
 
     /**

@@ -16,19 +16,13 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class PageScannerController extends AbstractController
 {
-    private Filesystem $filesystem;
-
-    private string $pageScanInterval;
-
     private static ?string $fileCache = null;
 
     public function __construct(
-        Filesystem $filesystem,
+        private Filesystem $filesystem,
         string $varDir,
-        string $pageScanInterval
+        private string $pageScanInterval
     ) {
-        $this->filesystem = $filesystem;
-        $this->pageScanInterval = $pageScanInterval;
         self::setFileCache($varDir);
     }
 

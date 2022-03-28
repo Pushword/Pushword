@@ -63,7 +63,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         )
     );
 
-    $parameters->set(Option::PHP_VERSION_FEATURES, PhpVersion::PHP_74);
+    $parameters->set(Option::PHP_VERSION_FEATURES, PhpVersion::PHP_80);
 
     //$containerConfigurator->import(SetList::DEAD_CODE);
     //$containerConfigurator->import(SymfonySetList::SYMFONY_CODE_QUALITY);

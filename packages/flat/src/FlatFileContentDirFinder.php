@@ -10,21 +10,13 @@ use Pushword\Core\Component\App\AppPool;
  */
 class FlatFileContentDirFinder
 {
-    protected \Pushword\Core\Component\App\AppPool $apps;
-
-    protected string $projectDir;
-
     /**
      * @var array<string, string>
      */
     protected array $contentDir = [];
 
-    public function __construct(
-        AppPool $appPool,
-        string $projectDir
-    ) {
-        $this->projectDir = $projectDir;
-        $this->apps = $appPool;
+    public function __construct(protected AppPool $apps, protected string $projectDir)
+    {
     }
 
     public function get(string $host): string

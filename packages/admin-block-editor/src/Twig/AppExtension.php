@@ -23,10 +23,10 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @param stdClass|array<mixed> $blockData
+     * @param array<mixed>|stdClass $blockData
      * @param array<mixed>          $attributes
      */
-    public function blockWrapperAttr($blockData, array $attributes = []): string
+    public function blockWrapperAttr(array|stdClass $blockData, array $attributes = []): string
     {
         $blockData = (array) \Safe\json_decode(\Safe\json_encode($blockData), true);
 
@@ -38,9 +38,9 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @param stdClass|array<mixed> $blockData
+     * @param array<mixed>|stdClass $blockData
      */
-    public function needBlockWrapper($blockData): bool
+    public function needBlockWrapper(array|stdClass $blockData): bool
     {
         return '' !== trim($this->blockWrapperAttr($blockData));
     }

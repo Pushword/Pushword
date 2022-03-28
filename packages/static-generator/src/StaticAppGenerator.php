@@ -13,25 +13,13 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 final class StaticAppGenerator
 {
-    private AppPool $apps;
-
-    private GeneratorBag $generatorBag;
-
-    private RedirectionManager $redirectionManager;
-
     private bool $abortGeneration = false;
 
     /** @var array<string> */
     private array $errors = [];
 
-    public function __construct(
-        AppPool $appPool,
-        GeneratorBag $generatorBag,
-        RedirectionManager $redirectionManager
-    ) {
-        $this->apps = $appPool;
-        $this->generatorBag = $generatorBag;
-        $this->redirectionManager = $redirectionManager;
+    public function __construct(private AppPool $apps, private GeneratorBag $generatorBag, private RedirectionManager $redirectionManager)
+    {
     }
 
     /**

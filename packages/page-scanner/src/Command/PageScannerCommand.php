@@ -22,32 +22,17 @@ class PageScannerCommand extends Command
      */
     protected static $defaultName = 'pushword:page-scanner:scan';
 
-    private \Symfony\Component\Filesystem\Filesystem $filesystem;
-
-    private \Pushword\PageScanner\Scanner\PageScannerService $scanner;
-
-    /**
-     * @var class-string<PageInterface>
-     */
-    private string $pageClass;
-
-    private \Doctrine\ORM\EntityManagerInterface $em;
-
     /**
      * @param class-string<PageInterface> $pageClass
      */
     public function __construct(
-        PageScannerService $pageScannerService,
-        Filesystem $filesystem,
-        EntityManagerInterface $entityManager,
-        string $pageClass,
+        private PageScannerService $scanner,
+        private Filesystem $filesystem,
+        private EntityManagerInterface $em,
+        private string $pageClass,
         string $varDir
     ) {
         parent::__construct();
-        $this->scanner = $pageScannerService;
-        $this->pageClass = $pageClass;
-        $this->em = $entityManager;
-        $this->filesystem = $filesystem;
         PageScannerController::setFileCache($varDir);
     }
 

@@ -36,10 +36,10 @@ interface PageRepositoryInterface extends ServiceEntityRepositoryInterface, Obje
      * @return PageInterface[]
      */
     public function getPublishedPages(
-        $host = '',
+        array|string $host = '',
         array $where = [],
         array $orderBy = [],
-        $limit = 0,
+        array|int $limit = 0,
         bool $withRedirection = true
     );
 
@@ -51,12 +51,12 @@ interface PageRepositoryInterface extends ServiceEntityRepositoryInterface, Obje
      * @param array<mixed> $where
      * @param int|array<(string|int), int> $limit
      */
-    public function getPublishedPageQueryBuilder($host = '', array $where = [], array $orderBy = [], $limit = 0): QueryBuilder;
+    public function getPublishedPageQueryBuilder(array|string $host = '', array $where = [], array $orderBy = [], array|int $limit = 0): QueryBuilder;
 
     /**
      * @param string|string[] $host
      */
-    public function getPage(string $slug, $host, bool $checkId = true): ?PageInterface;
+    public function getPage(string $slug, array|string $host, bool $checkId = true): ?PageInterface;
 
     public function getIndexablePagesQuery(
         string $host,
@@ -77,12 +77,12 @@ interface PageRepositoryInterface extends ServiceEntityRepositoryInterface, Obje
     /**
      * @param string|string[] $host
      */
-    public function andHost(QueryBuilder $queryBuilder, $host): QueryBuilder;
+    public function andHost(QueryBuilder $queryBuilder, array|string $host): QueryBuilder;
 
     /**
      * @param string|string[] $host
      *
      * @return PageInterface[]
      */
-    public function findByHost($host): array;
+    public function findByHost(array|string $host): array;
 }

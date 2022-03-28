@@ -11,11 +11,7 @@ class F
         return \Safe\file_get_contents($filename);
     }
 
-    /**
-     * @param string|array $replacement
-     * @param string|array $subject
-     */
-    public static function preg_replace_str(string $pattern, $replacement, $subject, int $limit = -1, int &$count = 0): string // @phpstan-ignore-line
+    public static function preg_replace_str(string $pattern, array|string $replacement, array|string $subject, int $limit = -1, int &$count = 0): string // @phpstan-ignore-line
     {
         $return = \Safe\preg_replace($pattern, $replacement, $subject, $limit, $count);
 

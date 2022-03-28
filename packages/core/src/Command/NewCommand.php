@@ -16,12 +16,9 @@ final class NewCommand extends Command
      */
     protected static $defaultName = 'pushword:new';
 
-    private string $projectDir;
-
     public function __construct(
-        string $projectDir
+        private string $projectDir
     ) {
-        $this->projectDir = $projectDir;
         parent::__construct();
     }
 

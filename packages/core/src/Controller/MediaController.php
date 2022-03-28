@@ -9,14 +9,8 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 final class MediaController extends AbstractController
 {
-    private string $publicMediaDir;
-
-    private Kernel $kernel;
-
-    public function __construct(string $publicMediaDir, Kernel $kernel)
+    public function __construct(private string $publicMediaDir, private Kernel $kernel)
     {
-        $this->publicMediaDir = $publicMediaDir;
-        $this->kernel = $kernel;
     }
 
     public function download(string $media): BinaryFileResponse

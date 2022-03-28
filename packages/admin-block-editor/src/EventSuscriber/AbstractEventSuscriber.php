@@ -11,11 +11,8 @@ abstract class AbstractEventSuscriber implements EventSubscriberInterface
     /** @required */
     public AppPool $apps;
 
-    public bool $editorBlockForNewPage;
-
-    public function __construct(bool $editorBlockForNewPage)
+    public function __construct(public bool $editorBlockForNewPage)
     {
-        $this->editorBlockForNewPage = $editorBlockForNewPage;
     }
 
     protected function mayUseEditorBlock(?PageInterface $page): bool

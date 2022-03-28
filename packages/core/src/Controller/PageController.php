@@ -22,31 +22,21 @@ final class PageController extends AbstractController
 {
     use RenderTrait;
 
-    private ParameterBagInterface $params;
-
-    private AppPool $apps;
-
     private AppConfig $app;
 
     private Twig $twig;
-
-    private EntityManagerInterface $em;
 
     /** @var DataCollectorTranslator|Translator */
     private TranslatorInterface $translator;
 
     public function __construct(
-        ParameterBagInterface $parameterBag,
-        EntityManagerInterface $entityManager,
-        AppPool $appPool,
+        private ParameterBagInterface $params,
+        private EntityManagerInterface $em,
+        private AppPool $apps,
         TranslatorInterface $translator
     ) {
-        $this->em = $entityManager;
-        $this->params = $parameterBag;
-        $this->apps = $appPool;
-
         if (! $translator instanceof DataCollectorTranslator && ! $translator instanceof Translator) {
-            throw new LogicException('A symfony codebase changed make this hack impossible (cf setLocale). Get `'.\get_class($translator).'`');
+            throw new LogicException('A symfony codebase changed make this hack impossible (cf setLocale). Get `'.$translator::class.'`');
         }
 
         $this->translator = $translator;
@@ -196,10 +186,7 @@ final class PageController extends AbstractController
         return Repository::getPageRepository($this->em, $this->params->get('pw.entity_page')); // @phpstan-ignore-line
     }
 
-    /**
-     * @param string|PageInterface $host
-     */
-    public function setApp($host): void
+    public function setApp(PageInterface|string $host): void
     {
         $this->app = $this->apps->switchCurrentApp($host)->get();
     }

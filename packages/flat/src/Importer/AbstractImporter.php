@@ -14,25 +14,10 @@ use Pushword\Core\Component\App\AppPool;
 abstract class AbstractImporter
 {
     /**
-     * @var class-string<T>
-     */
-    protected string $entityClass;
-
-    protected \Doctrine\ORM\EntityManagerInterface $em;
-
-    protected \Pushword\Core\Component\App\AppPool $apps;
-
-    /**
      * @param class-string<T> $entityClass
      */
-    public function __construct(
-        EntityManagerInterface $entityManager,
-        AppPool $appPool,
-        string $entityClass
-    ) {
-        $this->entityClass = $entityClass;
-        $this->apps = $appPool;
-        $this->em = $entityManager;
+    public function __construct(protected EntityManagerInterface $em, protected AppPool $apps, protected string $entityClass)
+    {
     }
 
     abstract public function import(string $filePath, DateTimeInterface $lastEditDateTime): void;

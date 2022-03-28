@@ -38,12 +38,14 @@ trait MediaTrait
      * @ORM\Column(type="string", length=255, name="media")
      */
     protected ?string $media = null;
+
     // TODO Rename to filename
 
     /**
      * NOTE : this is used only for media renaming.
      */
     protected ?string $mediaBeforeUpdate = null;
+
     // TODO Rename to filename
 
     /**
@@ -68,6 +70,7 @@ trait MediaTrait
      * @var UploadedFile|File|null
      */
     protected $mediaFile = null;
+
     // todo Rename to $file
 
     /**
@@ -243,9 +246,9 @@ trait MediaTrait
     }
 
     /**
-     * @return PageInterface[]|Collection<int, PageInterface>
+     * @return array<PageInterface>|Collection<int, PageInterface>
      */
-    public function getMainImagePages()
+    public function getMainImagePages(): array|Collection
     {
         return $this->mainImagePages;
     }

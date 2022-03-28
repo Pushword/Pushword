@@ -15,32 +15,15 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class NewMessageMailNotifier
 {
-    private \Symfony\Component\Mailer\MailerInterface $mailer;
-
-    private \Pushword\Core\Component\App\AppPool $apps;
-
-    private \Doctrine\ORM\EntityManagerInterface $em;
-
-    private \Symfony\Contracts\Translation\TranslatorInterface $translator;
-
     private string $emailTo;
 
     private string $emailFrom;
 
     private string $appName;
 
-    private string $projectDir;
-
     private string $interval;
 
-    /**
-     * @var class-string<MessageInterface>
-     */
-    private string $message;
-
     private string $host;
-
-    private LoggerInterface $logger;
 
     /**
      .
@@ -48,26 +31,19 @@ class NewMessageMailNotifier
      * @param class-string<MessageInterface> $message Entity
      */
     public function __construct(
-        string $message,
-        MailerInterface $mailer,
-        AppPool $appPool,
-        string $projectDir,
-        EntityManagerInterface $entityManager,
-        TranslatorInterface $translator,
-        LoggerInterface $logger
+        private string $message,
+        private MailerInterface $mailer,
+        private AppPool $apps,
+        private string $projectDir,
+        private EntityManagerInterface $em,
+        private TranslatorInterface $translator,
+        private LoggerInterface $logger
     ) {
-        $this->mailer = $mailer;
-        $this->apps = $appPool;
         $this->emailTo = \strval($this->apps->get()->get('conversation_notification_email_to'));
         $this->emailFrom = \strval($this->apps->get()->get('conversation_notification_email_from'));
         $this->interval = \strval($this->apps->get()->get('conversation_notification_interval'));
         $this->appName = \strval($this->apps->get()->get('name'));
         $this->host = $this->apps->get()->getMainHost();
-        $this->projectDir = $projectDir;
-        $this->em = $entityManager;
-        $this->translator = $translator;
-        $this->message = $message;
-        $this->logger = $logger;
     }
 
     /**

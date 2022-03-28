@@ -27,7 +27,7 @@ class TwigExtension extends AbstractExtension
      * @param array<string, string> $attr
      * @param string[]|string       $dir
      */
-    public function getSvg(string $name, array $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], $dir = ''): string
+    public function getSvg(string $name, array $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], array|string $dir = ''): string
     {
         $dirs = '' !== $dir ? $dir : $this->apps->get()->get('svg_dir');
 

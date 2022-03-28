@@ -19,27 +19,14 @@ final class UserCreateCommand extends Command
      */
     protected static $defaultName = 'pushword:user:create';
 
-    private EntityManagerInterface $em;
-
-    /**
-     * @var class-string
-     */
-    private string $userClass;
-
-    private UserPasswordHasherInterface $passwordEncoder;
-
     /**
      * @param class-string $userClass
      */
     public function __construct(
-        EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $userPasswordHasher,
-        string $userClass
+        private EntityManagerInterface $em,
+        private UserPasswordHasherInterface $passwordEncoder,
+        private string $userClass
     ) {
-        $this->em = $entityManager;
-        $this->passwordEncoder = $userPasswordHasher;
-        $this->userClass = $userClass;
-
         parent::__construct();
     }
 

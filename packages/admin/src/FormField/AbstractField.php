@@ -11,16 +11,10 @@ use Sonata\AdminBundle\Form\FormMapper;
 abstract class AbstractField
 {
     /**
-     * @var AdminInterface<T>
-     */
-    protected AdminInterface $admin;
-
-    /**
      * @param AdminInterface<T> $admin
      */
-    public function __construct(AdminInterface $admin)
+    public function __construct(protected AdminInterface $admin)
     {
-        $this->admin = $admin;
     }
 
     /**

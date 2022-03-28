@@ -28,11 +28,8 @@ final class PageMenuProvider implements ContainerAwareInterface
     /** @required */
     public RequestStack $requestStack;
 
-    private FactoryInterface $factory;
-
-    public function __construct(FactoryInterface $factory)
+    public function __construct(private FactoryInterface $factory)
     {
-        $this->factory = $factory;
     }
 
     public function getMenu(): ItemInterface

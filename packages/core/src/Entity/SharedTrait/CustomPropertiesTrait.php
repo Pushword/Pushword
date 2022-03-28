@@ -117,11 +117,11 @@ trait CustomPropertiesTrait
     {
         try {
             $this->mergeStandAloneCustomProperties();
-        } catch (ParseException $parseException) {
+        } catch (ParseException) {
             $executionContext->buildViolation('page.customProperties.malformed') // '$exception->getMessage())
                     ->atPath($this->buildValidationAtPath)
                     ->addViolation();
-        } catch (CustomPropertiesException $customPropertiesException) {
+        } catch (CustomPropertiesException) {
             $executionContext->buildViolation('page.customProperties.notStandAlone') // '$exception->getMessage())
                     ->atPath($this->buildValidationAtPath)
                     ->addViolation();

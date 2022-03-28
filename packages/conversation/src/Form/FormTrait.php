@@ -225,10 +225,7 @@ trait FormTrait
         ]);
     }
 
-    /**
-     * @return false|string
-     */
-    protected function getNextStepFunctionName()
+    protected function getNextStepFunctionName(): string|false
     {
         $getFormMethod = 'getStep'.self::$step[$this->getNextStep()];
         if (! method_exists($this, $getFormMethod)) {

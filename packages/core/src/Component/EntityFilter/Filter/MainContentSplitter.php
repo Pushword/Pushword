@@ -115,10 +115,7 @@ class MainContentSplitter extends AbstractFilter
         return $this->intro;
     }
 
-    /**
-     * @return string|ItemInterface
-     */
-    public function getToc(bool $html = true)
+    public function getToc(bool $html = true): ItemInterface|string
     {
         $content = explode('<!--end-toc-->', $this->originalContent);
         $content = $content[0];

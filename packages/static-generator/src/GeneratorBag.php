@@ -51,7 +51,7 @@ class GeneratorBag
 
     public function set(GeneratorInterface $generator): void
     {
-        $name = $this->classNameToPropertyName(\get_class($generator));
+        $name = $this->classNameToPropertyName($generator::class);
 
         if (property_exists($this, $name)) {
             $this->$name = $generator; // @phpstan-ignore-line

@@ -358,7 +358,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
      *
      * @param int|array<(string|int), int> $limit containing start,max or just max
      */
-    protected function limit(QueryBuilder $qb, $limit): QueryBuilder
+    protected function limit(QueryBuilder $qb, array|int $limit): QueryBuilder
     {
         if (\in_array($limit, [0, []], true)) {
             return $qb;

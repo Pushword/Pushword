@@ -10,7 +10,7 @@ final class RegexHelper
     /**
      * @param string|string[] $var
      */
-    public static function prepareForRegex($var): string
+    public static function prepareForRegex(array|string $var): string
     {
         if (\is_string($var)) {
             return preg_quote($var, '/');

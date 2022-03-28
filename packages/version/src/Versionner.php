@@ -19,33 +19,18 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
 {
     private Filesystem $fileSystem;
 
-    private string $logsDir;
-
-    /**
-     * @var class-string<PageInterface>
-     */
-    private string $pageClass;
-
-    private EntityManagerInterface $entityManager;
-
     public static bool $version = true;
-
-    private SerializerInterface $serializer;
 
     /**
      * @param class-string<PageInterface> $pageClass
      */
     public function __construct(
-        string $logDir,
-        string $pageClass,
-        EntityManagerInterface $entityManager,
-        SerializerInterface $serializer
+        private string $logDir,
+        private string $pageClass,
+        private EntityManagerInterface $entityManager,
+        private SerializerInterface $serializer
     ) {
-        $this->logsDir = $logDir;
-        $this->pageClass = $pageClass;
         $this->fileSystem = new Filesystem();
-        $this->entityManager = $entityManager;
-        $this->serializer = $serializer;
     }
 
     /**
@@ -111,31 +96,27 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
     {
         $pageVersionned = $this->getPageVersion(null !== $pageId ? $pageId : $page, $version);
 
-        $this->serializer->deserialize($pageVersionned, \get_class($page), 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $page]);
+        $this->serializer->deserialize($pageVersionned, $page::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $page]);
 
         return $page;
     }
 
-    /** @param PageInterface|int $page */
-    private function getPageVersion($page, string $version): string
+    private function getPageVersion(int|PageInterface $page, string $version): string
     {
         $versionFile = $this->getVersionFile($page, $version);
 
         return \Safe\file_get_contents($versionFile);
     }
 
-    /** @param PageInterface|int $pageId */
-    public function reset($pageId): void
+    public function reset(int|PageInterface $pageId): void
     {
         $this->fileSystem->remove($this->getVersionDir($pageId));
     }
 
     /**
-     * @param PageInterface|int $page
-     *
      * @return string[]
      */
-    public function getPageVersions($page): array
+    public function getPageVersions(int|PageInterface $page): array
     {
         $dir = $this->getVersionDir($page);
 
@@ -148,16 +129,14 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
         return array_values($versions);
     }
 
-    /** @param PageInterface|int $page */
-    private function getVersionDir($page): string
+    private function getVersionDir(int|PageInterface $page): string
     {
         $pageId = ($page instanceof PageInterface ? (string) $page->getId() : $page);
 
-        return $this->logsDir.'/version/'.$pageId;
+        return $this->logDir.'/version/'.$pageId;
     }
 
-    /** @param PageInterface|int $page */
-    private function getVersionFile($page, ?string $version = null): string
+    private function getVersionFile(int|PageInterface $page, ?string $version = null): string
     {
         return $this->getVersionDir($page).'/'.($version ?? uniqid());
     }

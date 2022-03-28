@@ -7,11 +7,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class UserListener
 {
-    private UserPasswordHasherInterface $passwordEncoder;
-
-    public function __construct(UserPasswordHasherInterface $userPasswordHasher)
+    public function __construct(private UserPasswordHasherInterface $passwordEncoder)
     {
-        $this->passwordEncoder = $userPasswordHasher;
     }
 
     /**

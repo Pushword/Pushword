@@ -24,42 +24,21 @@ use Vich\UploaderBundle\Event\Event;
 
 final class MediaListener
 {
-    private string $projectDir;
-
-    private EntityManagerInterface $em;
-
-    private FileSystem $filesystem;
-
-    private ImageManager $imageManager;
-
     private ?FlashBagInterface $flashBag = null;
-
-    private RequestStack $requestStack;
-
-    private TranslatorInterface $translator;
 
     private MediaRenamer $renamer;
 
-    private RouterInterface $router;
-
     /** @psalm-suppress  UndefinedInterfaceMethod */
     public function __construct(
-        string $projectDir,
-        EntityManagerInterface $entityManager,
-        FileSystem $filesystem,
-        ImageManager $imageManager,
-        RequestStack $requestStack,
-        RouterInterface $router,
-        TranslatorInterface $translator
+        private string $projectDir,
+        private EntityManagerInterface $em,
+        private FileSystem $filesystem,
+        private ImageManager $imageManager,
+        private RequestStack $requestStack,
+        private RouterInterface $router,
+        private TranslatorInterface $translator
     ) {
-        $this->projectDir = $projectDir;
-        $this->em = $entityManager;
-        $this->filesystem = $filesystem;
-        $this->imageManager = $imageManager;
-        $this->requestStack = $requestStack;
-        $this->router = $router;
         $this->renamer = new MediaRenamer();
-        $this->translator = $translator;
     }
 
     private function getMediaFromEvent(Event $event): MediaInterface
@@ -129,7 +108,7 @@ final class MediaListener
 
     public function postPersist(MediaInterface $media): void
     {
-        $duplicate = $this->em->getRepository(\get_class($media)) // @phpstan-ignore-line
+        $duplicate = $this->em->getRepository($media::class) // @phpstan-ignore-line
             ->findDuplicate($media);
 
         if (null !== $duplicate) {
@@ -217,14 +196,14 @@ final class MediaListener
             return true;
         }*/
 
-        $sameName = $this->em->getRepository(\get_class($media))->findOneBy(['name' => $media->getName()]);
+        $sameName = $this->em->getRepository($media::class)->findOneBy(['name' => $media->getName()]);
         if (null !== $sameName && $media->getId() !== $sameName->getId()) {
             // dump('sameName '.$sameName->getId());
             return true;
         }
 
         $mediaString = $this->getMediaString($media);
-        $sameMedia = $this->em->getRepository(\get_class($media))->findOneBy(['media' => $mediaString]);
+        $sameMedia = $this->em->getRepository($media::class)->findOneBy(['media' => $mediaString]);
         // dump('sameMedia '.$sameMedia->getId());
         return null !== $sameMedia && $media->getId() !== $sameMedia->getId();
     }

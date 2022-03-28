@@ -116,10 +116,9 @@ class PageImporter extends AbstractImporter
     }
 
     /**
-     * @param \DateTime|\DateTimeImmutable $lastEditDateTime
-     * @param mixed[]                      $data
+     * @param mixed[] $data
      */
-    private function editPage(string $slug, array $data, string $content, DateTimeInterface $lastEditDateTime): void
+    private function editPage(string $slug, array $data, string $content, DateTime|\DateTimeImmutable $lastEditDateTime): void
     {
         $page = $this->getPageFromSlug($slug);
 
@@ -285,7 +284,7 @@ class PageImporter extends AbstractImporter
     /**
      * @param string|array<string, string> $criteria
      */
-    private function getPage($criteria): ?PageInterface
+    private function getPage(array|string $criteria): ?PageInterface
     {
         if (\is_array($criteria)) {
             return Repository::getPageRepository($this->em, $this->entityClass)->findOneBy($criteria);

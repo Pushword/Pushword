@@ -17,7 +17,7 @@ trait LinkTwigTrait
      * @param array<string, string>|string|PageInterface $path
      * @param array<string, string>|bool|string          $attr
      */
-    public function renderLink(string $anchor, $path, $attr = [], bool $encrypt = true): string
+    public function renderLink(string $anchor, array|PageInterface|string $path, array|bool|string $attr = [], bool $encrypt = true): string
     {
         if (\is_bool($attr)) {
             $encrypt = $attr;

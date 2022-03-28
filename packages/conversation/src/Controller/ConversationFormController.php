@@ -19,8 +19,6 @@ use Twig\Environment as Twig;
 
 final class ConversationFormController extends AbstractController
 {
-    private TranslatorInterface $translator;
-
     private ?ConversationFormInterface $form = null;
 
     /**
@@ -28,42 +26,8 @@ final class ConversationFormController extends AbstractController
      */
     private array $possibleOrigins = [];
 
-    private ParameterBagInterface $params;
-
-    private AppPool $apps;
-
-    private Twig $twig;
-
-    private FormFactoryInterface $formFactory;
-
-    private TokenStorageInterface $tokenStorage;
-
-    private RouterInterface $router;
-
-    private string $env;
-
-    private ManagerRegistry $doctrine;
-
-    public function __construct(
-        TranslatorInterface $translator,
-        AppPool $appPool,
-        ParameterBagInterface $parameterBag,
-        Twig $twig,
-        FormFactoryInterface $formFactory,
-        TokenStorageInterface $tokenStorage,
-        RouterInterface $router,
-        ManagerRegistry $doctrine,
-        string $env
-    ) {
-        $this->translator = $translator;
-        $this->params = $parameterBag;
-        $this->apps = $appPool;
-        $this->env = $env;
-        $this->twig = $twig;
-        $this->formFactory = $formFactory;
-        $this->tokenStorage = $tokenStorage;
-        $this->router = $router;
-        $this->doctrine = $doctrine;
+    public function __construct(private TranslatorInterface $translator, private AppPool $apps, private ParameterBagInterface $params, private Twig $twig, private FormFactoryInterface $formFactory, private TokenStorageInterface $tokenStorage, private RouterInterface $router, private ManagerRegistry $doctrine, private string $env)
+    {
     }
 
     /**

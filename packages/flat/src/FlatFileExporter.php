@@ -21,33 +21,9 @@ class FlatFileExporter
 {
     protected AppConfig $app;
 
-    protected AppPool $apps;
-
-    protected string $projectDir;
-
-    protected string $mediaDir;
-
     protected string $copyMedia = '';
 
     protected string $exportDir = '';
-
-    /**
-     * @var class-string<MediaInterface>
-     */
-    protected string $mediaClass;
-
-    /**
-     * @var class-string<PageInterface>
-     */
-    protected string $pageClass;
-
-    protected FlatFileContentDirFinder $contentDirFinder;
-
-    protected PageImporter $pageImporter;
-
-    protected MediaImporter $mediaImporter;
-
-    protected EntityManagerInterface $entityManager;
 
     protected Filesystem $filesystem;
 
@@ -56,25 +32,16 @@ class FlatFileExporter
      * @param class-string<MediaInterface> $mediaClass
      */
     public function __construct(
-        string $projectDir,
-        string $mediaDir,
-        string $pageClass,
-        string $mediaClass,
-        AppPool $appPool,
-        EntityManagerInterface $entityManager,
-        FlatFileContentDirFinder $flatFileContentDirFinder,
-        PageImporter $pageImporter,
-        MediaImporter $mediaImporter
+        protected string $projectDir,
+        protected string $mediaDir,
+        protected string $pageClass,
+        protected string $mediaClass,
+        protected AppPool $apps,
+        protected EntityManagerInterface $entityManager,
+        protected FlatFileContentDirFinder $contentDirFinder,
+        protected PageImporter $pageImporter,
+        protected MediaImporter $mediaImporter
     ) {
-        $this->projectDir = $projectDir;
-        $this->mediaDir = $mediaDir;
-        $this->pageClass = $pageClass;
-        $this->mediaClass = $mediaClass;
-        $this->entityManager = $entityManager;
-        $this->apps = $appPool;
-        $this->contentDirFinder = $flatFileContentDirFinder;
-        $this->pageImporter = $pageImporter;
-        $this->mediaImporter = $mediaImporter;
         $this->filesystem = new Filesystem();
     }
 

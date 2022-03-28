@@ -6,11 +6,8 @@ use Symfony\Component\Finder\Finder;
 
 class ElementRepository
 {
-    private string $templateDir;
-
-    public function __construct(string $templateDir)
+    public function __construct(private string $templateDir)
     {
-        $this->templateDir = $templateDir;
     }
 
     /**

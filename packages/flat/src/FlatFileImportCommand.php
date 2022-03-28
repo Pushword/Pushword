@@ -18,18 +18,11 @@ class FlatFileImportCommand extends Command
     protected static $defaultName = 'pushword:flat:import';
 
     /**
-     * @var FlatFileImporter<T>
-     */
-    protected \Pushword\Flat\FlatFileImporter $importer;
-
-    /**
-     * @param FlatFileImporter<T> $flatFileImporter
+     * @param FlatFileImporter<T> $importer
      */
     public function __construct(
-        FlatFileImporter $flatFileImporter
+        protected FlatFileImporter $importer
     ) {
-        $this->importer = $flatFileImporter;
-
         parent::__construct();
     }
 

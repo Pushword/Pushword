@@ -7,8 +7,6 @@ use Twig\Environment as Twig;
 
 final class AppConfig
 {
-    private bool $isFirstApp = false;
-
     /** @var string[] */
     private array $hosts;
 
@@ -36,13 +34,9 @@ final class AppConfig
 
     private Twig $twig;
 
-    private ParameterBagInterface $params;
-
     /** @param array<string, mixed> $properties */
-    public function __construct(ParameterBagInterface $parameterBag, array $properties, bool $isFirstApp = false)
+    public function __construct(private ParameterBagInterface $params, array $properties, private bool $isFirstApp = false)
     {
-        $this->params = $parameterBag;
-
         foreach ($properties as $prop => $value) {
             $this->setCustomProperty($prop, $value);
 
@@ -50,8 +44,6 @@ final class AppConfig
             $prop = static::normalizePropertyName($prop);
             $this->$prop = $value; // @phpstan-ignore-line
         }
-
-        $this->isFirstApp = $isFirstApp;
     }
 
     private static function normalizePropertyName(string $string): string

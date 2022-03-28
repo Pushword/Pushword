@@ -18,32 +18,15 @@ use Twig\Environment as Twig;
 
 class PageUpdateNotifier
 {
-    private \Symfony\Component\Mailer\MailerInterface $mailer;
-
     private string $emailTo = '';
 
     private string $emailFrom = '';
 
     private string $appName = '';
 
-    private string $varDir;
-
     private string $interval = '';
 
-    private \Doctrine\ORM\EntityManagerInterface $em;
-
-    private \Symfony\Contracts\Translation\TranslatorInterface $translator;
-
-    /**
-     * @var class-string<PageInterface>
-     */
-    private string $pageClass;
-
     private \Pushword\Core\Component\App\AppConfig $app;
-
-    private Twig $twig;
-
-    private \Pushword\Core\Component\App\AppPool $apps;
 
     /**
      * @var int
@@ -68,29 +51,15 @@ class PageUpdateNotifier
     /**
      * @param class-string<PageInterface> $pageClass
      */
-    public function __construct(
-        string $pageClass,
-        MailerInterface $mailer,
-        AppPool $appPool,
-        string $varDir,
-        EntityManagerInterface $entityManager,
-        TranslatorInterface $translator,
-        Twig $twig
-    ) {
-        $this->mailer = $mailer;
-        $this->apps = $appPool;
-        $this->varDir = $varDir;
-        $this->em = $entityManager;
-        $this->translator = $translator;
-        $this->pageClass = $pageClass;
-        $this->twig = $twig;
+    public function __construct(private string $pageClass, private MailerInterface $mailer, private AppPool $apps, private string $varDir, private EntityManagerInterface $em, private TranslatorInterface $translator, private Twig $twig)
+    {
     }
 
     public function postUpdate(PageInterface $page): void
     {
         try {
             $this->run($page);
-        } catch (Exception $exception) {
+        } catch (Exception) {
         }
     }
 
@@ -98,7 +67,7 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (Exception $exception) {
+        } catch (Exception) {
             // todo log exception
         }
     }
@@ -161,10 +130,7 @@ class PageUpdateNotifier
         return $this->getCacheDir().'/lastPageUpdateNotification'.md5($this->app->getMainHost());
     }
 
-    /**
-     * @return string|int
-     */
-    public function run(PageInterface $page)
+    public function run(PageInterface $page): int|string
     {
         $this->checkConfig($page);
 

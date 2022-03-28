@@ -14,7 +14,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * @ORM\Entity(repositoryClass=MessageRepository::class)
  */
-class Message implements MessageInterface
+class Message implements MessageInterface, \Stringable
 {
     use HostTrait;
     use IdTrait;
@@ -97,8 +97,6 @@ class Message implements MessageInterface
 
     /**
      * Get the value of authorName.
-     *
-     * @return ?string
      */
     public function getAuthorName(): ?string
     {
@@ -117,8 +115,6 @@ class Message implements MessageInterface
 
     /**
      * Get the value of authorEmail.
-     *
-     * @return ?string
      */
     public function getAuthorEmail(): ?string
     {
@@ -178,15 +174,12 @@ class Message implements MessageInterface
         return $this->setAuthorIp((int) ip2long(IPUtils::anonymize($authorIp)));
     }
 
-    /**
-     * @return bool|string
-     */
-    public function getAuthorIpRaw()
+    public function getAuthorIpRaw(): bool|string
     {
         return long2ip((int) $this->getAuthorIp());
     }
 
-    public function __toString()
+    public function __toString(): string
     {
         return $this->id.' ';
     }

@@ -164,11 +164,11 @@ trait PageListTwigTrait
      */
     public function renderPagesList(
         Twig $twig,
-        $search = '',
-        $max = 0,
-        $order = 'publishedAt,priority',
+        array|string $search = '',
+        array|int $max = 0,
+        array|string $order = 'publishedAt,priority',
         string $view = '/component/pages_list.html.twig',
-        $host = ''
+        array|string $host = ''
     ): string {
         if ('card' == $view) {
             $view = '/component/pages_list_card.html.twig';
@@ -244,9 +244,9 @@ trait PageListTwigTrait
     /**
      * @param int|array<(string|int), int> $max
      */
-    private function getLimit($max): int
+    private function getLimit(array|int $max): int
     {
-        return \is_int($max) ? $max : (\is_array($max) && isset($max[1]) ? $max[1] * $max[0] : 0); // @phpstan-ignore-line
+        return \is_int($max) ? $max : (isset($max[1]) ? $max[1] * $max[0] : 0);
     }
 
     private function getCurrentPage(): int

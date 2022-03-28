@@ -47,7 +47,7 @@ class PostInstall
     /**
      * @param string|string[] $path
      */
-    public static function remove($path): void
+    public static function remove(array|string $path): void
     {
         (new Filesystem())->remove($path);
     }
@@ -76,7 +76,7 @@ class PostInstall
     public static function addOnTop(string $file, string $toAdd): void
     {
         $content = (string) @file_get_contents($file);
-        if (false !== strpos($content, $toAdd)) {
+        if (str_contains($content, $toAdd)) {
             return;
         }
 

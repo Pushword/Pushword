@@ -24,52 +24,31 @@ abstract class AbstractGenerator implements GeneratorInterface
     use GenerateLivePathForTrait;
     use KernelTrait;
 
-    protected PageRepositoryInterface $pageRepository;
-
     protected Filesystem $filesystem;
 
-    protected Twig $twig;
-
     protected string $publicDir;
-
-    protected AppPool $apps;
 
     protected AppConfig $app;
 
     protected string $staticDir;
 
-    protected RequestStack $requestStack;
-
-    protected TranslatorInterface $translator;
-
     protected HtmlCompressorInterface $parser;
-
-    protected ParameterBagInterface $params;
-
-    protected RouterInterface $router;
 
     protected StaticAppGenerator $staticAppGenerator;
 
     public function __construct(
-        PageRepositoryInterface $pageRepository,
-        Twig $twig,
-        ParameterBagInterface $parameterBag,
-        RequestStack $requestStack,
-        TranslatorInterface $translator,
-        RouterInterface $router,
+        protected PageRepositoryInterface $pageRepository,
+        protected Twig $twig,
+        protected ParameterBagInterface $params,
+        protected RequestStack $requestStack,
+        protected TranslatorInterface $translator,
+        protected RouterInterface $router,
         KernelInterface $kernel,
-        AppPool $appPool
+        protected AppPool $apps
     ) {
-        $this->pageRepository = $pageRepository;
         $this->filesystem = new Filesystem();
-        $this->twig = $twig;
-        $this->params = $parameterBag;
-        $this->requestStack = $requestStack;
-        $this->translator = $translator;
-        $this->router = $router;
         $this->router->setUseCustomHostPath(false);
-        $this->apps = $appPool;
-        $this->publicDir = \strval($parameterBag->get('pw.public_dir'));
+        $this->publicDir = \strval($params->get('pw.public_dir'));
         $this->parser = HtmlCompressor::construct();
 
         static::loadKernel($kernel);

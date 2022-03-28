@@ -10,10 +10,9 @@ trait GenerateLivePathForTrait
     protected RouterInterface $router;
 
     /**
-     * @param string|PageInterface  $host
      * @param array<string, string> $params
      */
-    public function generateLivePathFor($host, string $route = 'pushword_page', array $params = []): string
+    public function generateLivePathFor(PageInterface|string $host, string $route = 'pushword_page', array $params = []): string
     {
         if (isset($params['locale'])) {
             $params['_locale'] = $params['locale'].'/';

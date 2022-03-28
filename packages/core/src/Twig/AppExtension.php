@@ -40,38 +40,11 @@ class AppExtension extends AbstractExtension
     use UnproseTwigTrait;
     use VideoTwigTrait;
 
-    private RouterInterface $router;
-
-    private EntityManagerInterface $em;
-
-    private AppPool $apps;
-
-    private Twig $twig;
-
-    private ImageManager $imageManager;
-
-    /**
-     * @var ManagerPoolInterface<T>
-     */
-    private ManagerPoolInterface $entityFilterManagerPool;
-
     /**
      * @param ManagerPoolInterface<T> $entityFilterManagerPool
      */
-    public function __construct(
-        EntityManagerInterface $entityManager,
-        RouterInterface $router,
-        AppPool $appPool,
-        Twig $twig,
-        ImageManager $imageManager,
-        ManagerPoolInterface $entityFilterManagerPool
-    ) {
-        $this->em = $entityManager;
-        $this->router = $router;
-        $this->apps = $appPool;
-        $this->twig = $twig;
-        $this->imageManager = $imageManager;
-        $this->entityFilterManagerPool = $entityFilterManagerPool;
+    public function __construct(private EntityManagerInterface $em, private RouterInterface $router, private AppPool $apps, private Twig $twig, private ImageManager $imageManager, private ManagerPoolInterface $entityFilterManagerPool)
+    {
     }
 
     public function getApp(): AppConfig
@@ -146,7 +119,7 @@ class AppExtension extends AbstractExtension
      *
      * @return PageInterface[]
      */
-    public function getPublishedPages($host = null, array $where = [], array $orderBy = [], $limit = 0, bool $withRedirection = false): array
+    public function getPublishedPages($host = null, array $where = [], array $orderBy = [], array|int $limit = 0, bool $withRedirection = false): array
     {
         return Repository::getPageRepository($this->em, $this->getPageClass())
             ->getPublishedPages(null === $host ? [] : $host, $where, $orderBy, $limit, $withRedirection);
@@ -185,10 +158,8 @@ class AppExtension extends AbstractExtension
     /**
      * Convert the source path (often /media/default/... or just ...) in a Media Object
      * /!\ No search in db.
-     *
-     * @param string|MediaInterface $src
      */
-    public function transformStringToMedia($src, string $name = ''): MediaInterface
+    public function transformStringToMedia(MediaInterface|string $src, string $name = ''): MediaInterface
     {
         $src = \is_string($src) ? self::normalizeMediaPath($src) : $src;
 
@@ -217,7 +188,7 @@ class AppExtension extends AbstractExtension
      *
      * @return string[]|string
      */
-    public static function pregReplace($subject, $pattern, $replacement)
+    public static function pregReplace(array|string $subject, array|string $pattern, array|string $replacement): array|string
     {
         return \Safe\preg_replace($pattern, $replacement, $subject);
     }

@@ -21,20 +21,11 @@ final class PageBlockController extends AbstractController
     use RequiredApps;
     use RequiredPageClass;
 
-    private EntityManagerInterface $em;
-
-    private Twig $twig;
-
-    public function __construct(EntityManagerInterface $entityManager, Twig $twig)
+    public function __construct(private EntityManagerInterface $em, private Twig $twig)
     {
-        $this->em = $entityManager;
-        $this->twig = $twig;
     }
 
-    /**
-     * @param int|string $id
-     */
-    public function manage(Request $request, $id = ''): Response
+    public function manage(Request $request, int|string $id = ''): Response
     {
         $content = $request->toArray();
 

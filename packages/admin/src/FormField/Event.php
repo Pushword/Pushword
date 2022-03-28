@@ -19,23 +19,11 @@ class Event extends SfEvent
     public const NAME = 'pushword.admin.load_field';
 
     /**
-     * @var AdminInterface<T>
-     */
-    private AdminInterface $admin;
-
-    /**
-     * @var mixed[]
-     */
-    private array $fields;
-
-    /**
      * @param AdminInterface<T> $admin
      * @param mixed[]           $fields
      */
-    public function __construct(AdminInterface $admin, array $fields)
+    public function __construct(private AdminInterface $admin, private array $fields)
     {
-        $this->admin = $admin;
-        $this->fields = $fields;
     }
 
     /**

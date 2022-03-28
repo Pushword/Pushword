@@ -14,29 +14,14 @@ use Twig\TwigFunction;
 
 class AppExtension extends AbstractExtension
 {
-    private \Doctrine\ORM\EntityManagerInterface $em;
-
     private \Pushword\Core\Component\App\AppConfig $app;
-
-    private \Pushword\Core\Component\App\AppPool $apps;
-
-    /**
-     * @var class-string<MessageInterface>
-     */
-    private string $messageEntity;
-
-    private \Symfony\Component\Routing\RouterInterface $router;
 
     /**
      * @param class-string<MessageInterface> $messageEntity
      */
-    public function __construct(EntityManagerInterface $entityManager, string $messageEntity, AppPool $appPool, RouterInterface $router)
+    public function __construct(private EntityManagerInterface $em, private string $messageEntity, private AppPool $apps, private RouterInterface $router)
     {
-        $this->em = $entityManager;
-        $this->apps = $appPool;
-        $this->app = $appPool->get();
-        $this->messageEntity = $messageEntity;
-        $this->router = $router;
+        $this->app = $apps->get();
     }
 
     /**

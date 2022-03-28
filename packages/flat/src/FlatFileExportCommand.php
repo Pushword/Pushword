@@ -14,13 +14,9 @@ class FlatFileExportCommand extends Command
      */
     protected static $defaultName = 'pushword:flat:export';
 
-    protected FlatFileExporter $exporter;
-
     public function __construct(
-        FlatFileExporter $flatFileExporter
+        protected FlatFileExporter $exporter
     ) {
-        $this->exporter = $flatFileExporter;
-
         parent::__construct();
     }
 

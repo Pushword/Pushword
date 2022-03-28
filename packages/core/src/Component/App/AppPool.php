@@ -32,10 +32,7 @@ final class AppPool
         $this->switchCurrentApp($firstHost);
     }
 
-    /**
-     * @param string|PageInterface $host
-     */
-    public function switchCurrentApp($host): self
+    public function switchCurrentApp(PageInterface|string $host): self
     {
         if ($host instanceof PageInterface) {
             $this->currentPage = $host;

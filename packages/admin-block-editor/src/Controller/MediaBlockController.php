@@ -23,12 +23,8 @@ final class MediaBlockController extends AbstractController
 {
     use RequiredMediaClass;
 
-    private EntityManagerInterface $em;
-
-    public function __construct(
-        EntityManagerInterface $entityManager
-    ) {
-        $this->em = $entityManager;
+    public function __construct(private EntityManagerInterface $em)
+    {
     }
 
     public function manage(Request $request, ImageManager $imageManager, string $publicMediaDir): Response
@@ -86,10 +82,7 @@ final class MediaBlockController extends AbstractController
         return $data;
     }
 
-    /**
-     * @return UploadedFile|MediaInterface
-     */
-    private function getMediaFrom(string $content)
+    private function getMediaFrom(string $content): MediaInterface|UploadedFile
     {
         $content = \Safe\json_decode($content, true);
 

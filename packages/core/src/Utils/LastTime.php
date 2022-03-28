@@ -11,11 +11,8 @@ use DateTime;
  */
 class LastTime
 {
-    protected string $filePath;
-
-    public function __construct(string $filePath)
+    public function __construct(protected string $filePath)
     {
-        $this->filePath = $filePath;
     }
 
     public function wasRunSince(DateInterval $dateInterval): bool

@@ -8,11 +8,8 @@ use Twig\TwigFunction;
 
 final class RouterTwigExtension extends AbstractExtension
 {
-    private \Pushword\Core\Router\RouterInterface $router;
-
-    public function __construct(RouterInterface $router)
+    public function __construct(private RouterInterface $router)
     {
-        $this->router = $router;
     }
 
     /**

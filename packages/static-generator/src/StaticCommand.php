@@ -14,12 +14,9 @@ class StaticCommand extends Command
      */
     protected static $defaultName = 'pushword:static:generate';
 
-    private StaticAppGenerator $staticAppGenerator;
-
-    public function __construct(StaticAppGenerator $staticAppGenerator)
+    public function __construct(private StaticAppGenerator $staticAppGenerator)
     {
         parent::__construct();
-        $this->staticAppGenerator = $staticAppGenerator;
     }
 
     protected function configure(): void

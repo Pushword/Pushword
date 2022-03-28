@@ -24,10 +24,6 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private ?Request $previousRequest = null;
 
-    private EntityManagerInterface $entityManager;
-
-    private string $publicDir;
-
     private ?DomCrawler $domPage = null;
 
     /**
@@ -35,10 +31,8 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private array $urlExistCache = [];
 
-    public function __construct(EntityManagerInterface $entityManager, string $publicDir)
+    public function __construct(private EntityManagerInterface $entityManager, private string $publicDir)
     {
-        $this->publicDir = $publicDir;
-        $this->entityManager = $entityManager;
     }
 
     // Starting point called from AbstractSanner::scan
@@ -62,7 +56,7 @@ final class LinkedDocsScanner extends AbstractScanner
     /**
      * @param string|string[] $var
      */
-    private static function prepareForRegex($var): string
+    private static function prepareForRegex(array|string $var): string
     {
         if (\is_string($var)) {
             return preg_quote($var, '/');
@@ -248,7 +242,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
         $checkDatabase = ! str_starts_with($slug, 'media/'); // we avoid to check in db the media, file exists is enough
 
-        $page = $checkDatabase ? Repository::getPageRepository($this->entityManager, \get_class($this->page))
+        $page = $checkDatabase ? Repository::getPageRepository($this->entityManager, $this->page::class)
             ->getPage($slug, $this->page->getHost(), true) :
             null;
 
