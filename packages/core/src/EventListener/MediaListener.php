@@ -225,12 +225,8 @@ final class MediaListener
 
         $mediaString = $this->getMediaString($media);
         $sameMedia = $this->em->getRepository(\get_class($media))->findOneBy(['media' => $mediaString]);
-        if (null !== $sameMedia && $media->getId() !== $sameMedia->getId()) {
-            // dump('sameMedia '.$sameMedia->getId());
-            return true;
-        }
-
-        return false;
+        // dump('sameMedia '.$sameMedia->getId());
+        return null !== $sameMedia && $media->getId() !== $sameMedia->getId();
     }
 
     private function renameIfIdentifiersAreToken(MediaInterface $media): void
@@ -259,6 +255,7 @@ final class MediaListener
         if (null !== ($flashBag = $this->getFlashBag())) {
             $flashBag->add($type, $this->translator->trans($message, $parameters));
         }
+
         // else log TODO
     }
 

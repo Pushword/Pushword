@@ -72,6 +72,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
         if (null !== $request->get('btn_update_and_list')) {
             return new RedirectResponse($this->admin->generateObjectUrl('show', $object));
         }
+
         if (null !== $request->get('btn_create_and_list')) {
             return new RedirectResponse($this->admin->generateObjectUrl('show', $object));
         }

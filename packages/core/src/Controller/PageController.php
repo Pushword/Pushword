@@ -130,7 +130,7 @@ final class PageController extends AbstractController
         $page = null !== $LocaleHomepage ? $LocaleHomepage : $this->getPage($request, $slug, $host);
 
         $params = [
-            'pages' => $this->getPages(5, $request),
+            'pages' => $this->getPages($request, 5),
             'page' => $page,
             'feedUri' => ($this->params->get('kernel.default_locale') == $locale ? '' : $locale.'/').'feed.xml',
         ];
@@ -144,7 +144,7 @@ final class PageController extends AbstractController
     public function showSitemap(Request $request, string $_format, string $host = ''): Response
     {
         $this->setApp($host);
-        $pages = $this->getPages(null, $request);
+        $pages = $this->getPages($request, null);
 
         if (! \is_array($pages) || ! isset($pages[0])) {
             throw $this->createNotFoundException();
@@ -180,7 +180,7 @@ final class PageController extends AbstractController
      *
      * @return mixed //array<PageInterface>
      */
-    private function getPages(?int $limit = null, Request $request)
+    private function getPages(Request $request, ?int $limit = null)
     {
         $requestedLocale = rtrim($request->getLocale(), '/');
 

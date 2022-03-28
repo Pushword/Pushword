@@ -91,9 +91,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     ];
 
     //$containerConfigurator->import(SetList::TYPE_DECLARATION);
+    $containerConfigurator->import(SetList::PHP_80);
 
     $services = $containerConfigurator->services();
-    $services->set(VarConstantCommentRector::class);
+    //$services->set(VarConstantCommentRector::class);
     $services->set(CombinedAssignRector::class);
     $services->set(SimplifyConditionsRector::class);
     $services->set(SimplifyDeMorganBinaryRector::class);

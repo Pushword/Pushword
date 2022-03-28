@@ -7,7 +7,7 @@ toc: true
 
 ## Requirements
 
--   **PHP** >=7.4
+-   **PHP** >=8.0
 -   **PHP extensions** : dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, fileinfo
 -   **Composer** (#[how to install composer](https://getcomposer.org/download/))
 

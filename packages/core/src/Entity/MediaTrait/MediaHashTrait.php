@@ -40,6 +40,7 @@ trait MediaHashTrait
 
             return $this;
         }
+
         if (($mediaFile = $this->getMediaFile()) !== null && file_exists($mediaFile)) {
             $this->hash = \Safe\sha1_file($mediaFile->getPathname(), true);
 

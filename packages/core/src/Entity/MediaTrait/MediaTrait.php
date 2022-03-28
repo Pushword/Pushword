@@ -37,12 +37,14 @@ trait MediaTrait
     /**
      * @ORM\Column(type="string", length=255, name="media")
      */
-    protected ?string $media = null; // TODO Rename to filename
+    protected ?string $media = null;
+    // TODO Rename to filename
 
     /**
      * NOTE : this is used only for media renaming.
      */
-    protected ?string $mediaBeforeUpdate = null; // TODO Rename to filename
+    protected ?string $mediaBeforeUpdate = null;
+    // TODO Rename to filename
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -65,7 +67,8 @@ trait MediaTrait
      *
      * @var UploadedFile|File|null
      */
-    protected $mediaFile = null; // todo Rename to $file
+    protected $mediaFile = null;
+    // todo Rename to $file
 
     /**
      * @ORM\OneToMany(

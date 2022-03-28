@@ -91,7 +91,7 @@
 			<a href="{{ path('admin_app_page_edit', {id: page.id}) }}" class="inline-block p-1 text-gray-50 rounded-t-lg hover:bg-gray-800">
 				{{ svg('edit', {class: 'w-full p-2 fill-current'}) }}
 			</a>
-			<a href="{{ path('admin_app_page_list') }}" class="inline-block p-1 text-gray-50 bg-gray-500 rounded-b-lg hover:bg-gray-800">
+			<a href="{{ path('admin_app_page_list') }}?filter%5Bhost%5D%5Bvalue%5D%5B%5D={{ page.host }}" class="inline-block p-1 text-gray-50 bg-gray-500 rounded-b-lg hover:bg-gray-800">
 				{{ svg('list', {class: 'w-full p-2 fill-current'}) }}
 			</a>
 			</div>

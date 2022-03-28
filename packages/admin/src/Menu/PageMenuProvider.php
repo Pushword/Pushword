@@ -106,6 +106,7 @@ final class PageMenuProvider implements ContainerAwareInterface
             if (\is_array($query['filter']['host']['value']) && isset($query['filter']['host']['value'][0]) && \is_string($query['filter']['host']['value'][0])) {
                 return $query['filter']['host']['value'][0];
             }
+
             if (\is_string($query['value'])) {
                 return $query['value'];
             }
