@@ -34,11 +34,11 @@ class PageAdvancedMainImageFormField extends PageMainImageField
     public static function formatToRatio(int $format): string
     {
         switch ($format) {
-            case 2: return 'screen-1/3';
-            case 3: return 'screen-3/4';
+            case 2: return 'screen-[33vh]';
+            case 3: return 'screen-[75vh]';
             case 4: return 'screen';
         }
 
-        return 'screen-3/4';
+        return 'screen-[75vh]';
     }
 }

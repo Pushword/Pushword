@@ -29,8 +29,6 @@ class HostField extends AbstractField
 
         if ('' === $this->admin->getSubject()->getHost()) {
             $this->admin->getSubject()->setHost($this->getDefaultHost());
-
-            return $form->add('host', HiddenType::class);
         }
 
         return $form->add('host', HiddenType::class);
