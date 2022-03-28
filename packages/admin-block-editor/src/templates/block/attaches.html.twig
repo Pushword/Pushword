@@ -8,6 +8,6 @@
         <div class="font-light">{{ filesize(block.data.file.size) }}{{ 'bytes_abbreviation'|trans }}</div>
     </div>
 
-    {{ link(svg('download', {class: 'w-10 fill-current'}), block.data.file.url, {'class': 'd-block text-gray-600 p-3'}) }}
+    {{ link(svg('download', {class: 'w-10 fill-current'}), block.data.file.url, {'class': 'd-block text-gray-600 p-3', 'download': block.data.file.url}) }}
 </div>
 {% endapply %}

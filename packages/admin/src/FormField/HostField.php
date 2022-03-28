@@ -7,6 +7,7 @@ use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\DoctrineORMAdminBundle\Filter\ChoiceFilter;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 
 /**
  * @extends AbstractField<HostInterface>
@@ -29,16 +30,10 @@ class HostField extends AbstractField
         if ('' === $this->admin->getSubject()->getHost()) {
             $this->admin->getSubject()->setHost($this->getDefaultHost());
 
-            return $form;
+            return $form->add('host', HiddenType::class);
         }
 
-        return $form;
-        /*
-        return $form->add('host', ChoiceType::class, [
-            'choices' => \Safe\array_combine($this->getHosts(), $this->getHosts()),
-            'required' => false,
-            'label' => 'admin.page.host.label',
-        ]);*/
+        return $form->add('host', HiddenType::class);
     }
 
     private function getDefaultHost(): string
