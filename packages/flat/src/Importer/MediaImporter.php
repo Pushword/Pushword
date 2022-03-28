@@ -67,7 +67,7 @@ class MediaImporter extends AbstractImporter
     {
         $media = $this->getMedia($this->getFilename($filePath));
 
-        if ($this->newMedia && $media->getUpdatedAt() >= $dateTime) {
+        if (false === $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
             return; // no update needed
         }
 
