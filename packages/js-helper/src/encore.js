@@ -8,6 +8,7 @@ function getFilesToWatch(basePath = './..') {
         basePath + '/vendor/pushword/core/src/templates/*.html.twig',
         basePath + '/vendor/pushword/conversation/src/templates/*.html.twig',
         basePath + '/vendor/pushword/admin-block-editor/src/templates/page/*.html.twig',
+        basePath + '/vendor/pushword/advanced-main-image/src/templates/page/*.html.twig',
         basePath + '/templates/*.html.twig',
         basePath + '/templates/**/*.html.twig',
         basePath + '/templates/**/**/*.html.twig',
