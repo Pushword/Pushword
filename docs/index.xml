@@ -16,12 +16,6 @@
                     <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
                 </item>
                                                                 <item>
-                    <title><![CDATA[Installation]]></title>
-                    <link>https://pushword.piedweb.com/installation</link>
-                    <guid>https://pushword.piedweb.com/installation</guid>
-                    <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
-                </item>
-                                                                <item>
                     <title><![CDATA[Editor Hidden Super Powerand Markdown Cheatsheet]]></title>
                     <link>https://pushword.piedweb.com/editor</link>
                     <guid>https://pushword.piedweb.com/editor</guid>
@@ -38,6 +32,12 @@
                     <link>https://pushword.piedweb.com/component/entity-filter</link>
                     <guid>https://pushword.piedweb.com/component/entity-filter</guid>
                     <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Command]]></title>
+                    <link>https://pushword.piedweb.com/command</link>
+                    <guid>https://pushword.piedweb.com/command</guid>
+                    <pubDate>Fri, 28 Jan 2022 17:06:29 +0100</pubDate>
                 </item>
                             
     </channel>

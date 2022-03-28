@@ -1,3 +1,4 @@
+https://pushword.piedweb.com/installation
 https://pushword.piedweb.com/roadmap
 https://pushword.piedweb.com/extension/admin-block-editor
 https://pushword.piedweb.com/upgrade
@@ -22,7 +23,6 @@ https://pushword.piedweb.com/extension/page-update-notifier
 https://pushword.piedweb.com/extension/svg
 https://pushword.piedweb.com/extension/template-editor
 https://pushword.piedweb.com/extension/version
-https://pushword.piedweb.com/installation
 https://pushword.piedweb.com/license
 https://pushword.piedweb.com/manage-assets
 https://pushword.piedweb.com/override-theme
