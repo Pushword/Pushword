@@ -80,9 +80,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
 
         return $this->createQueryBuilder($alias)
             ->andWhere($alias.'.publishedAt <=  :now')
-            ->setParameter('now', new \DateTime(), 'datetime')
-            ->orderBy($alias.'.priority', Criteria::DESC)
-            ->addOrderBy($alias.'.publishedAt', Criteria::DESC);
+            ->setParameter('now', new \DateTime(), 'datetime');
     }
 
     /**

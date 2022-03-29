@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Controller;
 
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use Pushword\Core\Component\App\AppConfig;
@@ -118,6 +119,7 @@ final class PageController extends AbstractController
         $LocaleHomepage = $this->getPage($request, $locale, $host, false);
         $slug = 'homepage';
         $page = null !== $LocaleHomepage ? $LocaleHomepage : $this->getPage($request, $slug, $host);
+        $request->setLocale($page->getLocale());
 
         $params = [
             'pages' => $this->getPages($request, 5),
@@ -178,7 +180,9 @@ final class PageController extends AbstractController
             (string) $this->apps->getMainHost(),
             '' !== $requestedLocale ? $requestedLocale : $this->params->get('kernel.default_locale'),
             $limit
-        )->getQuery()->getResult();
+        )
+        ->orderBy('p.publishedAt', Criteria::DESC)
+        ->getQuery()->getResult();
     }
 
     private function getPageRepository(): PageRepository
