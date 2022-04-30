@@ -141,14 +141,14 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
             $filter->add('parentPage', null, ['label' => 'admin.page.parentPage.label']);
         }
 
-        if ($this->exists('metaRobots')) {
-            $filter->add('metaRobots', null, [
-                'choices' => [
-                    'admin.page.metaRobots.choice.noIndex' => 'noindex',
-                ],
-                'label' => 'admin.page.metaRobots.label',
-            ]);
-        }
+        $filter->add('metaRobots', null, [
+            'choices' => [
+                'admin.page.metaRobots.choice.noIndex' => 'noindex',
+            ],
+            'label' => 'admin.page.metaRobots.label',
+        ]);
+
+        $filter->add('customProperties', null, ['label' => 'admin.page.customProperties.label']);
     }
 
     protected function preUpdate(object $object): void

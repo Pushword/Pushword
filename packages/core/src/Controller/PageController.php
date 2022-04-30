@@ -119,6 +119,9 @@ final class PageController extends AbstractController
         $LocaleHomepage = $this->getPage($request, $locale, $host, false);
         $slug = 'homepage';
         $page = null !== $LocaleHomepage ? $LocaleHomepage : $this->getPage($request, $slug, $host);
+        if (null === $page) {
+            throw $this->createNotFoundException('The page `'.$slug.'` was not found');
+        }
         $request->setLocale($page->getLocale());
 
         $params = [
