@@ -16,13 +16,15 @@
                 {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
                 {% for name, image in images %}
 
-                    <li>{{ _self.gallery_part(
+                    {{ gallery_li_opener|default('<li>') }}
+                        {{ _self.gallery_part(
                             media_from_string(image, name),
                             gallery_id, page ?? null,
                             image_filter ?? 'thumb',
                             image_container ?? null,
                             image_otherAttributes ?? {}
-                        ) }}</li>
+                        ) }}
+                    </li>
                 {% endfor %}
             </ul>
         </div>
