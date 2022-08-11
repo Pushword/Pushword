@@ -60,12 +60,12 @@ class AppExtension extends AbstractExtension
         return [
             new TwigFilter('md5', 'md5'),
             new TwigFilter('html_entity_decode', 'html_entity_decode'),
-            new TwigFilter('slugify', [(new Slugify()), 'slugify']),
+            new TwigFilter('slugify', [new Slugify(), 'slugify']),
             new TwigFilter('preg_replace', [self::class, 'pregReplace']),
             new TwigFilter('nice_punctuation', [HtmlBeautifer::class, 'punctuationBeautifer'], self::options()),
             new TwigFilter('unprose', [$this, 'unprose'], self::options()),
             new TwigFilter('image', [$this->imageManager, 'getBrowserPath'], self::options()),
-            new TwigFilter('markdown', [(new MarkdownParser()), 'transform'], self::options()),
+            new TwigFilter('markdown', [new MarkdownParser(), 'transform'], self::options()),
             new TwigFilter('view', [$this, 'getView'], ['needs_environment' => false]),
         ];
     }

@@ -33,4 +33,14 @@ abstract class AbstractImporter
 
         return lcfirst($str);
     }
+
+    protected function getMimeTypeFromFile(string $filePath): string
+    {
+        $finfo = finfo_open(\FILEINFO_MIME_TYPE);
+        if (false === $finfo) {
+            throw new \Exception('finfo is not working');
+        }
+
+        return (string) finfo_file($finfo, $filePath);
+    }
 }

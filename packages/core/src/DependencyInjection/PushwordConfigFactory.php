@@ -157,7 +157,7 @@ final class PushwordConfigFactory
             if (\is_array($value)
             && 'image_filter_sets' !== $key
                 && IsAssociativeArray::test($value)
-                ) {
+            ) {
                 $this->loadToParameters($value, $prefix.$key.'.');
 
                 continue;

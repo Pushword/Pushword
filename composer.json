@@ -23,7 +23,7 @@
         "doctrine/doctrine-fixtures-bundle": "^3.4",
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.8.1",
-        "fortawesome/font-awesome": "^5.15",
+        "fortawesome/font-awesome": "^6.1",
         "intervention/image": "^2.5",
         "michelf/php-markdown": "^1.9",
         "miljar/php-exif": "^0.6.5",
@@ -143,7 +143,10 @@
         "reset-skeleton": "./.scripts/reset-skeleton"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true

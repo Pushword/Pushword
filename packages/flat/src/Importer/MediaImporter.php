@@ -77,7 +77,7 @@ class MediaImporter extends AbstractImporter
             ->setProjectDir($this->projectDir)
             ->setStoreIn(\dirname($filePath))
             ->setSize(\Safe\filesize($filePath))
-            ->setMimeType((string) finfo_file(\Safe\finfo_open(\FILEINFO_MIME_TYPE), $filePath));
+            ->setMimeType($this->getMimeTypeFromFile($filePath));
 
         $data = $this->getData($filePath);
 

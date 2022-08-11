@@ -71,7 +71,7 @@ class PageImporter extends AbstractImporter
 
     public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
     {
-        if (! str_starts_with((string) finfo_file(\Safe\finfo_open(\FILEINFO_MIME_TYPE), $filePath), 'text/')) {
+        if (! str_starts_with($this->getMimeTypeFromFile($filePath), 'text/')) {
             return;
         }
 

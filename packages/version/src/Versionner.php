@@ -4,8 +4,8 @@ namespace Pushword\Version;
 
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Events;
-use Doctrine\Persistence\Event\LifecycleEventArgs;
 use Exception;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;

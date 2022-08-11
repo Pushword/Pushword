@@ -15,5 +15,5 @@ return function (ContainerConfigurator $configurator): void {
         ])
         ->tag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_page%', 'event' => 'postUpdate'])
         ->tag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_page%', 'event' => 'postPersist'])
-        ;
+    ;
 };

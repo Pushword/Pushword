@@ -26,7 +26,7 @@ trait PageRedirectionTrait
         if ('Location:' == \Safe\substr($content, 0, 9)) {
             $url = trim(\Safe\substr($content, 9));
             if (1 === \Safe\preg_match('/ [1-5][0-9]{2}$/', $url, $match)) {
-                $code = (int) (trim($match[0]));
+                $code = (int) trim($match[0]);
                 $url = F::preg_replace_str('/ [1-5][0-9]{2}$/', '', $url);
             }
 

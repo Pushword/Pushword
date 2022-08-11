@@ -5,6 +5,7 @@ namespace Pushword\Svg;
 use Exception;
 use PiedWeb\RenderAttributes\AttributesTrait;
 use Pushword\Core\AutowiringTrait\RequiredApps;
+use Pushword\Svg\FontAwesome5To6 as SvgFontAwesome5To6;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -27,7 +28,7 @@ class TwigExtension extends AbstractExtension
      * @param array<string, string> $attr
      * @param string[]|string       $dir
      */
-    public function getSvg(string $name, array $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], array|string $dir = ''): string
+    public function getSvg(string $name, array $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], array|string $dir = '', bool $retryWithFontAwesome5IconsRenamed = true): string
     {
         $dirs = '' !== $dir ? $dir : $this->apps->get()->get('svg_dir');
 
@@ -46,6 +47,10 @@ class TwigExtension extends AbstractExtension
         }
 
         if (null === $file) {
+            if (true === $retryWithFontAwesome5IconsRenamed) {
+                return $this->getSvg(SvgFontAwesome5To6::convertNameFromFontAwesome5To6($name), $attr, $dir, false);
+            }
+
             throw new Exception('`'.$name.'` (svg) not found.');
         }
 

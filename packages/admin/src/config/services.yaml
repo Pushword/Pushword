@@ -10,8 +10,8 @@ services:
         tags:
             - { name: knp_menu.menu_builder, method: getMenu, alias: page_admin_menu }
 
-  Sonata\AdminBundle\Bridge\Exporter\AdminExporter:
-    autowire: true
+  #Sonata\AdminBundle\Bridge\Exporter\AdminExporter:
+  #  autowire: true
 
   Pushword\Admin\PageAdminInterface:
     class: Pushword\Admin\PageAdmin
