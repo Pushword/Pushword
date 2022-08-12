@@ -1,6 +1,6 @@
 {
     "name": "@pushword/js-helper",
-    "version": "0.0.72",
+    "version": "0.0.73",
     "description": "Pushword front end helpers. ",
     "author": "Robin@PiedWeb <contact@piedweb.com>",
     "license": "MIT",
@@ -19,7 +19,7 @@
         "core-js": "^3.8.1",
         "easymde": "^2.13.0",
         "fslightbox": "^3.2.2",
-        "node-sass": "^7.0",
+        "node-sass": "^5.0",
         "postcss": "^8.2.1",
         "postcss-import": "^14.0.0",
         "postcss-loader": "^7.0",
