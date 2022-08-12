@@ -1,6 +1,6 @@
-import AttachesTool from "@editorjs/attaches";
-import css from "./index.css";
-import make from "./../Abstract/make.js";
+import AttachesTool from '@editorjs/attaches/src/index.js';
+import css from './index.css';
+import make from './../Abstract/make.js';
 //import ajax from "@codexteam/ajax";
 
 export default class Attaches extends AttachesTool {
@@ -8,7 +8,7 @@ export default class Attaches extends AttachesTool {
         super({ data, config, api, readOnly });
 
         this.onSelectFile = config.onSelectFile;
-        this.onUploadFile = config.onUploadFile || "";
+        this.onUploadFile = config.onUploadFile || '';
     }
 
     enableFileUpload() {
@@ -30,17 +30,17 @@ export default class Attaches extends AttachesTool {
         size = Math.abs(parseInt(size, 10));
         for (
             var t = [
-                    [1, "octets"],
-                    [1024, "ko"],
-                    [1048576, "Mo"],
-                    [1073741824, "Go"],
-                    [1099511627776, "To"],
+                    [1, 'octets'],
+                    [1024, 'ko'],
+                    [1048576, 'Mo'],
+                    [1073741824, 'Go'],
+                    [1099511627776, 'To'],
                 ],
                 n = 0;
             n < t.length;
             n++
         )
-            if (size < t[n][0]) return (size / t[n - 1][0]).toFixed(2) + " " + t[n - 1][1];
+            if (size < t[n][0]) return (size / t[n - 1][0]).toFixed(2) + ' ' + t[n - 1][1];
         return size;
     }
 }

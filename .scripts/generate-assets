@@ -51,8 +51,8 @@ then
     php ./packages/admin/src/Resources/assets/easymde-hack
     cd packages/admin
     buildAssets
-    sed -i "s/\?v[0-9]/?v$(date '+%s%3N')/" packages/admin/src/templates/layout.html.twig
     cd ../../
+    sed -i "s/\?v[0-9]/?v$(date '+%s%3N')/" packages/admin/src/templates/layout.html.twig
 fi
 
 ########

@@ -45,9 +45,21 @@ html {
  * Pure css hamburger menu
  */
 
-.show-hide-input:checked ~ div,
 .show-hide-input:checked ~ ul,
 .show-hide-input:checked ~ nav {
     max-height: 100vh;
     padding-top: 1rem;
+}
+
+/** Pure CSS accordion and show more
+    Example  https: //play.tailwindcss.com/VxdXWMH64M
+
+**/
+.show-hide-input:checked~div {
+    max-height: 100%;
+}
+
+.show-more>.show-hide-input:checked~div.show-more-btn {
+    max-height: 0;
+    overflow: hidden;
 }

@@ -1,8 +1,8 @@
-var Encore = require("@symfony/webpack-encore");
+var Encore = require('@symfony/webpack-encore');
 
-Encore.setOutputPath("./src/Resources/public/")
-    .setPublicPath("/bundles/pushwordadmin")
-    .setManifestKeyPrefix("/bundles/pushwordadmin/")
+Encore.setOutputPath('./src/Resources/public/')
+    .setPublicPath('/bundles/pushwordadmin')
+    .setManifestKeyPrefix('/bundles/pushwordadmin/')
 
     .cleanupOutputBeforeBuild()
     .enableSassLoader()
@@ -10,17 +10,17 @@ Encore.setOutputPath("./src/Resources/public/")
     .enableVersioning(false)
     .disableSingleRuntimeChunk()
     .copyFiles({
-        from: "./node_modules/ace-builds/src-min-noconflict/",
+        from: './node_modules/ace-builds/src-min-noconflict/',
         // relative to the output dir
-        to: "ace/[name].[ext]",
+        to: 'ace/[name].[ext]',
         // only copy files matching this pattern
         pattern: /\.js$/,
     })
     .copyFiles({
-        from: "./src/Resources/assets/",
-        to: "[name].[ext]",
+        from: './src/Resources/assets/',
+        to: '[name].[ext]',
         pattern: /logo.svg$/,
     })
-    .addEntry("admin.min", "./src/Resources/assets/admin.js"); // {{ asset('bundles/pushwordadmin/admin.js') }}
+    .addEntry('admin.min', './src/Resources/assets/admin.js'); // {{ asset('bundles/pushwordadmin/admin.js') }}
 
 module.exports = Encore.getWebpackConfig();
