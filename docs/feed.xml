@@ -10,16 +10,16 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[Roadmap]]></title>
+                    <link>https://pushword.piedweb.com/roadmap</link>
+                    <guid>https://pushword.piedweb.com/roadmap</guid>
+                    <pubDate>Thu, 11 Aug 2022 11:12:51 +0200</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Installation]]></title>
                     <link>https://pushword.piedweb.com/installation</link>
                     <guid>https://pushword.piedweb.com/installation</guid>
                     <pubDate>Mon, 28 Mar 2022 17:56:58 +0200</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Roadmap]]></title>
-                    <link>https://pushword.piedweb.com/roadmap</link>
-                    <guid>https://pushword.piedweb.com/roadmap</guid>
-                    <pubDate>Thu, 17 Mar 2022 22:29:19 +0100</pubDate>
                 </item>
                                                                 <item>
                     <title><![CDATA[Admin Block Editor]]></title>
