@@ -118,10 +118,7 @@ final class AppConfig
         return $this->getCustomProperty($key);
     }
 
-    /**
-     * @param mixed $value
-     */
-    public function setCustomProperty(string $key, $value): self
+    public function setCustomProperty(string $key, mixed $value): self
     {
         $camelCaseKey = static::normalizePropertyName($key);
         if (property_exists($this, $camelCaseKey)) {

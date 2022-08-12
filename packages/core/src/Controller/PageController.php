@@ -122,6 +122,7 @@ final class PageController extends AbstractController
         if (null === $page) {
             throw $this->createNotFoundException('The page `'.$slug.'` was not found');
         }
+
         $request->setLocale($page->getLocale());
 
         $params = [

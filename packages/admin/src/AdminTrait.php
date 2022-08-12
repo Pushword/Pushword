@@ -153,6 +153,8 @@ trait AdminTrait
     }
 
     /**
+     * @noRector
+     *
      * @param class-string<PageInterface> $pageClass
      */
     public function setPageClass($pageClass): void
@@ -172,6 +174,8 @@ trait AdminTrait
     }
 
     /**
+     * @noRector
+     *
      * @param class-string<MediaInterface> $mediaClass
      */
     public function setMediaClass($mediaClass): void
@@ -180,6 +184,8 @@ trait AdminTrait
     }
 
     /**
+     * @noRector
+     *
      * @param class-string<UserInterface> $userClass
      */
     public function setUserClass($userClass): void

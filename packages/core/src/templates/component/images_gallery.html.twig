@@ -16,7 +16,7 @@
                 {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
                 {% for name, image in images %}
 
-                    {{ gallery_li_opener|default('<li>') }}
+                    {{ gallery_li_opener|default('<li>')|raw }}
                         {{ _self.gallery_part(
                             media_from_string(image, name),
                             gallery_id, page ?? null,

@@ -73,12 +73,8 @@ final class Manager
     /**
      * main_content => apply filters on mainContent (*_filters => camelCase(*))
      * string       => apply filters on each string property.
-     *
-     * @param mixed $propertyValue
-     *
-     * @return mixed
      */
-    private function filter(string $property, $propertyValue)
+    private function filter(string $property, mixed $propertyValue): mixed
     {
         $filters = $this->getFilters($this->camelCaseToSnakeCase($property));
 
@@ -168,12 +164,11 @@ final class Manager
     }
 
     /**
-     * @param mixed    $propertyValue
      * @param string[] $filters
      *
      * @return mixed
      */
-    private function applyFilters(string $property, $propertyValue, array $filters)
+    private function applyFilters(string $property, mixed $propertyValue, array $filters)
     {
         foreach ($filters as $filter) {
             if ($this->entity instanceof CustomPropertiesInterface

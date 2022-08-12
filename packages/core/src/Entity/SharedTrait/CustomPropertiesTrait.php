@@ -135,10 +135,7 @@ trait CustomPropertiesTrait
         return ! method_exists($this, 'set'.ucfirst($name)) && ! method_exists($this, 'set'.$name);
     }
 
-    /**
-     * @param mixed $value
-     */
-    public function setCustomProperty(string $name, $value): self
+    public function setCustomProperty(string $name, mixed $value): self
     {
         $this->customProperties[$name] = $value;
 
