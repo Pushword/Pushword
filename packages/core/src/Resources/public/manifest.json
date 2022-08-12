@@ -1,18 +1,4 @@
 {
-  "bundles/pushwordcore/app.js": "./app.js",
-  "bundles/pushwordcore/style.css": "./style.css",
-  "bundles/pushwordcore/favicons/favicon.ico": "./favicons/favicon.ico",
-  "bundles/pushwordcore/favicons/android-chrome-512x512.png": "./favicons/android-chrome-512x512.png",
-  "bundles/pushwordcore/favicons/mstile-310x310.png": "./favicons/mstile-310x310.png",
-  "bundles/pushwordcore/favicons/mstile-310x150.png": "./favicons/mstile-310x150.png",
-  "bundles/pushwordcore/favicons/android-chrome-192x192.png": "./favicons/android-chrome-192x192.png",
-  "bundles/pushwordcore/favicons/apple-touch-icon.png": "./favicons/apple-touch-icon.png",
-  "bundles/pushwordcore/favicons/mstile-150x150.png": "./favicons/mstile-150x150.png",
-  "bundles/pushwordcore/favicons/mstile-144x144.png": "./favicons/mstile-144x144.png",
-  "bundles/pushwordcore/favicons/mstile-70x70.png": "./favicons/mstile-70x70.png",
-  "bundles/pushwordcore/favicons/safari-pinned-tab.svg": "./favicons/safari-pinned-tab.svg",
-  "bundles/pushwordcore/favicons/favicon-32x32.png": "./favicons/favicon-32x32.png",
-  "bundles/pushwordcore/favicons/favicon-16x16.png": "./favicons/favicon-16x16.png",
-  "bundles/pushwordcore/favicons/site.webmanifest": "./favicons/site.webmanifest",
-  "bundles/pushwordcore/favicons/browserconfig.xml": "./favicons/browserconfig.xml"
+  "bundlesblablabla/app.js": "./app.js",
+  "bundlesblablabla/style.css": "./style.css"
 }

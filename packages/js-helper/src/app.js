@@ -1,21 +1,21 @@
-require("fslightbox");
+require('fslightbox');
 import {
     uncloakLinks,
     readableEmail,
     convertImageLinkToWebPLink,
     replaceOn,
     liveBlock,
-} from "@pushword/js-helper/src/helpers.js";
-import { allClickable } from "@pushword/js-helper/src/clickable.js";
+} from '@pushword/js-helper/src/helpers.js';
+import { allClickable } from '@pushword/js-helper/src/clickable.js';
 
 function onDomChanged() {
     liveBlock();
     convertImageLinkToWebPLink();
     uncloakLinks();
-    readableEmail(".cea");
+    readableEmail('.cea');
     replaceOn();
     refreshFsLightbox();
-    allClickable(".clickable");
+    allClickable('.clickable');
 }
 
 function onPageLoaded() {
@@ -23,5 +23,5 @@ function onPageLoaded() {
     new FsLightbox();
 }
 
-document.addEventListener("DOMContentLoaded", onPageLoaded());
-document.addEventListener("DOMChanged", onDomChanged);
+document.addEventListener('DOMContentLoaded', onPageLoaded());
+document.addEventListener('DOMChanged', onDomChanged);
