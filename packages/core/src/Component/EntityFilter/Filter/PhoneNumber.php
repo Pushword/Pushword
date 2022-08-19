@@ -19,15 +19,15 @@ class PhoneNumber extends AbstractFilter
 
     private function convertPhoneNumber(string $body): string
     {
-        $rgx = '/ (?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4} /iU';
+        $rgx = '/ (?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}(?P<after> |\.<\/|\. |$)/iU';
         \Safe\preg_match_all($rgx, $body, $matches);
 
         if (! isset($matches[0])) {
             return $body;
         }
-
-        foreach ($matches[0] as $m) {
-            $body = str_replace($m, $this->renderPhoneNumber($m), $body);
+        dump($matches);
+        foreach ($matches[0] as $k => $m) {
+            $body = str_replace($m, ' '.$this->renderPhoneNumber(trim($m)).$matches['after'][$k], $body);
         }
 
         return $body;
