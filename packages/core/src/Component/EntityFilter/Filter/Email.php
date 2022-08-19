@@ -27,7 +27,7 @@ class Email extends AbstractFilter
         for ($k = 0; $k < $nbrMatch; ++$k) {
             $body = str_replace(
                 $matches[0][$k],
-                ' '.$this->renderEncodedMail($matches[1][$k]).$matches[2][$k],
+                ' '.trim($this->renderEncodedMail($matches[1][$k])).$matches[2][$k],
                 $body
             );
         }
