@@ -1,15 +1,15 @@
 {% block before %}
 <div class="show-more">
     <input type="checkbox" id="{{ id }}" class="hidden show-hide-input">
-    <div class="max-h-[120px] overflow-hidden transition-all delay-75 duration-300">
+    <div class="max-h-[180px] overflow-hidden transition-all delay-75 duration-300">
 {% endblock %}
 
 {% block after %}
     <div class="text-center -mt-6">
-      <label for="{{ id }}" class="text-3xl text-gray-600 cursor-pointer after:content-[\'↥\']"></label>
+      <label for="{{ id }}" class="text-3xl text-gray-600 cursor-pointer after:content-['↥']"></label>
     </div>
     </div>
     <div class="show-more-btn transition-all delay-75 duration-150 text-center pt-20 -mt-[120px] h-[120px] bg-gradient-to-b from-transparent {{ to_background|default('to-white') }} relative z-10">
-      <label for="{{ id }}" class="text-6xl text-gray-600 cursor-pointer after:content-[\'↧\']"></label>
+      <label for="{{ id }}" class="text-6xl text-gray-600 cursor-pointer after:content-['↧']"></label>
     </div></div>
 {% endblock %}
