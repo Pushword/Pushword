@@ -25,9 +25,10 @@ class PhoneNumber extends AbstractFilter
         if (! isset($matches[0])) {
             return $body;
         }
-        dump($matches);
+
         foreach ($matches[0] as $k => $m) {
-            $body = str_replace($m, ' '.$this->renderPhoneNumber(trim($m)).$matches['after'][$k], $body);
+            $after = $matches['after'][$k];
+            $body = str_replace($m, ' '.$this->renderPhoneNumber(trim(substr($m, 0, -\strlen($after)))).$after, $body);
         }
 
         return $body;
