@@ -10,9 +10,9 @@ class ShowMore extends AbstractFilter
     use RequiredAppTrait;
     use RequiredTwigTrait;
 
-    public const TO_ADD_BEFORE = '{{ block("before", view("/component/show_more.html.twig")) %}';
+    public const TO_ADD_BEFORE = '{{ block("before", view("/component/show_more.html.twig")) }}';
 
-    public const TO_ADD_AFTER = '{{ block("after", view("/component/show_more.html.twig")) %}';
+    public const TO_ADD_AFTER = '{{ block("after", view("/component/show_more.html.twig")) }}';
 
     public function apply($propertyValue): string
     {
