@@ -62,4 +62,6 @@ html {
 .show-more>.show-hide-input:checked~div.show-more-btn {
     max-height: 0;
     overflow: hidden;
+    padding-top: 0;
+    margin-top: 0;
 }
