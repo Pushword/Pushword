@@ -135,4 +135,3 @@ services:
   vich_uploader.pushword.namer_property:
     class: Pushword\Core\Service\VichUploadPropertyNamer
     public: true
-  #   arguments: ['@Vich\UploaderBundle\Util\Transliterator']

@@ -76,4 +76,6 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
     public function setHash(?string $hash = null): self;
 
     public function resetHash(): self;
+
+    public function getMediaFromFilename(string $filename = ''): string;
 }

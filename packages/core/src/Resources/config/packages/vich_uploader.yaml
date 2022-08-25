@@ -7,4 +7,3 @@ vich_uploader:
       upload_destination: '%pw.media_dir%'
       namer:
         service: vich_uploader.pushword.namer_property
-        options: { property: 'name' }
