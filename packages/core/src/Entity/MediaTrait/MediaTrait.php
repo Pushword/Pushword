@@ -108,15 +108,18 @@ trait MediaTrait
 
         $extension = $this->getMediaFile()->guessExtension(); // From MimeType
         $extension = null === $extension ? '' : '.'.$extension;
-        $this->fixExtension($extension);
+        $extension = $this->fixExtension($extension);
 
         return $extension;
     }
 
+    /**
+     * Because for some format, the mime type extension is not the best.
+     */
     private function fixExtension(string $extension): string
     {
         // Todo : when using guessExtension, it's using safe mymetype and returning gpx as txt
-        if ('.txt' === $extension && '.gpx' === $this->extractExtension($this->getMediaFileName())) {
+        if ('.xml' === $extension && '.gpx' === $this->extractExtension($this->getMediaFileName())) {
             $extension = '.gpx';
         }
 

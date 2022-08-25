@@ -6,5 +6,5 @@ vich_uploader:
       #uri_prefix:
       upload_destination: '%pw.media_dir%'
       namer:
-        service: Vich\UploaderBundle\Naming\PropertyNamer #Pushword\Core\Service\VichUploadPropertyNamer
-        options: { property: 'slug' }
+        service: vich_uploader.pushword.namer_property
+        options: { property: 'name' }

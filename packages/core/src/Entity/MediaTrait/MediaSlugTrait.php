@@ -74,6 +74,16 @@ trait MediaSlugTrait
             return $this;
         }
 
+        $filenameSlugified = $this->getMediaFromFilename($filename);
+        $extension = $this->extractExtensionFromFile();
+        $this->setMedia($filenameSlugified);
+        $this->slug = \Safe\substr($filenameSlugified, 0, \strlen($filenameSlugified) - \strlen($extension));
+
+        return $this;
+    }
+
+    public function getMediaFromFilename(string $filename = ''): string
+    {
         $filename = '' !== $filename ? $filename : $this->getMediaFileName();
         if ('' === $filename) {
             throw new Exception('debug... '); // dd($this->mediaFile);
@@ -81,12 +91,10 @@ trait MediaSlugTrait
 
         $extension = $this->extractExtensionFromFile();
 
-        $slugSlugified = $this->slugifyPreservingExtension($filename, $extension);
+        $filename = $filename;
+        $filenameSlugified = $this->slugifyPreservingExtension($filename, $extension);
 
-        $this->setMedia($slugSlugified);
-        $this->slug = \Safe\substr($slugSlugified, 0, \strlen($slugSlugified) - \strlen($extension));
-
-        return $this;
+        return $filenameSlugified;
     }
 
     private function slugify(string $slug): string

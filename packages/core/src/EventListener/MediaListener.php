@@ -60,6 +60,7 @@ final class MediaListener
      */
     public function onVichUploaderPreUpload(Event $event): void
     {
+        /** @var MediaInterface $media */
         $media = $this->getMediaFromEvent($event);
         $media->resetHash();
         $media->setHash();
@@ -70,6 +71,10 @@ final class MediaListener
 
         $this->setNameIfEmpty($media);
         $this->renameIfIdentifiersAreToken($media);
+
+        if (null === $media->getMedia()) {
+            $media->setMedia($media->getMediaFromFilename($media->getSlug()));
+        }
     }
 
     /**
@@ -82,10 +87,6 @@ final class MediaListener
     public function onVichUploaderPostUpload(Event $event): void
     {
         $media = $this->getMediaFromEvent($event);
-
-        if (null === $media->getMedia()) {
-            $media->setMedia($event->getMapping()->getFileName($media));
-        }
 
         if ($this->imageManager->isImage($media)) {
             $this->imageManager->remove($media);
