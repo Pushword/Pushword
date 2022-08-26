@@ -94,6 +94,7 @@ class AppExtension extends AbstractExtension
             new TwigFunction('pager', [$this, 'renderPager'], self::options(true)),
             new TwigFunction('pages_list', [$this, 'renderPagesList'], self::options(true)),
             new TwigFunction('pages', [$this, 'getPublishedPages'], self::options()),
+            new TwigFunction('p', [$this, 'getPublishedPage'], self::options()),
             new TwigFunction('pw', [$this->entityFilterManagerPool, 'getProperty'], self::options()),
             new TwigFunction('filesize', [FilesizeFormatter::class, 'formatBytes'], self::options()),
             new TwigFunction('page_position', [$this, 'getPagePosition'], self::options()),
@@ -123,6 +124,23 @@ class AppExtension extends AbstractExtension
     {
         return Repository::getPageRepository($this->em, $this->getPageClass())
             ->getPublishedPages(null === $host ? [] : $host, $where, $orderBy, $limit, $withRedirection);
+    }
+
+    /**
+     * @param string|string[]|null $host
+     */
+    public function getPublishedPage(string $slug, $host = null): ?PageInterface
+    {
+        $pages = Repository::getPageRepository($this->em, $this->getPageClass())
+            ->getPublishedPages(
+                null === $host ? [] : $host,
+                [['key' => 'slug', 'operator' => '=', 'value' => $slug]],
+                [],
+                1,
+                false
+            );
+
+        return $pages[0] ?? null;
     }
 
     public function getView(string $path, ?string $fallback = null): string
