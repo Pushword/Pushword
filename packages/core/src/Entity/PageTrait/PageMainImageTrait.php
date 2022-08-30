@@ -10,7 +10,7 @@ trait PageMainImageTrait
     /**
      * @ORM\ManyToOne(
      *     targetEntity="Pushword\Core\Entity\MediaInterface",
-     *     cascade={"all"},
+     *     cascade={"persist"},
      *     inversedBy="mainImagePages"
      * )
      */
