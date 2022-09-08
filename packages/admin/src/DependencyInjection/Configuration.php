@@ -69,7 +69,10 @@ class Configuration implements ConfigurationInterface
                 'fields' => [PageTitleField::class, PageNameField::class, PageSearchExcreptField::class, PriorityField::class],
             ],
             'admin.page.translations.label' => [PageLocaleField::class, PageTranslationsField::class],
-            'admin.page.customProperties.label' => ['expand' => true, 'fields' => [CustomPropertiesField::class]],
+            'admin.page.customProperties.label' => [
+                'expand' => true,
+                'fields' => [CustomPropertiesField::class],
+            ],
             'admin.page.og.label' => [
                 'expand' => true,
                 'fields' => [OgTitleField::class, OgDescriptionField::class, OgImageField::class,

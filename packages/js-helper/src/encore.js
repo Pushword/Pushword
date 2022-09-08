@@ -66,7 +66,7 @@ module.exports = {
         outputPath = outputPath ? outputPath : './../public/assets/';
         publicPath = publicPath ? publicPath : '/assets';
 
-        Encore.configureRuntimeEnvironment('dev');
+        //Encore.configureRuntimeEnvironment('dev');
 
         Encore.setOutputPath(outputPath)
             .setPublicPath(publicPath)
