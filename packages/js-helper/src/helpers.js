@@ -204,8 +204,8 @@ export function addClassForNormalUser(attribute = 'data-acinb') {
             [].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
                 var classToAdd = element.getAttribute(attribute);
                 element.removeAttribute(attribute);
-                element.classList.add(' ' + classToAdd);
-                if ((' ' + classToAdd + ' ').contains('block ')) {
+                element.classList.add(classToAdd);
+                if ((' ' + classToAdd + ' ').contains(' block ')) {
                     element.classList.remove('hidden');
                 }
             });
