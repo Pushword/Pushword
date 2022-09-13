@@ -1,11 +1,11 @@
 {% block before %}
 <div class="show-more -mt-7">
     <input type="checkbox" id="{{ id }}" class="hidden show-hide-input">
-    <div class="max-h-[250px] overflow-hidden transition-all delay-75 duration-300">
+    <div class="overflow-hidden transition-all delay-75 duration-300" data-acinb="max-h-[250px]">
 {% endblock %}
 
 {% block after %}
-    <div class="text-center -mt-3">
+    <div class="text-center -mt-3 hidden" data-acinb="block">
       <label for="{{ id }}" class="text-3xl text-gray-500 cursor-pointer after:content-['↥']"></label>
     </div>
     </div>

@@ -1,6 +1,7 @@
 require('fslightbox');
 import {
     uncloakLinks,
+    addClassForNormalUser,
     readableEmail,
     convertImageLinkToWebPLink,
     replaceOn,
@@ -16,6 +17,7 @@ function onDomChanged() {
     replaceOn();
     refreshFsLightbox();
     allClickable('.clickable');
+    addClassForNormalUser();
 }
 
 function onPageLoaded() {

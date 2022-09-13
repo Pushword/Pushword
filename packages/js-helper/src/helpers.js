@@ -1,5 +1,5 @@
-import "core-js/stable";
-import "regenerator-runtime/runtime";
+import 'core-js/stable';
+import 'regenerator-runtime/runtime';
 /**
  * List of all functions
  *
@@ -21,19 +21,19 @@ import "regenerator-runtime/runtime";
  *
  * @param {string} attribute
  */
-export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = ".live-form") {
+export function liveBlock(liveBlockAttribute = 'data-live', liveFormSelector = '.live-form') {
     var btnToBlock = function (event, btn) {
-        btn.setAttribute(liveBlockAttribute, btn.getAttribute("src-" + liveBlockAttribute));
+        btn.setAttribute(liveBlockAttribute, btn.getAttribute('src-' + liveBlockAttribute));
         getLiveBlock(btn);
     };
 
     var getLiveBlock = function (item) {
         var url = item.getAttribute(liveBlockAttribute);
-        url = url.startsWith("e:") ? convertShortchutForLink(rot13ToText(url.substring(2))) : url;
+        url = url.startsWith('e:') ? convertShortchutForLink(rot13ToText(url.substring(2))) : url;
         fetch(url, {
             //headers: { "Content-Type": "application/json", Accept: "text/plain" },
-            method: "POST",
-            credentials: "include",
+            method: 'POST',
+            credentials: 'include',
         })
             .then(function (response) {
                 return response.text();
@@ -43,19 +43,19 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
                 item.outerHTML = body;
             })
             .then(function () {
-                document.dispatchEvent(new Event("DOMChanged"));
+                document.dispatchEvent(new Event('DOMChanged'));
             });
     };
 
     const spinner =
         '<span style="border-top-color: transparent" class="inline-block w-5 h-5 border-4 border-gray-50 border-solid rounded-full animate-spin"></span>';
-    const htmlLoader = "<div>" + spinner.replace("border-gray-50", "border-gray-800") + "</div>";
+    const htmlLoader = '<div>' + spinner.replace('border-gray-50', 'border-gray-800') + '</div>';
 
     var setLoader = function (form) {
         var $submitButton = getSubmitButton(form);
         if ($submitButton !== undefined) {
             //var initialButton = $submitButton.outerHTML;
-            $submitButton.innerHTML = "";
+            $submitButton.innerHTML = '';
             $submitButton.outerHTML = htmlLoader;
         }
     };
@@ -65,9 +65,9 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
 
         var formData = new FormData(form.srcElement);
         fetch(form.srcElement.action, {
-            method: "POST",
+            method: 'POST',
             body: formData,
-            credentials: "include",
+            credentials: 'include',
         })
             .then(function (response) {
                 return response.text();
@@ -76,31 +76,31 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
                 liveFormBlock.outerHTML = body;
             })
             .then(function () {
-                document.dispatchEvent(new Event("DOMChanged"));
+                document.dispatchEvent(new Event('DOMChanged'));
             });
     };
 
     var getSubmitButton = function (form) {
-        if (form.srcElement.querySelector("[type=submit]") !== null) {
-            return form.srcElement.querySelector("[type=submit]");
+        if (form.srcElement.querySelector('[type=submit]') !== null) {
+            return form.srcElement.querySelector('[type=submit]');
         }
-        if (form.srcElement.getElementsByTagName("button") !== null) {
-            return form.srcElement.getElementsByTagName("button")[0];
+        if (form.srcElement.getElementsByTagName('button') !== null) {
+            return form.srcElement.getElementsByTagName('button')[0];
         }
         return null;
     };
 
     // Listen data-live
-    document.querySelectorAll("[" + liveBlockAttribute + "]").forEach((item) => {
+    document.querySelectorAll('[' + liveBlockAttribute + ']').forEach((item) => {
         getLiveBlock(item);
     });
 
     // Listen button src-data-live
-    document.querySelectorAll("[src-" + liveBlockAttribute + "]").forEach((item) => {
-        item.addEventListener("click", (event) => {
-            if (item.tagName == "BUTTON") {
+    document.querySelectorAll('[src-' + liveBlockAttribute + ']').forEach((item) => {
+        item.addEventListener('click', (event) => {
+            if (item.tagName == 'BUTTON') {
                 item.innerHTML = spinner;
-                item.setAttribute("disabled", true);
+                item.setAttribute('disabled', true);
             }
             btnToBlock(event, item);
         });
@@ -108,8 +108,8 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
 
     // Listen live-form
     document.querySelectorAll(liveFormSelector).forEach((item) => {
-        if (item.querySelector("form") !== null) {
-            item.querySelector("form").addEventListener("submit", (e) => {
+        if (item.querySelector('form') !== null) {
+            item.querySelector('form').addEventListener('submit', (e) => {
                 e.preventDefault();
                 sendForm(e, item);
             });
@@ -121,33 +121,33 @@ export function liveBlock(liveBlockAttribute = "data-live", liveFormSelector = "
  * Block to replace Watcher
  * On $event on element find via $attribute, set attribute's content in element.innerHTML
  */
-export function replaceOn(attribute = "replaceBy", eventName = "click") {
+export function replaceOn(attribute = 'replaceBy', eventName = 'click') {
     var loadVideo = function (element) {
         var content = element.getAttribute(attribute);
         if (
-            element.classList.contains("hero-banner-overlay-lg") &&
-            element.querySelector("picture") &&
+            element.classList.contains('hero-banner-overlay-lg') &&
+            element.querySelector('picture') &&
             window.innerWidth < 992
         ) {
-            element.querySelector("picture").outerHTML = content;
-            element.querySelector(".btn-play").outerHTML = " ";
+            element.querySelector('picture').outerHTML = content;
+            element.querySelector('.btn-play').outerHTML = ' ';
         } else {
             element.innerHTML = content;
         }
-        if (element.classList.contains("hero-banner-overlay-lg")) {
-            element.style.zIndex = "2000";
+        if (element.classList.contains('hero-banner-overlay-lg')) {
+            element.style.zIndex = '2000';
         }
         element.removeAttribute(attribute);
-        document.dispatchEvent(new Event("DOMChanged"));
+        document.dispatchEvent(new Event('DOMChanged'));
     };
 
-    document.querySelectorAll("[" + attribute + "]:not([listen])").forEach(function (element) {
-        element.setAttribute("listen", "");
+    document.querySelectorAll('[' + attribute + ']:not([listen])').forEach(function (element) {
+        element.setAttribute('listen', '');
         element.addEventListener(
             eventName,
             function (event) {
                 loadVideo(event.currentTarget); //event.currentTarget;
-                element.removeAttribute("listen");
+                element.removeAttribute('listen');
             },
             { once: true }
         );
@@ -159,13 +159,13 @@ export function replaceOn(attribute = "replaceBy", eventName = "click") {
  *
  */
 export function seasonedBackground() {
-    document.querySelectorAll("[x-hash]").forEach(function (element) {
+    document.querySelectorAll('[x-hash]').forEach(function (element) {
         if (window.location.hash) {
-            if (element.getAttribute("x-hash") == window.location.hash.substring(1)) {
-                element.parentNode.parentNode.querySelectorAll("img").forEach(function (img) {
-                    img.style = "display:none";
+            if (element.getAttribute('x-hash') == window.location.hash.substring(1)) {
+                element.parentNode.parentNode.querySelectorAll('img').forEach(function (img) {
+                    img.style = 'display:none';
                 });
-                element.style = "display:block";
+                element.style = 'display:block';
             }
         }
     });
@@ -179,54 +179,69 @@ export function seasonedBackground() {
 export function responsiveImage(src) {
     var screenWidth = window.innerWidth;
     if (screenWidth <= 576) {
-        src = src.replace("/default/", "/xs/");
+        src = src.replace('/default/', '/xs/');
     } else if (screenWidth <= 768) {
-        src = src.replace("/default/", "/sm/");
+        src = src.replace('/default/', '/sm/');
     } else if (screenWidth <= 992) {
-        src = src.replace("/default/", "/md/");
+        src = src.replace('/default/', '/md/');
     } else if (screenWidth <= 1200) {
-        src = src.replace("/default/", "/lg/");
+        src = src.replace('/default/', '/lg/');
     } else {
         // 1200+
-        src = src.replace("/default/", "/xl/");
+        src = src.replace('/default/', '/xl/');
     }
 
     return src;
 }
 
+export function addClassForNormalUser(attribute = 'data-acinb') {
+    var startScrolling = 0;
+    document.addEventListener('scroll', function () {
+        if (startScrolling < 5) {
+            startScrolling++;
+        }
+        if (startScrolling === 4) {
+            [].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
+                var classToAdd = element.getAttribute(attribute);
+                element.removeAttribute(attribute);
+                element.classList.add(' ' + classToAdd);
+            });
+        }
+    });
+}
 /**
  * Convert elements wich contain attribute (data-href) in normal link (a href)
  * You can use a callback function to decrypt the link (eg: rot13ToText ;-))
  *
  * @param {string}  attribute
  */
-export async function uncloakLinks(attribute = "data-rot", when = "onEvent") {
+export async function uncloakLinks(attribute = 'data-rot', when = 'onEvent') {
     var convertLink = function (element) {
         // fix "bug" with img
         if (element.getAttribute(attribute) === null) {
-            var element = element.closest("[" + attribute + "]");
+            var element = element.closest('[' + attribute + ']');
         }
         if (element === null || element.getAttribute(attribute) === null) return;
-        var link = document.createElement("a");
+        var link = document.createElement('a');
         var href = element.getAttribute(attribute);
         element.removeAttribute(attribute);
         for (var i = 0, n = element.attributes.length; i < n; i++) {
             link.setAttribute(element.attributes[i].nodeName, element.attributes[i].nodeValue);
         }
         link.innerHTML = element.innerHTML;
-        link.setAttribute("href", responsiveImage(convertShortchutForLink(rot13ToText(href))));
+        link.setAttribute('href', responsiveImage(convertShortchutForLink(rot13ToText(href))));
         element.parentNode.replaceChild(link, element);
         return link;
     };
 
     var convertThemAll = function (attribute) {
-        [].forEach.call(document.querySelectorAll("[" + attribute + "]"), function (element) {
+        [].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
             convertLink(element);
         });
     };
 
     var fireEventLinksBuilt = async function (element, event) {
-        await document.dispatchEvent(new Event("DOMChanged"));
+        await document.dispatchEvent(new Event('DOMChanged'));
 
         var clickEvent = new Event(event.type);
         element.dispatchEvent(clickEvent);
@@ -234,7 +249,7 @@ export async function uncloakLinks(attribute = "data-rot", when = "onEvent") {
 
     var convertLinkOnEvent = async function (event) {
         // convert them all if it's an image (thanks this bug), permit to use gallery (baguetteBox)
-        if (event.target.tagName == "IMG") {
+        if (event.target.tagName == 'IMG') {
             await convertThemAll(attribute);
             var element = event.target;
         } else {
@@ -243,24 +258,24 @@ export async function uncloakLinks(attribute = "data-rot", when = "onEvent") {
         if (element) fireEventLinksBuilt(element, event);
     };
 
-    if (when == "onEvent") {
-        [].forEach.call(document.querySelectorAll("[" + attribute + "]"), function (element) {
+    if (when == 'onEvent') {
+        [].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
             element.addEventListener(
-                "touchstart",
+                'touchstart',
                 function (e) {
                     convertLinkOnEvent(e);
                 },
                 { once: true, passive: true }
             );
             element.addEventListener(
-                "click",
+                'click',
                 function (e) {
                     convertLinkOnEvent(e);
                 },
                 { once: true }
             );
             element.addEventListener(
-                "mouseover",
+                'mouseover',
                 function (e) {
                     convertLinkOnEvent(e);
                 },
@@ -275,23 +290,23 @@ export async function uncloakLinks(attribute = "data-rot", when = "onEvent") {
  *
  * @param {string}  attribute
  */
-export function convertFormFromRot13(attribute = "data-frot") {
-    [].forEach.call(document.querySelectorAll("[" + attribute + "]"), function (element) {
+export function convertFormFromRot13(attribute = 'data-frot') {
+    [].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
         var action = element.getAttribute(attribute);
         element.removeAttribute(attribute);
-        element.setAttribute("action", convertShortchutForLink(rot13ToText(action)));
+        element.setAttribute('action', convertShortchutForLink(rot13ToText(action)));
     });
 }
 
 export function convertShortchutForLink(str) {
-    if (str.charAt(0) == "-") {
-        return "http://" + str.substring(1);
+    if (str.charAt(0) == '-') {
+        return 'http://' + str.substring(1);
     }
-    if (str.charAt(0) == "_") {
-        return "https://" + str.substring(1);
+    if (str.charAt(0) == '_') {
+        return 'https://' + str.substring(1);
     }
-    if (str.charAt(0) == "@") {
-        return "mailto:" + str.substring(1);
+    if (str.charAt(0) == '@') {
+        return 'mailto:' + str.substring(1);
     }
     return str;
 }
@@ -304,9 +319,9 @@ export function convertShortchutForLink(str) {
 export function readableEmail(selector) {
     document.querySelectorAll(selector).forEach(function (item) {
         var mail = rot13ToText(item.textContent);
-        item.classList.remove("hidden");
-        item.innerHTML = '<a href="mailto:' + mail + '">' + mail + "</a>";
-        if (selector.charAt(0) == ".") {
+        item.classList.remove('hidden');
+        item.innerHTML = '<a href="mailto:' + mail + '">' + mail + '</a>';
+        if (selector.charAt(0) == '.') {
             item.classList.remove(selector.substring(1));
         }
     });
@@ -319,15 +334,17 @@ export function readableEmail(selector) {
  */
 export function rot13ToText(str) {
     return str.replace(/[a-zA-Z]/g, function (c) {
-        return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
+        return String.fromCharCode(
+            (c <= 'Z' ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26
+        );
     });
 }
 
 export function testWebPSupport() {
-    var elem = document.createElement("canvas");
+    var elem = document.createElement('canvas');
 
-    if (elem.getContext && elem.getContext("2d")) {
-        return elem.toDataURL("image/webp").indexOf("data:image/webp") == 0;
+    if (elem.getContext && elem.getContext('2d')) {
+        return elem.toDataURL('image/webp').indexOf('data:image/webp') == 0;
     }
 
     return false;
@@ -338,10 +355,10 @@ export function testWebPSupport() {
  */
 export function convertImageLinkToWebPLink() {
     var switchToWebP = function () {
-        [].forEach.call(document.querySelectorAll("a[dwl]"), function (element) {
-            var href = responsiveImage(element.getAttribute("dwl"));
-            element.setAttribute("href", href);
-            element.removeAttribute("dwl");
+        [].forEach.call(document.querySelectorAll('a[dwl]'), function (element) {
+            var href = responsiveImage(element.getAttribute('dwl'));
+            element.setAttribute('href', href);
+            element.removeAttribute('dwl');
         });
     };
 
@@ -364,18 +381,21 @@ export function convertImageLinkToWebPLink() {
  *
  * still used in piedvert. To remove ?!
  */
-export function imgLazyLoad(attribute = "data-img") {
-    [].forEach.call(document.querySelectorAll("[" + attribute + "]"), function (img) {
-        var newDomImg = document.createElement("img");
+export function imgLazyLoad(attribute = 'data-img') {
+    [].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (img) {
+        var newDomImg = document.createElement('img');
         var src = img.getAttribute(attribute);
         img.removeAttribute(attribute);
         for (var i = 0, n = img.attributes.length; i < n; i++) {
             newDomImg.setAttribute(img.attributes[i].nodeName, img.attributes[i].nodeValue);
         }
-        if (newDomImg.getAttribute("alt") === null && img.textContent != "") {
-            newDomImg.setAttribute("alt", img.textContent);
+        if (newDomImg.getAttribute('alt') === null && img.textContent != '') {
+            newDomImg.setAttribute('alt', img.textContent);
         }
-        newDomImg.setAttribute("src", typeof responsiveImage === "function" ? responsiveImage(src) : src);
+        newDomImg.setAttribute(
+            'src',
+            typeof responsiveImage === 'function' ? responsiveImage(src) : src
+        );
         img.outerHTML = newDomImg.outerHTML;
     });
 }
