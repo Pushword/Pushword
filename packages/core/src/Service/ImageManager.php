@@ -191,7 +191,11 @@ final class ImageManager
     {
         $path = $media instanceof MediaInterface ? $media->getPath() : $media;
 
-        return (new InteventionImageManager())->make($path); // default driver GD
+        try {
+            return (new InteventionImageManager())->make($path); // default driver GD
+        } catch (Exception) {
+            throw new Exception($media->getId().': '.$path);
+        }
     }
 
     public function remove(MediaInterface|string $media): void
