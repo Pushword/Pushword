@@ -1,5 +1,3 @@
-
-
 {#
     @var string gallery_container_class
     @var string gallery_class
@@ -17,11 +15,12 @@
                 {% for name, image in images %}
 
                     {{ gallery_li_opener|default('<li>')|raw }}
+                        {% set current_media = media_from_string(image, name) %}
                         {{ _self.gallery_part(
-                            media_from_string(image, name),
+                            current_media,
                             gallery_id, page ?? null,
-                            image_filter ?? 'thumb',
-                            image_container ?? null,
+                            image_filter|default('thumb'),
+                            image_container ?? '',
                             image_otherAttributes ?? {}
                         ) }}
                     </li>
@@ -33,7 +32,11 @@
 
 {% macro gallery_part(image, gallery_id, page = null, default_filter = 'xs', image_container = null, image_otherAttributes = {}) %}
     {% import view('/component/image_helper.html.twig') as helper %}
-    {% set image_html = helper.thumb(image, page, default_filter, image_otherAttributes) %}
+    {% import view('/component/image_inline.html.twig') as image_inline %}
+    {% set image_html = default_filter == 'thumb'
+            ? helper.thumb(image, page, default_filter, image_otherAttributes)
+            : image_inline.renderImage(image, image_otherAttributes.class|default(null))
+    %}
     {% if image_container is same as('') %}{% else %}<div class="{{ image_container|default('mx-auto max-w-[330px]') }}">{% endif %}
     {{ link(image_html,
         image|image('default'),
