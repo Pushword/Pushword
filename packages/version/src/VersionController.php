@@ -46,6 +46,7 @@ class VersionController extends AbstractController
 
     /**
      * @required
+     *
      * @psalm-suppress PossiblyInvalidArgument
      * @psalm-suppress InvalidPropertyAssignmentValue
      */

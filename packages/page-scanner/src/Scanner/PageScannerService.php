@@ -47,6 +47,7 @@ final class PageScannerService
 
     /**
      * @return mixed[]|true
+     *
      * @noRector
      */
     public function scan(PageInterface $page)

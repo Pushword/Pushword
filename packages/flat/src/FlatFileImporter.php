@@ -84,6 +84,7 @@ class FlatFileImporter
 
     /**
      * @return AbstractImporter<T>
+     *
      * @psalm-suppress InvalidReturnStatement
      * @psalm-suppress InvalidReturnType
      */

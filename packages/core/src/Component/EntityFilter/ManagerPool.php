@@ -10,6 +10,7 @@ use Twig\Environment as Twig;
 
 /**
  * @template T of object
+ *
  * @implements ManagerPoolInterface<T>
  */
 final class ManagerPool implements ManagerPoolInterface
@@ -28,6 +29,7 @@ final class ManagerPool implements ManagerPoolInterface
 
     /**
      * @return Manager<T>
+     *
      * @psalm-suppress InvalidArgument
      */
     public function getManager(IdInterface $id): Manager

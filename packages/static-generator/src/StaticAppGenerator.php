@@ -57,6 +57,7 @@ final class StaticAppGenerator
     /**
      * @throws \RuntimeException
      * @throws \LogicException
+     *
      * @psalm-suppress  UndefinedPropertyAssignment
      */
     private function generateHost(string $host): void

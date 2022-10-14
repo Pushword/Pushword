@@ -92,6 +92,7 @@ final class ImageManager
 
         /**
          * @psalm-suppress RedundantCondition
+         *
          * @psam-suppress TypeDoesNotContainNull
          */
         $quality = (int) (! isset($filters[$filterName]['quality']) ? 90 : $filters[$filterName]['quality']); // @phpstan-ignore-line

@@ -55,7 +55,7 @@ services:
       - [setPageClass, ["%pw.entity_page%"]]
       - [setMediaClass, ["%pw.entity_media%"]]
     tags:
-      - { name: sonata.admin, manager_type: orm, label: admin.label.media }
+      - { name: sonata.admin, manager_type: orm, label: admin.label.media, persist_filters: true }
 
   Pushword\Admin\UserAdminInterface:
     alias: pushword.admin.user

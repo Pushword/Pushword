@@ -11,7 +11,9 @@ class Repository
 {
     /**
      * @param class-string<PageInterface> $pageEntity
+     *
      * @template T as PageInterface
+     *
      * @psalm-suppress InvalidReturnStatement
      * @psalm-suppress InvalidReturnType
      */
@@ -22,6 +24,7 @@ class Repository
 
     /**
      * @param class-string<MediaInterface> $mediaEntity
+     *
      * @psalm-suppress InvalidReturnStatement
      * @psalm-suppress InvalidReturnType
      */

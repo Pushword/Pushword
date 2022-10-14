@@ -16,7 +16,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.8.1",
         "intervention/image": "^2.5",
-        "michelf/php-markdown": "^1.9",
+        "michelf/php-markdown": "^2",
         "pagerfanta/twig": "^3.0",
         "piedweb/render-html-attributes": "^2.0.1",
         "piedweb/url-harvester": "^0.0.31",

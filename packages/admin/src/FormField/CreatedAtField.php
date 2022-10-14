@@ -8,6 +8,7 @@ use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
 /**
  * @template T of object
+ *
  * @extends AbstractField<T>
  */
 class CreatedAtField extends AbstractField

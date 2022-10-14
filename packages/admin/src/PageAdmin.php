@@ -180,6 +180,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
     /**
      * @param PageInterface $object
+     *
      * @psalm-suppress MoreSpecificImplementedParamType
      */
     public function getObjectMetadata(object $object): Metadata

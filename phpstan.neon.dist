@@ -1,6 +1,7 @@
 parameters:
     level: max
     paths:
+        - rector.php
         - packages/core/src
         - packages/conversation/src
         - packages/admin/src

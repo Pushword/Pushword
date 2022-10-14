@@ -47,6 +47,7 @@ trait UserTrait
 
     /**
      * @var string The hashed password
+     *
      * @ORM\Column(type="string", nullable=true)
      */
     private ?string $password = null;

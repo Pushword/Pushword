@@ -14,6 +14,7 @@ use Twig\Environment as Twig;
 
 /**
  * @template T of object
+ *
  * @extends AdminAdminInterface<T>
  */
 interface AdminInterface extends AdminAdminInterface

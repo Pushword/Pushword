@@ -202,6 +202,7 @@ final class PageController extends AbstractController
     /**
      * @psalm-suppress NullableReturnStatement
      * @psalm-suppress InvalidNullableReturnType
+     *
      * @noRector
      */
     private function getPageElse404(Request $request, ?string &$slug, string $host, bool $extractPager = false): PageInterface

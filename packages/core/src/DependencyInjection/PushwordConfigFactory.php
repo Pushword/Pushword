@@ -169,6 +169,7 @@ final class PushwordConfigFactory
 
     /**
      * @param array<mixed>|bool|string|int|float|null $value The parameter value
+     *
      * @noRector
      */
     private function setParameter(string $key, $value): void

@@ -10,6 +10,7 @@ use Pushword\Core\Entity\MediaInterface;
 
 /**
  * @extends ServiceEntityRepository<MediaInterface>
+ *
  * @implements Selectable<int, MediaInterface>
  * @implements ObjectRepository<MediaInterface>
  */

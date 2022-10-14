@@ -9,6 +9,7 @@ use Pushword\Core\Entity\UserInterface;
 
 /**
  * @extends ServiceEntityRepository<UserInterface>
+ *
  * @implements ObjectRepository<UserInterface>
  * @implements Selectable<int, UserInterface>
  */
