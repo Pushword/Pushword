@@ -25,14 +25,14 @@ final class PageBlockController extends AbstractController
     {
     }
 
-    public function manage(Request $request, int|string $id = ''): Response
+    public function manage(Request $request, int $id = 0): Response
     {
         $content = $request->toArray();
 
         $request->attributes->set('_route', 'pushword_page'); // 'custom_host_pushword_page'
         // TODO: sanitize
 
-        if ('' !== $id) {
+        if (0 !== $id) {
             $currentPage = Repository::getPageRepository($this->em, $this->pageClass)->findOneBy(['id' => $id]);
             if (null === $currentPage) {
                 throw new Exception('Page not found');

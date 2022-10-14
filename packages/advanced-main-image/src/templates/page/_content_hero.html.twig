@@ -35,7 +35,7 @@
                     {%
                         include view('/component/image_inline.html.twig') with {
                             'image_src': bg.1,
-                            'image_alt': bg.0~' '~page.mainImage.name(page.locale, true)|default(page.getTitle(true))|striptags,
+                            'image_alt': bg.0~' '~(page.mainImage.name(page.locale, true)|default(page.getTitle(true)))|striptags,
                             'image_link': false,
                             'image_attr': {
                                 style: 'display:none',
