@@ -7,6 +7,8 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   Switch image block to use media.id moroever image.uri
+    -   event listener on load to update json
 -   Rectorize with all List
 -   Scan : ajouter un check des liens vides `"></a`
 -   AdminBlockEditor : new list item, évitez d'ajouter le lien d'avant sans ancre...

@@ -194,7 +194,7 @@ final class ImageManager
         try {
             return (new InteventionImageManager())->make($path); // default driver GD
         } catch (Exception) {
-            throw new Exception($media->getId().': '.$path);
+            throw new Exception($path);
         }
     }
 
