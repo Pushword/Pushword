@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Psr\Container\ContainerInterface;
 use Pushword\Core\Entity\PageInterface;
@@ -18,6 +19,12 @@ use Symfony\Component\HttpFoundation\Response;
 class PageCRUDController extends SonataCRUDController implements PageCRUDControllerInterface
 {
     protected ParameterBagInterface $params;
+
+    /**
+     * @required
+     * https://github.com/symfony/symfony/blob/5.4/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php
+     */
+    public EntityManagerInterface $entityManager;
 
     /**
      * @required
@@ -54,7 +61,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
 
     public function treeAction(): Response
     {
-        $pages = Repository::getPageRepository($this->getDoctrine(), $this->params->get('pw.entity_page')) // @phpstan-ignore-line
+        $pages = Repository::getPageRepository($this->entityManager, $this->params->get('pw.entity_page')) // @phpstan-ignore-line
         // $pages = $this->getDoctrine()->getRepository(PageInterface::class)
             ->getPagesWithoutParent();
 

@@ -76,6 +76,7 @@ final class PushwordConfigFactory
             throw new LogicException('You must register Pushword/CoreBundle in first (`pw.apps` is not loaded in ParameterBag.');
         }
 
+        /** @var array<string, array<mixed>> */
         $apps = $this->container->getParameter('pw.apps');
 
         foreach ($apps as $host => $app) {
