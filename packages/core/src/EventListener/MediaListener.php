@@ -60,7 +60,6 @@ final class MediaListener
      */
     public function onVichUploaderPreUpload(Event $event): void
     {
-        /** @var MediaInterface $media */
         $media = $this->getMediaFromEvent($event);
         $media->resetHash();
         $media->setHash();
