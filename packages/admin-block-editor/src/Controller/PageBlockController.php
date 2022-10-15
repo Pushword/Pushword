@@ -25,8 +25,9 @@ final class PageBlockController extends AbstractController
     {
     }
 
-    public function manage(Request $request, int $id = 0): Response
+    public function manage(Request $request, string $id = '0'): Response
     {
+        $id = \intval($id);
         $content = $request->toArray();
 
         $request->attributes->set('_route', 'pushword_page'); // 'custom_host_pushword_page'

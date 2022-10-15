@@ -1,7 +1,7 @@
 {% if (block.data.display == 'card') %}
 {# show preview for a 1024px screen max (else client screen width) #}
 <div style="text-align: center; max-width:100%;overflow-x:auto; overflow-y:hidden">
-<iframe seamless height="auto" style="width:100vw;max-width:1024px; border: none;transform-origin: 0 0;"
+<iframe seamless height="auto" style="width:100vw;max-width:1200px; border: none;transform-origin: 0 0;"
     onload="
         var ratio = (screen.width > 1024 ? 1024 / screen.width : 1);
         this.height = this.contentWindow.document.documentElement.scrollHeight + 'px';

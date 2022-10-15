@@ -8,6 +8,6 @@ admin_page_block:
   controller: Pushword\AdminBlockEditor\Controller\PageBlockController::manage
   methods: POST
   defaults:
-    id: 0
+    id: '0'
   requirements:
     id: "[0-9]*"

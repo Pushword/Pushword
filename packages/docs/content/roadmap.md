@@ -7,6 +7,8 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   Create a preprod env to inject /domain.tld/ in uri
+
 -   Switch image block to use media.id moroever image.uri
     -   event listener on load to update json
 -   Rectorize with all List
