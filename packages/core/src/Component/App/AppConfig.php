@@ -35,8 +35,11 @@ final class AppConfig
     private Twig $twig;
 
     /** @param array<string, mixed> $properties */
-    public function __construct(private ParameterBagInterface $params, array $properties, private bool $isFirstApp = false)
-    {
+    public function __construct(
+        private ParameterBagInterface $params,
+        array $properties,
+        private bool $isFirstApp = false
+    ) {
         foreach ($properties as $prop => $value) {
             $this->setCustomProperty($prop, $value);
 

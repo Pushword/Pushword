@@ -43,8 +43,14 @@ class AppExtension extends AbstractExtension
     /**
      * @param ManagerPoolInterface<T> $entityFilterManagerPool
      */
-    public function __construct(private EntityManagerInterface $em, private RouterInterface $router, private AppPool $apps, private Twig $twig, private ImageManager $imageManager, private ManagerPoolInterface $entityFilterManagerPool)
-    {
+    public function __construct(
+        private EntityManagerInterface $em,
+        private RouterInterface $router,
+        private AppPool $apps,
+        private Twig $twig,
+        private ImageManager $imageManager,
+        private ManagerPoolInterface $entityFilterManagerPool
+    ) {
     }
 
     public function getApp(): AppConfig

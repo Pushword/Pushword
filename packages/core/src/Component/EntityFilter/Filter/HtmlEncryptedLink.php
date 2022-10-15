@@ -19,9 +19,7 @@ final class HtmlEncryptedLink extends EncryptedLink
      */
     public const HTML_REGEX = '/(<a\s+(?:[^>]*\s{0,1})((?<=href=)((?P<hrefQuote>\'|")(?P<href1>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href2>[^"\'>][^> \r\n\t\f\v]*))\s+(?:[^>]*\s{0,1})(?<=rel=)((?P<relQuote>\'|")encrypt(?P=relQuote)|encrypt)|(?<=rel=)((?P<relQuote>\'|")encrypt(?P=relQuote)|encrypt)\s+(?:[^>]*\s{0,1})(?<=href=)((?P<hrefQuote>\'|")(?P<href3>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href4>[^"\'>][^> \r\n\t\f\v]*)))(?:[^>]*)?>(?P<anchor>((?!<\/a>).)*)<\/a>)/iJ';
 
-    /**
-     * @var string
-     */
+    /** @var string */
     public const HTML_REGEX_HREF_KEY = 'href';
 
     /**

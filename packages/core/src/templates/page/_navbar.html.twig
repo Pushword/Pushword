@@ -27,7 +27,7 @@
     {{ (navbar_container is defined ? ('<div class="'~navbar_container|default('') ~'">') : '')|raw }}
 
         {% block logo %}
-            <a class="{{ logo.class|default('block mr-1 font-mono text-4xl font-bold text-primary hover:opacity-75') }}" href="{{ logo.href|default(homepage()) }}"{% if logo.style is defined %} style="{{ logo.style }}"{% endif %}>{{ logo.alt|default(app_name)|raw }}</a>
+            <a class="{{ logo.class|default('block mr-1 font-mono text-4xl font-bold text-primary hover:opacity-75') }}" href="{{ logo.href|default(page('homepage')) }}"{% if logo.style is defined %} style="{{ logo.style }}"{% endif %}>{{ logo.alt|default(app_name)|raw }}</a>
         {% endblock %}
 
 

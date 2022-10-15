@@ -2,9 +2,11 @@
 
 namespace Pushword\Core\Component\EntityFilter;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
+use Pushword\Core\Router\RouterInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment as Twig;
 
@@ -23,6 +25,12 @@ final class ManagerPool implements ManagerPoolInterface
 
     /** @required */
     public EventDispatcherInterface $eventDispatcher;
+
+    /** @required */
+    public RouterInterface $router;
+
+    /** @required */
+    public EntityManagerInterface $entityManager;
 
     /** @var array<(string|int), Manager<T>> */
     private array $entityFilterManagers = [];

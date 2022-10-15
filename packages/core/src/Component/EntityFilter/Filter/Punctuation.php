@@ -8,6 +8,10 @@ class Punctuation extends AbstractFilter
 {
     public function apply($propertyValue): string
     {
-        return HtmlBeautifer::punctuationBeautifer(\strval($propertyValue));
+        $propertyValue = \strval($propertyValue);
+        $propetyValue = str_replace(' .', '.', $propertyValue);
+        $propetyValue = str_replace(' ,', ',', $propertyValue);
+
+        return HtmlBeautifer::punctuationBeautifer($propertyValue);
     }
 }

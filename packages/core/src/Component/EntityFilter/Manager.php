@@ -2,11 +2,13 @@
 
 namespace Pushword\Core\Component\EntityFilter;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
+use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Utils\F;
 use ReflectionClass;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -23,6 +25,10 @@ final class Manager
 
     private Twig $twig;
 
+    private RouterInterface $router;
+
+    private EntityManagerInterface $entityManager;
+
     /** @param T $entity
      * @param ManagerPool<T> $managerPool
      */
@@ -33,6 +39,8 @@ final class Manager
     ) {
         $this->apps = $managerPool->apps;
         $this->twig = $managerPool->twig;
+        $this->router = $managerPool->router;
+        $this->entityManager = $managerPool->entityManager;
         $this->app = method_exists($entity, 'getHost') ? $this->apps->get($entity->getHost()) : $this->apps->get();
     }
 
@@ -139,25 +147,21 @@ final class Manager
 
         $filterClass = new $filterClassName();
 
-        // Some kind of autoload ... move it to real autoload
-        if (method_exists($filterClass, 'setEntity')) {
-            $filterClass->setEntity($this->entity);
-        }
+        $toCheck = [
+            'setEntity' => 'entity',
+            'setApp' => 'app',
+            'setApps' => 'apps',
+            'setTwig' => 'twig',
+            'setManager' => '',
+            'setManagerPool' => 'managerPool',
+            'setRouter' => 'router',
+            'setEntityManager' => 'entityManager',
+        ];
 
-        if (method_exists($filterClass, 'setApp')) {
-            $filterClass->setApp($this->app);
-        }
-
-        if (method_exists($filterClass, 'setTwig')) {
-            $filterClass->setTwig($this->twig);
-        }
-
-        if (method_exists($filterClass, 'setManager')) {
-            $filterClass->setManager($this);
-        }
-
-        if (method_exists($filterClass, 'setManagerPool')) {
-            $filterClass->setManagerPool($this->managerPool);
+        foreach ($toCheck as $method => $property) {
+            if (method_exists($filterClass, $method)) {
+                $filterClass->$method('' === $property ? $this : $this->$property); // @phpstan-ignore-line
+            }
         }
 
         return $filterClass; // @phpstan-ignore-line

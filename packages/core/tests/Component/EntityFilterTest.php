@@ -57,6 +57,8 @@ class EntityFilterTest extends KernelTestCase
         $pool->apps = self::$kernel->getContainer()->get('pushword.apps');
         $pool->twig = self::$kernel->getContainer()->get('test.service_container')->get('twig');
         $pool->eventDispatcher = self::$kernel->getContainer()->get('event_dispatcher');
+        $pool->entityManager = self::$kernel->getContainer()->get('doctrine.orm.entity_manager');
+        $pool->router = self::$kernel->getContainer()->get('pushword.router');
 
         return $pool;
     }
