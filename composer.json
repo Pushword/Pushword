@@ -60,7 +60,7 @@
         "symfony/validator": "^5.4 || ^6.0",
         "symfony/web-link": "^5.4 || ^6.0",
         "symfony/webpack-encore-bundle": "^1.8",
-        "symfony/http-client": "6.1.6",
+        "symfony/http-client": "^5.4 || 6.1.6",
         "symfony/yaml": "^5.4 || ^6.0",
         "thecodingmachine/safe": "^2.2",
         "twig/intl-extra": "^3.2",
