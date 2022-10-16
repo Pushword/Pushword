@@ -22,7 +22,7 @@ class Image extends AbstractFilter
     {
         \Safe\preg_match_all('/(?:!\[(.*?)\]\((.*?)\))/', $body, $matches);
 
-        if (! isset($matches[1])) {
+        if (! isset($matches[1]) || ! isset($matches[0])) {
             return $body;
         }
 
