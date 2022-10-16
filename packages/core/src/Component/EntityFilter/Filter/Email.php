@@ -26,7 +26,7 @@ class Email extends AbstractFilter
         $nbrMatch = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($k = 0; $k < $nbrMatch; ++$k) {
             $body = str_replace(
-                $matches[0][$k],
+                $matches[0][$k], // @psalm-suppress PossiblyUndefinedMethod
                 ' '.trim($this->renderEncodedMail($matches[1][$k])).$matches[2][$k],
                 $body
             );
