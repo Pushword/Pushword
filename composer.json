@@ -18,7 +18,6 @@
         "babdev/pagerfanta-bundle": "^3.6",
         "caseyamcl/toc": "^3.0",
         "cocur/slugify": "^3.0|^4.0",
-        "doctrine/annotations": "^1.11",
         "doctrine/doctrine-bundle": "^2.2.2",
         "doctrine/doctrine-fixtures-bundle": "^3.4",
         "doctrine/doctrine-migrations-bundle": "^3.0",
@@ -140,7 +139,7 @@
         "assets": "./.scripts/generate-assets",
         "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish",
         "docs": "./.scripts/generate-docs",
-        "rector": "vendor/bin/rector process --dry-run",
+        "rector": "vendor/bin/rector process && composer format && composer test",
         "reset-skeleton": "./.scripts/reset-skeleton"
     },
     "config": {

@@ -10,7 +10,6 @@
         "caseyamcl/toc": "^3.0",
         "cocur/slugify": "^3.0|^4.0",
         "babdev/pagerfanta-bundle": "^3.6",
-        "doctrine/annotations": "^1.11",
         "doctrine/doctrine-bundle": "^2.2.2",
         "doctrine/doctrine-fixtures-bundle": "^3.4",
         "doctrine/doctrine-migrations-bundle": "^3.0",
