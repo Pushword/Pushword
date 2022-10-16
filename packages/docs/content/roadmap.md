@@ -7,6 +7,8 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   Yaml editor in Autres paramêtres
+
 -   Switch image block to use media.id moroever image.uri
     -   event listener on load to update json
 -   Rectorize with all List

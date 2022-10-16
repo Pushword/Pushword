@@ -25,12 +25,14 @@ final class BlockEditorFilter extends AbstractFilter
 
     /**
      * @return mixed|string
+     *
+     * @noRector
      */
     public function apply($propertyValue)
     {
         if (
             ! \is_string($propertyValue)
-            || ! \is_object($json = json_decode($propertyValue, null, 512, \JSON_THROW_ON_ERROR))
+            || ! \is_object($json = json_decode($propertyValue))
             || ! property_exists($json, 'blocks')
         ) {
             return $propertyValue;
