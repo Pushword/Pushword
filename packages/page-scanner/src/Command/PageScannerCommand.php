@@ -7,6 +7,7 @@ use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\PageScanner\Controller\PageScannerController;
 use Pushword\PageScanner\Scanner\PageScannerService;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,13 +16,9 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\FlockStore;
 
+#[AsCommand(name: 'pushword:page-scanner:scan')]
 class PageScannerCommand extends Command
 {
-    /**
-     * @var string|null
-     */
-    protected static $defaultName = 'pushword:page-scanner:scan';
-
     /**
      * @param class-string<PageInterface> $pageClass
      */

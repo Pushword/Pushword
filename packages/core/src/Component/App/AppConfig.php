@@ -255,6 +255,14 @@ final class AppConfig
     }
 
     /**
+     * @return string[]|string
+     */
+    public function getHostForDoctrineSearch(): array|string
+    {
+        return $this->isFirstApp ? ['', $this->getMainHost()] : $this->getMainHost();
+    }
+
+    /**
      * Get the value of locale.
      */
     public function getLocale(): string

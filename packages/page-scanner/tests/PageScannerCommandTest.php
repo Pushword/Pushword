@@ -8,7 +8,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class PageScannerCommandTest extends KernelTestCase
 {
-    public function testExecute()
+    public function testPageScannerCommand()
     {
         $kernel = static::createKernel();
         $application = new Application($kernel);

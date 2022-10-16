@@ -148,6 +148,12 @@ final class LinkedDocsScanner extends AbstractScanner
     {
         // internal
         $uri = $this->removeBase($url);
+        if (! isset($uri[0])) {
+            $this->addError('<code>'.$url.'</code> empty link');
+
+            return;
+        }
+
         if ('/' == $uri[0]) {
             if (! $this->uriExist($this->removeParameters($uri))) {
                 $this->addError('<code>'.$url.'</code> '.$this->trans('page_scan.not_found'));

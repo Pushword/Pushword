@@ -14,6 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Translation\DataCollectorTranslator;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -31,6 +32,7 @@ final class PageController extends AbstractController
     private TranslatorInterface $translator;
 
     public function __construct(
+        RequestStack $requestStack,
         private ParameterBagInterface $params,
         private EntityManagerInterface $em,
         private AppPool $apps,
@@ -39,15 +41,36 @@ final class PageController extends AbstractController
         if (! $translator instanceof DataCollectorTranslator && ! $translator instanceof Translator) {
             throw new LogicException('A symfony codebase changed make this hack impossible (cf setLocale). Get `'.$translator::class.'`');
         }
-
+        $this->initHost($requestStack);
         $this->translator = $translator;
     }
 
-    public function show(Request $request, ?string $slug, string $host = ''): Response
+    private function initHost(RequestStack $requestStack): void
     {
-        $page = $this->getPageElse404($request, $slug, $host, true);
+        $currentRequest = $requestStack->getCurrentRequest();
+        if (null === $currentRequest) {
+            return;
+        }
+
+        $host = $currentRequest->attributes->get('host', '');
+        if ('' !== $host) {
+            $this->apps->switchCurrentApp($host);
+
+            return;
+        }
+
+        $host = $this->apps->findHost($currentRequest->getHost());
+        if ('' !== $host) {
+            $this->apps->switchCurrentApp($host);
+        }
+    }
+
+    public function show(Request $request, ?string $slug): Response
+    {
+        $page = $this->getPageElse404($request, $slug, true);
 
         // SEO redirection if we are not on the good URI (for exemple /fr/tagada instead of /tagada)
+        $host = $request->query->get('host');
         if (
             ('' !== $host && $host === $request->getHost()) // avoid redir when using custom_host route
             && false !== $redirect = $this->checkIfUriIsCanonical($request, $page)) {
@@ -66,7 +89,7 @@ final class PageController extends AbstractController
 
     public function showPage(PageInterface $page): Response
     {
-        $params = array_merge(['page' => $page], $this->app->getParamsForRendering());
+        $params = array_merge(['page' => $page], $this->apps->getApp()->getParamsForRendering());
 
         $view = $this->getView(null !== $page->getTemplate() ? $page->getTemplate() : '/page/page.html.twig');
 
@@ -82,16 +105,16 @@ final class PageController extends AbstractController
 
     private function getView(string $path): string
     {
-        return $this->app->getView($path);
+        return $this->apps->getApp()->getView($path);
     }
 
-    public function showFeed(Request $request, string $slug = '', string $host = ''): Response
+    public function showFeed(Request $request, string $slug = ''): Response
     {
         if ('homepage' == $slug) {
             return $this->redirect($this->generateUrl('pushword_page_feed', ['slug' => 'index']), 301);
         }
 
-        $page = $this->getPageElse404($request, $slug, $host);
+        $page = $this->getPageElse404($request, $slug);
 
         $response = new Response();
         $response->headers->set('Content-Type', 'text/xml');
@@ -104,7 +127,7 @@ final class PageController extends AbstractController
 
         return $this->render(
             $this->getView('/page/rss.xml.twig'),
-            array_merge(['page' => $page], $this->app->getParamsForRendering()),
+            array_merge(['page' => $page], $this->apps->getApp()->getParamsForRendering()),
             $response
         );
     }
@@ -112,13 +135,12 @@ final class PageController extends AbstractController
     /**
      * Show Last created page in an XML Feed.
      */
-    public function showMainFeed(Request $request, string $host = ''): Response
+    public function showMainFeed(Request $request): Response
     {
-        $this->setApp($host);
-        $locale = '' !== $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->app->getDefaultLocale();
-        $LocaleHomepage = $this->getPage($request, $locale, $host, false);
+        $locale = '' !== $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->apps->getApp()->getDefaultLocale();
+        $LocaleHomepage = $this->getPage($request, $locale, false);
         $slug = 'homepage';
-        $page = null !== $LocaleHomepage ? $LocaleHomepage : $this->getPage($request, $slug, $host);
+        $page = null !== $LocaleHomepage ? $LocaleHomepage : $this->getPage($request, $slug);
         if (null === $page) {
             throw $this->createNotFoundException('The page `'.$slug.'` was not found');
         }
@@ -133,13 +155,12 @@ final class PageController extends AbstractController
 
         return $this->render(
             $this->getView('/page/rss.xml.twig'),
-            array_merge($params, $this->app->getParamsForRendering())
+            array_merge($params, $this->apps->getApp()->getParamsForRendering())
         );
     }
 
-    public function showSitemap(Request $request, string $_format, string $host = ''): Response
+    public function showSitemap(Request $request, string $_format): Response
     {
-        $this->setApp($host);
         $pages = $this->getPages($request, null);
 
         if (! \is_array($pages) || ! isset($pages[0])) {
@@ -150,22 +171,20 @@ final class PageController extends AbstractController
             $this->getView('/page/sitemap.'.$_format.'.twig'),
             [
                 'pages' => $pages,
-                'app_base_url' => $this->app->getBaseUrl(),
+                'app_base_url' => $this->apps->getApp()->getBaseUrl(),
             ]
         );
     }
 
-    public function showRobotsTxt(string $host = ''): Response
+    public function showRobotsTxt(): Response
     {
-        $this->setApp($host);
-
         $response = new Response();
         $response->headers->set('Content-Type', 'text/plain');
 
         return $this->render(
             $this->getView('/page/robots.txt.twig'),
             [
-                'app_base_url' => $this->app->getBaseUrl(),
+                'app_base_url' => $this->apps->getApp()->getBaseUrl(),
             ],
             $response
         );
@@ -194,26 +213,20 @@ final class PageController extends AbstractController
         return Repository::getPageRepository($this->em, $this->params->get('pw.entity_page')); // @phpstan-ignore-line
     }
 
-    public function setApp(PageInterface|string $host): void
-    {
-        $this->app = $this->apps->switchCurrentApp($host)->get();
-    }
-
     /**
      * @psalm-suppress NullableReturnStatement
      * @psalm-suppress InvalidNullableReturnType
      *
      * @noRector
      */
-    private function getPageElse404(Request $request, ?string &$slug, string $host, bool $extractPager = false): PageInterface
+    private function getPageElse404(Request $request, ?string &$slug, bool $extractPager = false): PageInterface
     {
-        return $this->getPage($request, $slug, $host, true, $extractPager); // @phpstan-ignore-line
+        return $this->getPage($request, $slug, true, $extractPager); // @phpstan-ignore-line
     }
 
     private function extractPager(
         Request $request,
         string &$slug,
-        string $host,
         bool $throwException
     ): ?PageInterface {
         if (1 !== \Safe\preg_match('#(/([1-9][0-9]*)|^([1-9][0-9]*))$#', $slug, $match)) {
@@ -224,22 +237,21 @@ final class PageController extends AbstractController
         $request->attributes->set('pager', (int) $match[2] >= 1 ? $match[2] : $match[3]);
         $request->attributes->set('slug', $unpaginatedSlug);
 
-        return $this->getPage($request, $unpaginatedSlug, $host, $throwException);
+        return $this->getPage($request, $unpaginatedSlug, $throwException);
     }
 
     /** @psalm-suppress UndefinedInterfaceMethod */
     private function getPage(
         Request $request,
         ?string &$slug,
-        string $host,
         bool $throwException = true,
         bool $extractPager = false
     ): ?PageInterface {
         $slug = $this->noramlizeSlug($slug);
-        $page = $this->getPageRepository()->getPage($slug, '' !== $host ? $host : [(string) $this->apps->getMainHost(), ''], true);
+        $page = $this->getPageRepository()->getPage($slug, $this->apps->get()->getHostForDoctrineSearch(), true);
 
         if (! $page instanceof PageInterface && $extractPager) {
-            $page = $this->extractPager($request, $slug, $host, $throwException);
+            $page = $this->extractPager($request, $slug, $throwException);
         }
 
         // Check if page exist
@@ -252,7 +264,7 @@ final class PageController extends AbstractController
         }
 
         if ('' === $page->getLocale()) { // avoid bc break
-            $page->setLocale($this->app->getDefaultLocale());
+            $page->setLocale($this->apps->getApp()->getDefaultLocale());
         }
 
         $this->translator->setLocale($page->getLocale());
@@ -266,7 +278,7 @@ final class PageController extends AbstractController
             }
         }
 
-        $this->setApp($page); // permit to load currentPage in Apps (used by Router)
+        $this->apps->setCurrentPage($page); // used by Router ???
 
         return $page;
     }
