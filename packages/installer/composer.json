@@ -5,7 +5,7 @@
     "homepage": "https://pushword.piedweb.com",
     "license": "MIT",
     "require": {
-        "symfony/filesystem": "^5.3"
+        "symfony/filesystem": "6.0.*"
     },
     "extra": {
         "branch-alias": {

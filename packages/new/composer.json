@@ -22,7 +22,7 @@
     "require-dev": {
         "symfony/profiler-pack": "*",
         "pushword/installer": "*",
-        "symfony/phpunit-bridge": "^5.3"
+        "symfony/filesystem": "6.0.*"
     },
     "config": {
         "optimize-autoloader": true,

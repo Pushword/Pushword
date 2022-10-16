@@ -11,7 +11,7 @@ echo "Installation running in folder $folder"
 rm -rf ${folder}
 
 # Install symfony
-composer create-project symfony/skeleton ${folder}  ^5.2 -q
+composer create-project symfony/skeleton ${folder}  ^6.0 -q
 cd ${folder}
 
 composer require pushword/installer -q
