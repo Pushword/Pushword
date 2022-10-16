@@ -36,7 +36,7 @@
         "symfony/process": "6.0.*",
         "symfony/security-bundle": "6.0.*",
         "symfony/security-csrf": "6.0.*",
-        "symfony/security-guard": "6.0.*",
+        "symfony/security-guard": "*",
         "symfony/translation": "6.0.*",
         "symfony/twig-bundle": "6.0.*",
         "symfony/validator": "6.0.*",
