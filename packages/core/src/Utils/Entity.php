@@ -27,7 +27,6 @@ class Entity
     {
         $reflectionClass = new \ReflectionClass($object::class);
         $properties = array_filter($reflectionClass->getProperties(), function (\ReflectionProperty $property) {
-            $attributes = $property->getAttributes();
             if (str_contains((string) $property->getDocComment(), '@ORM\Column')
                 || self::containAttribute($property->getAttributes(),  Column::class)) {
                 return true;

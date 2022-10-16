@@ -33,7 +33,7 @@ class Image extends AbstractFilter
                     'image_alt' => htmlspecialchars($matches[1][$k]),
                 ]
             ).'</div>';
-            $body = str_replace($matches[0][$k], $renderImg, $body);
+            $body = str_replace($matches[0][$k], $renderImg, $body); // @psalm-suppress PossiblyUndefinedMethod
         }
 
         return $body;
