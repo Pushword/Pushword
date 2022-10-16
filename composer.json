@@ -35,7 +35,7 @@
         "piedweb/render-html-attributes": "^2.0.1",
         "piedweb/curl": "^0.1",
         "piedweb/extractor": "^0.1.10",
-        "sensio/framework-extra-bundle": "^6",
+        "sensio/framework-extra-bundle": "^6.2",
         "sonata-project/admin-bundle": "^4.0",
         "sonata-project/doctrine-orm-admin-bundle": "^4.0",
         "spatie/image-optimizer": "^1.3",
