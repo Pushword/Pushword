@@ -15,6 +15,9 @@ class Image extends AbstractFilter
         return $this->convertMarkdownImage(\strval($propertyValue));
     }
 
+    /**
+     * @psalm-suppress PossiblyUndefinedMethod
+     */
     public function convertMarkdownImage(string $body): string
     {
         \Safe\preg_match_all('/(?:!\[(.*?)\]\((.*?)\))/', $body, $matches);
@@ -33,7 +36,7 @@ class Image extends AbstractFilter
                     'image_alt' => htmlspecialchars($matches[1][$k]),
                 ]
             ).'</div>';
-            $body = str_replace($matches[0][$k], $renderImg, $body); // @psalm-suppress PossiblyUndefinedMethod
+            $body = str_replace($matches[0][$k], $renderImg, $body);
         }
 
         return $body;

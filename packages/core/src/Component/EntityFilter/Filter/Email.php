@@ -17,6 +17,9 @@ class Email extends AbstractFilter
         return $this->convertEmail(\strval($propertyValue));
     }
 
+    /**
+     * @psalm-suppress PossiblyUndefinedMethod
+     */
     public function convertEmail(string $body): string
     {
         $rgx = '/ ([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})( |\.<\/|\. |$)/i';
@@ -26,7 +29,7 @@ class Email extends AbstractFilter
         $nbrMatch = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($k = 0; $k < $nbrMatch; ++$k) {
             $body = str_replace(
-                $matches[0][$k], // @psalm-suppress PossiblyUndefinedMethod
+                $matches[0][$k],
                 ' '.trim($this->renderEncodedMail($matches[1][$k])).$matches[2][$k],
                 $body
             );
