@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class LinkedDocsScannerTest extends KernelTestCase
 {
-    public function testIt()
+    public function testLinkedDocsScanner()
     {
         self::bootKernel();
         $linkedDocsScanner = new LinkedDocsScanner(
@@ -21,8 +21,8 @@ class LinkedDocsScannerTest extends KernelTestCase
         $errors = $linkedDocsScanner->scan($this->getPage(), file_get_contents(__DIR__.'/data/page.html'));
 
         $knowedErrors = [
-            "<code>https://localhost.dev/feed.xml</code> unreacheable - Couldn't resolve host name",
-            "<code>https://localhost.dev/</code> unreacheable - Couldn't resolve host name",
+            '<code>https://localhost.dev/feed.xml</code> unreacheable',
+            '<code>https://localhost.dev/</code> unreacheable',
             '<code>#install</code> target not found',
         ];
 

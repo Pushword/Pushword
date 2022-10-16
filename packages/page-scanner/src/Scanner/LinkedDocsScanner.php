@@ -3,8 +3,10 @@
 namespace Pushword\PageScanner\Scanner;
 
 use Doctrine\ORM\EntityManagerInterface;
-use PiedWeb\Curl\Request;
-use PiedWeb\UrlHarvester\Harvest;
+use PiedWeb\Curl\ExtendedClient;
+use PiedWeb\Curl\Helper;
+use PiedWeb\Extractor\CanonicalExtractor;
+use PiedWeb\Extractor\Url;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Twig\AppExtension;
 use Pushword\Core\Utils\F;
@@ -21,8 +23,6 @@ final class LinkedDocsScanner extends AbstractScanner
     private array $everChecked = [];
 
     private int $linksCheckedCounter = 0;
-
-    private ?Request $previousRequest = null;
 
     private ?DomCrawler $domPage = null;
 
@@ -203,33 +203,41 @@ final class LinkedDocsScanner extends AbstractScanner
      *
      * @return bool|mixed|string
      */
-    private function urlExist(string $uri)
+    private function urlExist(string $url)
     {
-        if (isset($this->urlExistCache[$uri])) {
-            return $this->urlExistCache[$uri];
+        if (isset($this->urlExistCache[$url])) {
+            return $this->urlExistCache[$url];
         }
 
-        $harvest = Harvest::fromUrl(
-            $uri,
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.107 Safari/537.36',
-            'en,en-US;q=0.5',
-            $this->previousRequest
-        );
+        $client = new ExtendedClient($url);
+        $client
+            ->setDefaultSpeedOptions()
+            ->fakeBrowserHeader()
+            ->setNoFollowRedirection()
+            ->setMaximumResponseSize()
+            ->setDownloadOnlyIf([Helper::class, 'checkStatusCode'])
+            ->setMobileUserAgent();
+        // if ($this->proxy) { $client->setProxy($this->proxy); }
+        $client->request();
 
-        if (\is_int($harvest)) {
-            $return = $this->trans('page_scan.unreachable', ['errorCode' => curl_strerror($harvest)]);
-        } elseif (200 !== $errorCode = $harvest->getResponse()->getStatusCode()) {
-            $return = $this->trans('page_scan.status_code').' ('.$errorCode.')';
-        } elseif (! $harvest->isCanonicalCorrect()) {
-            $return = $this->trans('page_scan.canonical').' ('.$harvest->getCanonical().')';
-        } else {
-            $this->previousRequest = $harvest->getResponse()->getRequest();
-            $return = true;
+        if (200 !== $client->getCurlInfo(\CURLINFO_HTTP_CODE) && 0 !== $client->getCurlInfo(\CURLINFO_HTTP_CODE)) {
+            return $this->urlExistCache[$url] = $this->trans('page_scan.status_code').' ('.$client->getCurlInfo(\CURLINFO_HTTP_CODE).')';
         }
 
-        $this->urlExistCache[$uri] = $return;
+        if ($client->getError() > 0) {
+            return $this->urlExistCache[$url] = $this->trans(
+                'page_scan.unreachable',
+                92832 === $client->getError() ? [' - errorMessage' => ''] : ['errorMessage' => $client->getErrorMessage()]
+            );
+        }
 
-        return $return;
+        $canonical = new CanonicalExtractor(new Url($url), new DomCrawler($client->getResponse()->getBody()));
+        if ($canonical->canonicalExists()
+            && (! $canonical->isCanonicalPartiallyCorrect() || ! $canonical->isCanonicalCorrect())) {
+            return $this->urlExistCache[$url] = $this->trans('page_scan.canonical').' ('.$canonical->get().')';
+        }
+
+        return $this->urlExistCache[$url] = true;
     }
 
     private function uriExist(string $uri): bool

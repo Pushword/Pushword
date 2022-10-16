@@ -2,6 +2,6 @@ page_scan:
   different_host: La page parente a un domaine différent
   encrypt_mail: pour prévenir le spam, vous pouvez encrypter ce lien.
   not_found: non trouvé
-  unreachable: inaccessible - errorCode
+  unreachable: inaccessible - errorMessage
   status_code: Code de réponse HTTP innatendu
   canonical: La canonical est différente
