@@ -71,7 +71,7 @@ final class PageListener
     public function setIdAsSlugIfNotDefined(PageInterface $page): void
     {
         if ('' === $page->getSlug()) {
-            $page->setSlug(substr(sha1(uniqid().rand()), 0, 8));
+            $page->setSlug(substr(sha1(uniqid().random_int(0, mt_getrandmax())), 0, 8));
         }
     }
 }

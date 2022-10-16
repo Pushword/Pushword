@@ -9,26 +9,19 @@ use Doctrine\ORM\Mapping as ORM;
 
 trait PageTrait
 {
-    /**
-     * @ORM\Column(type="string", length=150)
-     */
+    #[ORM\Column(type: 'string', length: 150)]
     protected string $slug = '';
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
+    #[ORM\Column(type: 'string', length: 255)]
     protected string $h1 = '';
 
     /**
      * RawContent would have been a more appropriate name.
-     *
-     * @ORM\Column(type="text")
      */
+    #[ORM\Column(type: 'text')]
     protected string $mainContent = '';
 
-    /**
-     * @ORM\Column(type="datetime", options={"default": "CURRENT_TIMESTAMP"})
-     */
+    #[ORM\Column(type: 'datetime', options: ['default' => 'CURRENT_TIMESTAMP'])]
     protected ?DateTimeInterface $publishedAt = null;
 
     public function __toString(): string

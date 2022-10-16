@@ -11,12 +11,12 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 /**
- * @ORM\MappedSuperclass
  * @Vich\Uploadable
- * @ORM\HasLifecycleCallbacks
  * #UniqueEntity({"media"}, message="Media name is ever taken by another media.")
  * #UniqueEntity({"name"}, message="Name is ever taken by another media..")
  */
+#[ORM\MappedSuperclass]
+#[ORM\HasLifecycleCallbacks]
 class Media implements MediaInterface
 {
     use CustomPropertiesTrait;
@@ -26,7 +26,7 @@ class Media implements MediaInterface
 
     public function __construct()
     {
-        $this->updatedAt = null !== $this->updatedAt ? $this->updatedAt : new \DateTime();
-        $this->createdAt = null !== $this->createdAt ? $this->createdAt : new \DateTime();
+        $this->updatedAt ??= new \DateTime();
+        $this->createdAt ??= new \DateTime();
     }
 }

@@ -4,7 +4,9 @@ namespace Pushword\Core\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Selectable;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\Persistence\ObjectRepository;
 use Exception;
 use LogicException;
 use Pushword\Core\Entity\MediaInterface;
@@ -17,8 +19,11 @@ use Pushword\Core\Entity\PageInterface;
  * @method PageInterface|null                        findOneBy(array $criteria, array $orderBy = null)
  * @method list<\Pushword\Core\Entity\PageInterface> findAll()
  * @method list<\Pushword\Core\Entity\PageInterface> findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ *
+ * @implements Selectable<int, PageInterface>
+ * @implements ObjectRepository<PageInterface>
  */
-class PageRepository extends ServiceEntityRepository implements PageRepositoryInterface // @phpstan-ignore-line
+class PageRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
     protected bool $hostCanBeNull = false;
 
@@ -237,7 +242,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
                 continue;
             }
 
-            $k = md5('a'.rand());
+            $k = md5('a'.random_int(0, mt_getrandmax()));
             $orX->add($queryBuilder->expr()->like(($singleWhere['key_prefix'] ?? $singleWhere[4] ?? 'p.').($singleWhere['key'] ?? $singleWhere[0]), ':m'.$k));
             $queryBuilder->setParameter('m'.$k, $singleWhere['value'] ?? $singleWhere[2]);
         }
@@ -257,7 +262,7 @@ class PageRepository extends ServiceEntityRepository implements PageRepositoryIn
             );
         }
 
-        $k = md5('a'.rand());
+        $k = md5('a'.random_int(0, mt_getrandmax()));
 
         return $queryBuilder->andWhere(
             ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0])

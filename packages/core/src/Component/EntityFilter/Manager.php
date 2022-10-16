@@ -109,12 +109,12 @@ final class Manager
 
         if (! isset($filters) || \in_array($filters, [[], '', null], true)) {
             $appFilters = $this->app->getFilters();
-            $filters = isset($appFilters[$label]) ? $appFilters[$label] : null;
+            $filters = $appFilters[$label] ?? null;
         }
 
         $filters = \is_string($filters) ? explode(',', $filters) : $filters;
 
-        return $filters ? $filters : []; // @phpstan-ignore-line
+        return $filters ?: []; // @phpstan-ignore-line
     }
 
     /**

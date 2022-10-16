@@ -30,7 +30,7 @@ final class BlockEditorFilter extends AbstractFilter
     {
         if (
             ! \is_string($propertyValue)
-            || ! \is_object($json = json_decode($propertyValue))
+            || ! \is_object($json = json_decode($propertyValue, null, 512, \JSON_THROW_ON_ERROR))
             || ! property_exists($json, 'blocks')
         ) {
             return $propertyValue;

@@ -82,9 +82,9 @@ final class LinkedDocsScanner extends AbstractScanner
         \Safe\preg_match_all($regex, $this->pageHtml, $matches);
 
         $linkedDocs = [];
-        $matchesCount = \count($matches[0]);
+        $matchesCount = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($k = 0; $k < $matchesCount; ++$k) {
-            $uri = isset($matches[4][$k]) ? $matches[4][$k] : $matches[5][$k];
+            $uri = $matches[4][$k] ?? $matches[5][$k];
             $uri = 'data-rot' == $matches[1][$k] ? AppExtension::decrypt($uri) : $uri;
             $uri .= $matches[4][$k] ? '' : '#(encrypt)'; // not elegant but permit to remember it's an encrypted link
             if (self::isMailtoOrTelLink($uri) && 'data-rot' != $matches[1][$k]) {

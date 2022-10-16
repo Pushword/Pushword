@@ -3,7 +3,7 @@
 namespace Pushword\StaticGenerator;
 
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Repository\PageRepositoryInterface;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\StaticGenerator\Generator\CNAMEGenerator;
 use Pushword\StaticGenerator\Generator\CopierGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
@@ -228,7 +228,7 @@ class StaticGeneratorTest extends KernelTestCase
             ->setCreatedAt(new \DateTime('2 days ago'))
             ->setMainContent('...');
 
-        $pageRepo = $this->createMock(PageRepositoryInterface::class);
+        $pageRepo = $this->createMock(PageRepository::class);
         $pageRepo->method('getPublishedPages')
                   ->willReturn([
                       $page,

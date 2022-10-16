@@ -11,9 +11,10 @@ trait RequiredMediaClass
      */
     private string $mediaClass;
 
-    /** @required
+    /**
      * @param class-string<MediaInterface> $mediaClass
      */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setMediaClass(string $mediaClass): self
     {
         $this->mediaClass = $mediaClass;

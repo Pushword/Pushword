@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Entity\SharedTrait;
 
+use Doctrine\ORM\Mapping as ORM;
 use Exception;
 use Pushword\Core\Utils\F;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -14,10 +15,9 @@ trait CustomPropertiesTrait
     /**
      * YAML Format.
      *
-     * @ORM\Column(type="json")
-     *
      * @var array<mixed>
      */
+    #[ORM\Column(type: 'json')]
     protected array $customProperties = [];
 
     /**
@@ -110,9 +110,7 @@ trait CustomPropertiesTrait
         }
     }
 
-    /**
-     * @Assert\Callback
-     */
+    #[Assert\Callback]
     public function validateStandAloneCustomProperties(ExecutionContextInterface $executionContext): void
     {
         try {

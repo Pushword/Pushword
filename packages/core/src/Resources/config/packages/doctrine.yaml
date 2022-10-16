@@ -15,12 +15,12 @@ doctrine:
     auto_mapping: true
     mappings:
       App:
-        type: annotation
+        type: attribute
         prefix: App\Entity
         dir: "%kernel.project_dir%/src/Entity"
         is_bundle: false
       PushwordCoreBundle:
-        type: annotation
+        type: attribute
         dir: "Entity"
         alias: PushwordCore
     resolve_target_entities:

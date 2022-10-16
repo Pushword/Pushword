@@ -16,16 +16,16 @@ final class PageMenuProvider implements ContainerAwareInterface
 {
     use ContainerAwareTrait;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public AppPool $apps;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public ManagerRegistry $doctrine;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public TranslatorInterface $translator;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public RequestStack $requestStack;
 
     public function __construct(private FactoryInterface $factory)

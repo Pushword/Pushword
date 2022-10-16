@@ -19,7 +19,7 @@ abstract class AbstractScanner
      */
     protected array $errors = [];
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public TranslatorInterface $translator;
 
     public function addError(string $msg): void

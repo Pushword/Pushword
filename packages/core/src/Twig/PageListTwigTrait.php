@@ -29,12 +29,12 @@ trait PageListTwigTrait
 
     private AppPool $apps;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public RequestStack $requestStack;
 
     abstract public function getApp(): AppConfig;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public RouteGeneratorFactoryInterface $routeGeneratorFactory;
 
     private function getCurrentRequest(): ?Request
@@ -123,7 +123,7 @@ trait PageListTwigTrait
         if ('children_children' == strtolower($search)
             && null !== $this->apps->getCurrentPage()
             && $this->apps->getCurrentPage()->hasChildrenPages()) {
-            $childrenPage = $this->apps->getCurrentPage()->getChildrenPages()->map(function ($page) { return $page->getId(); })->toArray();
+            $childrenPage = $this->apps->getCurrentPage()->getChildrenPages()->map(fn ($page) => $page->getId())->toArray();
 
             return ['parentPage', 'IN', $childrenPage];
         }

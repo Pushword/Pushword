@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Utils;
 
+use Doctrine\ORM\Mapping\Column;
+
 class Entity
 {
     /**
@@ -11,7 +13,8 @@ class Entity
     {
         $reflectionClass = new \ReflectionClass($object::class);
         $properties = array_filter($reflectionClass->getProperties(), function (\ReflectionProperty $property) {
-            if (str_contains((string) $property->getDocComment(), '@ORM\Column')) {
+            if (str_contains((string) $property->getDocComment(), '@ORM\Column')
+                || str_contains(implode(',', $property->getAttributes()), Column::class)) {
                 return true;
             }
         });

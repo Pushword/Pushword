@@ -58,10 +58,12 @@ use Rector\Set\ValueObject\LevelSetList;
 return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->parallel();
 
-    $rectorConfig->paths(array_map(
+    $paths = array_map(
             function ($path) { return __DIR__.'/'.$path; },
             array_values(\Safe\json_decode(\Safe\file_get_contents('composer.json'), true)['autoload']['psr-4']) // @phpstan-ignore-line
-        ));
+    );
+    $paths[] = __DIR__.'/packages/skeleton/src';
+    $rectorConfig->paths($paths);
 
     //$parameters->rule(Option::PHP_VERSION_FEATURES, PhpVersion::PHP_80);
     //$containerConfigurator->import(SetList::PHP_80);

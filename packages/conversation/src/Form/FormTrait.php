@@ -264,7 +264,7 @@ trait FormTrait
 
     protected function getId(): int
     {
-        return null !== $this->messageId ? $this->messageId : $this->request->query->getInt('id', 0);
+        return $this->messageId ?? $this->request->query->getInt('id', 0);
     }
 
     private function get(string $key): string
@@ -275,7 +275,7 @@ trait FormTrait
             throw new Exception($key.' not found');
         }
 
-        return \strval(isset($attributes[$key]) ? $attributes[$key] : $query[$key]);
+        return \strval($attributes[$key] ?? $query[$key]);
     }
 
     protected function getReferring(): ?string

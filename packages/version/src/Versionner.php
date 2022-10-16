@@ -94,7 +94,7 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
 
     public function populate(PageInterface $page, string $version, ?int $pageId = null): PageInterface
     {
-        $pageVersionned = $this->getPageVersion(null !== $pageId ? $pageId : $page, $version);
+        $pageVersionned = $this->getPageVersion($pageId ?? $page, $version);
 
         $this->serializer->deserialize($pageVersionned, $page::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $page]);
 

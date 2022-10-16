@@ -8,48 +8,32 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 trait UserTrait
 {
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
     protected ?DateTimeInterface $createdAt = null;
 
-    /**
-     * @ORM\Column(type="string", length=180, unique=true)
-     * @Assert\Email(
-     *     message="user.email.invalid",
-     *     mode="strict"
-     * )
-     */
+    #[ORM\Column(type: 'string', length: 180, unique: true)]
+    #[Assert\Email(message: 'user.email.invalid', mode: 'strict')]
     protected string $email = '';
 
-    /**
-     * @ORM\Column(type="string", length=150, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 150, nullable: true)]
     protected ?string $username = null;
 
     /**
      * Loaded From BaseUser.
-     *
-     * @Assert\Length(
-     *     min=7,
-     *     max=100,
-     *     minMessage="user.password.short"
-     * )
      */
+    #[Assert\Length(min: 7, max: 100, minMessage: 'user.password.short')]
     protected ?string $plainPassword = null;
 
     /**
-     * @ORM\Column(type="json")
-     *
      * @var string[]
      */
+    #[ORM\Column(type: 'json')]
     private array $roles = [];
 
     /**
      * @var string The hashed password
-     *
-     * @ORM\Column(type="string", nullable=true)
      */
+    #[ORM\Column(type: 'string', nullable: true)]
     private ?string $password = null;
 
     public function __toString(): string
@@ -145,9 +129,7 @@ trait UserTrait
         $this->plainPassword = null;
     }
 
-    /**
-     * @ORM\PrePersist
-     */
+    #[ORM\PrePersist]
     public function updatedTimestamps(): self
     {
         $this->setCreatedAt(new \DateTime('now'));
@@ -172,7 +154,7 @@ trait UserTrait
      */
     public function getUsername(): string
     {
-        return null !== $this->username ? $this->username : $this->email;
+        return $this->username ?? $this->email;
     }
 
     public function getUserIdentifier(): string

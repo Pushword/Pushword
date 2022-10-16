@@ -8,14 +8,10 @@ use Symfony\Component\Yaml\Yaml;
 
 trait MediaNameTrait
 {
-    /**
-     * @ORM\Column(type="string", length=100, unique=true)
-     */
+    #[ORM\Column(type: 'string', length: 100, unique: true)]
     protected string $name = '';
 
-    /**
-     * @ORM\Column(type="text", options={"default": ""}, nullable=true)
-     */
+    #[ORM\Column(type: 'text', options: ['default' => ''], nullable: true)]
     protected ?string $names = '';
 
     public function __toString(): string
@@ -37,7 +33,7 @@ trait MediaNameTrait
         $names = $this->getNamesParsed();
 
         return null !== $getLocalized ?
-            (isset($names[$getLocalized]) ? $names[$getLocalized] : ($onlyLocalized ? '' : $this->name))
+            ($names[$getLocalized] ?? ($onlyLocalized ? '' : $this->name))
             : $this->name;
     }
 

@@ -14,25 +14,25 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 class GeneratorBag
 {
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public CNAMEGenerator $cNAMEGenerator;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public CopierGenerator $copierGenerator;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public ErrorPageGenerator $errorPageGenerator;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public HtaccessGenerator $htaccessGenerator;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public MediaGenerator $mediaGenerator;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public PagesGenerator $pagesGenerator;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public RobotsGenerator $robotsGenerator;
 
     /** @var array<string, GeneratorInterface> */

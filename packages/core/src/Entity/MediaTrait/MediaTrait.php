@@ -24,9 +24,7 @@ trait MediaTrait
     use MediaSlugTrait;
     use TimestampableTrait;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
+    #[ORM\Column(type: 'string', length: 255)]
     protected string $storeIn;
 
     /**
@@ -34,9 +32,7 @@ trait MediaTrait
      */
     protected string $projectDir = '';
 
-    /**
-     * @ORM\Column(type="string", length=255, name="media")
-     */
+    #[ORM\Column(type: 'string', length: 255, name: 'media')]
     protected ?string $media = null;
 
     // TODO Rename to filename
@@ -46,16 +42,10 @@ trait MediaTrait
      */
     protected ?string $mediaBeforeUpdate = null;
 
-    // TODO Rename to filename
-
-    /**
-     * @ORM\Column(type="string", length=50)
-     */
+    #[ORM\Column(type: 'string', length: 50)]
     protected ?string $mimeType = null;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Column(type: 'integer')]
     protected int $size;
 
     /**
@@ -72,15 +62,10 @@ trait MediaTrait
     protected $mediaFile = null;
 
     // todo Rename to $file
-
     /**
-     * @ORM\OneToMany(
-     *     targetEntity="Pushword\Core\Entity\PageInterface",
-     *     mappedBy="mainImage"
-     * )
-     *
      * @var PageInterface[]|Collection<int, PageInterface>
      */
+    #[ORM\OneToMany(targetEntity: \Pushword\Core\Entity\PageInterface::class, mappedBy: 'mainImage')]
     protected $mainImagePages;
 
     public function setProjectDir(string $projectDir): self
@@ -126,9 +111,7 @@ trait MediaTrait
         return $extension;
     }
 
-    /**
-     * @Assert\Callback
-     */
+    #[Assert\Callback]
     public function validate(ExecutionContextInterface $executionContext): void
     {
         if (null !== $this->getMimeType() && null !== $this->mediaFile
@@ -256,9 +239,7 @@ trait MediaTrait
         return $this->mainImagePages;
     }
 
-    /**
-     * @ORM\PreRemove
-     */
+    #[ORM\PreRemove]
     public function removeMainImageFromPages(): void
     {
         if ($this->mainImagePages) { // @phpstan-ignore-line

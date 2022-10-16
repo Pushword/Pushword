@@ -8,25 +8,14 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface as sfUserInterface;
 
-/**
- * @ORM\MappedSuperclass
- * @ORM\HasLifecycleCallbacks
- * @UniqueEntity("email",
- *     message="user.email.already_used"
- * )
- */
+#[ORM\MappedSuperclass]
+#[ORM\HasLifecycleCallbacks]
+#[UniqueEntity('email', message: 'user.email.already_used')]
 class User implements UserInterface, sfUserInterface, PasswordAuthenticatedUserInterface
 {
     use CustomPropertiesTrait;
     use UserTrait;
 
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @var int
-     */
-    protected $id;
+    #[ORM\Id, ORM\Column(type: 'integer'), ORM\GeneratedValue(strategy: 'AUTO')]
+    protected ?int $id = null;
 }

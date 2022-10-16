@@ -5,7 +5,7 @@ namespace Pushword\StaticGenerator\Generator;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface as Page;
-use Pushword\Core\Repository\PageRepositoryInterface;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
@@ -37,7 +37,7 @@ abstract class AbstractGenerator implements GeneratorInterface
     protected StaticAppGenerator $staticAppGenerator;
 
     public function __construct(
-        protected PageRepositoryInterface $pageRepository,
+        protected PageRepository $pageRepository,
         protected Twig $twig,
         protected ParameterBagInterface $params,
         protected RequestStack $requestStack,
@@ -93,7 +93,7 @@ abstract class AbstractGenerator implements GeneratorInterface
         return \strval($this->app->get('static_dir'));
     }
 
-    protected function getPageRepository(): PageRepositoryInterface
+    protected function getPageRepository(): PageRepository
     {
         return $this->pageRepository;
     }

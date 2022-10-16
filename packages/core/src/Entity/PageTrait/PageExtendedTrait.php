@@ -7,9 +7,7 @@ use Pushword\Core\Entity\PageInterface;
 
 trait PageExtendedTrait
 {
-    /**
-     * @ORM\ManyToOne(targetEntity="Pushword\Core\Entity\PageInterface")
-     */
+    #[ORM\ManyToOne(targetEntity: \Pushword\Core\Entity\PageInterface::class)]
     protected ?PageInterface $extendedPage = null;
 
     public function getExtendedPage(): ?PageInterface

@@ -24,13 +24,13 @@ final class ElementAdmin extends AbstractController
 
     private twig $twig;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setKernel(KernelInterface $kernel): void
     {
         $this->kernel = $kernel;

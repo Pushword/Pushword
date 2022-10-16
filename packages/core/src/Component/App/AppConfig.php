@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Component\App;
 
+use Exception;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Twig\Environment as Twig;
 
@@ -16,7 +17,7 @@ final class AppConfig
     private string $locale;
 
     /** @var string|array<string> */
-    private $locales;
+    private string|array|null $locales = null;
 
     private string $baseUrl;
 
@@ -136,7 +137,7 @@ final class AppConfig
     /** @return mixed */
     public function getCustomProperty(string $key)
     {
-        return isset($this->customProperties[$key]) ? $this->customProperties[$key] : null;
+        return $this->customProperties[$key] ?? null;
     }
 
     public function getTemplate(): string
@@ -286,7 +287,7 @@ final class AppConfig
             $this->locales = explode('|', $this->locales);
         }
 
-        return $this->locales;
+        return $this->locales ?? throw new Exception();
     }
 
     /**

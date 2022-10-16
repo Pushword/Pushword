@@ -2,24 +2,17 @@
 
 namespace Pushword\Core\Entity\SharedTrait;
 
-use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 trait TimestampableTrait
 {
-    /**
-     * @ORM\Column(type="datetime")
-     *
-     * @noRector
-     */
+    /** @noRector */
+    #[ORM\Column(type: 'datetime')]
     protected ?DateTimeInterface $createdAt = null; // @phpstan-ignore-line
 
-    /**
-     * @ORM\Column(type="datetime")
-     *
-     * @noRector
-     */
+    /**  @noRector */
+    #[ORM\Column(type: 'datetime')]
     protected ?DateTimeInterface $updatedAt = null; // @phpstan-ignore-line
 
     public function setCreatedAt(DateTimeInterface $createdAt): self
@@ -74,7 +67,7 @@ trait TimestampableTrait
 
     public function initTimestampableProperties(): void
     {
-        $this->updatedAt = null !== $this->updatedAt ? $this->updatedAt : new \DateTime();
-        $this->createdAt = null !== $this->createdAt ? $this->createdAt : new \DateTime();
+        $this->updatedAt ??= new \DateTime();
+        $this->createdAt ??= new \DateTime();
     }
 }

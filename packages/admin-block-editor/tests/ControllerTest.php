@@ -88,6 +88,7 @@ class ControllerTest extends AbstractAdminTest
             json_encode(['url' => 'https://github.com/fluidicon.png'])
         );
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
+
         $this->assertSame('image/png', json_decode($client->getResponse()->getContent())->file->mimeType);
     }
 }

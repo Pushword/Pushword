@@ -15,7 +15,7 @@ trait VideoTwigTrait
         $youtube = $forceUrl ? null : static::getYoutubeVideoUrl($url);
 
         return trim($this->twig->render($template, [
-            'url' => null !== $youtube ? $youtube : $url,
+            'url' => $youtube ?? $url,
             'image' => $image,
             'alt' => $alternativeText,
             'embed_code' => null !== $youtube && ! $forceUrl ? $this->getEmbedCode($url) : null,

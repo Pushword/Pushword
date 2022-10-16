@@ -26,30 +26,29 @@ class VersionController extends AbstractController
 
     private ManagerRegistry $doctrine;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setDoctrine(ManagerRegistry $doctrine): void
     {
         $this->doctrine = $doctrine;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setVersionner(Versionner $versionner): void
     {
         $this->versionner = $versionner;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setTranslator(TranslatorInterface $translator): void
     {
         $this->translator = $translator;
     }
 
     /**
-     * @required
-     *
      * @psalm-suppress PossiblyInvalidArgument
      * @psalm-suppress InvalidPropertyAssignmentValue
      */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setParams(ParameterBagInterface $parameterBag): void
     {
         $this->pageClass = $parameterBag->get('pw.entity_page'); // @phpstan-ignore-line

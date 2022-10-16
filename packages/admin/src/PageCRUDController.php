@@ -21,15 +21,15 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
     protected ParameterBagInterface $params;
 
     /**
-     * @required
-     * https://github.com/symfony/symfony/blob/5.4/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php
+     * https://github.com/symfony/symfony/blob/5.4/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php.
      */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public EntityManagerInterface $entityManager;
 
     /**
-     * @required
-     * https://github.com/symfony/symfony/blob/5.4/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php
+     * https://github.com/symfony/symfony/blob/5.4/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php.
      */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function loadContainer(ContainerInterface $container): void
     {
         $this->container = $container;
@@ -39,7 +39,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
         }
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setParams(ParameterBagInterface $parameterBag): void
     {
         $this->params = $parameterBag;

@@ -3,16 +3,13 @@
 namespace Pushword\Core\Entity\PageTrait;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\PageHasEditor;
 use Pushword\Core\Entity\UserInterface;
 
 trait PageEditorTrait
 {
-    /**
-     * @ORM\ManyToOne(
-     *     targetEntity="Pushword\Core\Entity\UserInterface",
-     * )
-     */
+    #[ORM\ManyToOne(targetEntity: UserInterface::class)]
     protected ?UserInterface $editedBy = null;
 
     /*
@@ -27,16 +24,10 @@ trait PageEditorTrait
     protected ?ArrayCollection $pageHasEditors;
     /**/
 
-    /**
-     * @ORM\ManyToOne(
-     *     targetEntity="Pushword\Core\Entity\UserInterface",
-     * )
-     */
+    #[ORM\ManyToOne(targetEntity: UserInterface::class)]
     protected ?UserInterface $createdBy = null;
 
-    /**
-     * @ORM\Column(type="text", options={"default": ""})
-     */
+    #[ORM\Column(type: 'text', options: ['default' => ''])]
     protected string $editMessage = '';
 
     public function getEditedBy(): ?UserInterface

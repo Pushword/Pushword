@@ -8,7 +8,7 @@ trait RenderTrait
 {
     private Twig $twig;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;

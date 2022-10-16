@@ -23,7 +23,7 @@ class Email extends AbstractFilter
 
         \Safe\preg_match_all($rgx, $body, $matches);
 
-        $nbrMatch = \count($matches[0]);
+        $nbrMatch = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($k = 0; $k < $nbrMatch; ++$k) {
             $body = str_replace(
                 $matches[0][$k],

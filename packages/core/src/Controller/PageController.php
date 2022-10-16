@@ -5,7 +5,6 @@ namespace Pushword\Core\Controller;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
-use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\PageRepository;
@@ -24,8 +23,6 @@ final class PageController extends AbstractController
 {
     use RenderTrait;
 
-    private AppConfig $app;
-
     private Twig $twig;
 
     /** @var DataCollectorTranslator|Translator */
@@ -41,6 +38,7 @@ final class PageController extends AbstractController
         if (! $translator instanceof DataCollectorTranslator && ! $translator instanceof Translator) {
             throw new LogicException('A symfony codebase changed make this hack impossible (cf setLocale). Get `'.$translator::class.'`');
         }
+
         $this->initHost($requestStack);
         $this->translator = $translator;
     }
@@ -52,7 +50,7 @@ final class PageController extends AbstractController
             return;
         }
 
-        $host = $currentRequest->attributes->get('host', '');
+        $host = \strval($currentRequest->attributes->get('host', ''));
         if ('' !== $host) {
             $this->apps->switchCurrentApp($host);
 
@@ -63,6 +61,13 @@ final class PageController extends AbstractController
         if ('' !== $host) {
             $this->apps->switchCurrentApp($host);
         }
+    }
+
+    public function setHost(string $host): self
+    {
+        $this->apps->switchCurrentApp($host);
+
+        return $this;
     }
 
     public function show(Request $request, ?string $slug): Response
@@ -91,7 +96,7 @@ final class PageController extends AbstractController
     {
         $params = array_merge(['page' => $page], $this->apps->getApp()->getParamsForRendering());
 
-        $view = $this->getView(null !== $page->getTemplate() ? $page->getTemplate() : '/page/page.html.twig');
+        $view = $this->getView($page->getTemplate() ?? '/page/page.html.twig');
 
         $response = new Response();
         if (\is_array($headers = $page->getCustomProperty('headers'))) {
@@ -140,7 +145,7 @@ final class PageController extends AbstractController
         $locale = '' !== $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->apps->getApp()->getDefaultLocale();
         $LocaleHomepage = $this->getPage($request, $locale, false);
         $slug = 'homepage';
-        $page = null !== $LocaleHomepage ? $LocaleHomepage : $this->getPage($request, $slug);
+        $page = $LocaleHomepage ?? $this->getPage($request, $slug);
         if (null === $page) {
             throw $this->createNotFoundException('The page `'.$slug.'` was not found');
         }

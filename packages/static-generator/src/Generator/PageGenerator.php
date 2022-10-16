@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PageGenerator extends AbstractGenerator
 {
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public RedirectionManager $redirectionManager;
 
     public function generate(?string $host = null): void

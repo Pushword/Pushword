@@ -162,7 +162,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
             'label' => 'admin.page.title.label',
             'template' => '@pwAdmin/page/page_list_titleField.html.twig',
         ]);
-        $list->add('updatedAt', null, [
+        $list->add('updatedAt', 'datetime', [
             'format' => 'd/m à H:m',
             'label' => 'admin.page.updatedAt.label',
         ]);

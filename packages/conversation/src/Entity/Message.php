@@ -2,7 +2,6 @@
 
 namespace Pushword\Conversation\Entity;
 
-use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Entity\SharedTrait\HostTrait;
@@ -11,58 +10,40 @@ use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass=MessageRepository::class)
- */
+#[ORM\Entity(repositoryClass: MessageRepository::class)]
 class Message implements MessageInterface, \Stringable
 {
     use HostTrait;
     use IdTrait;
     use TimestampableTrait;
 
-    /**
-     * @ORM\Column(type="string", length=180, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 180, nullable: true)]
     protected ?string $authorName = '';
 
-    /**
-     * @ORM\Column(type="string", length=180, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 180, nullable: true)]
     protected ?string $authorEmail = '';
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     */
+    #[ORM\Column(type: 'integer', nullable: true)]
     protected ?int $authorIp = null;
 
-    /**
-     * @ORM\Column(type="string", nullable=true)
-     * @Assert\NotBlank
-     * @Assert\Length(
-     *     min=2,
-     *     max=200000,
-     *     minMessage="conversation.content.short",
-     *     maxMessage="conversation.content.long"
-     * )
-     */
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 2, max: 200000, minMessage: 'conversation.content.short', maxMessage: 'conversation.content.long')]
     protected ?string $content = null;
 
     /**
      * Identifier referring (most of time, URI).
-     *
-     * @ORM\Column(type="string", length=180)
      */
+    #[ORM\Column(type: 'string', length: 180)]
     protected string $referring = '';
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
     protected ?\DateTimeInterface $publishedAt = null;
 
     public function __construct()
     {
-        $this->updatedAt = null !== $this->updatedAt ? $this->updatedAt : new \DateTime();
-        $this->createdAt = null !== $this->createdAt ? $this->createdAt : new \DateTime();
+        $this->updatedAt ??= new \DateTime();
+        $this->createdAt ??= new \DateTime();
     }
 
     public function getPublishedAt(): ?\DateTimeInterface

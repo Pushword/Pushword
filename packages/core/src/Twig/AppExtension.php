@@ -129,7 +129,7 @@ class AppExtension extends AbstractExtension
     public function getPublishedPages($host = null, array $where = [], array $orderBy = [], array|int $limit = 0, bool $withRedirection = false): array
     {
         return Repository::getPageRepository($this->em, $this->getPageClass())
-            ->getPublishedPages(null === $host ? [] : $host, $where, $orderBy, $limit, $withRedirection);
+            ->getPublishedPages($host ?? [], $where, $orderBy, $limit, $withRedirection);
     }
 
     /**
@@ -139,7 +139,7 @@ class AppExtension extends AbstractExtension
     {
         $pages = Repository::getPageRepository($this->em, $this->getPageClass())
             ->getPublishedPages(
-                null === $host ? [] : $host,
+                $host ?? [],
                 [['key' => 'slug', 'operator' => '=', 'value' => $slug]],
                 [],
                 1,

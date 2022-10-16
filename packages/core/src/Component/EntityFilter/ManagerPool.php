@@ -17,19 +17,19 @@ use Twig\Environment as Twig;
  */
 final class ManagerPool implements ManagerPoolInterface
 {
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public AppPool $apps;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public Twig $twig;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public EventDispatcherInterface $eventDispatcher;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public RouterInterface $router;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public EntityManagerInterface $entityManager;
 
     /** @var array<(string|int), Manager<T>> */

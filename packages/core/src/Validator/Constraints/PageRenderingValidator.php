@@ -36,7 +36,7 @@ class PageRenderingValidator extends ConstraintValidator
         }
 
         try {
-            $this->pageController->setApp($value->getHost());
+            $this->pageController->setHost($value->getHost());
             $this->pageController->showPage($value);
         } catch (\Exception $exception) {
             $this->context->buildViolation($constraint->message)

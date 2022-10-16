@@ -13,7 +13,7 @@ use Twig\Environment as Twig;
  */
 class EnityFilterSuscriber extends AbstractEventSuscriber
 {
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public Twig $twig;
 
     /**

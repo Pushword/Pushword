@@ -4,11 +4,9 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\Page as BasePage;
-use Pushword\Core\Repository\PageRepositoryInterface;
+use Pushword\Core\Repository\PageRepository;
 
-/**
- * @ORM\Entity(repositoryClass=PageRepositoryInterface::class)
- */
+#[ORM\Entity(repositoryClass: PageRepository::class)]
 class Page extends BasePage
 {
 }

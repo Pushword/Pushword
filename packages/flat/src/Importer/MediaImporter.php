@@ -26,7 +26,7 @@ class MediaImporter extends AbstractImporter
 
     private bool $newMedia = false;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setMediaDir(string $mediaDir): self
     {
         $this->mediaDir = $mediaDir;
@@ -34,7 +34,7 @@ class MediaImporter extends AbstractImporter
         return $this;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setProjectDir(string $projectDir): self
     {
         $this->projectDir = $projectDir;

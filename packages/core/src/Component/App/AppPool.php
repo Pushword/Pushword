@@ -11,7 +11,7 @@ use Twig\Environment as Twig;
 final class AppPool
 {
     /** @var array<string, AppConfig> */
-    private $apps = [];
+    private array $apps = [];
 
     private ?string $currentApp = null;
 

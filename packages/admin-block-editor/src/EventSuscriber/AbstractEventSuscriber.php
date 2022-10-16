@@ -8,16 +8,19 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 abstract class AbstractEventSuscriber implements EventSubscriberInterface
 {
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public AppPool $apps;
 
     public function __construct(public bool $editorBlockForNewPage)
     {
     }
 
+    /**
+     * @noRector
+     */
     protected function mayUseEditorBlock(?PageInterface $page): bool
     {
-        if (null !== $page && '' !== $page->getMainContent() && null === json_decode($page->getMainContent())) {
+        if (null !== $page && '' !== $page->getMainContent() && null === json_decode($page->getMainContent(), null, 512)) {
             return false;
         }
 

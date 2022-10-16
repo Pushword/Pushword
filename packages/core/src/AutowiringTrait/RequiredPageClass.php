@@ -12,10 +12,9 @@ trait RequiredPageClass
     private string $pageClass;
 
     /**
-     * @required
-     *
      * @param class-string<PageInterface> $pageClass
      */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setPageClass(string $pageClass): void
     {
         $this->pageClass = $pageClass;

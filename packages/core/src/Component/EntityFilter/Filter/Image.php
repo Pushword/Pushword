@@ -23,7 +23,7 @@ class Image extends AbstractFilter
             return $body;
         }
 
-        $nbrMatch = \count($matches[0]);
+        $nbrMatch = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($k = 0; $k < $nbrMatch; ++$k) {
             $renderImg = '<div>'.$this->twig->render(
                 $this->app->getView('/component/image_inline.html.twig'),

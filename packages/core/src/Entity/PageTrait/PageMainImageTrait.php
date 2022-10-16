@@ -7,13 +7,7 @@ use Pushword\Core\Entity\MediaInterface;
 
 trait PageMainImageTrait
 {
-    /**
-     * @ORM\ManyToOne(
-     *     targetEntity="Pushword\Core\Entity\MediaInterface",
-     *     cascade={"persist"},
-     *     inversedBy="mainImagePages"
-     * )
-     */
+    #[ORM\ManyToOne(targetEntity: \Pushword\Core\Entity\MediaInterface::class, cascade: ['persist'], inversedBy: 'mainImagePages')]
     protected ?MediaInterface $mainImage = null;
 
     public function getMainImage(): ?MediaInterface

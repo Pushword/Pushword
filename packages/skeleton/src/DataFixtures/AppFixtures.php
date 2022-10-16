@@ -17,13 +17,13 @@ class AppFixtures extends Fixture
 
     private AppPool $apps;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setParameterBag(ParameterBagInterface $params): void
     {
         $this->params = $params;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setApps(AppPool $apps): void
     {
         $this->apps = $apps;
@@ -56,6 +56,7 @@ class AppFixtures extends Fixture
 
             $manager->persist($media[$name]);
         }
+
         $manager->flush();
 
         $homepage = (new Page())

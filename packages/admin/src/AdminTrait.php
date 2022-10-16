@@ -81,7 +81,7 @@ trait AdminTrait
 
     protected EventDispatcherInterface $eventDispatcher;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
     {
         $this->eventDispatcher = $eventDispatcher;
@@ -124,13 +124,13 @@ trait AdminTrait
         return $user;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setSecurityTokenStorage(TokenStorageInterface $securityTokenStorage): void
     {
         $this->securityTokenStorage = $securityTokenStorage;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setEntityManager(EntityManagerInterface $entityManager): void
     {
         $this->em = $entityManager;
@@ -141,7 +141,7 @@ trait AdminTrait
         return $this->em;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;
@@ -162,7 +162,7 @@ trait AdminTrait
         $this->pageClass = $pageClass;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setApps(AppPool $appPool): void
     {
         $this->apps = $appPool;
@@ -193,7 +193,7 @@ trait AdminTrait
         $this->userClass = $userClass;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setRouter(RouterInterface $router): void
     {
         $this->router = $router;
@@ -225,7 +225,7 @@ trait AdminTrait
         return $this->messagePrefix;
     }
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setImageManager(ImageManager $imageManager): void
     {
         $this->imageManager = $imageManager;

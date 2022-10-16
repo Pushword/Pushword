@@ -36,7 +36,7 @@ class PostInstall
             throw new LogicException();
         }
 
-        return array_filter($dir, function (string $path): bool { return ! \in_array($path, ['.', '..'], true); });
+        return array_filter($dir, fn (string $path): bool => ! \in_array($path, ['.', '..'], true));
     }
 
     public static function mirror(string $source, string $dest): void

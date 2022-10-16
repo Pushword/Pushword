@@ -10,19 +10,15 @@ use Pushword\Core\Entity\PageInterface;
 
 trait PageParentTrait
 {
-    /**
-     * @ORM\ManyToOne(targetEntity="Pushword\Core\Entity\PageInterface", inversedBy="childrenPages")
-     * TODO: assert parentPage is not currentPage
-     */
+    #[ORM\ManyToOne(targetEntity: \Pushword\Core\Entity\PageInterface::class, inversedBy: 'childrenPages')]
     protected ?PageInterface $parentPage = null;
 
     /**
-     * @ORM\OneToMany(targetEntity="Pushword\Core\Entity\PageInterface", mappedBy="parentPage")
-     * @ORM\OrderBy({"publishedAt": "DESC", "priority": "DESC"})
-     *
-     * @var Collection<int, PageInterface>
+     * @var ?Collection<int, PageInterface>
      */
-    protected $childrenPages;
+    #[ORM\OneToMany(targetEntity: \Pushword\Core\Entity\PageInterface::class, mappedBy: 'parentPage')]
+    #[ORM\OrderBy(['publishedAt' => 'DESC', 'priority' => 'DESC'])]
+    protected $childrenPages = null;
 
     public function getParentPage(): ?PageInterface
     {
@@ -55,7 +51,7 @@ trait PageParentTrait
      */
     public function getChildrenPages()
     {
-        return null !== $this->childrenPages ? $this->childrenPages : new ArrayCollection([]);
+        return $this->childrenPages ?? new ArrayCollection([]);
     }
 
     public function hasChildrenPages(): bool

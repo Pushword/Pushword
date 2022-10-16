@@ -11,16 +11,14 @@ trait PageI18nTrait
 {
     /**
      * //rfc5646.
-     *
-     * @ORM\Column(type="string", length=5)
      */
+    #[ORM\Column(type: 'string', length: 5)]
     protected string $locale = '';
 
     /**
-     * @ORM\ManyToMany(targetEntity="Pushword\Core\Entity\PageInterface")
-     *
      * @var Collection<string, PageInterface>|null
      */
+    #[ORM\ManyToMany(targetEntity: \Pushword\Core\Entity\PageInterface::class)]
     protected ?Collection $translations = null;
 
     public function getLocale(): string
@@ -50,7 +48,7 @@ trait PageI18nTrait
      */
     public function getTranslations(): Collection
     {
-        return null !== $this->translations ? $this->translations : ($this->translations = new ArrayCollection());
+        return $this->translations ?? ($this->translations = new ArrayCollection());
     }
 
     public function addTranslation(PageInterface $page, bool $recursive = true): self

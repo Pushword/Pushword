@@ -23,10 +23,10 @@ final class PageScannerService
      */
     private array $errors = [];
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public LinkedDocsScanner $linkedDocsScanner;
 
-    /** @required */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public ParentPageScanner $parentPageScanner;
 
     public function __construct(

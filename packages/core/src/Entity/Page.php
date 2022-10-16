@@ -21,15 +21,9 @@ use Pushword\Core\Validator\Constraints\PageRendering;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 
-/**
- * @ORM\MappedSuperclass
- * @ORM\HasLifecycleCallbacks
- * @UniqueEntity(
- *     fields={"host", "slug"},
- *     errorPath="slug",
- *     message="page.slug.already_used"
- * )
- */
+#[ORM\MappedSuperclass]
+#[ORM\HasLifecycleCallbacks]
+#[UniqueEntity(fields: ['host', 'slug'], errorPath: 'slug', message: 'page.slug.already_used')]
 class Page implements PageInterface
 {
     use CustomPropertiesTrait;
