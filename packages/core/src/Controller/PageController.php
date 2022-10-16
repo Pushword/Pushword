@@ -43,21 +43,22 @@ final class PageController extends AbstractController
         $this->translator = $translator;
     }
 
-    private function initHost(RequestStack $requestStack): void
+    private function initHost(RequestStack|Request $request): void
     {
-        $currentRequest = $requestStack->getCurrentRequest();
-        if (null === $currentRequest) {
+        $request = $request instanceof Request ? $request : $request->getCurrentRequest();
+
+        if (null === $request) {
             return;
         }
 
-        $host = \strval($currentRequest->attributes->get('host', ''));
+        $host = \strval($request->attributes->get('host', ''));
         if ('' !== $host) {
             $this->apps->switchCurrentApp($host);
 
             return;
         }
 
-        $host = $this->apps->findHost($currentRequest->getHost());
+        $host = $this->apps->findHost($request->getHost());
         if ('' !== $host) {
             $this->apps->switchCurrentApp($host);
         }
@@ -72,6 +73,8 @@ final class PageController extends AbstractController
 
     public function show(Request $request, ?string $slug): Response
     {
+        $this->initHost($request);
+
         $page = $this->getPageElse404($request, $slug, true);
 
         // SEO redirection if we are not on the good URI (for exemple /fr/tagada instead of /tagada)
@@ -115,6 +118,8 @@ final class PageController extends AbstractController
 
     public function showFeed(Request $request, string $slug = ''): Response
     {
+        $this->initHost($request);
+
         if ('homepage' == $slug) {
             return $this->redirect($this->generateUrl('pushword_page_feed', ['slug' => 'index']), 301);
         }
@@ -142,6 +147,8 @@ final class PageController extends AbstractController
      */
     public function showMainFeed(Request $request): Response
     {
+        $this->initHost($request);
+
         $locale = '' !== $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->apps->getApp()->getDefaultLocale();
         $LocaleHomepage = $this->getPage($request, $locale, false);
         $slug = 'homepage';
@@ -166,6 +173,8 @@ final class PageController extends AbstractController
 
     public function showSitemap(Request $request, string $_format): Response
     {
+        $this->initHost($request);
+
         $pages = $this->getPages($request, null);
 
         if (! \is_array($pages) || ! isset($pages[0])) {

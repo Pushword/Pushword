@@ -1,2 +1,2 @@
 
-Sitemap: https://pushword.piedweb.com/sitemap.xml
+Sitemap: https://localhost.dev/sitemap.xml
