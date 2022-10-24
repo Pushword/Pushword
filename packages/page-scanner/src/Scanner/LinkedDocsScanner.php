@@ -7,6 +7,7 @@ use PiedWeb\Curl\ExtendedClient;
 use PiedWeb\Curl\Helper;
 use PiedWeb\Extractor\CanonicalExtractor;
 use PiedWeb\Extractor\Url;
+use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Twig\AppExtension;
 use Pushword\Core\Utils\F;
@@ -41,7 +42,7 @@ final class LinkedDocsScanner extends AbstractScanner
         $this->linksCheckedCounter = 0;
 
         if ($this->page->hasRedirection()) {
-            $this->checkLinkedDoc($this->page->getRedirection());
+            $this->checkLinkedDoc($this->page->getRedirection(), false);
 
             return;
         }
@@ -144,7 +145,7 @@ final class LinkedDocsScanner extends AbstractScanner
         }
     }
 
-    private function checkLinkedDoc(string $url): void
+    private function checkLinkedDoc(string $url, bool $checkRedirection = true): void
     {
         // internal
         $uri = $this->removeBase($url);
@@ -157,6 +158,8 @@ final class LinkedDocsScanner extends AbstractScanner
         if ('/' == $uri[0]) {
             if (! $this->uriExist($this->removeParameters($uri))) {
                 $this->addError('<code>'.$url.'</code> '.$this->trans('page_scan.not_found'));
+            } elseif ($checkRedirection && $this->lastPageChecked instanceof PageInterface && $this->lastPageChecked->hasRedirection()) {
+                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scan.is_redirection'));
             }
 
             return;
@@ -246,8 +249,12 @@ final class LinkedDocsScanner extends AbstractScanner
         return $this->urlExistCache[$url] = true;
     }
 
+    private ?PageInterface $lastPageChecked = null;
+
     private function uriExist(string $uri): bool
     {
+        $this->lastPageChecked = null;
+
         $slug = ltrim($uri, '/');
 
         if (isset($this->everChecked[$slug])) {
@@ -256,12 +263,12 @@ final class LinkedDocsScanner extends AbstractScanner
 
         $checkDatabase = ! str_starts_with($slug, 'media/'); // we avoid to check in db the media, file exists is enough
 
-        $page = $checkDatabase ? Repository::getPageRepository($this->entityManager, $this->page::class)
+        $this->lastPageChecked = $checkDatabase ? Repository::getPageRepository($this->entityManager, $this->page::class)
             ->getPage($slug, $this->page->getHost(), true) :
             null;
 
         $this->everChecked[$slug] = (
-            ! $page instanceof \Pushword\Core\Entity\PageInterface
+            ! $this->lastPageChecked instanceof PageInterface
                 && ! file_exists($this->publicDir.'/'.$slug)
                 && ! file_exists($this->publicDir.'/../'.$slug)
                 && 'feed.xml' !== $slug
