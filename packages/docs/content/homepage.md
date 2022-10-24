@@ -1,10 +1,11 @@
 ---
 title: Pushword - Modern CMS to build rapidly Websites (powered by Symfony)
-h1: <span class="block mt-6 leading-relaxed">Build modern <em class="font-light">Content First</em> websites rapidly
+h1:
+    <span class="block mt-6 leading-relaxed">Build modern <em class="font-light">Content First</em> websites rapidly
     <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>
 name: Pushword
 template: /page/homepage.html.twig
-prose: "max-w-screen-sm prose-sm md:prose-lg mx-auto p-3 prose dark:prose-light"
+prose: 'max-w-screen-sm prose-sm md:prose-lg mx-auto p-3 prose dark:prose-light'
 ---
 
 <div class="flex flex-row max-w-screen-lg mx-auto mb-6">
@@ -77,7 +78,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <p><a href="/installation">Learn more about requirements and installation.</a></p>
                 <p>By default, it works without dirty work. It looks <strong>so simple</strong>. But don't be wrong, you
                     can do amazing custom thing with it !</p>
-                <p class="text-sm font-light text-center text-green-500"> PHP 7 // <strong style="color: rgba(16, 185, 129, var(--tw-text-opacity));">PHP 8</strong> // Symfony5</p>
+                <p class="text-sm font-light text-center text-green-500"><strong style="color: rgba(16, 185, 129, var(--tw-text-opacity));">PHP 8</strong> // Symfony 6</p>
             </div>
         </div>
         <div class="px-3 py-6 mb-6 rounded-lg bg-indigo-50">

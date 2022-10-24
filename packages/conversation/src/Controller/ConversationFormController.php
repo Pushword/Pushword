@@ -26,8 +26,17 @@ final class ConversationFormController extends AbstractController
      */
     private array $possibleOrigins = [];
 
-    public function __construct(private TranslatorInterface $translator, private AppPool $apps, private ParameterBagInterface $params, private Twig $twig, private FormFactoryInterface $formFactory, private TokenStorageInterface $tokenStorage, private RouterInterface $router, private ManagerRegistry $doctrine, private string $env)
-    {
+    public function __construct(
+        private TranslatorInterface $translator,
+        private AppPool $apps,
+        private ParameterBagInterface $params,
+        private Twig $twig,
+        private FormFactoryInterface $formFactory,
+        private TokenStorageInterface $tokenStorage,
+        private RouterInterface $router,
+        private ManagerRegistry $doctrine,
+        private string $env
+    ) {
     }
 
     /**
