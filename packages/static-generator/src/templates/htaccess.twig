@@ -12,7 +12,7 @@ AddDefaultCharset UTF-8
 #---
 # Redirect www subfolder (or other) to domain.tld
 #---
-RewriteCond %{HTTP_HOST} ^(.*).{{ domain }}
+RewriteCond %{HTTP_HOST} !^{{ domain }}
 RewriteRule ^(.*)$ https://{{ domain }}/$1 [L,R=301,END]
 
 #---
