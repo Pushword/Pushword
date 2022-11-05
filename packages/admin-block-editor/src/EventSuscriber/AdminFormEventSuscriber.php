@@ -2,7 +2,6 @@
 
 namespace Pushword\AdminBlockEditor\EventSuscriber;
 
-use LogicException;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageMainContentField;
@@ -66,7 +65,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         $fields = (new FormFieldReplacer())->run(PageH1Field::class, PageH1FormField::class, $fields);
 
         if (! \is_array($fields[0])) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         $fields[0][PageImageFormField::class] = PageImageFormField::class;

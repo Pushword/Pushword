@@ -3,7 +3,6 @@
 namespace Pushword\Conversation\Form;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
-use Exception;
 use Pushword\Conversation\Entity\MessageInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
@@ -272,7 +271,7 @@ trait FormTrait
         $attributes = $this->request->attributes->all();
         $query = $this->request->query->all();
         if (! isset($attributes[$key]) && ! isset($query[$key])) {
-            throw new Exception($key.' not found');
+            throw new \Exception($key.' not found');
         }
 
         return \strval($attributes[$key] ?? $query[$key]);

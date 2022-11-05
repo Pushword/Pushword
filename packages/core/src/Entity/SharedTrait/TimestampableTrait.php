@@ -2,27 +2,26 @@
 
 namespace Pushword\Core\Entity\SharedTrait;
 
-use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 trait TimestampableTrait
 {
     /** @noRector */
     #[ORM\Column(type: 'datetime')]
-    protected ?DateTimeInterface $createdAt = null; // @phpstan-ignore-line
+    protected ?\DateTimeInterface $createdAt = null; // @phpstan-ignore-line
 
     /**  @noRector */
     #[ORM\Column(type: 'datetime')]
-    protected ?DateTimeInterface $updatedAt = null; // @phpstan-ignore-line
+    protected ?\DateTimeInterface $updatedAt = null; // @phpstan-ignore-line
 
-    public function setCreatedAt(DateTimeInterface $createdAt): self
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getCreatedAt(bool $safe = true): ?DateTimeInterface
+    public function getCreatedAt(bool $safe = true): ?\DateTimeInterface
     {
         if ($safe) {
             return $this->safegetCreatedAt();
@@ -31,7 +30,7 @@ trait TimestampableTrait
         return $this->createdAt;
     }
 
-    public function safegetCreatedAt(): DateTimeInterface
+    public function safegetCreatedAt(): \DateTimeInterface
     {
         if (null === $this->createdAt) {
             return new \DateTime();
@@ -40,14 +39,14 @@ trait TimestampableTrait
         return $this->createdAt;
     }
 
-    public function setUpdatedAt(DateTimeInterface $updatedAt): self
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
 
         return $this;
     }
 
-    public function safegetUpdatedAt(): DateTimeInterface
+    public function safegetUpdatedAt(): \DateTimeInterface
     {
         if (null === $this->updatedAt) {
             return new \DateTime();
@@ -56,7 +55,7 @@ trait TimestampableTrait
         return $this->updatedAt;
     }
 
-    public function getUpdatedAt(bool $safe = true): ?DateTimeInterface
+    public function getUpdatedAt(bool $safe = true): ?\DateTimeInterface
     {
         if ($safe) {
             return $this->safegetUpdatedAt();

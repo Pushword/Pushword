@@ -21,6 +21,7 @@ class PageScannerTest extends KernelTestCase
         );
         $scanner->linkedDocsScanner = new LinkedDocsScanner(
             self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
+            [],
             __DIR__.'/../../skeleton/public',
         );
         $scanner->linkedDocsScanner->translator = self::$kernel->getContainer()->get('translator');

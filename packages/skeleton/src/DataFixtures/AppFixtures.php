@@ -5,7 +5,6 @@ namespace App\DataFixtures;
 use App\Entity\Media;
 use App\Entity\Page;
 use App\Entity\User;
-use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Pushword\Core\Component\App\AppPool;
@@ -63,8 +62,8 @@ class AppFixtures extends Fixture
             ->setH1('Welcome : this is your first page')
             ->setSlug('homepage')
             ->setLocale('en')
-            ->setCreatedAt(new DateTime('2 days ago'))
-            ->setUpdatedAt(new DateTime('2 days ago'))
+            ->setCreatedAt(new \DateTime('2 days ago'))
+            ->setUpdatedAt(new \DateTime('2 days ago'))
             ->setMainContent((string) file_get_contents(__DIR__.'/WelcomePage.md'));
 
         if ('localhost.dev' == $this->apps->getMainHost()) {
@@ -80,8 +79,8 @@ class AppFixtures extends Fixture
             ->setMainImage($media['Demo 1'])
             ->setLocale('en')
             ->setParentPage($homepage)
-            ->setCreatedAt(new DateTime('1 day ago'))
-            ->setUpdatedAt(new DateTime('1 day ago'))
+            ->setCreatedAt(new \DateTime('1 day ago'))
+            ->setUpdatedAt(new \DateTime('1 day ago'))
             ->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.md'))
             ->setCustomProperty('tag', 'testTag123');
 

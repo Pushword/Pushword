@@ -2,7 +2,6 @@
 
 namespace Pushword\Svg;
 
-use Exception;
 use PiedWeb\RenderAttributes\AttributesTrait;
 use Pushword\Core\AutowiringTrait\RequiredApps;
 use Pushword\Svg\FontAwesome5To6 as SvgFontAwesome5To6;
@@ -51,12 +50,12 @@ class TwigExtension extends AbstractExtension
                 return $this->getSvg(SvgFontAwesome5To6::convertNameFromFontAwesome5To6($name), $attr, $dir, false);
             }
 
-            throw new Exception('`'.$name.'` (svg) not found.');
+            throw new \Exception('`'.$name.'` (svg) not found.');
         }
 
         if (! \in_array(\Safe\mime_content_type($file), ['image/svg+xml', 'image/svg'], true)
             || ($svg = file_get_contents($file)) === false) {
-            throw new Exception('`'.$name.'` seems not be a valid svg file.');
+            throw new \Exception('`'.$name.'` seems not be a valid svg file.');
         }
 
         return self::replaceOnce('<svg ', '<svg '.self::mapAttributes($attr).' ', $svg);

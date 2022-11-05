@@ -3,10 +3,8 @@
 namespace Pushword\Conversation\Controller;
 
 use Doctrine\Persistence\ManagerRegistry;
-use ErrorException;
 use Pushword\Conversation\Form\ConversationFormInterface;
 use Pushword\Core\Component\App\AppPool;
-use ReflectionClass;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -54,7 +52,7 @@ final class ConversationFormController extends AbstractController
 
         $class = \strval($this->apps->get()->get($param));
         if (! class_exists($class)
-            || ! (new ReflectionClass($class))->implementsInterface(ConversationFormInterface::class)) {
+            || ! (new \ReflectionClass($class))->implementsInterface(ConversationFormInterface::class)) {
             throw new \Exception('`'.$type.'` does\'nt exist.');
         }
 
@@ -121,7 +119,7 @@ final class ConversationFormController extends AbstractController
         $response = new Response();
 
         if (! \in_array($request->headers->get('origin'), $this->getPossibleOrigins($request), true)) {
-            throw new ErrorException('origin sent is not authorized ('.$request->headers->get('origin').') '.\Safe\json_encode($this->getPossibleOrigins($request)).'.');
+            throw new \ErrorException('origin sent is not authorized ('.$request->headers->get('origin').') '.\Safe\json_encode($this->getPossibleOrigins($request)).'.');
         }
 
         $response->headers->set('Access-Control-Allow-Credentials', 'true');

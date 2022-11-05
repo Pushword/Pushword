@@ -2,14 +2,13 @@
 
 namespace Pushword\Core\Entity;
 
-use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 trait UserTrait
 {
     #[ORM\Column(type: 'datetime', nullable: true)]
-    protected ?DateTimeInterface $createdAt = null;
+    protected ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     #[Assert\Email(message: 'user.email.invalid', mode: 'strict')]
@@ -137,12 +136,12 @@ trait UserTrait
         return $this;
     }
 
-    public function getCreatedAt(): ?DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeInterface $createdAt): self
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 

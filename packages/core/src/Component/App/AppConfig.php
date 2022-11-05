@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Component\App;
 
-use Exception;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Twig\Environment as Twig;
 
@@ -287,7 +286,7 @@ final class AppConfig
             $this->locales = explode('|', $this->locales);
         }
 
-        return $this->locales ?? throw new Exception();
+        return $this->locales ?? throw new \Exception();
     }
 
     /**

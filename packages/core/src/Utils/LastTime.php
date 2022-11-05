@@ -15,11 +15,11 @@ class LastTime
     {
     }
 
-    public function wasRunSince(DateInterval $dateInterval): bool
+    public function wasRunSince(\DateInterval $dateInterval): bool
     {
         $dateTime = $this->get();
 
-        return null !== $dateTime && $dateTime->add($dateInterval) >= new DateTime('now');
+        return null !== $dateTime && $dateTime->add($dateInterval) >= new \DateTime('now');
     }
 
     /**
@@ -31,10 +31,10 @@ class LastTime
     public function get(?string $default = null): ?\DateTimeInterface
     {
         if (! file_exists($this->filePath)) {
-            return null === $default ? null : new DateTime($default);
+            return null === $default ? null : new \DateTime($default);
         }
 
-        return new DateTime('@'.\Safe\filemtime($this->filePath));
+        return new \DateTime('@'.\Safe\filemtime($this->filePath));
     }
 
     /**
@@ -56,7 +56,7 @@ class LastTime
             \Safe\file_put_contents($this->filePath, '');
         }
 
-        \Safe\touch($this->filePath, (new DateTime($datetime))->getTimestamp());
+        \Safe\touch($this->filePath, (new \DateTime($datetime))->getTimestamp());
     }
 
     /**

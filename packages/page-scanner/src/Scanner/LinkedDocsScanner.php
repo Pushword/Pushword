@@ -18,27 +18,49 @@ use Symfony\Component\DomCrawler\Crawler as DomCrawler;
  */
 final class LinkedDocsScanner extends AbstractScanner
 {
-    /**
-     * @var array<string, bool>
-     */
+    /** @var array<string, bool> */
     private array $everChecked = [];
 
     private int $linksCheckedCounter = 0;
 
     private ?DomCrawler $domPage = null;
 
+    /** @var string[] */
+    private array $toIgnore = [];
+
     /**
      * @var array<string, mixed>
      */
     private array $urlExistCache = [];
 
-    public function __construct(private EntityManagerInterface $entityManager, private string $publicDir)
+    /**
+     * @param string[] $linksToIgnore
+     */
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private array $linksToIgnore,
+        private string $publicDir
+    ) {
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getPageScanLinksToIgnore(): array
     {
+        $pageScanLinksToIgnore = $this->page->getCustomProperty('pageScanLinksToIgnore') ?? [];
+
+        return \is_array($pageScanLinksToIgnore) ? $pageScanLinksToIgnore : [];
     }
 
     // Starting point called from AbstractSanner::scan
     protected function run(): void
     {
+        $this->toIgnore = array_merge(
+            $this->linksToIgnore,
+            $this->getPageScanLinksToIgnore()
+        );
+
         $this->linksCheckedCounter = 0;
 
         if ($this->page->hasRedirection()) {
@@ -145,10 +167,26 @@ final class LinkedDocsScanner extends AbstractScanner
         }
     }
 
+    private function mustIgnore(string $url): bool
+    {
+        foreach ($this->toIgnore as $toIgnore) {
+            if (fnmatch($toIgnore, $url)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function checkLinkedDoc(string $url, bool $checkRedirection = true): void
     {
         // internal
         $uri = $this->removeBase($url);
+
+        if ($this->mustIgnore($url)) {
+            return;
+        }
+
         if (! isset($uri[0])) {
             $this->addError('<code>'.$url.'</code> empty link');
 

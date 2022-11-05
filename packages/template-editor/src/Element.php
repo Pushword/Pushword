@@ -2,8 +2,6 @@
 
 namespace Pushword\TemplateEditor;
 
-use LogicException;
-
 /**
  * Entity.
  */
@@ -52,7 +50,7 @@ class Element
     public function getEncodedPath(): string
     {
         if (null === $this->path) {
-            throw new LogicException('the path must be setted before to get the encoded path');
+            throw new \LogicException('the path must be setted before to get the encoded path');
         }
 
         return md5($this->path);

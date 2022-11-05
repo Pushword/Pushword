@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\DependencyInjection;
 
-use LogicException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 final class AppsConfigParser
@@ -54,7 +53,7 @@ final class AppsConfigParser
     {
         $return = $containerBuilder->getParameter($parameterName);
         if (! \is_array($return)) {
-            throw new LogicException('Parameter '.$parameterName.' must be an array');
+            throw new \LogicException('Parameter '.$parameterName.' must be an array');
         }
 
         return $return;

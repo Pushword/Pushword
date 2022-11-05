@@ -4,7 +4,6 @@ namespace Pushword\Core\Twig;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use LogicException;
 use Pagerfanta\Adapter\ArrayAdapter;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\PagerfantaInterface;
@@ -114,7 +113,7 @@ trait PageListTwigTrait
 
         if ('parent_children' == strtolower($search) && null !== $this->apps->getCurrentPage()) {
             if (($parentPage = $this->apps->getCurrentPage()->getParentPage()) === null) {
-                throw new Exception('no parent page');
+                throw new \Exception('no parent page');
             }
 
             return ['parentPage', '=', $parentPage->getId()];
@@ -200,7 +199,7 @@ trait PageListTwigTrait
             }
 
             if ($max[0] < 1) {
-                throw new LogicException();
+                throw new \LogicException();
             }
 
             $pagerfanta = (new Pagerfanta(new ArrayAdapter($pages)))

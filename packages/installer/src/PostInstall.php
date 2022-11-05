@@ -3,8 +3,6 @@
 namespace Pushword\Installer;
 
 use Composer\Script\Event;
-use Exception;
-use LogicException;
 use Symfony\Component\Filesystem\Filesystem;
 
 if (! class_exists(Filesystem::class)) {
@@ -33,7 +31,7 @@ class PostInstall
     public static function scanDir(string $dirPath): array
     {
         if (($dir = scandir($dirPath)) === false) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         return array_filter($dir, fn (string $path): bool => ! \in_array($path, ['.', '..'], true));
@@ -61,13 +59,13 @@ class PostInstall
     {
         $content = file_get_contents($file);
         if (false === $content) {
-            throw new Exception('`'.$file.'` not found');
+            throw new \Exception('`'.$file.'` not found');
         }
 
         $count = 0;
         $content = str_replace($search, $replace, $content, $count);
         if (1 !== $count) {
-            throw new Exception('Error on replacing `'.$search.'` by `'.$replace.'`');
+            throw new \Exception('Error on replacing `'.$search.'` by `'.$replace.'`');
         }
 
         file_put_contents($file, $content);

@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Entity;
 
-use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
 use Pushword\Core\Entity\PageTrait\PageEditorInterface;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
@@ -23,9 +22,9 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
 
     public function setMainContent(?string $mainContent): self;
 
-    public function getPublishedAt(bool $safe = true): ?DateTimeInterface;
+    public function getPublishedAt(bool $safe = true): ?\DateTimeInterface;
 
-    public function setPublishedAt(DateTimeInterface $publishedAt): self;
+    public function setPublishedAt(\DateTimeInterface $publishedAt): self;
 
     // ---
 

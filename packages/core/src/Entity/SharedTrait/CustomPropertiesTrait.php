@@ -3,7 +3,6 @@
 namespace Pushword\Core\Entity\SharedTrait;
 
 use Doctrine\ORM\Mapping as ORM;
-use Exception;
 use Pushword\Core\Utils\F;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -83,7 +82,7 @@ trait CustomPropertiesTrait
         $standAloneProperties = '' !== $this->standAloneCustomProperties ? Yaml::parse($this->standAloneCustomProperties)
             : [];
         if (! \is_array($standAloneProperties)) {
-            throw new Exception('standAloneProperties are not a valid yaml array');
+            throw new \Exception('standAloneProperties are not a valid yaml array');
         }
 
         $this->standAloneCustomProperties = '';

@@ -2,7 +2,6 @@
 
 namespace Pushword\Flat;
 
-use Exception;
 use Pushword\Core\Component\App\AppPool;
 
 /**
@@ -29,13 +28,13 @@ class FlatFileContentDirFinder
 
         $dir = $app->get('flat_content_dir');
         if ('' === $dir || ! \is_string($dir)) {
-            throw new Exception('No `flat_content_dir` dir in `'.$app->getMainHost().'`\'s params.');
+            throw new \Exception('No `flat_content_dir` dir in `'.$app->getMainHost().'`\'s params.');
         }
 
         $this->contentDir[$host] = $dir;
 
         if (! file_exists($this->contentDir[$host])) {
-            throw new Exception('Content dir `'.$dir.'` not found.');
+            throw new \Exception('Content dir `'.$dir.'` not found.');
         }
 
         return $this->contentDir[$host];

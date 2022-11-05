@@ -3,7 +3,6 @@
 namespace Pushword\AdminBlockEditor\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use Pushword\Core\AutowiringTrait\RequiredApps;
 use Pushword\Core\AutowiringTrait\RequiredPageClass;
 use Pushword\Core\Repository\Repository;
@@ -36,7 +35,7 @@ final class PageBlockController extends AbstractController
         if (0 !== $id) {
             $currentPage = Repository::getPageRepository($this->em, $this->pageClass)->findOneBy(['id' => $id]);
             if (null === $currentPage) {
-                throw new Exception('Page not found');
+                throw new \Exception('Page not found');
             }
 
             $this->apps->switchCurrentApp($currentPage);

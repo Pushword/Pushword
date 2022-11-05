@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Twig;
 
-use Exception;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Router\RouterInterface;
@@ -27,7 +26,7 @@ trait LinkTwigTrait
         if (\is_array($path)) {
             $attr = $path;
             if (! isset($attr['href'])) {
-                throw new Exception('attr must contain href for render a link.');
+                throw new \Exception('attr must contain href for render a link.');
             }
 
             $path = $attr['href'];

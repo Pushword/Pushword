@@ -3,7 +3,6 @@
 namespace Pushword\Core\DependencyInjection;
 
 use Exception;
-use LogicException;
 use Pushword\Core\Utils\F;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -35,7 +34,7 @@ trait ExtensionTrait
         foreach ($finder as $singleFinder) {
             $configs = $parser->parse(F::file_get_contents($singleFinder->getRealPath())); // @phpstan-ignore-line
             if (! \is_array($configs)) {
-                throw new Exception($singleFinder->getRealPath().' is malformed');
+                throw new \Exception($singleFinder->getRealPath().' is malformed');
             }
 
             $this->prependExtensionConfigs($configs, $container);
@@ -59,7 +58,7 @@ trait ExtensionTrait
             }
 
             if (! \is_array($config)) {
-                throw new Exception('Malformed config named `'.$name.'`');
+                throw new \Exception('Malformed config named `'.$name.'`');
             }
 
             $container->prependExtensionConfig($name, $config);
@@ -72,7 +71,7 @@ trait ExtensionTrait
     protected function loadInternal(array $mergedConfig, ContainerBuilder $container): void
     {
         if (($configuration = $this->getConfiguration($mergedConfig, $container)) === null) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         (new PushwordConfigFactory($container, $mergedConfig, $configuration, $this->getAlias()))

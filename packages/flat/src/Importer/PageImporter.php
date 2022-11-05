@@ -2,10 +2,7 @@
 
 namespace Pushword\Flat\Importer;
 
-use DateTime;
-use DateTimeInterface;
 use Exception;
-use LogicException;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\PageInterface;
@@ -43,7 +40,7 @@ class PageImporter extends AbstractImporter
     public function getContentDirFinder(): FlatFileContentDirFinder
     {
         if (null === $this->contentDirFinder) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         return $this->contentDirFinder;
@@ -69,7 +66,7 @@ class PageImporter extends AbstractImporter
         return $this->getContentDirFinder()->get($host);
     }
 
-    public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
+    public function import(string $filePath, \DateTimeInterface $lastEditDateTime): void
     {
         if (! str_starts_with($this->getMimeTypeFromFile($filePath), 'text/')) {
             return;
@@ -118,7 +115,7 @@ class PageImporter extends AbstractImporter
     /**
      * @param mixed[] $data
      */
-    private function editPage(string $slug, array $data, string $content, DateTime|\DateTimeImmutable $lastEditDateTime): void
+    private function editPage(string $slug, array $data, string $content, \DateTime|\DateTimeImmutable $lastEditDateTime): void
     {
         $page = $this->getPageFromSlug($slug);
 
@@ -141,7 +138,7 @@ class PageImporter extends AbstractImporter
             $setter = 'set'.ucfirst($camelKey);
             if (method_exists($page, $setter)) {
                 if (\in_array($camelKey, ['publishedAt', 'createdAt', 'updatedAt'], true)) {
-                    $value = new DateTime(\strval($value));
+                    $value = new \DateTime(\strval($value));
                 }
 
                 $page->$setter($value); // @phpstan-ignore-line
@@ -166,7 +163,7 @@ class PageImporter extends AbstractImporter
         }
     }
 
-    private function initDateTimeProperties(PageInterface $page, DateTimeInterface $lastEditDateTime): void
+    private function initDateTimeProperties(PageInterface $page, \DateTimeInterface $lastEditDateTime): void
     {
         if (null === $page->getPublishedAt(false)) {
             $page->setPublishedAt($lastEditDateTime);
@@ -207,13 +204,13 @@ class PageImporter extends AbstractImporter
                 if (MediaInterface::class === $object) {
                     $setter = 'set'.ucfirst($property);
                     if (! \is_string($value)) {
-                        throw new LogicException();
+                        throw new \LogicException();
                     }
 
                     $mediaName = F::preg_replace_str('@^/?media/(default)?/@', '', $value);
                     $media = $this->getMedia($mediaName);
                     if (null === $media) {
-                        throw new Exception('Media `'.$value.'` ('.$mediaName.') not found in `'.$slug.'`.');
+                        throw new \Exception('Media `'.$value.'` ('.$mediaName.') not found in `'.$slug.'`.');
                     }
 
                     $page->$setter($media); // @phpstan-ignore-line

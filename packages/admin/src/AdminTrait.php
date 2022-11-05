@@ -3,7 +3,6 @@
 namespace Pushword\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Core\Component\App\AppPool;
@@ -118,7 +117,7 @@ trait AdminTrait
     public function getUser(): UserInterface
     {
         if (null === $this->securityTokenStorage->getToken() || ! ($user = $this->securityTokenStorage->getToken()->getUser()) instanceof UserInterface) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         return $user;
@@ -246,7 +245,7 @@ trait AdminTrait
         $fields = $this->apps->get()->get($key);
 
         if (! \is_array($fields)) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         $event = new FormEvent($this, $fields);

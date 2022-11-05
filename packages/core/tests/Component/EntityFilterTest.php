@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Tests\Component;
 
-use DateTime;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlEncryptedLink;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
@@ -79,8 +78,8 @@ class EntityFilterTest extends KernelTestCase
             ->setSlug('kitchen-sink')
             ->setLocale('en')
             ->setCustomProperty('toc', true)
-            ->setCreatedAt(new DateTime('1 day ago'))
-            ->setUpdatedAt(new DateTime('1 day ago'))
+            ->setCreatedAt(new \DateTime('1 day ago'))
+            ->setUpdatedAt(new \DateTime('1 day ago'))
             ->setMainContent($content ?? file_get_contents(__DIR__.'/../../../skeleton/src/DataFixtures/WelcomePage.md'));
     }
 

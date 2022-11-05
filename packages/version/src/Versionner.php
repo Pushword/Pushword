@@ -6,7 +6,6 @@ use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Events;
-use Exception;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Utils\Entity;
@@ -82,7 +81,7 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
         $page = Repository::getPageRepository($this->entityManager, $this->pageClass)->findOneBy(['id' => $pageId]);
 
         if (null === $page) {
-            throw new Exception('Page not found `'.$pageId.'`');
+            throw new \Exception('Page not found `'.$pageId.'`');
         }
 
         $this->populate($page, $version);

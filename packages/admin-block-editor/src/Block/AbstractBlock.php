@@ -2,7 +2,6 @@
 
 namespace Pushword\AdminBlockEditor\Block;
 
-use Exception;
 use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredEntityTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
@@ -23,7 +22,7 @@ abstract class AbstractBlock implements BlockInterface
     public function __construct(string $name)
     {
         if ($name !== $this->name) {
-            throw new Exception('Name not concorde');
+            throw new \Exception('Name not concorde');
         }
     }
 

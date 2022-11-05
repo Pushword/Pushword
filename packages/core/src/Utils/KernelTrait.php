@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Utils;
 
-use LogicException;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 trait KernelTrait
@@ -31,7 +30,7 @@ trait KernelTrait
     public static function getKernel(): KernelInterface
     {
         if (null === self::$appKernel) {
-            throw new LogicException('You must load kernel before to get It');
+            throw new \LogicException('You must load kernel before to get It');
         }
 
         return self::$appKernel;

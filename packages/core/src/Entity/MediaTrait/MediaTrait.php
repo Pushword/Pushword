@@ -4,8 +4,6 @@ namespace Pushword\Core\Entity\MediaTrait;
 
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Exception;
-use LogicException;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Core\Utils\F;
@@ -88,7 +86,7 @@ trait MediaTrait
     private function extractExtensionFromFile(): string
     {
         if (null === $this->getMediaFile()) {
-            throw new Exception();
+            throw new \Exception();
         }
 
         $extension = $this->getMediaFile()->guessExtension(); // From MimeType
@@ -142,7 +140,7 @@ trait MediaTrait
     public function getMediaFileName(): string
     {
         if (! $this->mediaFile instanceof \Symfony\Component\HttpFoundation\File\File) {
-            throw new Exception('MediaFile is not setted');
+            throw new \Exception('MediaFile is not setted');
         }
 
         if ($this->mediaFile instanceof UploadedFile) {
@@ -175,7 +173,7 @@ trait MediaTrait
     public function getStoreIn(): ?string
     {
         if ('' === $this->projectDir) {
-            throw new Exception('must set project dir before');
+            throw new \Exception('must set project dir before');
         }
 
         return str_replace('%kernel.project_dir%', $this->projectDir, $this->storeIn);
@@ -184,7 +182,7 @@ trait MediaTrait
     public function setStoreIn(string $pathToDir): self
     {
         if ('' === $this->projectDir) {
-            throw new Exception('must set project dir before');
+            throw new \Exception('must set project dir before');
         }
 
         $this->storeIn = rtrim(str_replace($this->projectDir, '%kernel.project_dir%', $pathToDir), '/');
@@ -195,7 +193,7 @@ trait MediaTrait
     public function getPath(): string
     {
         if (null === $this->media) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         return $this->getStoreIn().'/'.$this->media;

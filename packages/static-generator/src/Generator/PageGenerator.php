@@ -19,7 +19,7 @@ class PageGenerator extends AbstractGenerator
         parent::generate($host);
 
         if (self::class == static::class) {
-            throw new Exception('no plan to call generate, maybe you want to call generatePage ?');
+            throw new \Exception('no plan to call generate, maybe you want to call generatePage ?');
         }
     }
 

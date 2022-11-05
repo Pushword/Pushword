@@ -2,8 +2,6 @@
 
 namespace Pushword\Conversation\Service;
 
-use DateInterval;
-use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Pushword\Conversation\Entity\MessageInterface;
@@ -49,7 +47,7 @@ class NewMessageMailNotifier
     /**
      * @return MessageInterface[]
      */
-    protected function getMessagesPostedSince(DateTimeInterface $datetime)
+    protected function getMessagesPostedSince(\DateTimeInterface $datetime)
     {
         $query = 'SELECT m FROM '.$this->message.' m WHERE m.host = :host AND m.createdAt > :lastNotificationTime';
         $query = $this->em->createQuery($query)
@@ -76,7 +74,7 @@ class NewMessageMailNotifier
         }
 
         $lastTime = new LastTime($this->projectDir.'/var/lastNewMessageNotification');
-        if ($lastTime->wasRunSince(new DateInterval($this->interval))) {
+        if ($lastTime->wasRunSince(new \DateInterval($this->interval))) {
             $this->logger->info('Not sending conversation notification : a previous notification was send not a long time ago ('.$this->interval.', see `conversation_notification_interval`).');
 
             return;

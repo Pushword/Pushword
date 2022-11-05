@@ -2,8 +2,6 @@
 
 namespace Pushword\Core\Utils;
 
-use Exception;
-
 class F
 {
     public static function file_get_contents(string $filename): string
@@ -17,7 +15,7 @@ class F
 
         // if (\gettype($pattern) !== \gettype($return)) {
         if (! \is_string($return)) {
-            throw new Exception('An error occured on preg_replace');
+            throw new \Exception('An error occured on preg_replace');
         }
 
         return $return;

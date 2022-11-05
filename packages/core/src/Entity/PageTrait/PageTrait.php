@@ -3,8 +3,6 @@
 namespace Pushword\Core\Entity\PageTrait;
 
 use Cocur\Slugify\Slugify;
-use DateTime;
-use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 trait PageTrait
@@ -22,7 +20,7 @@ trait PageTrait
     protected string $mainContent = '';
 
     #[ORM\Column(type: 'datetime', options: ['default' => 'CURRENT_TIMESTAMP'])]
-    protected ?DateTimeInterface $publishedAt = null;
+    protected ?\DateTimeInterface $publishedAt = null;
 
     public function __toString(): string
     {
@@ -85,16 +83,16 @@ trait PageTrait
     /**
      * Get the value of publishedAt.
      */
-    public function getPublishedAt(bool $safe = true): ?DateTimeInterface
+    public function getPublishedAt(bool $safe = true): ?\DateTimeInterface
     {
         if ($safe && null === $this->publishedAt) {
-            return new DateTime();
+            return new \DateTime();
         }
 
         return $this->publishedAt;
     }
 
-    public function setPublishedAt(DateTimeInterface $publishedAt): self
+    public function setPublishedAt(\DateTimeInterface $publishedAt): self
     {
         $this->publishedAt = $publishedAt;
 
@@ -103,6 +101,6 @@ trait PageTrait
 
     public function isPublished(): bool
     {
-        return $this->publishedAt <= new DateTime('now');
+        return $this->publishedAt <= new \DateTime('now');
     }
 }

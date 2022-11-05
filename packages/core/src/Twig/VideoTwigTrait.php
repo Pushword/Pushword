@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Twig;
 
-use Exception;
 use Pushword\Core\Component\App\AppConfig;
 
 trait VideoTwigTrait
@@ -25,7 +24,7 @@ trait VideoTwigTrait
     protected static function getYoutubeVideoUrl(string $url): string
     {
         if (1 === \Safe\preg_match('~^(?:https?://)?(?:www[.])?(?:youtube[.]com/watch[?]v=|youtu[.]be/)([^&]{11})~', $url, $m)) {
-            return $m[1] ?? throw new Exception();
+            return $m[1] ?? throw new \Exception();
         }
 
         return '';

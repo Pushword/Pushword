@@ -86,7 +86,7 @@ trait MediaSlugTrait
     {
         $filename = '' !== $filename ? $filename : $this->getMediaFileName();
         if ('' === $filename) {
-            throw new Exception('debug... '); // dd($this->mediaFile);
+            throw new \Exception('debug... '); // dd($this->mediaFile);
         }
 
         $extension = $this->extractExtensionFromFile();

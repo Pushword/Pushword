@@ -7,8 +7,6 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Selectable;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ObjectRepository;
-use Exception;
-use LogicException;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface;
 
@@ -38,10 +36,10 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      * @return PageInterface[]
      */
     public function getPublishedPages(
-        $host = '',
+        string|array $host = '',
         array $where = [],
         array $orderBy = [],
-        $limit = 0,
+        int|array $limit = 0,
         bool $withRedirection = true
     ) {
         $queryBuilder = $this->getPublishedPageQueryBuilder($host, $where, $orderBy);
@@ -65,16 +63,14 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      * @param array<mixed> $where
      * @param int|array<(string|int), int> $limit
      */
-    public function getPublishedPageQueryBuilder($host = '', array $where = [], array $orderBy = [], $limit = 0): QueryBuilder
+    public function getPublishedPageQueryBuilder(string|array $host = '', array $where = [], array $orderBy = [], int|array $limit = 0): QueryBuilder
     {
         $qb = $this->buildPublishedPageQuery('p');
 
         $this->andHost($qb, $host);
         $this->andWhere($qb, $where);
         $this->orderBy($qb, $orderBy);
-        if (! \in_array($limit, [0, []], true)) {
-            $this->limit($qb, $limit);
-        }
+        $this->limit($qb, $limit);
 
         return $qb;
     }
@@ -91,7 +87,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     /**
      * @param string|string[] $host
      */
-    public function getPage(string $slug, $host, bool $checkId = true): ?PageInterface
+    public function getPage(string $slug, string|array $host, bool $checkId = true): ?PageInterface
     {
         $qb = $this->createQueryBuilder('p')
             ->andWhere('p.slug =  :slug')->setParameter('slug', $slug);
@@ -110,7 +106,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      *
      * @return PageInterface[]
      */
-    public function findByHost($host): array
+    public function findByHost(string|array $host): array
     {
         $qb = $this->createQueryBuilder('p');
         $this->andHost($qb, $host);
@@ -124,7 +120,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      *                              $qb->getQuery()->getResult();
      */
     public function getIndexablePagesQuery(
-        $host,
+        string|array $host,
         string $locale,
         ?int $limit = null
     ): QueryBuilder {
@@ -221,7 +217,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
         foreach ($where as $singleWhere) {
             if (! \is_array($singleWhere)) {
-                throw new Exception('malformated where params');
+                throw new \Exception('malformated where params');
             }
 
             $this->simpleAndWhere($queryBuilder, $singleWhere);
@@ -285,7 +281,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             $direction = $this->extractDirection($key, $orderBy);
             $orderByFunc = 0 === $i ? 'orderBy' : 'addOrderBy';
             if (! method_exists($queryBuilder, $orderByFunc)) {
-                throw new LogicException();
+                throw new \LogicException();
             }
 
             $queryBuilder->$orderByFunc($this->getRootAlias($queryBuilder).'.'.$key, $direction); // @phpstan-ignore-line
@@ -314,7 +310,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      *
      * @param string|string[] $host
      */
-    public function andHost(QueryBuilder $queryBuilder, $host): QueryBuilder
+    public function andHost(QueryBuilder $queryBuilder, string|array $host): QueryBuilder
     {
         if (\in_array($host, ['', []], true)) {
             return $queryBuilder;

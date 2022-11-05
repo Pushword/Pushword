@@ -178,7 +178,7 @@ final class ImageManager
 
         $size = @getimagesize($path);
         if (false === $size) {
-            throw new Exception('`'.$path.'` not found');
+            throw new \Exception('`'.$path.'` not found');
         }
 
         return [$size[0], $size[1]];
@@ -194,7 +194,7 @@ final class ImageManager
         try {
             return (new InteventionImageManager())->make($path); // default driver GD
         } catch (Exception) {
-            throw new Exception($path);
+            throw new \Exception($path);
         }
     }
 

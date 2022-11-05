@@ -2,8 +2,6 @@
 
 namespace Pushword\Flat\Importer;
 
-use DateTime;
-use DateTimeInterface;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
 use Symfony\Component\Filesystem\Filesystem;
@@ -42,7 +40,7 @@ class MediaImporter extends AbstractImporter
         return $this;
     }
 
-    public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
+    public function import(string $filePath, \DateTimeInterface $lastEditDateTime): void
     {
         if (! $this->isImage($filePath)) {
             if (str_ends_with($filePath, '.json') && file_exists(\Safe\substr($filePath, 0, -5))) { // data file
@@ -63,7 +61,7 @@ class MediaImporter extends AbstractImporter
         // 0 !== strpos(finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $filePath), 'image/') || preg_match('/\.webp$/', $filePath);
     }
 
-    public function importMedia(string $filePath, DateTimeInterface $dateTime): void
+    public function importMedia(string $filePath, \DateTimeInterface $dateTime): void
     {
         $media = $this->getMedia($this->getFilename($filePath));
 
@@ -98,7 +96,7 @@ class MediaImporter extends AbstractImporter
             if (method_exists($media, $setter)) {
                 if (\in_array($key, ['createdAt', 'updatedAt'], true)
                     && \is_array($value) && isset($value['date'])) {
-                    $value = new DateTime($value['date']);
+                    $value = new \DateTime($value['date']);
                 }
 
                 $media->$setter($value); // @phpstan-ignore-line

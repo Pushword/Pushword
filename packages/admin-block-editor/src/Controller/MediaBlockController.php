@@ -3,7 +3,6 @@
 namespace Pushword\AdminBlockEditor\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
 use Pushword\Core\AutowiringTrait\RequiredMediaClass;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
@@ -87,7 +86,7 @@ final class MediaBlockController extends AbstractController
         $content = \Safe\json_decode($content, true);
 
         if (! \is_array($content) || (! isset($content['url']) && ! isset($content['id']))) {
-            throw new LogicException('URL not sent by editor.js ?!');
+            throw new \LogicException('URL not sent by editor.js ?!');
         }
 
         if (isset($content['id'])) {
@@ -104,7 +103,7 @@ final class MediaBlockController extends AbstractController
     private function getMediaFromMedia(string $media): MediaInterface
     {
         if (($media = Repository::getMediaRepository($this->em, $this->mediaClass)->findOneBy(['media' => $media])) === null) {
-            throw new LogicException('Media not found');
+            throw new \LogicException('Media not found');
         }
 
         return $media;
@@ -116,7 +115,7 @@ final class MediaBlockController extends AbstractController
     private function getMediaFileFromUrl(string $url): UploadedFile
     {
         if (0 === \Safe\preg_match('#/([^/]*)$#', $url, $matches)) {
-            throw new LogicException("URL doesn't contain file name");
+            throw new \LogicException("URL doesn't contain file name");
         }
 
         $fileContent = \Safe\file_get_contents($url);
@@ -125,7 +124,7 @@ final class MediaBlockController extends AbstractController
         $filename = md5($matches[1]);
         $filePath = sys_get_temp_dir().'/'.$filename;
         if (0 === \Safe\file_put_contents($filePath, $fileContent)) {
-            throw new LogicException('Storing in tmp folder filed');
+            throw new \LogicException('Storing in tmp folder filed');
         }
 
         $mimeType = \Safe\mime_content_type($filePath);
@@ -137,7 +136,7 @@ final class MediaBlockController extends AbstractController
     {
         $id = (int) $id;
         if (($media = Repository::getMediaRepository($this->em, $this->mediaClass)->findOneBy(['id' => $id])) === null) {
-            throw new LogicException('Media not found');
+            throw new \LogicException('Media not found');
         }
 
         return $media;

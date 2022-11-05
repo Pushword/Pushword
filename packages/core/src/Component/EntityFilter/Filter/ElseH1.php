@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
-use LogicException;
 use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredManagerTrait;
 use Pushword\Core\Entity\PageInterface;
@@ -20,7 +19,7 @@ class ElseH1 extends AbstractFilter
         $return = '' !== \strval($propertyValue) ? $propertyValue : $this->entityFilterManager->getEntity()->getH1();
 
         if (! \is_string($return) && null !== $return) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         return $return;

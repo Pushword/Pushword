@@ -3,7 +3,6 @@
 namespace Pushword\AdminBlockEditor\Twig;
 
 use PiedWeb\RenderAttributes\AttributesTrait;
-use stdClass;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -23,10 +22,10 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @param array<mixed>|stdClass $blockData
-     * @param array<mixed>          $attributes
+     * @param array<mixed>|\stdClass $blockData
+     * @param array<mixed>           $attributes
      */
-    public function blockWrapperAttr(array|stdClass $blockData, array $attributes = []): string
+    public function blockWrapperAttr(array|\stdClass $blockData, array $attributes = []): string
     {
         $blockData = (array) \Safe\json_decode(\Safe\json_encode($blockData), true);
 
@@ -38,9 +37,9 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @param array<mixed>|stdClass $blockData
+     * @param array<mixed>|\stdClass $blockData
      */
-    public function needBlockWrapper(array|stdClass $blockData): bool
+    public function needBlockWrapper(array|\stdClass $blockData): bool
     {
         return '' !== trim($this->blockWrapperAttr($blockData));
     }

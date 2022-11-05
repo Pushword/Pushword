@@ -2,7 +2,6 @@
 
 namespace Pushword\Admin;
 
-use LogicException;
 use Pushword\Core\Entity\UserInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
@@ -43,7 +42,7 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
     {
         $fields = $this->getFormFields('admin_user_form_fields');
         if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         $form->with('admin.user.label.id', ['class' => 'col-md-6 mainFields']);

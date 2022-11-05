@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\DependencyInjection;
 
-use LogicException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\ConfigurableExtension;
@@ -21,7 +20,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
         $this->setPathParameters($container);
 
         if (($configuration = $this->getConfiguration($mergedConfig, $container)) === null) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         (new PushwordConfigFactory($container, $mergedConfig, $configuration))

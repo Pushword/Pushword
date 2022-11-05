@@ -3,7 +3,6 @@
 namespace Pushword\Version;
 
 use Doctrine\Persistence\ManagerRegistry;
-use Exception;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
@@ -78,7 +77,7 @@ class VersionController extends AbstractController
         $page = Repository::getPageRepository($this->doctrine, $this->pageClass)->findOneBy(['id' => $id]);
 
         if (null === $page) {
-            throw new Exception('Page not found `'.$id.'`');
+            throw new \Exception('Page not found `'.$id.'`');
         }
 
         $versions = $this->versionner->getPageVersions($page);

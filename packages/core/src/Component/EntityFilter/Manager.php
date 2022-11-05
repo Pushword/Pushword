@@ -3,14 +3,12 @@
 namespace Pushword\Core\Component\EntityFilter;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Utils\F;
-use ReflectionClass;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment as Twig;
 
@@ -131,7 +129,7 @@ final class Manager
             return false;
         }
 
-        $reflectionClass = new ReflectionClass($filterClass);
+        $reflectionClass = new \ReflectionClass($filterClass);
         if (! $reflectionClass->implementsInterface(FilterInterface::class)) {
             return false;
         }
@@ -142,7 +140,7 @@ final class Manager
     private function getFilterClass(string $filter): FilterInterface
     {
         if (false === ($filterClassName = $this->isFilter($filter))) {
-            throw new Exception('Filter `'.$filter.'` not found');
+            throw new \Exception('Filter `'.$filter.'` not found');
         }
 
         $filterClass = new $filterClassName();

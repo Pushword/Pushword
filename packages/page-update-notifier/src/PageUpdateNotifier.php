@@ -2,11 +2,8 @@
 
 namespace Pushword\PageUpdateNotifier;
 
-use DateInterval;
-use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use LogicException;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
@@ -75,7 +72,7 @@ class PageUpdateNotifier
     /**
      * @return PageInterface[]
      */
-    protected function getPageUpdatedSince(DateTimeInterface $datetime)
+    protected function getPageUpdatedSince(\DateTimeInterface $datetime)
     {
         $pageRepo = Repository::getPageRepository($this->em, $this->pageClass);
 
@@ -103,15 +100,15 @@ class PageUpdateNotifier
         $this->init($page);
 
         if ('' === $this->emailTo) {
-            throw new Exception('`page_update_notification_from` must be set to use this extension.', self::ERROR_NO_EMAIL);
+            throw new \Exception('`page_update_notification_from` must be set to use this extension.', self::ERROR_NO_EMAIL);
         }
 
         if ('' === $this->emailFrom) {
-            throw new Exception('`page_update_notification_to` must be set to use this extension.', self::ERROR_NO_EMAIL);
+            throw new \Exception('`page_update_notification_to` must be set to use this extension.', self::ERROR_NO_EMAIL);
         }
 
         if ('' === $this->interval) {
-            throw new Exception('`page_update_notification_interval` must be set to use this extension.', self::ERROR_NO_INTERVAL);
+            throw new \Exception('`page_update_notification_interval` must be set to use this extension.', self::ERROR_NO_INTERVAL);
         }
     }
 
@@ -136,12 +133,12 @@ class PageUpdateNotifier
 
         $cache = $this->getCacheFilePath();
         $lastTime = new LastTime($cache);
-        if ($lastTime->wasRunSince(new DateInterval($this->interval))) {
+        if ($lastTime->wasRunSince(new \DateInterval($this->interval))) {
             return self::WAS_EVER_RUN_SINCE_INTERVAL;
         }
 
         if (($lastTime30min = $lastTime->get('30 minutes ago')) === null) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         $pages = $this->getPageUpdatedSince($lastTime30min);

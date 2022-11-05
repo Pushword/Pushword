@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Entity\PageTrait;
 
-use LogicException;
 use Pushword\Core\Utils\F;
 
 trait PageRedirectionTrait
@@ -58,7 +57,7 @@ trait PageRedirectionTrait
         }
 
         if (false === $this->redirectionUrl) {
-            throw new LogicException('You may check a redirection exist before to get the redirection url');
+            throw new \LogicException('You may check a redirection exist before to get the redirection url');
         }
 
         return $this->redirectionUrl; // @phpstan-ignore-line
@@ -67,7 +66,7 @@ trait PageRedirectionTrait
     public function getRedirectionCode(): int
     {
         if (null === $this->redirectionCode) {
-            throw new LogicException('You may check a redirection exist before to get the redirection code');
+            throw new \LogicException('You may check a redirection exist before to get the redirection code');
         }
 
         return $this->redirectionCode;

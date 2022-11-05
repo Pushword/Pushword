@@ -14,6 +14,7 @@ class LinkedDocsScannerTest extends KernelTestCase
         self::bootKernel();
         $linkedDocsScanner = new LinkedDocsScanner(
             self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
+            [],
             __DIR__.'/../../skeleton/public',
         );
         $linkedDocsScanner->translator = self::$kernel->getContainer()->get('translator');
@@ -38,6 +39,7 @@ class LinkedDocsScannerTest extends KernelTestCase
             ->setSlug('homepage')
             ->setLocale('en')
             ->setCreatedAt(new \DateTime('2 days ago'))
+            ->setCustomProperty('pageScanLinksToIgnore', ['https://example2.tld/*'])
             ->setMainContent('...'); // \Safe\file_get_contents( __DIR__.'/../../skeleton/src/DataFixtures/WelcomePage.md')
 
         return $page;

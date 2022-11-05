@@ -4,7 +4,6 @@ namespace Pushword\Core\Twig;
 
 use Cocur\Slugify\Slugify;
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use PiedWeb\RenderAttributes\AttributesTrait;
 use Pushword\Core\AutowiringTrait\RequiredPageClass;
 use Pushword\Core\Component\App\AppConfig;
@@ -199,7 +198,7 @@ class AppExtension extends AbstractExtension
         }
 
         if (! $src instanceof MediaInterface) {
-            throw new Exception('Can\'t handle the value submitted ('.$src.')');
+            throw new \Exception('Can\'t handle the value submitted ('.$src.')');
         }
 
         return $src;

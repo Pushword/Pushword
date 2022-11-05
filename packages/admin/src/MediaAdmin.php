@@ -2,7 +2,6 @@
 
 namespace Pushword\Admin;
 
-use LogicException;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
@@ -42,7 +41,7 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
     {
         $fields = $this->getFormFields('admin_media_form_fields');
         if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1]) || ! isset($fields[2]) || ! \is_array($fields[2])) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         $form->with('Media', ['class' => 'col-md-8']);

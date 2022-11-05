@@ -3,7 +3,6 @@
 namespace Pushword\Core\Service;
 
 use Cocur\Slugify\Slugify;
-use Exception;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Utils\Filepath;
@@ -34,7 +33,7 @@ trait ImageImport
         $imageLocalImport = $this->cacheExternalImage($image);
 
         if (false === $imageLocalImport || ($imgSize = getimagesize($imageLocalImport)) === false) {
-            throw new Exception('Image `'.$image.'` was not imported.');
+            throw new \Exception('Image `'.$image.'` was not imported.');
         }
 
         $fileName = $this->generateFileName($image, $imgSize['mime'], '' !== $slug ? $slug : $name, $hashInFilename);

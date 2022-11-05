@@ -2,7 +2,6 @@
 
 namespace Pushword\Admin;
 
-use LogicException;
 use Pushword\Admin\FormField\HostField;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
@@ -82,7 +81,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
         $fields = $this->getFormFields();
         if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         $form->with('admin.page.mainContent.label', ['class' => 'col-md-9 mainFields']);

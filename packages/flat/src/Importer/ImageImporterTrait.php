@@ -2,7 +2,6 @@
 
 namespace Pushword\Flat\Importer;
 
-use DateTimeInterface;
 // use iBudasov\Iptc\Manager as Iptc;
 use Pushword\Core\Entity\MediaInterface;
 
@@ -13,7 +12,7 @@ trait ImageImporterTrait
 {
     abstract protected function getMedia(string $media): MediaInterface;
 
-    public function importImage(string $filePath, DateTimeInterface $dateTime): void
+    public function importImage(string $filePath, \DateTimeInterface $dateTime): void
     {
         $media = $this->getMedia($this->getFilename($filePath));
 

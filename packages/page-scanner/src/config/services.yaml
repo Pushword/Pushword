@@ -8,6 +8,7 @@ services:
       $pageClass: "%pw.entity_page%"
       $varDir: "%kernel.project_dir%/var"
       $pageScanInterval: "%pw.pushword_page_scanner.min_interval_between_scan%"
+      $linksToIgnore: "%pw.pushword_page_scanner.links_to_ignore%"
 
   Pushword\PageScanner\:
     resource: "../*"

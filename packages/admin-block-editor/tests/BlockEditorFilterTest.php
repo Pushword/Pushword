@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pushword\AdminBlockEditor\Tests;
 
-use DateTime;
 use Pushword\AdminBlockEditor\BlockEditorFilter;
 use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -38,8 +37,8 @@ class BlockEditorFilterTest extends KernelTestCase
                 ->setSlug('kitchen-sink')
                 ->setLocale('en')
                 ->setCustomProperty('toc', true)
-                ->setCreatedAt(new DateTime('1 day ago'))
-                ->setUpdatedAt(new DateTime('1 day ago'))
+                ->setCreatedAt(new \DateTime('1 day ago'))
+                ->setUpdatedAt(new \DateTime('1 day ago'))
                 ->setMainContent(file_get_contents(__DIR__.'/content/content.json'));
     }
 }

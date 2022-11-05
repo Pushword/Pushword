@@ -3,7 +3,6 @@
 namespace Pushword\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use Psr\Container\ContainerInterface;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
@@ -35,7 +34,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
         $this->container = $container;
 
         if (! $this->container->has('parameter_bag')) { // @phpstan-ignore-line
-            throw new Exception('patch no longer worked');
+            throw new \Exception('patch no longer worked');
         }
     }
 

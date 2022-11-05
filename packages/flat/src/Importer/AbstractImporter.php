@@ -2,7 +2,6 @@
 
 namespace Pushword\Flat\Importer;
 
-use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Component\App\AppPool;
 
@@ -20,7 +19,7 @@ abstract class AbstractImporter
     {
     }
 
-    abstract public function import(string $filePath, DateTimeInterface $lastEditDateTime): void;
+    abstract public function import(string $filePath, \DateTimeInterface $lastEditDateTime): void;
 
     public function finishImport(): void
     {
