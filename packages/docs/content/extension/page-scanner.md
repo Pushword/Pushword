@@ -1,5 +1,5 @@
 ---
-title: "Pushword Page Scanner : Find dead links, 404, 301 and more."
+title: 'Pushword Page Scanner : Find dead links, 404, 301 and more.'
 h1: Page Scanner
 toc: true
 parent: extensions
@@ -20,4 +20,23 @@ you may have a look inside `vendor/pushword/admin/install.php`.
 
 ```
 php bin/console pushword:page:scan $host
+```
+
+## Configuration
+
+You can configure to avoid to check some links based on a url pattern (with wildcard).
+
+In a config file `pushword_page_scanner.yaml` :
+
+```yaml
+pushword_page_scanner:
+    links_to_ignore:
+        - https://example.tld/*
+```
+
+In a page (_customPropertiy_) :
+
+```yaml
+pageScanLinksToIgnore:
+    - https://example.tld/*
 ```
