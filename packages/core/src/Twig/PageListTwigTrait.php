@@ -76,7 +76,7 @@ trait PageListTwigTrait
      *
      * @return array<mixed>
      */
-    private function stringToSearch(string $search): array
+    private function stringToSearch(string $search, ?PageInterface $currentPage): array
     {
         $where = [];
 
@@ -84,7 +84,7 @@ trait PageListTwigTrait
             $searchToParse = explode(' OR ', $search);
             foreach ($searchToParse as $singleSearchToParse) {
                 // $where = array_merge($where, $this->stringToSearch($s), ['OR']);
-                $where[] = $this->simpleStringToSearch($singleSearchToParse);
+                $where[] = $this->simpleStringToSearch($singleSearchToParse, $currentPage);
                 $where[] = 'OR';
             }
 
@@ -96,7 +96,7 @@ trait PageListTwigTrait
                 $where[] = $this->simpleStringToSearch($s);
             }
         }*/ else {
-            $where[] = $this->simpleStringToSearch($search);
+            $where[] = $this->simpleStringToSearch($search, $currentPage);
         }
 
         return $where;
@@ -105,24 +105,27 @@ trait PageListTwigTrait
     /**
      * @return array<mixed>
      */
-    private function simpleStringToSearchChildren(string $search): ?array
+    private function simpleStringToSearchChildren(string $search, ?PageInterface $currentPage = null): ?array
     {
-        if ('children' == strtolower($search) && null !== $this->apps->getCurrentPage()) {
-            return ['parentPage', '=', $this->apps->getCurrentPage()->getId()];
+        if (null === $currentPage) {
+            return null;
         }
 
-        if ('parent_children' == strtolower($search) && null !== $this->apps->getCurrentPage()) {
-            if (($parentPage = $this->apps->getCurrentPage()->getParentPage()) === null) {
-                throw new \Exception('no parent page');
+        if ('children' == strtolower($search)) {
+            return ['parentPage', '=', $currentPage->getId()];
+        }
+
+        if ('parent_children' == strtolower($search)) {
+            if (($parentPage = $currentPage->getParentPage()) === null) {
+                throw new \Exception('no parent page for `'.$currentPage->getSlug().'`');
             }
 
             return ['parentPage', '=', $parentPage->getId()];
         }
 
         if ('children_children' == strtolower($search)
-            && null !== $this->apps->getCurrentPage()
-            && $this->apps->getCurrentPage()->hasChildrenPages()) {
-            $childrenPage = $this->apps->getCurrentPage()->getChildrenPages()->map(fn ($page) => $page->getId())->toArray();
+            && $currentPage->hasChildrenPages()) {
+            $childrenPage = $currentPage->getChildrenPages()->map(fn ($page) => $page->getId())->toArray();
 
             return ['parentPage', 'IN', $childrenPage];
         }
@@ -133,9 +136,9 @@ trait PageListTwigTrait
     /**
      * @return array<mixed>
      */
-    private function simpleStringToSearch(string $search): array
+    private function simpleStringToSearch(string $search, ?PageInterface $currentPage = null): array
     {
-        if (($return = $this->simpleStringToSearchChildren($search)) !== null) {
+        if (($return = $this->simpleStringToSearchChildren($search, $currentPage)) !== null) {
             return $return;
         }
 
@@ -166,14 +169,17 @@ trait PageListTwigTrait
         array|string $search = '',
         array|int $max = 0,
         array|string $order = 'publishedAt,priority',
-        string $view = '/component/pages_list.html.twig',
-        array|string $host = ''
+        string $view = '',
+        array|string $host = '',
+        ?PageInterface $currentPage = null
     ): string {
-        if ('card' == $view) {
-            $view = '/component/pages_list_card.html.twig';
-        }
+        $currentPage ??= $this->apps->getCurrentPage(); // todo : drop app's current page
 
-        $search = \is_array($search) ? $search : $this->stringToSearch($search);
+        $view = 'card' == $view ?
+                '/component/pages_list_card.html.twig'
+                : (\in_array($view, ['', 'list'], true) ? '/component/pages_list.html.twig' : $view);
+
+        $search = \is_array($search) ? $search : $this->stringToSearch($search, $currentPage);
 
         $order = '' === $order ? 'publishedAt,priority' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
@@ -187,8 +193,8 @@ trait PageListTwigTrait
                 $this->getLimit($max)
             );
 
-        if (null !== $this->apps->getCurrentPage()) {
-            $queryBuilder->andWhere('p.id <> '.$this->apps->getCurrentPage()->getId());
+        if (null !== $currentPage) {
+            $queryBuilder->andWhere('p.id <> '.($currentPage->getId() ?? 0));
         }
 
         if (\is_array($max) && isset($max[1]) && $max[1] > 1) {
