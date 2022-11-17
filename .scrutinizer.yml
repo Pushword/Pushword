@@ -7,13 +7,13 @@ build:
     tests:
       environment:
         php:
-          version: 8.0
+          version: 8.1
           pecl_extensions:
             - zip
     analysis:
       environment:
         php:
-          version: 8.0
+          version: 8.1
           pecl_extensions:
             - zip
       tests:
