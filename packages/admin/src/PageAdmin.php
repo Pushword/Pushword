@@ -115,6 +115,9 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         $object->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
     }
 
+    /**
+     * @psalm-suppress TooManyArguments
+     */
     public function getSearchFilterForTitle(QueryBuilder $queryBuilder, string $alias, string $field, FilterData $filterData): ?bool
     {
         if (! $filterData->hasValue()) {
@@ -123,9 +126,9 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
         $exp = new \Doctrine\ORM\Query\Expr();
         $queryBuilder->andWhere(
-            $exp->like(
-                $exp->concat($alias.'.h1', $alias.'.title', $alias.'.slug'),
-                $exp->literal('%'.$filterData->getValue().'%')
+            (string) $exp->like(
+                (string) $exp->concat($alias.'.h1', $alias.'.title', $alias.'.slug'),
+                (string) $exp->literal('%'.$filterData->getValue().'%')
             )
         );
 
