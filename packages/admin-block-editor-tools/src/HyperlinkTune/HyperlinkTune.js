@@ -1,6 +1,6 @@
-import css from "./HyperlinkTune.css";
-import make from "../Abstract/make.js";
-import Hyperlink from "../Hyperlink/Hyperlink.js";
+import css from './HyperlinkTune.css';
+import make from '../Abstract/make.js';
+import Hyperlink from '../Hyperlink/Hyperlink.js';
 // todo get selection utils https://github.com/codex-team/editor.js/blob/next/src/components/selection.ts
 // and drop editorjs-hyperlink dependency
 
@@ -12,12 +12,12 @@ export default class HyperlinkTune {
 
     constructor({ api, data }) {
         this.api = api;
-        this.data = data || { url: "", hideForBot: true, targetBlank: false };
+        this.data = data || { url: '', hideForBot: true, targetBlank: false };
 
         this._CSS = {
-            classWrapper: "cdx-anchor-tune-wrapper",
-            classIcon: "cdx-anchor-tune-icon",
-            classInput: "cdx-anchor-tune-input",
+            classWrapper: 'cdx-anchor-tune-wrapper',
+            classIcon: 'cdx-anchor-tune-icon',
+            classInput: 'cdx-anchor-tune-input',
         };
 
         this.nodes = {};
@@ -29,21 +29,27 @@ export default class HyperlinkTune {
      * @returns {*}
      */
     render(value = null) {
-        const wrapper = document.createElement("div");
+        const wrapper = document.createElement('div');
         //wrapper.classList.add(" ");
 
-        const wrapperIcon = document.createElement("div");
+        const wrapperIcon = document.createElement('div');
         wrapperIcon.classList.add(this._CSS.classIcon);
-        wrapperIcon.appendChild(Hyperlink.iconSvg("link", 12, 12));
+        wrapperIcon.appendChild(Hyperlink.iconSvg('link', 12, 12));
 
         this.nodes.url = make.input(
             this,
-            ["cdx-input-labeled", "cdx-input-full"],
-            "<a href=#>image</a>",
+            ['cdx-input-labeled', 'cdx-input-full'],
+            '<a href=#>image</a>',
             this.data.url
         );
-        this.nodes.hideForBot = make.switchInput("hideForBot", this.i18n.t("Dissimuler pour les robots"));
-        this.nodes.targetBlank = make.switchInput("targetBlank", this.i18n.t("Ouvrir dans un nouvel onglet"));
+        this.nodes.hideForBot = make.switchInput(
+            'hideForBot',
+            this.i18n.t('Dissimuler pour les robots')
+        );
+        this.nodes.targetBlank = make.switchInput(
+            'targetBlank',
+            this.i18n.t('Ouvrir dans un nouvel onglet')
+        );
 
         wrapper.appendChild(wrapperIcon);
         wrapper.appendChild(this.nodes.url);

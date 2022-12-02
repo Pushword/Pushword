@@ -19,6 +19,7 @@
         "@babel/core": "^7.10.2",
         "@babel/preset-env": "^7.10.2",
         "@codexteam/ajax": "^4.2.0",
+        "@codexteam/icons": "^0.0.4",
         "@editorjs/attaches": "https://github.com/editor-js/attaches.git",
         "@editorjs/editorjs": "^2.19.1",
         "@editorjs/image": "https://github.com/editor-js/image.git",

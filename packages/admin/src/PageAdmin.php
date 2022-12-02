@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Doctrine\DBAL\Query\QueryBuilder;
 use Pushword\Admin\FormField\HostField;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
@@ -114,14 +115,19 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         $object->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
     }
 
-    public function getSearchFilterForTitle($queryBuilder, $alias, $field, FilterData $filterData): mixed
+    public function getSearchFilterForTitle(QueryBuilder $queryBuilder, string $alias, string $field, FilterData $filterData): ?bool
     {
         if (! $filterData->hasValue()) {
             return null;
         }
 
         $exp = new \Doctrine\ORM\Query\Expr();
-        $queryBuilder->andWhere($exp->like($exp->concat($alias.'.h1', $alias.'.title'), $exp->literal('%'.$filterData->getValue().'%')));
+        $queryBuilder->andWhere(
+            $exp->like(
+                $exp->concat($alias.'.h1', $alias.'.title', $alias.'.slug'),
+                $exp->literal('%'.$filterData->getValue().'%')
+            )
+        );
 
         return true;
     }
@@ -141,12 +147,11 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
                 'callback' => [$this, 'getSearchFilterForTitle'],
                 'label' => 'admin.page.h1.label',
             ]);
+        // $filter->add('slug', null, ['label' => 'admin.page.slug.label']);
 
         $filter->add('mainContent', null, ['label' => 'admin.page.mainContent.label']);
 
         $filter->add('locale', null, ['label' => 'admin.page.locale.label']);
-
-        $filter->add('slug', null, ['label' => 'admin.page.slug.label']);
 
         if ($this->exists('name')) {
             $filter->add('name', null, ['label' => 'admin.page.name.label']);

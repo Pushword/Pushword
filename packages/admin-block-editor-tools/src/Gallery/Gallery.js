@@ -1,14 +1,14 @@
 //require("./index.css").toString(); /
-import css from "./index.css";
+import css from './index.css';
 
-import CarouselTool from "@vietlongn/editorjs-carousel/src/index.js";
-import make from "./../Abstract/make.js";
-import ToolboxIcon from "./toolbox-icon.svg";
+import CarouselTool from '@vietlongn/editorjs-carousel/src/index.js';
+import make from './../Abstract/make.js';
+import ToolboxIcon from './toolbox-icon.svg';
 
 export default class Gallery extends CarouselTool {
     static get toolbox() {
         return {
-            title: "Gallery",
+            title: 'Gallery',
             icon: ToolboxIcon,
         };
     }
@@ -26,26 +26,26 @@ export default class Gallery extends CarouselTool {
     }
 
     createImageInput() {
-        this.nodes.imagePreloader = make.element("div", "image-tool__image-preloader");
-        this.nodes.imagePreloader.style.display = "none";
-        this.nodes.fileButton = make.fileButtons(this, ["cdx-input-gallery"]);
+        this.nodes.imagePreloader = make.element('div', 'image-tool__image-preloader');
+        this.nodes.imagePreloader.style.display = 'none';
+        this.nodes.fileButton = make.fileButtons(this, ['cdx-input-gallery']);
         this.nodes.fileButton.appendChild(this.nodes.imagePreloader);
         return this.nodes.fileButton;
     }
 
     onUpload(response) {
         super.onUpload(response);
-        this.list.childNodes[this.list.childNodes.length - 2].firstChild.firstChild.dataset.file = JSON.stringify(
-            response.file
-        );
-        this.list.childNodes[this.list.childNodes.length - 2].firstChild.lastChild.value = response.file.name;
+        this.list.childNodes[this.list.childNodes.length - 2].firstChild.firstChild.dataset.file =
+            JSON.stringify(response.file);
+        this.list.childNodes[this.list.childNodes.length - 2].firstChild.lastChild.value =
+            response.file.name;
     }
 
     render() {
         super.render();
         if (this.data.length > 0) {
             for (const load of this.data) {
-                this.list.querySelectorAll(".cdxcarousel-inputUrl").forEach(function (item) {
+                this.list.querySelectorAll('.cdxcarousel-inputUrl').forEach(function (item) {
                     item.dataset.file = JSON.stringify(load.file);
                 });
             }
@@ -71,7 +71,8 @@ export default class Gallery extends CarouselTool {
                 if (item.firstChild.value) {
                     data.push({
                         file:
-                            item.firstChild.dataset.file && this.isJson(item.firstChild.dataset.file)
+                            item.firstChild.dataset.file &&
+                            this.isJson(item.firstChild.dataset.file)
                                 ? JSON.parse(item.firstChild.dataset.file)
                                 : {},
                         url: item.firstChild.value,
@@ -84,7 +85,7 @@ export default class Gallery extends CarouselTool {
     }
 
     onFileLoading() {
-        const newItem = this.creteNewItem("", "");
+        const newItem = this.creteNewItem('', '');
         this.list.insertBefore(newItem, this.addButton);
     }
 }

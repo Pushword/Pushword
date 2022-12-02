@@ -11,7 +11,6 @@ import InlineCode from '@editorjs/inline-code';
 import Hyperlink from '@pushword/editorjs-tools/dist/Hyperlink.js';
 import Paragraph from 'editorjs-paragraph-with-alignment';
 import Table from '@editorjs/table';
-import { ItalicInlineTool, UnderlineInlineTool, StrongInlineTool } from 'editorjs-inline-tool';
 import DragDrop from 'editorjs-drag-drop';
 import Undo from 'editorjs-undo';
 
@@ -35,9 +34,6 @@ export class editorJs {
                 : {
                       HyperlinkTune: HyperlinkTune,
                       Anchor: Anchor,
-                      Bold: StrongInlineTool,
-                      Italic: ItalicInlineTool,
-                      Underline: UnderlineInlineTool,
                       Header: Header,
                       List: List,
                       Raw: Raw,
