@@ -20,12 +20,12 @@
         "editorjs-paragraph-with-alignment": "^3.0",
         "editorjs-style": "^3.0",
         "editorjs-undo": "^2",
-        "sass": "^1.56",
         "postcss": "^8.4",
         "postcss-import": "^15.0",
         "postcss-loader": "^7.0",
         "postcss-nested": "^6.0",
         "postcss-nested-ancestors": "^3.0",
+        "sass": "^1.56",
         "sass-loader": "^13.2"
     },
     "license": "UNLICENSED",

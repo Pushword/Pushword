@@ -1,5 +1,7 @@
 var Encore = require('@symfony/webpack-encore');
 
+Encore.configureRuntimeEnvironment('production');
+
 Encore.setOutputPath('./src/Resources/public/')
     .setPublicPath('/bundles/pushwordadmin')
     .setManifestKeyPrefix('/bundles/pushwordadmin/')
