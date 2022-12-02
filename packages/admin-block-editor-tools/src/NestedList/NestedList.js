@@ -1,4 +1,4 @@
-import ListTool from "@editorjs/nested-list/src/index.js";
+import ListTool from '@editorjs/nested-list/src/index.js';
 //import css from "@editorjs/raw/src/index.css";
 
 export default class NestedList extends ListTool {
@@ -15,7 +15,7 @@ export default class NestedList extends ListTool {
         if (
             !(data && Object.keys(data).length) ||
             !(data.items && Object.keys(data.items).length) ||
-            typeof data.items[0] !== "string"
+            typeof data.items[0] !== 'string'
         )
             return data;
 
@@ -52,7 +52,7 @@ export default class NestedList extends ListTool {
      */
     static get pasteConfig() {
         return {
-            tags: ["OL", "UL", "LI"],
+            tags: ['OL', 'UL', 'LI'],
         };
     }
 
@@ -67,12 +67,12 @@ export default class NestedList extends ListTool {
         let style;
 
         switch (tag) {
-            case "OL":
-                style = "ordered";
+            case 'OL':
+                style = 'ordered';
                 break;
-            case "UL":
-            case "LI":
-                style = "unordered";
+            case 'UL':
+            case 'LI':
+                style = 'unordered';
         }
 
         const data = {
@@ -80,10 +80,10 @@ export default class NestedList extends ListTool {
             items: [],
         };
 
-        if (tag === "LI") {
+        if (tag === 'LI') {
             data.items.push({ content: element.innerHTML, items: [] });
         } else {
-            const items = Array.from(element.querySelectorAll("LI"));
+            const items = Array.from(element.querySelectorAll('LI'));
 
             const listItems = items.map((li) => li.innerHTML).filter((item) => !!item.trim());
 

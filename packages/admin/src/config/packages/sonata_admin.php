@@ -33,6 +33,7 @@ return [
             'logo_content' => 'icon',
             'sort_admins' => true,
             'confirm_exit' => false,
+            'list_action_button_content' => 'icon',
         ],
         'templates' => [
             'layout' => '@pwAdmin/layout.html.twig',
@@ -40,6 +41,7 @@ return [
             'user_block' => '@pwAdmin/user_block.html.twig',
             'button_create' => '@pwAdmin/Button/create_button.html.twig',
         ],
+        'search' => false,
         'global_search' => ['admin_route' => 'edit'],
         'breadcrumbs' => ['child_admin_route' => 'edit'],
     ],

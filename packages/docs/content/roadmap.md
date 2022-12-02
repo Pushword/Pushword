@@ -7,6 +7,14 @@ parent: contribute
 
 ## BugFix && To finish
 
+-   MàJ en cours sur admin-block-editor
+
+          "@editorjs/raw": "https://github.com/editor-js/raw.git#208cbfd7ea1da507173686e1312f95788fb8f209",
+
+        "@editorjs/nested-list": "https://github.com/editor-js/nested-list.git#8375ae17756fa2677d57e716e12096437d01e8f8",
+
+        "@editorjs/image": "https://github.com/editor-js/image.git#e3df500fc62a88d3490fa4ba4030c07f0cd79d64",
+
 -   Conversation form controller
     -   manage multiHost
 -   Scan : ajouter un check des liens vides `"></a`

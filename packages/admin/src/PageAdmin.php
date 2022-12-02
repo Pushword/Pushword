@@ -7,8 +7,10 @@ use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Filter\Model\FilterData;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata;
+use Sonata\DoctrineORMAdminBundle\Filter\CallbackFilter;
 
 /**
  * @extends AbstractAdmin<PageInterface>
@@ -112,25 +114,39 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         $object->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
     }
 
+    public function getSearchFilterForTitle($queryBuilder, $alias, $field, FilterData $filterData): mixed
+    {
+        if (! $filterData->hasValue()) {
+            return null;
+        }
+
+        $exp = new \Doctrine\ORM\Query\Expr();
+        $queryBuilder->andWhere($exp->like($exp->concat($alias.'.h1', $alias.'.title'), $exp->literal('%'.$filterData->getValue().'%')));
+
+        return true;
+    }
+
     /**
      * @psalm-suppress InvalidArgument
      */
     protected function configureDatagridFilters(DatagridMapper $filter): void
     {
-        $filter->add('locale', null, ['label' => 'admin.page.locale.label']);
-
         if (\count($this->getApps()->getHosts()) > 1) {
             // $filter->add('host', null, ['label' => 'admin.page.host.label']);
             (new HostField($this))->datagridMapper($filter); // @phpstan-ignore-line
         }
 
-        $filter->add('h1', null, ['label' => 'admin.page.h1.label']);
+        $filter
+            ->add('h1', CallbackFilter::class, [
+                'callback' => [$this, 'getSearchFilterForTitle'],
+                'label' => 'admin.page.h1.label',
+            ]);
 
         $filter->add('mainContent', null, ['label' => 'admin.page.mainContent.label']);
 
-        $filter->add('slug', null, ['label' => 'admin.page.slug.label']);
+        $filter->add('locale', null, ['label' => 'admin.page.locale.label']);
 
-        $filter->add('title', null, ['label' => 'admin.page.title.label']);
+        $filter->add('slug', null, ['label' => 'admin.page.slug.label']);
 
         if ($this->exists('name')) {
             $filter->add('name', null, ['label' => 'admin.page.name.label']);
