@@ -2,7 +2,6 @@
 
 namespace Pushword\Admin;
 
-use Doctrine\DBAL\Query\QueryBuilder;
 use Pushword\Admin\FormField\HostField;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
@@ -11,6 +10,7 @@ use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Filter\Model\FilterData;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata;
+use Sonata\DoctrineORMAdminBundle\Datagrid\ProxyQuery;
 use Sonata\DoctrineORMAdminBundle\Filter\CallbackFilter;
 
 /**
@@ -116,9 +116,11 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
     }
 
     /**
+     * @param ProxyQuery<PageInterface> $queryBuilder
+     *
      * @psalm-suppress TooManyArguments
      */
-    public function getSearchFilterForTitle(QueryBuilder $queryBuilder, string $alias, string $field, FilterData $filterData): ?bool
+    public function getSearchFilterForTitle(ProxyQuery $queryBuilder, string $alias, string $field, FilterData $filterData): ?bool
     {
         if (! $filterData->hasValue()) {
             return null;
