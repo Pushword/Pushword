@@ -23,7 +23,7 @@ class HtaccessGenerator extends PageGenerator
     {
         $return = '';
         foreach ($this->redirectionManager->get() as $r) {
-            $return .= 'Redirect '.$r[2].' '.$r[0].' '.$r[1].\PHP_EOL;
+            $return .= 'Redirect '.$r[2].' '.$r[0].'$ '.$r[1].\PHP_EOL;
         }
 
         return $return;
