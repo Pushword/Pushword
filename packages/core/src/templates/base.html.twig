@@ -60,7 +60,7 @@
     </head>
 {% endblock %}
 
-    <body{% if body_class is defined %} class="{{ body_class|default('') }}"{% endif %}{% if body_style is defined %} class="{{ body_style|default('') }}"{% endif %}>
+    <body{% if body_class is defined %} class="{{ body_class|default('') }}"{% endif %}{% if body_style is defined %} style="{{ body_style|default('') }}"{% endif %}>
 
         {% block body %}{% endblock %}
 
