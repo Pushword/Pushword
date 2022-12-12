@@ -7,6 +7,7 @@ twig:
     "%kernel.project_dir%/templates": App
     "%pw.package_dir%/core/src/templates/TwigBundle": Twig
     "%pw.package_dir%/core/src/../src/templates": Pushword
+    "%kernel.project_dir%/public": ~
     #'%kernel.project_dir%/templates/bundles/PushwordCoreBundle/': PushwordCore
   globals:
     apps: "@pushword.apps"
