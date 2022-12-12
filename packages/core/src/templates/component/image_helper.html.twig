@@ -5,7 +5,7 @@
         <img srcset="{{ image|image(default_filter) }} 576w"
             src="{{ image|image('default') }}"
             loading="lazy"
-            width="10000" height="10000"
+            width="{{ image.width }}" height="{{ image.height }}"
             {% if otherAttributes.alt is not defined %}
                 alt="{{ image.nameByLocale(page is not null ? page.locale : '') }}"
             {% endif %}
