@@ -23,7 +23,7 @@ trait MediaTrait
     use TimestampableTrait;
 
     #[ORM\Column(type: 'string', length: 255)]
-    protected string $storeIn;
+    protected string $storeIn = '';
 
     /**
      * Used to abstract storeIn.
@@ -47,16 +47,9 @@ trait MediaTrait
     protected int $size;
 
     /**
-     * @Vich\UploadableField(
-     *     mapping="media_media",
-     *     fileNameProperty="slug",
-     *     mimeType="mimeType",
-     *     size="size",
-     *     dimensions="dimensions"
-     * )
-     *
      * @var UploadedFile|File|null
      */
+    #[Vich\UploadableField(mapping: 'media_media', fileNameProperty: 'slug', mimeType: 'mimeType', size: 'size', dimensions: 'dimensions')]
     protected $mediaFile = null;
 
     // todo Rename to $file

@@ -11,10 +11,10 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 /**
- * @Vich\Uploadable
  * #UniqueEntity({"media"}, message="Media name is ever taken by another media.")
- * #UniqueEntity({"name"}, message="Name is ever taken by another media..")
+ * #UniqueEntity({"name"}, message="Name is ever taken by another media..").
  */
+#[Vich\Uploadable]
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
 class Media implements MediaInterface

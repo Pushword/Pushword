@@ -2,15 +2,13 @@
 
 namespace Pushword\StaticGenerator;
 
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class StaticController extends AbstractController
 {
-    /**
-     * @Security("is_granted('ROLE_PUSHWORD_ADMIN')")
-     */
+    #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function generateStatic(StaticAppGenerator $staticAppGenerator, ?string $host = null): Response
     {
         exec('cd ../ && php bin/console pushword:static:generate '.$host.' > /dev/null 2>/dev/null &');

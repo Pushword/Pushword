@@ -279,8 +279,7 @@ final class LinkedDocsScanner extends AbstractScanner
         }
 
         $canonical = new CanonicalExtractor(new Url($url), new DomCrawler($client->getResponse()->getBody()));
-        if ($canonical->canonicalExists()
-            && (! $canonical->isCanonicalPartiallyCorrect() || ! $canonical->isCanonicalCorrect())) {
+        if (! $canonical->ifCanonicalExistsIsItCorrectOrPartiallyCorrect()) {
             return $this->urlExistCache[$url] = $this->trans('page_scan.canonical').' ('.$canonical->get().')';
         }
 

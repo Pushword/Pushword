@@ -5,11 +5,11 @@ namespace Pushword\Version;
 use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class VersionController extends AbstractController
@@ -53,9 +53,7 @@ class VersionController extends AbstractController
         $this->pageClass = $parameterBag->get('pw.entity_page'); // @phpstan-ignore-line
     }
 
-    /**
-     * @Security("is_granted('ROLE_PUSHWORD_ADMIN')")
-     */
+    #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function loadVersion(string $id, string $version): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         $this->versionner->loadVersion($id, $version);

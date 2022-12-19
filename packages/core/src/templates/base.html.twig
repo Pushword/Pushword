@@ -23,9 +23,7 @@
 
     <title>{% block title %}Pushword CMS !{% endblock %}</title>
 
-
     {% block css %}
-
       {% block css_stylesheets %}
         {% set stylesheets = apps.get().get('assetsVersionned').stylesheets %}
         {% for stylesheet in stylesheets %}
@@ -41,11 +39,8 @@
       }
       </style>
       {% endblock %}
-
-      {# <link rel="stylesheet" href="{{ asset('assets/app.css') }}"> #}
-
       <style>.nojs{display:inline-block}</style>
-	    <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:none !important}</style>');</script>
+      <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:none !important}</style>');</script>
     {% endblock %}
 
     {% block feed %}

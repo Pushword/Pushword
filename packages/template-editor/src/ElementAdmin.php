@@ -2,7 +2,6 @@
 
 namespace Pushword\TemplateEditor;
 
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -13,11 +12,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Twig\Environment as Twig;
 
-/**
- * @IsGranted("ROLE_PUSHWORD_ADMIN_THEME")
- */
+#[IsGranted('ROLE_PUSHWORD_ADMIN')]
 final class ElementAdmin extends AbstractController
 {
     private KernelInterface $kernel;

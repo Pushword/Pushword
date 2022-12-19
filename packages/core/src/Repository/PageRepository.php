@@ -13,10 +13,10 @@ use Pushword\Core\Entity\PageInterface;
 /**
  * @extends ServiceEntityRepository<PageInterface>
  *
- * @method PageInterface|null                        find($id, $lockMode = null, $lockVersion = null)
- * @method PageInterface|null                        findOneBy(array $criteria, array $orderBy = null)
- * @method list<\Pushword\Core\Entity\PageInterface> findAll()
- * @method list<\Pushword\Core\Entity\PageInterface> findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method PageInterface|null  find($id, $lockMode = null, $lockVersion = null)
+ * @method PageInterface|null  findOneBy(array $criteria, array $orderBy = null)
+ * @method list<PageInterface> findAll()
+ * @method list<PageInterface> findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  *
  * @implements Selectable<int, PageInterface>
  * @implements ObjectRepository<PageInterface>

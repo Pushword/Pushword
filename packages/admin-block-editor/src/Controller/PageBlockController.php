@@ -6,15 +6,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\AutowiringTrait\RequiredApps;
 use Pushword\Core\AutowiringTrait\RequiredPageClass;
 use Pushword\Core\Repository\Repository;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Twig\Environment as Twig;
 
-/**
- * @IsGranted("ROLE_EDITOR")
- */
+#[IsGranted('ROLE_EDITOR')]
 final class PageBlockController extends AbstractController
 {
     use RequiredApps;

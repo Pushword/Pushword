@@ -68,60 +68,22 @@ return static function (RectorConfig $rectorConfig): void {
     //$parameters->rule(Option::PHP_VERSION_FEATURES, PhpVersion::PHP_80);
     //$containerConfigurator->import(SetList::PHP_80);
     $rectorConfig->sets([
+        SetList::CODE_QUALITY,
         LevelSetList::UP_TO_PHP_80,
-        DoctrineSetList::ANNOTATIONS_TO_ATTRIBUTES,
-        SymfonySetList::ANNOTATIONS_TO_ATTRIBUTES,
-        // SetList::CODE_QUALITY,
+        LevelSetList::UP_TO_PHP_81,
+        SetList::CODING_STYLE,
+        SetList::EARLY_RETURN,
+        SetList::TYPE_DECLARATION,
         // SetList::DEAD_CODE,
-        // SetList::CODING_STYLE,
-        // SetList::TYPE_DECLARATION,
-        // SetList::TYPE_DECLARATION_STRICT,
-        // SetList::NAMING,
-        // SetList::PRIVATIZATION,
-        // SetList::EARLY_RETURN,
-        // PHPUnitSetList::PHPUNIT_CODE_QUALITY,
+        PHPUnitSetList::PHPUNIT_CODE_QUALITY,
+        /*
+        SetList::NAMING,
+        SetList::PRIVATIZATION,
+        */
     ]);
-    $rectorConfig->rule(CombinedAssignRector::class);
-    $rectorConfig->rule(SimplifyConditionsRector::class);
-    $rectorConfig->rule(SimplifyDeMorganBinaryRector::class);
-    $rectorConfig->rule(SimplifyForeachToCoalescingRector::class);
-    $rectorConfig->rule(SimplifyIfReturnBoolRector::class);
-    $rectorConfig->rule(StrContainsRector::class);
-    $rectorConfig->rule(StrEndsWithRector::class);
-    $rectorConfig->rule(StrStartsWithRector::class);
-    $rectorConfig->rule(CatchExceptionNameMatchingTypeRector::class);
-    $rectorConfig->rule(MakeInheritedMethodVisibilitySameAsParentRector::class);
-    $rectorConfig->rule(NewlineAfterStatementRector::class);
-    $rectorConfig->rule(CatchExceptionNameMatchingTypeRector::class);
-    $rectorConfig->rule(AddMethodCallBasedStrictParamTypeRector::class);
-    $rectorConfig->rule(AddVoidReturnTypeWhereNoReturnRector::class);
-    $rectorConfig->rule(ReturnTypeFromStrictTypedPropertyRector::class);
-    $rectorConfig->rule(TypedPropertyFromStrictConstructorRector::class);
-    $rectorConfig->rule(AddClosureReturnTypeRector::class);
-    $rectorConfig->rule(ReturnTypeFromReturnNewRector::class);
-    $rectorConfig->rule(ReturnTypeDeclarationRector::class);
-    $rectorConfig->rule(PropertyTypeDeclarationRector::class);
-    $rectorConfig->rule(AddArrayParamDocTypeRector::class);
-    $rectorConfig->rule(ParamTypeByParentCallTypeRector::class);
-    $rectorConfig->rule(ParamTypeByMethodCallTypeRector::class);
-    $rectorConfig->rule(ParamTypeDeclarationRector::class);
-    //$rectorConfig->rule(SimplifyBoolIdenticalTrueRector::class);
-    $rectorConfig->rule(RecastingRemovalRector::class);
-    $rectorConfig->rule(RemoveAlwaysTrueIfConditionRector::class);
-    $rectorConfig->rule(RemoveAndTrueRector::class);
-    $rectorConfig->rule(RemoveDeadIfForeachForRector::class);
-    $rectorConfig->rule(AddArrayParamDocTypeRector::class);
-    $rectorConfig->rule(AddClosureReturnTypeRector::class);
-    $rectorConfig->rule(AddMethodCallBasedStrictParamTypeRector::class);
-    //$rectorConfig->rule(RemoveNullPropertyInitializationRector::class);
-    $rectorConfig->rule(RemoveUselessParamTagRector::class);
-    $rectorConfig->ruleWithConfiguration(BooleanInTernaryOperatorRuleFixerRector::class, [
-            BooleanInTernaryOperatorRuleFixerRector::TREAT_AS_NON_EMPTY => false,
-        ]);
-    $rectorConfig->ruleWithConfiguration(DisallowedEmptyRuleFixerRector::class, [
-            DisallowedEmptyRuleFixerRector::TREAT_AS_NON_EMPTY => false,
-        ]);
-    $rectorConfig->ruleWithConfiguration(DisallowedShortTernaryRuleFixerRector::class, [
-            DisallowedShortTernaryRuleFixerRector::TREAT_AS_NON_EMPTY => false,
-        ]);
+
+
+    $rectorConfig->skip([
+        'packages/core/src/Twig/AppExtension.php',
+    ]);
 };

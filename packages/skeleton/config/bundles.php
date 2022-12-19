@@ -35,10 +35,6 @@ return [
     // - generate default welcome page
     Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle::class => ['all' => true],
 
-    // Used in Extension/StaticGenerator
-    // - for security(is_granted()) annotation in controller
-    Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle::class => ['all' => true],
-
     // Used for Admin
     // - Sonata
     Sonata\BlockBundle\SonataBlockBundle::class => ['all' => true],

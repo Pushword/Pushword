@@ -3,14 +3,12 @@
 namespace Pushword\PageScanner\Controller;
 
 use Pushword\Core\Utils\LastTime;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-/**
- * @IsGranted("ROLE_PUSHWORD_ADMIN")
- */
+#[IsGranted('ROLE_PUSHWORD_ADMIN')]
 final class PageScannerController extends AbstractController
 {
     private static ?string $fileCache = null;
