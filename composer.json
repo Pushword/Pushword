@@ -32,7 +32,7 @@
         "phpstan/phpstan-phpunit": "^1.0",
         "phpstan/phpstan-strict-rules": "^1.0",
         "piedweb/curl": "@dev || ^0.1",
-        "piedweb/extractor": "@dev || ^0.1.10",
+        "piedweb/extractor": "@dev || ^0.1.19",
         "piedweb/linksimprover": "^0.0.8",
         "piedweb/render-html-attributes": "^2.0.1",
         "sonata-project/admin-bundle": "^4.0",

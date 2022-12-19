@@ -19,7 +19,7 @@
         "pagerfanta/twig": "^3.0",
         "piedweb/render-html-attributes": "^2.0.1",
         "piedweb/curl": "^0.1",
-        "piedweb/extractor": "^0.1.10",
+        "piedweb/extractor": "^0.1.19",
         "pushword/skeleton": "*",
         "thecodingmachine/safe": "^2.1",
         "spatie/image-optimizer": "^1.3",
