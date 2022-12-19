@@ -33,8 +33,8 @@ class AppExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('showConversation', [$this, 'showConversation'], ['is_safe' => ['html'], 'needs_environment' => true]),
-            new TwigFunction('conversation', [$this, 'getConversationRoute']),
+            new TwigFunction('showConversation', $this->showConversation(...), ['is_safe' => ['html'], 'needs_environment' => true]),
+            new TwigFunction('conversation', $this->getConversationRoute(...)),
         ];
     }
 

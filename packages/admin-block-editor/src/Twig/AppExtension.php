@@ -16,8 +16,8 @@ class AppExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('blockWrapperAttr', [$this, 'blockWrapperAttr'], ['is_safe' => ['html'], 'needs_environment' => false]),
-            new TwigFunction('needBlockWrapper', [$this, 'needBlockWrapper'], ['is_safe' => ['html'], 'needs_environment' => false]),
+            new TwigFunction('blockWrapperAttr', $this->blockWrapperAttr(...), ['is_safe' => ['html'], 'needs_environment' => false]),
+            new TwigFunction('needBlockWrapper', $this->needBlockWrapper(...), ['is_safe' => ['html'], 'needs_environment' => false]),
         ];
     }
 

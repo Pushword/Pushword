@@ -5,7 +5,6 @@ namespace Pushword\Core\Entity\MediaTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 
-/** @noRector */
 trait MediaHashTrait
 {
     /**

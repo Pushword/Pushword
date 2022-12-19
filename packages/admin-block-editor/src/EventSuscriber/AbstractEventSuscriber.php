@@ -17,7 +17,6 @@ abstract class AbstractEventSuscriber implements EventSubscriberInterface
 
     protected function mayUseEditorBlock(?PageInterface $page): bool
     {
-        /** @noRector \Rector\Php73\Rector\FuncCall\JsonThrowOnErrorRector */
         if (null !== $page && '' !== $page->getMainContent() && null === json_decode($page->getMainContent(), null, 512)) {
             return false;
         }

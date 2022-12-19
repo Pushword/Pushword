@@ -20,6 +20,7 @@ class ElseH1 extends AbstractFilter
         if (\is_string($return)) {
             return $return;
         }
+
         if (null === $return) {
             return $return;
         }

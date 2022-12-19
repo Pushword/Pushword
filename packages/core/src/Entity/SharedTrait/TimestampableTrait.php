@@ -6,11 +6,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 trait TimestampableTrait
 {
-    /** @noRector */
     #[ORM\Column(type: 'datetime')]
     protected ?\DateTimeInterface $createdAt = null; // @phpstan-ignore-line
 
-    /**  @noRector */
     #[ORM\Column(type: 'datetime')]
     protected ?\DateTimeInterface $updatedAt = null; // @phpstan-ignore-line
 

@@ -23,15 +23,13 @@ final class BlockEditorFilter extends AbstractFilter
 
     /**
      * @return mixed|string
-     *
-     * @noRector
      */
     public function apply(mixed $propertyValue)
     {
-        /** @noRector \Rector\Php73\Rector\FuncCall\JsonThrowOnErrorRector */
         if (! \is_string($propertyValue)) {
             return $propertyValue;
         }
+
         $json = \Safe\json_decode($propertyValue);
         if (! \is_object($json)) {
             return $propertyValue;

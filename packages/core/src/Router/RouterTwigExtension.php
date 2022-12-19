@@ -18,9 +18,9 @@ final class RouterTwigExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('homepage', [$this->router, 'generatePathForHomePage']),
-            new TwigFunction('page', [$this->router, 'generate']),
-            new TwigFunction('is_current_page', [$this, 'isCurrentPage']), // used ?
+            new TwigFunction('homepage', $this->router->generatePathForHomePage(...)),
+            new TwigFunction('page', $this->router->generate(...)),
+            new TwigFunction('is_current_page', $this->isCurrentPage(...)), // used ?
         ];
     }
 
