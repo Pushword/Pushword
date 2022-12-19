@@ -11,6 +11,8 @@ use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface;
 
 /**
+ * @psalm-suppress MethodSignatureMustProvideReturnType
+ *
  * @extends ServiceEntityRepository<PageInterface>
  *
  * @method PageInterface|null  find($id, $lockMode = null, $lockVersion = null)
@@ -169,10 +171,11 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $orx->add($qb->expr()->like('p.mainContent', ':quotedMedia')); // catch: "example.jpg'
         $orx->add($qb->expr()->like('p.mainContent', ':defaultMedia')); // catch: media/default/example.jpg
         $orx->add($qb->expr()->like('p.mainContent', ':thumbMedia'));
+
         $query = $qb->where($orx)->setParameters([ // @phpstan-ignore-line
             'idMedia' => $media->getId(),
-            'nameMedia' => '%\''.$media->getName().'\'%',
-            'apostrophMedia' => '%\''.$media->getMedia().'\'%',
+            'nameMedia' => "%'".$media->getName()."'%",
+            'apostrophMedia' => "%'".$media->getMedia()."'%",
             'quotedMedia' => '%"'.$media->getMedia().'"%',
             'defaultMedia' => '/media/default/'.$media->getMedia().'%',
             'thumbMedia' => '/media/thumb/'.$media->getMedia().'%',
@@ -326,7 +329,11 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
     protected function andLocale(QueryBuilder $queryBuilder, string $locale): QueryBuilder
     {
-        if ('' === $locale || '0' === $locale) {
+        if ('' === $locale) {
+            return $queryBuilder;
+        }
+
+        if ('0' === $locale) {
             return $queryBuilder;
         }
 

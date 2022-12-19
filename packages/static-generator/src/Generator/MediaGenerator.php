@@ -13,11 +13,13 @@ class MediaGenerator extends AbstractGenerator
 
     /**
      * Copy or Symlink "not image" media to download folder.
+     *
+     * @psalm-suppress RedundantCast
      */
     protected function copyMediaToDownload(): void
     {
-        $publicMediaDir = \strval($this->params->get('pw.public_media_dir'));
-        $mediaDir = \strval($this->params->get('pw.media_dir'));
+        $publicMediaDir = $this->params->get('pw.public_media_dir');
+        $mediaDir = $this->params->get('pw.media_dir');
         $staticMediaDir = $this->getStaticDir().'/'.$publicMediaDir;
 
         $symlink = $this->mustSymlink();
@@ -33,7 +35,11 @@ class MediaGenerator extends AbstractGenerator
         }
 
         while (false !== $entry = $dir->read()) {
-            if ('.' == $entry || '..' == $entry) {
+            if ('.' == $entry) {
+                continue;
+            }
+
+            if ('..' == $entry) {
                 continue;
             }
 

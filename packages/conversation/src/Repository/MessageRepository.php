@@ -6,6 +6,8 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Pushword\Conversation\Entity\MessageInterface;
 
 /*
+ * @psalm-suppress MissingTemplateParam
+ *
  * @extends ServiceEntityRepository<MessageInterface>
  *
  * @method MessageInterface|null find($id, $lockMode = null, $lockVersion = null)

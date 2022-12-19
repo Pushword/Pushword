@@ -71,11 +71,15 @@ trait PageI18nTrait
             $page->addTranslation($this, false);
 
             foreach ($this->getTranslations() as $otherTranslation) {
-                if ($otherTranslation != $this // déjà fait
-                    && $otherTranslation != $page // on ne se référence pas soit-même
-                ) {
-                    $otherTranslation->addTranslation($page, false);
+                if ($otherTranslation == $this) {  // déjà fait
+                    continue;
                 }
+
+                if ($otherTranslation == $page) { // on ne se référence pas soit-même
+                    continue;
+                }
+
+                $otherTranslation->addTranslation($page, false);
             }
         }
 
@@ -98,11 +102,15 @@ trait PageI18nTrait
             $page->removeTranslation($this, false);
 
             foreach ($this->getTranslations() as $otherTranslation) {
-                if ($otherTranslation != $this // déjà fait
-                    && $otherTranslation != $page // on ne se déréférence pas soit-même
-                ) {
-                    $otherTranslation->removeTranslation($page, false);
+                if ($otherTranslation == $this) {
+                    continue;
                 }
+
+                if ($otherTranslation == $page) {
+                    continue;
+                }
+
+                $otherTranslation->removeTranslation($page, false);
             }
         }
 

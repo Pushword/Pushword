@@ -25,7 +25,7 @@ final class UserController extends AbstractController
         ]);
     }
 
-    public function logout(): void
+    public function logout(): never
     {
         throw new \LogicException('This method can be blank');
     }

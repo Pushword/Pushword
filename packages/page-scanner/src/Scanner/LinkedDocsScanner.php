@@ -4,7 +4,6 @@ namespace Pushword\PageScanner\Scanner;
 
 use Doctrine\ORM\EntityManagerInterface;
 use PiedWeb\Curl\ExtendedClient;
-use PiedWeb\Curl\Helper;
 use PiedWeb\Extractor\CanonicalExtractor;
 use PiedWeb\Extractor\Url;
 use Pushword\Core\Entity\PageInterface;
@@ -37,9 +36,9 @@ final class LinkedDocsScanner extends AbstractScanner
      * @param string[] $linksToIgnore
      */
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private array $linksToIgnore,
-        private string $publicDir
+        private readonly EntityManagerInterface $entityManager,
+        private readonly array $linksToIgnore,
+        private readonly string $publicDir
     ) {
     }
 
@@ -71,9 +70,15 @@ final class LinkedDocsScanner extends AbstractScanner
 
         // 2. Je récupère tout les liens et je les check
         // href="", data-rot="" data-img="", src="", data-bg
-        if ('' !== $this->pageHtml && '0' !== $this->pageHtml) {
-            $this->checkLinkedDocs($this->getLinkedDocs());
+        if ('' === $this->pageHtml) {
+            return;
         }
+
+        if ('0' === $this->pageHtml) {
+            return;
+        }
+
+        $this->checkLinkedDocs($this->getLinkedDocs());
     }
 
     /**
@@ -132,7 +137,7 @@ final class LinkedDocsScanner extends AbstractScanner
         }
 
         if (str_contains($url, '#')) {
-            $url = F::preg_replace_str('/(#.*)$/', '', $url);
+            return F::preg_replace_str('/(#.*)$/', '', $url);
         }
 
         return $url;
@@ -262,7 +267,7 @@ final class LinkedDocsScanner extends AbstractScanner
             ->fakeBrowserHeader()
             ->setNoFollowRedirection()
             ->setMaximumResponseSize()
-            ->setDownloadOnlyIf([Helper::class, 'checkStatusCode'])
+            ->setDownloadOnlyIf(static fn (string $line, int $expected = 200): bool => \PiedWeb\Curl\Helper::checkStatusCode($line, $expected))
             ->setMobileUserAgent();
         // if ($this->proxy) { $client->setProxy($this->proxy); }
         $client->request();

@@ -29,9 +29,6 @@ trait UserTrait
     #[ORM\Column(type: 'json')]
     private array $roles = [];
 
-    /**
-     * @var string The hashed password
-     */
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $password = null;
 
@@ -111,10 +108,8 @@ trait UserTrait
 
     /**
      * @see UserInterface
-     *
-     * @return string
      */
-    public function getSalt()
+    public function getSalt(): string
     {
         // not needed when using the "bcrypt" algorithm in security.yaml
         return '';

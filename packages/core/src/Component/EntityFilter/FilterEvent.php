@@ -25,7 +25,10 @@ final class FilterEvent extends Event
     /**
      * @param Manager<T> $manager
      */
-    public function __construct(private Manager $manager, private string $property)
+    public function __construct(
+        private readonly Manager $manager,
+        private readonly string $property
+    )
     {
     }
 

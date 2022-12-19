@@ -17,7 +17,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 final class AdminFormEventSuscriber implements EventSubscriberInterface
 {
-    public function __construct(private AppPool $apps)
+    public function __construct(private readonly AppPool $apps)
     {
     }
 

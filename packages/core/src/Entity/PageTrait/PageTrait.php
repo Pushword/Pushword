@@ -85,11 +85,15 @@ trait PageTrait
      */
     public function getPublishedAt(bool $safe = true): ?\DateTimeInterface
     {
-        if ($safe && null === $this->publishedAt) {
-            return new \DateTime();
+        if (! $safe) {
+            return $this->publishedAt;
         }
 
-        return $this->publishedAt;
+        if (null !== $this->publishedAt) {
+            return $this->publishedAt;
+        }
+
+        return new \DateTime();
     }
 
     public function setPublishedAt(\DateTimeInterface $publishedAt): self

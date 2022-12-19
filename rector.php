@@ -53,6 +53,8 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symplify\PHPStanTwigRules\Rules\NoTwigMissingVariableRule;
 use Rector\Config\RectorConfig;
 use Rector\Php55\Rector\String_\StringClassNameToClassConstantRector;
+use Rector\Php73\Rector\FuncCall\JsonThrowOnErrorRector;
+use Rector\PHPUnit\Rector\Class_\AddSeeTestAnnotationRector;
 use Rector\Set\ValueObject\LevelSetList;
 
 return static function (RectorConfig $rectorConfig): void {
@@ -85,5 +87,7 @@ return static function (RectorConfig $rectorConfig): void {
 
     $rectorConfig->skip([
         'packages/core/src/Twig/AppExtension.php',
+        AddSeeTestAnnotationRector::class,
+        JsonThrowOnErrorRector::class
     ]);
 };

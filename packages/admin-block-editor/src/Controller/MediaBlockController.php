@@ -20,7 +20,7 @@ final class MediaBlockController extends AbstractController
 {
     use RequiredMediaClass;
 
-    public function __construct(private EntityManagerInterface $em)
+    public function __construct(private readonly EntityManagerInterface $em)
     {
     }
 
@@ -40,7 +40,7 @@ final class MediaBlockController extends AbstractController
             $media->setMediaFile($mediaFile);
 
             $duplicate = Repository::getMediaRepository($this->em, $this->mediaClass)->findOneBy(['hash' => $media->getHash()]);
-            if (null === $duplicate) {
+            if (! $duplicate instanceof \Pushword\Core\Entity\MediaInterface) {
                 $this->em->persist($media);
                 $this->em->flush();
             } else {
@@ -91,7 +91,7 @@ final class MediaBlockController extends AbstractController
             return $this->getMediaFileFromId($content['id']);
         }
 
-        if (str_starts_with($content['url'], '/media/default/')) {
+        if (str_starts_with((string) $content['url'], '/media/default/')) {
             return $this->getMediaFromMedia(\Safe\substr($content['url'], \strlen('/media/default/')));
         }
 
@@ -119,7 +119,7 @@ final class MediaBlockController extends AbstractController
         $fileContent = \Safe\file_get_contents($url);
 
         $originalName = $matches[1];
-        $filename = md5($matches[1]);
+        $filename = md5((string) $matches[1]);
         $filePath = sys_get_temp_dir().'/'.$filename;
         if (0 === \Safe\file_put_contents($filePath, $fileContent)) {
             throw new \LogicException('Storing in tmp folder filed');

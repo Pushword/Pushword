@@ -65,7 +65,7 @@ class MediaImporter extends AbstractImporter
     {
         $media = $this->getMedia($this->getFilename($filePath));
 
-        if (false === $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
+        if (! $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
             return; // no update needed
         }
 
@@ -135,7 +135,7 @@ class MediaImporter extends AbstractImporter
     {
         $newFilePath = $this->mediaDir.'/'.$this->getFilename($filePath);
 
-        if (null !== $this->mediaDir && $filePath != $newFilePath) {
+        if (null !== $this->mediaDir && $filePath !== $newFilePath) {
             (new Filesystem())->copy($filePath, $newFilePath);
 
             return $newFilePath;
@@ -149,7 +149,7 @@ class MediaImporter extends AbstractImporter
         $mediaEntity = Repository::getMediaRepository($this->em, $this->entityClass)->findOneBy(['media' => $media]);
         $this->newMedia = false;
 
-        if (null === $mediaEntity) {
+        if (! $mediaEntity instanceof \Pushword\Core\Entity\MediaInterface) {
             $this->newMedia = true;
             $mediaClass = $this->entityClass;
             $mediaEntity = new $mediaClass();

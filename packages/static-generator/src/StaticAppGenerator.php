@@ -18,7 +18,7 @@ final class StaticAppGenerator
     /** @var array<string> */
     private array $errors = [];
 
-    public function __construct(private AppPool $apps, private GeneratorBag $generatorBag, private RedirectionManager $redirectionManager)
+    public function __construct(private readonly AppPool $apps, private readonly GeneratorBag $generatorBag, private readonly RedirectionManager $redirectionManager)
     {
     }
 

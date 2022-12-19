@@ -30,7 +30,11 @@ class Element
 
     protected function loadCode(): string
     {
-        if (null === $this->path || ! file_exists($this->getTemplateDir().$this->getPath())) {
+        if (null === $this->path) {
+            return '';
+        }
+
+        if (! file_exists($this->getTemplateDir().$this->getPath())) {
             return '';
         }
 
@@ -64,7 +68,7 @@ class Element
     public function setPath(string $path): self
     {
         if (str_contains($path, '..')) { // avoiding to store in an other folder than templates.
-            throw new \Exception('You can\'t do that...');
+            throw new \Exception("You can't do that...");
         }
 
         $path = self::normalizePath($path);

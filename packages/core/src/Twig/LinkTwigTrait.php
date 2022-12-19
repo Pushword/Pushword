@@ -46,16 +46,16 @@ trait LinkTwigTrait
                 return $this->renderEncodedMail($anchor);
             }
 
-            $attr = array_merge($attr, ['data-rot' => self::encrypt($path)]);
+            $attr = [...$attr, ...['data-rot' => self::encrypt($path)]];
             $template = $this->getApp()->getView('/component/link_js.html.twig');
-            $renderedLink = $this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]);
-        } else {
-            $attr = array_merge($attr, ['href' => $path]);
-            $template = $this->getApp()->getView('/component/link.html.twig');
-            $renderedLink = $this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]);
+
+            return $this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]);
         }
 
-        return $renderedLink;
+        $attr = [...$attr, ...['href' => $path]];
+        $template = $this->getApp()->getView('/component/link.html.twig');
+
+        return $this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]);
     }
 
     public static function encrypt(string $path): string

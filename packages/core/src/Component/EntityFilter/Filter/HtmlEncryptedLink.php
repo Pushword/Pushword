@@ -43,7 +43,7 @@ final class HtmlEncryptedLink extends EncryptedLink
 
     private function extractClass(string $openingTag): string
     {
-        return 1 === preg_match('/class=\"([^"]*)\"/i', $openingTag, $match) ? $match[1] : '';
+        return 1 === preg_match('#class=\"([^"]*)\"#i', $openingTag, $match) ? $match[1] : '';
     }
 
     /**

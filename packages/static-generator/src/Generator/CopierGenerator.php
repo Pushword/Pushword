@@ -23,7 +23,7 @@ class CopierGenerator extends AbstractGenerator
             if ($symlink) {
                 $this->filesystem->symlink(
                     str_replace(
-                        \strval($this->params->get('kernel.project_dir')).'/',
+                        $this->params->get('kernel.project_dir').'/',
                         '../',
                         $this->publicDir.'/'.$entry
                     ),

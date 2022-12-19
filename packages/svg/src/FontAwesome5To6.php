@@ -4,6 +4,9 @@ namespace Pushword\Svg;
 
 final class FontAwesome5To6
 {
+    /**
+     * @var string[]
+     */
     public const iconsRenamed = [
         'ad' => 'rectangle-ad',
         'adjust' => 'circle-half-stroke',

@@ -13,6 +13,7 @@ class NewsletterForm implements ConversationFormInterface
     {
         $form = $this->initForm();
         $form->add('authorEmail', EmailType::class);
+
         $this->message->setContent($this->translator->trans('conversation.suscribeToNewsletter'));
 
         return $form;

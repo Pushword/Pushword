@@ -28,7 +28,7 @@ final class PageMenuProvider implements ContainerAwareInterface
     #[\Symfony\Contracts\Service\Attribute\Required]
     public RequestStack $requestStack;
 
-    public function __construct(private FactoryInterface $factory)
+    public function __construct(private readonly FactoryInterface $factory)
     {
     }
 
@@ -83,12 +83,15 @@ final class PageMenuProvider implements ContainerAwareInterface
             return true;
         }
 
-        if (($request = $this->requestStack->getCurrentRequest()) !== null
-            && ($hostInRequest = $this->extractHostFilter($request->query->all())) !== null) {
-            return $hostInRequest === $host;
+        if (($request = $this->requestStack->getCurrentRequest()) === null) {
+            return false;
         }
 
-        return false;
+        if (($hostInRequest = $this->extractHostFilter($request->query->all())) === null) {
+            return false;
+        }
+
+        return $hostInRequest === $host;
     }
 
     /**

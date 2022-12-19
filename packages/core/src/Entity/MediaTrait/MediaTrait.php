@@ -69,7 +69,11 @@ trait MediaTrait
     /** @psalm-suppress InvalidReturnType */
     protected function extractExtension(string $string): string
     {
-        if (! str_contains($string, '.') || 0 === preg_match('/.*(\\.[^.\\s]{3,4})$/', $string)) {
+        if (! str_contains($string, '.')) {
+            return '';
+        }
+
+        if (0 === preg_match('#.*(\.[^.\s]{3,4})$#', $string)) {
             return '';
         }
 
@@ -84,9 +88,8 @@ trait MediaTrait
 
         $extension = $this->getMediaFile()->guessExtension(); // From MimeType
         $extension = null === $extension ? '' : '.'.$extension;
-        $extension = $this->fixExtension($extension);
 
-        return $extension;
+        return $this->fixExtension($extension);
     }
 
     /**
@@ -95,25 +98,38 @@ trait MediaTrait
     private function fixExtension(string $extension): string
     {
         // Todo : when using guessExtension, it's using safe mymetype and returning gpx as txt
-        if ('.xml' === $extension && '.gpx' === $this->extractExtension($this->getMediaFileName())) {
-            $extension = '.gpx';
+        if ('.xml' !== $extension) {
+            return $extension;
         }
 
-        return $extension;
+        if ('.gpx' !== $this->extractExtension($this->getMediaFileName())) {
+            return $extension;
+        }
+
+        return '.gpx';
     }
 
     #[Assert\Callback]
     public function validate(ExecutionContextInterface $executionContext): void
     {
-        if (null !== $this->getMimeType() && null !== $this->mediaFile
-            && $this->mediaFile->getMimeType() != $this->getMimeType()) {
-            $executionContext
-                ->buildViolation('Attention ! Vous essayez de remplacer un fichier d\'un type ('
-                    .$this->getMimeType().') par un fichier d\'une autre type ('.$this->mediaFile->getMimeType().')')
-                ->atPath('fileName')
-                ->addViolation()
-            ;
+        if (null === $this->getMimeType()) {
+            return;
         }
+
+        if (null === $this->mediaFile) {
+            return;
+        }
+
+        if ($this->mediaFile->getMimeType() == $this->getMimeType()) {
+            return;
+        }
+
+        $executionContext
+            ->buildViolation("Attention ! Vous essayez de remplacer un fichier d'un type ("
+                .$this->getMimeType().") par un fichier d'une autre type (".$this->mediaFile->getMimeType().')')
+            ->atPath('fileName')
+            ->addViolation()
+        ;
     }
 
     public function setMediaFile(?File $file = null): void
@@ -251,7 +267,7 @@ trait MediaTrait
     /**
      * this is used only for media renaming.
      *
-     * @param string $mediaBeforeUpdate NOTE : this is used only for media renaming
+     * @param string|null $mediaBeforeUpdate NOTE : this is used only for media renaming
      */
     public function setMediaBeforeUpdate(?string $mediaBeforeUpdate): self
     {

@@ -13,13 +13,17 @@ use Twig\TwigFunction;
 
 class AppExtension extends AbstractExtension
 {
-    private \Pushword\Core\Component\App\AppConfig $app;
+    private readonly \Pushword\Core\Component\App\AppConfig $app;
 
     /**
      * @param class-string<MessageInterface> $messageEntity
      */
-    public function __construct(private EntityManagerInterface $em, private string $messageEntity, private AppPool $apps, private RouterInterface $router)
-    {
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly string $messageEntity,
+        private readonly AppPool $apps,
+        private readonly RouterInterface $router
+    ) {
         $this->app = $apps->get();
     }
 

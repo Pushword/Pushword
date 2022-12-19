@@ -15,7 +15,7 @@ abstract class AbstractBlock implements BlockInterface
     /**
      * @var string
      */
-    public const NAME = 'NotDefined!';
+    final public const NAME = 'NotDefined!';
 
     public string $name;
 

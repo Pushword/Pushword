@@ -23,10 +23,10 @@ class PageScannerCommand extends Command
      * @param class-string<PageInterface> $pageClass
      */
     public function __construct(
-        private PageScannerService $scanner,
-        private Filesystem $filesystem,
-        private EntityManagerInterface $em,
-        private string $pageClass,
+        private readonly PageScannerService $scanner,
+        private readonly Filesystem $filesystem,
+        private readonly EntityManagerInterface $em,
+        private readonly string $pageClass,
         string $varDir
     ) {
         parent::__construct();

@@ -27,7 +27,7 @@ class ErrorPageGenerator extends AbstractGenerator
     {
         if (null !== $locale) {
             $request = $this->requestStack->getCurrentRequest();
-            if (null === $request) {
+            if (! $request instanceof \Symfony\Component\HttpFoundation\Request) {
                 $request = new Request();
             }
 

@@ -102,7 +102,7 @@ class PageImporter extends AbstractImporter
         $page = $this->getPage($slug);
         $this->newPage = false;
 
-        if (null === $page) {
+        if (! $page instanceof \Pushword\Core\Entity\PageInterface) {
             $pageClass = $this->entityClass;
             $initDateTimeProperties = false;
             $page = new $pageClass($initDateTimeProperties);
@@ -181,7 +181,7 @@ class PageImporter extends AbstractImporter
     private function normalizePropertyName(string $propertyName): string
     {
         if ('parent' == $propertyName) {
-            $propertyName = 'parentPage';
+            return 'parentPage';
         }
 
         return $propertyName;
@@ -209,7 +209,7 @@ class PageImporter extends AbstractImporter
 
                     $mediaName = F::preg_replace_str('@^/?media/(default)?/@', '', $value);
                     $media = $this->getMedia($mediaName);
-                    if (null === $media) {
+                    if (! $media instanceof \Pushword\Core\Entity\MediaInterface) {
                         throw new \Exception('Media `'.$value.'` ('.$mediaName.') not found in `'.$slug.'`.');
                     }
 
@@ -249,18 +249,16 @@ class PageImporter extends AbstractImporter
     /**
      * Todo, get them automatically.
      *
-     * @return array<string, (string|class-string)>
+     * @return array{extendedPage: class-string<\Pushword\Core\Entity\PageInterface>, parentPage: class-string<\Pushword\Core\Entity\PageInterface>, translations: string, mainImage: class-string<\Pushword\Core\Entity\MediaInterface>}
      */
     private function getObjectRequiredProperties(): array
     {
-        $properties = [
+        return [
             'extendedPage' => PageInterface::class,
             'parentPage' => PageInterface::class,
             'translations' => 'addPages',
             'mainImage' => MediaInterface::class,
         ];
-
-        return $properties;
     }
 
     /**
@@ -287,7 +285,7 @@ class PageImporter extends AbstractImporter
             return Repository::getPageRepository($this->em, $this->entityClass)->findOneBy($criteria);
         }
 
-        $pages = array_filter($this->getPages(), fn (PageInterface $page): bool => $page->getSlug() == $criteria);
+        $pages = array_filter($this->getPages(), static fn (PageInterface $page): bool => $page->getSlug() === $criteria);
         $pages = array_values($pages);
 
         return $pages[0] ?? null;

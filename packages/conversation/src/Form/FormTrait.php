@@ -201,7 +201,7 @@ trait FormTrait
         }
 
         if (! $this->twig->getLoader()->exists($view)) {
-            $view = $this->getView('conversation.html.twig');
+            return $this->getView('conversation.html.twig');
         }
 
         return $view;
@@ -274,7 +274,7 @@ trait FormTrait
             throw new \Exception($key.' not found');
         }
 
-        return \strval($attributes[$key] ?? $query[$key]);
+        return (string) ($attributes[$key] ?? $query[$key]);
     }
 
     protected function getReferring(): ?string
@@ -298,7 +298,7 @@ trait FormTrait
     /**
      * @return Constraint[]
      */
-    protected function getAuthorNameConstraints()
+    protected function getAuthorNameConstraints(): array
     {
         return [
             new NotBlank(),
@@ -312,7 +312,7 @@ trait FormTrait
     /**
      * @return Constraint[]
      */
-    protected function getAuthorEmailConstraints()
+    protected function getAuthorEmailConstraints(): array
     {
         return [
             new NotBlank(),

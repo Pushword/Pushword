@@ -62,7 +62,7 @@ final class ManagerPool implements ManagerPoolInterface
         }
 
         if (! method_exists($manager, $property)) {
-            throw new \Exception('Property `'.$property.'` doesn\'t exist');
+            throw new \Exception('Property `'.$property."` doesn't exist");
         }
 
         return $manager->$property(); // @phpstan-ignore-line

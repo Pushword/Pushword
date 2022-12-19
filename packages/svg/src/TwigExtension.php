@@ -46,7 +46,7 @@ class TwigExtension extends AbstractExtension
         }
 
         if (null === $file) {
-            if (true === $retryWithFontAwesome5IconsRenamed) {
+            if ($retryWithFontAwesome5IconsRenamed) {
                 return $this->getSvg(SvgFontAwesome5To6::convertNameFromFontAwesome5To6($name), $attr, $dir, false);
             }
 
@@ -65,7 +65,7 @@ class TwigExtension extends AbstractExtension
     {
         $pos = strpos($haystack, $needle);
         if (false !== $pos) {
-            $haystack = substr_replace($haystack, $replace, $pos, \strlen($needle));
+            return substr_replace($haystack, $replace, $pos, \strlen($needle));
         }
 
         return $haystack;

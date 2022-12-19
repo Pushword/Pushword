@@ -13,16 +13,17 @@ use Symfony\Contracts\EventDispatcher\Event as SfEvent;
  */
 class Event extends SfEvent
 {
-    /**
-     * @var string
-     */
-    public const NAME = 'pushword.admin.load_field';
+    /** @var string */
+    final public const NAME = 'pushword.admin.load_field';
 
     /**
      * @param AdminInterface<T> $admin
      * @param mixed[]           $fields
      */
-    public function __construct(private AdminInterface $admin, private array $fields)
+    public function __construct(
+        private readonly AdminInterface $admin,
+        private array $fields
+    )
     {
     }
 

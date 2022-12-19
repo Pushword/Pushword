@@ -10,13 +10,13 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 final class PushwordConfigFactory
 {
-    private string $prefix;
+    private readonly string $prefix;
 
     /** @param array<mixed> $config */
     public function __construct(
-        private ContainerBuilder $container,
+        private readonly ContainerBuilder $container,
         private array $config,
-        private ConfigurationInterface $configuration,
+        private readonly ConfigurationInterface $configuration,
         string $prefix = ''
     ) {
         $this->prefix = 'pw.'.('' !== $prefix ? $prefix.'.' : '');
@@ -172,7 +172,7 @@ final class PushwordConfigFactory
      *
      * @noRector
      */
-    private function setParameter(string $key, $value): void
+    private function setParameter(string $key, array|bool|string|int|float|\UnitEnum|null $value): void
     {
         if ($this->container->hasParameter($key)) {
             throw new \InvalidArgumentException(\Safe\sprintf('Invalid "%s" name: parameter is ever registered.', $key));

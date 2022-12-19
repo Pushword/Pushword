@@ -10,7 +10,7 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    public const DEFAULT_APP_FALLBACK = [
+    final public const DEFAULT_APP_FALLBACK = [
         'page_update_notification_from',
         'page_update_notification_to',
         'page_update_notification_interval',

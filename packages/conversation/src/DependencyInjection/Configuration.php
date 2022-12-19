@@ -13,7 +13,7 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    public const DEFAULT_APP_FALLBACK = [
+    final public const DEFAULT_APP_FALLBACK = [
         'conversation_notification_email_to',
         'conversation_notification_email_from',
         'conversation_notification_interval',

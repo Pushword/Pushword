@@ -18,13 +18,13 @@ final class PageBlockController extends AbstractController
     use RequiredApps;
     use RequiredPageClass;
 
-    public function __construct(private EntityManagerInterface $em, private Twig $twig)
+    public function __construct(private readonly EntityManagerInterface $em, private readonly Twig $twig)
     {
     }
 
     public function manage(Request $request, string $id = '0'): Response
     {
-        $id = \intval($id);
+        $id = (int) $id;
         $content = $request->toArray();
 
         $request->attributes->set('_route', 'pushword_page'); // 'custom_host_pushword_page'
@@ -32,7 +32,7 @@ final class PageBlockController extends AbstractController
 
         if (0 !== $id) {
             $currentPage = Repository::getPageRepository($this->em, $this->pageClass)->findOneBy(['id' => $id]);
-            if (null === $currentPage) {
+            if (! $currentPage instanceof \Pushword\Core\Entity\PageInterface) {
                 throw new \Exception('Page not found');
             }
 

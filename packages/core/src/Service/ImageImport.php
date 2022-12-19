@@ -79,10 +79,8 @@ trait ImageImport
 
     /**
      * @noRector
-     *
-     * @return false|string
      */
-    public function cacheExternalImage(string $src)
+    public function cacheExternalImage(string $src): false|string
     {
         $filePath = sys_get_temp_dir().'/'.sha1($src);
         if (file_exists($filePath)) {
@@ -99,7 +97,11 @@ trait ImageImport
             $content = file_get_contents($src);
         }
 
-        if (false === $content || false === imagecreatefromstring($content)) {
+        if (false === $content) {
+            return false;
+        }
+
+        if (false === imagecreatefromstring($content)) {
             return false;
         }
 

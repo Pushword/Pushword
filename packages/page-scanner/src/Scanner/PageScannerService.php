@@ -50,7 +50,7 @@ final class PageScannerService
      *
      * @noRector
      */
-    public function scan(PageInterface $page)
+    public function scan(PageInterface $page): array|bool
     {
         $this->resetErrors();
 

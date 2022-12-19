@@ -48,7 +48,7 @@ abstract class AbstractGenerator implements GeneratorInterface
     ) {
         $this->filesystem = new Filesystem();
         $this->router->setUseCustomHostPath(false);
-        $this->publicDir = \strval($params->get('pw.public_dir'));
+        $this->publicDir = $params->get('pw.public_dir');
         $this->parser = HtmlCompressor::construct();
 
         static::loadKernel($kernel);
@@ -75,14 +75,14 @@ abstract class AbstractGenerator implements GeneratorInterface
     {
         return \is_array($this->app->get('static_generators'))
             && \in_array(CNAMEGenerator::class, $this->app->get('static_generators'), true) ? false
-            : \boolval($this->app->get('static_symlink'));
+            : (bool) $this->app->get('static_symlink');
     }
 
     protected function copy(string $file): void
     {
         if (file_exists($file)) {
             \Safe\copy(
-                str_replace(\strval($this->params->get('kernel.project_dir')).'/', '../', $this->publicDir.'/'.$file),
+                str_replace($this->params->get('kernel.project_dir').'/', '../', $this->publicDir.'/'.$file),
                 $this->getStaticDir().'/'.$file
             );
         }

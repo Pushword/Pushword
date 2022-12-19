@@ -12,7 +12,7 @@ class EncryptedLink extends AbstractFilter
     use RequiredAppTrait;
     use RequiredTwigTrait;
 
-    public function apply($propertyValue): string
+    public function apply(mixed $propertyValue): string
     {
         return $this->convertEncryptedLink(\strval($propertyValue));
     }

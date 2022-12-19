@@ -14,7 +14,7 @@ class Name extends AbstractFilter
      */
     use RequiredManagerTrait;
 
-    public function apply($propertyValue): ?string
+    public function apply(mixed $propertyValue): ?string
     {
         $names = explode("\n", \strval($propertyValue));
 

@@ -10,7 +10,7 @@ class Image extends AbstractFilter
     use RequiredAppTrait;
     use RequiredTwigTrait;
 
-    public function apply($propertyValue): string
+    public function apply(mixed $propertyValue): string
     {
         return $this->convertMarkdownImage(\strval($propertyValue));
     }
@@ -21,8 +21,11 @@ class Image extends AbstractFilter
     public function convertMarkdownImage(string $body): string
     {
         \Safe\preg_match_all('/(?:!\[(.*?)\]\((.*?)\))/', $body, $matches);
+        if (! isset($matches[1])) {
+            return $body;
+        }
 
-        if (! isset($matches[1]) || ! isset($matches[0])) {
+        if (! isset($matches[0])) {
             return $body;
         }
 
@@ -33,7 +36,7 @@ class Image extends AbstractFilter
                 [
                     // "image_wrapper_class" : "mimg",'
                     'image_src' => $matches[2][$k],
-                    'image_alt' => htmlspecialchars($matches[1][$k]),
+                    'image_alt' => htmlspecialchars((string) $matches[1][$k]),
                 ]
             ).'</div>';
             $body = str_replace($matches[0][$k], $renderImg, $body);

@@ -20,7 +20,7 @@ final class AppPool
     /** @param array<string, array<string, mixed>> $rawApps */
     public function __construct(array $rawApps, Twig $twig, ParameterBagInterface $parameterBag)
     {
-        $firstHost = \strval(array_key_first($rawApps));
+        $firstHost = (string) array_key_first($rawApps);
 
         foreach ($rawApps as $mainHost => $app) {
             $this->apps[$mainHost] = new AppConfig($parameterBag, $app, $firstHost === $mainHost);
@@ -135,11 +135,15 @@ final class AppPool
 
     public function sameHost(?string $host): bool
     {
-        if ($this->isFirstApp() && null === $host) {
-            return true;
+        if (! $this->isFirstApp()) {
+            return $host === $this->currentApp;
         }
 
-        return $host === $this->currentApp;
+        if (null !== $host) {
+            return $host === $this->currentApp;
+        }
+
+        return true;
     }
 
     public function getApp(string $host = ''): AppConfig

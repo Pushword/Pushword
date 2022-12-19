@@ -5,7 +5,6 @@ namespace Pushword\Core\Router;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\PageInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
 
@@ -13,11 +12,11 @@ final class Router implements RouterInterface
 {
     private bool $useCustomHostPath = true;
 
-    private string $currentHost;
+    private readonly string $currentHost;
 
     public function __construct(
-        private SfRouterInterface $router,
-        private AppPool $apps,
+        private readonly SfRouterInterface $router,
+        private readonly AppPool $apps,
         RequestStack $requestStack
     ) {
         $this->currentHost = null !== $requestStack->getCurrentRequest() ? $requestStack->getCurrentRequest()->getHost() : '';
@@ -66,7 +65,10 @@ final class Router implements RouterInterface
                     'host' => $this->apps->safegetCurrentPage()->getHost(),
                     'slug' => $slug,
                 ]);
-            } elseif (null !== $page && ! $this->apps->sameHost($page->getHost())) { // maybe we force canonical - useful for views
+            }
+
+            if (null !== $page && ! $this->apps->sameHost($page->getHost())) {
+                // maybe we force canonical - useful for views
                 $canonical = true;
             }
         }
@@ -78,7 +80,7 @@ final class Router implements RouterInterface
         $url = ($baseUrl ?? '').$this->router->generate(self::PATH, ['slug' => $slug]);
 
         if (null !== $pager && '1' !== (string) $pager) {
-            $url = rtrim($url, '/').'/'.$pager;
+            return rtrim($url, '/').'/'.$pager;
         }
 
         return $url;
@@ -86,11 +88,23 @@ final class Router implements RouterInterface
 
     public function mayUseCustomPath(): bool
     {
-        return $this->useCustomHostPath
-            && '' !== $this->currentHost // we have a request
-            && null !== $this->apps->getCurrentPage() // a page is loaded
-            && '' !== $this->apps->getCurrentPage()->getHost()
-            && ! $this->apps->get()->isMainHost($this->currentHost);
+        if (! $this->useCustomHostPath) {
+            return false;
+        }
+
+        if ('' === $this->currentHost) {
+            return false;
+        }
+
+        if (null === $this->apps->getCurrentPage()) {
+            return false;
+        }
+
+        if ('' === $this->apps->getCurrentPage()->getHost()) {
+            return false;
+        }
+
+        return ! $this->apps->get()->isMainHost($this->currentHost);
     }
 
     /**

@@ -18,14 +18,22 @@ class Extended extends AbstractFilter
     use RequiredManagerPoolTrait;
     use RequiredPropertyTrait;
 
-    public function apply($propertyValue)
+    public function apply(mixed $propertyValue)
     {
         return $this->loadExtendedValue($propertyValue);
     }
 
     private function loadExtendedValue(mixed $propertyValue): mixed
     {
-        if ('' !== $propertyValue || ! $this->entity instanceof PageInterface || ! $this->entity->getExtendedPage() instanceof PageInterface) {
+        if ('' !== $propertyValue) {
+            return $propertyValue;
+        }
+
+        if (! $this->entity instanceof PageInterface) {
+            return $propertyValue;
+        }
+
+        if (! $this->entity->getExtendedPage() instanceof PageInterface) {
             return $propertyValue;
         }
 

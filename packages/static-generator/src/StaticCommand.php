@@ -14,7 +14,7 @@ class StaticCommand extends Command
      */
     protected static $defaultName = 'pushword:static:generate';
 
-    public function __construct(private StaticAppGenerator $staticAppGenerator)
+    public function __construct(private readonly StaticAppGenerator $staticAppGenerator)
     {
         parent::__construct();
     }
@@ -36,14 +36,14 @@ class StaticCommand extends Command
         }
 
         if (null === $input->getArgument('page')) {
-            $this->staticAppGenerator->generate(\strval($input->getArgument('host')));
+            $this->staticAppGenerator->generate($input->getArgument('host'));
             $this->printStatus($output, $input->getArgument('host').' generated witch success.');
 
             return 0;
         }
 
-        $this->staticAppGenerator->generatePage(\strval($input->getArgument('host')), \strval($input->getArgument('page')));
-        $this->printStatus($output, $input->getArgument('host').'\'s page generated witch success.');
+        $this->staticAppGenerator->generatePage($input->getArgument('host'),  $input->getArgument('page'));
+        $this->printStatus($output, $input->getArgument('host')."'s page generated witch success.");
 
         return 0;
     }

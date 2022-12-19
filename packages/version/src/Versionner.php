@@ -16,7 +16,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class Versionner implements EventSubscriber // EventSubscriberInterface
 {
-    private Filesystem $fileSystem;
+    private readonly Filesystem $fileSystem;
 
     public static bool $version = true;
 
@@ -24,10 +24,10 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
      * @param class-string<PageInterface> $pageClass
      */
     public function __construct(
-        private string $logDir,
-        private string $pageClass,
-        private EntityManagerInterface $entityManager,
-        private SerializerInterface $serializer
+        private readonly string $logDir,
+        private readonly string $pageClass,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly SerializerInterface $serializer
     ) {
         $this->fileSystem = new Filesystem();
     }
@@ -80,7 +80,7 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
 
         $page = Repository::getPageRepository($this->entityManager, $this->pageClass)->findOneBy(['id' => $pageId]);
 
-        if (null === $page) {
+        if (! $page instanceof \Pushword\Core\Entity\PageInterface) {
             throw new \Exception('Page not found `'.$pageId.'`');
         }
 
@@ -118,12 +118,15 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
     public function getPageVersions(int|PageInterface $page): array
     {
         $dir = $this->getVersionDir($page);
-
-        if (! file_exists($dir) || ! \is_array($scandir = \Safe\scandir($dir))) {
+        if (! file_exists($dir)) {
             return [];
         }
 
-        $versions = array_filter($scandir, fn (string $item): bool => ! \in_array($item, ['.', '..'], true));
+        if (! \is_array($scandir = \Safe\scandir($dir))) {
+            return [];
+        }
+
+        $versions = array_filter($scandir, static fn (string $item): bool => ! \in_array($item, ['.', '..'], true));
 
         return array_values($versions);
     }

@@ -9,7 +9,7 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 class PageRenderingValidator extends ConstraintValidator
 {
-    public function __construct(private \Pushword\Core\Controller\PageController $pageController)
+    public function __construct(private readonly \Pushword\Core\Controller\PageController $pageController)
     {
     }
 

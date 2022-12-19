@@ -8,7 +8,7 @@ use Twig\TwigFunction;
 
 final class RouterTwigExtension extends AbstractExtension
 {
-    public function __construct(private RouterInterface $router)
+    public function __construct(private readonly RouterInterface $router)
     {
     }
 
@@ -27,7 +27,7 @@ final class RouterTwigExtension extends AbstractExtension
     public function isCurrentPage(string $uri, ?Page $currentPage): bool
     {
         return
-            null === $currentPage || $uri != $this->router->generate($currentPage->getRealSlug())
+            null === $currentPage || $uri !== $this->router->generate($currentPage->getRealSlug())
             ? false
             : true;
     }

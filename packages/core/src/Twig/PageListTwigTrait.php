@@ -56,7 +56,7 @@ trait PageListTwigTrait
         }
 
         if (null !== ($currentRequest = $this->getCurrentRequest()) && null !== ($host = $currentRequest->request->get('host'))) {
-            $params['host'] = \strval($host);
+            $params['host'] = (string) $host;
         }
 
         return $params;
@@ -66,9 +66,8 @@ trait PageListTwigTrait
     {
         $pagerRouter = null !== $this->getCurrentRequest() ? $this->getCurrentRequest()->attributes->get('_route') : 'pushword_page';
         $pagerRouter .= null !== $this->getCurrentRequest() && '' === $this->getCurrentRequest()->attributes->get('slug') ? '_homepage' : '';
-        $pagerRouter .= '_pager';
 
-        return $pagerRouter;
+        return $pagerRouter.'_pager';
     }
 
     /**
@@ -103,7 +102,7 @@ trait PageListTwigTrait
     }
 
     /**
-     * @return array<mixed>
+     * @return mixed[]|null
      */
     private function simpleStringToSearchChildren(string $search, ?PageInterface $currentPage = null): ?array
     {
@@ -125,7 +124,7 @@ trait PageListTwigTrait
 
         if ('children_children' == strtolower($search)
             && $currentPage->hasChildrenPages()) {
-            $childrenPage = $currentPage->getChildrenPages()->map(fn ($page) => $page->getId())->toArray();
+            $childrenPage = $currentPage->getChildrenPages()->map(static fn ($page): ?int => $page->getId())->toArray();
 
             return ['parentPage', 'IN', $childrenPage];
         }

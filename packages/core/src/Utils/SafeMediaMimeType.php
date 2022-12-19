@@ -4,7 +4,7 @@ namespace Pushword\Core\Utils;
 
 class SafeMediaMimeType
 {
-    public const GET = [
+    final public const GET = [
         'application/gpx+xml' => 'gpx',
         'application/gpx' => 'gpx',
         'image/svg+xml' => 'svg',

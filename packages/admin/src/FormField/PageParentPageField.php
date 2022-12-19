@@ -23,19 +23,16 @@ class PageParentPageField extends AbstractField
         return $form->add(
             'parentPage',
             EntityType::class,
-            array_merge(
-                [
-                    'class' => $this->admin->getPageClass(),
-                    'label' => 'admin.page.parentPage.label',
-                    'required' => false,
-                ],
-                ['query_builder' => fn (PageRepository $er): QueryBuilder => $er->createQueryBuilder('p')
-                    ->andWhere('p.id != :id')
-                    ->andWhere('p.host = :host')
-                    ->setParameter('id', (int) $this->admin->getSubject()->getId())
-                    ->setParameter('host', $this->admin->getSubject()->getHost()),
-                ]
-            )
+            [
+                'class' => $this->admin->getPageClass(),
+                'label' => 'admin.page.parentPage.label',
+                'required' => false,
+                'query_builder' => fn (PageRepository $er): QueryBuilder => $er->createQueryBuilder('p')
+                ->andWhere('p.id != :id')
+                ->andWhere('p.host = :host')
+                ->setParameter('id', (int) $this->admin->getSubject()->getId())
+                ->setParameter('host', $this->admin->getSubject()->getHost()),
+            ]
         );
     }
 }

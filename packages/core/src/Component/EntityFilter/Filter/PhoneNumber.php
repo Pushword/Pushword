@@ -12,7 +12,7 @@ class PhoneNumber extends AbstractFilter
     use RequiredAppTrait;
     use RequiredTwigTrait;
 
-    public function apply($propertyValue): string
+    public function apply(mixed $propertyValue): string
     {
         return $this->convertPhoneNumber(\strval($propertyValue));
     }
@@ -28,7 +28,7 @@ class PhoneNumber extends AbstractFilter
 
         foreach ($matches[0] as $k => $m) {
             $after = $matches['after'][$k];
-            $body = str_replace($m, ' '.$this->renderPhoneNumber(trim(substr($m, 0, -\strlen($after)))).$after, $body);
+            $body = str_replace($m, ' '.$this->renderPhoneNumber(trim(substr((string) $m, 0, -\strlen((string) $after)))).$after, $body);
         }
 
         return $body;

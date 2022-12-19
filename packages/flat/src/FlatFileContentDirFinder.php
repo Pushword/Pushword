@@ -28,7 +28,7 @@ class FlatFileContentDirFinder
 
         $dir = $app->get('flat_content_dir');
         if ('' === $dir || ! \is_string($dir)) {
-            throw new \Exception('No `flat_content_dir` dir in `'.$app->getMainHost().'`\'s params.');
+            throw new \Exception('No `flat_content_dir` dir in `'.$app->getMainHost()."`'s params.");
         }
 
         $this->contentDir[$host] = $dir;

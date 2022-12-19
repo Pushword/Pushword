@@ -28,27 +28,27 @@ class PageUpdateNotifier
     /**
      * @var int
      */
-    public const ERROR_NO_EMAIL = 1;
+    final public const ERROR_NO_EMAIL = 1;
 
     /**
      * @var int
      */
-    public const ERROR_NO_INTERVAL = 2;
+    final public const ERROR_NO_INTERVAL = 2;
 
     /**
      * @var int
      */
-    public const WAS_EVER_RUN_SINCE_INTERVAL = 3;
+    final public const WAS_EVER_RUN_SINCE_INTERVAL = 3;
 
     /**
      * @var int
      */
-    public const NOTHING_TO_NOTIFY = 4;
+    final public const NOTHING_TO_NOTIFY = 4;
 
     /**
      * @param class-string<PageInterface> $pageClass
      */
-    public function __construct(private string $pageClass, private MailerInterface $mailer, private AppPool $apps, private string $varDir, private EntityManagerInterface $em, private TranslatorInterface $translator, private Twig $twig)
+    public function __construct(private readonly string $pageClass, private readonly MailerInterface $mailer, private readonly AppPool $apps, private readonly string $varDir, private readonly EntityManagerInterface $em, private readonly TranslatorInterface $translator, private readonly Twig $twig)
     {
     }
 

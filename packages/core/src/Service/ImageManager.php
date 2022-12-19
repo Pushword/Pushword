@@ -15,21 +15,21 @@ final class ImageManager
 {
     use ImageImport;
 
-    private OptimizerChain $optimizer;
+    private readonly OptimizerChain $optimizer;
 
     private ?Image $lastThumb = null;
 
-    private FileSystem $fileSystem;
+    private readonly FileSystem $fileSystem;
 
     /**
      * @param array<string, array<string, mixed>> $filterSets
      */
     public function __construct(
         private array $filterSets,
-        private string $publicDir,
-        private string $projectDir,
-        private string $publicMediaDir,
-        private string $mediaDir
+        private readonly string $publicDir,
+        private readonly string $projectDir,
+        private readonly string $publicMediaDir,
+        private readonly string $mediaDir
     ) {
         $this->fileSystem = new FileSystem();
         $this->optimizer = OptimizerChainFactory::create(); // t o d o make optimizer bin path configurable
@@ -95,7 +95,7 @@ final class ImageManager
          *
          * @psam-suppress TypeDoesNotContainNull
          */
-        $quality = (int) (! isset($filters[$filterName]['quality']) ? 90 : $filters[$filterName]['quality']); // @phpstan-ignore-line
+        $quality = (int) ($filters[$filterName]['quality'] ?? 90); // @phpstan-ignore-line
 
         $this->createFilterDir(\dirname($this->getFilterPath($media, $filterName)));
 
@@ -141,7 +141,7 @@ final class ImageManager
     private function normalizeFilter(string &$filter, array &$parameters): void
     {
         if ('downscale' == $filter) {
-            $parameters[] = function ($constraint): void {
+            $parameters[] = static function ($constraint): void {
                 $constraint->aspectRatio();
                 $constraint->upsize();
             };
@@ -149,7 +149,7 @@ final class ImageManager
         }
 
         if (isset($parameters['constraint']) && \is_string($parameters['constraint'])) {
-            $parameters[] = eval("return function(\$constraint) {{$parameters['constraint']}};");
+            $parameters[] = eval(sprintf('return function($constraint) {%s};', $parameters['constraint']));
             unset($parameters['constraint']);
         }
     }

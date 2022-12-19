@@ -6,7 +6,7 @@ use Pushword\Core\Utils\HtmlBeautifer;
 
 class Punctuation extends AbstractFilter
 {
-    public function apply($propertyValue): string
+    public function apply(mixed $propertyValue): string
     {
         $propertyValue = \strval($propertyValue);
         $propertyValue = str_replace(' .', '.', $propertyValue);

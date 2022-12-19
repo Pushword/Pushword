@@ -22,9 +22,9 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
     /**
      * @var string
      */
-    public const LOGIN_ROUTE = 'pushword_login';
+    final public const LOGIN_ROUTE = 'pushword_login';
 
-    public function __construct(private UrlGeneratorInterface $urlGenerator)
+    public function __construct(private readonly UrlGeneratorInterface $urlGenerator)
     {
     }
 
@@ -38,7 +38,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             new UserBadge($email),
             new PasswordCredentials((string) $request->request->get('password', '')),
             [
-                new CsrfTokenBadge('authenticate', \strval($request->request->get('_csrf_token'))),
+                new CsrfTokenBadge('authenticate', (string) $request->request->get('_csrf_token')),
             ]
         );
     }

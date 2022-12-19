@@ -25,13 +25,13 @@ final class PageController extends AbstractController
     private Twig $twig;
 
     /** @var DataCollectorTranslator|Translator */
-    private TranslatorInterface $translator;
+    private readonly TranslatorInterface $translator;
 
     public function __construct(
         RequestStack $requestStack,
-        private ParameterBagInterface $params,
-        private EntityManagerInterface $em,
-        private AppPool $apps,
+        private readonly ParameterBagInterface $params,
+        private readonly EntityManagerInterface $em,
+        private readonly AppPool $apps,
         TranslatorInterface $translator
     ) {
         if (! $translator instanceof DataCollectorTranslator && ! $translator instanceof Translator) {
@@ -46,7 +46,7 @@ final class PageController extends AbstractController
     {
         $request = $request instanceof Request ? $request : $request->getCurrentRequest();
 
-        if (null === $request) {
+        if (! $request instanceof \Symfony\Component\HttpFoundation\Request) {
             return;
         }
 
@@ -96,7 +96,7 @@ final class PageController extends AbstractController
 
     public function showPage(PageInterface $page): Response
     {
-        $params = array_merge(['page' => $page], $this->apps->getApp()->getParamsForRendering());
+        $params = [...['page' => $page], ...$this->apps->getApp()->getParamsForRendering()];
 
         $view = $this->getView($page->getTemplate() ?? '/page/page.html.twig');
 
@@ -136,7 +136,7 @@ final class PageController extends AbstractController
 
         return $this->render(
             $this->getView('/page/rss.xml.twig'),
-            array_merge(['page' => $page], $this->apps->getApp()->getParamsForRendering()),
+            [...['page' => $page], ...$this->apps->getApp()->getParamsForRendering()],
             $response
         );
     }
@@ -152,7 +152,7 @@ final class PageController extends AbstractController
         $LocaleHomepage = $this->getPage($request, $locale, false);
         $slug = 'homepage';
         $page = $LocaleHomepage ?? $this->getPage($request, $slug);
-        if (null === $page) {
+        if (! $page instanceof \Pushword\Core\Entity\PageInterface) {
             throw $this->createNotFoundException('The page `'.$slug.'` was not found');
         }
 
@@ -246,7 +246,7 @@ final class PageController extends AbstractController
             return null;
         }
 
-        $unpaginatedSlug = \Safe\substr($slug, 0, -\strlen($match[1]));
+        $unpaginatedSlug = \Safe\substr($slug, 0, -\strlen((string) $match[1]));
         $request->attributes->set('pager', (int) $match[2] >= 1 ? $match[2] : $match[3]);
         $request->attributes->set('slug', $unpaginatedSlug);
 
@@ -271,9 +271,9 @@ final class PageController extends AbstractController
         if (! $page instanceof PageInterface) {
             if ($throwException) {
                 throw $this->createNotFoundException();
-            } else {
-                return null;
             }
+
+            return null;
         }
 
         if ('' === $page->getLocale()) { // avoid bc break
@@ -286,9 +286,9 @@ final class PageController extends AbstractController
         if ($page->getCreatedAt() > new \DateTimeImmutable() && ! $this->isGranted('ROLE_EDITOR')) {
             if ($throwException) {
                 throw $this->createNotFoundException();
-            } else {
-                return null;
             }
+
+            return null;
         }
 
         $this->apps->setCurrentPage($page); // used by Router ???
@@ -303,10 +303,8 @@ final class PageController extends AbstractController
 
     /**
      * @noRector
-     *
-     * @return false|string
      */
-    private function checkIfUriIsCanonical(Request $request, PageInterface $page)
+    private function checkIfUriIsCanonical(Request $request, PageInterface $page): false|string
     {
         $requestUri = $request->getRequestUri();
 

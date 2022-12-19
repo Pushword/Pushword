@@ -92,9 +92,8 @@ trait MediaSlugTrait
         $extension = $this->extractExtensionFromFile();
 
         $filename = $filename;
-        $filenameSlugified = $this->slugifyPreservingExtension($filename, $extension);
 
-        return $filenameSlugified;
+        return $this->slugifyPreservingExtension($filename, $extension);
     }
 
     private function slugify(string $slug): string

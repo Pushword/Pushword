@@ -6,7 +6,7 @@ use Pushword\Core\Utils\MarkdownParser;
 
 class Markdown extends AbstractFilter
 {
-    public function apply($propertyValue): string
+    public function apply(mixed $propertyValue): string
     {
         return $this->render(\strval($propertyValue));
     }

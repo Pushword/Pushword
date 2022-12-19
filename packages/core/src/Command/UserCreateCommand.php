@@ -23,9 +23,9 @@ final class UserCreateCommand extends Command
      * @param class-string $userClass
      */
     public function __construct(
-        private EntityManagerInterface $em,
-        private UserPasswordHasherInterface $passwordEncoder,
-        private string $userClass
+        private readonly EntityManagerInterface $em,
+        private readonly UserPasswordHasherInterface $passwordEncoder,
+        private readonly string $userClass
     ) {
         parent::__construct();
     }

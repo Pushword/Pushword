@@ -10,7 +10,7 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    public const DEFAULT_APP_FALLBACK = [
+    final public const DEFAULT_APP_FALLBACK = [
         'svg_dir',
     ];
 

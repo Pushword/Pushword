@@ -5,8 +5,11 @@ namespace Pushword\Installer;
 use Composer\Script\Event;
 use Symfony\Component\Filesystem\Filesystem;
 
+/**
+ * @psalm-suppress MissingFile
+ */
 if (! class_exists(Filesystem::class)) {
-    require_once 'vendor/symfony/filesystem/Filesystem.php';
+    require_once __DIR__.'/vendor/symfony/filesystem/Filesystem.php';
 }
 
 class PostInstall
@@ -34,7 +37,7 @@ class PostInstall
             throw new \LogicException();
         }
 
-        return array_filter($dir, fn (string $path): bool => ! \in_array($path, ['.', '..'], true));
+        return array_filter($dir, static fn (string $path): bool => ! \in_array($path, ['.', '..'], true));
     }
 
     public static function mirror(string $source, string $dest): void

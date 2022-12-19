@@ -13,15 +13,15 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class NewMessageMailNotifier
 {
-    private string $emailTo;
+    private readonly string $emailTo;
 
-    private string $emailFrom;
+    private readonly string $emailFrom;
 
-    private string $appName;
+    private readonly string $appName;
 
-    private string $interval;
+    private readonly string $interval;
 
-    private string $host;
+    private readonly string $host;
 
     /**
      .
@@ -29,13 +29,13 @@ class NewMessageMailNotifier
      * @param class-string<MessageInterface> $message Entity
      */
     public function __construct(
-        private string $message,
-        private MailerInterface $mailer,
-        private AppPool $apps,
-        private string $projectDir,
-        private EntityManagerInterface $em,
-        private TranslatorInterface $translator,
-        private LoggerInterface $logger
+        private readonly string $message,
+        private readonly MailerInterface $mailer,
+        private readonly AppPool $apps,
+        private readonly string $projectDir,
+        private readonly EntityManagerInterface $em,
+        private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface $logger
     ) {
         $this->emailTo = \strval($this->apps->get()->get('conversation_notification_email_to'));
         $this->emailFrom = \strval($this->apps->get()->get('conversation_notification_email_from'));

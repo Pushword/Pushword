@@ -45,11 +45,15 @@ trait ImageTrait
     }
 
     /**
-     * @return array<int>
+     * @return int[]|null
      */
     public function getDimensions(): ?array
     {
-        if (null === $this->height || null === $this->width) {
+        if (null === $this->height) {
+            return null;
+        }
+
+        if (null === $this->width) {
             return null;
         }
 
@@ -58,7 +62,11 @@ trait ImageTrait
 
     public function getRatio(): ?float
     {
-        if (null === $this->height || null === $this->width) {
+        if (null === $this->height) {
+            return null;
+        }
+
+        if (null === $this->width) {
             return null;
         }
 

@@ -25,15 +25,15 @@ final class ConversationFormController extends AbstractController
     private array $possibleOrigins = [];
 
     public function __construct(
-        private TranslatorInterface $translator,
-        private AppPool $apps,
-        private ParameterBagInterface $params,
-        private Twig $twig,
-        private FormFactoryInterface $formFactory,
-        private TokenStorageInterface $tokenStorage,
-        private RouterInterface $router,
-        private ManagerRegistry $doctrine,
-        private string $env
+        private readonly TranslatorInterface $translator,
+        private readonly AppPool $apps,
+        private readonly ParameterBagInterface $params,
+        private readonly Twig $twig,
+        private readonly FormFactoryInterface $formFactory,
+        private readonly TokenStorageInterface $tokenStorage,
+        private readonly RouterInterface $router,
+        private readonly ManagerRegistry $doctrine,
+        private readonly string $env
     ) {
     }
 
@@ -47,13 +47,13 @@ final class ConversationFormController extends AbstractController
         $param = 'conversation_form_'.str_replace('-', '_', $type);
 
         if (! $this->apps->get()->has($param)) {
-            throw new \Exception('`'.$type.'` does\'nt exist (not configured).');
+            throw new \Exception('`'.$type."` does'nt exist (not configured).");
         }
 
         $class = \strval($this->apps->get()->get($param));
         if (! class_exists($class)
             || ! (new \ReflectionClass($class))->implementsInterface(ConversationFormInterface::class)) {
-            throw new \Exception('`'.$type.'` does\'nt exist.');
+            throw new \Exception('`'.$type."` does'nt exist.");
         }
 
         return $class; // @phpstan-ignore-line

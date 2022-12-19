@@ -9,7 +9,10 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 final class MediaController extends AbstractController
 {
-    public function __construct(private string $publicMediaDir, private Kernel $kernel)
+    public function __construct(
+        private readonly string $publicMediaDir,
+        private readonly Kernel $kernel
+    )
     {
     }
 

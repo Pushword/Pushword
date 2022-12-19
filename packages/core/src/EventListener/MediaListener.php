@@ -24,17 +24,17 @@ final class MediaListener
 {
     private ?FlashBagInterface $flashBag = null;
 
-    private MediaRenamer $renamer;
+    private readonly MediaRenamer $renamer;
 
     /** @psalm-suppress  UndefinedInterfaceMethod */
     public function __construct(
-        private string $projectDir,
-        private EntityManagerInterface $em,
-        private FileSystem $filesystem,
-        private ImageManager $imageManager,
-        private RequestStack $requestStack,
-        private RouterInterface $router,
-        private TranslatorInterface $translator
+        private readonly string $projectDir,
+        private readonly EntityManagerInterface $em,
+        private readonly FileSystem $filesystem,
+        private readonly ImageManager $imageManager,
+        private readonly RequestStack $requestStack,
+        private readonly RouterInterface $router,
+        private readonly TranslatorInterface $translator
     ) {
         $this->renamer = new MediaRenamer();
     }
@@ -61,6 +61,7 @@ final class MediaListener
         $media = $this->getMediaFromEvent($event);
         $media->resetHash();
         $media->setHash();
+
         $propertyMapping = $event->getMapping();
 
         $absoluteDir = $propertyMapping->getUploadDestination().'/'.$propertyMapping->getUploadDir($media);
@@ -170,7 +171,7 @@ final class MediaListener
             $media->setName($media->getSlug());
         }
 
-        $media->setName(\strval(\Safe\preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFileName())));
+        $media->setName(\Safe\preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFileName())); // @phpstan-ignore-line
     }
 
     private function getMediaString(MediaInterface $media): string

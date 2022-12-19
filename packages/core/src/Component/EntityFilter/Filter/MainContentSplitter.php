@@ -27,7 +27,7 @@ class MainContentSplitter extends AbstractFilter
     /** @var string[] */
     private array $contentParts = [];
 
-    public function apply($propertyValue): self
+    public function apply(mixed $propertyValue): self
     {
         $this->split(\strval($propertyValue));
 

@@ -17,7 +17,7 @@ final class NewCommand extends Command
     protected static $defaultName = 'pushword:new';
 
     public function __construct(
-        private string $projectDir
+        private readonly string $projectDir
     ) {
         parent::__construct();
     }

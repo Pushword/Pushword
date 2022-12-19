@@ -64,7 +64,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
     {
         parent::configure();
 
-        $this->setListModes(array_merge($this->getListModes(), ['tree' => ['class' => 'fa fa-sitemap']]));
+        $this->setListModes([...$this->getListModes(), ...['tree' => ['class' => 'fa fa-sitemap']]]);
     }
 
     /**
@@ -149,7 +149,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
         $filter
             ->add('h1', CallbackFilter::class, [
-                'callback' => [$this, 'getSearchFilterForTitle'],
+                'callback' => fn (\Sonata\DoctrineORMAdminBundle\Datagrid\ProxyQuery $queryBuilder, string $alias, string $field, \Sonata\AdminBundle\Filter\Model\FilterData $filterData): ?bool => $this->getSearchFilterForTitle($queryBuilder, $alias, $field, $filterData),
                 'label' => 'admin.page.h1.label',
             ]);
         // $filter->add('slug', null, ['label' => 'admin.page.slug.label']);

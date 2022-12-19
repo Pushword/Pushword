@@ -14,14 +14,16 @@ class ElseH1 extends AbstractFilter
      */
     use RequiredManagerTrait;
 
-    public function apply($propertyValue): ?string
+    public function apply(mixed $propertyValue): ?string
     {
-        $return = '' !== \strval($propertyValue) ? $propertyValue : $this->entityFilterManager->getEntity()->getH1();
-
-        if (! \is_string($return) && null !== $return) {
-            throw new \LogicException();
+        $return = '' !== $propertyValue ? $propertyValue : $this->entityFilterManager->getEntity()->getH1();
+        if (\is_string($return)) {
+            return $return;
+        }
+        if (null === $return) {
+            return $return;
         }
 
-        return $return;
+        throw new \LogicException();
     }
 }

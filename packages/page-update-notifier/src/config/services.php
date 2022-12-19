@@ -4,9 +4,8 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Pushword\PageUpdateNotifier\PageUpdateNotifier;
 
-return function (ContainerConfigurator $configurator): void {
+return static function (ContainerConfigurator $configurator): void {
     $services = $configurator->services();
-
     $services->set('pushword.page_update_notifier', PageUpdateNotifier::class)
         ->autowire()
         ->args([

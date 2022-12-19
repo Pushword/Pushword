@@ -91,8 +91,11 @@ class FlatFileExporter
 
             $getter = 'get'.ucfirst($property);
             $value = $page->$getter(); // @phpstan-ignore-line
-            if (null === $value
-            || ('customProperties' == $property && empty($value))) { // @phpstan-ignore-line
+            if (null === $value) {
+                continue;
+            }
+
+            if ('customProperties' == $property && empty($value)) { // @phpstan-ignore-line
                 continue;
             }
 

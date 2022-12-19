@@ -17,23 +17,23 @@ use Twig\Environment as Twig;
  */
 final class Manager
 {
-    private AppConfig $app;
+    private readonly AppConfig $app;
 
-    private AppPool $apps;
+    private readonly AppPool $apps;
 
-    private Twig $twig;
+    private readonly Twig $twig;
 
-    private RouterInterface $router;
+    private readonly RouterInterface $router;
 
-    private EntityManagerInterface $entityManager;
+    private readonly EntityManagerInterface $entityManager;
 
     /** @param T $entity
      * @param ManagerPool<T> $managerPool
      */
     public function __construct(
-        private ManagerPool $managerPool,
-        private EventDispatcherInterface $eventDispatcher,
-        private object $entity
+        private readonly ManagerPool $managerPool,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly object $entity
     ) {
         $this->apps = $managerPool->apps;
         $this->twig = $managerPool->twig;
@@ -120,7 +120,7 @@ final class Manager
      *
      * @return false|class-string
      */
-    private function isFilter(string $className)
+    private function isFilter(string $className): false|string
     {
         $filterClass = class_exists($className) ? $className
             : 'Pushword\Core\Component\EntityFilter\Filter\\'.ucfirst($className);

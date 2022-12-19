@@ -39,13 +39,18 @@ final class HtmlLinkMultisite extends AbstractFilter
     /** @var string */
     public const HTML_REGEX_HREF_KEY = 'href';
 
-    public function apply($propertyValue): string
+    public function apply(mixed $propertyValue): string
     {
-        if (! method_exists($this->router, 'mayUseCustomPath') || ! $this->router->mayUseCustomPath()) {
-            return \strval($propertyValue);
+        $propertyValue = \strval($propertyValue);
+        if (! method_exists($this->router, 'mayUseCustomPath')) {
+            return $propertyValue;
         }
 
-        return $this->convertLinks(\strval($propertyValue));
+        if (! $this->router->mayUseCustomPath()) {
+            return $propertyValue;
+        }
+
+        return $this->convertLinks($propertyValue);
     }
 
     public function convertLinks(string $body): string

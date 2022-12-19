@@ -8,14 +8,14 @@ use Twig\Environment as Twig;
 final class AppConfig
 {
     /** @var string[] */
-    private array $hosts;
+    private array $hosts = [];
 
     /** @var array<(string|int), mixed> */
-    private array $customProperties;
+    private array $customProperties = [];
 
     private string $locale;
 
-    /** @var string|array<string> */
+    /** @var string|string[]|null */
     private string|array|null $locales = null;
 
     private string $baseUrl;
@@ -25,20 +25,20 @@ final class AppConfig
     private string $template;
 
     /** @var array<string, string> */
-    private array $filters;
+    private array $filters = [];
 
     private bool $entityCanOverrideFilters;
 
     /** @var array<string, array<string>> */
-    private array $assets;
+    private array $assets = [];
 
     private Twig $twig;
 
     /** @param array<string, mixed> $properties */
     public function __construct(
-        private ParameterBagInterface $params,
+        private readonly ParameterBagInterface $params,
         array $properties,
-        private bool $isFirstApp = false
+        private readonly bool $isFirstApp = false
     ) {
         foreach ($properties as $prop => $value) {
             $this->setCustomProperty($prop, $value);
@@ -61,7 +61,7 @@ final class AppConfig
         $this->twig = $twig;
     }
 
-    /** @return array<string, mixed> */
+    /** @return array{app_base_url: string, app_name: string, app_color: mixed} */
     public function getParamsForRendering(): array
     {
         return [
@@ -167,7 +167,7 @@ final class AppConfig
         return $this->assets;
     }
 
-    /** @return array<string, array<string>> */
+    /** @return array{javascripts: string[], stylesheets: string[]} */
     public function getAssetsVersionned(): array
     {
         $assetsVersionned = ['javascripts' => [], 'stylesheets' => []];
@@ -177,7 +177,7 @@ final class AppConfig
             }
 
             foreach ($this->assets[$row] as $key => $asset) {
-                $filepath = \strval($this->params->get('pw.public_dir')).$asset;
+                $filepath = $this->params->get('pw.public_dir').$asset;
                 $assetsVersionned[$row][$key] = $asset.
                     (file_exists($filepath) ? '?'.\Safe\substr(md5(\Safe\filemtime($filepath).$filepath), 2, 9) : '');
             }

@@ -37,7 +37,7 @@ trait PageParentTrait
     public function setParentPage(?PageInterface $page): self
     {
         if (null !== $page && ! $this->validateParentPage($page)) {
-            throw new \LogicException('Current Page can\'t be it own parent page.');
+            throw new \LogicException("Current Page can't be it own parent page.");
         }
 
         $this->parentPage = $page;

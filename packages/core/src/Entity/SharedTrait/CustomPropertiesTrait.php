@@ -90,9 +90,15 @@ trait CustomPropertiesTrait
         // remove the standAlone which were removed
         $existingPropertyNames = array_keys($this->getCustomProperties());
         foreach ($existingPropertyNames as $existingPropertyName) {
-            if ($this->isStandAloneCustomProperty($existingPropertyName) && ! isset($standAloneProperties[$existingPropertyName])) {
-                $this->removeCustomProperty($existingPropertyName);
+            if (! $this->isStandAloneCustomProperty($existingPropertyName)) {
+                continue;
             }
+
+            if (isset($standAloneProperties[$existingPropertyName])) {
+                continue;
+            }
+
+            $this->removeCustomProperty($existingPropertyName);
         }
 
         // nothing to add

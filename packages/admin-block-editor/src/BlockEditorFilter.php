@@ -26,14 +26,18 @@ final class BlockEditorFilter extends AbstractFilter
      *
      * @noRector
      */
-    public function apply($propertyValue)
+    public function apply(mixed $propertyValue)
     {
         /** @noRector \Rector\Php73\Rector\FuncCall\JsonThrowOnErrorRector */
-        if (
-            ! \is_string($propertyValue)
-            || ! \is_object($json = json_decode($propertyValue))
-            || ! property_exists($json, 'blocks')
-        ) {
+        if (! \is_string($propertyValue)) {
+            return $propertyValue;
+        }
+        $json = \Safe\json_decode($propertyValue);
+        if (! \is_object($json)) {
+            return $propertyValue;
+        }
+
+        if (! property_exists($json, 'blocks')) {
             return $propertyValue;
         }
 
@@ -104,7 +108,7 @@ final class BlockEditorFilter extends AbstractFilter
                 continue;
             }
 
-            $class = '\Pushword\AdminBlockEditor\Block\\'.ucfirst($block).'Block';
+            $class = '\Pushword\AdminBlockEditor\Block\\'.ucfirst((string) $block).'Block';
             if (class_exists($class) && ($class = new $class()) instanceof BlockInterface) {
                 $this->appBlocks[$block] = $this->loadBlockManager($class);
 

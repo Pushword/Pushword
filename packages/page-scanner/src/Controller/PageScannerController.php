@@ -14,9 +14,9 @@ final class PageScannerController extends AbstractController
     private static ?string $fileCache = null;
 
     public function __construct(
-        private Filesystem $filesystem,
+        private readonly Filesystem $filesystem,
         string $varDir,
-        private string $pageScanInterval
+        private readonly string $pageScanInterval
     ) {
         self::setFileCache($varDir);
     }

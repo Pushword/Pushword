@@ -39,13 +39,18 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
             return;
         }
 
-        $requestUniqId = \strval($persistenceEvent->getAdmin()->getRequest()->query->get('uniqid'));
+        $requestUniqId = (string) $persistenceEvent->getAdmin()->getRequest()->query->get('uniqid');
         $returnValues = $persistenceEvent->getAdmin()->getRequest()->request->all($requestUniqId);
-
-        if (isset($returnValues['mainContent']) && \is_string($returnValues['mainContent'])) {
-            // sanitize with https://github.com/editor-js/editorjs-php
-            $persistenceEvent->getAdmin()->getSubject()->setMainContent($returnValues['mainContent']);
+        if (! isset($returnValues['mainContent'])) {
+            return;
         }
+
+        if (! \is_string($returnValues['mainContent'])) {
+            return;
+        }
+
+        // sanitize with https://github.com/editor-js/editorjs-php
+        $persistenceEvent->getAdmin()->getSubject()->setMainContent($returnValues['mainContent']);
     }
 
     /**
@@ -55,7 +60,11 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
      */
     public function replaceFields(FormEvent $formEvent): void
     {
-        if (! $formEvent->getAdmin() instanceof PageAdminInterface || ! $this->mayUseEditorBlock($formEvent->getAdmin()->getSubject())) {
+        if (! $formEvent->getAdmin() instanceof PageAdminInterface) {
+            return;
+        }
+
+        if (! $this->mayUseEditorBlock($formEvent->getAdmin()->getSubject())) {
             return;
         }
 

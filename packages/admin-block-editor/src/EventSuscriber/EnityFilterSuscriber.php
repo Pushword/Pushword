@@ -32,11 +32,19 @@ class EnityFilterSuscriber extends AbstractEventSuscriber
     public function convertJsBlockToHtml(FilterEvent $filterEvent): void
     {
         $page = $filterEvent->getManager()->getEntity();
+        if (! $page instanceof PageInterface) {
+            return;
+        }
 
-        if (! $page instanceof PageInterface
-            || 'MainContent' != $filterEvent->getProperty()
-            || ! $this->mayUseEditorBlock($page)
-            || true === ($appConfig = $this->apps->get($page->getHost()))->get('admin_block_editor_disable_listener')) {
+        if ('MainContent' != $filterEvent->getProperty()) {
+            return;
+        }
+
+        if (! $this->mayUseEditorBlock($page)) {
+            return;
+        }
+
+        if (true === ($appConfig = $this->apps->get($page->getHost()))->get('admin_block_editor_disable_listener')) {
             return;
         }
 
