@@ -27,7 +27,7 @@ class Date extends AbstractFilter
         $string = F::preg_replace_str('/date\([\'"]?%?S[\'"]?\)/i', $this->getSummerYear(), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?W[\'"]?\)/i', $this->getWinterYear(), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?Y-1[\'"]?\)/i', date('Y', strtotime('-1 year')), $string);
-        $string = F::preg_replace_str('/date\([\'"]?%?Y+1[\'"]?\)/i', date('Y', strtotime('next year')), $string);
+        $string = F::preg_replace_str('/date\([\'"]?%?Y\+1[\'"]?\)/i', date('Y', strtotime('next year')), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?Y[\'"]?\)/i', (string) strftime('%Y'), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?(B|M)[\'"]?\)/i', (string) strftime('%B'), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?A[\'"]?\)/i', (string) strftime('%A'), $string);
