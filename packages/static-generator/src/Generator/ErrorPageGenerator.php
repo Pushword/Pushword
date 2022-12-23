@@ -35,7 +35,13 @@ class ErrorPageGenerator extends AbstractGenerator
             $this->requestStack->push($request);
         }
 
+        $filepath = $this->getStaticDir().(null !== $locale ? '/'.$locale : '').'/'.$uri;
+
+        if (file_exists($filepath)) {
+            return;
+        }
+
         $dump = $this->parser->compress($this->twig->render('@Twig/Exception/error.html.twig'));
-        $this->filesystem->dumpFile($this->getStaticDir().(null !== $locale ? '/'.$locale : '').'/'.$uri, $dump);
+        $this->filesystem->dumpFile($filepath, $dump);
     }
 }
