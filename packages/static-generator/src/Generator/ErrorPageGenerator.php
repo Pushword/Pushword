@@ -25,15 +25,15 @@ class ErrorPageGenerator extends AbstractGenerator
     // TODO : make it useful when using a .htaccess else disable it
     protected function generateErrorPage(?string $locale = null, string $uri = '404.html'): void
     {
-        if (null !== $locale) {
-            $request = $this->requestStack->getCurrentRequest();
-            if (! $request instanceof \Symfony\Component\HttpFoundation\Request) {
-                $request = new Request();
-            }
-
-            $request->setLocale($locale);
-            $this->requestStack->push($request);
+        $request = $this->requestStack->getCurrentRequest();
+        if (! $request instanceof \Symfony\Component\HttpFoundation\Request) {
+            $request = new Request();
         }
+
+        if (null !== $locale) {
+            $request->setLocale($locale);
+        }
+        $this->requestStack->push($request);
 
         $filepath = $this->getStaticDir().(null !== $locale ? '/'.$locale : '').'/'.$uri;
 
