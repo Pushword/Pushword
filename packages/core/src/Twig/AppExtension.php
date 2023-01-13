@@ -217,10 +217,11 @@ class AppExtension extends AbstractExtension
         return \Safe\preg_replace($pattern, $replacement, $subject);
     }
 
-    public function containsLinkTo(string $slugOrUrl, string $content): bool
+    public function containsLinkTo(string $slug, string $content): bool
     {
         $path = $this->router->generate($slug);
 
-        return str_contains($content, '"'.$path.'"');
+        return str_contains($content, '"'.$path.'"')
+            || str_contains($content, '"/'.$slug.'"');
     }
 }
