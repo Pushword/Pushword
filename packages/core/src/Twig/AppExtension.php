@@ -222,6 +222,8 @@ class AppExtension extends AbstractExtension
         $path = $this->router->generate($slug);
 
         return str_contains($content, '"'.$path.'"')
+            || str_contains($content, '='.$path.'>')
+            || str_contains($content, '='.$path.' ')
             || str_contains($content, '"/'.$slug.'"');
     }
 }
