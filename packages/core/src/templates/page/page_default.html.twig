@@ -79,7 +79,7 @@
 	{% endblock %}
 
 	{% block footer %}
-		{% include view('/page/_footer.html.twig') with {'content': '/'~page.slug ~ ' ' ~pageContent ~ pageBreadcrumb} %}
+		{% include view('/page/_footer.html.twig') with {'content': '"/'~page.slug ~ '" ' ~pageContent ~ pageBreadcrumb} %}
 	{% endblock %}
 
 	{% block navbar %}
