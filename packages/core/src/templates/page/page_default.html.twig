@@ -67,16 +67,19 @@
 
 {% block body %}
     <div class="flex flex-col min-h-screen">
+
+	{% set pageContent = include(view('/page/_content.html.twig')) %}
 	{% block content %}
-		{% include view('/page/_content.html.twig') %}
+		{{ pageContent|raw }}
 	{% endblock %}
 
+	{% set pageBreadcrumb = include(view('/page/_breadcrumb.html.twig')) %}
 	{% block breadcrumb %}
-		{% include view('/page/_breadcrumb.html.twig') %}
+		{{ pageBreadcrumb|raw }}
 	{% endblock %}
 
 	{% block footer %}
-		{% include view('/page/_footer.html.twig') %}
+		{% include view('/page/_footer.html.twig') with {'content': '/'~page.slug ~ ' ' ~pageContent ~ pageBreadcrumb} %}
 	{% endblock %}
 
 	{% block navbar %}

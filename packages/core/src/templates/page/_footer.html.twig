@@ -2,6 +2,7 @@
     <div class="max-w-screen-md p-3 py-10 mx-auto text-center text-gray-500">
         {% block footer %}
             {% include view('/component/alternate_links.html.twig') %}
+            {{ content }}
         {% endblock %}
 
         {% block extra_footer %}

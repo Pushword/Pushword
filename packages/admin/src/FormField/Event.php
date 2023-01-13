@@ -23,8 +23,7 @@ class Event extends SfEvent
     public function __construct(
         private readonly AdminInterface $admin,
         private array $fields
-    )
-    {
+    ) {
     }
 
     /**

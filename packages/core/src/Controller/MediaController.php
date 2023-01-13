@@ -12,8 +12,7 @@ final class MediaController extends AbstractController
     public function __construct(
         private readonly string $publicMediaDir,
         private readonly Kernel $kernel
-    )
-    {
+    ) {
     }
 
     public function download(string $media): BinaryFileResponse

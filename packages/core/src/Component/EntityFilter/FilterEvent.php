@@ -28,8 +28,7 @@ final class FilterEvent extends Event
     public function __construct(
         private readonly Manager $manager,
         private readonly string $property
-    )
-    {
+    ) {
     }
 
     /**
