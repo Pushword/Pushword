@@ -103,6 +103,7 @@ class AppExtension extends AbstractExtension
             new TwigFunction('pw', [$this->entityFilterManagerPool, 'getProperty'], self::options()),
             new TwigFunction('filesize', [FilesizeFormatter::class, 'formatBytes'], self::options()),
             new TwigFunction('page_position', [$this, 'getPagePosition'], self::options()),
+            new TwigFunction('contains_link_to', [$this, 'containsLinkTo'], self::options()),
             new TwigFunction('image_dimensions', [$this->imageManager, 'getDimensions'], self::options()),
             new TwigFunction('class_exists', 'class_exists'),
         ];
@@ -214,5 +215,12 @@ class AppExtension extends AbstractExtension
     public static function pregReplace(array|string $subject, array|string $pattern, array|string $replacement): array|string
     {
         return \Safe\preg_replace($pattern, $replacement, $subject);
+    }
+
+    public function containLinkTo(string $slugOrUrl, string $content): bool
+    {
+        $path = $this->router->generate($slug);
+
+        return str_contains($content, '"'.$path.'"');
     }
 }
