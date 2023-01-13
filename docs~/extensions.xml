@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Extensions</title>
+        <link>https://pushword.piedweb.com/extensions</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/extensions.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Version]]></title>
+                    <link>https://pushword.piedweb.com/extension/version</link>
+                    <guid>https://pushword.piedweb.com/extension/version</guid>
+                    <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Template Editor]]></title>
+                    <link>https://pushword.piedweb.com/extension/template-editor</link>
+                    <guid>https://pushword.piedweb.com/extension/template-editor</guid>
+                    <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[SVG]]></title>
+                    <link>https://pushword.piedweb.com/extension/svg</link>
+                    <guid>https://pushword.piedweb.com/extension/svg</guid>
+                    <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Page Update Notifier]]></title>
+                    <link>https://pushword.piedweb.com/extension/page-update-notifier</link>
+                    <guid>https://pushword.piedweb.com/extension/page-update-notifier</guid>
+                    <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Redirect to extensions]]></title>
+                    <link>https://pushword.piedweb.com/extension</link>
+                    <guid>https://pushword.piedweb.com/extension</guid>
+                    <pubDate>Sun, 18 Apr 2021 12:06:59 +0200</pubDate>
+                </item>
+                            
+    </channel>
+</rss>
