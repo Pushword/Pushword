@@ -243,7 +243,7 @@ final class MediaListener
             return $this->flashBag;
         }
 
-        return null !== ($request = $this->requestStack->getCurrentRequest()) && method_exists($request->getSession(), 'getFlashBag') ? // @phpstan-ignore-line
+        return null !== ($request = $this->requestStack->getCurrentRequest()) && method_exists($request->getSession(), 'getFlashBag') ?
                 $this->flashBag = $request->getSession()->getFlashBag() : null;
     }
 

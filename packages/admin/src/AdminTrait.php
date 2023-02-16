@@ -248,7 +248,7 @@ trait AdminTrait
             throw new \LogicException();
         }
 
-        $event = new FormEvent($this, $fields);
+        $event = new FormEvent($this, $fields); // @phpstan-ignore-line
         $this->eventDispatcher->dispatch($event, FormEvent::NAME);
 
         return $event->getFields();
