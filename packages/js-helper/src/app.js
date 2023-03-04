@@ -6,6 +6,7 @@ import {
     convertImageLinkToWebPLink,
     replaceOn,
     liveBlock,
+    convertFormFromRot13,
 } from '@pushword/js-helper/src/helpers.js';
 import { allClickable } from '@pushword/js-helper/src/clickable.js';
 
@@ -18,6 +19,7 @@ function onDomChanged() {
     refreshFsLightbox();
     allClickable('.clickable');
     addClassForNormalUser();
+    convertFormFromRot13();
 }
 
 function onPageLoaded() {

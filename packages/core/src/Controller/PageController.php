@@ -246,7 +246,7 @@ final class PageController extends AbstractController
             return null;
         }
 
-        $unpaginatedSlug = \Safe\substr($slug, 0, -\strlen((string) $match[1]));
+        $unpaginatedSlug = substr($slug, 0, -\strlen((string) $match[1]));
         $request->attributes->set('pager', (int) $match[2] >= 1 ? $match[2] : $match[3]);
         $request->attributes->set('slug', $unpaginatedSlug);
 

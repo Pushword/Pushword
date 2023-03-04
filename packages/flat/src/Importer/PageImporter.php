@@ -91,7 +91,7 @@ class PageImporter extends AbstractImporter
         if ('index' == $slug) {
             $slug = 'homepage';
         } elseif ('index' == basename($slug)) {
-            $slug = \Safe\substr($slug, 0, -\strlen('index'));
+            $slug = substr($slug, 0, -\strlen('index'));
         }
 
         return Page::normalizeSlug($slug);

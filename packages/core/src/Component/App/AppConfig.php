@@ -179,7 +179,7 @@ final class AppConfig
             foreach ($this->assets[$row] as $key => $asset) {
                 $filepath = $this->params->get('pw.public_dir').$asset;
                 $assetsVersionned[$row][$key] = $asset.
-                    (file_exists($filepath) ? '?'.\Safe\substr(md5(\Safe\filemtime($filepath).$filepath), 2, 9) : '');
+                    (file_exists($filepath) ? '?'.substr(md5(\Safe\filemtime($filepath).$filepath), 2, 9) : '');
             }
         }
 

@@ -146,7 +146,7 @@ final class LinkedDocsScanner extends AbstractScanner
     private function removeBase(string $url): string
     {
         if ('' !== $this->page->getHost() && str_starts_with($url, 'https://'.$this->page->getHost())) {
-            return \Safe\substr($url, \strlen('https://'.$this->page->getHost()));
+            return substr($url, \strlen('https://'.$this->page->getHost()));
         }
 
         return $url;
@@ -219,7 +219,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
         // anchor/bookmark/jump link
         if (str_starts_with($url, '#')) {
-            if (! $this->targetExist(\Safe\substr($url, 1))) {
+            if (! $this->targetExist(substr($url, 1))) {
                 $this->addError('<code>'.$url.'</code> target not found');
             }
 

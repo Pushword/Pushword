@@ -63,13 +63,13 @@ final class Manager
             $method = 'get'.ucfirst($method);
         }
 
-        $filterEvent = new FilterEvent($this, \Safe\substr($method, 3));
+        $filterEvent = new FilterEvent($this, substr($method, 3));
         $this->eventDispatcher->dispatch($filterEvent, FilterEvent::NAME_BEFORE);
 
         $returnValue = [] !== $arguments ? \call_user_func_array([$this->entity, $method], $arguments) // @phpstan-ignore-line
             : \call_user_func([$this->entity, $method]);    // @phpstan-ignore-line
 
-        $returnValue = $this->filter(\Safe\substr($method, 3), $returnValue);
+        $returnValue = $this->filter(substr($method, 3), $returnValue);
 
         $this->eventDispatcher->dispatch($filterEvent, FilterEvent::NAME_AFTER);
 
@@ -192,7 +192,7 @@ final class Manager
 
     private function className(string $name): string
     {
-        $name = \Safe\substr($name, (int) strrpos($name, '/'));
+        $name = substr($name, (int) strrpos($name, '/'));
 
         return lcfirst($name);
     }

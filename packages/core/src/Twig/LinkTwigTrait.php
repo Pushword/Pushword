@@ -61,11 +61,11 @@ trait LinkTwigTrait
     public static function encrypt(string $path): string
     {
         if (str_starts_with($path, 'http://')) {
-            $path = '-'.\Safe\substr($path, 7);
+            $path = '-'.substr($path, 7);
         } elseif (str_starts_with($path, 'https://')) {
-            $path = '_'.\Safe\substr($path, 8);
+            $path = '_'.substr($path, 8);
         } elseif (str_starts_with($path, 'mailto:')) {
-            $path = '@'.\Safe\substr($path, 7);
+            $path = '@'.substr($path, 7);
         }
 
         return str_rot13($path);
@@ -76,11 +76,11 @@ trait LinkTwigTrait
         $path = str_rot13($string);
 
         if (str_starts_with($path, '-')) {
-            $path = 'http://'.\Safe\substr($path, 1);
+            $path = 'http://'.substr($path, 1);
         } elseif (str_starts_with($path, '_')) {
-            $path = 'https://'.\Safe\substr($path, 1);
+            $path = 'https://'.substr($path, 1);
         } elseif (str_starts_with($path, '@')) {
-            $path = 'mailto:'.\Safe\substr($path, 1);
+            $path = 'mailto:'.substr($path, 1);
         }
 
         return $path;

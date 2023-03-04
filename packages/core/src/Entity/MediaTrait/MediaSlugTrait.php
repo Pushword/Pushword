@@ -77,7 +77,7 @@ trait MediaSlugTrait
         $filenameSlugified = $this->getMediaFromFilename($filename);
         $extension = $this->extractExtensionFromFile();
         $this->setMedia($filenameSlugified);
-        $this->slug = \Safe\substr($filenameSlugified, 0, \strlen($filenameSlugified) - \strlen($extension));
+        $this->slug = substr($filenameSlugified, 0, \strlen($filenameSlugified) - \strlen($extension));
 
         return $this;
     }
@@ -104,7 +104,7 @@ trait MediaSlugTrait
     protected function slugifyPreservingExtension(string $string, string $extension = ''): string
     {
         $extension = '' === $extension ? $this->extractExtension($string) : $extension;
-        $string = str_ends_with($string, $extension) ? \Safe\substr($string, 0, \strlen($string) - \strlen($extension)) : $string;
+        $string = str_ends_with($string, $extension) ? substr($string, 0, \strlen($string) - \strlen($extension)) : $string;
         $stringSlugify = $this->slugify($string);
 
         return $stringSlugify.$extension;

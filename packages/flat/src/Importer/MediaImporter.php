@@ -43,7 +43,7 @@ class MediaImporter extends AbstractImporter
     public function import(string $filePath, \DateTimeInterface $lastEditDateTime): void
     {
         if (! $this->isImage($filePath)) {
-            if (str_ends_with($filePath, '.json') && file_exists(\Safe\substr($filePath, 0, -5))) { // data file
+            if (str_ends_with($filePath, '.json') && file_exists(substr($filePath, 0, -5))) { // data file
                 return;
             }
 

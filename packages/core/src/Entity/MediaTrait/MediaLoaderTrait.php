@@ -14,7 +14,7 @@ trait MediaLoaderTrait
     {
         // TODO : move it to a separate service to get it from an SQL and get all properties
 
-        $src = str_contains($src, '/') ? \Safe\substr($src, \strlen('/media/default/')) : $src;
+        $src = str_contains($src, '/') ? substr($src, \strlen('/media/default/')) : $src;
 
         /** @var MediaInterface $self */
         $self = new self(); // @phpstan-ignore-line

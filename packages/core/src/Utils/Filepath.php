@@ -8,13 +8,13 @@ class Filepath
     {
         $pos = strrpos($filepath, '.');
 
-        return false !== $pos && (\strlen($filepath) - $pos) < 5 ? \Safe\substr($filepath, 0, $pos) : $filepath;
+        return false !== $pos && (\strlen($filepath) - $pos) < 5 ? substr($filepath, 0, $pos) : $filepath;
     }
 
     public static function filename(string $filepath): string
     {
         $pos = strrpos($filepath, '/');
 
-        return false !== $pos ? \Safe\substr($filepath, $pos + 1) : $filepath;
+        return false !== $pos ? substr($filepath, $pos + 1) : $filepath;
     }
 }

@@ -92,7 +92,7 @@ final class MediaBlockController extends AbstractController
         }
 
         if (str_starts_with((string) $content['url'], '/media/default/')) {
-            return $this->getMediaFromMedia(\Safe\substr($content['url'], \strlen('/media/default/')));
+            return $this->getMediaFromMedia(substr($content['url'], \strlen('/media/default/')));
         }
 
         return $this->getMediaFileFromUrl($content['url']);

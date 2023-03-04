@@ -15,7 +15,7 @@ trait ImageImport
         $slug = (new Slugify())->slugify($slug);
 
         return ('' !== $slug ? $slug : pathinfo($url, \PATHINFO_BASENAME))
-            .($hashInFilename ? '-'.\Safe\substr(md5(sha1($url)), 0, 4) : '')
+            .($hashInFilename ? '-'.substr(md5(sha1($url)), 0, 4) : '')
             .'.'.str_replace(['image/', 'jpeg'], ['', 'jpg'], $mimeType);
     }
 
