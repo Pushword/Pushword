@@ -22,7 +22,7 @@ trait PageRedirectionTrait
     {
         $content = $this->getMainContent();
         $code = 301; // default symfony is 302...
-        if ('Location:' == substr($content, 0, 9)) {
+        if (str_starts_with($content, 'Location:')) {
             $url = trim(substr($content, 9));
             if (1 === \Safe\preg_match('/ [1-5][0-9]{2}$/', $url, $match)) {
                 $code = (int) trim((string) $match[0]);

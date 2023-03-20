@@ -33,6 +33,7 @@ class ErrorPageGenerator extends AbstractGenerator
         if (null !== $locale) {
             $request->setLocale($locale);
         }
+
         $this->requestStack->push($request);
 
         $filepath = $this->getStaticDir().(null !== $locale ? '/'.$locale : '').'/'.$uri;
