@@ -152,9 +152,9 @@ final class Configuration implements ConfigurationInterface
                 ->info('Used to generate browser path. Must be accessible from public_dir.')
                 ->end()
             ->scalarNode('database_url')->defaultValue('sqlite:///%kernel.project_dir%/var/app.db')->cannotBeEmpty()->end()
-            ->scalarNode('entity_page')->defaultValue('App\Entity\Page')->cannotBeEmpty()->end()
-            ->scalarNode('entity_media')->defaultValue('App\Entity\Media')->cannotBeEmpty()->end()
-            ->scalarNode('entity_user')->defaultValue('App\Entity\User')->cannotBeEmpty()->end()
+            ->scalarNode('entity_page')->defaultValue(\App\Entity\Page::class)->cannotBeEmpty()->end()
+            ->scalarNode('entity_media')->defaultValue(\App\Entity\Media::class)->cannotBeEmpty()->end()
+            ->scalarNode('entity_user')->defaultValue(\App\Entity\User::class)->cannotBeEmpty()->end()
 
             // default app value
             ->scalarNode('locale')->defaultValue('%kernel.default_locale%')->cannotBeEmpty()->end()

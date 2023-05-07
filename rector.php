@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Rector\CodeQuality\Rector\Array_\CallableThisArrayToAnonymousFunctionRector;
 use Rector\CodeQuality\Rector\FuncCall\IntvalToTypeCastRector;
 use Rector\CodeQuality\Rector\FuncCall\StrvalToTypeCastRector;
+use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\CodingStyle\Rector\ClassConst\VarConstantCommentRector;
 use Rector\Config\RectorConfig;
 use Rector\Core\Configuration\Option;
@@ -54,5 +55,6 @@ return static function (RectorConfig $rectorConfig): void {
         IntvalToTypeCastRector::class,
         CallableThisArrayToAnonymousFunctionRector::class,
         NullToStrictStringFuncCallArgRector::class,
+        FlipTypeControlToUseExclusiveTypeRector::class,
     ]);
 };

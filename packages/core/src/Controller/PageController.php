@@ -166,7 +166,7 @@ final class PageController extends AbstractController
 
         return $this->render(
             $this->getView('/page/rss.xml.twig'),
-            array_merge($params, $this->apps->getApp()->getParamsForRendering())
+            [...$params, ...$this->apps->getApp()->getParamsForRendering()]
         );
     }
 
