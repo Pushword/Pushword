@@ -49,6 +49,7 @@ jobs:
           user_email: 'contact@piedweb.com'
 
   test_installer:
+    needs: split_monorepo
     runs-on: ubuntu-latest
     steps:
       - name: Trigger next workflow
