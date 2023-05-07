@@ -7,6 +7,7 @@ use Pushword\Core\AutowiringTrait\RequiredApps;
 use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use Pushword\Core\Repository\Repository;
+use Pushword\Core\Router\Router;
 use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Twig\LinkTwigTrait;
 
@@ -42,7 +43,7 @@ final class HtmlLinkMultisite extends AbstractFilter
     public function apply(mixed $propertyValue): string
     {
         $propertyValue = \strval($propertyValue);
-        if (! method_exists($this->router, 'mayUseCustomPath')) {
+        if (! $this->router instanceof Router) {
             return $propertyValue;
         }
 

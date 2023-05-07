@@ -17,10 +17,8 @@ class Date extends AbstractFilter
     /** @psalm-suppress RedundantCast */
     private function convertDateShortCode(string $string, ?string $locale = null): string
     {
-        // var_dump($string); exit;
-        if (null !== $locale) {
-            setlocale(\LC_TIME, $this->convertLocale($locale));
-        }
+        $locale = null !== $locale ? $this->convertLocale($locale) : 'fr_FR';
+        $intlDateFormatter = new \IntlDateFormatter($locale, \IntlDateFormatter::FULL, \IntlDateFormatter::NONE);
 
         // $string = preg_replace('/date\([\'"]?([a-z% ]+)[\'"]?\)/i',
         //  strftime(strpos('\1', '%') ? '\1': '%\1'), $string);
@@ -28,11 +26,17 @@ class Date extends AbstractFilter
         $string = F::preg_replace_str('/date\([\'"]?%?W[\'"]?\)/i', $this->getWinterYear(), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?Y-1[\'"]?\)/i', date('Y', strtotime('-1 year')), $string);
         $string = F::preg_replace_str('/date\([\'"]?%?Y\+1[\'"]?\)/i', date('Y', strtotime('next year')), $string);
-        $string = F::preg_replace_str('/date\([\'"]?%?Y[\'"]?\)/i', (string) strftime('%Y'), $string);
-        $string = F::preg_replace_str('/date\([\'"]?%?(B|M)[\'"]?\)/i', (string) strftime('%B'), $string);
-        $string = F::preg_replace_str('/date\([\'"]?%?A[\'"]?\)/i', (string) strftime('%A'), $string);
+        $string = F::preg_replace_str('/date\([\'"]?%?Y[\'"]?\)/i', date('Y'), $string);
 
-        return F::preg_replace_str('/date\([\'"]?%?e[\'"]?\)/i', (string) strftime('%e'), $string);
+        $intlDateFormatter->setPattern('MMMM');
+        $string = F::preg_replace_str('/date\([\'"]?%?(B|M)[\'"]?\)/i', (string) $intlDateFormatter->format(time()), $string);
+
+        $intlDateFormatter->setPattern('cccc');
+        $string = F::preg_replace_str('/date\([\'"]?%?A[\'"]?\)/i', (string) $intlDateFormatter->format(time()), $string);
+
+        $intlDateFormatter->setPattern('d');
+
+        return F::preg_replace_str('/date\([\'"]?%?e[\'"]?\)/i', (string) $intlDateFormatter->format(time()), $string);
     }
 
     private function getWinterYear(): string

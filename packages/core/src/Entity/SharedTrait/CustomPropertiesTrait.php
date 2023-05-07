@@ -181,9 +181,11 @@ trait CustomPropertiesTrait
             // @phpstan-ignore-next-line
             return $this->$property;
         }
+
         if (! \array_key_exists($method, get_object_vars($this))) {
             return $this->getCustomProperty(lcfirst($method)) ?? null;
         }
+
         if (! \is_callable($getter = [$this, 'get'.ucfirst($method)])) {
             return $this->getCustomProperty(lcfirst($method)) ?? null;
         }
