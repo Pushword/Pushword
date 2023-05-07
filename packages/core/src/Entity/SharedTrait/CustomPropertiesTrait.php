@@ -178,7 +178,8 @@ trait CustomPropertiesTrait
                 return $this->getCustomProperty($property) ?? null;
             }
 
-            return $this->$property; // may keep that ?! @phpstan-ignore-line
+            // @phpstan-ignore-next-line
+            return $this->$property;
         } else {
             if (\array_key_exists($method, get_object_vars($this)) && \is_callable($getter = [$this, 'get'.ucfirst($method)])) {
                 return \call_user_func_array($getter, $arguments);

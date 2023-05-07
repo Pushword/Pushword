@@ -60,7 +60,8 @@ trait PageRedirectionTrait
             throw new \LogicException('You may check a redirection exist before to get the redirection url');
         }
 
-        return $this->redirectionUrl; // @phpstan-ignore-line
+        // @phpstan-ignore-next-line
+        return $this->redirectionUrl;
     }
 
     public function getRedirectionCode(): int

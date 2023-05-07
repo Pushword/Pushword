@@ -50,6 +50,9 @@ class Configuration implements ConfigurationInterface
      */
     final public const DEFAULT_COPY = ['assets', 'bundles', 'media'];
 
+    /**
+     * @psalm-suppress UndefinedInterfaceMethod
+     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('static_generator');

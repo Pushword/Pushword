@@ -24,6 +24,9 @@ class Configuration implements ConfigurationInterface
      */
     final public const DEFAULT_TYPE_TO_PROSE = ['paragraph', 'image', 'list', 'blockquote', 'code', 'delimiter', 'header'];
 
+    /**
+     * @psalm-suppress UndefinedInterfaceMethod
+     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('admin_block_editor');

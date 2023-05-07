@@ -4,7 +4,9 @@ namespace Pushword\Version;
 
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Event\LifecycleEventArgs;
+use Doctrine\ORM\Event\PostPersistEventArgs;
+use Doctrine\ORM\Event\PostUpdateEventArgs;
+// use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Events;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
@@ -44,12 +46,12 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
         ];
     }
 
-    public function postPersist(LifecycleEventArgs $lifecycleEventArgs): void
+    public function postPersist(PostPersistEventArgs $lifecycleEventArgs): void
     {
         $this->postUpdate($lifecycleEventArgs);
     }
 
-    public function postUpdate(LifecycleEventArgs $lifecycleEventArgs): void
+    public function postUpdate(PostPersistEventArgs|PostUpdateEventArgs $lifecycleEventArgs): void
     {
         if (! static::$version) {
             return;
@@ -122,9 +124,7 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
             return [];
         }
 
-        if (! \is_array($scandir = \Safe\scandir($dir))) {
-            return [];
-        }
+        $scandir = \Safe\scandir($dir);
 
         $versions = array_filter($scandir, static fn (string $item): bool => ! \in_array($item, ['.', '..'], true));
 

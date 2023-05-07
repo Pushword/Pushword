@@ -16,6 +16,9 @@ class Configuration implements ConfigurationInterface
         'page_update_notification_interval',
     ];
 
+    /**
+     * @psalm-suppress UndefinedInterfaceMethod
+     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('pushword_page_update_notifier');

@@ -11,6 +11,9 @@ class Configuration implements ConfigurationInterface
         'flat_content_dir',
     ];
 
+    /**
+     * @psalm-suppress UndefinedInterfaceMethod
+     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('flat');

@@ -84,6 +84,9 @@ class Configuration implements ConfigurationInterface
         [MediaPreviewField::class],
     ];
 
+    /**
+     * @psalm-suppress UndefinedInterfaceMethod
+     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('pushword_admin');

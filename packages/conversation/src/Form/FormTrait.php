@@ -135,7 +135,8 @@ trait FormTrait
     {
         $currentStepMethod = 'getStep'.self::$step[$this->getStep()];
 
-        return $this->$currentStepMethod(); // @phpstan-ignore-line
+        // @phpstan-ignore-next-line
+        return $this->$currentStepMethod();
     }
 
     abstract protected function getStepOne(): FormBuilderInterface;
@@ -147,7 +148,8 @@ trait FormTrait
     {
         $currentStepMethod = 'valid'.self::$step[$this->getStep()];
         if (method_exists($this, $currentStepMethod)) {
-            return $this->$currentStepMethod($form); // @phpstan-ignore-line
+            // @phpstan-ignore-next-line
+            return $this->$currentStepMethod($form);
         }
 
         return $this->defaultStepValidator($form);

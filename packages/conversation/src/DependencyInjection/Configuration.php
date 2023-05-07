@@ -25,6 +25,9 @@ class Configuration implements ConfigurationInterface
         'possible_origins',
     ];
 
+    /**
+     * @psalm-suppress UndefinedInterfaceMethod
+     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('conversation');

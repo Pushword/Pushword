@@ -14,6 +14,9 @@ class Configuration implements ConfigurationInterface
         'svg_dir',
     ];
 
+    /**
+     * @psalm-suppress UndefinedInterfaceMethod
+     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('svg');

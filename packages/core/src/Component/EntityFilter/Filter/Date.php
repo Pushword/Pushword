@@ -37,12 +37,12 @@ class Date extends AbstractFilter
 
     private function getWinterYear(): string
     {
-        return date('m') < 4 ? date('Y') : date('Y', strtotime('next year'));
+        return date('m') < 4 ? \Safe\date('Y') : \Safe\date('Y', strtotime('next year'));
     }
 
     private function getSummerYear(): string
     {
-        return date('m') < 10 ? date('Y') : date('Y', strtotime('next year'));
+        return date('m') < 10 ? \Safe\date('Y') : \Safe\date('Y', strtotime('next year'));
     }
 
     private function convertLocale(string $locale): string

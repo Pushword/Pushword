@@ -14,6 +14,7 @@ class Configuration implements ConfigurationInterface
         'advanced_main_image',
     ];
 
+    /** @psalm-suppress UndefinedInterfaceMethod */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('admin_block_editor');
