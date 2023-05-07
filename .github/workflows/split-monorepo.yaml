@@ -3,31 +3,7 @@ name: Split Monorepo
 on: push
 
 jobs:
-  provide_packages_json:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      # required for matrix of packages set
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.1
-          coverage: none
-
-      - run: composer install --no-progress --ansi
-
-      # get package json list
-      - id: output_data
-        run: echo "::set-output name=matrix::$(vendor/bin/monorepo-builder packages-json)"
-
-    # this step is needed, so the output gets to the next defined job
-    outputs:
-      matrix: ${{ steps.output_data.outputs.matrix }}
-
   split_monorepo:
-    needs: provide_packages_json
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -49,10 +25,9 @@ jobs:
           - new
           - admin-block-editor
           - advanced-main-image
-          #package: ${{fromJson(needs.provide_packages_json.outputs.matrix)}}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -62,16 +37,16 @@ jobs:
 
       - # Uses an action in the root directory
         name: Monorepo Split of ${{ matrix.package }}
-        uses: symplify/github-action-monorepo-split@1.1
+        uses: danharrin/monorepo-split-github-action@v2.3.0
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         with:
-          package-directory: 'packages/${{ matrix.package }}'
-          split-repository-organization: 'pushword'
-          split-repository-name: '${{ matrix.package }}'
+          package_directory: 'packages/${{ matrix.package }}'
+          repository_organization: 'pushword'
+          repository_name: '${{ matrix.package }}'
           tag: ${{ steps.previous_tag.outputs.tag }}
-          user-name: 'RobinDev'
-          user-email: 'contact@piedweb.com'
+          user_name: 'RobinDev'
+          user_email: 'contact@piedweb.com'
 
   test_installer:
     runs-on: ubuntu-latest
