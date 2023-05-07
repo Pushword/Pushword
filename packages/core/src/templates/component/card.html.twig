@@ -24,13 +24,13 @@
             {{ date|date('d/m/Y à H:i') }}
         </span>
         {% endblock %}
-        <h{{ hLevel|default(2) }} class="p-2 mt-0 text-md" style="margin-bottom:0.5rem">
+        <{{ title_tag|default('h'~(hLevel|default(2))) }} class="p-2 mt-0 text-md" style="margin-bottom:0.5rem">
             {% if encrypted_link is defined %}{{ link(title, link) }}{% else %}
                 <a href="{{ link }}" style="text-decoration:none">
                     {{ title|raw }}
                 </a>
             {% endif %}
-        </h{{ hLevel|default(2) }}>
+        </h{{ title_tag|default('h'~(hLevel|default(2))) }}>
     </header>
 
 </article>

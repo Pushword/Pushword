@@ -19,6 +19,7 @@ coverage.xml
 /debug-container
 /drivers
 .vs-code
+/.phpunit.cache
 
 # Future packages
 related-pages
