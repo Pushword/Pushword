@@ -35,7 +35,7 @@ class PageOpenGraphImageGenerator
         private readonly string $publicMediaDir,
         private readonly int $imageHeight = 600,
         private readonly int $imageWidth = 1200,
-        private readonly int $marginSize = 40,
+        private readonly int $marginSize = 60,
     ) {
         if (null !== $this->apps->getCurrentPage()) {
             $this->page = $this->apps->getCurrentPage();
