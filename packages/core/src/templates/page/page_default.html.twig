@@ -45,7 +45,7 @@
 	{% endif %}
 	{% if page.mainImage is defined and page.mainImage is not null %}
 		<meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ (page.mainImage)|image('default') }}">
-	{% else %}
+	{% elseif apps.get().get('generated_og_image') is not null %}
 		{% set generated_image = open_graph_image_generated_path(page) %}
 		{% if generated_image is not null %}
 			<meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ open_graph_image_generated_path(page) }}">

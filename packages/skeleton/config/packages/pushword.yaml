@@ -6,6 +6,7 @@ pushword:
         hosts: ["localhost.dev", "localhost"],
         base_url: "https://localhost.dev",
         randomTest: 123,
+        generated_og_image: true,
         admin_block_editor: false,
         admin_block_editor_disable_listener: true,
         locales: 'fr|en'
