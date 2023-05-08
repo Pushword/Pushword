@@ -15,6 +15,7 @@ use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Utils\FilesizeFormatter;
 use Pushword\Core\Utils\HtmlBeautifer;
 use Pushword\Core\Utils\MarkdownParser;
@@ -48,7 +49,8 @@ class AppExtension extends AbstractExtension
         private AppPool $apps,
         private Twig $twig,
         private ImageManager $imageManager,
-        private ManagerPoolInterface $entityFilterManagerPool
+        private ManagerPoolInterface $entityFilterManagerPool,
+        private PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
     ) {
     }
 
@@ -106,7 +108,19 @@ class AppExtension extends AbstractExtension
             new TwigFunction('contains_link_to', [$this, 'containsLinkTo'], self::options()),
             new TwigFunction('image_dimensions', [$this->imageManager, 'getDimensions'], self::options()),
             new TwigFunction('class_exists', 'class_exists'),
+            new TwigFunction('open_graph_image_generated_path', [$this, 'getOpenGraphImageGeneratedPath']),
         ];
+    }
+
+    public function getOpenGraphImageGeneratedPath(PageInterface $page): ?string
+    {
+        $this->pageOpenGraphImageGenerator->page = $page;
+
+        if (! file_exists($this->pageOpenGraphImageGenerator->getPath())) {
+            return null;
+        }
+
+        return $this->pageOpenGraphImageGenerator->getPath(true);
     }
 
     public function getPagePosition(PageInterface $page): int

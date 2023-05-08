@@ -3,12 +3,17 @@
 namespace Pushword\Core\EventListener;
 
 use Pushword\Core\Entity\PageInterface;
-use Symfony\Component\Security\Core\Security;
+use Pushword\Core\Service\PageOpenGraphImageGenerator;
+use Symfony\Bundle\SecurityBundle\Security;
+
+// Symfony\Component\Security\Core\Security;
 
 final class PageListener
 {
-    public function __construct(private readonly Security $security)
-    {
+    public function __construct(
+        private readonly Security $security,
+        private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
+    ) {
     }
 
     public function preRemove(PageInterface $page): void
@@ -25,11 +30,13 @@ final class PageListener
     {
         $this->setIdAsSlugIfNotDefined($page);
         $this->updatePageEditor($page);
+        $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
     }
 
     public function preUpdate(PageInterface $page): void
     {
         $this->updatePageEditor($page);
+        $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
     }
 
     /**

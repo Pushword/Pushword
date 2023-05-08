@@ -45,6 +45,11 @@
 	{% endif %}
 	{% if page.mainImage is defined and page.mainImage is not null %}
 		<meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ (page.mainImage)|image('default') }}">
+	{% else %}
+		{% set generated_image = open_graph_image_generated_path(page) %}
+		{% if generated_image is not null %}
+			<meta name="og:image" content="{{ open_graph_image_generated_path(page) }}">
+		{% endif %}
 	{% endif %}
     <script>const base = "{{ page('homepage') }}"</script>
 {% endblock %}

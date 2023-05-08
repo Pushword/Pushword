@@ -103,6 +103,17 @@ final class AppConfig
         return null !== $this->get($key);
     }
 
+    public function getStr(string $key, string $default = ''): string
+    {
+        $returnValue = $this->get($key) ?? $default;
+
+        if (! \is_string($returnValue) && ! \is_int($returnValue) && ! \is_float($returnValue)) {
+            throw new \LogicException('`'.$key.'` is not stringable');
+        }
+
+        return (string) $returnValue;
+    }
+
     /** @return mixed */
     public function get(string $key)
     {
