@@ -49,6 +49,7 @@
 		{% set generated_image = open_graph_image_generated_path(page) %}
 		{% if generated_image is not null %}
 			<meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ open_graph_image_generated_path(page) }}">
+			<meta name="twitter:card" content="summary_large_image">
 		{% endif %}
 	{% endif %}
     <script>const base = "{{ page('homepage') }}"</script>
