@@ -4,6 +4,7 @@ namespace Pushword\Core\Entity\PageTrait;
 
 use Cocur\Slugify\Slugify;
 use Doctrine\ORM\Mapping as ORM;
+use Pushword\Core\Utils\F;
 
 trait PageTrait
 {
@@ -76,6 +77,8 @@ trait PageTrait
     public function setMainContent(?string $mainContent): self
     {
         $this->mainContent = (string) $mainContent;
+        // clean empty link added by editor.js
+        $this->mainContent = F::preg_replace_str('@<a[^>]+"></a>@U', '', $this->mainContent);
 
         return $this;
     }

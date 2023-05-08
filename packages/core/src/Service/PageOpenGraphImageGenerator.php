@@ -23,7 +23,7 @@ class PageOpenGraphImageGenerator
 {
     private ?RGB $rgb = null;
 
-    private ?ImagineInterface $imagine = null;
+    public ?ImagineInterface $imagine = null;
 
     public PageInterface $page;
 
