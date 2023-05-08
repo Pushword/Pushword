@@ -45,7 +45,8 @@ class PageOpenGraphImageGenerator
     public function getPath(bool $browserPath = false): string
     {
         return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/og/'
-            .str_replace('/', '_', $this->page->getSlug()).'.png';
+            .str_replace('/', '_', $this->page->getSlug()).'-'
+            .substr(sha1($this->page->getId().$this->apps->get()->getHosts()[0]), 0, 6).'.png';
     }
 
     public function generatePreviewImage(): void
@@ -109,7 +110,8 @@ class PageOpenGraphImageGenerator
 
     private function drawLogo(ImageInterface $image): void
     {
-        $logo = $this->getImagine()->open($this->twig->getLoader()->getSourceContext('@Pushword/page/OpenGrapImageGenerator/logo.png')->getPath());
+        $logo = $this->apps->get()->getView('/page/OpenGrapImageGenerator/logo.png');
+        $logo = $this->getImagine()->open($this->twig->getLoader()->getSourceContext($logo)->getPath());
         $logoSize = $logo->getSize();
         $bottomRight = new \Imagine\Image\Point(
             $this->imageWidth - $logoSize->getWidth() - $this->marginSize,
@@ -120,8 +122,10 @@ class PageOpenGraphImageGenerator
 
     private function getFont(string $fontType = 'bold', int $size = 37, ?ColorInterface $color = null): Font
     {
+        $font = $this->apps->get()->getView('@Pushword/page/OpenGrapImageGenerator/'.$fontType.'.ttf');
+
         return new Font(
-            $this->twig->getLoader()->getSourceContext('@Pushword/page/OpenGrapImageGenerator/'.$fontType.'.ttf')->getPath(),
+            $this->twig->getLoader()->getSourceContext($font)->getPath(),
             $size,
             $color ?? $this->getRgb()->color('#0f172a')
         );
