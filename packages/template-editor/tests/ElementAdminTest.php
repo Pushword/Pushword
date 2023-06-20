@@ -2,10 +2,10 @@
 
 namespace Pushword\TemplateEditor\Tests;
 
-use Pushword\Admin\Tests\AbstractAdminTest;
+use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\TemplateEditor\ElementRepository;
 
-class ElementAdminTest extends AbstractAdminTest
+class ElementAdminTest extends AbstractAdminTestClass
 {
     public function testAdmin()
     {

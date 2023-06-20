@@ -3,9 +3,9 @@
 namespace Pushword\AdminBlockEditor\Tests;
 
 use App\Entity\Page;
-use Pushword\Admin\Tests\AbstractAdminTest;
+use Pushword\Admin\Tests\AbstractAdminTestClass;
 
-class ControllerTest extends AbstractAdminTest
+class ControllerTest extends AbstractAdminTestClass
 {
     public function testBasics()
     {

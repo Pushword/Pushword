@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Panther\PantherTestCase;
 
-abstract class AbstractAdminTest extends PantherTestCase
+abstract class AbstractAdminTestClass extends PantherTestCase
 {
     protected static bool $userCreated = false;
 

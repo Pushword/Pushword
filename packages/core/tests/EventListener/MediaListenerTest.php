@@ -2,14 +2,14 @@
 
 namespace Pushword\Core\Tests\Controller;
 
-use Pushword\Admin\Tests\AbstractAdminTest;
+use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Panther\PantherTestCase;
 
-class MediaListenerTest extends AbstractAdminTest // PantherTestCase // KernelTestCase
+class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // KernelTestCase
 {
     use PathTrait;
 

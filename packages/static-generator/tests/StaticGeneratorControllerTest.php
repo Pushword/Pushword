@@ -2,9 +2,9 @@
 
 namespace Pushword\StaticGenerator\Tests;
 
-use Pushword\Admin\Tests\AbstractAdminTest;
+use Pushword\Admin\Tests\AbstractAdminTestClass;
 
-class StaticGeneratorControllerTest extends AbstractAdminTest
+class StaticGeneratorControllerTest extends AbstractAdminTestClass
 {
     public function testController()
     {

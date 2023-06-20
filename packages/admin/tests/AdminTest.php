@@ -2,7 +2,7 @@
 
 namespace Pushword\Admin\Tests;
 
-class AdminTest extends AbstractAdminTest
+class AdminTest extends AbstractAdminTestClass
 {
     public function testLogin()
     {

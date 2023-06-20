@@ -2,9 +2,9 @@
 
 namespace Pushword\conversation\Tests\Admin;
 
-use Pushword\Admin\Tests\AbstractAdminTest;
+use Pushword\Admin\Tests\AbstractAdminTestClass;
 
-class ConversationAdminTest extends AbstractAdminTest
+class ConversationAdminTest extends AbstractAdminTestClass
 {
     public function testAdmin()
     {

@@ -2,12 +2,12 @@
 
 namespace Pushword\Version\Tests;
 
-use Pushword\Admin\Tests\AbstractAdminTest;
+use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Version\Versionner;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
-class ControllerTest extends AbstractAdminTest
+class ControllerTest extends AbstractAdminTestClass
 {
     public function testLogin()
     {

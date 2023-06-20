@@ -2,9 +2,9 @@
 
 namespace Pushword\TemplateEditor\Tests;
 
-use Pushword\Admin\Tests\AbstractAdminTest;
+use Pushword\Admin\Tests\AbstractAdminTestClass;
 
-class PageScannerControllerTest extends AbstractAdminTest
+class PageScannerControllerTest extends AbstractAdminTestClass
 {
     public function testAdmin()
     {

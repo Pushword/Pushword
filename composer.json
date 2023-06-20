@@ -73,7 +73,7 @@
         "phpstan/phpstan": "^1.0",
         "phpstan/phpstan-doctrine": "^1.0",
         "phpstan/phpstan-symfony": "^1.0",
-        "phpunit/phpunit": "^9.5",
+        "phpunit/phpunit": "^10.2",
         "psalm/plugin-symfony": "^5.0",
         "rector/rector": "^0.17",
         "squizlabs/php_codesniffer": "^3.5",
