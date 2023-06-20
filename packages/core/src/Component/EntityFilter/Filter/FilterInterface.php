@@ -4,8 +4,5 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 
 interface FilterInterface
 {
-    /**
-     * @return mixed
-     */
-    public function apply(mixed $propertyValue);
+    public function apply(mixed $propertyValue); // @phpstan-ignore-line
 }

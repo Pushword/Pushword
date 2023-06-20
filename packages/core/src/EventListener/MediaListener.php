@@ -247,7 +247,7 @@ final class MediaListener
                 $this->flashBag = $request->getSession()->getFlashBag() : null;
     }
 
-    private function updateMainColor(MediaInterface $media, ?Image $image = null): void
+    private function updateMainColor(MediaInterface $media, Image $image = null): void
     {
         if (! $image instanceof \Intervention\Image\Image) {
             return;
@@ -257,7 +257,7 @@ final class MediaListener
         $color = $imageForPalette->limitColors(1)->pickColor(0, 0, 'hex');
         $imageForPalette->destroy();
 
-        $media->setMainColor(\strval($color));
+        $media->setMainColor(\strval($color)); // @phpstan-ignore-line
     }
 
     /*  Palette was good, but not ready for PHP 8

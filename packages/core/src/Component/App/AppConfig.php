@@ -107,15 +107,14 @@ final class AppConfig
     {
         $returnValue = $this->get($key) ?? $default;
 
-        if (! \is_string($returnValue) && ! \is_int($returnValue) && ! \is_float($returnValue)) {
+        if (! \is_scalar($returnValue)) {
             throw new \LogicException('`'.$key.'` is not stringable');
         }
 
         return (string) $returnValue;
     }
 
-    /** @return mixed */
-    public function get(string $key)
+    public function get(string $key): mixed
     {
         $camelCaseKey = static::normalizePropertyName($key);
 
@@ -144,8 +143,7 @@ final class AppConfig
         return $this;
     }
 
-    /** @return mixed */
-    public function getCustomProperty(string $key)
+    public function getCustomProperty(string $key): mixed
     {
         return $this->customProperties[$key] ?? null;
     }
@@ -200,7 +198,7 @@ final class AppConfig
     /**
      * @psalm-suppress InternalMethod
      */
-    public function getView(?string $path = null, string $fallback = '@Pushword'): string
+    public function getView(string $path = null, string $fallback = '@Pushword'): string
     {
         if (null === $path) {
             return $this->template.'/page/page.html.twig';

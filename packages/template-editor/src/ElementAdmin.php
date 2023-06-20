@@ -68,7 +68,7 @@ final class ElementAdmin extends AbstractController
         }
     }
 
-    public function editElement(?string $encodedPath = null, Request $request = null): Response
+    public function editElement(string $encodedPath = null, Request $request = null): Response
     {
         $element = $this->getElement($encodedPath);
 

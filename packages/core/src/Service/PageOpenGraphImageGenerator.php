@@ -112,6 +112,7 @@ class PageOpenGraphImageGenerator
     {
         $logo = $this->apps->get()->getView('/page/OpenGrapImageGenerator/logo.png');
         $logo = $this->getImagine()->open($this->twig->getLoader()->getSourceContext($logo)->getPath());
+
         $logoSize = $logo->getSize();
         $bottomRight = new \Imagine\Image\Point(
             $this->imageWidth - $logoSize->getWidth() - $this->marginSize,
@@ -120,7 +121,7 @@ class PageOpenGraphImageGenerator
         $image->paste($logo, $bottomRight);
     }
 
-    private function getFont(string $fontType = 'bold', int $size = 37, ?ColorInterface $color = null): Font
+    private function getFont(string $fontType = 'bold', int $size = 37, ColorInterface $color = null): Font
     {
         $font = $this->apps->get()->getView('@Pushword/page/OpenGrapImageGenerator/'.$fontType.'.ttf');
 

@@ -11,11 +11,10 @@ class Date extends AbstractFilter
 
     public function apply(mixed $propertyValue): string
     {
-        return $this->convertDateShortCode(\strval($propertyValue), $this->getApp()->getDefaultLocale());
+        return $this->convertDateShortCode($this->string($propertyValue), $this->getApp()->getDefaultLocale());
     }
 
-    /** @psalm-suppress RedundantCast */
-    private function convertDateShortCode(string $string, ?string $locale = null): string
+    private function convertDateShortCode(string $string, string $locale = null): string
     {
         $locale = null !== $locale ? $this->convertLocale($locale) : 'fr_FR';
         $intlDateFormatter = new \IntlDateFormatter($locale, \IntlDateFormatter::FULL, \IntlDateFormatter::NONE);

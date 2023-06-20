@@ -24,8 +24,6 @@ class NewMessageMailNotifier
     private readonly string $host;
 
     /**
-     .
-     *
      * @param class-string<MessageInterface> $message Entity
      */
     public function __construct(
@@ -37,10 +35,10 @@ class NewMessageMailNotifier
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger
     ) {
-        $this->emailTo = \strval($this->apps->get()->get('conversation_notification_email_to'));
-        $this->emailFrom = \strval($this->apps->get()->get('conversation_notification_email_from'));
-        $this->interval = \strval($this->apps->get()->get('conversation_notification_interval'));
-        $this->appName = \strval($this->apps->get()->get('name'));
+        $this->emailTo = \strval($this->apps->get()->getStr('conversation_notification_email_to'));
+        $this->emailFrom = \strval($this->apps->get()->getStr('conversation_notification_email_from'));
+        $this->interval = \strval($this->apps->get()->getStr('conversation_notification_interval'));
+        $this->appName = \strval($this->apps->get()->getStr('name'));
         $this->host = $this->apps->get()->getMainHost();
     }
 

@@ -155,8 +155,7 @@ final class AppPool
         return $this->get($host);
     }
 
-    /** @return mixed */
-    public function getAppValue(string $key, string $host = '')
+    public function getAppValue(string $key, string $host = ''): mixed
     {
         return $this->getApp($host)->get($key);
     }

@@ -52,7 +52,7 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
 
         $form->end();
 
-        foreach ($fields[1]  as $k => $block) {
+        foreach ($fields[1] as $k => $block) {
             $form->with($k, ['class' => 'col-md-3 columnFields']);
             foreach ($block as $singleBlock) {
                 $this->addFormField($singleBlock, $form);

@@ -3,7 +3,6 @@
 namespace Pushword\Core\Utils;
 
 use DateInterval;
-use DateTime;
 
 /**
  * Usage
@@ -28,7 +27,7 @@ class LastTime
      *
      * @return \DateTime|\DateTimeImmutable|null
      */
-    public function get(?string $default = null): ?\DateTimeInterface
+    public function get(string $default = null): ?\DateTimeInterface
     {
         if (! file_exists($this->filePath)) {
             return null === $default ? null : new \DateTime($default);

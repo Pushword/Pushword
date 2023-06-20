@@ -12,7 +12,7 @@ class Image extends AbstractFilter
 
     public function apply(mixed $propertyValue): string
     {
-        return $this->convertMarkdownImage(\strval($propertyValue));
+        return $this->convertMarkdownImage($this->string($propertyValue));
     }
 
     /**

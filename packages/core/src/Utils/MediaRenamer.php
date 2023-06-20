@@ -16,7 +16,7 @@ class MediaRenamer
     public function rename(MediaInterface $media): MediaInterface
     {
         $newName = (1 === $this->iterate ? $media->getName()
-            : F::preg_replace_str('/ \([0-9]+\)$/', '', $media->getName()));
+            : F::preg_replace_str('/ \(\d+\)$/', '', $media->getName()));
         $newName .= ' ('.($this->iterate + 1).')';
 
         $media->setName($newName);

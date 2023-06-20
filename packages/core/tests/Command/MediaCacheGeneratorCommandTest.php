@@ -19,12 +19,12 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
-        $this->assertTrue(false !== strpos($output, '100%'));
+        $this->assertTrue(str_contains($output, '100%'));
 
         $commandTester->execute(['media' => 'piedweb-logo.png']);
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
-        $this->assertTrue(false !== strpos($output, '100%'));
+        $this->assertTrue(str_contains($output, '100%'));
     }
 }

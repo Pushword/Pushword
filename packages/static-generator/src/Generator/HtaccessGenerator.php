@@ -4,7 +4,7 @@ namespace Pushword\StaticGenerator\Generator;
 
 class HtaccessGenerator extends PageGenerator
 {
-    public function generate(?string $host = null): void
+    public function generate(string $host = null): void
     {
         $this->init($host);
 

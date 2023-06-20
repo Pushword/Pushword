@@ -100,9 +100,9 @@ final class PageMenuProvider implements ContainerAwareInterface
     private function extractHostFilter(array $query): ?string
     {
         if (
-            isset($query['filter']) && \is_array($query['filter']) &&
-            isset($query['filter']['host']) && \is_array($query['filter']['host']) &&
-            isset($query['filter']['host']['value'])) {
+            isset($query['filter']) && \is_array($query['filter'])
+            && isset($query['filter']['host']) && \is_array($query['filter']['host'])
+            && isset($query['filter']['host']['value'])) {
             if (\is_array($query['filter']['host']['value']) && isset($query['filter']['host']['value'][0]) && \is_string($query['filter']['host']['value'][0])) {
                 return $query['filter']['host']['value'][0];
             }

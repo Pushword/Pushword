@@ -9,6 +9,7 @@ use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RobotsGenerator;
+use Pushword\StaticGenerator\Helper;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -74,7 +75,7 @@ class Configuration implements ConfigurationInterface
                 ->defaultValue('%kernel.project_dir%/%main_host%')
                 ->info('If null or empty, static dir will be %kernel.project_dir%/host.tld/.')
                 ->validate()
-                    ->ifTrue(static fn ($value): bool => ! self::isAbsolutePath($value))
+                    ->ifTrue(static fn ($value): bool => ! Helper::isAbsolutePath($value))
                     ->thenInvalid('Invalid static dir path `%s`, it must be absolute (eg: /home/pushword/host.tld/)')
                 ->end()
             ->end()
@@ -85,10 +86,5 @@ class Configuration implements ConfigurationInterface
         ->end();
 
         return $treeBuilder;
-    }
-
-    private static function isAbsolutePath(string $path): bool
-    {
-        return '' !== $path && (\in_array($path[0], [\DIRECTORY_SEPARATOR, '%'], true) || 1 === \Safe\preg_match('#\A[A-Z]:(?![^/\\\\])#i', $path));
     }
 }

@@ -42,7 +42,7 @@ final class HtmlLinkMultisite extends AbstractFilter
 
     public function apply(mixed $propertyValue): string
     {
-        $propertyValue = \strval($propertyValue);
+        $propertyValue = $this->string($propertyValue);
         if (! $this->router instanceof Router) {
             return $propertyValue;
         }

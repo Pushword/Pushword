@@ -8,7 +8,7 @@ class Punctuation extends AbstractFilter
 {
     public function apply(mixed $propertyValue): string
     {
-        $propertyValue = \strval($propertyValue);
+        $propertyValue = $this->string($propertyValue);
         $propertyValue = str_replace(' .', '.', $propertyValue);
         $propertyValue = str_replace(' ,', ',', $propertyValue);
 

@@ -9,7 +9,7 @@ trait PageRedirectionTrait
     /**
      * @var string|false|null
      */
-    protected $redirectionUrl = null;
+    protected $redirectionUrl;
 
     protected ?int $redirectionCode = null;
 
@@ -24,9 +24,9 @@ trait PageRedirectionTrait
         $code = 301; // default symfony is 302...
         if (str_starts_with($content, 'Location:')) {
             $url = trim(substr($content, 9));
-            if (1 === \Safe\preg_match('/ [1-5][0-9]{2}$/', $url, $match)) {
+            if (1 === \Safe\preg_match('/ [1-5]\d{2}$/', $url, $match)) {
                 $code = (int) trim((string) $match[0]);
-                $url = F::preg_replace_str('/ [1-5][0-9]{2}$/', '', $url);
+                $url = F::preg_replace_str('/ [1-5]\d{2}$/', '', $url);
             }
 
             if (false !== filter_var($url, \FILTER_VALIDATE_URL) || 1 === \Safe\preg_match('/^[^ ]+$/', $url)) {

@@ -21,7 +21,7 @@ class CommandTest extends KernelTestCase
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
-        $this->assertTrue(false !== strpos($output, 'ended'));
+        $this->assertTrue(str_contains($output, 'ended'));
 
         $exportDir = $kernel->getCacheDir().'/test-exporter';
 

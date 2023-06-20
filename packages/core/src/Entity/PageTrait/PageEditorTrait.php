@@ -57,38 +57,38 @@ trait PageEditorTrait
     }
 
     /**
-    public function setPageHasEditors($pageHasEditors): void
-    {
-        $this->pageHasEditors = new ArrayCollection();
-        foreach ($pageHasEditors as $pageHasEditor) {
-            $this->addPageHasEditor($pageHasEditor);
-        }
-    }
-
-    public function getPageHasEditors(): ArrayCollection
-    {
-        return $this->pageHasEditors ?? new ArrayCollection();
-    }
-
-    public function addPageHasEditor(PageHasEditor $pageHasEditor): void
-    {
-        $this->getPageHasEditors();
-        $pageHasEditor->setPage($this);
-        $this->pageHasEditors[] = $pageHasEditor;
-    }
-
-    public function resetPageHasEditors(): void
-    {
-        foreach ($this->getPageHasEditors() as $pageHasEditor) {
-            $this->removePageHasEditor($pageHasEditor);
-        }
-    }
-
-    public function removePageHasEditor(PageHasEditor $pageHasEditor): void
-    {
-        $this->getPageHasEditors()->removeElement($pageHasEditor);
-    }
-    /**/
+     * public function setPageHasEditors($pageHasEditors): void
+     * {
+     * $this->pageHasEditors = new ArrayCollection();
+     * foreach ($pageHasEditors as $pageHasEditor) {
+     * $this->addPageHasEditor($pageHasEditor);
+     * }
+     * }.
+     *
+     * public function getPageHasEditors(): ArrayCollection
+     * {
+     * return $this->pageHasEditors ?? new ArrayCollection();
+     * }
+     *
+     * public function addPageHasEditor(PageHasEditor $pageHasEditor): void
+     * {
+     * $this->getPageHasEditors();
+     * $pageHasEditor->setPage($this);
+     * $this->pageHasEditors[] = $pageHasEditor;
+     * }
+     *
+     * public function resetPageHasEditors(): void
+     * {
+     * foreach ($this->getPageHasEditors() as $pageHasEditor) {
+     * $this->removePageHasEditor($pageHasEditor);
+     * }
+     * }
+     *
+     * public function removePageHasEditor(PageHasEditor $pageHasEditor): void
+     * {
+     * $this->getPageHasEditors()->removeElement($pageHasEditor);
+     * }
+     * /**/
 
     /**
      * Get the value of editMessage.

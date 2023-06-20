@@ -71,7 +71,7 @@ final class ImageManager
     /**
      * @param array<string, mixed>|string $filter
      */
-    public function generateFilteredCache(MediaInterface|string $media, array|string $filter, ?Image $originalImage = null): Image
+    public function generateFilteredCache(MediaInterface|string $media, array|string $filter, Image $originalImage = null): Image
     {
         if (\is_array($filter)) {
             $filterName = array_keys($filter)[0];
@@ -154,7 +154,7 @@ final class ImageManager
         }
     }
 
-    public function getFilterPath(MediaInterface|string $media, string $filterName, ?string $extension = null, bool $browserPath = false): string
+    public function getFilterPath(MediaInterface|string $media, string $filterName, string $extension = null, bool $browserPath = false): string
     {
         /** @var string $media */
         $media = $media instanceof MediaInterface ? $media->getMedia() : Filepath::filename($media);
@@ -164,7 +164,7 @@ final class ImageManager
         return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/'.$filterName.'/'.$fileName;
     }
 
-    public function getBrowserPath(MediaInterface|string $media, string $filterName = 'default', ?string $extension = null): string
+    public function getBrowserPath(MediaInterface|string $media, string $filterName = 'default', string $extension = null): string
     {
         return $this->getFilterPath($media, $filterName, $extension, true);
     }

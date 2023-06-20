@@ -18,7 +18,7 @@ class Extended extends AbstractFilter
     use RequiredManagerPoolTrait;
     use RequiredPropertyTrait;
 
-    public function apply(mixed $propertyValue)
+    public function apply(mixed $propertyValue) // @phpstan-ignore-line
     {
         return $this->loadExtendedValue($propertyValue);
     }

@@ -84,7 +84,7 @@ final class LinkedDocsScanner extends AbstractScanner
     /**
      * @param string|string[] $var
      */
-    private static function prepareForRegex(array|string $var): string
+    private function prepareForRegex(array|string $var): string
     {
         if (\is_string($var)) {
             return preg_quote($var, '/');
@@ -95,7 +95,7 @@ final class LinkedDocsScanner extends AbstractScanner
         return '('.implode('|', $var).')';
     }
 
-    private static function isWebLink(string $url): bool
+    private function isWebLink(string $url): bool
     {
         return (bool) \Safe\preg_match('@^((?:(http:|https:)//([\wà-üÀ-Ü-]+\.)+[\w-]+){0,1}(/?[\wà-üÀ-Ü~,;\-\./?%&+#=]*))$@', $url);
     }
@@ -105,7 +105,7 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private function getLinkedDocs(): array
     {
-        $urlInAttributes = ' '.self::prepareForRegex(['href', 'data-rot', 'src', 'data-img', 'data-bg']);
+        $urlInAttributes = ' '.$this->prepareForRegex(['href', 'data-rot', 'src', 'data-img', 'data-bg']);
         $regex = '/'.$urlInAttributes.'=((["\'])([^\3]+)\3|([^\s>]+)[\s>])/iU';
         \Safe\preg_match_all($regex, $this->pageHtml, $matches);
 
@@ -115,9 +115,9 @@ final class LinkedDocsScanner extends AbstractScanner
             $uri = $matches[4][$k] ?? $matches[5][$k];
             $uri = 'data-rot' == $matches[1][$k] ? AppExtension::decrypt($uri) : $uri;
             $uri .= $matches[4][$k] ? '' : '#(encrypt)'; // not elegant but permit to remember it's an encrypted link
-            if (self::isMailtoOrTelLink($uri) && 'data-rot' != $matches[1][$k]) {
+            if ($this->isMailtoOrTelLink($uri) && 'data-rot' != $matches[1][$k]) {
                 $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.encrypt_mail'));
-            } elseif ('' !== $uri && self::isWebLink($uri)) {
+            } elseif ('' !== $uri && $this->isWebLink($uri)) {
                 $linkedDocs[] = $uri;
             }
         }
@@ -125,7 +125,7 @@ final class LinkedDocsScanner extends AbstractScanner
         return array_unique($linkedDocs);
     }
 
-    private static function isMailtoOrTelLink(string $uri): bool
+    private function isMailtoOrTelLink(string $uri): bool
     {
         return str_contains($uri, 'tel:') || str_contains($uri, 'mailto:');
     }

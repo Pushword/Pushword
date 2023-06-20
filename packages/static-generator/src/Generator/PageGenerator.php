@@ -14,7 +14,7 @@ class PageGenerator extends AbstractGenerator
     #[\Symfony\Contracts\Service\Attribute\Required]
     public RedirectionManager $redirectionManager;
 
-    public function generate(?string $host = null): void
+    public function generate(string $host = null): void
     {
         parent::generate($host);
 
@@ -36,7 +36,7 @@ class PageGenerator extends AbstractGenerator
         $this->generateFeedFor($page);
     }
 
-    protected function generateFilePath(Page $page, ?int $pager = null): string
+    protected function generateFilePath(Page $page, int $pager = null): string
     {
         $slug = '' == $page->getRealSlug() ? 'index' : $page->getRealSlug();
 
@@ -69,7 +69,7 @@ class PageGenerator extends AbstractGenerator
         $this->saveAsStatic($liveUri, $staticFile, $page);
     }
 
-    protected function saveAsStatic(string $liveUri, string $destination, ?Page $page = null): void
+    protected function saveAsStatic(string $liveUri, string $destination, Page $page = null): void
     {
         $request = Request::create($liveUri);
         // $request->headers->set('host', $this->app->getMainHost());
@@ -110,7 +110,7 @@ class PageGenerator extends AbstractGenerator
         $this->filesystem->dumpFile($destination, $content);
     }
 
-    private function setErrorFor(string $liveUri, ?Page $page = null, string $msg = ''): void
+    private function setErrorFor(string $liveUri, Page $page = null, string $msg = ''): void
     {
         $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
                      '['.$liveUri.']('.$this->router->getRouter()->generate('admin_app_page_edit', ['id' => $page->getId()]).')'
@@ -126,7 +126,7 @@ class PageGenerator extends AbstractGenerator
 
     private function extractPager(Page $page, string $content): void
     {
-        \Safe\preg_match('#<!-- pager:([0-9]+) -->#', $content, $match);
+        \Safe\preg_match('#<!-- pager:(\d+) -->#', $content, $match);
         $pager = (int) $match[1];
         $this->saveAsStatic(rtrim($this->generateLivePathFor($page), '/').'/'.$pager, $this->generateFilePath($page, $pager), $page);
     }

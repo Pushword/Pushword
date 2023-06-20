@@ -89,10 +89,10 @@ class PageUpdateNotifier
     protected function init(PageInterface $page): void
     {
         $this->app = $this->apps->get($page->getHost());
-        $this->emailFrom = \strval($this->app->get('page_update_notification_from'));
-        $this->emailTo = \strval($this->app->get('page_update_notification_to'));
-        $this->interval = \strval($this->app->get('page_update_notification_interval'));
-        $this->appName = \strval($this->app->get('name'));
+        $this->emailFrom = \strval($this->app->getStr('page_update_notification_from'));
+        $this->emailTo = \strval($this->app->getStr('page_update_notification_to'));
+        $this->interval = \strval($this->app->getStr('page_update_notification_interval'));
+        $this->appName = \strval($this->app->getStr('name'));
     }
 
     protected function checkConfig(PageInterface $page): void

@@ -68,6 +68,7 @@ final class UserCreateCommand extends Command
     {
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
+        /** @var bool|float|int|resource|string|null */
         $argumentValue = $input->getArgument($argument);
 
         if (null !== $argumentValue) {
@@ -79,6 +80,7 @@ final class UserCreateCommand extends Command
             $question->setHidden(true);
         }
 
+        /** @var bool|float|int|resource|string|null */
         $argumentValue = $helper->ask($input, $output, $question);
 
         if (null === $argumentValue) {

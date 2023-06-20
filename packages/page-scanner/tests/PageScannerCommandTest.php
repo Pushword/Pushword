@@ -19,6 +19,6 @@ class PageScannerCommandTest extends KernelTestCase
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
-        $this->assertTrue(false !== strpos($output, 'done...'));
+        $this->assertTrue(str_contains($output, 'done...'));
     }
 }

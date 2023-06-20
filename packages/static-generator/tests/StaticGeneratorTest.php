@@ -38,7 +38,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
-        $this->assertTrue(false !== strpos($output, 'success'));
+        $this->assertTrue(str_contains($output, 'success'));
 
         $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/.htaccess'));
         $this->assertTrue(file_exists(__DIR__.'/../../skeleton/localhost.dev/index.html'));

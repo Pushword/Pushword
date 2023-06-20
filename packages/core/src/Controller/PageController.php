@@ -16,13 +16,10 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Translation\DataCollectorTranslator;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Twig\Environment as Twig;
 
 final class PageController extends AbstractController
 {
     use RenderTrait;
-
-    private Twig $twig;
 
     /** @var DataCollectorTranslator|Translator */
     private readonly TranslatorInterface $translator;
@@ -50,7 +47,7 @@ final class PageController extends AbstractController
             return;
         }
 
-        $host = \strval($request->attributes->get('host', ''));
+        $host = \strval($request->attributes->get('host', '')); // @phpstan-ignore-line
         if ('' !== $host) {
             $this->apps->switchCurrentApp($host);
 
@@ -204,11 +201,11 @@ final class PageController extends AbstractController
     }
 
     /**
-     .
+     * .
      *
      * @return mixed //array<PageInterface>
      */
-    private function getPages(Request $request, ?int $limit = null)
+    private function getPages(Request $request, int $limit = null)
     {
         $requestedLocale = rtrim($request->getLocale(), '/');
 
@@ -242,7 +239,7 @@ final class PageController extends AbstractController
         string &$slug,
         bool $throwException
     ): ?PageInterface {
-        if (1 !== \Safe\preg_match('#(/([1-9][0-9]*)|^([1-9][0-9]*))$#', $slug, $match)) {
+        if (1 !== \Safe\preg_match('#(/([1-9]\d*)|^([1-9]\d*))$#', $slug, $match)) {
             return null;
         }
 

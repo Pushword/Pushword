@@ -53,7 +53,7 @@ final class ManagerPool implements ManagerPoolInterface
     /**
      * @return mixed|\Pushword\Core\Component\EntityFilter\Manager
      */
-    public function getProperty(IdInterface $id, string $property = '')
+    public function getProperty(IdInterface $id, string $property = ''): mixed
     {
         $manager = $this->getManager($id);
 

@@ -17,7 +17,7 @@ interface RouterInterface
      */
     public const CUSTOM_HOST_PATH = 'custom_host_pushword_page';
 
-    public function generatePathForHomePage(?PageInterface $page = null, bool $canonical = false): string;
+    public function generatePathForHomePage(PageInterface $page = null, bool $canonical = false): string;
 
     /**
      * @param int|string|null $pager

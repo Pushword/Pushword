@@ -27,7 +27,7 @@ trait MediaNameTrait
         return '' === $this->name && null !== $this->getMediaFile() ? $this->getMediaFileName() : $this->name;
     }
 
-    public function getNameLocalized(?string $getLocalized = null, bool $onlyLocalized = false): string
+    public function getNameLocalized(string $getLocalized = null, bool $onlyLocalized = false): string
     {
         $names = $this->getNamesParsed();
 
@@ -51,10 +51,7 @@ trait MediaNameTrait
         return $return;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getNames(bool $yamlParsed = false)
+    public function getNames(bool $yamlParsed = false): mixed
     {
         $this->names = (string) $this->names;
 

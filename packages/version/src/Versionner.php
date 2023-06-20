@@ -93,7 +93,7 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
         static::$version = true;
     }
 
-    public function populate(PageInterface $page, string $version, ?int $pageId = null): PageInterface
+    public function populate(PageInterface $page, string $version, int $pageId = null): PageInterface
     {
         $pageVersionned = $this->getPageVersion($pageId ?? $page, $version);
 
@@ -138,7 +138,7 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
         return $this->logDir.'/version/'.$pageId;
     }
 
-    private function getVersionFile(int|PageInterface $page, ?string $version = null): string
+    private function getVersionFile(int|PageInterface $page, string $version = null): string
     {
         return $this->getVersionDir($page).'/'.($version ?? uniqid());
     }

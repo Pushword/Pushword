@@ -50,7 +50,7 @@ final class ConversationFormController extends AbstractController
             throw new \Exception('`'.$type."` does'nt exist (not configured).");
         }
 
-        $class = \strval($this->apps->get()->get($param));
+        $class = \strval($this->apps->get()->getStr($param));
         if (! class_exists($class)
             || ! (new \ReflectionClass($class))->implementsInterface(ConversationFormInterface::class)) {
             throw new \Exception('`'.$type."` does'nt exist.");
@@ -130,7 +130,7 @@ final class ConversationFormController extends AbstractController
         return $response;
     }
 
-    public function show(Request $request, string $type, ?string $host = null): Response
+    public function show(Request $request, string $type, string $host = null): Response
     {
         // $host = $host ?? $request->getHost();
         if (null !== $host) {

@@ -27,7 +27,7 @@ final class Router implements RouterInterface
      * and / for YY page home if your default language is YY
      * X/Y may be en/fr/...
      */
-    public function generatePathForHomePage(?PageInterface $page = null, bool $canonical = false): string
+    public function generatePathForHomePage(PageInterface $page = null, bool $canonical = false): string
     {
         $homepage = (new Page())->setSlug('');
 

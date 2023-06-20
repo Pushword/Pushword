@@ -17,7 +17,7 @@ trait PhoneNumberTwigTrait
 
         return trim($this->twig->render($template, [
             'number' => str_replace([' ', '&nbsp;', '.'], '', $number),
-            'number_readable' => str_replace(' ', '&nbsp;', F::preg_replace_str('#^\+[0-9]{2} ?#', '0', $number)),
+            'number_readable' => str_replace(' ', '&nbsp;', F::preg_replace_str('#^\+\d{2} ?#', '0', $number)),
             'class' => $class,
         ]));
     }

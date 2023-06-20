@@ -15,14 +15,14 @@ class Element
 
     protected ?string $unlink = null;
 
-    public function __construct(string $templateDir, ?string $path = null)
+    public function __construct(string $templateDir, string $path = null)
     {
         $realPathTemplateDir = \Safe\realpath($templateDir);
 
         $this->templateDir = $realPathTemplateDir;
 
         if (null !== $path) {
-            $this->path = self::normalizePath($path);
+            $this->path = $this->normalizePath($path);
         }
 
         $this->code = $this->loadCode();
@@ -60,7 +60,7 @@ class Element
         return md5($this->path);
     }
 
-    private static function normalizePath(string $path): string
+    private function normalizePath(string $path): string
     {
         return '/'.ltrim($path, '/');
     }
@@ -71,7 +71,7 @@ class Element
             throw new \Exception("You can't do that...");
         }
 
-        $path = self::normalizePath($path);
+        $path = $this->normalizePath($path);
 
         if (null === $this->path) {
             $this->path = $path;

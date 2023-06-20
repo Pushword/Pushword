@@ -37,6 +37,7 @@ final class NewCommand extends Command
         $mainDomain = $helper->ask($input, $output, $question);
 
         $question = new Question('Locale (default: en|fr):', 'en|fr');
+        /** @var bool|float|int|resource|string|null */
         $locales = $helper->ask($input, $output, $question);
         $locale = explode('|', \strval($locales))[0];
 

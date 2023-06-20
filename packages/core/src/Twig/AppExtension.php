@@ -133,9 +133,9 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @param string|string[]|null $host
-     * @param array<(string|int), string> $orderBy
-     * @param array<mixed> $where
+     * @param string|string[]|null         $host
+     * @param array<(string|int), string>  $orderBy
+     * @param array<mixed>                 $where
      * @param int|array<(string|int), int> $limit
      *
      * @return PageInterface[]
@@ -163,7 +163,7 @@ class AppExtension extends AbstractExtension
         return $pages[0] ?? null;
     }
 
-    public function getView(string $path, ?string $fallback = null): string
+    public function getView(string $path, string $fallback = null): string
     {
         return null !== $fallback ? $this->apps->get()->getView($path, $fallback)
             : $this->apps->get()->getView($path);

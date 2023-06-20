@@ -29,7 +29,7 @@ class MainContentSplitter extends AbstractFilter
 
     public function apply(mixed $propertyValue): self
     {
-        $this->split(\strval($propertyValue));
+        $this->split($this->string($propertyValue));
 
         return $this;
     }
@@ -43,8 +43,8 @@ class MainContentSplitter extends AbstractFilter
         $this->chapeau = isset($parsedContent[1]) ? $parsedContent[0] : '';
         $this->content = $parsedContent[1] ?? $parsedContent[0];
 
-        if ($this->entity instanceof CustomPropertiesInterface &&
-            (null !== $this->entity->getCustomProperty('toc') || null !== $this->entity->getCustomProperty('tocTitle'))) {
+        if ($this->entity instanceof CustomPropertiesInterface
+            && (null !== $this->entity->getCustomProperty('toc') || null !== $this->entity->getCustomProperty('tocTitle'))) {
             $this->parseToc();
         }
 

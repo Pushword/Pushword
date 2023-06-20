@@ -137,7 +137,7 @@ class PageImporter extends AbstractImporter
 
             $setter = 'set'.ucfirst($camelKey);
             if (method_exists($page, $setter)) {
-                if (\in_array($camelKey, ['publishedAt', 'createdAt', 'updatedAt'], true)) {
+                if (\in_array($camelKey, ['publishedAt', 'createdAt', 'updatedAt'], true) && \is_scalar($value)) {
                     $value = new \DateTime(\strval($value));
                 }
 

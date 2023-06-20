@@ -17,7 +17,7 @@ trait PageParentTrait
      */
     #[ORM\OneToMany(targetEntity: \Pushword\Core\Entity\PageInterface::class, mappedBy: 'parentPage')]
     #[ORM\OrderBy(['publishedAt' => 'DESC', 'priority' => 'DESC'])]
-    protected $childrenPages = null;
+    protected $childrenPages;
 
     public function getParentPage(): ?PageInterface
     {

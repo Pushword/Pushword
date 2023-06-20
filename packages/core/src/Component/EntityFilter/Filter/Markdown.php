@@ -8,7 +8,7 @@ class Markdown extends AbstractFilter
 {
     public function apply(mixed $propertyValue): string
     {
-        return $this->render(\strval($propertyValue));
+        return $this->render($this->string($propertyValue));
     }
 
     private function render(string $string): string

@@ -27,7 +27,7 @@ final class StaticAppGenerator
      *
      * @return int the number of site generated
      */
-    public function generate(?string $hostToGenerate = null): int
+    public function generate(string $hostToGenerate = null): int
     {
         $i = 0;
         foreach ($this->apps->getHosts() as $host) {
@@ -64,7 +64,7 @@ final class StaticAppGenerator
     {
         $app = $this->apps->switchCurrentApp($host)->get();
 
-        $staticDir = \strval($app->get('static_dir'));
+        $staticDir = \strval($app->getStr('static_dir'));
         $app->staticDir = $staticDir.'~'; // @phpstan-ignore-line
 
         $filesystem = new Filesystem();
@@ -72,7 +72,10 @@ final class StaticAppGenerator
         $filesystem->mkdir($staticDir.'~');
 
         foreach ($app->get('static_generators') as $generator) { // @phpstan-ignore-line
-            $this->getGenerator(\strval($generator))->generate();
+            if (! \is_string($generator)) {
+                throw new \LogicException();
+            }
+            $this->getGenerator($generator)->generate();
         }
 
         if (! $this->abortGeneration) {

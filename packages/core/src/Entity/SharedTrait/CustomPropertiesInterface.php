@@ -22,10 +22,9 @@ interface CustomPropertiesInterface
 
     public function setCustomProperty(string $name, mixed $value): self;
 
-    /**
-     * @return mixed
-     */
-    public function getCustomProperty(string $name);
+    public function getCustomProperty(string $name): mixed;
+
+    public function getCustomPropertyScalar(string $name): bool|float|int|string|null;
 
     public function removeCustomProperty(string $name): void;
 }

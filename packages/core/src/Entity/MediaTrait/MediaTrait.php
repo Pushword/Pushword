@@ -50,7 +50,7 @@ trait MediaTrait
      * @var UploadedFile|File|null
      */
     #[Vich\UploadableField(mapping: 'media_media', fileNameProperty: 'slug', mimeType: 'mimeType', size: 'size', dimensions: 'dimensions')]
-    protected $mediaFile = null;
+    protected $mediaFile;
 
     // todo Rename to $file
     /**
@@ -132,7 +132,7 @@ trait MediaTrait
         ;
     }
 
-    public function setMediaFile(?File $file = null): void
+    public function setMediaFile(File $file = null): void
     {
         $this->mediaFile = $file;
 

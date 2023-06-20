@@ -145,12 +145,19 @@ trait CustomPropertiesTrait
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getCustomProperty(string $name)
+    public function getCustomProperty(string $name): mixed
     {
         return $this->customProperties[$name] ?? null;
+    }
+
+    public function getCustomPropertyScalar(string $name): bool|float|int|string|null
+    {
+        $return = $this->customProperties[$name] ?? null;
+        if (null !== $return && ! \is_scalar($return)) {
+            throw new \LogicException(\gettype($return));
+        }
+
+        return $return;
     }
 
     public function removeCustomProperty(string $name): void
@@ -164,7 +171,7 @@ trait CustomPropertiesTrait
      *
      * @param mixed[] $arguments
      *
-     * @return mixed
+     * @return mixed|void
      */
     public function __call(string $method, array $arguments = [])
     {

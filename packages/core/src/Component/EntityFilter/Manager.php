@@ -54,10 +54,8 @@ final class Manager
      * Magic getter for Entity properties.
      *
      * @param array<mixed> $arguments
-     *
-     * @return mixed
      */
-    public function __call(string $method, array $arguments = [])
+    public function __call(string $method, array $arguments = []): mixed
     {
         if (\Safe\preg_match('/^get/', $method) < 1) {
             $method = 'get'.ucfirst($method);
@@ -68,6 +66,10 @@ final class Manager
 
         $returnValue = [] !== $arguments ? \call_user_func_array([$this->entity, $method], $arguments) // @phpstan-ignore-line
             : \call_user_func([$this->entity, $method]);    // @phpstan-ignore-line
+
+        if (! \is_scalar($returnValue)) {
+            throw new \LogicException();
+        }
 
         $returnValue = $this->filter(substr($method, 3), $returnValue);
 
@@ -80,7 +82,7 @@ final class Manager
      * main_content => apply filters on mainContent (*_filters => camelCase(*))
      * string       => apply filters on each string property.
      */
-    private function filter(string $property, mixed $propertyValue): mixed
+    private function filter(string $property, bool|float|int|string|null $propertyValue): mixed
     {
         $filters = $this->getFilters($this->camelCaseToSnakeCase($property));
 
@@ -167,10 +169,8 @@ final class Manager
 
     /**
      * @param string[] $filters
-     *
-     * @return mixed
      */
-    private function applyFilters(string $property, mixed $propertyValue, array $filters)
+    private function applyFilters(string $property, bool|float|int|string|null $propertyValue, array $filters): mixed
     {
         foreach ($filters as $filter) {
             if ($this->entity instanceof CustomPropertiesInterface

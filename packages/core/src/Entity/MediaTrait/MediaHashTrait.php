@@ -11,7 +11,7 @@ trait MediaHashTrait
      * @var ?string
      */
     #[ORM\Column(type: 'binary', length: 20, options: ['default' => ''])]
-    protected $hash = null;
+    protected $hash;
 
     abstract public function getMediaFile(): ?File;
 
@@ -31,7 +31,7 @@ trait MediaHashTrait
         return $this;
     }
 
-    public function setHash(?string $hash = null): self
+    public function setHash(string $hash = null): self
     {
         if (null !== $hash) {
             $this->hash = $hash;

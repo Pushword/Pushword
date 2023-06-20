@@ -4,7 +4,6 @@ namespace Pushword\StaticGenerator\Generator;
 
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Entity\PageInterface as Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\RouterInterface;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
@@ -58,12 +57,12 @@ abstract class AbstractGenerator implements GeneratorInterface
         $newKernelRouter->setUseCustomHostPath(false);
     }
 
-    public function generate(?string $host = null): void
+    public function generate(string $host = null): void
     {
         $this->init($host);
     }
 
-    protected function init(?string $host = null): void
+    protected function init(string $host = null): void
     {
         $this->app = null !== $host ? $this->apps->switchCurrentApp($host)->get() : $this->apps->get();
     }
@@ -90,7 +89,7 @@ abstract class AbstractGenerator implements GeneratorInterface
 
     protected function getStaticDir(): string
     {
-        return \strval($this->app->get('static_dir'));
+        return $this->app->getStr('static_dir');
     }
 
     protected function getPageRepository(): PageRepository

@@ -16,7 +16,7 @@ class Name extends AbstractFilter
 
     public function apply(mixed $propertyValue): ?string
     {
-        $names = explode("\n", \strval($propertyValue));
+        $names = explode("\n", $this->string($propertyValue));
 
         return isset($names[0]) && '' !== $names[0] ? trim($names[0])
             : ('' !== $propertyValue ? $propertyValue : $this->entityFilterManager->getH1()); // @phpstan-ignore-line

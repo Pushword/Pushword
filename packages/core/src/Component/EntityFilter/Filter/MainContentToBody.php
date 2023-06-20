@@ -8,7 +8,7 @@ class MainContentToBody extends AbstractFilter
 
     public function apply(mixed $propertyValue): self
     {
-        $this->body = \strval($propertyValue);
+        $this->body = $this->string($propertyValue);
 
         return $this;
     }

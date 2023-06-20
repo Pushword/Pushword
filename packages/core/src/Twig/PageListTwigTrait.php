@@ -104,7 +104,7 @@ trait PageListTwigTrait
     /**
      * @return mixed[]|null
      */
-    private function simpleStringToSearchChildren(string $search, ?PageInterface $currentPage = null): ?array
+    private function simpleStringToSearchChildren(string $search, PageInterface $currentPage = null): ?array
     {
         if (null === $currentPage) {
             return null;
@@ -135,7 +135,7 @@ trait PageListTwigTrait
     /**
      * @return array<mixed>
      */
-    private function simpleStringToSearch(string $search, ?PageInterface $currentPage = null): array
+    private function simpleStringToSearch(string $search, PageInterface $currentPage = null): array
     {
         if (($return = $this->simpleStringToSearchChildren($search, $currentPage)) !== null) {
             return $return;
@@ -157,11 +157,11 @@ trait PageListTwigTrait
     }
 
     /**
-     * @param string|array<mixed> $search
+     * @param string|array<mixed>                $search
      * @param string|array<(string|int), string> $order
-     * @param string|string[] $host
-     * @param int|array<(string|int), int>    $max    if max is int => max result,
-     *                                        if max is array => paginate where 0 => item per page and 1 (fac) maxPage
+     * @param string|string[]                    $host
+     * @param int|array<(string|int), int>       $max    if max is int => max result,
+     *                                                   if max is array => paginate where 0 => item per page and 1 (fac) maxPage
      */
     public function renderPagesList(
         Twig $twig,
@@ -170,7 +170,7 @@ trait PageListTwigTrait
         array|string $order = 'publishedAt,priority',
         string $view = '',
         array|string $host = '',
-        ?PageInterface $currentPage = null
+        PageInterface $currentPage = null
     ): string {
         $currentPage ??= $this->apps->getCurrentPage(); // todo : drop app's current page
 
@@ -260,6 +260,6 @@ trait PageListTwigTrait
             return 1;
         }
 
-        return \intval($this->requestStack->getCurrentRequest()->attributes->get('pager', 1));
+        return \intval($this->requestStack->getCurrentRequest()->attributes->getInt('pager', 1));
     }
 }

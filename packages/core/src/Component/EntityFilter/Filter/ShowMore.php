@@ -12,7 +12,7 @@ class ShowMore extends AbstractFilter
 
     public function apply(mixed $propertyValue): string
     {
-        return $this->showMore(\strval($propertyValue));
+        return $this->showMore($this->string($propertyValue));
     }
 
     private function showMore(string $body): string

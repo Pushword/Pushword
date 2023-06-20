@@ -9,8 +9,7 @@ use Pushword\Core\Entity\SharedTrait\IdInterface;
  */
 interface ManagerPoolInterface
 {
-    /** @return mixed */
-    public function getProperty(IdInterface $id, string $property = '');
+    public function getProperty(IdInterface $id, string $property = ''): mixed;
 
     /**
      * @return Manager<T>

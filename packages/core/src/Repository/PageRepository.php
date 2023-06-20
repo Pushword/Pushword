@@ -30,9 +30,9 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     /**
      * Can be used via a twig function.
      *
-     * @param string|array<string> $host
-     * @param array<(string|int), string> $orderBy
-     * @param array<mixed> $where
+     * @param string|array<string>         $host
+     * @param array<(string|int), string>  $orderBy
+     * @param array<mixed>                 $where
      * @param int|array<(string|int), int> $limit
      *
      * @return PageInterface[]
@@ -60,9 +60,9 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     /**
      * Can be used via a twig function.
      *
-     * @param string|array<string> $host
-     * @param array<(string|int), string> $orderBy
-     * @param array<mixed> $where
+     * @param string|array<string>         $host
+     * @param array<(string|int), string>  $orderBy
+     * @param array<mixed>                 $where
      * @param int|array<(string|int), int> $limit
      */
     public function getPublishedPageQueryBuilder(string|array $host = '', array $where = [], array $orderBy = [], int|array $limit = 0): QueryBuilder
@@ -124,7 +124,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     public function getIndexablePagesQuery(
         string|array $host,
         string $locale,
-        ?int $limit = null
+        int $limit = null
     ): QueryBuilder {
         $qb = $this->buildPublishedPageQuery('p');
         $qb = $this->andIndexable($qb);
