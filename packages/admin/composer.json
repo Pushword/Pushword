@@ -6,7 +6,7 @@
     "homepage": "https://pushword.piedweb.com/extension/admin",
     "license": "MIT",
     "require": {
-        "pushword/core": "^0.0",
+        "pushword/core": "^0",
         "sonata-project/admin-bundle": "^4.0",
         "sonata-project/doctrine-orm-admin-bundle": "^4.0"
     },

@@ -6,8 +6,8 @@
     "homepage": "https://pushword.piedweb.com/extension/advanced-main-image",
     "license": "MIT",
     "require": {
-        "pushword/core": "^0.0",
-        "pushword/admin": "^0.0"
+        "pushword/core": "^0",
+        "pushword/admin": "^0"
     },
     "extra": {
         "branch-alias": {
@@ -20,7 +20,7 @@
         }
     },
     "require-dev": {
-        "pushword/admin": "^0.0",
+        "pushword/admin": "^0",
         "phpunit/phpunit": "^9.5"
     },
     "authors": [

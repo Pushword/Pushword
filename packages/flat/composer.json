@@ -6,7 +6,7 @@
     "homepage": "https://pushword.piedweb.com/extension/flat",
     "license": "MIT",
     "require": {
-        "pushword/core": "^0.0",
+        "pushword/core": "^0",
         "spatie/yaml-front-matter": "^2.0",
         "miljar/php-exif": "^0.6.5"
     },

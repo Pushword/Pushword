@@ -6,7 +6,7 @@
     "homepage": "https://pushword.piedweb.com/extension/svg",
     "license": "MIT",
     "require": {
-        "pushword/core": "^0.0",
+        "pushword/core": "^0",
         "fortawesome/font-awesome": "^6.1"
     },
     "extra": {
