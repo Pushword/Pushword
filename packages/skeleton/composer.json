@@ -11,7 +11,7 @@
     "require-dev": {},
     "extra": {
         "branch-alias": {
-            "dev-main": "0.0.x-dev"
+            "dev-main": "0.1.x-dev"
         }
     },
     "autoload": {},
