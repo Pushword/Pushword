@@ -6,7 +6,7 @@
 #}
 
 {% block images_gallery %}
-    {% set gallery_id = random(10, 1000) %}
+    {% set gallery_id = page.uniqueGalleryId|default(random(10, 1000)) %}
     {% set grid_cols = grid_cols|default(images|length < 5 ? images|length : (images|length is odd ? 3 : 4)) %}
 
         <div class="{{ gallery_container_class|default('my-3') }}">{# w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw] #}
@@ -18,7 +18,8 @@
                         {% set current_media = media_from_string(image, name) %}
                         {{ _self.gallery_part(
                             current_media,
-                            gallery_id, page ?? null,
+                            gallery_id,
+                            page ?? null,
                             image_filter|default('thumb'),
                             image_container ?? '',
                             image_otherAttributes ?? {}

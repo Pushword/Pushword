@@ -8,7 +8,7 @@
 
 {% if (needBlockWrapper(block)) %}<div{{ blockWrapperAttr(block) }}>{% endif %}
 
-{% include view('/component/images_gallery.html.twig') with {'images': images} only %}
+{% include view('/component/images_gallery.html.twig') with {'images': images, 'page': page} only %}
 
 {% if (needBlockWrapper(block)) %}</div>{% endif %}
 
