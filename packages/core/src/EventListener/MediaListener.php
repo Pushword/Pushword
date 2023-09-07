@@ -203,6 +203,7 @@ final class MediaListener
 
         $mediaString = $this->getMediaString($media);
         $sameMedia = $this->em->getRepository($media::class)->findOneBy(['media' => $mediaString]);
+
         // dump('sameMedia '.$sameMedia->getId());
         return null !== $sameMedia && $media->getId() !== $sameMedia->getId();
     }

@@ -66,9 +66,9 @@ module.exports = {
         outputPath = outputPath ? outputPath : './../public/assets/';
         publicPath = publicPath ? publicPath : '/assets';
 
-        //Encore.configureRuntimeEnvironment('dev');
 
-        Encore.setOutputPath(outputPath)
+        Encore.configureRuntimeEnvironment(process.env.NODE_ENV || 'dev')
+            .setOutputPath(outputPath)
             .setPublicPath(publicPath)
             .cleanupOutputBeforeBuild()
             .enableSassLoader()

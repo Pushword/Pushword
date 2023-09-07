@@ -75,6 +75,7 @@ final class StaticAppGenerator
             if (! \is_string($generator)) {
                 throw new \LogicException();
             }
+
             $this->getGenerator($generator)->generate();
         }
 

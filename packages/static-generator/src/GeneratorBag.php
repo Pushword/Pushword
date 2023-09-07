@@ -10,7 +10,6 @@ use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RobotsGenerator;
-use Symfony\Contracts\Service\Attribute\Required;
 
 class GeneratorBag
 {

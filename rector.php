@@ -6,13 +6,12 @@ use Rector\CodeQuality\Rector\Array_\CallableThisArrayToAnonymousFunctionRector;
 use Rector\CodeQuality\Rector\FuncCall\IntvalToTypeCastRector;
 use Rector\CodeQuality\Rector\FuncCall\StrvalToTypeCastRector;
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
-use Rector\CodingStyle\Rector\ClassConst\VarConstantCommentRector;
 use Rector\Config\RectorConfig;
 use Rector\Core\Configuration\Option;
 use Rector\Core\ValueObject\PhpVersion;
 use Rector\Php73\Rector\FuncCall\JsonThrowOnErrorRector;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
-use Rector\PHPUnit\Rector\Class_\AddSeeTestAnnotationRector;
+use Rector\PHPUnit\CodeQuality\Rector\Class_\AddSeeTestAnnotationRector;
 use Rector\PHPUnit\Set\PHPUnitSetList;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
@@ -50,7 +49,6 @@ return static function (RectorConfig $rectorConfig): void {
         'packages/core/src/Component/App/AppConfig.php',
         AddSeeTestAnnotationRector::class,
         JsonThrowOnErrorRector::class,
-        VarConstantCommentRector::class,
         StrvalToTypeCastRector::class,
         IntvalToTypeCastRector::class,
         CallableThisArrayToAnonymousFunctionRector::class,

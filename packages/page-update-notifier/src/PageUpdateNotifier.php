@@ -56,7 +56,7 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (Exception) {
+        } catch (\Exception) {
         }
     }
 
@@ -64,7 +64,7 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (Exception) {
+        } catch (\Exception) {
             // todo log exception
         }
     }

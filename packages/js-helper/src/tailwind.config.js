@@ -27,7 +27,6 @@ module.exports = {
         require('tailwindcss-multi-column')(),
         require('@tailwindcss/typography'),
         require('@tailwindcss/aspect-ratio'),
-        require('@tailwindcss/line-clamp'),
         require('@tailwindcss/forms'),
         plugin(pushwordHelper.twFirstLetterPlugin),
         plugin(pushwordHelper.twFirstChildPlugin),

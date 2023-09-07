@@ -12,6 +12,7 @@ var watchFiles = [
 
 var tailwindConfig = EncoreHelper.getTailwindConfig(watchFiles);
 
+
 module.exports = EncoreHelper.getEncore(
     watchFiles,
     tailwindConfig,

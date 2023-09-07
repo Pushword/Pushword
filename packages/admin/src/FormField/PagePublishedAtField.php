@@ -21,13 +21,9 @@ class PagePublishedAtField extends AbstractField
     {
         return $form->add('publishedAt', DateTimePickerType::class, [
             'format' => DateTimeType::HTML5_FORMAT,
-            'dp_side_by_side' => true,
-            'dp_use_current' => true,
-            'dp_use_seconds' => false,
-            'dp_collapse' => true,
-            'dp_calendar_weeks' => false,
-            'dp_view_mode' => 'days',
-            'dp_min_view_mode' => 'days',
+            'datepicker_options' => [
+                'useCurrent' => true,
+            ],
             'label' => $this->admin->getMessagePrefix().'.publishedAt.label',
             'help' => $this->getHelp(),
             'help_html' => true,
@@ -37,6 +33,7 @@ class PagePublishedAtField extends AbstractField
     private function getHelp(): string
     {
         $published = $this->getSubject()->getPublishedAt() <= new \DateTime('now');
+
         // TODO: translate
         return null !== $this->getSubject()->getId() ?
             $this->trans($this->admin->getMessagePrefix().'.publishedAt.'.($published ? 'online' : 'draft'))

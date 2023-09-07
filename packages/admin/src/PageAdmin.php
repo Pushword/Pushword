@@ -147,12 +147,13 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
             (new HostField($this))->datagridMapper($filter); // @phpstan-ignore-line
         }
 
+        $filter->add('slug', null, ['label' => 'admin.page.slug.label']);
+
         $filter
             ->add('h1', CallbackFilter::class, [
                 'callback' => fn (\Sonata\DoctrineORMAdminBundle\Datagrid\ProxyQuery $queryBuilder, string $alias, string $field, \Sonata\AdminBundle\Filter\Model\FilterData $filterData): ?bool => $this->getSearchFilterForTitle($queryBuilder, $alias, $field, $filterData),
                 'label' => 'admin.page.h1.label',
             ]);
-        // $filter->add('slug', null, ['label' => 'admin.page.slug.label']);
 
         $filter->add('mainContent', null, ['label' => 'admin.page.mainContent.label']);
 

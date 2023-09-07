@@ -7,6 +7,7 @@ parent: contribute
 
 ## BugFix && To finish
 
+
 -   MàJ en cours sur admin-block-editor
 
           "@editorjs/raw": "https://github.com/editor-js/raw.git#208cbfd7ea1da507173686e1312f95788fb8f209",

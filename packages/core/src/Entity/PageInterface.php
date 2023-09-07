@@ -31,9 +31,6 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
     // ParentTrait
     public function getParentPage(): ?self;
 
-    /**
-     * @param \Pushword\Core\Entity\PageInterface|null $page
-     */
     public function setParentPage(?self $page): self;
 
     /**
@@ -62,9 +59,6 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
     // Page Extended
     public function getExtendedPage(): ?self;
 
-    /**
-     * @param \Pushword\Core\Entity\PageInterface|null $page
-     */
     public function setExtendPage(?self $page): self;
 
     public function getMetaRobots(): string;

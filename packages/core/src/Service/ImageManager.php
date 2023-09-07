@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Service;
 
-use Exception;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
 use Pushword\Core\Entity\MediaInterface;
@@ -193,7 +192,7 @@ final class ImageManager
 
         try {
             return (new InteventionImageManager())->make($path); // default driver GD
-        } catch (Exception) {
+        } catch (\Exception) {
             throw new \Exception($path);
         }
     }

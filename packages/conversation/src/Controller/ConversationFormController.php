@@ -42,7 +42,7 @@ final class ConversationFormController extends AbstractController
      *
      * @return class-string<ConversationFormInterface>
      */
-    private function getFormManagerClass(string $type)
+    private function getFormManagerClass(string $type): string
     {
         $param = 'conversation_form_'.str_replace('-', '_', $type);
 
