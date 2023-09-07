@@ -35,8 +35,8 @@ class CreatedAtField extends AbstractField
     public function formField(FormMapper $form): FormMapper
     {
         return $form->add('createdAt', DateTimePickerType::class, [
-            'format' => "yyyy-MM-dd'T'HH:mm",
             'datepicker_options' => self::DateTimePickerOptions,
+            'format' => "yyyy-MM-dd'T'HH:mm",
             'label' => $this->admin->getMessagePrefix().'.createdAt.label',
         ]);
     }
