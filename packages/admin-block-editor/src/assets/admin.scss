@@ -46,4 +46,9 @@ a[rel='encrypt']:not(.link-btn) {
 .ce-settings__default-zone {
     margin-top: 10px;
 }
+@media (min-width: 651px){
+.ce-toolbar__actions {
+    right: 60%;
+}
+}
 /* purgecss end ignore */
