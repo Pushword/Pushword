@@ -2,53 +2,19 @@
 
 /* editorjs raw */
 .ce-rawtool__textarea {
-    background-color: #f3f4f6 !important;
-    color: #111827 !important;
-    min-height: unset !important;
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  min-height: unset !important;
 }
 
 /* heading anchor size */
 .ce-header::after {
-    font-size: 1rem;
-    padding-top: 2rem;
+  font-size: 1rem;
+  padding-top: 2rem;
 }
 
 a[rel='encrypt']:not(.link-btn) {
-    color: #059669;
+  color: #059669;
 }
 
-@media screen and (min-width: 980px) {
-    .ce-settings {
-        right: unset;
-        min-width: calc(100vh / 12 * 3);
-    }
-    .ce-toolbar__settings-btn {
-        margin-right: 15px;
-        background: #eff2f5;
-        box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-            rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
-    }
-    .ce-toolbar__settings-btn svg {
-        transform: scale(1.2);
-    }
-}
-@media (min-width: 651px) {
-    .ce-toolbox__button {
-        width: 36px;
-        height: 36px;
-        transform: scale(1.2);
-    }
-}
-.ce-toolbox__button {
-    color: #707684;
-}
-.ce-settings__plugin-zone > div + div,
-.ce-settings__default-zone {
-    margin-top: 10px;
-}
-@media (min-width: 651px){
-.ce-toolbar__actions {
-    right: 60%;
-}
-}
 /* purgecss end ignore */
