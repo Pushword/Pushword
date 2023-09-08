@@ -5,6 +5,7 @@ namespace Pushword\Admin\FormField;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\Form\Type\DateTimePickerType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
 /**
  * @extends AbstractField<PageInterface>
@@ -19,7 +20,7 @@ class PagePublishedAtField extends AbstractField
     public function formField(FormMapper $form): FormMapper
     {
         return $form->add('publishedAt', DateTimePickerType::class, [
-            'format' => "yyyy-MM-dd'T'HH:mm",
+            'format' => DateTimeType::HTML5_FORMAT,
             'datepicker_options' => CreatedAtField::DateTimePickerOptions,
             'label' => $this->admin->getMessagePrefix().'.publishedAt.label',
             'help' => $this->getHelp(),

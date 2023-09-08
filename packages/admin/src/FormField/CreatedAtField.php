@@ -4,6 +4,7 @@ namespace Pushword\Admin\FormField;
 
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\Form\Type\DateTimePickerType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
 /**
  * @template T of object
@@ -18,9 +19,7 @@ class CreatedAtField extends AbstractField
             'sideBySide' => true,
             'calendarWeeks' => false,
             'viewMode' => 'calendar',
-            'components' => [
-                'seconds' => false,
-            ],
+            // 'components' => [ 'seconds' => false, ],
         ],
     ];
 
@@ -35,8 +34,8 @@ class CreatedAtField extends AbstractField
     public function formField(FormMapper $form): FormMapper
     {
         return $form->add('createdAt', DateTimePickerType::class, [
+            'format' => DateTimeType::HTML5_FORMAT,
             'datepicker_options' => self::DateTimePickerOptions,
-            'format' => "yyyy-MM-dd'T'HH:mm",
             'label' => $this->admin->getMessagePrefix().'.createdAt.label',
         ]);
     }
