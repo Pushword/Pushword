@@ -5,7 +5,7 @@
     {% block content_header %}
         {% block h1 %}
             {% set h1_class= page.h1_class|default(h1_class|default('')) %}
-            <h1{{ h1_class ? ' class="'~h1_class~'"':'' }}{{ pw(page).h1|raw }}</h1>
+            <h1{{ h1_class ? ' class="'~h1_class~'"':'' }}>{{ pw(page).h1|raw }}</h1>
         {% endblock %}
 
         {% block description %}
