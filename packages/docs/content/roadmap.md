@@ -16,7 +16,7 @@ parent: contribute
 -   Switch image block to use media.id moroever image.uri
     -   event listener on load to update json
 
--   Rectorize with all List
+
 -   Implement ESlint
 -   https://github.com/jolicode/JoliTypo
 

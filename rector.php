@@ -45,10 +45,7 @@ return static function (RectorConfig $rectorConfig): void {
         SetList::TYPE_DECLARATION,
         // SetList::DEAD_CODE,
         PHPUnitSetList::PHPUNIT_CODE_QUALITY,
-        /*
-        SetList::NAMING,
-        SetList::PRIVATIZATION,
-        */
+        // SetList::NAMING,
         SetList::CODE_QUALITY,
         SetList::PHP_82,
         SetList::CODING_STYLE,

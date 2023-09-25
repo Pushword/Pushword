@@ -4,7 +4,6 @@ namespace Pushword\Admin\FormField;
 
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Form\FormMapper;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 /**
@@ -31,20 +30,4 @@ class PageMainContentField extends AbstractField
             'help' => 'admin.page.mainContent.help',
         ]);
     }
-
-    /* TODO : keep it to integrate editorJs
-    protected function configureFormFieldMainContentContentType(FormMapper $form): FormMapper
-    {
-        return $form->add('mainContentType', ChoiceType::class, [
-            'choices' => [
-                'admin.page.mainContentType.choice.defaultAppValue' => '0',
-                'admin.page.mainContentType.choice.raw' => '1',
-                'admin.page.mainContentType.choice.editorjs' => '2',
-            ],
-            'label' => 'admin.page.mainContentType.label',
-            'required' => false,
-            'help_html' => true,
-            'help' => 'admin.page.markdown.help',
-        ]);
-    }*/
 }
