@@ -4,7 +4,7 @@ namespace Pushword\StaticGenerator\Generator;
 
 use Exception;
 use Pushword\Admin\PushwordAdminBundle;
-use Pushword\Core\Entity\PageInterface as Page;
+use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Utils\F;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,7 +23,7 @@ class PageGenerator extends AbstractGenerator
         }
     }
 
-    public function generatePage(Page $page): void
+    public function generatePage(PageInterface $page): void
     {
         if ($page->hasRedirection()) {
             $this->redirectionManager->addPage($page);
@@ -36,7 +36,7 @@ class PageGenerator extends AbstractGenerator
         $this->generateFeedFor($page);
     }
 
-    protected function generateFilePath(Page $page, int $pager = null): string
+    protected function generateFilePath(PageInterface $page, int $pager = null): string
     {
         $slug = '' == $page->getRealSlug() ? 'index' : $page->getRealSlug();
 
@@ -58,7 +58,7 @@ class PageGenerator extends AbstractGenerator
      * Generate static file for feed indexing children pages
      * (only if children pages exists).
      */
-    protected function generateFeedFor(Page $page): void
+    protected function generateFeedFor(PageInterface $page): void
     {
         $liveUri = $this->generateLivePathFor($page, 'pushword_page_feed');
         $staticFile = F::preg_replace_str('/.html$/', '.xml', $this->generateFilePath($page));
@@ -69,7 +69,7 @@ class PageGenerator extends AbstractGenerator
         $this->saveAsStatic($liveUri, $staticFile, $page);
     }
 
-    protected function saveAsStatic(string $liveUri, string $destination, Page $page = null): void
+    protected function saveAsStatic(string $liveUri, string $destination, PageInterface $page = null): void
     {
         $request = Request::create($liveUri);
         // $request->headers->set('host', $this->app->getMainHost());
@@ -110,7 +110,7 @@ class PageGenerator extends AbstractGenerator
         $this->filesystem->dumpFile($destination, $content);
     }
 
-    private function setErrorFor(string $liveUri, Page $page = null, string $msg = ''): void
+    private function setErrorFor(string $liveUri, PageInterface $page = null, string $msg = ''): void
     {
         $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
                      '['.$liveUri.']('.$this->router->getRouter()->generate('admin_app_page_edit', ['id' => $page->getId()]).')'
@@ -124,7 +124,7 @@ class PageGenerator extends AbstractGenerator
         return str_contains($response->headers->all()['content-type'][0] ?? '', 'html');
     }
 
-    private function extractPager(Page $page, string $content): void
+    private function extractPager(PageInterface $page, string $content): void
     {
         \Safe\preg_match('#<!-- pager:(\d+) -->#', $content, $match);
         $pager = (int) $match[1];

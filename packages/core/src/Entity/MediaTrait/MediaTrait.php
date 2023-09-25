@@ -3,7 +3,6 @@
 namespace Pushword\Core\Entity\MediaTrait;
 
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
@@ -23,7 +22,7 @@ trait MediaTrait
     use MediaSlugTrait;
     use TimestampableTrait;
 
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255)]
     protected string $storeIn = '';
 
     /**
@@ -31,7 +30,7 @@ trait MediaTrait
      */
     protected string $projectDir = '';
 
-    #[ORM\Column(type: Types::STRING, length: 255, name: 'media')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255, name: 'media')]
     protected ?string $media = null;
 
     // TODO Rename to filename
@@ -41,10 +40,10 @@ trait MediaTrait
      */
     protected ?string $mediaBeforeUpdate = null;
 
-    #[ORM\Column(type: Types::STRING, length: 50)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
     protected ?string $mimeType = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     protected int $size;
 
     /**
@@ -55,10 +54,10 @@ trait MediaTrait
 
     // todo Rename to $file
     /**
-     * @var Collection<PageInterface>
+     * @var \Doctrine\Common\Collections\Collection<\Pushword\Core\Entity\PageInterface>|null
      */
     #[ORM\OneToMany(targetEntity: PageInterface::class, mappedBy: 'mainImage')]
-    protected $mainImagePages; // @phpstan-ignore-line
+    protected ?Collection $mainImagePages = null; // @phpstan-ignore-line
 
     public function setProjectDir(string $projectDir): self
     {
@@ -244,7 +243,7 @@ trait MediaTrait
      */
     public function getMainImagePages(): Collection
     {
-        return $this->mainImagePages;
+        return $this->mainImagePages ?? throw new \Exception();
     }
 
     #[ORM\PreRemove]

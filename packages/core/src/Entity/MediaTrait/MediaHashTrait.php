@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Entity\MediaTrait;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 
@@ -11,7 +10,7 @@ trait MediaHashTrait
     /**
      * @var string|resource|null
      */
-    #[ORM\Column(type: Types::BINARY, length: 20, options: ['default' => ''])]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BINARY, length: 20, options: ['default' => ''])]
     protected $hash;
 
     abstract public function getMediaFile(): ?File;
