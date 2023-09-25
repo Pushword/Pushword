@@ -44,7 +44,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
         $this->params = $parameterBag;
     }
 
-    public function listAction(Request $request): Response
+    public function list(Request $request): Response
     {
         if (($listMode = $request->query->get('_list_mode')) !== null) {
             $this->admin->setListMode($listMode);
@@ -60,7 +60,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
         return parent::listAction($request);
     }
 
-    public function treeAction(): Response
+    public function tree(): Response
     {
         $pages = Repository::getPageRepository($this->entityManager, $this->params->get('pw.entity_page')) // @phpstan-ignore-line
             ->getPagesWithoutParent();

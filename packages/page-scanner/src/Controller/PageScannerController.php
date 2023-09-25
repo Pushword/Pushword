@@ -35,7 +35,7 @@ final class PageScannerController extends AbstractController
         return self::$fileCache;
     }
 
-    public function scanAction(int $force = 0): Response
+    public function scan(int $force = 0): Response
     {
         $force = (bool) $force;
 

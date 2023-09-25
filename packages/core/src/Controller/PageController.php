@@ -78,7 +78,7 @@ final class PageController extends AbstractController
         if (
             ('' !== $host && $host === $request->getHost()) // avoid redir when using custom_host route
             && false !== $redirect = $this->checkIfUriIsCanonical($request, $page)) {
-            return $this->redirect($redirect, 301);
+            return $this->redirect($redirect, \Symfony\Component\HttpFoundation\Response::HTTP_MOVED_PERMANENTLY);
         }
 
         // Maybe the page is a redirection
@@ -117,7 +117,7 @@ final class PageController extends AbstractController
         $this->initHost($request);
 
         if ('homepage' == $slug) {
-            return $this->redirect($this->generateUrl('pushword_page_feed', ['slug' => 'index']), 301);
+            return $this->redirect($this->generateUrl('pushword_page_feed', ['slug' => 'index']), \Symfony\Component\HttpFoundation\Response::HTTP_MOVED_PERMANENTLY);
         }
 
         $page = $this->getPageElse404($request, $slug);
