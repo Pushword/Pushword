@@ -24,7 +24,6 @@
         "@editorjs/editorjs": "^2.19.1",
         "@editorjs/header": "https://github.com/editor-js/header",
         "@editorjs/image": "https://github.com/editor-js/image.git",
-        "@editorjs/nested-list": "git+https://github.com/editor-js/nested-list.git#802df38dd1452d0cde6b0821d846745a3b8fde01",
         "@editorjs/raw": "https://github.com/editor-js/raw.git",
         "@vietlongn/editorjs-carousel": "https://github.com/mr8bit/carousel-editorjs.git",
         "babel-loader": "^9.1",

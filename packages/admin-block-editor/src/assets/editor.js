@@ -1,6 +1,6 @@
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
-import List from '@pushword/editorjs-tools/dist/NestedList.js'; // "@editorjs/nested-list";
+import List from  '@editorjs/nested-list';
 import Raw from '@pushword/editorjs-tools/dist/Raw.js';
 import Delimiter from '@editorjs/delimiter';
 import Quote from '@editorjs/quote';

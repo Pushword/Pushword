@@ -9,7 +9,6 @@ module.exports = {
         PagesList: "./src/PagesList/PagesList.js",
         Hyperlink: "./src/Hyperlink/Hyperlink.js",
         Raw: "./src/Raw/Raw.js",
-        NestedList: "./src/NestedList/NestedList.js",
         Anchor: "./src/Anchor/Anchor.js",
         HyperlinkTune: "./src/HyperlinkTune/HyperlinkTune.js",
     },

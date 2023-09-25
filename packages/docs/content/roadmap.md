@@ -8,13 +8,6 @@ parent: contribute
 ## BugFix && To finish
 
 
--   MàJ en cours sur admin-block-editor
-
-          "@editorjs/raw": "https://github.com/editor-js/raw.git#208cbfd7ea1da507173686e1312f95788fb8f209",
-
-        "@editorjs/nested-list": "https://github.com/editor-js/nested-list.git#8375ae17756fa2677d57e716e12096437d01e8f8",
-
-        "@editorjs/image": "https://github.com/editor-js/image.git#e3df500fc62a88d3490fa4ba4030c07f0cd79d64",
 
 -   Conversation form controller
     -   manage multiHost
@@ -28,8 +21,6 @@ parent: contribute
 -   Implement ESlint
 -   https://github.com/jolicode/JoliTypo
 
--   [Core] Rewrite MediaTrait/MediaSlugTrait and MediaListener (tag reference before starting refactoring 0.0.859)n
-
 -   [AdminBlockEditor] Add Layout https://github.com/hata6502/editorjs-layout#readme
 
 -   [StaticGenerator] Very long CopierGenerator, MediaGenerator -> set a warning in docs
@@ -41,8 +32,8 @@ parent: contribute
     -   admin page list with only 1 domain listing + default correct selected domain on click add new
     -   preview : manage page link to be OK when it's not the fist domain
 
--   When simplify 10 will be stable, add phpstan-twig-rules
 -   // TODO check a new blank installation
+
 -   [AdminBlockEditor] Image > Add link + Alt and redesign Legend
 -   [AdminBlockEditor] document block and add Help link when advanced knowledge is needed
 -   [AdminBlockEditor] édition avancée (template notamment dans pages, prose/unprise)
@@ -61,9 +52,6 @@ parent: contribute
 
 -   **Page scanner** : test current page anchor link
 -   Toward wiki !
-    -   **page authors**
-        HUGE BUG: une fois la page mise à jour avec le dernier utilisateur, impossible d'afficher la page d'édition
-        de Admin sans être déconnecté
     -   **Change requester**
     -   **Public Historic** (or make accessible historic from page object)
 -   Youtube Importer (from a youtube hash, create a page with video and text is imported from subtitle)
@@ -75,7 +63,6 @@ parent: contribute
         -   Check there is no translation with the same language than current page
     -   add <!-- page-scanner-ignore: what to ignore --> ou plutôt dans othersParameters
     -   page scanner --alter :)
--   **name suggester**: parse content, find words or multiple words used only in this doc, suggest it as potential name, s'active au moment du clic sur l'input name
 -   **eCommerce** bridge with sylius ?!
 -   **Advanced main image** : associé un champ vidéo à l'image d'en-tête
 -   **Admin** : extend parameters and events to _filters_ and _lister_ will permit extension)
