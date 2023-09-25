@@ -189,8 +189,10 @@ Unzip it on a classic Apache/PHP server and play.
 
 <ul class="flex flex-row my-6 space-x-6">
     <li class="text-center"><a href="https://symfony.com"><img src="/media/symfony.svg" alt="Symfony PHP Framework" class="h-16"><br><small>Symfony</small></a></li>
+    <li class="text-center"><a href="https://tailwindcss.com"><img src="/media/tailwind.svg" alt="Tailwind CSS" class="w-16 h-16 bg-gray-300 rounded-full"><br><small>Tailwind CSS</small></a></li>
     <li class="text-center"><a href="https://codex.so/editor"><img src="/media/editorjs.svg" alt="Editor.js" class="h-16"><br><small>Editor.js</a></small></li>
     <li class="text-center"><a href="https://sonata-project.org"><img src="/media/sonata.svg" alt="Editor.js" class="w-16 h-16 bg-gray-300 rounded-full"><br><small>Sonata</small></a></li>
+
 </ul>
 
 <div class="pt-3 pb-12 prose dark:prose-light">
