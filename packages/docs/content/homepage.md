@@ -39,8 +39,8 @@ Maybe you will want to change [default configuration](/configuration) or add som
 
 If you are not composer friendly, you can download the classic version.
 
-<p class="text-center">{{ link(svg('download', {'class': 'w-6 h-6 inline-block mr-2'}) ~ ' Pushword-Classic-1.0.0.zip', '#', {'class': 'font-bold'}) }}
-<br><small>{{ svg('exclamation-triangle', {'class': 'w-3 h-3 inline-block mr-1'}) }} not yet available</small></p>
+<p class="text-center">{{ link(svg('download', {'class': 'w-6 h-6 inline-block mr-2 dark:fill-white'}) ~ ' Pushword-Classic-1.0.0.zip', '#', {'class': 'font-bold'}) }}
+<br><small>{{ svg('exclamation-triangle', {'class': 'w-3 h-3 inline-block mr-1 dark:fill-white'}) }} not yet available</small></p>
 
 Unzip it on a classic Apache/PHP server and play.
 
