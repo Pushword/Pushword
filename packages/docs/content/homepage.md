@@ -64,7 +64,7 @@ Unzip it on a classic Apache/PHP server and play.
 <div class="grid max-w-screen-sm grid-cols-2 gap-4 mx-auto md:px-12 md:grid-cols-4 xl:grid-cols-6 md:max-w-screen-2xl ">
     <div class="col-span-2">
         <!-- Edit -->
-        <div class="px-3 py-6 mb-6 rounded-lg bg-green-50">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-green-500 rounded-full">{{
@@ -81,7 +81,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <p class="text-sm font-light text-center text-green-500"><strong style="color: rgba(16, 185, 129, var(--tw-text-opacity));">PHP 8</strong> // Symfony 6</p>
             </div>
         </div>
-        <div class="px-3 py-6 mb-6 rounded-lg bg-indigo-50">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-indigo-500 rounded-full">
@@ -105,7 +105,7 @@ Unzip it on a classic Apache/PHP server and play.
         </div>
     </div>
     <div class="col-span-2">
-        <div class="px-3 py-6 mb-6 rounded-lg bg-blue-50">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-blue-500 rounded-full">
@@ -125,7 +125,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <p>A <a href="/extension/admin-block-editor">block editor</a> is avalaible for non-markdown friendly people.</p>
             </div>
         </div>
-        <div class="px-3 py-6 mb-6 rounded-lg bg-red-50">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-red-500 rounded-full">
@@ -146,7 +146,7 @@ Unzip it on a classic Apache/PHP server and play.
         </div>
     </div>
     <div class="flex flex-col items-start col-span-2 xl:flex-col md:col-span-4 xl:col-span-2 md:flex-row xl:col-start-auto md:space-x-3 xl:space-x-0">
-        <div class="px-3 py-6 mb-6 rounded-lg bg-pink-50">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-pink-500 rounded-full">
@@ -163,7 +163,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <p>Woring about speed ? If default installation is not fast enough for you, you will fall in love with the <a href="/extension/static-generator">{{ svg('bolt') }} Static Website Generator</a>.</p>
             </div>
         </div>
-        <div class="px-3 py-6 mb-6 rounded-lg bg-purple-50 md:-mt-24 xl:mt-0">
+        <div class="px-3 py-6 mb-6 rounded-lg md:-mt-24 xl:mt-0 dark:bg-gray-900 bg-white shadow-lg">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-purple-500 rounded-full">
