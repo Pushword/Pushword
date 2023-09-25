@@ -14,11 +14,11 @@ trait PageParentTrait
     protected ?PageInterface $parentPage = null;
 
     /**
-     * @var ?Collection<PageInterface>
+     * @var ?Collection<int, PageInterface>
      */
     #[ORM\OneToMany(targetEntity: PageInterface::class, mappedBy: 'parentPage')]
     #[ORM\OrderBy(['publishedAt' => Criteria::DESC, 'priority' => 'DESC'])]
-    protected ?Collection $childrenPages; // @phpstan-ignore-line
+    protected ?Collection $childrenPages;
 
     public function getParentPage(): ?PageInterface
     {

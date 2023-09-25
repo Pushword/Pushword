@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Entity\MediaTrait;
 
+use App\Entity\Media;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\PageInterface;
@@ -52,12 +53,11 @@ trait MediaTrait
     #[Vich\UploadableField(mapping: 'media_media', fileNameProperty: 'slug', mimeType: 'mimeType', size: 'size', dimensions: 'dimensions')]
     protected $mediaFile;
 
-    // todo Rename to $file
     /**
-     * @var \Doctrine\Common\Collections\Collection<\Pushword\Core\Entity\PageInterface>|null
+     * @var Collection<int, PageInterface>|null
      */
     #[ORM\OneToMany(targetEntity: PageInterface::class, mappedBy: 'mainImage')]
-    protected ?Collection $mainImagePages = null; // @phpstan-ignore-line
+    protected ?Collection $mainImagePages = null;
 
     public function setProjectDir(string $projectDir): self
     {
