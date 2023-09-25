@@ -60,7 +60,7 @@ Unzip it on a classic Apache/PHP server and play.
         <h2 class="pt-12 pb-6 text-4xl">Features<br><small class="text-lg">Create content and publish it on the web smoothly</small></h2>
     </div>
 
-<div class="grid max-w-screen-sm grid-cols-2 gap-4 mx-auto md:px-12 md:grid-cols-4 xl:grid-cols-6 md:max-w-screen-2xl ">
+<div class="grid max-w-screen-sm md:max-w-screen-2xl grid-cols-2 gap-4 mx-auto md:px-12 md:grid-cols-4 xl:grid-cols-6  ">
     <div class="col-span-2">
         <!-- Edit -->
         <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
