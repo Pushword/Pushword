@@ -16,7 +16,7 @@ trait CustomPropertiesTrait
      *
      * @var array<mixed>
      */
-    #[ORM\Column(type: 'json')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::JSON)]
     protected array $customProperties = [];
 
     /**

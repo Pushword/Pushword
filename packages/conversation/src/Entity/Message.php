@@ -17,16 +17,16 @@ class Message implements MessageInterface, \Stringable
     use IdTrait;
     use TimestampableTrait;
 
-    #[ORM\Column(type: 'string', length: 180, nullable: true)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 180, nullable: true)]
     protected ?string $authorName = '';
 
-    #[ORM\Column(type: 'string', length: 180, nullable: true)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 180, nullable: true)]
     protected ?string $authorEmail = '';
 
-    #[ORM\Column(type: 'integer', nullable: true)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER, nullable: true)]
     protected ?int $authorIp = null;
 
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(min: 2, max: 200000, minMessage: 'conversation.content.short', maxMessage: 'conversation.content.long')]
     protected ?string $content = null;
@@ -34,10 +34,10 @@ class Message implements MessageInterface, \Stringable
     /**
      * Identifier referring (most of time, URI).
      */
-    #[ORM\Column(type: 'string', length: 180)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 180)]
     protected string $referring = '';
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, nullable: true)]
     protected ?\DateTimeInterface $publishedAt = null;
 
     public function __construct()

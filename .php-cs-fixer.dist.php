@@ -11,7 +11,7 @@ $finder = Symfony\Component\Finder\Finder::create()
 
 return (new PhpCsFixer\Config())
     ->setRules([
-        '@PSR12' => true,
+        '@PER-CS2.0:risky' => true,
         '@PSR2' => true,
         '@DoctrineAnnotation' => true,
         '@Symfony' => true,

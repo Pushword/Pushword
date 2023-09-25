@@ -9,12 +9,16 @@ use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\Core\Configuration\Option;
 use Rector\Core\ValueObject\PhpVersion;
+use Rector\Doctrine\Set\DoctrineSetList;
 use Rector\Php73\Rector\FuncCall\JsonThrowOnErrorRector;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
 use Rector\PHPUnit\CodeQuality\Rector\Class_\AddSeeTestAnnotationRector;
 use Rector\PHPUnit\Set\PHPUnitSetList;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
+use Rector\Symfony\Bridge\Symfony\Routing\SymfonyRoutesProvider;
+use Rector\Symfony\Contract\Bridge\Symfony\Routing\SymfonyRoutesProviderInterface;
+use Rector\Symfony\Set\SymfonySetList;
 
 return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->parallel();
@@ -25,6 +29,9 @@ return static function (RectorConfig $rectorConfig): void {
     );
     $paths[] = __DIR__.'/packages/skeleton/src';
     $rectorConfig->paths($paths);
+    $rectorConfig->symfonyContainerPhp(__DIR__.'/tests/symfonyContainer.php');
+    $rectorConfig->singleton(SymfonyRoutesProvider::class);
+    $rectorConfig->alias(SymfonyRoutesProvider::class, SymfonyRoutesProviderInterface::class);
 
     // $parameters->rule(Option::PHP_VERSION_FEATURES, PhpVersion::PHP_80);
     // $containerConfigurator->import(SetList::PHP_80);
@@ -41,6 +48,19 @@ return static function (RectorConfig $rectorConfig): void {
         SetList::NAMING,
         SetList::PRIVATIZATION,
         */
+        SetList::CODE_QUALITY,
+        SetList::PHP_82,
+        SetList::CODING_STYLE,
+        SetList::EARLY_RETURN,
+        SetList::TYPE_DECLARATION,
+        SetList::INSTANCEOF,
+        // SetList::PRIVATIZATION,
+        DoctrineSetList::DOCTRINE_CODE_QUALITY,
+        // SymfonySetList::SYMFONY_63,
+        // SymfonySetList::SYMFONY_CODE_QUALITY,
+        // SymfonySetList::SYMFONY_CONSTRUCTOR_INJECTION,
+        // SymfonySetList::ANNOTATIONS_TO_ATTRIBUTES,
+        // SymfonySetList::CONFIGS,
     ]);
 
     $rectorConfig->skip([

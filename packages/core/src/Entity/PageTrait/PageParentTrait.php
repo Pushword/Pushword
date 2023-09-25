@@ -4,20 +4,21 @@ namespace Pushword\Core\Entity\PageTrait;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\PageInterface;
 
 trait PageParentTrait
 {
-    #[ORM\ManyToOne(targetEntity: \Pushword\Core\Entity\PageInterface::class, inversedBy: 'childrenPages')]
+    #[ORM\ManyToOne(targetEntity: PageInterface::class, inversedBy: 'childrenPages')]
     protected ?PageInterface $parentPage = null;
 
     /**
-     * @var ?Collection<int, PageInterface>
+     * @var ?Collection<PageInterface>
      */
-    #[ORM\OneToMany(targetEntity: \Pushword\Core\Entity\PageInterface::class, mappedBy: 'parentPage')]
-    #[ORM\OrderBy(['publishedAt' => 'DESC', 'priority' => 'DESC'])]
-    protected $childrenPages;
+    #[ORM\OneToMany(targetEntity: PageInterface::class, mappedBy: 'parentPage')]
+    #[ORM\OrderBy(['publishedAt' => Criteria::DESC, 'priority' => 'DESC'])]
+    protected ?Collection $childrenPages; // @phpstan-ignore-line
 
     public function getParentPage(): ?PageInterface
     {

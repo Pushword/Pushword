@@ -27,7 +27,7 @@ trait PageEditorTrait
     #[ORM\ManyToOne(targetEntity: UserInterface::class)]
     protected ?UserInterface $createdBy = null;
 
-    #[ORM\Column(type: 'text', options: ['default' => ''])]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TEXT, options: ['default' => ''])]
     protected string $editMessage = '';
 
     public function getEditedBy(): ?UserInterface

@@ -8,19 +8,19 @@ use Pushword\Core\Utils\F;
 
 trait PageTrait
 {
-    #[ORM\Column(type: 'string', length: 150)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 150)]
     protected string $slug = '';
 
-    #[ORM\Column(type: 'string', length: 255)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255)]
     protected string $h1 = '';
 
     /**
      * RawContent would have been a more appropriate name.
      */
-    #[ORM\Column(type: 'text')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TEXT)]
     protected string $mainContent = '';
 
-    #[ORM\Column(type: 'datetime', options: ['default' => 'CURRENT_TIMESTAMP'])]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     protected ?\DateTimeInterface $publishedAt = null;
 
     public function __toString(): string

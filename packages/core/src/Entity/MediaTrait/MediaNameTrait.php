@@ -7,10 +7,10 @@ use Symfony\Component\Yaml\Yaml;
 
 trait MediaNameTrait
 {
-    #[ORM\Column(type: 'string', length: 100, unique: true)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 100, unique: true)]
     protected string $name = '';
 
-    #[ORM\Column(type: 'text', options: ['default' => ''], nullable: true)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TEXT, options: ['default' => ''], nullable: true)]
     protected ?string $names = '';
 
     public function __toString(): string

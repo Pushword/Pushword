@@ -10,25 +10,25 @@ trait PageSearchTrait
     /**
      * may Index ?
      */
-    #[ORM\Column(type: 'string', length: 50, options: ['default' => ''])]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50, options: ['default' => ''])]
     protected string $metaRobots = '';
 
     /**
      * (links improver) / Breadcrumb.
      */
-    #[ORM\Column(type: 'string', length: 150)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 150)]
     protected string $name = '';
 
     /**
      * HTML Title - SEO.
      */
-    #[ORM\Column(type: 'string', length: 200)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 200)]
     protected string $title = '';
 
     /**
      * priority.
      */
-    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER, options: ['default' => 0])]
     protected int $priority = 0;
 
     public function getTemplate(): ?string

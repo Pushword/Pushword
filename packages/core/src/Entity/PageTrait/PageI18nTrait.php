@@ -12,7 +12,7 @@ trait PageI18nTrait
     /**
      * //rfc5646.
      */
-    #[ORM\Column(type: 'string', length: 5)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 5)]
     protected string $locale = '';
 
     /**

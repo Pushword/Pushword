@@ -71,7 +71,7 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
      */
     public function getMainImagePages(): array|Collection;
 
-    public function getHash(): string;
+    public function getHash(): mixed;
 
     public function setHash(string $hash = null): self;
 

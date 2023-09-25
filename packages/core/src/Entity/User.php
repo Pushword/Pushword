@@ -16,6 +16,6 @@ class User implements UserInterface, sfUserInterface, PasswordAuthenticatedUserI
     use CustomPropertiesTrait;
     use UserTrait;
 
-    #[ORM\Id, ORM\Column(type: 'integer'), ORM\GeneratedValue(strategy: 'AUTO')]
+    #[ORM\Id, ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER), ORM\GeneratedValue(strategy: 'AUTO')]
     protected ?int $id = null;
 }
