@@ -54,9 +54,8 @@ Unzip it on a classic Apache/PHP server and play.
 
 <!-- next: show a preview there -->
 
-{% apply unprose %}
 
-<div class="relative mb-6 shadow-sm bg-gray-50 dark:bg-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+<div class="p-3 relative mb-6 shadow-sm bg-gray-50 dark:bg-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
     <div class="max-w-screen-sm mx-auto">
         <h2 class="pt-12 pb-6 text-4xl">Features<br><small class="text-lg">Create content and publish it on the web smoothly</small></h2>
     </div>
@@ -64,7 +63,7 @@ Unzip it on a classic Apache/PHP server and play.
 <div class="grid max-w-screen-sm grid-cols-2 gap-4 mx-auto md:px-12 md:grid-cols-4 xl:grid-cols-6 md:max-w-screen-2xl ">
     <div class="col-span-2">
         <!-- Edit -->
-        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-green-500 rounded-full">{{
@@ -72,7 +71,7 @@ Unzip it on a classic Apache/PHP server and play.
                 </div>
                 <div class="ml-3 text-green-500">Easy to install<br><small>Run it in a few seconds</small></div>
             </h2>
-            <div class="prose md:prose-lg">
+            <div>
                 <p>Pushword run on a classic up to date <strong>PHP</strong> environnement (and Composer). You have this on your
                     machine or just a cheap shared host ? So you are able to install it in a few seconds.</p>
                 <p><a href="/installation">Learn more about requirements and installation.</a></p>
@@ -81,7 +80,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <p class="text-sm font-light text-center text-green-500"><strong style="color: rgba(16, 185, 129, var(--tw-text-opacity));">PHP 8</strong> // Symfony 6</p>
             </div>
         </div>
-        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-indigo-500 rounded-full">
@@ -90,7 +89,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <div class="ml-3 text-indigo-500">Extendable<br><small>Look ! It's a symfony application under the hood</small>
                 </div>
             </h2>
-            <div class="prose md:prose-lg"">
+            <div>
                 <p>To create <strong>Multiple sites</strong> with <strong>multiple languages</strong> (i18n) and
                     managing them on <strong>multiple domains</strong> you don't need to extend the core. <strong>Simple
                         site</strong> and <strong>complex content network</strong> can be managed easily with Pushword
@@ -105,7 +104,7 @@ Unzip it on a classic Apache/PHP server and play.
         </div>
     </div>
     <div class="col-span-2">
-        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-blue-500 rounded-full">
@@ -115,7 +114,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <div class="ml-3 text-blue-500">Just Write<br><small>Are you more Flat-file CMS or Full Featured Admin
                         ?</small></div>
             </h2>
-            <div class="prose md:prose-lg"">
+            <div>
                 <p>Pushword offers the two ways to manage a site : a <strong>simple, functionnable and efficient default
                         Admin</strong>, if you come from Wordpress, you will find your way easily or a <strong>powerfull
                         flat-file CMS</strong>, you will be able to edit your content or your template files from where
@@ -125,7 +124,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <p>A <a href="/extension/admin-block-editor">block editor</a> is avalaible for non-markdown friendly people.</p>
             </div>
         </div>
-        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-red-500 rounded-full">
@@ -135,7 +134,7 @@ Unzip it on a classic Apache/PHP server and play.
                 <div class="ml-3 text-red-500">Be unique : theme it quickly<br><small>Do you know Tailwind CSS and Twig ?</small>
                 </div>
             </h2>
-            <div class="prose md:prose-lg"">
+            <div>
                 <p>Thanks to <strong>Tailwind CSS</strong> and <strong>Twig</strong>, you will be
                     able to customize the default theme rapidly if you master html and css.</p>
                 <p>Maybe you will prefer rebuild your own custom theme. Do as you wish, you use Pushword.</p>
@@ -146,7 +145,7 @@ Unzip it on a classic Apache/PHP server and play.
         </div>
     </div>
     <div class="flex flex-col items-start col-span-2 xl:flex-col md:col-span-4 xl:col-span-2 md:flex-row xl:col-start-auto md:space-x-3 xl:space-x-0">
-        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow-lg">
+        <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-pink-500 rounded-full">
@@ -156,14 +155,14 @@ Unzip it on a classic Apache/PHP server and play.
                 <div class="ml-3 text-pink-500">Searchable website<br><small>Want to be found on google ?</small>
                 </div>
             </h2>
-            <div class="prose md:prose-lg"">
+            <div>
                 <p>Pushword was first crafted by a seo and developper guy. Being on the first page of search result matters !</p>
                 <p>So, of course, Pushword manage <strong>title</strong>, <strong>h1</strong>, <strong>description</strong>, <strong>nice url</strong>.</p>
                 <p>But discover more SEO feature like <strong>health checker</strong> (dead links checker), <strong>internal links improver</strong> (suggest links to add in your content) and more...</p>
                 <p>Woring about speed ? If default installation is not fast enough for you, you will fall in love with the <a href="/extension/static-generator">{{ svg('bolt') }} Static Website Generator</a>.</p>
             </div>
         </div>
-        <div class="px-3 py-6 mb-6 rounded-lg md:-mt-24 xl:mt-0 dark:bg-gray-900 bg-white shadow-lg">
+        <div class="px-3 py-6 mb-6 rounded-lg md:-mt-24 xl:mt-0 dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
                 <div class="flex-shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-purple-500 rounded-full">
@@ -174,7 +173,7 @@ Unzip it on a classic Apache/PHP server and play.
                         ?</small>
                 </div>
             </h2>
-            <div class="prose md:prose-lg">
+            <div>
                 <p>Pushword is crafted to last. Source code is <strong>hight quality</strong>, <strong>open source</strong> and <strong>well tested</strong>.</p>
                 <p>Bringing a new feature or refactor your code will be painless. Thanks to <strong>symfony best practices</strong>, it will last in the time.</p>
             </div>
@@ -187,11 +186,11 @@ Unzip it on a classic Apache/PHP server and play.
 
 <h2 class="text-2xl pt-9"><small>Thanks to open source package and their contributors</small><br>Pushword CMS is built on top of</h2>
 
-<ul class="flex flex-row my-6 space-x-6">
-    <li class="text-center"><a href="https://symfony.com"><img src="/media/symfony.svg" alt="Symfony PHP Framework" class="h-16"><br><small>Symfony</small></a></li>
-    <li class="text-center"><a href="https://tailwindcss.com"><img src="/media/tailwind.svg" alt="Tailwind CSS" class="w-16 h-16 bg-gray-300 rounded-full"><br><small>Tailwind CSS</small></a></li>
-    <li class="text-center"><a href="https://codex.so/editor"><img src="/media/editorjs.svg" alt="Editor.js" class="h-16"><br><small>Editor.js</a></small></li>
-    <li class="text-center"><a href="https://sonata-project.org"><img src="/media/sonata.svg" alt="Editor.js" class="w-16 h-16 bg-gray-300 rounded-full"><br><small>Sonata</small></a></li>
+<ul class="flex flex-row my-6 space-x-6 list-none">
+    <li class="text-center"><a href="https://symfony.com"><img src="/media/symfony.svg" alt="Symfony PHP Framework" class="h-16"><small>Symfony</small></a></li>
+    <li class="text-center"><a href="https://tailwindcss.com"><img src="/media/tailwind.svg" alt="Tailwind CSS" class="w-16 h-16 mx-auto rounded-full"><small>Tailwind CSS</small></a></li>
+    <li class="text-center"><a href="https://codex.so/editor"><img src="/media/editorjs.svg" alt="Editor.js" class="h-16"><small>Editor.js</a></small></li>
+    <li class="text-center"><a href="https://sonata-project.org"><img src="/media/sonata.svg" alt="Editor.js" class="w-16 h-16 mx-auto bg-gray-300 rounded-full"><small>Sonata</small></a></li>
 
 </ul>
 
@@ -207,14 +206,12 @@ And many more ({{ link('see dependencies', 'https://github.com/Pushword/Pushword
 <div class="shadow-sm bg-gray-50 -mb-14 dark:bg-gray-800">
 <div class="max-w-screen-sm p-3 py-12 mx-auto prose-sm prose md:prose-lg dark:prose-light">
 
-<h2>Next</h2>
+<h2 class="font-bold">Next</h2>
 {% apply markdown %}
-Time to [read the docs](/installation) or maybe have a look to the {{ link(svg('github') ~ 'source code', 'https://github.com/Pushword/pushword') }}.
+Time to [read the docs](/installation) or have a look to the {{ link(svg('github') ~ ' source code', 'https://github.com/Pushword/pushword') }}.
 
-And follow {{ link('@PushwordCMS', 'https://twitter.com/PushwordCMS') }} on twitter or {{ link('github', 'https://github.com/Pushword/pushword') }} to be notified about updates or new extensions.
+And follow {{ link('@Robind4', 'https://twitter.com/Robind4') }} on twitter or {{ link('github', 'https://github.com/Pushword/pushword') }} to be notified about updates or new extensions.
 {% endapply %}
 
 </div>
 </div>
-
-{% endapply %}

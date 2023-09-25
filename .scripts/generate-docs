@@ -19,5 +19,4 @@ php ./.scripts/generate-docs-assets
 CURRENT_DIR='packages/skeleton'
 cd packages/skeleton
 
-php bin/console pushword:flat:import pushword.piedweb.com
-php bin/console pushword:static:generate pushword.piedweb.com
+php bin/console pushword:flat:import pushword.piedweb.com && php bin/console pushword:static:generate pushword.piedweb.com
