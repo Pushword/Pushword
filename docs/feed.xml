@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-                <title>Pushword - Modern CMS to build rapidly Websites (powered by Symfony)</title>
+                <title>Pushword - CMS to build rapidly Websites (powered by Symfony)</title>
         <link>https://pushword.piedweb.com/</link>
         <description><![CDATA[]]></description>
         <atom:link
@@ -10,7 +10,7 @@
             type="application/rss+xml"
         />
                                                             <item>
-                    <title><![CDATA[Build modern Content First websites rapidly  Manage and maintain it as quickly]]></title>
+                    <title><![CDATA[Build Content First websites rapidly  Manage and maintain it as quickly]]></title>
                     <link>https://pushword.piedweb.com/</link>
                     <guid>https://pushword.piedweb.com/</guid>
                     <pubDate>Mon, 25 Sep 2023 14:41:36 +0000</pubDate>

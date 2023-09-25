@@ -1,7 +1,7 @@
 ---
-title: Pushword - Modern CMS to build rapidly Websites (powered by Symfony)
+title: Pushword - CMS to build rapidly Websites (powered by Symfony)
 h1:
-    <span class="block mt-6 leading-relaxed">Build modern <em class="font-light">Content First</em> websites rapidly
+    <span class="block mt-6 leading-relaxed">Build <em class="font-light">Content First</em> websites rapidly
     <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>
 name: Pushword
 template: /page/homepage.html.twig
