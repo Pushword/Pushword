@@ -7,17 +7,16 @@ parent: contribute
 
 ## BugFix && To finish
 
-
-
 -   Conversation form controller
     -   manage multiHost
--   Scan : ajouter un check des liens vides `"></a`
+
+
 -   Yaml editor in Autres paramêtres
 
 -   Switch image block to use media.id moroever image.uri
     -   event listener on load to update json
+
 -   Rectorize with all List
--   AdminBlockEditor : new list item, évitez d'ajouter le lien d'avant sans ancre...
 -   Implement ESlint
 -   https://github.com/jolicode/JoliTypo
 
