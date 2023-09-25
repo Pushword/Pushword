@@ -9,7 +9,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class VersionController extends AbstractController
@@ -25,19 +28,19 @@ class VersionController extends AbstractController
 
     private ManagerRegistry $doctrine;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setDoctrine(ManagerRegistry $doctrine): void
     {
         $this->doctrine = $doctrine;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setVersionner(Versionner $versionner): void
     {
         $this->versionner = $versionner;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTranslator(TranslatorInterface $translator): void
     {
         $this->translator = $translator;
@@ -61,11 +64,23 @@ class VersionController extends AbstractController
         return $this->redirectToRoute('admin_app_page_edit', ['id' => $id]);
     }
 
+    private function getFlashBagFromRequest(Request $request): FlashBagInterface
+    {
+        $session = $request->getSession();
+
+        if ($session instanceof FlashBagAwareSessionInterface) {
+            return $session->getFlashBag();
+        }
+
+        throw new \Exception();
+    }
+
     /** @psalm-suppress  UndefinedInterfaceMethod */
     public function resetVersioning(Request $request, int $id): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         $this->versionner->reset($id);
-        $request->getSession()->getFlashBag()->add('success', $this->translator->trans('version.reset_history')); // @phpstan-ignore-line
+
+        $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('version.reset_history'));
 
         return $this->redirectToRoute('admin_app_page_edit', ['id' => $id]);
     }
@@ -74,7 +89,7 @@ class VersionController extends AbstractController
     {
         $page = Repository::getPageRepository($this->doctrine, $this->pageClass)->findOneBy(['id' => $id]);
 
-        if (! $page instanceof \Pushword\Core\Entity\PageInterface) {
+        if (! $page instanceof PageInterface) {
             throw new \Exception('Page not found `'.$id.'`');
         }
 

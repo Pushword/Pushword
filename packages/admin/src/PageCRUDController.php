@@ -54,7 +54,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
         if ('tree' === $listMode) {
             parent::listAction($request);
 
-            return $this->treeAction();
+            return $this->tree();
         }
 
         return parent::listAction($request);

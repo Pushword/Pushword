@@ -17,6 +17,7 @@ use Rector\PHPUnit\Set\PHPUnitSetList;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
 use Rector\Symfony\Bridge\Symfony\Routing\SymfonyRoutesProvider;
+use Rector\Symfony\Configs\Rector\ClassMethod\AddRouteAnnotationRector;
 use Rector\Symfony\Contract\Bridge\Symfony\Routing\SymfonyRoutesProviderInterface;
 use Rector\Symfony\Set\SymfonySetList;
 
@@ -29,7 +30,7 @@ return static function (RectorConfig $rectorConfig): void {
     );
     $paths[] = __DIR__.'/packages/skeleton/src';
     $rectorConfig->paths($paths);
-    $rectorConfig->symfonyContainerPhp(__DIR__.'/tests/symfonyContainer.php');
+    $rectorConfig->symfonyContainerPhp(__DIR__.'/packages/skeleton/tests/symfonyContainer.php');
     $rectorConfig->singleton(SymfonyRoutesProvider::class);
     $rectorConfig->alias(SymfonyRoutesProvider::class, SymfonyRoutesProviderInterface::class);
 
@@ -58,10 +59,12 @@ return static function (RectorConfig $rectorConfig): void {
         DoctrineSetList::DOCTRINE_CODE_QUALITY,
         SymfonySetList::SYMFONY_63,
         SymfonySetList::SYMFONY_CODE_QUALITY,
-        // SymfonySetList::SYMFONY_CONSTRUCTOR_INJECTION,
-        // SymfonySetList::ANNOTATIONS_TO_ATTRIBUTES,
+        SymfonySetList::SYMFONY_CONSTRUCTOR_INJECTION,
+        SymfonySetList::ANNOTATIONS_TO_ATTRIBUTES,
         // SymfonySetList::CONFIGS,
     ]);
+
+    // $rectorConfig->rule(AddRouteAnnotationRector::class);
 
     $rectorConfig->skip([
         'packages/core/src/Twig/AppExtension.php',
