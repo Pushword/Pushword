@@ -4,7 +4,7 @@ A few example for the editor possibilities. Best to observe this, it's in admin 
 
 -   [Homepage]({{ homepage() }})
 -   [Current Page]({{ page(page) }})
--   Get Url : {{ page('/what-you-want-in-same-app') }}
+-   Get Url : {{ page('what-you-want-in-same-app') }}
 -   Canonical with base: {{ page(page, true) }}
 -   Encrypted Link : {{ link('Pied Web', 'https://piedweb.com/') }}
 -   Self Encrypted Link: {{ link('Pied Web', page) }}

@@ -46,9 +46,8 @@ final class Router implements RouterInterface
 
     /**
      * @param string|PageInterface $slug
-     * @param int|string|null      $pager
      */
-    public function generate($slug = 'homepage', bool $canonical = false, $pager = null): string
+    public function generate($slug = 'homepage', bool $canonical = false, int $pager = null, string $host = null): string
     {
         $page = null;
 
@@ -62,24 +61,25 @@ final class Router implements RouterInterface
         if (! $canonical) {
             if ($this->mayUseCustomPath()) {
                 return $this->router->generate(self::CUSTOM_HOST_PATH, [
-                    'host' => $this->apps->safegetCurrentPage()->getHost(),
+                    'host' => $host ?? $this->apps->safegetCurrentPage()->getHost(),
                     'slug' => $slug,
                 ]);
             }
 
-            if (null !== $page && ! $this->apps->sameHost($page->getHost())) {
+            if (null !== $page && ! $this->apps->sameHost($page->getHost())
+                || null !== $host && ! $this->apps->sameHost($host)) {
                 // maybe we force canonical - useful for views
                 $canonical = true;
             }
         }
 
-        if ($canonical && null !== $page) {
-            $baseUrl = $this->apps->getAppValue('baseUrl', $page->getHost());
+        if ($canonical && (null !== $page || null !== $host)) {
+            $baseUrl = $this->apps->getAppValue('baseUrl', null !== $page ? $page->getHost() : $host); // @phpstan-ignore-line
         }
 
         $url = ($baseUrl ?? '').$this->router->generate(self::PATH, ['slug' => $slug]);
 
-        if (null !== $pager && '1' !== (string) $pager) {
+        if (null !== $pager && 1 !== $pager) {
             return rtrim($url, '/').'/'.$pager;
         }
 

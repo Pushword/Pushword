@@ -49,7 +49,7 @@ trait PageParentTrait
     /**
      * @return Collection<int, PageInterface>
      */
-    public function getChildrenPages()
+    public function getChildrenPages(): Collection
     {
         return $this->childrenPages ?? new ArrayCollection([]);
     }
