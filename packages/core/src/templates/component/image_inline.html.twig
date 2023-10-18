@@ -62,7 +62,7 @@
      class: image_class is defined and image_class ? image_class : 'w-full h-auto',
      width: width,
      height: height,
-     alt: image_alt|default(image.alt)
+     alt: image_alt|default(image.alt ?? image.name)
     }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }} />
 </picture>
 {% endmacro %}
