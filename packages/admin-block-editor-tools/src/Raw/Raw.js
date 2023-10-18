@@ -28,16 +28,15 @@ export default class Raw extends RawTool {
 
     transformTextareaToAce() {
         var textarea = $(this.textarea);
-        console.log(textarea.height());
         var editDiv = $('<div>', {
             position: 'absolute',
-            width: '100%', // textarea.width(),
+            width: '100%',
             class: 'aceInsideEditorJs',
         }).insertAfter(textarea);
         textarea.css('display', 'none');
         var editor = ace.edit(editDiv[0]);
         editor.renderer.setShowGutter(false);
-        editor.getSession().setValue(textarea.val());
+        editor.getSession().setValue(textarea.val() || '');
         editor.getSession().setMode('ace/mode/twig');
         editor.setFontSize('16px');
         editor.container.style.lineHeight = '1.5em';
@@ -47,9 +46,13 @@ export default class Raw extends RawTool {
         });
 
         editor.getSession().on('change', () => {
-            textarea.val(editor.getSession().getValue());
+            if (textarea) textarea.val(editor.getSession().getValue() || '');
         });
         editor.renderer.setScrollMargin(10, 10);
+        editor.focus();
+        setTimeout(function () {
+            editor.focus();
+        }, 1);
 
         return editor;
     }
