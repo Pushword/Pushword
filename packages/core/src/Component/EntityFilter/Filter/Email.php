@@ -22,7 +22,7 @@ class Email extends AbstractFilter
      */
     public function convertEmail(string $body): string
     {
-        $rgx = '/ ([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})( |\.?<\/|\. |$)/i';
+        $rgx = '/ ([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})( |\.<\/|<\/p|\. |$)/i';
 
         \Safe\preg_match_all($rgx, $body, $matches);
 
