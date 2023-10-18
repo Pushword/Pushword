@@ -21,7 +21,7 @@
         "@codexteam/ajax": "^4.2.0",
         "@codexteam/icons": "^0.3",
         "@editorjs/attaches": "https://github.com/editor-js/attaches.git",
-        "@editorjs/editorjs": "^2.19.1",
+        "@editorjs/editorjs": "^2.28",
         "@editorjs/header": "https://github.com/editor-js/header",
         "@editorjs/image": "https://github.com/editor-js/image.git",
         "@editorjs/raw": "https://github.com/editor-js/raw.git",

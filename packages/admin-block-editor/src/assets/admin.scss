@@ -1,20 +1,25 @@
 /* purgecss start ignore */
 
 /* editorjs raw */
+.aceInsideEditorJs {
+    background-color: #f3f4f6 !important;
+}
+.aceInsideEditorJs .ace_content,.aceInsideEditorJs .ace_scroller {
+    padding: 0 2px;
+}
 .ce-rawtool__textarea {
-  background-color: #f3f4f6 !important;
-  color: #111827 !important;
-  min-height: unset !important;
+    background-color: #f3f4f6 !important;
+    color: #111827 !important;
 }
 
 /* heading anchor size */
 .ce-header::after {
-  font-size: 1rem;
-  padding-top: 2rem;
+    font-size: 1rem;
+    padding-top: 2rem;
 }
 
 a[rel='encrypt']:not(.link-btn) {
-  color: #059669;
+    color: #059669;
 }
 
 /* purgecss end ignore */

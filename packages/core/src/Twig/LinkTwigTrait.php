@@ -88,6 +88,7 @@ trait LinkTwigTrait
 
     public function renderEncodedMail(string $mail, string $class = ''): string
     {
+        // LINK packages/core/src/templates/component/encoded_mail.html.twig
         $template = $this->getApp()->getView('/component/encoded_mail.html.twig');
 
         return $this->twig->render($template, [
