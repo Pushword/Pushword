@@ -44,6 +44,7 @@ export default class Raw extends RawTool {
         editor.setOptions({
             maxLines: Infinity,
         });
+        editor.session.setTabSize(2);
 
         editor.getSession().on('change', () => {
             if (textarea) textarea.val(editor.getSession().getValue() || '');
