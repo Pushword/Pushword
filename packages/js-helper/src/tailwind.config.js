@@ -28,6 +28,7 @@ module.exports = {
         require('@tailwindcss/typography'),
         require('@tailwindcss/aspect-ratio'),
         require('@tailwindcss/forms'),
+        require('tailwindcss-animated'),
         require('tailwindcss-hero-patterns'),
         plugin(pushwordHelper.twFirstLetterPlugin),
         plugin(pushwordHelper.twFirstChildPlugin),

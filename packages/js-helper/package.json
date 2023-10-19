@@ -1,6 +1,6 @@
 {
     "name": "@pushword/js-helper",
-    "version": "0.0.89",
+    "version": "0.0.90",
     "description": "Pushword front end helpers. ",
     "author": "Robin@PiedWeb <contact@piedweb.com>",
     "license": "MIT",
@@ -30,6 +30,7 @@
         "sass-loader": "^13.3",
         "simple-jekyll-search": "^1.9.1",
         "tailwindcss": "^3",
+        "tailwindcss-animated": "^1.0.1",
         "tailwindcss-hero-patterns": "^0.1",
         "tailwindcss-multi-column": "^1.0.2",
         "webpack": "^5.72",
