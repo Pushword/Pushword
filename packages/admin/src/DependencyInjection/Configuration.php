@@ -70,11 +70,13 @@ class Configuration implements ConfigurationInterface
                 'expand' => true,
                 'fields' => [CustomPropertiesField::class],
             ],
+            /*
             'admin.page.og.label' => [
                 'expand' => true,
                 'fields' => [OgTitleField::class, OgDescriptionField::class, OgImageField::class,
                     OgTwitterCardField::class, OgTwitterSiteField::class, OgTwitterCreatorField::class, ],
             ],
+            */
         ],
     ];
 
