@@ -64,7 +64,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
     {
         parent::configure();
 
-        $this->setListModes([...$this->getListModes(), ...['tree' => ['class' => 'fa fa-sitemap']]]);
+        // $this->setListModes([...$this->getListModes(), ...['tree' => ['class' => 'fa fa-sitemap']]]);
     }
 
     /**
