@@ -143,6 +143,8 @@ class PageUpdateNotifier
         $cache = $this->getCacheFilePath();
         $lastTime = new LastTime($cache);
         if ($lastTime->wasRunSince(new \DateInterval($this->interval))) {
+            $this->logger?->info('[PageUpdateNotifier] was ever run since interval');
+
             return self::WAS_EVER_RUN_SINCE_INTERVAL;
         }
 
@@ -153,6 +155,8 @@ class PageUpdateNotifier
         $pages = $this->getPageUpdatedSince($lastTime30min);
         // dd($pages);
         if ([] === $pages) {
+            $this->logger?->info('[PageUpdateNotifier] Nothing to notify');
+
             return self::NOTHING_TO_NOTIFY;
         }
 
