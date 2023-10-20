@@ -1,0 +1,73 @@
+/*!
+       * Codex JavaScript Notification module
+       * https://github.com/codex-team/js-notifier
+       */
+
+/*!
+ * CodeX.Tooltips
+ * 
+ * @version 1.0.5
+ * 
+ * @licence MIT
+ * @author CodeX <https://codex.so>
+ * 
+ * 
+ */
+
+/*!
+ * Library for handling keyboard shortcuts
+ * @copyright CodeX (https://codex.so)
+ * @license MIT
+ * @author CodeX (https://codex.so)
+ * @version 1.2.0
+ */
+
+/*! For license information please see Image.js.LICENSE.txt */
+
+/*! For license information please see Raw.js.LICENSE.txt */
+
+/*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
+
+/**
+       * Base Paragraph Block for the Editor.js.
+       * Represents a regular text block
+       *
+       * @author CodeX (team@codex.so)
+       * @copyright CodeX 2018
+       * @license The MIT License (MIT)
+       */
+
+/**
+ * CodeTool for Editor.js
+ *
+ * @author CodeX (team@ifmo.su)
+ * @copyright CodeX 2018
+ * @license MIT
+ * @version 2.0.0
+ */
+
+/**
+ * Delimiter Block for the Editor.js.
+ *
+ * @author CodeX (team@ifmo.su)
+ * @copyright CodeX 2018
+ * @license The MIT License (MIT)
+ * @version 2.0.0
+ */
+
+/**
+ * Editor.js
+ *
+ * @license Apache-2.0
+ * @see Editor.js <https://editorjs.io>
+ * @author CodeX Team <https://codex.so>
+ */
+
+/**
+ * Header block for the Editor.js.
+ *
+ * @author CodeX (team@ifmo.su)
+ * @copyright CodeX 2018
+ * @license MIT
+ * @version 2.0.0
+ */
