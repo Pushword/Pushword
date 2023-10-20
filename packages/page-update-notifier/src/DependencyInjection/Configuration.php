@@ -26,7 +26,7 @@ class Configuration implements ConfigurationInterface
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
             ->scalarNode('page_update_notification_from')->defaultValue(null)->end()
             ->scalarNode('page_update_notification_to')->defaultValue(null)->end()
-            ->scalarNode('page_update_notification_interval')->defaultValue('P1D')->end()
+            ->scalarNode('page_update_notification_interval')->defaultValue('PT6H')->end()
         ->end();
 
         return $treeBuilder;
