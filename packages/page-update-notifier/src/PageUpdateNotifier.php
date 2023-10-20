@@ -3,7 +3,7 @@
 namespace Pushword\PageUpdateNotifier;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
@@ -48,15 +48,24 @@ class PageUpdateNotifier
     /**
      * @param class-string<PageInterface> $pageClass
      */
-    public function __construct(private readonly string $pageClass, private readonly MailerInterface $mailer, private readonly AppPool $apps, private readonly string $varDir, private readonly EntityManagerInterface $em, private readonly TranslatorInterface $translator, private readonly Twig $twig)
-    {
+    public function __construct(
+        private readonly string $pageClass,
+        private readonly MailerInterface $mailer,
+        private readonly AppPool $apps,
+        private readonly string $varDir,
+        private readonly EntityManagerInterface $em,
+        private readonly TranslatorInterface $translator,
+        private readonly Twig $twig,
+        private readonly ?LoggerInterface $logger = null,
+    ) {
     }
 
     public function postUpdate(PageInterface $page): void
     {
         try {
             $this->run($page);
-        } catch (\Exception) {
+        } catch (\Exception $e) {
+            $this->logger?->info('[PageUpdateNotifier] '.$e->getMessage());
         }
     }
 
@@ -64,8 +73,8 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (\Exception) {
-            // todo log exception
+        } catch (\Exception $e) {
+            $this->logger?->info('[PageUpdateNotifier] '.$e->getMessage());
         }
     }
 
@@ -124,7 +133,7 @@ class PageUpdateNotifier
 
     public function getCacheFilePath(): string
     {
-        return $this->getCacheDir().'/lastPageUpdateNotification'.md5($this->app->getMainHost());
+        return $this->getCacheDir().'/lastPageUpdateNotification'; // .md5($this->app->getMainHost())
     }
 
     public function run(PageInterface $page): int|string
@@ -163,6 +172,8 @@ class PageUpdateNotifier
         $lastTime->set();
         $this->mailer->send($message);
 
-        return 'Notify send for '.\count($pages).' page(s)';
+        $this->logger?->info('[PageUpdateNotifier] Notification sent for '.\count($pages).' page(s)');
+
+        return 'Notification sent';
     }
 }

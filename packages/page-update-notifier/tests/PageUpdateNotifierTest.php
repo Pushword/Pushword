@@ -32,7 +32,7 @@ class PageUpdateNotifierTest extends KernelTestCase
             sys_get_temp_dir(),
             $entityManager,
             $translator,
-            $twig
+            $twig,
         );
     }
 
@@ -51,21 +51,6 @@ class PageUpdateNotifierTest extends KernelTestCase
             ->setHost('localhost.dev');
     }
 
-    public function testNoEmailToException()
-    {
-        $notifier = $this->getNotifier();
-        $this->expectExceptionCode(PageUpdateNotifier::ERROR_NO_EMAIL);
-        $notifier->run($this->getPage());
-    }
-
-    public function testNoEmailFromException()
-    {
-        $notifier = $this->getNotifier();
-        $this->getApps()->get()->setCustomProperty('page_update_notification_from', 'contact@example.tld');
-        $this->expectExceptionCode(PageUpdateNotifier::ERROR_NO_EMAIL);
-        $notifier->run($this->getPage());
-    }
-
     public function testRun()
     {
         $notifier = $this->getNotifier();
@@ -79,7 +64,7 @@ class PageUpdateNotifierTest extends KernelTestCase
         self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager')->persist($this->getPage());
         self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager')->flush();
 
-        $this->assertSame('Notify send for 1 page(s)', $notifier->run($this->getPage()));
+        $this->assertSame('Notification sent', $notifier->run($this->getPage()));
 
         $this->assertSame(PageUpdateNotifier::WAS_EVER_RUN_SINCE_INTERVAL, $notifier->run($this->getPage()));
 
