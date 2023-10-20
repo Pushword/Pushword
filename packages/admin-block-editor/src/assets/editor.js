@@ -21,6 +21,7 @@ import Embed from '@pushword/editorjs-tools/dist/Embed.js';
 import PagesList from '@pushword/editorjs-tools/dist/PagesList.js';
 import Gallery from '@pushword/editorjs-tools/dist/Gallery.js';
 import Anchor from '@pushword/editorjs-tools/dist/Anchor.js';
+import AlignementTune from '@pushword/editorjs-tools/dist/AlignementTune.js';
 import HyperlinkTune from '@pushword/editorjs-tools/dist/HyperlinkTune.js';
 
 /** Was initially design to permit multiple editor.js in one page */
@@ -35,6 +36,7 @@ export class editorJs {
                 : {
                       HyperlinkTune: HyperlinkTune,
                       Anchor: Anchor,
+                      AlignmentTuneTool: AlignementTune,
                       Header: Header,
                       List: List,
                       Raw: Raw,

@@ -101,7 +101,6 @@ export default class Hyperlink {
         /** */
         this.nodes.wrapper.addEventListener('keydown', (event) => {
             if (event.keyCode === 13) {
-                this.save(event);
                 this.selection.collapseToEnd();
                 this.inlineToolbar.close();
             }

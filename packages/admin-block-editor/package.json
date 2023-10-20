@@ -21,6 +21,7 @@
         "editorjs-inline-tool": "^0.4",
         "editorjs-paragraph-with-alignment": "^3.0",
         "editorjs-style": "^3.0",
+        "editorjs-text-alignment-blocktune": "https://github.com/aacoelho/editorjs-alignment-blocktune",
         "editorjs-undo": "^2",
         "postcss": "^8.4",
         "postcss-import": "^15.0",
