@@ -7,3 +7,10 @@
 .cdxcarousel-item img {
     margin-bottom: 10px !important;
 }
+
+
+.cdxcarousel-removeBtn {
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+}
