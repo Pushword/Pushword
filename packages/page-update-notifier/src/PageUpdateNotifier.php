@@ -64,8 +64,8 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (\Exception $e) {
-            $this->logger?->info('[PageUpdateNotifier] '.$e->getMessage());
+        } catch (\Exception $exception) {
+            $this->logger?->info('[PageUpdateNotifier] '.$exception->getMessage());
         }
     }
 
@@ -73,8 +73,8 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (\Exception $e) {
-            $this->logger?->info('[PageUpdateNotifier] '.$e->getMessage());
+        } catch (\Exception $exception) {
+            $this->logger?->info('[PageUpdateNotifier] '.$exception->getMessage());
         }
     }
 
