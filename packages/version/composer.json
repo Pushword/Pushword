@@ -7,7 +7,7 @@
     "license": "MIT",
     "require": {
         "pushword/core": "^0",
-        "symfony/serializer": "6.3.*"
+        "symfony/serializer": "^6.3"
     },
     "extra": {
         "branch-alias": {
