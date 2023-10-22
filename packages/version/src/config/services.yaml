@@ -2,21 +2,14 @@ services:
   _defaults:
     autowire: true
     autoconfigure: true
+    bind:
+      $logDir: "%kernel.logs_dir%"
+      $pageClass: "%pw.entity_page%"
 
   Pushword\Version\:
     resource: "../*"
     exclude: "../{DependencyInjection,Entity,Migrations,Tests,Kernel.php,Installer/install.php}"
 
-  Pushword\Version\Versionner:
-    alias: pushword.version.versionner
-
-  pushword.version.versionner:
-    class: Pushword\Version\Versionner
-    autowire: true
-    tags: ["doctrine.event_subscriber"]
-    arguments:
-      $pageClass: "%pw.entity_page%"
-      $logDir: "%kernel.logs_dir%"
 
   Pushword\Version\VersionController:
     tags: ["controller.service_arguments"]

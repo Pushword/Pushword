@@ -19,7 +19,7 @@ return [
                 'app.admin.group.setting' => [
                     'keep_open' => true,
                     'label' => 'admin.label.params',
-                    'label_catalogue' => 'messages',
+                    'translation_domain' => 'messages',
                     'icon' => '<i class="fa fa-wrench"></i>',
                     'items' => [
                         0 => 'pushword.admin.user',

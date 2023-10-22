@@ -5,6 +5,7 @@ namespace Pushword\Core\Component\App;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Twig\Environment as Twig;
 
+#[\AllowDynamicProperties]
 final class AppConfig
 {
     /** @var string[] */

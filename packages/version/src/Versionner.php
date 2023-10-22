@@ -2,7 +2,7 @@
 
 namespace Pushword\Version;
 
-use Doctrine\Common\EventSubscriber;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
@@ -11,12 +11,13 @@ use Doctrine\ORM\Events;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Utils\Entity;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 
-class Versionner implements EventSubscriber // EventSubscriberInterface
+#[AsDoctrineListener(event: Events::postPersist)]
+#[AsDoctrineListener(event: Events::postUpdate)]
+class Versionner
 {
     private readonly Filesystem $fileSystem;
 
@@ -32,18 +33,6 @@ class Versionner implements EventSubscriber // EventSubscriberInterface
         private readonly SerializerInterface $serializer
     ) {
         $this->fileSystem = new Filesystem();
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getSubscribedEvents(): array
-    {
-        // return the subscribed events, their methods and priorities
-        return [
-            Events::postPersist,
-            Events::postUpdate,
-        ];
     }
 
     public function postPersist(PostPersistEventArgs $lifecycleEventArgs): void

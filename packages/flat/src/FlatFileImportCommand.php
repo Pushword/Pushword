@@ -2,6 +2,7 @@
 
 namespace Pushword\Flat;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -10,13 +11,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @template T of object
  */
+#[AsCommand(name: 'pushword:flat:import')]
 class FlatFileImportCommand extends Command
 {
-    /**
-     * @noRector
-     */
-    protected static $defaultName = 'pushword:flat:import';
-
     /**
      * @param FlatFileImporter<T> $importer
      */

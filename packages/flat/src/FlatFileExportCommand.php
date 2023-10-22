@@ -2,18 +2,15 @@
 
 namespace Pushword\Flat;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[AsCommand(name: 'pushword:flat:export')]
 class FlatFileExportCommand extends Command
 {
-    /**
-     * @noRector
-     */
-    protected static $defaultName = 'pushword:flat:export';
-
     public function __construct(
         protected FlatFileExporter $exporter
     ) {

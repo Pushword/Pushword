@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -9,13 +10,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Yaml\Yaml;
 
+#[AsCommand(name: 'pushword:new')]
 final class NewCommand extends Command
 {
-    /**
-     * @var string|null
-     */
-    protected static $defaultName = 'pushword:new';
-
     public function __construct(
         private readonly string $projectDir
     ) {

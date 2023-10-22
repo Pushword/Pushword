@@ -3,8 +3,8 @@
 namespace Pushword\AdminBlockEditor\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Pushword\Core\AutowiringTrait\RequiredApps;
-use Pushword\Core\AutowiringTrait\RequiredPageClass;
+use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,11 +15,15 @@ use Twig\Environment as Twig;
 #[IsGranted('ROLE_EDITOR')]
 final class PageBlockController extends AbstractController
 {
-    use RequiredApps;
-    use RequiredPageClass;
-
-    public function __construct(private readonly EntityManagerInterface $em, private readonly Twig $twig)
-    {
+    /**
+     * @param class-string<PageInterface> $pageClass
+     */
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly Twig $twig,
+        private readonly AppPool $apps,
+        private readonly string $pageClass,
+    ) {
     }
 
     public function manage(Request $request, string $id = '0'): Response

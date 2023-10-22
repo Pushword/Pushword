@@ -4,6 +4,7 @@ namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\UserInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
@@ -12,13 +13,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
+#[AsCommand(name: 'pushword:user:create')]
 final class UserCreateCommand extends Command
 {
-    /**
-     * @var string|null
-     */
-    protected static $defaultName = 'pushword:user:create';
-
     /**
      * @param class-string $userClass
      */

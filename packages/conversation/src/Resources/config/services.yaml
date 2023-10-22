@@ -25,13 +25,10 @@ services:
 
   pushword.admin.conversation:
     class: Pushword\Conversation\Admin\ConversationAdmin
-    arguments:
-      - ~
-      - '%pw.conversation.entity_message%'
-      - ~
     tags:
       - {
           name: sonata.admin,
+          model_class: "%pw.conversation.entity_message%",
           manager_type: orm,
           label: admin.label.conversation,
         }

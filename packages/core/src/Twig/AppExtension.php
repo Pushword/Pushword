@@ -48,9 +48,9 @@ class AppExtension extends AbstractExtension
         private RouterInterface $router,
         private AppPool $apps,
         private Twig $twig,
-        private ImageManager $imageManager,
-        private ManagerPoolInterface $entityFilterManagerPool,
-        private PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
+        private readonly ImageManager $imageManager,
+        private readonly ManagerPoolInterface $entityFilterManagerPool,
+        private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
     ) {
     }
 
@@ -142,7 +142,7 @@ class AppExtension extends AbstractExtension
      */
     public function getPublishedPages($host = null, array $where = [], array $orderBy = [], array|int $limit = 0, bool $withRedirection = false): array
     {
-        return Repository::getPageRepository($this->em, $this->getPageClass())
+        return Repository::getPageRepository($this->em, $this->pageClass)
             ->getPublishedPages($host ?? $this->apps->getMainHost() ?? [], $where, $orderBy, $limit, $withRedirection);
     }
 
@@ -151,7 +151,7 @@ class AppExtension extends AbstractExtension
      */
     public function getPublishedPage(string $slug, $host = null): ?PageInterface
     {
-        $pages = Repository::getPageRepository($this->em, $this->getPageClass())
+        $pages = Repository::getPageRepository($this->em, $this->pageClass)
             ->getPublishedPages(
                 $host ?? $this->apps->getMainHost() ?? [],
                 [['key' => 'slug', 'operator' => '=', 'value' => $slug]],

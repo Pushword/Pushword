@@ -16,13 +16,10 @@ services:
   Pushword\Admin\PageAdminInterface:
     class: Pushword\Admin\PageAdmin
     autowire: true
-    arguments:
-      - ~
-      - "%pw.entity_page%"
-      - Pushword\Admin\PageCRUDControllerInterface
     tags:
-      - { name: sonata.admin, manager_type: orm, label: admin.label.page }
+      - { name: sonata.admin, model_class: "%pw.entity_page%", manager_type: orm, label: admin.label.page }
     calls:
+      - [setBaseControllerName, [Pushword\Admin\PageCRUDControllerInterface]]
       - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
       - [setTemplate, [show, "@@pwAdmin/page/page_show.html.twig"]]
       - [setTemplate, [edit, "@@pwAdmin/page/page_edit.html.twig"]]
@@ -47,7 +44,6 @@ services:
 
   pushword.admin.media:
     class: Pushword\Admin\MediaAdmin
-    arguments: [~, "%pw.entity_media%", ~]
     autowire: true
     calls:
       - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
@@ -55,7 +51,7 @@ services:
       - [setPageClass, ["%pw.entity_page%"]]
       - [setMediaClass, ["%pw.entity_media%"]]
     tags:
-      - { name: sonata.admin, manager_type: orm, label: admin.label.media, persist_filters: true }
+      - { name: sonata.admin, model_class: "%pw.entity_media%", manager_type: orm, label: admin.label.media, persist_filters: true }
 
   Pushword\Admin\UserAdminInterface:
     alias: pushword.admin.user
@@ -63,9 +59,8 @@ services:
   pushword.admin.user:
     class: Pushword\Admin\UserAdmin
     autowire: true
-    arguments: [~, "%pw.entity_user%", ~]
     tags:
-      - { name: sonata.admin, manager_type: orm, label: admin.label.user }
+      - { name: sonata.admin, model_class: "%pw.entity_user%", manager_type: orm, label: admin.label.user }
     public: true
     calls:
       - [setUserClass, ["%pw.entity_user%"]]

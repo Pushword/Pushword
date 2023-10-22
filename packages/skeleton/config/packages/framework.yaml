@@ -2,3 +2,4 @@ framework:
   ide: vscode
   mailer:
     dsn: 'null://null' #native://default
+  http_method_override: false
