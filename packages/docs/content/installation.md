@@ -46,10 +46,9 @@ php bin/console pushword:user:create
 
 ## Next
 
-Want more feature like an [admin dashboard](/extension/admin), a [static website generator](/extension/static-generator) or a
-[flat-file CMS manager](/extension/flat) ?
+* Configure the [colors and display](/themes) (also see [automatic tailwind run after page update](/manage-assets)).
+* Add [extensions](/extensions)
 
-Look the [extensions](/extensions).
 
 ## Manual installation
 

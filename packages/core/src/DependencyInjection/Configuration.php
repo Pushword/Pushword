@@ -174,8 +174,10 @@ final class Configuration implements ConfigurationInterface
             ->scalarNode('template_dir')->defaultValue('%kernel.project_dir%/templates')->cannotBeEmpty()->end()
             // The following is a garbage, useful for quick new extension not well designed (no check for conf values)
             ->variableNode('custom_properties')->defaultValue(self::DEFAULT_CUSTOM_PROPERTIES)->end()
-
             ->variableNode('apps')->defaultValue([[]])->end()
+
+            ->booleanNode('tailwind_generator')->defaultTrue()->end()
+            ->scalarNode('path_to_bin')->defaultValue('')->end()
         ->end();
 
         return $treeBuilder;

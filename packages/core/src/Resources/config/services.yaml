@@ -12,6 +12,8 @@ services:
       $mediaDir: "%pw.media_dir%"
       $rawApps: "%pw.apps%"
       $publicDir: "%pw.public_dir%"
+      $pathToBin: "%pw.path_to_bin%"
+      $tailwindGeneratorisActive: "%pw.tailwind_generator%"
 
   # --------
   # Me

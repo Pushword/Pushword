@@ -7,6 +7,8 @@ parent: contribute
 
 ## BugFix && To finish
 
+- switch code editor to https://microsoft.github.io/monaco-editor/
+
 -   Conversation form controller
     -   manage multiHost
 
