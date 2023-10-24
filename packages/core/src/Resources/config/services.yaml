@@ -44,12 +44,7 @@ services:
   # Page
   # --------
 
-    # Todo: move to EventSuscriber
-  Pushword\Core\EventListener\PageListener:
-    tags:
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_page%", event: preRemove }
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_page%", event: preUpdate }
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_page%", event: prePersist }
+
 
   Pushword\Core\Repository\PageRepository:
     arguments:

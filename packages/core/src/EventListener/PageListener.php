@@ -2,17 +2,24 @@
 
 namespace Pushword\Core\EventListener;
 
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
+use Doctrine\ORM\Events;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
+use Pushword\Core\Service\TailwindGenerator;
 use Symfony\Bundle\SecurityBundle\Security;
 
-// Symfony\Component\Security\Core\Security;
-
+#[AsEntityListener(event: Events::preRemove, entity: '%pw.entity_page%')]
+#[AsEntityListener(event: Events::preUpdate, entity: '%pw.entity_page%')]
+#[AsEntityListener(event: Events::prePersist, entity: '%pw.entity_page%')]
+#[AsEntityListener(event: Events::postPersist, entity: '%pw.entity_page%')]
+#[AsEntityListener(event: Events::postUpdate, entity: '%pw.entity_page%')]
 final class PageListener
 {
     public function __construct(
         private readonly Security $security,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
+        private readonly TailwindGenerator $tailwindGenerator,
     ) {
     }
 
@@ -31,6 +38,16 @@ final class PageListener
         $this->setIdAsSlugIfNotDefined($page);
         $this->updatePageEditor($page);
         $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
+    }
+
+    public function postPersist(PageInterface $page): void
+    {
+        $this->tailwindGenerator->run($page);
+    }
+
+    public function postUpdate(PageInterface $page): void
+    {
+        $this->tailwindGenerator->run($page);
     }
 
     public function preUpdate(PageInterface $page): void

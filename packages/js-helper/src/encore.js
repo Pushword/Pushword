@@ -12,6 +12,7 @@ function getFilesToWatch(basePath = './..') {
         basePath + '/templates/*.html.twig',
         basePath + '/templates/**/*.html.twig',
         basePath + '/templates/**/**/*.html.twig',
+        basePath + '/var/TailwindGeneratorCache/*',
     ];
 }
 function getTailwindConfig(watchFiles = null) {
