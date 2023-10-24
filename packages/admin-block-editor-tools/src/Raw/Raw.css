@@ -12,8 +12,9 @@
         height: auto;
         padding: 2px;
     }
-}
 
-.ce-block--focused .ce-rawtool {
-    width: calc(100vw - 230px - 28vw);
+
+    .ce-block--focused .ce-rawtool {
+        width: calc(100vw - 222px - 28vw);
+    }
 }
