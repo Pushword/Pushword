@@ -1,0 +1,19 @@
+.aceFsBtn {
+    display: none;
+    color: black;
+}
+@media screen and (min-width: 1200px) {
+    .ce-block--focused .aceFsBtn {
+        display: block;
+        position: absolute;
+        top: 6px;
+        left: -80px;
+        width: 16px;
+        height: auto;
+        padding: 2px;
+    }
+}
+
+.ce-rawtool-full {
+    width: calc(100vw - 230px - 28vw);
+}

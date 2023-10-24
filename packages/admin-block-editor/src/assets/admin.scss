@@ -31,4 +31,9 @@ a[rel='encrypt']:not(.link-btn) {
     color: #059669;
 }
 
+@media screen and (min-width: 1200px) {
+    .ce-block__content, .ce-toolbar__content {
+        margin-left:65px;
+    }
+}
 /* purgecss end ignore */
