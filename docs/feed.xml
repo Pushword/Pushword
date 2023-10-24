@@ -10,34 +10,34 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[Installation]]></title>
+                    <link>https://pushword.piedweb.com/installation</link>
+                    <guid>https://pushword.piedweb.com/installation</guid>
+                    <pubDate>Tue, 24 Oct 2023 09:37:26 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Managing Assets (css/js)]]></title>
+                    <link>https://pushword.piedweb.com/manage-assets</link>
+                    <guid>https://pushword.piedweb.com/manage-assets</guid>
+                    <pubDate>Tue, 24 Oct 2023 09:34:58 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Roadmap]]></title>
+                    <link>https://pushword.piedweb.com/roadmap</link>
+                    <guid>https://pushword.piedweb.com/roadmap</guid>
+                    <pubDate>Tue, 24 Oct 2023 07:44:54 +0000</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Build Content First websites rapidly  Manage and maintain it as quickly]]></title>
                     <link>https://pushword.piedweb.com/</link>
                     <guid>https://pushword.piedweb.com/</guid>
                     <pubDate>Mon, 25 Sep 2023 15:27:57 +0000</pubDate>
                 </item>
                                                                 <item>
-                    <title><![CDATA[Roadmap]]></title>
-                    <link>https://pushword.piedweb.com/roadmap</link>
-                    <guid>https://pushword.piedweb.com/roadmap</guid>
-                    <pubDate>Mon, 25 Sep 2023 12:21:57 +0000</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Installation]]></title>
-                    <link>https://pushword.piedweb.com/installation</link>
-                    <guid>https://pushword.piedweb.com/installation</guid>
-                    <pubDate>Thu, 17 Nov 2022 18:53:00 +0000</pubDate>
-                </item>
-                                                                <item>
                     <title><![CDATA[Page Scanner]]></title>
                     <link>https://pushword.piedweb.com/extension/page-scanner</link>
                     <guid>https://pushword.piedweb.com/extension/page-scanner</guid>
                     <pubDate>Sat, 05 Nov 2022 17:58:33 +0000</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Admin Block Editor]]></title>
-                    <link>https://pushword.piedweb.com/extension/admin-block-editor</link>
-                    <guid>https://pushword.piedweb.com/extension/admin-block-editor</guid>
-                    <pubDate>Tue, 22 Feb 2022 18:06:17 +0000</pubDate>
                 </item>
                             
     </channel>
