@@ -24,6 +24,14 @@ export default class Raw extends RawTool {
 
         this.editor = this.transformTextareaToAce();
 
+        this.editor.on('focus', function () {
+            wrapper.classList.add('ce-rawtool-focus');
+        });
+
+        this.editor.on('blur', function () {
+            wrapper.classList.remove('ce-rawtool-focus');
+        });
+
         return wrapper;
     }
 

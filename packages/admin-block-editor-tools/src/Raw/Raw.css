@@ -3,18 +3,7 @@
     color: black;
 }
 @media screen and (min-width: 1200px) {
-    .ce-block--focused .aceFsBtn {
-        display: block;
-        position: absolute;
-        top: 6px;
-        left: -80px;
-        width: 16px;
-        height: auto;
-        padding: 2px;
-    }
-
-
-    .ce-block--focused .ce-rawtool {
-        width: calc(100vw - 222px - 28vw);
+    .ce-rawtool-focus {
+        width: calc(100vw - 220px - 28vw);
     }
 }
