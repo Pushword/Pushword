@@ -35,13 +35,26 @@ export default class Raw extends RawTool {
         return wrapper;
     }
 
+    /**
+     * Extract Tool's data from the view
+     *
+     * @param {HTMLDivElement} rawToolsWrapper - RawTool's wrapper, containing textarea with raw HTML code
+     * @returns {RawData} - raw HTML code
+     * @public
+     */
+    save(rawToolsWrapper) {
+        return {
+            html: rawToolsWrapper.querySelector('textarea.ce-rawtool__textarea').value,
+        };
+    }
+
     transformTextareaToAce() {
         var textarea = $(this.textarea);
         var editDiv = $('<div>', {
             position: 'absolute',
             width: '100%',
             class: 'aceInsideEditorJs',
-        }).insertBefore(textarea);
+        }).insertAfter(textarea);
         textarea.css('display', 'none');
         var editor = ace.edit(editDiv[0]);
         editor.renderer.setShowGutter(false);
