@@ -106,6 +106,10 @@
 			<a href="{{ path('admin_app_page_create') }}?host={{ page.host }}" class="inline-block p-1 text-gray-50 bg-gray-500 rounded-b-lg hover:bg-gray-800">
 				{{ svg('file', {class: 'w-full p-2 fill-current'}) }}
 			</a>
+			</a>
+			<a href="{{ path('piedweb_static_generate', {'host': page.host}) }}" class="inline-block p-1 text-gray-50 bg-gray-500 rounded-b-lg hover:bg-gray-800">
+				{{ svg('upload', {class: 'w-full p-2 fill-current'}) }}
+			</a>
 			</div>
 		{% endif %}
 	{% endblock %}

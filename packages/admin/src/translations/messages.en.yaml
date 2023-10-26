@@ -68,7 +68,7 @@ admin:
     title:
       search_label: Title
       label: Titre
-      help: '<small>Titre visible depuis les moteurs de recherches dans la limite de 560px (taille actuelle : <span id="titleWidth"></span>)</small>'
+      help: '<small>Titre visible dans les moteurs de recherches - <span id="titleWidth"></span></small>'
     slug:
       label: Identifiant Url
       help: " "
@@ -82,7 +82,7 @@ admin:
       help: "Utiliser l'url pour trouver la page (ex : en/my-other)."
     searchExcrept:
       label: Courte Description
-      help: Visible depuis les pages de résultats des moteurs de recherches (meta description)
+      help: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) - <span id="descWidth"></span></small>'
     h1:
       label: Titre
       help: <small>Le <em>H1</em> est visible sur vos pages tandis que le <code>Titre</code> de votre document s'affichera dans la barre du navigateur et sur les moteurs de recherches.</small>

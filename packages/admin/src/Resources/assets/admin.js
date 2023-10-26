@@ -28,6 +28,7 @@ window.addEventListener("load", function () {
     // ...
     easyMDEditor();
     showTitlePixelWidth();
+    showTitlePixelWidth('desc', 150);
     memorizeOpenPannel();
     onDomChanged();
     textareaWithoutNewLine();
@@ -102,22 +103,25 @@ function copyElementText(element) {
     document.body.removeChild(elem);
 }
 
-function showTitlePixelWidth() {
+function showTitlePixelWidth(toMeasure = 'title', maxLenght = 70) {
     // todo abstract it (showPixelWith(element))
-    if (!$(".titleToMeasure").length) return;
+    if (!$('.' + toMeasure + 'ToMeasure').length) return;
 
-    var input = document.querySelector(".titleToMeasure");
-    var resultWrapper = document.getElementById("titleWidth");
+    var input = document.querySelector('.' + toMeasure + 'ToMeasure');
+    var resultWrapper = document.getElementById('' + toMeasure + 'Width');
     function updateTitleWidth() {
         resultWrapper.style =
-            "font-size:20px;margin:0;padding:0;border:0;font-weight:400;display:inline-block;font-family:arial,sans-serif;line-height: 1.3;";
+            'font-size:20px;margin:0;padding:0;border:0;font-weight:400;display:inline-block;font-family:arial,sans-serif;line-height: 1.3;';
         resultWrapper.innerHTML = input.value;
-        var titleWidth = resultWrapper.offsetWidth;
-        resultWrapper.innerHTML = titleWidth + "px";
-        resultWrapper.style = titleWidth > 560 ? "color:#B0413E" : "color:#4F805D";
+        //var titleWidth = resultWrapper.offsetWidth;
+        //resultWrapper.innerHTML = titleWidth + "px";
+        var titleLenght = input.value.length;
+        resultWrapper.innerHTML = titleLenght;
+        //resultWrapper.style = titleWidth > 560 ? "color:#B0413E" : "color:#4F805D";
+        resultWrapper.style = titleLenght > maxLenght ? 'color:#B0413E' : 'color:#4F805D';
     }
     updateTitleWidth();
-    input.addEventListener("input", updateTitleWidth);
+    input.addEventListener('input', updateTitleWidth);
 }
 
 function columnSizeManager() {
