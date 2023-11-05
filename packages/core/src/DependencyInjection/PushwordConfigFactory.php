@@ -131,7 +131,7 @@ final class PushwordConfigFactory
                     throw new \LogicException();
                 }
 
-                $app['custom_properties'] = array_merge($this->config['custom_properties'], $app['custom_properties']);
+                $app['custom_properties'] = [...$this->config['custom_properties'], ...$app['custom_properties']];
             }
         }
 

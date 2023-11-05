@@ -30,7 +30,7 @@ final class BlockEditorFilter extends AbstractFilter
             return $propertyValue;
         }
 
-        $json = \Safe\json_decode($propertyValue);
+        $json = json_decode($propertyValue);
         if (! \is_object($json)) {
             return $propertyValue;
         }

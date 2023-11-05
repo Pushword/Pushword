@@ -10,6 +10,9 @@ import {
 } from '@pushword/js-helper/src/helpers.js';
 import { allClickable } from '@pushword/js-helper/src/clickable.js';
 
+//import { HorizontalScroll } from '@pushword/js-helper/src/horizontalScroll.js';
+//window.HorizontalScroll = HorizontalScroll;
+
 function onDomChanged() {
     liveBlock();
     convertImageLinkToWebPLink();

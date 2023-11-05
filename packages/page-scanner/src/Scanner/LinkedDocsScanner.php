@@ -55,10 +55,7 @@ final class LinkedDocsScanner extends AbstractScanner
     // Starting point called from AbstractSanner::scan
     protected function run(): void
     {
-        $this->toIgnore = array_merge(
-            $this->linksToIgnore,
-            $this->getPageScanLinksToIgnore()
-        );
+        $this->toIgnore = [...$this->linksToIgnore, ...$this->getPageScanLinksToIgnore()];
 
         $this->linksCheckedCounter = 0;
 
