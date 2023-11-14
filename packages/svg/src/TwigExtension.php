@@ -2,7 +2,7 @@
 
 namespace Pushword\Svg;
 
-use PiedWeb\RenderAttributes\AttributesTrait;
+use PiedWeb\RenderAttributes\Attribute;
 use Pushword\Core\AutowiringTrait\RequiredApps;
 use Pushword\Svg\FontAwesome5To6 as SvgFontAwesome5To6;
 use Twig\Extension\AbstractExtension;
@@ -10,7 +10,6 @@ use Twig\TwigFunction;
 
 class TwigExtension extends AbstractExtension
 {
-    use AttributesTrait;
     use RequiredApps;
 
     /**
@@ -58,7 +57,7 @@ class TwigExtension extends AbstractExtension
             throw new \Exception('`'.$name.'` seems not be a valid svg file.');
         }
 
-        return $this->replaceOnce('<svg ', '<svg '.self::mapAttributes($attr).' ', $svg);
+        return $this->replaceOnce('<svg ', '<svg '.Attribute::renderAll($attr).' ', $svg);
     }
 
     private function replaceOnce(string $needle, string $replace, string $haystack): string

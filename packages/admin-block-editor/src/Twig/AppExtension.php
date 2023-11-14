@@ -2,14 +2,11 @@
 
 namespace Pushword\AdminBlockEditor\Twig;
 
-use PiedWeb\RenderAttributes\AttributesTrait;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 class AppExtension extends AbstractExtension
 {
-    use AttributesTrait;
-
     /**
      * @return \Twig\TwigFunction[]
      */
@@ -33,7 +30,7 @@ class AppExtension extends AbstractExtension
             $attributes['id'] = trim(($attributes['id'] ?? '').' '.$blockData['tunes']['anchor']);
         }
 
-        return self::mapAttributes($attributes);
+        return \PiedWeb\RenderAttributes\Attribute::renderAll($attributes);
     }
 
     /**
