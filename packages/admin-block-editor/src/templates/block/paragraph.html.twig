@@ -1,2 +1,2 @@
 
-<p {{ blockWrapperAttr(block, block.data.alignment is defined and block.data.alignment and block.data.alignment != 'left' ? {class: 'text-' ~ block.data.alignment} : {}) }}>{{ block.data.text|raw }}</p>
+<p {{ blockWrapperAttr(block, block.data.alignment is defined and block.data.alignment and block.data.alignment != 'left' ? {class: 'text-' ~ block.data.alignment} : {}) }}>{{ block.data.text|fixHref|raw }}</p>

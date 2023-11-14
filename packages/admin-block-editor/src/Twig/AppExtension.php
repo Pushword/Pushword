@@ -2,11 +2,19 @@
 
 namespace Pushword\AdminBlockEditor\Twig;
 
+use Pushword\Core\Component\App\AppPool;
 use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
 use Twig\TwigFunction;
 
 class AppExtension extends AbstractExtension
 {
+    public function __construct(
+        private AppPool $appPool,
+        private readonly \Pushword\Core\Router\RouterInterface $router
+    ) {
+    }
+
     /**
      * @return \Twig\TwigFunction[]
      */
@@ -15,6 +23,16 @@ class AppExtension extends AbstractExtension
         return [
             new TwigFunction('blockWrapperAttr', $this->blockWrapperAttr(...), ['is_safe' => ['html'], 'needs_environment' => false]),
             new TwigFunction('needBlockWrapper', $this->needBlockWrapper(...), ['is_safe' => ['html'], 'needs_environment' => false]),
+        ];
+    }
+
+    /**
+     * @return \Twig\TwigFilter[]
+     */
+    public function getFilters(): array
+    {
+        return [
+            new TwigFilter('fixHref', $this->fixHref(...), ['is_safe' => ['html'], 'needs_environment' => false]),
         ];
     }
 
@@ -39,5 +57,24 @@ class AppExtension extends AbstractExtension
     public function needBlockWrapper(array|\stdClass $blockData): bool
     {
         return '' !== trim($this->blockWrapperAttr($blockData));
+    }
+
+    public function fixHref(string $text): string
+    {
+        $regex = '/"(https?)?:\/\/([a-zA-Z0-9.-:]+)\/'.$this->getHostsRegex().'\/?([^"]*)"/';
+
+        preg_match_all($regex, $text, $matches);
+        for ($i = 0; $i < \count($matches[0]); ++$i) {
+            $text = str_replace($matches[0][$i], '"'.$this->router->generate($matches[4][$i] ?? 'homepage', host: $matches[3][$i]).'"', $text);
+        }
+
+        return $text;
+    }
+
+    private ?string $hostRegex = null;
+
+    private function getHostsRegex(): string
+    {
+        return $this->hostRegex ??= '('.implode('|', array_map('preg_quote', $this->appPool->getHosts())).')';
     }
 }

@@ -7,7 +7,7 @@
         {% if page.video is not null %}replaceBy="{{ url_to_embed(page.video.embed_code|default(page.video))|replace({'"': "'"}) }}"{% endif %}
     >
         {# md:min-h-[33vh] md:min-h-screen md:min-h-[75vh] #}
-        <div class="{{ page.hero_container|default(hero_container ?? 'max-w-screen-sm mx-auto relative md:min-h-' ~ heroSize(page.mainImageFormat) ~ ' pt-6') }}">
+        <div class="{{ page.hero_container|default(hero_container ?? ('max-w-screen-sm mx-auto relative md:min-h-' ~ heroSize(page.mainImageFormat) ~ ' pt-6')) }}">
             <div class="{{ page.hero_position|default(hero_position ?? 'p-3 text-gray-50 md:absolute md:bottom-4 md:left-4 z-10 md:[text-shadow:_0_1px_16px_rgb(0_0_0_/_50%),_0_0_1px_rgb(0_0_0_/_50%)]') }}{{ main_image_blur is defined ? ' blur' : '' }}">
 
                 {% block subTitle %}
