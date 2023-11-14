@@ -5,12 +5,12 @@
 {% endblock %}
 
 {% block navbar_title %}
-     <a href="{{ path('admin_app_page_edit', {id: page.id}) }}">{{ page.slug }}</a> › Versions
+     <a href="{{ path('admin_page_edit', {id: page.id}) }}">{{ page.slug }}</a> › Versions
 {% endblock %}
 
 {% block tab_menu_navbar_header %}
         <div class="navbar-header">
-             <span class="navbar-brand"><a href="{{ path('admin_app_page_edit', {id: page.id}) }}">{{ page.slug }}</a> › <b>Versions</b></span>
+             <span class="navbar-brand"><a href="{{ path('admin_page_edit', {id: page.id}) }}">{{ page.slug }}</a> › <b>Versions</b></span>
         </div>
 {% endblock %}
 

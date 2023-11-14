@@ -2,7 +2,7 @@ pushword_admin_dashboard:
   path: /admin/dashboard
   controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
   defaults:
-    route: admin_app_page_list
+    route: admin_page_list
 
 admin_area:
   resource: '@SonataAdminBundle/Resources/config/routing/sonata_admin.xml'

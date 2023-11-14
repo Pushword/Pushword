@@ -39,7 +39,8 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
      */
     protected function configureFormFields(FormMapper $form): void
     {
-        $fields = $this->getFormFields('admin_media_form_fields');
+        $this->formFieldKey = 'admin_media_form_fields';
+        $fields = $this->getFormFields();
         if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1]) || ! isset($fields[2]) || ! \is_array($fields[2])) {
             throw new \LogicException();
         }

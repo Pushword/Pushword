@@ -46,22 +46,45 @@ final class PageMenuProvider implements ContainerAwareInterface
         $pageMenu = $menu->addChild(
             $this->translator->trans('admin.label.page'),
             [
-                'route' => 'admin_app_page_list',
+                'route' => 'admin_page_list',
+            ]
+        );
+
+        $isRequesteingRedirection = $this->isRequestingRedirection();
+
+        if (\count($hosts) > 1) {
+            foreach ($hosts as $host) {
+                $hostMenu = $pageMenu->addChild($host, [
+                    'route' => 'admin_page_list',
+                    'routeParameters' => ['filter[host][value][]' => $host],
+                ]);
+                if ($this->isRequestingPageEdit($host) && ! $isRequesteingRedirection) {
+                    $hostMenu->setCurrent(true);
+                }
+            }
+        } elseif ($this->isRequestingPageEdit() && ! $isRequesteingRedirection) {
+            $pageMenu->setCurrent(true);
+        }
+
+        $redirectionMenu = $menu->addChild(
+            $this->translator->trans('Redirection'),
+            [
+                'route' => 'admin_redirection_list',
             ]
         );
 
         if (\count($hosts) > 1) {
             foreach ($hosts as $host) {
-                $hostMenu = $pageMenu->addChild($host, [
-                    'route' => 'admin_app_page_list',
+                $hostMenu = $redirectionMenu->addChild($host, [
+                    'route' => 'admin_redirection_list',
                     'routeParameters' => ['filter[host][value][]' => $host],
                 ]);
-                if ($this->isRequestingPageEdit($host)) {
+                if ($this->isRequestingPageEdit($host) && $isRequesteingRedirection) {
                     $hostMenu->setCurrent(true);
                 }
             }
-        } elseif ($this->isRequestingPageEdit()) {
-            $pageMenu->setCurrent(true);
+        } elseif ($this->isRequestingPageEdit() && $isRequesteingRedirection) {
+            $redirectionMenu->setCurrent(true);
         }
 
         $menu->addChild($this->translator->trans('admin.label.media'), ['route' => 'admin_app_media_list']);
@@ -71,6 +94,11 @@ final class PageMenuProvider implements ContainerAwareInterface
         }
 
         return $menu;
+    }
+
+    private function isRequestingRedirection(): bool
+    {
+        return str_starts_with((string) $this->requestStack->getCurrentRequest()?->attributes->getString('_route'), 'admin_redirection');
     }
 
     private function isRequestingPageEdit(string $host = ''): bool

@@ -44,6 +44,7 @@ class Configuration implements ConfigurationInterface
 {
     final public const DEFAULT_APP_FALLBACK = [
         'admin_page_form_fields',
+        'admin_redirection_form_fields',
         'admin_user_form_fields',
         'admin_media_form_fields',
     ];
@@ -51,6 +52,11 @@ class Configuration implements ConfigurationInterface
     final public const DEFAULT_ADMIN_USER_FORM_FIELDS = [
         [UserEmailField::class, UserUsernameField::class, UserPasswordField::class, CreatedAtField::class],
         ['admin.user.label.security' => [UserRolesField::class]],
+    ];
+
+    final public const DEFAULT_ADMIN_REDIRECTION_FORM_FIELDS = [
+        [PageH1Field::class, PageMainContentField::class],
+        [],
     ];
 
     final public const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
@@ -97,6 +103,7 @@ class Configuration implements ConfigurationInterface
                 ->children()
                     ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
                     ->variableNode('admin_page_form_fields')->defaultValue(self::DEFAULT_ADMIN_PAGE_FORM_FIELDS)->cannotBeEmpty()->end()
+                    ->variableNode('admin_redirection_form_fields')->defaultValue(self::DEFAULT_ADMIN_REDIRECTION_FORM_FIELDS)->cannotBeEmpty()->end()
                     ->variableNode('admin_user_form_fields')->defaultValue(self::DEFAULT_ADMIN_USER_FORM_FIELDS)->cannotBeEmpty()->end()
                     ->variableNode('admin_media_form_fields')->defaultValue(self::DEFAULT_ADMIN_MEDIA_FORM_FIELDS)->cannotBeEmpty()->end()
                 ->end()

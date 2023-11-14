@@ -46,6 +46,8 @@ trait AdminTrait
 
     protected TokenStorageInterface $securityTokenStorage;
 
+    protected string $formFieldKey = '';
+
     /**
      * @var string
      */
@@ -240,12 +242,12 @@ trait AdminTrait
      *
      * @return array<mixed>
      */
-    protected function getFormFields(string $key = 'admin_page_form_fields'): array
+    protected function getFormFields(): array
     {
-        $fields = $this->apps->get()->get($key);
+        $fields = $this->apps->get()->get($this->formFieldKey);
 
         if (! \is_array($fields)) {
-            throw new \LogicException();
+            throw new \LogicException($this->formFieldKey);
         }
 
         $event = new FormEvent($this, $fields); // @phpstan-ignore-line

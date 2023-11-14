@@ -40,7 +40,8 @@ class UserAdmin extends AbstractAdmin implements UserAdminInterface
 
     protected function configureFormFields(FormMapper $form): void
     {
-        $fields = $this->getFormFields('admin_user_form_fields');
+        $this->formFieldKey = 'admin_user_form_fields';
+        $fields = $this->getFormFields();
         if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) {
             throw new \LogicException();
         }

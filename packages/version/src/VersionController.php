@@ -61,7 +61,7 @@ class VersionController extends AbstractController
     {
         $this->versionner->loadVersion($id, $version);
 
-        return $this->redirectToRoute('admin_app_page_edit', ['id' => $id]);
+        return $this->redirectToRoute('admin_page_edit', ['id' => $id]);
     }
 
     private function getFlashBagFromRequest(Request $request): FlashBagInterface
@@ -82,7 +82,7 @@ class VersionController extends AbstractController
 
         $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('version.reset_history'));
 
-        return $this->redirectToRoute('admin_app_page_edit', ['id' => $id]);
+        return $this->redirectToRoute('admin_page_edit', ['id' => $id]);
     }
 
     public function listVersion(string $id): Response

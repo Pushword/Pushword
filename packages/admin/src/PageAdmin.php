@@ -2,11 +2,13 @@
 
 namespace Pushword\Admin;
 
+use Doctrine\ORM\QueryBuilder;
 use Pushword\Admin\FormField\HostField;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Datagrid\ProxyQueryInterface;
 use Sonata\AdminBundle\Filter\Model\FilterData;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata;
@@ -52,6 +54,33 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         ];
     }
 
+    protected function generateBaseRouteName(bool $isChildAdmin = false): string
+    {
+        return 'admin_page';
+    }
+
+    protected function generateBaseRoutePattern(bool $isChildAdmin = false): string
+    {
+        return 'app/page';
+    }
+
+    protected function configureQuery(ProxyQueryInterface $query): ProxyQueryInterface
+    {
+        $query = parent::configureQuery($query);
+
+        /** @var QueryBuilder */
+        $qb = $query->getQueryBuilder(); // @phpstan-ignore-line
+
+        $rootAlias = current($qb->getRootAliases());
+
+        $qb->andWhere(
+            $qb->expr()->notLike($rootAlias.'.mainContent', ':mcf')
+        );
+        $qb->setParameter('mcf', 'Location:%');
+
+        return $query;
+    }
+
     protected function configure(): void
     {
         parent::configure();
@@ -74,6 +103,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
     {
         $this->apps->switchCurrentApp($this->getSubject());
 
+        $this->formFieldKey = $this->formFieldKey ?: 'admin_page_form_fields';
         $fields = $this->getFormFields();
         if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) {
             throw new \LogicException();

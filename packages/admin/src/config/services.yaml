@@ -17,6 +17,22 @@ services:
     class: Pushword\Admin\PageAdmin
     autowire: true
     tags:
+      - { name: sonata.admin, model_class: "%pw.entity_page%", manager_type: orm, label: admin.label.page, default: true }
+    calls:
+      - [setBaseControllerName, [Pushword\Admin\PageCRUDControllerInterface]]
+      - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
+      - [setTemplate, [show, "@@pwAdmin/page/page_show.html.twig"]]
+      - [setTemplate, [edit, "@@pwAdmin/page/page_edit.html.twig"]]
+      - [setTemplate, [preview, "@@pwAdmin/page/preview.html.twig"]]
+      - [setMediaClass, ["%pw.entity_media%"]]
+      - [setUserClass, ["%pw.entity_user%"]]
+      - [setPageClass, ["%pw.entity_page%"]]
+    public: true
+
+  Pushword\Admin\RedirectionAdminInterface:
+    class: Pushword\Admin\RedirectionAdmin
+    autowire: true
+    tags:
       - { name: sonata.admin, model_class: "%pw.entity_page%", manager_type: orm, label: admin.label.page }
     calls:
       - [setBaseControllerName, [Pushword\Admin\PageCRUDControllerInterface]]

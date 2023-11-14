@@ -113,7 +113,7 @@ class PageGenerator extends AbstractGenerator
     private function setErrorFor(string $liveUri, PageInterface $page = null, string $msg = ''): void
     {
         $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
-                     '['.$liveUri.']('.$this->router->getRouter()->generate('admin_app_page_edit', ['id' => $page->getId()]).')'
+                     '['.$liveUri.']('.$this->router->getRouter()->generate('admin_page_edit', ['id' => $page->getId()]).')'
                      : $liveUri;
         $this->setError('An error occured when generating '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));
         // throw new Exception('An error occured when generating `'.$liveUri.'`'); //exit($this->kernel->handle($request));
