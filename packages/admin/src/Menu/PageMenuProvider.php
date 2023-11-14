@@ -110,7 +110,11 @@ final class PageMenuProvider implements ContainerAwareInterface
 
     private function isRequestingRedirection(): bool
     {
-        return str_starts_with((string) $this->requestStack->getCurrentRequest()?->attributes->getString('_route'), 'admin_redirection');
+        if (null === $this->requestStack->getCurrentRequest()) {
+            return false;
+        }
+
+        return str_starts_with($this->requestStack->getCurrentRequest()->attributes->getString('_route'), 'admin_redirection');
     }
 
     private function isRequestingPageEdit(string $host = ''): bool

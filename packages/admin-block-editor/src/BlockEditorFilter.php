@@ -43,9 +43,9 @@ final class BlockEditorFilter extends AbstractFilter
 
         $renderValue = '';
 
-        foreach ($blocks as $block) {
+        foreach ($blocks as $pos => $block) {
             $classBlock = $this->getBlockManager($block->type);
-            $blockRendered = $classBlock->render($block);
+            $blockRendered = $classBlock->render($block, $pos + 1);
             $renderValue .= $blockRendered."\n";
         }
 
@@ -94,8 +94,8 @@ final class BlockEditorFilter extends AbstractFilter
         }
 
         foreach ($blocks as $block) {
-            if (class_exists($block) && ($block = new $block()) instanceof AbstractBlock) {
-                $this->appBlocks[$block::NAME] = $this->loadBlockManager($block);
+            if (class_exists($block) && ($blockClass = new $block()) instanceof AbstractBlock) {
+                $this->appBlocks[$blockClass::NAME] = $this->loadBlockManager($blockClass);
 
                 continue;
             }
@@ -107,8 +107,9 @@ final class BlockEditorFilter extends AbstractFilter
             }
 
             $class = '\Pushword\AdminBlockEditor\Block\\'.ucfirst((string) $block).'Block';
-            if (class_exists($class) && ($class = new $class()) instanceof BlockInterface) {
-                $this->appBlocks[$block] = $this->loadBlockManager($class);
+            if (class_exists($class) && ($blockClass = new $class()) instanceof BlockInterface) {
+                /** @var AbstractBlock $blockClass */
+                $this->appBlocks[$block] = $this->loadBlockManager($blockClass);
 
                 continue;
             }

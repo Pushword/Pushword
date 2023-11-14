@@ -29,8 +29,9 @@ final class AppsConfigParser
      */
     private static function parseAppConfig(array $app, ContainerBuilder $containerBuilder): array
     {
+        /** @var string|array<string> */
         $properties = $containerBuilder->getParameter('pw.app_fallback_properties');
-        if (\is_string($properties)) { // @phpstan-ignore-line
+        if (\is_string($properties)) {
             $properties = explode(',', $properties);
         }
 

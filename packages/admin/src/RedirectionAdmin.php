@@ -2,7 +2,6 @@
 
 namespace Pushword\Admin;
 
-use Doctrine\ORM\QueryBuilder;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Datagrid\ProxyQueryInterface;
@@ -33,8 +32,7 @@ class RedirectionAdmin extends PageAdmin
     {
         $query = AbstractAdmin::configureQuery($query);
 
-        /** @var QueryBuilder */
-        $qb = $query->getQueryBuilder(); // @phpstan-ignore-line
+        $qb = $this->getQueryBuilderFrom($query);
 
         $rootAlias = current($qb->getRootAliases());
 

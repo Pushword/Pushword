@@ -26,11 +26,12 @@ abstract class AbstractBlock implements BlockInterface
         }
     }
 
-    public function render(object $block): string
+    public function render(object $block, int $pos = 0): string
     {
         $view = $this->getApp()->getView('/block/'.$this->name.'.html.twig', '@PushwordAdminBlockEditor');
 
         return $this->getTwig()->render($view, [
+            'pos' => $pos,
             'block' => $block,
             'page' => $this->getEntity(),
         ]);

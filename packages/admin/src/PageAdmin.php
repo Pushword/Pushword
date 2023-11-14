@@ -64,12 +64,25 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         return 'app/page';
     }
 
+    /**
+     * @param ProxyQueryInterface<PageInterface> $query
+     */
+    protected function getQueryBuilderFrom(ProxyQueryInterface $query): QueryBuilder
+    {
+        if (! method_exists($query, 'getQueryBuilder')) {
+            throw new \Exception();
+        }
+
+        $qb = $query->getQueryBuilder();
+
+        return $qb instanceof QueryBuilder ? $qb : throw new \Exception();
+    }
+
     protected function configureQuery(ProxyQueryInterface $query): ProxyQueryInterface
     {
         $query = parent::configureQuery($query);
 
-        /** @var QueryBuilder */
-        $qb = $query->getQueryBuilder(); // @phpstan-ignore-line
+        $qb = $this->getQueryBuilderFrom($query);
 
         $rootAlias = current($qb->getRootAliases());
 
