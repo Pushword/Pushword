@@ -46,7 +46,7 @@ trait AdminTrait
 
     protected TokenStorageInterface $securityTokenStorage;
 
-    protected string $formFieldKey = '';
+    protected string $formFieldKey = 'admin_page_form_fields';
 
     /**
      * @var string

@@ -58,9 +58,15 @@ final class PageMenuProvider implements ContainerAwareInterface
                     'route' => 'admin_page_list',
                     'routeParameters' => ['filter[host][value][]' => $host],
                 ]);
-                if ($this->isRequestingPageEdit($host) && ! $isRequesteingRedirection) {
-                    $hostMenu->setCurrent(true);
+                if (! $this->isRequestingPageEdit($host)) {
+                    continue;
                 }
+
+                if ($isRequesteingRedirection) {
+                    continue;
+                }
+
+                $hostMenu->setCurrent(true);
             }
         } elseif ($this->isRequestingPageEdit() && ! $isRequesteingRedirection) {
             $pageMenu->setCurrent(true);
@@ -79,9 +85,15 @@ final class PageMenuProvider implements ContainerAwareInterface
                     'route' => 'admin_redirection_list',
                     'routeParameters' => ['filter[host][value][]' => $host],
                 ]);
-                if ($this->isRequestingPageEdit($host) && $isRequesteingRedirection) {
-                    $hostMenu->setCurrent(true);
+                if (! $this->isRequestingPageEdit($host)) {
+                    continue;
                 }
+
+                if (! $isRequesteingRedirection) {
+                    continue;
+                }
+
+                $hostMenu->setCurrent(true);
             }
         } elseif ($this->isRequestingPageEdit() && $isRequesteingRedirection) {
             $redirectionMenu->setCurrent(true);
