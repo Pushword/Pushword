@@ -5,12 +5,14 @@
 {% endblock %}
 
 {%block actions %}
-               <ul class="nav navbar-nav navbar-right">
-                  <li><a class="sonata-action-element" href="{{ path ('pushword_template_editor_create') }}"><i class="fa fa-plus-circle" aria-hidden="true"></i>
-                     Ajouter
-                     </a>
-                  </li>
-               </ul>
+{% if ( canCreate ) %}
+   <ul class="nav navbar-nav navbar-right">
+      <li><a class="sonata-action-element" href="{{ path ('pushword_template_editor_create') }}"><i class="fa fa-plus-circle" aria-hidden="true"></i>
+         Ajouter
+         </a>
+      </li>
+   </ul>
+{% endif %}
 {% endblock %}
 {% block sonata_admin_content %}
     {% include '@SonataTwig/FlashMessage/render.html.twig' %}
@@ -38,13 +40,15 @@
                <td class="sonata-ba-list-field sonata-ba-list-field-text" objectid="34" style="text-align:right">
                   <div class="btn-group">
                      <a href="{{ path ('pushword_template_editor_edit', {'encodedPath':element.encodedPath}) }}" class="btn btn-sm btn-default view_link" title="Editer">
-                     <i class="fa fa-edit" aria-hidden="true"></i>
-                     Editer
+                        <i class="fa fa-edit" aria-hidden="true"></i>
+                        Editer
                      </a>
+                  {% if ( canCreate ) %}
                      <a href="{{ path ('pushword_template_editor_delete', {'encodedPath':element.encodedPath}) }}" class="btn btn-sm btn-default delete_link" title="Supprimer">
                      <i class="fa fa-times" aria-hidden="true"></i>
                      Supprimer
                      </a>
+                  {% endif %}
                   </div>
                </td>
             </tr>

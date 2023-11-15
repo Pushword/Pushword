@@ -56,11 +56,19 @@ class ElementTest extends KernelTestCase
     public function testRepository()
     {
         $templateDir = __DIR__.'/../../skeleton/templates';
-        $repo = new ElementRepository($templateDir);
+        $repo = new ElementRepository($templateDir, [], false);
 
         $templates = $repo->getAll();
         $this->assertTrue(\count($templates) > 0);
 
         $this->assertSame($templates[0]->getPath(), $repo->getOneByEncodedPath($templates[0]->getEncodedPath())->getPath());
+
+        $templateDir = __DIR__.'/../../skeleton/templates';
+        $repo = new ElementRepository($templateDir, [$templates[0]->getPath()], true);
+
+        $templates = $repo->getAll();
+        $this->assertTrue(1 === \count($templates));
+        $this->assertSame($templates[0]->getPath(), $repo->getOneByEncodedPath($templates[0]->getEncodedPath())->getPath());
+        $this->assertSame($templates[0]->movingIsDisabled(), true);
     }
 }

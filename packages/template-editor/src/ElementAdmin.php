@@ -2,7 +2,9 @@
 
 namespace Pushword\TemplateEditor;
 
+use Pushword\Core\Entity\UserInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -22,6 +24,20 @@ final class ElementAdmin extends AbstractController
 
     private twig $twig;
 
+    /** @param string[] $canBeEditedList */
+    public function __construct(
+        public array $canBeEditedList, // template_editor_can_be_edited
+        public bool $disableCreation,  // template_editor_disable_creation
+        Security $security,
+    ) {
+        /** @var ?UserInterface */
+        $user = $security->getUser();
+        if (true === $user?->hasRole('ROLE_SUPER_ADMIN')) {
+            $this->canBeEditedList = [];
+            $this->disableCreation = false;
+        }
+    }
+
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setTwig(Twig $twig): void
     {
@@ -36,12 +52,15 @@ final class ElementAdmin extends AbstractController
 
     private function getElements(): ElementRepository
     {
-        return new ElementRepository($this->kernel->getProjectDir().'/templates');
+        return new ElementRepository($this->kernel->getProjectDir().'/templates', $this->canBeEditedList, $this->disableCreation);
     }
 
     public function listElement(): Response
     {
-        return $this->render('@pwTemplateEditor/list.html.twig', ['elements' => $this->getElements()->getAll()]);
+        return $this->render('@pwTemplateEditor/list.html.twig', [
+            'elements' => $this->getElements()->getAll(),
+            'canCreate' => ! $this->disableCreation,
+        ]);
     }
 
     private function getElement(?string $encodedPath): Element
@@ -53,7 +72,8 @@ final class ElementAdmin extends AbstractController
             }
         }
 
-        return $element ?? new Element($this->kernel->getProjectDir().'/templates');
+        return $element ??
+            ($this->disableCreation ? throw new \Exception('creation is disabled') : new Element($this->kernel->getProjectDir().'/templates'));
     }
 
     private function clearTwigCache(): void
@@ -99,6 +119,7 @@ final class ElementAdmin extends AbstractController
             [
                 'element' => $element,
                 'form' => $form->createView(),
+                'disableCreation' => $this->disableCreation,
             ]
         );
     }
@@ -106,7 +127,7 @@ final class ElementAdmin extends AbstractController
     private function editElementForm(Element $element): FormInterface
     {
         return $this->createFormBuilder($element)
-            ->add('path', TextType::class)
+            ->add('path', TextType::class, ['disabled' => $this->disableCreation])
             ->add('code', TextareaType::class, [
                 'attr' => [
                     'style' => 'min-height: 90vh;font-size:125%;',
@@ -121,6 +142,11 @@ final class ElementAdmin extends AbstractController
 
     public function deleteElement(string $encodedPath, Request $request): Response
     {
+        if ($this->disableCreation) {
+            $this->addFlash('warning', 'Creation (so deletion) are disabled');
+            $this->redirectToRoute('pushword_template_editor_list');
+        }
+
         $element = $this->getElement($encodedPath);
 
         $form = $this->createFormBuilder()
@@ -141,6 +167,7 @@ final class ElementAdmin extends AbstractController
             [
                 'form' => $form->createView(),
                 'element' => $element,
+                'disableCreation' => $this->disableCreation,
             ]
         );
     }

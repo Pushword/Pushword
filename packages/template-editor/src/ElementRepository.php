@@ -4,10 +4,16 @@ namespace Pushword\TemplateEditor;
 
 use Symfony\Component\Finder\Finder;
 
-class ElementRepository
+final class ElementRepository
 {
-    public function __construct(private readonly string $templateDir)
-    {
+    /**
+     * @param string[] $canBeEditedList
+     */
+    public function __construct(
+        private readonly string $templateDir,
+        private array $canBeEditedList,  // template_editor_can_be_edited_list
+        private bool $disableCreation, // template_editor_disable_creation
+    ) {
     }
 
     /**
@@ -15,12 +21,20 @@ class ElementRepository
      */
     public function getAll(): array
     {
-        $finder = new Finder();
-        $finder->files()->in($this->templateDir);
+        $templateFileList = (new Finder())->files()->in($this->templateDir);
         $elements = [];
 
-        foreach ($finder as $singleFinder) {
-            $elements[] = new Element($this->templateDir, substr((string) $singleFinder, \strlen($this->templateDir)));
+        foreach ($templateFileList as $templateFile) {
+            $templateFilePath = substr((string) $templateFile, \strlen($this->templateDir));
+            if ([] !== $this->canBeEditedList && ! \in_array($templateFilePath, $this->canBeEditedList, true)) {
+                continue;
+            }
+
+            $elements[] = new Element(
+                $this->templateDir,
+                $templateFilePath,
+                $this->disableCreation
+            );
         }
 
         return $elements;

@@ -27,5 +27,7 @@ interface UserInterface extends PasswordAuthenticatedUserInterface, BaseUserInte
     /** @param string[] $roles */
     public function setRoles(array $roles): self;
 
+    public function hasRole(string $role): bool;
+
     public function __toString(): string;
 }

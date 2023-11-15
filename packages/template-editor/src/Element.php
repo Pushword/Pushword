@@ -15,8 +15,11 @@ class Element
 
     protected ?string $unlink = null;
 
-    public function __construct(string $templateDir, string $path = null)
-    {
+    public function __construct(
+        string $templateDir,
+        string $path = null,
+        protected bool $disableMoving = false
+    ) {
         $realPathTemplateDir = \Safe\realpath($templateDir);
 
         $this->templateDir = $realPathTemplateDir;
@@ -67,6 +70,10 @@ class Element
 
     public function setPath(string $path): self
     {
+        if ($this->disableMoving) {
+            return $this;
+        }
+
         if (str_contains($path, '..')) { // avoiding to store in an other folder than templates.
             throw new \Exception("You can't do that...");
         }
@@ -119,5 +126,10 @@ class Element
     public function deleteElement(): bool
     {
         return unlink($this->getTemplateDir().$this->path);
+    }
+
+    public function movingIsDisabled(): bool
+    {
+        return $this->disableMoving;
     }
 }

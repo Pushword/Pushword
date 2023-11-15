@@ -71,7 +71,7 @@ class PushwordConfigFactoryTest extends TestCase
     {
         $config = Yaml::parse(file_get_contents(__DIR__.'/../../../skeleton/config/packages/pushword.yaml'));
         $config['pushword']['apps'][0]['custom_properties'] = array_merge($config['pushword']['apps'][0]['custom_properties'] ?? [], ['firstCP' => 'blabla']);
-        $config = (new Processor())->processConfiguration(new Configuration(), $config);
+        $config = (new Processor())->processConfiguration(new Configuration(), [$config['pushword']]);
 
         return $config;
     }
