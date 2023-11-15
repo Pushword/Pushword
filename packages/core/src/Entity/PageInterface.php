@@ -50,7 +50,7 @@ interface PageInterface extends HostInterface, IdInterface, TimestampableInterfa
 
     public function getH1(): ?string;
 
-    public function setH1(string $string): self;
+    public function setH1(string $h1): self;
 
     public function getTitle(): ?string;
 

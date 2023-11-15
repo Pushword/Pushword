@@ -65,7 +65,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
         $pages = Repository::getPageRepository($this->entityManager, $this->params->get('pw.entity_page')) // @phpstan-ignore-line
             ->getPagesWithoutParent();
 
-        return $this->renderWithExtraParams('@pwAdmin/page/page_treeView.html.twig', [
+        return $this->render('@pwAdmin/page/page_treeView.html.twig', [
             'pages' => $pages,
             'list' => $this->admin->getList(),
             'admin' => $this->admin,
