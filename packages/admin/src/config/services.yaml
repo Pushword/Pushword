@@ -29,8 +29,18 @@ services:
       - [setPageClass, ["%pw.entity_page%"]]
     public: true
 
-  Pushword\Admin\RedirectionAdminInterface:
-    class: Pushword\Admin\RedirectionAdmin
+  Pushword\Admin\PageCheatSheetAdmin:
+    autowire: true
+    tags:
+      - { name: sonata.admin, model_class: "%pw.entity_page%", manager_type: orm, label: admin.label.page }
+    calls:
+      - [setTemplate, [edit, "@@pwAdmin/page/page_edit.html.twig"]]
+      - [setMediaClass, ["%pw.entity_media%"]]
+      - [setUserClass, ["%pw.entity_user%"]]
+      - [setPageClass, ["%pw.entity_page%"]]
+    public: true
+
+  Pushword\Admin\PageRedirectionAdmin:
     autowire: true
     tags:
       - { name: sonata.admin, model_class: "%pw.entity_page%", manager_type: orm, label: admin.label.page }
@@ -47,6 +57,11 @@ services:
 
   Pushword\Admin\PageCRUDControllerInterface:
     class: Pushword\Admin\PageCRUDController
+    autowire: true
+    autoconfigure: true
+    tags: ["controller.service_arguments"]
+
+  Pushword\Admin\PageCheatSheetController:
     autowire: true
     autoconfigure: true
     tags: ["controller.service_arguments"]

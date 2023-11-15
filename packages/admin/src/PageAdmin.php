@@ -44,6 +44,10 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
     protected int $maxPerPage = 1000;
 
+    protected ?string $mainColClass = null;
+
+    protected ?string $secondColClass = null;
+
     protected function configureDefaultSortValues(array &$sortValues): void
     {
         $sortValues = [
@@ -86,10 +90,9 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
         $rootAlias = current($qb->getRootAliases());
 
-        $qb->andWhere(
-            $qb->expr()->notLike($rootAlias.'.mainContent', ':mcf')
-        );
-        $qb->setParameter('mcf', 'Location:%');
+        $qb->andWhere($qb->expr()->notLike($rootAlias.'.mainContent', ':mcf'))->setParameter('mcf', 'Location:%');
+
+        $qb->andWhere($qb->expr()->neq($rootAlias.'.slug', ':slug'))->setParameter('slug', 'pushword-cheatsheet');
 
         return $query;
     }
@@ -120,7 +123,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
             throw new \LogicException();
         }
 
-        $form->with('admin.page.mainContent.label', ['class' => 'col-md-9 mainFields']);
+        $form->with('admin.page.mainContent.label', ['class' => $this->mainColClass ?? 'col-md-9 mainFields']);
         foreach ($fields[0] as $field) {
             $this->addFormField($field, $form);
         }
@@ -134,7 +137,7 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
 
             $fields = $block['fields'] ?? $block;
             $class = isset($block['expand']) ? 'expand' : '';
-            $form->with($k, ['class' => 'col-md-3 columnFields '.$class, 'label' => $k]);
+            $form->with($k, ['class' => $this->secondColClass ?? 'col-md-3 columnFields '.$class, 'label' => $k]);
             foreach ($fields as $field) {
                 $this->addFormField($field, $form);
             }
@@ -143,6 +146,9 @@ class PageAdmin extends AbstractAdmin implements PageAdminInterface
         }
     }
 
+    /**
+     * @phpstan-param PageInterface $object
+     */
     protected function alterNewInstance(object $object): void
     {
         $object->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...

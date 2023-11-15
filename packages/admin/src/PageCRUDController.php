@@ -69,7 +69,7 @@ class PageCRUDController extends SonataCRUDController implements PageCRUDControl
             'pages' => $pages,
             'list' => $this->admin->getList(),
             'admin' => $this->admin,
-            'base_template' => $this->getBaseTemplate(),
+            // 'base_template' => $this->getBaseTemplate(),
             'action' => 'list',
         ]);
     }

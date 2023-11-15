@@ -102,8 +102,16 @@ final class PageMenuProvider implements ContainerAwareInterface
         $menu->addChild($this->translator->trans('admin.label.media'), ['route' => 'admin_app_media_list']);
 
         if (class_exists(PushwordConversationBundle::class)) { // TODO : move it to an event listerner in conversation bundle and create event here
-            $menu->addChild($this->translator->trans('admin.label.conversation'), ['route' => 'admin_pushword_conversation_message_list']);
+            $menu->addChild(
+                $this->translator->trans('admin.label.conversation'),
+                ['route' => 'admin_pushword_conversation_message_list']
+            );
         }
+
+        $menu->addChild(
+            $this->translator->trans('admin.label.cheatsheet'),
+            ['route' => 'cheatsheetEditRoute'],
+        );
 
         return $menu;
     }

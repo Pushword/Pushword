@@ -47,6 +47,7 @@ admin:
     theme: Éditeur de thème
     check_content: Vérifier le contenu
     conversation: Conversation
+    cheatsheet: Aide-mémoire
 
   action: Action
   details: Details

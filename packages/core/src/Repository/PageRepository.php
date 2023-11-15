@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Selectable;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ObjectRepository;
+use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface;
 
@@ -83,7 +84,9 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
         return $this->createQueryBuilder($alias)
             ->andWhere($alias.'.publishedAt <=  :now')
-            ->setParameter('now', new \DateTime(), 'datetime');
+            ->setParameter('now', new \DateTime(), 'datetime')
+            ->andWhere($alias.'.slug <> :cheatsheet')
+            ->setParameter('cheatsheet', PageCheatSheetAdmin::CHEATSHEET_SLUG);
     }
 
     /**

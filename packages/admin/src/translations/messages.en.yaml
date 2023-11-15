@@ -36,7 +36,7 @@ admin:
     media: Media
     content: Contenu
     list: Liste
-    user: Utilisateur
+    user: User
     users: Utilisateurs
     manage: Mettre en ligne
     update: Actualiser
@@ -44,6 +44,7 @@ admin:
     theme: Éditeur de thème
     check_content: Vérifier le contenu
     conversation: Conversation
+    cheatsheet: Aide-mémoire
 
   action: Action
   details: Details

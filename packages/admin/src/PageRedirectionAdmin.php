@@ -7,7 +7,7 @@ use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Datagrid\ProxyQueryInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 
-class RedirectionAdmin extends PageAdmin
+class PageRedirectionAdmin extends PageAdmin
 {
     /**
      * @psalm-suppress InvalidArgument

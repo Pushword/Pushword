@@ -19,3 +19,9 @@ pushword_markdown_cheatsheet:
   controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController
   defaults:
     template: '@pwAdmin/markdown_cheatsheet.html.twig'
+
+controllers:
+    resource:
+        path: ./
+        namespace: Pushword\Admin
+    type: attribute
