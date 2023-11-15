@@ -1,0 +1,19 @@
+{
+  "assets/app.min.js": "/assets/app.min.js",
+  "assets/tw.min.css": "/assets/tw.min.css",
+  "assets/favicons/favicon.ico": "/assets/favicons/favicon.ico",
+  "assets/favicons/android-chrome-512x512.png": "/assets/favicons/android-chrome-512x512.png",
+  "assets/favicons/mstile-310x310.png": "/assets/favicons/mstile-310x310.png",
+  "assets/favicons/mstile-310x150.png": "/assets/favicons/mstile-310x150.png",
+  "assets/favicons/android-chrome-192x192.png": "/assets/favicons/android-chrome-192x192.png",
+  "assets/favicons/apple-touch-icon.png": "/assets/favicons/apple-touch-icon.png",
+  "assets/favicons/mstile-150x150.png": "/assets/favicons/mstile-150x150.png",
+  "assets/favicons/mstile-144x144.png": "/assets/favicons/mstile-144x144.png",
+  "assets/favicons/mstile-70x70.png": "/assets/favicons/mstile-70x70.png",
+  "assets/favicons/safari-pinned-tab.svg": "/assets/favicons/safari-pinned-tab.svg",
+  "assets/logo.svg": "/assets/logo.svg",
+  "assets/favicons/favicon-32x32.png": "/assets/favicons/favicon-32x32.png",
+  "assets/favicons/favicon-16x16.png": "/assets/favicons/favicon-16x16.png",
+  "assets/favicons/site.webmanifest": "/assets/favicons/site.webmanifest",
+  "assets/favicons/browserconfig.xml": "/assets/favicons/browserconfig.xml"
+}

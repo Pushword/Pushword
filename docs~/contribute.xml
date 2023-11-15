@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Contribute to Pushword : Documention, Core or Extension</title>
+        <link>https://pushword.piedweb.com/contribute</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/contribute.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[The Code Architecture]]></title>
+                    <link>https://pushword.piedweb.com/architecture</link>
+                    <guid>https://pushword.piedweb.com/architecture</guid>
+                    <pubDate>Sun, 18 Apr 2021 10:06:59 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Roadmap]]></title>
+                    <link>https://pushword.piedweb.com/roadmap</link>
+                    <guid>https://pushword.piedweb.com/roadmap</guid>
+                    <pubDate>Tue, 24 Oct 2023 07:44:54 +0000</pubDate>
+                </item>
+                            
+    </channel>
+</rss>
