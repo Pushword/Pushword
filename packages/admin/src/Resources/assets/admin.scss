@@ -152,4 +152,8 @@ textarea.autosize {
     text-align: center;
     margin-left: -15px;
 }
+
+.ace_scrollbar {
+    z-index: 0 !important;
+}
 /* purgecss end ignore */

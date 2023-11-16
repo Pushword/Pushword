@@ -1,6 +1,7 @@
 <?php
 
 use Pushword\Admin\Menu\PageMenuProvider;
+use Pushword\Admin\UserAdmin;
 
 return [
     'sonata_admin' => [
@@ -38,7 +39,7 @@ return [
                     'icon' => '<i class="fa fa-wrench"></i>',
                     // 'extras' => [PageMenuProvider::ORDER_NUMBER, 3],
                     'items' => [
-                        0 => 'pushword.admin.user',
+                        0 => UserAdmin::class,
                     ],
                 ],
             ],

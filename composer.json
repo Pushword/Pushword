@@ -83,6 +83,7 @@
         "symfony/panther": "^1 || ^2.0",
         "symfony/phpunit-bridge": "^6.1",
         "symfony/profiler-pack": "^1.0",
+        "symplify/config-transformer": "^12.1",
         "symplify/monorepo-builder": "^11.1",
         "vimeo/psalm": "^5",
         "weirdan/doctrine-psalm-plugin": "^2.0"

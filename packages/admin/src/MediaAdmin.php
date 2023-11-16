@@ -15,8 +15,10 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 /**
  * @extends AbstractAdmin<MediaInterface>
+ *
+ * @implements AdminInterface<MediaInterface>
  */
-final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
+final class MediaAdmin extends AbstractAdmin implements AdminInterface
 {
     /**
      * @use AdminTrait<MediaInterface>

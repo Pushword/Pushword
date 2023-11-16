@@ -17,8 +17,10 @@ use Sonata\DoctrineORMAdminBundle\Filter\CallbackFilter;
 
 /**
  * @extends AbstractAdmin<PageInterface>
+ *
+ * @implements AdminInterface<PageInterface>
  */
-class PageAdmin extends AbstractAdmin implements PageAdminInterface
+class PageAdmin extends AbstractAdmin implements AdminInterface
 {
     /**
      * @use AdminTrait<PageInterface>

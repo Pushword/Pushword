@@ -1,52 +1,44 @@
 services:
-  # ---
-  # Page
-  # ---
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    bind:
+      $mediaClass: "%pw.entity_media%"
+      $pageClass: "%pw.entity_page%"
+      $userClass: "%pw.entity_user%"
 
-  pushword.admin.page_menu:
-        class: Pushword\Admin\Menu\PageMenuProvider
-        autowire: true
-        autoconfigure: true
-        tags:
-            - { name: knp_menu.menu_builder, method: getMenu, alias: page_admin_menu }
-            - { name: knp_menu.menu_builder, method: getRedirectionMenu, alias: redirection_admin_menu }
+  Pushword\Admin\Menu\PageMenuProvider:
+    tags:
+        - { name: knp_menu.menu_builder, method: getMenu, alias: page_admin_menu }
+        - { name: knp_menu.menu_builder, method: getRedirectionMenu, alias: redirection_admin_menu }
 
   #Sonata\AdminBundle\Bridge\Exporter\AdminExporter:
   #  autowire: true
 
-  Pushword\Admin\PageAdminInterface:
-    class: Pushword\Admin\PageAdmin
+  Pushword\Admin\PageAdmin:
     autowire: true
     tags:
       - { name: sonata.admin, model_class: "%pw.entity_page%", manager_type: orm, label: admin.label.page, default: true }
     calls:
-      - [setBaseControllerName, [Pushword\Admin\PageCRUDControllerInterface]]
+      - [setBaseControllerName, [Pushword\Admin\PageCRUDController]]
       - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
       - [setTemplate, [show, "@@pwAdmin/page/page_show.html.twig"]]
       - [setTemplate, [edit, "@@pwAdmin/page/page_edit.html.twig"]]
       - [setTemplate, [preview, "@@pwAdmin/page/preview.html.twig"]]
-      - [setMediaClass, ["%pw.entity_media%"]]
-      - [setUserClass, ["%pw.entity_user%"]]
-      - [setPageClass, ["%pw.entity_page%"]]
     public: true
 
   Pushword\Admin\PageCheatSheetAdmin:
-    autowire: true
     tags:
       - { name: sonata.admin, model_class: "%pw.entity_page%", manager_type: orm, label: admin.label.page }
     calls:
       - [setTemplate, [edit, "@@pwAdmin/page/page_edit.html.twig"]]
-      - [setMediaClass, ["%pw.entity_media%"]]
-      - [setUserClass, ["%pw.entity_user%"]]
-      - [setPageClass, ["%pw.entity_page%"]]
     public: true
 
   Pushword\Admin\PageRedirectionAdmin:
-    autowire: true
     tags:
       - { name: sonata.admin, model_class: "%pw.entity_page%", manager_type: orm, label: admin.label.page }
     calls:
-      - [setBaseControllerName, [Pushword\Admin\PageCRUDControllerInterface]]
+      - [setBaseControllerName, [Pushword\Admin\PageCRUDController:]]
       - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
       - [setTemplate, [show, "@@pwAdmin/page/page_show.html.twig"]]
       - [setTemplate, [edit, "@@pwAdmin/page/page_edit.html.twig"]]
@@ -56,26 +48,13 @@ services:
       - [setPageClass, ["%pw.entity_page%"]]
     public: true
 
-  Pushword\Admin\PageCRUDControllerInterface:
-    class: Pushword\Admin\PageCRUDController
-    autowire: true
-    autoconfigure: true
+  Pushword\Admin\PageCRUDController:
     tags: ["controller.service_arguments"]
 
   Pushword\Admin\PageCheatSheetController:
-    autowire: true
-    autoconfigure: true
     tags: ["controller.service_arguments"]
 
-  # ---
-  # Others
-  # ---
-
-  Pushword\Admin\MediaAdminInterface:
-    alias: pushword.admin.media
-
-  pushword.admin.media:
-    class: Pushword\Admin\MediaAdmin
+  Pushword\Admin\MediaAdmin:
     autowire: true
     calls:
       - [setTemplate, [list, "@@pwAdmin/CRUD/mosaic.html.twig"]]
@@ -85,11 +64,7 @@ services:
     tags:
       - { name: sonata.admin, model_class: "%pw.entity_media%", manager_type: orm, label: admin.label.media, persist_filters: true }
 
-  Pushword\Admin\UserAdminInterface:
-    alias: pushword.admin.user
-
-  pushword.admin.user:
-    class: Pushword\Admin\UserAdmin
+  Pushword\Admin\UserAdmin:
     autowire: true
     tags:
       - { name: sonata.admin, model_class: "%pw.entity_user%", manager_type: orm, label: admin.label.user }

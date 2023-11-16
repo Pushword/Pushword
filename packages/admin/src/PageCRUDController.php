@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * @extends SonataCRUDController<PageInterface>
  */
-class PageCRUDController extends SonataCRUDController implements PageCRUDControllerInterface
+class PageCRUDController extends SonataCRUDController
 {
     protected ParameterBagInterface $params;
 

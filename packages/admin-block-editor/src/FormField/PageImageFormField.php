@@ -3,6 +3,7 @@
 namespace Pushword\AdminBlockEditor\FormField;
 
 use Pushword\Admin\FormField\AbstractField;
+use Pushword\Admin\MediaAdmin;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 
@@ -26,7 +27,7 @@ class PageImageFormField extends AbstractField
             'mapped' => false,
             'row_attr' => ['style' => 'display:none'],
         ], [
-            'admin_code' => 'pushword.admin.media',
+            'admin_code' => MediaAdmin::class,
         ]);
 
         return $form->add('inline_attaches', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
@@ -37,7 +38,7 @@ class PageImageFormField extends AbstractField
             'mapped' => false,
             'row_attr' => ['style' => 'display:none'],
         ], [
-            'admin_code' => 'pushword.admin.media',
+            'admin_code' => MediaAdmin::class,
         ]);
     }
 }

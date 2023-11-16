@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 use Twig\Environment as Twig;
 
 /**
@@ -82,7 +83,7 @@ trait AdminTrait
 
     protected EventDispatcherInterface $eventDispatcher;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
     {
         $this->eventDispatcher = $eventDispatcher;
@@ -127,13 +128,13 @@ trait AdminTrait
         return $user;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setSecurityTokenStorage(TokenStorageInterface $securityTokenStorage): void
     {
         $this->securityTokenStorage = $securityTokenStorage;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setEntityManager(EntityManagerInterface $entityManager): void
     {
         $this->em = $entityManager;
@@ -144,7 +145,7 @@ trait AdminTrait
         return $this->em;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;
@@ -156,16 +157,15 @@ trait AdminTrait
     }
 
     /**
-     * @noRector
-     *
      * @param class-string<PageInterface> $pageClass
      */
-    public function setPageClass($pageClass): void
+    #[Required]
+    public function setPageClass(string $pageClass): void
     {
         $this->pageClass = $pageClass;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setApps(AppPool $appPool): void
     {
         $this->apps = $appPool;
@@ -177,26 +177,24 @@ trait AdminTrait
     }
 
     /**
-     * @noRector
-     *
      * @param class-string<MediaInterface> $mediaClass
      */
-    public function setMediaClass($mediaClass): void
+    #[Required]
+    public function setMediaClass(string $mediaClass): void
     {
         $this->mediaClass = $mediaClass;
     }
 
     /**
-     * @noRector
-     *
      * @param class-string<UserInterface> $userClass
      */
-    public function setUserClass($userClass): void
+    #[Required]
+    public function setUserClass(string $userClass): void
     {
         $this->userClass = $userClass;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setRouter(RouterInterface $router): void
     {
         $this->router = $router;
@@ -228,7 +226,7 @@ trait AdminTrait
         return $this->messagePrefix;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setImageManager(ImageManager $imageManager): void
     {
         $this->imageManager = $imageManager;

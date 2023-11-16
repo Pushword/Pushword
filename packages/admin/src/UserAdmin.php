@@ -11,8 +11,10 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
  * @extends AbstractAdmin<UserInterface>
+ *
+ * @implements AdminInterface<UserInterface>
  */
-class UserAdmin extends AbstractAdmin implements UserAdminInterface
+class UserAdmin extends AbstractAdmin implements AdminInterface
 {
     /**
      * @use AdminTrait<UserInterface>

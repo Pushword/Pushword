@@ -4,7 +4,7 @@ namespace Pushword\AdvancedMainImage\EventSuscriber;
 
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageMainImageField;
-use Pushword\Admin\PageAdminInterface;
+use Pushword\Admin\PageAdmin;
 use Pushword\Admin\Utils\FormFieldReplacer;
 use Pushword\AdvancedMainImage\PageAdvancedMainImageFormField;
 use Pushword\Core\Component\App\AppPool;
@@ -58,7 +58,7 @@ final class AdminFormEventSuscriber implements EventSubscriberInterface
      */
     public function setAdvancedMainImage(PersistenceEvent $persistenceEvent): void
     {
-        if (! $persistenceEvent->getAdmin() instanceof PageAdminInterface) {
+        if (! $persistenceEvent->getAdmin() instanceof PageAdmin) {
             return;
         }
 

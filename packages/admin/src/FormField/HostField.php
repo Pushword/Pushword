@@ -55,7 +55,7 @@ class HostField extends AbstractField
         return $datagrid->add('host', ChoiceFilter::class, [
             'field_type' => ChoiceType::class,
             'field_options' => [
-                'choices' => \Safe\array_combine($this->getHosts(), $this->getHosts()),
+                'choices' => array_combine($this->getHosts(), $this->getHosts()),
                 'multiple' => true,
             ],
             'label' => 'admin.page.host.label',

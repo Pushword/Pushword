@@ -5,7 +5,7 @@ namespace Pushword\AdminBlockEditor\EventSuscriber;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageMainContentField;
-use Pushword\Admin\PageAdminInterface;
+use Pushword\Admin\PageAdmin;
 use Pushword\Admin\Utils\FormFieldReplacer;
 use Pushword\AdminBlockEditor\FormField\PageH1FormField;
 use Pushword\AdminBlockEditor\FormField\PageImageFormField;
@@ -35,7 +35,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
      */
     public function setMainContent(PersistenceEvent $persistenceEvent): void
     {
-        if (! $persistenceEvent->getAdmin() instanceof PageAdminInterface) {
+        if (! $persistenceEvent->getAdmin() instanceof PageAdmin) {
             return;
         }
 
@@ -60,7 +60,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
      */
     public function replaceFields(FormEvent $formEvent): void
     {
-        if (! $formEvent->getAdmin() instanceof PageAdminInterface) {
+        if (! $formEvent->getAdmin() instanceof PageAdmin) {
             return;
         }
 
