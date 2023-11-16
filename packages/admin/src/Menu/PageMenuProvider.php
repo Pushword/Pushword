@@ -5,7 +5,6 @@ namespace Pushword\Admin\Menu;
 use Doctrine\Persistence\ManagerRegistry;
 use Knp\Menu\FactoryInterface;
 use Knp\Menu\ItemInterface;
-use Knp\Menu\MenuItem;
 use Sonata\AdminBundle\Event\ConfigureMenuEvent;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
@@ -52,8 +51,8 @@ final class PageMenuProvider implements ContainerAwareInterface
 
         $pageMenu = $menu; // $menu->addChild('admin.label.page', ['route' => 'admin_page_list'])->setExtra(self::ORDER_NUMBER, 1);
 
+        $isRequesteingRedirection = $this->isRequestingRedirection();
         if (\count($hosts) > 1) {
-            $isRequesteingRedirection = $this->isRequestingRedirection();
             foreach ($hosts as $host) {
                 $hostMenu = $pageMenu->addChild($host, [
                     'route' => 'admin_page_list',
@@ -92,8 +91,8 @@ final class PageMenuProvider implements ContainerAwareInterface
 
         $redirectionMenu = $menu; // $menu->addChild('admin.label.redirection', ['route' => 'admin_redirection_list'])->setExtra(self::ORDER_NUMBER, 3);
 
+        $isRequesteingRedirection = $this->isRequestingRedirection();
         if (\count($hosts) > 1) {
-            $isRequesteingRedirection = $this->isRequestingRedirection();
             foreach ($hosts as $host) {
                 $hostMenu = $redirectionMenu->addChild($host, [
                     'route' => 'admin_redirection_list',
@@ -123,13 +122,15 @@ final class PageMenuProvider implements ContainerAwareInterface
         $this->reorderMenuItems($menu);
     }
 
-    private function getPriority(MenuItem $menuItem): ?int
+    private function getPriority(ItemInterface $menuItem): ?int
     {
         if ('admin.label.media' === $menuItem->getLabel()) {
             return 2;
         }
 
-        return $menuItem->getExtra(self::ORDER_NUMBER);
+        $priority = $menuItem->getExtra(self::ORDER_NUMBER);
+
+        return \is_int($priority) ? $priority : null;
     }
 
     /**
@@ -145,16 +146,18 @@ final class PageMenuProvider implements ContainerAwareInterface
             if ($menuItem->hasChildren()) {
                 $this->reorderMenuItems($menuItem);
             }
+
             $priority = $this->getPriority($menuItem);
             if (! \in_array($priority, [null, 0], true)) {
                 $priorities[$key] = $priority;
             }
+
             $menuItemsNameList[$key] = $menuItem->getName();
         }
 
         if ([] !== $priorities) {
             $keysOrder = array_flip(array_keys($menuItemsNameList));
-            uksort($menuItemsNameList, static fn ($n1, $n2) => (($priorities[$n1] ?? 1000000) <=> ($priorities[$n2] ?? 1000000)) ?: ($keysOrder[$n1] <=> $keysOrder[$n2])); // @phpstan-ignore-line
+            uksort($menuItemsNameList, static fn ($n1, $n2): int => (($priorities[$n1] ?? 1_000_000) <=> ($priorities[$n2] ?? 1_000_000)) ?: ($keysOrder[$n1] <=> $keysOrder[$n2])); // @phpstan-ignore-line
         }
 
         $menu->reorderChildren($menuItemsNameList);
