@@ -14,10 +14,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class PageCheatSheetController extends AbstractController
 {
     public function __construct(
-        private PageRepository $pageRepo,
-        private ParameterBagInterface $parameterBag,
-        private TranslatorInterface $translator,
-        private EntityManagerInterface $entityManager,
+        private readonly PageRepository $pageRepo,
+        private readonly ParameterBagInterface $parameterBag,
+        private readonly TranslatorInterface $translator,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 

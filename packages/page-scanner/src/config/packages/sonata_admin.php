@@ -1,14 +1,18 @@
 <?php
 
+use Pushword\Admin\Menu\PageMenuProvider;
+
 return [
     'sonata_admin' => [
         'dashboard' => [
             'groups' => [
-                'app.admin.group.static' => [
+                'app.admin.group.page_scanner' => [
+                    'on_top' => true,
                     'keep_open' => true,
-                    'label' => 'admin.label.manage',
+                    'label' => 'admin.label.check_content',
                     'translation_domain' => 'messages',
-                    'icon' => '<i class="fa fa-bolt"></i>',
+                    'icon' => '<i class="fa fa-check-circle"></i>',
+                    // 'extras' => [PageMenuProvider::ORDER_NUMBER, 2],
                     'items' => [
                         0 => [
                             'route' => 'pushword_page_scanner',

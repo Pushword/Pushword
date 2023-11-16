@@ -90,6 +90,8 @@ trait AdminTrait
 
     abstract public function getRequest(): Request;
 
+    abstract public function hasRequest(): bool;
+
     /**
      * Must be a cookie to check before to do that
      * If you click one time to list, stay in liste mode.
@@ -98,7 +100,7 @@ trait AdminTrait
      * */
     protected function setMosaicDefaultListMode(): self
     {
-        if (($mode = (string) $this->getRequest()->query->get('_list_mode')) !== '') {
+        if ($this->hasRequest() && ($mode = (string) $this->getRequest()->query->get('_list_mode')) !== '') {
             $this->setListMode($mode);
         } else {
             $this->setListMode('mosaic');

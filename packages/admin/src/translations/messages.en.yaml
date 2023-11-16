@@ -34,14 +34,14 @@ admin:
   label:
     page: Page
     media: Media
-    content: Contenu
+    content: Pages
     list: Liste
     user: User
     users: Utilisateurs
     manage: Mettre en ligne
     update: Actualiser
     params: Réglages
-    theme: Éditeur de thème
+    redirection: Redirection
     check_content: Vérifier le contenu
     conversation: Conversation
     cheatsheet: Aide-mémoire

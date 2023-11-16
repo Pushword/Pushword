@@ -9,6 +9,7 @@ services:
         autoconfigure: true
         tags:
             - { name: knp_menu.menu_builder, method: getMenu, alias: page_admin_menu }
+            - { name: knp_menu.menu_builder, method: getRedirectionMenu, alias: redirection_admin_menu }
 
   #Sonata\AdminBundle\Bridge\Exporter\AdminExporter:
   #  autowire: true

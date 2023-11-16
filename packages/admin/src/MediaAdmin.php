@@ -89,7 +89,7 @@ final class MediaAdmin extends AbstractAdmin implements MediaAdminInterface
             $filter->add('mimeType', ChoiceFilter::class, [
                 'field_type' => ChoiceType::class,
                 'field_options' => [
-                    'choices' => \Safe\array_combine($mimeTypes, $mimeTypes),
+                    'choices' => array_combine($mimeTypes, $mimeTypes),
                     'multiple' => true,
                 ],
                 'label' => 'admin.media.filetype.label',

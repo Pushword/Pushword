@@ -1,5 +1,7 @@
 <?php
 
+use Pushword\Admin\Menu\PageMenuProvider;
+
 return [
     'sonata_admin' => [
         'security' => [
@@ -16,11 +18,25 @@ return [
                     'keep_open' => true,
                     'provider' => 'page_admin_menu',
                 ],
-                'app.admin.group.setting' => [
+                'app.admin.group.redirection' => [
                     'keep_open' => true,
-                    'label' => 'admin.label.params',
+                    'provider' => 'redirection_admin_menu',
+                ],
+                'app.admin.group.media' => [
+                    'on_top' => true,
+                    'label' => 'admin.label.media', // 'admin.label.params',
+                    'translation_domain' => 'messages',
+                    'icon' => '<i class="fa fa-photo-video"></i>',
+                    // 'extras' => [PageMenuProvider::ORDER_NUMBER, 2],
+                    'items' => [['route' => 'admin_app_media_list', 'label' => 'a']],
+                ],
+                'app.admin.group.setting' => [
+                    'on_top' => true,
+                    'keep_open' => true,
+                    'label' => 'admin.label.user', // 'admin.label.params',
                     'translation_domain' => 'messages',
                     'icon' => '<i class="fa fa-wrench"></i>',
+                    // 'extras' => [PageMenuProvider::ORDER_NUMBER, 3],
                     'items' => [
                         0 => 'pushword.admin.user',
                     ],

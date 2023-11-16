@@ -10,7 +10,7 @@ use Twig\TwigFunction;
 class AppExtension extends AbstractExtension
 {
     public function __construct(
-        private AppPool $appPool,
+        private readonly AppPool $appPool,
         private readonly \Pushword\Core\Router\RouterInterface $router
     ) {
     }
@@ -64,7 +64,8 @@ class AppExtension extends AbstractExtension
         $regex = '/"(https?)?:\/\/([a-zA-Z0-9.-:]+)\/'.$this->getHostsRegex().'\/?([^"]*)"/';
 
         preg_match_all($regex, $text, $matches);
-        for ($i = 0; $i < \count($matches[0]); ++$i) {
+        $counter = \count($matches[0]);
+        for ($i = 0; $i < $counter; ++$i) {
             $text = str_replace($matches[0][$i], '"'.$this->router->generate($matches[4][$i] ?? 'homepage', host: $matches[3][$i]).'"', $text);
         }
 

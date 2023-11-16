@@ -4,17 +4,18 @@ return [
     'sonata_admin' => [
         'dashboard' => [
             'groups' => [
-                'app.admin.group.setting' => [
-                    // 'label' => 'admin.label.params',
-                    // 'label_catalogue' => 'messages',
-                    // 'icon' => '<i class="fa fa-wrench"></i>',
+                'app.admin.group.template_editor' => [
+                    'on_top' => true,
+                    'label' => 'admin.label.theme',
+                    'translation_domain' => 'messages',
+                    'icon' => '<i class="fa fa-code"></i>',
+                    'roles' => [
+                        0 => 'ROLE_PUSHWORD_ADMIN_THEME',
+                    ],
                     'items' => [
-                        0 => [
+                        [
                             'route' => 'pushword_template_editor_list',
-                            'label' => 'admin.label.theme',
-                            'roles' => [
-                                0 => 'ROLE_PUSHWORD_ADMIN_THEME',
-                            ],
+                            'label' => 'admin.label.theme', // duplicate !
                         ],
                     ],
                 ],

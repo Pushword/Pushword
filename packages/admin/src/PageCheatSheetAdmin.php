@@ -7,7 +7,7 @@ use Sonata\AdminBundle\Route\RouteCollectionInterface;
 
 class PageCheatSheetAdmin extends PageAdmin
 {
-    public const CHEATSHEET_SLUG = 'pushword-cheatsheet';
+    final public const CHEATSHEET_SLUG = 'pushword-cheatsheet';
 
     protected ?string $mainColClass = 'col-md-12 mainFields';
 

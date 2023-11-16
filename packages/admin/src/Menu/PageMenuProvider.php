@@ -5,19 +5,23 @@ namespace Pushword\Admin\Menu;
 use Doctrine\Persistence\ManagerRegistry;
 use Knp\Menu\FactoryInterface;
 use Knp\Menu\ItemInterface;
-use Pushword\Conversation\PushwordConversationBundle;
-use Pushword\Core\Component\App\AppPool;
+use Knp\Menu\MenuItem;
+use Sonata\AdminBundle\Event\ConfigureMenuEvent;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class PageMenuProvider implements ContainerAwareInterface
 {
     use ContainerAwareTrait;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
-    public AppPool $apps;
+    public const ORDER_NUMBER = 'priority';
+
+    #[Required]
+    public \Pushword\Core\Component\App\AppPool $apps;
 
     #[\Symfony\Contracts\Service\Attribute\Required]
     public ManagerRegistry $doctrine;
@@ -39,20 +43,17 @@ final class PageMenuProvider implements ContainerAwareInterface
 
         $menu = $factory->createItem('content', [
             'label' => $this->translator->trans('admin.label.content'),
+            'route' => 'admin_page_list',
         ])
             ->setCurrent(true) // dirty hack to prevent bug
-            ->setExtra('keep_open', true);
+            // ->setExtra('keep_open', true)
+            ->setExtra(self::ORDER_NUMBER, 1)
+        ;
 
-        $pageMenu = $menu->addChild(
-            $this->translator->trans('admin.label.page'),
-            [
-                'route' => 'admin_page_list',
-            ]
-        );
-
-        $isRequesteingRedirection = $this->isRequestingRedirection();
+        $pageMenu = $menu; // $menu->addChild('admin.label.page', ['route' => 'admin_page_list'])->setExtra(self::ORDER_NUMBER, 1);
 
         if (\count($hosts) > 1) {
+            $isRequesteingRedirection = $this->isRequestingRedirection();
             foreach ($hosts as $host) {
                 $hostMenu = $pageMenu->addChild($host, [
                     'route' => 'admin_page_list',
@@ -72,14 +73,27 @@ final class PageMenuProvider implements ContainerAwareInterface
             $pageMenu->setCurrent(true);
         }
 
-        $redirectionMenu = $menu->addChild(
-            $this->translator->trans('Redirection'),
-            [
-                'route' => 'admin_redirection_list',
-            ]
-        );
+        $menu->addChild('admin.label.cheatsheet', ['route' => 'cheatsheetEditRoute']);
+
+        return $menu;
+    }
+
+    public function getRedirectionMenu(): ItemInterface
+    {
+        $factory = $this->factory;
+        $hosts = $this->apps->getHosts();
+
+        $menu = $factory->createItem('redirection', [
+            'label' => $this->translator->trans('admin.label.redirection'),
+            'route' => 'admin_redirection_list',
+        ])
+            ->setExtra(self::ORDER_NUMBER, 3)
+        ;
+
+        $redirectionMenu = $menu; // $menu->addChild('admin.label.redirection', ['route' => 'admin_redirection_list'])->setExtra(self::ORDER_NUMBER, 3);
 
         if (\count($hosts) > 1) {
+            $isRequesteingRedirection = $this->isRequestingRedirection();
             foreach ($hosts as $host) {
                 $hostMenu = $redirectionMenu->addChild($host, [
                     'route' => 'admin_redirection_list',
@@ -99,21 +113,53 @@ final class PageMenuProvider implements ContainerAwareInterface
             $redirectionMenu->setCurrent(true);
         }
 
-        $menu->addChild($this->translator->trans('admin.label.media'), ['route' => 'admin_app_media_list']);
+        return $menu;
+    }
 
-        if (class_exists(PushwordConversationBundle::class)) { // TODO : move it to an event listerner in conversation bundle and create event here
-            $menu->addChild(
-                $this->translator->trans('admin.label.conversation'),
-                ['route' => 'admin_pushword_conversation_message_list']
-            );
+    #[AsEventListener(event: 'sonata.admin.event.configure.menu.sidebar')]
+    public function reOrderMenu(ConfigureMenuEvent $event): void
+    {
+        $menu = $event->getMenu();
+        $this->reorderMenuItems($menu);
+    }
+
+    private function getPriority(MenuItem $menuItem): ?int
+    {
+        if ('admin.label.media' === $menuItem->getLabel()) {
+            return 2;
         }
 
-        $menu->addChild(
-            $this->translator->trans('admin.label.cheatsheet'),
-            ['route' => 'cheatsheetEditRoute'],
-        );
+        return $menuItem->getExtra(self::ORDER_NUMBER);
+    }
 
-        return $menu;
+    /**
+     * Inspire by priority concept from Router
+     * https://github.com/symfony/routing/blob/6.3/RouteCollection.php#L104.
+     */
+    public function reorderMenuItems(ItemInterface $menu): void
+    {
+        $priorities = [];
+        $menuItems = $menu->getChildren();
+        $menuItemsNameList = [];
+        foreach ($menuItems as $key => $menuItem) {
+            if ($menuItem->hasChildren()) {
+                $this->reorderMenuItems($menuItem);
+            }
+            $priority = $this->getPriority($menuItem);
+            if (! \in_array($priority, [null, 0], true)) {
+                $priorities[$key] = $priority;
+            }
+            $menuItemsNameList[$key] = $menuItem->getName();
+        }
+
+        if ([] !== $priorities) {
+            $keysOrder = array_flip(array_keys($menuItemsNameList));
+            uksort($menuItemsNameList, static fn ($n1, $n2) => (($priorities[$n1] ?? 1000000) <=> ($priorities[$n2] ?? 1000000)) ?: ($keysOrder[$n1] <=> $keysOrder[$n2])); // @phpstan-ignore-line
+        }
+
+        $menu->reorderChildren($menuItemsNameList);
+
+        return;
     }
 
     private function isRequestingRedirection(): bool
