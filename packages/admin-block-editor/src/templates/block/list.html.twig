@@ -1,4 +1,4 @@
-<div{{ blockWrapperAttr(block, {class: 'prose mx-auto'}) }}>
+
 {{ block.data.style == 'unordered' ? '<ul>' : '<ol>' }}
 {% for item in block.data.items %}
     {% if item.content is defined %}
@@ -11,7 +11,6 @@
     {% endif %}
 {% endfor %}
 {{ block.data.style == 'unordered' ? '</ul>' : '</ol>' }}
-</div>
 
 
 {% macro nested_list(items, style) %}
