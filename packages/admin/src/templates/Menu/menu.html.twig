@@ -11,5 +11,9 @@
         {% do item.setAttribute('class', (item.getAttribute('class') ~ ' active')) %}
     {% endif %}
 
-    {{ parent() }}
+    {% if item.name in ['page'] %}
+        {% do item.setAttribute('class', (item.getAttribute('class')|replace({'treeview':''}))) %}
+    {% endif %}
+
+    {{ parent()|preg_replace('@treeview(.*/admin/app/page/list)@', '$1')|raw }}
 {% endblock %}

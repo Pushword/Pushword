@@ -1,4 +1,4 @@
-
+{#{{ blockWrapperAttr(block) }}#}
 {{ block.data.style == 'unordered' ? '<ul>' : '<ol>' }}
 {% for item in block.data.items %}
     {% if item.content is defined %}

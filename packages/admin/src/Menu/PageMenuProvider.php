@@ -43,8 +43,9 @@ final class PageMenuProvider implements ContainerAwareInterface
         $menu = $factory->createItem('content', [
             'label' => $this->translator->trans('admin.label.content'),
             'route' => 'admin_page_list',
+            'name' => 'page',
         ])
-            ->setCurrent(true) // dirty hack to prevent bug
+            // ->setCurrent(true) // dirty hack to prevent bug
             // ->setExtra('keep_open', true)
             ->setExtra(self::ORDER_NUMBER, 1)
         ;
@@ -53,6 +54,7 @@ final class PageMenuProvider implements ContainerAwareInterface
 
         $isRequesteingRedirection = $this->isRequestingRedirection();
         if (\count($hosts) > 1) {
+            $pageMenu->setCurrent(true);
             foreach ($hosts as $host) {
                 $hostMenu = $pageMenu->addChild($host, [
                     'route' => 'admin_page_list',
@@ -68,9 +70,11 @@ final class PageMenuProvider implements ContainerAwareInterface
 
                 $hostMenu->setCurrent(true);
             }
-        } elseif ($this->isRequestingPageEdit() && ! $isRequesteingRedirection) {
-            $pageMenu->setCurrent(true);
         }
+
+        // if ($this->isRequestingPageEdit() && ! $isRequesteingRedirection) {
+        //     $pageMenu->setCurrent(true);
+        // }
 
         $menu->addChild('admin.label.cheatsheet', ['route' => 'cheatsheetEditRoute']);
 
