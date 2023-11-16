@@ -10,6 +10,12 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[Template Editor]]></title>
+                    <link>https://pushword.piedweb.com/extension/template-editor</link>
+                    <guid>https://pushword.piedweb.com/extension/template-editor</guid>
+                    <pubDate>Wed, 15 Nov 2023 20:38:22 +0000</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Installation]]></title>
                     <link>https://pushword.piedweb.com/installation</link>
                     <guid>https://pushword.piedweb.com/installation</guid>
@@ -32,12 +38,6 @@
                     <link>https://pushword.piedweb.com/</link>
                     <guid>https://pushword.piedweb.com/</guid>
                     <pubDate>Mon, 25 Sep 2023 15:27:57 +0000</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Page Scanner]]></title>
-                    <link>https://pushword.piedweb.com/extension/page-scanner</link>
-                    <guid>https://pushword.piedweb.com/extension/page-scanner</guid>
-                    <pubDate>Sat, 05 Nov 2022 17:58:33 +0000</pubDate>
                 </item>
                             
     </channel>
