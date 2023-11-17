@@ -53,7 +53,9 @@ class TwigExtension extends AbstractExtension
                 return $this->getSvg(SvgFontAwesome5To6::convertNameFromFontAwesome5To6($name), $attr, $dir, false);
             }
 
-            throw new \Exception('`'.$name.'` (svg) not found.');
+            return 'question' !== $name
+                ? $this->getSvg('question', $attr, $dir, $retryWithFontAwesome5IconsRenamed)
+                : throw new \Exception('`'.$name.'` (svg) not found.');
         }
 
         if (! \in_array(\Safe\mime_content_type($file), ['image/svg+xml', 'image/svg'], true)
