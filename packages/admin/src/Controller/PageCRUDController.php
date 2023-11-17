@@ -1,6 +1,6 @@
 <?php
 
-namespace Pushword\Admin;
+namespace Pushword\Admin\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\PageInterface;

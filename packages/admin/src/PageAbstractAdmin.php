@@ -3,6 +3,7 @@
 namespace Pushword\Admin;
 
 use Doctrine\ORM\QueryBuilder;
+use Pushword\Admin\Controller\PageCRUDController;
 use Pushword\Admin\FormField\HostField;
 use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Admin\AbstractAdmin;

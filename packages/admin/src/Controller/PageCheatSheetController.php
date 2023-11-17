@@ -1,8 +1,9 @@
 <?php
 
-namespace Pushword\Admin;
+namespace Pushword\Admin\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
