@@ -6,6 +6,7 @@ use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageMainContentField;
 use Pushword\Admin\PageAdmin;
+use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Admin\Utils\FormFieldReplacer;
 use Pushword\AdminBlockEditor\FormField\PageH1FormField;
 use Pushword\AdminBlockEditor\FormField\PageImageFormField;
@@ -31,11 +32,19 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
     }
 
     /**
+     * @param PersistenceEvent<PageInterface>|FormEvent<PageInterface> $event
+     */
+    private function isPageAdmin(PersistenceEvent|FormEvent $event): bool
+    {
+        return $event->getAdmin() instanceof PageAdmin || $event->getAdmin() instanceof PageCheatSheetAdmin;
+    }
+
+    /**
      * @param PersistenceEvent<PageInterface> $persistenceEvent
      */
     public function setMainContent(PersistenceEvent $persistenceEvent): void
     {
-        if (! $persistenceEvent->getAdmin() instanceof PageAdmin) {
+        if (! $this->isPageAdmin($persistenceEvent)) {
             return;
         }
 
@@ -56,11 +65,11 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
     /**
      * @psalm-suppress  NoInterfaceProperties
      *
-     * @param FormEvent<T> $formEvent
+     * @param FormEvent<PageInterface> $formEvent
      */
     public function replaceFields(FormEvent $formEvent): void
     {
-        if (! $formEvent->getAdmin() instanceof PageAdmin) {
+        if (! $this->isPageAdmin($formEvent)) {
             return;
         }
 
