@@ -6,8 +6,15 @@ use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Datagrid\ProxyQueryInterface;
 use Sonata\AdminBundle\Form\FormMapper;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
-class PageRedirectionAdmin extends PageAdmin
+#[AutoconfigureTag('sonata.admin', [
+    'model_class' => '%pw.entity_page%',
+    'manager_type' => 'orm',
+    'label' => 'admin.label.page',
+    'default' => false,
+])]
+class PageRedirectionAdmin extends PageAbstractAdmin
 {
     /**
      * @psalm-suppress InvalidArgument

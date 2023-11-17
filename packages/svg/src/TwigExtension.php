@@ -23,11 +23,15 @@ class TwigExtension extends AbstractExtension
     }
 
     /**
-     * @param array<string, string> $attr
-     * @param string[]|string       $dir
+     * @param array<string, string>|string $attr
+     * @param string[]|string              $dir
      */
-    public function getSvg(string $name, array $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], array|string $dir = '', bool $retryWithFontAwesome5IconsRenamed = true): string
+    public function getSvg(string $name, array|string $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], array|string $dir = '', bool $retryWithFontAwesome5IconsRenamed = true): string
     {
+        if (\is_string($attr)) {
+            $attr = ['class' => $attr];
+        }
+
         $dirs = '' !== $dir ? $dir : $this->apps->get()->get('svg_dir');
 
         if (! \is_array($dirs)) {

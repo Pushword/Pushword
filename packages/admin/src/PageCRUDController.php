@@ -3,42 +3,28 @@
 namespace Pushword\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Container\ContainerInterface;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Sonata\AdminBundle\Controller\CRUDController as SonataCRUDController;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * @extends SonataCRUDController<PageInterface>
  */
+#[AutoconfigureTag('controller.service_arguments')]
 class PageCRUDController extends SonataCRUDController
 {
     protected ParameterBagInterface $params;
 
-    /**
-     * https://github.com/symfony/symfony/blob/5.4/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php.
-     */
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public EntityManagerInterface $entityManager;
 
-    /**
-     * https://github.com/symfony/symfony/blob/5.4/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php.
-     */
-    #[\Symfony\Contracts\Service\Attribute\Required]
-    public function loadContainer(ContainerInterface $container): void
-    {
-        $this->container = $container;
-
-        if (! $this->container->has('parameter_bag')) { // @phpstan-ignore-line
-            throw new \Exception('patch no longer worked');
-        }
-    }
-
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setParams(ParameterBagInterface $parameterBag): void
     {
         $this->params = $parameterBag;

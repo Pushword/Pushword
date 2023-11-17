@@ -7,6 +7,7 @@ use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
@@ -14,6 +15,11 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
  *
  * @implements AdminInterface<UserInterface>
  */
+#[AutoconfigureTag('sonata.admin', [
+    'model_class' => '%pw.entity_user%',
+    'manager_type' => 'orm',
+    'label' => 'admin.label.user',
+])]
 class UserAdmin extends AbstractAdmin implements AdminInterface
 {
     /**

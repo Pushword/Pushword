@@ -14,8 +14,9 @@ class PageH1Field extends AbstractField
     /**
      * @var string
      */
-    final public const DEFAULT_STYLE = 'font-size: 22px !important; border:0;'
-            .'font-weight: 700; padding: 10px 10px 0px 10px; margin-top:-23px; margin-bottom:-23px max-width: 640px; color:#111827';
+    final public const DEFAULT_STYLE = 'font-size: 22px !important; font-weight: 700; border:0; color:#111827;'
+        .'padding: 10px 10px 0px 10px; margin-top:-23px; margin-bottom:-23px;
+        max-width: 640px; ';
 
     /**
      * @param FormMapper<PageInterface> $form
@@ -29,7 +30,11 @@ class PageH1Field extends AbstractField
         // Todo move style to view
         return $form->add('h1', TextareaType::class, [
             'required' => false,
-            'attr' => ['class' => 'autosize textarea-no-newline ce-block__content', 'placeholder' => 'admin.page.title.label', 'style' => $style],
+            'attr' => [
+                'class' => 'autosize textarea-no-newline ce-block__content',
+                'placeholder' => 'admin.page.title.label',
+                'style' => $style,
+            ],
             'label' => ' ',
         ]);
     }

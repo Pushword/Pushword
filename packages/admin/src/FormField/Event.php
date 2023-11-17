@@ -18,7 +18,7 @@ class Event extends SfEvent
 
     /**
      * @param AdminInterface<T> $admin
-     * @param mixed[]           $fields
+     * @param mixed[]           $fields // TODO Reduce complexity !!!
      */
     public function __construct(
         private readonly AdminInterface $admin,

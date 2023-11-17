@@ -6,11 +6,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AutoconfigureTag('controller.service_arguments')]
 class PageCheatSheetController extends AbstractController
 {
     public function __construct(

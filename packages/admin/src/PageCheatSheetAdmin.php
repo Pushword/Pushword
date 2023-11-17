@@ -4,8 +4,15 @@ namespace Pushword\Admin;
 
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Route\RouteCollectionInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
-class PageCheatSheetAdmin extends PageAdmin
+#[AutoconfigureTag('sonata.admin', [
+    'model_class' => '%pw.entity_page%',
+    'manager_type' => 'orm',
+    'label' => 'admin.label.page',
+    'default' => false,
+])]
+class PageCheatSheetAdmin extends PageAbstractAdmin
 {
     final public const CHEATSHEET_SLUG = 'pushword-cheatsheet';
 

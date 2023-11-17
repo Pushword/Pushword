@@ -25,8 +25,6 @@ trait AdminTrait
 {
     protected AppPool $apps;
 
-    private ImageManager $imageManager;
-
     /**
      * @var class-string<PageInterface>
      */
@@ -38,8 +36,6 @@ trait AdminTrait
     protected string $mediaClass;
 
     protected string $userClass;
-
-    protected Twig $twig;
 
     protected EntityManagerInterface $em;
 
@@ -145,6 +141,9 @@ trait AdminTrait
         return $this->em;
     }
 
+    /** Used in AbstractField::class / MediaPreviewField::class */
+    protected Twig $twig;
+
     #[Required]
     public function setTwig(Twig $twig): void
     {
@@ -226,17 +225,6 @@ trait AdminTrait
         return $this->messagePrefix;
     }
 
-    #[Required]
-    public function setImageManager(ImageManager $imageManager): void
-    {
-        $this->imageManager = $imageManager;
-    }
-
-    public function getImageManager(): ImageManager
-    {
-        return $this->imageManager;
-    }
-
     /**
      * @psalm-suppress InvalidArgument
      *
@@ -254,5 +242,20 @@ trait AdminTrait
         $this->eventDispatcher->dispatch($event, FormEvent::NAME);
 
         return $event->getFields();
+    }
+
+    private ImageManager $imageManager;
+
+    public function getImageManager(): ImageManager
+    {
+        return $this->imageManager;
+    }
+
+    #[Required]
+    public function setImageManager(ImageManager $imageManager): self
+    {
+        $this->imageManager = $imageManager;
+
+        return $this;
     }
 }

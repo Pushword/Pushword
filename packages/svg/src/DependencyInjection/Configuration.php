@@ -23,6 +23,7 @@ class Configuration implements ConfigurationInterface
         $treeBuilder->getRootNode()->children()
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
             ->variableNode('svg_dir')->defaultValue([
+                '%kernel.project_dir%/templates/icons',
                 '%vendor_dir%/fortawesome/font-awesome/svgs/solid',
                 '%vendor_dir%/fortawesome/font-awesome/svgs/regular',
                 '%vendor_dir%/fortawesome/font-awesome/svgs/brands',

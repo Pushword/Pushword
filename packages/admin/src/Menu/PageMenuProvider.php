@@ -6,6 +6,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Knp\Menu\FactoryInterface;
 use Knp\Menu\ItemInterface;
 use Sonata\AdminBundle\Event\ConfigureMenuEvent;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -13,6 +14,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AutoconfigureTag('knp_menu.menu_builder', ['method' => 'getMenu', 'alias' => 'page_admin_menu'])]
+#[AutoconfigureTag('knp_menu.menu_builder', ['method' => 'getRedirectionMenu', 'alias' => 'redirection_admin_menu'])]
 final class PageMenuProvider implements ContainerAwareInterface
 {
     use ContainerAwareTrait;
