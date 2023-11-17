@@ -29,7 +29,7 @@ class TwigExtension extends AbstractExtension
     public function getSvg(string $name, array|string $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], array|string $dir = '', bool $retryWithFontAwesome5IconsRenamed = true): string
     {
         if (\is_string($attr)) {
-            $attr = ['class' => str_contains($attr, 'block') ? $attr : $attr.'fill-current w-4 inline-block -mt-1'];
+            $attr = ['class' => str_contains($attr, 'block') ? $attr : 'fill-current w-4 inline-block -mt-1 '.$attr];
         }
 
         $dirs = '' !== $dir ? $dir : $this->apps->get()->get('svg_dir');
