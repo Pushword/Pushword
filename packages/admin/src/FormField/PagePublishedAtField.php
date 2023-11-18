@@ -22,17 +22,13 @@ class PagePublishedAtField extends AbstractField
             'label' => $this->formFieldManager->getMessagePrefix().'.publishedAt.label',
             'help' => $this->getHelp(),
             'help_html' => true,
+            'attr' => ['data-selector' => 'publishedAtToDraft'],
         ]);
     }
 
     private function getHelp(): string
     {
-        $published = $this->getSubject()->getPublishedAt() <= new \DateTime('now');
-
-        // TODO: translate
-        return null !== $this->getSubject()->getId() ?
-            $this->trans($this->formFieldManager->getMessagePrefix().'.publishedAt.'.($published ? 'online' : 'draft'))
-            : '';
+        return $this->formFieldManager->twig->render('@pwAdmin/page/page_draft.html.twig', ['page' => $this->getSubject(), 'draft' => $this->getSubject()->getPublishedAt() > new \DateTime('now')]);
     }
 
     private function getSubject(): PageInterface

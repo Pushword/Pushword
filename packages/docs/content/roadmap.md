@@ -10,6 +10,7 @@ parent: contribute
 -   [Core] https://github.com/jolicode/JoliTypo
 
 -   [Admin] Brouillon
+-   [Admin] Block (left column) for viewing Page subtitle and navigate in the content
 -   [Admin] Page : Code Editor for Autres paramêtres (yaml highlighting)
 -   [Admin] Implements htmx ?!
 -   [Admin] Better Parent UX : Title + Slug
@@ -73,7 +74,6 @@ parent: contribute
 *   **Flat** (spatie/yaml-front-matter, vérif à chaque requête pour une sync constante admin <-> flat files)
 
 -   [New] Batch Action
-
 
 -- [All] Drop Weird Config Prepender
 
