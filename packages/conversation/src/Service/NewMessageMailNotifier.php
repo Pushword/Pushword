@@ -49,7 +49,7 @@ class NewMessageMailNotifier
      */
     protected function getMessagesPostedSince(\DateTimeInterface $datetime)
     {
-        $query = 'SELECT m FROM '.$this->message.' m WHERE m.host = :host AND m.createdAt > :lastNotificationTime';
+        $query = 'SELECT m FROM '.$this->message.' m WHERE m.authorEmail IS NULL AND m.host = :host AND m.createdAt > :lastNotificationTime';
         $query = $this->em->createQuery($query)
             ->setParameter('lastNotificationTime', $datetime, 'datetime')
             ->setParameter('host', $this->host);
@@ -57,15 +57,36 @@ class NewMessageMailNotifier
         return $query->getResult(); // @phpstan-ignore-line
     }
 
-    public function postPersist(): void
+    public function postPersist(Message $message): void
     {
-        $this->send();
+        if (null === $message->getAuthorEmail()) {
+            // $this->send();
+
+            return;
+        }
+
+        $this->sendMessage($message);
     }
 
-    /**
-     * @return bool|void
-     */
-    public function send()
+    public function sendMessage(Message $message): void
+    {
+        $authorEmail = $message->getAuthorEmail() ?? throw new \Exception();
+
+        $templatedEmail = (new TemplatedEmail())
+            ->subject(
+                $this->translator->trans('admin.conversation.notification.title.singular', ['%appName%' => $this->appName])
+            )
+            ->from($this->emailFrom)
+            ->to($this->emailTo)
+            ->replyTo($authorEmail)
+            ->text($message->getContent()
+                ."\n\n---\n"
+                .'Envoyé depuis '.$message->getHost().' '.$message->getReferring());
+
+        $this->mailer->send($templatedEmail);
+    }
+
+    public function send(): void
     {
         if ('' === $this->emailTo) {
             $this->logger->info('Not sending conversation notification : `conversation_notification_email_to` is not configured.');
@@ -106,7 +127,5 @@ class NewMessageMailNotifier
 
         $lastTime->set();
         $this->mailer->send($templatedEmail);
-
-        return true;
     }
 }

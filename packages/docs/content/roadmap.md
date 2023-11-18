@@ -8,8 +8,8 @@ parent: contribute
 ## BugFix && To finish
 
 -   [Core] https://github.com/jolicode/JoliTypo
+-   [Core/AdminBlockEditor] Related, RelatedToParent
 
--   [Admin] Brouillon
 -   [Admin] Block (left column) for viewing Page subtitle and navigate in the content
 -   [Admin] Page : Code Editor for Autres paramêtres (yaml highlighting)
 -   [Admin] Implements htmx ?!
