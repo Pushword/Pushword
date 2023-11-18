@@ -22,7 +22,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 ])]
 class UserAdmin extends AbstractAdmin implements AdminInterface
 {
-    public const MESSAGE_PREFIX = 'admin.user';
+    final public const MESSAGE_PREFIX = 'admin.user';
 
     public function __construct(
         private readonly AdminFormFieldManager $adminFormFieldManager

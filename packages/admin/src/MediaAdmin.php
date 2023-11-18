@@ -34,8 +34,8 @@ final class MediaAdmin extends AbstractAdmin implements AdminInterface
 
     public function __construct(
         private readonly AdminFormFieldManager $adminFormFieldManager,
-        private EntityManagerInterface $entityManager,
-        private ImageManager $imageManager,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ImageManager $imageManager,
     ) {
         $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
         parent::__construct();

@@ -47,6 +47,7 @@ final class AdminFormEventSuscriber implements EventSubscriberInterface
         if (false === $this->apps->get($page->getHost())->get('advanced_main_image')) {
             return;
         }
+
         $fields = $formEvent->getFields();
         (new FormFieldReplacer())->run(PageMainImageField::class, PageAdvancedMainImageFormField::class, $fields);
 

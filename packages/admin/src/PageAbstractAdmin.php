@@ -28,12 +28,12 @@ use Symfony\Component\HttpFoundation\RequestStack;
  */
 abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
 {
-    public const FORM_FIELD_KEY = 'admin_page_form_fields';
+    final public const FORM_FIELD_KEY = 'admin_page_form_fields';
 
     /** @var bool */
     public $supportsPreviewMode = true;
 
-    public const MESSAGE_PREFIX = 'admin.page';
+    final public const MESSAGE_PREFIX = 'admin.page';
 
     /** @var string[] */
     protected array $fields = [];
@@ -51,8 +51,8 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
 
     public function __construct(
         private readonly AdminFormFieldManager $adminFormFieldManager,
-        private AppPool $apps,
-        private ImageManager $imageManager,
+        private readonly AppPool $apps,
+        private readonly ImageManager $imageManager,
         RequestStack $requestStack,
     ) {
         $adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
