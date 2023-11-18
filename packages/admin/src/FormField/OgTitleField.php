@@ -13,12 +13,10 @@ class OgTitleField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('ogTitle', TextType::class, [
+        $form->add('ogTitle', TextType::class, [
             'label' => 'admin.page.ogTitle.label',
             'required' => false,
             'help_html' => true,

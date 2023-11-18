@@ -13,12 +13,10 @@ class PageSearchExcreptField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('searchExcrept', TextareaType::class, [
+        $form->add('searchExcrept', TextareaType::class, [
             'required' => false,
             'label' => 'admin.page.searchExcrept.label',
             'help_html' => true,

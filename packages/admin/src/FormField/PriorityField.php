@@ -12,19 +12,11 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
  */
 class PriorityField extends AbstractField
 {
-    /**
-     * @psalm-suppress InvalidReturnStatement
-     * @psalm-suppress InvalidReturnType
-     */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add(
-            'priority',
-            NumberType::class,
-            [
-                'required' => false,
-                'label' => 'admin.page.priority.label',
-            ]
-        );
+        $form->add('priority', NumberType::class, [
+            'required' => false,
+            'label' => 'admin.page.priority.label',
+        ]);
     }
 }

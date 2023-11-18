@@ -32,19 +32,25 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
     }
 
     /**
-     * @param PersistenceEvent<PageInterface>|FormEvent<PageInterface> $event
+     * @param PersistenceEvent<T>|FormEvent<T> $event
      */
-    private function isPageAdmin(PersistenceEvent|FormEvent $event): bool
+    private function getPage(PersistenceEvent|FormEvent $event): ?PageInterface
     {
-        return $event->getAdmin() instanceof PageAdmin || $event->getAdmin() instanceof PageCheatSheetAdmin;
+        $subject = $event->getAdmin()->getSubject();
+        if ($subject instanceof PageInterface) { //  $event->getAdmin() instanceof PageAdmin || $event->getAdmin() instanceof PageCheatSheetAdmin
+            return $subject;
+        }
+
+        return null;
     }
 
     /**
-     * @param PersistenceEvent<PageInterface> $persistenceEvent
+     * @param PersistenceEvent<T> $persistenceEvent
      */
     public function setMainContent(PersistenceEvent $persistenceEvent): void
     {
-        if (! $this->isPageAdmin($persistenceEvent)) {
+        $page = $this->getPage($persistenceEvent);
+        if (null === $page) {
             return;
         }
 
@@ -59,32 +65,34 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         }
 
         // sanitize with https://github.com/editor-js/editorjs-php
-        $persistenceEvent->getAdmin()->getSubject()->setMainContent($returnValues['mainContent']);
+        $page->setMainContent($returnValues['mainContent']);
     }
 
     /**
-     * @psalm-suppress  NoInterfaceProperties
+     * @psalm-suppress  InvalidArgument // use only phpstan
      *
-     * @param FormEvent<PageInterface> $formEvent
+     * @param FormEvent<T> $formEvent
      */
     public function replaceFields(FormEvent $formEvent): void
     {
-        if (! $this->isPageAdmin($formEvent)) {
+        $page = $this->getPage($formEvent);
+        if (null === $page) {
             return;
         }
 
-        if (! $this->mayUseEditorBlock($formEvent->getAdmin()->getSubject())) {
+        /** @var FormEvent<PageInterface> */
+        $formEventPage = $formEvent;
+
+        if (! $this->mayUseEditorBlock($page, $formEventPage)) {
             return;
         }
 
         $fields = $formEvent->getFields();
 
-        $fields = (new FormFieldReplacer())->run(PageMainContentField::class, PageMainContentFormField::class, $fields);
-        $fields = (new FormFieldReplacer())->run(PageH1Field::class, PageH1FormField::class, $fields);
+        (new FormFieldReplacer())->run(PageMainContentField::class, PageMainContentFormField::class, $fields);
+        (new FormFieldReplacer())->run(PageH1Field::class, PageH1FormField::class, $fields);
 
-        if (! \is_array($fields[0])) {
-            throw new \LogicException();
-        }
+        // if (! \is_array($fields[0])) { throw new \LogicException(); }
 
         $fields[0][PageImageFormField::class] = PageImageFormField::class;
 

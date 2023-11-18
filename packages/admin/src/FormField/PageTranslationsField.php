@@ -13,15 +13,13 @@ class PageTranslationsField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('translations', ModelAutocompleteType::class, [
+        $form->add('translations', ModelAutocompleteType::class, [
             'required' => false,
             'multiple' => true,
-            'class' => $this->admin->getPageClass(),
+            'class' => $this->admin->getModelClass(),
             'property' => 'slug',
             'label' => 'admin.page.translations.label',
             'help_html' => true,

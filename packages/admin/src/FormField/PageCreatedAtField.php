@@ -13,15 +13,13 @@ class PageCreatedAtField extends CreatedAtField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('createdAt', DateTimePickerType::class, [
+        $form->add('createdAt', DateTimePickerType::class, [
             'format' => CreatedAtField::DateTimePickerFormat,
             'datepicker_options' => CreatedAtField::DateTimePickerOptions,
-            'label' => $this->admin->getMessagePrefix().'.createdAt.label',
+            'label' => $this->formFieldManager->getMessagePrefix().'.createdAt.label',
         ]);
     }
 }

@@ -14,18 +14,16 @@ class UserRolesField extends AbstractField
 {
     /**
      * @param FormMapper<UserInterface> $form
-     *
-     * @return FormMapper<UserInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('roles', ImmutableArrayType::class, [
+        $form->add('roles', ImmutableArrayType::class, [
             'label' => false,
             'keys' => [
                 ['0', ChoiceType::class, [
                     'required' => false,
                     'label' => 'admin.user.role.label',
-                    'choices' => \in_array('ROLE_SUPER_ADMIN', $this->admin->getUser()->getRoles(), true) ? [
+                    'choices' => \in_array('ROLE_SUPER_ADMIN', $this->formFieldManager->user?->getRoles() ?? [], true) ? [
                         'admin.user.role.super_admin' => 'ROLE_SUPER_ADMIN',
                         'admin.user.role.admin' => 'ROLE_ADMIN',
                         'admin.user.role.editor' => 'ROLE_EDITOR',

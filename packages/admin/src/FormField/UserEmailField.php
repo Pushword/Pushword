@@ -12,12 +12,10 @@ class UserEmailField extends AbstractField
 {
     /**
      * @param FormMapper<UserInterface> $form
-     *
-     * @return FormMapper<UserInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form
-            ->add('email', null, ['label' => 'admin.user.email.label']);
+        $form
+                ->add('email', null, ['label' => 'admin.user.email.label']);
     }
 }

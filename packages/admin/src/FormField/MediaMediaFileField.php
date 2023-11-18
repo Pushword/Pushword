@@ -13,12 +13,10 @@ final class MediaMediaFileField extends AbstractField
 {
     /**
      * @param FormMapper<MediaInterface> $form
-     *
-     * @return FormMapper<MediaInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('mediaFile', FileType::class, [
+        $form->add('mediaFile', FileType::class, [
             'label' => 'admin.media.mediaFile.label',
             'required' => null === $this->admin->getSubject()->getId(),
         ]);

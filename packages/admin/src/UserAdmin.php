@@ -22,15 +22,14 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 ])]
 class UserAdmin extends AbstractAdmin implements AdminInterface
 {
-    /**
-     * @use AdminTrait<UserInterface>
-     */
-    use AdminTrait;
+    public const MESSAGE_PREFIX = 'admin.user';
 
-    /**
-     * @var string
-     */
-    protected $messagePrefix = 'admin.user';
+    public function __construct(
+        private readonly AdminFormFieldManager $adminFormFieldManager
+    ) {
+        $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
+        parent::__construct();
+    }
 
     protected function configureDefaultSortValues(array &$sortValues): void
     {
@@ -43,28 +42,30 @@ class UserAdmin extends AbstractAdmin implements AdminInterface
 
     protected function exists(string $name): bool
     {
-        return method_exists($this->userClass, 'get'.$name);
+        return method_exists($this->getModelClass(), 'get'.$name);
     }
 
+    /**
+     * @psalm-suppress  InvalidArgument // use only phpstan
+     */
     protected function configureFormFields(FormMapper $form): void
     {
-        $this->formFieldKey = 'admin_user_form_fields';
-        $fields = $this->getFormFields();
-        if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) {
-            throw new \LogicException();
-        }
+        $fields = $this->adminFormFieldManager->getFormFields($this, 'admin_user_form_fields');
+        // if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) { throw new \LogicException(); }
 
         $form->with('admin.user.label.id', ['class' => 'col-md-6 mainFields']);
         foreach ($fields[0] as $field) {
-            $this->addFormField($field, $form);
+            $this->adminFormFieldManager->addFormField($field, $form, $this);
         }
 
         $form->end();
 
         foreach ($fields[1] as $k => $block) {
+            $block = \is_array($block) ? $block : throw new \Exception();
             $form->with($k, ['class' => 'col-md-3 columnFields']);
-            foreach ($block as $singleBlock) {
-                $this->addFormField($singleBlock, $form);
+            foreach ($block as $field) {
+                $field = \is_string($field) ? $field : throw new \Exception();
+                $this->adminFormFieldManager->addFormField($field, $form, $this);
             }
 
             $form->end();

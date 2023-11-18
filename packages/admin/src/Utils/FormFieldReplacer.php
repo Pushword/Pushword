@@ -2,6 +2,9 @@
 
 namespace Pushword\Admin\Utils;
 
+/**
+ * @template T of object
+ */
 class FormFieldReplacer
 {
     private int $replaced = 0;
@@ -12,15 +15,13 @@ class FormFieldReplacer
     }
 
     /**
-     * @param mixed[] $fields
-     *
-     * @return mixed[]
+     * @param class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<class-string<\Pushword\Admin\FormField\AbstractField<T>>[]> $fields
      */
-    public function run(string $formFieldClass, string $newFormFieldClass, array $fields): array
+    public function run(string $formFieldClass, string $newFormFieldClass, array &$fields): void
     {
         foreach ($fields as $k => $field) {
             if (\is_array($field)) {
-                $fields[$k] = $this->run($formFieldClass, $newFormFieldClass, $field);
+                $this->run($formFieldClass, $newFormFieldClass, $fields[$k]);
 
                 continue;
             }
@@ -32,7 +33,5 @@ class FormFieldReplacer
                 break;
             }
         }
-
-        return $fields;
     }
 }

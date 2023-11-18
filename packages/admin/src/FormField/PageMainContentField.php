@@ -13,12 +13,10 @@ class PageMainContentField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('mainContent', TextareaType::class, [
+        $form->add('mainContent', TextareaType::class, [
             'attr' => [
                 'style' => 'min-height: 50vh;font-size:125%; max-width:900px',
                 'data-editor' => 'markdown',

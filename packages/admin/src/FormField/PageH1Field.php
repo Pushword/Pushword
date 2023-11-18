@@ -20,15 +20,13 @@ class PageH1Field extends AbstractField
 
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form, string $style = ''): FormMapper
+    public function formField(FormMapper $form, string $style = ''): void
     {
         $style = '' !== $style ? $style : self::DEFAULT_STYLE;
 
         // Todo move style to view
-        return $form->add('h1', TextareaType::class, [
+        $form->add('h1', TextareaType::class, [
             'required' => false,
             'attr' => [
                 'class' => 'autosize textarea-no-newline ce-block__content',

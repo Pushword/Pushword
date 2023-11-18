@@ -13,12 +13,10 @@ class OgDescriptionField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('ogDescription', TextareaType::class, [
+        $form->add('ogDescription', TextareaType::class, [
             'required' => false,
             'label' => 'admin.page.ogDescription.label',
             'help_html' => true,

@@ -25,17 +25,15 @@ class CreatedAtField extends AbstractField
     /**
      * @param FormMapper<T> $form
      *
-     * @return FormMapper<T>
-     *
      * @psalm-suppress InvalidReturnStatement
      * @psalm-suppress InvalidReturnType
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('createdAt', DateTimePickerType::class, [
+        $form->add('createdAt', DateTimePickerType::class, [
             'format' => self::DateTimePickerFormat,
             'datepicker_options' => self::DateTimePickerOptions,
-            'label' => $this->admin->getMessagePrefix().'.createdAt.label',
+            'label' => $this->formFieldManager->getMessagePrefix().'.createdAt.label',
         ]);
     }
 }

@@ -12,16 +12,18 @@ use Sonata\AdminBundle\Form\FormMapper;
  */
 class PageMainContentFormField extends AbstractField
 {
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('mainContent', EditorjsType::class, [
+        $page = $this->admin->getSubject();
+
+        $form->add('mainContent', EditorjsType::class, [
             'required' => false,
             'label' => ' ',
             'help_html' => true,
             'help' => 'admin.page.mainContent.help',
             'mapped' => false,
-            'data' => $this->admin->getSubject()->getMainContent(),
-            'attr' => ['page_id' => $this->admin->getSubject()->getId()],
+            'data' => $page->getMainContent(),
+            'attr' => ['page_id' => $page->getId()],
         ]);
     }
 }

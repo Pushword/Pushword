@@ -13,12 +13,10 @@ class PageLocaleField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('locale', TextType::class, [
+        $form->add('locale', TextType::class, [
             'label' => 'admin.page.locale.label',
             'help_html' => true,
             'help' => 'admin.page.locale.help',

@@ -13,12 +13,10 @@ class OgImageField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('ogImage', TextType::class, [
+        $form->add('ogImage', TextType::class, [
             'required' => false,
             'label' => 'admin.page.ogImage.label',
             'help_html' => true,

@@ -12,18 +12,14 @@ class PageMainImageField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
         $form->add('mainImage', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
             'required' => false,
-            'class' => $this->admin->getMediaClass(),
+            'class' => $this->formFieldManager->mediaClass,
             'label' => ' ', // 'admin.page.mainImage.label',
             'btn_edit' => false,
         ]);
-
-        return $form;
     }
 }

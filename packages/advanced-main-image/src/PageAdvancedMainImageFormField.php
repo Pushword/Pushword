@@ -8,7 +8,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 class PageAdvancedMainImageFormField extends PageMainImageField
 {
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
         parent::formField($form);
 
@@ -27,8 +27,6 @@ class PageAdvancedMainImageFormField extends PageMainImageField
             ],
             'data' => \intval($subject->getCustomPropertyScalar('mainImageFormat')),
         ]);
-
-        return $form;
     }
 
     public static function formatToRatio(int $format): string

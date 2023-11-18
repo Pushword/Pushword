@@ -20,9 +20,9 @@ class PageSlugField extends AbstractField
         /** @param PageInterface $page */
         $page = $this->admin->getSubject();
 
-        $url = $page->getHost().$this->admin->getRouter()->generate('pushword_page', ['slug' => $page->getRealSlug()]);
+        $url = $page->getHost().$this->formFieldManager->router->generate('pushword_page', ['slug' => $page->getRealSlug()]);
         $liveUrl = '' !== $page->getHost() ?
-            $this->admin->getRouter()->generate(
+            $this->formFieldManager->router->generate(
                 'custom_host_pushword_page',
                 ['host' => $page->getHost(), 'slug' => $page->getRealSlug()]
             ) : $url;
@@ -38,12 +38,10 @@ class PageSlugField extends AbstractField
 
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('slug', TextType::class, [
+        $form->add('slug', TextType::class, [
             'required' => false,
             'label' => 'admin.page.slug.label',
             'help_html' => true,

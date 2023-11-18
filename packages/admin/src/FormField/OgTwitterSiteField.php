@@ -13,12 +13,10 @@ class OgTwitterSiteField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('twitterSite', TextType::class, [
+        $form->add('twitterSite', TextType::class, [
             'required' => false,
             'label' => 'admin.page.twitterSite.label',
             'help_html' => true,

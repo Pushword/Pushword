@@ -16,20 +16,20 @@ class CustomPropertiesField extends AbstractField
      * @psalm-suppress InvalidReturnStatement
      * @psalm-suppress InvalidReturnType
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('standAloneCustomProperties', TextareaType::class, [
+        $form->add('standAloneCustomProperties', TextareaType::class, [
             'required' => false,
             'attr' => [
                 'style' => 'width:100%; height:100px;min-height:15vh',
                 // 'data-editor' => 'yaml',
                 'class' => 'autosize',
             ],
-            // 'label' => $this->admin->getMessagePrefix().'.customProperties.label',
+            // 'label' => $this->formFieldManager->getMessagePrefix().'.customProperties.label',
             'label' => 'admin.page.customProperties.label',
             'help_html' => true,
             'help' => 'admin.page.customProperties.help',
-            // 'help' => $this->admin->getMessagePrefix().'.customProperties.help',
+            // 'help' => $this->formFieldManager->getMessagePrefix().'.customProperties.help',
         ]);
     }
 }

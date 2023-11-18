@@ -13,15 +13,13 @@ class PagePublishedAtField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('publishedAt', DateTimePickerType::class, [
+        $form->add('publishedAt', DateTimePickerType::class, [
             'format' => CreatedAtField::DateTimePickerFormat,
             'datepicker_options' => CreatedAtField::DateTimePickerOptions,
-            'label' => $this->admin->getMessagePrefix().'.publishedAt.label',
+            'label' => $this->formFieldManager->getMessagePrefix().'.publishedAt.label',
             'help' => $this->getHelp(),
             'help_html' => true,
         ]);
@@ -33,7 +31,7 @@ class PagePublishedAtField extends AbstractField
 
         // TODO: translate
         return null !== $this->getSubject()->getId() ?
-            $this->trans($this->admin->getMessagePrefix().'.publishedAt.'.($published ? 'online' : 'draft'))
+            $this->trans($this->formFieldManager->getMessagePrefix().'.publishedAt.'.($published ? 'online' : 'draft'))
             : '';
     }
 

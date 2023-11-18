@@ -2,6 +2,9 @@
 
 namespace Pushword\AdminBlockEditor\EventSuscriber;
 
+use Pushword\Admin\FormField\Event as FormEvent;
+use Pushword\Admin\PageAdmin;
+use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -15,8 +18,17 @@ abstract class AbstractEventSuscriber implements EventSubscriberInterface
     {
     }
 
-    protected function mayUseEditorBlock(?PageInterface $page): bool
+    /**
+     * @param FormEvent<PageInterface> $event
+     */
+    protected function mayUseEditorBlock(?PageInterface $page, FormEvent $event = null): bool
     {
+        if (null !== $event
+            && ! $event->getAdmin() instanceof PageAdmin
+            && ! $event->getAdmin() instanceof PageCheatSheetAdmin) {
+            return false;
+        } // do not use event for PageRedirection for example
+
         if (null !== $page && '' !== $page->getMainContent() && null === json_decode($page->getMainContent(), null, 512)) {
             return false;
         }

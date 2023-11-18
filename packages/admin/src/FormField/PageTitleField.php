@@ -13,12 +13,10 @@ class PageTitleField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('title', TextareaType::class, [
+        $form->add('title', TextareaType::class, [
             'label' => 'admin.page.title.label',
             'required' => false,
             'help_html' => true,

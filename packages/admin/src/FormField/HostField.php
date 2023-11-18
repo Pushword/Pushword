@@ -16,28 +16,26 @@ class HostField extends AbstractField
 {
     /**
      * @param FormMapper<HostInterface> $form
-     *
-     * @return FormMapper<HostInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        if (1 === \count($this->admin->getApps()->getHosts())) {
-            $this->admin->getSubject()->setHost($this->admin->getApps()->get()->getMainHost());
+        if (1 === \count($this->formFieldManager->apps->getHosts())) {
+            $this->admin->getSubject()->setHost($this->formFieldManager->apps->get()->getMainHost());
 
-            return $form;
+            return;
         }
 
         if ('' === $this->admin->getSubject()->getHost()) {
             $this->admin->getSubject()->setHost($this->getDefaultHost());
         }
 
-        return $form->add('host', HiddenType::class);
+        $form->add('host', HiddenType::class);
     }
 
     private function getDefaultHost(): string
     {
         if ($this->admin->hasRequest() && ($host = $this->admin->getRequest()->query->get('host')) !== null) {
-            $this->admin->getApps()->switchCurrentApp($host); // todo move it before fields initializations
+            $this->formFieldManager->apps->switchCurrentApp($host); // todo move it before fields initializations
 
             return $host;
         }
@@ -47,12 +45,10 @@ class HostField extends AbstractField
 
     /**
      * @param DatagridMapper<HostInterface> $datagrid
-     *
-     * @return DatagridMapper<HostInterface>
      */
-    public function datagridMapper(DatagridMapper $datagrid): DatagridMapper
+    public function datagridMapper(DatagridMapper $datagrid): void
     {
-        return $datagrid->add('host', ChoiceFilter::class, [
+        $datagrid->add('host', ChoiceFilter::class, [
             'field_type' => ChoiceType::class,
             'field_options' => [
                 'choices' => array_combine($this->getHosts(), $this->getHosts()),
@@ -67,6 +63,6 @@ class HostField extends AbstractField
      */
     private function getHosts(): array
     {
-        return $this->admin->getApps()->getHosts();
+        return $this->formFieldManager->apps->getHosts();
     }
 }

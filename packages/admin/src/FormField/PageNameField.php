@@ -13,12 +13,10 @@ class PageNameField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('name', TextareaType::class, [
+        $form->add('name', TextareaType::class, [
             'label' => 'admin.page.name.label',
             'required' => false,
             'help_html' => true,

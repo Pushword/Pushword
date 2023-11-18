@@ -2,13 +2,11 @@
 
 namespace Pushword\Admin\FormField;
 
+use Pushword\Admin\AdminFormFieldManager;
 use Sonata\AdminBundle\Admin\AdminInterface;
 use Symfony\Contracts\EventDispatcher\Event as SfEvent;
 
 /**
- * The order.placed event is dispatched each time an order is created
- * in the system.
- *
  * @template T of object
  */
 class Event extends SfEvent
@@ -17,13 +15,19 @@ class Event extends SfEvent
     final public const NAME = 'pushword.admin.load_field';
 
     /**
-     * @param AdminInterface<T> $admin
-     * @param mixed[]           $fields // TODO Reduce complexity !!!
+     * @param AdminInterface<T>                                                                                                                                                                                                                                                                                                                                                            $admin
+     * @param array{ 0: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] , 1: class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<string,  class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array{'fields': class-string<\Pushword\Admin\FormField\AbstractField<T>>[], 'expand': bool}>, 2: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] } $fields
      */
     public function __construct(
         private readonly AdminInterface $admin,
-        private array $fields
+        private array $fields,
+        private readonly AdminFormFieldManager $formFieldManager,
     ) {
+    }
+
+    public function getFormFieldManager(): AdminFormFieldManager
+    {
+        return $this->formFieldManager;
     }
 
     /**
@@ -35,7 +39,7 @@ class Event extends SfEvent
     }
 
     /**
-     * @return mixed[]
+     * @return array{ 0: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] , 1: class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<string,  class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array{'fields': class-string<\Pushword\Admin\FormField\AbstractField<T>>[], 'expand': bool}>, 2: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] }
      */
     public function getFields(): array
     {
@@ -43,7 +47,7 @@ class Event extends SfEvent
     }
 
     /**
-     * @param mixed[] $fields
+     * @phpstan-param array{ 0: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] , 1: class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<string,  class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array{'fields': class-string<\Pushword\Admin\FormField\AbstractField<T>>[], 'expand': bool}>, 2: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] } $fields
      *
      * @return self<T>
      */

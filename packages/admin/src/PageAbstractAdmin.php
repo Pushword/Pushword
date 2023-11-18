@@ -4,8 +4,12 @@ namespace Pushword\Admin;
 
 use Doctrine\ORM\QueryBuilder;
 use Pushword\Admin\Controller\PageCRUDController;
+use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\FormField\HostField;
+use Pushword\Admin\Utils\Thumb;
+use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
+use Pushword\Core\Service\ImageManager;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -15,6 +19,7 @@ use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Object\Metadata;
 use Sonata\DoctrineORMAdminBundle\Datagrid\ProxyQuery;
 use Sonata\DoctrineORMAdminBundle\Filter\CallbackFilter;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * @extends AbstractAdmin<PageInterface>
@@ -23,13 +28,12 @@ use Sonata\DoctrineORMAdminBundle\Filter\CallbackFilter;
  */
 abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
 {
-    /** @use AdminTrait<PageInterface> */
-    use AdminTrait;
+    public const FORM_FIELD_KEY = 'admin_page_form_fields';
 
     /** @var bool */
     public $supportsPreviewMode = true;
 
-    protected string $messagePrefix = 'admin.page';
+    public const MESSAGE_PREFIX = 'admin.page';
 
     /** @var string[] */
     protected array $fields = [];
@@ -43,8 +47,21 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
 
     protected ?string $secondColClass = null;
 
-    public function __construct()
-    {
+    protected string $formFieldKey = 'admin_page_form_fields';
+
+    public function __construct(
+        private readonly AdminFormFieldManager $adminFormFieldManager,
+        private AppPool $apps,
+        private ImageManager $imageManager,
+        RequestStack $requestStack,
+    ) {
+        $adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
+
+        // dd($requestStack->getCurrentRequest()->query->get('host'));
+        if (($r = $requestStack->getCurrentRequest()) !== null && ($host = $r->query->get('host')) !== null) {
+            $this->apps->switchCurrentApp($host);
+        }
+
         parent::__construct();
     }
 
@@ -114,7 +131,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
      */
     protected function exists(string $name): bool
     {
-        return method_exists($this->pageClass, 'get'.$name);
+        return method_exists($this->getModelClass(), 'get'.$name);
     }
 
     /**
@@ -123,14 +140,12 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
     protected function configureFormFields(FormMapper $form): void
     {
         $this->apps->switchCurrentApp($this->getSubject());
-        $fields = $this->getFormFields();
-        if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) {
-            throw new \LogicException();
-        }
+        $fields = $this->adminFormFieldManager->getFormFields($this, $this->formFieldKey);
+        // if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) { throw new \LogicException(); }
 
         $form->with('admin.page.mainContent.label', ['class' => $this->mainColClass ?? 'col-md-9 mainFields']);
         foreach ($fields[0] as $field) {
-            $this->addFormField($field, $form);
+            $this->adminFormFieldManager->addFormField($field, $form, $this);
         }
 
         $form->end();
@@ -140,11 +155,12 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
                 continue;
             }
 
-            $fields = $block['fields'] ?? $block;
+            /** @var class-string<AbstractField<PageInterface>>[] */
+            $blockFields = $block['fields'] ?? $block;
             $class = isset($block['expand']) ? 'expand' : '';
             $form->with($k, ['class' => $this->secondColClass ?? 'col-md-3 columnFields '.$class, 'label' => $k]);
-            foreach ($fields as $field) {
-                $this->addFormField($field, $form);
+            foreach ($blockFields as $field) {
+                $this->adminFormFieldManager->addFormField($field, $form, $this);
             }
 
             $form->end();
@@ -186,9 +202,9 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
      */
     protected function configureDatagridFilters(DatagridMapper $filter): void
     {
-        if (\count($this->getApps()->getHosts()) > 1) {
+        if (\count($this->apps->getHosts()) > 1) {
             // $filter->add('host', null, ['label' => 'admin.page.host.label']);
-            (new HostField($this))->datagridMapper($filter); // @phpstan-ignore-line
+            (new HostField($this->adminFormFieldManager, $this))->datagridMapper($filter); // @phpstan-ignore-line
         }
 
         $filter->add('slug', null, ['label' => 'admin.page.slug.label']);
@@ -259,7 +275,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
         if (null !== $media && $this->imageManager->isImage($media)) {
             $thumb = $this->imageManager->getBrowserPath($media, 'thumb');
         } else {
-            $thumb = self::$thumb;
+            $thumb = Thumb::$thumb;
         }
 
         $name = \in_array($object->getName(), ['', null], true) ? $object->getH1() : $object->getName();

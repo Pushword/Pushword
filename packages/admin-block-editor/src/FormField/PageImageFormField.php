@@ -12,16 +12,11 @@ use Sonata\AdminBundle\Form\FormMapper;
  */
 class PageImageFormField extends AbstractField
 {
-    /**
-     * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
-     */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
         $form->add('inline_image', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
             'required' => false,
-            'class' => $this->admin->getMediaClass(),
+            'class' => $this->formFieldManager->mediaClass,
             // 'label' => 'admin.page.mainImage.label',
             'btn_edit' => false,
             'mapped' => false,
@@ -30,9 +25,9 @@ class PageImageFormField extends AbstractField
             'admin_code' => MediaAdmin::class,
         ]);
 
-        return $form->add('inline_attaches', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
+        $form->add('inline_attaches', \Sonata\AdminBundle\Form\Type\ModelListType::class, [
             'required' => false,
-            'class' => $this->admin->getMediaClass(),
+            'class' => $this->formFieldManager->mediaClass,
             // 'label' => 'admin.page.mainImage.label',
             'btn_edit' => false,
             'mapped' => false,

@@ -15,16 +15,14 @@ class PageParentPageField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add(
+        $form->add(
             'parentPage',
             EntityType::class,
             [
-                'class' => $this->admin->getPageClass(),
+                'class' => $this->admin->getModelClass(),
                 'label' => 'admin.page.parentPage.label',
                 'required' => false,
                 'query_builder' => fn (PageRepository $er): QueryBuilder => $er->createQueryBuilder('p')

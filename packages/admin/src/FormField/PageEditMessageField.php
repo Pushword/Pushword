@@ -14,15 +14,13 @@ class PageEditMessageField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('editMessage', TextareaType::class, [
+        $form->add('editMessage', TextareaType::class, [
             'required' => false,
             'attr' => ['class' => 'autosize textarea-no-newline'],
-            'label' => $this->admin->getMessagePrefix().'.editMessage.label',
+            'label' => $this->formFieldManager->getMessagePrefix().'.editMessage.label',
             'help' => $this->getHelp(),
             'help_html' => true,
         ]);
@@ -30,15 +28,16 @@ class PageEditMessageField extends AbstractField
 
     private function getHelp(): string
     {
-        $editMessage = $this->getSubject()->getEditMessage();
-        $this->getSubject()->setEditMessage('');
+        $page = $this->admin->getSubject();
+        $editMessage = $page->getEditMessage();
+        $page->setEditMessage('');
 
-        return null !== $this->getSubject()->getId() ?
-            $this->admin->getTranslator()->trans($this->admin->getMessagePrefix().'.editMessage.help'.(class_exists(PushwordVersionBundle::class) ? 'Versionned' : ''), [
-                '%lastEditDatetime%' => $this->getSubject()->safegetUpdatedAt()->format($this->admin->getTranslator()->trans('datetimeMediumFormat')),
+        return null !== $page->getId() ?
+            $this->admin->getTranslator()->trans($this->formFieldManager->getMessagePrefix().'.editMessage.help'.(class_exists(PushwordVersionBundle::class) ? 'Versionned' : ''), [
+                '%lastEditDatetime%' => $page->safegetUpdatedAt()->format($this->admin->getTranslator()->trans('datetimeMediumFormat')),
                 '%lastEditMessage%' => '' !== $editMessage ? '«&nbsp;'.$editMessage.'&nbsp;»' : '-',
                 '%seeVersionLink%' => class_exists(PushwordVersionBundle::class)
-                    ? $this->admin->getRouter()->generate('pushword_version_list', ['id' => $this->getSubject()->getId()])
+                    ? $this->formFieldManager->router->generate('pushword_version_list', ['id' => $page->getId()])
                     : '',
             ]) : '';
     }

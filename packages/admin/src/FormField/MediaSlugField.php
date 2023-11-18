@@ -13,12 +13,10 @@ class MediaSlugField extends AbstractField
 {
     /**
      * @param FormMapper<MediaInterface> $form
-     *
-     * @return FormMapper<MediaInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('slugForce', TextType::class, [
+        $form->add('slugForce', TextType::class, [
             'label' => 'admin.page.slug.label',
             'help_html' => true,
             'required' => false,

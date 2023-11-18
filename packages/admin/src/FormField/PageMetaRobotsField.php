@@ -13,12 +13,10 @@ class PageMetaRobotsField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
-     *
-     * @return FormMapper<PageInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form->add('metaRobots', ChoiceType::class, [
+        $form->add('metaRobots', ChoiceType::class, [
             'choices' => [
                 'admin.page.metaRobots.choice.noIndex' => 'noindex',
             ],

@@ -49,6 +49,9 @@ class Configuration implements ConfigurationInterface
         'admin_media_form_fields',
     ];
 
+    /**
+     * Must respect AdminFormFields type define in ./phpstan.neon.dist !
+     */
     final public const DEFAULT_ADMIN_USER_FORM_FIELDS = [
         [UserEmailField::class, UserUsernameField::class, UserPasswordField::class, CreatedAtField::class],
         ['admin.user.label.security' => [UserRolesField::class]],

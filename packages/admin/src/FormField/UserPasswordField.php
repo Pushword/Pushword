@@ -13,15 +13,13 @@ class UserPasswordField extends AbstractField
 {
     /**
      * @param FormMapper<UserInterface> $form
-     *
-     * @return FormMapper<UserInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
-        return $form
-        ->add('plainPassword', TextType::class, [
-            'required' => null === $this->admin->getSubject()->getId(),
-            'label' => 'admin.user.password.label',
-        ]);
+        $form
+            ->add('plainPassword', TextType::class, [
+                'required' => null === $this->admin->getSubject()->getId(),
+                'label' => 'admin.user.password.label',
+            ]);
     }
 }

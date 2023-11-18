@@ -2,8 +2,11 @@
 
 namespace Pushword\Admin;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
+use Pushword\Core\Service\ImageManager;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -27,12 +30,16 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 ])]
 final class MediaAdmin extends AbstractAdmin implements AdminInterface
 {
-    /**
-     * @use AdminTrait<MediaInterface>
-     */
-    use AdminTrait;
+    public const MESSAGE_PREFIX = 'admin.media';
 
-    private string $messagePrefix = 'admin.media';
+    public function __construct(
+        private readonly AdminFormFieldManager $adminFormFieldManager,
+        private EntityManagerInterface $entityManager,
+        private ImageManager $imageManager,
+    ) {
+        $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
+        parent::__construct();
+    }
 
     protected function configure(): void
     {
@@ -54,29 +61,27 @@ final class MediaAdmin extends AbstractAdmin implements AdminInterface
      */
     protected function configureFormFields(FormMapper $form): void
     {
-        $this->formFieldKey = 'admin_media_form_fields';
-        $fields = $this->getFormFields();
-        if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1]) || ! isset($fields[2]) || ! \is_array($fields[2])) {
-            throw new \LogicException();
-        }
+        $fields = $this->adminFormFieldManager->getFormFields($this, 'admin_media_form_fields');
+        // if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1]) || ! isset($fields[2]) || ! \is_array($fields[2])) {  throw new \LogicException(); }
 
         $form->with('Media', ['class' => 'col-md-8']);
         foreach ($fields[0] as $field) {
-            $this->addFormField($field, $form);
+            $this->adminFormFieldManager->addFormField($field, $form, $this);
         }
 
         $form->end();
 
         $form->with('Params', ['class' => 'col-md-4']);
         foreach ($fields[1] as $field) {
-            $this->addFormField($field, $form);
+            $field = \is_string($field) ? $field : throw new \Exception('');
+            $this->adminFormFieldManager->addFormField($field, $form, $this);
         }
 
         $form->end();
 
         // preview
         foreach ($fields[2] as $field) {
-            $this->addFormField($field, $form);
+            $this->adminFormFieldManager->addFormField($field, $form, $this);
         }
     }
 
@@ -99,7 +104,7 @@ final class MediaAdmin extends AbstractAdmin implements AdminInterface
             'label' => 'admin.media.filetype.label',
         ]);* */
 
-        $mimeTypes = Repository::getMediaRepository($this->getEntityManager(), $this->mediaClass)->getMimeTypes();
+        $mimeTypes = Repository::getMediaRepository($this->entityManager, $this->getModelClass())->getMimeTypes();
         if ([] !== $mimeTypes) {
             $filter->add('mimeType', ChoiceFilter::class, [
                 'field_type' => ChoiceType::class,
@@ -114,6 +119,23 @@ final class MediaAdmin extends AbstractAdmin implements AdminInterface
         $filter->add('names', null, [
             'label' => 'admin.media.names.label',
         ]);
+    }
+
+    /**
+     * Must be a cookie to check before to do that
+     * If you click one time to list, stay in liste mode.
+     * Yes it's in the session
+     * TODO.
+     * */
+    protected function setMosaicDefaultListMode(): self
+    {
+        if ($this->hasRequest() && ($mode = (string) $this->getRequest()->query->get('_list_mode')) !== '') {
+            $this->setListMode($mode);
+        } else {
+            $this->setListMode('mosaic');
+        }
+
+        return $this;
     }
 
     protected function configureListFields(ListMapper $list): void
@@ -140,7 +162,7 @@ final class MediaAdmin extends AbstractAdmin implements AdminInterface
 
     public function getObjectMetadata(object $object): Metadata
     {
-        $thumb = $this->imageManager->isImage($object) ? $this->imageManager->getBrowserPath($object, 'thumb') : self::$thumb;
+        $thumb = $this->imageManager->isImage($object) ? $this->imageManager->getBrowserPath($object, 'thumb') : Thumb::$thumb;
 
         return new Metadata($object->getName(), null, $thumb);
     }

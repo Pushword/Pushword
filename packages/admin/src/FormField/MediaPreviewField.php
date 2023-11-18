@@ -19,10 +19,8 @@ final class MediaPreviewField extends AbstractField
 
     /**
      * @param FormMapper<MediaInterface> $form
-     *
-     * @return FormMapper<MediaInterface>
      */
-    public function formField(FormMapper $form): FormMapper
+    public function formField(FormMapper $form): void
     {
         if (null !== $this->admin->getSubject()->getMedia()) {
             $form->with('admin.media.preview.label', [
@@ -39,8 +37,6 @@ final class MediaPreviewField extends AbstractField
                 ])->end();
             }
         }
-
-        return $form;
     }
 
     private function issetRelatedPages(): bool
@@ -61,7 +57,7 @@ final class MediaPreviewField extends AbstractField
 
         $media = $this->admin->getSubject();
 
-        $this->relatedPages = Repository::getPageRepository($this->admin->getEntityManager(), $this->admin->getPageClass())
+        $this->relatedPages = Repository::getPageRepository($this->formFieldManager->em, $this->formFieldManager->pageClass)
             ->getPagesUsingMedia($media);
 
         return $this->relatedPages;
@@ -69,7 +65,7 @@ final class MediaPreviewField extends AbstractField
 
     private function showRelatedPages(): string
     {
-        return $this->admin->getTwig()->render(
+        return $this->formFieldManager->twig->render(
             '@pwAdmin/media/media_show.relatedPages.html.twig',
             ['related_pages' => $this->getRelatedPages()]
         );
@@ -79,11 +75,11 @@ final class MediaPreviewField extends AbstractField
     {
         $media = $this->admin->getSubject();
 
-        $template = $this->admin->getImageManager()->isImage($media) ?
+        $template = $this->formFieldManager->imageManager->isImage($media) ?
             '@pwAdmin/media/media_show.preview_image.html.twig'
             : '@pwAdmin/media/media_show.preview.html.twig';
 
-        return $this->admin->getTwig()->render(
+        return $this->formFieldManager->twig->render(
             $template,
             [
                 'media' => $media,
