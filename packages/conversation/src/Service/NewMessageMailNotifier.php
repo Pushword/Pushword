@@ -59,7 +59,7 @@ class NewMessageMailNotifier
 
     public function postPersist(Message $message): void
     {
-        if (null === $message->getAuthorEmail()) {
+        if (filter_var($message->getAuthorEmail(), \FILTER_VALIDATE_EMAIL)) {
             // $this->send();
 
             return;
