@@ -5,6 +5,7 @@ namespace Pushword\TemplateEditor;
 use Pushword\Core\Entity\UserInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -18,6 +19,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Twig\Environment as Twig;
 
 #[IsGranted('ROLE_PUSHWORD_ADMIN')]
+#[AutoconfigureTag('controller.service_arguments')]
 final class ElementAdmin extends AbstractController
 {
     private KernelInterface $kernel;

@@ -17,12 +17,12 @@ class ConfigurationTest extends KernelTestCase
         // $this->assertSame(Message::class, $msgEntity);
         $this->assertSame(
             '',
-            self::$kernel->getContainer()->get('pushword.apps')->get()->get('flat_content_dir')
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class)->get()->get('flat_content_dir')
         );
 
         $this->assertSame(
             self::$kernel->getContainer()->getParameter('kernel.project_dir').'/../docs/content',
-            self::$kernel->getContainer()->get('pushword.apps')->get('pushword.piedweb.com')->get('flat_content_dir')
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class)->get('pushword.piedweb.com')->get('flat_content_dir')
         );
     }
 }

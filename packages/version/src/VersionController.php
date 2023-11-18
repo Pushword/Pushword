@@ -6,6 +6,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +16,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AutoconfigureTag('controller.service_arguments')]
 class VersionController extends AbstractController
 {
     private Versionner $versionner;

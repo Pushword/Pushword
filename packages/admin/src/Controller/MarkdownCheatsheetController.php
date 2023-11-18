@@ -6,10 +6,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+#[\Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag('controller.service_arguments')]
 class MarkdownCheatsheetController extends AbstractController
 {
     #[Route('/admin/dashboard', name: 'pushword_admin_dashboard')]
-    public function redirectDashboard(string $url, int $status = 302): Response
+    public function redirectDashboard(): Response
     {
         return $this->redirectToRoute('admin_page_list');
     }

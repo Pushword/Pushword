@@ -3,9 +3,11 @@
 namespace Pushword\StaticGenerator;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[AutoconfigureTag('controller.service_arguments')]
 class StaticController extends AbstractController
 {
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]

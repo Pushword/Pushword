@@ -13,6 +13,7 @@ use Pushword\Core\Entity\UserInterface;
  * @implements ObjectRepository<UserInterface>
  * @implements Selectable<int, UserInterface>
  */
+#[\Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag('doctrine.repository_service')]
 class UserRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
 }

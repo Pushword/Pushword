@@ -1,7 +1,7 @@
 controllers:
     resource:
-        path: ./
-        namespace: Pushword\Admin
+        path: ./Controller
+        namespace: Pushword\Admin\Controller
     type: attribute
 
 admin_area:

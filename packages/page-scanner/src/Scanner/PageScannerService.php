@@ -3,7 +3,7 @@
 namespace Pushword\PageScanner\Scanner;
 
 use Pushword\Core\Entity\PageInterface;
-use Pushword\Core\Router\RouterInterface as PwRouter;
+use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,14 +30,14 @@ final class PageScannerService
     public ParentPageScanner $parentPageScanner;
 
     public function __construct(
-        PwRouter $pwRouter, // required for GenerateLivePathForTrait
+        PushwordRouteGenerator $pwRouter, // required for GenerateLivePathForTrait
         KernelInterface $kernel // required for KernelTrait
     ) {
         $this->router = $pwRouter;
         $this->router->setUseCustomHostPath(false);
 
         static::loadKernel($kernel);
-        static::getKernel()->getContainer()->get('pushword.router')->setUseCustomHostPath(false);
+        static::getKernel()->getContainer()->get(\Pushword\Core\Router\PushwordRouteGenerator::class)->setUseCustomHostPath(false);
     }
 
     private function resetErrors(): void

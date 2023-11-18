@@ -7,8 +7,7 @@ use Pushword\Core\AutowiringTrait\RequiredApps;
 use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use Pushword\Core\Repository\Repository;
-use Pushword\Core\Router\Router;
-use Pushword\Core\Router\RouterInterface;
+use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Twig\LinkTwigTrait;
 
 final class HtmlLinkMultisite extends AbstractFilter
@@ -25,9 +24,9 @@ final class HtmlLinkMultisite extends AbstractFilter
         $this->entityManager = $entityManager;
     }
 
-    private RouterInterface $router;
+    private PushwordRouteGenerator $router;
 
-    public function setRouter(RouterInterface $router): void
+    public function setRouter(PushwordRouteGenerator $router): void
     {
         $this->router = $router;
     }
@@ -43,9 +42,7 @@ final class HtmlLinkMultisite extends AbstractFilter
     public function apply(mixed $propertyValue): string
     {
         $propertyValue = $this->string($propertyValue);
-        if (! $this->router instanceof Router) {
-            return $propertyValue;
-        }
+        // if (! $this->router instanceof PushwordRouteGenerator) { return $propertyValue; }
 
         if (! $this->router->mayUseCustomPath()) {
             return $propertyValue;

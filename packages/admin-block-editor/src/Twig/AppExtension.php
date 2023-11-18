@@ -11,7 +11,7 @@ class AppExtension extends AbstractExtension
 {
     public function __construct(
         private readonly AppPool $appPool,
-        private readonly \Pushword\Core\Router\RouterInterface $router
+        private readonly \Pushword\Core\Router\PushwordRouteGenerator $router
     ) {
     }
 

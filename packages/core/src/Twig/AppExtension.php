@@ -8,12 +8,12 @@ use PiedWeb\RenderAttributes\AttributesTrait;
 use Pushword\Core\AutowiringTrait\RequiredPageClass;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Component\EntityFilter\ManagerPoolInterface;
+use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
-use Pushword\Core\Router\RouterInterface;
+use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Utils\FilesizeFormatter;
@@ -41,15 +41,15 @@ class AppExtension extends AbstractExtension
     use VideoTwigTrait;
 
     /**
-     * @param ManagerPoolInterface<T> $entityFilterManagerPool
+     * @param ManagerPool<T> $entityFilterManagerPool
      */
     public function __construct(
         private EntityManagerInterface $em,
-        private RouterInterface $router,
+        private PushwordRouteGenerator $router,
         private AppPool $apps,
         private Twig $twig,
         private readonly ImageManager $imageManager,
-        private readonly ManagerPoolInterface $entityFilterManagerPool,
+        private readonly ManagerPool $entityFilterManagerPool,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
     ) {
     }

@@ -7,7 +7,7 @@ use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
-use Pushword\Core\Router\RouterInterface;
+use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\F;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment as Twig;
@@ -23,7 +23,7 @@ final class Manager
 
     private readonly Twig $twig;
 
-    private readonly RouterInterface $router;
+    private readonly PushwordRouteGenerator $router;
 
     private readonly EntityManagerInterface $entityManager;
 

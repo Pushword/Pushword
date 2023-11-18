@@ -54,12 +54,11 @@ class StaticGeneratorTest extends KernelTestCase
         if (null !== $this->staticAppGenerator) {
             return $this->staticAppGenerator;
         }
-        // $staticAppGenerator = self::$kernel->getContainer()->get('pushword.static_app_generator');
 
         $generatorBag = $this->getGeneratorBag();
 
         return new StaticAppGenerator(
-            self::$kernel->getContainer()->get('pushword.apps'),
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class),
             $generatorBag,
             $generatorBag->get(RedirectionManager::class)
         );
@@ -171,9 +170,9 @@ class StaticGeneratorTest extends KernelTestCase
                 $this->getParameterBag(),
                 new RequestStack(),
                 self::$kernel->getContainer()->get('translator'),
-                self::$kernel->getContainer()->get('pushword.router'),
+                self::$kernel->getContainer()->get(\Pushword\Core\Router\PushwordRouteGenerator::class),
                 self::$kernel,// ->getContainer()->get('kernel'),
-                self::$kernel->getContainer()->get('pushword.apps')
+                self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class)
             );
 
             if (property_exists($generator, 'redirectionManager')) {

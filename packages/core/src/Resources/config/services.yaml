@@ -15,10 +15,6 @@ services:
       $pathToBin: "%pw.path_to_bin%"
       $tailwindGeneratorisActive: "%pw.tailwind_generator%"
 
-  # --------
-  # Me
-  # --------
-  Twig\Extension\StringLoaderExtension: ~
   Pushword\Core\PushwordCoreBundle: ~
 
   Pushword\Core\:
@@ -31,103 +27,34 @@ services:
     resource: "../../../src/Controller"
     tags: ["controller.service_arguments"]
 
-  # Todo: move to EventSuscriber
-  Pushword\Core\EventListener\UserListener:
-    tags:
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_user%", event: preUpdate }
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_user%", event: prePersist }
-
-  pushword.page_rendering.validator:
-    class: Pushword\Core\Validator\Constraints\PageRenderingValidator
-    tags:
-      - { name: validator.constraint_validator, alias: page_rendering }
-
-  # --------
-  # Page
-  # --------
-
-
 
   Pushword\Core\Repository\PageRepository:
     arguments:
       $entityClass: "%pw.entity_page%"
-    tags:
-      - { name: doctrine.repository_service }
-
-  Pushword\Core\Component\EntityFilter\ManagerPoolInterface:
-    class: Pushword\Core\Component\EntityFilter\ManagerPool
-
-  # --------
-  # Media
-  # --------
-
-  # Todo: move to EventSuscriber
-  pushword.media_listener:
-    class: Pushword\Core\EventListener\MediaListener
-    tags:
-      - { name: kernel.event_listener, event: vich_uploader.pre_upload }
-      - { name: kernel.event_listener, event: vich_uploader.post_upload }
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: prePersist }
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: preUpdate }
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: preRemove }
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: postLoad }
-      - { name: doctrine.orm.entity_listener, entity: "%pw.entity_media%", event: postPersist }
-      #- { name: doctrine.orm.entity_listener, entity: Pushword\Core\Entity\Image, event: prePersist }
 
   Pushword\Core\Repository\MediaRepository:
     arguments:
       $entityClass: "%pw.entity_media%"
-    tags: ["doctrine.repository_service"]
 
   Pushword\Core\Repository\UserRepository:
     arguments:
       $entityClass: "%pw.entity_user%"
-    tags: ["doctrine.repository_service"]
 
   # --------
   # TWIG extension
   # --------
 
-  pushword.twig.extension.render_attributes:
-    class: PiedWeb\RenderAttributes\TwigExtension
-    public: false
-    tags:
-      - { name: twig.extension }
+  Twig\Extension\StringLoaderExtension: ~
+  PiedWeb\RenderAttributes\TwigExtension: ~
+  Twig\Extra\Intl\IntlExtension: ~
 
-  twig.extension.intl:
-    class: Twig\Extra\Intl\IntlExtension
-    tags:
-      - { name: twig.extension }
 
-  # Router
-  # --------
+  Pushword\Core\Router\PushwordRouteGenerator:
+    public: true # todo limit to test https://stackoverflow.com/questions/54466158/symfony-4-2-how-to-do-a-service-public-only-for-tests
 
-  Pushword\Core\Router\RouterInterface:
-    alias: pushword.router
-
-  pushword.router:
-    class: Pushword\Core\Router\Router
-    autowire: true
-    public: true
-
-  Pushword\Core\Router\RouterTwigExtension:
-    tags:
-      - "twig.extension"
-    autowire: true
-
-  # App
-  # --------
 
   Pushword\Core\Component\App\AppPool:
-    alias: pushword.apps
+    public: true # todo limit to test https://stackoverflow.com/questions/54466158/symfony-4-2-how-to-do-a-service-public-only-for-tests
 
-  pushword.apps:
-    class: Pushword\Core\Component\App\AppPool
-    public: true
-
-  # Vich
-  # --------
-# todo : to delete
-  vich_uploader.pushword.namer_property:
-    class: Pushword\Core\Service\VichUploadPropertyNamer
+  Pushword\Core\Service\VichUploadPropertyNamer:
     public: true

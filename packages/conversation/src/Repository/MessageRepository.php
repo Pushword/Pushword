@@ -4,19 +4,18 @@ namespace Pushword\Conversation\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Pushword\Conversation\Entity\MessageInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
-/*
- * @psalm-suppress MissingTemplateParam
- *
+/**
  * @extends ServiceEntityRepository<MessageInterface>
  *
  * @method MessageInterface|null find($id, $lockMode = null, $lockVersion = null)
  * @method MessageInterface|null findOneBy(array $criteria, array $orderBy = null)
  * @method MessageInterface[]    findAll()
  * @method MessageInterface[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- *
  */
-class MessageRepository extends ServiceEntityRepository // @phpstan-ignore-line
+#[AutoconfigureTag('doctrine.repository_service')]
+class MessageRepository extends ServiceEntityRepository
 {
     /**
      * @return MessageInterface[]

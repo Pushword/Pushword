@@ -25,7 +25,7 @@ class ConfigurationTest extends KernelTestCase
 
         $this->assertSame(
             'P1D',
-            self::$kernel->getContainer()->get('pushword.apps')->get()->get('conversation_notification_interval')
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class)->get()->get('conversation_notification_interval')
         );
 
         $bundle = new PushwordConversationBundle();

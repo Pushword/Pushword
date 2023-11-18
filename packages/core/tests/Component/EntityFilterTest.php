@@ -24,7 +24,7 @@ class EntityFilterTest extends KernelTestCase
         self::bootKernel();
 
         $filter = new HtmlEncryptedLink();
-        $filter->setApp(self::$kernel->getContainer()->get('pushword.apps')->getApp());
+        $filter->setApp(self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class)->getApp());
         $filter->setTwig(self::$kernel->getContainer()->get('test.service_container')->get('twig'));
         $this->assertSame(
             'Lorem <span data-rot=_cvrqjro.pbz/>Test</span> ipsum',
@@ -53,11 +53,11 @@ class EntityFilterTest extends KernelTestCase
     {
         self::bootKernel();
         $pool = new ManagerPool();
-        $pool->apps = self::$kernel->getContainer()->get('pushword.apps');
+        $pool->apps = self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class);
         $pool->twig = self::$kernel->getContainer()->get('test.service_container')->get('twig');
         $pool->eventDispatcher = self::$kernel->getContainer()->get('event_dispatcher');
         $pool->entityManager = self::$kernel->getContainer()->get('doctrine.orm.entity_manager');
-        $pool->router = self::$kernel->getContainer()->get('pushword.router');
+        $pool->router = self::$kernel->getContainer()->get(\Pushword\Core\Router\PushwordRouteGenerator::class);
 
         return $pool;
     }

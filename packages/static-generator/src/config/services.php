@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use Pushword\Core\PushwordCoreBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();
@@ -10,12 +13,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->defaults()
         ->autowire()
         ->autoconfigure()
-        ->bind('$mediaClass', '%pw.entity_media%')
-        ->bind('$pageClass', '%pw.entity_page%')
-        ->bind('$userClass', '%pw.entity_user%');
+        ->bind('$kernel', service('kernel'));
 
-    $services->load('Pushword\Admin\\', __DIR__.'/../../src/')
+    $services->load('Pushword\StaticGenerator\\', __DIR__.'/../*')
         ->exclude([
-            __DIR__.'/../'.\Pushword\Core\PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
+            __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
         ]);
 };

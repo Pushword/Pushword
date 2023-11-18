@@ -10,7 +10,7 @@ twig:
     "%kernel.project_dir%/public": ~
     #'%kernel.project_dir%/templates/bundles/PushwordCoreBundle/': PushwordCore
   globals:
-    apps: "@pushword.apps"
+    apps: "@Pushword\\Core\\Component\\App\\AppPool"
     twig: "@twig"
 
   form_themes:

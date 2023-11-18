@@ -14,7 +14,7 @@ class ConfigurationTest extends KernelTestCase
 
         $this->assertStringContainsString(
             'font-awesome',
-            self::$kernel->getContainer()->get('pushword.apps')->get()->get('svg_dir')[1]
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class)->get()->get('svg_dir')[1]
         );
     }
 }

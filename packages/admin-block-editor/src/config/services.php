@@ -10,12 +10,13 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->defaults()
         ->autowire()
         ->autoconfigure()
+        ->bind('$editorBlockForNewPage', '%pw.pushword_admin_block_editor.new_page%')
         ->bind('$mediaClass', '%pw.entity_media%')
         ->bind('$pageClass', '%pw.entity_page%')
-        ->bind('$userClass', '%pw.entity_user%');
+        ->bind('$publicMediaDir', '%pw.public_media_dir%');
 
-    $services->load('Pushword\Admin\\', __DIR__.'/../../src/')
+    $services->load('Pushword\AdminBlockEditor\\', __DIR__.'/../*')
         ->exclude([
-            __DIR__.'/../'.\Pushword\Core\PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
+            __DIR__.'/../{DependencyInjection,Entity,Migrations,Tests,config,Kernel.php,Installer/install.php}',
         ]);
 };

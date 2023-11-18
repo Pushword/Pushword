@@ -8,8 +8,18 @@ use Pushword\Core\Entity\PageInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
 
-final class Router implements RouterInterface
+final class PushwordRouteGenerator
 {
+    /**
+     * @var string
+     */
+    public const PATH = 'pushword_page';
+
+    /**
+     * @var string
+     */
+    public const CUSTOM_HOST_PATH = 'custom_host_pushword_page';
+
     private bool $useCustomHostPath = true;
 
     private readonly string $currentHost;

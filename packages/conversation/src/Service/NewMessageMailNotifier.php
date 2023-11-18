@@ -8,9 +8,11 @@ use Pushword\Conversation\Entity\MessageInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Utils\LastTime;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.conversation.entity_message%', 'event' => 'postPersist'])]
 class NewMessageMailNotifier
 {
     private readonly string $emailTo;

@@ -5,16 +5,14 @@ namespace Pushword\Core\Component\EntityFilter;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
-use Pushword\Core\Router\RouterInterface;
+use Pushword\Core\Router\PushwordRouteGenerator;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment as Twig;
 
 /**
  * @template T of object
- *
- * @implements ManagerPoolInterface<T>
  */
-final class ManagerPool implements ManagerPoolInterface
+final class ManagerPool
 {
     #[\Symfony\Contracts\Service\Attribute\Required]
     public AppPool $apps;
@@ -26,7 +24,7 @@ final class ManagerPool implements ManagerPoolInterface
     public EventDispatcherInterface $eventDispatcher;
 
     #[\Symfony\Contracts\Service\Attribute\Required]
-    public RouterInterface $router;
+    public PushwordRouteGenerator $router;
 
     #[\Symfony\Contracts\Service\Attribute\Required]
     public EntityManagerInterface $entityManager;

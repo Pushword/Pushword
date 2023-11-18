@@ -12,6 +12,7 @@ use League\ColorExtractor\Palette;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Utils\MediaRenamer;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -20,6 +21,13 @@ use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Vich\UploaderBundle\Event\Event;
 
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'prePersist'])]
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'preUpdate'])]
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'preRemove'])]
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'postLoad'])]
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'postPersist'])]
+#[AutoconfigureTag('kernel.event_listener', ['event' => 'vich_uploader.post_upload'])]
+#[AutoconfigureTag('kernel.event_listener', ['event' => 'vich_uploader.pre_upload'])]
 final class MediaListener
 {
     private ?FlashBagInterface $flashBag = null;

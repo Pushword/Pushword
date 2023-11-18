@@ -2,7 +2,7 @@
 
 namespace Pushword\Core\Tests\Component;
 
-use Pushword\Core\Router\Router;
+use Pushword\Core\Router\PushwordRouteGenerator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -12,9 +12,9 @@ class RouterTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $router = new Router(
+        $router = new PushwordRouteGenerator(
             self::$kernel->getContainer()->get('router'),
-            self::$kernel->getContainer()->get('pushword.apps'),
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class),
             new RequestStack(),
             'fr'
         );

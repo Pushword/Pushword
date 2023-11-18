@@ -135,3 +135,46 @@ Alors la page chargé sera `/blog/example-tag/` (entity créée à la volée san
 avec l'argument accessible getDynamicArg et les propriétés écrasés par **dynamicPage**.
 
 Drawback : le sitemap actuelle ne permettra pas de générer ces pages. Switch to a sitemap render after a crawl ?
+
+
+-------------
+
+## Rewrite services.yaml & co to PHP, prefer attributes
+
+- [ ] Conversation
+- [ ] Core
+
+## Drop My Weird Config Prepender
+
+Imply to rewrite for example :
+
+```
+declare(strict_types=1);
+
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+return static function (ContainerConfigurator $containerConfigurator): void {
+    $containerConfigurator->extension('twig', [
+        'form_themes' => [
+            '@PushwordAdminBlockEditor/editorjs_widget.html.twig',
+        ],
+    ]);
+};
+```
+
+To
+
+```
+return [
+    'twig' => [
+        'form_themes' => [
+            '@PushwordAdminBlockEditor/editorjs_widget.html.twig',
+        ],
+    ],
+];
+```
+
+Why :
+
+* Less custom code
+* Stan ?

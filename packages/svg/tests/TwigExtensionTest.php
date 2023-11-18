@@ -13,7 +13,7 @@ class TwigExtensionTest extends KernelTestCase
     {
         self::bootKernel();
         $twig = new TwigExtension();
-        $twig->setApps(self::$kernel->getContainer()->get('pushword.apps'));
+        $twig->setApps(self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class));
         $this->assertStringStartsWith('<svg', $twig->getSvg('facebook'));
     }
 }

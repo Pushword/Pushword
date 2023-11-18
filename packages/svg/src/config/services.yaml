@@ -1,5 +1,0 @@
-services:
-  Pushword\Svg\TwigExtension:
-    tags:
-      - 'twig.extension'
-    autowire: true

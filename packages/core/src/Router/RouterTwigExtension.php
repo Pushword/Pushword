@@ -7,9 +7,10 @@ use Pushword\Core\Entity\PageInterface as Page;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
+#[\Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag('twig.extension')]
 final class RouterTwigExtension extends AbstractExtension
 {
-    public function __construct(private readonly RouterInterface $router)
+    public function __construct(private readonly PushwordRouteGenerator $router)
     {
     }
 

@@ -24,6 +24,7 @@ use Pushword\Core\Entity\PageInterface;
  * @implements Selectable<int, PageInterface>
  * @implements ObjectRepository<PageInterface>
  */
+#[\Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag('doctrine.repository_service')]
 class PageRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
     protected bool $hostCanBeNull = false;

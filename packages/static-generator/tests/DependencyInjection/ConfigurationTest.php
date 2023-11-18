@@ -13,7 +13,7 @@ class ConfigurationTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $apps = self::$kernel->getContainer()->get('pushword.apps');
+        $apps = self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class);
 
         $this->assertSame($apps->get()->get('static_copy'), Configuration::DEFAULT_COPY);
     }

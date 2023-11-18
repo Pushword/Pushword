@@ -64,7 +64,7 @@ class FlatFileImporterTest extends KernelTestCase
         return new FlatFileImporter(
             self::$kernel->getContainer()->getParameter('pw.public_dir'),
             self::$kernel->getContainer()->getParameter('pw.media_dir'),
-            self::$kernel->getContainer()->get('pushword.apps'),
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class),
             $this->getContentDirFinder(),
             $this->getPageImporter(),
             $this->getMediaImporter()
@@ -100,7 +100,7 @@ class FlatFileImporterTest extends KernelTestCase
     private function getContentDirFinder()
     {
         return new FlatFileContentDirFinder(
-            self::$kernel->getContainer()->get('pushword.apps'),
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class),
             self::$kernel->getContainer()->getParameter('pw.public_dir')
         );
     }
@@ -109,7 +109,7 @@ class FlatFileImporterTest extends KernelTestCase
     {
         return (new MediaImporter(
             self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
-            self::$kernel->getContainer()->get('pushword.apps'),
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class),
             Media::class
         ))->setProjectDir(self::$kernel->getContainer()->getParameter('kernel.project_dir'));
         // ->setMediaDir(self::$kernel->getContainer()->getParameter('kernel.project_dir').'/media');
@@ -119,7 +119,7 @@ class FlatFileImporterTest extends KernelTestCase
     {
         $pageImporter = new PageImporter(
             self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager'),
-            self::$kernel->getContainer()->get('pushword.apps'),
+            self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class),
             Page::class
         );
         $pageImporter->setContentDirFinder($this->getContentDirFinder());

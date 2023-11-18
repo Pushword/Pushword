@@ -38,7 +38,7 @@ class PageUpdateNotifierTest extends KernelTestCase
 
     protected function getApps(): AppPool
     {
-        return self::$kernel->getContainer()->get('pushword.apps');
+        return self::$kernel->getContainer()->get(\Pushword\Core\Component\App\AppPool::class);
     }
 
     protected function getPage()

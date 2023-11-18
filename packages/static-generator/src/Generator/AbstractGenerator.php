@@ -5,7 +5,7 @@ namespace Pushword\StaticGenerator\Generator;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Repository\PageRepository;
-use Pushword\Core\Router\RouterInterface;
+use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
 use Pushword\StaticGenerator\StaticAppGenerator;
@@ -41,7 +41,7 @@ abstract class AbstractGenerator implements GeneratorInterface
         protected ParameterBagInterface $params,
         protected RequestStack $requestStack,
         protected TranslatorInterface $translator,
-        protected RouterInterface $router,
+        protected PushwordRouteGenerator $router,
         KernelInterface $kernel,
         protected AppPool $apps
     ) {
@@ -53,7 +53,7 @@ abstract class AbstractGenerator implements GeneratorInterface
         static::loadKernel($kernel);
         $this->kernel = $kernel;
 
-        $newKernelRouter = static::getKernel()->getContainer()->get('pushword.router');
+        $newKernelRouter = static::getKernel()->getContainer()->get(\Pushword\Core\Router\PushwordRouteGenerator::class);
         $newKernelRouter->setUseCustomHostPath(false);
     }
 

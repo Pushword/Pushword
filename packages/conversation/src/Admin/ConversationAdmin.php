@@ -8,14 +8,30 @@ use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\Form\Type\DateTimePickerType;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
  * @extends AbstractAdmin<MessageInterface>
  */
+#[AutoconfigureTag('sonata.admin', [
+    'model_class' => '%pw.conversation.entity_message%',
+    'manager_type' => 'orm',
+    'label' => 'admin.label.conversation',
+])]
 class ConversationAdmin extends AbstractAdmin
 {
+    protected function generateBaseRouteName(bool $isChildAdmin = false): string
+    {
+        return 'admin_conversation';
+    }
+
+    protected function generateBaseRoutePattern(bool $isChildAdmin = false): string
+    {
+        return 'conversation';
+    }
+
     protected function configureDefaultSortValues(array &$sortValues): void
     {
         $sortValues = [

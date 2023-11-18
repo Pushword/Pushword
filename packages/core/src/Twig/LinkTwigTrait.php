@@ -4,11 +4,11 @@ namespace Pushword\Core\Twig;
 
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Entity\PageInterface;
-use Pushword\Core\Router\RouterInterface;
+use Pushword\Core\Router\PushwordRouteGenerator;
 
 trait LinkTwigTrait
 {
-    private RouterInterface $router;
+    private PushwordRouteGenerator $router;
 
     abstract public function getApp(): AppConfig;
 

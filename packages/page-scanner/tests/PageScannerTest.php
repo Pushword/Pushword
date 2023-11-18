@@ -16,7 +16,7 @@ class PageScannerTest extends KernelTestCase
         self::bootKernel();
 
         $scanner = new PageScannerService(
-            self::$kernel->getContainer()->get('pushword.router'),
+            self::$kernel->getContainer()->get(\Pushword\Core\Router\PushwordRouteGenerator::class),
             self::$kernel
         );
         $scanner->linkedDocsScanner = new LinkedDocsScanner(

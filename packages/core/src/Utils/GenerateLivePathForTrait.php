@@ -3,11 +3,11 @@
 namespace Pushword\Core\Utils;
 
 use Pushword\Core\Entity\PageInterface;
-use Pushword\Core\Router\RouterInterface;
+use Pushword\Core\Router\PushwordRouteGenerator;
 
 trait GenerateLivePathForTrait
 {
-    protected RouterInterface $router;
+    protected PushwordRouteGenerator $router;
 
     /**
      * @param array<string, string> $params

@@ -14,6 +14,7 @@ use Pushword\Core\Entity\MediaInterface;
  * @implements Selectable<int, MediaInterface>
  * @implements ObjectRepository<MediaInterface>
  */
+#[\Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag('doctrine.repository_service')]
 class MediaRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
     /**

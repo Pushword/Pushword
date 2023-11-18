@@ -3,10 +3,12 @@
 namespace Pushword\Core\Validator\Constraints;
 
 use Pushword\Core\Entity\PageInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
+#[AutoconfigureTag('validator.constraint_validator', ['alias' => 'page_rendering'])]
 class PageRenderingValidator extends ConstraintValidator
 {
     public function __construct(private readonly \Pushword\Core\Controller\PageController $pageController)

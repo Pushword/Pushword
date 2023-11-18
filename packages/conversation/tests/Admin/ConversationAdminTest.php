@@ -15,7 +15,7 @@ class ConversationAdminTest extends AbstractAdminTestClass
         $actions = ['list', 'create'];
 
         foreach ($actions as $action) {
-            $client->request('GET', '/admin/pushword/conversation/message/'.$action);
+            $client->request('GET', '/admin/conversation/'.$action);
             $this->assertResponseIsSuccessful();
         }
     }
