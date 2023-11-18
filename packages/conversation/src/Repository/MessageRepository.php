@@ -3,22 +3,22 @@
 namespace Pushword\Conversation\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Pushword\Conversation\Entity\MessageInterface;
+use Pushword\Conversation\Entity\Message;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 /**
- * @extends ServiceEntityRepository<MessageInterface>
+ * @extends ServiceEntityRepository<Message>
  *
- * @method MessageInterface|null find($id, $lockMode = null, $lockVersion = null)
- * @method MessageInterface|null findOneBy(array $criteria, array $orderBy = null)
- * @method MessageInterface[]    findAll()
- * @method MessageInterface[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Message|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Message|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Message[]    findAll()
+ * @method Message[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 #[AutoconfigureTag('doctrine.repository_service')]
 class MessageRepository extends ServiceEntityRepository
 {
     /**
-     * @return MessageInterface[]
+     * @return Message[]
      */
     public function getMessagesPublishedByReferring(string $referring, string $orderBy = 'createdAt DESC', int $limit = 0)
     {
@@ -33,6 +33,6 @@ class MessageRepository extends ServiceEntityRepository
             $queryBuilder->setMaxResults($limit);
         }
 
-        return $queryBuilder->getQuery()->getResult(); // @phpstan-ignore-line
+        return $queryBuilder->getQuery()->getResult();
     }
 }

@@ -3,7 +3,7 @@
 namespace Pushword\Conversation\Form;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
-use Pushword\Conversation\Entity\MessageInterface;
+use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
@@ -59,18 +59,18 @@ trait FormTrait
     protected ?int $messageId = null;
 
     /**
-     * @var class-string<MessageInterface>
+     * @var class-string<Message>
      */
     protected string $messageEntity;
 
-    protected MessageInterface $message;
+    protected Message $message;
 
     protected AppPool $apps;
 
     protected AppConfig $app;
 
     /**
-     * @param class-string<MessageInterface> $messageEntity
+     * @param class-string<Message> $messageEntity
      */
     public function __construct(
         string $messageEntity,

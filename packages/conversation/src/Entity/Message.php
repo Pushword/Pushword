@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MessageRepository::class)]
-class Message implements MessageInterface, \Stringable
+class Message implements \Stringable
 {
     use HostTrait;
     use IdTrait;

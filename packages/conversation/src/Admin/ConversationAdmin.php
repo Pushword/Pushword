@@ -2,7 +2,7 @@
 
 namespace Pushword\Conversation\Admin;
 
-use Pushword\Conversation\Entity\MessageInterface;
+use Pushword\Conversation\Entity\Message;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -13,7 +13,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
- * @extends AbstractAdmin<MessageInterface>
+ * @extends AbstractAdmin<Message>
  */
 #[AutoconfigureTag('sonata.admin', [
     'model_class' => '%pw.conversation.entity_message%',

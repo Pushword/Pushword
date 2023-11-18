@@ -4,7 +4,7 @@ namespace Pushword\Conversation\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Pushword\Conversation\Entity\MessageInterface;
+use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Utils\LastTime;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -26,7 +26,7 @@ class NewMessageMailNotifier
     private readonly string $host;
 
     /**
-     * @param class-string<MessageInterface> $message Entity
+     * @param class-string<Message> $message Entity
      */
     public function __construct(
         private readonly string $message,
@@ -45,7 +45,7 @@ class NewMessageMailNotifier
     }
 
     /**
-     * @return MessageInterface[]
+     * @return Message[]
      */
     protected function getMessagesPostedSince(\DateTimeInterface $datetime)
     {

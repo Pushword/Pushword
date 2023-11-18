@@ -3,7 +3,7 @@
 namespace Pushword\Conversation\Twig;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Pushword\Conversation\Entity\MessageInterface;
+use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Component\Routing\RouterInterface;
@@ -16,7 +16,7 @@ class AppExtension extends AbstractExtension
     private readonly \Pushword\Core\Component\App\AppConfig $app;
 
     /**
-     * @param class-string<MessageInterface> $messageEntity
+     * @param class-string<Message> $messageEntity
      */
     public function __construct(
         private readonly EntityManagerInterface $em,
