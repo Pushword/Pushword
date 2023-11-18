@@ -31,7 +31,8 @@ final class PageScannerService
 
     public function __construct(
         PushwordRouteGenerator $pwRouter, // required for GenerateLivePathForTrait
-        KernelInterface $kernel // required for KernelTrait
+        KernelInterface $kernel,// required for KernelTrait
+        // private readonly PushwordRouteGenerator $pushwordRouteGenerator
     ) {
         $this->router = $pwRouter;
         $this->router->setUseCustomHostPath(false);

@@ -139,10 +139,6 @@ Drawback : le sitemap actuelle ne permettra pas de générer ces pages. Switch t
 
 -------------
 
-## Rewrite services.yaml & co to PHP, prefer attributes
-
-- [ ] Conversation
-- [ ] Core
 
 ## Drop My Weird Config Prepender
 
