@@ -8,11 +8,13 @@ use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Utils\LastTime;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.conversation.entity_message%', 'event' => 'postPersist'])]
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.conversation.entity_message%', 'event' => 'postUpdate'])]
 class NewMessageMailNotifier
 {
     private readonly string $emailTo;
@@ -35,7 +37,8 @@ class NewMessageMailNotifier
         private readonly string $projectDir,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly Security $security,
     ) {
         $this->emailTo = \strval($this->apps->get()->getStr('conversation_notification_email_to'));
         $this->emailFrom = \strval($this->apps->get()->getStr('conversation_notification_email_from'));
@@ -55,6 +58,19 @@ class NewMessageMailNotifier
             ->setParameter('host', $this->host);
 
         return $query->getResult(); // @phpstan-ignore-line
+    }
+
+    public function postUpdate(Message $message): void
+    {
+        if (null !== $this->security->getUser()) {
+            return;
+        } // we send notification only for message sent by not logged people
+
+        if (false === filter_var($message->getAuthorEmail(), \FILTER_VALIDATE_EMAIL)) {
+            return; // no valid email, so nothing to reply, no notification.
+        }
+
+        $this->sendMessage($message);
     }
 
     public function postPersist(Message $message): void
@@ -79,9 +95,12 @@ class NewMessageMailNotifier
             ->from($this->emailFrom)
             ->to($this->emailTo)
             ->replyTo($authorEmail)
-            ->text($message->getContent()
+            ->text(
+                htmlspecialchars_decode($message->getContent())
                 ."\n\n---\n"
-                .'Envoyé depuis '.$message->getHost().' '.$message->getReferring());
+                .'Envoyé par '.$message->getAuthorName()
+                ."\n".'Depuis '.$message->getHost().' › form['.$message->getReferring().']'
+            );
 
         $this->mailer->send($templatedEmail);
     }

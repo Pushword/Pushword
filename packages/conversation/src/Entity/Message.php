@@ -71,9 +71,9 @@ class Message implements \Stringable
     /**
      * Get message content.
      */
-    public function getContent(): ?string
+    public function getContent(): string
     {
-        return $this->content;
+        return $this->content ?? '';
     }
 
     /**

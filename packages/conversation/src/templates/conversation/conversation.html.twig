@@ -22,12 +22,13 @@
                 {{ form_row(conversation.content, {
 
                 label_attr: {class: 'sr-only'},
+                row_attr: { class: ' '},
                 attr: {
                     'placeholder': 'Message',
                     onfocus: "this.placeholder = ''",
                     onblur: "this.placeholder = 'Message'",
                     rows: 8,
-                    class: 'bg-white border-2 border-gray-100 rounded w-full py-2 px-4 text-gray-900 focus:outline-none rounded focus:border-primary focus:ring-primary'
+                    class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-none focus:border-primary focus:ring-primary'
                 }
                 }) }}
                 {{ form_errors(conversation.content) }}
@@ -42,13 +43,14 @@
                 <div class="md:w-3/4">
                     {{ form_row(conversation.authorName, {
                     label_attr: {class: 'sr-only'},
+                    row_attr: { class: ' '},
                     attr: {
                         'placeholder': 'conversation.name.placeholder'|trans,
                         onfocus: "this.placeholder = ''",
                         onblur: "this.placeholder = '"~'conversation.name.placeholder'|trans~"'",
                         required: "text",
                         type: "text",
-                        class: 'bg-white border-2 border-gray-100 rounded w-full py-2 px-4 text-gray-900 focus:outline-none rounded focus:border-primary focus:ring-primary'
+                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-none focus:border-primary focus:ring-primary'
                     }
                 }) }}
                 {{ form_errors(conversation.authorName) }}
@@ -63,6 +65,7 @@
                 <div class="md:w-3/4">
                     {{ form_row(conversation.authorEmail, {
                     label_attr: {class: 'sr-only', style: 'display:none'},
+                    row_attr: { class: ' '},
                     attr: {
                         'placeholder': 'conversation.email.placeholder'|trans,
                         onfocus: "this.placeholder = ''",
@@ -70,7 +73,7 @@
                         required: "text",
                         pattern: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$",
                         type: "email",
-                        class: 'bg-white border-2 border-gray-100 rounded w-full py-2 px-4 text-gray-900 focus:outline-none rounded focus:border-primary focus:ring-primary'
+                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-none focus:border-primary focus:ring-primary'
                     }
                 }) }}
                 {{ form_errors(conversation.authorEmail) }}
