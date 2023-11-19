@@ -10,7 +10,7 @@ class StringToSearch
     /** @var array<int, string|array{0: string, 1: string, 2: string|int|float|int[]}> */
     private array $where = [];
 
-    public function __construct(private readonly string $search, private ?PageInterface $currentPage)
+    public function __construct(private readonly string $search, private readonly ?PageInterface $currentPage)
     {
     }
 

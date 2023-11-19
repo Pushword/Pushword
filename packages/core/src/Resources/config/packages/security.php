@@ -51,13 +51,13 @@ return [
                 'http_basic' => [
                     'realm' => 'Secured Area',
                 ],
-                'custom_authenticator' => 'Pushword\\Core\\Security\\LoginFormAuthenticator',
-                'entry_point' => 'Pushword\\Core\\Security\\LoginFormAuthenticator',
+                'custom_authenticator' => \Pushword\Core\Security\LoginFormAuthenticator::class,
+                'entry_point' => \Pushword\Core\Security\LoginFormAuthenticator::class,
                 'logout' => [
                     'path' => 'pushword_logout',
                 ],
                 'remember_me' => [
-                    'lifetime' => 31536000,
+                    'lifetime' => 31_536_000,
                     'always_remember_me' => true,
                     'secret' => '%kernel.secret%',
                 ],
