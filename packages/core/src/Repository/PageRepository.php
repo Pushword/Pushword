@@ -5,8 +5,11 @@ namespace Pushword\Core\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\ORM\Query\Expr\Andx;
+use Doctrine\ORM\Query\Expr\Orx;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ObjectRepository;
+use Exception;
 use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface;
@@ -69,14 +72,14 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      */
     public function getPublishedPageQueryBuilder(string|array $host = '', array $where = [], array $orderBy = [], int|array $limit = 0): QueryBuilder
     {
-        $qb = $this->buildPublishedPageQuery('p');
+        $queryBuilder = $this->buildPublishedPageQuery('p');
 
-        $this->andHost($qb, $host);
-        $this->andWhere($qb, $where);
-        $this->orderBy($qb, $orderBy);
-        $this->limit($qb, $limit);
+        $this->andHost($queryBuilder, $host);
+        $this->andWhere($queryBuilder, $where);
+        $this->orderBy($queryBuilder, $orderBy);
+        $this->limit($queryBuilder, $limit);
 
-        return $qb;
+        return $queryBuilder;
     }
 
     private function buildPublishedPageQuery(string $alias = 'p'): QueryBuilder
@@ -95,16 +98,16 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      */
     public function getPage(string $slug, string|array $host, bool $checkId = true): ?PageInterface
     {
-        $qb = $this->createQueryBuilder('p')
+        $queryBuilder = $this->createQueryBuilder('p')
             ->andWhere('p.slug =  :slug')->setParameter('slug', $slug);
 
         if ((int) $slug > 0 && $checkId) {
-            $qb->orWhere('p.id =  :id')->setParameter('id', $slug);
+            $queryBuilder->orWhere('p.id =  :id')->setParameter('id', $slug);
         }
 
-        $qb = $this->andHost($qb, $host);
+        $queryBuilder = $this->andHost($queryBuilder, $host);
 
-        return $qb->getQuery()->getResult()[0] ?? null; // @phpstan-ignore-line
+        return $queryBuilder->getQuery()->getResult()[0] ?? null; // @phpstan-ignore-line
     }
 
     /**
@@ -114,34 +117,34 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      */
     public function findByHost(string|array $host): array
     {
-        $qb = $this->createQueryBuilder('p');
-        $this->andHost($qb, $host);
+        $queryBuilder = $this->createQueryBuilder('p');
+        $this->andHost($queryBuilder, $host);
 
-        return $qb->getQuery()->getResult();
+        return $queryBuilder->getQuery()->getResult();
     }
 
     /**
      * @param string|string[] $host
      *                              Return page for sitemap and main Feed (PageController)
-     *                              $qb->getQuery()->getResult();
+     *                              $queryBuilder->getQuery()->getResult();
      */
     public function getIndexablePagesQuery(
         string|array $host,
         string $locale,
         int $limit = null
     ): QueryBuilder {
-        $qb = $this->buildPublishedPageQuery('p');
-        $qb = $this->andIndexable($qb);
-        $qb = $this->andHost($qb, $host);
-        $qb = $this->andLocale($qb, $locale);
+        $queryBuilder = $this->buildPublishedPageQuery('p');
+        $queryBuilder = $this->andIndexable($queryBuilder);
+        $queryBuilder = $this->andHost($queryBuilder, $host);
+        $queryBuilder = $this->andLocale($queryBuilder, $locale);
 
-        $this->andNotRedirection($qb);
+        $this->andNotRedirection($queryBuilder);
 
         if (null !== $limit) {
-            $qb->setMaxResults($limit);
+            $queryBuilder->setMaxResults($limit);
         }
 
-        return $qb;
+        return $queryBuilder;
     }
 
     /**
@@ -166,17 +169,17 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      */
     public function getPagesUsingMedia(MediaInterface $media): array
     {
-        $qb = $this->createQueryBuilder('p');
+        $queryBuilder = $this->createQueryBuilder('p');
 
-        $orx = $qb->expr()->orX();
-        $orx->add($qb->expr()->eq('p.mainImage', ':idMedia'));
-        $orx->add($qb->expr()->like('p.mainContent', ':nameMedia')); // catch: 'example'
-        $orx->add($qb->expr()->like('p.mainContent', ':apostrophMedia')); // catch: 'example.jpg'
-        $orx->add($qb->expr()->like('p.mainContent', ':quotedMedia')); // catch: "example.jpg'
-        $orx->add($qb->expr()->like('p.mainContent', ':defaultMedia')); // catch: media/default/example.jpg
-        $orx->add($qb->expr()->like('p.mainContent', ':thumbMedia'));
+        $orx = $queryBuilder->expr()->orX();
+        $orx->add($queryBuilder->expr()->eq('p.mainImage', ':idMedia'));
+        $orx->add($queryBuilder->expr()->like('p.mainContent', ':nameMedia')); // catch: 'example'
+        $orx->add($queryBuilder->expr()->like('p.mainContent', ':apostrophMedia')); // catch: 'example.jpg'
+        $orx->add($queryBuilder->expr()->like('p.mainContent', ':quotedMedia')); // catch: "example.jpg'
+        $orx->add($queryBuilder->expr()->like('p.mainContent', ':defaultMedia')); // catch: media/default/example.jpg
+        $orx->add($queryBuilder->expr()->like('p.mainContent', ':thumbMedia'));
 
-        $query = $qb->where($orx)->setParameters([ // @phpstan-ignore-line
+        $query = $queryBuilder->where($orx)->setParameters([ // @phpstan-ignore-line
             'idMedia' => $media->getId(),
             'nameMedia' => "%'".$media->getName()."'%",
             'apostrophMedia' => "%'".$media->getMedia()."'%",
@@ -205,81 +208,118 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      * QueryBuilder Helper.
      *
      * @param array<mixed> $where array containing array with key,operator,value,key_prefix
-     *                            Eg:
-     *                            ['title', 'LIKE' '%this%'] => works
-     *                            [['title', 'LIKE' '%this%']] => works
-     *                            [['key'=>'title', 'operator' => 'LIKE', 'value' => '%this%'], 'OR', ['key'=>'slug', 'operator' => 'LIKE', 'value' => '%this%']] => works
-     *                            See confusing parenthesis DQL doctrine https://symfonycasts.com/screencast/doctrine-queries/and-where-or-where#avoid-orwhere-and-where
+     *
+     * Eg:
+     * ['title', 'LIKE' '%this%'] => works
+     * [['title', 'LIKE' '%this%']] => works
+     * [['title', 'LIKE' '%this%'], 'OR', ['title', 'LIKE' '%that%']] => works
+     * [[['title', 'LIKE' '%this%'], ['title', 'LIKE' '%this%']], 'OR', ['title', 'LIKE' '%that%']] => works
      */
     private function andWhere(QueryBuilder $queryBuilder, array $where): QueryBuilder
     {
+        if ([] === $where) {
+            return $queryBuilder;
+        }
+
         // Normalize array [']
-        if ([] !== $where && (! isset($where[0]) || ! \is_array($where[0]))) {
+        if (! isset($where[0]) || ! \is_array($where[0])) { // eg : ['key' => 'test'...] or ['test', ...]
             $where = [$where];
         }
 
-        if (\in_array('OR', $where, true)) {
-            return $this->andWhereOr($queryBuilder, $where);
-        }
-
-        foreach ($where as $singleWhere) {
-            if (! \is_array($singleWhere)) {
-                throw new \Exception('malformated where params');
-            }
-
-            $this->simpleAndWhere($queryBuilder, $singleWhere);
-        }
-
-        return $queryBuilder;
+        return $queryBuilder->andWhere($this->andWhereAndOr($queryBuilder, $where));
     }
 
     /**
      * @param array<mixed> $where
      */
-    private function andWhereOr(QueryBuilder $queryBuilder, array $where): QueryBuilder
+    private function andWhereAndOr(QueryBuilder $queryBuilder, array $where): Andx|Orx
+    {
+        if (\in_array('OR', $where, true)) {
+            return $this->andWhereOr($queryBuilder, $where);
+        }
+
+        return $this->andWhereAnd($queryBuilder, $where);
+    }
+
+    /**
+     * @param array<mixed> $where
+     */
+    private function andWhereAnd(QueryBuilder $queryBuilder, array $where): Andx
+    {
+        $andX = $queryBuilder->expr()->andX();
+        foreach ($where as $singleWhereOrSubQuery) {
+            if (! \is_array($singleWhereOrSubQuery)) {
+                throw new \Exception('malformated where params');
+            }
+
+            $andX->add($this->simpleAndWhere($queryBuilder, $singleWhereOrSubQuery));
+        }
+
+        return $andX;
+    }
+
+    /**
+     * @param array<mixed> $w
+     */
+    private function simpleAndWhere(QueryBuilder $queryBuilder, array $w): Andx
+    {
+        $andX = $queryBuilder->expr()->andX();
+
+        if (\is_array(array_values($w)[0] ?? throw new \Exception())) {
+            return $andX->add($this->andWhereAndOr($queryBuilder, $w));
+        }
+
+        return $andX->add($this->retrieveExpressionFrom($queryBuilder, $w));
+    }
+
+    /**
+     * @param array<mixed> $where
+     */
+    private function andWhereOr(QueryBuilder $queryBuilder, array $where): Orx
     {
         $orX = $queryBuilder->expr()->orX();
 
         foreach ($where as $singleWhere) {
             if (! \is_array($singleWhere)) {
+                continue; // why not throw an exception ?!
+            }
+
+            if (\is_array(array_values($singleWhere)[0] ?? throw new \Exception())) {
+                $orX->add($this->andWhereAndOr($queryBuilder, $singleWhere));
+
                 continue;
             }
 
             $orX->add($this->retrieveExpressionFrom($queryBuilder, $singleWhere));
         }
 
-        return $queryBuilder->andWhere($orX);
+        return $orX;
     }
 
     /**
      * @param array<mixed> $whereRow
      */
-    private function retrieveExpressionFrom(QueryBuilder $qb, array $whereRow): string
+    private function retrieveExpressionFrom(QueryBuilder $queryBuilder, array $whereRow): string
     {
         $paramKey = 'm'.md5('a'.random_int(0, mt_getrandmax()));
 
         $prefix = $whereRow['key_prefix'] ?? $whereRow[4] ?? 'p.';
         $key = $whereRow['key'] ?? $whereRow[0] ?? throw new \Exception('key was forgotten');
         $operator = $whereRow['operator'] ?? $whereRow[1] ?? throw new \Exception('operator was forgotten');
-        $value = 'IN' === $operator ? '( :'.$paramKey.')' : ' :'.$paramKey;
-        $qb->setParameter($paramKey, $whereRow['value'] ?? $whereRow[2]);
+        $sqlValue = 'IN' === $operator ? '( :'.$paramKey.')' : ' :'.$paramKey;
+        $value = $whereRow['value'] ?? $whereRow[2];
 
-        return $prefix.$key.' '.$operator.' '.$value;
-    }
+        if (null === $value) {
+            if (! \in_array($operator, ['IS', 'IS NOT'], true)) {
+                throw new \Exception('operator `'.$operator.'` forbidden for null value');
+            }
 
-    /**
-     * @param array<mixed> $w
-     */
-    private function simpleAndWhere(QueryBuilder $queryBuilder, array $w): QueryBuilder
-    {
-        if (($w['value'] ?? $w[2]) === null) {
-            return $queryBuilder->andWhere(
-                ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0]).
-                    ' '.($w['operator'] ?? $w[1]).' NULL'
-            );
+            return $prefix.$key.' '.$operator.' NULL';
         }
 
-        return $queryBuilder->andWhere($this->retrieveExpressionFrom($queryBuilder, $w));
+        $queryBuilder->setParameter($paramKey, $value);
+
+        return $prefix.$key.' '.$operator.' '.$sqlValue;
     }
 
     /**
@@ -376,16 +416,16 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      *
      * @param int|array<(string|int), int> $limit containing start,max or just max
      */
-    protected function limit(QueryBuilder $qb, array|int $limit): QueryBuilder
+    protected function limit(QueryBuilder $queryBuilder, array|int $limit): QueryBuilder
     {
         if (\in_array($limit, [0, []], true)) {
-            return $qb;
+            return $queryBuilder;
         }
 
         if (\is_array($limit)) {
-            return $qb->setFirstResult($limit['start'] ?? $limit[0])->setMaxResults($limit['max'] ?? $limit[1]);
+            return $queryBuilder->setFirstResult($limit['start'] ?? $limit[0])->setMaxResults($limit['max'] ?? $limit[1]);
         }
 
-        return $qb->setMaxResults($limit);
+        return $queryBuilder->setMaxResults($limit);
     }
 }

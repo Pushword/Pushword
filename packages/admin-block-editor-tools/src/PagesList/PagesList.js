@@ -106,7 +106,8 @@ export default class PagesList extends Abstract {
                 Tool.updatePreview(response.body.content);
             })
             .catch(function (error) {
-                Tool.updatePreview("An error occured...");
+                console.log(error);
+                Tool.updatePreview("An error occured (see console log for more info)");
             });
     }
 

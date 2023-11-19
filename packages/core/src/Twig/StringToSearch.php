@@ -7,14 +7,14 @@ use Pushword\Core\Entity\PageInterface;
 
 class StringToSearch
 {
-    /** @var array<int, string|array{0: string, 1: string, 2: string|int|float|int[]}> */
+    /** @var array<int, string|array{0: string, 1: string, 2: string|int|float|int[]}|array{0: string, 1: string, 2: string|int|float|int[]}[]> */
     private array $where = [];
 
     public function __construct(private readonly string $search, private readonly ?PageInterface $currentPage)
     {
     }
 
-    /** @return array<int, string|array{0: string, 1: string, 2: string|int|float|int[]}> */
+    /** @return array<int, string|array{0: string, 1: string, 2: string|int|float|int[]}|array{0: string, 1: string, 2: string|int|float|int[]}[]> */
     public function retrieve(): array
     {
         if (str_contains($this->search, ' OR ')) {
@@ -44,12 +44,10 @@ class StringToSearch
         if (str_starts_with($search, 'related:comment:')) {
             $search = '<!--'.substr($search, \strlen('related:comment:')).'-->';
 
-            $this->where[] = ['mainContent', 'LIKE', '%'.$search.'%'];
-            $this->where[] = ['id', '<', ($this->currentPage?->getId() ?? 0) + 3];
-
-            if (\in_array('OR', $this->where, true)) {
-                throw new \Exception('related:comment + OR not yet supported');
-            }
+            $this->where[] = [
+                ['mainContent', 'LIKE', '%'.$search.'%'],
+                ['id', '<', ($this->currentPage?->getId() ?? 0) + 3],
+            ];
 
             return;
         }
@@ -78,11 +76,10 @@ class StringToSearch
         $searchLowerCased = strtolower($search);
         if ('related' == $searchLowerCased) {
             if (($parentPage = $this->currentPage?->getParentPage()) !== null) {
-                $this->where[] = ['parentPage', '=', $parentPage->getId() ?? 0];
-                $this->where[] = ['id', '<', ($this->currentPage->getId() ?? 0) + 3];
-                if (\in_array('OR', $this->where, true)) {
-                    throw new \Exception('related + OR not yet supported');
-                }
+                $this->where[] = [
+                    ['parentPage', '=', $parentPage->getId() ?? 0],
+                    ['id', '<', ($this->currentPage->getId() ?? 0) + 3],
+                ];
 
                 return true;
             }
