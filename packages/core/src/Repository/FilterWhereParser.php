@@ -19,7 +19,7 @@ class FilterWhereParser
      * @param array<mixed> $where
      */
     public function __construct(
-        private QueryBuilder $queryBuilder,
+        private readonly QueryBuilder $queryBuilder,
         private array $where
     ) {
     }
