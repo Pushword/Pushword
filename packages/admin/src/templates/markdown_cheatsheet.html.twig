@@ -284,13 +284,16 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
-{{ "{{" }} list('keyword X or <!--invisible-hash-in-content-->')|unprose {{ "}}" }}<br>
-{{ "{{" }} list('keyword X', $number = 3, $start = 1 $orderBy = 'createdAt', $template = '/page/_pages_list.html.twig')|unprose {{ "}}" }}<br>
-{{ "{{" }} cardlist('keyword X', $number = 3, $orderBy = 'createdAt')|unprose {{ "}}" }}<br>
-<br>
-{{ "{{" }} children(page, $number = 3, $start = 1)|unprose {{ "}}" }}<br>
-{{ "{{" }} cardchildren(page, $number = 3, $start = 1)|unprose {{ "}}" }}
+{{ "{{" }} pages_list('keyword X OR <!--invisible-hash-in-content-->')|unprose {{ "}}" }}
+{{ "{{" }} pages_list('keyword X OR <!--invisible-hash-in-content-->', max, order, view, host)|unprose {{ "}}" }}
 {% endapply %}</code></pre>
+
+{% apply markdown %}
+- `max` nombre maximum d'items à montrer, peut être un tableau pour paginer le résultat, défault : `0`, no limit
+- `order`  default `publishedAt DESC,priority DESC`
+- `view` default `/component/pages_list.html.twig`, accepte tout chemin vers un template ou `card` pour `/component/pages_list_card.html.twig`
+- `host` default current host, if set to '', will be set to current host
+{% endapply %}
 </div>
 
 <h2 id="redirect" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.redirection'|trans }}</h2>
