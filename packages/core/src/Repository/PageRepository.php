@@ -5,11 +5,8 @@ namespace Pushword\Core\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Selectable;
-use Doctrine\ORM\Query\Expr\Andx;
-use Doctrine\ORM\Query\Expr\Orx;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ObjectRepository;
-use Exception;
 use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface;
@@ -75,7 +72,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $queryBuilder = $this->buildPublishedPageQuery('p');
 
         $this->andHost($queryBuilder, $host);
-        $this->andWhere($queryBuilder, $where);
+        (new FilterWhereParser($queryBuilder, $where))->parseAndAdd();
         $this->orderBy($queryBuilder, $orderBy);
         $this->limit($queryBuilder, $limit);
 
@@ -203,124 +200,6 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /* ~~~~~~~~~~~~~~~ Query Builder Helper ~~~~~~~~~~~~~~~ */
-
-    /**
-     * QueryBuilder Helper.
-     *
-     * @param array<mixed> $where array containing array with key,operator,value,key_prefix
-     *
-     * Eg:
-     * ['title', 'LIKE' '%this%'] => works
-     * [['title', 'LIKE' '%this%']] => works
-     * [['title', 'LIKE' '%this%'], 'OR', ['title', 'LIKE' '%that%']] => works
-     * [[['title', 'LIKE' '%this%'], ['title', 'LIKE' '%this%']], 'OR', ['title', 'LIKE' '%that%']] => works
-     */
-    private function andWhere(QueryBuilder $queryBuilder, array $where): QueryBuilder
-    {
-        if ([] === $where) {
-            return $queryBuilder;
-        }
-
-        // Normalize array [']
-        if (! isset($where[0]) || ! \is_array($where[0])) { // eg : ['key' => 'test'...] or ['test', ...]
-            $where = [$where];
-        }
-
-        return $queryBuilder->andWhere($this->andWhereAndOr($queryBuilder, $where));
-    }
-
-    /**
-     * @param array<mixed> $where
-     */
-    private function andWhereAndOr(QueryBuilder $queryBuilder, array $where): Andx|Orx
-    {
-        if (\in_array('OR', $where, true)) {
-            return $this->andWhereOr($queryBuilder, $where);
-        }
-
-        return $this->andWhereAnd($queryBuilder, $where);
-    }
-
-    /**
-     * @param array<mixed> $where
-     */
-    private function andWhereAnd(QueryBuilder $queryBuilder, array $where): Andx
-    {
-        $andX = $queryBuilder->expr()->andX();
-        foreach ($where as $singleWhereOrSubQuery) {
-            if (! \is_array($singleWhereOrSubQuery)) {
-                throw new \Exception('malformated where params');
-            }
-
-            $andX->add($this->simpleAndWhere($queryBuilder, $singleWhereOrSubQuery));
-        }
-
-        return $andX;
-    }
-
-    /**
-     * @param array<mixed> $w
-     */
-    private function simpleAndWhere(QueryBuilder $queryBuilder, array $w): Andx
-    {
-        $andX = $queryBuilder->expr()->andX();
-
-        if (\is_array(array_values($w)[0] ?? throw new \Exception())) {
-            return $andX->add($this->andWhereAndOr($queryBuilder, $w));
-        }
-
-        return $andX->add($this->retrieveExpressionFrom($queryBuilder, $w));
-    }
-
-    /**
-     * @param array<mixed> $where
-     */
-    private function andWhereOr(QueryBuilder $queryBuilder, array $where): Orx
-    {
-        $orX = $queryBuilder->expr()->orX();
-
-        foreach ($where as $singleWhere) {
-            if (! \is_array($singleWhere)) {
-                continue; // why not throw an exception ?!
-            }
-
-            if (\is_array(array_values($singleWhere)[0] ?? throw new \Exception())) {
-                $orX->add($this->andWhereAndOr($queryBuilder, $singleWhere));
-
-                continue;
-            }
-
-            $orX->add($this->retrieveExpressionFrom($queryBuilder, $singleWhere));
-        }
-
-        return $orX;
-    }
-
-    /**
-     * @param array<mixed> $whereRow
-     */
-    private function retrieveExpressionFrom(QueryBuilder $queryBuilder, array $whereRow): string
-    {
-        $paramKey = 'm'.md5('a'.random_int(0, mt_getrandmax()));
-
-        $prefix = $whereRow['key_prefix'] ?? $whereRow[4] ?? 'p.';
-        $key = $whereRow['key'] ?? $whereRow[0] ?? throw new \Exception('key was forgotten');
-        $operator = $whereRow['operator'] ?? $whereRow[1] ?? throw new \Exception('operator was forgotten');
-        $sqlValue = 'IN' === $operator ? '( :'.$paramKey.')' : ' :'.$paramKey;
-        $value = $whereRow['value'] ?? $whereRow[2];
-
-        if (null === $value) {
-            if (! \in_array($operator, ['IS', 'IS NOT'], true)) {
-                throw new \Exception('operator `'.$operator.'` forbidden for null value');
-            }
-
-            return $prefix.$key.' '.$operator.' NULL';
-        }
-
-        $queryBuilder->setParameter($paramKey, $value);
-
-        return $prefix.$key.' '.$operator.' '.$sqlValue;
-    }
 
     /**
      * @param array<(string|int), string> $orderBy containing key,direction

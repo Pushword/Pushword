@@ -27,8 +27,8 @@ use Twig\Environment as Twig;
  * - comment:blog
  * Operators : OR
  * Example :
- * [✔] children OR parent_children
- * [✗] children AND parent_children.
+ * [✔] related:comment:blog OR related
+ * [✗] children AND slug:homepage.
  */
 trait PageListTwigTrait
 {
