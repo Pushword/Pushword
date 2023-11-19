@@ -13,17 +13,20 @@
             <ul class="{{ gallery_class|default('grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-screen-2xl mx-auto') }}">
                 {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
                 {% for name, image in images %}
-
                     {{ gallery_li_opener|default('<li>')|raw }}
                         {% set current_media = media_from_string(image, name) %}
-                        {{ _self.gallery_part(
+                        {% set galleryPart = _self.gallery_part(
                             current_media,
                             gallery_id,
                             page ?? null,
                             image_filter|default('thumb'),
                             image_container ?? '',
                             image_otherAttributes ?? {}
-                        ) }}
+                        ) %}
+                        {{ ((loop.index == 1 and (pos ?? 100) < 3)
+                            ? galleryPart|replace({'loading="lazy"': '', 'loading=lazy': ''})
+                            : galleryPart
+                        )|raw }}
                     </li>
                 {% endfor %}
             </ul>

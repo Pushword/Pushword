@@ -4,7 +4,7 @@
     <source type="image/webp" srcset="{{ image|image(filter, 'webp') }} 576w" />
     <img srcset="{{ image|image(filter) }} 576w"
       src="{{ image|image('default') }}"
-      loading="lazy"
+      loading=lazy
       width="{{ filter == 'thumb' ? '1' : image.width }}"
       height="{{ filter == 'thumb' ? '1' :  image.height }}"
       {% if otherAttributes.alt is not defined %}
