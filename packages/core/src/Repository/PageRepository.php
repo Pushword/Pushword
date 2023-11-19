@@ -245,12 +245,26 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
                 continue;
             }
 
-            $k = md5('a'.random_int(0, mt_getrandmax()));
-            $orX->add($queryBuilder->expr()->like(($singleWhere['key_prefix'] ?? $singleWhere[4] ?? 'p.').($singleWhere['key'] ?? $singleWhere[0]), ':m'.$k));
-            $queryBuilder->setParameter('m'.$k, $singleWhere['value'] ?? $singleWhere[2]);
+            $orX->add($this->retrieveExpressionFrom($queryBuilder, $singleWhere));
         }
 
         return $queryBuilder->andWhere($orX);
+    }
+
+    /**
+     * @param array<mixed> $whereRow
+     */
+    private function retrieveExpressionFrom(QueryBuilder $qb, array $whereRow): string
+    {
+        $paramKey = 'm'.md5('a'.random_int(0, mt_getrandmax()));
+
+        $prefix = $whereRow['key_prefix'] ?? $whereRow[4] ?? 'p.';
+        $key = $whereRow['key'] ?? $whereRow[0] ?? throw new \Exception('key was forgotten');
+        $operator = $whereRow['operator'] ?? $whereRow[1] ?? throw new \Exception('operator was forgotten');
+        $value = 'IN' === $operator ? '( :'.$paramKey.')' : ' :'.$paramKey;
+        $qb->setParameter($paramKey, $whereRow['value'] ?? $whereRow[2]);
+
+        return $prefix.$key.' '.$operator.' '.$value;
     }
 
     /**
@@ -265,13 +279,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             );
         }
 
-        $k = md5('a'.random_int(0, mt_getrandmax()));
-
-        return $queryBuilder->andWhere(
-            ($w['key_prefix'] ?? $w[4] ?? 'p.').($w['key'] ?? $w[0])
-                        .' '.($w['operator'] ?? $w[1])
-                        .(($w['operator'] ?? $w[1]) === 'IN' ? '( :m'.$k.')' : ' :m'.$k)
-        )->setParameter('m'.$k, $w['value'] ?? $w[2]);
+        return $queryBuilder->andWhere($this->retrieveExpressionFrom($queryBuilder, $w));
     }
 
     /**

@@ -17,6 +17,19 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Environment as Twig;
 
+/**
+ * TODO documenter
+ * Possible value :
+ * - children
+ * - parent_children
+ * - related
+ * - related:comment:blog
+ * - comment:blog
+ * Operators : OR
+ * Example :
+ * [✔] children OR parent_children
+ * [✗] children AND parent_children.
+ */
 trait PageListTwigTrait
 {
     /**
@@ -71,92 +84,6 @@ trait PageListTwigTrait
     }
 
     /**
-     * TODO: documenter.
-     *
-     * @return array<mixed>
-     */
-    private function stringToSearch(string $search, ?PageInterface $currentPage): array
-    {
-        $where = [];
-
-        if (str_contains($search, ' OR ')) {
-            $searchToParse = explode(' OR ', $search);
-            foreach ($searchToParse as $singleSearchToParse) {
-                // $where = array_merge($where, $this->stringToSearch($s), ['OR']);
-                $where[] = $this->simpleStringToSearch($singleSearchToParse, $currentPage);
-                $where[] = 'OR';
-            }
-
-            array_pop($where);
-        }
-        /*elseif (strpos($search, ' AND ') !== false) { // Manage OR and Where seems difficult
-            $searchToParse = explode(' AND ', $search);
-            foreach ($searchToParse as $s) {
-                $where[] = $this->simpleStringToSearch($s);
-            }
-        }*/ else {
-            $where[] = $this->simpleStringToSearch($search, $currentPage);
-        }
-
-        return $where;
-    }
-
-    /**
-     * @return mixed[]|null
-     */
-    private function simpleStringToSearchChildren(string $search, PageInterface $currentPage = null): ?array
-    {
-        if (null === $currentPage) {
-            return null;
-        }
-
-        if ('children' == strtolower($search)) {
-            return ['parentPage', '=', $currentPage->getId()];
-        }
-
-        if ('parent_children' == strtolower($search)) {
-            if (($parentPage = $currentPage->getParentPage()) === null) {
-                throw new \Exception('no parent page for `'.$currentPage->getSlug().'`');
-            }
-
-            return ['parentPage', '=', $parentPage->getId()];
-        }
-
-        if ('children_children' == strtolower($search)
-            && $currentPage->hasChildrenPages()) {
-            $childrenPage = $currentPage->getChildrenPages()->map(static fn ($page): ?int => $page->getId())->toArray();
-
-            return ['parentPage', 'IN', $childrenPage];
-        }
-
-        return null;
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    private function simpleStringToSearch(string $search, PageInterface $currentPage = null): array
-    {
-        if (($return = $this->simpleStringToSearchChildren($search, $currentPage)) !== null) {
-            return $return;
-        }
-
-        if (str_starts_with($search, 'comment:')) {
-            $search = '<!--'.substr($search, \strlen('comment:')).'-->';
-
-            return ['key' => 'mainContent', 'operator' => 'LIKE', 'value' => '%'.$search.'%'];
-        }
-
-        if (str_starts_with($search, 'slug:')) {
-            $search = substr($search, \strlen('slug:'));
-
-            return ['key' => 'slug', 'operator' => 'LIKE', 'value' => $search];
-        }
-
-        return ['key' => 'mainContent', 'operator' => 'LIKE', 'value' => '%'.$search.'%'];
-    }
-
-    /**
      * @param string|array<mixed>                $search
      * @param string|array<(string|int), string> $order
      * @param string|string[]                    $host
@@ -178,7 +105,7 @@ trait PageListTwigTrait
                 '/component/pages_list_card.html.twig'
                 : (\in_array($view, ['', 'list'], true) ? '/component/pages_list.html.twig' : $view);
 
-        $search = \is_array($search) ? $search : $this->stringToSearch($search, $currentPage);
+        $search = \is_array($search) ? $search : (new StringToSearch($search, $currentPage))->retrieve();
 
         $order = '' === $order ? 'publishedAt,priority' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
