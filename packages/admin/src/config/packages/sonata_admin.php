@@ -24,7 +24,7 @@ return [
                     'on_top' => true,
                     'label' => 'admin.label.media', // 'admin.label.params',
                     'translation_domain' => 'messages',
-                    'icon' => '<i class="fa fa-photo-video"></i>',
+                    'icon' => '<i class="fa fa-images"></i>',
                     // 'extras' => [PageMenuProvider::ORDER_NUMBER, 2],
                     'items' => [['route' => 'admin_app_media_list', 'label' => 'a']],
                 ],
