@@ -7,9 +7,8 @@ parent: contribute
 
 ## BugFix && To finish
 
-- [Core] catch Exception and show them in flash messages, eg : PagesListTwigTrait / PageController
+-   [Core/Admin] catch Exception and show them in flash messages, eg : PagesListTwigTrait / PageController
 -   [Core] https://github.com/jolicode/JoliTypo
--   [Core/AdminBlockEditor] Related, RelatedToParent
 
 -   [Admin] Block (left column) for viewing Page subtitle and navigate in the content
 -   [Admin] Page : Code Editor for Autres paramêtres (yaml highlighting)

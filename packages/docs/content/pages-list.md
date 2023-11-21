@@ -6,4 +6,16 @@ raw: true
 toc: true
 ---
 
-{# TODO #}
+/**
+ * TODO documenter
+ * Possible value :
+ * - children
+ * - parent_children
+ * - related
+ * - related:comment:blog
+ * - comment:blog
+ * Operators : OR
+ * Example :
+ * [✔] related:comment:blog OR related
+ * [✗] children AND slug:homepage.
+ */

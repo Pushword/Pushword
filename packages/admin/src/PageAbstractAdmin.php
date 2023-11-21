@@ -139,6 +139,8 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
      */
     protected function configureFormFields(FormMapper $form): void
     {
+        $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
+
         $this->apps->switchCurrentApp($this->getSubject());
         $fields = $this->adminFormFieldManager->getFormFields($this, $this->formFieldKey);
         // if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) { throw new \LogicException(); }
