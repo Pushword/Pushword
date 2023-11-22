@@ -321,7 +321,7 @@ export function convertShortchutForLink(str) {
  */
 export function readableEmail(selector) {
   document.querySelectorAll(selector).forEach(function (item) {
-    var mail = rot13ToText(item.textContent);
+    var mail = rot13ToText(item.textContent).trim();
     item.classList.remove('hidden');
     item.innerHTML = '<a href="mailto:' + mail + '">' + mail + '</a>';
     if (selector.charAt(0) == '.') {

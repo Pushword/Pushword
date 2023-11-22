@@ -90,6 +90,7 @@ trait LinkTwigTrait
     {
         // LINK packages/core/src/templates/component/encoded_mail.html.twig
         $template = $this->getApp()->getView('/component/encoded_mail.html.twig');
+        $mail = trim($mail);
 
         return $this->twig->render($template, [
             'mail_readable' => self::readableEncodedMail($mail),
