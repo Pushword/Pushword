@@ -55,8 +55,6 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
         private readonly ImageManager $imageManager,
         RequestStack $requestStack,
     ) {
-        $adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
-
         // dd($requestStack->getCurrentRequest()->query->get('host'));
         if (($r = $requestStack->getCurrentRequest()) !== null && ($host = $r->query->get('host')) !== null) {
             $this->apps->switchCurrentApp($host);

@@ -37,7 +37,6 @@ final class MediaAdmin extends AbstractAdmin implements AdminInterface
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageManager $imageManager,
     ) {
-        $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
         parent::__construct();
     }
 
@@ -61,6 +60,8 @@ final class MediaAdmin extends AbstractAdmin implements AdminInterface
      */
     protected function configureFormFields(FormMapper $form): void
     {
+        $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
+
         $fields = $this->adminFormFieldManager->getFormFields($this, 'admin_media_form_fields');
         // if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1]) || ! isset($fields[2]) || ! \is_array($fields[2])) {  throw new \LogicException(); }
 
