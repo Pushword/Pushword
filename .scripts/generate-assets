@@ -64,5 +64,4 @@ then
     cd packages/core
     installDependencies
     buildAssets
-    cd ../../
 fi
