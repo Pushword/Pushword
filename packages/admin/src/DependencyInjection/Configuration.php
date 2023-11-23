@@ -58,7 +58,7 @@ class Configuration implements ConfigurationInterface
     ];
 
     final public const DEFAULT_ADMIN_REDIRECTION_FORM_FIELDS = [
-        [PageH1Field::class, PageMainContentField::class],
+        [PageH1Field::class, PageMainContentField::class, HostField::class],
         [],
     ];
 

@@ -1,5 +1,4 @@
 const EncoreHelper = require('@pushword/js-helper/src/encore.js');
-const Encore = require('@symfony/webpack-encore');
 
 var watchFiles = [
     './src/templates/**/*.html.twig',

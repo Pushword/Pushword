@@ -1,5 +1,5 @@
 const plugin = require('tailwindcss/plugin');
-const pushwordHelper = require('@pushword/js-helper/src/tailwind.helpers.js');
+const pushwordHelper = require('./tailwind.helpers.js');
 
 module.exports = {
     mode: 'jit',

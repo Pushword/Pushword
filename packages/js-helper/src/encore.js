@@ -17,7 +17,7 @@ function getFilesToWatch(basePath = './..') {
 }
 function getTailwindConfig(watchFiles = null) {
     if (watchFiles === null) watchFiles = getFilesToWatch();
-    var tailwindConfig = require('@pushword/js-helper/src/tailwind.config.js');
+    var tailwindConfig = require('./tailwind.config.js');
     tailwindConfig.content = watchFiles;
     return tailwindConfig;
 }

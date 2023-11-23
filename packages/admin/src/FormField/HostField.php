@@ -40,7 +40,8 @@ class HostField extends AbstractField
             return $host;
         }
 
-        return $this->getHosts()[0];
+        return $this->admin->hasRequest() && $this->admin->getRequest()->isMethod('POST') ? '' // POST request query parameter is not transmitted
+            : $this->getHosts()[0];
     }
 
     /**

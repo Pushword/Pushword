@@ -18,6 +18,8 @@ class PageParentPageField extends AbstractField
      */
     public function formField(FormMapper $form): void
     {
+        /** @var PageInterface */
+        $page = $this->admin->getSubject();
         $form->add(
             'parentPage',
             EntityType::class,
@@ -25,12 +27,21 @@ class PageParentPageField extends AbstractField
                 'class' => $this->admin->getModelClass(),
                 'label' => 'admin.page.parentPage.label',
                 'required' => false,
-                'query_builder' => fn (PageRepository $er): QueryBuilder => $er->createQueryBuilder('p')
-                ->andWhere('p.id != :id')
-                ->andWhere('p.host = :host')
-                ->setParameter('id', (int) $this->admin->getSubject()->getId())
-                ->setParameter('host', $this->admin->getSubject()->getHost()),
+                'query_builder' => fn (PageRepository $repo): QueryBuilder => $this->getQueryBuilder($repo, $page),
             ]
         );
+    }
+
+    public function getQueryBuilder(PageRepository $repo, PageInterface $page): QueryBuilder
+    {
+        $qb = $repo->createQueryBuilder('p')
+                ->andWhere('p.id != :id')
+                ->setParameter('id', (int) $page->getId());
+
+        if ('' !== $page->getHost()) { // HostField must be call before
+            $qb->andWhere('p.host = :host')->setParameter('host', $page->getHost());
+        }
+
+        return $qb;
     }
 }

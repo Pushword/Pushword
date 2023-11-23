@@ -56,6 +56,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
         RequestStack $requestStack,
     ) {
         // dd($requestStack->getCurrentRequest()->query->get('host'));
+        // dd($requestStack->getCurrentRequest());
         if (($r = $requestStack->getCurrentRequest()) !== null && ($host = $r->query->get('host')) !== null) {
             $this->apps->switchCurrentApp($host);
         }
@@ -132,6 +133,11 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
         return method_exists($this->getModelClass(), 'get'.$name);
     }
 
+    protected function preValidate(object $object): void
+    {
+        $this->apps->switchCurrentApp($object->getHost());
+    }
+
     /**
      * @psalm-suppress InvalidArgument
      */
@@ -139,7 +145,6 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
     {
         $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
 
-        $this->apps->switchCurrentApp($this->getSubject());
         $fields = $this->adminFormFieldManager->getFormFields($this, $this->formFieldKey);
         // if (! isset($fields[0]) || ! \is_array($fields[0]) || ! isset($fields[1]) || ! \is_array($fields[1])) { throw new \LogicException(); }
 
@@ -172,6 +177,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
      */
     protected function alterNewInstance(object $object): void
     {
+        // $object->setHost($this->apps->get()->getMainHost());
         $object->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
     }
 
