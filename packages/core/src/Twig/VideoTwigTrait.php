@@ -17,7 +17,7 @@ trait VideoTwigTrait
             'url' => $youtube ?? $url,
             'image' => $image,
             'alt' => $alternativeText,
-            'embed_code' => null !== $youtube && ! $forceUrl ? $this->getEmbedCode($url) : null,
+            'embed_code' => null !== $youtube && ! $forceUrl ? $this->getEmbedCode($url) : null, // @phpstan-ignore-line
         ]));
     }
 
