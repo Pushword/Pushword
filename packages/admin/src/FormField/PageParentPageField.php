@@ -15,6 +15,8 @@ class PageParentPageField extends AbstractField
 {
     /**
      * @param FormMapper<PageInterface> $form
+     *
+     * @psalm-suppress UnnecessaryVarAnnotation
      */
     public function formField(FormMapper $form): void
     {
