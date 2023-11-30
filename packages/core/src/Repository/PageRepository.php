@@ -176,7 +176,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $orx->add($queryBuilder->expr()->like('p.mainContent', ':defaultMedia')); // catch: media/default/example.jpg
         $orx->add($queryBuilder->expr()->like('p.mainContent', ':thumbMedia'));
 
-        $query = $queryBuilder->where($orx)->setParameters([ // @phpstan-ignore-line
+        $query = $queryBuilder->where($orx)->setParameters([
             'idMedia' => $media->getId(),
             'nameMedia' => "%'".$media->getName()."'%",
             'apostrophMedia' => "%'".$media->getMedia()."'%",
@@ -185,7 +185,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             'thumbMedia' => '/media/thumb/'.$media->getMedia().'%',
         ])->getQuery();
 
-        return $query->getResult(); // @phpstan-ignore-line
+        return $query->getResult();
     }
 
     private function getRootAlias(QueryBuilder $queryBuilder): string
