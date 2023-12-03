@@ -38,7 +38,7 @@ class TailwindGenerator
 
         $cmd = 'cd "'.str_replace('"', '\"', $this->projectDir).'/assets" && '
             .('' !== $this->pathToBin ? 'export PATH="'.str_replace('"', '\"', $this->pathToBin).'" && ' : '')
-            .'yarn encore production >"'.str_replace('"', '\"', $this->projectDir).'/var/log/lastTailwindGeneration" 2>&1 &';
+            .'NODE_ENV=production yarn build >"'.str_replace('"', '\"', $this->projectDir).'/var/log/lastTailwindGeneration" 2>&1 &';
         @proc_open(
             '{ ('.$cmd.') <&3 3<&- 3>/dev/null & } 3<&0;',
             [['pipe', 'r'], ['pipe', 'w'], ['pipe', 'w']],
