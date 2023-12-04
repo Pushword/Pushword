@@ -1,3 +1,4 @@
+https://pushword.piedweb.com/upgrade
 https://pushword.piedweb.com/pages-list
 https://pushword.piedweb.com/roadmap
 https://pushword.piedweb.com/extension/template-editor
@@ -6,7 +7,6 @@ https://pushword.piedweb.com/manage-assets
 https://pushword.piedweb.com/
 https://pushword.piedweb.com/extension/page-scanner
 https://pushword.piedweb.com/extension/admin-block-editor
-https://pushword.piedweb.com/upgrade
 https://pushword.piedweb.com/extension/facebook
 https://pushword.piedweb.com/extensions
 https://pushword.piedweb.com/extension/conversation
