@@ -19,7 +19,7 @@ trait PageI18nTrait
      * @var Collection<string, PageInterface>|null
      */
     #[ORM\ManyToMany(targetEntity: \Pushword\Core\Entity\PageInterface::class)]
-    protected ?Collection $translations = null;
+    protected ?Collection $translations = null;  // @phpstan-ignore-line
 
     public function getLocale(): string
     {

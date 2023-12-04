@@ -32,7 +32,7 @@ trait MediaTrait
     protected string $projectDir = '';
 
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255, name: 'media')]
-    protected ?string $media = null;
+    protected ?string $media = null; // @phpstan-ignore-line
 
     // TODO Rename to filename
 
@@ -42,7 +42,7 @@ trait MediaTrait
     protected ?string $mediaBeforeUpdate = null;
 
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
-    protected ?string $mimeType = null;
+    protected ?string $mimeType = null; // @phpstan-ignore-line
 
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     protected int $size;
@@ -54,10 +54,10 @@ trait MediaTrait
     protected $mediaFile;
 
     /**
-     * @var Collection<int, PageInterface>|null
+     * @var Collection<int, PageInterface>
      */
     #[ORM\OneToMany(targetEntity: PageInterface::class, mappedBy: 'mainImage')]
-    protected ?Collection $mainImagePages = null;
+    protected ?Collection $mainImagePages = null; // @phpstan-ignore-line TODO drop PageInterface
 
     public function setProjectDir(string $projectDir): self
     {

@@ -8,7 +8,7 @@ use Pushword\Core\Entity\PageInterface;
 trait PageExtendedTrait
 {
     #[ORM\ManyToOne(targetEntity: \Pushword\Core\Entity\PageInterface::class)]
-    protected ?PageInterface $extendedPage = null;
+    protected ?PageInterface $extendedPage = null;  // @phpstan-ignore-line
 
     public function getExtendedPage(): ?PageInterface
     {

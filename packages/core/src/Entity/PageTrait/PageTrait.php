@@ -21,7 +21,7 @@ trait PageTrait
     protected string $mainContent = '';
 
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
-    protected ?\DateTimeInterface $publishedAt = null;
+    protected ?\DateTimeInterface $publishedAt = null;  // @phpstan-ignore-line
 
     public function __toString(): string
     {

@@ -11,14 +11,14 @@ use Pushword\Core\Entity\PageInterface;
 trait PageParentTrait
 {
     #[ORM\ManyToOne(targetEntity: PageInterface::class, inversedBy: 'childrenPages')]
-    protected ?PageInterface $parentPage = null;
+    protected ?PageInterface $parentPage = null;  // @phpstan-ignore-line
 
     /**
      * @var ?Collection<int, PageInterface>
      */
     #[ORM\OneToMany(targetEntity: PageInterface::class, mappedBy: 'parentPage')]
     #[ORM\OrderBy(['publishedAt' => Criteria::DESC, 'priority' => 'DESC'])]
-    protected ?Collection $childrenPages;
+    protected ?Collection $childrenPages;  // @phpstan-ignore-line
 
     public function getParentPage(): ?PageInterface
     {

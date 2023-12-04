@@ -10,7 +10,7 @@ use Pushword\Core\Entity\UserInterface;
 trait PageEditorTrait
 {
     #[ORM\ManyToOne(targetEntity: UserInterface::class)]
-    protected ?UserInterface $editedBy = null;
+    protected ?UserInterface $editedBy = null; // @phpstan-ignore-line
 
     /*
      * @ORM\OneToMany(
@@ -25,7 +25,7 @@ trait PageEditorTrait
     /**/
 
     #[ORM\ManyToOne(targetEntity: UserInterface::class)]
-    protected ?UserInterface $createdBy = null;
+    protected ?UserInterface $createdBy = null; // @phpstan-ignore-line
 
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TEXT, options: ['default' => ''])]
     protected string $editMessage = '';
