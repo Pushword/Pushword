@@ -11,6 +11,11 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 0.1.084
+
+* Delete src/DataFixtures folder
+* Update composer.json to allow sf7 `6.*` -> `6.*|7.*`
+
 ## To 0.0.800
 
 -   Update doctrine

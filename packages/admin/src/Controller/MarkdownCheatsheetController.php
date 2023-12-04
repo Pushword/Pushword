@@ -4,7 +4,7 @@ namespace Pushword\Admin\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[\Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag('controller.service_arguments')]
 class MarkdownCheatsheetController extends AbstractController
