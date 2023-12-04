@@ -29,7 +29,7 @@
         "babel-loader": "^9.1",
         "browserslist": "^4.22",
         "caniuse-lite": "^1",
-        "cross-env": "^7.0.3",
+        "cross-env": "^6.4|^7.0.3",
         "css-loader": "^6.5",
         "editorjs-hyperlink": "https://github.com/trinhtam/editorjs-hyperlink.git",
         "postcss": "^8.4",

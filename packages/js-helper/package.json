@@ -24,7 +24,7 @@
         "fslightbox": "^3.2.2",
         "postcss": "^8.4.30",
         "postcss-import": "^15.0",
-        "postcss-loader": "^7.0",
+        "postcss-loader": "^6.4|^7.0",
         "sass": "^1.68",
         "sass-loader": "^13.3",
         "simple-jekyll-search": "^1.9.1",
