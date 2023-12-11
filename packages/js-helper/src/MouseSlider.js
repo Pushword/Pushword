@@ -1,4 +1,4 @@
-export function mouseSlider(toSlide) {
+export function mouseSlider(toSlide, speed = 1) {
     let isDown = false;
     let startX;
     let scrollLeft;
@@ -20,7 +20,7 @@ export function mouseSlider(toSlide) {
         if (!isDown) return;
         e.preventDefault();
         const x = e.pageX - toSlide.offsetLeft;
-        const walk = (x - startX) * 3;
+        const walk = (x - startX) * speed;
         toSlide.scrollLeft = scrollLeft - walk;
     });
 }
