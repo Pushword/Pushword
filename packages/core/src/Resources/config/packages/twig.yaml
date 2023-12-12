@@ -12,6 +12,7 @@ twig:
   globals:
     apps: "@Pushword\\Core\\Component\\App\\AppPool"
     twig: "@twig"
+    unprose: 'not-prose lg:-mx-40 my-6 md:-mx-20'
 
   form_themes:
     #- 'bootstrap_4_layout.html.twig'
