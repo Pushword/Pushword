@@ -55,4 +55,11 @@ module.exports = {
             },
         });
     },
+    justifySafeCenterPlugin: function({addUtilities}) {
+        addUtilities({
+            '.justify-safe-center': {
+                'justify-content': 'safe center',
+            },
+        })
+    }
 };

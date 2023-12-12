@@ -33,5 +33,6 @@ module.exports = {
         plugin(pushwordHelper.twFirstLetterPlugin),
         plugin(pushwordHelper.twFirstChildPlugin),
         plugin(pushwordHelper.twBleedPlugin),
+        plugin(pushwordHelper.justifySafeCenterPlugin),
     ],
 };
