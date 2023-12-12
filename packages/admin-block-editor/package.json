@@ -25,7 +25,7 @@
         "editorjs-undo": "^2",
         "postcss": "^8.4",
         "postcss-import": "^15.0",
-        "postcss-loader": "^6.4|^7.0",
+        "postcss-loader": "^7.3",
         "postcss-nested": "^6.0",
         "postcss-nested-ancestors": "^3.0",
         "sass": "^1.56",
