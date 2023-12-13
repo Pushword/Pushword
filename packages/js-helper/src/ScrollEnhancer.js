@@ -33,7 +33,7 @@ class ScrollYEnhancer {
       const after = element.scrollTop
       if (before === after) {
         window.scrollXWithoutDoingNothing++
-        if (window.scrollXWithoutDoingNothing > 10) window.scrollBy(0, evt.deltaY / 2)
+        if (window.scrollXWithoutDoingNothing > 12) window.scrollBy(0, evt.deltaY )
       } else {
         window.scrollXWithoutDoingNothing = 0
       }
@@ -141,7 +141,7 @@ class ScrollXEnhancer {
       const after = element.scrollLeft
       if (before === after) {
         window.scrollYWithoutDoingNothing++
-        if (window.scrollYWithoutDoingNothing > 10) window.scrollBy(0, evt.deltaY / 2)
+        if (window.scrollYWithoutDoingNothing > 12) window.scrollBy(0, evt.deltaY)
       } else {
         window.scrollYWithoutDoingNothing = 0
       }
