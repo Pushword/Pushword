@@ -2,7 +2,7 @@
  * Demo in Draft
  */
 
-class ScrollYEnhancer {
+export class ScrollYEnhancer {
     constructor(
         selector = '.enhance-scroll-y',
         chevron = '<div class="scroller absolute left-[128px] z-10 -mt-[10px] h-[44px] w-[44px] cursor-pointer rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-600 hover:bg-gray-100 select-none" onclick="scrollPreviousDiv(this)">⌄</div><div class="relative z-0 -mt-8 h-8 w-full bg-gradient-to-t from-white to-transparent"></div>',
@@ -98,7 +98,7 @@ class ScrollYEnhancer {
     }
 }
 
-class ScrollXEnhancer {
+export class ScrollXEnhancer {
     constructor(
         selector = '.enhance-scroll-x',
         chevronRight = '<div class="scroll-right fixed right-0 top-1/3 z-20 h-[44px] w-[44px] cursor-pointer select-none rounded-full border border-gray-200 bg-white pt-[6px] text-center text-3xl leading-none text-gray-600 hover:bg-gray-100" onclick="scrollX(this)">🠆</div>',
