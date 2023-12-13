@@ -105,13 +105,13 @@ class ScrollXEnhancer {
     arrowRight = '<div class="scroll-right relative left-[calc(100vw-62px)] -mt-[44px] top-1/3 z-20 h-[44px] w-[44px] cursor-pointer select-none rounded-full border border-gray-200 bg-white pt-[3px] text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">›</div>',
     arrowLeft = '<div class="scroll-left relative left-[22px] top-1/3 z-20 h-[44px] w-[44px] cursor-pointer select-none rounded-full border border-gray-200 bg-white pt-[3px] text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">‹</div>',
   ) {
-    this.arrowLeft = arrowLeft
-    this.arrowRight = arrowRight
     window.scrollLeft = this.scrollLeft
     window.scrollX = this.scrollX
     window.manageScrollXControllerVisibility = this.manageScrollXControllerVisibility
 
     document.querySelectorAll(selector).forEach((element) => {
+      this.arrowLeft = element.dataset.arrowleft ?? arrowLeft
+      this.arrowRight = element.dataset.arrowright ?? arrowRight
       element.classList.remove(selector)
       this.enhanceScrollX(element)
       this.mouseSliderX(element)
