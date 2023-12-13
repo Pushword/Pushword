@@ -27,9 +27,14 @@ class ScrollYEnhancer {
   wheelScroll(element) {
     element.addEventListener('wheel', (evt) => {
       evt.preventDefault()
-      element.classList.toggle('scroll-smooth')
+      //element.classList.toggle('scroll-smooth')
+      const before = element.scrollTop
       element.scrollTop += evt.deltaY
-      element.classList.toggle('scroll-smooth')
+      const after = element.scrollTop
+      if (before === after) {
+        window.scrollBy(0, evt.deltaY / 2)
+      }
+      //element.classList.toggle('scroll-smooth')
     })
     return this
   }
@@ -127,9 +132,14 @@ class ScrollXEnhancer {
       evt.preventDefault()
       if (evt.target.closest('.enhance-scroll-y')) return
       if (window.isScrolling === true) return
-      element.classList.toggle('scroll-smooth')
+      //element.classList.toggle('scroll-smooth')
+      const before = element.scrollLeft
       element.scrollLeft += evt.deltaY
-      element.classList.toggle('scroll-smooth')
+      const after = element.scrollLeft
+      if (before === after) {
+        window.scrollBy(0, evt.deltaY / 2)
+      }
+      //element.classList.toggle('scroll-smooth')
     })
   }
 
