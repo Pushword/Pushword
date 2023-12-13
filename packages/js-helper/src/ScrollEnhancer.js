@@ -32,7 +32,10 @@ class ScrollYEnhancer {
       element.scrollTop += evt.deltaY
       const after = element.scrollTop
       if (before === after) {
-        window.scrollBy(0, evt.deltaY / 2)
+        window.scrollWithoutDoingNothing++
+        if (window.scrollWithoutDoingNothing > 10) window.scrollBy(0, evt.deltaY / 2)
+      } else {
+        window.scrollWithoutDoingNothing = 0
       }
       //element.classList.toggle('scroll-smooth')
     })
@@ -137,7 +140,10 @@ class ScrollXEnhancer {
       element.scrollLeft += evt.deltaY
       const after = element.scrollLeft
       if (before === after) {
-        window.scrollBy(0, evt.deltaY / 2)
+        window.scrollWithoutDoingNothing++
+        if (window.scrollWithoutDoingNothing > 10) window.scrollBy(0, evt.deltaY / 2)
+      } else {
+        window.scrollWithoutDoingNothing = 0
       }
       //element.classList.toggle('scroll-smooth')
     })
