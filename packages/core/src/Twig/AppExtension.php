@@ -133,17 +133,25 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @param string|string[]|null         $host
-     * @param array<(string|int), string>  $orderBy
-     * @param array<mixed>                 $where
-     * @param int|array<(string|int), int> $limit
+     * @param string|string[]|null               $host
+     * @param array<(string|int), string>|string $order
+     * @param array<mixed>|string                $where
+     * @param int|array<(string|int), int>       $max
      *
      * @return PageInterface[]
      */
-    public function getPublishedPages($host = null, array $where = [], array $orderBy = [], array|int $limit = 0, bool $withRedirection = false): array
+    public function getPublishedPages($host = null, array|string $where = [], array|string $order = 'priority,publishedAt', array|int $max = 0, bool $withRedirection = false): array
     {
+        $currentPage = $this->apps->getCurrentPage();
+        $where = \is_array($where) ? $where : (new StringToSearch($where, $currentPage))->retrieve();
+        $where[] = ['id',  '<>', $currentPage?->getId() ?? 0];
+
+        $order = '' === $order ? 'publishedAt,priority' : $order;
+        $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
+            : ['key' => $order[0], 'direction' => $order[1]];
+
         return Repository::getPageRepository($this->em, $this->pageClass)
-            ->getPublishedPages($host ?? $this->apps->getMainHost() ?? [], $where, $orderBy, $limit, $withRedirection);
+            ->getPublishedPages($host ?? $this->apps->getMainHost() ?? [], $where, $order, $this->getLimit($max), $withRedirection);
     }
 
     /**
