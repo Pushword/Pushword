@@ -125,8 +125,8 @@ class AppExtension extends AbstractExtension
 
     public function getPagePosition(PageInterface $page): int
     {
-        if (null !== $page->getParentPage()) {
-            return $this->getPagePosition($page->getParentPage()) + 1;
+        if (null !== ($parentPage = $page->getParentPage())) {
+            return $this->getPagePosition($parentPage) + 1;
         }
 
         return 1;
