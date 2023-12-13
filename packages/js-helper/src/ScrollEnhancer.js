@@ -6,7 +6,7 @@ export class ScrollYEnhancer {
     constructor(
         selector = '.enhance-scroll-y',
         chevron = '<div class="scroller absolute left-[128px] z-10 -mt-[10px] h-[44px] w-[44px] cursor-pointer rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-600 hover:bg-gray-100 select-none" onclick="scrollPreviousDiv(this)">⌄</div><div class="relative z-0 -mt-8 h-8 w-full bg-gradient-to-t from-white to-transparent"></div>',
-        insertAfterBegin = '<div class="fixed left-0 z-0 -mt-3 h-3 w-full bg-gradient-to-b from-white to-transparent"></div>'
+        insertAfterBegin = '<div class="sticky left-0 -top-3 z-0 -mt-3 h-3 w-full bg-gradient-to-b from-white to-transparent"></div>'
     ) {
         this.chevron = chevron;
         this.insertAfterBegin = insertAfterBegin;
@@ -14,24 +14,24 @@ export class ScrollYEnhancer {
         window.manageScrollYControllerVisibility = this.manageScrollYControllerVisibility;
 
         document.querySelectorAll(selector).forEach((element) => {
-          this.enhanceScrollY(element)
-          this.mouseSliderY(element)
-          this.wheelScroll(element)
-          element.onscroll = function () {
-            manageScrollYControllerVisibility(this)
-          }
-        })
-      }
+            this.enhanceScrollY(element);
+            this.mouseSliderY(element);
+            this.wheelScroll(element);
+            element.onscroll = function () {
+                manageScrollYControllerVisibility(this);
+            };
+        });
+    }
 
-      wheelScroll(element) {
+    wheelScroll(element) {
         element.addEventListener('wheel', (evt) => {
-          evt.preventDefault()
-          element.classList.toggle('scroll-smooth')
-          element.scrollTop += evt.deltaY
-          element.classList.toggle('scroll-smooth')
-        })
-        return this
-      }
+            evt.preventDefault();
+            element.classList.toggle('scroll-smooth');
+            element.scrollTop += evt.deltaY;
+            element.classList.toggle('scroll-smooth');
+        });
+        return this;
+    }
 
     enhanceScrollY(element) {
         if (element.scrollHeight <= element.clientHeight) return;
@@ -52,7 +52,8 @@ export class ScrollYEnhancer {
     manageScrollYControllerVisibility(element) {
         const scroller = element.parentNode.querySelector('.scroller');
         if (scroller.textContent === '⌄') {
-            const isAtMaxScroll = element.scrollTop >= element.scrollHeight - element.clientHeight - 10;
+            const isAtMaxScroll =
+                element.scrollTop >= element.scrollHeight - element.clientHeight - 10;
             if (isAtMaxScroll) {
                 scroller.textContent = '⌃';
                 scroller.classList.add('pt-[11px]');
@@ -101,8 +102,8 @@ export class ScrollYEnhancer {
 export class ScrollXEnhancer {
     constructor(
         selector = '.enhance-scroll-x',
-        chevronRight = '<div class="scroll-right fixed right-0 top-1/3 z-20 h-[44px] w-[44px] cursor-pointer select-none rounded-full border border-gray-200 bg-white pt-[6px] text-center text-3xl leading-none text-gray-600 hover:bg-gray-100" onclick="scrollX(this)">🠆</div>',
-        chevronLeft = '<div class="scroll-left fixed left-[22px] top-1/3 z-20 h-[44px] w-[44px] cursor-pointer select-none rounded-full border border-gray-200 bg-white pt-[6px] text-center text-3xl leading-none text-gray-600 hover:bg-gray-100" onclick="scrollX(this)">🠄</div>'
+        chevronRight = '<div class="scroll-right relative left-[calc(100vw-62px)] top-1/3 z-20 h-[44px] w-[44px] cursor-pointer select-none rounded-full border border-gray-200 bg-white pt-[6px] text-center text-3xl leading-none text-gray-600 hover:bg-gray-100" onclick="scrollX(this)">🠆</div>',
+        chevronLeft = '<div class="scroll-left relative left-[22px] top-1/3 z-20 h-[44px] w-[44px] cursor-pointer select-none rounded-full border border-gray-200 bg-white pt-[6px] text-center text-3xl leading-none text-gray-600 hover:bg-gray-100" onclick="scrollX(this)">🠄</div>'
     ) {
         this.chevronLeft = chevronLeft;
         this.chevronRight = chevronRight;
@@ -111,29 +112,29 @@ export class ScrollXEnhancer {
         window.manageScrollXControllerVisibility = this.manageScrollXControllerVisibility;
 
         document.querySelectorAll(selector).forEach((element) => {
-          this.enhanceScrollX(element)
-          this.mouseSliderX(element)
-          this.wheelScroll(element)
-          element.onscroll = function () {
-            manageScrollXControllerVisibility(this)
-          }
-        })
-      }
+            this.enhanceScrollX(element);
+            this.mouseSliderX(element);
+            this.wheelScroll(element);
+            element.onscroll = function () {
+                manageScrollXControllerVisibility(this);
+            };
+        });
+    }
 
-      wheelScroll(element) {
+    wheelScroll(element) {
         element.addEventListener('wheel', (evt) => {
-          evt.preventDefault()
-          if (evt.target.closest('.enhance-scroll-y')) return
-          if (window.isScrolling === true) return
-          element.classList.toggle('scroll-smooth')
-          element.scrollLeft += evt.deltaY
-          element.classList.toggle('scroll-smooth')
-        })
-      }
+            evt.preventDefault();
+            if (evt.target.closest('.enhance-scroll-y')) return;
+            if (window.isScrolling === true) return;
+            element.classList.toggle('scroll-smooth');
+            element.scrollLeft += evt.deltaY;
+            element.classList.toggle('scroll-smooth');
+        });
+    }
 
     enhanceScrollX(element) {
         if (element.scrollWidth <= element.clientWidth) return;
-        element.insertAdjacentHTML('afterbegin', this.chevronLeft + this.chevronRight);
+        element.insertAdjacentHTML('beforebegin', this.chevronLeft + this.chevronRight);
     }
 
     scrollX(scroller) {
@@ -150,7 +151,6 @@ export class ScrollXEnhancer {
             nextElementToScroll.offsetWidth +
             parseInt(window.getComputedStyle(nextElementToScroll).marginLeft);
         element.scrollLeft += scrollToRight ? toScrollWidth : -toScrollWidth;
-
     }
 
     manageScrollXControllerVisibility(element) {
