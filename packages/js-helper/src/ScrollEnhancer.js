@@ -7,9 +7,14 @@
  */
 
 class ScrollYEnhancer {
-  constructor(selector = '.enhance-scroll-y', arrow = '<div class="scroller absolute left-[128px] z-10 -mt-[10px] h-[36px] w-[36px] cursor-pointer rounded-full border border-gray-200 bg-white text-center text-3xl leading-[23px] text-gray-500 hover:text-gray-700 select-none" onclick="scrollPreviousDiv(this)">⌄</div><div class="relative z-0 -mt-8 h-8 w-full bg-gradient-to-t from-white to-transparent"></div>', fadeout = '<div class="sticky left-0 -top-3 z-0 -mt-3 h-3 w-full bg-gradient-to-b from-white to-transparent"></div>') {
+  constructor(
+    selector = '.enhance-scroll-y',
+    arrow = '<div class="scroller absolute left-[128px] z-10 -mt-[10px] h-[36px] w-[36px] cursor-pointer rounded-full border border-gray-200 bg-white text-center text-3xl leading-[23px] text-gray-500 hover:text-gray-700 select-none" onclick="scrollPreviousDiv(this)">⌄</div><div class="relative z-0 -mt-8 h-8 w-full bg-gradient-to-t from-white to-transparent"></div>',
+    fadeout = '<div class="sticky left-0 -top-3 z-0 -mt-3 h-3 w-full bg-gradient-to-b from-white to-transparent"></div>',
+  ) {
     window.scrollPreviousDiv = this.scrollPreviousDiv
     window.manageScrollYControllerVisibility = this.manageScrollYControllerVisibility
+    window.isScrolling = false
 
     document.querySelectorAll(selector).forEach((element) => {
       if (element.scrollHeight <= element.clientHeight - 20) {
@@ -40,7 +45,11 @@ class ScrollYEnhancer {
       element.scrollTop += evt.deltaY
 
       if (before === element.scrollTop) {
-        if ((parent = element.closest('.enhance-scroll-x')) && new Date().getTime() - window.lastScrollTime > 200 && scrollX(parent.parentNode.querySelector(evt.deltaY > 0 ? '.scroll-right' : '.scroll-left'))) {
+        if (
+          (parent = element.closest('.enhance-scroll-x')) &&
+          new Date().getTime() - window.lastScrollTime > 200 &&
+          scrollX(parent.parentNode.querySelector(evt.deltaY > 0 ? '.scroll-right' : '.scroll-left'))
+        ) {
           window.lastScrollTime = new Date().getTime()
           window.isScrolling = false
           return
@@ -122,10 +131,15 @@ class ScrollYEnhancer {
 }
 
 class ScrollXEnhancer {
-  constructor(selector = '.enhance-scroll-x', arrowRight = '<div class="scroll-right relative left-[calc(100vw-62px)] -mt-[36px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">›</div>', arrowLeft = '<div class="scroll-left relative left-[22px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">‹</div>') {
+  constructor(
+    selector = '.enhance-scroll-x',
+    arrowRight = '<div class="scroll-right relative left-[calc(100vw-62px)] -mt-[36px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">›</div>',
+    arrowLeft = '<div class="scroll-left relative left-[22px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">‹</div>',
+  ) {
     window.scrollLeft = this.scrollLeft
     window.scrollX = this.scrollX
     window.manageScrollXControllerVisibility = this.manageScrollXControllerVisibility
+    window.isScrolling = false
 
     document.querySelectorAll(selector).forEach((element) => {
       if (element.scrollWidth <= element.clientWidth - 12) {
@@ -177,6 +191,7 @@ class ScrollXEnhancer {
   }
 
   scrollX(scroller, selector = '.enhance-scroll-x') {
+    if (!scroller) return
     const element = scroller.parentNode.querySelector(selector)
     if (!element) return
 
@@ -228,7 +243,6 @@ class ScrollXEnhancer {
     })
   }
 }
-
 
 module.exports = {
   ScrollXEnhancer: ScrollXEnhancer,
