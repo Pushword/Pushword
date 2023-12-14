@@ -46,7 +46,7 @@
     {% set width = image.width %}
     {% set height = image.height %}
 {% endif %}
-<picture>
+<picture style="margin:0">
     <source type="image/webp"
      srcset="{{ image|image('xs', 'webp') ~' 576w'
       ~','~ image|image('sm', 'webp') ~' 768w'
