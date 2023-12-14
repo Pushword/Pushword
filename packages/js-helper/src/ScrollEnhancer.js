@@ -17,7 +17,7 @@ class ScrollYEnhancer {
     window.isScrolling = false
 
     document.querySelectorAll(selector).forEach((element) => {
-      if (element.scrollHeight <= element.clientHeight - 20) {
+      if (element.scrollHeight <= element.clientHeight + 20) {
         // 20 = padding-bottom
         element.classList.remove('enhance-scroll-y')
         return
@@ -142,7 +142,7 @@ class ScrollXEnhancer {
     window.isScrolling = false
 
     document.querySelectorAll(selector).forEach((element) => {
-      if (element.scrollWidth <= element.clientWidth - 12) {
+      if (element.scrollWidth <= element.clientWidth + 12) {
         // 20 = padding-bottom
         element.classList.remove('enhance-scroll-x')
         return
