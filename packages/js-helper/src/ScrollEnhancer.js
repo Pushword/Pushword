@@ -26,20 +26,32 @@ class ScrollYEnhancer {
 
   wheelScroll(element) {
     element.addEventListener('wheel', (evt) => {
+      if (window.isScrolling === true) return
       evt.preventDefault()
-      //element.classList.toggle('scroll-smooth')
+      window.isScrolling = true
+
       const before = element.scrollTop
       element.scrollTop += evt.deltaY
-      const after = element.scrollTop
-      if (before === after) {
-        window.scrollXWithoutDoingNothing++
-        if (window.scrollXWithoutDoingNothing > 12) window.scrollBy(0, evt.deltaY )
-      } else {
-        window.scrollXWithoutDoingNothing = 0
-      }
-      //element.classList.toggle('scroll-smooth')
+
+      if (before === element.scrollTop) {
+        if (
+          (parent = element.closest('.enhance-scroll-x')) &&
+          new Date().getTime() - window.lastScrollTime > 200 &&
+          scrollX(parent.parentNode.querySelector(evt.deltaY > 0 ? '.scroll-right' : '.scroll-left'))
+        ) {
+          window.lastScrollTime = new Date().getTime()
+          window.isScrolling = false
+          return
+        }
+
+        if (new Date().getTime() - window.lastScrollTime > 200) {
+          window.lastScrollTime = new Date().getTime()
+          const toScrollHeight = element.dataset.toscroll ?? 600
+          window.scrollBy({ top: evt.deltaY > 0 ? toScrollHeight : -toScrollHeight, left: 0, behavior: 'smooth' })
+        }
+      } else window.lastScrollTime = new Date().getTime()
+      window.isScrolling = false
     })
-    return this
   }
 
   enhanceScrollY(element) {
@@ -132,20 +144,26 @@ class ScrollXEnhancer {
 
   wheelScroll(element) {
     element.addEventListener('wheel', (evt) => {
-      evt.preventDefault()
-      if (evt.target.closest('.enhance-scroll-y')) return
       if (window.isScrolling === true) return
-      //element.classList.toggle('scroll-smooth')
+      evt.preventDefault()
+      window.isScrolling = true
+
+      if (evt.target.closest('.enhance-scroll-y')) {
+        window.isScrolling = false
+        return
+      }
+
       const before = element.scrollLeft
       element.scrollLeft += evt.deltaY
-      const after = element.scrollLeft
-      if (before === after) {
-        window.scrollYWithoutDoingNothing++
-        if (window.scrollYWithoutDoingNothing > 12) window.scrollBy(0, evt.deltaY)
-      } else {
-        window.scrollYWithoutDoingNothing = 0
-      }
-      //element.classList.toggle('scroll-smooth')
+
+      if (before === element.scrollLeft) {
+        if (new Date().getTime() - window.lastScrollTime > 200) {
+          window.lastScrollTime = new Date().getTime()
+          const toScrollHeight = element.dataset.toscroll ?? 600
+          window.scrollBy({ top: evt.deltaY > 0 ? toScrollHeight : -toScrollHeight, left: 0, behavior: 'smooth' })
+        }
+      } else window.lastScrollTime = new Date().getTime()
+      window.isScrolling = false
     })
   }
 
@@ -165,7 +183,9 @@ class ScrollXEnhancer {
 
     const nextElementToScroll = element.children[3] // work only with equal width block
     const toScrollWidth = nextElementToScroll.offsetWidth + parseInt(window.getComputedStyle(nextElementToScroll).marginLeft)
+    const before = element.scrollLeft
     element.scrollLeft += scrollToRight ? toScrollWidth : -toScrollWidth
+    return before !== element.scrollLeft
   }
 
   manageScrollXControllerVisibility(element) {
