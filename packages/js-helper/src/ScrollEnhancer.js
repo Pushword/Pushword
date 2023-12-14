@@ -5,7 +5,7 @@
 class ScrollYEnhancer {
   constructor(
     selector = '.enhance-scroll-y',
-    arrow = '<div class="scroller absolute left-[128px] z-10 -mt-[10px] h-[44px] w-[44px] cursor-pointer rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700 select-none" onclick="scrollPreviousDiv(this)">⌄</div><div class="relative z-0 -mt-8 h-8 w-full bg-gradient-to-t from-white to-transparent"></div>',
+    arrow = '<div class="scroller absolute left-[128px] z-10 -mt-[10px] h-[36px] w-[36px] cursor-pointer rounded-full border border-gray-200 bg-white text-center text-3xl leading-[23px] text-gray-500 hover:text-gray-700 select-none" onclick="scrollPreviousDiv(this)">⌄</div><div class="relative z-0 -mt-8 h-8 w-full bg-gradient-to-t from-white to-transparent"></div>',
     fadeout = '<div class="sticky left-0 -top-3 z-0 -mt-3 h-3 w-full bg-gradient-to-b from-white to-transparent"></div>',
   ) {
     window.scrollPreviousDiv = this.scrollPreviousDiv
@@ -76,13 +76,13 @@ class ScrollYEnhancer {
     if (scroller.textContent === '⌄' || isAtMaxScroll) {
       if (isAtMaxScroll) {
         scroller.textContent = '⌃'
-        scroller.classList.add('pt-[11px]')
+        scroller.classList.add('pt-[12px]')
         scroller.classList.add('text-gray-200')
       }
       return
     } else {
       scroller.textContent = '⌄'
-      scroller.classList.remove('pt-[11px]')
+      scroller.classList.remove('pt-[12px]')
       scroller.classList.remove('text-gray-200')
     }
   }
@@ -122,8 +122,8 @@ class ScrollYEnhancer {
 class ScrollXEnhancer {
   constructor(
     selector = '.enhance-scroll-x',
-    arrowRight = '<div class="scroll-right relative left-[calc(100vw-62px)] -mt-[44px] top-1/3 z-20 h-[44px] w-[44px] cursor-pointer select-none rounded-full border border-gray-200 bg-white pt-[3px] text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">›</div>',
-    arrowLeft = '<div class="scroll-left relative left-[22px] top-1/3 z-20 h-[44px] w-[44px] cursor-pointer select-none rounded-full border border-gray-200 bg-white pt-[3px] text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">‹</div>',
+    arrowRight = '<div class="scroll-right relative left-[calc(100vw-62px)] -mt-[36px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">›</div>',
+    arrowLeft = '<div class="scroll-left relative left-[22px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">‹</div>',
   ) {
     window.scrollLeft = this.scrollLeft
     window.scrollX = this.scrollX
