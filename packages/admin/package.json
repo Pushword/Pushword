@@ -11,5 +11,7 @@
         "watch": "encore dev --watch",
         "build": "encore production"
     },
-    "dependencies": {}
+    "dependencies": {
+        "htmx.org": "^1.9.9"
+    }
 }

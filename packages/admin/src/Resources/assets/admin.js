@@ -1,5 +1,9 @@
 require("./admin.scss");
 
+import 'htmx.org'
+window.htmx = require('htmx.org');
+
+
 //global.$ = global.jQuery = require('jquery');
 
 import { easyMDEditor } from "./admin.easymde-editor";
