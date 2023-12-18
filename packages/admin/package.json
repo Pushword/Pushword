@@ -1,17 +1,17 @@
 {
-    "devDependencies": {
-        "@pushword/js-helper": "file:../js-helper",
-        "sass-loader": "^13.0.0"
-    },
-    "license": "UNLICENSED",
-    "private": true,
-    "scripts": {
-        "dev-server": "encore dev-server",
-        "dev": "encore dev",
-        "watch": "encore dev --watch",
-        "build": "encore production"
-    },
-    "dependencies": {
-        "htmx.org": "^1.9.9"
-    }
+  "devDependencies": {
+    "@pushword/js-helper": "file:../js-helper",
+    "sass-loader": "^13.0.0"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev-server": "encore dev-server",
+    "dev": "encore dev",
+    "watch": "encore dev --watch",
+    "build": "NODE_ENV=production yarn encore production"
+  },
+  "dependencies": {
+    "htmx.org": "^1.9.9"
+  }
 }
