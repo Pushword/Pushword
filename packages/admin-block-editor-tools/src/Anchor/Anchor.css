@@ -1,20 +1,25 @@
 .cdx-anchor-tune-wrapper {
-    display: flex;
+  display: flex;
 }
 
 .cdx-anchor-tune-icon {
-    width: 10px;
-    height: 20px;
-    margin-left: 7px;
+  width: 14px;
+  height: 20px;
+  padding-top: 5px;
+  margin-left: 3px;
+  margin-right: 3px;
+  display: flex;
 }
 
 .cdx-anchor-tune-icon svg {
-    vertical-align: inherit;
+  vertical-align: inherit;
 }
 
 .cdx-anchor-tune-input {
-    border: 0;
-    box-sizing: border-box;
-    margin-left: 7px;
-    outline: none;
+  border: 0;
+  height: 26px;
+  max-width: calc(100% - 14px);
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
 }

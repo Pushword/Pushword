@@ -36,7 +36,7 @@ var editorjsConfig = {
             name: "header",
             className: "Header",
             inlineToolbar: ['italic', 'inline-code', 'marker', 'link'],
-            tunes: ['anchor', 'textAlign'],
+            tunes: ['anchor',  'textAlign', 'class',],
             config: {
                 placeholder: "...",
                 levels: [2, 3, 4],
@@ -109,7 +109,7 @@ var editorjsConfig = {
         paragraph: {
             name: "paragraph",
             className: "Paragraph",
-            tunes: ['anchor'],
+            tunes: ['anchor', 'class'],
         },
         table: {
             name: "table",
@@ -172,6 +172,10 @@ var editorjsConfig = {
         anchor: {
             name: "anchor",
             className: "Anchor",
+        },
+        class: {
+            name: "class",
+            className: "Class",
         },
         textAlign: {
             name: "textAlign",

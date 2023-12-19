@@ -44,8 +44,26 @@ class AppExtension extends AbstractExtension
     {
         $blockData = (array) \Safe\json_decode(\Safe\json_encode($blockData), true);
 
-        if (isset($blockData['tunes']) && isset($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) { // @phpstan-ignore-line
+        if (! isset($blockData['tunes']) || ! \is_array($blockData['tunes'])) {
+            return \PiedWeb\RenderAttributes\Attribute::renderAll($attributes);
+        }
+
+        if (isset($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) {
             $attributes['id'] = trim(($attributes['id'] ?? '').' '.$blockData['tunes']['anchor']);
+        }
+
+        if (isset($blockData['tunes']['class']) && '' !== $blockData['tunes']['class']) {
+            $attributes['class'] = trim(($attributes['class'] ?? '').' '.$blockData['tunes']['class']);
+        }
+
+        $alignment = $blockData['tunes']['textAlign']['alignment'] ?? $blockData['data']['alignment'] ?? '';
+
+        if ('center' === $alignment) {
+            $attributes['class'] = trim(($attributes['class'] ?? '').' text-center');
+        } elseif ('right' === $alignment) {
+            $attributes['class'] = trim(($attributes['class'] ?? '').' text-right');
+        } elseif ('justify' === $alignment) {
+            $attributes['class'] = trim(($attributes['class'] ?? '').' text-justify');
         }
 
         return \PiedWeb\RenderAttributes\Attribute::renderAll($attributes);
