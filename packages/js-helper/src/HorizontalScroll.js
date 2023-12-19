@@ -1,60 +1,47 @@
-
 class HorizontalScroll {
-    constructor(selectorToFindElementToScroll, scrollerSelectorOrContainer = null) {
-        this.elementToScroll = document.querySelector(selectorToFindElementToScroll);
-        this.scrollContainer = this.elementToScroll.querySelector('div:nth-child(2)');
-        this.scroller =
-            scrollerSelectorOrContainer instanceof HTMLElement
-                ? scrollerSelectorOrContainer
-                : document.querySelector(
-                      scrollerSelectorOrContainer || selectorToFindElementToScroll + '-scroller'
-                  );
-        this.scrollWidth =
-            this.scrollContainer.offsetWidth +
-            parseInt(window.getComputedStyle(this.scrollContainer).marginLeft);
-        this.scrollContainerWidth =
-            this.elementToScroll.scrollWidth - this.elementToScroll.clientWidth;
-    }
+  constructor(selectorToFindElementToScroll, scrollerSelectorOrContainer = null) {
+    this.elementToScroll = document.querySelector(selectorToFindElementToScroll)
+    this.scrollContainer = this.elementToScroll.querySelector('div:nth-child(2)')
+    this.scroller =
+      scrollerSelectorOrContainer instanceof HTMLElement
+        ? scrollerSelectorOrContainer
+        : document.querySelector(scrollerSelectorOrContainer || selectorToFindElementToScroll + '-scroller')
+    this.scrollWidth = this.scrollContainer.offsetWidth + parseInt(window.getComputedStyle(this.scrollContainer).marginLeft)
+    this.scrollContainerWidth = this.elementToScroll.scrollWidth - this.elementToScroll.clientWidth
+  }
 
-    init() {
-        if (!('ontouchstart' in document.documentElement)) {
-            this.elementToScroll.classList.add('overflow-x-hidden');
-            this.scroller.classList.toggle('hidden');
-        }
-        return this;
+  init() {
+    if (!('ontouchstart' in document.documentElement)) {
+      this.elementToScroll.classList.add('overflow-x-hidden')
+      this.scroller.classList.toggle('hidden')
     }
+    return this
+  }
 
-    activateWheelScroll() {
-        this.elementToScroll.addEventListener('wheel', (evt) => {
-            evt.preventDefault();
-            this.elementToScroll.classList.toggle('scroll-smooth');
-            this.elementToScroll.scrollLeft += evt.deltaY;
-            this.elementToScroll.classList.toggle('scroll-smooth');
-        });
-        return this;
-    }
+  activateWheelScroll() {
+    this.elementToScroll.addEventListener(
+      'wheel',
+      (evt) => {
+        evt.preventDefault()
+        this.elementToScroll.classList.toggle('scroll-smooth')
+        this.elementToScroll.scrollLeft += evt.deltaY
+        this.elementToScroll.classList.toggle('scroll-smooth')
+      },
+      { passive: true },
+    )
+    return this
+  }
 
-    scroll(scrollerClassToToggle = 'opacity-50') {
-        const isRightScroll =
-            window.event.target == this.scroller.children[1] ||
-            window.event.target.parentNode == this.scroller.children[1];
-        const scrollPos = isRightScroll
-            ? (this.elementToScroll.scrollLeft += this.scrollWidth)
-            : (this.elementToScroll.scrollLeft -= this.scrollWidth);
+  scroll(scrollerClassToToggle = 'opacity-50') {
+    const isRightScroll = window.event.target == this.scroller.children[1] || window.event.target.parentNode == this.scroller.children[1]
+    const scrollPos = isRightScroll ? (this.elementToScroll.scrollLeft += this.scrollWidth) : (this.elementToScroll.scrollLeft -= this.scrollWidth)
 
-        this.scroller.children[1].classList.toggle(
-            scrollerClassToToggle,
-            scrollPos >= this.scrollContainerWidth
-        );
-        this.scroller.children[1].classList.toggle(
-            'cursor-pointer',
-            scrollPos < this.scrollContainerWidth
-        );
-        this.scroller.children[0].classList.toggle(scrollerClassToToggle, scrollPos <= 0);
-        this.scroller.children[0].classList.toggle('cursor-pointer', scrollPos > 0);
-    }
+    this.scroller.children[1].classList.toggle(scrollerClassToToggle, scrollPos >= this.scrollContainerWidth)
+    this.scroller.children[1].classList.toggle('cursor-pointer', scrollPos < this.scrollContainerWidth)
+    this.scroller.children[0].classList.toggle(scrollerClassToToggle, scrollPos <= 0)
+    this.scroller.children[0].classList.toggle('cursor-pointer', scrollPos > 0)
+  }
 }
-
 
 /*
  * Demo : https://codepen.io/PiedWeb/pen/ExrNWvP

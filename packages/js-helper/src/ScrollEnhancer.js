@@ -36,33 +36,37 @@ class ScrollYEnhancer {
   }
 
   wheelScrollY(element) {
-    element.addEventListener('wheel', (evt) => {
-      if (window.isScrolling === true) return
-      evt.preventDefault()
-      window.isScrolling = true
+    element.addEventListener(
+      'wheel',
+      (evt) => {
+        if (window.isScrolling === true) return
+        evt.preventDefault()
+        window.isScrolling = true
 
-      const before = element.scrollTop
-      element.scrollTop += evt.deltaY
+        const before = element.scrollTop
+        element.scrollTop += evt.deltaY
 
-      if (before === element.scrollTop) {
-        if (
-          (parent = element.closest('.enhance-scroll-x')) &&
-          new Date().getTime() - window.lastScrollTime > 200 &&
-          scrollX(parent.parentNode.querySelector(evt.deltaY > 0 ? '.scroll-right' : '.scroll-left'))
-        ) {
-          window.lastScrollTime = new Date().getTime()
-          window.isScrolling = false
-          return
-        }
+        if (before === element.scrollTop) {
+          if (
+            (parent = element.closest('.enhance-scroll-x')) &&
+            new Date().getTime() - window.lastScrollTime > 200 &&
+            scrollX(parent.parentNode.querySelector(evt.deltaY > 0 ? '.scroll-right' : '.scroll-left'))
+          ) {
+            window.lastScrollTime = new Date().getTime()
+            window.isScrolling = false
+            return
+          }
 
-        if (new Date().getTime() - window.lastScrollTime > 200) {
-          window.lastScrollTime = new Date().getTime()
-          const toScrollHeight = element.dataset.toscroll ?? 600
-          window.scrollBy({ top: evt.deltaY > 0 ? toScrollHeight : -toScrollHeight, left: 0, behavior: 'smooth' })
-        }
-      } else window.lastScrollTime = new Date().getTime()
-      window.isScrolling = false
-    })
+          if (new Date().getTime() - window.lastScrollTime > 200) {
+            window.lastScrollTime = new Date().getTime()
+            const toScrollHeight = element.dataset.toscroll ?? 600
+            window.scrollBy({ top: evt.deltaY > 0 ? toScrollHeight : -toScrollHeight, left: 0, behavior: 'smooth' })
+          }
+        } else window.lastScrollTime = new Date().getTime()
+        window.isScrolling = false
+      },
+      { passive: true },
+    )
   }
 
   enhanceScrollY(element) {
@@ -161,28 +165,32 @@ class ScrollXEnhancer {
   }
 
   wheelScrollX(element) {
-    element.addEventListener('wheel', (evt) => {
-      if (window.isScrolling === true) return
-      evt.preventDefault()
-      window.isScrolling = true
+    element.addEventListener(
+      'wheel',
+      (evt) => {
+        if (window.isScrolling === true) return
+        evt.preventDefault()
+        window.isScrolling = true
 
-      if (evt.target.closest('.enhance-scroll-y')) {
-        window.isScrolling = false
-        return
-      }
-
-      const before = element.scrollLeft
-      element.scrollLeft += evt.deltaY
-
-      if (before === element.scrollLeft) {
-        if (new Date().getTime() - window.lastScrollTime > 200) {
-          window.lastScrollTime = new Date().getTime()
-          const toScrollHeight = element.dataset.toscroll ?? 600
-          window.scrollBy({ top: evt.deltaY > 0 ? toScrollHeight : -toScrollHeight, left: 0, behavior: 'smooth' })
+        if (evt.target.closest('.enhance-scroll-y')) {
+          window.isScrolling = false
+          return
         }
-      } else window.lastScrollTime = new Date().getTime()
-      window.isScrolling = false
-    })
+
+        const before = element.scrollLeft
+        element.scrollLeft += evt.deltaY
+
+        if (before === element.scrollLeft) {
+          if (new Date().getTime() - window.lastScrollTime > 200) {
+            window.lastScrollTime = new Date().getTime()
+            const toScrollHeight = element.dataset.toscroll ?? 600
+            window.scrollBy({ top: evt.deltaY > 0 ? toScrollHeight : -toScrollHeight, left: 0, behavior: 'smooth' })
+          }
+        } else window.lastScrollTime = new Date().getTime()
+        window.isScrolling = false
+      },
+      { passive: true },
+    )
   }
 
   enhanceScrollX(element) {
