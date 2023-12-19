@@ -216,7 +216,7 @@ export function addClassForNormalUser(attribute = 'data-acinb') {
       }
     }
   }
-  document.addEventListener('scroll', scrollEventAddClassHandler)
+  document.addEventListener('scroll', scrollEventAddClassHandler, { passive: true })
 }
 /**
  * Convert elements wich contain attribute (data-href) in normal link (a href)
