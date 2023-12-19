@@ -26,7 +26,7 @@ final class RouterTwigExtension extends AbstractExtension
         ];
     }
 
-    private function getPageUri(...$args): string
+    private function getPageUri(mixed ...$args): string
     {
         $slug = $args[0] ?? throw new \Exception('must use a string or page object');
         if (! \is_string($slug) && ! $slug instanceof PageInterface) {

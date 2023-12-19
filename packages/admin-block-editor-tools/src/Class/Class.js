@@ -17,7 +17,6 @@ export default class Class {
    * @param data — previously saved data
    */
   constructor({ api, data, config, block }) {
-    console.log('init Class')
     this.api = api
     this.data = data || ''
     this.block = block

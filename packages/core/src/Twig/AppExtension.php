@@ -246,6 +246,7 @@ class AppExtension extends AbstractExtension
         return str_contains($content, '"'.$path.'"')
             || str_contains($content, '='.$path.'>')
             || str_contains($content, '='.$path.' ')
+            || str_contains($content, "'$slug'")
             || str_contains($content, '"/'.$slug.'"');
     }
 }
