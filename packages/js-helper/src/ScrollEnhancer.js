@@ -65,7 +65,7 @@ class ScrollYEnhancer {
         } else window.lastScrollTime = new Date().getTime()
         window.isScrolling = false
       },
-      { passive: true },
+      { passive: false },
     )
   }
 
@@ -189,7 +189,7 @@ class ScrollXEnhancer {
         } else window.lastScrollTime = new Date().getTime()
         window.isScrolling = false
       },
-      { passive: true },
+      { passive: false },
     )
   }
 

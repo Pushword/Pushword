@@ -27,7 +27,7 @@ class HorizontalScroll {
         this.elementToScroll.scrollLeft += evt.deltaY
         this.elementToScroll.classList.toggle('scroll-smooth')
       },
-      { passive: true },
+      { passive: false },
     )
     return this
   }
