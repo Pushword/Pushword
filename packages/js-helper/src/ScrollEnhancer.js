@@ -207,6 +207,7 @@ class ScrollXEnhancer {
   manageScrollXControllerVisibility(element) {
     const scrollLeftElement = element.parentNode.querySelector('.scroll-left')
     const scrollRightElement = element.parentNode.querySelector('.scroll-right')
+    if (!scrollLeftElement || !scrollRightElement) return
     scrollRightElement.classList.remove('opacity-30')
     scrollLeftElement.classList.remove('opacity-30')
 
