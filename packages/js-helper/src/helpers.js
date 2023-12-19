@@ -192,14 +192,14 @@ export function responsiveImage(src) {
 export function addClassForNormalUser(attribute = 'data-acinb') {
   var startScrolling = 0
   function scrollEventAddClassHandler() {
-    console.log('scroll')
     if (startScrolling < 5) {
       startScrolling++
     }
     if (startScrolling === 4) {
       document.removeEventListener('scroll', scrollEventAddClassHandler)
       ;[].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
-        var classToAdd = element.getAttribute(attribute).split(' ')
+        var classToAddRaw = element.getAttribute(attribute)
+        var classToAdd = classToAddRaw.split(' ')
         element.removeAttribute(attribute)
         element.classList.add(...classToAdd)
         if (classToAdd.includes('block')) {
