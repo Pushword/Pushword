@@ -14,6 +14,7 @@ import Paragraph from 'editorjs-paragraph-with-alignment'
 import Table from '@editorjs/table'
 import DragDrop from 'editorjs-drag-drop'
 import Undo from 'editorjs-undo'
+import Strikethrough from '@sotaproject/strikethrough'
 
 import Attaches from '@pushword/editorjs-tools/dist/Attaches.js'
 import Image from '@pushword/editorjs-tools/dist/Image.js'
@@ -55,6 +56,7 @@ export class editorJs {
             Embed: Embed,
             PagesList: PagesList,
             Gallery: Gallery,
+            Strikethrough: Strikethrough,
             //StyleInlineTool: StyleInlineTool,
           }
 

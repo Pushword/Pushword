@@ -38,5 +38,8 @@
     "dev": "encore dev",
     "watch": "encore dev --watch",
     "build": "NODE_ENV=production yarn encore production"
+  },
+  "dependencies": {
+    "@sotaproject/strikethrough": "^1.0.1"
   }
 }
