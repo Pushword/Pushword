@@ -1,4 +1,4 @@
-name: 'Static Code Analysis'
+name: "Static Code Analysis"
 
 on: [push, pull_request]
 
@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        php: [8.1]
+        php: [8.2]
         stability: [prefer-stable] #prefer-lowest,
 
     name: PHPStan - P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
