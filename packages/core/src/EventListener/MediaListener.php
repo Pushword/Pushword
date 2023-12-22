@@ -4,11 +4,8 @@ namespace Pushword\Core\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
-use Intervention\Image\Gd\Driver as GdDriver;
 use Intervention\Image\Image;
-use League\ColorExtractor\Color;
-use League\ColorExtractor\ColorExtractor;
-use League\ColorExtractor\Palette;
+use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Utils\MediaRenamer;
@@ -72,13 +69,13 @@ final class MediaListener
 
         $propertyMapping = $event->getMapping();
 
-        $absoluteDir = $propertyMapping->getUploadDestination().'/'.$propertyMapping->getUploadDir($media);
+        $absoluteDir = $propertyMapping->getUploadDestination().'/'.($propertyMapping->getUploadDir($media) ?? '');
         $media->setProjectDir($this->projectDir)->setStoreIn($absoluteDir);
 
         $this->setNameIfEmpty($media);
         $this->renameIfIdentifiersAreToken($media);
 
-        if (null === $media->getMedia()) {
+        if ('' === $media->getMedia()) {
             $media->setMedia($media->getMediaFromFilename($media->getSlug()));
         }
     }
@@ -98,6 +95,10 @@ final class MediaListener
             $this->imageManager->remove($media);
             $this->imageManager->generateCache($media);
             $image = $this->imageManager->getLastThumb();
+            if (null === $image) {
+                return;
+            }
+
             $this->updateMainColor($media, $image);
             // exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
         }
@@ -141,7 +142,7 @@ final class MediaListener
                 throw new \Exception('Impossible to rename '.$media->getMediaBeforeUpdate().' in '.$media->getMedia().'. File ever exist');
             }
 
-            if (! \is_string($media->getMediaBeforeUpdate())) {
+            if ('' === $media->getMediaBeforeUpdate()) {
                 // dd($media->getMediaBeforeUpdate());
                 throw new \LogicException();
             }
@@ -151,7 +152,7 @@ final class MediaListener
                 $media->getStoreIn().'/'.$media->getMedia()
             );
             $this->imageManager->remove($media->getMediaBeforeUpdate());
-            $media->setMediaBeforeUpdate(null);
+            $media->setMediaBeforeUpdate('');
 
             $this->imageManager->generateCache($media);
             // exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
@@ -162,7 +163,7 @@ final class MediaListener
 
     public function preRemove(MediaInterface $media): void
     {
-        if (str_starts_with((string) $media->getStoreIn(), $this->projectDir)) {
+        if (str_starts_with($media->getStoreIn(), $this->projectDir)) {
             $this->filesystem->remove($media->getStoreIn().'/'.$media->getMedia());
         }
 
@@ -179,17 +180,19 @@ final class MediaListener
             $media->setName($media->getSlug());
         }
 
-        $media->setName(\Safe\preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFileName())); // @phpstan-ignore-line
+        /** @var string */
+        $name = \Safe\preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFileName());
+        $media->setName($name);
     }
 
     private function getMediaString(MediaInterface $media): string
     {
-        if (($return = $media->getMedia()) !== null) {
+        if (($return = $media->getMedia()) !== '') {
             return $return;
         }
 
-        $extension = $media->getMediaFile() instanceof UploadedFile
-            ? (string) $media->getMediaFile()->guessExtension() : '';
+        $extension = ($mediaFile = $media->getMediaFile()) instanceof UploadedFile
+            ? (string) $mediaFile->guessExtension() : '';
 
         return $media->getName().('' !== $extension ? '.'.$extension : '');
     }
@@ -256,28 +259,16 @@ final class MediaListener
                 $this->flashBag = $request->getSession()->getFlashBag() : null;
     }
 
-    private function updateMainColor(MediaInterface $media, Image $image = null): void
+    private function updateMainColor(MediaInterface $media, ImageInterface $image = null): void
     {
         if (! $image instanceof \Intervention\Image\Image) {
             return;
         }
 
         $imageForPalette = clone $image;
-        $color = $imageForPalette->limitColors(1)->pickColor(0, 0, 'hex');
-        $imageForPalette->destroy();
+        $color = $imageForPalette->pickColor(0, 0)->toHex('#'); // ->reduceColors(1)
+        // previously doing this $color = $imageForPalette->limitColors(1)->pickColor(0, 0, 'hex');
 
-        $media->setMainColor(\strval($color)); // @phpstan-ignore-line
+        $media->setMainColor($color);
     }
-
-    /*  Palette was good, but not ready for PHP 8
-    private function updatePaletteColor(MediaInterface $media, ?Image $image = null): void
-    {
-        $palette = $image->getDriver() instanceof GdDriver
-            ? Palette::fromGD($image->getCore(), Color::fromHexToInt('#FFFFFF'))
-            : Palette::fromFilename($this->imageManager->getFilterPath($media, 'xs'), Color::fromHexToInt('#FFFFFF'));
-
-        $extractor = new ColorExtractor($palette);
-        $colors = $extractor->extract();
-        $media->setMainColor(Color::fromIntToHex($colors[0]));
-    }*/
 }

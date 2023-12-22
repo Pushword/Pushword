@@ -14,7 +14,7 @@ trait MediaSlugTrait
 
     abstract public function getMediaFile(): ?File;
 
-    abstract public function getMedia(): ?string;
+    abstract public function getMedia(): string;
 
     public function setSlug(?string $slug): self
     {
@@ -56,7 +56,7 @@ trait MediaSlugTrait
 
         $this->slug = $this->slugify($slug);
 
-        if (null !== $this->getMedia()) {
+        if ('' !== $this->getMedia()) {
             $this->setMedia($this->slug.$this->extractExtension($this->getMedia()));
         }
 
@@ -116,7 +116,7 @@ trait MediaSlugTrait
             return $this->slug;
         }
 
-        if (null !== $this->getMedia()) {
+        if ('' !== $this->getMedia()) {
             return $this->slug = Filepath::removeExtension($this->getMedia());
         }
 

@@ -68,20 +68,20 @@ final class Configuration implements ConfigurationInterface
      * @var array<string, array<string, mixed>>
      */
     public const IMAGE_FILTERS_SET = [
-        'default' => ['quality' => 90, 'filters' => ['downscale' => [1980, 1280]]],
+        'default' => ['quality' => 90, 'filters' => ['scaleDown' => [1980, 1280]]],
         'height_300' => [
             'quality' => 82,
             'filters' => [
-                'heighten' => [
+                'scaleDown' => [
+                    null,
                     300,
-                    'constraint' => '$constraint->upsize();',
                 ],
             ],
         ],
         'thumb' => [
             'quality' => 80,
             'filters' => [
-                'fit' => [
+                'coverDown' => [
                     330,
                     330,
                 ],
@@ -90,45 +90,40 @@ final class Configuration implements ConfigurationInterface
         'xs' => [
             'quality' => 85,
             'filters' => [
-                'widen' => [
+                'scaleDown' => [
                     576,
-                    'constraint' => '$constraint->upsize();',
                 ],
             ],
         ],
         'sm' => [
             'quality' => 85,
             'filters' => [
-                'widen' => [
+                'scaleDown' => [
                     768,
-                    'constraint' => '$constraint->upsize();',
                 ],
             ],
         ],
         'md' => [
             'quality' => 85,
             'filters' => [
-                'widen' => [
+                'scaleDown' => [
                     992,
-                    'constraint' => '$constraint->upsize();',
                 ],
             ],
         ],
         'lg' => [
             'quality' => 85,
             'filters' => [
-                'widen' => [
+                'scaleDown' => [
                     1200,
-                    'constraint' => '$constraint->upsize();',
                 ],
             ],
         ],
         'xl' => [
             'quality' => 85,
             'filters' => [
-                'widen' => [
+                'scaleDown' => [
                     1600,
-                    'constraint' => '$constraint->upsize();',
                 ],
             ],
         ],

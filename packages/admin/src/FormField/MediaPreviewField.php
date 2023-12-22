@@ -22,7 +22,7 @@ final class MediaPreviewField extends AbstractField
      */
     public function formField(FormMapper $form): void
     {
-        if (null !== $this->admin->getSubject()->getMedia()) {
+        if ('' !== $this->admin->getSubject()->getMedia()) {
             $form->with('admin.media.preview.label', [
                 'class' => 'col-md-12',
                 'description' => $this->showMediaPreview(),

@@ -1,56 +1,56 @@
 {
-    "name": "@pushword/editorjs-tools",
-    "version": "1.0.0",
-    "keywords": [
-        "editorjs",
-        "plugin",
-        "image",
-        "embed"
-    ],
-    "scripts": {
-        "build": "webpack --mode production",
-        "watch": "webpack --mode development --watch"
-    },
-    "author": {
-        "name": "Robin from Pied Web",
-        "url": "https://piedweb.com"
-    },
-    "devDependencies": {
-        "@babel/core": "^7.10.2",
-        "@babel/preset-env": "^7.10.2",
-        "@codexteam/ajax": "^4.2.0",
-        "@codexteam/icons": "^0.3",
-        "@editorjs/attaches": "https://github.com/editor-js/attaches.git",
-        "@editorjs/editorjs": "^2.28",
-        "@editorjs/header": "https://github.com/editor-js/header",
-        "@editorjs/image": "https://github.com/editor-js/image.git",
-        "@editorjs/raw": "https://github.com/editor-js/raw.git",
-        "@vietlongn/editorjs-carousel": "https://github.com/mr8bit/carousel-editorjs.git",
-        "babel-loader": "^9.1",
-        "browserslist": "^4.22",
-        "caniuse-lite": "^1",
-        "cross-env": "^6.4|^7.0.3",
-        "css-loader": "^6.5",
-        "editorjs-hyperlink": "https://github.com/trinhtam/editorjs-hyperlink.git",
-        "postcss": "^8.4",
-        "postcss-cssnext": "^3.1.1",
-        "postcss-loader": "^7.3",
-        "postcss-nested": "^6.0",
-        "postcss-nested-ancestors": "^3.0",
-        "postcss-smart-import": "^0.7.6",
-        "raw-loader": "^4.0.1",
-        "sass": "^1.56",
-        "sass-loader": "^13.2",
-        "style-loader": "^3.3",
-        "webpack": "^5.65",
-        "webpack-cli": "^5.0"
-    },
-    "bugs": {
-        "url": "https://github.com/pushword/pushword/issues"
-    },
-    "homepage": "https://puswhord.piedweb.com",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/pushword/pushword.git"
-    }
+  "name": "@pushword/editorjs-tools",
+  "version": "1.0.0",
+  "keywords": [
+    "editorjs",
+    "plugin",
+    "image",
+    "embed"
+  ],
+  "scripts": {
+    "build": "webpack --mode production",
+    "watch": "webpack --mode development --watch"
+  },
+  "author": {
+    "name": "Robin from Pied Web",
+    "url": "https://piedweb.com"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "@babel/preset-env": "^7.10.2",
+    "@codexteam/ajax": "^4.2.0",
+    "@codexteam/icons": "^0.3",
+    "@editorjs/attaches": "https://github.com/editor-js/attaches.git",
+    "@editorjs/editorjs": "^2.28",
+    "@editorjs/header": "https://github.com/editor-js/header",
+    "@editorjs/image": "https://github.com/editor-js/image.git",
+    "@editorjs/raw": "https://github.com/editor-js/raw.git",
+    "@vietlongn/editorjs-carousel": "https://github.com/mr8bit/carousel-editorjs.git",
+    "babel-loader": "^9.1",
+    "browserslist": "^4.22",
+    "caniuse-lite": "^1",
+    "cross-env": "^7.0.3",
+    "css-loader": "^6.5",
+    "editorjs-hyperlink": "https://github.com/trinhtam/editorjs-hyperlink.git",
+    "postcss": "^8.4",
+    "postcss-cssnext": "^3.1.1",
+    "postcss-loader": "^7.3",
+    "postcss-nested": "^6.0",
+    "postcss-nested-ancestors": "^3.0",
+    "postcss-smart-import": "^0.7.6",
+    "raw-loader": "^4.0.1",
+    "sass": "^1.56",
+    "sass-loader": "^13.2",
+    "style-loader": "^3.3",
+    "webpack": "^5.65",
+    "webpack-cli": "^5.0"
+  },
+  "bugs": {
+    "url": "https://github.com/pushword/pushword/issues"
+  },
+  "homepage": "https://puswhord.piedweb.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pushword/pushword.git"
+  }
 }

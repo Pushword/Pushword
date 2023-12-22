@@ -13,6 +13,6 @@ final class VichUploadPropertyNamer implements NamerInterface
 {
     public function name($object, PropertyMapping $mapping): string
     {
-        return $object->getMedia() ?? '';
+        return $object->getMedia();
     }
 }

@@ -1,33 +1,33 @@
 {
-    "name": "pushword/installer",
-    "description": "",
-    "keywords": [],
-    "homepage": "https://pushword.piedweb.com",
-    "license": "MIT",
-    "require": {
-        "symfony/filesystem": "^6.4|^7.0"
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-main": "0.1.x-dev"
-        }
-    },
-    "autoload": {
-        "psr-4": {
-            "Pushword\\Installer\\": "src"
-        }
-    },
-    "require-dev": {
-        "composer/composer": "^2.0",
-        "phpunit/phpunit": "^9.5"
-    },
-    "authors": [
-        {
-            "name": "Robin@PiedWeb",
-            "email": "contact@piedweb.com",
-            "homepage": "https://piedweb.com"
-        }
-    ],
-    "minimum-stability": "dev",
-    "prefer-stable": true
+  "name": "pushword/installer",
+  "description": "",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com",
+  "license": "MIT",
+  "require": {
+    "symfony/filesystem": "^7.0"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "0.1.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Installer\\": "src"
+    }
+  },
+  "require-dev": {
+    "composer/composer": "^2.0",
+    "phpunit/phpunit": "^9.5"
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }

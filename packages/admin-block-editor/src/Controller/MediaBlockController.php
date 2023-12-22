@@ -48,7 +48,7 @@ final class MediaBlockController extends AbstractController
             }
         }
 
-        $url = $imageManager->isImage($media) ? $imageManager->getBrowserPath((string) $media->getMedia())
+        $url = $imageManager->isImage($media) ? $imageManager->getBrowserPath($media->getMedia())
              : '/'.$publicMediaDir.'/'.$media->getMedia();
 
         return new Response(\Safe\json_encode([
@@ -118,8 +118,8 @@ final class MediaBlockController extends AbstractController
 
         $fileContent = \Safe\file_get_contents($url);
 
-        $originalName = $matches[1];
-        $filename = md5((string) $matches[1]);
+        $originalName = ($matches[1] ?? throw new \Exception($url));
+        $filename = md5($originalName);
         $filePath = sys_get_temp_dir().'/'.$filename;
         if (0 === \Safe\file_put_contents($filePath, $fileContent)) {
             throw new \LogicException('Storing in tmp folder filed');

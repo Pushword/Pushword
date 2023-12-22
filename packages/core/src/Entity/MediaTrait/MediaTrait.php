@@ -32,14 +32,14 @@ trait MediaTrait
     protected string $projectDir = '';
 
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255, name: 'media')]
-    protected ?string $media = null; // @phpstan-ignore-line
+    protected string $media = '';
 
     // TODO Rename to filename
 
     /**
      * NOTE : this is used only for media renaming.
      */
-    protected ?string $mediaBeforeUpdate = null;
+    protected string $mediaBeforeUpdate = '';
 
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
     protected ?string $mimeType = null; // @phpstan-ignore-line
@@ -159,7 +159,7 @@ trait MediaTrait
         return $this->mediaFile->getFilename();
     }
 
-    public function getMedia(): ?string
+    public function getMedia(): string
     {
         return $this->media;
     }
@@ -170,7 +170,7 @@ trait MediaTrait
             return $this;
         }
 
-        if (null !== $this->media) {
+        if ('' !== $this->media) {
             $this->setMediaBeforeUpdate($this->media);
         }
 
@@ -179,7 +179,7 @@ trait MediaTrait
         return $this;
     }
 
-    public function getStoreIn(): ?string
+    public function getStoreIn(): string
     {
         if ('' === $this->projectDir) {
             throw new \Exception('must set project dir before');
@@ -201,7 +201,7 @@ trait MediaTrait
 
     public function getPath(): string
     {
-        if (null === $this->media) {
+        if ('' === $this->media) {
             throw new \LogicException();
         }
 
@@ -259,19 +259,17 @@ trait MediaTrait
     /**
      * this is used only for media renaming.
      */
-    public function getMediaBeforeUpdate(): ?string
+    public function getMediaBeforeUpdate(): string
     {
         return $this->mediaBeforeUpdate;
     }
 
     /**
      * this is used only for media renaming.
-     *
-     * @param string|null $mediaBeforeUpdate NOTE : this is used only for media renaming
      */
-    public function setMediaBeforeUpdate(?string $mediaBeforeUpdate): self
+    public function setMediaBeforeUpdate(string $mediaBeforeUpdate): self
     {
-        if (null === $this->mediaBeforeUpdate || null === $mediaBeforeUpdate) {
+        if ('' === $this->mediaBeforeUpdate || '' === $mediaBeforeUpdate) {
             $this->mediaBeforeUpdate = $mediaBeforeUpdate;
         }
 

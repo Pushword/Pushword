@@ -16,15 +16,15 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function getHeight(): ?int;
 
-    public function getMedia(): ?string;
+    public function getMedia(): string;
 
-    public function getMediaBeforeUpdate(): ?string;
+    public function getMediaBeforeUpdate(): string;
 
     public function getPath(): string;
 
     public function setProjectDir(string $projectDir): self;
 
-    public function getStoreIn(): ?string;
+    public function getStoreIn(): string;
 
     public function setStoreIn(string $pathToDir): self;
 
@@ -47,7 +47,7 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function setMedia(?string $media): self;
 
-    public function setMediaBeforeUpdate(?string $mediaBeforeUpdate): self;
+    public function setMediaBeforeUpdate(string $mediaBeforeUpdate): self;
 
     public function setName(?string $name): self;
 

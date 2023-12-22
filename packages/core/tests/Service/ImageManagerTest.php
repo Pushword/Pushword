@@ -32,7 +32,7 @@ class ImageManagerTest extends KernelTestCase
     public function testFilterCache()
     {
         $image = __DIR__.'/blank.jpg';
-        $filters = ['xl' => ['quality' => 80, 'filters' => ['widen' => [1600, 'constraint' => '$constraint->upsize();']]]];
+        $filters = ['xl' => ['quality' => 80, 'filters' => ['scaleDown' => [1600]]]];
         $this->getManager()->generateFilteredCache($image, $filters);
 
         $this->assertFileExists($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
@@ -43,7 +43,7 @@ class ImageManagerTest extends KernelTestCase
 
         $this->getManager()->remove($image);
         $image = __DIR__.'/blank.jpg';
-        $filters = ['xl' => ['quality' => 80, 'filters' => ['widen' => 1600]]];
+        $filters = ['xl' => ['quality' => 80, 'filters' => ['scale' => 1600]]];
         $this->getManager()->generateFilteredCache($image, $filters);
         $imgSize = getimagesize($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
         $this->assertSame(1600, $imgSize[0]);

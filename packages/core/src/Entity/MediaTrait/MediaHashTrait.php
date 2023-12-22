@@ -15,9 +15,9 @@ trait MediaHashTrait
 
     abstract public function getMediaFile(): ?File;
 
-    abstract public function getStoreIn(): ?string;
+    abstract public function getStoreIn(): string;
 
-    abstract public function getMedia(): ?string;
+    abstract public function getMedia(): string;
 
     public function getHash(): mixed
     {

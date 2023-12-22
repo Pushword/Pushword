@@ -2,8 +2,18 @@
 
 namespace Pushword\Core\Service;
 
+use Intervention\Gif\Exception\EncoderException;
+use Intervention\Image\Encoders\AutoEncoder;
+use Intervention\Image\Encoders\AvifEncoder;
+use Intervention\Image\Encoders\BmpEncoder;
+use Intervention\Image\Encoders\GifEncoder;
+use Intervention\Image\Encoders\JpegEncoder;
+use Intervention\Image\Encoders\PngEncoder;
+use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
+use Intervention\Image\Interfaces\EncodedImageInterface;
+use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Utils\Filepath;
 use Pushword\Core\Utils\ImageOptimizer\OptimizerChainFactory;
@@ -16,7 +26,7 @@ final class ImageManager
 
     private readonly OptimizerChain $optimizer;
 
-    private ?Image $lastThumb = null;
+    private ?ImageInterface $lastThumb = null;
 
     private readonly FileSystem $fileSystem;
 
@@ -62,7 +72,7 @@ final class ImageManager
         exec('cd ../ && php bin/console pushword:image:optimize '.$media->getMedia().' > /dev/null 2>/dev/null &');
     }
 
-    public function getLastThumb(): ?Image
+    public function getLastThumb(): ?ImageInterface
     {
         return $this->lastThumb;
     }
@@ -70,7 +80,7 @@ final class ImageManager
     /**
      * @param array<string, mixed>|string $filter
      */
-    public function generateFilteredCache(MediaInterface|string $media, array|string $filter, Image $originalImage = null): Image
+    public function generateFilteredCache(MediaInterface|string $media, array|string $filter, ImageInterface $originalImage = null): ImageInterface
     {
         if (\is_array($filter)) {
             $filterName = array_keys($filter)[0];
@@ -85,7 +95,6 @@ final class ImageManager
 
         foreach ($filters[$filterName]['filters'] as $filter => $parameters) { // @phpstan-ignore-line
             $parameters = \is_array($parameters) ? $parameters : [$parameters];
-            $this->normalizeFilter($filter, $parameters);
             \call_user_func_array([$image, $filter], $parameters);  // @phpstan-ignore-line
         }
 
@@ -98,12 +107,31 @@ final class ImageManager
 
         $this->createFilterDir(\dirname($this->getFilterPath($media, $filterName)));
 
-        $image->save($this->getFilterPath($media, $filterName), $quality);
-        $image->save($this->getFilterPath($media, $filterName, 'webp'), $quality, 'webp');
+        // ->encode(new AutoEncoder())
+        $this->autoEncode($image, $quality)->save($this->getFilterPath($media, $filterName));
+        $image->toWebp($quality)->save($this->getFilterPath($media, $filterName, 'webp'));
 
         $this->getFilterPath($media, $filterName);
 
         return $image;
+    }
+
+    // TODO DElete when it's merged https://github.com/Intervention/image/pull/1242
+    public function autoEncode(ImageInterface $image, int $quality): EncodedImageInterface
+    {
+        $type = $image->origin()->mimetype();
+
+        return $image->encode(
+            match ($type) {
+                'image/webp' => new WebpEncoder($quality),
+                'image/avif' => new AvifEncoder($quality),
+                'image/jpeg' => new JpegEncoder($quality),
+                'image/bmp' => new BmpEncoder(),
+                'image/gif' => new GifEncoder(),
+                'image/png' => new PngEncoder(),
+                default => throw new EncoderException('No encoder found for media type ('.$type.').'),
+            }
+        );
     }
 
     private function createFilterDir(string $path): void
@@ -131,31 +159,8 @@ final class ImageManager
         $this->optimizer->optimize($this->getFilterPath($media, $filterName, 'webp'));
     }
 
-    /**
-     * Transform {$fiter}_notupsize in $fiter and add constrait->upsize()
-     * or transform dowscale in resize with aspectRatio and upSize contraint.
-     *
-     * @param array<mixed> $parameters
-     */
-    private function normalizeFilter(string &$filter, array &$parameters): void
-    {
-        if ('downscale' == $filter) {
-            $parameters[] = static function ($constraint): void {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            };
-            $filter = 'resize';
-        }
-
-        if (isset($parameters['constraint']) && \is_string($parameters['constraint'])) {
-            $parameters[] = eval(sprintf('return function($constraint) {%s};', $parameters['constraint']));
-            unset($parameters['constraint']);
-        }
-    }
-
     public function getFilterPath(MediaInterface|string $media, string $filterName, string $extension = null, bool $browserPath = false): string
     {
-        /** @var string $media */
         $media = $media instanceof MediaInterface ? $media->getMedia() : Filepath::filename($media);
 
         $fileName = null === $extension ? $media : Filepath::removeExtension($media).'.'.$extension;
@@ -186,12 +191,12 @@ final class ImageManager
     /**
      * @param MediaInterface|string $media string must be the accessible path (absolute) to the image file
      */
-    private function getImage(MediaInterface|string $media): Image
+    private function getImage(MediaInterface|string $media): ImageInterface
     {
         $path = $media instanceof MediaInterface ? $media->getPath() : $media;
 
         try {
-            return (new InteventionImageManager())->make($path); // default driver GD
+            return InteventionImageManager::gd()->read($path); // default driver GD
         } catch (\Exception) {
             throw new \Exception($path);
         }
@@ -199,7 +204,6 @@ final class ImageManager
 
     public function remove(MediaInterface|string $media): void
     {
-        /** @var string $media */
         $media = $media instanceof MediaInterface ? $media->getMedia() : Filepath::filename($media);
 
         $filterNames = array_keys($this->filterSets);
