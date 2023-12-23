@@ -107,7 +107,7 @@ final class ImageManager
 
         $this->createFilterDir(\dirname($this->getFilterPath($media, $filterName)));
 
-        // ->encode(new AutoEncoder())
+        // $image->encode(new AutoEncoder($quality))
         $this->autoEncode($image, $quality)->save($this->getFilterPath($media, $filterName));
         $image->toWebp($quality)->save($this->getFilterPath($media, $filterName, 'webp'));
 

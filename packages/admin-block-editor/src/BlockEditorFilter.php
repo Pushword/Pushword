@@ -30,12 +30,9 @@ final class BlockEditorFilter extends AbstractFilter
             return $propertyValue;
         }
 
-        $json = json_decode($propertyValue);
-        if (! \is_object($json)) {
-            return $propertyValue;
-        }
-
-        if (! property_exists($json, 'blocks')) {
+        try {
+            $json = EditorJsHelper::jsonDecode($propertyValue);
+        } catch (\Exception) {
             return $propertyValue;
         }
 
@@ -45,7 +42,7 @@ final class BlockEditorFilter extends AbstractFilter
 
         foreach ($blocks as $pos => $block) {
             $classBlock = $this->getBlockManager($block->type);
-            $blockRendered = $classBlock->render($block, $pos + 1);
+            $blockRendered = $classBlock->render($block, (int) $pos + 1);
             $renderValue .= $blockRendered."\n";
         }
 

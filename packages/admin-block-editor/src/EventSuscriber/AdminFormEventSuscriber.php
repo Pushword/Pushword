@@ -8,6 +8,7 @@ use Pushword\Admin\FormField\PageMainContentField;
 use Pushword\Admin\PageAdmin;
 use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Admin\Utils\FormFieldReplacer;
+use Pushword\AdminBlockEditor\EditorJsHelper;
 use Pushword\AdminBlockEditor\FormField\PageH1FormField;
 use Pushword\AdminBlockEditor\FormField\PageImageFormField;
 use Pushword\AdminBlockEditor\FormField\PageMainContentFormField;
@@ -64,7 +65,9 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
             return;
         }
 
-        // sanitize with https://github.com/editor-js/editorjs-php
+        // sanitize with https://github.com/editor-js/editorjs-phpstan
+        $returnValues['mainContent'] = EditorJsHelper::purify($returnValues['mainContent']);
+
         $page->setMainContent($returnValues['mainContent']);
     }
 
