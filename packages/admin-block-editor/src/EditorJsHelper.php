@@ -2,7 +2,7 @@
 
 namespace Pushword\AdminBlockEditor;
 
-class EditorJsHelper
+final class EditorJsHelper
 {
     /**
      * @psalm-suppress MoreSpecificReturnType
@@ -10,7 +10,7 @@ class EditorJsHelper
      *
      * @return object{blocks: array<object{type: string, data: object}>}
      */
-    public static function jsonDecode(string $raw): object
+    public static function decode(string $raw): object
     {
         if ('' === $raw) {
             throw new \Exception('JSON is empty');
@@ -37,57 +37,5 @@ class EditorJsHelper
         }
 
         return $data; // @phpstan-ignore-line
-    }
-
-    public static function htmlPurifier(string $text): string
-    {
-        $text = str_replace("\u{a0}", ' ', $text);
-        $text = preg_replace('# </([a-z]+)>#i', '</$1> ', $text) ?? throw new \Exception($text);
-
-        return trim($text);
-    }
-
-    /**
-     * @param array<array-key, object{items: array<mixed>, content: string}> $items
-     *
-     * @return array<array-key, object{items: array<mixed>, content: string}>
-     */
-    public static function htmlPurifierForList(array $items): array
-    {
-        foreach ($items as $k => $item) {
-            $items[$k]->content = self::htmlPurifier($item->content); // @phpstan-ignore-line
-            $items[$k]->items = [] !== $item->items ? self::htmlPurifierForList($item->items) : []; // @phpstan-ignore-line
-        }
-
-        return $items;
-    }
-
-    public static function purify(string $raw): string
-    {
-        try {
-            $data = self::jsonDecode($raw);
-        } catch (\Exception) {
-            return $raw;
-        }
-
-        foreach ($data->blocks as $k => $block) {
-            if (\in_array($block->type, ['header', 'paragraph'], true)) {
-                if (! \is_string($data->blocks[$k]->data->text ?? 0)) {
-                    return $raw;
-                }
-
-                $data->blocks[$k]->data->text = self::htmlPurifier($data->blocks[$k]->data->text);
-            }
-
-            if ('list' === $block->type) {
-                if (! \is_array($data->blocks[$k]->data->items ?? 0)) {
-                    return $raw;
-                }
-
-                $data->blocks[$k]->data->items = self::htmlPurifierForList($data->blocks[$k]->data->items);
-            }
-        }
-
-        return \Safe\json_encode($data);
     }
 }

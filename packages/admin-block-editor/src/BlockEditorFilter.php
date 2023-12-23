@@ -31,7 +31,7 @@ final class BlockEditorFilter extends AbstractFilter
         }
 
         try {
-            $json = EditorJsHelper::jsonDecode($propertyValue);
+            $json = EditorJsHelper::decode($propertyValue);
         } catch (\Exception) {
             return $propertyValue;
         }

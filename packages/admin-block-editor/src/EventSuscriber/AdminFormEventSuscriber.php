@@ -8,7 +8,7 @@ use Pushword\Admin\FormField\PageMainContentField;
 use Pushword\Admin\PageAdmin;
 use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Admin\Utils\FormFieldReplacer;
-use Pushword\AdminBlockEditor\EditorJsHelper;
+use Pushword\AdminBlockEditor\EditorJsPurifier;
 use Pushword\AdminBlockEditor\FormField\PageH1FormField;
 use Pushword\AdminBlockEditor\FormField\PageImageFormField;
 use Pushword\AdminBlockEditor\FormField\PageMainContentFormField;
@@ -66,7 +66,7 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
         }
 
         // sanitize with https://github.com/editor-js/editorjs-phpstan
-        $returnValues['mainContent'] = EditorJsHelper::purify($returnValues['mainContent']);
+        $returnValues['mainContent'] = (new EditorJsPurifier($page->getLocale() ?: 'fr'))($returnValues['mainContent']); // @phpstan-ignore-line
 
         $page->setMainContent($returnValues['mainContent']);
     }
