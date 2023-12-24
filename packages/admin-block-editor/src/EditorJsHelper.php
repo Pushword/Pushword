@@ -30,10 +30,6 @@ final class EditorJsHelper
             if (! property_exists($block, 'type') || ! \is_string($block->type)) {
                 throw new \Exception('Block must have a type (string)');
             }
-
-            if (! property_exists($block, 'data') || ! \is_object($block->data)) {
-                throw new \Exception('Block must have a data (object)');
-            }
         }
 
         return $data; // @phpstan-ignore-line
