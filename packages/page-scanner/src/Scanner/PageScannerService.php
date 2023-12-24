@@ -38,7 +38,7 @@ final class PageScannerService
         $this->router->setUseCustomHostPath(false);
 
         static::loadKernel($kernel);
-        static::getKernel()->getContainer()->get(\Pushword\Core\Router\PushwordRouteGenerator::class)->setUseCustomHostPath(false);
+        static::getKernel()->getContainer()->get(PushwordRouteGenerator::class)->setUseCustomHostPath(false);
     }
 
     private function resetErrors(): void

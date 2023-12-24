@@ -117,7 +117,7 @@ trait FormTrait
             // sinon, passer l'id dans la session plutôt que dans la requête
         }
 
-        $form = $this->formFactory->createBuilder(FormType::class, $this->message); // ['csrf_protection' => false]
+        $form = $this->formFactory->createBuilder(FormType::class, $this->message, ['csrf_protection' => false]); // ['csrf_protection' => false]
 
         $form->setAction($this->router->generate('pushword_conversation', [
             'type' => $this->getType(),
@@ -288,7 +288,7 @@ trait FormTrait
     }
 
     /**
-     * @return \Doctrine\Bundle\DoctrineBundle\Registry
+     * @return Registry
      */
     protected function getDoctrine()
     {

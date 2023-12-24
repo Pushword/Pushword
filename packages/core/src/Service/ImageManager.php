@@ -2,17 +2,9 @@
 
 namespace Pushword\Core\Service;
 
-use Intervention\Gif\Exception\EncoderException;
 use Intervention\Image\Encoders\AutoEncoder;
-use Intervention\Image\Encoders\AvifEncoder;
-use Intervention\Image\Encoders\BmpEncoder;
-use Intervention\Image\Encoders\GifEncoder;
-use Intervention\Image\Encoders\JpegEncoder;
-use Intervention\Image\Encoders\PngEncoder;
-use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
-use Intervention\Image\Interfaces\EncodedImageInterface;
 use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Utils\Filepath;
@@ -107,31 +99,12 @@ final class ImageManager
 
         $this->createFilterDir(\dirname($this->getFilterPath($media, $filterName)));
 
-        // $image->encode(new AutoEncoder($quality))
-        $this->autoEncode($image, $quality)->save($this->getFilterPath($media, $filterName));
+        $image->encode(new AutoEncoder($quality))->save($this->getFilterPath($media, $filterName));
         $image->toWebp($quality)->save($this->getFilterPath($media, $filterName, 'webp'));
 
         $this->getFilterPath($media, $filterName);
 
         return $image;
-    }
-
-    // TODO DElete when it's merged https://github.com/Intervention/image/pull/1242
-    public function autoEncode(ImageInterface $image, int $quality): EncodedImageInterface
-    {
-        $type = $image->origin()->mimetype();
-
-        return $image->encode(
-            match ($type) {
-                'image/webp' => new WebpEncoder($quality),
-                'image/avif' => new AvifEncoder($quality),
-                'image/jpeg' => new JpegEncoder($quality),
-                'image/bmp' => new BmpEncoder(),
-                'image/gif' => new GifEncoder(),
-                'image/png' => new PngEncoder(),
-                default => throw new EncoderException('No encoder found for media type ('.$type.').'),
-            }
-        );
     }
 
     private function createFilterDir(string $path): void

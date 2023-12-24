@@ -53,7 +53,7 @@ abstract class AbstractGenerator implements GeneratorInterface
         static::loadKernel($kernel);
         $this->kernel = $kernel;
 
-        $newKernelRouter = static::getKernel()->getContainer()->get(\Pushword\Core\Router\PushwordRouteGenerator::class);
+        $newKernelRouter = static::getKernel()->getContainer()->get(PushwordRouteGenerator::class);
         $newKernelRouter->setUseCustomHostPath(false);
     }
 
