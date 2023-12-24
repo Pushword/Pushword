@@ -8,7 +8,7 @@ final class EditorJsHelper
      * @psalm-suppress MoreSpecificReturnType
      *  @psalm-suppress LessSpecificReturnStatement
      *
-     * @return object{blocks: array<object{type: string, data: object}>}
+     * @return object{blocks: array<object{type: string}>}
      */
     public static function decode(string $raw): object
     {

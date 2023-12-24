@@ -32,7 +32,11 @@ final class BlockEditorFilter extends AbstractFilter
 
         try {
             $json = EditorJsHelper::decode($propertyValue);
-        } catch (\Exception) {
+        } catch (\Exception $e) {
+            if (isset($_GET['showException'])) {
+                throw $e;
+            }
+
             return $propertyValue;
         }
 
