@@ -59,8 +59,9 @@ final class EditorJsPurifier
         $text = str_replace("\u{a0}", ' ', $text);
         $text = preg_replace('# </([a-z]+)>#i', '</$1> ', $text) ?? throw new \Exception($text);
 
-        // TODO fix the add of space insecable
-        $text = $this->getFixer()->fix($text);
+        if (! str_contains($text, '{{')) { // for now, we skip when there is a twig inside the text because it's convert the quote
+            $text = $this->getFixer()->fix($text);
+        }
 
         return trim($text);
     }
