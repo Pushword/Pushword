@@ -148,7 +148,7 @@ trait MediaTrait
 
     public function getMediaFileName(): string
     {
-        if (! $this->mediaFile instanceof \Symfony\Component\HttpFoundation\File\File) {
+        if (! $this->mediaFile instanceof File) {
             throw new \Exception('MediaFile is not setted');
         }
 

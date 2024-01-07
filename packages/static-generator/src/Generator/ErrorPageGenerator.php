@@ -26,7 +26,7 @@ class ErrorPageGenerator extends AbstractGenerator
     protected function generateErrorPage(string $locale = null, string $uri = '404.html'): void
     {
         $request = $this->requestStack->getCurrentRequest();
-        if (! $request instanceof \Symfony\Component\HttpFoundation\Request) {
+        if (! $request instanceof Request) {
             $request = new Request();
         }
 

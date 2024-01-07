@@ -16,6 +16,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->load('Pushword\Admin\\', __DIR__.'/../../src/')
         ->exclude([
-            __DIR__.'/../'.\Pushword\Core\PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
+            __DIR__.'/../'.Pushword\Core\PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
         ]);
 };

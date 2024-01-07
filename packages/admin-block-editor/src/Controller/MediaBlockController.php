@@ -40,7 +40,7 @@ final class MediaBlockController extends AbstractController
             $media->setMediaFile($mediaFile);
 
             $duplicate = Repository::getMediaRepository($this->em, $this->mediaClass)->findOneBy(['hash' => $media->getHash()]);
-            if (! $duplicate instanceof \Pushword\Core\Entity\MediaInterface) {
+            if (! $duplicate instanceof MediaInterface) {
                 $this->em->persist($media);
                 $this->em->flush();
             } else {

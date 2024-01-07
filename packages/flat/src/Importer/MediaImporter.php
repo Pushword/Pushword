@@ -149,7 +149,7 @@ class MediaImporter extends AbstractImporter
         $mediaEntity = Repository::getMediaRepository($this->em, $this->entityClass)->findOneBy(['media' => $media]);
         $this->newMedia = false;
 
-        if (! $mediaEntity instanceof \Pushword\Core\Entity\MediaInterface) {
+        if (! $mediaEntity instanceof MediaInterface) {
             $this->newMedia = true;
             $mediaClass = $this->entityClass;
             $mediaEntity = new $mediaClass();

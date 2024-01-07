@@ -69,7 +69,7 @@ final class ElementAdmin extends AbstractController
     {
         if (null !== $encodedPath) {
             $element = $this->getElements()->getOneByEncodedPath($encodedPath);
-            if (! $element instanceof \Pushword\TemplateEditor\Element) {
+            if (! $element instanceof Element) {
                 throw $this->createNotFoundException('`'.$encodedPath.'` element does not exist...');
             }
         }

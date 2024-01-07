@@ -44,7 +44,7 @@ final class PageController extends AbstractController
     {
         $request = $request instanceof Request ? $request : $request->getCurrentRequest();
 
-        if (! $request instanceof \Symfony\Component\HttpFoundation\Request) {
+        if (! $request instanceof Request) {
             return;
         }
 
@@ -150,7 +150,7 @@ final class PageController extends AbstractController
         $LocaleHomepage = $this->getPage($request, $locale, false);
         $slug = 'homepage';
         $page = $LocaleHomepage ?? $this->getPage($request, $slug);
-        if (! $page instanceof \Pushword\Core\Entity\PageInterface) {
+        if (! $page instanceof PageInterface) {
             throw $this->createNotFoundException('The page `'.$slug.'` was not found');
         }
 

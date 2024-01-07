@@ -102,7 +102,7 @@ class PageImporter extends AbstractImporter
         $page = $this->getPage($slug);
         $this->newPage = false;
 
-        if (! $page instanceof \Pushword\Core\Entity\PageInterface) {
+        if (! $page instanceof PageInterface) {
             $pageClass = $this->entityClass;
             $initDateTimeProperties = false;
             $page = new $pageClass($initDateTimeProperties);
@@ -209,7 +209,7 @@ class PageImporter extends AbstractImporter
 
                     $mediaName = F::preg_replace_str('@^/?media/(default)?/@', '', $value);
                     $media = $this->getMedia($mediaName);
-                    if (! $media instanceof \Pushword\Core\Entity\MediaInterface) {
+                    if (! $media instanceof MediaInterface) {
                         throw new \Exception('Media `'.$value.'` ('.$mediaName.') not found in `'.$slug.'`.');
                     }
 

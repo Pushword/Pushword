@@ -17,7 +17,7 @@ final class ParentPageScanner extends AbstractScanner
     private function checkParentPageHost(Pageinterface $pageinterface): void
     {
         $parent = $pageinterface->getParentPage();
-        if (! $parent instanceof \Pushword\Core\Entity\PageInterface) {
+        if (! $parent instanceof PageInterface) {
             return;
         }
 

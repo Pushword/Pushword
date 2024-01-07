@@ -36,7 +36,7 @@ final class PageBlockController extends AbstractController
 
         if (0 !== $id) {
             $currentPage = Repository::getPageRepository($this->em, $this->pageClass)->findOneBy(['id' => $id]);
-            if (! $currentPage instanceof \Pushword\Core\Entity\PageInterface) {
+            if (! $currentPage instanceof PageInterface) {
                 throw new \Exception('Page not found');
             }
 

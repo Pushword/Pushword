@@ -261,7 +261,7 @@ final class MediaListener
 
     private function updateMainColor(MediaInterface $media, ImageInterface $image = null): void
     {
-        if (! $image instanceof \Intervention\Image\Image) {
+        if (! $image instanceof Image) {
             return;
         }
 

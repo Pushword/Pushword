@@ -114,7 +114,7 @@ class PageOpenGraphImageGenerator
         $logo = $this->getImagine()->open($this->twig->getLoader()->getSourceContext($logo)->getPath());
 
         $logoSize = $logo->getSize();
-        $bottomRight = new \Imagine\Image\Point(
+        $bottomRight = new Point(
             $this->imageWidth - $logoSize->getWidth() - $this->marginSize,
             $this->imageHeight - $logoSize->getHeight() - $this->marginSize
         );

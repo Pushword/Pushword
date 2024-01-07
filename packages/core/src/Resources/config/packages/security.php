@@ -51,8 +51,8 @@ return [
                 'http_basic' => [
                     'realm' => 'Secured Area',
                 ],
-                'custom_authenticator' => \Pushword\Core\Security\LoginFormAuthenticator::class,
-                'entry_point' => \Pushword\Core\Security\LoginFormAuthenticator::class,
+                'custom_authenticator' => Pushword\Core\Security\LoginFormAuthenticator::class,
+                'entry_point' => Pushword\Core\Security\LoginFormAuthenticator::class,
                 'logout' => [
                     'path' => 'pushword_logout',
                 ],
