@@ -58,7 +58,9 @@ final class EditorJsPurifier
     {
         $text = str_replace("\u{a0}", ' ', $text);
         $text = preg_replace('# </([a-z]+)>#i', '</$1> ', $text) ?? throw new \Exception($text);
-        $text = $this->getFixer()->fix($text);
+
+        // TODO fix the add of space insecable
+        // $text = $this->getFixer()->fix($text);
 
         return trim($text);
     }
