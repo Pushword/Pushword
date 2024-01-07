@@ -43,7 +43,7 @@ final class EditorJsPurifier
 
     private function getFixer(): Fixer
     {
-        $fixer = new Fixer(['Ellipsis', 'Dimension', 'Unit', 'Dash', 'SmartQuotes', 'FrenchNoBreakSpace', 'NoSpaceBeforeComma', 'CurlyQuote', 'Hyphen', 'Trademark']);
+        $fixer = new Fixer(['Ellipsis', 'Dimension', 'Unit', 'Dash', 'SmartQuotes', 'FrenchNoBreakSpace', 'NoSpaceBeforeComma', 'CurlyQuote', 'Trademark']);
 
         if (\in_array($this->locale, ['fr', 'fr_FR'], true)) {
             $fixer->setLocale('fr_FR');
@@ -60,7 +60,7 @@ final class EditorJsPurifier
         $text = preg_replace('# </([a-z]+)>#i', '</$1> ', $text) ?? throw new \Exception($text);
 
         // TODO fix the add of space insecable
-        // $text = $this->getFixer()->fix($text);
+        $text = $this->getFixer()->fix($text);
 
         return trim($text);
     }
