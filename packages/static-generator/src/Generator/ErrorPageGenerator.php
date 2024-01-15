@@ -42,7 +42,8 @@ class ErrorPageGenerator extends AbstractGenerator
             return;
         }
 
-        $dump = $this->parser->compress($this->twig->render('@Twig/Exception/error.html.twig'));
+        $html = $this->twig->render('@Twig/Exception/error.html.twig');
+        $dump = HtmlCompressor::compress($html);
         $this->filesystem->dumpFile($filepath, $dump);
     }
 }

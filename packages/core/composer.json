@@ -47,8 +47,7 @@
     "symfony/runtime": "^7.0",
     "twig/intl-extra": "^3.2",
     "vich/uploader-bundle": "^2.0",
-    "villfa/invert-color": "^0.5",
-    "wyrihaximus/html-compress": "^4.2"
+    "villfa/invert-color": "^0.5"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^2.17",

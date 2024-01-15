@@ -15,8 +15,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
-use WyriHaximus\HtmlCompress\Factory as HtmlCompressor;
-use WyriHaximus\HtmlCompress\HtmlCompressorInterface;
 
 abstract class AbstractGenerator implements GeneratorInterface
 {
@@ -30,8 +28,6 @@ abstract class AbstractGenerator implements GeneratorInterface
     protected AppConfig $app;
 
     protected string $staticDir;
-
-    protected HtmlCompressorInterface $parser;
 
     protected StaticAppGenerator $staticAppGenerator;
 
@@ -48,7 +44,6 @@ abstract class AbstractGenerator implements GeneratorInterface
         $this->filesystem = new Filesystem();
         $this->router->setUseCustomHostPath(false);
         $this->publicDir = $params->get('pw.public_dir');
-        $this->parser = HtmlCompressor::construct();
 
         static::loadKernel($kernel);
         $this->kernel = $kernel;
