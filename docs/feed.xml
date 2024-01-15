@@ -10,6 +10,12 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[test content]]></title>
+                    <link>https://pushword.piedweb.com/test-content</link>
+                    <guid>https://pushword.piedweb.com/test-content</guid>
+                    <pubDate>Mon, 15 Jan 2024 09:59:05 +0000</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Roadmap]]></title>
                     <link>https://pushword.piedweb.com/roadmap</link>
                     <guid>https://pushword.piedweb.com/roadmap</guid>
@@ -32,12 +38,6 @@
                     <link>https://pushword.piedweb.com/extension/template-editor</link>
                     <guid>https://pushword.piedweb.com/extension/template-editor</guid>
                     <pubDate>Wed, 15 Nov 2023 20:38:22 +0000</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Installation]]></title>
-                    <link>https://pushword.piedweb.com/installation</link>
-                    <guid>https://pushword.piedweb.com/installation</guid>
-                    <pubDate>Tue, 24 Oct 2023 09:37:26 +0000</pubDate>
                 </item>
                             
     </channel>

@@ -87,7 +87,7 @@ final class LinkedDocsScanner extends AbstractScanner
             return preg_quote($var, '/');
         }
 
-        $var = array_map('static::prepareForRegex', $var); // @phpstan-ignore-line
+        $var = array_map([$this, 'prepareForRegex'], $var);
 
         return '('.implode('|', $var).')';
     }

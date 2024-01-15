@@ -1,0 +1,22 @@
+{
+    "customProperties": [],
+    "storeIn": "\/home\/robin\/localhost\/Pushword\/packages\/skeleton\/media",
+    "media": "symfony.svg",
+    "mimeType": "image\/svg+xml",
+    "size": 1811,
+    "height": null,
+    "width": null,
+    "mainColor": null,
+    "name": "symfony.svg - 65a501e637a0d",
+    "names": "",
+    "createdAt": {
+        "date": "2024-01-15 09:59:02.227851",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    },
+    "updatedAt": {
+        "date": "2024-01-15 09:59:02.227848",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    }
+}

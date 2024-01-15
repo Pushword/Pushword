@@ -10,7 +10,7 @@ class PageScannerCommandTest extends KernelTestCase
 {
     public function testPageScannerCommand()
     {
-        $kernel = static::createKernel();
+        $kernel = self::createKernel();
         $application = new Application($kernel);
 
         $command = $application->find('pushword:page-scanner:scan');
