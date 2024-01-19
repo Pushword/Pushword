@@ -224,7 +224,7 @@ export function addClassForNormalUser(attribute = 'data-acinb') {
  *
  * @param {string}  attribute
  */
-export async function uncloakLinks(attribute = 'data-rot', when = 'onEvent') {
+export async function uncloakLinks(attribute = 'data-rot', onClickMouseoverOrTouchstart = true) {
   var convertLink = function (element) {
     // fix "bug" with img
     if (element.getAttribute(attribute) === null) {
@@ -239,11 +239,11 @@ export async function uncloakLinks(attribute = 'data-rot', when = 'onEvent') {
     }
     link.innerHTML = element.innerHTML
     link.setAttribute('href', responsiveImage(convertShortchutForLink(rot13ToText(href))))
-    element.parentNode.replaceChild(link, element)
+    element.replaceWith(link)
     return link
   }
 
-  var convertThemAll = function (attribute) {
+  var convertAll = function (attribute) {
     ;[].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
       convertLink(element)
     })
@@ -259,7 +259,7 @@ export async function uncloakLinks(attribute = 'data-rot', when = 'onEvent') {
   var convertLinkOnEvent = async function (event) {
     // convert them all if it's an image (thanks this bug), permit to use gallery (baguetteBox)
     if (event.target.tagName == 'IMG') {
-      await convertThemAll(attribute)
+      await convertAll(attribute)
       var element = event.target
     } else {
       var element = convertLink(event.target)
@@ -267,7 +267,7 @@ export async function uncloakLinks(attribute = 'data-rot', when = 'onEvent') {
     if (element) fireEventLinksBuilt(element, event)
   }
 
-  if (when == 'onEvent') {
+  if (onClickMouseoverOrTouchstart) {
     ;[].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
       element.addEventListener(
         'touchstart',
@@ -291,7 +291,7 @@ export async function uncloakLinks(attribute = 'data-rot', when = 'onEvent') {
         { once: true },
       )
     })
-  } else convertThemAll(attribute)
+  } else convertAll(attribute)
 }
 
 /**
@@ -370,36 +370,4 @@ export function convertImageLinkToWebPLink() {
   }
 
   if (testWebPSupport()) switchToWebP()
-}
-
-/**
- * Simple Image Lazy Loader
- * original from : https://davidwalsh.name/lazyload-image-fade
- *
- * @param {string}  attribute
- *
- * @example
- * imgLazyLoad()
- * <span data-img=/img/me.png>Tagada</span> or <img data-img=/img/me.png alt=Tagada>
- *
- * will be converted to
- *
- * <img src=/img/me.png alt=Tagada />
- *
- * still used in piedvert. To remove ?!
- */
-export function imgLazyLoad(attribute = 'data-img') {
-  ;[].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (img) {
-    var newDomImg = document.createElement('img')
-    var src = img.getAttribute(attribute)
-    img.removeAttribute(attribute)
-    for (var i = 0, n = img.attributes.length; i < n; i++) {
-      newDomImg.setAttribute(img.attributes[i].nodeName, img.attributes[i].nodeValue)
-    }
-    if (newDomImg.getAttribute('alt') === null && img.textContent != '') {
-      newDomImg.setAttribute('alt', img.textContent)
-    }
-    newDomImg.setAttribute('src', typeof responsiveImage === 'function' ? responsiveImage(src) : src)
-    img.outerHTML = newDomImg.outerHTML
-  })
 }

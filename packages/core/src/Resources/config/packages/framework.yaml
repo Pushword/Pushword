@@ -2,8 +2,8 @@ framework:
   secret: "secretKeyToOverride (normally, it s automatically done by symfony standard edition"
 
   session:
-    handler_id: ~
     cookie_lifetime: 0
+    handler_id: "file://%kernel.project_dir%/var/sessions"
 
   php_errors:
     log: true
