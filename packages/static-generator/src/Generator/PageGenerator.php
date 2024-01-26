@@ -133,9 +133,6 @@ class PageGenerator extends AbstractGenerator
 
     protected function compress(string $html): string
     {
-        // TODO wait for https://github.com/voku/simple_html_dom/pull/106 be merged to restor html compressor with PHP 8.3
-        // restore dependency wyrihaximus/html-compress
-        // $html = HtmlCompressor::compress($html);
-        return $html;
+        return HtmlCompressor::compress($html);
     }
 }

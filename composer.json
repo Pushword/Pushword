@@ -64,7 +64,8 @@
     "thecodingmachine/safe": "^2.2",
     "twig/intl-extra": "^3.2",
     "vich/uploader-bundle": "^2.0",
-    "villfa/invert-color": "^0.5"
+    "villfa/invert-color": "^0.5",
+    "wyrihaximus/html-compress": "^1.3"
   },
   "require-dev": {
     "composer/composer": "^2.6.6",
@@ -87,6 +88,12 @@
     "vimeo/psalm": "^5",
     "weirdan/doctrine-psalm-plugin": "^2.0"
   },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/devteam-emroc/simple_html_dom"
+    }
+  ],
   "extra": {
     "branch-alias": {
       "dev-master": "0.0-dev"

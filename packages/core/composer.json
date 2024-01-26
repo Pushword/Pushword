@@ -59,6 +59,12 @@
     "symfony/profiler-pack": "^1.0",
     "symplify/monorepo-builder": "^9.0"
   },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/devteam-emroc/simple_html_dom"
+    }
+  ],
   "extra": {
     "branch-alias": {
       "dev-main": "0.1.x-dev"

@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Service;
 
-use Exception;
 use Intervention\Image\Encoders\AutoEncoder;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
