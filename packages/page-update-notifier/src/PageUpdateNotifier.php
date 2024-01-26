@@ -92,7 +92,7 @@ class PageUpdateNotifier
 
         $pageRepo->andHost($queryBuilder, $this->app->getMainHost());
 
-        return $queryBuilder->getQuery()->getResult();
+        return $queryBuilder->getQuery()->getResult();  // @phpstan-ignore-line
     }
 
     protected function init(PageInterface $page): void

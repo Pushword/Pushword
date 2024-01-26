@@ -117,7 +117,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $queryBuilder = $this->createQueryBuilder('p');
         $this->andHost($queryBuilder, $host);
 
-        return $queryBuilder->getQuery()->getResult();
+        return $queryBuilder->getQuery()->getResult(); // @phpstan-ignore-line
     }
 
     /**
@@ -156,7 +156,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             ->orderBy('p.slug', Criteria::DESC)
             ->getQuery();
 
-        return $query->getResult();
+        return $query->getResult(); // @phpstan-ignore-line
     }
 
     /**
@@ -185,7 +185,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             'thumbMedia' => '/media/thumb/'.$media->getMedia().'%',
         ])->getQuery();
 
-        return $query->getResult();
+        return $query->getResult(); // @phpstan-ignore-line
     }
 
     private function getRootAlias(QueryBuilder $queryBuilder): string

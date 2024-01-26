@@ -27,7 +27,10 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $queryBuilder->groupBy('m.mimeType');
         $queryBuilder->orderBy('m.mimeType', Criteria::ASC);
 
-        return array_column($queryBuilder->getQuery()->getResult(), 'mimeType');
+        /** @var array{mimeType: string} */
+        $results = $queryBuilder->getQuery()->getResult();
+
+        return array_column($results, 'mimeType');
     }
 
     public function findDuplicate(MediaInterface $media): ?MediaInterface

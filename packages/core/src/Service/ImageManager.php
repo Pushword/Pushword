@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Service;
 
+use Exception;
 use Intervention\Image\Encoders\AutoEncoder;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
@@ -87,19 +88,15 @@ final class ImageManager
 
         foreach ($filters[$filterName]['filters'] as $filter => $parameters) { // @phpstan-ignore-line
             $parameters = \is_array($parameters) ? $parameters : [$parameters];
-            \call_user_func_array([$image, $filter], $parameters);  // @phpstan-ignore-line
+            \call_user_func_array([$image, $filter], $parameters); // @phpstan-ignore-line
         }
 
-        /**
-         * @psalm-suppress RedundantCondition
-         *
-         * @psam-suppress TypeDoesNotContainNull
-         */
+        /** @psalm-suppress RedundantCondition TypeDoesNotContainNull */
         $quality = (int) ($filters[$filterName]['quality'] ?? 90); // @phpstan-ignore-line
 
-        $this->createFilterDir(\dirname($this->getFilterPath($media, $filterName)));
+        $this->createFilterDir(\dirname($this->getFilterPath($media,  $filterName)));
 
-        $image->encode(new AutoEncoder($quality))->save($this->getFilterPath($media, $filterName));
+        $image->encode(new AutoEncoder(quality: $quality))->save($this->getFilterPath($media, $filterName));
         $image->toWebp($quality)->save($this->getFilterPath($media, $filterName, 'webp'));
 
         $this->getFilterPath($media, $filterName);
