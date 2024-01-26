@@ -52,7 +52,7 @@ class VersionController extends AbstractController
      * @psalm-suppress PossiblyInvalidArgument
      * @psalm-suppress InvalidPropertyAssignmentValue
      */
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setParams(ParameterBagInterface $parameterBag): void
     {
         $this->pageClass = $parameterBag->get('pw.entity_page'); // @phpstan-ignore-line

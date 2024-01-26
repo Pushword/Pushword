@@ -39,9 +39,9 @@ trait FormTrait
     /** @var string */
     protected $successMessage = 'conversation.send.success';
 
-    protected \Symfony\Component\HttpFoundation\Request $request;
+    protected Request $request;
 
-    protected \Doctrine\Bundle\DoctrineBundle\Registry $doctrine;
+    protected Registry $doctrine;
 
     protected Twig $twig;
 

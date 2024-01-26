@@ -28,7 +28,7 @@ class PageImporter extends AbstractImporter
      */
     protected array $toAddAtTheEnd = [];
 
-    protected ?\Pushword\Flat\FlatFileContentDirFinder $contentDirFinder = null;
+    protected ?FlatFileContentDirFinder $contentDirFinder = null;
 
     /**
      * @var class-string<MediaInterface>

@@ -24,7 +24,7 @@ final class ElementAdmin extends AbstractController
 {
     private KernelInterface $kernel;
 
-    private twig $twig;
+    private Twig $twig;
 
     /** @param string[] $canBeEditedList */
     public function __construct(

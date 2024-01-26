@@ -81,9 +81,9 @@ class FlatFileImporterTest extends KernelTestCase
         self::bootKernel();
         $newName = 'logo-test'.uniqid().rand().'.png';
 
-        (new FileSystem())->copy(__DIR__.'/content/test-content.md', $this->getContentDir().'/test-content.md');
-        (new FileSystem())->copy(__DIR__.'/content/media/logo-test.png', $this->getContentDir().'/media/logo-test.png');
-        (new FileSystem())->copy(__DIR__.'/content/media/logo-test.png', $this->getContentDir().'/media/'.$newName);
+        (new Filesystem())->copy(__DIR__.'/content/test-content.md', $this->getContentDir().'/test-content.md');
+        (new Filesystem())->copy(__DIR__.'/content/media/logo-test.png', $this->getContentDir().'/media/logo-test.png');
+        (new Filesystem())->copy(__DIR__.'/content/media/logo-test.png', $this->getContentDir().'/media/'.$newName);
 
         return $newName;
     }

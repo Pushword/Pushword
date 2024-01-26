@@ -30,7 +30,7 @@ class TailwindGenerator
             return;
         }
 
-        $fs = new FileSystem();
+        $fs = new Filesystem();
         $fs->dumpFile(
             $this->projectDir.'/var/TailwindGeneratorCache/'.$page->getId(),
             serialize($page)

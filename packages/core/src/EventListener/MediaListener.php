@@ -35,7 +35,7 @@ final class MediaListener
     public function __construct(
         private readonly string $projectDir,
         private readonly EntityManagerInterface $em,
-        private readonly FileSystem $filesystem,
+        private readonly Filesystem $filesystem,
         private readonly ImageManager $imageManager,
         private readonly RequestStack $requestStack,
         private readonly RouterInterface $router,

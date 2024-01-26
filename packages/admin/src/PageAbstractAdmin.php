@@ -217,7 +217,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
 
         $filter
             ->add('h1', CallbackFilter::class, [
-                'callback' => fn (\Sonata\DoctrineORMAdminBundle\Datagrid\ProxyQuery $queryBuilder, string $alias, string $field, \Sonata\AdminBundle\Filter\Model\FilterData $filterData): ?bool => $this->getSearchFilterForTitle($queryBuilder, $alias, $field, $filterData),
+                'callback' => fn (ProxyQuery $queryBuilder, string $alias, string $field, FilterData $filterData): ?bool => $this->getSearchFilterForTitle($queryBuilder, $alias, $field, $filterData),
                 'label' => 'admin.page.h1.label',
             ]);
 

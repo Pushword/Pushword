@@ -152,7 +152,7 @@ class Message implements \Stringable
 
     public function setAuthorIpRaw(string $authorIp): self
     {
-        return $this->setAuthorIp((int) ip2long(IPUtils::anonymize($authorIp)));
+        return $this->setAuthorIp((int) ip2long(IpUtils::anonymize($authorIp)));
     }
 
     public function getAuthorIpRaw(): bool|string

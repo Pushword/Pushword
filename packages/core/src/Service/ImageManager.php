@@ -20,7 +20,7 @@ final class ImageManager
 
     private ?ImageInterface $lastThumb = null;
 
-    private readonly FileSystem $fileSystem;
+    private readonly Filesystem $fileSystem;
 
     /**
      * @param array<string, array<string, mixed>> $filterSets
@@ -32,7 +32,7 @@ final class ImageManager
         private readonly string $publicMediaDir,
         private readonly string $mediaDir
     ) {
-        $this->fileSystem = new FileSystem();
+        $this->fileSystem = new Filesystem();
         $this->optimizer = OptimizerChainFactory::create(); // t o d o make optimizer bin path configurable
     }
 

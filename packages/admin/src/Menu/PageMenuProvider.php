@@ -21,13 +21,13 @@ final class PageMenuProvider
     #[Required]
     public \Pushword\Core\Component\App\AppPool $apps;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public ManagerRegistry $doctrine;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public TranslatorInterface $translator;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public RequestStack $requestStack;
 
     public function __construct(private readonly FactoryInterface $factory)
