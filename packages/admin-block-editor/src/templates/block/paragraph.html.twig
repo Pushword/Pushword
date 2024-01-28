@@ -1,1 +1,2 @@
-<p {{ blockWrapperAttr(block) }}>{{ block.data.text|fixHref|raw }}</p>
+{% set attr = blockWrapperAttr(block) %}
+<p{{ attr ? ' '~blockWrapperAttr(block): '' }}>{{ block.data.text|fixHref|raw }}</p>
