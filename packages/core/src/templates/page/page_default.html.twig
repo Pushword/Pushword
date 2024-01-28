@@ -3,10 +3,7 @@
 {# ----------- #}
 
 {% block html_opener %}
-	<html
-		lang="{{ page.locale|default(apps.get().defaultLocale) }}"
-		{{ mergeAttr({'class': 'leading-tight text-gray-900'}, page.htmlOpenerAttr|default({})) }}
-	>
+<html lang="{{ page.locale|default(apps.get().defaultLocale) }}" {{ mergeAttr({'class': 'leading-tight text-gray-900'}, page.htmlOpenerAttr|default({})) }}>
 {% endblock %}
 
 {% block title %}
@@ -57,63 +54,58 @@
 
 {% block feed %}
 	{# TODO #}
-	{{ parent() }}
-	{% if page.feeds is defined and page.feeds is not null %}
-		{% for feed in page.feeds %}
-			<link
-				rel="alternate"
-				type="{{ feed.type|default('application/rss+xml') }}"
-				href="{{ apps.get().baseUrl|default('') }}{{ feed.uri }}"
-				title="{{ app_name|default('') }} &raquo; {{ feed.title }}"
-			/>
-		{% endfor %}
-	{% endif %}
+{{ parent() }}
+{% if page.feeds is defined and page.feeds is not null %}
+	{% for feed in page.feeds %}
+		<link rel="alternate" type="{{ feed.type|default('application/rss+xml') }}" href="{{ apps.get().baseUrl|default('') }}{{ feed.uri }}" title="{{ app_name|default('') }} &raquo; {{ feed.title }}" />
+	{% endfor %}
+{% endif %}
 {% endblock %}
 
 
 {% block body %}
-    <div class="flex flex-col min-h-screen">
+<div class="flex flex-col min-h-screen">
 
-	{% set pageContent = include(view('/page/_content.html.twig')) %}
-	{% block content %}
-		{{ pageContent|raw }}
-	{% endblock %}
+{% set pageContent = include(view('/page/_content.html.twig')) %}
+{% block content %}
+	{{ pageContent|raw }}
+{% endblock %}
 
-	{% set pageBreadcrumb = include(view('/page/_breadcrumb.html.twig')) %}
-	{% block breadcrumb %}
-		{{ pageBreadcrumb|raw }}
-	{% endblock %}
+{% set pageBreadcrumb = include(view('/page/_breadcrumb.html.twig')) %}
+{% block breadcrumb %}
+	{{ pageBreadcrumb|raw }}
+{% endblock %}
 
-	{% block footer %}
-		{% include view('/page/_footer.html.twig') with {'content': '"/'~page.slug ~ '" ' ~pageContent ~ pageBreadcrumb} %}
-	{% endblock %}
+{% block footer %}
+	{% include view('/page/_footer.html.twig') with {'content': '"/'~page.slug ~ '" ' ~pageContent ~ pageBreadcrumb} %}
+{% endblock %}
 
-	{% block navbar %}
-		{% include view('/page/_navbar.html.twig') %}
-	{% endblock %}
+{% block navbar %}
+	{% include view('/page/_navbar.html.twig') %}
+{% endblock %}
 
-	{% block admin_buttons %}
-		{% if class_exists('\\Pushword\\Admin\\PushwordAdminBundle')
-			and class_exists('\\Pushword\\Svg\\PushwordSvgBundle')
-			and is_granted('IS_AUTHENTICATED_REMEMBERED') %}
-			<div class="hidden md:block fixed top-1/2 right-2  mx-1 w-10 z-10 bg-gray-500 rounded-lg opacity-50">
-			<a href="{{ path('admin_page_edit', {id: page.id}) }}" class="inline-block p-1 text-gray-50 rounded-t-lg hover:bg-gray-800">
-				{{ svg('edit', {class: 'w-full p-2 fill-current'}) }}
-			</a>
-			<a href="{{ path('admin_page_list') }}?filter%5Bhost%5D%5Bvalue%5D%5B%5D={{ page.host }}" class="inline-block p-1 text-gray-50 bg-gray-500  hover:bg-gray-800">
-				{{ svg('list', {class: 'w-full p-2 fill-current'}) }}
-			</a>
-			<a href="{{ path('admin_page_create') }}?host={{ page.host }}" class="inline-block p-1 text-gray-50 bg-gray-500  hover:bg-gray-800">
-				{{ svg('file', {class: 'w-full p-2 fill-current'}) }}
-			</a>
-			</a>
-			<a href="{{ path('piedweb_static_generate', {'host': page.host}) }}" class="inline-block p-1 text-gray-50 bg-gray-500 rounded-b-lg hover:bg-gray-800">
-				{{ svg('upload', {class: 'w-full p-2 fill-current'}) }}
-			</a>
-			</div>
-		{% endif %}
-	{% endblock %}
-    </div>
+{% block admin_buttons %}
+	{% if class_exists('\\Pushword\\Admin\\PushwordAdminBundle')
+		and class_exists('\\Pushword\\Svg\\PushwordSvgBundle')
+		and is_granted('IS_AUTHENTICATED_REMEMBERED') %}
+		<div class="hidden md:block fixed top-1/2 right-2  mx-1 w-10 z-10 bg-gray-500 rounded-lg opacity-50">
+		<a href="{{ path('admin_page_edit', {id: page.id}) }}" class="inline-block p-1 text-gray-50 rounded-t-lg hover:bg-gray-800">
+			{{ svg('edit', {class: 'w-full p-2 fill-current'}) }}
+		</a>
+		<a href="{{ path('admin_page_list') }}?filter%5Bhost%5D%5Bvalue%5D%5B%5D={{ page.host }}" class="inline-block p-1 text-gray-50 bg-gray-500  hover:bg-gray-800">
+			{{ svg('list', {class: 'w-full p-2 fill-current'}) }}
+		</a>
+		<a href="{{ path('admin_page_create') }}?host={{ page.host }}" class="inline-block p-1 text-gray-50 bg-gray-500  hover:bg-gray-800">
+			{{ svg('file', {class: 'w-full p-2 fill-current'}) }}
+		</a>
+		</a>
+		<a href="{{ path('piedweb_static_generate', {'host': page.host}) }}" class="inline-block p-1 text-gray-50 bg-gray-500 rounded-b-lg hover:bg-gray-800">
+			{{ svg('upload', {class: 'w-full p-2 fill-current'}) }}
+		</a>
+		</div>
+	{% endif %}
+{% endblock %}
+</div>
 {% endblock %}
 
 

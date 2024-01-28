@@ -2,6 +2,7 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
+use Exception;
 use WyriHaximus\HtmlCompress\Factory as HtmlCompressorFactory;
 
 class HtmlCompressor
@@ -10,7 +11,7 @@ class HtmlCompressor
     {
         // TODO wait for https://github.com/voku/simple_html_dom/pull/106 be merged to restor html compressor with PHP 8.3
         // and remove package https://github.com/devteam-emroc/simple_html_dom in base and core
-        $html = preg_replace('/<!--(.*?)-->/s', '', $html);
+        $html = preg_replace('/<!--(.*?)-->/s', '', $html) ?? throw new Exception();
 
         return $html; // return HtmlCompressorFactory::construct()->compress($html);
     }
