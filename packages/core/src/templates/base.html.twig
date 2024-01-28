@@ -44,12 +44,7 @@
     {% endblock %}
 
     {% block feed %}
-      <link
-        rel="alternate"
-        type="application/rss+xml"
-        href="{{ apps.get().baseUrl|default('') }}/feed.xml"
-        title="{{ apps.get().name|default('') }} &raquo; {{ 'feed.alternate_title'|trans }}"
-       />
+      <link rel="alternate" type="application/rss+xml" href="{{ apps.get().baseUrl|default('') }}/feed.xml" title="{{ apps.get().name|default('') }} &raquo; {{ 'feed.alternate_title'|trans }}" />
     {% endblock %}
 
     {% block robots %}{% endblock %}
