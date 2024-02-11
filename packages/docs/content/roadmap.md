@@ -17,6 +17,8 @@ parent: contribute
 - [Admin] ctrl+s -> save (without reloading)
 
 - [AdminBlockEditor] horizontal toggle button (for list or pages_list)
+- [AdminBlockEditor] https://github.com/calumk/editorjs-nested-checklist
+- [AdminBlockEditor] https://github.com/calumk/editorjs-codecup
 - [AdminBlockEditor] Block Nav Menu (guttenberg style)
 - [AdminBlockEditor] Span with class, nearest implementation https://github.com/hata6502/editorjs-style
 - [AdminBlockEditor] Group

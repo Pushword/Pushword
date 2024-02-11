@@ -14,7 +14,6 @@
     "@editorjs/table": "^2.1",
     "@pushword/editorjs-tools": "file:../admin-block-editor-tools",
     "@pushword/js-helper": "file:../js-helper",
-    "@symfony/webpack-encore": "^4.5",
     "autoprefixer": "^10.4",
     "core-js": "^3.33",
     "editorjs-drag-drop": "^1.1",
@@ -24,12 +23,9 @@
     "editorjs-text-alignment-blocktune": "https://github.com/aacoelho/editorjs-alignment-blocktune",
     "editorjs-undo": "^2",
     "postcss": "^8.4",
-    "postcss-import": "^16",
     "postcss-loader": "^8",
     "postcss-nested": "^6.0",
-    "postcss-nested-ancestors": "^3.0",
-    "sass": "^1.56",
-    "sass-loader": "^14"
+    "postcss-nested-ancestors": "^3.0"
   },
   "license": "UNLICENSED",
   "private": true,

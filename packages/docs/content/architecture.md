@@ -50,6 +50,9 @@ Feel free to ask (github or mail), I will list my answer here.
 ## Prepare a development environement
 
 1. Check you have installed all the [required dependencies](/installation).
+
 2. Clone the #[repository](https://github.com/Pushword/Pushword)
-3. Launch at leat one time the skeleton (`cd packages/skeleton && symfony server:start -d`) to generate required symfony files to permits psalm, stan and test to work successfully
-4. Install assets `cd packages/skeleton && bin/console assets:install`
+
+3. Launch at leat one time the skeleton (`cd packages/skeleton && symfony server:start -d`) to generate Symfony PHP and Xml Container to permits psalm, stan and test to work successfully
+
+4. Install assets `cd packages/skeleton && php bin/console assets:install --symlink --relative`
