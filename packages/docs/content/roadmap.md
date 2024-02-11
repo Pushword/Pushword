@@ -7,10 +7,7 @@ parent: contribute
 
 ## BugFix && To finish
 
-- [Design] https://codepen.io/toddwebdev/pen/yExKoj
-
 - [Core/Admin] catch Exception and show them in flash messages, eg : PagesListTwigTrait / PageController
-- [Core] https://github.com/jolicode/JoliTypo
 
 - [Admin] Block (left column) for viewing Page subtitle and navigate in the content
 - [Admin] Page : Code Editor for Autres paramêtres (yaml highlighting)
@@ -71,17 +68,17 @@ parent: contribute
 - [Flat] Transform markdown link to page link (useful for navigate in docs from editor)
 - [Flat] Throw error when the content is more up to date in database
 
-- [Core] implement **SonataUserBlundle** (see user_block.html.twig), wait for https://github.com/sonata-project/SonataUserBundle/pull/1256
 - manage date i18n a better way than randomly (document the process)
 
 - **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (see draft.md) (extension or core ?)
+-
 - [Core] Rewrite filter componenent to use the power of symfony service
 
 * [Admin] : Automatic save without flooding version
 
-* **Flat** (spatie/yaml-front-matter, vérif à chaque requête pour une sync constante admin <-> flat files)
+* [Flat] (spatie/yaml-front-matter, vérif à chaque requête pour une sync constante admin <-> flat files)
 
-- [New] Batch Action
+- [New] Batch Content Edition
 
 -- [All] Drop Weird Config Prepender
 
@@ -117,3 +114,13 @@ Why :
 
 - Less custom code
 - Stan ?
+
+## Html Minification
+
+**Html Minification** (for staticn befire _0.1.9973_) was relying on #[wyrihaximus/html-compress](https://packagist.org/packages/wyrihaximus/html-compress) wich rely on [voku/simple-html-dom](https://packagist.org/packages/voku/simple_html_dom).
+
+It's not compatible neither with PHP 8.3 not SF 7+.
+
+Html Minification is not anymore a core feature.
+
+Switch to a server minifier like _mod_pageSpeed_.
