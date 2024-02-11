@@ -2,12 +2,12 @@
   "entrypoints": {
     "app": {
       "js": [
-        "./app.js"
+        "/bundles/pushwordcore/app.js"
       ]
     },
     "style": {
       "css": [
-        "./style.css"
+        "/bundles/pushwordcore/style.css"
       ]
     }
   }

@@ -7,16 +7,18 @@ toc: true
 
 ## Requirements
 
--   **PHP** >=8.1
--   **PHP extensions** : dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, fileinfo
--   **Composer** (#[how to install composer](https://getcomposer.org/download/))
+- **PHP** >=8.1
+- **PHP extensions** : dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, imagick, exif, iconv, fileinfo
+- **Composer** (#[how to install composer](https://getcomposer.org/download/))
+- **Node** (>= 16.20.2, see [nvm to easily install a node version up to date](https://github.com/nvm-sh/nvm) - only tested with 16.20.2)
+- **yarn** (#[how to install yarn](https://classic.yarnpkg.com/lang/en/docs/install/#debian-stable))
+
+_Note_ : Node and Yarn may not be required in the near future, [thanks to asset mapper](https://symfony.com/doc/current/frontend/asset_mapper.html).
 
 ## Automatic installer via composer
 
-```
-
+```shell
 composer create-project pushword/new pushword
-
 ```
 
 That's it ! You can still configure an app or directly launch a PHP Server :
@@ -25,7 +27,7 @@ That's it ! You can still configure an app or directly launch a PHP Server :
 cd pushword;
 php bin/console pushword:new
 php -S 127.0.0.1:8004 -t public/
-
+# OR symfony server:start -d
 ```
 
 ## _Recommended Extesions_ to get Pushword Classic
@@ -40,15 +42,18 @@ composer req pushword/page-update-notifier
 composer req pushword/advanced-main-image
 composer req pushword/conversation
 
-# create a new user
+```
+
+## Create the first user
+
+```
 php bin/console pushword:user:create
 ```
 
 ## Next
 
-* Configure the [colors and display](/themes) (also see [automatic tailwind run after page update](/manage-assets)).
-* Add [extensions](/extensions)
-
+- Configure the [colors and display](/themes) (also see [automatic tailwind run after page update](/manage-assets)).
+- Supercharge Pushword with [extensions](/extensions) or **custom development**
 
 ## Manual installation
 

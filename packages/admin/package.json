@@ -1,7 +1,6 @@
 {
   "devDependencies": {
-    "@pushword/js-helper": "file:../js-helper",
-    "sass-loader": "^13.0.0"
+    "@pushword/js-helper": "file:../js-helper"
   },
   "license": "UNLICENSED",
   "private": true,
