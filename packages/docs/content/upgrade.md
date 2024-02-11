@@ -11,6 +11,16 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 0.1.9973
+
+In your `assets/webpack.config.js`, upgrade the getEncore function to add at the first parameter the symfony webpack-encore dependecy (`const Encore = require('@symfony/webpack-encore')`).
+
+Permit to avoid the compilation error.
+
+```
+TypeError: The 'compilation' argument must be an instance of Compilation
+``
+
 ## To 0.1.084
 
 * Delete src/DataFixtures folder
@@ -21,13 +31,17 @@ If you are doing a major upgrade, find the upgrade guide down there.
 -   Update doctrine
 
 ```
+
 php bin/console make:migration && php bin/console doctrine:migrations:migrate
+
 ```
 
 -   Update main content's block
 
 ```
+
 php vendor/pushword/admin-block-editor/src/Installer/Update795.php~
+
 ```
 
 -   **Update front-end to tailwind 3** by keeping only `@pushword/js-helper` as dependency in your `assets/package.json` and **simplify** `webpack.config.js` and, if needed, `app.js` and `app.css` (see the simpliest way `packages/skeleton/assets`)
@@ -37,14 +51,18 @@ php vendor/pushword/admin-block-editor/src/Installer/Update795.php~
 -   Update stylesheets
 
 ```
+
 cd assets && yarn && yarn encore production
+
 ```
 
 -   Update doctrine
 
 ```
+
 bin/console make:migration && bin/console doctrine:migrations:migrate
-```
+
+````
 
 ## From PiedWeb/CMS 0.0.86 to Pushword
 
@@ -71,3 +89,4 @@ bin/console make:migration && bin/console doctrine:migrations:migrate
 -   Update your custom template file
 
 -   Search for all `<!--` in `mainContent` and put them in `customProperties`'s textarea
+````

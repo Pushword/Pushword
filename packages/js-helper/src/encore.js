@@ -1,6 +1,7 @@
 const WatchExternalFilesPlugin = require('webpack-watch-files-plugin').default
-const Encore = require('@symfony/webpack-encore')
 const tailwindcss = require('tailwindcss')
+const postcssImport = require('postcss-import')
+const autoprefixer = require('autoprefixer')
 
 function getFilesToWatch(basePath = './..') {
   return [
@@ -22,6 +23,7 @@ function getTailwindConfig(watchFiles = null) {
 }
 
 function getEncore(
+  Encore,
   watchFiles = null, // default: getFilesToWatch()
   tailwindConfig = null, // default : getTailwindConfig()
   outputPath = null, // default : './../public/assets/'
@@ -37,15 +39,6 @@ function getEncore(
 
   if (tailwindConfig === null) {
     tailwindConfig = getTailwindConfig(watchFiles)
-  }
-
-  if (filesToCopy === null) {
-    filesToCopy = [
-      {
-        from: './favicons',
-        to: '[name].[ext]',
-      },
-    ]
   }
 
   if (entries === null) {
@@ -77,24 +70,32 @@ function getEncore(
     )
     .enablePostCssLoader((options) => {
       options.postcssOptions = {
-        plugins: [require('postcss-import'), tailwindcss(tailwindConfig), require('autoprefixer')],
+        plugins: [postcssImport, tailwindcss(tailwindConfig), autoprefixer],
       }
     })
     .disableSingleRuntimeChunk()
 
+  //   if (filesToCopy === null) {
+  //     filesToCopy = [
+  //       {
+  //         from: './favicons',
+  //         to: '[name].[ext]',
+  //       },
+  //     ]
+  //   }
   //filesToCopy.forEach(function (toCopy) {
   //Encore.copyFiles(toCopy);
   //})
 
   if (manifestKeyPrefix !== null) Encore.setManifestKeyPrefix(manifestKeyPrefix)
 
-  entries.forEach(function (entry) {
-    Encore.addEntry(entry.name, entry.file)
-  })
+  //   entries.forEach(function (entry) {
+  //     Encore.addEntry(entry.name, entry.file)
+  //   })
 
-  styleEntries.forEach(function (entry) {
-    Encore.addStyleEntry(entry.name, entry.file)
-  })
+  //   styleEntries.forEach(function (entry) {
+  //     Encore.addStyleEntry(entry.name, entry.file)
+  //   })
 
   return Encore
 }

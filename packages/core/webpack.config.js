@@ -1,4 +1,5 @@
 const EncoreHelper = require('@pushword/js-helper/src/encore.js')
+const Encore = require('@symfony/webpack-encore')
 
 var watchFiles = [
   './src/templates/**/*.html.twig',
@@ -11,13 +12,6 @@ var watchFiles = [
 
 var tailwindConfig = EncoreHelper.getTailwindConfig(watchFiles)
 
-const Encore = EncoreHelper.getEncore(watchFiles, tailwindConfig, __dirname + '/src/Resources/public/', '/bundles/pushwordcore', 'bundles/pushwordcore', [
-  {
-    from: './src/Resources/assets/favicons',
-    to: 'favicons/[name].[ext]',
-  },
-])
-
-console.log(Encore.getWebpackConfig())
+EncoreHelper.getEncore(Encore, watchFiles, tailwindConfig, __dirname + '/src/Resources/public', '/bundles/pushwordcore', 'bundles/pushwordcore', [])
 
 module.exports = Encore.getWebpackConfig()

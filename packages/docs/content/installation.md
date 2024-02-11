@@ -10,7 +10,7 @@ toc: true
 - **PHP** >=8.1
 - **PHP extensions** : dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, imagick, exif, iconv, fileinfo
 - **Composer** (#[how to install composer](https://getcomposer.org/download/))
-- **Node** (>= 16.20.2, see [nvm to easily install a node version up to date](https://github.com/nvm-sh/nvm) - only tested with 16.20.2)
+- **Node** (>= 16.20.2, see [nvm to easily install a node version up to date](https://github.com/nvm-sh/nvm) - only tested with v20.9.0)
 - **yarn** (#[how to install yarn](https://classic.yarnpkg.com/lang/en/docs/install/#debian-stable))
 
 _Note_ : Node and Yarn may not be required in the near future, [thanks to asset mapper](https://symfony.com/doc/current/frontend/asset_mapper.html).
