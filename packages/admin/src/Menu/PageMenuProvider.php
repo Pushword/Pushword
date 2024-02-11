@@ -5,6 +5,7 @@ namespace Pushword\Admin\Menu;
 use Doctrine\Persistence\ManagerRegistry;
 use Knp\Menu\FactoryInterface;
 use Knp\Menu\ItemInterface;
+use Pushword\Core\Component\App\AppPool;
 use Sonata\AdminBundle\Event\ConfigureMenuEvent;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -19,7 +20,7 @@ final class PageMenuProvider
     public const ORDER_NUMBER = 'priority';
 
     #[Required]
-    public \Pushword\Core\Component\App\AppPool $apps;
+    public AppPool $apps;
 
     #[Required]
     public ManagerRegistry $doctrine;

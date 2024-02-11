@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use function Safe\preg_match_all;
+
 final class HtmlEncryptedLink extends EncryptedLink
 {
     /**
@@ -32,7 +34,7 @@ final class HtmlEncryptedLink extends EncryptedLink
 
     public function convertHtmlRelEncryptedLink(string $body): string
     {
-        \Safe\preg_match_all(self::HTML_REGEX, $body, $matches);
+        preg_match_all(self::HTML_REGEX, $body, $matches);
 
         if (! isset($matches[1])) {
             return $body;

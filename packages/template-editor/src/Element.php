@@ -2,6 +2,9 @@
 
 namespace Pushword\TemplateEditor;
 
+use function Safe\file_get_contents;
+use function Safe\realpath;
+
 /**
  * Entity.
  */
@@ -17,10 +20,10 @@ class Element
 
     public function __construct(
         string $templateDir,
-        string $path = null,
+        ?string $path = null,
         protected bool $disableMoving = false
     ) {
-        $realPathTemplateDir = \Safe\realpath($templateDir);
+        $realPathTemplateDir = realpath($templateDir);
 
         $this->templateDir = $realPathTemplateDir;
 
@@ -41,7 +44,7 @@ class Element
             return '';
         }
 
-        return \Safe\file_get_contents($this->getTemplateDir().$this->getPath());
+        return file_get_contents($this->getTemplateDir().$this->getPath());
     }
 
     protected function getTemplateDir(): string

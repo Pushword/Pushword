@@ -8,6 +8,9 @@ use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Utils\Filepath;
 use Pushword\Core\Utils\MediaRenamer;
 
+use function Safe\file_put_contents;
+use function Safe\filesize;
+
 trait ImageImport
 {
     private function generateFileName(string $url, string $mimeType, string $slug, bool $hashInFilename): string
@@ -43,7 +46,7 @@ trait ImageImport
             ->setProjectDir($this->projectDir)
                 ->setStoreIn($this->mediaDir)
                 ->setMimeType($imgSize['mime'])
-                ->setSize(\Safe\filesize($imageLocalImport))
+                ->setSize(filesize($imageLocalImport))
                 ->setDimensions([$imgSize[0], $imgSize[1]])
                 ->setMedia($fileName)
                 ->setSlug(Filepath::removeExtension($fileName))
@@ -105,7 +108,7 @@ trait ImageImport
             return false;
         }
 
-        \Safe\file_put_contents($filePath, $content);
+        file_put_contents($filePath, $content);
 
         return $filePath;
     }

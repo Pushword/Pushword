@@ -13,8 +13,8 @@ use Pushword\Core\Service\ImageManager;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Twig\Environment;
 
 class AdminFormFieldManager
 {
@@ -32,7 +32,7 @@ class AdminFormFieldManager
         public readonly string $userClass,
         public readonly EntityManagerInterface $em,
         public readonly RouterInterface $router,
-        public readonly \Twig\Environment $twig,
+        public readonly Environment $twig,
         public readonly ImageManager $imageManager,
         // TokenStorageInterface $securityTokenStorage,
         Security $security,
@@ -70,11 +70,11 @@ class AdminFormFieldManager
      *
      * @param AdminInterface<T> $admin
      *
-     * @return array{ 0: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] , 1: class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<string,  class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array{'fields': class-string<\Pushword\Admin\FormField\AbstractField<T>>[], 'expand': bool}>, 2: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] }
+     * @return array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[]|array<string, (class-string<AbstractField<T>>[]|array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]}
      */
     public function getFormFields(AdminInterface $admin, string $formFieldKey): array
     {
-        /** @var array{ 0: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] , 1: class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<string,  class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array{'fields': class-string<\Pushword\Admin\FormField\AbstractField<T>>[], 'expand': bool}>, 2: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] } */
+        /** @var array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[]|array<string, (class-string<AbstractField<T>>[]|array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]} */
         $fields = $this->apps->get()->get($formFieldKey);
 
         $event = new FormEvent($admin, $fields, $this);

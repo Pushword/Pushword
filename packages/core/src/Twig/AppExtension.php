@@ -171,7 +171,7 @@ class AppExtension extends AbstractExtension
         return $pages[0] ?? null;
     }
 
-    public function getView(string $path, string $fallback = null): string
+    public function getView(string $path, ?string $fallback = null): string
     {
         return null !== $fallback ? $this->apps->get()->getView($path, $fallback)
             : $this->apps->get()->getView($path);
@@ -239,7 +239,7 @@ class AppExtension extends AbstractExtension
         return \Safe\preg_replace($pattern, $replacement, $subject);
     }
 
-    public function containsLinkTo(string $slug, string $content = null): bool
+    public function containsLinkTo(string $slug, ?string $content = null): bool
     {
         if (null === $content) {
             $content = $this->apps->getCurrentPage()?->getMainContent() ?? '';

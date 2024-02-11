@@ -8,6 +8,9 @@ use Pushword\Flat\Importer\AbstractImporter;
 use Pushword\Flat\Importer\MediaImporter;
 use Pushword\Flat\Importer\PageImporter;
 
+use function Safe\filemtime;
+use function Safe\scandir;
+
 /**
  * Permit to find error in image or link.
  *
@@ -57,7 +60,7 @@ class FlatFileImporter
             return;
         }
 
-        $files = \Safe\scandir($dir);
+        $files = scandir($dir);
         foreach ($files as $file) {
             if (\in_array($file, ['.', '..'], true)) {
                 continue;
@@ -75,7 +78,7 @@ class FlatFileImporter
 
     private function importFile(string $filePath, string $type): void
     {
-        $lastEditDateTime = (new \DateTime())->setTimestamp(\Safe\filemtime($filePath));
+        $lastEditDateTime = (new \DateTime())->setTimestamp(filemtime($filePath));
 
         $this->getImporter($type)->import($filePath, $lastEditDateTime);
     }

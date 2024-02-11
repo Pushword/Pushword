@@ -6,15 +6,19 @@ use Exception;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Utils\F;
+
+use function Safe\preg_match;
+
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Service\Attribute\Required;
 
 class PageGenerator extends AbstractGenerator
 {
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public RedirectionManager $redirectionManager;
 
-    public function generate(string $host = null): void
+    public function generate(?string $host = null): void
     {
         parent::generate($host);
 
@@ -36,11 +40,11 @@ class PageGenerator extends AbstractGenerator
         $this->generateFeedFor($page);
     }
 
-    protected function generateFilePath(PageInterface $page, int $pager = null): string
+    protected function generateFilePath(PageInterface $page, ?int $pager = null): string
     {
         $slug = '' == $page->getRealSlug() ? 'index' : $page->getRealSlug();
 
-        if (\Safe\preg_match('/.+\.(json|xml)$/i', $page->getRealSlug()) >= 1) {
+        if (preg_match('/.+\.(json|xml)$/i', $page->getRealSlug()) >= 1) {
             return $this->getStaticDir().'/'.$slug;
         }
 
@@ -69,7 +73,7 @@ class PageGenerator extends AbstractGenerator
         $this->saveAsStatic($liveUri, $staticFile, $page);
     }
 
-    protected function saveAsStatic(string $liveUri, string $destination, PageInterface $page = null): void
+    protected function saveAsStatic(string $liveUri, string $destination, ?PageInterface $page = null): void
     {
         $request = Request::create($liveUri);
         // $request->headers->set('host', $this->app->getMainHost());
@@ -110,7 +114,7 @@ class PageGenerator extends AbstractGenerator
         $this->filesystem->dumpFile($destination, $content);
     }
 
-    private function setErrorFor(string $liveUri, PageInterface $page = null, string $msg = ''): void
+    private function setErrorFor(string $liveUri, ?PageInterface $page = null, string $msg = ''): void
     {
         $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
                      '['.$liveUri.']('.$this->router->getRouter()->generate('admin_page_edit', ['id' => $page->getId()]).')'
@@ -126,7 +130,7 @@ class PageGenerator extends AbstractGenerator
 
     private function extractPager(PageInterface $page, string $content): void
     {
-        \Safe\preg_match('#<!-- pager:(\d+) -->#', $content, $match);
+        preg_match('#<!-- pager:(\d+) -->#', $content, $match);
         $pager = (int) $match[1];
         $this->saveAsStatic(rtrim($this->generateLivePathFor($page), '/').'/'.$pager, $this->generateFilePath($page, $pager), $page);
     }

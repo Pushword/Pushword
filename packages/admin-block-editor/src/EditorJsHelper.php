@@ -2,6 +2,8 @@
 
 namespace Pushword\AdminBlockEditor;
 
+use function Safe\json_decode;
+
 final class EditorJsHelper
 {
     /**
@@ -16,7 +18,7 @@ final class EditorJsHelper
             throw new \Exception('JSON is empty');
         }
 
-        $data = \Safe\json_decode($raw);
+        $data = json_decode($raw);
 
         if (! \is_object($data)) {
             throw new \Exception('raw is not an object');

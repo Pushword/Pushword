@@ -8,13 +8,15 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Repository\Repository;
+
+use function Safe\preg_match;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Translation\DataCollectorTranslator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -206,7 +208,7 @@ final class PageController extends AbstractController
      *
      * @return mixed //array<PageInterface>
      */
-    private function getPages(Request $request, int $limit = null)
+    private function getPages(Request $request, ?int $limit = null)
     {
         $requestedLocale = rtrim($request->getLocale(), '/');
 
@@ -240,7 +242,7 @@ final class PageController extends AbstractController
         string &$slug,
         bool $throwException
     ): ?PageInterface {
-        if (1 !== \Safe\preg_match('#(/([1-9]\d*)|^([1-9]\d*))$#', $slug, $match)) {
+        if (1 !== preg_match('#(/([1-9]\d*)|^([1-9]\d*))$#', $slug, $match)) {
             return null;
         }
 

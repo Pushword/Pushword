@@ -4,6 +4,8 @@ namespace Pushword\Core\Entity\PageTrait;
 
 use Pushword\Core\Utils\F;
 
+use function Safe\preg_match;
+
 trait PageRedirectionTrait
 {
     /**
@@ -24,12 +26,12 @@ trait PageRedirectionTrait
         $code = 301; // default symfony is 302...
         if (str_starts_with($content, 'Location:')) {
             $url = trim(substr($content, 9));
-            if (1 === \Safe\preg_match('/ [1-5]\d{2}$/', $url, $match)) {
+            if (1 === preg_match('/ [1-5]\d{2}$/', $url, $match)) {
                 $code = (int) trim((string) $match[0]);
                 $url = F::preg_replace_str('/ [1-5]\d{2}$/', '', $url);
             }
 
-            if (false !== filter_var($url, \FILTER_VALIDATE_URL) || 1 === \Safe\preg_match('/^[^ ]+$/', $url)) {
+            if (false !== filter_var($url, \FILTER_VALIDATE_URL) || 1 === preg_match('/^[^ ]+$/', $url)) {
                 $this->redirectionUrl = $url;
                 $this->redirectionCode = $code;
 

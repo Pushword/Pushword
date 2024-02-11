@@ -9,31 +9,34 @@ use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\F;
+
+use function Safe\preg_match;
+
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment as Twig;
 
 /**
  * @template T of object
  */
-final class Manager
+final readonly class Manager
 {
-    private readonly AppConfig $app;
+    private AppConfig $app;
 
-    private readonly AppPool $apps;
+    private AppPool $apps;
 
-    private readonly Twig $twig;
+    private Twig $twig;
 
-    private readonly PushwordRouteGenerator $router;
+    private PushwordRouteGenerator $router;
 
-    private readonly EntityManagerInterface $entityManager;
+    private EntityManagerInterface $entityManager;
 
     /** @param T $entity
      * @param ManagerPool<T> $managerPool
      */
     public function __construct(
-        private readonly ManagerPool $managerPool,
-        private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly object $entity
+        private ManagerPool $managerPool,
+        private EventDispatcherInterface $eventDispatcher,
+        private object $entity
     ) {
         $this->apps = $managerPool->apps;
         $this->twig = $managerPool->twig;
@@ -57,7 +60,7 @@ final class Manager
      */
     public function __call(string $method, array $arguments = []): mixed
     {
-        if (\Safe\preg_match('/^get/', $method) < 1) {
+        if (preg_match('/^get/', $method) < 1) {
             $method = 'get'.ucfirst($method);
         }
 

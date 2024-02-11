@@ -75,7 +75,7 @@
     "phpstan/phpstan-symfony": "^1.0",
     "phpunit/phpunit": "^10.5",
     "psalm/plugin-symfony": "^5.1",
-    "rector/rector": "^0.19",
+    "rector/rector": "^1",
     "squizlabs/php_codesniffer": "^3.5",
     "symfony/debug-bundle": "^7.0",
     "symfony/dotenv": "^7.0",

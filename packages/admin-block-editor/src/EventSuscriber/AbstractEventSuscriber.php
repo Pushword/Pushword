@@ -8,10 +8,11 @@ use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 
 abstract class AbstractEventSuscriber implements EventSubscriberInterface
 {
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public AppPool $apps;
 
     public function __construct(public bool $editorBlockForNewPage)
@@ -21,7 +22,7 @@ abstract class AbstractEventSuscriber implements EventSubscriberInterface
     /**
      * @param FormEvent<PageInterface> $event
      */
-    protected function mayUseEditorBlock(?PageInterface $page, FormEvent $event = null): bool
+    protected function mayUseEditorBlock(?PageInterface $page, ?FormEvent $event = null): bool
     {
         if (null !== $event
             && ! $event->getAdmin() instanceof PageAdmin

@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class ErrorPageGenerator extends AbstractGenerator
 {
-    public function generate(string $host = null): void
+    public function generate(?string $host = null): void
     {
         parent::generate($host);
 
@@ -23,7 +23,7 @@ class ErrorPageGenerator extends AbstractGenerator
     }
 
     // TODO : make it useful when using a .htaccess else disable it
-    protected function generateErrorPage(string $locale = null, string $uri = '404.html'): void
+    protected function generateErrorPage(?string $locale = null, string $uri = '404.html'): void
     {
         $request = $this->requestStack->getCurrentRequest();
         if (! $request instanceof Request) {

@@ -4,6 +4,7 @@ use Pushword\Admin\MediaAdmin;
 use Pushword\Admin\PageAdmin;
 use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Admin\PageRedirectionAdmin;
+use Pushword\Core\Security\LoginFormAuthenticator;
 
 return [
     'security' => [
@@ -51,8 +52,8 @@ return [
                 'http_basic' => [
                     'realm' => 'Secured Area',
                 ],
-                'custom_authenticator' => Pushword\Core\Security\LoginFormAuthenticator::class,
-                'entry_point' => Pushword\Core\Security\LoginFormAuthenticator::class,
+                'custom_authenticator' => LoginFormAuthenticator::class,
+                'entry_point' => LoginFormAuthenticator::class,
                 'logout' => [
                     'path' => 'pushword_logout',
                 ],

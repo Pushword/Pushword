@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Entity\PageTrait;
 
-use Doctrine\Common\Collections\ArrayCollection;
 // use Pushword\Core\Entity\PageHasEditor;
 use Pushword\Core\Entity\UserInterface;
 

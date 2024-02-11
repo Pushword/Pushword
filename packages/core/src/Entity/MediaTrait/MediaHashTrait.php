@@ -2,7 +2,11 @@
 
 namespace Pushword\Core\Entity\MediaTrait;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+
+use function Safe\sha1_file;
+
 use Symfony\Component\HttpFoundation\File\File;
 
 trait MediaHashTrait
@@ -10,7 +14,7 @@ trait MediaHashTrait
     /**
      * @var string|resource|null
      */
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BINARY, length: 20, options: ['default' => ''])]
+    #[ORM\Column(type: Types::BINARY, length: 20, options: ['default' => ''])]
     protected $hash;
 
     abstract public function getMediaFile(): ?File;
@@ -31,7 +35,7 @@ trait MediaHashTrait
         return $this;
     }
 
-    public function setHash(string $hash = null): self
+    public function setHash(?string $hash = null): self
     {
         if (null !== $hash) {
             $this->hash = $hash;
@@ -40,12 +44,12 @@ trait MediaHashTrait
         }
 
         if (($mediaFile = $this->getMediaFile()) !== null && file_exists((string) $mediaFile)) {
-            $this->hash = \Safe\sha1_file($mediaFile->getPathname(), true);
+            $this->hash = sha1_file($mediaFile->getPathname(), true);
 
             return $this;
         }
 
-        $this->hash = \Safe\sha1_file($this->getStoreIn().'/'.$this->getMedia(), true);
+        $this->hash = sha1_file($this->getStoreIn().'/'.$this->getMedia(), true);
 
         return $this;
     }

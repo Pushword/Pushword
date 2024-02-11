@@ -4,6 +4,7 @@ namespace Pushword\Core\Entity\PageTrait;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\PageInterface;
 
@@ -12,7 +13,7 @@ trait PageI18nTrait
     /**
      * //rfc5646.
      */
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 5)]
+    #[ORM\Column(type: Types::STRING, length: 5)]
     protected string $locale = '';
 
     /**

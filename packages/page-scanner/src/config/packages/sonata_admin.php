@@ -1,7 +1,5 @@
 <?php
 
-use Pushword\Admin\Menu\PageMenuProvider;
-
 return [
     'sonata_admin' => [
         'dashboard' => [

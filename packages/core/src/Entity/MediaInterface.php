@@ -51,13 +51,13 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function setName(?string $name): self;
 
-    public function setMediaFile(File $file = null): void;
+    public function setMediaFile(?File $file = null): void;
 
     public function getMimeType(): ?string;
 
     public function getName(bool $onlyName = false): string;
 
-    public function getNameLocalized(string $getLocalized = null, bool $onlyLocalized = false): string;
+    public function getNameLocalized(?string $getLocalized = null, bool $onlyLocalized = false): string;
 
     public function getMediaFile(): ?File;
 
@@ -73,7 +73,7 @@ interface MediaInterface extends IdInterface, TimestampableInterface, CustomProp
 
     public function getHash(): mixed;
 
-    public function setHash(string $hash = null): self;
+    public function setHash(?string $hash = null): self;
 
     public function resetHash(): self;
 

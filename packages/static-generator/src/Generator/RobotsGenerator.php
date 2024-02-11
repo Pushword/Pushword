@@ -4,7 +4,7 @@ namespace Pushword\StaticGenerator\Generator;
 
 class RobotsGenerator extends PageGenerator
 {
-    public function generate(string $host = null): void
+    public function generate(?string $host = null): void
     {
         parent::generate($host);
 

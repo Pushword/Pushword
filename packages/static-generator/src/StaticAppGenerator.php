@@ -27,7 +27,7 @@ final class StaticAppGenerator
      *
      * @return int the number of site generated
      */
-    public function generate(string $hostToGenerate = null): int
+    public function generate(?string $hostToGenerate = null): int
     {
         $i = 0;
         foreach ($this->apps->getHosts() as $host) {

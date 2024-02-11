@@ -5,8 +5,6 @@ namespace Pushword\AdminBlockEditor\EventSuscriber;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageMainContentField;
-use Pushword\Admin\PageAdmin;
-use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Admin\Utils\FormFieldReplacer;
 use Pushword\AdminBlockEditor\EditorJsPurifier;
 use Pushword\AdminBlockEditor\FormField\PageH1FormField;

@@ -9,7 +9,7 @@ use Twig\TwigFunction;
 class AppExtension extends AbstractExtension
 {
     /**
-     * @return \Twig\TwigFunction[]
+     * @return TwigFunction[]
      */
     public function getFunctions(): array
     {

@@ -6,6 +6,8 @@ use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use Pushword\Core\Twig\LinkTwigTrait;
 
+use function Safe\preg_match_all;
+
 class Email extends AbstractFilter
 {
     use LinkTwigTrait;
@@ -24,7 +26,7 @@ class Email extends AbstractFilter
     {
         $rgx = '/ ([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})( |\.<\/|<\/p|\. |$)/i';
 
-        \Safe\preg_match_all($rgx, $body, $matches);
+        preg_match_all($rgx, $body, $matches);
 
         $nbrMatch = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($k = 0; $k < $nbrMatch; ++$k) {

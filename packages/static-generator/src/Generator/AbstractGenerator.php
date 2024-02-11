@@ -9,6 +9,9 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
 use Pushword\StaticGenerator\StaticAppGenerator;
+
+use function Safe\copy;
+
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -52,12 +55,12 @@ abstract class AbstractGenerator implements GeneratorInterface
         $newKernelRouter->setUseCustomHostPath(false);
     }
 
-    public function generate(string $host = null): void
+    public function generate(?string $host = null): void
     {
         $this->init($host);
     }
 
-    protected function init(string $host = null): void
+    protected function init(?string $host = null): void
     {
         $this->app = null !== $host ? $this->apps->switchCurrentApp($host)->get() : $this->apps->get();
     }
@@ -75,7 +78,7 @@ abstract class AbstractGenerator implements GeneratorInterface
     protected function copy(string $file): void
     {
         if (file_exists($file)) {
-            \Safe\copy(
+            copy(
                 str_replace($this->params->get('kernel.project_dir').'/', '../', $this->publicDir.'/'.$file),
                 $this->getStaticDir().'/'.$file
             );

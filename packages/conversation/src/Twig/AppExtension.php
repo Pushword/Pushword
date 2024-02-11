@@ -5,7 +5,9 @@ namespace Pushword\Conversation\Twig;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Repository\MessageRepository;
+use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Entity\PageInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment as Twig;
 use Twig\Extension\AbstractExtension;
@@ -13,7 +15,7 @@ use Twig\TwigFunction;
 
 class AppExtension extends AbstractExtension
 {
-    private readonly \Pushword\Core\Component\App\AppConfig $app;
+    private readonly AppConfig $app;
 
     /**
      * @param class-string<Message> $messageEntity
@@ -28,7 +30,7 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @return \Twig\TwigFunction[]
+     * @return TwigFunction[]
      */
     public function getFunctions(): array
     {
@@ -41,7 +43,7 @@ class AppExtension extends AbstractExtension
     public function getConversationRoute(string $type): string
     {
         $page = $this->apps->getCurrentPage();
-        if (! $page instanceof \Pushword\Core\Entity\PageInterface) {
+        if (! $page instanceof PageInterface) {
             throw new \Exception('A page must be defined...');
         }
 

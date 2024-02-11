@@ -5,6 +5,7 @@ namespace Pushword\StaticGenerator\DependencyInjection;
 use Pushword\StaticGenerator\Generator\CNAMEGenerator;
 use Pushword\StaticGenerator\Generator\CopierGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
+use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
@@ -23,7 +24,7 @@ class Configuration implements ConfigurationInterface
     ];
 
     /**
-     * @var array<class-string<\Pushword\StaticGenerator\Generator\GeneratorInterface>>
+     * @var array<class-string<GeneratorInterface>>
      */
     final public const DEFAULT_GENERATOR = [
         PagesGenerator::class,
@@ -35,7 +36,7 @@ class Configuration implements ConfigurationInterface
     ];
 
     /**
-     * @var array<class-string<\Pushword\StaticGenerator\Generator\GeneratorInterface>>
+     * @var array<class-string<GeneratorInterface>>
      */
     final public const DEFAULT_GENERATOR_GITHUB = [
         PagesGenerator::class,

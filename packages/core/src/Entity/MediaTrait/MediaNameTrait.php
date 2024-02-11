@@ -2,15 +2,16 @@
 
 namespace Pushword\Core\Entity\MediaTrait;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Yaml\Yaml;
 
 trait MediaNameTrait
 {
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 100, unique: true)]
+    #[ORM\Column(type: Types::STRING, length: 100, unique: true)]
     protected string $name = '';
 
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TEXT, options: ['default' => ''], nullable: true)]
+    #[ORM\Column(type: Types::TEXT, options: ['default' => ''], nullable: true)]
     protected ?string $names = '';
 
     public function __toString(): string
@@ -27,7 +28,7 @@ trait MediaNameTrait
         return '' === $this->name && null !== $this->getMediaFile() ? $this->getMediaFileName() : $this->name;
     }
 
-    public function getNameLocalized(string $getLocalized = null, bool $onlyLocalized = false): string
+    public function getNameLocalized(?string $getLocalized = null, bool $onlyLocalized = false): string
     {
         $names = $this->getNamesParsed();
 

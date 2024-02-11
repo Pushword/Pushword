@@ -16,6 +16,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 use Twig\Environment as Twig;
 
 #[IsGranted('ROLE_PUSHWORD_ADMIN')]
@@ -40,13 +41,13 @@ final class ElementAdmin extends AbstractController
         }
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setKernel(KernelInterface $kernel): void
     {
         $this->kernel = $kernel;
@@ -90,7 +91,7 @@ final class ElementAdmin extends AbstractController
         }
     }
 
-    public function editElement(string $encodedPath = null, Request $request = null): Response
+    public function editElement(?string $encodedPath = null, ?Request $request = null): Response
     {
         $element = $this->getElement($encodedPath);
 

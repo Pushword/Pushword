@@ -2,8 +2,12 @@
 
 namespace Pushword\Core\Entity\SharedTrait;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Utils\F;
+
+use function Safe\preg_match;
+
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -16,7 +20,7 @@ trait CustomPropertiesTrait
      *
      * @var array<mixed>
      */
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::JSON)]
+    #[ORM\Column(type: Types::JSON)]
     protected array $customProperties = [];
 
     /**
@@ -179,7 +183,7 @@ trait CustomPropertiesTrait
             return; // avoid error with sonata
         }
 
-        if (1 === \Safe\preg_match('/^get/', $method)) {
+        if (1 === preg_match('/^get/', $method)) {
             $property = lcfirst(F::preg_replace_str('/^get/', '', $method));
             if (! property_exists(static::class, $property)) {
                 return $this->getCustomProperty($property) ?? null;

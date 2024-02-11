@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -16,6 +17,6 @@ class User implements UserInterface, sfUserInterface, PasswordAuthenticatedUserI
     use CustomPropertiesTrait;
     use UserTrait;
 
-    #[ORM\Id, ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER), ORM\GeneratedValue(strategy: 'AUTO')]
+    #[ORM\Id, ORM\Column(type: Types::INTEGER), ORM\GeneratedValue(strategy: 'AUTO')]
     protected ?int $id = null;
 }

@@ -9,6 +9,7 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 
 class AppFixtures extends Fixture
 {
@@ -16,13 +17,13 @@ class AppFixtures extends Fixture
 
     private AppPool $apps;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setParameterBag(ParameterBagInterface $params): void
     {
         $this->params = $params;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setApps(AppPool $apps): void
     {
         $this->apps = $apps;

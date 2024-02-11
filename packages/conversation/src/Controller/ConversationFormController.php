@@ -5,6 +5,9 @@ namespace Pushword\Conversation\Controller;
 use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Conversation\Form\ConversationFormInterface;
 use Pushword\Core\Component\App\AppPool;
+
+use function Safe\json_encode;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -119,7 +122,7 @@ final class ConversationFormController extends AbstractController
         $response = new Response();
 
         if (! \in_array($request->headers->get('origin'), $this->getPossibleOrigins($request), true)) {
-            throw new \ErrorException('origin sent is not authorized ('.$request->headers->get('origin').') '.\Safe\json_encode($this->getPossibleOrigins($request)).'.');
+            throw new \ErrorException('origin sent is not authorized ('.$request->headers->get('origin').') '.json_encode($this->getPossibleOrigins($request)).'.');
         }
 
         $response->headers->set('Access-Control-Allow-Credentials', 'true');
@@ -130,7 +133,7 @@ final class ConversationFormController extends AbstractController
         return $response;
     }
 
-    public function show(Request $request, string $type, string $host = null): Response
+    public function show(Request $request, string $type, ?string $host = null): Response
     {
         // $host = $host ?? $request->getHost();
         if (null !== $host) {

@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Command;
 
+use function Safe\file_put_contents;
+
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -40,7 +42,7 @@ final class NewCommand extends Command
 
         $config = $this->initConfig($configFile, ['hosts' => [$mainDomain], 'locale' => $locale, 'locales' => $locales]);
 
-        \Safe\file_put_contents($configFile, Yaml::dump($config, 4));
+        file_put_contents($configFile, Yaml::dump($config, 4));
 
         $output->writeln('<info>Config updated with success. Want more set more configuration options ? Open `config/packages/pushword.yaml`</info>');
 

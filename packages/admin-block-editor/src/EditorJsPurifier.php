@@ -4,9 +4,11 @@ namespace Pushword\AdminBlockEditor;
 
 use JoliTypo\Fixer;
 
-final class EditorJsPurifier
+use function Safe\json_encode;
+
+final readonly class EditorJsPurifier
 {
-    public function __construct(private readonly string $locale = 'fr_FR')
+    public function __construct(private string $locale = 'fr_FR')
     {
     }
 
@@ -38,7 +40,7 @@ final class EditorJsPurifier
             }
         }
 
-        return \Safe\json_encode($data);
+        return json_encode($data);
     }
 
     private function getFixer(): Fixer

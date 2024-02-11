@@ -11,7 +11,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class StaticController extends AbstractController
 {
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
-    public function generateStatic(StaticAppGenerator $staticAppGenerator, string $host = null): Response
+    public function generateStatic(StaticAppGenerator $staticAppGenerator, ?string $host = null): Response
     {
         exec('cd ../ && php bin/console pushword:static:generate '.$host.' > /dev/null 2>/dev/null &');
         // $staticAppGenerator->generate($host); // TODO : fixed why it's logged me out

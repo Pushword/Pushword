@@ -4,7 +4,7 @@ namespace Pushword\StaticGenerator\Generator;
 
 class MediaGenerator extends AbstractGenerator
 {
-    public function generate(string $host = null): void
+    public function generate(?string $host = null): void
     {
         parent::generate($host);
 

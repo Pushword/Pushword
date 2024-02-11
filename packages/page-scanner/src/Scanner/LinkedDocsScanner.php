@@ -4,12 +4,17 @@ namespace Pushword\PageScanner\Scanner;
 
 use Doctrine\ORM\EntityManagerInterface;
 use PiedWeb\Curl\ExtendedClient;
+use PiedWeb\Curl\Helper;
 use PiedWeb\Extractor\CanonicalExtractor;
 use PiedWeb\Extractor\Url;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Twig\AppExtension;
 use Pushword\Core\Utils\F;
+
+use function Safe\preg_match;
+use function Safe\preg_match_all;
+
 use Symfony\Component\DomCrawler\Crawler as DomCrawler;
 
 /**
@@ -94,7 +99,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function isWebLink(string $url): bool
     {
-        return (bool) \Safe\preg_match('@^((?:(http:|https:)//([\wà-üÀ-Ü-]+\.)+[\w-]+){0,1}(/?[\wà-üÀ-Ü~,;\-\./?%&+#=]*))$@', $url);
+        return (bool) preg_match('@^((?:(http:|https:)//([\wà-üÀ-Ü-]+\.)+[\w-]+){0,1}(/?[\wà-üÀ-Ü~,;\-\./?%&+#=]*))$@', $url);
     }
 
     /**
@@ -104,7 +109,7 @@ final class LinkedDocsScanner extends AbstractScanner
     {
         $urlInAttributes = ' '.$this->prepareForRegex(['href', 'data-rot', 'src', 'data-img', 'data-bg']);
         $regex = '/'.$urlInAttributes.'=((["\'])([^\3]+)\3|([^\s>]+)[\s>])/iU';
-        \Safe\preg_match_all($regex, $this->pageHtml, $matches);
+        preg_match_all($regex, $this->pageHtml, $matches);
 
         $linkedDocs = [];
         $matchesCount = is_countable($matches[0]) ? \count($matches[0]) : 0;
@@ -228,7 +233,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function patchUnreachableDomain(string $url): bool
     {
-        return (bool) \Safe\preg_match('/^https:\/\/(www)?\.?(example.tld|instagram.com)/i', $url);
+        return (bool) preg_match('/^https:\/\/(www)?\.?(example.tld|instagram.com)/i', $url);
     }
 
     private function getDomPage(): DomCrawler
@@ -264,7 +269,7 @@ final class LinkedDocsScanner extends AbstractScanner
             ->fakeBrowserHeader()
             ->setNoFollowRedirection()
             ->setMaximumResponseSize()
-            ->setDownloadOnlyIf(static fn (string $line, int $expected = 200): bool => \PiedWeb\Curl\Helper::checkStatusCode($line, $expected))
+            ->setDownloadOnlyIf(static fn (string $line, int $expected = 200): bool => Helper::checkStatusCode($line, $expected))
             ->setMobileUserAgent();
         // if ($this->proxy) { $client->setProxy($this->proxy); }
         $client->request();

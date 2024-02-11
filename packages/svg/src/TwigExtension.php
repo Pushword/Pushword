@@ -5,6 +5,9 @@ namespace Pushword\Svg;
 use PiedWeb\RenderAttributes\Attribute;
 use Pushword\Core\AutowiringTrait\RequiredApps;
 use Pushword\Svg\FontAwesome5To6 as SvgFontAwesome5To6;
+
+use function Safe\mime_content_type;
+
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -13,7 +16,7 @@ class TwigExtension extends AbstractExtension
     use RequiredApps;
 
     /**
-     * @return \Twig\TwigFunction[]
+     * @return TwigFunction[]
      */
     public function getFunctions(): array
     {
@@ -58,7 +61,7 @@ class TwigExtension extends AbstractExtension
                 : throw new \Exception('`'.$name.'` (svg) not found.');
         }
 
-        if (! \in_array(\Safe\mime_content_type($file), ['image/svg+xml', 'image/svg'], true)
+        if (! \in_array(mime_content_type($file), ['image/svg+xml', 'image/svg'], true)
             || ($svg = file_get_contents($file)) === false) {
             throw new \Exception('`'.$name.'` seems not be a valid svg file.');
         }

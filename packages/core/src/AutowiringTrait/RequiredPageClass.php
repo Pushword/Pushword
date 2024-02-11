@@ -3,6 +3,7 @@
 namespace Pushword\Core\AutowiringTrait;
 
 use Pushword\Core\Entity\PageInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 
 trait RequiredPageClass
 {
@@ -14,7 +15,7 @@ trait RequiredPageClass
     /**
      * @param class-string<PageInterface> $pageClass
      */
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setPageClass(string $pageClass): void
     {
         $this->pageClass = $pageClass;

@@ -37,7 +37,7 @@ final class PushwordRouteGenerator
      * and / for YY page home if your default language is YY
      * X/Y may be en/fr/...
      */
-    public function generatePathForHomePage(PageInterface $page = null, bool $canonical = false): string
+    public function generatePathForHomePage(?PageInterface $page = null, bool $canonical = false): string
     {
         $homepage = (new Page())->setSlug('');
 
@@ -57,7 +57,7 @@ final class PushwordRouteGenerator
     /**
      * @param string|PageInterface $slug
      */
-    public function generate($slug = 'homepage', bool $canonical = false, int $pager = null, string $host = null): string
+    public function generate($slug = 'homepage', bool $canonical = false, ?int $pager = null, ?string $host = null): string
     {
         $page = null;
 

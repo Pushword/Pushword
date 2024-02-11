@@ -6,7 +6,6 @@ use Cocur\Slugify\Slugify;
 use Exception;
 use Pushword\Core\Utils\Filepath;
 use Symfony\Component\HttpFoundation\File\File;
-use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 trait MediaSlugTrait
 {

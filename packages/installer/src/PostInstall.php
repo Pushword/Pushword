@@ -2,7 +2,6 @@
 
 namespace Pushword\Installer;
 
-use Composer\Script\Event;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**

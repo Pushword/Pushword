@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Utils\ImageOptimizer;
 
+use function Safe\file_put_contents;
+
 use Spatie\ImageOptimizer\Image;
 use Spatie\ImageOptimizer\Optimizers\BaseOptimizer;
 use Symfony\Component\Process\Process;
@@ -28,7 +30,7 @@ class Mozjpeg extends BaseOptimizer
             ->run();
 
         if (0 === $status) {
-            \Safe\file_put_contents($this->imagePath, $process->getOutput());
+            file_put_contents($this->imagePath, $process->getOutput());
         }
 
         return 'echo ""';

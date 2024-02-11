@@ -6,6 +6,8 @@ use Pushword\Core\Entity\PageInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
+use function Symfony\Component\String\u;
+
 /**
  * @extends AbstractField<PageInterface>
  */
@@ -33,7 +35,7 @@ class PageSlugField extends AbstractField
                         $(".slug_disabled").first().removeAttr("disabled");
                         $(".slug_disabled").first().focus();
                         $("#disabledLinkSlug").first().remove();
-                    }</script> <small><a href="'.$liveUrl.'"><small><i class="fa fa-link"></i></small> '.\Symfony\Component\String\u($url)->truncate(30, '…').'</a></small></div>';
+                    }</script> <small><a href="'.$liveUrl.'"><small><i class="fa fa-link"></i></small> '.u($url)->truncate(30, '…').'</a></small></div>';
     }
 
     /**

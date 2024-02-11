@@ -3,7 +3,11 @@
 namespace Pushword\Flat\Importer;
 
 // use iBudasov\Iptc\Manager as Iptc;
+use PHPExif\Reader\Reader;
 use Pushword\Core\Entity\MediaInterface;
+
+use function Safe\filesize;
+use function Safe\getimagesize;
 
 /**
  * Permit to find error in image or link.
@@ -39,7 +43,7 @@ trait ImageImporterTrait
             $data = array_merge($data, $manager->getTags());
         }*/
 
-        $reader = \PHPExif\Reader\Reader::factory(\PHPExif\Reader\Reader::TYPE_NATIVE);
+        $reader = Reader::factory(Reader::TYPE_NATIVE);
         $exif = $reader->read($filePath);
         if ($exif) { // @phpstan-ignore-line
             $data = array_merge($data, $exif->getData());
@@ -50,13 +54,13 @@ trait ImageImporterTrait
 
     private function importImageMediaData(MediaInterface $media, string $filePath): void
     {
-        $imgSize = \Safe\getimagesize($filePath);
+        $imgSize = getimagesize($filePath);
 
         $media
                 ->setProjectDir($this->projectDir)
                 ->setStoreIn(\dirname($filePath))
                 ->setMimeType($imgSize['mime'])
-                ->setSize(\Safe\filesize($filePath))
+                ->setSize(filesize($filePath))
                 ->setDimensions([$imgSize[0], $imgSize[1]]);
 
         $data = $this->getImageData($filePath); // , $imgSize['mime']);

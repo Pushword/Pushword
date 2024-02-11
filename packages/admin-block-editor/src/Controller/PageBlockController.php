@@ -6,6 +6,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
+
+use function Safe\json_encode;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -48,7 +51,7 @@ final class PageBlockController extends AbstractController
             ['page' => $currentPage ?? null, 'block' => ['data' => $content]]
         );
 
-        return new Response(\Safe\json_encode([
+        return new Response(json_encode([
             'success' => 1,
             'content' => $htmlContent,
         ]));

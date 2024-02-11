@@ -9,6 +9,7 @@ use Pushword\Core\Utils\KernelTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * Permit to find error in image or link.
@@ -23,10 +24,10 @@ final class PageScannerService
      */
     private array $errors = [];
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public LinkedDocsScanner $linkedDocsScanner;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public ParentPageScanner $parentPageScanner;
 
     public function __construct(

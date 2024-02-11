@@ -8,9 +8,9 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_user%', 'event' => 'preUpdate'])]
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_user%', 'event' => 'prePersist'])]
-final class UserListener
+final readonly class UserListener
 {
-    public function __construct(private readonly UserPasswordHasherInterface $passwordEncoder)
+    public function __construct(private UserPasswordHasherInterface $passwordEncoder)
     {
     }
 

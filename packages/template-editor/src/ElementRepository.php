@@ -4,15 +4,15 @@ namespace Pushword\TemplateEditor;
 
 use Symfony\Component\Finder\Finder;
 
-final class ElementRepository
+final readonly class ElementRepository
 {
     /**
      * @param string[] $canBeEditedList
      */
     public function __construct(
-        private readonly string $templateDir,
-        private readonly array $canBeEditedList,  // template_editor_can_be_edited_list
-        private readonly bool $disableCreation, // template_editor_disable_creation
+        private string $templateDir,
+        private array $canBeEditedList,  // template_editor_can_be_edited_list
+        private bool $disableCreation, // template_editor_disable_creation
     ) {
     }
 

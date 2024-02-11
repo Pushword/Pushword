@@ -2,6 +2,8 @@
 
 namespace Pushword\Admin\Utils;
 
+use Pushword\Admin\FormField\AbstractField;
+
 /**
  * @template T of object
  */
@@ -15,7 +17,7 @@ class FormFieldReplacer
     }
 
     /**
-     * @param class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<class-string<\Pushword\Admin\FormField\AbstractField<T>>[]> $fields
+     * @param class-string<AbstractField<T>>[]|array<class-string<AbstractField<T>>[]> $fields
      */
     public function run(string $formFieldClass, string $newFormFieldClass, array &$fields): void
     {

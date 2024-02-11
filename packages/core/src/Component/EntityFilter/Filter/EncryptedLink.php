@@ -6,6 +6,8 @@ use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use Pushword\Core\Twig\LinkTwigTrait;
 
+use function Safe\preg_match_all;
+
 class EncryptedLink extends AbstractFilter
 {
     use LinkTwigTrait;
@@ -24,7 +26,7 @@ class EncryptedLink extends AbstractFilter
 
     public function convertMarkdownEncryptedLink(string $body): string
     {
-        \Safe\preg_match_all('/(?:#\[(.*?)\]\((.*?)\))({(?:([#.][-_:a-zA-Z0-9 ]+)+)\})?/', $body, $matches);
+        preg_match_all('/(?:#\[(.*?)\]\((.*?)\))({(?:([#.][-_:a-zA-Z0-9 ]+)+)\})?/', $body, $matches);
 
         if (! isset($matches[1])) {
             return $body;

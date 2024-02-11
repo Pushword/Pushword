@@ -9,6 +9,9 @@ use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Utils\F;
 use Pushword\Flat\FlatFileContentDirFinder;
+
+use function Safe\file_get_contents;
+
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 
 /**
@@ -72,7 +75,7 @@ class PageImporter extends AbstractImporter
             return;
         }
 
-        $content = \Safe\file_get_contents($filePath);
+        $content = file_get_contents($filePath);
         $document = YamlFrontMatter::parse($content);
 
         if (empty($document->matter())) { // @phpstan-ignore-line
@@ -249,7 +252,7 @@ class PageImporter extends AbstractImporter
     /**
      * Todo, get them automatically.
      *
-     * @return array{extendedPage: class-string<\Pushword\Core\Entity\PageInterface>, parentPage: class-string<\Pushword\Core\Entity\PageInterface>, translations: string, mainImage: class-string<\Pushword\Core\Entity\MediaInterface>}
+     * @return array{extendedPage: class-string<PageInterface>, parentPage: class-string<PageInterface>, translations: string, mainImage: class-string<MediaInterface>}
      */
     private function getObjectRequiredProperties(): array
     {

@@ -10,6 +10,7 @@ use Imagine\Image\ImagineInterface;
 use Imagine\Image\Palette\Color\ColorInterface;
 use Imagine\Image\Palette\RGB;
 use Imagine\Image\Point;
+use Imagine\Imagick\Imagine;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -121,7 +122,7 @@ class PageOpenGraphImageGenerator
         $image->paste($logo, $bottomRight);
     }
 
-    private function getFont(string $fontType = 'bold', int $size = 37, ColorInterface $color = null): Font
+    private function getFont(string $fontType = 'bold', int $size = 37, ?ColorInterface $color = null): Font
     {
         $font = $this->apps->get()->getView('@Pushword/page/OpenGrapImageGenerator/'.$fontType.'.ttf');
 
@@ -134,7 +135,7 @@ class PageOpenGraphImageGenerator
 
     private function getImagine(): ImagineInterface
     {
-        return $this->imagine ?? new \Imagine\Imagick\Imagine();
+        return $this->imagine ?? new Imagine();
     }
 
     private function getRgb(): RGB

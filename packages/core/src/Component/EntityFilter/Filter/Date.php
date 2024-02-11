@@ -14,7 +14,7 @@ class Date extends AbstractFilter
         return $this->convertDateShortCode($this->string($propertyValue), $this->getApp()->getDefaultLocale());
     }
 
-    private function convertDateShortCode(string $string, string $locale = null): string
+    private function convertDateShortCode(string $string, ?string $locale = null): string
     {
         $locale = null !== $locale ? $this->convertLocale($locale) : 'fr_FR';
         $intlDateFormatter = new \IntlDateFormatter($locale, \IntlDateFormatter::FULL, \IntlDateFormatter::NONE);

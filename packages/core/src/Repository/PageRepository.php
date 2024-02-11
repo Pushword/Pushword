@@ -10,6 +10,7 @@ use Doctrine\Persistence\ObjectRepository;
 use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Entity\PageInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 /**
  * @psalm-suppress MethodSignatureMustProvideReturnType
@@ -24,7 +25,7 @@ use Pushword\Core\Entity\PageInterface;
  * @implements Selectable<int, PageInterface>
  * @implements ObjectRepository<PageInterface>
  */
-#[\Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag('doctrine.repository_service')]
+#[AutoconfigureTag('doctrine.repository_service')]
 class PageRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
     protected bool $hostCanBeNull = false;
@@ -128,7 +129,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     public function getIndexablePagesQuery(
         string|array $host,
         string $locale,
-        int $limit = null
+        ?int $limit = null
     ): QueryBuilder {
         $queryBuilder = $this->buildPublishedPageQuery('p');
         $queryBuilder = $this->andIndexable($queryBuilder);

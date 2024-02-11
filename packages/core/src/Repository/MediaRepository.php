@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Selectable;
 use Doctrine\Persistence\ObjectRepository;
 use Pushword\Core\Entity\MediaInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 /**
  * @extends ServiceEntityRepository<MediaInterface>
@@ -14,7 +15,7 @@ use Pushword\Core\Entity\MediaInterface;
  * @implements Selectable<int, MediaInterface>
  * @implements ObjectRepository<MediaInterface>
  */
-#[\Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag('doctrine.repository_service')]
+#[AutoconfigureTag('doctrine.repository_service')]
 class MediaRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
     /**

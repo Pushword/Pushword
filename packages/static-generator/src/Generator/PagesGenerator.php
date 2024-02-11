@@ -4,7 +4,7 @@ namespace Pushword\StaticGenerator\Generator;
 
 class PagesGenerator extends PageGenerator
 {
-    public function generate(string $host = null): void
+    public function generate(?string $host = null): void
     {
         parent::generate($host);
 
@@ -16,7 +16,7 @@ class PagesGenerator extends PageGenerator
         }
     }
 
-    public function generatePageBySlug(string $slug, string $host = null): void
+    public function generatePageBySlug(string $slug, ?string $host = null): void
     {
         parent::generate($host);
 

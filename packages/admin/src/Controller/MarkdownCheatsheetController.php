@@ -3,10 +3,11 @@
 namespace Pushword\Admin\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[\Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag('controller.service_arguments')]
+#[AutoconfigureTag('controller.service_arguments')]
 class MarkdownCheatsheetController extends AbstractController
 {
     #[Route('/admin/dashboard', name: 'pushword_admin_dashboard')]

@@ -199,7 +199,7 @@ final class AppConfig
     /**
      * @psalm-suppress InternalMethod
      */
-    public function getView(string $path = null, string $fallback = '@Pushword'): string
+    public function getView(?string $path = null, string $fallback = '@Pushword'): string
     {
         if (null === $path) {
             return $this->template.'/page/page.html.twig';

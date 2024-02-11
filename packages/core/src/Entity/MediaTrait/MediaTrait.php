@@ -2,8 +2,8 @@
 
 namespace Pushword\Core\Entity\MediaTrait;
 
-use App\Entity\Media;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
@@ -23,7 +23,7 @@ trait MediaTrait
     use MediaSlugTrait;
     use TimestampableTrait;
 
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255)]
+    #[ORM\Column(type: Types::STRING, length: 255)]
     protected string $storeIn = '';
 
     /**
@@ -31,7 +31,7 @@ trait MediaTrait
      */
     protected string $projectDir = '';
 
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255, name: 'media')]
+    #[ORM\Column(type: Types::STRING, length: 255, name: 'media')]
     protected string $media = '';
 
     // TODO Rename to filename
@@ -41,10 +41,10 @@ trait MediaTrait
      */
     protected string $mediaBeforeUpdate = '';
 
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
+    #[ORM\Column(type: Types::STRING, length: 50)]
     protected ?string $mimeType = null; // @phpstan-ignore-line
 
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     protected int $size;
 
     /**
@@ -132,7 +132,7 @@ trait MediaTrait
         ;
     }
 
-    public function setMediaFile(File $file = null): void
+    public function setMediaFile(?File $file = null): void
     {
         $this->mediaFile = $file;
 

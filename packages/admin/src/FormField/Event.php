@@ -15,8 +15,8 @@ class Event extends SfEvent
     final public const NAME = 'pushword.admin.load_field';
 
     /**
-     * @param AdminInterface<T>                                                                                                                                                                                                                                                                                                                                                            $admin
-     * @param array{ 0: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] , 1: class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<string,  class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array{'fields': class-string<\Pushword\Admin\FormField\AbstractField<T>>[], 'expand': bool}>, 2: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] } $fields
+     * @param AdminInterface<T>                                                                                                                                                                                                                      $admin
+     * @param array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[]|array<string, (class-string<AbstractField<T>>[]|array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]} $fields
      */
     public function __construct(
         private readonly AdminInterface $admin,
@@ -39,7 +39,7 @@ class Event extends SfEvent
     }
 
     /**
-     * @return array{ 0: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] , 1: class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<string,  class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array{'fields': class-string<\Pushword\Admin\FormField\AbstractField<T>>[], 'expand': bool}>, 2: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] }
+     * @return array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[]|array<string, (class-string<AbstractField<T>>[]|array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]}
      */
     public function getFields(): array
     {
@@ -47,7 +47,7 @@ class Event extends SfEvent
     }
 
     /**
-     * @phpstan-param array{ 0: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] , 1: class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array<string,  class-string<\Pushword\Admin\FormField\AbstractField<T>>[]|array{'fields': class-string<\Pushword\Admin\FormField\AbstractField<T>>[], 'expand': bool}>, 2: class-string<\Pushword\Admin\FormField\AbstractField<T>>[] } $fields
+     * @phpstan-param array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[] | array<string, (class-string<AbstractField<T>>[] | array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]} $fields
      *
      * @return self<T>
      */

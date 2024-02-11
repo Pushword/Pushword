@@ -14,12 +14,12 @@ use Symfony\Bundle\SecurityBundle\Security;
 #[AsEntityListener(event: Events::prePersist, entity: '%pw.entity_page%')]
 #[AsEntityListener(event: Events::postPersist, entity: '%pw.entity_page%')]
 #[AsEntityListener(event: Events::postUpdate, entity: '%pw.entity_page%')]
-final class PageListener
+final readonly class PageListener
 {
     public function __construct(
-        private readonly Security $security,
-        private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
-        private readonly TailwindGenerator $tailwindGenerator,
+        private Security $security,
+        private PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
+        private TailwindGenerator $tailwindGenerator,
     ) {
     }
 

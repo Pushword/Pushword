@@ -110,7 +110,7 @@ final class AppPool
     }
 
     /** @param string|array<string>|null $host */
-    public function isFirstApp(string|array $host = null): bool
+    public function isFirstApp(string|array|null $host = null): bool
     {
         $firstApp = array_key_first($this->apps);
 

@@ -10,6 +10,8 @@ use Pushword\Core\Repository\Repository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Twig\LinkTwigTrait;
 
+use function Safe\preg_match_all;
+
 final class HtmlLinkMultisite extends AbstractFilter
 {
     use LinkTwigTrait;
@@ -53,7 +55,7 @@ final class HtmlLinkMultisite extends AbstractFilter
 
     public function convertLinks(string $body): string
     {
-        \Safe\preg_match_all(self::HTML_REGEX, $body, $matches);
+        preg_match_all(self::HTML_REGEX, $body, $matches);
 
         if (! isset($matches[1])) {
             return $body;

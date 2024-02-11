@@ -6,6 +6,7 @@ use Pushword\AdminBlockEditor\BlockEditorFilter;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\EntityFilter\FilterEvent;
 use Pushword\Core\Entity\PageInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 use Twig\Environment as Twig;
 
 /**
@@ -13,7 +14,7 @@ use Twig\Environment as Twig;
  */
 class EnityFilterSuscriber extends AbstractEventSuscriber
 {
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public Twig $twig;
 
     /**

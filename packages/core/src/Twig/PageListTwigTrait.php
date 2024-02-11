@@ -3,7 +3,6 @@
 namespace Pushword\Core\Twig;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
 use Pagerfanta\Adapter\ArrayAdapter;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\PagerfantaInterface;
@@ -15,6 +14,7 @@ use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Service\Attribute\Required;
 use Twig\Environment as Twig;
 
 /**
@@ -41,12 +41,12 @@ trait PageListTwigTrait
 
     private AppPool $apps;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public RequestStack $requestStack;
 
     abstract public function getApp(): AppConfig;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public RouteGeneratorFactoryInterface $routeGeneratorFactory;
 
     private function getCurrentRequest(): ?Request
@@ -97,7 +97,7 @@ trait PageListTwigTrait
         array|string $order = 'publishedAt,priority',
         string $view = '',
         array|string $host = '',
-        PageInterface $currentPage = null
+        ?PageInterface $currentPage = null
     ): string {
         $currentPage ??= $this->apps->getCurrentPage(); // todo : drop app's current page
 

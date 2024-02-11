@@ -10,28 +10,29 @@ use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RobotsGenerator;
+use Symfony\Contracts\Service\Attribute\Required;
 
 class GeneratorBag
 {
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public CNAMEGenerator $cNAMEGenerator;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public CopierGenerator $copierGenerator;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public ErrorPageGenerator $errorPageGenerator;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public HtaccessGenerator $htaccessGenerator;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public MediaGenerator $mediaGenerator;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public PagesGenerator $pagesGenerator;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public RobotsGenerator $robotsGenerator;
 
     /** @var array<string, GeneratorInterface> */

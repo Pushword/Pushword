@@ -4,10 +4,11 @@ namespace Pushword\Core\Twig;
 
 use Cocur\Slugify\Slugify;
 use Pushword\Core\Component\App\AppConfig;
+use Twig\Environment;
 
 trait TxtAnchorTwigTrait
 {
-    private \Twig\Environment $twig;
+    private Environment $twig;
 
     abstract public function getApp(): AppConfig;
 

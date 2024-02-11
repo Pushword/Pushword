@@ -4,10 +4,14 @@ namespace Pushword\PageUpdateNotifier;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Utils\LastTime;
+
+use function Safe\mkdir;
+
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -23,7 +27,7 @@ class PageUpdateNotifier
 
     private string $interval = '';
 
-    private \Pushword\Core\Component\App\AppConfig $app;
+    private AppConfig $app;
 
     /**
      * @var int
@@ -125,7 +129,7 @@ class PageUpdateNotifier
     {
         $dir = $this->varDir.'/PageUpdateNotifier';
         if (! is_dir($dir)) {
-            \Safe\mkdir($dir);
+            mkdir($dir);
         }
 
         return $dir;

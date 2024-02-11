@@ -3,7 +3,6 @@
 namespace Pushword\Core\Service;
 
 use Intervention\Image\Encoders\AutoEncoder;
-use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\Entity\MediaInterface;
@@ -72,7 +71,7 @@ final class ImageManager
     /**
      * @param array<string, mixed>|string $filter
      */
-    public function generateFilteredCache(MediaInterface|string $media, array|string $filter, ImageInterface $originalImage = null): ImageInterface
+    public function generateFilteredCache(MediaInterface|string $media, array|string $filter, ?ImageInterface $originalImage = null): ImageInterface
     {
         if (\is_array($filter)) {
             $filterName = array_keys($filter)[0];
@@ -128,7 +127,7 @@ final class ImageManager
         $this->optimizer->optimize($this->getFilterPath($media, $filterName, 'webp'));
     }
 
-    public function getFilterPath(MediaInterface|string $media, string $filterName, string $extension = null, bool $browserPath = false): string
+    public function getFilterPath(MediaInterface|string $media, string $filterName, ?string $extension = null, bool $browserPath = false): string
     {
         $media = $media instanceof MediaInterface ? $media->getMedia() : Filepath::filename($media);
 
@@ -137,7 +136,7 @@ final class ImageManager
         return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/'.$filterName.'/'.$fileName;
     }
 
-    public function getBrowserPath(MediaInterface|string $media, string $filterName = 'default', string $extension = null): string
+    public function getBrowserPath(MediaInterface|string $media, string $filterName = 'default', ?string $extension = null): string
     {
         return $this->getFilterPath($media, $filterName, $extension, true);
     }

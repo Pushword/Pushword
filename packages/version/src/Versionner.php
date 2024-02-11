@@ -6,11 +6,15 @@ use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
-// use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Events;
 use Pushword\Core\Entity\PageInterface;
+// use Doctrine\ORM\Event\LifecycleEventArgs;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Utils\Entity;
+
+use function Safe\file_get_contents;
+use function Safe\scandir;
+
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -82,7 +86,7 @@ class Versionner
         static::$version = true;
     }
 
-    public function populate(PageInterface $page, string $version, int $pageId = null): PageInterface
+    public function populate(PageInterface $page, string $version, ?int $pageId = null): PageInterface
     {
         $pageVersionned = $this->getPageVersion($pageId ?? $page, $version);
 
@@ -95,7 +99,7 @@ class Versionner
     {
         $versionFile = $this->getVersionFile($page, $version);
 
-        return \Safe\file_get_contents($versionFile);
+        return file_get_contents($versionFile);
     }
 
     public function reset(int|PageInterface $pageId): void
@@ -113,7 +117,7 @@ class Versionner
             return [];
         }
 
-        $scandir = \Safe\scandir($dir);
+        $scandir = scandir($dir);
 
         $versions = array_filter($scandir, static fn (string $item): bool => ! \in_array($item, ['.', '..'], true));
 
@@ -127,7 +131,7 @@ class Versionner
         return $this->logDir.'/version/'.$pageId;
     }
 
-    private function getVersionFile(int|PageInterface $page, string $version = null): string
+    private function getVersionFile(int|PageInterface $page, ?string $version = null): string
     {
         return $this->getVersionDir($page).'/'.($version ?? uniqid());
     }

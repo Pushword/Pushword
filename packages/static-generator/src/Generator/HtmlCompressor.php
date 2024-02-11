@@ -2,8 +2,6 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
-use WyriHaximus\HtmlCompress\Factory as HtmlCompressorFactory;
-
 class HtmlCompressor
 {
     public static function compress(string $html): string

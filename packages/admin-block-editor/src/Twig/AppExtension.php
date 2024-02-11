@@ -2,7 +2,13 @@
 
 namespace Pushword\AdminBlockEditor\Twig;
 
+use PiedWeb\RenderAttributes\Attribute;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Router\PushwordRouteGenerator;
+
+use function Safe\json_decode;
+use function Safe\json_encode;
+
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
@@ -11,12 +17,12 @@ class AppExtension extends AbstractExtension
 {
     public function __construct(
         private readonly AppPool $appPool,
-        private readonly \Pushword\Core\Router\PushwordRouteGenerator $router
+        private readonly PushwordRouteGenerator $router
     ) {
     }
 
     /**
-     * @return \Twig\TwigFunction[]
+     * @return TwigFunction[]
      */
     public function getFunctions(): array
     {
@@ -27,7 +33,7 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @return \Twig\TwigFilter[]
+     * @return TwigFilter[]
      */
     public function getFilters(): array
     {
@@ -42,10 +48,10 @@ class AppExtension extends AbstractExtension
      */
     public function blockWrapperAttr(array|\stdClass $blockData, array $attributes = []): string
     {
-        $blockData = (array) \Safe\json_decode(\Safe\json_encode($blockData), true);
+        $blockData = (array) json_decode(json_encode($blockData), true);
 
         if (! isset($blockData['tunes']) || ! \is_array($blockData['tunes'])) {
-            return \PiedWeb\RenderAttributes\Attribute::renderAll($attributes);
+            return Attribute::renderAll($attributes);
         }
 
         if (isset($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) {
@@ -66,7 +72,7 @@ class AppExtension extends AbstractExtension
             $attributes['class'] = trim(($attributes['class'] ?? '').' text-justify');
         }
 
-        return \PiedWeb\RenderAttributes\Attribute::renderAll($attributes);
+        return Attribute::renderAll($attributes);
     }
 
     /**

@@ -4,6 +4,9 @@ namespace Pushword\Core\DependencyInjection;
 
 use LogicException;
 use Pushword\Core\Utils\IsAssociativeArray;
+
+use function Safe\sprintf;
+
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -175,7 +178,7 @@ final class PushwordConfigFactory
     private function setParameter(string $key, array|bool|string|int|float|\UnitEnum|null $value): void
     {
         if ($this->container->hasParameter($key)) {
-            throw new \InvalidArgumentException(\Safe\sprintf('Invalid "%s" name: parameter is ever registered.', $key));
+            throw new \InvalidArgumentException(sprintf('Invalid "%s" name: parameter is ever registered.', $key));
         }
 
         $this->container->setParameter($key, $value);

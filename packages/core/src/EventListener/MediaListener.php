@@ -9,6 +9,9 @@ use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Utils\MediaRenamer;
+
+use function Safe\preg_replace;
+
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -181,7 +184,7 @@ final class MediaListener
         }
 
         /** @var string */
-        $name = \Safe\preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFileName());
+        $name = preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFileName());
         $media->setName($name);
     }
 
@@ -259,7 +262,7 @@ final class MediaListener
                 $this->flashBag = $request->getSession()->getFlashBag() : null;
     }
 
-    private function updateMainColor(MediaInterface $media, ImageInterface $image = null): void
+    private function updateMainColor(MediaInterface $media, ?ImageInterface $image = null): void
     {
         if (! $image instanceof Image) {
             return;

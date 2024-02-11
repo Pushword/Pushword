@@ -3,6 +3,7 @@
 namespace Pushword\Core\AutowiringTrait;
 
 use Pushword\Core\Entity\MediaInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 
 trait RequiredMediaClass
 {
@@ -14,7 +15,7 @@ trait RequiredMediaClass
     /**
      * @param class-string<MediaInterface> $mediaClass
      */
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setMediaClass(string $mediaClass): self
     {
         $this->mediaClass = $mediaClass;

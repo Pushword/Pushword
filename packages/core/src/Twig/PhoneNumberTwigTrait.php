@@ -4,10 +4,11 @@ namespace Pushword\Core\Twig;
 
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Utils\F;
+use Twig\Environment;
 
 trait PhoneNumberTwigTrait
 {
-    private \Twig\Environment $twig;
+    private Environment $twig;
 
     abstract public function getApp(): AppConfig;
 

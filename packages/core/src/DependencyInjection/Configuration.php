@@ -2,6 +2,9 @@
 
 namespace Pushword\Core\DependencyInjection;
 
+use App\Entity\Media;
+use App\Entity\Page;
+use App\Entity\User;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -147,9 +150,9 @@ final class Configuration implements ConfigurationInterface
                 ->info('Used to generate browser path. Must be accessible from public_dir.')
                 ->end()
             ->scalarNode('database_url')->defaultValue('sqlite:///%kernel.project_dir%/var/app.db')->cannotBeEmpty()->end()
-            ->scalarNode('entity_page')->defaultValue(\App\Entity\Page::class)->cannotBeEmpty()->end()
-            ->scalarNode('entity_media')->defaultValue(\App\Entity\Media::class)->cannotBeEmpty()->end()
-            ->scalarNode('entity_user')->defaultValue(\App\Entity\User::class)->cannotBeEmpty()->end()
+            ->scalarNode('entity_page')->defaultValue(Page::class)->cannotBeEmpty()->end()
+            ->scalarNode('entity_media')->defaultValue(Media::class)->cannotBeEmpty()->end()
+            ->scalarNode('entity_user')->defaultValue(User::class)->cannotBeEmpty()->end()
 
             // default app value
             ->scalarNode('locale')->defaultValue('%kernel.default_locale%')->cannotBeEmpty()->end()

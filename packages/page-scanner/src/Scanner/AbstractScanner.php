@@ -3,6 +3,7 @@
 namespace Pushword\PageScanner\Scanner;
 
 use Pushword\Core\Entity\PageInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -19,7 +20,7 @@ abstract class AbstractScanner
      */
     protected array $errors = [];
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public TranslatorInterface $translator;
 
     public function addError(string $msg): void
@@ -48,7 +49,7 @@ abstract class AbstractScanner
      *
      * @param mixed[] $parameters
      */
-    public function trans(string $id, array $parameters = [], string $domain = null, string $locale = null): string
+    public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         return $this->translator->trans($id, $parameters, $domain, $locale);
     }

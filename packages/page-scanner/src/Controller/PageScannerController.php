@@ -3,6 +3,10 @@
 namespace Pushword\PageScanner\Controller;
 
 use Pushword\Core\Utils\LastTime;
+
+use function Safe\file_get_contents;
+use function Safe\filemtime;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
@@ -44,8 +48,8 @@ final class PageScannerController extends AbstractController
         }
 
         if ($this->filesystem->exists(self::$fileCache)) {
-            $errors = unserialize(\Safe\file_get_contents(self::$fileCache));
-            $lastEdit = \Safe\filemtime(self::$fileCache);
+            $errors = unserialize(file_get_contents(self::$fileCache));
+            $lastEdit = filemtime(self::$fileCache);
         } else {
             $lastEdit = 0;
             $errors = [];

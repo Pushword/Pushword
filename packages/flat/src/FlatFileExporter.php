@@ -11,6 +11,9 @@ use Pushword\Core\Repository\Repository;
 use Pushword\Core\Utils\Entity;
 use Pushword\Flat\Importer\MediaImporter;
 use Pushword\Flat\Importer\PageImporter;
+
+use function Safe\json_encode;
+
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
@@ -137,7 +140,7 @@ class FlatFileExporter
             $this->filesystem->copy($media->getPath(), $destination);
         }
 
-        $jsonContent = \Safe\json_encode($data, \JSON_PRETTY_PRINT);
+        $jsonContent = json_encode($data, \JSON_PRETTY_PRINT);
         $jsonFile = ('' !== $this->copyMedia && '0' !== $this->copyMedia ? $this->exportDir.'/'.$this->copyMedia : $this->mediaDir).'/'.$media->getMedia().'.json';
         $this->filesystem->dumpFile($jsonFile, $jsonContent);
     }

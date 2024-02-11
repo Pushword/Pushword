@@ -3,6 +3,11 @@
 namespace Pushword\Core\Utils;
 
 use DateInterval;
+use DateTime;
+
+use function Safe\file_put_contents;
+use function Safe\filemtime;
+use function Safe\touch;
 
 /**
  * Usage
@@ -27,13 +32,13 @@ class LastTime
      *
      * @return \DateTime|\DateTimeImmutable|null
      */
-    public function get(string $default = null): ?\DateTimeInterface
+    public function get(?string $default = null): ?\DateTimeInterface
     {
         if (! file_exists($this->filePath)) {
             return null === $default ? null : new \DateTime($default);
         }
 
-        return new \DateTime('@'.\Safe\filemtime($this->filePath));
+        return new \DateTime('@'.filemtime($this->filePath));
     }
 
     /**
@@ -52,10 +57,10 @@ class LastTime
                 return;
             }
 
-            \Safe\file_put_contents($this->filePath, '');
+            file_put_contents($this->filePath, '');
         }
 
-        \Safe\touch($this->filePath, (new \DateTime($datetime))->getTimestamp());
+        touch($this->filePath, (new \DateTime($datetime))->getTimestamp());
     }
 
     /**

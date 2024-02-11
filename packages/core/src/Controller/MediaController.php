@@ -5,7 +5,6 @@ namespace Pushword\Core\Controller;
 use App\Kernel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 final class MediaController extends AbstractController
 {

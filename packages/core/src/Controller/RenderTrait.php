@@ -2,13 +2,14 @@
 
 namespace Pushword\Core\Controller;
 
+use Symfony\Contracts\Service\Attribute\Required;
 use Twig\Environment as Twig;
 
 trait RenderTrait
 {
     private Twig $twig;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;

@@ -7,7 +7,6 @@ use Pushword\Core\Entity\MediaTrait\MediaLoaderTrait;
 use Pushword\Core\Entity\MediaTrait\MediaTrait;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 /**

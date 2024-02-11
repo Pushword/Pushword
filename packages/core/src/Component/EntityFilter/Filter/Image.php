@@ -5,6 +5,8 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 
+use function Safe\preg_match_all;
+
 class Image extends AbstractFilter
 {
     use RequiredAppTrait;
@@ -20,7 +22,7 @@ class Image extends AbstractFilter
      */
     public function convertMarkdownImage(string $body): string
     {
-        \Safe\preg_match_all('/(?:!\[(.*?)\]\((.*?)\))/', $body, $matches);
+        preg_match_all('/(?:!\[(.*?)\]\((.*?)\))/', $body, $matches);
         if (! isset($matches[1])) {
             return $body;
         }

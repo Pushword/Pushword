@@ -2,9 +2,8 @@
 
 namespace Pushword\Core\Entity\PageTrait;
 
-use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Pushword\Core\Entity\PageHasEditor;
 use Pushword\Core\Entity\UserInterface;
 
 trait PageEditorTrait
@@ -27,7 +26,7 @@ trait PageEditorTrait
     #[ORM\ManyToOne(targetEntity: UserInterface::class)]
     protected ?UserInterface $createdBy = null; // @phpstan-ignore-line
 
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TEXT, options: ['default' => ''])]
+    #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
     protected string $editMessage = '';
 
     public function getEditedBy(): ?UserInterface

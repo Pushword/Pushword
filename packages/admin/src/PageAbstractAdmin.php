@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder;
 use Pushword\Admin\Controller\PageCRUDController;
 use Pushword\Admin\FormField\AbstractField;
@@ -192,7 +193,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
             return null;
         }
 
-        $exp = new \Doctrine\ORM\Query\Expr();
+        $exp = new Expr();
         $queryBuilder->andWhere(
             (string) $exp->like(
                 (string) $exp->concat($alias.'.h1', $alias.'.title', $alias.'.slug'),

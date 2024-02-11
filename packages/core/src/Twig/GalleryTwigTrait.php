@@ -13,9 +13,9 @@ trait GalleryTwigTrait
      */
     public function renderGallery(
         array $images,
-        string $gridCols = null,
-        string $imageFilter = null,
-        string $imageContainer = null
+        ?string $gridCols = null,
+        ?string $imageFilter = null,
+        ?string $imageContainer = null
     ): string {
         $template = $this->getApp()->getView('/component/images_gallery.html.twig');
 

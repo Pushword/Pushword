@@ -7,6 +7,7 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 use Twig\Environment as Twig;
 
 /**
@@ -14,19 +15,19 @@ use Twig\Environment as Twig;
  */
 final class ManagerPool
 {
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public AppPool $apps;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public Twig $twig;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public EventDispatcherInterface $eventDispatcher;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public PushwordRouteGenerator $router;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public EntityManagerInterface $entityManager;
 
     /** @var array<(string|int), Manager<T>> */
@@ -49,7 +50,7 @@ final class ManagerPool
     }
 
     /**
-     * @return mixed|\Pushword\Core\Component\EntityFilter\Manager
+     * @return mixed|Manager
      */
     public function getProperty(IdInterface $id, string $property = ''): mixed
     {

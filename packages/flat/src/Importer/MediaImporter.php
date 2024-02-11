@@ -4,7 +4,13 @@ namespace Pushword\Flat\Importer;
 
 use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
+
+use function Safe\file_get_contents;
+use function Safe\filesize;
+use function Safe\json_decode;
+
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * Permit to find error in image or link.
@@ -24,7 +30,7 @@ class MediaImporter extends AbstractImporter
 
     private bool $newMedia = false;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setMediaDir(string $mediaDir): self
     {
         $this->mediaDir = $mediaDir;
@@ -32,7 +38,7 @@ class MediaImporter extends AbstractImporter
         return $this;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setProjectDir(string $projectDir): self
     {
         $this->projectDir = $projectDir;
@@ -74,7 +80,7 @@ class MediaImporter extends AbstractImporter
         $media
             ->setProjectDir($this->projectDir)
             ->setStoreIn(\dirname($filePath))
-            ->setSize(\Safe\filesize($filePath))
+            ->setSize(filesize($filePath))
             ->setMimeType($this->getMimeTypeFromFile($filePath));
 
         $data = $this->getData($filePath);
@@ -121,7 +127,7 @@ class MediaImporter extends AbstractImporter
             return [];
         }
 
-        $jsonData = \Safe\json_decode(\Safe\file_get_contents($filePath.'.json'), true);
+        $jsonData = json_decode(file_get_contents($filePath.'.json'), true);
 
         return \is_array($jsonData) ? $jsonData : [];
     }

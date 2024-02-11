@@ -8,6 +8,14 @@ use Pushword\Core\Entity\MediaInterface;
 use Pushword\Core\Repository\Repository;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Utils\Entity;
+
+use function Safe\file_get_contents;
+use function Safe\file_put_contents;
+use function Safe\json_decode;
+use function Safe\json_encode;
+use function Safe\mime_content_type;
+use function Safe\preg_match;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -51,7 +59,7 @@ final class MediaBlockController extends AbstractController
         $url = $imageManager->isImage($media) ? $imageManager->getBrowserPath($media->getMedia())
              : '/'.$publicMediaDir.'/'.$media->getMedia();
 
-        return new Response(\Safe\json_encode([
+        return new Response(json_encode([
             'success' => 1,
             'file' => $this->exportMedia($media, $url),
         ]));
@@ -81,7 +89,7 @@ final class MediaBlockController extends AbstractController
 
     private function getMediaFrom(string $content): MediaInterface|UploadedFile
     {
-        $content = \Safe\json_decode($content, true);
+        $content = json_decode($content, true);
 
         if (! \is_array($content) || (! isset($content['url']) && ! isset($content['id']))) {
             throw new \LogicException('URL not sent by editor.js ?!');
@@ -112,20 +120,20 @@ final class MediaBlockController extends AbstractController
      */
     private function getMediaFileFromUrl(string $url): UploadedFile
     {
-        if (0 === \Safe\preg_match('#/([^/]*)$#', $url, $matches)) {
+        if (0 === preg_match('#/([^/]*)$#', $url, $matches)) {
             throw new \LogicException("URL doesn't contain file name");
         }
 
-        $fileContent = \Safe\file_get_contents($url);
+        $fileContent = file_get_contents($url);
 
         $originalName = ($matches[1] ?? throw new \Exception($url));
         $filename = md5($originalName);
         $filePath = sys_get_temp_dir().'/'.$filename;
-        if (0 === \Safe\file_put_contents($filePath, $fileContent)) {
+        if (0 === file_put_contents($filePath, $fileContent)) {
             throw new \LogicException('Storing in tmp folder filed');
         }
 
-        $mimeType = \Safe\mime_content_type($filePath);
+        $mimeType = mime_content_type($filePath);
 
         return new UploadedFile($filePath, $originalName, $mimeType, null, true);
     }

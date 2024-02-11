@@ -8,6 +8,7 @@ use Pushword\Core\Repository\Repository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
@@ -59,7 +60,7 @@ class VersionController extends AbstractController
     }
 
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
-    public function loadVersion(string $id, string $version): \Symfony\Component\HttpFoundation\RedirectResponse
+    public function loadVersion(string $id, string $version): RedirectResponse
     {
         $this->versionner->loadVersion($id, $version);
 
@@ -78,7 +79,7 @@ class VersionController extends AbstractController
     }
 
     /** @psalm-suppress  UndefinedInterfaceMethod */
-    public function resetVersioning(Request $request, int $id): \Symfony\Component\HttpFoundation\RedirectResponse
+    public function resetVersioning(Request $request, int $id): RedirectResponse
     {
         $this->versionner->reset($id);
 
