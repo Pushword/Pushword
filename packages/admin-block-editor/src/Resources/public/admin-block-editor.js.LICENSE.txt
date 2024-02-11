@@ -22,20 +22,16 @@
  * @version 1.2.0
  */
 
-/*! For license information please see Image.js.LICENSE.txt */
-
-/*! For license information please see Raw.js.LICENSE.txt */
-
 /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
 
 /**
-       * Base Paragraph Block for the Editor.js.
-       * Represents a regular text block
-       *
-       * @author CodeX (team@codex.so)
-       * @copyright CodeX 2018
-       * @license The MIT License (MIT)
-       */
+ * Base Paragraph Block for the Editor.js.
+ * Represents a regular text block
+ *
+ * @author CodeX (team@codex.so)
+ * @copyright CodeX 2018
+ * @license The MIT License (MIT)
+ */
 
 /**
  * CodeTool for Editor.js
