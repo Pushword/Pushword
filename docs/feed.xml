@@ -13,31 +13,31 @@
                     <title><![CDATA[Roadmap]]></title>
                     <link>https://pushword.piedweb.com/roadmap</link>
                     <guid>https://pushword.piedweb.com/roadmap</guid>
-                    <pubDate>Sat, 23 Dec 2023 08:59:06 +0000</pubDate>
+                    <pubDate>Wed, 14 Feb 2024 14:05:25 +0000</pubDate>
                 </item>
                                                                 <item>
-                    <title><![CDATA[Upgrade Guide]]></title>
-                    <link>https://pushword.piedweb.com/upgrade</link>
-                    <guid>https://pushword.piedweb.com/upgrade</guid>
-                    <pubDate>Mon, 04 Dec 2023 13:15:56 +0000</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Create Page ListAdvanced filtering]]></title>
-                    <link>https://pushword.piedweb.com/pages-list</link>
-                    <guid>https://pushword.piedweb.com/pages-list</guid>
-                    <pubDate>Mon, 20 Nov 2023 07:12:03 +0000</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Template Editor]]></title>
-                    <link>https://pushword.piedweb.com/extension/template-editor</link>
-                    <guid>https://pushword.piedweb.com/extension/template-editor</guid>
-                    <pubDate>Wed, 15 Nov 2023 20:38:22 +0000</pubDate>
+                    <title><![CDATA[The Code Architecture]]></title>
+                    <link>https://pushword.piedweb.com/architecture</link>
+                    <guid>https://pushword.piedweb.com/architecture</guid>
+                    <pubDate>Mon, 12 Feb 2024 08:19:08 +0000</pubDate>
                 </item>
                                                                 <item>
                     <title><![CDATA[Installation]]></title>
                     <link>https://pushword.piedweb.com/installation</link>
                     <guid>https://pushword.piedweb.com/installation</guid>
-                    <pubDate>Tue, 24 Oct 2023 09:37:26 +0000</pubDate>
+                    <pubDate>Mon, 12 Feb 2024 08:19:08 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Managing Assets (css/js)]]></title>
+                    <link>https://pushword.piedweb.com/manage-assets</link>
+                    <guid>https://pushword.piedweb.com/manage-assets</guid>
+                    <pubDate>Mon, 12 Feb 2024 08:19:08 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade Guide]]></title>
+                    <link>https://pushword.piedweb.com/upgrade</link>
+                    <guid>https://pushword.piedweb.com/upgrade</guid>
+                    <pubDate>Mon, 12 Feb 2024 08:19:08 +0000</pubDate>
                 </item>
                             
     </channel>

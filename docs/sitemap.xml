@@ -4,6 +4,15 @@
     <loc>https://pushword.piedweb.com/roadmap</loc>
           </url>
   <url>
+    <loc>https://pushword.piedweb.com/architecture</loc>
+          </url>
+  <url>
+    <loc>https://pushword.piedweb.com/installation</loc>
+          </url>
+  <url>
+    <loc>https://pushword.piedweb.com/manage-assets</loc>
+          </url>
+  <url>
     <loc>https://pushword.piedweb.com/upgrade</loc>
           </url>
   <url>
@@ -11,12 +20,6 @@
           </url>
   <url>
     <loc>https://pushword.piedweb.com/extension/template-editor</loc>
-          </url>
-  <url>
-    <loc>https://pushword.piedweb.com/installation</loc>
-          </url>
-  <url>
-    <loc>https://pushword.piedweb.com/manage-assets</loc>
           </url>
   <url>
     <loc>https://pushword.piedweb.com/</loc>
@@ -44,9 +47,6 @@
           </url>
   <url>
     <loc>https://pushword.piedweb.com/extension/static-generator</loc>
-          </url>
-  <url>
-    <loc>https://pushword.piedweb.com/architecture</loc>
           </url>
   <url>
     <loc>https://pushword.piedweb.com/component/entity-filter</loc>
