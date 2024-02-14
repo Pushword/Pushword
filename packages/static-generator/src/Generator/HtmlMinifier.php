@@ -9,8 +9,9 @@ class HtmlMinifier
     public static function compress(string $html): string
     {
         $html = preg_replace('/<!--(.*?)-->/s', '', $html) ?? throw new \Exception();
+        $html = self::removeExtraWhiteSpace($html);
 
-        return self::removeExtraWhiteSpace($html);
+        return $html;
     }
 
     public static function removeExtraWhiteSpace(string $html): string
@@ -29,9 +30,9 @@ class HtmlMinifier
             });
         }
 
-        $html = preg_replace('/\h{2,}/', ' ', $html) ?? $html; // remove multiple horizontal whitespaces
-        $html = preg_replace('/\n\h{1,}/', "\n", $html) ?? $html; // remove whitespace starting a new line
-        $html = preg_replace('/\n{1,}/', '', $html) ?? $html; // remove all newlines (a bit extreme ?!)
+        $html = preg_replace('/\h{2,}/u', ' ', $html) ?? $html; // remove multiple horizontal whitespaces
+        $html = preg_replace('/\n\h{1,}/u', "\n", $html) ?? $html; // remove whitespace starting a new line
+        $html = preg_replace('/\n{1,}/u', '', $html) ?? $html; // remove all newlines (a bit extreme ?!)
         // $html = preg_replace('/\n{2,}/', "\n", $html);
 
         // Restore the original content of <pre> and <textarea>
