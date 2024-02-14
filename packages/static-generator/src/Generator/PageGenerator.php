@@ -137,6 +137,6 @@ class PageGenerator extends AbstractGenerator
 
     protected function compress(string $html): string
     {
-        return HtmlCompressor::compress($html);
+        return HtmlMinifier::compress($html);
     }
 }

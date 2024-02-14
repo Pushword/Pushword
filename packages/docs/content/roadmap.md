@@ -116,13 +116,3 @@ Why :
 
 - Less custom code
 - Stan ?
-
-## Html Minification
-
-**Html Minification** (for staticn befire _0.1.9973_) was relying on #[wyrihaximus/html-compress](https://packagist.org/packages/wyrihaximus/html-compress) wich rely on [voku/simple-html-dom](https://packagist.org/packages/voku/simple_html_dom).
-
-It's not compatible neither with PHP 8.3 not SF 7+.
-
-Html Minification is not anymore a core feature.
-
-Switch to a server minifier like _mod_pageSpeed_.

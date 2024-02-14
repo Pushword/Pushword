@@ -1,0 +1,22 @@
+{
+    "customProperties": [],
+    "storeIn": "\/home\/robin\/localhost\/Pushword\/packages\/skeleton\/media",
+    "media": "favicon.png",
+    "mimeType": "image\/png",
+    "size": 1521,
+    "height": 32,
+    "width": 32,
+    "mainColor": null,
+    "name": "favicon.png - 65ccc94938cfa",
+    "names": "",
+    "createdAt": {
+        "date": "2024-02-14 14:08:09.232697",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    },
+    "updatedAt": {
+        "date": "2024-02-14 14:08:09.232696",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    }
+}
