@@ -22,7 +22,7 @@ class PhoneNumber extends AbstractFilter
     private function convertPhoneNumber(string $body): string
     {
         // \xC2\xA0 ➜ parse aussi les n° des svg
-        $rgx = '/ (?:(?:\+|00)33|0)(\s|&nbsp;)*[1-9](?:([\s.-]|&nbsp;)*\d{2}){4}(?P<after>( |&nbsp;)|\.<\/|\. |$)/iU';
+        $rgx = '/ (?:(?:\+|00)33|0)(\s|&nbsp;|\xC2\xA0)*[1-9](?:([\s.-]|&nbsp;|\xC2\xA0)*\d{2}){4}(?P<after>( |&nbsp;)|\.<\/|\. |$)/iU';
         preg_match_all($rgx, $body, $matches);
 
         if (! isset($matches[0])) {
