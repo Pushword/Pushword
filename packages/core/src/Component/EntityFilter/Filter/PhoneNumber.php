@@ -5,7 +5,6 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 use Pushword\Core\AutowiringTrait\RequiredAppTrait;
 use Pushword\Core\AutowiringTrait\RequiredTwigTrait;
 use Pushword\Core\Twig\PhoneNumberTwigTrait;
-use Symfony\Component\DomCrawler\Crawler;
 
 use function Safe\preg_match_all;
 
