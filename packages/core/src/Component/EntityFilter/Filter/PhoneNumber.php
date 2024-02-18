@@ -21,7 +21,7 @@ class PhoneNumber extends AbstractFilter
 
     private function convertPhoneNumber(string $body): string
     {
-        $rgx = '/ (?:(?:\+|00)33|0)(\s|\xC2\xA0|&nbsp;)*[1-9](?:([\s.-\xC2\xA0]|&nbsp;)*\d{2}){4}(?P<after>( |&nbsp;)|\.<\/|\. |$)/iU';
+        $rgx = '(?:[^0-9] |>)(?:(?:\+|00)33|0)(\s|\xC2\xA0|&nbsp;)*[1-9](?:([\s.-\xC2\xA0]|&nbsp;)*\d{2}){4}(?P<after>( |&nbsp;)|\.<\/|\. |$)';
         preg_match_all($rgx, $body, $matches);
 
         if (! isset($matches[0])) {
