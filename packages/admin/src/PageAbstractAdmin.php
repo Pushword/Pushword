@@ -58,7 +58,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
     ) {
         // dd($requestStack->getCurrentRequest()->query->get('host'));
         // dd($requestStack->getCurrentRequest());
-        if (($r = $requestStack->getCurrentRequest()) !== null && ($host = $r->query->get('host')) !== null) {
+        if (($r = $requestStack->getCurrentRequest()) !== null && \is_string($host = $r->query->get('host'))) {
             $this->apps->switchCurrentApp($host);
         }
 
@@ -218,7 +218,11 @@ abstract class PageAbstractAdmin extends AbstractAdmin implements AdminInterface
 
         $filter
             ->add('h1', CallbackFilter::class, [
-                'callback' => fn (ProxyQuery $queryBuilder, string $alias, string $field, FilterData $filterData): ?bool => $this->getSearchFilterForTitle($queryBuilder, $alias, $field, $filterData),
+                'callback' =>
+                /**
+                 * @param ProxyQuery<PageInterface> $queryBuilder
+                 */
+                fn (ProxyQuery $queryBuilder, string $alias, string $field, FilterData $filterData): ?bool => $this->getSearchFilterForTitle($queryBuilder, $alias, $field, $filterData),
                 'label' => 'admin.page.h1.label',
             ]);
 

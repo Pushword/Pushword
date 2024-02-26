@@ -9,9 +9,8 @@ class HtmlMinifier
     public static function compress(string $html): string
     {
         $html = preg_replace('/<!--(.*?)-->/s', '', $html) ?? throw new \Exception();
-        $html = self::removeExtraWhiteSpace($html);
 
-        return $html;
+        return self::removeExtraWhiteSpace($html);
     }
 
     public static function removeExtraWhiteSpace(string $html): string

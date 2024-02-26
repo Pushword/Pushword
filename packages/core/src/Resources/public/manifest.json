@@ -1,1 +1,4 @@
-{}
+{
+  "bundles/pushwordcore/app.js": "/bundles/pushwordcore/app.js",
+  "bundles/pushwordcore/style.css": "/bundles/pushwordcore/style.css"
+}

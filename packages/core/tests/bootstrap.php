@@ -37,7 +37,7 @@ $application->setAutoExit(false);
 $input = new ArrayInput(['command' => 'doctrine:database:drop', '--no-interaction' => true, '--force' => true]);
 $application->run($input, new ConsoleOutput());
 
-$input = new ArrayInput(['command' => 'doctrine:database:create', '--no-interaction' => true]);
+$input = new ArrayInput(['command' => 'doctrine:database:create', '--no-interaction' => true, '--quiet' => true]);
 $application->run($input, new ConsoleOutput());
 
 $input = new ArrayInput(['command' => 'doctrine:schema:create', '--quiet' => true]);

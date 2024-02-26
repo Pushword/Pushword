@@ -177,14 +177,14 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $orx->add($queryBuilder->expr()->like('p.mainContent', ':defaultMedia')); // catch: media/default/example.jpg
         $orx->add($queryBuilder->expr()->like('p.mainContent', ':thumbMedia'));
 
-        $query = $queryBuilder->where($orx)->setParameters([
-            'idMedia' => $media->getId(),
-            'nameMedia' => "%'".$media->getName()."'%",
-            'apostrophMedia' => "%'".$media->getMedia()."'%",
-            'quotedMedia' => '%"'.$media->getMedia().'"%',
-            'defaultMedia' => '/media/default/'.$media->getMedia().'%',
-            'thumbMedia' => '/media/thumb/'.$media->getMedia().'%',
-        ])->getQuery();
+        $query = $queryBuilder->where($orx)
+            ->setParameter('idMedia', $media->getId())
+            ->setParameter('nameMedia', "%'".$media->getName()."'%")
+            ->setParameter('apostrophMedia', "%'".$media->getMedia()."'%")
+            ->setParameter('quotedMedia', '%"'.$media->getMedia().'"%')
+            ->setParameter('defaultMedia', '/media/default/'.$media->getMedia().'%')
+            ->setParameter('thumbMedia', '/media/thumb/'.$media->getMedia().'%')
+            ->getQuery();
 
         return $query->getResult(); // @phpstan-ignore-line
     }

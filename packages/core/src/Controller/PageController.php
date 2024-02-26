@@ -283,7 +283,7 @@ final class PageController extends AbstractController
         $this->translator->setLocale($page->getLocale());
 
         // Check if page is public
-        if ($page->getCreatedAt() > new \DateTimeImmutable() && ! $this->isGranted('ROLE_EDITOR')) {
+        if ($page->getCreatedAt() > new \DateTime() && ! $this->isGranted('ROLE_EDITOR')) {
             if ($throwException) {
                 throw $this->createNotFoundException();
             }

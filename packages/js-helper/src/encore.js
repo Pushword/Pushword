@@ -89,13 +89,13 @@ function getEncore(
 
   if (manifestKeyPrefix !== null) Encore.setManifestKeyPrefix(manifestKeyPrefix)
 
-  //   entries.forEach(function (entry) {
-  //     Encore.addEntry(entry.name, entry.file)
-  //   })
+  entries.forEach(function (entry) {
+    Encore.addEntry(entry.name, entry.file)
+  })
 
-  //   styleEntries.forEach(function (entry) {
-  //     Encore.addStyleEntry(entry.name, entry.file)
-  //   })
+  styleEntries.forEach(function (entry) {
+    Encore.addStyleEntry(entry.name, entry.file)
+  })
 
   return Encore
 }

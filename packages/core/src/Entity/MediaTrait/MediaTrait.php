@@ -137,7 +137,7 @@ trait MediaTrait
         $this->mediaFile = $file;
 
         if (null !== $file) {
-            $this->updatedAt = new \DateTimeImmutable();
+            $this->updatedAt = new \DateTime();
         }
     }
 
