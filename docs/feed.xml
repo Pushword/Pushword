@@ -10,6 +10,12 @@
             type="application/rss+xml"
         />
                                                             <item>
+                    <title><![CDATA[Build Content First websites rapidly  Manage and maintain it as quickly]]></title>
+                    <link>https://pushword.piedweb.com/</link>
+                    <guid>https://pushword.piedweb.com/</guid>
+                    <pubDate>Tue, 27 Feb 2024 18:39:20 +0000</pubDate>
+                </item>
+                                                                <item>
                     <title><![CDATA[Roadmap]]></title>
                     <link>https://pushword.piedweb.com/roadmap</link>
                     <guid>https://pushword.piedweb.com/roadmap</guid>
@@ -31,12 +37,6 @@
                     <title><![CDATA[Managing Assets (css/js)]]></title>
                     <link>https://pushword.piedweb.com/manage-assets</link>
                     <guid>https://pushword.piedweb.com/manage-assets</guid>
-                    <pubDate>Mon, 12 Feb 2024 08:19:08 +0000</pubDate>
-                </item>
-                                                                <item>
-                    <title><![CDATA[Upgrade Guide]]></title>
-                    <link>https://pushword.piedweb.com/upgrade</link>
-                    <guid>https://pushword.piedweb.com/upgrade</guid>
                     <pubDate>Mon, 12 Feb 2024 08:19:08 +0000</pubDate>
                 </item>
                             
