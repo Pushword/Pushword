@@ -18,11 +18,11 @@ class HtmlMinifier
         $crawler = new Crawler($html);
         $html = '<!DOCTYPE html>'.$crawler->outerHtml(); // remove useless whitespace in tag attributes (but not in attribute !)
 
-        $skippedTags = ['code', 'pre', 'script', 'style', 'textarea'];
+        $skippedTags = ['pre', 'code', 'script', 'style', 'textarea'];
         $protectedTags = [];
 
         foreach ($skippedTags as $tagName) {
-            $crawler->filter($tagName)->each(static function (Crawler $node, string $i) use ($tagName, &$protectedTags, $html): void {
+            $crawler->filter($tagName)->each(static function (Crawler $node, string $i) use ($tagName, &$protectedTags, &$html): void {
                 $placeholder = '<'.$tagName.'-placeholder-'.$i.'></'.$tagName.'-placeholder-'.$i.'>';
                 $protectedTags[$placeholder] = $node->outerHtml();
                 $html = str_replace($node->outerHtml(), $placeholder, $html);
