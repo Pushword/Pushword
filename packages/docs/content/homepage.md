@@ -1,8 +1,7 @@
 ---
 title: Pushword - CMS to build rapidly Websites (powered by Symfony)
-h1:
-    <span class="block mt-6 leading-relaxed">Build <em class="font-light">Content First</em> websites rapidly
-    <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>
+h1: <span class="block mt-6 leading-relaxed">Build <em class="font-light">Content First</em> websites rapidly
+  <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>
 name: Pushword
 template: /page/homepage.html.twig
 prose: 'max-w-screen-sm prose-sm md:prose-lg mx-auto p-3 prose dark:prose-light'
@@ -18,11 +17,13 @@ It make it easy to create amazing <strong>searchable</strong> websites <strong>f
 
 Bonus, managing <strong>multi-site</strong>, <strong>internationalization</strong> and <strong>page vesioning</strong> is so simple.
 
-<strong>Want a demo ?</strong> This website is built with _Pushword_ with flat file management. You may prefer a <strong>block editor</strong> with an admin dashboard, it's possible with **simply installing an extension**.
+<strong>Want a demo ?</strong> This website is built with _Pushword_ with flat file management.
 
-See [how to install and test Pushword in less than one minute](/installation). test
+You may prefer a <strong>block editor</strong> with an admin dashboard, it's possible with **simply installing an extension** (officially maintained to avoid code's nightmare like in wordpress plugins).
 
-Or look at the <strong>detailled features</strong>.
+See [how to install and test Pushword in less than one minute](/installation).
+
+Or look at the <strong>detailled features</strong> ↓
 
 </div>
 <div class="hidden p-3 -mt-3 prose-sm rounded-sm shadow-lg bg-gray-50 dark:bg-gray-900 lg:block" style="width:400px" markdown=1>
@@ -54,7 +55,6 @@ Unzip it on a classic Apache/PHP server and play.
 
 <!-- next: show a preview there -->
 
-
 <div class="p-3 relative mb-6 shadow-sm bg-gray-50 dark:bg-gray-800 from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
     <div class="max-w-screen-sm mx-auto">
         <h2 class="pt-12 pb-6 text-4xl">Features<br><small class="text-lg">Create content and publish it on the web smoothly</small></h2>
@@ -72,11 +72,9 @@ Unzip it on a classic Apache/PHP server and play.
                 <div class="ml-3 text-green-500">Easy to install<br><small>Run it in a few seconds</small></div>
             </h2>
             <div>
-                <p>Pushword run on a classic up to date <strong>PHP</strong> environnement (and Composer). You have this on your
-                    machine or just a cheap shared host ? So you are able to install it in a few seconds.</p>
+                <p>Pushword run on a classic up to date <strong>PHP</strong> environnement (and Composer). You have this on your machine or just a cheap shared host ? So you are able to install it in a few seconds.</p>
                 <p><a href="/installation">Learn more about requirements and installation.</a></p>
-                <p>By default, it works without dirty work. It looks <strong>so simple</strong>. But don't be wrong, you
-                    can do amazing custom thing with it !</p>
+                <p>By default, it works without dirty work. It looks <strong>so simple</strong>. But don't be wrong, you can do amazing custom thing with it !</p>
                 <p class="text-sm font-light text-center text-green-500"><strong style="color: rgba(16, 185, 129, var(--tw-text-opacity));">PHP 8</strong> // Symfony 6</p>
             </div>
         </div>
@@ -90,16 +88,10 @@ Unzip it on a classic Apache/PHP server and play.
                 </div>
             </h2>
             <div>
-                <p>To create <strong>Multiple sites</strong> with <strong>multiple languages</strong> (i18n) and
-                    managing them on <strong>multiple domains</strong> you don't need to extend the core. <strong>Simple
-                        site</strong> and <strong>complex content network</strong> can be managed easily with Pushword
-                    without extension.</p>
-                <p>You want a <strong>blog</strong> or a <strong>documentation website</strong> ? Just install Pushword
-                    and play.</p>
-                <p>Want another feature ? Look at the <a href="/extensions">{{ svg('puzzle-piece')
-                        }}&nbsp;extensions</a>.</p>
-                <p>Not finding the one you want ? Pushword is built as a <strong>symfony bundle</strong> so just extend
-                    your research to them or find an expert developper to make your wish reality.</p>
+                <p>To create <strong>Multiple sites</strong> with <strong>multiple languages</strong> (i18n) and managing them on <strong>multiple domains</strong> you don't need to extend the core. <strong>Simple site</strong> and <strong>complex content network</strong> can be managed easily with Pushword without extension.</p>
+                <p>You want a <strong>blog</strong> or a <strong>documentation website</strong> ? Just install Pushword and play.</p>
+                <p>Want another feature ? Look at the <a href="/extensions">{{ svg('puzzle-piece') }}&nbsp;extensions</a>.</p>
+                <p>Not finding the one you want ? Pushword is built as a <strong>symfony bundle</strong> so just extend your research to them or find an expert developper to make your wish reality.</p>
             </div>
         </div>
     </div>
@@ -115,12 +107,8 @@ Unzip it on a classic Apache/PHP server and play.
                         ?</small></div>
             </h2>
             <div>
-                <p>Pushword offers the two ways to manage a site : a <strong>simple, functionnable and efficient default
-                        Admin</strong>, if you come from Wordpress, you will find your way easily or a <strong>powerfull
-                        flat-file CMS</strong>, you will be able to edit your content or your template files from where
-                    you want (nextcloud folder, custom editor, git compatible...).</p>
-                <p>Default editor use <strong>Markdown/Html</strong> with extended <a href="/editor">features</a>
-                    (video, responsive image, encrypted link...).</p>
+                <p>Pushword offers the two ways to manage a site : a <strong>simple, functionnable and efficient default Admin</strong>, if you come from Wordpress, you will find your way easily or a <strong>powerfull flat-file CMS</strong>, you will be able to edit your content or your template files from where you want (nextcloud folder, custom editor, git compatible...).</p>
+                <p>Default editor use <strong>Markdown/Html</strong> with extended <a href="/editor">features</a> (video, responsive image, encrypted link...).</p>
                 <p>A <a href="/extension/admin-block-editor">block editor</a> is avalaible for non-markdown friendly people.</p>
             </div>
         </div>
@@ -135,12 +123,9 @@ Unzip it on a classic Apache/PHP server and play.
                 </div>
             </h2>
             <div>
-                <p>Thanks to <strong>Tailwind CSS</strong> and <strong>Twig</strong>, you will be
-                    able to customize the default theme rapidly if you master html and css.</p>
+                <p>Thanks to <strong>Tailwind CSS</strong> and <strong>Twig</strong>, you will be able to customize the default theme rapidly if you master html and css.</p>
                 <p>Maybe you will prefer rebuild your own custom theme. Do as you wish, you use Pushword.</p>
-                <p>{{ svg('eye') }} Want to see how easy it is ? See this documentation website {{ link('assets',
-                    'https://github.com/Pushword/Pushword/tree/main/packages/docs') }} and {{ link('template files',
-                    'https://github.com/Pushword/Pushword/tree/main/packages/skeleton/templates/pushword.piedweb.com') }}.</p>
+                <p>{{ svg('eye') }} Want to see how easy it is ? See this documentation website {{ link('assets', 'https://github.com/Pushword/Pushword/tree/main/packages/docs') }} and {{ link('template files', 'https://github.com/Pushword/Pushword/tree/main/packages/skeleton/templates/pushword.piedweb.com') }}.</p>
             </div>
         </div>
     </div>
@@ -174,7 +159,7 @@ Unzip it on a classic Apache/PHP server and play.
                 </div>
             </h2>
             <div>
-                <p>Pushword is crafted to last. Source code is <strong>hight quality</strong>, <strong>open source</strong> and <strong>well tested</strong>.</p>
+                <p>Pushword is crafted to last. Source code is <strong>high quality</strong>, <strong>open source</strong> and <strong>well tested</strong>.</p>
                 <p>Bringing a new feature or refactor your code will be painless. Thanks to <strong>symfony best practices</strong>, it will last in the time.</p>
             </div>
         </div>
@@ -196,7 +181,7 @@ Unzip it on a classic Apache/PHP server and play.
 
 <div class="pt-3 pb-12 prose dark:prose-light">
 {% apply markdown %}
-And many more ({{ link('see dependencies', 'https://github.com/Pushword/Pushword/blob/main/composer.json') }}).
+And a few more open source ({{ link('dependencies', 'https://github.com/Pushword/Pushword/blob/main/composer.json') }}).
 {% endapply %}
 
 </div>
