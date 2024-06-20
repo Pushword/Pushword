@@ -7,23 +7,22 @@
 
 {% block error %}{% endblock %}
 
-{% block authorEmail %}
+{% block authorName %}
     {% form_theme conversation 'form_div_layout.html.twig' %}
-        {{ form_widget(conversation.authorEmail, {
+        {{ form_widget(conversation.authorName, {
             attr: {
-                'placeholder': 'conversation.emailOrPhone.placeholder'|trans,
+                'placeholder': 'conversation.name.placeholder'|trans,
                 onfocus: "this.placeholder = ''",
-                onblur: "this.placeholder = '" ~ 'conversation.emailOrPhone.placeholder'|trans ~ "'",
+                onblur: "this.placeholder = '" ~ 'conversation.name.placeholder'|trans ~ "'",
                 required: "text",
-                pattern: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$",
-                type: "email",
+                type: "text",
                 class: 'appearance-none bg-transparent border-none focus:ring-transparent focus:border-transparent focus:shadow-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none'
             }
         }) }}
 {% endblock %}
 
 {% block submit %}
-    <button class="flex-shrink-0 px-2 py-1 link-btn">{{ submitLabel|default('conversation.registerLabel'|trans) }}</button>
+        <button class="flex-shrink-0 px-2 py-1 link-btn">{{ submitLabel|default('conversation.registerLabel'|trans) }}</button>
 {% endblock %}
 
 {% block after %}

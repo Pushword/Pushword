@@ -1,5 +1,5 @@
 ---
-title: "Conversation: Add Comment, Newsletter Form or Contact For"
+title: 'Conversation: Add Comment, Newsletter Form or Contact For'
 h1: Conversation
 toc: true
 filter_twig: 0
@@ -35,6 +35,9 @@ you may have a look inside `vendor/pushword/admin/install.php`.
 
 # Or add a button to click before loading block
 <button src-data-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'nslttr-'~page.slug, 'host': page.host}) }}" class="btn btn-primary">Register</button>
+
+# Advanced usage
+<p>This is an invitation to <button src-data-live="..." data-target="parent">register</button></p>
 ```
 
 Activate the `data-live` element with [@pushword/js-helper](https://yarnpkg.com/package/@pushword/js-helper) :
@@ -74,4 +77,4 @@ or `'@PushwordConversation/conversation/'.$type.$referring.'Step'.$step.'.html.t
 
 Per default, there is 3 form types : `newsletter`, `message` and `multiStepMessage`.
 
-Add a new class in config `piedweb_conversation.form.myNewType: myNewFormClass`.
+Add a new class in bundle config `pushword_conversation.conversation_form.myNewType: myNewFormClass` or at the app level config `pushword.apps[...].conversation_form: [...]`

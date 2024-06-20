@@ -8,7 +8,11 @@ conversation:
     placeholder: Nom
   email:
     placeholder: Email
+    invalid: Adresse email invalide
+  phoneNumber:
+    invalid: Numéro de téléphone au format inconnu
   submitLabel: Valider
+  registerLabel: S'inscrire
   input:
     notset: inconnu
   suscribeToNewsletter: Inscription à la newsletter
@@ -17,8 +21,8 @@ admin:
   conversation:
     notification:
       title:
-        singular: '[%appName%] : Nouveau message'
-        plural: '[%appName%] : Nouveaux messages'
+        singular: "[%appName%] : Nouveau message"
+        plural: "[%appName%] : Nouveaux messages"
     label:
       conversation: Conversation
       publishedAt: Publié le

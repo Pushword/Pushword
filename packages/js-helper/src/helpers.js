@@ -23,6 +23,10 @@ import 'regenerator-runtime/runtime'
  */
 export function liveBlock(liveBlockAttribute = 'data-live', liveFormSelector = '.live-form') {
   var btnToBlock = function (event, btn) {
+    if (btn.hasAttribute('data-target') && btn.getAttribute('data-target') == 'parent') {
+      btn = btn.parentElement ?? btn
+    }
+
     btn.setAttribute(liveBlockAttribute, btn.getAttribute('src-' + liveBlockAttribute))
     getLiveBlock(btn)
   }

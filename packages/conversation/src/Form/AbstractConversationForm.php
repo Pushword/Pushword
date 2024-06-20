@@ -18,6 +18,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\Constraints;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -288,14 +289,23 @@ abstract class AbstractConversationForm implements ConversationFormInterface
     /**
      * @return Constraint[]
      */
-    protected function getAuthorEmailConstraints(): array
+    protected function getAuthorEmailConstraints(bool $canBeAPhoneNumber = false): array
     {
+        if ($canBeAPhoneNumber) {
+            return [
+                new Constraints\NotBlank(),
+                new Constraints\AtLeastOneOf([
+                    new Constraints\Regex([
+                        'pattern' => "^ *(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4} *$", 'message' => 'user.email.invalid',
+                    ]),
+                    new Constraints\Email(['message' => 'conversation.phoneNumber.invalid',
+                    ]),
+                ])];
+        }
+
         return [
-            new NotBlank(),
-            new Email([
-                'message' => 'user.email.invalid',
-                'mode' => 'strict',
-            ]),
+            new Constraints\NotBlank(),
+            new Constraints\Email(['message' => 'conversation.email.invalid', 'mode' => 'strict']),
         ];
     }
 }

@@ -12,14 +12,6 @@ class MessageForm extends AbstractConversationForm implements ConversationFormIn
 {
     protected function getStepOne(): FormBuilderInterface
     {
-        /*
-        if ($this->getUser()) {
-            $this->message->setAuthorEmail($this->getUser()->getEmail());
-            $this->message->setAuthorName($this->getUser()->getUsername());
-            $user = true;
-        }
-        /**/
-
         $formBuilder = $this->initForm();
 
         if (null === $this->getUser()) { // ! isset($user) ||

@@ -18,7 +18,7 @@ class Configuration implements ConfigurationInterface
         'conversation_notification_email_to',
         'conversation_notification_email_from',
         'conversation_notification_interval',
-        // 'form',
+        'conversation_form',
         'conversation_form_message',
         'conversation_form_multistep_message',
         'conversation_form_ms_message',
@@ -43,7 +43,16 @@ class Configuration implements ConfigurationInterface
                         ->defaultValue('P1D')
                         ->info("DateInterval's format")
                     ->end()
-                    // ->arrayNode('form')->end()
+                    ->variableNode('conversation_form')
+                        ->defaultValue([
+                            'message' => MessageForm::class,
+                            'ms_message' => MultiStepMessageForm::class,
+                            'multistep_message' => MultiStepMessageForm::class,
+                            'newsletter' => NewsletterForm::class,
+                        ])
+                    ->end()
+
+                    // permit compatibility before v1
                     ->scalarNode('conversation_form_message')
                         ->defaultValue(MessageForm::class)
                     ->end()
@@ -56,6 +65,7 @@ class Configuration implements ConfigurationInterface
                     ->scalarNode('conversation_form_newsletter')
                         ->defaultValue(NewsletterForm::class)
                     ->end()
+
                     ->scalarNode('possible_origins')->defaultNull()->end()
                 ->end()
         ;

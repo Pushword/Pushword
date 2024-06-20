@@ -43,18 +43,25 @@ final class ConversationFormController extends AbstractController
     ) {
     }
 
+    private function getFormManagerClassBeforeV1(string $type): ?string
+    {
+        $param = 'conversation_form_'.str_replace('-', '_', $type);
+
+        if (! $this->apps->get()->has($param)) {
+            return null;
+        }
+    }
+
     /**
      * @return class-string<ConversationFormInterface>
      */
     private function getFormManagerClass(string $type): string
     {
-        $param = 'conversation_form_'.str_replace('-', '_', $type);
+        $class = $this->apps->get()->getArray('conversation_form')[$type] ?? $this->getFormManagerClassBeforeV1($type);
 
-        if (! $this->apps->get()->has($param)) {
+        if (! is_string($class)) {
             throw new Exception('`'.$type."` does'nt exist (not configured).");
         }
-
-        $class = \strval($this->apps->get()->getStr($param));
 
         if (! class_exists($class)
             || ! (new ReflectionClass($class))->implementsInterface(ConversationFormInterface::class)) {

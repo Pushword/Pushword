@@ -134,30 +134,33 @@ class ScrollYEnhancer {
   }
 }
 
+/**
+ * <div
+ *  data-arrowleft='<div class="scroll-left relative left-[22px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">‹</div>'
+ *  data-arrowright='<div class="scroll-right relative left-[calc(100vw-62px)] -mt-[36px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">›</div>'
+ *  data-arrowhiddenclass="opacity-30"
+ *  data-scrolly=600 // before toscroll
+ * >...</div>
+ */
 class ScrollXEnhancer {
-  constructor(
-    selector = '.enhance-scroll-x',
-    arrowRight = '<div class="scroll-right relative left-[calc(100vw-62px)] -mt-[36px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">›</div>',
-    arrowLeft = '<div class="scroll-left relative left-[22px] top-1/3 z-20 h-[36px] w-[36px] cursor-pointer select-none rounded-full border border-gray-200 bg-white text-center text-3xl leading-none text-gray-500 hover:text-gray-700" onclick="scrollX(this)">‹</div>',
-  ) {
+  constructor() {
     window.scrollLeft = this.scrollLeft
     window.scrollX = this.scrollX
     window.manageScrollXControllerVisibility = this.manageScrollXControllerVisibility
     window.isScrolling = false
 
-    document.querySelectorAll(selector).forEach((element) => {
+    document.querySelectorAll('.enhance-scroll-x').forEach((element) => {
       if (element.scrollWidth <= element.clientWidth + 12) {
         // 20 = padding-bottom
         element.classList.remove('enhance-scroll-x')
         return
       }
 
-      this.arrowLeft = element.dataset.arrowleft ?? arrowLeft
-      this.arrowRight = element.dataset.arrowright ?? arrowRight
-      element.classList.remove(selector)
+      element.classList.remove('.enhance-scroll-x')
       this.enhanceScrollX(element)
       this.mouseSliderX(element)
       this.wheelScrollX(element)
+      manageScrollXControllerVisibility(element)
       element.onscroll = function () {
         manageScrollXControllerVisibility(this)
       }
@@ -180,13 +183,19 @@ class ScrollXEnhancer {
         const before = element.scrollLeft
         element.scrollLeft += evt.deltaY
 
+        if (element.dataset.scrolly === 0) {
+          window.isScrolling = false
+          return
+        }
+
         if (before === element.scrollLeft) {
           if (new Date().getTime() - window.lastScrollTime > 200) {
             window.lastScrollTime = new Date().getTime()
-            const toScrollHeight = element.dataset.toscroll ?? 600
+            const toScrollHeight = element.dataset.scrolly ?? 600
             window.scrollBy({ top: evt.deltaY > 0 ? toScrollHeight : -toScrollHeight, left: 0, behavior: 'smooth' })
           }
         } else window.lastScrollTime = new Date().getTime()
+
         window.isScrolling = false
       },
       { passive: false },
@@ -195,33 +204,34 @@ class ScrollXEnhancer {
 
   enhanceScrollX(element) {
     if (element.scrollWidth <= element.clientWidth) return
-    element.insertAdjacentHTML('beforebegin', this.arrowLeft + this.arrowRight)
+    element.insertAdjacentHTML('beforebegin', element.dataset.arrowleft + element.dataset.arrowright)
   }
 
-  scrollX(scroller, selector = '.enhance-scroll-x') {
+  scrollX(scroller, scrollDistance = null) {
     if (!scroller) return
-    const element = scroller.parentNode.querySelector(selector)
+    const element = scroller.parentNode.querySelector('.enhance-scroll-x')
     if (!element) return
 
     const scrollToRight = scroller.classList.contains('scroll-right')
 
     const nextElementToScroll = element.children[3] // work only with equal width block
-    const toScrollWidth = nextElementToScroll.offsetWidth + parseInt(window.getComputedStyle(nextElementToScroll).marginLeft)
+    const toScrollWidth = scrollDistance ?? nextElementToScroll.offsetWidth + parseInt(window.getComputedStyle(nextElementToScroll).marginLeft)
     const before = element.scrollLeft
     element.scrollLeft += scrollToRight ? toScrollWidth : -toScrollWidth
     return before !== element.scrollLeft
   }
 
   manageScrollXControllerVisibility(element) {
+    const arrowHiddenClass = element.dataset.arrowhiddenclass ?? 'opacity-30'
     const scrollLeftElement = element.parentNode.querySelector('.scroll-left')
     const scrollRightElement = element.parentNode.querySelector('.scroll-right')
-    if (!scrollLeftElement || !scrollRightElement) return
-    scrollRightElement.classList.remove('opacity-30')
-    scrollLeftElement.classList.remove('opacity-30')
+    if (!scrollLeftElement || !scrollRightElement || !arrowHiddenClass) return
+    scrollRightElement.classList.remove(arrowHiddenClass)
+    scrollLeftElement.classList.remove(arrowHiddenClass)
 
     const isAtMaxScroll = element.scrollLeft >= element.scrollWidth - element.clientWidth
-    if (isAtMaxScroll) scrollRightElement.classList.add('opacity-30')
-    if (element.scrollLeft === 0) scrollLeftElement.classList.add('opacity-30')
+    if (isAtMaxScroll) scrollRightElement.classList.add(arrowHiddenClass)
+    if (element.scrollLeft === 0) scrollLeftElement.classList.add(arrowHiddenClass)
   }
 
   mouseSliderX(toSlide, speed = 1) {
