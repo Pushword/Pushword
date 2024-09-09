@@ -36,7 +36,7 @@ final class HtmlObfuscateLink extends ObfuscateLink
 
     public function convertHtmlRelObfuscateLink(string $body): string
     {
-        preg_match_all(static::HTML_REGEX, $body, $matches);
+        preg_match_all(self::HTML_REGEX, $body, $matches);
 
         if (! isset($matches[1])) {
             return $body;

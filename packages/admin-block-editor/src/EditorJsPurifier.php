@@ -84,7 +84,7 @@ final readonly class EditorJsPurifier
             '"'.$this->base.'/',
         ];
 
-        $text = str_replace($toReplace, '/', '"'.$text);
+        $text = str_replace($toReplace, '"/', $text);
     }
 
     /**
