@@ -10,7 +10,7 @@ import Code from '@editorjs/code'
 import InlineCode from '@editorjs/inline-code'
 //import { StyleInlineTool } from "editorjs-style";
 import Hyperlink from '@pushword/editorjs-tools/dist/Hyperlink.js'
-import Paragraph from 'editorjs-paragraph-with-alignment'
+import Paragraph from 'editorjs-paragraph-with-alignment' // '@pushword/editorjs-tools/dist/Paragraph.js'
 import Table from '@editorjs/table'
 import DragDrop from 'editorjs-drag-drop'
 import Undo from 'editorjs-undo'
@@ -25,6 +25,7 @@ import Anchor from '@pushword/editorjs-tools/dist/Anchor.js'
 import Class from '@pushword/editorjs-tools/dist/Class.js'
 import AlignementTune from '@pushword/editorjs-tools/dist/AlignementTune.js'
 import HyperlinkTune from '@pushword/editorjs-tools/dist/HyperlinkTune.js'
+import PasteLink from '@pushword/editorjs-tools/dist/PasteLink.js'
 
 /** Was initially design to permit multiple editor.js in one page */
 export class editorJs {
@@ -96,10 +97,7 @@ export class editorJs {
 
     var editor = new EditorJS(
       Object.assign(config, {
-        onReady: function () {
-          new DragDrop(editor)
-          new Undo({ editor })
-        },
+        onReady: () => new DragDrop(editor) && new Undo({ editor }) && new PasteLink(editor),
       }),
     )
 

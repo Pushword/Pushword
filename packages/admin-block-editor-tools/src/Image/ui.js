@@ -1,4 +1,4 @@
-import ParentUi from './../../node_modules/@editorjs/image/src/ui.js'
+import ParentUi from './../Abstract/AbstractUi.js'
 import make from './../Abstract/make.js'
 
 export default class Ui extends ParentUi {

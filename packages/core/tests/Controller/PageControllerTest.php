@@ -33,7 +33,7 @@ class PageControllerTest extends KernelTestCase
         $slug = 'kitchen-sink';
         $this->expectException(NotFoundHttpException::class);
         $response = $this->getPageController()->show(Request::create('/en/'.$slug), '/en/'.$slug);
-        $this->assertSame(404, $response->getStatusCode());
+        self::assertSame(404, $response->getStatusCode());
     }
 
     public function testShowFeed(): void

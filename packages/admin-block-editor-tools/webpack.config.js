@@ -12,6 +12,7 @@ module.exports = {
     Anchor: './src/Anchor/Anchor.js',
     Class: './src/Class/Class.js',
     AlignementTune: './src/AlignementTune/AlignementTune.js',
+    PasteLink: './src/PasteLink/PasteLink.js',
     HyperlinkTune: './src/HyperlinkTune/HyperlinkTune.js',
   },
   module: {

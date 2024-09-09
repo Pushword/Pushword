@@ -83,6 +83,7 @@
     "symfony/profiler-pack": "*",
     "symplify/config-transformer": "*",
     "symplify/monorepo-builder": "*",
+    "tomasvotruba/unused-public": "^0.3.11",
     "vimeo/psalm": "*",
     "vincentlanglet/twig-cs-fixer": "*",
     "weirdan/doctrine-psalm-plugin": "*"

@@ -34,3 +34,7 @@ parameters:
         console_application_loader: packages/skeleton/bin/console-test.php
     doctrine:
         objectManagerLoader: packages/skeleton/bin/object-test.php
+    unused_public:
+        methods: false
+        properties: false
+        constants: false

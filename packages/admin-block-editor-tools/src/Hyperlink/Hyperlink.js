@@ -53,6 +53,7 @@ export default class Hyperlink {
   }
 
   render() {
+    console.log('render')
     this.nodes.button = document.createElement('button')
     this.nodes.button.type = 'button'
     this.nodes.button.classList.add(this.CSS.button, this.CSS.buttonModifier)
@@ -69,9 +70,10 @@ export default class Hyperlink {
     new Suggest.Local(this.nodes.input, this.nodes.suggester, window.pagesUriList ?? [], options)
 
     this.nodes.hideForBot = make.switchInput('hideForBot', this.i18n.t('Obfusquer'))
-    this.nodes.targetBlank = make.switchInput('targetBlank', this.i18n.t('Ouvrir dans un nouvel onglet'))
+    this.nodes.targetBlank = make.switchInput('targetBlank', this.i18n.t('Nouvel onglet'))
 
     this.nodes.selectDesign = make.element('select', this.CSS.select)
+    //this.nodes.selectDesign.name = 'style'
     make.option(this.nodes.selectDesign, '0', this.i18n.t('Style'), { disabled: 'disabled' })
     make.option(this.nodes.selectDesign, '')
     for (let i = 0; i < this.avalaibleDesign.length; i++) {
@@ -85,12 +87,16 @@ export default class Hyperlink {
     this.nodes.wrapper.classList.add(this.CSS.wrapper)
     this.nodes.wrapper.append(this.nodes.input, this.nodes.suggester, this.nodes.hideForBot, this.nodes.targetBlank, this.nodes.selectDesign)
 
+    setTimeout(() => this.nodes.input.focus(), 0)
+
     this.nodes.wrapper.addEventListener('change', (event) => {
       this.save(event)
     })
     /** */
+
     this.nodes.wrapper.addEventListener('keydown', (event) => {
       if (event.keyCode === 13) {
+        this.save(event)
         this.selection.collapseToEnd()
         this.inlineToolbar.close()
       }
@@ -165,6 +171,7 @@ export default class Hyperlink {
     }
     return !!anchorTag
   }
+
   clear() {
     this.closeActions()
   }
@@ -206,9 +213,11 @@ export default class Hyperlink {
   }
 
   save(event) {
-    event.preventDefault()
-    event.stopPropagation()
-    event.stopImmediatePropagation()
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+    }
 
     let value = this.nodes.input.value || ''
     if (!value.trim()) {
@@ -259,6 +268,7 @@ export default class Hyperlink {
     }
     return anchorTag
   }
+
   unlink() {
     document.execCommand(this.commandUnlink)
   }

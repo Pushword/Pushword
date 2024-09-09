@@ -9,8 +9,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Before v1
 
-- [x] Default theme more _classic_, _warm_ and _welcoming_
-  - [ ] Kitchen sink for Block Editor
 - [ ] TODO check a new blank installation
   - [x] dev environnement setup
   - [ ] usage setup - see if there is a prompt for first user

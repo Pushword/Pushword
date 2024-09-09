@@ -1,9 +1,8 @@
 //import ImageTool from "@editorjs/image/src/index.js";
-import ImageTool from './../../node_modules/@editorjs/image/src/index.js'
+import ImageTool from './ParentImage.js'
 //import css from "@editorjs/image/src/index.css";
 import css from './index.css'
 import Ui from './ui.js' //
-//import Ui from "@editorjs/image/src/ui.js";
 
 export default class Image extends ImageTool {
   constructor({ data, config, api, readOnly, block }) {

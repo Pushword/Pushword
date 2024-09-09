@@ -65,6 +65,7 @@ export default class PagesList extends Abstract {
     this.nodes.orderSelect.classList.add('cdx-select')
     make.option(this.nodes.orderSelect, null, 'orderBy', { disabled: true })
     make.option(this.nodes.orderSelect, 'publishedAt ↓')
+    make.option(this.nodes.orderSelect, 'priority ↓, publishedAt ↓')
     make.option(this.nodes.orderSelect, 'publishedAt ↑')
     if (this._data.order) this.nodes.orderSelect.value = this._data.order
     return this.nodes.orderSelect
