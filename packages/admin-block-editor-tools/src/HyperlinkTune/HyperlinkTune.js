@@ -37,7 +37,7 @@ export default class HyperlinkTune {
     wrapperIcon.appendChild(Hyperlink.iconSvg('link', 12, 12))
 
     this.nodes.url = make.input(this, ['cdx-input-labeled', 'cdx-input-full'], '<a href=#>image</a>', this.data.url)
-    this.nodes.hideForBot = make.switchInput('hideForBot', this.i18n.t('Dissimuler pour les robots'))
+    this.nodes.hideForBot = make.switchInput('hideForBot', this.i18n.t('Obfusquer'))
     this.nodes.targetBlank = make.switchInput('targetBlank', this.i18n.t('Ouvrir dans un nouvel onglet'))
 
     wrapper.appendChild(wrapperIcon)

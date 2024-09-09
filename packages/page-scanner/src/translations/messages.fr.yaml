@@ -1,6 +1,6 @@
 page_scan:
   different_host: La page parente a un domaine différent
-  encrypt_mail: pour prévenir le spam, vous pouvez encrypter ce lien.
+  obfuscate_mail: pour prévenir le spam, vous pouvez obfusquer ce lien.
   not_found: non trouvé
   is_redirection: redirection
   unreachable: inaccessible - errorMessage

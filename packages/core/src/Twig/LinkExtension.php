@@ -29,6 +29,7 @@ final class LinkExtension extends AbstractExtension
             new TwigFunction('jslink', $this->linkProvider->renderLink(...), AppExtension::options()), // alias link
             new TwigFunction('link', $this->linkProvider->renderLink(...), AppExtension::options()),
             new TwigFunction('encrypt', [LinkProvider::class, 'encrypt']),
+            new TwigFunction('obfuscate', [LinkProvider::class, 'obfuscate']),
             new TwigFunction('mail', $this->linkProvider->renderEncodedMail(...), AppExtension::options()),
             new TwigFunction('email', $this->linkProvider->renderEncodedMail(...), AppExtension::options()),
             new TwigFunction('tel', $this->linkProvider->renderPhoneNumber(...), AppExtension::options()),

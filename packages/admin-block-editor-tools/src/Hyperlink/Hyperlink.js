@@ -226,7 +226,7 @@ export default class Hyperlink {
   insertLink() {
     let href = this.nodes.input.value || ''
     let target = this.nodes.targetBlank.querySelector('input').checked ? '_blank' : ''
-    let rel = this.nodes.hideForBot.querySelector('input').checked ? 'encrypt' : ''
+    let rel = this.nodes.hideForBot.querySelector('input').checked ? 'obfuscate' : ''
     let design = this.nodes.selectDesign.value || ''
 
     let anchorTag = this.initSelection ? this.initSelection : this.selection.findParentTag('A')

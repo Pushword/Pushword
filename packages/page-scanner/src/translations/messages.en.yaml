@@ -1,6 +1,6 @@
 page_scan:
   different_host: Parent page has a different host
-  encrypt_mail: to prevent spam, encrypt this link.
+  obfuscate_mail: to prevent spam, obfuscate this link.
   not_found: not found
   is_redirection: redirection
   unreachable: unreacheable - errorMessage

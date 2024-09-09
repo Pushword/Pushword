@@ -23,7 +23,7 @@
         </span>-->
         {% endblock %}
         <{{ title_tag|default('h' ~ (hLevel|default(2))) }} class="py-4 px-6 mt-0 font-bold text-xl leading-tight">
-            {% if encrypted_link is defined %}{{ link(title, link) }}{% else %}
+            {% if obfuscate_link is defined %}{{ link(title, link) }}{% else %}
                 <a href="{{ link }}" style="text-decoration:none">
                     {{ title|raw }}
                 </a>

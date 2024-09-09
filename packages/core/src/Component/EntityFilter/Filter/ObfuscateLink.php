@@ -9,7 +9,7 @@ use function Safe\preg_match_all;
 
 use Twig\Environment;
 
-class EncryptedLink extends AbstractFilter
+class ObfuscateLink extends AbstractFilter
 {
     public LinkProvider $linkProvider;
 
@@ -19,15 +19,15 @@ class EncryptedLink extends AbstractFilter
 
     public function apply(mixed $propertyValue): string
     {
-        return $this->convertEncryptedLink($this->string($propertyValue));
+        return $this->convertObfuscateLink($this->string($propertyValue));
     }
 
-    public function convertEncryptedLink(string $body): string
+    public function convertObfuscateLink(string $body): string
     {
-        return $this->convertMarkdownEncryptedLink($body);
+        return $this->convertMarkdownObfuscateLink($body);
     }
 
-    public function convertMarkdownEncryptedLink(string $body): string
+    public function convertMarkdownObfuscateLink(string $body): string
     {
         preg_match_all('/(?:#\[(.*?)\]\((.*?)\))({(?:([#.][-_:a-zA-Z0-9 ]+)+)\})?/', $body, $matches);
 
@@ -36,13 +36,13 @@ class EncryptedLink extends AbstractFilter
         }
 
         /** @var array<int, array<int, string>> $matches */
-        return $this->replaceEncryptedLink($body, $matches);
+        return $this->replaceObfuscateLink($body, $matches);
     }
 
     /**
      * @param array<int, array<int, string>> $matches
      */
-    protected function replaceEncryptedLink(string $body, array $matches, int $hrefKey = 2, int $anchorKey = 1): string
+    protected function replaceObfuscateLink(string $body, array $matches, int $hrefKey = 2, int $anchorKey = 1): string
     {
         $nbrMatch = \count($matches[0]);
         for ($k = 0; $k < $nbrMatch; ++$k) {

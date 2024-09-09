@@ -1,0 +1,412 @@
+{
+  "time": 1725895524264,
+  "blocks": [
+    {
+      "id": "3qkq3F7pZf",
+      "type": "paragraph",
+      "data": {
+        "text": "A few example for the editor possibilities. Best to observe this, it's in admin with split editor (live preview Side By Side).",
+        "alignment": "left"
+      },
+      "tunes": {
+        "anchor": "",
+        "class": ""
+      }
+    },
+    {
+      "id": "YM5xTDe0P0",
+      "type": "header",
+      "data": {
+        "text": "Links & Routes",
+        "level": 2
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": {
+          "alignment": "left"
+        },
+        "class": ""
+      }
+    },
+    {
+      "id": "VoMP8D9cb7",
+      "type": "list",
+      "data": {
+        "style": "unordered",
+        "items": [
+          {
+            "content": "<a href=\"{{ homepage() }}\">Homepage</a>",
+            "items": []
+          },
+          {
+            "content": "<a href=\"{{ page(page) }}\">Current Page</a>",
+            "items": []
+          },
+          {
+            "content": "Get Url : {{ page('what-you-want-in-same-app') }}",
+            "items": []
+          },
+          {
+            "content": "Canonical with base: {{ page(page, true) }}",
+            "items": []
+          },
+          {
+            "content": "Obfuscated Link :  <a href=\"https://piedweb.com\">Pied Web</a>  ",
+            "items": []
+          },
+          {
+            "content": "contact@piedweb.com ou {{ mail('contact@piedweb.com') }}",
+            "items": []
+          },
+          {
+            "content": "{{ tel('+33 00 00 00 00') }} ou directement +331 00 00 00 00",
+            "items": []
+          }
+        ]
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "A_0F1juE7u",
+      "type": "header",
+      "data": {
+        "text": " Quotes",
+        "level": 2
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": {
+          "alignment": "left"
+        },
+        "class": ""
+      }
+    },
+    {
+      "id": "UVJOHHKx_d",
+      "type": "quote",
+      "data": {
+        "text": " PHP ecosystem is undeniably awesome! With its extensive library of frameworks like Laravel and Symfony, coupled with its flexibility and scalability, PHP empowers developers to build robust and dynamic web applications effortlessly. Its active community constantly contributes to its evolution, ensuring it stays relevant and cutting-edge. Whether it's for small projects or enterprise-level applications, PHP remains a top choice for developers worldwide. In short, PHP rocks!",
+        "caption": "Author",
+        "alignment": "left"
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "0DNKkNX6_m",
+      "type": "header",
+      "data": {
+        "text": " Images et Galleries",
+        "level": 2
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": {
+          "alignment": "left"
+        },
+        "class": ""
+      }
+    },
+    {
+      "id": "Nc0PmabD3k",
+      "type": "header",
+      "data": {
+        "text": " Simple Image",
+        "level": 3
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": {
+          "alignment": "left"
+        },
+        "class": ""
+      }
+    },
+    {
+      "id": "1T4sQKxoZX",
+      "type": "image",
+      "data": {
+        "file": {
+          "media": "3.jpg",
+          "mimeType": "image/jpg",
+          "size": 2,
+          "customProperties": [],
+          "height": 1000,
+          "width": 1000,
+          "mainColor": null,
+          "name": "Demo 3",
+          "names": "",
+          "createdAt": {
+            "date": "2024-04-10 12:57:17.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "updatedAt": {
+            "date": "2024-04-10 12:57:17.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "url": "/media/default/3.jpg"
+        },
+        "caption": "Demo 3",
+        "withBorder": false,
+        "stretched": false,
+        "withBackground": false
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "tz4qMg5X9W",
+      "type": "header",
+      "data": {
+        "text": "Gallery",
+        "level": 3
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": {
+          "alignment": "left"
+        },
+        "class": ""
+      }
+    },
+    {
+      "id": "3QQ26W8pQ7",
+      "type": "gallery",
+      "data": [
+        {
+          "file": {
+            "media": "1.jpg",
+            "mimeType": "image/jpg",
+            "size": 2,
+            "customProperties": [],
+            "height": 1000,
+            "width": 1000,
+            "mainColor": null,
+            "name": "Demo 1",
+            "names": "",
+            "createdAt": {
+              "date": "2024-04-10 12:57:17.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "updatedAt": {
+              "date": "2024-04-10 12:57:17.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "url": "/media/default/1.jpg"
+          },
+          "url": "/media/default/1.jpg",
+          "caption": "Demo 1"
+        },
+        {
+          "file": {
+            "media": "2.jpg",
+            "mimeType": "image/jpg",
+            "size": 2,
+            "customProperties": [],
+            "height": 1000,
+            "width": 1000,
+            "mainColor": null,
+            "name": "Demo 2",
+            "names": "",
+            "createdAt": {
+              "date": "2024-04-10 12:57:17.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "updatedAt": {
+              "date": "2024-04-10 12:57:17.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "url": "/media/default/2.jpg"
+          },
+          "url": "/media/default/2.jpg",
+          "caption": "Demo 2"
+        },
+        {
+          "file": {
+            "media": "3.jpg",
+            "mimeType": "image/jpg",
+            "size": 2,
+            "customProperties": [],
+            "height": 1000,
+            "width": 1000,
+            "mainColor": null,
+            "name": "Demo 3",
+            "names": "",
+            "createdAt": {
+              "date": "2024-04-10 12:57:17.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "updatedAt": {
+              "date": "2024-04-10 12:57:17.000000",
+              "timezone_type": 3,
+              "timezone": "UTC"
+            },
+            "url": "/media/default/3.jpg"
+          },
+          "url": "/media/default/3.jpg",
+          "caption": "Demo 3"
+        }
+      ],
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "Qo3TFvvBh7",
+      "type": "header",
+      "data": {
+        "text": "Video",
+        "level": 2
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": {
+          "alignment": "left"
+        },
+        "class": ""
+      }
+    },
+    {
+      "id": "1revQkMWBC",
+      "type": "embed",
+      "data": {
+        "serviceUrl": "https://www.youtube.com/watch?v=Nwyylc9GQuQ",
+        "alternativeText": "SuperVideo",
+        "image": {
+          "media": "3.jpg",
+          "mimeType": "image/jpg",
+          "size": 2,
+          "customProperties": [],
+          "height": 1000,
+          "width": 1000,
+          "mainColor": null,
+          "name": "Demo 3",
+          "names": "",
+          "createdAt": {
+            "date": "2024-04-10 12:57:17.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "updatedAt": {
+            "date": "2024-04-10 12:57:17.000000",
+            "timezone_type": 3,
+            "timezone": "UTC"
+          },
+          "url": "/media/default/3.jpg"
+        }
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "wEXmDzMLAu",
+      "type": "paragraph",
+      "data": {
+        "text": "  ",
+        "alignment": "left"
+      },
+      "tunes": {
+        "anchor": "",
+        "class": ""
+      }
+    },
+    {
+      "id": "yeI1Q_0S1s",
+      "type": "header",
+      "data": {
+        "text": "Advanced",
+        "level": 2
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": {
+          "alignment": "left"
+        },
+        "class": ""
+      }
+    },
+    {
+      "id": "IoYdB2tjKC",
+      "type": "header",
+      "data": {
+        "text": "Render Page List",
+        "level": 3
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": {
+          "alignment": "left"
+        },
+        "class": ""
+      }
+    },
+    {
+      "id": "KE-DQW4i8C",
+      "type": "header",
+      "data": {
+        "text": "Page found via Kw",
+        "level": 4
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": {
+          "alignment": "left"
+        },
+        "class": ""
+      }
+    },
+    {
+      "id": "upP4XLl00B",
+      "type": "pages_list",
+      "data": {
+        "kw": "content:fun",
+        "display": "list",
+        "order": "publishedAt ↓",
+        "max": "",
+        "maxPages": ""
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "1WolIq6OBX",
+      "type": "pages_list",
+      "data": {
+        "kw": "content:fun",
+        "display": "card",
+        "order": "publishedAt ↓",
+        "max": "",
+        "maxPages": ""
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "ehE8RitO__",
+      "type": "paragraph",
+      "data": {
+        "text": "<a href=\"https://pushword.piedweb.com\">Continue your exploration with the docs ➜</a>",
+        "alignment": "left"
+      },
+      "tunes": {
+        "anchor": "",
+        "class": ""
+      }
+    }
+  ],
+  "version": "2.29.1"
+}

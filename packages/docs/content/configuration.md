@@ -93,10 +93,10 @@ pushword:
       - bundles/pushwordcore/page.js
   filters:
     # Defaults:
-    main_content: twig,date,email,encryptedLink,htmlEncryptedLink,image,phoneNumber,punctuation,markdown,mainContentSplitter,extended
+    main_content: twig,date,email,obfuscateLink,htmlObfuscateLink,image,phoneNumber,punctuation,markdown,mainContentSplitter,extended
     name: twig,date,name,extended
     title: twig,date,elseH1,extended
-    string: twig,date,email,encryptedLink,phoneNumber,extended
+    string: twig,date,email,obfuscateLink,phoneNumber,extended
   entity_can_override_filters: true
   image_filter_sets:
     default:

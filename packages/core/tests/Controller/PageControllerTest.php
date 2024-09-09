@@ -24,10 +24,16 @@ class PageControllerTest extends KernelTestCase
         // file_put_contents('debug.html', $response->getContent());
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
 
+        $slug = 'kitchen-sink-block';
+        $request = Request::create($slug);
+        $request->attributes->set('host', 'admin-block-editor.test');
+        $response = $this->getPageController()->show($request, $slug);
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+
         $slug = 'kitchen-sink';
         $this->expectException(NotFoundHttpException::class);
         $response = $this->getPageController()->show(Request::create('/en/'.$slug), '/en/'.$slug);
-        // $this->assertSame(404, $response->getStatusCode());
+        $this->assertSame(404, $response->getStatusCode());
     }
 
     public function testShowFeed(): void

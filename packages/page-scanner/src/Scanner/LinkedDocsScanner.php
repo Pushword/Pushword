@@ -125,9 +125,9 @@ final class LinkedDocsScanner extends AbstractScanner
         for ($k = 0; $k < $matchesCount; ++$k) {
             $uri = $matches[4][$k] ?? $matches[5][$k];
             $uri = 'data-rot' == $matches[1][$k] ? LinkProvider::decrypt($uri) : $uri;
-            $uri .= $matches[4][$k] ? '' : '#(encrypt)'; // not elegant but permit to remember it's an encrypted link
+            $uri .= $matches[4][$k] ? '' : '#(obfuscate)'; // not elegant but permit to remember it's an obfuscate link
             if ($this->isMailtoOrTelLink($uri) && 'data-rot' != $matches[1][$k]) {
-                $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.encrypt_mail'));
+                $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.obfuscate_mail'));
             } elseif ('' !== $uri && $this->isWebLink($uri)) {
                 $linkedDocs[] = $uri;
             }

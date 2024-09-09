@@ -27,10 +27,10 @@ final readonly class LinkProvider
      * @param array<string, string>|string|Page $path
      * @param array<string, string>|bool|string $attr
      */
-    public function renderLink(string $anchor, array|Page|string $path, array|bool|string $attr = [], bool $encrypt = true): string
+    public function renderLink(string $anchor, array|Page|string $path, array|bool|string $attr = [], bool $obfuscate = true): string
     {
         if (\is_bool($attr)) {
-            $encrypt = $attr;
+            $obfuscate = $attr;
             $attr = [];
         }
 
@@ -52,12 +52,12 @@ final readonly class LinkProvider
             $path = $this->router->generate($path);
         }
 
-        if ($encrypt) {
+        if ($obfuscate) {
             if (str_contains($path, 'mailto:') && false !== filter_var($anchor, \FILTER_VALIDATE_EMAIL)) {
                 return $this->renderEncodedMail($anchor);
             }
 
-            $attr = [...$attr, ...['data-rot' => self::encrypt($path)]];
+            $attr = [...$attr, ...['data-rot' => self::obfuscate($path)]];
             $template = $this->getApp()->getView('/component/link_js.html.twig');
 
             return trim($this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]));
@@ -69,7 +69,13 @@ final readonly class LinkProvider
         return trim($this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]));
     }
 
+    /** alias for compatibility with v0.* */
     public static function encrypt(string $path): string
+    {
+        return self::obfuscate($path);
+    }
+
+    public static function obfuscate(string $path): string
     {
         if (str_starts_with($path, 'http://')) {
             $path = '-'.substr($path, 7);

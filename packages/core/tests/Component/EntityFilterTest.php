@@ -4,7 +4,7 @@ namespace Pushword\Core\Tests\Component;
 
 use DateTime;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Component\EntityFilter\Filter\HtmlEncryptedLink;
+use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
@@ -27,19 +27,19 @@ class EntityFilterTest extends KernelTestCase
         self::assertSame('<p>', substr(trim($manager->getMainContent()->getBody()), 0, 3));
     }
 
-    public function testEncryptedLink(): void
+    public function testObfuscateLink(): void
     {
-        $filter = new HtmlEncryptedLink();
+        $filter = new HtmlObfuscateLink();
         $filter->app = ($apps = self::getContainer()->get(AppPool::class))->getApp();
         $filter->twig = self::getContainer()->get('twig');
         $router = self::getContainer()->get(PushwordRouteGenerator::class);
         $filter->linkProvider = new LinkProvider($router, $apps, $filter->twig);
-        self::assertSame('Lorem <span data-rot=_cvrqjro.pbz/>Test</span> ipsum', $filter->convertHtmlRelEncryptedLink('Lorem <a href="https://piedweb.com/" rel="encrypt">Test</a> ipsum'));
-        self::assertSame('Lorem <span class=link-btn data-rot=_cvrqjro.pbz/>Test</span> ipsum', $filter->convertHtmlRelEncryptedLink('Lorem <a class="link-btn" href="https://piedweb.com/" rel="encrypt">Test</a> ipsum'));
-        self::assertSame('Lorem <span class="link-btn btn-plus" data-rot=_cvrqjro.pbz/>Test</span> ipsum', $filter->convertHtmlRelEncryptedLink('Lorem <a class="link-btn btn-plus" href="https://piedweb.com/" rel="encrypt">Test</a> ipsum'));
-        self::assertSame('Lorem <span class="link-btn btn-plus" data-rot=&>Test</span> ipsum', $filter->convertHtmlRelEncryptedLink('Lorem <a class="link-btn btn-plus" href="&" rel="encrypt">Test</a> ipsum'));
+        self::assertSame('Lorem <span data-rot=_cvrqjro.pbz/>Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
+        self::assertSame('Lorem <span class=link-btn data-rot=_cvrqjro.pbz/>Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn" href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
+        self::assertSame('Lorem <span class="link-btn btn-plus" data-rot=_cvrqjro.pbz/>Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn btn-plus" href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
+        self::assertSame('Lorem <span class="link-btn btn-plus" data-rot=&>Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn btn-plus" href="&" rel="obfuscate">Test</a> ipsum'));
 
-        self::assertSame('Lorem <a href="/a1" class="ninja">Test</a> <span data-rot=_cvrqjro.pbz/>Anchor 2</span>', $filter->convertHtmlRelEncryptedLink('Lorem <a href="/a1" class="ninja">Test</a> <a href="https://piedweb.com/" rel="encrypt">Anchor 2</a>'));
+        self::assertSame('Lorem <a href="/a1" class="ninja">Test</a> <span data-rot=_cvrqjro.pbz/>Anchor 2</span>', $filter->convertHtmlRelObfuscateLink('Lorem <a href="/a1" class="ninja">Test</a> <a href="https://piedweb.com/" rel="obfuscate">Anchor 2</a>'));
     }
 
     private function getManagerPool(): ManagerPool
