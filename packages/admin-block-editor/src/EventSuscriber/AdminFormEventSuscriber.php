@@ -12,12 +12,18 @@ use Pushword\AdminBlockEditor\FormField\PageImageFormField;
 use Pushword\AdminBlockEditor\FormField\PageMainContentFormField;
 use Pushword\Core\Entity\Page;
 use Sonata\AdminBundle\Event\PersistenceEvent;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * @template T of object
  */
 class AdminFormEventSuscriber extends AbstractEventSuscriber
 {
+    public function __construct(public bool $editorBlockForNewPage, private readonly RequestStack $requestStack)
+    {
+        parent::__construct($editorBlockForNewPage);
+    }
+
     /**
      * @return array<string, string>
      */
@@ -63,8 +69,10 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
             return;
         }
 
+        $base = $this->requestStack->getCurrentRequest()?->getSchemeAndHttpHost() ?? '';
+
         // sanitize with https://github.com/editor-js/editorjs-phpstan
-        $returnValues['mainContent'] = (new EditorJsPurifier($page->getLocale() ?: 'fr'))($returnValues['mainContent']); // @phpstan-ignore-line
+        $returnValues['mainContent'] = (new EditorJsPurifier($page->getLocale() ?: 'fr', $page, $base))($returnValues['mainContent']); // @phpstan-ignore-line
 
         $page->setMainContent($returnValues['mainContent']);
     }

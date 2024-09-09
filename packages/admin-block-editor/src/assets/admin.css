@@ -40,6 +40,10 @@ a[rel='encrypt']:not(.link-btn) {
   }
 }
 
+.ce-popover__items {
+  overflow-x: hidden;
+}
+
 /** editorjs quote ui inspired by https://github.com/editor-js/quote/pull/23 */
 
 .cdx-quote {

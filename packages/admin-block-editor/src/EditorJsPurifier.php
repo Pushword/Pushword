@@ -4,12 +4,13 @@ namespace Pushword\AdminBlockEditor;
 
 use Exception;
 use JoliTypo\Fixer;
+use Pushword\Core\Entity\Page;
 
 use function Safe\json_encode;
 
 final readonly class EditorJsPurifier
 {
-    public function __construct(private string $locale = 'fr_FR')
+    public function __construct(private string $locale = 'fr_FR', private readonly ?Page $page = null, private readonly string $base = '')
     {
     }
 
@@ -68,7 +69,22 @@ final readonly class EditorJsPurifier
             $text = $this->getFixer()->fix($text);
         }
 
+        $this->makeUrlRelative($text);
+
         return trim($text);
+    }
+
+    private function makeUrlRelative(string &$text): void
+    {
+        if (($host = $this->page?->getHost() ?? '') !== '' && '' !== $this->base) {
+        }
+
+        $toReplace = [
+            '"'.$this->base.'/'.$host.'/',
+            '"'.$this->base.'/',
+        ];
+
+        $text = str_replace($toReplace, '/', '"'.$text);
     }
 
     /**
