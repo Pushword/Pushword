@@ -38,7 +38,7 @@ document.querySelector('body').addEventListener('keydown', function(event) {
 {% endblock %}
 
 {% block sonata_form_attributes %}
-hx-post="{{ admin.generateUrl(url, {(admin.idParameter): objectId, 'uniqid': admin.uniqid, 'subclass': app.request.get('subclass')}) }}"
+hx-post="{{ admin.generateUrl(url, {(admin.idParameter): objectId, uniqid: admin.uniqid, subclass: app.request.get('subclass')}) }}"
 hx-trigger="ctrl-s-event"
 hx-swap="none"
 {% endblock %}

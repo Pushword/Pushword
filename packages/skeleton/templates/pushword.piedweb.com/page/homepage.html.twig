@@ -4,7 +4,7 @@
 <div class="flex flex-wrap items-stretch">
 
     <div class="order-2 w-full mx-auto lg:mr-0 lg:ml-0">
-        {% include view('/page/_content.html.twig') %}
+        {{ include(view('/page/_content.html.twig')) }}
     </div>
 </div>
 {% endblock %}

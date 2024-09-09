@@ -21,7 +21,7 @@
     {% if admin.getListMode() == 'tree' %}
       // TODO
     {% else %}
-      {% include get_admin_template('outer_list_rows_' ~ admin.getListMode(), admin.code) %}
+      {{ include(get_admin_template('outer_list_rows_' ~ admin.getListMode(), admin.code)) }}
     {% endif %}
   </tbody>
 {% endblock %}

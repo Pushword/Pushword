@@ -12,7 +12,7 @@ file that was distributed with this source code.
 {% extends base_template %}
 
 {% block title %}
-    {{ "title_show"|trans({'%name%': admin.toString(object)|u.truncate(15, '...')}, 'SonataAdminBundle') }}
+    {{ 'title_show'|trans({'%name%': admin.toString(object)|u.truncate(15, '...')}, 'SonataAdminBundle') }}
 {% endblock %}
 
 {% block navbar_title %}
@@ -20,13 +20,13 @@ file that was distributed with this source code.
 {% endblock %}
 
 {%- block actions -%}
-    {% include '@SonataAdmin/CRUD/action_buttons.html.twig' %}
+    {{ include('@SonataAdmin/CRUD/action_buttons.html.twig') }}
 {%- endblock -%}
 
 {% block tab_menu %}
     {{ knp_menu_render(admin.sidemenu(action), {
-        'currentClass': 'active',
-        'template': get_global_template('tab_menu_template')
+        currentClass: 'active',
+        template: get_global_template('tab_menu_template')
     }, 'twig') }}
 {% endblock %}
 

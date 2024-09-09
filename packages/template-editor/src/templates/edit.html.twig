@@ -2,7 +2,7 @@
 {% form_theme form 'bootstrap_4_layout.html.twig' %}
 
 {% block sonata_admin_content %}
-    {% include '@SonataTwig/FlashMessage/render.html.twig' %}
+    {{ include('@SonataTwig/FlashMessage/render.html.twig') }}
 
     {{ form_start(form) }}
 <div class="box box-primary">
@@ -19,7 +19,7 @@
             <button type="submit" class="btn btn-success" name="btn_update_and_edit"><i class="fa fa-save" aria-hidden="true"></i> Mettre à jour</button>
 
             ou
-            <a class="btn btn-danger" href="{{ path('pushword_template_editor_delete', {'encodedPath': element.encodedPath}) }}">
+            <a class="btn btn-danger" href="{{ path('pushword_template_editor_delete', {encodedPath: element.encodedPath}) }}">
                 <i class="fa fa-minus-circle" aria-hidden="true"></i> Supprimer
             </a>
             {% else %}

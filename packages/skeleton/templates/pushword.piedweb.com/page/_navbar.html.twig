@@ -23,7 +23,7 @@
                     <li><a class="hidden md:inline-block {{ nav_item_class }}" href="{{ page('extensions') }}">Extensions</a></li>
                     <li><a class="hidden md:inline-block {{ nav_item_class }}" href="{{ page('contribute') }}">Contribute</a></li>
                     <li><a class="hidden md:inline-block {{ nav_item_class }}" href="{{ page('roadmap') }}">Roadmap</a></li>
-                    <li>{{ link(svg('github'), 'https://github.com/pushword/pushword', {'class': 'hidden md:inline-block ' ~ nav_item_class}) }}</li>
+                    <li>{{ link(svg('github'), 'https://github.com/pushword/pushword', {class: 'hidden md:inline-block ' ~ nav_item_class}) }}</li>
 
                     <li>
                         {% if page.slug == 'homepage' %}

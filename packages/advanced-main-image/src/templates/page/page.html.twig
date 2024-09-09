@@ -1,1 +1,1 @@
-{% include page.template|default(view(page.mainImageFormat > 1 ? '/page/page_hero.html.twig' : '/page/page_default.html.twig')) %}
+{{ include(page.template|default(view(page.mainImageFormat > 1 ? '/page/page_hero.html.twig' : '/page/page_default.html.twig'))) }}

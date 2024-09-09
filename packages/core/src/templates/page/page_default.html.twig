@@ -3,7 +3,7 @@
 {# ----------- #}
 
 {% block html_opener %}
-<html lang="{{ page.locale|default(apps.get().defaultLocale) }}" {{ mergeAttr({'class': 'leading-tight text-gray-900'}, page.htmlOpenerAttr|default({})) }}>
+<html lang="{{ page.locale|default(apps.get().defaultLocale) }}" {{ mergeAttr({class: 'leading-tight text-gray-900'}, page.htmlOpenerAttr|default({})) }}>
 {% endblock %}
 
 {% block title %}{{ pw(page).title|striptags }}{% endblock %}
@@ -59,11 +59,11 @@
   {% endblock %}
 
   {% block footer %}
-    {% include view('/page/_footer.html.twig') with {'content': '"/' ~ page.slug ~ '" ' ~ pageContent ~ pageBreadcrumb} %}
+    {{ include(view('/page/_footer.html.twig'), {content: '"/' ~ page.slug ~ '" ' ~ pageContent ~ pageBreadcrumb}) }}
   {% endblock %}
 
   {% block navbar %}
-    {% include view('/page/_navbar.html.twig') %}
+    {{ include(view('/page/_navbar.html.twig')) }}
   {% endblock %}
 
   {% block admin_buttons %}
@@ -79,7 +79,7 @@
         {{ svg('file', {class: 'w-full p-2 fill-current'}) }}
       </a>
       </a>
-      <a href="{{ path('piedweb_static_generate', {'host': page.host}) }}" class="inline-block p-1 text-gray-50 bg-gray-500 rounded-b-lg hover:bg-gray-800">
+      <a href="{{ path('piedweb_static_generate', {host: page.host}) }}" class="inline-block p-1 text-gray-50 bg-gray-500 rounded-b-lg hover:bg-gray-800">
         {{ svg('upload', {class: 'w-full p-2 fill-current'}) }}
       </a>
       </div>

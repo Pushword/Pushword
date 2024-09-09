@@ -12,7 +12,7 @@
     {% endif %}
 
     {% if item.name in ['page'] %}
-        {% do item.setAttribute('class', (item.getAttribute('class')|replace({'treeview': ''}))) %}
+        {% do item.setAttribute('class', (item.getAttribute('class')|replace({treeview: ''}))) %}
     {% endif %}
 
     {% if item.label in ['admin.label.conversation']

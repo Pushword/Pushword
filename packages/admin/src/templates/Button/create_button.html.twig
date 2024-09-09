@@ -17,7 +17,7 @@ file that was distributed with this source code.
     {% else %}
         {% for subclass in admin.subclasses|keys %}
             <li>
-                <a class="sonata-action-element" href="{{ admin.generateUrl('create', {'subclass': subclass}) }}">
+                <a class="sonata-action-element" href="{{ admin.generateUrl('create', {subclass: subclass}) }}">
                     <i class="fas fa-plus-circle" aria-hidden="true"></i>
                     {{ 'link_action_create'|trans({}, 'SonataAdminBundle') }} {{ subclass|trans({}, admin.translationdomain) }}
                 </a>

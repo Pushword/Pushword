@@ -11,12 +11,12 @@
 #}
 
 {% set navbar_items = navbar_items ?? {
-  'Admin': (class_exists('\\Pushword\\Admin\\PushwordAdminBundle') ? '/admin/' : 'https://pushword.piedweb.com/extension/admin'),
-  'Kitchen Sink': {'href': page('kitchen-sink')},
-  'Docs': {
-        'anchor': svg('arrow-up-right-from-square', {class: 'w-auto h-3 mr-1 fill-current text-gray-300 group-hover:text-gray-600 inline-block'}) ~ 'Docs',
-        'href': 'https://pushword.piedweb.com',
-        'class': 'group text-gray-800 hover:text-primary'
+  Admin: (class_exists('\\Pushword\\Admin\\PushwordAdminBundle') ? '/admin/' : 'https://pushword.piedweb.com/extension/admin'),
+  'Kitchen Sink': {href: page('kitchen-sink')},
+  Docs: {
+        anchor: svg('arrow-up-right-from-square', {class: 'w-auto h-3 mr-1 fill-current text-gray-300 group-hover:text-gray-600 inline-block'}) ~ 'Docs',
+        href: 'https://pushword.piedweb.com',
+        class: 'group text-gray-800 hover:text-primary'
   },
  } %}
 
@@ -65,7 +65,7 @@
                                 {{ item.anchor ?? anchor|raw }}
                             </span>
                         {% else %}
-                          {% set itemAttr = ({'class': navbar_nav_item_class ?? 'text-gray-800 hover:text-primary'})|merge(item|filter((v, k) => k != "anchor")) %}
+                          {% set itemAttr = ({class: navbar_nav_item_class ?? 'text-gray-800 hover:text-primary'})|merge(item|filter((v, k) => k != 'anchor')) %}
                           {{ link(item.anchor ?? anchor, itemAttr, item.encrypt ?? false) }}
                         {% endif %}
                     {% endfor %}

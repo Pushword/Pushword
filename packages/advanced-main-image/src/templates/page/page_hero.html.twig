@@ -1,5 +1,5 @@
 {% extends view('/page/page_default.html.twig') %}
 
     {% block content %}
-        {% include view('/page/_content_hero.html.twig') %}
+        {{ include(view('/page/_content_hero.html.twig')) }}
     {% endblock %}

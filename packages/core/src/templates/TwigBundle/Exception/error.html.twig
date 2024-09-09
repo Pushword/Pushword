@@ -5,5 +5,5 @@
         'Pushword\\Core\\Controller\\PageController::showPage', {page: error_page}
     )) }}
 {% else %}
-    {% include view('/error.html.twig') %}
+    {{ include(view('/error.html.twig')) }}
 {% endif %}

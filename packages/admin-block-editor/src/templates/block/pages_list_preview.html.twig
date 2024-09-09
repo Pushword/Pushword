@@ -15,7 +15,7 @@ srcdoc='
 
 {% apply replace({"'": "\'"}) %}
 
-{{ block("css", view('/base.html.twig')) }}
+{{ block('css', view('/base.html.twig')) }}
 
 {{ pages_list(block.data.kw, [block.data.max|default(9), block.data.maxPages|default(1)], block.data.order, 'card') }}
 
@@ -25,5 +25,5 @@ srcdoc='
 </base>
 </div>
 {% else %}
-    {% include view('/block/pages_list.html.twig', '@PushwordAdminBlockEditor') %}
+    {{ include(view('/block/pages_list.html.twig', '@PushwordAdminBlockEditor')) }}
 {% endif %}

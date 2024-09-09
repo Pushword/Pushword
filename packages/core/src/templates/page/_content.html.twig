@@ -15,11 +15,11 @@
 
         {% block main_image %}
             {% if page.mainImage is not null %}
-                {% include view('/component/image_inline.html.twig') with {
-                        'image_src': page.mainImage|image('default'),
-                        'image_alt': page.mainImage.name(page.locale, true)|default(page.getTitle(true)|striptags),
-                        'image_wrapper_class': (page.mainImageFormat is same as(1) ? 'hidden' : ' '),
-                    } %}
+                {{ include(view('/component/image_inline.html.twig'), {
+                        image_src: page.mainImage|image('default'),
+                        image_alt: page.mainImage.name(page.locale, true)|default(page.getTitle(true)|striptags),
+                        image_wrapper_class: (page.mainImageFormat is same as(1) ? 'hidden' : ' '),
+                    }) }}
                 {# @var page.mainImageFormat is a custom property wich culd be managed via advanced-main-image #}
             {% endif %}
         {% endblock %}

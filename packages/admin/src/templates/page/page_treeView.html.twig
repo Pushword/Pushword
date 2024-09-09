@@ -1,7 +1,7 @@
 {% extends '@SonataAdmin/CRUD/list.html.twig' %}
 
 {% macro renderLink(page) %}
-    <a href="{{ path('admin_page_edit', {'id': page.id}) }}">
+    <a href="{{ path('admin_page_edit', {id: page.id}) }}">
         <span class="badge btn-primary">{{ page.host }}/{{ page.slug }}</span>
         {{ pw(page).h1|striptags }}
     </a>
@@ -31,7 +31,7 @@
 {% endmacro %}
 
 {% block list_table %}
-    {% include '@SonataTwig/FlashMessage/render.html.twig' %}
+    {{ include('@SonataTwig/FlashMessage/render.html.twig') }}
 <div class="col-xs-12 col-md-12">
 <div class="box box-primary" style="margin-bottom: 100px;">
              <div class="box-header">

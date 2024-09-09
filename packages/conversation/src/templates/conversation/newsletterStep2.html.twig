@@ -11,11 +11,11 @@
     {% form_theme conversation 'form_div_layout.html.twig' %}
         {{ form_widget(conversation.authorName, {
             attr: {
-                'placeholder': 'conversation.name.placeholder'|trans,
+                placeholder: 'conversation.name.placeholder'|trans,
                 onfocus: "this.placeholder = ''",
                 onblur: "this.placeholder = '" ~ 'conversation.name.placeholder'|trans ~ "'",
-                required: "text",
-                type: "text",
+                required: 'text',
+                type: 'text',
                 class: 'appearance-none bg-transparent border-none focus:ring-transparent focus:border-transparent focus:shadow-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none'
             }
         }) }}

@@ -1,7 +1,7 @@
 <footer class="{{ footer_class|default('text-sm') }}">
     <div class="max-w-screen-md p-3 py-10 mx-auto text-center text-gray-500">
         {% block footer %}
-            {% include view('/component/alternate_links.html.twig') %}
+            {{ include(view('/component/alternate_links.html.twig')) }}
         {% endblock %}
 
         {% block extra_footer %}

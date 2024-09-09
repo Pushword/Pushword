@@ -3,7 +3,7 @@
         <ul class="flex flex-row my-5 flex-wrap justify-center mx-auto">
             {% for p in pages %}
                 <li class="w-full px-1 my-1 sm:w-1/2 md:w-1/3">
-                    {% include view('/component/card.html.twig') with {'page': p} %}
+                    {{ include(view('/component/card.html.twig'), {page: p}) }}
                 </li>
             {% endfor %}
         </ul>
@@ -11,7 +11,7 @@
         <p>...</p>
     {% endif %}
     {% if pager is defined and pager is not null and (pager.currentPage != 1 or pager.hasNextPage) %}
-        <div class="mb-5">{{ pager(pager, {'omitFirstPage': true, 'pageParameter': '[pager]', 'routeName': pager_route, 'routeParams': pager_route_params}) }}</div>
+        <div class="mb-5">{{ pager(pager, {omitFirstPage: true, pageParameter: '[pager]', routeName: pager_route, routeParams: pager_route_params}) }}</div>
     {% endif %}
 {% endapply %}
 {% endblock %}

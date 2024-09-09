@@ -24,7 +24,7 @@
                         Résultat du scan du {{ lastEdit|date('d/m/Y à H:i') }}
                         {{ newRun ? ' (<em>nouveau scan en cours</em>, la page s\'actualisera automatiquement à la fin de celui-ci<meta http-equiv="refresh" content="4">
 
-)' : ('(<a href="' ~ path('pushword_page_scanner', {'force': '1'}) ~ '">forcer un nouveau scan</a>)')|raw }}.
+)' : ('(<a href="' ~ path('pushword_page_scanner', {force: '1'}) ~ '">forcer un nouveau scan</a>)')|raw }}.
                     </p>
 
                     <table class="table table-bordered table-striped table-hover sonata-ba-list">
@@ -40,7 +40,7 @@
                             {% set object = errorsBypage.0.page %}
                             <tr>
                                 <td>
-                                    <a href="{{ path('admin_page_edit', {'id': object.id}) }}">
+                                    <a href="{{ path('admin_page_edit', {id: object.id}) }}">
                                         {% if object.metaRobots != '' %}<span class="badge" title="{{ object.metaRobots }}"><i class="fa fa-eye-slash"></i></span> {% endif %}
                                         <span style="color:#333; font-weight:400; font-size:90%">{{ object.host ? object.host ~ ' › ' : '' }}{{ object.slug }}</span><br>
                                         <span style="font-size:110%;font-weight:600">{{ object.h1|raw }}</span>
@@ -54,7 +54,7 @@
                                     </ul>
                                  </td>
                                  <td>
-                                    <a href="{{ path('admin_page_show', {'id': object.id}) }}" target=_blank class="btn btn-sm btn-default view_link">
+                                    <a href="{{ path('admin_page_show', {id: object.id}) }}" target=_blank class="btn btn-sm btn-default view_link">
                                         <i class="fa fa-eye" aria-hidden="true"></i>
                                      </a>
                                 </td>

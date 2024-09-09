@@ -137,7 +137,7 @@ Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 {% endapply %}
     </div>
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
-{{ "{<!---->{" }} mail('contact@example.tld') }}
+{{ '{<!---->{' }} mail('contact@example.tld') }}
 </code></pre>
 </div>
 
@@ -152,7 +152,7 @@ Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 {% endapply %}
     </div>
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
-{{ "{<!---->{" }} tel('+33 7 00 00 00 00 00 00 00') }}
+{{ '{<!---->{' }} tel('+33 7 00 00 00 00 00 00 00') }}
 </code></pre>
 </div>
 
@@ -261,7 +261,7 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
-{{ "{{" }} video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose {{ "}}" }}
+{{ '{{' }} video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose {{ '}}' }}
 {% endapply %}</code></pre>
 </div>
 <div class="prose dark:prose-light">
@@ -279,8 +279,8 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
-{{ "{{" }} pages_list('exampleTag')|unprose {{ "}}" }}
-{{ "{{" }} pages_list('exampleTag OR <!--invisible-hash-in-content--> OR comment:invisible-hash-in-content')|unprose {{ "}}" }}
+{{ '{{' }} pages_list('exampleTag')|unprose {{ '}}' }}
+{{ '{{' }} pages_list('exampleTag OR <!--invisible-hash-in-content--> OR comment:invisible-hash-in-content')|unprose {{ '}}' }}
 {% endapply %}</code></pre>
 
 Discover more on [Advanced Pages Listing](https://pushword.piedweb.com/pages-list).
@@ -322,7 +322,7 @@ Location: http://example.eg/
 
 - `toc` (: true) : active le sommaire
 
-- Tout autre *Autres Paramètres* peut êgalement être appelé directement dans la page `{{ "{{ page.customParam }}" }}`
+- Tout autre *Autres Paramètres* peut êgalement être appelé directement dans la page `{{ '{{ page.customParam }}' }}`
 {% endapply %}
 </div>
 

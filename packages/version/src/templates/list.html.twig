@@ -24,7 +24,7 @@
 {% endblock %}
 
 {% block sonata_admin_content %}
-    {% include '@SonataTwig/FlashMessage/render.html.twig' %}
+    {{ include('@SonataTwig/FlashMessage/render.html.twig') }}
 <div class="box box-primary" style="margin-bottom: 100px;">
    <div class="box-body table-responsive no-padding">
       <table class="table table-bordered table-striped table-hover sonata-ba-list">
@@ -49,7 +49,7 @@
             {% for version, p in pages %}
             <tr>
                 <td class="sonata-ba-list-field sonata-ba-list-field-html">
-                  <a class="sonata-link-identifier" href="{{ path('pushword_version_load', {'id': page.id, 'version': version}) }}">
+                  <a class="sonata-link-identifier" href="{{ path('pushword_version_load', {id: page.id, version: version}) }}">
                       {{ p.h1|default(p.title) }}
                   </a>
                </td>
@@ -62,11 +62,11 @@
                </td>
                <td class="sonata-ba-list-field sonata-ba-list-field-text" objectid="34" style="text-align:right">
                   <div class="btn-group">
-                     <a href="{{ path('pushword_version_load', {'id': page.id, 'version': version}) }}" class="btn btn-sm btn-default view_link" title="Editer">
+                     <a href="{{ path('pushword_version_load', {id: page.id, version: version}) }}" class="btn btn-sm btn-default view_link" title="Editer">
                      <i class="fa fa-edit" aria-hidden="true"></i>
                      Switch
                      </a>
-                     <!--<a href="{{ path('pushword_version_load', {'id': page.id, 'version': version}) }}" class="btn btn-sm btn-default delete_link" title="Supprimer">
+                     <!--<a href="{{ path('pushword_version_load', {id: page.id, version: version}) }}" class="btn btn-sm btn-default delete_link" title="Supprimer">
                      <i class="fa fa-times" aria-hidden="true"></i>
                      Supprimer
                      </a>-->

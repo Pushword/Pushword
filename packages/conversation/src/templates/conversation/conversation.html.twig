@@ -23,7 +23,7 @@
                 label_attr: {class: 'sr-only'},
                 row_attr: {class: ' '},
                 attr: {
-                    'placeholder': 'Message',
+                    placeholder: 'Message',
                     onfocus: "this.placeholder = ''",
                     onblur: "this.placeholder = 'Message'",
                     rows: 8,
@@ -44,11 +44,11 @@
                     label_attr: {class: 'sr-only'},
                     row_attr: {class: ' '},
                     attr: {
-                        'placeholder': 'conversation.name.placeholder'|trans,
+                        placeholder: 'conversation.name.placeholder'|trans,
                         onfocus: "this.placeholder = ''",
                         onblur: "this.placeholder = '" ~ 'conversation.name.placeholder'|trans ~ "'",
-                        required: "text",
-                        type: "text",
+                        required: 'text',
+                        type: 'text',
                         class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-none focus:border-primary focus:ring-primary'
                     }
                 }) }}
@@ -66,12 +66,12 @@
                     label_attr: {class: 'sr-only', style: 'display:none'},
                     row_attr: {class: ' '},
                     attr: {
-                        'placeholder': 'conversation.email.placeholder'|trans,
+                        placeholder: 'conversation.email.placeholder'|trans,
                         onfocus: "this.placeholder = ''",
                         onblur: "this.placeholder = '" ~ 'conversation.email.placeholder'|trans ~ "'",
-                        required: "text",
-                        pattern: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$",
-                        type: "email",
+                        required: 'text',
+                        pattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$',
+                        type: 'email',
                         class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-none focus:border-primary focus:ring-primary'
                     }
                 }) }}

@@ -9,7 +9,7 @@
     {% block favicon %}
       {% if apps.get().get('favicon_path') is not null %}
         {# permit retrocompatibility with a feature previous v1 wich is deprecated ! Prefer override base.html.twig ➜ favicon block #}
-        {% include view('/component/favicon.html.twig') with {favicon_path: apps.get().get('favicon_path')} only %}
+        {{ include(view('/component/favicon.html.twig'), {favicon_path: apps.get().get('favicon_path')}, false) }}
       {% else %}
       <link rel="icon" href="{{ asset(apps.get().get('assets:favicon') ?? 'bundles/pushwordcore/favicon.ico') }}" />
       {% endif %}
