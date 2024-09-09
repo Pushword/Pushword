@@ -62,6 +62,7 @@ final class PageImporter extends AbstractImporter
         if (! str_starts_with($this->getMimeTypeFromFile($filePath), 'text/')) {
             return;
         }
+
         $content = file_get_contents($filePath);
         $document = YamlFrontMatter::parse($content);
 
@@ -71,6 +72,7 @@ final class PageImporter extends AbstractImporter
 
         $slug = $document->matter('slug') ?? $this->filePathToSlug($filePath);
         $slug = \is_string($slug) ? $slug : throw new Exception();
+
         $relativeFilePath = str_replace($this->getContentDir().'/', '', $filePath);
         $this->slugs[$relativeFilePath] = $slug;
 

@@ -3,6 +3,7 @@
 namespace Pushword\Conversation\Tests\Controller;
 
 use Pushword\Conversation\Controller\ConversationFormController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Panther\PantherTestCase;
 
@@ -13,7 +14,7 @@ class ConversationFormControllerTest extends PantherTestCase
         $client = static::createClient();
 
         $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
-        $crawler = $client->request('POST', '/conversation/message/test', [], [], $server);
+        $crawler = $client->request(Request::METHOD_POST, '/conversation/message/test', [], [], $server);
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
         $form = $crawler->filter('[name="form"]')->form([

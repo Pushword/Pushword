@@ -87,7 +87,7 @@ class PageUpdateNotifier
      *
      * @psalm-suppress all
      */
-    protected function getPageUpdatedSince(DateTimeInterface $datetime)
+    protected function getPageUpdatedSince(DateTimeInterface $datetime): mixed
     {
         $pageRepo = $this->em->getRepository(Page::class);
 

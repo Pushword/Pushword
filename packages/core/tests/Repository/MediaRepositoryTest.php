@@ -3,7 +3,6 @@
 namespace Pushword\Core\Tests\Controller;
 
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Repository\MediaRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class MediaRepositoryTest extends KernelTestCase
@@ -14,7 +13,6 @@ class MediaRepositoryTest extends KernelTestCase
 
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-        /** @var MediaRepository */
         $mediaRepo = $em->getRepository(Media::class);
 
         $duplicate = $mediaRepo->findDuplicate((new Media())->setHash('testFakeHash'));

@@ -7,7 +7,6 @@ namespace Pushword\Flat\Tests;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Repository\PageRepository;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\FlatFileImporter;
 use Pushword\Flat\Importer\MediaImporter;
@@ -47,7 +46,7 @@ class FlatFileImporterTest extends KernelTestCase
     {
         /** @var EntityManagerInterface */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        /** @var PageRepository */
+
         $pageRepo = $em->getRepository(Page::class);
 
         $page = $pageRepo->findOneBy(['slug' => 'test-link']);

@@ -16,7 +16,11 @@ final class RegexHelper
             return preg_quote($var, '/');
         }
 
-        $var = array_map('static::prepareForRegex', $var); // @phpstan-ignore-line
+        /** @var callable */
+        $callable = ['RegexHelper', 'prepareForRegex'];
+
+        /** @var string[] */
+        $var = array_map($callable, $var);
 
         return '('.implode('|', $var).')';
     }

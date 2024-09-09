@@ -50,6 +50,8 @@ final class ConversationFormController extends AbstractController
         if (! $this->apps->get()->has($param)) {
             return null;
         }
+
+        return $this->apps->get()->getStr($param);
     }
 
     /**

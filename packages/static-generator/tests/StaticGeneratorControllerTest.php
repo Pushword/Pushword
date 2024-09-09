@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator\Tests;
 
 use Pushword\Admin\Tests\AbstractAdminTestClass;
+use Symfony\Component\HttpFoundation\Request;
 
 class StaticGeneratorControllerTest extends AbstractAdminTestClass
 {
@@ -12,10 +13,10 @@ class StaticGeneratorControllerTest extends AbstractAdminTestClass
 
         $client->catchExceptions(false);
 
-        $client->request('GET', '/admin/static');
+        $client->request(Request::METHOD_GET, '/admin/static');
         self::assertResponseIsSuccessful();
 
-        $client->request('GET', '/admin/static/localhost.dev');
+        $client->request(Request::METHOD_GET, '/admin/static/localhost.dev');
         self::assertResponseIsSuccessful();
     }
 }

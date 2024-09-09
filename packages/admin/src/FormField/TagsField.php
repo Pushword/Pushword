@@ -3,7 +3,6 @@
 namespace Pushword\Admin\FormField;
 
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Repository\PageRepository;
 
 use function Safe\json_encode;
 
@@ -22,7 +21,6 @@ class TagsField extends AbstractField
         /** @var Page */
         $page = $this->admin->getSubject();
 
-        /** @var PageRepository */
         $pageRepo = $this->admin->getEntityManager()->getRepository(Page::class);
 
         $host = $this->admin->getRequest()->query->getString('host', $page->getHost());

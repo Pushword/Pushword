@@ -3,6 +3,7 @@
 namespace Pushword\TemplateEditor\Tests;
 
 use Pushword\Admin\Tests\AbstractAdminTestClass;
+use Symfony\Component\HttpFoundation\Request;
 
 class PageScannerControllerTest extends AbstractAdminTestClass
 {
@@ -12,7 +13,7 @@ class PageScannerControllerTest extends AbstractAdminTestClass
 
         $client->catchExceptions(false);
 
-        $client->request('GET', '/admin/page/scan');
+        $client->request(Request::METHOD_GET, '/admin/page/scan');
         self::assertResponseIsSuccessful();
     }
 }

@@ -5,9 +5,9 @@ namespace Pushword\Core\Tests\Controller;
 use Exception;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Tests\PathTrait;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // KernelTestCase
@@ -19,7 +19,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         self::bootKernel();
 
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        /** @var MediaRepository */
+
         $mediaRepo = $em->getRepository(Media::class);
 
         $media = $mediaRepo->findOneBy(['media' => 'piedweb-logo.png']) ?? throw new Exception();
@@ -64,7 +64,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
             // dump($file);
             $client = $this->loginUser();
             $client->catchExceptions(false);
-            $crawler = $client->request('GET', '/admin/media/create');
+            $crawler = $client->request(Request::METHOD_GET, '/admin/media/create');
             $formId = strtok($crawler->filter('[type="file"]')->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
             $form = $crawler->filter('[role="form"]')->form([
                 $formId.'[mediaFile]' => $file,
@@ -73,7 +73,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
             self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
             self::assertFileExists($this->mediaDir.'/2-2.jpg');
 
-            $crawler = $client->request('GET', '/admin/media/create');
+            $crawler = $client->request(Request::METHOD_GET, '/admin/media/create');
             $formId = strtok($crawler->filter('[type="file"]')->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
             $form = $crawler->filter('[role="form"]')->form([
                 $formId.'[mediaFile]' => $file,
@@ -84,7 +84,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
             self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
             self::assertFileExists($this->mediaDir.'/1-2.jpg');
 
-            $crawler = $client->request('GET', '/admin/media/create');
+            $crawler = $client->request(Request::METHOD_GET, '/admin/media/create');
             $formId = strtok($crawler->filter('[type="file"]')->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
             $form = $crawler->filter('[role="form"]')->form([
                 $formId.'[mediaFile]' => $file,
@@ -97,7 +97,6 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
 
             $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-            /** @var MediaRepository */
             $mediaRepo = $em->getRepository(Media::class);
 
             $medias = $mediaRepo->findBy([], ['id' => 'DESC'], 3, 0);

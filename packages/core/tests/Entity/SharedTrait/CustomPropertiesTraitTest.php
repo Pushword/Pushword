@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Entity\SharedTrait;
 
 use Error;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -47,17 +48,14 @@ class CustomPropertiesTraitTest extends TestCase
         self::assertArrayNotHasKey('newCustomPropertyNotIndexed', $customProperties->getCustomProperties());
     }
 
-    /**
-     * @return ExecutionContextInterface
-     */
-    protected function getExceptionContextInterface()
+    protected function getExceptionContextInterface(): MockObject
     {
         $mockConstraintViolationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
         $mockConstraintViolationBuilder->method('atPath')->willReturnSelf();
         $mockConstraintViolationBuilder->method('addViolation')->willReturnSelf();
 
         $mock = $this->createMock(ExecutionContextInterface::class);
-        $mock->method('buildViolation')->willReturnCallback(static function ($arg) use ($mockConstraintViolationBuilder) {
+        $mock->method('buildViolation')->willReturnCallback(static function ($arg) use ($mockConstraintViolationBuilder): MockObject {
             if (\in_array($arg, ['page.customProperties.malformed', 'page.customProperties.notStandAlone'], true)) {
                 throw new Error();
             }

@@ -9,6 +9,7 @@ use function Safe\file_get_contents;
 use function Safe\json_decode;
 use function Safe\json_encode;
 
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class ControllerTest extends AbstractAdminTestClass
@@ -21,11 +22,11 @@ class ControllerTest extends AbstractAdminTestClass
 
         $id = $this->createNewPage();
 
-        $client->request('GET', '/admin/page/'.$id.'/edit');
+        $client->request(Request::METHOD_GET, '/admin/page/'.$id.'/edit');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
         // does'nt throw error = good start, can do better ?
 
-        $client->request('GET', '/admin-block-editor.test/test');
+        $client->request(Request::METHOD_GET, '/admin-block-editor.test/test');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
         // does'nt throw error = every filters are working (well ?)
         // if bug encouter, test them via BlockEditorFilterTest
@@ -54,7 +55,7 @@ class ControllerTest extends AbstractAdminTestClass
             // static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
         );
         $client->request(
-            'POST',
+            Request::METHOD_POST,
             '/admin/page/block/',
             [],
             [],
@@ -75,7 +76,7 @@ class ControllerTest extends AbstractAdminTestClass
         ));
 
         $client->request(
-            'POST',
+            Request::METHOD_POST,
             '/admin/page/block/1',
             [],
             [],
@@ -91,7 +92,7 @@ class ControllerTest extends AbstractAdminTestClass
             // static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
         );
         $client->request(
-            'POST',
+            Request::METHOD_POST,
             '/admin/media/block',
             [],
             [],

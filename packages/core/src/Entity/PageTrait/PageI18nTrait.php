@@ -17,7 +17,7 @@ trait PageI18nTrait
     protected string $locale = '';
 
     /**
-     * @var Collection<string, Page>|null
+     * @var Collection<int, Page>
      */
     #[ORM\ManyToMany(targetEntity: Page::class)]
     protected ?Collection $translations = null;  // @phpstan-ignore-line
@@ -34,9 +34,7 @@ trait PageI18nTrait
         return $this;
     }
 
-    /**
-     * @param Collection<string, Page> $translations
-     */
+    /** @param Collection<int, Page> $translations */
     public function setTranslations(Collection $translations): self
     {
         $this->translations = $translations;
@@ -44,9 +42,7 @@ trait PageI18nTrait
         return $this;
     }
 
-    /**
-     * @return Collection<string, Page>
-     */
+    /** @return Collection<int, Page> */
     public function getTranslations(): Collection
     {
         return $this->translations ?? ($this->translations = new ArrayCollection());

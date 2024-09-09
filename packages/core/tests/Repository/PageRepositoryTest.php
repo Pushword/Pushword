@@ -3,7 +3,6 @@
 namespace Pushword\Core\Tests\Controller;
 
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Repository\PageRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class PageRepositoryTest extends KernelTestCase
@@ -14,7 +13,6 @@ class PageRepositoryTest extends KernelTestCase
 
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-        /** @var PageRepository */
         $pageRepo = $em->getRepository(Page::class);
 
         $pages = $pageRepo->getIndexablePagesQuery('', 'en', 2)->getQuery()->getResult();

@@ -53,7 +53,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         array $orderBy = [],
         int|array $limit = 0,
         bool $withRedirection = true
-    ) {
+    ): mixed {
         $queryBuilder = $this->getPublishedPageQueryBuilder($host, $where, $orderBy);
 
         if (! $withRedirection) {

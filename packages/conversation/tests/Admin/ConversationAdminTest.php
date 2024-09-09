@@ -3,6 +3,7 @@
 namespace Pushword\conversation\Tests\Admin;
 
 use Pushword\Admin\Tests\AbstractAdminTestClass;
+use Symfony\Component\HttpFoundation\Request;
 
 class ConversationAdminTest extends AbstractAdminTestClass
 {
@@ -15,7 +16,7 @@ class ConversationAdminTest extends AbstractAdminTestClass
         $actions = ['list', 'create'];
 
         foreach ($actions as $action) {
-            $client->request('GET', '/admin/conversation/'.$action);
+            $client->request(Request::METHOD_GET, '/admin/conversation/'.$action);
             self::assertResponseIsSuccessful();
         }
     }

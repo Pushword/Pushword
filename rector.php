@@ -1,12 +1,8 @@
 <?php
 
 declare(strict_types=1);
-use Rector\CodeQuality\Rector\Array_\CallableThisArrayToAnonymousFunctionRector;
-use Rector\CodeQuality\Rector\FuncCall\IntvalToTypeCastRector;
-use Rector\CodeQuality\Rector\FuncCall\StrvalToTypeCastRector;
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
-use Rector\Doctrine\CodeQuality\Rector\Property\OrderByKeyToClassConstRector;
 use Rector\Doctrine\Set\DoctrineSetList;
 use Rector\Php73\Rector\FuncCall\JsonThrowOnErrorRector;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
@@ -15,7 +11,6 @@ use Rector\PHPUnit\CodeQuality\Rector\Class_\PreferPHPUnitThisCallRector;
 use Rector\PHPUnit\Rector\Class_\PreferPHPUnitSelfCallRector;
 use Rector\PHPUnit\Set\PHPUnitSetList;
 use Rector\Symfony\Set\SymfonySetList;
-use Rector\Symfony\Symfony42\Rector\MethodCall\ContainerGetToConstructorInjectionRector;
 
 $paths = [
     __DIR__.'/packages',
@@ -51,13 +46,12 @@ return RectorConfig::configure()
         'packages/core/src/Component/App/AppConfig.php',
         AddSeeTestAnnotationRector::class,
         JsonThrowOnErrorRector::class,
-        StrvalToTypeCastRector::class,
-        IntvalToTypeCastRector::class,
+        // StrvalToTypeCastRector::class,
+        // IntvalToTypeCastRector::class,
         PreferPHPUnitThisCallRector::class,
-        OrderByKeyToClassConstRector::class, // inject deprecate Criteria::DESC instead of Order::Descending
-        CallableThisArrayToAnonymousFunctionRector::class,
+        // OrderByKeyToClassConstRector::class, // inject deprecate Criteria::DESC instead of Order::Descending
+        // CallableThisArrayToAnonymousFunctionRector::class,
         NullToStrictStringFuncCallArgRector::class,
         FlipTypeControlToUseExclusiveTypeRector::class,
-        ContainerGetToConstructorInjectionRector::class, // for AbstractGenerator and PageScannerService
     ])
 ;

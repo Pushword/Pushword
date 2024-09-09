@@ -132,7 +132,7 @@ final class PageController extends AbstractController
         $this->initHost($request);
 
         if ('homepage' === $slug) {
-            return $this->redirect($this->generateUrl('pushword_page_feed', ['slug' => 'index']), Response::HTTP_MOVED_PERMANENTLY);
+            return $this->redirectToRoute('pushword_page_feed', ['slug' => 'index'], Response::HTTP_MOVED_PERMANENTLY);
         }
 
         $page = $this->getPageElse404($request, $slug);
@@ -220,7 +220,7 @@ final class PageController extends AbstractController
      *
      * @return mixed //array<Page>
      */
-    private function getPages(Request $request, ?int $limit = null)
+    private function getPages(Request $request, ?int $limit = null): mixed
     {
         $requestedLocale = rtrim($request->getLocale(), '/');
 

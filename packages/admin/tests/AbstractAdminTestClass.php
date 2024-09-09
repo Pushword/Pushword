@@ -6,6 +6,7 @@ use Pushword\Core\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Panther\PantherTestCase;
 
 abstract class AbstractAdminTestClass extends PantherTestCase
@@ -24,7 +25,7 @@ abstract class AbstractAdminTestClass extends PantherTestCase
 
         self::createUser();
 
-        $crawler = $this->client->request('GET', '/login');
+        $crawler = $this->client->request(Request::METHOD_GET, '/login');
         $form = $crawler->filter('[method=post]')->form();
         $form['email'] = 'admin@example.tld';
         $form['password'] = 'mySecr3tpAssword';

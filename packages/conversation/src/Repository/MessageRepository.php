@@ -25,7 +25,7 @@ class MessageRepository extends ServiceEntityRepository
     /**
      * @return Message[]
      */
-    public function getMessagesPublishedByReferring(string $referring, string $orderBy = 'createdAt DESC', int $limit = 0)
+    public function getMessagesPublishedByReferring(string $referring, string $orderBy = 'createdAt DESC', int $limit = 0): mixed
     {
         $orderBy = explode(' ', $orderBy);
 

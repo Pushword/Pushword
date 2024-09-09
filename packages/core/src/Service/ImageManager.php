@@ -263,10 +263,10 @@ final class ImageManager
 
         if (! is_readable($src) && \function_exists('curl_init')) {
             $curl = curl_init($src);
-            curl_setopt($curl, \CURLOPT_RETURNTRANSFER, 1); // @phpstan-ignore-line
+            curl_setopt($curl, \CURLOPT_RETURNTRANSFER, 1);
             /** @var false|string $content */
-            $content = curl_exec($curl); // @phpstan-ignore-line
-            curl_close($curl); // @phpstan-ignore-line
+            $content = curl_exec($curl);
+            curl_close($curl);
         } else {
             $content = file_get_contents($src);
         }

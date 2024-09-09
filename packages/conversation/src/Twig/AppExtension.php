@@ -5,7 +5,6 @@ namespace Pushword\Conversation\Twig;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Pushword\Conversation\Entity\Message;
-use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
@@ -58,7 +57,6 @@ class AppExtension extends AbstractExtension
         int $limit = 0,
         string $view = '/conversation/messages_list.html.twig'
     ): string {
-        /** @var MessageRepository $msgRepo */
         $msgRepo = $this->em->getRepository(Message::class);
 
         $messages = $msgRepo->getMessagesPublishedByReferring($referring, $orderBy, $limit);

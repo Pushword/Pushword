@@ -5,6 +5,7 @@ namespace Pushword\PageUpdateNotifier\Tests;
 use DateTime;
 use Error;
 use Nette\Utils\FileSystem;
+use PHPUnit\Framework\MockObject\MockObject;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\PageUpdateNotifier\PageUpdateNotifier;
@@ -72,9 +73,9 @@ class PageUpdateNotifierTest extends KernelTestCase
     }
 
     /**
-     * @return AbstractTransport
+     * @return AbstractTransport&MockObject
      */
-    protected function getTransporter()
+    protected function getTransporter(): MockObject
     {
         $mock = $this->createMock(AbstractTransport::class);
         $mock->method('send')->willReturn(null);
@@ -82,17 +83,15 @@ class PageUpdateNotifierTest extends KernelTestCase
         return $mock;
     }
 
-    /**
-     * @return ExecutionContextInterface
-     */
-    protected function getExceptionContextInterface()
+    /** @return ExecutionContextInterface&MockObject */
+    protected function getExceptionContextInterface(): MockObject
     {
         $mockConstraintViolationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
         $mockConstraintViolationBuilder->method('atPath')->willReturnSelf();
         $mockConstraintViolationBuilder->method('addViolation')->willReturnSelf();
 
         $mock = $this->createMock(ExecutionContextInterface::class);
-        $mock->method('buildViolation')->willReturnCallback(static function ($arg) use ($mockConstraintViolationBuilder) {
+        $mock->method('buildViolation')->willReturnCallback(static function ($arg) use ($mockConstraintViolationBuilder): MockObject {
             if (\in_array($arg, ['page.customProperties.malformed', 'page.customProperties.notStandAlone'], true)) {
                 throw new Error();
             }

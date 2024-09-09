@@ -4,7 +4,6 @@ namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
 use Symfony\Component\Console\Input\InputInterface;
 
@@ -29,7 +28,6 @@ trait ImageCommandTrait
      */
     protected function getMedias(InputInterface $input): array
     {
-        /** @var MediaRepository */
         $repo = $this->em->getRepository(Media::class);
 
         if (null !== $input->getArgument('media')) {
