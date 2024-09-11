@@ -17,7 +17,7 @@ If you are doing a major upgrade, find the upgrade guide down there.
 - Upgrade database `bin/console doctrine:schema:update --force`
 - Remove `composer remove pushword/svg` (and from bundles !)
 - Drop get('assetsVersionned'), prefer use `getStylesheets` or `getJavascript`
-- Change `navbar_items` format from a list with `{anchor: string, attr: ...}` to an object with `{'anchor': {href:...}}`
+- Change twig function `page_position` for `breadcrumb_list_position`
 
 ## To 0.1.9973
 

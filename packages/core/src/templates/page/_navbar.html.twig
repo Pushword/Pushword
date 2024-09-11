@@ -50,7 +50,7 @@
 
         {% block nav_list %}
             {% if navbar_items is defined and navbar_items is not empty %}
-                <nav id="navbar-links" class="{{ navbar_nav_class }}">
+                <nav id="navbar-links" class="{{ navbar_nav_class|raw }}">
                     {% for anchor, item in navbar_items %}
 
                         {# some navbar normalization #}
@@ -62,10 +62,10 @@
                             {{ item.html|raw }}
                         {% elseif is_current_page(item.href ?? item.attr.href, page) %}
                             <span class="{{ navbar_nav_item_class_active ?? navbar_nav_item_class ?? 'text-secondary font-bold' }}" aria-current="page">
-                                {{ item.anchor ?? anchor|raw }}
+                                {{ (item.anchor ?? anchor)|raw }}
                             </span>
                         {% else %}
-                          {% set itemAttr = ({class: navbar_nav_item_class ?? 'text-gray-800 hover:text-primary'})|merge(item.attr ?? item|filter((v, k) => k != 'anchor' and k != 'obfuscate' and k != 'encrypt')) %}
+                          {% set itemAttr = ({class: navbar_nav_item_class ?? 'text-gray-800 hover:text-primary'})|merge(item is iterable ? (item.attr ?? item|filter((v, k) => k != 'anchor' and k != 'obfuscate' and k != 'encrypt')) : {href: item}) %}
                           {{ link(item.anchor ?? anchor, itemAttr, item.obfuscate ?? item.encrypt ?? false) }}
                         {% endif %}
                     {% endfor %}
@@ -74,3 +74,6 @@
         {% endblock %}
     {{ (navbar_container is defined ? '</div>' : '')|raw }}
 </div>
+
+
+{%}

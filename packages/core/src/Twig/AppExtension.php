@@ -51,7 +51,6 @@ final class AppExtension extends AbstractExtension
         ];
     }
 
-
     /**
      * @param array<string> $isSafe
      *
