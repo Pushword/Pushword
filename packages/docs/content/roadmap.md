@@ -17,7 +17,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 ## Features
 
 - [AdminBlockEditor] Image > Add link + Alt and redesign Legend + edit image (inspired by Bard)
--
+
 - [AdminBlockEditor] Make a POC with ProseEditor (then a migration tool ?)
 
 - [ ] Block Editor wich can be insert dinamically in Page (often to replace template editor)

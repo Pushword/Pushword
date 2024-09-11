@@ -1,7 +1,8 @@
 require('./admin.scss')
 
-// import 'htmx.org'
-// window.htmx = require('htmx.org')
+// used for ctrl-s
+import 'htmx.org'
+window.htmx = require('htmx.org')
 
 //global.$ = global.jQuery = require('jquery');
 

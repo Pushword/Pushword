@@ -27,13 +27,22 @@
 {% block btn_update_and_edit %}
 <script>
 document.querySelector('body').addEventListener('keydown', function(event) {
-    if (event.ctrlKey && event.key === 's') {
+  if (event.ctrlKey && event.key === 's') {
     console.log('trigger ctrl-s-event')
     document.querySelector('form[hx-trigger]').dispatchEvent(new Event('ctrl-s-event'));
     event.preventDefault();
-    }
+  }
 });
 </script>
+<style>
+.navbar-formactions{
+  transition: background 200ms ease-in;
+}
+.htmx-request.navbar-formactions, .htmx-request .navbar-formactions{
+  background: #337ab7;
+  opacity:1;
+}
+</style>
 {{ parent() }}
 {% endblock %}
 
@@ -41,6 +50,7 @@ document.querySelector('body').addEventListener('keydown', function(event) {
 hx-post="{{ admin.generateUrl(url, {(admin.idParameter): objectId, uniqid: admin.uniqid, subclass: app.request.get('subclass')}) }}"
 hx-trigger="ctrl-s-event"
 hx-swap="none"
+hx-indicator=".navbar-formactions"
 {% endblock %}
 
 {% block sonata_tab_content %}

@@ -48,9 +48,10 @@
 {% block body %}
   <div class="flex flex-col min-h-screen">
 
+
   {% set pageContent = include(view('/page/_content.html.twig')) %}
   {% block content %}
-    {{ pageContent|raw }}
+    {{ (pageContent ?? include(view('/page/_content.html.twig')))|raw }}
   {% endblock %}
 
   {% set pageBreadcrumb = include(view('/page/_breadcrumb.html.twig')) %}
