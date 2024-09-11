@@ -83,14 +83,14 @@
     "symfony/profiler-pack": "*",
     "symplify/config-transformer": "*",
     "symplify/monorepo-builder": "*",
-    "tomasvotruba/unused-public": "^0.3.11",
+    "tomasvotruba/unused-public": "*",
     "vimeo/psalm": "*",
     "vincentlanglet/twig-cs-fixer": "*",
     "weirdan/doctrine-psalm-plugin": "*"
   },
   "extra": {
     "branch-alias": {
-      "dev-master": "0.0-dev"
+      "dev-main": "1.0.x-dev"
     },
     "public-dir": "packages/skeleton/public"
   },

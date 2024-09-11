@@ -14,7 +14,7 @@ If you are doing a major upgrade, find the upgrade guide down there.
 ## To next !
 
 - Delete `App\Entity\*`
-- Upgrade database `bin/console doctrine:schema:update --force --complete`
+- Upgrade database `bin/console doctrine:schema:update --force`
 - Remove `composer remove pushword/svg` (and from bundles !)
 - Drop get('assetsVersionned'), prefer use `getStylesheets` or `getJavascript`
 - Change `navbar_items` format from a list with `{anchor: string, attr: ...}` to an object with `{'anchor': {href:...}}`

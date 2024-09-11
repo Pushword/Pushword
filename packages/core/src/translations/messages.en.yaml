@@ -8,6 +8,8 @@ video:
 fr: Français
 en: English
 
+navigation:
+  toggle: Toggle Navigation
 #---
 # Entity
 #---

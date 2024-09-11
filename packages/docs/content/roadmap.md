@@ -16,11 +16,14 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Features
 
+- [AdminBlockEditor] Image > Add link + Alt and redesign Legend + edit image (inspired by Bard)
+-
+- [AdminBlockEditor] Make a POC with ProseEditor (then a migration tool ?)
+
 - [ ] Block Editor wich can be insert dinamically in Page (often to replace template editor)
 
 - [ ] [AdminBlockEditor] https://github.com/calumk/editorjs-codecup (or ACE or codemirror)
 
-- [AdminBlockEditor] Image > Add link + Alt and redesign Legend + edit image (inspired by Bard)
 - [AdminBlockEditor] Noticies block with different notices level (inspired by Grav)
 - [AdminBlockEditor] To Markdown (to go back to standard editor) or To Html (easy, just need to created block.md.twig) and the transpiler)
 - [AdminBlockEditor] Card List (like page list but custom entry, custom url, custom everything... see piedvert.com cards everywhere)
