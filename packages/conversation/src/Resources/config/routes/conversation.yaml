@@ -1,14 +1,14 @@
 pushword_conversation:
   path: /conversation/{type}/{referring}/{host}
   controller: Pushword\Conversation\Controller\ConversationFormController::show
-  methods: [POST]
+  methods: [POST, GET]
   defaults:
     step: 1
     id: 0
     host: null
   requirements:
-    type: '[a-zA-Z0-9-]*'
+    type: "[a-zA-Z0-9-]*"
     referring: '[-A-Za-z0-9_\/\.]*'
-    id: '[0-9]*'
-    step: '[0-9]*'
+    id: "[0-9]*"
+    step: "[0-9]*"
     host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'

@@ -4,7 +4,7 @@ TYPE="$1"
 DEV="$2"
 
 function installDependencies {
-    yarn link @pushword/js-helper;
+    yarn link @pushword/js-helper || true;
     if [ "$DEV" = "watch" ];
     then
         yarn;
@@ -30,8 +30,8 @@ fi
 echo '------------------'
 
 cd packages/js-helper;
-yarn link;
-
+yarn link || true;
+cd ../../;
 #####################
 ## ADMIN BLOCK EDITOR
 #####################
