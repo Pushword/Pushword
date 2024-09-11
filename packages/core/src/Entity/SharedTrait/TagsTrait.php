@@ -10,7 +10,7 @@ use function Symfony\Component\String\u;
 trait TagsTrait
 {
     /** @var string[] */
-    #[ORM\Column(type: Types::JSON)]
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     protected array $tags = [];
 
     /** @var string[] */
