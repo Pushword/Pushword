@@ -36,7 +36,7 @@ admin:
     media: Media
     content: Pages
     list: Liste
-    user: User
+    user: Utilisateur
     users: Utilisateurs
     manage: Mettre en ligne
     update: Actualiser
