@@ -65,7 +65,7 @@
                                 {{ item.anchor ?? anchor|raw }}
                             </span>
                         {% else %}
-                          {% set itemAttr = ({class: navbar_nav_item_class ?? 'text-gray-800 hover:text-primary'})|merge(item|filter((v, k) => k != 'anchor')) %}
+                          {% set itemAttr = ({class: navbar_nav_item_class ?? 'text-gray-800 hover:text-primary'})|merge(item.attr ?? item|filter((v, k) => k != 'anchor' and k != 'obfuscate' and k != 'encrypt')) %}
                           {{ link(item.anchor ?? anchor, itemAttr, item.obfuscate ?? item.encrypt ?? false) }}
                         {% endif %}
                     {% endfor %}
