@@ -23,7 +23,6 @@ function toggleEditor() {
         textarea.setAttribute('data-editor', 'json');
         window.aceEditors = aceEditor();
     } else {
-        console.log(window.aceEditors);
         var aceEditorElem = document.querySelector('.ace_editor');
         aceEditorElem.parentNode.removeChild(aceEditorElem);
     }

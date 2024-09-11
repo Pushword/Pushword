@@ -27,7 +27,9 @@ export function transformTextareaToAce(textarea) {
     editor.commands.removeCommand('find')
   }
 
-  editor.commands.removeCommand('find')
+  if (!textarea.attr('data-editorjs')) {
+    editor.commands.removeCommand('find')
+  }
 
   // copy back to textarea on form submit...
   textarea.closest('form').submit(function () {
