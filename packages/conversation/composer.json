@@ -1,34 +1,30 @@
 {
-    "name": "pushword/conversation",
-    "type": "symfony-bundle",
-    "description": "Extend your Pushword website with **comments**, a **contact** form or just an **user input**.",
-    "keywords": [],
-    "homepage": "https://pushword.piedweb.com/extension/conversation",
-    "license": "MIT",
-    "require": {
-        "pushword/core": "^0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^9.5",
-        "pushword/admin": "^0"
-    },
-    "autoload": {
-        "psr-4": {
-            "Pushword\\Conversation\\": "src"
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-main": "0.1.x-dev"
-        }
-    },
-    "authors": [
-        {
-            "name": "Robin D.",
-            "email": "contact@piedweb.com",
-            "homepage": "https://piedweb.com/"
-        }
-    ],
-    "minimum-stability": "dev",
-    "prefer-stable": true
+  "name": "pushword/conversation",
+  "type": "symfony-bundle",
+  "description": "Extend your Pushword website with **comments**, a **contact** form or just an **user input**.",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/conversation",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "^1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Conversation\\": "src"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin D.",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com/"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }

@@ -7,21 +7,17 @@
   "license": "MIT",
   "require": {
     "jolicode/jolitypo": "^1.4",
-    "pushword/core": "^0"
+    "pushword/core": "^1"
   },
   "extra": {
     "branch-alias": {
-      "dev-main": "0.1.x-dev"
+      "dev-main": "1.0.x-dev"
     }
   },
   "autoload": {
     "psr-4": {
       "Pushword\\AdminBlockEditor\\": "src"
     }
-  },
-  "require-dev": {
-    "pushword/admin": "^0",
-    "phpunit/phpunit": "^9.5"
   },
   "authors": [
     {
