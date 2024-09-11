@@ -27,7 +27,7 @@ md_cs:
 #---
 # Admin
 #---
-datetimeMediumFormat: 'd/m/Y à H:m'
+datetimeMediumFormat: "d/m/Y à H:m"
 
 Page List: Liste des pages
 
@@ -113,7 +113,7 @@ admin:
       draft: Brouillon
     editMessage:
       label: Motif d'édition
-      help:           Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>
+      help: Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>
       helpVersionned: Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">Voir l'historique</a>
     createdAt:
       label: Créé le
@@ -132,6 +132,8 @@ admin:
     customProperties:
       label: Autres paramètres
       help: Au format <em>YAML</em>.
+    tags:
+      label: "Tag 1, Tag 2, ..."
     og:
       label: Open Graph Card
     ogTitle:
