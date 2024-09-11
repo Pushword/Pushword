@@ -296,10 +296,9 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             return [
                 new NotBlank(),
                 new AtLeastOneOf([
+                    new Email(['message' => 'conversation.email.invalid']),
                     new Regex([
-                        'pattern' => "^ *(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4} *$", 'message' => 'user.email.invalid',
-                    ]),
-                    new Email(['message' => 'conversation.phoneNumber.invalid',
+                        'pattern' => "/^ *(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4} *$/", 'message' => 'user.phoneNumber.invalid',
                     ]),
                 ])];
         }
