@@ -11,8 +11,10 @@ use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\FormField\HostField;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Controller\PageController;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Utils\FlashBag;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Datagrid\ProxyQueryInterface;
@@ -22,6 +24,8 @@ use Sonata\AdminBundle\Object\Metadata;
 use Sonata\DoctrineORMAdminBundle\Datagrid\ProxyQuery;
 use Sonata\DoctrineORMAdminBundle\Filter\CallbackFilter;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
+use Twig\Error\RuntimeError;
 
 /**
  * @extends AbstractAdmin<Page>
@@ -55,7 +59,8 @@ abstract class PageAbstractAdmin extends AbstractAdmin
         private readonly AdminFormFieldManager $adminFormFieldManager,
         private readonly AppPool $apps,
         private readonly ImageManager $imageManager,
-        RequestStack $requestStack,
+        private readonly PageController $pageController,
+        private readonly RequestStack $requestStack,
     ) {
         // dd($requestStack->getCurrentRequest()->query->get('host'));
         // dd($requestStack->getCurrentRequest());
@@ -252,7 +257,48 @@ abstract class PageAbstractAdmin extends AbstractAdmin
 
     protected function preUpdate(object $object): void
     {
-        $object->setUpdatedAt(new DateTime());
+        $page = $object;
+
+        $page->setUpdatedAt(new DateTime());
+
+        $flashBag = FlashBag::get($this->requestStack->getCurrentRequest());
+
+        if (null === $flashBag) {
+            return;
+        }
+
+        try {
+            $response = $this->pageController->showPage($page);
+            if (Response::HTTP_OK !== $response->getStatusCode()) {
+                $flashBag->add('warning', 'Une erreur a survenu lorsque la page a tenté d\'être généré.');
+            }
+        } catch (RuntimeError $runtimeError) {
+            $flashBag->add(
+                'warning',
+                'Une erreur a survenu lorsque la page a tenté d\'être généré'
+                .' : <code>'.$runtimeError->getRawMessage().'</code>'
+                .'<br><textarea style="margin-top:4px; width:100%;" data-editor="twig" readonly>'.htmlentities($this->getErrorExcerpt($runtimeError)).'</textarea>'
+            );
+        }
+    }
+
+    public function getErrorExcerpt(RuntimeError $exception, int $context = 1): string
+    {
+        $sourceContext = $exception->getSourceContext();
+        if (null === $sourceContext) {
+            return '';
+        }
+
+        $code = $sourceContext->getCode();
+        $lines = explode("\n", $code);
+        $line = $exception->getTemplateLine();
+
+        $start = max(0, $line - $context - 1);
+        $end = min(count($lines) - 1, $line + $context - 1);
+
+        $excerpt = array_slice($lines, $start, $end - $start + 1, true);
+
+        return trim(implode("\n", $excerpt));
     }
 
     protected function configureListFields(ListMapper $list): void

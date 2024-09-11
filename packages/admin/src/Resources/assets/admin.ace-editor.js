@@ -22,6 +22,13 @@ export function transformTextareaToAce(textarea) {
   editor.getSession().setUseWrapMode(true)
   //editor.setTheme("ace/theme/idle_fingers");
 
+  if (textarea.attr('readonly')) {
+    editor.setReadOnly(true)
+    editor.commands.removeCommand('find')
+  }
+
+  editor.commands.removeCommand('find')
+
   // copy back to textarea on form submit...
   textarea.closest('form').submit(function () {
     textarea.val(editor.getSession().getValue())

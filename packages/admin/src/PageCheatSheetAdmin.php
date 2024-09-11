@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Pushword\Core\Entity\Page;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Route\RouteCollectionInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -10,7 +11,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
  * @psalm-suppress PropertyNotSetInConstructor
  */
 #[AutoconfigureTag('sonata.admin', [
-    'model_class' => '%pw.entity_page%',
+    'model_class' => Page::class,
     'manager_type' => 'orm',
     'label' => 'admin.label.page',
     'default' => false,

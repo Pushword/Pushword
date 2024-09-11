@@ -9,11 +9,11 @@ use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Service\TailwindGenerator;
 use Symfony\Bundle\SecurityBundle\Security;
 
-#[AsEntityListener(event: Events::preRemove, entity: '%pw.entity_page%')]
-#[AsEntityListener(event: Events::preUpdate, entity: '%pw.entity_page%')]
-#[AsEntityListener(event: Events::prePersist, entity: '%pw.entity_page%')]
-#[AsEntityListener(event: Events::postPersist, entity: '%pw.entity_page%')]
-#[AsEntityListener(event: Events::postUpdate, entity: '%pw.entity_page%')]
+#[AsEntityListener(event: Events::preRemove, entity: Page::class)]
+#[AsEntityListener(event: Events::preUpdate, entity: Page::class)]
+#[AsEntityListener(event: Events::prePersist, entity: Page::class)]
+#[AsEntityListener(event: Events::postPersist, entity: Page::class)]
+#[AsEntityListener(event: Events::postUpdate, entity: Page::class)]
 final readonly class PageListener
 {
     public function __construct(

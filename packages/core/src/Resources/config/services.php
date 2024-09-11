@@ -36,12 +36,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->load('Pushword\Core\Controller\\', __DIR__.'/../../../src/Controller')
         ->tag('controller.service_arguments');
 
-    // $services->set(PageRepository::class)->arg('$entityClass', '%pw.entity_page%');
-
-    // $services->set(MediaRepository::class)->arg('$entityClass', '%pw.entity_media%');
-
-    // $services->set(UserRepository::class)->arg('$entityClass', '%pw.entity_user%');
-
     $services->set(StringLoaderExtension::class);
 
     $services->set(TwigExtension::class);

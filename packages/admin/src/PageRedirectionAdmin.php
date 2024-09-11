@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Pushword\Core\Entity\Page;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Datagrid\ProxyQueryInterface;
@@ -12,7 +13,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
  * @psalm-suppress PropertyNotSetInConstructor
  */
 #[AutoconfigureTag('sonata.admin', [
-    'model_class' => '%pw.entity_page%',
+    'model_class' => Page::class,
     'manager_type' => 'orm',
     'label' => 'admin.label.page',
     'default' => false,

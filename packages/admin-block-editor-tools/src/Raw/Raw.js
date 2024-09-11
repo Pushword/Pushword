@@ -76,6 +76,7 @@ export default class Raw extends RawTool {
     setTimeout(function () {
       editor.focus()
     }, 1)
+    editor.commands.removeCommand('find')
 
     return editor
   }

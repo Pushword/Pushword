@@ -2,6 +2,7 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Pushword\Core\Entity\Page;
 use Pushword\PageUpdateNotifier\PageUpdateNotifier;
 
 return static function (ContainerConfigurator $configurator): void {
@@ -11,7 +12,7 @@ return static function (ContainerConfigurator $configurator): void {
         ->args([
             '$varDir' => '%kernel.project_dir%/var',
         ])
-        ->tag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_page%', 'event' => 'postUpdate'])
-        ->tag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_page%', 'event' => 'postPersist'])
+        ->tag('doctrine.orm.entity_listener', ['entity' => Page::class, 'event' => 'postUpdate'])
+        ->tag('doctrine.orm.entity_listener', ['entity' => Page::class, 'event' => 'postPersist'])
     ;
 };

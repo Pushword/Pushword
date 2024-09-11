@@ -16,10 +16,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Features
 
-- [ ] Find unused code
+- [ ] Block Editor wich can be insert dinamically in Page (often to replace template editor)
 
 - [ ] [AdminBlockEditor] https://github.com/calumk/editorjs-codecup (or ACE or codemirror)
-- [ ] [Core/Admin] catch Exception on page rendering and show them in flash messages, OR if user is admin, show him the exception message
 
 - [AdminBlockEditor] Image > Add link + Alt and redesign Legend + edit image (inspired by Bard)
 - [AdminBlockEditor] Noticies block with different notices level (inspired by Grav)

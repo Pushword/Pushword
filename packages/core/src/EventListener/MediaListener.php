@@ -11,6 +11,7 @@ use LogicException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Utils\FlashBag;
 use Pushword\Core\Utils\MediaRenamer;
 
 use function Safe\preg_replace;
@@ -19,7 +20,6 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Vich\UploaderBundle\Event\Event;
@@ -31,21 +31,19 @@ use Vich\UploaderBundle\Event\Event;
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'postPersist'])]
 #[AutoconfigureTag('kernel.event_listener', ['event' => 'vich_uploader.post_upload'])]
 #[AutoconfigureTag('kernel.event_listener', ['event' => 'vich_uploader.pre_upload'])]
-final class MediaListener
+final readonly class MediaListener
 {
-    private ?FlashBagInterface $flashBag = null;
-
-    private readonly MediaRenamer $renamer;
+    private MediaRenamer $renamer;
 
     public function __construct(
-        private readonly string $projectDir,
-        private readonly EntityManagerInterface $em,
-        private readonly Filesystem $filesystem,
-        private readonly ImageManager $imageManager,
-        private readonly RequestStack $requestStack,
-        private readonly RouterInterface $router,
-        private readonly TranslatorInterface $translator,
-        private readonly MediaRepository $mediaRepo,
+        private string $projectDir,
+        private EntityManagerInterface $em,
+        private Filesystem $filesystem,
+        private ImageManager $imageManager,
+        private RequestStack $requestStack,
+        private RouterInterface $router,
+        private TranslatorInterface $translator,
+        private MediaRepository $mediaRepo,
     ) {
         $this->renamer = new MediaRenamer();
     }
@@ -243,24 +241,11 @@ final class MediaListener
 
     private function alert(string $type, string $message, array $parameters = []): void // @phpstan-ignore-line
     {
-        if (null !== ($flashBag = $this->getFlashBag())) {
+        if (null !== ($flashBag = FlashBag::get($this->requestStack->getCurrentRequest()))) {
             $flashBag->add($type, $this->translator->trans($message, $parameters));
         }
 
         // else log TODO
-    }
-
-    /**
-     * @psalm-suppress all
-     */
-    private function getFlashBag(): ?FlashBagInterface
-    {
-        if (null !== $this->flashBag) {
-            return $this->flashBag;
-        }
-
-        return null !== ($request = $this->requestStack->getCurrentRequest()) && method_exists($request->getSession(), 'getFlashBag') ?
-                $this->flashBag = $request->getSession()->getFlashBag() : null;
     }
 
     private function updateMainColor(Media $media, ?ImageInterface $image = null): void
