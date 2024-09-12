@@ -1,6 +1,9 @@
 # Markdown Cheatsheet
 #---
 md_cs:
+  page:
+    h1: Editor Hidden Super Power
+    subtitle: and Markdown Cheatsheet
   title: Title and subtitle
   chapeau: Chapeau
   chapeau_description: Le chapeau est le paragraphe introductif placé sous le titre.

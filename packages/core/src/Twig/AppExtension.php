@@ -35,6 +35,7 @@ final class AppExtension extends AbstractExtension
             new TwigFilter('nice_punctuation', [HtmlBeautifer::class, 'punctuationBeautifer'], self::options()),
             new TwigFilter('markdown', [new MarkdownParser(), 'transform'], self::options()),
             new TwigFilter('unprose', [$this, 'unprose'], self::options()),
+            new TwigFilter('escapeTwig', [$this, 'escapeTwig'], self::options()),
         ];
     }
 
@@ -49,6 +50,15 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('contains_link_to', [$this, 'containsLinkTo'], self::options()),
             new TwigFunction('class_exists', 'class_exists'),
         ];
+    }
+
+    public function escapeTwig(string $text): string
+    {
+        $text = htmlspecialchars($text);
+        $text = str_replace('{{', '{<!---->{', $text);
+        $text = str_replace('{%', '{<!---->%', $text);
+
+        return $text;
     }
 
     /**

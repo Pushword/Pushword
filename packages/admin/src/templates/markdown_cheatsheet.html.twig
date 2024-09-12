@@ -136,9 +136,7 @@ Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 {{ mail('contact@example.tld') }}
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
-{{ '{<!---->{' }} mail('contact@example.tld') }}
-</code></pre>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{{ "{{ mail('contact@example.tld') }}"|escapeTwig }}</code></pre>
 </div>
 
 <!-- -->
@@ -151,9 +149,7 @@ Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 {{ tel('+33 7 00 00 00 00 00 00 00') }}
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
-{{ '{<!---->{' }} tel('+33 7 00 00 00 00 00 00 00') }}
-</code></pre>
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{{ "{{ tel('+33 7 00 00 00 00 00 00 00') }}"|escapeTwig }}</code></pre>
 </div>
 
 <!-- -->
@@ -279,13 +275,14 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
-{{ '{{' }} pages_list('exampleTag')|unprose {{ '}}' }}
-{{ '{{' }} pages_list('exampleTag OR <!--invisible-hash-in-content--> OR comment:invisible-hash-in-content')|unprose {{ '}}' }}
+{{ "{{ pages_list('exampleTag')|unprose"|escapeTwig }}
+{{ "{{ pages_list('exampleTag OR <!--invisible-hash-in-content--> OR comment:invisible-hash-in-content')|unprose"|escapeTwig }}
 {% endapply %}</code></pre>
-
-Discover more on [Advanced Pages Listing](https://pushword.piedweb.com/pages-list).
-
+</div>
+<div class="prose dark:prose-light">
 {% apply markdown %}
+Discover more on {{ link('Advanced Pages Listing', 'https://pushword.piedweb.com/pages-list', false) }}.
+
 - `max` nombre maximum d'items à montrer, peut être un tableau pour paginer le résultat, défault : `0`, no limit
 - `order`  default `publishedAt DESC,priority DESC`
 - `view` default `/component/pages_list.html.twig`, accepte tout chemin vers un template ou `card` pour `/component/pages_list_card.html.twig`

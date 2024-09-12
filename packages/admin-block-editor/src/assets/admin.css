@@ -111,6 +111,10 @@ div[data-item-name='convert-to'] {
   height: 0;
   opacity: 0;
 }
+
+.codex-editor path {
+  stroke: revert-layer !important;
+}
 /** // **/
 
 /* purgecss end ignore */

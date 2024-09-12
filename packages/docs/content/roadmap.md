@@ -16,8 +16,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Features
 
-- [AdminBlockEditor] Image > Add link + Alt and redesign Legend + edit image (inspired by Bard)
-
 - [AdminBlockEditor] Make a POC with ProseEditor (then a migration tool ?)
 
 - [ ] Block Editor wich can be insert dinamically in Page (often to replace template editor)
@@ -28,6 +26,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [AdminBlockEditor] To Markdown (to go back to standard editor) or To Html (easy, just need to created block.md.twig) and the transpiler)
 - [AdminBlockEditor] Card List (like page list but custom entry, custom url, custom everything... see piedvert.com cards everywhere)
 - [AdminBlockEditor] PagesList/CardList/Gallery ➜ Heavily use grid-col-12 and col-span-3/4/2 to be able to fully customize it
+- [AdminBlockEditor] Image > Add link + Alt and redesign Legend + edit image (inspired by Bard)
 
 - [ ] [Admin] easily customize navbar with favorites `page`
 

@@ -86,14 +86,6 @@ var editorjsConfig = {
                 onUploadFile: editorJsHelper.onUploadImage,
             },
         },
-        raw: {
-            name: "raw",
-            className: "Raw",
-            config: {
-                placeholder: "<div>...</div>",
-                defaultHeight: "50"
-            },
-        },
         delimiter: {
             name: "delimiter",
             className: "Delimiter",
@@ -134,6 +126,19 @@ var editorjsConfig = {
             config: {
                 preview: "/admin/page/block/{{ attr.page_id }}",
             }
+        },
+        codeBlock: {
+            name: "codeBlock",
+            className: "CodeBlock",
+            tunes: ['anchor'],
+        },
+        raw: {
+            name: "raw",
+            className: "Raw",
+            config: {
+                placeholder: "<div>...</div>",
+                defaultHeight: "50"
+            },
         },
 
         /** Inline Tool */

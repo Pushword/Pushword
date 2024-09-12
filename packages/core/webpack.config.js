@@ -5,6 +5,7 @@ var watchFiles = [
   './src/templates/**/*.html.twig',
   './src/templates/*.html.twig',
   './../conversation/src/templates/conversation/*.html.twig',
+  './../admin/src/templates/*.html.twig',
   './../admin-block-editor/src/templates/block/*.html.twig',
   './../advanced-main-image/src/templates/page/*.html.twig',
   './../js-helper/src/helpers.js',

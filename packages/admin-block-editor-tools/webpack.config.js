@@ -14,6 +14,7 @@ module.exports = {
     AlignementTune: './src/AlignementTune/AlignementTune.js',
     PasteLink: './src/PasteLink/PasteLink.js',
     HyperlinkTune: './src/HyperlinkTune/HyperlinkTune.js',
+    CodeBlock: './src/CodeBlock/CodeBlock.js',
   },
   module: {
     rules: [

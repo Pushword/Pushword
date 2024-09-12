@@ -26,6 +26,7 @@ import Class from '@pushword/editorjs-tools/dist/Class.js'
 import AlignementTune from '@pushword/editorjs-tools/dist/AlignementTune.js'
 import HyperlinkTune from '@pushword/editorjs-tools/dist/HyperlinkTune.js'
 import PasteLink from '@pushword/editorjs-tools/dist/PasteLink.js'
+import CodeBlock from '@pushword/editorjs-tools/dist/CodeBlock.js'
 
 /** Was initially design to permit multiple editor.js in one page */
 export class editorJs {
@@ -58,6 +59,7 @@ export class editorJs {
             PagesList: PagesList,
             Gallery: Gallery,
             Strikethrough: Strikethrough,
+            CodeBlock: CodeBlock,
             //StyleInlineTool: StyleInlineTool,
           }
 

@@ -1,0 +1,7 @@
+/**
+ * Raw HTML Tool for CodeX Editor
+ *
+ * @author CodeX (team@codex.so)
+ * @copyright CodeX 2018
+ * @license The MIT License (MIT)
+ */

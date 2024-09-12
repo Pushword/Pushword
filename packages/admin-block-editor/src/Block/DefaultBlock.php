@@ -24,6 +24,7 @@ class DefaultBlock extends AbstractBlock
         'attaches',
         'pages_list',
         'gallery',
+        'codeBlock',
     ];
 
     public function __construct(string $name)

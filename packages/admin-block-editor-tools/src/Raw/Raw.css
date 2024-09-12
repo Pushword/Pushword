@@ -1,9 +1,15 @@
 .aceFsBtn {
-    display: none;
-    color: black;
+  display: none;
+  color: black;
 }
 @media screen and (min-width: 1200px) {
-    .ce-rawtool-focus {
-        width: calc(100vw - 220px - 28vw);
-    }
+  .ce-rawtool-focus {
+    width: calc(100vw - 220px - 28vw);
+  }
+}
+
+select.CodeBlock_language {
+  position: absolute;
+  top: 0;
+  right: 0;
 }

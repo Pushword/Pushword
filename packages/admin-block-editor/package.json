@@ -34,6 +34,7 @@
     "watch": "webpack --mode development --watch"
   },
   "dependencies": {
+    "@calumk/editorjs-codecup": "^1.2.0",
     "@sotaproject/strikethrough": "^1.0.1"
   }
 }

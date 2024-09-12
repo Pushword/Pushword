@@ -406,6 +406,25 @@
         "anchor": "",
         "class": ""
       }
+    },
+
+    {
+      "id": "6vAp9lk044",
+      "type": "codeBlock",
+      "data": {
+        "html": "<div>\n  {{ hello }}\n  {% include view('codeblockTest.html.twig') %}\n</div>",
+        "language": "html"
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "QJ9UhOxjT0",
+      "type": "raw",
+      "data": {
+        "html": "<p>Example Raw Html</p>"
+      }
     }
   ],
   "version": "2.29.1"
