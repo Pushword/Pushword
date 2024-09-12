@@ -37,7 +37,7 @@ var editorjsConfig = {
             name: "header",
             className: "Header",
             inlineToolbar: ['bold', 'italic', 'inline-code', 'marker', 'link', 'Strikethrough'],
-            tunes: ['anchor',  'textAlign', 'class',],
+            tunes: ['textAlign', 'anchor', 'class',],
             config: {
                 placeholder: "...",
                 levels: [2, 3, 4],
@@ -61,7 +61,8 @@ var editorjsConfig = {
                 },
                 onSelectFile: editorJsHelper.onSelectImage,
                 onUploadFile: editorJsHelper.onUploadImage,
-            }
+            },
+            conversion: false,
         },
         gallery: {
             name: "gallery",

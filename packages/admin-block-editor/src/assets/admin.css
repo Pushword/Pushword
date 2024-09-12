@@ -73,4 +73,44 @@ a[rel='encrypt']:not(.link-btn) {
   border-top: 1px solid #00000017;
 }
 
+/* Disable convertTo */
+
+div[data-item-name='convert-to'] {
+  display: none !important;
+}
+
+.ce-popover-item-separator {
+  display: none !important;
+}
+
+/** Agressive customization **/
+.ce-popover__items {
+  display: flex;
+  flex-wrap: wrap;
+}
+.ce-popover--inline .ce-popover__items {
+  flex-wrap: unset !important;
+}
+
+.ce-popover-item__title {
+  display: none;
+}
+
+.ce-popover-item-html {
+  width: 100%;
+}
+.ce-popover__search {
+  display: none;
+}
+
+.ce-popover--inline .ce-popover-item__title {
+  display: unset !important;
+}
+.ce-popover--inline .ce-popover__search {
+  display: unset !important;
+  height: 0;
+  opacity: 0;
+}
+/** // **/
+
 /* purgecss end ignore */

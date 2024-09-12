@@ -2,6 +2,7 @@ import RawTool from './../../node_modules/@editorjs/raw/src/index.js'
 //import { transformTextareaToAce } from './../../../admin/src/Resources/assets/admin.ace-editor.js';
 import css from './../../node_modules/@editorjs/raw/src/index.css'
 import './Raw.css'
+import Icon from './icon.svg'
 
 export default class Raw extends RawTool {
   // Wait for PR  https://github.com/editor-js/raw/pull/25 merged
@@ -79,5 +80,12 @@ export default class Raw extends RawTool {
     editor.commands.removeCommand('find')
 
     return editor
+  }
+
+  static get toolbox() {
+    return {
+      icon: Icon,
+      title: 'Raw',
+    }
   }
 }
