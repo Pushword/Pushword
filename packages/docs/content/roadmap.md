@@ -10,7 +10,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 ## Before v1
 
 - [ ] TODO check a new blank installation
-
   - [x] dev environnement setup
   - [ ] usage setup - see if there is a prompt for first user
 
@@ -18,9 +17,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [AdminBlockEditor] Make a POC with ProseEditor (then a migration tool ?)
 
-- [ ] Block Editor wich can be insert dinamically in Page (often to replace template editor)
-
-- [ ] [AdminBlockEditor] https://github.com/calumk/editorjs-codecup (or ACE or codemirror)
+- [AdminBlockEditor] Block Editor wich can be insert dinamically in Page (often to replace template editor)
 
 - [AdminBlockEditor] Noticies block with different notices level (inspired by Grav)
 - [AdminBlockEditor] To Markdown (to go back to standard editor) or To Html (easy, just need to created block.md.twig) and the transpiler)
@@ -28,7 +25,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [AdminBlockEditor] PagesList/CardList/Gallery ➜ Heavily use grid-col-12 and col-span-3/4/2 to be able to fully customize it
 - [AdminBlockEditor] Image > Add link + Alt and redesign Legend + edit image (inspired by Bard)
 
-- [ ] [Admin] easily customize navbar with favorites `page`
+- [Admin] easily customize navbar with favorites `page`
 
 - [Version] Advanced Diff Checker raw /editorjs
 
@@ -44,6 +41,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [AdminBlockEditor] Group
   - = div wrapper with anchor and class (and strettched ? flex ? grid ?), nearest imlpementation:
     - https://github.com/serlo/backlog/issues/83
+    - https://github.com/calumk/editorjs-columns/pull/6
 - [AdminBlockEditor] https://github.com/calumk/editorjs-nested-checklist
 - [AdminBlockEditor] Block Nav Menu (guttenberg style) and moving blocks
 - [AdminBlockEditor] **Multi-upload** (see https://packagist.org/packages/silasjoisten/sonata-multiupload-bundle) + Multi Select
@@ -57,7 +55,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - Intégrer **LinksImprover** (+ UX)
 
-- [PageScanner] add <!-- page-scanner-ignore: what to ignore --> ou plutôt dans othersParameters
+- [PageScanner] add <!-- page-scanner-ignore: what to ignore --> ou othersParameters
   - donner un code unique aux erreurs
   - en 1 click (ignore error)
   - - see ignored errors ui

@@ -1,15 +1,15 @@
 
-{% macro thumb(image, page = null, filter = 'thumb', otherAttributes = {}) %}{% apply spaceless %}
-  <picture>
-    <source type="image/webp" srcset="{{ image|image(filter, 'webp') }} 576w" />
-    <img srcset="{{ image|image(filter) }} 576w"
-      src="{{ image|image('default') }}"
-      loading=lazy
-      width="{{ filter == 'thumb' ? '1000' : image.width }}"
-      height="{{ filter == 'thumb' ? '1000' : image.height }}"
-      {% if otherAttributes.alt is not defined %}
-        alt="{{ image.nameByLocale(page is not null ? page.locale : '') }}"
-      {% endif %}
-      {{ otherAttributes ? attr(otherAttributes) : '' }} />
-  </picture>
-{% endapply %}{% endmacro %}
+{% macro thumb(image, page = null, filter = 'thumb', otherAttributes = {}) %}
+<picture>
+  <source type="image/webp" srcset="{{ image|image(filter, 'webp') }} 576w" />
+  <img srcset="{{ image|image(filter) }} 576w"
+    src="{{ image|image('default') }}"
+    loading=lazy
+    width="{{ filter == 'thumb' ? '1000' : image.width }}"
+    height="{{ filter == 'thumb' ? '1000' : image.height }}"
+    {% if otherAttributes.alt is not defined %}
+      alt="{{ image.nameByLocale(page is not null ? page.locale : '') }}"
+    {% endif %}
+    {{ otherAttributes ? attr(otherAttributes) : '' }} />
+</picture>
+{% endmacro %}

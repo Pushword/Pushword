@@ -11,11 +11,11 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
-## To next !
+## To 1.0.0
 
 - Delete `App\Entity\*`
 - Upgrade database `bin/console doctrine:schema:update --force`
-- Remove `composer remove pushword/svg` (and from bundles !)
+- Remove `composer remove pushword/svg` (and from `config/bundles.php`)
 - Drop get('assetsVersionned'), prefer use `getStylesheets` or `getJavascript`
 - Change twig function `page_position` for `breadcrumb_list_position`
 

@@ -28,7 +28,7 @@
                     {{ title|raw }}
                 </a>
             {% endif %}
-        </h{{ title_tag|default('h' ~ (hLevel|default(2))) }}>
+        </{{ title_tag|default('h' ~ (hLevel|default(2))) }}>
     </header>
 </article>
 {% endblock %}
