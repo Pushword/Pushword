@@ -26,6 +26,7 @@ use Sonata\DoctrineORMAdminBundle\Filter\CallbackFilter;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 /**
  * @extends AbstractAdmin<Page>
@@ -272,7 +273,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin
             if (Response::HTTP_OK !== $response->getStatusCode()) {
                 $flashBag->add('warning', 'Une erreur a survenu lorsque la page a tenté d\'être généré.');
             }
-        } catch (RuntimeError $runtimeError) {
+        } catch (RuntimeError|SyntaxError $runtimeError) {
             $flashBag->add(
                 'warning',
                 'Une erreur a survenu lorsque la page a tenté d\'être généré'
@@ -282,7 +283,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin
         }
     }
 
-    public function getErrorExcerpt(RuntimeError $exception, int $context = 1): string
+    public function getErrorExcerpt(RuntimeError|SyntaxError $exception, int $context = 1): string
     {
         $sourceContext = $exception->getSourceContext();
         if (null === $sourceContext) {
