@@ -48,7 +48,6 @@
 {% block body %}
   <div class="flex flex-col min-h-screen">
 
-
   {% set pageContent = include(view('/page/_content.html.twig')) %}
   {% block content %}
     {{ (pageContent ?? include(view('/page/_content.html.twig')))|raw }}
