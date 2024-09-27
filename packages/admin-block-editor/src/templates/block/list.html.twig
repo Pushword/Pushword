@@ -1,5 +1,5 @@
 {% set attr = blockWrapperAttr(block) %}
-{{ '<' ~ (block.data.style == 'unordered' ? 'ul' : 'ol') ~ (attr ? ' ' ~ attr : '') ~ '>' }}
+{{ ('<' ~ (block.data.style == 'unordered' ? 'ul' : 'ol') ~ (attr ? ' ' ~ attr : '') ~ '>')|raw }}
 {% for item in block.data.items %}
     {% if item.content is defined %}
         <li>
