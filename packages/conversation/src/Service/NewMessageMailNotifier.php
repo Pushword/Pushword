@@ -104,7 +104,8 @@ class NewMessageMailNotifier
             ->text(
                 htmlspecialchars_decode($message->getContent())
                 ."\n\n---\n"
-                .'Envoyé par '.($message->getAuthorName() ?? '')
+                .'Envoyé par '.($message->getAuthorName() ?? '...')
+                .' - '.($message->getAuthorEmail() ?? '...')
                 ."\n".'Depuis '.$message->getHost().' › form['.$message->getReferring().']'
             );
 

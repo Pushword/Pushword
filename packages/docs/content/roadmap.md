@@ -15,6 +15,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Features
 
+- https://x.com/jh3yy/status/1798728699459563905
+
 - [AdminBlockEditor] Make a POC with ProseEditor (then a migration tool ?)
 
 - [AdminBlockEditor] Block Editor wich can be insert dinamically in Page (often to replace template editor)
