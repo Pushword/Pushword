@@ -15,6 +15,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Features
 
+- [ ] revoir la compression pour du contenu statique - https://dunglas.dev/2024/12/http-compression-in-php-new-symfony-assetmapper-feature/
+
 - https://x.com/jh3yy/status/1798728699459563905
 
 - [AdminBlockEditor] Make a POC with ProseEditor (then a migration tool ?)
