@@ -28,6 +28,9 @@
 {% endblock %}
 
 {% block open_graph %}
+  {#<script>const base = "{{ page('homepage') }}"</script>#}
+  {# Where is `base` used ? #}
+
   <meta name="og:title" content="{{ page.ogTitle|default(pw(page).title)|striptags }}">
   <meta name="og:url" content="{{ page(page, true) }}">
   {% if page.searchExcrept or page.ogDescription %}
@@ -42,7 +45,6 @@
       <meta name="twitter:card" content="summary_large_image">
     {% endif %}
   {% endif %}
-    <script>const base = "{{ page('homepage') }}"</script>
 {% endblock %}
 
 {% block body %}
