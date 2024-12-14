@@ -70,6 +70,7 @@ ErrorDocument 500 /404
 #---
 <IfModule mod_headers.c>
 Header set Connection keep-alive
+FileETag Size
 # 4 HOURS
 Header set Cache-Control "max-age=14400, must-revalidate"
     # 480 weeks - 290304000

@@ -3,17 +3,8 @@
 
 {% block head %}
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    {% block favicon %}
-      {% if apps.get().get('favicon_path') is not null %}
-        {# permit retrocompatibility with a feature previous v1 wich is deprecated ! Prefer override base.html.twig ➜ favicon block #}
-        {{ include(view('/component/favicon.html.twig'), {favicon_path: apps.get().get('favicon_path')}, false) }}
-      {% else %}
-      <link rel="icon" href="{{ asset(apps.get().get('assets:favicon') ?? 'bundles/pushwordcore/favicon.ico') }}" />
-      {% endif %}
-    {% endblock %}
 
     <title>{% block title %}Pushword CMS !{% endblock %}</title>
 
@@ -37,6 +28,16 @@
         .nojs{display:inline-block}
       </style>
       <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:none !important}</style>');</script>
+    {% endblock %}
+
+
+    {% block favicon %}
+      {% if apps.get().get('favicon_path') is not null %}
+        {# permit retrocompatibility with a feature previous v1 wich is deprecated ! Prefer override base.html.twig ➜ favicon block #}
+        {{ include(view('/component/favicon.html.twig'), {favicon_path: apps.get().get('favicon_path')}, false) }}
+      {% else %}
+      <link rel="icon" href="{{ asset(apps.get().get('assets:favicon') ?? 'bundles/pushwordcore/favicon.ico') }}" />
+      {% endif %}
     {% endblock %}
 
     {% block feed %}
