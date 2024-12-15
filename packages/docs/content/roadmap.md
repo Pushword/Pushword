@@ -15,10 +15,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Features
 
-- [ ] revoir la compression pour du contenu statique et l'ordre des assets
+- [ ] revoir la compression pour du contenu statique
 
   - https://dunglas.dev/2024/12/http-compression-in-php-new-symfony-assetmapper-feature/
-  - https://chromewebstore.google.com/detail/capo-get-your-%EF%B9%A4%F0%9D%9A%91%F0%9D%9A%8E%F0%9D%9A%8A%F0%9D%9A%8D%EF%B9%A5/ohabpnaccigjhkkebjofhpmebofgpbeb
 
 - TwigStan + TwigFormatter
 

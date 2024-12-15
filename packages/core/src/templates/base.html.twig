@@ -32,7 +32,7 @@
 
     {% block script %}
       {% for javascript in apps.get().getJavascripts() %}
-        <script{% if javascript is iterable %}{{ attr(javascript) }}{% else %} src="{{ asset(javascript) }}" async{% endif %} defer></script>
+        <script{% if javascript is iterable %}{{ attr(javascript) }}{% else %} src="{{ asset(javascript) }}" async{% endif %}></script>
       {% endfor %}
     {% endblock %}
 
