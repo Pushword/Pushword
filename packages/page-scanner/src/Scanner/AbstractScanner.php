@@ -10,10 +10,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 abstract class AbstractScanner
 {
-    /** @psalm-suppress PropertyNotSetInConstructor defined on init */
     protected Page $page;
 
-    /** @psalm-suppress PropertyNotSetInConstructor defined on init */
     protected string $pageHtml;
 
     /**

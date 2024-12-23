@@ -6,9 +6,6 @@ use Exception;
 use LogicException;
 use Symfony\Component\Filesystem\Filesystem;
 
-/**
- * @psalm-suppress MissingFile
- */
 if (! class_exists(Filesystem::class)) {
     require_once __DIR__.'/vendor/symfony/filesystem/Filesystem.php';
 }
@@ -22,7 +19,6 @@ class PostInstall
         foreach ($packages as $package) {
             if (! file_exists('var/installer/'.md5($package)) && file_exists($installer = 'vendor/pushword/'.$package.'/install.php')) {
                 echo '~ Executing '.$package.' post update command install action.'.\chr(10);
-                /** @psalm-suppress UnresolvableInclude */
                 include $installer;
 
                 self::dumpFile('var/installer/'.md5($package), 'done');

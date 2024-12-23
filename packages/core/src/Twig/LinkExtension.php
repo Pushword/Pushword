@@ -3,6 +3,7 @@
 namespace Pushword\Core\Twig;
 
 use Cocur\Slugify\Slugify;
+use Override;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
@@ -23,6 +24,7 @@ final class LinkExtension extends AbstractExtension
     /**
      * @return TwigFunction[]
      */
+    #[Override]
     public function getFunctions(): array
     {
         return [

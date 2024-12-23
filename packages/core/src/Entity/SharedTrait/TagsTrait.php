@@ -40,7 +40,7 @@ trait TagsTrait
             $tags = $this->manageTagsString($tags);
         }
 
-        $tags = array_filter(array_map('trim', $tags));
+        $tags = array_filter(array_map('trim', $tags), fn (string $tag): bool => '' !== $tag);
         $tags = array_diff($tags, $this->reservedTags);
         // tag disappear without message for user ➜ if count != exception ?!
         $this->tags = array_values($tags);

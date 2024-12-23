@@ -2,6 +2,7 @@
 
 namespace Pushword\AdminBlockEditor\Twig;
 
+use Override;
 use PiedWeb\RenderAttributes\Attribute;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Router\PushwordRouteGenerator;
@@ -25,6 +26,7 @@ class AppExtension extends AbstractExtension
     /**
      * @return TwigFunction[]
      */
+    #[Override]
     public function getFunctions(): array
     {
         return [
@@ -36,6 +38,7 @@ class AppExtension extends AbstractExtension
     /**
      * @return TwigFilter[]
      */
+    #[Override]
     public function getFilters(): array
     {
         return [
@@ -46,8 +49,6 @@ class AppExtension extends AbstractExtension
     /**
      * @param array<mixed>|stdClass $blockData
      * @param array<mixed>          $attributes
-     *
-     * @psalm-suppress all
      */
     public function blockWrapperAttr(array|stdClass $blockData, array $attributes = []): string
     {
@@ -57,22 +58,26 @@ class AppExtension extends AbstractExtension
             return Attribute::renderAll($attributes);
         }
 
-        if (isset($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) {
-            $attributes['id'] = trim(($attributes['id'] ?? '').' '.$blockData['tunes']['anchor']);
+        if (isset($blockData['tunes']['anchor']) && is_string($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) {
+            $id = isset($attributes['id']) && is_string($attributes['id']) ? trim($attributes['id']) : '';
+            $attributes['id'] = $id.' '.$blockData['tunes']['anchor'];
         }
 
-        if (isset($blockData['tunes']['class']) && '' !== $blockData['tunes']['class']) {
-            $attributes['class'] = trim(($attributes['class'] ?? '').' '.$blockData['tunes']['class']);
+        if (isset($blockData['tunes']['class']) && is_string($blockData['tunes']['class']) && '' !== $blockData['tunes']['class']) {
+            $class = isset($attributes['class']) && is_string($attributes['class']) ? trim($attributes['class']) : '';
+            $attributes['class'] = trim($class.' '.$blockData['tunes']['class']);
+        } else {
+            $attributes['class'] = '';
         }
 
-        $alignment = $blockData['tunes']['textAlign']['alignment'] ?? $blockData['data']['alignment'] ?? '';
+        $alignment = $blockData['tunes']['textAlign']['alignment'] ?? $blockData['data']['alignment'] ?? ''; // @phpstan-ignore-line
 
         if ('center' === $alignment) {
-            $attributes['class'] = trim(($attributes['class'] ?? '').' text-center');
+            $attributes['class'] .= ' text-center';
         } elseif ('right' === $alignment) {
-            $attributes['class'] = trim(($attributes['class'] ?? '').' text-right');
+            $attributes['class'] .= ' text-right';
         } elseif ('justify' === $alignment) {
-            $attributes['class'] = trim(($attributes['class'] ?? '').' text-justify');
+            $attributes['class'] .= ' text-justify';
         }
 
         return Attribute::renderAll($attributes);

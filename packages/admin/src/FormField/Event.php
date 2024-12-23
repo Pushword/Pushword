@@ -12,7 +12,7 @@ use Symfony\Contracts\EventDispatcher\Event as SfEvent;
 class Event extends SfEvent
 {
     /** @var string */
-    final public const NAME = 'pushword.admin.load_field';
+    final public const string NAME = 'pushword.admin.load_field';
 
     /**
      * @param AdminInterface<T>                                                                                                                                                                                                                      $admin
@@ -39,7 +39,7 @@ class Event extends SfEvent
     }
 
     /**
-     * @return array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[]|array<string, (class-string<AbstractField<T>>[]|array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]}
+     * @return array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[] | array<string, (class-string<AbstractField<T>>[] | array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]}
      */
     public function getFields(): array
     {
@@ -47,7 +47,7 @@ class Event extends SfEvent
     }
 
     /**
-     * @phpstan-param array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[] | array<string, (class-string<AbstractField<T>>[] | array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]} $fields
+     * @param array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[] | array<string, (class-string<AbstractField<T>>[] | array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]} $fields
      *
      * @return self<T>
      */

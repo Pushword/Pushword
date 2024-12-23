@@ -37,7 +37,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 class Configuration implements ConfigurationInterface
 {
-    final public const DEFAULT_APP_FALLBACK = [
+    final public const array DEFAULT_APP_FALLBACK = [
         'admin_page_form_fields',
         'admin_redirection_form_fields',
         'admin_user_form_fields',
@@ -47,17 +47,17 @@ class Configuration implements ConfigurationInterface
     /**
      * Must respect AdminFormFields type define in ./phpstan.neon.dist !
      */
-    final public const DEFAULT_ADMIN_USER_FORM_FIELDS = [
+    final public const array DEFAULT_ADMIN_USER_FORM_FIELDS = [
         [UserEmailField::class, UserUsernameField::class, UserPasswordField::class, CreatedAtField::class],
         ['admin.user.label.security' => [UserRolesField::class]],
     ];
 
-    final public const DEFAULT_ADMIN_REDIRECTION_FORM_FIELDS = [
+    final public const array DEFAULT_ADMIN_REDIRECTION_FORM_FIELDS = [
         [PageH1Field::class, PageMainContentField::class, HostField::class],
         [],
     ];
 
-    final public const DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
+    final public const array DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
         [TagsField::class, PageH1Field::class, PageMainContentField::class],
         [
             'admin.page.revisions' => [PageEditMessageField::class],
@@ -84,15 +84,12 @@ class Configuration implements ConfigurationInterface
         ],
     ];
 
-    final public const DEFAULT_ADMIN_MEDIA_FORM_FIELDS = [
+    final public const array DEFAULT_ADMIN_MEDIA_FORM_FIELDS = [
         [MediaMediaFileField::class, MediaNameField::class, MediaSlugField::class],
         [CustomPropertiesField::class, MediaNamesField::class],
         [MediaPreviewField::class],
     ];
 
-    /**
-     * @psalm-suppress UndefinedInterfaceMethod
-     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('pushword_admin');

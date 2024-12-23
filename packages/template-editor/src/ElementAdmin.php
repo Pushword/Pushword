@@ -102,10 +102,6 @@ final class ElementAdmin extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $element = $form->getData();
 
-            if (! $element instanceof Element) {
-                throw new Exception('an error occured');
-            }
-
             $element->storeElement();
 
             $this->clearTwigCache();
@@ -128,9 +124,13 @@ final class ElementAdmin extends AbstractController
         );
     }
 
+    /**
+     * @return FormInterface<Element>
+     */
     private function editElementForm(Element $element): FormInterface
     {
-        return $this->createFormBuilder($element)
+        /** @var FormInterface<Element> */
+        $form = $this->createFormBuilder($element)
             ->add('path', TextType::class, ['disabled' => $this->disableCreation])
             ->add('code', TextareaType::class, [
                 'attr' => [
@@ -142,6 +142,8 @@ final class ElementAdmin extends AbstractController
             ])
 
             ->getForm();
+
+        return $form;
     }
 
     public function deleteElement(string $encodedPath, Request $request): Response

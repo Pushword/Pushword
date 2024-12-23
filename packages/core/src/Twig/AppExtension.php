@@ -107,9 +107,6 @@ final class AppExtension extends AbstractExtension
 
     /**
      * Twig filters.
-     *
-     * @psalm-suppress UnnecessaryVarAnnotation
-     * @psalm-suppress InternalMethod
      */
     public function unprose(string $html): string
     {

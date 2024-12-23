@@ -22,7 +22,6 @@ use Symfony\Component\Yaml\Yaml;
  */
 class FlatFileExporter
 {
-    /** @psalm-suppress PropertyNotSetInConstructor */
     protected AppConfig $app;
 
     protected string $copyMedia = '';

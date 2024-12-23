@@ -12,7 +12,6 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 abstract class AbstractEventSuscriber implements EventSubscriberInterface
 {
-    /** @psalm-suppress PropertyNotSetInConstructor */
     #[Required]
     public AppPool $apps;
 

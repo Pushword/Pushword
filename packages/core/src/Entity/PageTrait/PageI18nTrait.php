@@ -50,7 +50,7 @@ trait PageI18nTrait
 
     public function addTranslation(Page $page, bool $recursive = true): self
     {
-        if (! $this->getTranslations()->contains($page) && $this != $page) {
+        if (! $this->getTranslations()->contains($page) && $this !== $page) {
             $this->getTranslations()->add($page);
         }
 
@@ -68,11 +68,11 @@ trait PageI18nTrait
             $page->addTranslation($this, false);
 
             foreach ($this->getTranslations() as $otherTranslation) {
-                if ($otherTranslation == $this) {  // déjà fait
+                if ($otherTranslation === $this) {  // déjà fait
                     continue;
                 }
 
-                if ($otherTranslation == $page) { // on ne se référence pas soit-même
+                if ($otherTranslation === $page) { // on ne se référence pas soit-même
                     continue;
                 }
 
@@ -99,11 +99,11 @@ trait PageI18nTrait
             $page->removeTranslation($this, false);
 
             foreach ($this->getTranslations() as $otherTranslation) {
-                if ($otherTranslation == $this) {
+                if ($otherTranslation === $this) {
                     continue;
                 }
 
-                if ($otherTranslation == $page) {
+                if ($otherTranslation === $page) {
                     continue;
                 }
 

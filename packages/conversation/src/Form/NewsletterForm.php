@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Form;
 
+use Pushword\Conversation\Entity\Message;
 use Symfony\Component\Form\FormBuilderInterface;
 
 class NewsletterForm extends AbstractConversationForm implements ConversationFormInterface
@@ -16,6 +17,7 @@ class NewsletterForm extends AbstractConversationForm implements ConversationFor
         return $form;
     }
 
+    /** @return FormBuilderInterface<Message> */
     protected function getStepTwo(): FormBuilderInterface
     {
         $form = $this->initForm();

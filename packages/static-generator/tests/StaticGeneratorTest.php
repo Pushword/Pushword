@@ -4,6 +4,7 @@ namespace Pushword\StaticGenerator;
 
 use DateTime;
 use Exception;
+use PHPUnit\Framework\MockObject\MockObject;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
@@ -59,7 +60,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generatorBag = $this->getGeneratorBag();
 
-        return new StaticAppGenerator(
+        return $this->staticAppGenerator = new StaticAppGenerator(
             self::getContainer()->get(AppPool::class),
             $generatorBag,
             $generatorBag->get(RedirectionManager::class) // @phpstan-ignore-line
@@ -159,7 +160,7 @@ class StaticGeneratorTest extends KernelTestCase
         return $container->get(GeneratorBag::class);
     }
 
-    public function getParameterBag(): ParameterBagInterface
+    public function getParameterBag(): MockObject
     {
         $params = $this->createMock(ParameterBagInterface::class);
 
@@ -190,7 +191,7 @@ class StaticGeneratorTest extends KernelTestCase
         throw new Exception();
     }
 
-    public function getPageRepo(): PageRepository
+    public function getPageRepo(): MockObject
     {
         $page = (new Page())
             ->setH1('Welcome to Pushword !')

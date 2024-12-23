@@ -3,6 +3,7 @@
 namespace Pushword\Core\Twig;
 
 use Exception;
+use Override;
 use PiedWeb\RenderAttributes\Attribute;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Utils\FontAwesome5To6 as SvgFontAwesome5To6;
@@ -21,6 +22,7 @@ class SVGExtension extends AbstractExtension
     /**
      * @return TwigFunction[]
      */
+    #[Override]
     public function getFunctions(): array
     {
         return [

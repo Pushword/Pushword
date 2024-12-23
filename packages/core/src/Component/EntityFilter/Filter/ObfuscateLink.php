@@ -47,7 +47,7 @@ class ObfuscateLink extends AbstractFilter
         $nbrMatch = \count($matches[0]);
         for ($k = 0; $k < $nbrMatch; ++$k) {
             $attr = $matches[3][$k] ?? null;
-            $attr = null !== $attr ? [('#' == $attr ? 'id' : 'class') => substr($attr, 1)] : [];
+            $attr = null !== $attr ? [('#' === ($attr[0] ?? '') ? 'id' : 'class') => substr($attr, 1)] : [];
             $link = $this->linkProvider->renderLink($matches[$anchorKey][$k], $matches[$hrefKey][$k], $attr);
             $body = str_replace($matches[0][$k], $link, $body);
         }

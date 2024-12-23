@@ -9,7 +9,7 @@ class DefaultBlock extends AbstractBlock
     /**
      * @var string[]
      */
-    final public const AVAILABLE_BLOCKS = [
+    final public const array AVAILABLE_BLOCKS = [
         'paragraph',
         'list',
         'header',

@@ -3,6 +3,7 @@
 namespace Pushword\Core\Twig;
 
 use Exception;
+use Override;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -19,8 +20,8 @@ use Twig\TwigFunction;
 /**
  * @template T of object
  *
- * @psalm-suppress MissingConstructor
- * @psalm-suppress PropertyNotSetInConstructor */
+ *
+ *  */
 class MediaExtension extends AbstractExtension
 {
     public function __construct(
@@ -34,6 +35,7 @@ class MediaExtension extends AbstractExtension
     /**
      * @return TwigFilter[]
      */
+    #[Override]
     public function getFilters(): array
     {
         return [
@@ -44,6 +46,7 @@ class MediaExtension extends AbstractExtension
     /**
      * @return TwigFunction[]
      */
+    #[Override]
     public function getFunctions(): array
     {
         return [

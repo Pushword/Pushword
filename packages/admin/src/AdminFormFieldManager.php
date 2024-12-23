@@ -53,9 +53,6 @@ class AdminFormFieldManager
     }
 
     /**
-     * @psalm-suppress  InvalidReturnType // use only phpstan
-     * @psalm-suppress  InvalidReturnStatement // use only phpstan
-     *
      * @template T of object
      *
      * @param AdminInterface<T> $admin
@@ -82,7 +79,6 @@ class AdminFormFieldManager
      */
     public function addFormField(string $field, FormMapper $form, AdminInterface $admin): void
     {
-        /** @psalm-suppress UnsafeInstantiation */
         (new $field($this, $admin))->formField($form);
     }
 }

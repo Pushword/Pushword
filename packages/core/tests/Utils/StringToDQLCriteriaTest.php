@@ -2,7 +2,7 @@
 
 namespace Pushword\Core\Tests\Service;
 
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query\Parameter;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Utils\StringToDQLCriteria;
@@ -16,7 +16,7 @@ class StringToDQLCriteriaTest extends KernelTestCase
         self::assertSame([['slug', 'LIKE', 'blog'], 'OR', ['tags', 'LIKE', '%"a"%']], (new StringToDQLCriteria('slug:blog OR a', null))->retrieve());
 
         self::bootKernel();
-        /** @var EntityManagerInterface */
+        /** @var EntityManager */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $pageRepo = $em->getRepository(Page::class);

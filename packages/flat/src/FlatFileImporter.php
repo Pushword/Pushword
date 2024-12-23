@@ -20,7 +20,6 @@ use function Safe\scandir;
  */
 final class FlatFileImporter
 {
-    /** @psalm-suppress PropertyNotSetInConstructor */
     protected AppConfig $app;
 
     protected string $customMediaDir = '';
@@ -95,9 +94,6 @@ final class FlatFileImporter
 
     /**
      * @return AbstractImporter<T>
-     *
-     * @psalm-suppress InvalidReturnStatement
-     * @psalm-suppress InvalidReturnType
      */
     private function getImporter(string $type): AbstractImporter
     {

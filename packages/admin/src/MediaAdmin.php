@@ -3,6 +3,7 @@
 namespace Pushword\Admin;
 
 use Exception;
+use Override;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
@@ -17,8 +18,6 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 /**
  * @extends AbstractAdmin<Media>
- *
- * @psalm-suppress PropertyNotSetInConstructor
  */
 #[AutoconfigureTag('sonata.admin', [
     'model_class' => '%pw.entity_media%',
@@ -28,7 +27,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 ])]
 final class MediaAdmin extends AbstractAdmin
 {
-    public const MESSAGE_PREFIX = 'admin.media';
+    public const string MESSAGE_PREFIX = 'admin.media';
 
     public function __construct(
         private readonly AdminFormFieldManager $adminFormFieldManager,
@@ -38,11 +37,13 @@ final class MediaAdmin extends AbstractAdmin
         parent::__construct();
     }
 
+    #[Override]
     protected function generateBaseRouteName(bool $isChildAdmin = false): string
     {
         return 'admin_media';
     }
 
+    #[Override]
     protected function generateBaseRoutePattern(bool $isChildAdmin = false): string
     {
         return 'media';
@@ -63,9 +64,6 @@ final class MediaAdmin extends AbstractAdmin
         ];
     }
 
-    /**
-     * @psalm-suppress InvalidArgument
-     */
     protected function configureFormFields(FormMapper $form): void
     {
         $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
@@ -168,6 +166,7 @@ final class MediaAdmin extends AbstractAdmin
         ]);
     }
 
+    #[Override]
     public function getObjectMetadata(object $object): Metadata
     {
         $thumb = $this->imageManager->isImage($object) ? $this->imageManager->getBrowserPath($object, 'thumb') : Thumb::$thumb;

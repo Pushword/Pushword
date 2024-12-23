@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Override;
 use Pushword\Core\Entity\Page;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -9,9 +10,6 @@ use Sonata\AdminBundle\Datagrid\ProxyQueryInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
-/**
- * @psalm-suppress PropertyNotSetInConstructor
- */
 #[AutoconfigureTag('sonata.admin', [
     'model_class' => Page::class,
     'manager_type' => 'orm',
@@ -20,28 +18,30 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 ])]
 class PageRedirectionAdmin extends PageAbstractAdmin
 {
+    #[Override]
     protected function configureFormFields(FormMapper $form): void
     {
         $this->formFieldKey = 'admin_redirection_form_fields';
         parent::configureFormFields($form);
     }
 
+    #[Override]
     protected function generateBaseRouteName(bool $isChildAdmin = false): string
     {
         return 'admin_redirection';
     }
 
+    #[Override]
     protected function generateBaseRoutePattern(bool $isChildAdmin = false): string
     {
         return 'app/redirection';
     }
 
-    /** @psalm-suppress MoreSpecificReturnType */
+    #[Override]
     protected function configureQuery(ProxyQueryInterface $query): ProxyQueryInterface
     {
         $query = AbstractAdmin::configureQuery($query);
 
-        /** @psalm-suppress ArgumentTypeCoercion */
         $qb = $this->getQueryBuilderFrom($query);
 
         $rootAlias = current($qb->getRootAliases());
@@ -51,10 +51,10 @@ class PageRedirectionAdmin extends PageAbstractAdmin
         );
         $qb->setParameter('mcf', 'Location:%');
 
-        /** @psalm-suppress LessSpecificReturnStatement */
         return $query;
     }
 
+    #[Override]
     protected function configureListFields(ListMapper $list): void
     {
         $list->addIdentifier('h1', 'html', [

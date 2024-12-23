@@ -3,6 +3,7 @@
 namespace Pushword\Core\Utils;
 
 use Michelf\MarkdownExtra;
+use Override;
 
 class MarkdownParser extends MarkdownExtra
 {
@@ -18,11 +19,13 @@ class MarkdownParser extends MarkdownExtra
      *
      * @param string $text
      */
+    #[Override]
     protected function detab($text): string
     {
         return str_replace("\t", str_repeat(' ', $this->tab_width), $text);
     }
 
+    #[Override]
     protected function _initDetab(): void
     {
     }

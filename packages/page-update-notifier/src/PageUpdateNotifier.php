@@ -30,28 +30,27 @@ class PageUpdateNotifier
 
     private string $interval = '';
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     private AppConfig $app;
 
     /**
      * @var int
      */
-    final public const ERROR_NO_EMAIL = 1;
+    final public const int ERROR_NO_EMAIL = 1;
 
     /**
      * @var int
      */
-    final public const ERROR_NO_INTERVAL = 2;
+    final public const int ERROR_NO_INTERVAL = 2;
 
     /**
      * @var int
      */
-    final public const WAS_EVER_RUN_SINCE_INTERVAL = 3;
+    final public const int WAS_EVER_RUN_SINCE_INTERVAL = 3;
 
     /**
      * @var int
      */
-    final public const NOTHING_TO_NOTIFY = 4;
+    final public const int NOTHING_TO_NOTIFY = 4;
 
     public function __construct(
         private readonly MailerInterface $mailer,
@@ -84,8 +83,6 @@ class PageUpdateNotifier
 
     /**
      * @return Page[]
-     *
-     * @psalm-suppress all
      */
     protected function getPageUpdatedSince(DateTimeInterface $datetime): mixed
     {

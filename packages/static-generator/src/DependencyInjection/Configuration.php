@@ -16,7 +16,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    final public const DEFAULT_APP_FALLBACK = [
+    final public const array DEFAULT_APP_FALLBACK = [
         'static_generators',
         'static_symlink',
         'static_dir',
@@ -26,7 +26,7 @@ class Configuration implements ConfigurationInterface
     /**
      * @var array<class-string<GeneratorInterface>>
      */
-    final public const DEFAULT_GENERATOR = [
+    final public const array DEFAULT_GENERATOR = [
         PagesGenerator::class,
         RobotsGenerator::class,
         ErrorPageGenerator::class,
@@ -38,7 +38,7 @@ class Configuration implements ConfigurationInterface
     /**
      * @var array<class-string<GeneratorInterface>>
      */
-    final public const DEFAULT_GENERATOR_GITHUB = [
+    final public const array DEFAULT_GENERATOR_GITHUB = [
         PagesGenerator::class,
         RobotsGenerator::class,
         ErrorPageGenerator::class,
@@ -50,11 +50,8 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    final public const DEFAULT_COPY = ['assets', 'bundles', 'media'];
+    final public const array DEFAULT_COPY = ['assets', 'bundles', 'media'];
 
-    /**
-     * @psalm-suppress UndefinedInterfaceMethod
-     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('static_generator');

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Tests;
 
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityManager;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
@@ -44,7 +44,7 @@ class FlatFileImporterTest extends KernelTestCase
 
     private function assertLinkToMarkdownFileIsReplacedBySlugPath(): void
     {
-        /** @var EntityManagerInterface */
+        /** @var EntityManager */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $pageRepo = $em->getRepository(Page::class);

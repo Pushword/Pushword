@@ -10,15 +10,14 @@ use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
- * @template T of object
+ * @template T of Page
  *
- * @extends AbstractField<T>
+ * @extends AbstractField<Page>
  */
 class TagsField extends AbstractField
 {
     public function formField(FormMapper $form): void
     {
-        /** @var Page */
         $page = $this->admin->getSubject();
 
         $pageRepo = $this->admin->getEntityManager()->getRepository(Page::class);

@@ -25,7 +25,8 @@ final readonly class EditorJsPurifier
         foreach ($data->blocks as $k => $block) {
             if (\in_array($block->type, ['header', 'paragraph'], true)) {
                 if (! property_exists($data->blocks[$k], 'data') || ! \is_object($data->blocks[$k]->data)
-                    || ! \is_string($text = $data->blocks[$k]->data->text ?? 0)) {
+                    || ! property_exists($data->blocks[$k]->data, 'text')
+                    || ! \is_string($text = $data->blocks[$k]->data->text)) {
                     return $raw;
                 }
 
@@ -34,11 +35,11 @@ final readonly class EditorJsPurifier
 
             if ('list' === $block->type) {
                 if (! property_exists($data->blocks[$k], 'data') || ! \is_object($data->blocks[$k]->data)
-                    || ! \is_array($text = $data->blocks[$k]->data->items ?? 0)) {
+                    || ! property_exists($data->blocks[$k]->data, 'items')
+                    || ! \is_array($text = $data->blocks[$k]->data->items)) {
                     return $raw;
                 }
 
-                /** @psalm-suppress MixedArgumentTypeCoercion */
                 $data->blocks[$k]->data->items = self::htmlPurifierForList($text);
             }
         }
@@ -88,18 +89,25 @@ final readonly class EditorJsPurifier
     }
 
     /**
-     * @param array<array-key, object{items: array<mixed>, content: string}> $items
+     * @param array<array-key, mixed> $items
      *
      * @return array<array-key, object{items: array<mixed>, content: string}>
      */
     private function htmlPurifierForList(array $items): array
     {
+        $itemsPurified = [];
         foreach ($items as $k => $item) {
-            $items[$k]->content = self::htmlPurifier($item->content); // @phpstan-ignore-line
-            /** @psalm-suppress MixedArgumentTypeCoercion @phpstan-ignore-next-line*/
-            $items[$k]->items = [] !== $item->items ? self::htmlPurifierForList($item->items) : [];
+            if (! is_object($item) || ! property_exists($item, 'content') || ! is_string($item->content)) {
+                throw new Exception();
+            }
+
+            $subListExists = property_exists($item, 'items') && is_array($subListItems = $item->items);
+            $itemsPurified[$k] = (object) [
+                'content' => self::htmlPurifier($item->content),
+                'items' => $subListExists ? self::htmlPurifierForList($subListItems) : [],
+            ];
         }
 
-        return $items;
+        return $itemsPurified;
     }
 }

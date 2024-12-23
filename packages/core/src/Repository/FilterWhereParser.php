@@ -68,7 +68,6 @@ class FilterWhereParser
                 continue;
             }
 
-            /** @psalm-suppress MixedArgumentTypeCoercion */
             $compose->add($this->retrieveExpressionFrom($singleWhere));
         }
 

@@ -11,10 +11,6 @@ class PostAutoloadDump extends PostInstall
 {
     private static ?Kernel $kernel = null;
 
-    /**
-     *  @psalm-suppress UnresolvableInclude
-     * @psalm-suppress MixedOperand
-     */
     public static function runPostAutoload(Event $event): void
     {
         $vendorDir = $event->getComposer()->getConfig()->get('vendor-dir');
@@ -45,7 +41,6 @@ class PostAutoloadDump extends PostInstall
                     throw new Exception();
                 }
 
-                /** @psalm-suppress MixedMethodCall */
                 (new $className())->run();
 
                 // TODO find a way to use autowiring

@@ -7,13 +7,10 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    final public const DEFAULT_APP_FALLBACK = [
+    final public const array DEFAULT_APP_FALLBACK = [
         'flat_content_dir',
     ];
 
-    /**
-     * @psalm-suppress UndefinedInterfaceMethod
-     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('flat');

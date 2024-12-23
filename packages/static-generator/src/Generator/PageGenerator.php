@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator\Generator;
 
 use Exception;
+use Override;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Core\Entity\Page;
 
@@ -14,10 +15,10 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 class PageGenerator extends AbstractGenerator
 {
-    /** @psalm-suppress PropertyNotSetInConstructor */
     #[Required]
     public RedirectionManager $redirectionManager;
 
+    #[Override]
     public function generate(?string $host = null): void
     {
         parent::generate($host);
@@ -89,7 +90,7 @@ class PageGenerator extends AbstractGenerator
             return;
         }
 
-        if (Response::HTTP_OK != $response->getStatusCode()) {
+        if (Response::HTTP_OK !== $response->getStatusCode()) {
             if (Response::HTTP_INTERNAL_SERVER_ERROR === $response->getStatusCode() && 'dev' === $this->kernel->getEnvironment()) {
                 $this->setErrorFor($liveUri, $page, 'status code '.$response->getStatusCode());
             }
@@ -132,7 +133,7 @@ class PageGenerator extends AbstractGenerator
     private function extractPager(Page $page, string $content): void
     {
         preg_match('#<!-- pager:(\d+) -->#', $content, $match);
-        $pager = (int) ($match[1] ?? throw new Exception('Pager not found'));
+        $pager = (int) ($match[1] ?? throw new Exception('Pager not found')); // @phpstan-ignore-line
         $this->saveAsStatic(rtrim($this->generateLivePathFor($page), '/').'/'.$pager, $this->generateFilePath($page, $pager), $page);
     }
 

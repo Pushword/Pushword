@@ -61,7 +61,7 @@ final class ImageManager
         $filterNames = array_keys($this->filterSets);
         foreach ($filterNames as $filterName) {
             $lastImg = $this->generateFilteredCache($media, $filterName, $image);
-            if ('thumb' == $filterName) {
+            if ('thumb' === $filterName) {
                 $this->lastThumb = $lastImg;
             }
         }
@@ -88,15 +88,13 @@ final class ImageManager
         }
 
         $image = null === $originalImage ? $this->getImage($media)
-            : ('default' == $filterName ? $originalImage : clone $originalImage); // don't clone if default for speed perf
+            : ('default' === $filterName ? $originalImage : clone $originalImage); // don't clone if default for speed perf
 
-        /** @psalm-suppress all */
         foreach ($filters[$filterName]['filters'] as $filter => $parameters) { // @phpstan-ignore-line
             $parameters = \is_array($parameters) ? $parameters : [$parameters];
             \call_user_func_array([$image, $filter], $parameters); // @phpstan-ignore-line
         }
 
-        /** @psalm-suppress all */
         $quality = (int) ($filters[$filterName]['quality'] ?? 90); // @phpstan-ignore-line
 
         $this->createFilterDir(\dirname($this->getFilterPath($media,  $filterName)));
@@ -263,7 +261,7 @@ final class ImageManager
 
         if (! is_readable($src) && \function_exists('curl_init')) {
             $curl = curl_init($src);
-            curl_setopt($curl, \CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($curl, \CURLOPT_RETURNTRANSFER, true);
             /** @var false|string $content */
             $content = curl_exec($curl);
             curl_close($curl);

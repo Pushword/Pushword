@@ -3,6 +3,7 @@
 namespace Pushword\Admin;
 
 use Exception;
+use Override;
 use Pushword\Core\Entity\User;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
@@ -12,8 +13,6 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
  * @extends AbstractAdmin<User>
- *
- * @psalm-suppress PropertyNotSetInConstructor
  */
 #[AutoconfigureTag('sonata.admin', [
     'model_class' => '%pw.entity_user%',
@@ -22,7 +21,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 ])]
 class UserAdmin extends AbstractAdmin
 {
-    final public const MESSAGE_PREFIX = 'admin.user';
+    final public const string MESSAGE_PREFIX = 'admin.user';
 
     public function __construct(
         private readonly AdminFormFieldManager $adminFormFieldManager
@@ -31,11 +30,13 @@ class UserAdmin extends AbstractAdmin
         parent::__construct();
     }
 
+    #[Override]
     protected function generateBaseRouteName(bool $isChildAdmin = false): string
     {
         return 'admin_user';
     }
 
+    #[Override]
     protected function generateBaseRoutePattern(bool $isChildAdmin = false): string
     {
         return 'user';
@@ -55,9 +56,6 @@ class UserAdmin extends AbstractAdmin
         return method_exists($this->getModelClass(), 'get'.$name);
     }
 
-    /**
-     * @psalm-suppress  InvalidArgument // use only phpstan
-     */
     protected function configureFormFields(FormMapper $form): void
     {
         $fields = $this->adminFormFieldManager->getFormFields($this, 'admin_user_form_fields');

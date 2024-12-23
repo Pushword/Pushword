@@ -10,13 +10,10 @@ use Twig\Environment as Twig;
 
 abstract class AbstractBlock implements BlockInterface
 {
-    /** @psalm-suppress PropertyNotSetInConstructor */
     public AppConfig $app;
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     public Page $page;
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     public Twig $twig;
 
     /** @var string */

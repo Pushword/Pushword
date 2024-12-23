@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Twig;
 
+use Override;
 use Pushword\Core\Component\App\AppPool;
 use Twig\Environment as Twig;
 use Twig\Extension\AbstractExtension;
@@ -18,6 +19,7 @@ final class VideoExtension extends AbstractExtension
     /**
      * @return TwigFunction[]
      */
+    #[Override]
     public function getFunctions(): array
     {
         return [

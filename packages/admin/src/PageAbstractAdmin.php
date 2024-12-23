@@ -6,6 +6,7 @@ use DateTime;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder;
 use Exception;
+use Override;
 use Pushword\Admin\Controller\PageCRUDController;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\FormField\HostField;
@@ -30,8 +31,6 @@ use Twig\Error\SyntaxError;
 
 /**
  * @extends AbstractAdmin<Page>
- *
- * @psalm-suppress PropertyNotSetInConstructor
  */
 abstract class PageAbstractAdmin extends AbstractAdmin
 {
@@ -94,11 +93,13 @@ abstract class PageAbstractAdmin extends AbstractAdmin
         ];
     }
 
+    #[Override]
     protected function generateBaseRouteName(bool $isChildAdmin = false): string
     {
         return 'admin_page';
     }
 
+    #[Override]
     protected function generateBaseRoutePattern(bool $isChildAdmin = false): string
     {
         return 'page';
@@ -118,6 +119,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin
         return $qb instanceof QueryBuilder ? $qb : throw new Exception();
     }
 
+    #[Override]
     protected function configureQuery(ProxyQueryInterface $query): ProxyQueryInterface
     {
         $query = parent::configureQuery($query);
@@ -125,6 +127,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin
         $qb = $this->getQueryBuilderFrom($query);
 
         $rootAlias = current($qb->getRootAliases());
+        assert(is_string($rootAlias));
 
         $qb->andWhere($qb->expr()->notLike($rootAlias.'.mainContent', ':mcf'))->setParameter('mcf', 'Location:%');
 
@@ -146,9 +149,6 @@ abstract class PageAbstractAdmin extends AbstractAdmin
         $this->apps->switchCurrentApp($object->getHost());
     }
 
-    /**
-     * @psalm-suppress InvalidArgument
-     */
     protected function configureFormFields(FormMapper $form): void
     {
         $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
@@ -164,7 +164,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin
         $form->end();
 
         foreach ($fields[1] as $k => $block) {
-            if (null === $this->getSubject()->getId() && 'admin.page.revisions' == $k) {
+            if (null === $this->getSubject()->getId() && 'admin.page.revisions' === $k) {
                 continue;
             }
 
@@ -212,9 +212,6 @@ abstract class PageAbstractAdmin extends AbstractAdmin
         return true;
     }
 
-    /**
-     * @psalm-suppress InvalidArgument
-     */
     protected function configureDatagridFilters(DatagridMapper $filter): void
     {
         if (\count($this->apps->getHosts()) > 1) {
@@ -326,9 +323,8 @@ abstract class PageAbstractAdmin extends AbstractAdmin
 
     /**
      * @param Page $object
-     *
-     * @psalm-suppress MoreSpecificImplementedParamType
      */
+    #[Override]
     public function getObjectMetadata(object $object): Metadata
     {
         $media = $object->getMainImage();

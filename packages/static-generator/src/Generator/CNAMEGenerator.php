@@ -2,8 +2,11 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
+use Override;
+
 class CNAMEGenerator extends AbstractGenerator
 {
+    #[Override]
     public function generate(?string $host = null): void
     {
         parent::generate($host);

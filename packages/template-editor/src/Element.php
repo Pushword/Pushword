@@ -51,7 +51,6 @@ final class Element
         return $this->templateDir;
     }
 
-    /** @psalm-suppress MixedReturnStatement */
     public function getPath(): string
     {
         return $this->path ?? '';
@@ -105,7 +104,7 @@ final class Element
         return $this;
     }
 
-    public function getCode(): ?string
+    public function getCode(): string
     {
         return $this->code;
     }

@@ -28,10 +28,8 @@ abstract class AbstractGenerator implements GeneratorInterface
 
     protected string $publicDir;
 
-    /** @psalm-suppress PropertyNotSetInConstructor  */
     protected AppConfig $app;
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     protected StaticAppGenerator $staticAppGenerator;
 
     public function __construct(

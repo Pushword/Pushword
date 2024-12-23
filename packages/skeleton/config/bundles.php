@@ -3,7 +3,6 @@
 use BabDev\PagerfantaBundle\BabDevPagerfantaBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle;
-use Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle;
 use Knp\Bundle\MenuBundle\KnpMenuBundle;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle;
@@ -54,7 +53,6 @@ return [
     SecurityBundle::class => ['all' => true],
 
     DoctrineBundle::class => ['all' => true],
-    DoctrineMigrationsBundle::class => ['all' => true],
 
     BabDevPagerfantaBundle::class => ['all' => true],
 

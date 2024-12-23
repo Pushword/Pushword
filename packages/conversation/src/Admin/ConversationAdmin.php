@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Admin;
 
+use Override;
 use Pushword\Conversation\Entity\Message;
 use Sonata\AdminBundle\Admin\AbstractAdmin;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
@@ -22,11 +23,13 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 ])]
 class ConversationAdmin extends AbstractAdmin
 {
+    #[Override]
     protected function generateBaseRouteName(bool $isChildAdmin = false): string
     {
         return 'admin_conversation';
     }
 
+    #[Override]
     protected function generateBaseRoutePattern(bool $isChildAdmin = false): string
     {
         return 'conversation';

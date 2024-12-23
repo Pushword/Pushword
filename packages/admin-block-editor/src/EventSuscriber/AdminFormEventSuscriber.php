@@ -2,6 +2,7 @@
 
 namespace Pushword\AdminBlockEditor\EventSuscriber;
 
+use Exception;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageMainContentField;
@@ -15,7 +16,7 @@ use Sonata\AdminBundle\Event\PersistenceEvent;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
- * @template T of object
+ * @template-covariant T of Page
  */
 class AdminFormEventSuscriber extends AbstractEventSuscriber
 {
@@ -37,12 +38,12 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
     }
 
     /**
-     * @param PersistenceEvent<T>|FormEvent<T> $event
+     * @param PersistenceEvent<object>|FormEvent<object>|PersistenceEvent<Page>|FormEvent<Page> $event
      */
     private function getPage(PersistenceEvent|FormEvent $event): ?Page
     {
         $subject = $event->getAdmin()->getSubject();
-        if ($subject instanceof Page) { //  $event->getAdmin() instanceof PageAdmin || $event->getAdmin() instanceof PageCheatSheetAdmin
+        if ($subject instanceof Page) {
             return $subject;
         }
 
@@ -50,11 +51,12 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
     }
 
     /**
-     * @param PersistenceEvent<T> $persistenceEvent
+     * @param PersistenceEvent<object> $persistenceEvent
      */
     public function setMainContent(PersistenceEvent $persistenceEvent): void
     {
         $page = $this->getPage($persistenceEvent);
+
         if (null === $page) {
             return;
         }
@@ -78,33 +80,33 @@ class AdminFormEventSuscriber extends AbstractEventSuscriber
     }
 
     /**
-     * @psalm-suppress  InvalidArgument // use only phpstan
-     *
-     * @param FormEvent<T> $formEvent
+     * @param FormEvent<Page> $formEvent
      */
     public function replaceFields(FormEvent $formEvent): void
     {
         $page = $this->getPage($formEvent);
+
         if (null === $page) {
             return;
         }
 
-        /** @var FormEvent<Page> */
-        $formEventPage = $formEvent;
-
-        if (! $this->mayUseEditorBlock($page, $formEventPage)) {
+        if (! $this->mayUseEditorBlock($page, $formEvent)) {
             return;
         }
 
         $fields = $formEvent->getFields();
 
+        // @phpstan-ignore-next-line
         (new FormFieldReplacer())->run(PageMainContentField::class, PageMainContentFormField::class, $fields);
         (new FormFieldReplacer())->run(PageH1Field::class, PageH1FormField::class, $fields);
 
-        // if (! \is_array($fields[0])) { throw new \LogicException(); }
+        if (! isset($fields[0]) || ! is_array($fields[0])) {
+            throw new Exception();
+        }
 
         $fields[0][PageImageFormField::class] = PageImageFormField::class;
 
+        // @phpstan-ignore-next-line
         $formEvent->setFields($fields);
     }
 }

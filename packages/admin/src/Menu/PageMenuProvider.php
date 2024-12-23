@@ -15,7 +15,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[AutoconfigureTag('knp_menu.menu_builder', ['method' => 'getRedirectionMenu', 'alias' => 'redirection_admin_menu'])]
 final readonly class PageMenuProvider
 {
-    public const ORDER_NUMBER = 'priority';
+    public const string ORDER_NUMBER = 'priority';
 
     public function __construct(
         private FactoryInterface $factory,

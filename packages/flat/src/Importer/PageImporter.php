@@ -7,6 +7,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
 use LogicException;
+use Override;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
@@ -34,11 +35,9 @@ final class PageImporter extends AbstractImporter
      */
     protected array $toAddAtTheEnd = [];
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     #[Required]
     public FlatFileContentDirFinder $contentDirFinder;
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     #[Required]
     public PageRepository $pageRepo;
 
@@ -86,7 +85,7 @@ final class PageImporter extends AbstractImporter
     {
         $slug = preg_replace('/\.md$/i', '', str_replace($this->getContentDir().'/', '', $filePath)) ?? throw new Exception();
 
-        if ('index' == $slug) {
+        if ('index' === $slug) {
             $slug = 'homepage';
         } elseif ('index' === basename($slug)) {
             $slug = substr($slug, 0, -\strlen('index'));
@@ -256,6 +255,7 @@ final class PageImporter extends AbstractImporter
         }
     }
 
+    #[Override]
     public function finishImport(): void
     {
         $this->relativeMarkdownLinkToSlugLink();

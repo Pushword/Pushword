@@ -15,14 +15,7 @@ use Pushword\Core\Entity\Page;
 use RuntimeException;
 
 /**
- * @psalm-suppress MethodSignatureMustProvideReturnType
- *
  * @extends ServiceEntityRepository<Page>
- *
- * @method Page|null  find($id, $lockMode = null, $lockVersion = null)
- * @method Page|null  findOneBy(array $criteria, array $orderBy = null)
- * @method list<Page> findAll()
- * @method list<Page> findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  *
  * @implements Selectable<int, Page>
  * @implements ObjectRepository<Page>

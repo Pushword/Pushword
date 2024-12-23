@@ -6,6 +6,7 @@ use DateTime;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Exception;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
 use Pushword\Core\Repository\UserRepository;
 use Stringable;
@@ -181,7 +182,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
 
     public function getUserIdentifier(): string
     {
-        return $this->getUsername();
+        return $this->getUsername() ?:
+            throw new Exception();
     }
 
     /**

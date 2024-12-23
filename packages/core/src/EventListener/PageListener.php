@@ -56,9 +56,6 @@ final readonly class PageListener
         $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
     }
 
-    /**
-     * @psalm-suppress all
-     */
     private function updatePageEditor(Page $page): void
     {
         if (null === ($user = $this->security->getUser())) {

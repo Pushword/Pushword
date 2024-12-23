@@ -25,7 +25,7 @@ class Name extends AbstractFilter
 
         $names = explode("\n", $this->string($propertyValue));
 
-        if (isset($names[0]) && '' !== $names[0]) {
+        if ('' !== $names[0]) {
             return trim($names[0]);
         }
 

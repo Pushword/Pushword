@@ -17,23 +17,20 @@ class FormFieldReplacer
     }
 
     /**
-     * @param class-string<AbstractField<T>>[]|array<class-string<AbstractField<T>>[]> $fields
-     *
-     * @psalm-suppress ReferenceConstraintViolation
-     * @psalm-suppress PossiblyInvalidArgument
-     * */
+     * @param class-string<AbstractField<T>>[]|array<class-string<AbstractField<T>>[]>|array{0: class-string<AbstractField<T>>[], 1: (class-string<AbstractField<T>>[] | array<string, (class-string<AbstractField<T>>[] | array{fields: class-string<AbstractField<T>>[], expand: bool})>), 2: class-string<AbstractField<T>>[]} $fields
+     */
     public function run(string $formFieldClass, string $newFormFieldClass, array &$fields): void
     {
-        foreach ($fields as $k => $field) {
-            if (\is_array($field)) {
-                $this->run($formFieldClass, $newFormFieldClass, $fields[$k]);
+        foreach (array_keys($fields) as $k) {
+            if (\is_array($fields[$k])) {
+                $this->run($formFieldClass, $newFormFieldClass, $fields[$k]); // @phpstan-ignore-line
 
                 continue;
             }
 
-            if ($formFieldClass === $field) {
+            if ($formFieldClass === $fields[$k]) {
                 ++$this->replaced;
-                $fields[$k] = $newFormFieldClass;
+                $fields[$k] = $newFormFieldClass;  // @phpstan-ignore-line
 
                 break;
             }

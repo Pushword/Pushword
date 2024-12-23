@@ -12,8 +12,6 @@ use Symfony\Contracts\Service\Attribute\Required;
  * @extends SonataAbstractAdmin<T>
  *
  * @implements AdminInterface<T>
- *
- * @psalm-suppress PropertyNotSetInConstructor
  */
 class AbstractAdmin extends SonataAbstractAdmin implements AdminInterface
 {

@@ -30,11 +30,13 @@ parameters:
         - packages/installer/src/PostInstall.php
         - packages/core/tests/DependencyInjection/PushwordConfigFactoryTest.php
     symfony:
-        container_xml_path: /tmp/com.github.pushword.pushword/tests/var/dev/cache/App_KernelDevDebugContainer.xml
-        console_application_loader: packages/skeleton/bin/console-test.php
+        containerXmlPath: /tmp/com.github.pushword.pushword/tests/var/dev/cache/App_KernelDevDebugContainer.xml
+        consoleApplicationLoader: packages/skeleton/bin/console-test.php
     doctrine:
         objectManagerLoader: packages/skeleton/bin/object-test.php
     unused_public:
         methods: false
         properties: false
         constants: false
+    ignoreErrors:
+        - '#Short ternary operator is not allowed#'

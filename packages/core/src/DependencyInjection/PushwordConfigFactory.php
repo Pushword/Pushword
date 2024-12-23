@@ -50,8 +50,6 @@ final class PushwordConfigFactory
 
     /**
      * load Apps config and retrieve fallback directly, no need to call processAppsConfiguration.
-     *
-     * @psalm-suppress MixedArgument MixedArrayOffset
      */
     public function loadApps(): self
     {
@@ -80,7 +78,6 @@ final class PushwordConfigFactory
             throw new LogicException('You must register Pushword/CoreBundle in first (`pw.apps` is not loaded in ParameterBag.');
         }
 
-        /** @var array<string, array<mixed>> */
         $apps = $this->container->getParameter('pw.apps');
 
         foreach ($apps as $host => $app) {
@@ -104,7 +101,6 @@ final class PushwordConfigFactory
                 throw new InvalidArgumentException('Something is badly configured in your pushword configuration file.');
             }
 
-            /** @psalm-suppress MixedArrayOffset */
             $result[$app['hosts'][0]] = $app;
         }
 
@@ -115,8 +111,6 @@ final class PushwordConfigFactory
      * @param array<mixed> $app
      *
      * @return array<mixed>
-     *
-     * @psalm-suppress all
      */
     private function processAppConfig(array $app): array
     {
@@ -132,9 +126,11 @@ final class PushwordConfigFactory
 
         foreach ($fallbackProperties as $fallbackProperty) {
             if (! isset($app[$fallbackProperty])) {
-                $app[$fallbackProperty] = \is_string($this->config[$fallbackProperty]) ? str_replace('%main_host%', $app['hosts'][0], $this->config[$fallbackProperty])
+                /** @var string @phpstan-ignore-next-line */
+                $mainHost = $app['hosts'][0];
+                $app[$fallbackProperty] = \is_string($this->config[$fallbackProperty]) ? str_replace('%main_host%', $mainHost, $this->config[$fallbackProperty])
                     : $this->config[$fallbackProperty];
-            } elseif ('custom_properties' == $fallbackProperty) {
+            } elseif ('custom_properties' === $fallbackProperty) {
                 if (! \is_array($this->config['custom_properties']) || ! \is_array($app['custom_properties'])) {
                     throw new LogicException();
                 }

@@ -22,7 +22,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
     /**
      * @var string
      */
-    final public const LOGIN_ROUTE = 'pushword_login';
+    final public const string LOGIN_ROUTE = 'pushword_login';
 
     public function __construct(private readonly UrlGeneratorInterface $urlGenerator)
     {

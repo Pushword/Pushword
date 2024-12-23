@@ -12,7 +12,6 @@ use Pushword\Core\Component\EntityFilter\Filter\AbstractFilter;
 use Pushword\Core\Entity\Page;
 use Twig\Environment as Twig;
 
-/** @psalm-suppress MissingConstructor */
 final class BlockEditorFilter extends AbstractFilter
 {
     public AppConfig $app;
@@ -79,9 +78,6 @@ final class BlockEditorFilter extends AbstractFilter
     }
 
     /**
-     * @psalm-suppress NullableReturnStatement
-     * @psalm-suppress InvalidNullableReturnType
-     *
      * @noRector
      *
      * @return BlockInterface[]
@@ -99,7 +95,6 @@ final class BlockEditorFilter extends AbstractFilter
 
         /** @var string[] $blocks */
         foreach ($blocks as $block) {
-            /** @psalm-suppress MixedMethodCall */
             if (class_exists($block) && ($blockClass = new $block()) instanceof AbstractBlock) {
                 $this->appBlocks[$blockClass->getName()] = $this->loadBlockManager($blockClass);
 
@@ -113,7 +108,6 @@ final class BlockEditorFilter extends AbstractFilter
             }
 
             $class = '\Pushword\AdminBlockEditor\Block\\'.ucfirst($block).'Block';
-            /** @psalm-suppress MixedMethodCall */
             if (class_exists($class) && ($blockClass = new $class()) instanceof BlockInterface) {
                 /** @var AbstractBlock $blockClass */
                 $this->appBlocks[$block] = $this->loadBlockManager($blockClass);

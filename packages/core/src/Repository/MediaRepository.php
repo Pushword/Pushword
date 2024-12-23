@@ -3,7 +3,6 @@
 namespace Pushword\Core\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Selectable;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
@@ -31,9 +30,8 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $queryBuilder = $this->createQueryBuilder('m');
         $queryBuilder->select('m.mimeType');
         $queryBuilder->groupBy('m.mimeType');
-        $queryBuilder->orderBy('m.mimeType', Criteria::ASC);
+        $queryBuilder->orderBy('m.mimeType', 'ASC');
 
-        /** @var array{mimeType: string} */
         $results = $queryBuilder->getQuery()->getResult();
 
         return array_column($results, 'mimeType');

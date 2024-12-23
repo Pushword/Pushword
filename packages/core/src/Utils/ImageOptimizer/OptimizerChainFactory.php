@@ -13,45 +13,21 @@ class OptimizerChainFactory
 {
     /**
      * @param array<string, string> $config
-     *
-     * @psalm-suppress all
      */
     public static function create(array $config = []): OptimizerChain
     {
         $jpegQuality = '-quality '.($config['quality'] ?? 75);
         $pngQuality = '--quality='.($config['quality'] ?? 85);
 
-        return (new OptimizerChain())
-            ->addOptimizer(new Mozjpeg([
-                $jpegQuality,
-                '-optimize',
-                '-progressive',
-            ]))
+        $otpimizerChain = new OptimizerChain();
 
-            ->addOptimizer(new Pngquant([
-                $pngQuality,
-                '--force',
-            ]))
+        $otpimizerChain->addOptimizer(new Mozjpeg([$jpegQuality, '-optimize', '-progressive']));
+        $otpimizerChain->addOptimizer(new Pngquant([$pngQuality, '--force']));
+        $otpimizerChain->addOptimizer(new Optipng(['-i0', '-o2', '-quiet']));
+        $otpimizerChain->addOptimizer(new Svgo(['--disable={cleanupIDs,removeViewBox}']));
+        $otpimizerChain->addOptimizer(new Gifsicle(['-b', '-O3']));
+        $otpimizerChain->addOptimizer(new Cwebp(['-m 6', '-pass 10', '-mt', '-q 80']));
 
-            ->addOptimizer(new Optipng([
-                '-i0',
-                '-o2',
-                '-quiet',
-            ]))
-
-            ->addOptimizer(new Svgo([
-                '--disable={cleanupIDs,removeViewBox}',
-            ]))
-
-            ->addOptimizer(new Gifsicle([
-                '-b',
-                '-O3',
-            ]))
-            ->addOptimizer(new Cwebp([
-                '-m 6',
-                '-pass 10',
-                '-mt',
-                '-q 80',
-            ]));
+        return $otpimizerChain;
     }
 }

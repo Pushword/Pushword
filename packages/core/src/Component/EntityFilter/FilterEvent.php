@@ -13,12 +13,12 @@ final class FilterEvent extends Event
     /**
      * @var string
      */
-    public const NAME_BEFORE = 'pushword.entity_filter.before_filtering';
+    public const string NAME_BEFORE = 'pushword.entity_filter.before_filtering';
 
     /**
      * @var string
      */
-    public const NAME_AFTER = 'pushword.entity_filter.after_filtering';
+    public const string NAME_AFTER = 'pushword.entity_filter.after_filtering';
 
     public function __construct(
         private readonly Manager $manager,

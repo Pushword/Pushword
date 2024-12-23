@@ -12,7 +12,7 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    final public const DEFAULT_APP_FALLBACK = [
+    final public const array DEFAULT_APP_FALLBACK = [
         'admin_block_editor',
         'admin_block_editor_disable_listener',
         'admin_block_editor_blocks',
@@ -22,11 +22,8 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    final public const DEFAULT_TYPE_TO_PROSE = ['paragraph', 'image', 'list', 'blockquote', 'code', 'delimiter', 'header'];
+    final public const array DEFAULT_TYPE_TO_PROSE = ['paragraph', 'image', 'list', 'blockquote', 'code', 'delimiter', 'header'];
 
-    /**
-     * @psalm-suppress UndefinedInterfaceMethod
-     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('admin_block_editor');

@@ -31,6 +31,6 @@ class ControllerTest extends AbstractAdminTestClass
         self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
         $client->request(Request::METHOD_GET, '/admin/version/1/reset');
-        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent()); // @phpstan-ignore-line
     }
 }

@@ -5,6 +5,7 @@ namespace Pushword\Conversation\Controller;
 use Doctrine\Persistence\ManagerRegistry;
 use ErrorException;
 use Exception;
+use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Form\ConversationFormInterface;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Component\App\AppPool;
@@ -14,6 +15,7 @@ use function Safe\json_encode;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\RouterInterface;
@@ -160,7 +162,7 @@ final class ConversationFormController extends AbstractController
 
         $form = $this->getFormManager($type, $request)->getCurrentStep()->getForm();
         $form->handleRequest($request);
-
+        /** @var FormInterface<Message|null> $form */
         if ($form->isSubmitted()) {
             return $response->setContent($this->getFormManager($type, $request)->validCurrentStep($form));
         }

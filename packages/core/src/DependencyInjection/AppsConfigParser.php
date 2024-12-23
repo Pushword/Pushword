@@ -32,16 +32,12 @@ final class AppsConfigParser
      */
     private static function parseAppConfig(array $app, ContainerBuilder $containerBuilder): array
     {
-        /** @var string|array<string> */
         $properties = $containerBuilder->getParameter('pw.app_fallback_properties');
-        if (\is_string($properties)) {
-            $properties = explode(',', $properties);
-        }
 
         foreach ($properties as $property) {
             if (! isset($app[$property])) {
                 $app[$property] = $containerBuilder->getParameter('pw.'.$property); // '%'.'pw.'.$p.'%';
-            } elseif ('custom_properties' == $property) {
+            } elseif ('custom_properties' === $property) {
                 if (! \is_array($app['custom_properties'])) {
                     throw new Exception();
                 }

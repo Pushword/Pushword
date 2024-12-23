@@ -3,6 +3,7 @@
 namespace Pushword\Core\DependencyInjection;
 
 use LogicException;
+use Override;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\ConfigurableExtension;
@@ -43,6 +44,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
         $containerBuilder->setParameter('pw.package_dir', '%kernel.project_dir%/..');
     }
 
+    #[Override]
     public function getAlias(): string
     {
         return 'pushword';

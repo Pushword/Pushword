@@ -2,8 +2,11 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
+use Override;
+
 class MediaGenerator extends AbstractGenerator
 {
+    #[Override]
     public function generate(?string $host = null): void
     {
         parent::generate($host);
@@ -33,11 +36,11 @@ class MediaGenerator extends AbstractGenerator
         }
 
         while (false !== $entry = $dir->read()) {
-            if ('.' == $entry) {
+            if ('.' === $entry) {
                 continue;
             }
 
-            if ('..' == $entry) {
+            if ('..' === $entry) {
                 continue;
             }
 

@@ -13,12 +13,12 @@ final class Configuration implements ConfigurationInterface
     /**
      * @var string
      */
-    public const DEFAULT_TEMPLATE = '@Pushword';
+    public const string DEFAULT_TEMPLATE = '@Pushword';
 
     /**
      * @var string[]|class-string<locale>[]
      */
-    public const DEFAULT_APP_FALLBACK = [
+    public const array DEFAULT_APP_FALLBACK = [
         'hosts',
         'locale',
         'locales',
@@ -36,12 +36,12 @@ final class Configuration implements ConfigurationInterface
     /**
      * @var bool
      */
-    public const DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS = true;
+    public const bool DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS = true;
 
     /**
      * @var array<string, string>
      */
-    public const DEFAULT_FILTERS = [
+    public const array DEFAULT_FILTERS = [
         'main_content' => 'showMore,twig,date,email,htmlLinkMultisite,obfuscateLink,htmlObfuscateLink,image,phoneNumber,markdown,mainContentSplitter,extended',
         'name' => 'twig,date,name,extended',
         'title' => 'elseH1,twig,date,extended',
@@ -51,7 +51,7 @@ final class Configuration implements ConfigurationInterface
     /**
      * @var array<string, array<string>>
      */
-    public const DEFAULT_ASSETS = [
+    public const array DEFAULT_ASSETS = [
         'stylesheets' => ['bundles/pushwordcore/style.css'],
         'javascripts' => ['bundles/pushwordcore/app.js'],
         'favicon' => ['bundles/pushwordcore/app.js'],
@@ -60,17 +60,17 @@ final class Configuration implements ConfigurationInterface
     /**
      * @var mixed[]
      */
-    public const DEFAULT_CUSTOM_PROPERTIES = [];
+    public const array DEFAULT_CUSTOM_PROPERTIES = [];
 
     /**
      * @var string
      */
-    public const DEFAULT_PUBLIC_MEDIA_DIR = 'media';
+    public const string DEFAULT_PUBLIC_MEDIA_DIR = 'media';
 
     /**
      * @var array<string, array<string, mixed>>
      */
-    public const IMAGE_FILTERS_SET = [
+    public const array IMAGE_FILTERS_SET = [
         'default' => ['quality' => 90, 'filters' => ['scaleDown' => [1980, 1280]]],
         'height_300' => [
             'quality' => 82,
@@ -132,9 +132,6 @@ final class Configuration implements ConfigurationInterface
         ],
     ];
 
-    /**
-     * @psalm-suppress UndefinedInterfaceMethod
-     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('pushword');

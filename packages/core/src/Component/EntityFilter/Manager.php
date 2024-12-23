@@ -107,8 +107,6 @@ final readonly class Manager
 
     /**
      * @return string[]
-     *
-     * @psalm-suppress all
      */
     private function getFilters(string $label): array
     {
@@ -121,7 +119,16 @@ final readonly class Manager
             $filters = $appFilters[$label] ?? null;
         }
 
-        return \is_string($filters) ? explode(',', $filters) : (\is_array($filters) ? $filters : []);
+        if (is_string($filters)) {
+            return explode(',', $filters);
+        }
+
+        if (! is_array($filters)) {
+            return [];
+        }
+
+        // Ensure all elements are strings
+        return array_map(fn ($item): string => is_scalar($item) ? (string) $item : throw new Exception(), $filters);
     }
 
     /**

@@ -12,12 +12,12 @@ final class PushwordRouteGenerator
     /**
      * @var string
      */
-    public const PATH = 'pushword_page';
+    public const string PATH = 'pushword_page';
 
     /**
      * @var string
      */
-    public const CUSTOM_HOST_PATH = 'custom_host_pushword_page';
+    public const string CUSTOM_HOST_PATH = 'custom_host_pushword_page';
 
     private bool $useCustomHostPath = true;
 
@@ -64,7 +64,7 @@ final class PushwordRouteGenerator
         if ($slug instanceof Page) {
             $page = $slug;
             $slug = $slug->getRealSlug();
-        } elseif ('homepage' == $slug) {
+        } elseif ('homepage' === $slug) {
             $slug = '';
         }
 

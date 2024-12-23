@@ -3,6 +3,7 @@
 namespace Pushword\Admin\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Override;
 use Pushword\Core\Entity\Page;
 use Sonata\AdminBundle\Controller\CRUDController as SonataCRUDController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -14,8 +15,6 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * @extends SonataCRUDController<Page>
- *
- * @psalm-suppress MissingConstructor
  */
 #[AutoconfigureTag('controller.service_arguments')]
 class PageCRUDController extends SonataCRUDController
@@ -56,6 +55,7 @@ class PageCRUDController extends SonataCRUDController
         ]);
     }
 
+    #[Override]
     protected function redirectTo(Request $request, object $object): RedirectResponse
     {
         if (null !== $request->request->get('btn_update_and_list')) {

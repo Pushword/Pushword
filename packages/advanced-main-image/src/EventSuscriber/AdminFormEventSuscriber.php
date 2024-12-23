@@ -34,14 +34,15 @@ final readonly class AdminFormEventSuscriber implements EventSubscriberInterface
     }
 
     /**
-     * @psalm-suppress  InvalidArgument // use only phpstan
-     *
      * @param FormEvent<T> $formEvent
      */
     public function replaceFields(FormEvent $formEvent): void
     {
-        /** @var Page $page */
         $page = $formEvent->getAdmin()->getSubject();
+
+        if (! $page instanceof Page) {
+            return;
+        }
 
         if (false === $this->apps->get($page->getHost())->get('advanced_main_image')) {
             return;
@@ -50,13 +51,11 @@ final readonly class AdminFormEventSuscriber implements EventSubscriberInterface
         $fields = $formEvent->getFields();
         (new FormFieldReplacer())->run(PageMainImageField::class, PageAdvancedMainImageFormField::class, $fields);
 
-        $formEvent->setFields($fields);
+        $formEvent->setFields($fields); // @phpstan-ignore-line
     }
 
     /**
      * @param PersistenceEvent<T> $persistenceEvent
-     *
-     * @psalm-suppress RedundantCondition
      */
     public function setAdvancedMainImage(PersistenceEvent $persistenceEvent): void
     {

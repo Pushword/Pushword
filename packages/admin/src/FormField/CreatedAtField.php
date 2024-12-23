@@ -12,7 +12,7 @@ use Sonata\Form\Type\DateTimePickerType;
  */
 class CreatedAtField extends AbstractField
 {
-    final public const DateTimePickerOptions = [
+    final public const array DateTimePickerOptions = [
         'useCurrent' => true,
         'display' => [
             'viewMode' => 'calendar',
@@ -20,7 +20,7 @@ class CreatedAtField extends AbstractField
         ],
     ];
 
-    final public const DateTimePickerFormat = 'yyyy-MM-dd HH:mm';
+    final public const string DateTimePickerFormat = 'yyyy-MM-dd HH:mm';
 
     /**
      * @param FormMapper<T> $form

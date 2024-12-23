@@ -4,6 +4,7 @@ namespace Pushword\Conversation\Twig;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use Override;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
@@ -28,6 +29,7 @@ class AppExtension extends AbstractExtension
     /**
      * @return TwigFunction[]
      */
+    #[Override]
     public function getFunctions(): array
     {
         return [

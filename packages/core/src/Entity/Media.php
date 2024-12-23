@@ -151,7 +151,7 @@ class Media implements IdInterface
 
         $mediaFileMimeType = $this->mediaFile->getMimeType() ?? 'unknowMimeType';
 
-        if ($mediaFileMimeType == $this->getMimeType()) {
+        if ($mediaFileMimeType === $this->getMimeType()) {
             return;
         }
 

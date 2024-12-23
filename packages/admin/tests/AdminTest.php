@@ -16,7 +16,7 @@ class AdminTest extends AbstractAdminTestClass
         self::assertSame(Response::HTTP_MOVED_PERMANENTLY, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
         $client->request(Request::METHOD_GET, '/login');
-        self::assertStringContainsString('Connexion', $client->getResponse());
+        self::assertStringContainsString('Connexion', (string) $client->getResponse()->getContent());
     }
 
     public function testAdmins(): void

@@ -4,6 +4,7 @@ namespace Pushword\Core\Twig;
 
 use InvalidArgumentException;
 use LogicException;
+use Override;
 use Pagerfanta\Adapter\ArrayAdapter;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\PagerfantaInterface;
@@ -37,6 +38,7 @@ final class PageExtension extends AbstractExtension
     /**
      * @return TwigFunction[]
      */
+    #[Override]
     public function getFunctions(): array
     {
         return [

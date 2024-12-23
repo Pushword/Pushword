@@ -126,7 +126,6 @@ class StringToDQLCriteria
         }
 
         if (\in_array($searchLowerCased, ['children_children', 'grandchildren'], true)) {
-            /** @psalm-suppress all  */
             $childrenPage = ($this->currentPage?->getChildrenPages() ?? new ArrayCollection([]))
                 ->map(static fn ($page): int => $page->getId() ?? 0)->toArray();
 

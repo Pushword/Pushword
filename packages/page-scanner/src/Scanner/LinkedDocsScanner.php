@@ -19,8 +19,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Permit to find error in image or link.
- *
- * @psalm-suppress PropertyNotSetInConstructor
  */
 final class LinkedDocsScanner extends AbstractScanner
 {
@@ -107,8 +105,6 @@ final class LinkedDocsScanner extends AbstractScanner
 
     /**
      * @return string[]
-     *
-     * @psalm-suppress all
      */
     private function getLinkedDocs(): array
     {
@@ -123,10 +119,13 @@ final class LinkedDocsScanner extends AbstractScanner
         $linkedDocs = [];
         $matchesCount = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($k = 0; $k < $matchesCount; ++$k) {
-            $uri = $matches[4][$k] ?? $matches[5][$k];
-            $uri = 'data-rot' == $matches[1][$k] ? LinkProvider::decrypt($uri) : $uri;
+            /** @var string */
+            $uri = $matches[4][$k] ?? $matches[5][$k]; // @phpstan-ignore-line
+            $isDataRotAttribute = 'data-rot' === $matches[1][$k]; // @phpstan-ignore-line
+            $uri = $isDataRotAttribute ? LinkProvider::decrypt($uri) : $uri;
+            // @phpstan-ignore-next-line
             $uri .= $matches[4][$k] ? '' : '#(obfuscate)'; // not elegant but permit to remember it's an obfuscate link
-            if ($this->isMailtoOrTelLink($uri) && 'data-rot' != $matches[1][$k]) {
+            if ($this->isMailtoOrTelLink($uri) && $isDataRotAttribute) {
                 $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.obfuscate_mail'));
             } elseif ('' !== $uri && $this->isWebLink($uri)) {
                 $linkedDocs[] = $uri;
@@ -251,7 +250,7 @@ final class LinkedDocsScanner extends AbstractScanner
             return $this->domPage;
         }
 
-        return new DomCrawler($this->pageHtml);
+        return $this->domPage = new DomCrawler($this->pageHtml);
     }
 
     private function targetExist(string $target): bool

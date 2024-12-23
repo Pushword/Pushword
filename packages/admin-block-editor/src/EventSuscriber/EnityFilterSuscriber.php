@@ -10,8 +10,6 @@ use Twig\Environment as Twig;
 
 /**
  * @template T of object
- *
- * @psalm-suppress PropertyNotSetInConstructor
  */
 class EnityFilterSuscriber extends AbstractEventSuscriber
 {

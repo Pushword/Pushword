@@ -72,7 +72,7 @@ class AppFixtures extends Fixture
 
         $homepage->setCustomProperty('mainImageFormat', 1);
 
-        if ('localhost.dev' == $this->apps->getMainHost()) {
+        if ('localhost.dev' === $this->apps->getMainHost()) {
             $homepage->setHost('localhost.dev');
         }
 
@@ -91,7 +91,7 @@ class AppFixtures extends Fixture
 
         $ksPage->setCustomProperty('tag', 'testTag123');
 
-        if ('localhost.dev' == $this->apps->getMainHost()) {
+        if ('localhost.dev' === $this->apps->getMainHost()) {
             $ksPage->setHost('localhost.dev');
         }
 

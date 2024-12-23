@@ -132,9 +132,10 @@ final class MediaBlockController extends AbstractController
             throw new LogicException("URL doesn't contain file name");
         }
 
+        /** @var array<int, string> $matches */
         $fileContent = file_get_contents($url);
 
-        $originalName = ($matches[1] ?? throw new Exception($url));
+        $originalName = $matches[1];
         $filename = md5($originalName);
         $filePath = sys_get_temp_dir().'/'.$filename;
         if (0 === file_put_contents($filePath, $fileContent)) {

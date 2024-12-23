@@ -46,7 +46,6 @@ trait ExtensionTrait
 
         $finder = Finder::create()->files()->name('*.php')->in($this->getConfigFolder().'/packages');
         foreach ($finder as $singleFinder) {
-            /** @psalm-suppress UnresolvableInclude */
             $configs = @include $singleFinder->getRealPath();
             if (! \is_array($configs)) {
                 throw new Exception();
@@ -62,7 +61,7 @@ trait ExtensionTrait
     protected function prependExtensionConfigs(array $configs, ContainerBuilder $container): void
     {
         foreach ($configs as $name => $config) {
-            if ('services' == $name) {
+            if ('services' === $name) {
                 continue;
             }
 

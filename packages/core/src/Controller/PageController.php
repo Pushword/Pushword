@@ -4,6 +4,7 @@ namespace Pushword\Core\Controller;
 
 use DateTime;
 use LogicException;
+use Override;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
@@ -47,6 +48,7 @@ final class PageController extends AbstractController
      *
      * @param array<mixed> $parameters
      */
+    #[Override]
     protected function renderView(string $view, array $parameters = []): string
     {
         return $this->twig->render($view, $parameters);
@@ -80,7 +82,7 @@ final class PageController extends AbstractController
         return $this;
     }
 
-    public function show(Request $request, ?string $slug): Response
+    public function show(Request $request, string $slug): Response
     {
         $this->initHost($request);
 
@@ -161,9 +163,9 @@ final class PageController extends AbstractController
         $this->initHost($request);
 
         $locale = '' !== $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->apps->getApp()->getDefaultLocale();
-        $LocaleHomepage = $this->getPage($request, $locale, false);
+        $LocaleHomepage = $this->findPage($request, $locale, false);
         $slug = 'homepage';
-        $page = $LocaleHomepage ?? $this->getPage($request, $slug);
+        $page = $LocaleHomepage ?? $this->findPage($request, $slug);
         if (! $page instanceof Page) {
             throw $this->createNotFoundException('The page `'.$slug.'` was not found');
         }
@@ -173,7 +175,7 @@ final class PageController extends AbstractController
         $params = [
             'pages' => $this->getPages($request, 5),
             'page' => $page,
-            'feedUri' => ($this->params->get('kernel.default_locale') == $locale ? '' : $locale.'/').'feed.xml',
+            'feedUri' => ($this->params->get('kernel.default_locale') === $locale ? '' : $locale.'/').'feed.xml',
         ];
 
         return $this->render(
@@ -233,23 +235,18 @@ final class PageController extends AbstractController
         ->getQuery()->getResult();
     }
 
-    /**
-     * @psalm-suppress NullableReturnStatement
-     * @psalm-suppress InvalidNullableReturnType
-     *
-     * @noRector
-     */
-    private function getPageElse404(Request $request, ?string &$slug, bool $extractPager = false): Page
+    private function getPageElse404(Request $request, string $slug, bool $extractPager = false): Page
     {
-        $slug = $slug ??= 'homepage';
+        if ('' === $slug) {
+            $slug = 'homepage';
+        }
 
-        return $this->getPage($request, $slug, true, $extractPager); // @phpstan-ignore-line
+        return $this->getPage($request, $slug, $extractPager);
     }
 
     private function extractPager(
         Request $request,
         string &$slug,
-        bool $throwException
     ): ?Page {
         if (1 !== preg_match('#(/([1-9]\d*)|^([1-9]\d*))$#', $slug, $match)) {
             return null;
@@ -260,28 +257,31 @@ final class PageController extends AbstractController
         $request->attributes->set('pager', (int) $match[2] >= 1 ? $match[2] : $match[3]);
         $request->attributes->set('slug', $unpaginatedSlug);
 
-        return $this->getPage($request, $unpaginatedSlug, $throwException);
+        return $this->findPage($request, $unpaginatedSlug);
     }
 
     private function getPage(
         Request $request,
         string &$slug,
-        bool $throwException = true,
+        bool $extractPager = false
+    ): Page {
+        return $this->findPage($request, $slug, $extractPager) ?? throw $this->createNotFoundException();
+    }
+
+    private function findPage(
+        Request $request,
+        string &$slug,
         bool $extractPager = false
     ): ?Page {
         $slug = $this->noramlizeSlug($slug);
         $page = $this->pageRepository->getPage($slug, $this->apps->get()->getHostForDoctrineSearch(), true);
 
         if (! $page instanceof Page && $extractPager) {
-            $page = $this->extractPager($request, $slug, $throwException);
+            $page = $this->extractPager($request, $slug);
         }
 
         // Check if page exist
         if (! $page instanceof Page) {
-            if ($throwException) {
-                throw $this->createNotFoundException();
-            }
-
             return null;
         }
 
@@ -293,10 +293,6 @@ final class PageController extends AbstractController
 
         // Check if page is public
         if ($page->getCreatedAt() > new DateTime() && ! $this->isGranted('ROLE_EDITOR')) {
-            if ($throwException) {
-                throw $this->createNotFoundException();
-            }
-
             return null;
         }
 

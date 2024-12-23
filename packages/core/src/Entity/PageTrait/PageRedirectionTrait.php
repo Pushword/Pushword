@@ -53,7 +53,6 @@ trait PageRedirectionTrait
         return false !== $this->redirectionUrl;
     }
 
-    /** @psalm-suppress InvalidNullableReturnType */
     public function getRedirection(): string
     {
         if (null === $this->redirectionUrl) {

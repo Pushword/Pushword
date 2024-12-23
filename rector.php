@@ -3,13 +3,10 @@
 declare(strict_types=1);
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
-use Rector\Doctrine\Set\DoctrineSetList;
 use Rector\Php73\Rector\FuncCall\JsonThrowOnErrorRector;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
 use Rector\PHPUnit\CodeQuality\Rector\Class_\AddSeeTestAnnotationRector;
 use Rector\PHPUnit\CodeQuality\Rector\Class_\PreferPHPUnitThisCallRector;
-use Rector\PHPUnit\Rector\Class_\PreferPHPUnitSelfCallRector;
-use Rector\PHPUnit\Set\PHPUnitSetList;
 use Rector\Symfony\Set\SymfonySetList;
 
 $paths = [
@@ -22,6 +19,8 @@ $paths = [
 
 return RectorConfig::configure()
     ->withImportNames(removeUnusedImports: true)
+    ->withPhpSets(php83: true)
+    ->withComposerBased(doctrine: true, twig: true, phpunit: true)
     ->withParallel()
     ->withPaths($paths)
     ->withRootFiles()
@@ -29,15 +28,11 @@ return RectorConfig::configure()
     ->withPhpSets()
     ->withPreparedSets(codeQuality: true, codingStyle: true, earlyReturn: true, typeDeclarations: true, instanceOf: true)
     ->withSets([
-        PHPUnitSetList::PHPUNIT_CODE_QUALITY,
-        DoctrineSetList::DOCTRINE_CODE_QUALITY,
         SymfonySetList::SYMFONY_64,
+        SymfonySetList::SYMFONY_72,
         SymfonySetList::SYMFONY_CODE_QUALITY,
         SymfonySetList::SYMFONY_CONSTRUCTOR_INJECTION,
         SymfonySetList::ANNOTATIONS_TO_ATTRIBUTES,
-    ])
-    ->withRules([
-        PreferPHPUnitSelfCallRector::class,
     ])
     ->withAttributesSets(symfony: true, doctrine: true)
     ->withSkip([

@@ -14,31 +14,25 @@ final class AppConfig
     /** @var array<(string|int), mixed> */
     private array $customProperties = [];
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     private string $locale;
 
     /** @var string|string[]|null */
-    private string|array|null $locales = null;
+    private string|array|null $locales = null;  // @phpstan-ignore-line
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     private string $baseUrl;
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     private string $name;
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     private string $template;
 
     /** @var array<string, string> */
     private array $filters = [];
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     private bool $entityCanOverrideFilters;
 
     /** @var array{}|array{javascripts: ?string[], stylesheets: ?string[]} */
-    private array $assets = [];
+    private array $assets = []; // @phpstan-ignore-line
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     private Twig $twig;
 
     /** @param array<string, mixed> $properties */
@@ -241,7 +235,7 @@ final class AppConfig
             return $path;
         }
 
-        if ('none' == $path) { // alias
+        if ('none' === $path) { // alias
             $path = '/page/raw.twig';
         }
 

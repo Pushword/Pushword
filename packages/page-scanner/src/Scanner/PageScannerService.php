@@ -14,7 +14,7 @@ use Symfony\Contracts\Service\Attribute\Required;
 /**
  * Permit to find error in image or link.
  *
- *  @psalm-suppress PropertyNotSetInConstructor */
+ *   */
 final class PageScannerService
 {
     use GenerateLivePathForTrait;
@@ -25,11 +25,9 @@ final class PageScannerService
      */
     private array $errors = [];
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     #[Required]
     public LinkedDocsScanner $linkedDocsScanner;
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     #[Required]
     public ParentPageScanner $parentPageScanner;
 
@@ -77,7 +75,7 @@ final class PageScannerService
             return '';
         }
 
-        if (false === ($content = $response->getContent()) || Response::HTTP_OK != $response->getStatusCode()) {
+        if (false === ($content = $response->getContent()) || Response::HTTP_OK !== $response->getStatusCode()) {
             $this->addError($page, 'error occured generating the page ('.$response->getStatusCode().')');
 
             return '';

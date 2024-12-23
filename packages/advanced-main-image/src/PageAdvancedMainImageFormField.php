@@ -2,12 +2,14 @@
 
 namespace Pushword\AdvancedMainImage;
 
+use Override;
 use Pushword\Admin\FormField\PageMainImageField;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 class PageAdvancedMainImageFormField extends PageMainImageField
 {
+    #[Override]
     public function formField(FormMapper $form): void
     {
         parent::formField($form);

@@ -14,7 +14,7 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    final public const DEFAULT_APP_FALLBACK = [
+    final public const array DEFAULT_APP_FALLBACK = [
         'conversation_notification_email_to',
         'conversation_notification_email_from',
         'conversation_notification_interval',
@@ -26,9 +26,6 @@ class Configuration implements ConfigurationInterface
         'possible_origins',
     ];
 
-    /**
-     * @psalm-suppress UndefinedInterfaceMethod
-     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('conversation');

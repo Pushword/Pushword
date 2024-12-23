@@ -18,7 +18,7 @@ trait KernelTrait
             $kernelClass = $kernel::class;
             $env = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? throw new Exception();
             // file_put_contents('debug', $env, FILE_APPEND);
-            static::$appKernel = new $kernelClass('test' == $env ? 'test' : 'prod', true);
+            static::$appKernel = new $kernelClass('test' === $env ? 'test' : 'prod', true);
             // static::$appKernel = clone $kernel;
             // NOTE: If we clone, it's take too much time in dev mod
 

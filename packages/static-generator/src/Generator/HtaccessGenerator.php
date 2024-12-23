@@ -2,8 +2,11 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
+use Override;
+
 class HtaccessGenerator extends PageGenerator
 {
+    #[Override]
     public function generate(?string $host = null): void
     {
         $this->init($host);

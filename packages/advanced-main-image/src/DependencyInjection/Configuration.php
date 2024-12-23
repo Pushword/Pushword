@@ -10,11 +10,10 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    final public const DEFAULT_APP_FALLBACK = [
+    final public const array DEFAULT_APP_FALLBACK = [
         'advanced_main_image',
     ];
 
-    /** @psalm-suppress UndefinedInterfaceMethod */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('admin_block_editor');

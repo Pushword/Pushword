@@ -3,9 +3,6 @@
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Pushword\Core\Component\App\AppConfig;
-
-use function Safe\preg_match_all;
-
 use Twig\Environment;
 
 class Image extends AbstractFilter
@@ -19,28 +16,20 @@ class Image extends AbstractFilter
         return $this->convertMarkdownImage($this->string($propertyValue));
     }
 
-    /**
-     * @psalm-suppress all
-     */
     public function convertMarkdownImage(string $body): string
     {
-        preg_match_all('/(?:!\[(.*?)\]\((.*?)\))/', $body, $matches);
-        if (! isset($matches[1])) {
+        if (false === preg_match_all('/(?:!\[(.*?)\]\((.*?)\))/', $body, $matches)) {
             return $body;
         }
 
-        if (! isset($matches[0])) {
-            return $body;
-        }
-
-        $nbrMatch = is_countable($matches[0]) ? \count($matches[0]) : 0;
+        $nbrMatch = \count($matches[0]);
         for ($k = 0; $k < $nbrMatch; ++$k) {
             $renderImg = '<div>'.$this->twig->render(
                 $this->app->getView('/component/image_inline.html.twig'),
                 [
                     // "image_wrapper_class" : "mimg",'
                     'image_src' => $matches[2][$k],
-                    'image_alt' => htmlspecialchars((string) $matches[1][$k]),
+                    'image_alt' => htmlspecialchars($matches[1][$k]),
                 ]
             ).'</div>';
             $body = str_replace($matches[0][$k], $renderImg, $body);

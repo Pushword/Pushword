@@ -2,6 +2,8 @@
 
 namespace Pushword\Core\Utils\ImageOptimizer;
 
+use Override;
+
 use function Safe\file_put_contents;
 
 use Spatie\ImageOptimizer\Image;
@@ -17,7 +19,7 @@ class Mozjpeg extends BaseOptimizer
         return 'image/jpeg' === $image->mime();
     }
 
-    /** @psalm-suppress all */
+    #[Override]
     public function getCommand(): string
     {
         $command = parent::getCommand();
@@ -31,7 +33,7 @@ class Mozjpeg extends BaseOptimizer
             ->run();
 
         if (0 === $status) {
-            file_put_contents($this->imagePath, $process->getOutput());
+            file_put_contents($this->imagePath, $process->getOutput());  // @phpstan-ignore-line
         }
 
         return 'echo ""';

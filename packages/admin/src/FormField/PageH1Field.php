@@ -14,7 +14,7 @@ class PageH1Field extends AbstractField
     /**
      * @var string
      */
-    private const DEFAULT_STYLE = 'font-size: 22px !important; font-weight: 700; border:0; color:#111827;'
+    private const string DEFAULT_STYLE = 'font-size: 22px !important; font-weight: 700; border:0; color:#111827;'
         .'padding: 10px 10px 0px 10px; margin-top:-23px; margin-bottom:-23px;
         max-width: 640px; ';
 

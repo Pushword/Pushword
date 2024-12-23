@@ -14,7 +14,6 @@ use function Safe\preg_match_all;
 
 use Twig\Environment;
 
-/** @psalm-suppress MissingConstructor */
 final class HtmlLinkMultisite extends AbstractFilter
 {
     public LinkProvider $linkProvider;
@@ -32,10 +31,10 @@ final class HtmlLinkMultisite extends AbstractFilter
     /**
      * @var string
      */
-    public const HTML_REGEX = '/href=((?P<hrefQuote>\'|")(?P<href1>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href2>[^"\'>][^> \r\n\t\f\v]*))/iJ';
+    public const string HTML_REGEX = '/href=((?P<hrefQuote>\'|")(?P<href1>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href2>[^"\'>][^> \r\n\t\f\v]*))/iJ';
 
     /** @var string */
-    public const HTML_REGEX_HREF_KEY = 'href';
+    public const string HTML_REGEX_HREF_KEY = 'href';
 
     public function apply(mixed $propertyValue): string
     {

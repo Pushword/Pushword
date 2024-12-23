@@ -9,7 +9,6 @@ use Pushword\Core\Entity\Page;
 // TODO: Tester
 class Extended extends AbstractFilter
 {
-    /** @psalm-suppress MissingConstructor */
     public ManagerPool $managerPool;
 
     public Page $page;

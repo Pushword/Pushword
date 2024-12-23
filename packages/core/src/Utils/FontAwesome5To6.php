@@ -7,7 +7,7 @@ final class FontAwesome5To6
     /**
      * @var string[]
      */
-    public const iconsRenamed = [
+    public const array iconsRenamed = [
         'ad' => 'rectangle-ad',
         'adjust' => 'circle-half-stroke',
         'air-freshener' => 'spray-can-sparkles',

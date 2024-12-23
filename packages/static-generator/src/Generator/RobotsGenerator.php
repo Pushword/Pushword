@@ -2,8 +2,11 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
+use Override;
+
 class RobotsGenerator extends PageGenerator
 {
+    #[Override]
     public function generate(?string $host = null): void
     {
         parent::generate($host);
@@ -49,7 +52,7 @@ class RobotsGenerator extends PageGenerator
             ['locale' => $locale]
         );
 
-        if ($this->app->get('locale') == $locale) {
+        if ($this->app->get('locale') === $locale) {
             $staticFile = $this->getStaticDir().'/feed.xml';
         } else {
             $staticFile = $this->getStaticDir().'/'.$locale.'/feed.xml';
@@ -66,7 +69,7 @@ class RobotsGenerator extends PageGenerator
             ['locale' => $locale]
         );
 
-        if ($this->app->get('locale') == $locale) {
+        if ($this->app->get('locale') === $locale) {
             $staticFile = $this->getStaticDir().'/robots.txt';
         } else {
             $staticFile = $this->getStaticDir().'/'.$locale.'/robots.txt';

@@ -47,7 +47,6 @@ abstract class AbstractConversationForm implements ConversationFormInterface
 
     protected ?int $messageId = null;
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     protected Message $message;
 
     protected AppConfig $app;
@@ -69,6 +68,8 @@ abstract class AbstractConversationForm implements ConversationFormInterface
     /**
      * Initiate Message Entity (or load data from previous message)
      * and return form builder instance.
+     *
+     * @return FormBuilderInterface<Message>
      */
     protected function initForm(): FormBuilderInterface
     {
@@ -98,6 +99,9 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         return $form;
     }
 
+    /**
+     * @return FormBuilderInterface<Message>
+     */
     public function getCurrentStep(): FormBuilderInterface
     {
         $currentStepMethod = 'getStep'.self::$step[$this->getStep()];
@@ -115,12 +119,13 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         return $currentStep;
     }
 
+    /**
+     * @return FormBuilderInterface<Message>
+     */
     abstract protected function getStepOne(): FormBuilderInterface;
 
     /**
      * Return rendered response (success or error).
-     *
-     * @psalm-suppress all
      */
     public function validCurrentStep(FormInterface $form): string
     {
@@ -133,11 +138,13 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         return $this->defaultStepValidator($form);
     }
 
+    /** @param FormInterface<Message|null> $form */
     protected function validStepOne(FormInterface $form): string
     {
         return $this->defaultStepValidator($form);
     }
 
+    /** @param FormInterface<Message|null> $form */
     protected function defaultStepValidator(FormInterface $form): string
     {
         if ($form->isValid()) {
@@ -255,7 +262,10 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             throw new Exception($key.' not found');
         }
 
-        return (string) ($attributes[$key] ?? $query[$key]);
+        $getOrPost = ($attributes[$key] ?? $query[$key]);
+        assert(is_scalar($getOrPost));
+
+        return (string) $getOrPost;
     }
 
     protected function getReferring(): string
