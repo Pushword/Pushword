@@ -30,12 +30,6 @@
       </style>
     {% endblock %}
 
-    {% block script %}
-      {% for javascript in apps.get().getJavascripts() %}
-        <script{% if javascript is iterable %}{{ attr(javascript) }}{% else %} src="{{ asset(javascript) }}" async{% endif %}></script>
-      {% endfor %}
-    {% endblock %}
-
     {% block favicon %}
       {% if apps.get().get('favicon_path') is not null %}
         {# permit retrocompatibility with a feature previous v1 wich is deprecated ! Prefer override base.html.twig ➜ favicon block #}
@@ -61,5 +55,10 @@
 
     {% block body %}{% endblock %}
 
+    {% block script %}
+      {% for javascript in apps.get().getJavascripts() %}
+        <script{% if javascript is iterable %}{{ attr(javascript) }}{% else %} src="{{ asset(javascript) }}" async{% endif %}></script>
+      {% endfor %}
+    {% endblock %}
   </body>
 </html>
