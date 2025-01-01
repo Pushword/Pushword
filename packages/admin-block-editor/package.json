@@ -18,13 +18,11 @@
     "core-js": "^3.33",
     "editorjs-drag-drop": "^1.1",
     "editorjs-inline-tool": "^0.4",
-    "editorjs-paragraph-with-alignment": "^3.0",
     "editorjs-style": "^3.0",
-    "editorjs-text-alignment-blocktune": "https://github.com/aacoelho/editorjs-alignment-blocktune",
     "editorjs-undo": "^2",
     "postcss": "^8.4",
     "postcss-loader": "^8",
-    "postcss-nested": "^6.0",
+    "postcss-nested": "^7.0",
     "postcss-nested-ancestors": "^3.0"
   },
   "license": "UNLICENSED",
@@ -35,6 +33,7 @@
   },
   "dependencies": {
     "@calumk/editorjs-codecup": "^1.2.0",
+    "@editorjs/paragraph": "^2.11.7",
     "@sotaproject/strikethrough": "^1.0.1"
   }
 }

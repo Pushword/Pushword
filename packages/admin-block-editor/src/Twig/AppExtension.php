@@ -80,6 +80,8 @@ class AppExtension extends AbstractExtension
             $attributes['class'] .= ' text-justify';
         }
 
+        $attributes['class'] = trim($attributes['class']);
+
         return Attribute::renderAll($attributes);
     }
 

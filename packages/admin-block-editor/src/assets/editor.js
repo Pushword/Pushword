@@ -10,7 +10,7 @@ import Code from '@editorjs/code'
 import InlineCode from '@editorjs/inline-code'
 //import { StyleInlineTool } from "editorjs-style";
 import Hyperlink from '@pushword/editorjs-tools/dist/Hyperlink.js'
-import Paragraph from 'editorjs-paragraph-with-alignment' // '@pushword/editorjs-tools/dist/Paragraph.js'
+import Paragraph from '@editorjs/paragraph' // '@pushword/editorjs-tools/dist/Paragraph.js'
 import Table from '@editorjs/table'
 import DragDrop from 'editorjs-drag-drop'
 import Undo from 'editorjs-undo'

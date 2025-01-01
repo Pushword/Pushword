@@ -34,7 +34,7 @@
     "postcss": "^8.4",
     "postcss-cssnext": "^3.1.1",
     "postcss-loader": "^8",
-    "postcss-nested": "^6.0",
+    "postcss-nested": "^7.0",
     "postcss-nested-ancestors": "^3.0",
     "postcss-smart-import": "^0.7.6",
     "raw-loader": "^4.0.1",
@@ -42,7 +42,7 @@
     "sass-loader": "^16",
     "style-loader": "^4",
     "webpack": "^5.65",
-    "webpack-cli": "^5.0"
+    "webpack-cli": "^6.0"
   },
   "bugs": {
     "url": "https://github.com/pushword/pushword/issues"
