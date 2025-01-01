@@ -15,9 +15,15 @@ module.exports = {
     PasteLink: './src/PasteLink/PasteLink.js',
     HyperlinkTune: './src/HyperlinkTune/HyperlinkTune.js',
     CodeBlock: './src/CodeBlock/CodeBlock.js',
+    Header: './src/Header/Header.js',
+    Small: './src/Small/Small.ts',
   },
   module: {
     rules: [
+      {
+        test: /\.ts$/,
+        use: 'ts-loader',
+      },
       {
         test: /\.js$/,
         exclude: /node_modules/,

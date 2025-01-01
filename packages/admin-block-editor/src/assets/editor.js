@@ -1,5 +1,6 @@
 import EditorJS from '@editorjs/editorjs'
-import Header from '@editorjs/header'
+import Header from '@pushword/editorjs-tools/dist/Header.js'
+import Small from '@pushword/editorjs-tools/dist/Small.js'
 import List from '@editorjs/nested-list'
 //import Raw from '@editorjs/raw';
 import Raw from '@pushword/editorjs-tools/dist/Raw.js'
@@ -60,6 +61,7 @@ export class editorJs {
             Gallery: Gallery,
             Strikethrough: Strikethrough,
             CodeBlock: CodeBlock,
+            Small: Small,
             //StyleInlineTool: StyleInlineTool,
           }
 
