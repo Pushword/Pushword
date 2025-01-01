@@ -213,6 +213,11 @@ export function addClassForNormalUser(attribute = 'data-acinb') {
       if (window.location.hash) {
         const targetElement = document.querySelector(window.location.hash)
         if (targetElement) {
+          // open show more block if exists
+          const showMoreTarget = targetElement.closest('.show-more')
+          if (showMoreTarget) {
+            showMoreTarget.querySelector('.show-more-btn label').click()
+          }
           targetElement.scrollIntoView({
             behavior: 'smooth',
           })

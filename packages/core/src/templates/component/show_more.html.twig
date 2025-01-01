@@ -1,18 +1,42 @@
 {% block before %}
 <div class="show-more -mt-7">
   <input type="checkbox" id="{{ id }}" class="hidden show-hide-input">
-  <div class="overflow-hidden transition-all delay-75 duration-300" data-acinb="max-h-[250px]">
+  <div class="overflow-hidden transition-all delay-75 duration-300" data-acinb="max-h-[250px]" id="csm_{{ id }}">
 {% endblock %}
 
 {% block after %}
-    <div class="text-center -mt-3 hidden" data-acinb="block">
+    <div class="text-center mt-3 hidden" data-acinb="block">
       {# ↥ #}
-      <label for="{{ id }}" class="text-3xl text-gray-500 cursor-pointer after:content-['\21A5'] after:cursor-pointer" onclick="this.closest('.show-more').children[1].classList.add('overflow-hidden')"></label>
+      <label
+        for="{{ id }}"
+        class="text-3xl text-gray-500 cursor-pointer after:content-['\21A5'] after:cursor-pointer"
+        onclick="
+          const wrapper = this.closest('.show-more');
+          wrapper.classList.add('-mt-7');
+          const content = wrapper.children[1];
+          content.classList.add('overflow-hidden');
+          content.style.maxHeight = '250px';
+          const scrollOptions = (window.previousScrollPositionForShowMore ?? 0)
+            ? { top: window.previousScrollPositionForShowMore, behavior: 'smooth' }
+            : { behavior: 'smooth', block: 'start' };
+          wrapper.scrollIntoView(scrollOptions);
+        ">
+      </label>
     </div>
   </div>
   <div class="show-more-btn transition-all delay-75 duration-300 text-center pt-[100px] -mt-[120px] h-[120px] bg-gradient-to-b from-transparent {{ to_background|default('to-white') }} relative z-10 mb-14 hidden" data-acinb="block">
     {# ↧ #}
-    <label for="{{ id }}" class="text-4xl inline-block w-full text-gray-500 cursor-pointer after:content-['\21A7']" onclick="this.closest('.show-more').children[1].classList.remove('overflow-hidden')"></label>
+    <label for="{{ id }}"
+      class="text-4xl inline-block w-full text-gray-500 cursor-pointer after:content-['\21A7']"
+      onclick="
+        const wrapper = this.closest('.show-more');
+        const content = wrapper.children[1];
+        window.previousScrollPositionForShowMore = wrapper.getBoundingClientRect().top;
+        wrapper.classList.remove('-mt-7');
+        content.classList.remove('overflow-hidden');
+        content.style.maxHeight = content.scrollHeight + 'px';
+      ">
+    </label>
   </div>
 </div>
 {% endblock %}
