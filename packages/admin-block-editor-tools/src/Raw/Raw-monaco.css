@@ -1,0 +1,22 @@
+.monaco-editor .margin {
+  display: none !important;
+}
+.monaco-editor .decorationsOverviewRuler {
+  display: none !important;
+}
+
+.monaco-scrollable-element {
+  left: 6px !important; /* Override the inline left style */
+}
+
+.monaco-editor {
+  --vscode-editor-background: #f3f4f6 !important;
+  --vscode-focusBorder: #f3f4f6 !important;
+}
+
+.editorjs-monaco-wrapper {
+  margin: 0.6em 0;
+  padding: 0.4em 0;
+  background-color: #f3f4f6;
+  border-radius: 5px;
+}

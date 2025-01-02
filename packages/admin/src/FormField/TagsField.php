@@ -41,7 +41,6 @@ class TagsField extends AbstractField
             'help' => ' <div class="textSuggester" style="display:none;"></div>'
                 .'<script>setTimeout(function () {
                     const element = document.querySelector("'.(null === $page->getId() ? '[data-tags]' : '[id$=_h1] textarea').'");
-                    console.log(element);
                     element.focus();
                     element.selectionStart = element.selectionEnd = element.value.length;
                 }, 500)</script>',

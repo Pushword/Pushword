@@ -13,3 +13,89 @@ select.CodeBlock_language {
   top: 0;
   right: 0;
 }
+
+/*******************************/
+.editorjs-codeCup_Wrapper {
+  height: 200px;
+  border-radius: 5px;
+  background-color: unset !important;
+  border: unset !important;
+  margin-bottom: 10px;
+
+  z-index: 0;
+  position: inherit;
+}
+
+.editorjs-codeCup_Wrapper .codeCup {
+  border-radius: 5px;
+  background: none;
+}
+
+.editorjs-codeCup_Wrapper .editorjs-codeCup_LangDisplay {
+  position: absolute;
+  height: 20px;
+  line-height: 20px;
+  font-size: 10px;
+  color: #999;
+  background-color: #dcdfe6;
+  padding: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  right: 0;
+  bottom: 0;
+  border-bottom-right-radius: 5px;
+  border-top-left-radius: 5px;
+}
+
+.editorjs-codeCup_Wrapper .codeCup.codeCup--has-line-numbers:before {
+  background-color: #dcdfe6;
+}
+
+/* .wide{
+	width: 100%;
+
+	z-index: 10;
+    position: inherit;
+} */
+
+.editorjs-codeCup_input {
+  background-color: #f8f8f8;
+  border-radius: 2px;
+  padding: 5px;
+  flex: 1;
+  margin-right: 5px;
+}
+
+.editorjs-codeCup_input:focus {
+  outline: none;
+}
+
+.editorjs-codeCup_inputButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editorjs-codeCup_inputButton:hover {
+  border-radius: 2px;
+  background-color: #dcdfe6;
+  cursor: pointer;
+}
+
+.editorjs-codeCup_inputContainer {
+  padding: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* sonataadmin pre unsetting */
+.codecup__textarea {
+  overflow-y: hidden !important;
+}
+
+.codecup__pre {
+  background-color: unset;
+  border: unset;
+  color: unset;
+  display: unset;
+}

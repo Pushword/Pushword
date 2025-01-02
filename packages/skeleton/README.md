@@ -46,6 +46,6 @@ If you're interested in contributing to Pushword, please read our [contributing 
 
 The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license#license) for more information.
 
-<p align="center"><a href="https://dev.piedweb.com" rel="dofollow">
+<p align="center"><a href="https://dev.piedweb.com">
 <img src="https://raw.githubusercontent.com/Pushword/Pushword/f5021f4c5d5d3ab3f2858ec2e4bdd70818806c6a/packages/admin/src/Resources/assets/logo.svg" width="200" height="200" alt="PHP Packages Open Source" />
 </a></p>

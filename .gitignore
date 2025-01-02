@@ -11,6 +11,7 @@ node_modules/
 /packages/core/node_modules
 **/package-lock.json
 **/yarn.lock
+packages/admin-monaco-editor/dist
 
 # dev tool
 .phpunit.result.cache

@@ -1,0 +1,20 @@
+{
+  "scripts": {
+    "clean": "rm -rf dist && mkdir dist",
+    "clean-public": "rm -rf ./../admin/src/Resources/public/monaco && mkdir ./../admin/src/Resources/public/monaco",
+    "copy-to-public": "cp -R ./dist/* ./../admin/src/Resources/public/monaco",
+    "build": "yarn clean && webpack --mode production && yarn clean-public && yarn copy-to-public"
+  },
+  "devDependencies": {
+    "css-loader": "^7",
+    "file-loader": "^6.2.0",
+    "monaco-editor": "^0.52.2",
+    "monaco-editor-webpack-plugin": "^7.1.0",
+    "style-loader": "^4",
+    "webpack": "^5.65",
+    "webpack-cli": "^6.0"
+  },
+  "dependencies": {
+    "monaco-yaml": "^5.2.3"
+  }
+}

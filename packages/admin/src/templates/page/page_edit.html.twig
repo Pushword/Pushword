@@ -28,7 +28,7 @@
 <script>
 document.querySelector('body').addEventListener('keydown', function(event) {
   if (event.ctrlKey && event.key === 's') {
-    console.log('trigger ctrl-s-event')
+    // console.log('trigger ctrl-s-event')
     document.querySelector('form[hx-trigger]').dispatchEvent(new Event('ctrl-s-event'));
     event.preventDefault();
   }
