@@ -1,15 +1,11 @@
 <?php
 
 declare(strict_types=1);
-
-use PiedWeb\RenderAttributes\TwigExtension;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Twig\Extension\StringLoaderExtension;
-use Twig\Extra\Intl\IntlExtension;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();
@@ -26,8 +22,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$pathToBin', '%pw.path_to_bin%')
         ->bind('$tailwindGeneratorisActive', '%pw.tailwind_generator%');
 
-    $services->set(PushwordCoreBundle::class);
-
     $services->load('Pushword\Core\\', __DIR__.'/../../../src/*')
         ->exclude([
             __DIR__.'/../../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
@@ -35,12 +29,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->load('Pushword\Core\Controller\\', __DIR__.'/../../../src/Controller')
         ->tag('controller.service_arguments');
-
-    $services->set(StringLoaderExtension::class);
-
-    $services->set(TwigExtension::class);
-
-    $services->set(IntlExtension::class);
 
     // # todo limit to test https://stackoverflow.com/questions/54466158/symfony-4-2-how-to-do-a-service-public-only-for-tests
     $services->set(PushwordRouteGenerator::class)
@@ -52,4 +40,5 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // See who to avoid limit for this one too
     $services->set(VichUploadPropertyNamer::class)
         ->public();
+    $services->load('s', __DIR__.'/../../');
 };

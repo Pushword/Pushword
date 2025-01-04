@@ -16,13 +16,28 @@ $paths = [
 return RectorConfig::configure()
     ->withImportNames(removeUnusedImports: true)
     ->withPhpSets(php83: true)
-    ->withComposerBased(doctrine: true, twig: true, phpunit: true)
     ->withParallel()
     ->withPaths($paths)
     ->withRootFiles()
     ->withSymfonyContainerPhp(__DIR__.'/packages/skeleton/tests/symfonyContainer.php')
-    ->withPreparedSets(codeQuality: true, codingStyle: true, earlyReturn: true, typeDeclarations: true, instanceOf: true)
-    ->withAttributesSets(symfony: true, doctrine: true)
+    ->withComposerBased(
+        doctrine: true,
+        twig: true,
+        phpunit: true
+    )
+    ->withPreparedSets(
+        codeQuality: true,
+        codingStyle: true,
+        earlyReturn: true,
+        typeDeclarations: true,
+        instanceOf: true,
+        symfonyCodeQuality: true,
+        // symfonyConfigs: true
+    )
+    ->withAttributesSets(
+        symfony: true,
+        doctrine: true
+    )
     ->withSkip([
         'packages/core/src/Twig/AppExtension.php',
         'packages/skeleton/src/Kernel.php',
