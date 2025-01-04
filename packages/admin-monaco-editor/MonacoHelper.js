@@ -17,6 +17,9 @@ export default class MonacoHelper {
       formatOnPaste: true,
       wordWrap: 'on',
       guides: { indentation: true },
+      tabSize: 2,
+      insertSpaces: true,
+      detectIndentation: true,
     }
   }
 
@@ -64,6 +67,8 @@ export default class MonacoHelper {
       textarea.value = editor.getValue()
       //monacoHelperInstance.updateHeight(textarea)
     })
+
+    textarea.style.opacity = 0
 
     return editor
   }

@@ -1,27 +1,5 @@
 /* purgecss start ignore */
 
-/* editorjs raw */
-.aceInsideEditorJs {
-  background-color: #f3f4f6 !important;
-}
-.aceInsideEditorJs .ace_content,
-.aceInsideEditorJs .ace_scroller {
-  padding: 0 2px;
-}
-
-.aceInsideEditorJs .ace_hidden-cursors {
-  opacity: 0 !important;
-}
-
-.aceInsideEditorJs .ace_active-line {
-  background: none !important;
-}
-
-.ce-rawtool__textarea {
-  background-color: #f3f4f6 !important;
-  color: #111827 !important;
-}
-
 /* heading anchor size */
 .ce-header::after {
   font-size: 1rem;

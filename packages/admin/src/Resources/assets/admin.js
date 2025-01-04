@@ -7,14 +7,12 @@ window.htmx = require('htmx.org')
 //global.$ = global.jQuery = require('jquery');
 
 import { easyMDEditor } from './admin.easymde-editor'
-import { aceEditor } from './admin.ace-editor'
 import { filterParentPageFromHost } from './admin.filteringParentPage'
 import { filterImageFormField } from './admin.filterImageFormField'
 //import { autosize } from 'autosize/src/autosize.js';
 import 'core-js/stable'
 import 'regenerator-runtime/runtime'
 
-window.aceEditor = aceEditor
 window.domChanging = false
 window.copyElementText = copyElementText
 //var aceEditorElements = null;
@@ -23,8 +21,6 @@ async function onDomChanged() {
   window.domChanging = true
   //await console.log('domChanged');
   await autoSizeTextarea()
-  //if (aceEditorElements !== null && aceEditorElements.renderer !== 'undefined') {    await aceEditor.renderer.updateFull();}
-  // todo put all editor in aceEditorElements and for
   window.domChanging = false
 }
 
@@ -36,7 +32,6 @@ window.addEventListener('load', function () {
   memorizeOpenPannel()
   onDomChanged()
   textareaWithoutNewLine()
-  var aceEditorElements = window.aceEditor()
   onDomChangedAction()
   removePreviewBtn()
   filterParentPageFromHost()

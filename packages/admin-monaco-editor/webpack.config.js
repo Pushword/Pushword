@@ -21,7 +21,7 @@ module.exports = {
   },
   plugins: [
     new MonacoWebpackPlugin({
-      languages: ['html', 'javascript', 'twig', 'yaml', 'php', 'json'],
+      languages: ['html', 'javascript', 'twig', 'yaml', 'php', 'json', 'markdown'],
       customLanguages: [
         {
           label: 'yaml',

@@ -12,6 +12,7 @@ function installDependencies {
         yarn && yarn upgrade;
     fi
 }
+
 function buildAssets {
     if [ "$DEV" = "watch" ]
     then
@@ -30,8 +31,9 @@ fi
 echo '------------------'
 
 cd packages/js-helper;
-yarn link || true;
+yarn link  > /dev/null 2>&1 || echo "yarn link failed, but continuing..."
 cd ../../;
+
 #####################
 ## ADMIN BLOCK EDITOR
 #####################
