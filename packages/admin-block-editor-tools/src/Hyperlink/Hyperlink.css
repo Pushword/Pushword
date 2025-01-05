@@ -1,3 +1,17 @@
+.link-options-wrapper {
+  outline: none;
+  border: 0;
+  border-radius: 0 0 4px 4px;
+  margin: 0;
+  font-size: 13px;
+  padding: 10px;
+  width: 100%;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  font-weight: 500;
+  border-top: 1px solid rgba(201, 201, 204, 0.48);
+}
+
 .ninja {
   text-decoration: none !important;
   color: inherit !important;
@@ -85,24 +99,6 @@
   width: 100%;
   box-sizing: border-box;
   background: #fff;
-}
-.plugin-options-wrapper {
-  outline: none;
-  border: 0;
-  border-radius: 0 0 4px 4px;
-  margin: 0;
-  font-size: 13px;
-  padding: 10px;
-  width: 100%;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-  display: none;
-  font-weight: 500;
-  border-top: 1px solid rgba(201, 201, 204, 0.48);
-}
-
-.plugin-options-wrapper-showed {
-  display: block;
 }
 
 .ce-popover__container {

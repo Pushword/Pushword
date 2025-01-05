@@ -2,7 +2,7 @@ import SelectIcon from './folder.svg'
 import UploadIcon from './upload.svg'
 
 export default class make {
-  static element(tagName, classNames = null, attributes = {}) {
+  static element(tagName, classNames = null, attributes = {}, innerHTML = '') {
     const el = document.createElement(tagName)
 
     if (Array.isArray(classNames)) {
@@ -13,6 +13,10 @@ export default class make {
 
     for (const attrName in attributes) {
       el.setAttribute(attrName, attributes[attrName])
+    }
+
+    if (innerHTML !== '') {
+      el.innerHTML = innerHTML
     }
 
     return el

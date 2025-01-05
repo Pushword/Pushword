@@ -1,29 +1,22 @@
-
-import {type API, type InlineTool, type SanitizerConfig} from "@editorjs/editorjs";
-import {type InlineToolConstructorOptions} from "@editorjs/editorjs/types/tools/inline-tool";
+import { type API, type InlineTool, type SanitizerConfig } from '@editorjs/editorjs'
+import { type InlineToolConstructorOptions } from '@editorjs/editorjs/types/tools/inline-tool'
 
 export default class Small implements InlineTool {
-
   private button: HTMLButtonElement | undefined
-  private tag: string = 'SMALL';
+  private tag: string = 'SMALL'
   private api: API
-  private iconClasses: {base: string, active: string}
   public constructor(options: InlineToolConstructorOptions) {
-    this.api = options.api;
-    this.iconClasses = {
-      base: this.api.styles.inlineToolButton,
-      active: this.api.styles.inlineToolButtonActive,
-    };
+    this.api = options.api
   }
-  public static isInline = true;
+  public static isInline = true
 
   public render(): HTMLElement {
-    this.button = document.createElement('button');
-    this.button.type = 'button';
-    this.button.classList.add(this.iconClasses.base);
-    this.button.innerHTML = 'Aa';
+    this.button = document.createElement('button')
+    this.button.type = 'button'
+    this.button.classList.add(this.api.styles.inlineToolButton)
+    this.button.innerHTML = 'Aa'
 
-    return this.button;
+    return this.button
   }
 
   /**
@@ -32,70 +25,60 @@ export default class Small implements InlineTool {
    * @param {Range} range - selected fragment
    */
   public surround(range: Range): void {
-    if (!range) {
-      return;
-    }
+    if (!range) return
 
-    const termWrapper = this.api.selection.findParentTag(this.tag);
+    const termWrapper = this.api.selection.findParentTag(this.tag)
 
-    /**
-     * If start or end of selection is in the highlighted block
-     */
+    // If start or end of selection is in the highlighted block
     if (termWrapper) {
-      this.unwrap(termWrapper);
+      this.unwrap(termWrapper)
     } else {
-      this.wrap(range);
+      this.wrap(range)
     }
   }
 
   public wrap(range: Range) {
-    const u = document.createElement(this.tag);
-    u.appendChild(range.extractContents());
-    range.insertNode(u);
-    this.api.selection.expandToTag(u);
+    const u = document.createElement(this.tag)
+    u.appendChild(range.extractContents())
+    range.insertNode(u)
+    this.api.selection.expandToTag(u)
   }
 
   public unwrap(termWrapper: HTMLElement): void {
+    this.api.selection.expandToTag(termWrapper)
 
-    this.api.selection.expandToTag(termWrapper);
+    const sel = window.getSelection()
+    if (!sel) return
 
-    const sel = window.getSelection();
-    if (!sel) {
-      return;
-    }
-    const range = sel.getRangeAt(0);
-    if (!range) {
-      return
-    }
+    const range = sel.getRangeAt(0)
+    if (!range) return
 
-    const unwrappedContent = range.extractContents();
-    if (!unwrappedContent) {
-      return
-    }
+    const unwrappedContent = range.extractContents()
+    if (!unwrappedContent) return
 
     // Remove empty term-tag
-    termWrapper.parentNode?.removeChild(termWrapper);
+    termWrapper.parentNode?.removeChild(termWrapper)
 
-    range.insertNode(unwrappedContent);
+    range.insertNode(unwrappedContent)
 
-    sel.removeAllRanges();
-    sel.addRange(range);
+    sel.removeAllRanges()
+    sel.addRange(range)
   }
 
   /**
    * Check and change Term's state for current selection
    */
   public checkState(): boolean {
-    const termTag = this.api.selection.findParentTag(this.tag);
+    const termTag = this.api.selection.findParentTag(this.tag)
 
-    this.button?.classList.toggle(this.iconClasses.active, !!termTag);
+    this.button?.classList.toggle(this.api.styles.inlineToolButtonActive, !!termTag)
 
     return !!termTag
   }
 
   public static get sanitize(): SanitizerConfig {
     return {
-      u: { },
-    };
+      u: {},
+    }
   }
 }
