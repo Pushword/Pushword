@@ -15,7 +15,6 @@ import 'regenerator-runtime/runtime'
 
 window.domChanging = false
 window.copyElementText = copyElementText
-//var aceEditorElements = null;
 
 async function onDomChanged() {
   window.domChanging = true

@@ -22,10 +22,6 @@
  * @version 1.2.0
  */
 
-/*! For license information please see Header.js.LICENSE.txt */
-
-/*! For license information please see Image.js.LICENSE.txt */
-
 /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
 
 /**

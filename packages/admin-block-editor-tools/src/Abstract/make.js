@@ -78,4 +78,14 @@ export default class make {
 
     return wrapper
   }
+
+  static selectionCollapseToEnd() {
+    const sel = window.getSelection()
+    const range = document.createRange()
+
+    range.selectNodeContents(sel.focusNode)
+    range.collapse(false)
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
 }

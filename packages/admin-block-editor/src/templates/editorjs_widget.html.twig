@@ -20,11 +20,10 @@ function toggleEditor() {
         var ugly = textarea.value;
         var pretty = JSON.stringify(JSON.parse(ugly), undefined, 4);
         textarea.value = pretty;
-        textarea.setAttribute('data-editor', 'json');
-        window.aceEditors = aceEditor();
+        window.monacoHelper.transformTextareaToMonaco(textarea)
     } else {
-        var aceEditorElem = document.querySelector('.ace_editor');
-        aceEditorElem.parentNode.removeChild(aceEditorElem);
+        var monacoEditor = document.querySelector('.monaco-editor').parentNode
+        monacoEditor.parentNode.removeChild(monacoEditor)
     }
 }
 {% block editorjs_config %}

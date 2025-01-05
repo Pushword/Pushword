@@ -1,5 +1,4 @@
 import css2 from './Hyperlink.css'
-import SelectionUtils from './Selection'
 import make from './../Abstract/make.js'
 import { IconLink, IconUnlink } from '@codexteam/icons'
 import { Suggest } from '../../../admin/src/Resources/assets/suggest.js'
@@ -55,23 +54,62 @@ export default class Hyperlink {
   /** @type {HTMLElement | null} */
   anchorTag = null
 
-  /** @type {SelectionUtils} */
-  selection
-
   /** @param {{ api: API }} options  */
   constructor({ api }) {
     this.api = api
-    this.selection = new SelectionUtils()
   }
 
   /** @returns {HTMLElement} */
   render() {
-    console.log('render')
     this.nodes.button = document.createElement('button')
     this.nodes.button.type = 'button'
     this.nodes.button.classList.add(this.api.styles.inlineToolButton)
     this.nodes.button.innerHTML = IconLink
     return this.nodes.button
+  }
+
+  toggleButton(showUnlink = true) {
+    if (showUnlink) {
+      this.nodes.button?.classList.add(this.api.styles.inlineToolButtonActive)
+      this.nodes.button.innerHTML = IconUnlink
+    } else this.nodes.button?.classList.remove(this.api.styles.inlineToolButtonActive)
+  }
+
+  /**
+   *
+   * @param {Selection} selection
+   */
+  checkState(selection) {
+    console.log('checkState', this.inputOpened)
+
+    const anchorTag = this.anchorTag || this.api.selection.findParentTag('A')
+    if (!anchorTag) {
+      this.toggleButton(false)
+      return
+    }
+
+    this.anchorTag = anchorTag
+    this.toggleButton()
+    this.openActions()
+    this.updateActionValues()
+
+    console.log('checkState ended')
+    return !!anchorTag
+  }
+
+  updateActionValues() {
+    if (!this.nodes.input) return
+    const hrefAttr = this.anchorTag.getAttribute('href')
+    this.nodes.input.value = !!hrefAttr ? hrefAttr : ''
+
+    const relAttr = this.anchorTag.getAttribute('rel')
+    this.nodes.hideForBot.querySelector('input').checked = !!relAttr ? true : false
+
+    const targetAttr = this.anchorTag.getAttribute('target')
+    this.nodes.targetBlank.querySelector('input').checked = !!targetAttr ? true : false
+
+    const designAttr = this.anchorTag.getAttribute('class')
+    this.nodes.selectDesign.value = designAttr ? designAttr : ''
   }
 
   renderActions() {
@@ -88,6 +126,7 @@ export default class Hyperlink {
     this.nodes.targetBlank = make.switchInput('targetBlank', this.api.i18n.t('Nouvel onglet'))
 
     this.nodes.selectDesign = make.element('select', this.api.styles.input)
+    //this.nodes.selectDesign.name = 'style'
     make.option(this.nodes.selectDesign, '', this.api.i18n.t('Style'), { style: 'opacity: 0.5' })
     for (const [key, value] of Object.entries(this.availableDesign)) {
       make.option(this.nodes.selectDesign, value, key)
@@ -104,9 +143,8 @@ export default class Hyperlink {
 
     // sauvegarde lors de ENTER
     this.nodes.input.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
+      if (event.keyCode === 13) {
         console.log('press ENTER')
-        //this.enterPressed(event)
         event.preventDefault()
         event.stopPropagation()
         event.stopImmediatePropagation()
@@ -115,28 +153,8 @@ export default class Hyperlink {
       }
     })
 
-    console.log('/renderActions')
+    console.log('renderActions ended')
     return this.nodes.wrapper
-  }
-
-  checkState() {
-    console.log('checkState')
-
-    const anchorTag = this.anchorTag || this.api.selection.findParentTag('A') // this.anchorTag ||
-
-    if (!anchorTag) {
-      this.showUnlink(false)
-      return false
-    }
-
-    this.showUnlink()
-    this.anchorTag = anchorTag
-    this.openActions()
-    this.updateActionValues(anchorTag)
-    setTimeout(() => this.nodes.input.focus(), 0)
-
-    console.log('/checkState')
-    return true
   }
 
   /** @param {Range} range */
@@ -147,67 +165,22 @@ export default class Hyperlink {
       return
     }
 
-    if (this.inputOpened) {
-      this.selection.restore()
-      this.selection.removeFakeBackground()
-    }
-
+    console.log(this.inputOpened, this.api.selection, this.api.selection.findParentTag('A'), this.anchorTag)
     const termWrapper = this.api.selection.findParentTag('A') || this.anchorTag
-    console.log(termWrapper, this.inputOpened)
+    console.log(termWrapper)
     if (termWrapper) {
-      // && this.inputOpened
       this.unlink(termWrapper)
       this.closeActions()
       //this.checkState()
       return
+    } else {
+      console.log('create A')
+      this.anchorTag = document.createElement('A')
+      this.anchorTag.appendChild(range.extractContents())
+      range.insertNode(this.anchorTag)
+      this.api.selection.expandToTag(this.anchorTag)
     }
-    //else if (termWrapper) {
-    //   this.showUnlink(false)
-    //   console.log(this.anchorTag)
-    //   this.updateActionValues()
-    //   //this.api.selection.expandToTag(this.anchorTag)
-    //   this.openActions(true)
-    // } else {
-    console.log('create A')
-    this.anchorTag = document.createElement('A')
-    this.anchorTag.appendChild(range.extractContents())
-    range.insertNode(this.anchorTag)
-    this.api.selection.expandToTag(this.anchorTag)
-    this.selection.setFakeBackground()
-    this.selection.save()
-    this.openActions(true)
-  }
-
-  showUnlink(showUnlink = true) {
-    if (showUnlink) {
-      this.nodes.button?.classList.add(this.api.styles.inlineToolButtonActive)
-      this.nodes.button.innerHTML = IconUnlink
-      return
-    }
-    this.nodes.button.innerHTML = IconLink
-    this.nodes.button?.classList.remove(this.api.styles.inlineToolButtonActive)
-  }
-
-  /**
-   * @param {HTMLElement} anchorTag
-   */
-  updateActionValues(anchorTag) {
-    console.log('updateActionValues')
-    if (!this.nodes.input) return
-
-    const hrefAttr = anchorTag.getAttribute('href')
-    this.nodes.input.value = !!hrefAttr ? hrefAttr : ''
-
-    const relAttr = anchorTag.getAttribute('rel')
-    this.nodes.hideForBot.querySelector('input').checked = !!relAttr ? true : false
-
-    const targetAttr = anchorTag.getAttribute('target')
-    this.nodes.targetBlank.querySelector('input').checked = !!targetAttr ? true : false
-
-    const designAttr = anchorTag.getAttribute('class')
-    this.nodes.selectDesign.value = designAttr ? designAttr : ''
-
-    console.log('/updateActionValues')
+    this.toggleActions()
   }
 
   get shortcut() {
@@ -233,11 +206,7 @@ export default class Hyperlink {
   }
 
   clear() {
-    console.log('CLEAR')
-
-    this.selection.restore()
-    this.selection.removeFakeBackground()
-    //throw new Error()
+    console.log('clear')
     //if (this.inputOpened) this.closeActions()
   }
 
@@ -254,32 +223,22 @@ export default class Hyperlink {
     console.log('openActions')
     this.nodes.wrapper.style.display = 'block'
     if (needFocus) {
-      // if (this.anchorTag) this.api.selection.expandToTag(this.anchorTag)
-      // this.api.selection.setFakeBackground()
-      // this.api.selection.save()
+      this.api.selection.expandToTag(this.anchorTag)
+      this.api.selection.setFakeBackground()
+      this.api.selection.save()
       this.nodes.input.focus()
     }
     this.inputOpened = true
   }
 
   closeActions() {
-    if (this.selection.isFakeBackgroundEnabled) {
-      // if actions is broken by other selection We need to save new selection
-      const currentSelection = new SelectionUtils()
-      currentSelection.save()
-      this.selection.restore()
-      this.selection.removeFakeBackground()
-      // and recover new selection after removing fake background
-      currentSelection.restore()
-    }
-
     let value = this.nodes.input.value || ''
-    if (!value.trim()) this.unlink(this.anchorTag)
-    //this.api.selection.restore()
-    //this.api.selection.removeFakeBackground()
-    this.inputOpened = false
-    this.api.inlineToolbar.close()
+    if (!value.trim()) this.unlink()
+    this.api.selection.restore()
+    this.api.selection.removeFakeBackground()
+    //make.selectionCollapseToEnd()
     this.api.toolbar.close()
+    this.inputOpened = false
   }
 
   updateLink() {
@@ -311,10 +270,10 @@ export default class Hyperlink {
   }
 
   unlink(termWrapper) {
-    console.log('- unlink', termWrapper, this.anchorTag)
-    termWrapper = termWrapper
+    console.log('- unlink', termWrapper)
+    termWrapper = termWrapper || this.anchorTag
 
-    if (!termWrapper) return
+    console.log(termWrapper)
     this.api.selection.expandToTag(termWrapper)
 
     const sel = window.getSelection()

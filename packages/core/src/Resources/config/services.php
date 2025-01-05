@@ -1,13 +1,13 @@
 <?php
 
 declare(strict_types=1);
+use PiedWeb\RenderAttributes\TwigExtension;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Twig\Extension\StringLoaderExtension;
-use PiedWeb\RenderAttributes\TwigExtension;
 use Twig\Extra\Intl\IntlExtension;
 
 return static function (ContainerConfigurator $containerConfigurator): void {

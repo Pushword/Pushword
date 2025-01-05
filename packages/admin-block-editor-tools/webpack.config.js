@@ -1,6 +1,10 @@
 const path = require('path')
+const TerserPlugin = require('terser-webpack-plugin')
 
 module.exports = {
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   entry: {
     Image: './src/Image/Image.js',
     Attaches: './src/Attaches/Attaches.js',
@@ -59,6 +63,19 @@ module.exports = {
           },
         ],
       },
+    ],
+  },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        extractComments: false, // Disable license file generation
+        terserOptions: {
+          format: {
+            comments: false, // Remove all comments from output files
+          },
+        },
+      }),
     ],
   },
   output: {

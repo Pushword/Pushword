@@ -56,5 +56,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pushword/pushword.git"
+  },
+  "dependencies": {
+    "terser-webpack-plugin": "^5.3.11"
   }
 }
