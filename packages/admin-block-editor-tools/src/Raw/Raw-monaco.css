@@ -10,6 +10,7 @@
 }
 
 .monaco-editor {
+  z-index: 1;
   --vscode-editor-background: #f3f4f6 !important;
   --vscode-focusBorder: #f3f4f6 !important;
 }

@@ -20,6 +20,7 @@ function toggleEditor() {
         var ugly = textarea.value;
         var pretty = JSON.stringify(JSON.parse(ugly), undefined, 4);
         textarea.value = pretty;
+        textarea.setAttribute('data-editor', 'json');
         window.monacoHelper.transformTextareaToMonaco(textarea)
     } else {
         var monacoEditor = document.querySelector('.monaco-editor').parentNode
