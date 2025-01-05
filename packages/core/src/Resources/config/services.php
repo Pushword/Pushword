@@ -6,6 +6,9 @@ use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Twig\Extension\StringLoaderExtension;
+use PiedWeb\RenderAttributes\TwigExtension;
+use Twig\Extra\Intl\IntlExtension;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();
@@ -40,5 +43,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // See who to avoid limit for this one too
     $services->set(VichUploadPropertyNamer::class)
         ->public();
-    $services->load('s', __DIR__.'/../../');
+
+    $services->set(PushwordCoreBundle::class);
+    $services->set(StringLoaderExtension::class);
+    $services->set(TwigExtension::class);
+    $services->set(IntlExtension::class);
 };
