@@ -7,8 +7,13 @@ import { API, InlineTool, SanitizerConfig, ToolConfig, Selection } from '@editor
 
 /**
  * TODO Test it :
- * - When clicking ctrl+k, then pressing ENTER, no link is created and the toolbar is closed
- * - When clicking ctrl+k, pasting value, then pressing ENTER, the link is created and the toolbar is closed
+ * - When clicking ctrl+k, then pressing ENTER, no link is created and the toolbar is closed, the cursor is setted at the end of the previously selected text
+ * - When clicking ctrl+k, pasting value OR typing value, then pressing ENTER, the link is created and the toolbar is closed, the cursor is setted at the end of the previously selected text
+ * - When clicking on an existing link, changing the value, the value is automatically updated
+ * - When clicking on an existing link, changing the value, then clicking another area, the toolbar is closed and the value is updated
+ * - When deleting link, link is deleted and replaced by the innerText, toolbar is closed, the cursor is setted at the end of the innerText
+ * - when selecting a part of a link, it's expanding to the whole link
+ * - when selection a part of a link + other content, it's do nothing <- not working
  *
  * @implements {InlineTool}
  */
@@ -102,6 +107,18 @@ export default class Hyperlink {
       this.updateLink()
     })
 
+    // Permit copy the link even if we focus the input
+    document.addEventListener('copy', async (e) => {
+      console.log('copy', this.anchorTag)
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([this.anchorTag?.outerHTML], { type: 'text/html' }),
+          'text/plain': new Blob([this.nodes.input.value], { type: 'text/plain' }),
+        }),
+      ])
+      e.preventDefault() // Prevent the default copy action
+    })
+
     // sauvegarde lors de ENTER
     this.nodes.input.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
@@ -133,6 +150,8 @@ export default class Hyperlink {
     this.anchorTag = anchorTag
     this.openActions()
     this.updateActionValues(anchorTag)
+    // This is a hack to avoid infinite loop of rebuilding this inline tool
+    // cons ➜ this is not possible for the user to copy or paste a text wich start or end by a link
     setTimeout(() => this.nodes.input.focus(), 0)
 
     console.log('/checkState')
@@ -142,6 +161,7 @@ export default class Hyperlink {
   /** @param {Range} range */
   surround(range) {
     console.log('surround', range, this.anchorTag)
+    // Range will be null when user makes second click on the 'link icon' to close opened input */
     if (!range) {
       this.toggleActions()
       return
@@ -235,8 +255,13 @@ export default class Hyperlink {
   clear() {
     console.log('CLEAR')
 
-    this.selection.restore()
+    //this.selection.restore()
+    if (this.anchorTag) this.anchorTag.style = ''
     this.selection.removeFakeBackground()
+    //this.api.selection.restore()
+    //this.api.selection.removeFakeBackground()
+
+    //this.closeActions()
     //throw new Error()
     //if (this.inputOpened) this.closeActions()
   }
@@ -253,6 +278,11 @@ export default class Hyperlink {
   openActions(needFocus = false) {
     console.log('openActions')
     this.nodes.wrapper.style.display = 'block'
+    if (this.anchorTag) {
+      this.api.selection.expandToTag(this.anchorTag)
+      this.api.selection.setFakeBackground()
+      this.api.selection.save()
+    }
     if (needFocus) {
       // if (this.anchorTag) this.api.selection.expandToTag(this.anchorTag)
       // this.api.selection.setFakeBackground()
@@ -263,6 +293,7 @@ export default class Hyperlink {
   }
 
   closeActions() {
+    console.log('closeActions', this.selection.isFakeBackgroundEnabled)
     if (this.selection.isFakeBackgroundEnabled) {
       // if actions is broken by other selection We need to save new selection
       const currentSelection = new SelectionUtils()
@@ -270,7 +301,8 @@ export default class Hyperlink {
       this.selection.restore()
       this.selection.removeFakeBackground()
       // and recover new selection after removing fake background
-      currentSelection.restore()
+      //currentSelection.restore()
+      this.selection.collapseToEnd()
     }
 
     let value = this.nodes.input.value || ''
@@ -279,7 +311,7 @@ export default class Hyperlink {
     //this.api.selection.removeFakeBackground()
     this.inputOpened = false
     this.api.inlineToolbar.close()
-    this.api.toolbar.close()
+    //this.api.toolbar.close()
   }
 
   updateLink() {
@@ -330,7 +362,12 @@ export default class Hyperlink {
     termWrapper.parentNode?.removeChild(termWrapper)
     range.insertNode(unwrappedContent)
     sel.removeAllRanges()
+    range.collapse()
     sel.addRange(range)
+
+    //this.api.selection.restore()
+    // this.selection.restore()
+    //this.selection.collapseToEnd()
     console.log('removed')
   }
 }

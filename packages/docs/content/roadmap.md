@@ -15,6 +15,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Features
 
+- [ ] upgrade editorjs/list https://github.com/editor-js/list/pull/126
+
 - [ ] revoir la compression pour du contenu statique
 
   - https://dunglas.dev/2024/12/http-compression-in-php-new-symfony-assetmapper-feature/
