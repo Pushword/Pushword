@@ -15,6 +15,8 @@ export default class MonacoHelper {
       letterSpacing: 0,
       fontLigatures: true,
       formatOnPaste: true,
+      folding: false,
+      showFoldingControls: 'never',
       wordWrap: 'on',
       guides: { indentation: true },
       tabSize: 2,

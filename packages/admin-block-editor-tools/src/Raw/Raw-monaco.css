@@ -5,10 +5,6 @@
   display: none !important;
 }
 
-.monaco-scrollable-element {
-  left: 6px !important; /* Override the inline left style */
-}
-
 .monaco-editor {
   z-index: 1;
   --vscode-editor-background: #f3f4f6 !important;
