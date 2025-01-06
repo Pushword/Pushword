@@ -60,7 +60,7 @@ class AppExtension extends AbstractExtension
 
         if (isset($blockData['tunes']['anchor']) && is_string($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) {
             $id = isset($attributes['id']) && is_string($attributes['id']) ? trim($attributes['id']) : '';
-            $attributes['id'] = $id.' '.$blockData['tunes']['anchor'];
+            $attributes['id'] = trim($id.' '.$blockData['tunes']['anchor']);
         }
 
         if (isset($blockData['tunes']['class']) && is_string($blockData['tunes']['class']) && '' !== $blockData['tunes']['class']) {

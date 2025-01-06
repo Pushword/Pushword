@@ -67,9 +67,9 @@
     "phpstan/extension-installer": "*",
     "phpstan/phpstan": "*",
     "phpstan/phpstan-doctrine": "*",
-    "phpstan/phpstan-symfony": "*",
     "phpstan/phpstan-phpunit": "*",
     "phpstan/phpstan-strict-rules": "*",
+    "phpstan/phpstan-symfony": "*",
     "phpunit/phpunit": "*",
     "rector/rector": "*",
     "squizlabs/php_codesniffer": "*",
@@ -82,6 +82,7 @@
     "symplify/config-transformer": "*",
     "symplify/monorepo-builder": "*",
     "tomasvotruba/unused-public": "*",
+    "twigstan/twigstan": "dev-main",
     "vincentlanglet/twig-cs-fixer": "*"
   },
   "extra": {
