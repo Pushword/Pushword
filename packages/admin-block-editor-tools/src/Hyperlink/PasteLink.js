@@ -1,12 +1,9 @@
 import { API, ToolConfig } from '@editorjs/editorjs'
+import Selection from './Selection'
 
 export default class PasteLink {
-  /** @type {API} */
-  api
-
-  /** @param {{ api: API }} options  */
-  constructor({ configuration, api }) {
-    this.api = api
+  constructor({ configuration }) {
+    this.selection = new Selection()
     this.holder = typeof configuration.holder === 'string' ? document.getElementById(configuration.holder) : configuration.holder
 
     this.initializePasteListener()
@@ -28,7 +25,7 @@ export default class PasteLink {
 
         // Are we in a link ?
         // normally, it's not possible because if you select an a, it's opening the related toolbar
-        const parentAnchor = this.api.selection.findParentTag('A')
+        const parentAnchor = this.selection.findParentTag('A')
         if (parentAnchor) return true
 
         // Do we have an URL in the clipboard to create a link ?

@@ -108,7 +108,7 @@ export default class Hyperlink {
     })
 
     // Permit copy the link even if we focus the input
-    document.addEventListener('copy', async (e) => {
+    this.nodes.wrapper.addEventListener('copy', async (e) => {
       console.log('copy', this.anchorTag)
       await navigator.clipboard.write([
         new ClipboardItem({
