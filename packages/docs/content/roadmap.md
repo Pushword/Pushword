@@ -25,10 +25,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - https://x.com/jh3yy/status/1798728699459563905
 
-- [AdminBlockEditor] Make a POC with ProseEditor (then a migration tool ?)
-
 - [AdminBlockEditor] Block Editor wich can be insert dinamically in Page (often to replace template editor)
-
 - [AdminBlockEditor] Noticies block with different notices level (inspired by Grav)
 - [AdminBlockEditor] To Markdown (to go back to standard editor) or To Html (easy, just need to created block.md.twig) and the transpiler)
 - [AdminBlockEditor] Card List (like page list but custom entry, custom url, custom everything... see piedvert.com cards everywhere)
@@ -45,14 +42,14 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [All] prepare translating and transalte
 
+  - manage date i18n a better way than randomly (document the process)
+
 - [Admin] AssetMapper instead build ?! will avoid 20 seconds build time
-- [Admin] switch code editor to https://microsoft.github.io/monaco-editor/ or codeMirror ( + prose editor) ➜ https://blog.replit.com/code-editors
 
 - [AdminBlockEditor] Group
   - = div wrapper with anchor and class (and strettched ? flex ? grid ?), nearest imlpementation:
     - https://github.com/serlo/backlog/issues/83
     - https://github.com/calumk/editorjs-columns/pull/6
-- [AdminBlockEditor] https://github.com/calumk/editorjs-nested-checklist
 - [AdminBlockEditor] Block Nav Menu (guttenberg style) and moving blocks
 - [AdminBlockEditor] **Multi-upload** (see https://packagist.org/packages/silasjoisten/sonata-multiupload-bundle) + Multi Select
 
@@ -78,6 +75,5 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [ ] [Flat] Throw error when the content is more up to date in database
 - [ ] [Flat] (spatie/yaml-front-matter, vérif à chaque requête pour une sync constante admin <-> flat files)
 
-- manage date i18n a better way than randomly (document the process)
 - **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (extension or core ?)
 - **eCommerce** bridge with sylius ?!

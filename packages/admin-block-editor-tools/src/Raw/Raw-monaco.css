@@ -11,6 +11,18 @@
   --vscode-focusBorder: #f3f4f6 !important;
 }
 
+.monaco-editor .overflow-guard {
+  z-index: 1;
+}
+
+.my-content-that-overlays-editor {
+  z-index: 2;
+}
+
+.monaco-editor .overflowingContentWidget {
+  z-index: 3;
+}
+
 .editorjs-monaco-wrapper {
   margin: 0.6em 0;
   padding: 0.4em 0;
