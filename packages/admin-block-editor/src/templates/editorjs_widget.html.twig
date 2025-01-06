@@ -17,11 +17,13 @@ function toggleEditor() {
     var textarea = document.querySelector('textarea[data-editorjs]');
     if (textarea) {
         textarea.style.minHeight = '70vh';
+        textarea.style.maxHeight = '71vh';
         var ugly = textarea.value;
         var pretty = JSON.stringify(JSON.parse(ugly), undefined, 4);
         textarea.value = pretty;
         textarea.setAttribute('data-editor', 'json');
-        window.monacoHelper.transformTextareaToMonaco(textarea)
+        const monacoEditorInstance = window.monacoHelper.transformTextareaToMonaco(textarea)
+        //monacoEditorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {}, 'editorTextFocus');
     } else {
         var monacoEditor = document.querySelector('.monaco-editor').parentNode
         monacoEditor.parentNode.removeChild(monacoEditor)

@@ -11,11 +11,25 @@ export default class Raw {
     return true
   }
 
+  /** @type {API} */
+  api
+
+  /** @type {HTMLElement} */
+  wrapper
+
+  /** @type {MonacoEditor} */
+  editorInstance
+
+  /** @type{ String} */
+  html
+
   constructor({ api, data }) {
     this.api = api
-    this.wrapper = null
-    this.editorInstance = {}
     this.html = data.html === undefined ? '' : data.html
+  }
+
+  instantiateEditor(editorElem) {
+    return monaco.editor.create(editorElem, { value: this.html, language: 'twig', ...monacoHelper.defaultSettings })
   }
 
   render() {
@@ -33,7 +47,7 @@ export default class Raw {
     const monaco = window.monaco
     /** @type {import('./../../../admin-monaco-editor/MonacoHelper.js').default} */
     const monacoHelper = window.monacoHelper
-    this.editorInstance = monaco.editor.create(editorElem, { value: this.html, language: 'twig', ...monacoHelper.defaultSettings })
+    this.editorInstance = this.instantiateEditor(editorElem)
     const monacoHelperInstance = new monacoHelper(this.editorInstance)
 
     monacoHelperInstance.updateHeight(this.wrapper)

@@ -65,6 +65,7 @@ final readonly class EditorJsPurifier
         $text = str_replace("\u{a0}", ' ', $text);
         $text = str_replace('&shy;', '', $text);
         $text = preg_replace('# </([a-z]+)>#i', '</$1> ', $text) ?? throw new Exception($text);
+        $text = preg_replace('# ?<(b|i)> ?</(b|i)> ?#', ' ', $text) ?? throw new Exception($text);
 
         if (! str_contains($text, '{{')) { // for now, we skip when there is a twig inside the text because it's convert the quote
             $text = $this->getFixer()->fix($text);

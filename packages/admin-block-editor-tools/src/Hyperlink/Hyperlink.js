@@ -146,6 +146,11 @@ export default class Hyperlink {
       return false
     }
 
+    if (!anchorTag.innerText.includes(window.getSelection().toString())) {
+      this.showUnlink(true)
+      return false
+    }
+
     this.showUnlink()
     this.anchorTag = anchorTag
     this.openActions()

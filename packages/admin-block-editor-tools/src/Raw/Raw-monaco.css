@@ -11,6 +11,22 @@
   --vscode-focusBorder: #f3f4f6 !important;
 }
 
+.monaco-codeblock-wrapper .monaco-editor {
+  z-index: 1;
+  --vscode-editor-background: #e0f2fe !important;
+  --vscode-focusBorder: #e0f2fe !important;
+}
+.monaco-codeblock-wrapper {
+  background-color: #e0f2fe !important;
+}
+
+.editorjs-monaco-wrapper {
+  margin: 0.6em 0;
+  padding: 0.4em 0;
+  background-color: #f3f4f6;
+  border-radius: 5px;
+}
+
 .monaco-editor .overflow-guard {
   z-index: 1;
 }
@@ -21,11 +37,4 @@
 
 .monaco-editor .overflowingContentWidget {
   z-index: 3;
-}
-
-.editorjs-monaco-wrapper {
-  margin: 0.6em 0;
-  padding: 0.4em 0;
-  background-color: #f3f4f6;
-  border-radius: 5px;
 }
