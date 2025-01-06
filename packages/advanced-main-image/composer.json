@@ -6,7 +6,7 @@
   "homepage": "https://pushword.piedweb.com/extension/advanced-main-image",
   "license": "MIT",
   "require": {
-    "pushword/core": "^1",
+    "pushword/core": "*",
     "pushword/admin": "^1"
   },
   "extra": {

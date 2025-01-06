@@ -6,7 +6,7 @@
   "homepage": "https://pushword.piedweb.com/extension/version",
   "license": "MIT",
   "require": {
-    "pushword/core": "^1",
+    "pushword/core": "*",
     "symfony/serializer": "^7.0"
   },
   "extra": {

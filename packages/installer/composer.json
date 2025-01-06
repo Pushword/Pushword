@@ -18,8 +18,8 @@
     }
   },
   "require-dev": {
-    "composer/composer": "^2.0",
-    "phpunit/phpunit": "^9.5"
+    "composer/composer": "*",
+    "phpunit/phpunit": "*"
   },
   "authors": [
     {

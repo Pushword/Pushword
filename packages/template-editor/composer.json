@@ -6,7 +6,7 @@
   "homepage": "https://pushword.piedweb.com",
   "license": "MIT",
   "require": {
-    "pushword/core": "^1"
+    "pushword/core": "*"
   },
   "extra": {
     "branch-alias": {
