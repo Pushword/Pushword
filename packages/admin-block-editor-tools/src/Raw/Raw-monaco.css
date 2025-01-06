@@ -38,3 +38,7 @@
 .monaco-editor .overflowingContentWidget {
   z-index: 3;
 }
+
+.ce-toolbar--opened {
+  z-index: 4;
+}
