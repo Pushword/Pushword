@@ -127,14 +127,15 @@
     "console": "cd packages/skeleton && php bin/console $2",
     "dev": "cd packages/skeleton && symfony server:start -d",
     "stan": "vendor/bin/phpstan analyze packages/*/src",
-    "test": "./.scripts/test",
+    "test": "./.scripts/test && composer validate-monorepo",
     "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
     "rector": "vendor/bin/rector process && composer format && composer test",
     "format": "vendor/bin/php-cs-fixer fix rector.php && vendor/bin/php-cs-fixer fix",
     "assets": "./.scripts/generate-assets",
     "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish",
     "docs": "./.scripts/generate-docs",
-    "reset-skeleton": "./.scripts/reset-skeleton"
+    "reset-skeleton": "./.scripts/reset-skeleton",
+    "validate-monorepo": "vendor/bin/monorepo-builder validate"
   },
   "config": {
     "sort-packages": true,

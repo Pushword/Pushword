@@ -13,7 +13,9 @@ import { API, InlineTool, SanitizerConfig, ToolConfig, Selection } from '@editor
  * - When clicking on an existing link, changing the value, then clicking another area, the toolbar is closed and the value is updated
  * - When deleting link, link is deleted and replaced by the innerText, toolbar is closed, the cursor is setted at the end of the innerText
  * - when selecting a part of a link, it's expanding to the whole link
- * - when selection a part of a link + other content, it's do nothing <- not working
+ * - when selection a part of a link + other content, it's do nothing
+ *
+ * Best move : having 2 buttons like cke, one for edit an existing link, one for killing an existing link
  *
  * @implements {InlineTool}
  */

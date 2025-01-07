@@ -59,15 +59,14 @@ class AppExtension extends AbstractExtension
         }
 
         if (isset($blockData['tunes']['anchor']) && is_string($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) {
-            $id = isset($attributes['id']) && is_string($attributes['id']) ? trim($attributes['id']) : '';
-            $attributes['id'] = trim($id.' '.$blockData['tunes']['anchor']);
+            $attributes['id'] = $blockData['tunes']['anchor'];
+        } else {
+             $attributes['id'] = isset($attributes['id']) && is_string($attributes['id']) ? $attributes['id'] : '';
         }
 
-        if (isset($blockData['tunes']['class']) && is_string($blockData['tunes']['class']) && '' !== $blockData['tunes']['class']) {
-            $class = isset($attributes['class']) && is_string($attributes['class']) ? trim($attributes['class']) : '';
-            $attributes['class'] = trim($class.' '.$blockData['tunes']['class']);
-        } else {
-            $attributes['class'] = '';
+        $attributes['class'] = isset($attributes['class']) && is_string($attributes['class']) ? trim($attributes['class']) : '';
+        if (isset($blockData['tunes']['class']) && is_string($blockData['tunes']['class'])  ) {
+            $attributes['class'] .= ' '.$blockData['tunes']['class'];
         }
 
         $alignment = $blockData['tunes']['textAlign']['alignment'] ?? $blockData['data']['alignment'] ?? ''; // @phpstan-ignore-line

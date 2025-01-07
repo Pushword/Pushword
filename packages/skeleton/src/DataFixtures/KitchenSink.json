@@ -61,6 +61,10 @@
           {
             "content": "{{ tel('+33 00 00 00 00') }} ou directement +331 00 00 00 00",
             "items": []
+          },
+          {
+            "content": "<a href=\"#citation\">AnchorLink</a>",
+            "items": []
           }
         ]
       },
@@ -72,7 +76,7 @@
       "id": "A_0F1juE7u",
       "type": "header",
       "data": {
-        "text": " Quotes",
+        "text": "Quotes",
         "level": 2
       },
       "tunes": {
@@ -92,7 +96,7 @@
         "alignment": "left"
       },
       "tunes": {
-        "anchor": ""
+        "anchor": "citation"
       }
     },
     {
