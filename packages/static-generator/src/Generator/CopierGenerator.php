@@ -14,11 +14,11 @@ class CopierGenerator extends AbstractGenerator
         $symlink = $this->mustSymlink();
         $entries = $this->app->getStringList('static_copy');
 
-        $issetFavicons = false;
+        $issetFavicon = false;
 
         foreach ($entries as $entry) {
             if ('favicon.ico' === $entry) {
-                $issetFavicons = true;
+                $issetFavicon = true;
             }
 
             $this->copyOrSymlink($entry, $symlink);
@@ -26,12 +26,16 @@ class CopierGenerator extends AbstractGenerator
 
         // permits to add a favicons to the root dir without extra config if the favicons is in the assets folder
         // else configure  in in static_copy
+        if ($issetFavicon || file_exists($this->getStaticDir().'/favicon.ico')) {
+            return;
+        }
+
         $commonFaviconsSpotList = [
             'assets/favicon.ico',
             'assets/favicons/favicon.ico',
         ];
         foreach ($commonFaviconsSpotList as $faviconSpot) {
-            if (! $issetFavicons && file_exists($this->publicDir.'/'.$faviconSpot)) {
+            if (file_exists($this->publicDir.'/'.$faviconSpot)) {
                 $this->copyOrSymlink($faviconSpot,  $symlink, 'favicon.ico');
             }
         }
