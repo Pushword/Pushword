@@ -5,7 +5,8 @@ use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\HttpFoundation\Request;
 
-require __DIR__.'/../../../vendor/autoload.php';
+// require __DIR__.'/../../../vendor/autoload.php';
+require_once __DIR__.'/../../../vendor/autoload_runtime.php';
 
 (new Dotenv())->loadEnv(__DIR__.'/../.env');
 

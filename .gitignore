@@ -24,7 +24,6 @@ coverage.xml
 /debug
 /debug-container
 /drivers
-.vs-code
 /.phpunit.cache
 /docs~preserve/
 test.php

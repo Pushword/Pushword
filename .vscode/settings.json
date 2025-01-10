@@ -12,5 +12,17 @@
         "titleBar.inactiveForeground": "#e7e7e799",
         "tab.activeBorder": "#a54915"
     },
-    "peacock.color": "#78350f"
+    "peacock.color": "#78350f",
+    "files.exclude": {
+        "./docs": true,
+        "**/dist": true,
+        "**/Resources/public": true,
+        "**/skeleton/var": true
+    },
+    "search.exclude": {
+        "./docs": true,
+        "**/dist": true,
+        "**/Resources/public": true,
+        "**/skeleton/var": true
+    }
 }

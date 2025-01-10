@@ -1,0 +1,24 @@
+{
+	# Enable FrankenPHP
+    frankenphp
+    auto_https disable_redirects
+}
+
+http://localhost:8006 {
+	log {
+		{$CADDY_SERVER_LOG_OPTIONS}
+		# Redact the authorization query parameter that can be set by Mercure
+		format filter {
+			request>uri query {
+				replace authorization REDACTED
+			}
+		}
+	}
+	root ./public
+	encode zstd br gzip
+	# Execute PHP files in the current directory and serve assets
+	php_server
+	@frontController path index.php
+	php @frontController
+	file_server
+}
