@@ -14,29 +14,50 @@ class CopierGenerator extends AbstractGenerator
         $symlink = $this->mustSymlink();
         $entries = $this->app->getStringList('static_copy');
 
+        $issetFavicons = false;
+
         foreach ($entries as $entry) {
-            if (! file_exists($this->publicDir.'/'.$entry)) {
-                continue;
+            if ('favicon.ico' === $entry) {
+                $issetFavicons = true;
             }
 
-            if ($symlink) {
-                $this->filesystem->symlink(
-                    str_replace(
-                        $this->params->get('kernel.project_dir').'/',
-                        '../',
-                        $this->publicDir.'/'.$entry
-                    ),
-                    $this->getStaticDir().'/'.$entry
-                );
+            $this->copyOrSymlink($entry, $symlink);
+        }
 
-                continue;
-            }
-
-            if (is_file($this->publicDir.'/'.$entry)) {
-                $this->filesystem->copy($this->publicDir.'/'.$entry, $this->getStaticDir().'/'.$entry);
-            } else {
-                $this->filesystem->mirror($this->publicDir.'/'.$entry, $this->getStaticDir().'/'.$entry);
+        // permits to add a favicons to the root dir without extra config if the favicons is in the assets folder
+        // else configure  in in static_copy
+        $commonFaviconsSpotList = [
+            'assets/favicon.ico',
+            'assets/favicons/favicon.ico',
+        ];
+        foreach ($commonFaviconsSpotList as $faviconSpot) {
+            if (! $issetFavicons && file_exists($this->publicDir.'/'.$faviconSpot)) {
+                $this->copyOrSymlink($faviconSpot,  $symlink, 'favicon.ico');
             }
         }
+    }
+
+    private function copyOrSymlink(string $entry,  bool $symlink, ?string $to = null): void
+    {
+        $from = $this->publicDir.'/'.$entry;
+        $to = $this->getStaticDir().'/'.($to ?? $entry);
+
+        if (! file_exists($from)) {
+            return;
+        }
+
+        if ($symlink) {
+            $symlinkDest = str_replace($this->params->get('kernel.project_dir').'/', '../', $from);
+            $this->filesystem->symlink($symlinkDest,  $to);
+
+            return;
+        }
+
+        if (is_file($from)) {
+            $this->filesystem->copy($from, $to);
+
+            return;
+        }
+        $this->filesystem->mirror($from, $to);
     }
 }

@@ -182,7 +182,7 @@ pushword:
           ],
         assets: { javascripts: ['assets/app.js'], stylesheets: ['assets/tw.css'] },
         color_bg: '#fff',
-        static_copy: ['assets'],
+        static_copy: ['assets', 'favicons.ico'],
       }
     - { hosts: [admin-block-editor.test], base_url: 'https://admin-block-editor.test' }
 ```
