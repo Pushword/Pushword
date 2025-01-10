@@ -30,7 +30,10 @@
 
 {% block before_navbar %}{% endblock %}
 
+{% block navbar_wrapper_opener %}
 <div class="{{ navbar_wrapper_class }}" id="navbar">
+{% endblock %}
+
     {{ (navbar_container is defined ? ('<div class="' ~ navbar_container|default('') ~ '">') : '')|raw }}
 
         {% block logo %}
