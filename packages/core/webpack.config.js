@@ -13,11 +13,29 @@ var watchFiles = [
 
 var tailwindConfig = EncoreHelper.getTailwindConfig(watchFiles)
 
-EncoreHelper.getEncore(Encore, watchFiles, tailwindConfig, __dirname + '/src/Resources/public', '/bundles/pushwordcore', 'bundles/pushwordcore', [
+const isDev = process.env.NODE_ENV !== 'production'
+
+const modernConfig = EncoreHelper.getEncore(Encore, watchFiles, tailwindConfig, __dirname + '/src/Resources/public', '/bundles/pushwordcore', 'bundles/pushwordcore', [
   {
     from: __dirname + '/src/Resources/assets/favicons',
     to: '[name].[ext]',
   },
-])
+]).getWebpackConfig()
 
-module.exports = Encore.getWebpackConfig()
+Encore.reset()
+const legacyConfig = isDev
+  ? null
+  : EncoreHelper.getEncore(
+      Encore,
+      watchFiles,
+      tailwindConfig,
+      __dirname + '/src/Resources/public',
+      '/bundles/pushwordcore',
+      'bundles/pushwordcore',
+      null,
+      null,
+      null,
+      true,
+    ).getWebpackConfig()
+
+module.exports = isDev ? [modernConfig] : [modernConfig, legacyConfig]

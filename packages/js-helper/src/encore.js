@@ -2,6 +2,7 @@ const WatchExternalFilesPlugin = require('webpack-watch-files-plugin').default
 const tailwindcss = require('tailwindcss')
 const postcssImport = require('postcss-import')
 const autoprefixer = require('autoprefixer')
+const Encore = require('@symfony/webpack-encore')
 
 function getFilesToWatch(basePath = './..') {
   return [
@@ -22,6 +23,10 @@ function getTailwindConfig(watchFiles = null) {
   return tailwindConfig
 }
 
+/**
+ *
+ * @param {Encore} Encore
+ */
 function getEncore(
   Encore,
   watchFiles = null, // default: getFilesToWatch()
@@ -32,6 +37,7 @@ function getEncore(
   filesToCopy = null, // default :: ... from: /favicons. ...
   entries = null, // [{ name: 'app', file: '/node_modules/@pushword/js-helper/src/app.js' }];
   styleEntries = null, // [{ name: 'style', file: '/node_modules/@pushword/js-helper/src/app.css' }];
+  isLegacy = false,
 ) {
   if (watchFiles === null) {
     watchFiles = getFilesToWatch()
@@ -41,13 +47,14 @@ function getEncore(
     tailwindConfig = getTailwindConfig(watchFiles)
   }
 
+  const jsAppName = 'app' + (isLegacy ? '-legacy' : '')
   if (entries === null) {
-    entries = [{ name: 'app', file: __dirname + '/app.js' }]
+    entries = [{ name: jsAppName, file: __dirname + '/app.js' }]
   } else if (typeof entries === 'string') {
-    entries = [{ name: 'app', file: entries }]
+    entries = [{ name: jsAppName, file: entries }]
   }
 
-  if (styleEntries === null) {
+  if (styleEntries === null && !isLegacy) {
     styleEntries = [{ name: 'style', file: __dirname + '/app.css' }]
   } else if (typeof styleEntries === 'string') {
     styleEntries = [{ name: 'style', file: styleEntries }]
@@ -59,7 +66,6 @@ function getEncore(
   Encore.configureRuntimeEnvironment(process.env.NODE_ENV || 'dev')
     .setOutputPath(outputPath)
     .setPublicPath(publicPath)
-    .cleanupOutputBeforeBuild()
     .enableSassLoader()
     .enableSourceMaps(false)
     .enableVersioning(false)
@@ -75,7 +81,7 @@ function getEncore(
     })
     .disableSingleRuntimeChunk()
 
-  if (filesToCopy === null) {
+  if (filesToCopy === null && !isLegacy) {
     filesToCopy = [
       {
         from: './favicons',
@@ -84,9 +90,10 @@ function getEncore(
     ]
   }
 
-  filesToCopy.forEach(function (toCopy) {
-    Encore.copyFiles(toCopy)
-  })
+  if (filesToCopy)
+    filesToCopy.forEach(function (toCopy) {
+      Encore.copyFiles(toCopy)
+    })
 
   if (manifestKeyPrefix !== null) Encore.setManifestKeyPrefix(manifestKeyPrefix)
 
@@ -94,9 +101,26 @@ function getEncore(
     Encore.addEntry(entry.name, entry.file)
   })
 
-  styleEntries.forEach(function (entry) {
-    Encore.addStyleEntry(entry.name, entry.file)
-  })
+  if (styleEntries)
+    styleEntries.forEach(function (entry) {
+      Encore.addStyleEntry(entry.name, entry.file)
+    })
+
+  //if (!isLegacy) Encore.cleanupOutputBeforeBuild()
+
+  if (!isLegacy) {
+    Encore.configureBabelPresetEnv((config) => {
+      config.targets = {
+        browsers: ['Chrome >= 60', 'Safari >= 10.1', 'iOS >= 10.3', 'Firefox >= 54', 'Edge >= 15'],
+      }
+    })
+  } else {
+    Encore.configureBabelPresetEnv((config) => {
+      config.targets = {
+        browsers: ['> 1%', 'last 2 versions', 'Firefox ESR'],
+      }
+    })
+  }
 
   return Encore
 }
