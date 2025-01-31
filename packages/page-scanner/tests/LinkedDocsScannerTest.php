@@ -23,7 +23,7 @@ class LinkedDocsScannerTest extends KernelTestCase
         );
 
         $errors = $linkedDocsScanner->scan($this->getPage(), file_get_contents(__DIR__.'/data/page.html'));
-
+        dd($errors);
         $knowedErrors = [
             '<code>https://localhost.dev/feed.xml</code> unreacheable',
             '<code>https://localhost.dev/</code> unreacheable',
@@ -33,6 +33,8 @@ class LinkedDocsScannerTest extends KernelTestCase
         foreach ($knowedErrors as $error) {
             self::assertContains($error, $errors);
         }
+
+        self::assertNotContains('<code>#fun</code> target not found', $errors);
     }
 
     public function getPage(): Page
