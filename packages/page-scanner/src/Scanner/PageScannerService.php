@@ -21,7 +21,7 @@ final class PageScannerService
     use KernelTrait;
 
     /**
-     * @var mixed[]
+     * @var array{message: string, page: array{id:int, slug: string, h1: string, metaRobots: string, host: string}}[]
      */
     private array $errors = [];
 
@@ -49,9 +49,7 @@ final class PageScannerService
     }
 
     /**
-     * @return mixed[]|true
-     *
-     * @noRector
+     * @return array{message: string, page: array{id:int, slug: string, h1: string, metaRobots: string, host: string}}[]|true
      */
     public function scan(Page $page): array|bool
     {
@@ -99,9 +97,9 @@ final class PageScannerService
         $this->errors[] = [
             'message' => $message,
             'page' => [
-                'id' => $page->getId(),
+                'id' => $page->getId() ?? 0,
                 'slug' => $page->getSlug(),
-                'h1' => $page->getH1(),
+                'h1' => $page->getH1() ?? '',
                 'metaRobots' => $page->getMetaRobots(),
                 'host' => $page->getHost(),
             ],

@@ -64,6 +64,9 @@ final class PageScannerCommand extends Command
             if (true !== $scan) {
                 $pageId = (int) $page->getId();
                 $errors[$pageId] = $scan;
+                foreach ($scan as $s) {
+                    $this->output?->writeln($s['page']['host'].'/'.$s['page']['slug'].' ➜ '.str_replace(['<code>', '</code>'], '`', $s['message']));
+                }
                 $errorNbr += \count($errors[$pageId]);
             }
 
@@ -75,9 +78,12 @@ final class PageScannerCommand extends Command
         return $errors;
     }
 
+    private ?OutputInterface $output = null;
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Acquiring page scanner lock to start the scan...');
+        $this->output = $output;
 
         if ($this->scanAllWithLock($input->getArgument('host') ?? '')) {
             $output->writeln('done...');

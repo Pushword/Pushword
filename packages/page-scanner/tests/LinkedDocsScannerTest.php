@@ -23,7 +23,7 @@ class LinkedDocsScannerTest extends KernelTestCase
         );
 
         $errors = $linkedDocsScanner->scan($this->getPage(), file_get_contents(__DIR__.'/data/page.html'));
-        dd($errors);
+
         $knowedErrors = [
             '<code>https://localhost.dev/feed.xml</code> unreacheable',
             '<code>https://localhost.dev/</code> unreacheable',
