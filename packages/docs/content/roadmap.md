@@ -16,6 +16,10 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [ ] rename skeleton wich is absolutely not a skeleton
 
+- [ ] Avanced Taxonomy Manager
+
+- [ ] start-show-more : voir pour améliorer le close : désactiver si l'utilisateur n'est pas en haut de la page (couvrira ctrl+f et le rechargement), désactiver si un hash est présent dans l'url
+
 ## Features
 
 - [ ] Replace .clickable by css (https://codepen.io/potatoDie/pen/abzvGxG)
