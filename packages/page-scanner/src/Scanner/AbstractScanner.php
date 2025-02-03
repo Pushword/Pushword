@@ -29,9 +29,7 @@ abstract class AbstractScanner
         $this->errors[] = $msg;
     }
 
-    /**
-     * @return string[]
-     */
+    /** @return string[] */
     public function scan(Page $page, string $pageHtml): array
     {
         $this->errors = [];

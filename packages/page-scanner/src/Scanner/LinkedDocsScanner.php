@@ -100,6 +100,18 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function isWebLink(string $url): bool
     {
+        $toIgnore = [
+            'https://wa.me/',
+            'https://maps.app.goo.gl',
+            'https://g.page/',
+            'https://www.tripadvisor.fr/',
+        ];
+        foreach ($toIgnore as $ignore) {
+            if (str_starts_with($url, $ignore)) {
+                return false;
+            }
+        }
+
         return (bool) preg_match('@^((?:(http:|https:)//([\wà-üÀ-Ü-]+\.)+[\w-]+){0,1}(/?[\wà-üÀ-Ü~,;\-\./?%&+#=]*))$@', $url);
     }
 
@@ -125,7 +137,7 @@ final class LinkedDocsScanner extends AbstractScanner
             $uri = $isDataRotAttribute ? LinkProvider::decrypt($uri) : $uri;
             // @phpstan-ignore-next-line
             $uri .= $matches[4][$k] ? '' : '#(obfuscate)'; // not elegant but permit to remember it's an obfuscate link
-            if ($this->isMailtoOrTelLink($uri) && $isDataRotAttribute) {
+            if ($this->isMailtoOrTelLink($uri) && ! $isDataRotAttribute) {
                 $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.obfuscate_mail'));
             } elseif ('' !== $uri && $this->isWebLink($uri)) {
                 $linkedDocs[] = $uri;
@@ -244,13 +256,17 @@ final class LinkedDocsScanner extends AbstractScanner
         return (bool) preg_match('/^https:\/\/(www)?\.?(example.tld|instagram.com)/i', $url);
     }
 
+    public function scan(Page $page, string $pageHtml): array
+    {
+        /** @return string[] */
+        $this->domPage = new DomCrawler($pageHtml);
+
+        return parent::scan($page, $pageHtml);
+    }
+
     private function getDomPage(): DomCrawler
     {
-        if (null !== $this->domPage) {
-            return $this->domPage;
-        }
-
-        return $this->domPage = new DomCrawler($this->pageHtml);
+        return $this->domPage;
     }
 
     private function targetExist(string $target): bool
@@ -297,10 +313,10 @@ final class LinkedDocsScanner extends AbstractScanner
             );
         }
 
-        $canonical = new CanonicalExtractor(new Url($url), new DomCrawler($client->getResponse()->getBody()));
-        if (! $canonical->ifCanonicalExistsIsItCorrectOrPartiallyCorrect()) {
-            return $this->urlExistCache[$url] = $this->trans('page_scan.canonical').' ('.($canonical->get() ?? 'null').')';
-        }
+        // $canonical = new CanonicalExtractor(new Url($url), new DomCrawler($client->getResponse()->getBody()));
+        // if (! $canonical->ifCanonicalExistsIsItCorrectOrPartiallyCorrect()) {
+        //     return $this->urlExistCache[$url] = $this->trans('page_scan.canonical').' ('.($canonical->get() ?? 'null').')';
+        // }
 
         return $this->urlExistCache[$url] = true;
     }
