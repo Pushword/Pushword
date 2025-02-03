@@ -299,6 +299,10 @@ final class LinkedDocsScanner extends AbstractScanner
         // if ($this->proxy) { $client->setProxy($this->proxy); }
         $client->request();
 
+        if (in_array($client->getCurlInfo(\CURLINFO_HTTP_CODE), [403, 410])) {
+            return $this->urlExistCache[$url] = true;
+        }
+
         if (200 !== $client->getCurlInfo(\CURLINFO_HTTP_CODE) && 0 !== $client->getCurlInfo(\CURLINFO_HTTP_CODE)) {
             /** @var string */
             $httpCode = $client->getCurlInfo(\CURLINFO_HTTP_CODE);
