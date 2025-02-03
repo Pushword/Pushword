@@ -76,6 +76,9 @@ final class EditorJsHelper
                 if (! property_exists($block->data, 'text')) {
                     continue;
                 }
+                if (property_exists($block, 'tunes') && property_exists($block->tunes, 'anchor') && '' !== $block->tunes->anchor) {
+                    return;
+                }
 
                 if ($type === $block->type && preg_match($regex, $block->data->text)) {
                     if (null !== $outputCallback) {
