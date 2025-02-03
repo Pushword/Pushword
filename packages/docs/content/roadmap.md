@@ -18,7 +18,11 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [ ] Avanced Taxonomy Manager
 
-- [ ] start-show-more : voir pour améliorer le close : désactiver si l'utilisateur n'est pas en haut de la page (couvrira ctrl+f et le rechargement), désactiver si un hash est présent dans l'url
+- [ ] start-show-more : voir pour améliorer le close :
+  - scrollToHash si l'utilisateur clique sur showMore et qu'un hash est présent dans l'url correspondant à un bloc enfant du showMore
+  - désactiver si le scroll est très rapide (couvre l'use case l'utilisateur utilise ctrl+f)
+  - désactiver si l'utilisateur n'est pas en haut de la page (couvrira ctrl+f et le rechargement),
+  - désactiver si un hash est présent dans l'url
 
 ## Features
 
