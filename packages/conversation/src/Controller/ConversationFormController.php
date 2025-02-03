@@ -61,7 +61,9 @@ final class ConversationFormController extends AbstractController
      */
     private function getFormManagerClass(string $type): string
     {
-        $class = $this->apps->get()->getArray('conversation_form')[$type] ?? $this->getFormManagerClassBeforeV1($type);
+        $class = $this->apps->get()->getArray('conversation_form')[$type]
+            ?? $this->getFormManagerClassBeforeV1($type)
+            ?? 'App\\Form\\'.$type;
 
         if (! is_string($class)) {
             throw new Exception('`'.$type."` does'nt exist (not configured).");
