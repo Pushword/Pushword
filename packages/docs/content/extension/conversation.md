@@ -34,10 +34,10 @@ you may have a look inside `vendor/pushword/admin/install.php`.
 {{ render(controller('Pushword\\Conversation\\Controller\\ConversationFormController::show')) }}
 
 # Or add a button to click before loading block
-<button src-data-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'nslttr-'~page.slug, 'host': page.host}) }}" class="btn btn-primary">Register</button>
+<button data-src-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'nslttr-'~page.slug, 'host': page.host}) }}" class="btn btn-primary">Register</button>
 
 # Advanced usage
-<p>This is an invitation to <button src-data-live="..." data-target="parent">register</button></p>
+<p>This is an invitation to <button data-src-live="..." data-target="parent">register</button></p>
 ```
 
 Activate the `data-live` element with [@pushword/js-helper](https://yarnpkg.com/package/@pushword/js-helper) :
