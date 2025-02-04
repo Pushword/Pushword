@@ -30,7 +30,7 @@ class PageSlugField extends AbstractField
             ) : $url;
 
         return '<div id="disabledLinkSlug">
-                    <span class="btn btn-primary" onclick="toggleDisabled()" style="float:right; margin-top:-43px; z-index:100;position:relative"><i class="fa fa-unlock"></i></span>
+                    <span class="btn btn-primary" onclick="toggleDisabled()" style="float:right; margin-top:-39px; z-index:100;position:relative"><i class="fa fa-unlock"></i></span>
                     <script>function toggleDisabled() {
                         $(".slug_disabled").first().removeAttr("disabled");
                         $(".slug_disabled").first().focus();
