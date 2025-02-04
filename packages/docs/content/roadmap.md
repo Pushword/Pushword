@@ -18,6 +18,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [ ] Avanced Taxonomy Manager
 
+- [ ] go for tailwind v4 or tailwind bundle
+
 - [ ] start-show-more : voir pour améliorer le close :
   - scrollToHash si l'utilisateur clique sur showMore et qu'un hash est présent dans l'url correspondant à un bloc enfant du showMore
   - désactiver si le scroll est très rapide (couvre l'use case l'utilisateur utilise ctrl+f)
