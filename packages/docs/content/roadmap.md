@@ -18,6 +18,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [ ] Avanced Taxonomy Manager
 
+- [ ] Upgrade SonataAdmin and activate StimulusBundle
+
 - [ ] go for tailwind v4 or tailwind bundle
 
 - [ ] start-show-more : voir pour améliorer le close :

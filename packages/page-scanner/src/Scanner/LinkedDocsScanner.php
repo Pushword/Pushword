@@ -266,7 +266,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function getDomPage(): DomCrawler
     {
-        return $this->domPage;
+        return $this->domPage ?? throw new Exception();
     }
 
     private function targetExist(string $target): bool
@@ -299,7 +299,7 @@ final class LinkedDocsScanner extends AbstractScanner
         // if ($this->proxy) { $client->setProxy($this->proxy); }
         $client->request();
 
-        if (in_array($client->getCurlInfo(\CURLINFO_HTTP_CODE), [403, 410])) {
+        if (in_array($client->getCurlInfo(\CURLINFO_HTTP_CODE), [403, 410], true)) {
             return $this->urlExistCache[$url] = true;
         }
 

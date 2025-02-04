@@ -3,8 +3,8 @@
 
 {% block head %}
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>{% block title %}Pushword CMS !{% endblock %}</title>
 
@@ -35,12 +35,12 @@
         {# permit retrocompatibility with a feature previous v1 wich is deprecated ! Prefer override base.html.twig ➜ favicon block #}
         {{ include(view('/component/favicon.html.twig'), {favicon_path: apps.get().get('favicon_path')}, false) }}
       {% else %}
-      <link rel="icon" href="{{ asset(apps.get().get('assets:favicon') ?? 'bundles/pushwordcore/favicon.ico') }}" />
+      <link rel="icon" href="{{ asset(apps.get().get('assets:favicon') ?? 'bundles/pushwordcore/favicon.ico') }}">
       {% endif %}
     {% endblock %}
 
     {% block feed %}
-      <link rel="alternate" type="application/rss+xml" href="{{ apps.get().baseUrl|default('') }}/feed.xml" title="{{ apps.get().name|default('') }} &raquo; {{ 'feed.alternate_title'|trans }}" />
+      <link rel="alternate" type="application/rss+xml" href="{{ apps.get().baseUrl|default('') }}/feed.xml" title="{{ apps.get().name|default('') }} &raquo; {{ 'feed.alternate_title'|trans }}">
     {% endblock %}
 
     {% block robots %}{% endblock %}

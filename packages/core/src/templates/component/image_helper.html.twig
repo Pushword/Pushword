@@ -1,8 +1,10 @@
 
 {% macro thumb(image, page = null, filter = 'thumb', otherAttributes = {}) %}
 <picture>
-  <source type="image/webp" srcset="{{ image|image(filter, 'webp') }} 576w" />
-  <img srcset="{{ image|image(filter) }} 576w"
+  <source type="image/webp" srcset="{{ image|image(filter, 'webp') }} 576w" sizes="(max-width: 576px) 100vw, 576px">
+  <img
+    srcset="{{ image|image(filter) }} 576w"
+    sizes="(max-width: 576px) 100vw, 576px"
     src="{{ image|image('default') }}"
     loading=lazy
     width="{{ filter == 'thumb' ? '1000' : image.width }}"
@@ -10,6 +12,6 @@
     {% if otherAttributes.alt is not defined %}
       alt="{{ image.nameByLocale(page is not null ? page.locale : '') }}"
     {% endif %}
-    {{ otherAttributes ? attr(otherAttributes) : '' }} />
+    {{ otherAttributes ? attr(otherAttributes) : '' }}>
 </picture>
 {% endmacro %}

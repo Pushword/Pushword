@@ -51,17 +51,27 @@
       ~ ',' ~ image|image('sm', 'webp') ~ ' 768w'
       ~ ',' ~ image|image('md', 'webp') ~ ' 992w'
       ~ ',' ~ image|image('lg', 'webp') ~ ' 1200w'
-      ~ ',' ~ image|image('xl', 'webp') ~ ' 1600w' }}" />
+      ~ ',' ~ image|image('xl', 'webp') ~ ' 1600w' }}"
+      sizes="(max-width: 576px) 576px,
+               (max-width: 768px) 768px,
+               (max-width: 992px) 992px,
+               (max-width: 1200px) 1200px,
+               1600px">
     <img {{ mergeAttr({srcset: image|image('xs') ~ ' 576w'
-      ~ ',' ~ image|image('sm') ~ ' 768w'
-      ~ ',' ~ image|image('md') ~ ' 992w'
-      ~ ',' ~ image|image('lg') ~ ' 1200w'
-      ~ ',' ~ image|image('xl') ~ ' 1600w',
+        ~ ',' ~ image|image('sm') ~ ' 768w'
+        ~ ',' ~ image|image('md') ~ ' 992w'
+        ~ ',' ~ image|image('lg') ~ ' 1200w'
+        ~ ',' ~ image|image('xl') ~ ' 1600w',
+      sizes:'(max-width: 576px) 576px,'
+        ~ '(max-width: 768px) 768px,'
+        ~ '(max-width: 992px) 992px,'
+        ~ '(max-width: 1200px) 1200px,'
+        ~ '1600px',
      src: image|image('default'),
      class: image_class ?? 'w-full h-auto mb-4',
      width: width,
      height: height,
      alt: image_alt|default(image.alt ?? image.name)
-    }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }} />
+    }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }}>
 </picture>
 {% endmacro %}

@@ -8,17 +8,17 @@
     <div class="max-w-screen-xl mx-auto">
         <div
             class="relative m-3 my-6 aspect-w-16 aspect-h-9" {% if is_embed %}
-            replaceBy="{{ embed_code|replace({'"': "'"}) }}"{% endif %}>
+            data-replaceBy="{{ embed_code|replace({'"': "'"}) }}"{% endif %}>
             {% if false == is_embed %}<span data-rot="{{ obfuscate(url) }}" data-fslightbox>{% endif %}
                 {{ _self.videoThumb(image, alt|default(url), btn_title) }}
-            {% if false == is_embed %}</a>{% endif %}
+            {% if false == is_embed %}</span>{% endif %}
             </div>
     </div>
 {% endblock %}
 
 {% macro videoThumb(image, alt, btn_title) %}
     {{ include(view('/component/image_inline.html.twig'), {image_src: image, image_alt: alt|striptags, image_link: false, image_class: 'm-0 absolute top-0 left-0 h-full w-full'}) }}
-    <div class="absolute top-0 left-0 w-full h-full bg-white bg-opacity-25"></div>
+    <span class="absolute top-0 left-0 w-full h-full bg-white bg-opacity-25"></span>
     <span><span class="absolute block w-2/5 p-5 cursor-pointer text-primary hover:opacity-75" style="transform: translate(-50%,-50%);margin-right:-50%;top: 50%;left: 50%;">
        {{ btn_title|raw }}
     </span></span>

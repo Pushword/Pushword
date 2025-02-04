@@ -124,7 +124,7 @@ export function liveBlock(liveBlockAttribute = 'data-live', liveFormSelector = '
  * Block to replace Watcher
  * On $event on element find via $attribute, set attribute's content in element.innerHTML
  */
-export function replaceOn(attribute = 'replaceBy', eventName = 'click') {
+export function replaceOn(attribute = 'data-replaceBy', eventName = 'click') {
   var loadVideo = function (element) {
     var content = element.getAttribute(attribute)
     if (element.classList.contains('hero-banner-overlay-lg') && element.querySelector('picture') && window.innerWidth < 992) {

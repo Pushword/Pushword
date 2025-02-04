@@ -4,7 +4,7 @@
     <div
         class="{{ page.hero_wrapper ?? hero_wrapper|default('w-full relative') }}"
         style="background:{{ page.mainImage.mainColor }}"
-        {% if page.video is not null %}replaceBy="{{ url_to_embed(page.video.embed_code|default(page.video))|replace({'"': "'"}) }}"{% endif %}
+        {% if page.video is not null %}data-replaceBy="{{ url_to_embed(page.video.embed_code|default(page.video))|replace({'"': "'"}) }}"{% endif %}
     >
         {# md:min-h-[33vh] md:min-h-screen md:min-h-[75vh] #}
         <div class="{{ page.hero_container|default(hero_container ?? ('max-w-screen-sm mx-auto relative md:min-h-' ~ heroSize(page.mainImageFormat) ~ ' pt-6')) }}">

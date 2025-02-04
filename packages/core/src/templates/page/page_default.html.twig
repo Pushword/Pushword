@@ -15,14 +15,14 @@
   {% if page.metaRobots %}
     <meta name="robots" content="{{ page.metaRobots }}">
   {% endif %}
-  <link rel="canonical" href="{{ page(page, true, app.request ? app.request.get('pager') : 0) }}"/>
+  <link rel="canonical" href="{{ page(page, true, app.request ? app.request.get('pager') : 0) }}">
 {% endblock %}
 
 {% block alternate_language %}
   {% if page.locale is not null %}
-    <link rel="alternate" hreflang="{{ page.locale == apps.get().defaultLocale ? 'x-default' : page.locale }}" href="{{ page(page, true) }}"/>
+    <link rel="alternate" hreflang="{{ page.locale == apps.get().defaultLocale ? 'x-default' : page.locale }}" href="{{ page(page, true) }}">
     {% for translation in page.translations %}
-      <link rel="alternate" hreflang="{{ translation.locale == apps.get().defaultLocale ? 'x-default' : translation.locale }}" href="{{ page(translation, true) }}"/>
+      <link rel="alternate" hreflang="{{ translation.locale == apps.get().defaultLocale ? 'x-default' : translation.locale }}" href="{{ page(translation, true) }}">
     {% endfor %}
   {% endif %}
 {% endblock %}
@@ -79,7 +79,6 @@
       </a>
       <a href="{{ path('admin_page_create') }}?host={{ page.host }}" class="inline-block p-1 text-gray-50 bg-gray-500  hover:bg-gray-800">
         {{ svg('file', {class: 'w-full p-2 fill-current'}) }}
-      </a>
       </a>
       <a href="{{ path('piedweb_static_generate', {host: page.host}) }}" class="inline-block p-1 text-gray-50 bg-gray-500 rounded-b-lg hover:bg-gray-800">
         {{ svg('upload', {class: 'w-full p-2 fill-current'}) }}
