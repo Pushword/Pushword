@@ -64,6 +64,11 @@ then
     buildAssets
     cd ../../
     sed -i "s/\?v[0-9]/?v$(date '+%s%3N')/" packages/admin/src/templates/layout.html.twig
+
+    cd packages/admin-monaco-editor
+    installDependencies
+    buildAssets
+    cd ../../
 fi
 
 ########

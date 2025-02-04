@@ -17,7 +17,7 @@
     "url": "https://piedweb.com"
   },
   "devDependencies": {
-    "@babel/core": "^7.10.2",
+    "@babel/core": "^7.24",
     "@babel/preset-env": "^7.10.2",
     "@calumk/codecup": "https://github.com/calumk/codecup",
     "@codexteam/ajax": "^4.2.0",
