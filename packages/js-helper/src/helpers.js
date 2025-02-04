@@ -21,18 +21,18 @@ import 'regenerator-runtime/runtime'
  *
  * @param {string} attribute
  */
-export function liveBlock(liveBlockAttribute = 'data-live', liveFormSelector = '.live-form') {
+export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live-form') {
   var btnToBlock = function (event, btn) {
-    const liveBlockUrl = btn.getAttribute('src-' + liveBlockAttribute)
+    const liveBlockUrl = btn.getAttribute('data-src-' + liveBlockAttribute)
     if (btn.hasAttribute('data-target') && btn.getAttribute('data-target') == 'parent') {
       btn = btn.parentElement ?? btn
     }
-    btn.setAttribute(liveBlockAttribute, liveBlockUrl)
+    btn.setAttribute('data-' + liveBlockAttribute, liveBlockUrl)
     getLiveBlock(btn)
   }
 
   var getLiveBlock = function (item) {
-    var url = item.getAttribute(liveBlockAttribute)
+    var url = item.getAttribute('data-' + liveBlockAttribute)
     url = url.startsWith('e:') ? convertShortchutForLink(rot13ToText(url.substring(2))) : url
     fetch(url, {
       //headers: { "Content-Type": "application/json", Accept: "text/plain" },
@@ -43,7 +43,7 @@ export function liveBlock(liveBlockAttribute = 'data-live', liveFormSelector = '
         return response.text()
       })
       .then(function (body) {
-        item.removeAttribute(liveBlockAttribute)
+        item.removeAttribute('data-' + liveBlockAttribute)
         item.outerHTML = body
       })
       .then(function () {
@@ -94,12 +94,12 @@ export function liveBlock(liveBlockAttribute = 'data-live', liveFormSelector = '
   }
 
   // Listen data-live
-  document.querySelectorAll('[' + liveBlockAttribute + ']').forEach((item) => {
+  document.querySelectorAll('[' + 'data-' + liveBlockAttribute + ']').forEach((item) => {
     getLiveBlock(item)
   })
 
-  // Listen button src-data-live
-  document.querySelectorAll('[src-' + liveBlockAttribute + ']').forEach((item) => {
+  // Listen button src-data-live / data-src-live
+  document.querySelectorAll('[' + 'data-src' + liveBlockAttribute + ']').forEach((item) => {
     item.addEventListener('click', (event) => {
       if (item.tagName == 'BUTTON') {
         item.innerHTML = spinner
