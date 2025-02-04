@@ -25,7 +25,7 @@
 
      {% if image_link is not defined or image_link != false %}
 
-      {{ link(image_html, image_link|default(image|image('default')), image_link is not defined ? {'data-fslightbox': 'inline', dwl: image|image('default', 'webp')} : {}) }}
+      {{ link(image_html, image_link|default(image|image('default')), image_link is not defined ? {'data-fslightbox': 'inline', 'data-dwl': image|image('default', 'webp')} : {}) }}
      {% else %}
       {{ image_html }}
      {% endif %}

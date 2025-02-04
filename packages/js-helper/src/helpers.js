@@ -371,10 +371,10 @@ export function testWebPSupport() {
  */
 export function convertImageLinkToWebPLink() {
   var switchToWebP = function () {
-    ;[].forEach.call(document.querySelectorAll('a[dwl]'), function (element) {
-      var href = responsiveImage(element.getAttribute('dwl'))
+    ;[].forEach.call(document.querySelectorAll('a[data-dwl]'), function (element) {
+      var href = responsiveImage(element.getAttribute('data-dwl'))
       element.setAttribute('href', href)
-      element.removeAttribute('dwl')
+      element.removeAttribute('data-dwl')
     })
   }
 

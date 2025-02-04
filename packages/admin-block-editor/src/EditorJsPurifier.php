@@ -63,7 +63,7 @@ final readonly class EditorJsPurifier
     public function htmlPurifier(string $text): string
     {
         $text = str_replace("\u{a0}", ' ', $text);
-        $text = str_replace("  ", ' ', $text);
+        $text = str_replace('  ', ' ', $text);
         $text = str_replace('&shy;', '', $text);
         $text = preg_replace('# </([a-z]+)>#i', '</$1> ', $text) ?? throw new Exception($text);
         $text = preg_replace('# ?<(b|i)> ?</(b|i)> ?#', ' ', $text) ?? throw new Exception($text);
