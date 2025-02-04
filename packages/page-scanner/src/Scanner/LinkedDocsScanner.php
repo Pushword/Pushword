@@ -105,6 +105,7 @@ final class LinkedDocsScanner extends AbstractScanner
             'https://maps.app.goo.gl',
             'https://g.page/',
             'https://www.tripadvisor.fr/',
+            'https://www.facebook.com/',
         ];
         foreach ($toIgnore as $ignore) {
             if (str_starts_with($url, $ignore)) {
