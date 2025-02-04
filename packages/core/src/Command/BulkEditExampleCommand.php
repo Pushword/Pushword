@@ -6,6 +6,7 @@ namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\AdminBlockEditor\EditorJsHelper;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -36,12 +37,20 @@ final class BulkEditExampleCommand extends Command
                 continue;
             }
 
-            EditorJsHelper::addAnchor($page, 'avis', '/\bAvis\b/i', ['header'], [$output, 'writeln']);
-            // $page->setMainContent(str_replace('escape-game-gap', 'escape-game-champsaur-valgaudemar', $page->getMainContent()));
+            // EditorJsHelper::addAnchor($page, 'avis', '/\bAvis\b/i', ['header'], [$output, 'writeln']);
+            $this->updateSrcDataLive($output, $page);
         }
 
         $this->em->flush();
 
         return 0;
+    }
+
+    private function updateSrcDataLive(OutputInterface $output, Page $page): void
+    {
+        if (str_contains($page->getMainContent(), 'src-data-live')) {
+            $output->writeln($page->getHost().'/'.$page->getSlug().' : update src-data-live');
+            $page->setMainContent(str_replace('src-data-live', 'data-src-live', $page->getMainContent()));
+        }
     }
 }
