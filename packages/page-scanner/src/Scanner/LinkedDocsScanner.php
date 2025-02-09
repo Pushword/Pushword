@@ -103,6 +103,7 @@ final class LinkedDocsScanner extends AbstractScanner
         $toIgnore = [
             'https://wa.me/',
             'https://maps.app.goo.gl',
+            'https://goo.gl/',
             'https://g.page/',
             'https://www.tripadvisor.fr/',
             'https://www.facebook.com/',

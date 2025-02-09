@@ -34,12 +34,14 @@ class EntityFilterTest extends KernelTestCase
         $filter->twig = self::getContainer()->get('twig');
         $router = self::getContainer()->get(PushwordRouteGenerator::class);
         $filter->linkProvider = new LinkProvider($router, $apps, $filter->twig);
-        self::assertSame('Lorem <span data-rot=_cvrqjro.pbz/>Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
-        self::assertSame('Lorem <span class=link-btn data-rot=_cvrqjro.pbz/>Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn" href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
-        self::assertSame('Lorem <span class="link-btn btn-plus" data-rot=_cvrqjro.pbz/>Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn btn-plus" href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
-        self::assertSame('Lorem <span class="link-btn btn-plus" data-rot=&>Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn btn-plus" href="&" rel="obfuscate">Test</a> ipsum'));
+        self::assertSame('Lorem <span data-rot="_cvrqjro.pbz/">Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
+        self::assertSame('Lorem <span class="link-btn" data-rot="_cvrqjro.pbz/">Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn" href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
+        self::assertSame('Lorem <span class="link-btn btn-plus" data-rot="_cvrqjro.pbz/">Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn btn-plus" href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
+        self::assertSame('Lorem <span class="link-btn btn-plus" data-rot="&">Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn btn-plus" href="&" rel="obfuscate">Test</a> ipsum'));
 
-        self::assertSame('Lorem <a href="/a1" class="ninja">Test</a> <span data-rot=_cvrqjro.pbz/>Anchor 2</span>', $filter->convertHtmlRelObfuscateLink('Lorem <a href="/a1" class="ninja">Test</a> <a href="https://piedweb.com/" rel="obfuscate">Anchor 2</a>'));
+        self::assertStringNotContainsString(';', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn btn-plus" href="https://example.tld/?test1=abvc&test=2158" rel="obfuscate">Test</a> ipsum'));
+
+        self::assertSame('Lorem <a href="/a1" class="ninja">Test</a> <span data-rot="_cvrqjro.pbz/">Anchor 2</span>', $filter->convertHtmlRelObfuscateLink('Lorem <a href="/a1" class="ninja">Test</a> <a href="https://piedweb.com/" rel="obfuscate">Anchor 2</a>'));
     }
 
     private function getManagerPool(): ManagerPool

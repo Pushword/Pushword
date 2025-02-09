@@ -85,7 +85,10 @@ final readonly class LinkProvider
             $path = '@'.substr($path, 7);
         }
 
-        return str_rot13($path);
+        $rot13path = str_rot13($path);
+        $rot13path = str_replace('&nzc;', '&', $rot13path);
+
+        return $rot13path;
     }
 
     public static function decrypt(string $string): string
