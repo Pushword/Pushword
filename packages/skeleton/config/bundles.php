@@ -72,7 +72,7 @@ return [
     SonataFormBundle::class => ['all' => true],
     SonataTwigBundle::class => ['all' => true],
     SonataDoctrineBundle::class => ['all' => true],
-    // StimulusBundle::class => ['all' => true],
+    StimulusBundle::class => ['all' => true],
     // Sonata\Exporter\Bridge\Symfony\SonataExporterSymfonyBundle::class => ['all' => true],
 
     // Used for tests

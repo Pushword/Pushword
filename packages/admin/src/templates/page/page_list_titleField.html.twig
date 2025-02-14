@@ -12,7 +12,7 @@
   <span style="font-size:110%;font-weight:600">
     {{ object.h1 is empty ? object.title : object.h1|striptags }}</span>
   <br>
-  {{ object.tag != '' ? '<span style="font-weight:200; color:#94a3b8; display:inline-block; margin-right:4px">#</span>' : '' }}
+  {{ object.tags ? '<span style="font-weight:200; color:#94a3b8; display:inline-block; margin-right:4px">#</span>' : '' }}
   {% for tag in object.tagList %}
     <span class="badge" style="background:white; font-weight:400; color:#333;box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
  margin-right:4px">{{ tag }}</span>

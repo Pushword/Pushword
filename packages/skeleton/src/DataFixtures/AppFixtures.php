@@ -89,7 +89,6 @@ class AppFixtures extends Fixture
             ->setUpdatedAt(new DateTime('1 day ago'))
             ->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.md'));
 
-        $ksPage->setCustomProperty('tag', 'testTag123');
 
         if ('localhost.dev' === $this->apps->getMainHost()) {
             $ksPage->setHost('localhost.dev');
@@ -107,7 +106,6 @@ class AppFixtures extends Fixture
             ->setUpdatedAt(new DateTime('1 day ago'))
             ->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.json'));
 
-        $ksPage->setCustomProperty('tag', 'testTag123');
 
         if (in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
             $ksPage->setHost('admin-block-editor.test');
