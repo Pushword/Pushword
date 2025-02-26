@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator;
 
 use LogicException;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
@@ -23,7 +24,8 @@ final class StaticAppGenerator
     public function __construct(
         private readonly AppPool $apps,
         private readonly GeneratorBag $generatorBag,
-        private readonly RedirectionManager $redirectionManager
+        private readonly RedirectionManager $redirectionManager,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -52,6 +54,7 @@ final class StaticAppGenerator
     {
         $this->apps->switchCurrentApp($host)->get();
 
+        $this->logger->info('Generating '.$host.'/'.$page);
         /** @var PagesGenerator $pagesGenerator */
         $pagesGenerator = $this->getGenerator(PagesGenerator::class);
         $pagesGenerator->generatePageBySlug($page);

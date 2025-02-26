@@ -89,7 +89,6 @@ class AppFixtures extends Fixture
             ->setUpdatedAt(new DateTime('1 day ago'))
             ->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.md'));
 
-
         if ('localhost.dev' === $this->apps->getMainHost()) {
             $ksPage->setHost('localhost.dev');
         }
@@ -105,7 +104,6 @@ class AppFixtures extends Fixture
             ->setCreatedAt(new DateTime('1 day ago'))
             ->setUpdatedAt(new DateTime('1 day ago'))
             ->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.json'));
-
 
         if (in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
             $ksPage->setHost('admin-block-editor.test');
