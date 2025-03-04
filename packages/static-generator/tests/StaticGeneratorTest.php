@@ -5,6 +5,7 @@ namespace Pushword\StaticGenerator;
 use DateTime;
 use Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
@@ -61,10 +62,15 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generatorBag = $this->getGeneratorBag();
 
+        $container = self::getContainer();
+        $logger = $container->get(LoggerInterface::class);
+        $this->assertInstanceOf(LoggerInterface::class, $logger);
+
         return $this->staticAppGenerator = new StaticAppGenerator(
             self::getContainer()->get(AppPool::class),
             $generatorBag,
-            $generatorBag->get(RedirectionManager::class) // @phpstan-ignore-line
+            $generatorBag->get(RedirectionManager::class), // @phpstan-ignore-line
+            $logger,
         );
     }
 

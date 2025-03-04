@@ -47,10 +47,30 @@ final class PageExtension extends AbstractExtension
             new TwigFunction('p', $this->getPublishedPage(...)),
             new TwigFunction('pw', $this->entityFilterManagerPool->getProperty(...)),
             new TwigFunction('breadcrumb_list_position', $this->getBreadcrumbListPosition(...)),
+            new TwigFunction('pageContainsBlock', $this->pageContainsBlock(...)),
 
             new TwigFunction('pager', $this->renderPager(...), AppExtension::options()),
             new TwigFunction('pages_list', $this->renderPagesList(...), AppExtension::options()),
         ];
+    }
+
+    public function pageContainsBlock(Page $page, string $blockId): bool
+    {
+        $mainContent = $page->getMainContent();
+
+        if (str_contains($mainContent, '"anchor":"'.$blockId.'"')) {
+            return true;
+        }
+
+        if (str_contains($mainContent, ' id="'.$blockId.'"')) {
+            return true;
+        }
+
+        if (str_contains($mainContent, ' id='.$blockId.'')) {
+            return true;
+        }
+
+        return false;
     }
 
     public function getBreadcrumbListPosition(Page $page): int
