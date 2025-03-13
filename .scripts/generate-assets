@@ -40,9 +40,11 @@ cd ../../;
 
 if [ "$TYPE" = "admin-block-editor" ] || [ "$TYPE" = "editor" ] || [ "$TYPE" = "all" ]
 then
+    echo "--- packages/admin-block-editor-tools ---"
     cd packages/admin-block-editor-tools
     installDependencies
     buildAssets
+    echo "--- packages/admin-block-editor ---"
     cd ../admin-block-editor
     installDependencies
     buildAssets
@@ -56,6 +58,7 @@ fi
 
 if [ "$TYPE" = "admin" ] || [ "$TYPE" = "all" ]
 then
+    echo "--- packages/admin ---"
     cd packages/admin
     installDependencies
     cd ../../
@@ -65,6 +68,7 @@ then
     cd ../../
     sed -i "s/\?v[0-9]/?v$(date '+%s%3N')/" packages/admin/src/templates/layout.html.twig
 
+    echo "--- packages/admin-monaco-editor ---"
     cd packages/admin-monaco-editor
     installDependencies
     buildAssets
@@ -77,7 +81,12 @@ fi
 
 if [ "$TYPE" = "core" ] || [ "$TYPE" = "all" ]
 then
+    echo "--- packages/core ---"
     cd packages/core
     installDependencies
     buildAssets
+    cd ../../
 fi
+
+cd packages/skeleton
+php bin/console --symlink --relative  'assets:install'

@@ -58,38 +58,58 @@ function onDomChangedAction() {
 }
 
 function autoSizeTextarea() {
-  $('.autosize')
-    .each(function () {
-      $(this).css('height', '')
-      $(this).height(this.scrollHeight + 'px')
+  document.querySelectorAll('.autosize').forEach(function (element) {
+    const adjustHeight = (el) => {
+      el.style.height = ''
+      el.style.height = el.scrollHeight + 'px'
+    }
+
+    adjustHeight(element)
+    element.addEventListener('input', function () {
+      adjustHeight(this)
     })
-    .on('input', function () {
-      $(this).css('height', '')
-      $(this).height(this.scrollHeight + 'px')
-    })
+  })
 }
 
-jQuery.extend(jQuery.expr[':'], {
-  focusable: function (el, index, selector) {
-    return $(el).is('textarea:not([style*="display: none"]),input,.CodeMirror-lines')
-  },
-})
+// jQuery.extend(jQuery.expr[':'], {
+//   focusable: function (el, index, selector) {
+//     return $(el).is('textarea:not([style*="display: none"]),input,.CodeMirror-lines')
+//   },
+// })
 
 function textareaWithoutNewLine() {
-  $(document).on('keypress', '.textarea-no-newline', function (e) {
-    if ((e.keyCode || e.which) == 13) {
-      var $canfocus = $(':focusable:visible,.editorjs-holder')
-      var index = $canfocus.index(this) + 1
-      if (index >= $canfocus.length) index = 0
-      $canfocus.eq(index).attr('class') == 'editorjs-holder' ? focusEditorJs($canfocus.eq(index)) : $canfocus.eq(index).focus()
+  // $(document).on('keypress', '.textarea-no-newline', function (e) {
+  //   if ((e.keyCode || e.which) == 13) {
+  //     var $canfocus = $(':focusable:visible,.editorjs-holder')
+  //     var index = $canfocus.index(this) + 1
+  //     if (index >= $canfocus.length) index = 0
+  //     $canfocus.eq(index).attr('class') == 'editorjs-holder' ? focusEditorJs($canfocus.eq(index)) : $canfocus.eq(index).focus()
+  //     return false
+  //   }
+  // })
+
+  document.addEventListener('keypress', function (e) {
+    if (e.target.classList.contains('textarea-no-newline') && (e.keyCode || e.which) == 13) {
+      const focusableElements = document.querySelectorAll('textarea:not([style*="display: none"]),input,.CodeMirror-lines')
+      const elementArray = Array.from(focusableElements)
+      let index = elementArray.indexOf(e.target) + 1
+      if (index >= elementArray.length) index = 0
+      const nextElement = elementArray[index]
+      if (nextElement.classList.contains('editorjs-holder')) {
+        focusEditorJs(nextElement)
+      } else {
+        nextElement.focus()
+      }
       return false
     }
   })
 }
+
 function focusEditorJs(editorJsHolder) {
-  const id = editorJsHolder.attr('id')
+  const id = editorJsHolder.getAttribute('id')
   window.editors[id].focus()
 }
+
 function copyElementText(element) {
   var text = element.innerText
   var elem = document.createElement('textarea')

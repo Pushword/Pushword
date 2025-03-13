@@ -138,7 +138,10 @@
     "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish",
     "docs": "./.scripts/generate-docs",
     "reset-skeleton": "./.scripts/reset-skeleton",
-    "validate-monorepo": "vendor/bin/monorepo-builder validate"
+    "validate-monorepo": "vendor/bin/monorepo-builder validate",
+    "post-update-cmd": [
+      "composer console cache:clear"
+    ]
   },
   "config": {
     "sort-packages": true,

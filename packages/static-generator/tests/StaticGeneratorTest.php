@@ -64,7 +64,6 @@ class StaticGeneratorTest extends KernelTestCase
 
         $container = self::getContainer();
         $logger = $container->get(LoggerInterface::class);
-        $this->assertInstanceOf(LoggerInterface::class, $logger);
 
         return $this->staticAppGenerator = new StaticAppGenerator(
             self::getContainer()->get(AppPool::class),

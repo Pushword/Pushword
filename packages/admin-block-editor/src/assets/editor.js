@@ -81,6 +81,9 @@ export class editorJs {
       Object.keys(config.tools).forEach((toolName) => {
         if (typeof this.editorjsTools[config.tools[toolName].className] !== 'undefined') {
           config.tools[toolName].class = this.editorjsTools[config.tools[toolName].className]
+          // if (toolName === 'Hyperlink') {
+          //   config.tools[toolName].shortcut = 'CMD+K'
+          // }
         } else {
           delete config.tools[toolName]
         }
