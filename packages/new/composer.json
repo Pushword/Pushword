@@ -17,11 +17,17 @@
     "symfony/framework-bundle": "^7.0",
     "symfony/runtime": "*",
     "symfony/yaml": "^7.0",
-    "pushword/core": "*"
+    "pushword/core": "*",
+    "pushword/admin": "*",
+    "pushword/admin-block-editor": "*",
+    "pushword/page-scanner": "*",
+    "pushword/static-generator": "*",
+    "pushword/template-editor": "*"
   },
   "require-dev": {
     "symfony/profiler-pack": "*",
     "pushword/installer": "*",
+    "pushword/skeleton": "*",
     "symfony/filesystem": "^7.0"
   },
   "config": {
@@ -53,8 +59,8 @@
   "scripts": {
     "auto-scripts": [],
     "post-install-cmd": [
-      "@auto-scripts",
-      "bash ./vendor/pushword/installer/src/installer"
+      "bash ./vendor/pushword/installer/src/installer",
+      "@auto-scripts"
     ],
     "post-update-cmd": [
       "Pushword\\Installer\\PostInstall::runPostUpdate",

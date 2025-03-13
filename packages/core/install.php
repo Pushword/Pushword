@@ -22,8 +22,8 @@ PostInstall::replace('config/bundles.php', PushwordCoreBundle::class."::class =>
 PostInstall::replace('config/bundles.php', 'return [', 'return [
     '.PushwordCoreBundle::class."::class => ['all' => true],");
 
-echo '~~ Copy Entities in ./src/Entity'.chr(10);
-PostInstall::mirror('vendor/pushword/skeleton/src/Entity', 'src/Entity');
+// echo '~~ Copy Entities in ./src/Entity'.chr(10);
+// PostInstall::mirror('vendor/pushword/skeleton/src/Entity', 'src/Entity');
 @unlink('src/DataFixtures/AppFixtures.php');
 PostInstall::mirror('vendor/pushword/skeleton/src/DataFixtures', 'src/DataFixtures');
 
@@ -31,6 +31,8 @@ echo '~~ Adding Puswhord Routes'.chr(10);
 PostInstall::addOnTop('config/routes.yaml', "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/all.yaml'\n");
 
 echo '~~ Create database'.chr(10);
+PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=16&charset=utf8', 'sqlite:///%kernel.project_dir%/var/app.db');
+PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.sha1(md5(uniqid())));
 PostInstall::mirror('vendor/pushword/skeleton/media~', 'media');
 exec('php bin/console doctrine:schema:create -q');
 exec('php bin/console doctrine:fixtures:load -q &');
