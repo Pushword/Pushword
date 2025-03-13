@@ -10,5 +10,4 @@ if (! PostInstall::isRoot()) {
 }
 
 echo '~~ Adding Routes'.chr(10);
-PostInstall::addOnTop('config/routes.yaml', "template_editor:\n    resource: '@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml'\n");
-PostInstall::addOnTop('config/framework.yaml', "template_editor:\n    resource: '@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml'\n");
+PostInstall::insertIn('config/routes.yaml', "template_editor:\n    resource: '@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml'\n");

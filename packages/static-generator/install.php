@@ -12,5 +12,4 @@ if (! isset($postInstallRunning)) {
 }
 
 echo '~~ Adding Routes'.chr(10);
-PostInstall::addOnTop('config/routes.yaml', "static:\n    resource: '@PushwordStaticGeneratorBundle/StaticRoutes.yaml'\n");
-PostInstall::addOnTop('config/framework.yaml', "static:\n    resource: '@PushwordStaticGeneratorBundle/StaticRoutes.yaml'\n");
+PostInstall::insertIn('config/routes.yaml', "static:\n    resource: '@PushwordStaticGeneratorBundle/StaticRoutes.yaml'\n");

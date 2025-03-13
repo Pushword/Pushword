@@ -12,5 +12,4 @@ if (! isset($postInstallRunning)) {
 }
 
 echo '~~ Adding Routes'.chr(10);
-PostInstall::addOnTop('config/routes.yaml', "admin_block_editor:\n    resource: '@PushwordAdminBlockEditorBundle/AdminBlockEditorRoutes.yaml'\n");
-PostInstall::addOnTop('config/framework.yaml', "admin_block_editor:\n    resource: '@PushwordAdminBlockEditorBundle/AdminBlockEditorRoutes.yaml'\n");
+PostInstall::insertIn('config/routes.yaml', "admin_block_editor:\n    resource: '@PushwordAdminBlockEditorBundle/AdminBlockEditorRoutes.yaml'\n");
