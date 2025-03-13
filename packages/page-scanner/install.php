@@ -11,3 +11,4 @@ if (! PostInstall::isRoot()) {
 
 echo '~~ Adding Routes'.chr(10);
 PostInstall::addOnTop('config/routes.yaml', "page_scanner:\n    resource: '@PushwordPageScannerBundle/PageScannerRoutes.yaml'\n");
+PostInstall::addOnTop('config/framework.yaml', "page_scanner:\n    resource: '@PushwordPageScannerBundle/PageScannerRoutes.yaml'\n");

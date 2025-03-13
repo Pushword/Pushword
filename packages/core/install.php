@@ -29,6 +29,7 @@ PostInstall::mirror('vendor/pushword/skeleton/src/DataFixtures', 'src/DataFixtur
 
 echo '~~ Adding Puswhord Routes'.chr(10);
 PostInstall::addOnTop('config/routes.yaml', "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/all.yaml'\n");
+PostInstall::addOnTop('config/framework.yaml', "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/all.yaml'\n");
 
 echo '~~ Create database'.chr(10);
 // if it's a default symfony installation, switch from postgresql to sqlite
