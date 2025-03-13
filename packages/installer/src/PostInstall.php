@@ -18,7 +18,7 @@ class PostInstall
 
         foreach ($packages as $package) {
             if (! file_exists('var/installer/'.md5($package)) && file_exists($installer = 'vendor/pushword/'.$package.'/install.php')) {
-                echo '~ Executing '.$package.' post update command install action.'.\chr(10);
+                echo '~ Executing '.$package.' install action.'.\chr(10);
                 include $installer;
 
                 self::dumpFile('var/installer/'.md5($package), 'done');

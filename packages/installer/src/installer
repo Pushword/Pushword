@@ -5,17 +5,6 @@
 
 echo "Welcome to pushword World"
 
-sed -i -e 's/"scripts": {/"scripts": {\n        "post-package-install": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::run"\n        \],/' composer.json
-sed -i -e 's/"post-update-cmd": \[/"post-update-cmd": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::run",/' composer.json
-
-# Enable flex recipes from contrib repo
-composer config extra.symfony.allow-contrib true
-
-# Get Pushword
-composer require pushword/core -q
-composer require pushword/skeleton symfony/profiler-pack --dev -q
-# Install profiler (not installer by symfony skeleton ?!)
-
 # We copy pushword config to easily edit it later manually
 cp vendor/pushword/installer/src/pushword.yaml config/packages/pushword.yaml
 
