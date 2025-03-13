@@ -63,11 +63,11 @@ final class NewCommand extends Command
             $config = [];
         }
 
-        if (! \is_array($config['pushword'])) {
+        if (!isset($config['pushword']) || ! \is_array($config['pushword'])) {
             $config['pushword'] = [];
         }
 
-        if (! \is_array($config['pushword']['apps'])) {
+        if (!isset ($config['pushword']['apps']) || ! \is_array($config['pushword']['apps'])) {
             $config['pushword']['apps'] = [];
         }
 

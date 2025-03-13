@@ -3,18 +3,8 @@
 # Use it :
 # ./installer ./my-folder
 
-: ${1?failure: in wich folder should i work ?}
-folder=$1
-echo "Installation running in folder $folder"
+echo "Welcome to pushword World"
 
-# First clean the folder where we will install
-rm -rf ${folder}
-
-# Install symfony
-composer create-project symfony/skeleton ${folder}  ^6.0 -q
-cd ${folder}
-
-composer require pushword/installer -q
 sed -i -e 's/"scripts": {/"scripts": {\n        "post-package-install": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::run"\n        \],/' composer.json
 sed -i -e 's/"post-update-cmd": \[/"post-update-cmd": \[\n            "Pushword\\\\\Installer\\\\\PostInstall::run",/' composer.json
 
@@ -33,7 +23,6 @@ cp vendor/pushword/installer/src/pushword.yaml config/packages/pushword.yaml
 cp -r vendor/pushword/skeleton/media~ media
 
 # Copy Entities
-cp -R vendor/pushword/skeleton/src/Entity/. src/Entity
 cp -R vendor/pushword/skeleton/src/DataFixtures/. src/DataFixtures
 
 

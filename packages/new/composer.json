@@ -53,7 +53,8 @@
   "scripts": {
     "auto-scripts": [],
     "post-install-cmd": [
-      "@auto-scripts"
+      "@auto-scripts",
+      "bash ./vendor/pushword/installer/src/installer"
     ],
     "post-update-cmd": [
       "Pushword\\Installer\\PostInstall::runPostUpdate",

@@ -18,7 +18,7 @@ _Note_ : **Node** and **Yarn** may not be required in the near future, [thanks t
 ## Automatic installer via composer
 
 ```shell
-composer create-project pushword/new pushword
+composer create-project pushword/new pushword @dev
 ```
 
 That's it ! You can still configure an app or directly launch a PHP Server :
