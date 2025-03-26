@@ -94,12 +94,12 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
   }
 
   // Listen data-live
-  document.querySelectorAll('[' + 'data-' + liveBlockAttribute + ']').forEach((item) => {
+  document.querySelectorAll('[data-' + liveBlockAttribute + ']').forEach((item) => {
     getLiveBlock(item)
   })
 
   // Listen button src-data-live / data-src-live
-  document.querySelectorAll('[' + 'data-src-' + liveBlockAttribute + ']').forEach((item) => {
+  document.querySelectorAll('[data-src-' + liveBlockAttribute + ']').forEach((item) => {
     item.addEventListener('click', (event) => {
       if (item.tagName == 'BUTTON') {
         item.innerHTML = spinner
