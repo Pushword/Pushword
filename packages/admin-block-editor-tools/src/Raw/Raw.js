@@ -43,6 +43,13 @@ export default class Raw {
     this.wrapper.appendChild(editorElem)
 
     // Initialize Monaco editor
+
+    // test if window.monaco is defined
+    if (typeof window.monaco === 'undefined') {
+      console.log('monaco is not defined')
+      return this.wrapper
+    }
+
     /** @type {typeof import('monaco-editor')} */
     const monaco = window.monaco
     /** @type {import('./../../../admin-monaco-editor/MonacoHelper.js').default} */

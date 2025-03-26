@@ -4,8 +4,7 @@ window.EasyMDE = EasyMDE
 export function easyMDEditor() {
   var timeoutPreviewRender = null
 
-  $('textarea[data-editor="markdown"]').each(function () {
-    var editorElement = $(this)[0]
+  document.querySelectorAll('textarea[data-editor="markdown"]').forEach(function (editorElement) {
     new EasyMDE({
       element: editorElement,
       toolbar: [
@@ -43,12 +42,11 @@ export function easyMDEditor() {
         link: ['[', ']()'],
         image: ['![', '](/media/default/...)'],
       },
-      //minHeight: "70vh",
       maxHeight: '65vh',
       syncSideBySidePreviewScroll: false,
       previewRender: function (editorContent, preview) {
         resizeSidePreview()
-        $(editorElement).val(editorContent)
+        editorElement.value = editorContent
         if (!document.getElementById('previewf')) {
           customPreview(editorContent, editorElement, preview)
         }
@@ -59,14 +57,11 @@ export function easyMDEditor() {
           }, 1000)
         })
       },
-      /**/
     })
   })
 
   function resizeSidePreview() {
-    var sidedNoFullScreenContainer = document.querySelector(
-      '.editor-preview-side', //".sided--no-fullscreen"
-    )
+    var sidedNoFullScreenContainer = document.querySelector('.editor-preview-side')
     if (sidedNoFullScreenContainer) {
       sidedNoFullScreenContainer.style.height = 'inherit'
     }
@@ -78,9 +73,11 @@ export function easyMDEditor() {
 
     var scrollTop = preloadIframeElement ? previewIframeElement.contentWindow.window.scrollY : 0
     var XHR = new XMLHttpRequest()
-    var form = $(editorElement).closest('form')
-    var actionUrl = form.attr('action')
-    var urlEncodedData = form.serialize() + '&btn_preview'
+    var form = editorElement.closest('form')
+    var actionUrl = form.getAttribute('action')
+    var formData = new FormData(form)
+    formData.append('btn_preview', '')
+    var urlEncodedData = new URLSearchParams(formData).toString()
 
     createIframes(preview)
 

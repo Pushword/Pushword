@@ -24,9 +24,10 @@ class MediaSlugField extends AbstractField
                 ? '<span class="btn btn-link" onclick="toggleDisabled()" id="disabledLinkSlug">
                     <i class="fa fa-unlock"></i></span>
                     <script>function toggleDisabled() {
-                        $(".slug_disabled").first().removeAttr("disabled");
-                        $(".slug_disabled").first().focus();
-                        $("#disabledLinkSlug").first().remove();
+                        const slugField = document.querySelector(".slug_disabled");
+                        slugField.removeAttribute("disabled");
+                        slugField.focus();
+                        document.getElementById("disabledLinkSlug").remove();
                     }</script>'
                     .'<small>Changer le slug change l\'URL de l\'image et peut créer des erreurs.</small>'
                 : 'admin.page.slug.help',

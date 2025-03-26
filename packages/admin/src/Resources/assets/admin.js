@@ -4,11 +4,10 @@ require('./admin.scss')
 import 'htmx.org'
 window.htmx = require('htmx.org')
 
-//global.$ = global.jQuery = require('jquery');
-
 import { easyMDEditor } from './admin.easymde-editor'
 import { filterParentPageFromHost } from './admin.filteringParentPage'
 import { filterImageFormField } from './admin.filterImageFormField'
+import { memorizeOpenPanel } from './admin.memorizeOpenPanel'
 //import { autosize } from 'autosize/src/autosize.js';
 import 'core-js/stable'
 import 'regenerator-runtime/runtime'
@@ -16,46 +15,19 @@ import 'regenerator-runtime/runtime'
 window.domChanging = false
 window.copyElementText = copyElementText
 
-async function onDomChanged() {
-  window.domChanging = true
-  //await console.log('domChanged');
-  await autoSizeTextarea()
-  window.domChanging = false
-}
-
 window.addEventListener('load', function () {
   // ...
   easyMDEditor()
   showTitlePixelWidth()
   showTitlePixelWidth('desc', 150)
-  memorizeOpenPannel()
-  onDomChanged()
+  memorizeOpenPanel()
   textareaWithoutNewLine()
-  onDomChangedAction()
+  autoSizeTextarea()
   removePreviewBtn()
   filterParentPageFromHost()
   filterImageFormField()
   suggestTags()
 })
-
-window.onresize = onDomChanged
-
-function onDomChangedAction() {
-  MutationObserver = window.MutationObserver || window.WebKitMutationObserver
-
-  var observer = new MutationObserver(function (mutations, observer) {
-    if (window.domChanging) {
-      //console.log('domChanged but not run onDomChanged');
-      return
-    } else onDomChanged()
-    //console.log(mutations, observer);
-  })
-
-  observer.observe(document, {
-    attributes: true,
-    subtree: true,
-  })
-}
 
 function autoSizeTextarea() {
   document.querySelectorAll('.autosize').forEach(function (element) {
@@ -71,23 +43,7 @@ function autoSizeTextarea() {
   })
 }
 
-// jQuery.extend(jQuery.expr[':'], {
-//   focusable: function (el, index, selector) {
-//     return $(el).is('textarea:not([style*="display: none"]),input,.CodeMirror-lines')
-//   },
-// })
-
 function textareaWithoutNewLine() {
-  // $(document).on('keypress', '.textarea-no-newline', function (e) {
-  //   if ((e.keyCode || e.which) == 13) {
-  //     var $canfocus = $(':focusable:visible,.editorjs-holder')
-  //     var index = $canfocus.index(this) + 1
-  //     if (index >= $canfocus.length) index = 0
-  //     $canfocus.eq(index).attr('class') == 'editorjs-holder' ? focusEditorJs($canfocus.eq(index)) : $canfocus.eq(index).focus()
-  //     return false
-  //   }
-  // })
-
   document.addEventListener('keypress', function (e) {
     if (e.target.classList.contains('textarea-no-newline') && (e.keyCode || e.which) == 13) {
       const focusableElements = document.querySelectorAll('textarea:not([style*="display: none"]),input,.CodeMirror-lines')
@@ -121,19 +77,15 @@ function copyElementText(element) {
 }
 
 function showTitlePixelWidth(toMeasure = 'title', maxLenght = 70) {
-  // todo abstract it (showPixelWith(element))
-  if (!$('.' + toMeasure + 'ToMeasure').length) return
+  const input = document.querySelector('.' + toMeasure + 'ToMeasure')
+  if (!input) return
 
-  var input = document.querySelector('.' + toMeasure + 'ToMeasure')
-  var resultWrapper = document.getElementById('' + toMeasure + 'Width')
+  const resultWrapper = document.getElementById(toMeasure + 'Width')
   function updateTitleWidth() {
     resultWrapper.style = 'font-size:20px;margin:0;padding:0;border:0;font-weight:400;display:inline-block;font-family:arial,sans-serif;line-height: 1.3;'
     resultWrapper.innerHTML = input.value
-    //var titleWidth = resultWrapper.offsetWidth;
-    //resultWrapper.innerHTML = titleWidth + "px";
-    var titleLenght = input.value.length
+    const titleLenght = input.value.length
     resultWrapper.innerHTML = titleLenght
-    //resultWrapper.style = titleWidth > 560 ? "color:#B0413E" : "color:#4F805D";
     resultWrapper.style = titleLenght > maxLenght ? 'color:#B0413E' : 'color:#4F805D'
   }
   updateTitleWidth()
@@ -141,72 +93,29 @@ function showTitlePixelWidth(toMeasure = 'title', maxLenght = 70) {
 }
 
 function columnSizeManager() {
-  if (!$('.expandColumnFields').length) return
-  $('.expandColumnFields').on('click', function () {
-    if (!$('.columnFields').hasClass('w-0')) {
-      $('.columnFields').removeClass('col-md-3').addClass('col-md-6')
-      $('.mainFields').removeClass('col-md-9').addClass('col-md-6')
+  const expandColumnFields = document.querySelector('.expandColumnFields')
+  const columnFields = document.querySelector('.columnFields')
+  const mainFields = document.querySelector('.mainFields')
+
+  if (!expandColumnFields || !columnFields || !mainFields) return
+
+  expandColumnFields.addEventListener('click', function () {
+    if (!columnFields.classList.contains('w-0')) {
+      columnFields.classList.remove('col-md-3')
+      columnFields.classList.add('col-md-6')
+      mainFields.classList.remove('col-md-9')
+      mainFields.classList.add('col-md-6')
     }
   })
-  $('.mainFields').on('click', function () {
-    if (!$('.columnFields').hasClass('w-0')) {
-      $('.columnFields').removeClass('col-md-6').addClass('col-md-3')
-      $('.mainFields').removeClass('col-md-6').addClass('col-md-9')
+
+  mainFields.addEventListener('click', function () {
+    if (!columnFields.classList.contains('w-0')) {
+      columnFields.classList.remove('col-md-6')
+      columnFields.classList.add('col-md-3')
+      mainFields.classList.remove('col-md-6')
+      mainFields.classList.add('col-md-9')
     }
   })
-}
-
-function memorizeOpenPannel() {
-  if (!$('.collapse').length) return
-
-  $('.collapse').on('shown.bs.collapse', function () {
-    var active = $(this).attr('id')
-    var panels = localStorage.panels === 'undefined' || localStorage.panels === undefined ? new Array() : JSON.parse(localStorage.panels)
-    if ($.inArray(active, panels) == -1) panels.push(active)
-    localStorage.panels = JSON.stringify(panels)
-
-    $("[href='#" + active + "'] .fa-plus")
-      .removeClass('fa-plus')
-      .addClass('fa-minus')
-  })
-
-  $('.collapse').on('hidden.bs.collapse', function () {
-    var active = $(this).attr('id')
-    var panels = localStorage.panels === 'undefined' || localStorage.panels === undefined ? new Array() : JSON.parse(localStorage.panels)
-    var elementIndex = $.inArray(active, panels)
-    if (elementIndex !== -1) {
-      panels.splice(elementIndex, 1)
-    }
-    localStorage.panels = JSON.stringify(panels)
-
-    $("[href='#" + active + "'] .fa-minus")
-      .removeClass('fa-minus')
-      .addClass('fa-plus')
-  })
-
-  function onInit() {
-    var panels = localStorage.panels === 'undefined' || localStorage.panels === undefined ? new Array() : JSON.parse(localStorage.panels)
-    for (var i in panels) {
-      if ($('#' + panels[i]).hasClass('collapse')) {
-        $('#' + panels[i]).collapse('show')
-        $("[href='#" + panels[i] + "'] .fa-plus")
-          .removeClass('fa-plus')
-          .addClass('fa-minus')
-      }
-    }
-  }
-
-  onInit()
-  onErrorOpenPanel()
-
-  function onErrorOpenPanel() {
-    document.querySelectorAll('.sonata-ba-field-error-messages').forEach(function (element) {
-      var panel = element.closest('.collapse')
-      if (panel) {
-        $(panel).collapse('show')
-      }
-    })
-  }
 }
 
 function removePreviewBtn() {
