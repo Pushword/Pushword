@@ -23,5 +23,5 @@ if [ "$1" = "full" ]
 then
     trap restoreDataAndComposerDependencies EXIT
     composer update --prefer-lowest
-    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug
+    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug --no-cache-result
 fi

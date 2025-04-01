@@ -133,7 +133,7 @@ class PageGenerator extends AbstractGenerator
     private function extractPager(Page $page, string $content): void
     {
         preg_match('#<!-- pager:(\d+) -->#', $content, $match);
-        $pager = (int) ($match[1] ?? throw new Exception('Pager not found')); // @phpstan-ignore-line
+        $pager = (int) ($match[1] ?? throw new Exception('Pager not found'));
         $this->saveAsStatic(rtrim($this->generateLivePathFor($page), '/').'/'.$pager, $this->generateFilePath($page, $pager), $page);
     }
 

@@ -52,8 +52,11 @@ trait ImageImporterTrait
 
     private function importImageMediaData(Media $media, string $filePath): void
     {
-        /** @var array{'mime': string, 0:int, 1: int} */
         $imgSize = getimagesize($filePath);
+
+        if (null === $imgSize) {
+            throw new \RuntimeException('Image size is null');
+        }
 
         $media
                 ->setProjectDir($this->projectDir)

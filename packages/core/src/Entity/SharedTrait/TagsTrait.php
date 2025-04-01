@@ -7,6 +7,12 @@ use Doctrine\ORM\Mapping as ORM;
 
 use function Symfony\Component\String\u;
 
+/**
+ * - A tag is a string without space.
+ * - Multiple tags are inlined with a space.
+ * - if user set "tag 1, tag two, tag three", it will be inlined and camelized "tag1 tagTwo tagThree".
+ * - if user use comma in a previously inlined tags with space, it will try to keep the correctness (eg : tag1 tagTwo, tag 3 => tag1 TagTwo tag3).
+ */
 trait TagsTrait
 {
     /** @var string[] */
@@ -20,7 +26,7 @@ trait TagsTrait
     {
         $tags = implode(' ', $this->tags);
 
-        return $tags.('' !== $tags ? ', ' : '');
+        return $tags.('' !== $tags ? ' ' : '');
     }
 
     /** @return string[] */
@@ -56,8 +62,36 @@ trait TagsTrait
         }
 
         $tags = explode(',', $tags);
-        $tags = array_map(static fn (string $tag): string => (string) u($tag)->camel(), $tags);
+        $finalTags = [];
 
-        return $this->manageTagsString(implode(' ', $tags));
+        // TRICKY
+        // if user use comma in a previously inlined tags, it will be dirty (eg : tag1 tagTwo, tag 3 => tag1TagTwo tag3).
+        // test if space exists in tag and test if tag exists previously in $this->tags
+        // if true, add tags to finalTags
+        // else camelize tag add add it to $tags
+        // between, try to create the new tag
+
+        foreach ($tags as $tag) {
+            if (! str_contains($tag, ' ')) {
+                $finalTags[] = $tag;
+
+                continue;
+            }
+            $partTags = explode(' ', $tag);
+            $finalPartTag = '';
+            $newTag = false;
+            foreach ($partTags as $partTag) {
+                if (false === $newTag && in_array($partTag, $this->tags, true)) {
+                    $finalTags[] = $partTag;
+
+                    continue;
+                }
+                $finalPartTag .= ' '.$partTag;
+                $newTag = true;
+            }
+            $finalTags[] = (string) u($finalPartTag)->camel();
+        }
+
+        return $this->manageTagsString(implode(' ', $finalTags));
     }
 }
