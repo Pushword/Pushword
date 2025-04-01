@@ -219,6 +219,8 @@ abstract class PageAbstractAdmin extends AbstractAdmin
             (new HostField($this->adminFormFieldManager, $this))->datagridMapper($filter); // @phpstan-ignore-line
         }
 
+        $filter->add('tags', null, ['label' => 'admin.page.tags.search_label']);
+
         $filter->add('slug', null, ['label' => 'admin.page.slug.label']);
 
         $filter

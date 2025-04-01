@@ -133,7 +133,8 @@ admin:
       label: Autres paramètres
       help: Au format <em>YAML</em>.
     tags:
-      label: "Tag 1, Tag 2, ..."
+      search_label: Tags
+      label: "TagOne, TagTwo, ..."
     og:
       label: Open Graph Card
     ogTitle:
