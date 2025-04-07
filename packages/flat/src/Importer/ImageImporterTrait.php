@@ -5,6 +5,7 @@ namespace Pushword\Flat\Importer;
 // use iBudasov\Iptc\Manager as Iptc;
 use DateTimeInterface;
 use Pushword\Core\Entity\Media;
+use RuntimeException;
 
 use function Safe\filesize;
 use function Safe\getimagesize;
@@ -55,7 +56,7 @@ trait ImageImporterTrait
         $imgSize = getimagesize($filePath);
 
         if (null === $imgSize) {
-            throw new \RuntimeException('Image size is null');
+            throw new RuntimeException('Image size is null');
         }
 
         $media

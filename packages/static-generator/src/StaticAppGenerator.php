@@ -25,7 +25,7 @@ final class StaticAppGenerator
         private readonly AppPool $apps,
         private readonly GeneratorBag $generatorBag,
         private readonly RedirectionManager $redirectionManager,
-        private LoggerInterface $logger,
+        private readonly LoggerInterface $logger,
     ) {
     }
 

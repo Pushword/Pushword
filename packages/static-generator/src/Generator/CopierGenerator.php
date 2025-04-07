@@ -62,6 +62,7 @@ class CopierGenerator extends AbstractGenerator
 
             return;
         }
+
         $this->filesystem->mirror($from, $to);
     }
 }

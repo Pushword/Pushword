@@ -77,6 +77,7 @@ trait TagsTrait
 
                 continue;
             }
+
             $partTags = explode(' ', $tag);
             $finalPartTag = '';
             $newTag = false;
@@ -86,9 +87,11 @@ trait TagsTrait
 
                     continue;
                 }
+
                 $finalPartTag .= ' '.$partTag;
                 $newTag = true;
             }
+
             $finalTags[] = (string) u($finalPartTag)->camel();
         }
 

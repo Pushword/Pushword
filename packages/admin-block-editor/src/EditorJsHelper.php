@@ -6,6 +6,8 @@ use Exception;
 use Pushword\Core\Entity\Page;
 
 use function Safe\json_decode;
+use function Safe\json_encode;
+use function Safe\preg_match;
 
 use stdClass;
 
@@ -60,7 +62,7 @@ final class EditorJsHelper
 
         try {
             $data = self::decode($mainContent);
-        } catch (Exception $e) {
+        } catch (Exception) {
             return;
         }
 
@@ -68,9 +70,11 @@ final class EditorJsHelper
             if (! property_exists($block, 'tunes')) {
                 continue;
             }
+
             if (! property_exists($block->tunes, 'anchor')) {
                 continue;
             }
+
             if ($anchor === $block->tunes->anchor) {
                 return;
             }
@@ -81,21 +85,28 @@ final class EditorJsHelper
                 if (! property_exists($block, 'type')) {
                     continue;
                 }
+
                 if (! property_exists($block, 'data')) {
                     continue;
                 }
+
                 if (! is_object($block->data)) {
                     continue;
                 }
-                if (! property_exists($block->data, 'text') || ! is_string($block->data->text)) {
+
+                if (! property_exists($block->data, 'text')) {
                     continue;
                 }
+                if (! is_string($block->data->text)) {
+                    continue;
+                }
+
                 if (property_exists($block, 'tunes')
                     && property_exists($block->tunes, 'anchor') && '' !== $block->tunes->anchor) {
                     return;
                 }
 
-                if ($type === $block->type && \Safe\preg_match($regex, $block->data->text) > 0) {
+                if ($type === $block->type && preg_match($regex, $block->data->text) > 0) {
                     if (null !== $outputCallback) {
                         $outputCallback($page->getHost().'/'.$page->getSlug().' : '.$block->type.' updated with anchor `'.$anchor.'`');
                     }
@@ -108,7 +119,7 @@ final class EditorJsHelper
                         $block->tunes->anchor = $anchor;
                     }
 
-                    $page->setMainContent(\Safe\json_encode($data));
+                    $page->setMainContent(json_encode($data));
 
                     return;
                 }

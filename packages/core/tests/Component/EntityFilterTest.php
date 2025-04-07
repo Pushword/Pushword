@@ -32,6 +32,7 @@ class EntityFilterTest extends KernelTestCase
         $filter = new HtmlObfuscateLink();
         $filter->app = ($apps = self::getContainer()->get(AppPool::class))->getApp();
         $filter->twig = self::getContainer()->get('twig');
+
         $router = self::getContainer()->get(PushwordRouteGenerator::class);
         $filter->linkProvider = new LinkProvider($router, $apps, $filter->twig);
         self::assertSame('Lorem <span data-rot="_cvrqjro.pbz/">Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));

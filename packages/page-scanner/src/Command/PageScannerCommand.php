@@ -67,6 +67,7 @@ final class PageScannerCommand extends Command
                 foreach ($scan as $s) {
                     $this->output?->writeln($s['page']['host'].'/'.$s['page']['slug'].' ➜ '.str_replace(['<code>', '</code>'], '`', $s['message']));
                 }
+
                 $errorNbr += \count($errors[$pageId]);
             }
 

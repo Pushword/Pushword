@@ -5,7 +5,6 @@
 namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Pushword\AdminBlockEditor\EditorJsHelper;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -20,7 +19,7 @@ final class BulkEditExampleCommand extends Command
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly PageRepository $pageRepo,
-        private Filesystem $fs,
+        private readonly Filesystem $fs,
     ) {
         parent::__construct();
     }

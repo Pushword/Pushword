@@ -11,10 +11,7 @@ class PushwordConversationExtension extends ConfigurableExtension implements Pre
 {
     use ExtensionTrait;
 
-    /**
-     * @var string
-     */
-    private $configFolder = __DIR__.'/../Resources/config';
+    private string $configFolder = __DIR__.'/../Resources/config';
 
     #[Override]
     public function getAlias(): string

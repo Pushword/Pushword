@@ -95,6 +95,11 @@ trait ImageTrait
             return null;
         }
 
+        if (strlen($this->mainColor) > 7) {
+            // fix transparency add in mainColor
+            $this->mainColor = substr($this->mainColor, 0, 7);
+        }
+
         return Color::fromHex($this->mainColor)->invert(true);
     }
 

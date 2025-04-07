@@ -4,10 +4,9 @@ namespace Pushword\PageScanner\Scanner;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use Override;
 use PiedWeb\Curl\ExtendedClient;
 use PiedWeb\Curl\Helper;
-use PiedWeb\Extractor\CanonicalExtractor;
-use PiedWeb\Extractor\Url;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
 
@@ -258,6 +257,7 @@ final class LinkedDocsScanner extends AbstractScanner
         return (bool) preg_match('/^https:\/\/(www)?\.?(example.tld|instagram.com)/i', $url);
     }
 
+    #[Override]
     public function scan(Page $page, string $pageHtml): array
     {
         /** @return string[] */

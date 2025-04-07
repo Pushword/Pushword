@@ -27,6 +27,7 @@ class PageControllerTest extends KernelTestCase
         $slug = 'kitchen-sink-block';
         $request = Request::create($slug);
         $request->attributes->set('host', 'admin-block-editor.test');
+
         $response = $this->getPageController()->show($request, $slug);
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
 

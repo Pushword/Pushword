@@ -66,11 +66,7 @@ final class PageExtension extends AbstractExtension
             return true;
         }
 
-        if (str_contains($mainContent, ' id='.$blockId.'')) {
-            return true;
-        }
-
-        return false;
+        return str_contains($mainContent, ' id='.$blockId.'');
     }
 
     public function getBreadcrumbListPosition(Page $page): int
