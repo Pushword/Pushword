@@ -99,7 +99,7 @@ final class PageExtension extends AbstractExtension
     public function getPublishedPages($host = null, array|string $where = [], array|string $order = 'priority,publishedAt', array|int $max = 0, bool $withRedirection = false): array
     {
         $currentPage = $this->apps->getCurrentPage();
-        $where = \is_array($where) ? $where : (new StringToDQLCriteria($where, $currentPage))->retrieve();
+        $where = [\is_array($where) ? $where : (new StringToDQLCriteria($where, $currentPage))->retrieve()];
         $where[] = ['id',  '<>', $currentPage?->getId() ?? 0];
 
         $order = '' === $order ? 'publishedAt,priority' : $order;
