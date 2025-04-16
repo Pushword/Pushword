@@ -48,6 +48,17 @@ trait PageI18nTrait
         return $this->translations ?? ($this->translations = new ArrayCollection());
     }
 
+    public function getTranslation(string $locale): ?Page
+    {
+        foreach ($this->getTranslations() as $translation) {
+            if ($translation->getLocale() === $locale) {
+                return $translation;
+            }
+        }
+
+        return null;
+    }
+
     public function addTranslation(Page $page, bool $recursive = true): self
     {
         if (! $this->getTranslations()->contains($page) && $this !== $page) {

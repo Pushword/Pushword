@@ -41,6 +41,15 @@ class CopierGenerator extends AbstractGenerator
         }
     }
 
+    private function getSymlinkOriginDir(): string
+    {
+        $path = str_replace($this->params->get('kernel.project_dir'), '', $this->getStaticDir());
+        $count = substr_count($path, '/');
+        $path = str_repeat('../', $count);
+
+        return $path;
+    }
+
     private function copyOrSymlink(string $entry,  bool $symlink, ?string $to = null): void
     {
         $from = $this->publicDir.'/'.$entry;
@@ -51,7 +60,7 @@ class CopierGenerator extends AbstractGenerator
         }
 
         if ($symlink) {
-            $symlinkDest = str_replace($this->params->get('kernel.project_dir').'/', '../', $from);
+            $symlinkDest = str_replace($this->params->get('kernel.project_dir').'/', $this->getSymlinkOriginDir(), $from);
             $this->filesystem->symlink($symlinkDest,  $to);
 
             return;

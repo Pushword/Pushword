@@ -99,7 +99,7 @@ final class PageScannerService
             'page' => [
                 'id' => $page->getId() ?? 0,
                 'slug' => $page->getSlug(),
-                'h1' => $page->getH1() ?? '',
+                'h1' => $page->getH1(),
                 'metaRobots' => $page->getMetaRobots(),
                 'host' => $page->getHost(),
             ],

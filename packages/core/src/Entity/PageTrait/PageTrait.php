@@ -31,7 +31,7 @@ trait PageTrait
         return trim($this->host.'/'.$this->getSlug().' ');
     }
 
-    public function getH1(): ?string
+    public function getH1(): string
     {
         return $this->h1;
     }

@@ -82,7 +82,7 @@ class PageOpenGraphImageGenerator
 
     private function drawTitle(DrawerInterface $drawer): void
     {
-        $titleText = $this->getPage()->getH1() ?? '...';
+        $titleText = $this->getPage()->getH1() ?: '...';
 
         if (\strlen($titleText) > 90) {
             $titleText = substr($titleText, 0, 87).'…';

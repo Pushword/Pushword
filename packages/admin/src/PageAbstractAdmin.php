@@ -338,6 +338,6 @@ abstract class PageAbstractAdmin extends AbstractAdmin
 
         $name = \in_array($object->getName(), ['', null], true) ? $object->getH1() : $object->getName();
 
-        return new Metadata(strip_tags((string) $name), null, $thumb);
+        return new Metadata(strip_tags($name), null, $thumb);
     }
 }

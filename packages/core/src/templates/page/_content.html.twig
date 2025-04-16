@@ -1,4 +1,11 @@
 {% block content %}
+
+    {% block breadcrumbJsonLd %}
+    <script type="application/ld+json">
+        {{ breadcrumbJsonLd(page) }}
+    </script>
+    {% endblock %}
+
 {# TODO: fix bug, if pw(page).ma... is not called before we really need it, it don't work #}
 <!--{{ pw(page).mainContent.chapeau|raw }}-->
 <div class="{{ content_container_class|default('prose mx-auto py-12 px-3 md:px-0') }}">

@@ -4,6 +4,7 @@ namespace Pushword\Core\Twig;
 
 use Cocur\Slugify\Slugify;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FilesizeFormatter;
 use Pushword\Core\Utils\HtmlBeautifer;
@@ -49,6 +50,7 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('filesize', [FilesizeFormatter::class, 'formatBytes'], self::options()),
             new TwigFunction('contains_link_to', [$this, 'containsLinkTo'], self::options()),
             new TwigFunction('class_exists', 'class_exists'),
+            new TwigFunction('breadcrumbJsonLd', [$this, 'generateBreadcrumbJsonLd'], self::options()),
         ];
     }
 
@@ -112,12 +114,41 @@ final class AppExtension extends AbstractExtension
     {
         /** @var Twig */
         $twig = $this->twig;
-        $unproseClass = $twig->getGlobals()['unprose'] ?? '';
+        $unproseClass = $this->apps->get()->get('unprose') ?? $twig->getGlobals()['unprose'] ?? '';
 
         if ('' === $unproseClass || ! \is_string($unproseClass)) {
             return $html;
         }
 
         return '<div class="'.$unproseClass.'">'.$html.'</div>';
+    }
+
+    public function generateBreadcrumbJsonLd(Page $page): string
+    {
+        $breadcrumbs = [];
+        $position = 1;
+        $currentPage = $page;
+
+        while (null !== $currentPage) {
+            $breadcrumbs[] = [
+                '@type' => 'ListItem',
+                'position' => $position,
+                'name' => $currentPage->getName() ?: $currentPage->getH1() ?: $currentPage->getTitle(),
+                'item' => $this->router->generate($currentPage->getRealSlug(), true),
+            ];
+
+            $currentPage = $currentPage->getParentPage();
+            ++$position;
+        }
+
+        $breadcrumbs = array_reverse($breadcrumbs);
+
+        $jsonLd = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => $breadcrumbs,
+        ];
+
+        return \Safe\json_encode($jsonLd, \JSON_UNESCAPED_SLASHES | \JSON_PRETTY_PRINT);
     }
 }
