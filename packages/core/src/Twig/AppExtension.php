@@ -134,7 +134,7 @@ final class AppExtension extends AbstractExtension
                 '@type' => 'ListItem',
                 'position' => $position,
                 'name' => $currentPage->getName() ?: $currentPage->getH1() ?: $currentPage->getTitle(),
-                'item' => $this->router->generate($currentPage->getRealSlug(), true),
+                'item' => $this->router->generate($currentPage, true),
             ];
 
             $currentPage = $currentPage->getParentPage();
