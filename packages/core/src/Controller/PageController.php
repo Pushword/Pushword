@@ -286,7 +286,7 @@ final class PageController extends AbstractController
         }
 
         if ('' === $page->getLocale()) { // avoid bc break
-            $page->setLocale($this->apps->getApp()->getDefaultLocale());
+            $page->setLocale($this->apps->getApp()->getLocale());
         }
 
         $this->translator->setLocale($page->getLocale());

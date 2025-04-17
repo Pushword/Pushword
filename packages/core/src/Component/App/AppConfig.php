@@ -39,7 +39,8 @@ final class AppConfig
     public function __construct(
         private readonly ParameterBagInterface $params,
         array $properties,
-        private readonly bool $isFirstApp = false
+        private readonly bool $isFirstApp,
+        private readonly AppPool $apps,
     ) {
         foreach ($properties as $prop => $value) {
             $this->setCustomProperty($prop, $value);
@@ -308,7 +309,11 @@ final class AppConfig
 
     public function getDefaultLocale(): string
     {
-        return $this->locale;
+        $defaultLocale = $this->get('defaultLocale') ?? $this->apps->get()->getLocale();
+
+        assert(is_string($defaultLocale));
+
+        return $defaultLocale;
     }
 
     /**

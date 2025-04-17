@@ -14,7 +14,7 @@ class Date extends AbstractFilter
 
     public function apply(mixed $propertyValue): string
     {
-        return $this->convertDateShortCode($this->string($propertyValue), $this->app->getDefaultLocale());
+        return $this->convertDateShortCode($this->string($propertyValue), $this->app->getLocale());
     }
 
     private function convertDateShortCode(string $string, ?string $locale = null): string

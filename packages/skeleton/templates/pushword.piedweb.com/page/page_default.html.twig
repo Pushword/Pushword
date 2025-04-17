@@ -28,7 +28,7 @@
 {% set breadcrumb_class = 'p-3 text-sm font-light text-gray-700 dark:text-gray-300' %}
 
 {% block html_opener %}
-<html lang="{{ page.locale|default(apps.get().defaultLocale) }}" {{ mergeAttr({class: 'leading-tight text-gray-900 bg-white dark:bg-gray-900 dark:text-gray-100 overflow-x-hidden'}, page.htmlOpenerAttr|default({})) }}>
+<html lang="{{ page.locale|default(apps.get().locale) }}" {{ mergeAttr({class: 'leading-tight text-gray-900 bg-white dark:bg-gray-900 dark:text-gray-100 overflow-x-hidden'}, page.htmlOpenerAttr|default({})) }}>
 {% endblock %}
 
 {% block content %}

@@ -42,7 +42,7 @@ final class PushwordRouteGenerator
         $homepage = (new Page())->setSlug('');
 
         if (null !== $page) {
-            if ($page->getLocale() !== $this->apps->get()->getDefaultLocale()) {
+            if ($page->getLocale() !== $this->apps->get()->getLocale()) {
                 $homepage->setSlug($page->getLocale());
             }
 

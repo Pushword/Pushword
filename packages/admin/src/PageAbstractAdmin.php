@@ -186,7 +186,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin
     protected function alterNewInstance(object $object): void
     {
         // $object->setHost($this->apps->get()->getMainHost());
-        $object->setLocale($this->apps->get()->getDefaultLocale()); // always use first app params...
+        $object->setLocale($this->apps->get()->getLocale()); // always use first app params...
     }
 
     /**
