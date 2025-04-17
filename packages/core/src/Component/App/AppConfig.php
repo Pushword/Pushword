@@ -35,6 +35,10 @@ final class AppConfig
 
     private Twig $twig;
 
+    /**
+     * First app locale is a bit weird ?
+     * It's assuming when defaultLocale is not set, it's the first app locale wich is the default locale.
+     */
     public string $firstAppLocale = 'fr';
 
     /** @param array<string, mixed> $properties */
