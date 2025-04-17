@@ -35,12 +35,13 @@ final class AppConfig
 
     private Twig $twig;
 
+    public string $firstAppLocale = 'fr';
+
     /** @param array<string, mixed> $properties */
     public function __construct(
         private readonly ParameterBagInterface $params,
         array $properties,
         private readonly bool $isFirstApp,
-        private readonly AppPool $apps,
     ) {
         foreach ($properties as $prop => $value) {
             $this->setCustomProperty($prop, $value);
@@ -309,7 +310,7 @@ final class AppConfig
 
     public function getDefaultLocale(): string
     {
-        $defaultLocale = $this->get('defaultLocale') ?? $this->apps->get()->getLocale();
+        $defaultLocale = $this->getCustomProperty('defaultLocale') ?? $this->firstAppLocale;
 
         assert(is_string($defaultLocale));
 

@@ -24,9 +24,15 @@ final class AppPool
     {
         $firstHost = (string) array_key_first($rawApps);
 
+        $firstApp = null;
         foreach ($rawApps as $mainHost => $app) {
-            $this->apps[$mainHost] = new AppConfig($parameterBag, $app, $firstHost === $mainHost, $this);
+            $this->apps[$mainHost] = new AppConfig($parameterBag, $app, $firstHost === $mainHost);
             $this->apps[$mainHost]->setTwig($twig);
+            if (null === $firstApp) {
+                $firstApp = $this->apps[$mainHost];
+            }
+
+            $this->apps[$mainHost]->firstAppLocale = $firstApp->getLocale();
         }
 
         $this->switchCurrentApp($firstHost);

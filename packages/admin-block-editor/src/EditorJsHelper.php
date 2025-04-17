@@ -97,6 +97,7 @@ final class EditorJsHelper
                 if (! property_exists($block->data, 'text')) {
                     continue;
                 }
+
                 if (! is_string($block->data->text)) {
                     continue;
                 }

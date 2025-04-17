@@ -3,7 +3,7 @@
 {# ----------- #}
 
 {% block html_opener %}
-<html lang="{{ page.locale|default(apps.get().defaultLocale) }}" {{ mergeAttr({class: 'leading-tight text-gray-900'}, page.htmlOpenerAttr|default({})) }}>
+<html lang="{{ page.locale|default(apps.get().locale) }}" {{ mergeAttr({class: 'leading-tight text-gray-900'}, page.htmlOpenerAttr|default({})) }}>
 {% endblock %}
 
 {% block title %}{{ pw(page).title|striptags }}{% endblock %}
@@ -20,10 +20,20 @@
 
 {% block alternate_language %}
   {% if page.locale is not null %}
-    <link rel="alternate" hreflang="{{ page.locale == apps.get().defaultLocale ? 'x-default' : page.locale }}" href="{{ page(page, true) }}">
+    <link rel="alternate" hreflang="{{ page.locale }}" href="{{ page(page, true) }}">
+    {% if  page.locale == apps.get().defaultLocale %}
+      <link rel="alternate" hreflang="x-default" href="{{ page(page, true) }}">
+    {% endif %}
+
     {% for translation in page.translations %}
-      <link rel="alternate" hreflang="{{ translation.locale == apps.get().defaultLocale ? 'x-default' : translation.locale }}" href="{{ page(translation, true) }}">
+      <link rel="alternate" hreflang="{{ translation.locale }}" href="{{ page(translation, true) }}">
+      {% if  translation.locale == apps.get().defaultLocale %}
+        <link rel="alternate" hreflang="x-default" href="{{ page(translation, true) }}">
+      {% endif %}
+
     {% endfor %}
+
+
   {% endif %}
 {% endblock %}
 
