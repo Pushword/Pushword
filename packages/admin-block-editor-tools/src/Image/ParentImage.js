@@ -213,7 +213,7 @@ export default class ImageTool {
     // @see https://github.com/editor-js/image/pull/49
     const tunes = ImageTool.tunes.concat(this.config.actions)
 
-    return tunes.map((tune) => ({
+    let tunesMapped = tunes.map((tune) => ({
       icon: tune.icon,
       label: this.api.i18n.t(tune.title),
       name: tune.name,
@@ -229,6 +229,8 @@ export default class ImageTool {
         this.tuneToggled(tune.name)
       },
     }))
+
+    return tunesMapped
   }
 
   /**
@@ -331,6 +333,9 @@ export default class ImageTool {
 
     this._data.caption = data.caption || ''
     this.ui.fillCaption(this._data.caption)
+
+    // Initialize href property
+    this._data.href = data.href || ''
 
     ImageTool.tunes.forEach(({ name: tune }) => {
       const value = typeof data[tune] !== 'undefined' ? data[tune] === true || data[tune] === 'true' : false

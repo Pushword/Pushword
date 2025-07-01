@@ -1,18 +1,17 @@
 import css from './HyperlinkTune.css'
 import make from '../Abstract/make.js'
 import Hyperlink from '../Hyperlink/Hyperlink.js'
-// todo get selection utils https://github.com/codex-team/editor.js/blob/main/src/components/selection.ts
-// and drop editorjs-hyperlink dependency
+import { IconLink, IconUnlink } from '@codexteam/icons'
 
-// TODO WiP
 export default class HyperlinkTune {
   static get isTune() {
     return true
   }
 
-  constructor({ api, data }) {
+  constructor({ api, data, config, block }) {
     this.api = api
     this.data = data || { url: '', hideForBot: true, targetBlank: false }
+    this.block = block
 
     this._CSS = {
       classWrapper: 'cdx-anchor-tune-wrapper',
@@ -29,29 +28,77 @@ export default class HyperlinkTune {
    * @returns {*}
    */
   render(value = null) {
+    console.log(this.data, value)
     const wrapper = document.createElement('div')
-    //wrapper.classList.add(" ");
+    wrapper.classList.add('cdx-anchor-tune-wrapper')
+    wrapper.style.display = 'block'
+    wrapper.style.position = 'relative'
 
     const wrapperIcon = document.createElement('div')
-    wrapperIcon.classList.add(this._CSS.classIcon)
-    wrapperIcon.appendChild(Hyperlink.iconSvg('link', 12, 12))
-
-    this.nodes.url = make.input(this, ['cdx-input-labeled', 'cdx-input-full'], '<a href=#>image</a>', this.data.url)
-    this.nodes.hideForBot = make.switchInput('hideForBot', this.i18n.t('Obfusquer'))
-    this.nodes.targetBlank = make.switchInput('targetBlank', this.i18n.t('Nouvel onglet'))
-
+    wrapperIcon.classList.add('cdx-anchor-tune-icon')
+    wrapperIcon.style.position = 'absolute'
+    wrapperIcon.style.left = '-2px'
+    wrapperIcon.style.width = '25px'
+    wrapperIcon.style.opacity = '0.9'
+    wrapperIcon.style.height = '25px'
+    wrapperIcon.innerHTML = IconLink
     wrapper.appendChild(wrapperIcon)
+
+    this.nodes.url = make.input(this, ['cdx-input-labeled', 'cdx-input-full'], ':self OR /url', this.data.url)
+    this.nodes.url.style.backgroundColor = 'white'
+    this.nodes.url.style.borderRadius = '6px'
+    this.nodes.url.style.padding = '4px'
+    this.nodes.url.style.paddingLeft = '22px'
+    this.nodes.url.style.fontSize = '14px'
+
+    this.nodes.hideForBot = make.switchInput('hideForBot', this.i18n.t('Obfusquer'), this.data.hideForBot)
+    this.nodes.targetBlank = make.switchInput('targetBlank', this.i18n.t('Nouvel onglet'), this.data.targetBlank)
+
     wrapper.appendChild(this.nodes.url)
     wrapper.appendChild(this.nodes.hideForBot)
     wrapper.appendChild(this.nodes.targetBlank)
 
+    // on change, save
+    // Using multiple events for contentEditable elements
+    const urlChangeHandler = () => {
+      this._updateData()
+    }
+
+    this.nodes.url.addEventListener('input', urlChangeHandler)
+    this.nodes.url.addEventListener('blur', urlChangeHandler)
+    this.nodes.url.addEventListener('keyup', urlChangeHandler)
+    this.nodes.hideForBot.addEventListener('change', () => {
+      this._updateData()
+    })
+    this.nodes.targetBlank.addEventListener('change', () => {
+      this._updateData()
+    })
+
     return wrapper
   }
+
   /**
-   * Save
+   * Return tool's data
    * @returns {*}
    */
   save() {
+    return {
+      url: this.data.url ?? '',
+      hideForBot: this.data.hideForBot ?? true,
+      targetBlank: this.data.targetBlank ?? false,
+    }
+  }
+
+  _updateData() {
+    this.data.url = this.nodes.url.textContent
+    this.data.hideForBot = this.nodes.hideForBot.querySelector('input').checked
+    this.data.targetBlank = this.nodes.targetBlank.querySelector('input').checked
+
+    console.log(this.block)
+    this.block?.dispatchChange()
+    console.log(this.api)
+    this.api.saver.save()
+
     return this.data
   }
 }

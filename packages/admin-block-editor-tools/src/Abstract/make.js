@@ -68,13 +68,17 @@ export default class make {
     return buttonWrapper
   }
 
-  static switchInput(name, labelText) {
+  static switchInput(name, labelText, checked = false) {
     let wrapper = make.element('div', 'editor-switch')
     let checkbox = make.element('input', null, { type: 'checkbox', id: name })
     let switchElement = make.element('label', 'label-default', { for: name })
     let label = make.element('label', '', { for: name })
     label.innerHTML = labelText
     wrapper.append(checkbox, switchElement, label)
+
+    if (checked) {
+      checkbox.checked = checked
+    }
 
     return wrapper
   }
