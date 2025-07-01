@@ -7,10 +7,20 @@
 </div>
 
 <div style="padding-top:10px; text-align:center">
-    <a href="#" onclick="toggleEditor()" style="color:#4b5563">{{ svg('unlock', {style: 'width:12px', fill: 'currentColor'}) }}</a>
+    <a href="#" onclick="toggleEditor()" style="color:#4b5563" title="Alt + U">{{ svg('code', {style: 'width:12px', fill: 'currentColor'}) }}</a>
+    <a href="#" onclick="alert('wip')" style="color:#4b5563; display:inline-block; margin-left: 10px;" title="Alt + M">{{ svg('markdown', {style: 'width:12px', fill: 'currentColor'}) }}</a>
 </div>
 <script>
 window.pagesUriList = {{ page_uri_list()|json_encode|raw }};
+
+window.onkeyup = function(event){
+    console.log(event);
+    if (event.altKey  && event.which === 85) { // 85 = touche U
+        event.preventDefault();
+        toggleEditor();
+        return;
+    }
+}
 
 function toggleEditor() {
     editorJsHelper.toggleEditorJs('{{ editor_id }}');
@@ -22,9 +32,12 @@ function toggleEditor() {
         var pretty = JSON.stringify(JSON.parse(ugly), undefined, 4);
         textarea.value = pretty;
         textarea.setAttribute('data-editor', 'json');
-        const monacoEditorInstance = window.monacoHelper.transformTextareaToMonaco(textarea)
+       // const monacoEditorInstance = window.monacoHelper.transformTextareaToMonaco(textarea)
+        window.monacoEditorInstance{{ editor_id }} = window.monacoHelper.transformTextareaToMonaco(textarea)
         //monacoEditorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {}, 'editorTextFocus');
     } else {
+        value = window.monacoEditorInstance{{ editor_id }}.getValue();
+        window.editors['{{ editor_id }}'].blocks.render(JSON.parse(value))
         var monacoEditor = document.querySelector('.monaco-editor').parentNode
         monacoEditor.parentNode.removeChild(monacoEditor)
     }
