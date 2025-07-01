@@ -115,7 +115,8 @@ class MediaExtension extends AbstractExtension
         array $images,
         ?string $gridCols = null,
         ?string $imageFilter = null,
-        ?string $imageContainer = null
+        bool $clickable = true,
+        int $pos = 100
     ): string {
         $template = $this->apps->get()->getView('/component/images_gallery.html.twig');
 
@@ -123,7 +124,9 @@ class MediaExtension extends AbstractExtension
             'images' => $images,
             'grid_cols' => $gridCols,
             'image_filter' => $imageFilter,
-            'image_coontainer' => $imageContainer,
+            'pos' => $pos,
+            // 'image_coontainer' => $imageContainer,
+            'clickable' => $clickable,
         ]);
     }
 }

@@ -35,10 +35,18 @@
     {% block main_content %}
         {% if page.toc is not null or page.tocTitle is not null %}
             {% block toc %}
+                {% set content = pw(page).mainContent.content %}
                 {{ pw(page).mainContent.intro|raw }}
-                <h3>{{ page.tocTitle|default('Nav') }}</h3>
-                {{ pw(page).mainContent.toc|raw }}
-                {{ pw(page).mainContent.content|raw }}
+                // if content contains '<!-- toc -->'
+                {% if '<!-- toc -->' in content%}
+                    {% set content = content|replace({
+                        '<!-- toc -->': pw(page).mainContent.toc
+                    }) %}
+                {% else %}
+                    <h3>{{ page.tocTitle|default('Nav') }}</h3>
+                    {{ pw(page).mainContent.toc|raw }}
+                {% endif %}
+                {{ content|raw }}
                 {% endblock %}
         {% else %}
             {{ pw(page).mainContent.body|raw }}

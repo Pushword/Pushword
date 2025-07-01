@@ -27,6 +27,10 @@ A few example for the editor possibilities. Best to observe this, it's in admin 
 
 {{ gallery({'Pied Web Logo' :'piedweb-logo.png', 'Demo 1': '1.jpg', 'Demo 2': '2.jpg', 'Demo 3': '3.jpg'})|unprose }}
 
+## Not clickable Gallery
+
+{{ gallery({'Pied Web Logo' :['piedweb-logo.png', 'https://piedweb.com', {}, false], 'Demo 1': '1.jpg', 'Demo 2': '2.jpg', 'Demo 3': '3.jpg'}, clickable=false)|unprose }}
+
 ## Video
 
 Avoiding load Youtube cookies per default.

@@ -23,11 +23,16 @@
      {% set image_html = _self.renderImage(image, image_class ?? null,
       image_attr ?? null, image_alt ?? null, lazy ?? true) %}
 
-     {% if image_link is not defined or image_link != false %}
-
-      {{ link(image_html, image_link|default(image|image('default')), image_link is not defined ? {'data-fslightbox': 'inline', 'data-dwl': image|image('default', 'webp')} : {}) }}
-     {% else %}
+     {% if image_link is not defined or image_link is same as false %}
       {{ image_html }}
+     {% else %}
+      {% set absolute_image_link = (image_link is same as true) ? image|image('default') : image_link %}
+      {{ link(
+         image_html,
+         absolute_image_link,
+         image_link is not defined
+            ? {'data-fslightbox': 'inline', 'data-dwl': image|image('default', 'webp')} : absolute_image_link
+      ) }}
      {% endif %}
 
      {% if image_wrapper_class is defined or image_wrapper is defined %}

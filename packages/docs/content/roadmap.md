@@ -9,7 +9,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Before v1
 
-- [ ] TODO check a new blank installation
+- [AdminBlockEditor] Markdown converter - https://github.com/carrara88/editorjs-md-parser
+
+- check a new blank installation
 
   - [x] dev environnement setup
   - [ ] usage setup - see if there is a prompt for first user
