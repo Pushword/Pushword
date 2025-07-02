@@ -21,17 +21,18 @@ abstract class AbstractAdminTestClass extends PantherTestCase
             return $this->client;
         }
 
-        $this->client = $client ?? static::createClient();
+        $client = $client ?? static::createClient();
+        $this->client = $client;
 
         self::createUser();
 
-        $crawler = $this->client->request(Request::METHOD_GET, '/login');
+        $crawler = $client->request(Request::METHOD_GET, '/login');
         $form = $crawler->filter('[method=post]')->form();
         $form['email'] = 'admin@example.tld';
         $form['password'] = 'mySecr3tpAssword';
-        $crawler = $this->client->submit($form);
+        $crawler = $client->submit($form);
 
-        return $this->client;
+        return $client;
     }
 
     protected static function createUser(): void
