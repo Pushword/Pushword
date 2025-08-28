@@ -11,9 +11,9 @@
     {% form_theme conversation 'form_div_layout.html.twig' %}
         {{ form_widget(conversation.authorEmail, {
             attr: {
-                placeholder: 'conversation.emailOrPhone.placeholder'|trans,
+                placeholder: 'conversation.email.placeholder'|trans,
                 onfocus: "this.placeholder = ''",
-                onblur: "this.placeholder = '" ~ 'conversation.emailOrPhone.placeholder'|trans ~ "'",
+                onblur: "this.placeholder = '" ~ 'conversation.email.placeholder'|trans ~ "'",
                 required: 'text',
                 pattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$',
                 type: 'email',
