@@ -16,7 +16,7 @@
                 onblur: "this.placeholder = '" ~ 'conversation.name.placeholder'|trans ~ "'",
                 required: 'text',
                 type: 'text',
-                class: 'appearance-none bg-transparent border-none focus:ring-transparent focus:border-transparent focus:shadow-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none'
+                class: authorNameInputClass ?? 'appearance-none bg-transparent border-none focus:ring-transparent focus:border-transparent focus:shadow-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none'
             }
         }) }}
 {% endblock %}
