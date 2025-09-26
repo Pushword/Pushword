@@ -4,7 +4,6 @@ namespace Pushword\Core\Twig;
 
 use Exception;
 use Override;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\ImageManager;
@@ -25,7 +24,6 @@ use Twig\TwigFunction;
 class MediaExtension extends AbstractExtension
 {
     public function __construct(
-        private readonly AppPool $apps,
         public Twig $twig,
         private readonly ImageManager $imageManager,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
@@ -50,7 +48,6 @@ class MediaExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('gallery', $this->renderGallery(...), AppExtension::options()),
             new TwigFunction('media_from_string', $this->transformStringToMedia(...)),
             new TwigFunction('image_dimensions', $this->imageManager->getDimensions(...)),
             new TwigFunction('open_graph_image_generated_path', $this->getOpenGraphImageGeneratedPath(...)),
@@ -106,27 +103,5 @@ class MediaExtension extends AbstractExtension
         }
 
         return $src;
-    }
-
-    /**
-     * @param array<mixed> $images
-     */
-    public function renderGallery(
-        array $images,
-        ?string $gridCols = null,
-        ?string $imageFilter = null,
-        bool $clickable = true,
-        int $pos = 100
-    ): string {
-        $template = $this->apps->get()->getView('/component/images_gallery.html.twig');
-
-        return $this->twig->render($template, [
-            'images' => $images,
-            'grid_cols' => $gridCols,
-            'image_filter' => $imageFilter,
-            'pos' => $pos,
-            // 'image_coontainer' => $imageContainer,
-            'clickable' => $clickable,
-        ]);
     }
 }

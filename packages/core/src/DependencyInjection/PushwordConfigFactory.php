@@ -97,7 +97,7 @@ final class PushwordConfigFactory
         $result = [];
         foreach ($apps as $app) {
             $app = $this->processAppConfig($app);
-            if (! isset($app['hosts']) || ! \is_array($app['hosts']) || ! isset($app['hosts'][0])) { // normally, it's impossible to reach this
+            if (! isset($app['hosts']) || ! \is_array($app['hosts']) || ! isset($app['hosts'][0]) || ! is_scalar($app['hosts'][0])) { // normally, it's impossible to reach this
                 throw new InvalidArgumentException('Something is badly configured in your pushword configuration file.');
             }
 

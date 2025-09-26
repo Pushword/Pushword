@@ -1,13 +1,1 @@
-{% apply unprose %}
-<div{{ blockWrapperAttr(block, {class: 'flex flex-row p-3 my-6 border border-gray-400 rounded clickable cursor-pointer max-w-screen-sm mx-auto'}) }}>
-    <div class="w-16 px-3 text-gray-400">
-        {{ svg('file-alt', {class: 'w-8 pt-2 fill-current'}) }}
-    </div>
-    <div class="grow pt-3" style="flex-grow: 1">
-        <div class="font-bold">{{ block.data.title|raw }}</div>
-        <div class="font-light">{{ filesize(block.data.file.size) }}{{ 'bytes_abbreviation'|trans }}</div>
-    </div>
-
-    {{ link(svg('download', {class: 'w-10 fill-current'}), block.data.file.url, {class: 'd-block text-gray-600 p-3', download: block.data.file.url}) }}
-</div>
-{% endapply %}
+{{ attaches(block)|unprose }}
