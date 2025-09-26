@@ -15,14 +15,4 @@ class MediaTest extends TestCase
         $media->setName('test');
         self::assertSame('test', $media->getName());
     }
-
-    public function testLoad(): void
-    {
-        // Default is the liip filter
-        $src = '/media/default/test.jpg';
-        $media = Media::loadFromSrc($src);
-
-        self::assertStringNotContainsString('media/default', $media->getMedia());
-        self::assertSame('test', $media->getSlug());
-    }
 }

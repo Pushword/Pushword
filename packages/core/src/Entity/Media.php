@@ -60,7 +60,7 @@ class Media implements IdInterface
     protected string $projectDir = '';
 
     #[ORM\Column(type: Types::STRING, length: 255, name: 'media')]
-    protected string $media = '';
+    protected string $media = ''; // eg : my-file.jpg
 
     // TODO Rename to filename
 
@@ -305,21 +305,6 @@ class Media implements IdInterface
         }
 
         return $this;
-    }
-
-    /**
-     * Useed in twig AppExtension transformStringToMedia.
-     * Convert the source path (often /media/default/... or just ...) in a Media Object.
-     */
-    public static function loadFromSrc(string $src): self
-    {
-        // TODO : move it to a separate service to get it from an SQL and get all properties
-        $src = str_contains($src, '/') ? substr($src, \strlen('/media/default/')) : $src;
-
-        $self = new self();
-        $self->setMedia($src);
-
-        return $self;
     }
 
     /**************** Slug ***************/

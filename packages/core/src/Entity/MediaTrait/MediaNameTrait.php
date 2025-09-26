@@ -10,7 +10,7 @@ use Symfony\Component\Yaml\Yaml;
 trait MediaNameTrait
 {
     #[ORM\Column(type: Types::STRING, length: 100, unique: true)]
-    protected string $name = '';
+    protected string $name = ''; // used for alt text
 
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''], nullable: true)]
     protected ?string $names = '';

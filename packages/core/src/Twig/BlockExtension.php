@@ -33,7 +33,8 @@ class BlockExtension
     }
 
     /**
-     * @param array<mixed> $images
+     * @param array<mixed> $images is very tolerant, most of the time it's an array of string corresponding to the mediaName (eg: ['filename.jpg', 'filename2.jpg'])
+     * @param int          $pos    set to < 3 permit to disable lazy loading on first image
      */
     #[AsTwigFunction('gallery', isSafe: ['html'], needsEnvironment: false)]
     public function renderGallery(
@@ -50,7 +51,6 @@ class BlockExtension
             'grid_cols' => $gridCols,
             'image_filter' => $imageFilter,
             'pos' => $pos,
-            // 'image_coontainer' => $imageContainer,
             'clickable' => $clickable,
         ]);
     }

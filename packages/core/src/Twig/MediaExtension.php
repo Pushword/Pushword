@@ -5,6 +5,7 @@ namespace Pushword\Core\Twig;
 use Exception;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 
@@ -23,6 +24,7 @@ class MediaExtension
     public function __construct(
         public Twig $twig,
         private readonly ImageManager $imageManager,
+        private readonly MediaRepository $mediaRepository,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
     ) {
     }
@@ -39,7 +41,7 @@ class MediaExtension
         return $this->pageOpenGraphImageGenerator->getPath(true);
     }
 
-    public static function isInternalImage(string $media): bool
+    public static function mayBeAnInternalImage(string $media): bool
     {
         return str_starts_with($media, '/media/default/') || ! str_contains($media, '/');
     }
@@ -47,8 +49,10 @@ class MediaExtension
     private function normalizeMediaPath(string $src): string
     {
         if (1 === preg_match('/^[0-9a-z-]+$/', $src)) {
-            return '/media/default/'.$src.'.jpg';
+            return $src.'.jpg';
         }
+
+        $src = str_starts_with($src, '/media/default/') ? substr($src, \strlen('/media/default/')) : $src;
 
         return $src;
     }
@@ -60,23 +64,27 @@ class MediaExtension
     #[AsTwigFunction('media_from_string')]
     public function transformStringToMedia(Media|string $src, string $name = ''): Media
     {
-        $src = \is_string($src) ? $this->normalizeMediaPath($src) : $src;
+        if ($src instanceof Media) {
+            return $src;
+        }
 
-        if (\is_string($src) && self::isInternalImage($src)) {
-            $media = Media::loadFromSrc($src);
-            $media->setName($name);
+        $src = $this->normalizeMediaPath($src);
+
+        if (self::mayBeAnInternalImage($src)) {
+            $media = $this->mediaRepository->findOneBy(['media' => $src]) ??
+            throw new Exception("Can't handle the value submitted (".$src.').');
+
+            if ('' !== $name) { // to check if useful
+                $media->setName($name);
+            }
 
             return $media;
         }
 
-        if (\is_string($src) && false !== $this->imageManager->cacheExternalImage($src)) {
+        if (false !== $this->imageManager->cacheExternalImage($src)) {
             return $this->imageManager->importExternal($src, $name);
         }
 
-        if (! $src instanceof Media) {
-            throw new Exception("Can't handle the value submitted (".$src.')');
-        }
-
-        return $src;
+        throw new Exception("Can't handle the value submitted (".$src.')');
     }
 }
