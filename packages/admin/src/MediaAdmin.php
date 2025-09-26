@@ -169,7 +169,7 @@ final class MediaAdmin extends AbstractAdmin
     #[Override]
     public function getObjectMetadata(object $object): Metadata
     {
-        $thumb = $this->imageManager->isImage($object) ? $this->imageManager->getBrowserPath($object, 'thumb') : Thumb::$thumb;
+        $thumb = $this->imageManager->isImage($object) ? $this->imageManager->getBrowserPath($object, 'md') : Thumb::$thumb;
 
         return new Metadata($object->getName(), null, $thumb);
     }
