@@ -17,10 +17,12 @@ function getFilesToWatch(basePath = './..') {
 }
 
 function getTailwindConfig(watchFiles = null) {
+  // Tailwind v4 CSS-first: configuration is now handled in CSS files
+  // Return a minimal config for content watching only
   if (watchFiles === null) watchFiles = getFilesToWatch()
-  var tailwindConfig = require('./tailwind.config.js')
-  tailwindConfig.content = watchFiles
-  return tailwindConfig
+  return {
+    content: watchFiles,
+  }
 }
 
 /**
@@ -76,7 +78,7 @@ function getEncore(
     )
     .enablePostCssLoader((options) => {
       options.postcssOptions = {
-        plugins: [postcssImport, tailwindcss(tailwindConfig), autoprefixer],
+        plugins: [require('@tailwindcss/postcss')],
       }
     })
     .disableSingleRuntimeChunk()

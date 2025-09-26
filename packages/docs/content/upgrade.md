@@ -19,6 +19,12 @@ If you are doing a major upgrade, find the upgrade guide down there.
 - Drop get('assetsVersionned'), prefer use `getStylesheets` or `getJavascript`
 - Change twig function `page_position` for `breadcrumb_list_position`
 
+### To tailwind v4
+
+- heropattern plugin has been dropped, import manually the properties used in your css (see https://heropatterns.com)
+- multicolumn plugin has been dropped
+- update your project configuration (see example in `packages/docs/assets/`)
+
 ## To 0.1.9973
 
 In your `assets/webpack.config.js`, upgrade the getEncore function to add at the first parameter the symfony webpack-encore dependecy (`const Encore = require('@symfony/webpack-encore')`).

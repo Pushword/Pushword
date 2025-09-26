@@ -24,9 +24,9 @@ Have fun,<br>
 ] %}
 
 <div class="not-prose lg:-mx-40 my-6 md:-mx-20">
-  <ul class="flex flex-row my-5 flex-wrap justify-center mx-auto">
+  <ul class="flex flex-row my-5 flex-wrap justify-center mx-auto space-x-3">
     {% for item in items %}
-      <li class="w-full px-2 my-1 sm:w-1/2 md:w-1/3">
+      <li class="w-full px-1 my-1 sm:w-1/2 md:w-1/3">
         {% include view('/component/card.html.twig') with item only %}
       </li>
     {% endfor %}
