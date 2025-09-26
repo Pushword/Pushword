@@ -27,8 +27,21 @@ window.addEventListener('load', function () {
   filterParentPageFromHost()
   filterImageFormField()
   suggestTags()
+  setBgImageUrlForMosaic()
 })
 
+function setBgImageUrlForMosaic() {
+  console.log('imageEle')
+  const imageElementList = document.querySelectorAll('table.sonata-ba-list td .mosaic-inner-box img')
+  for (const image of imageElementList) {
+    const imageUrl = image.getAttribute('src')
+    image.style.setProperty('height', image.closest('.mosaic-inner-box').clientHeight + 'px')
+    const imageContainer = image.parentElement.parentElement
+
+    // Set the CSS variable on the container
+    imageContainer.style.setProperty('--bg-image-url', `url('${imageUrl}')`)
+  }
+}
 function autoSizeTextarea() {
   document.querySelectorAll('.autosize').forEach(function (element) {
     const adjustHeight = (el) => {

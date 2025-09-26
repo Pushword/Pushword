@@ -226,4 +226,40 @@ textarea.autosize {
   }
 }
 
+// Media list
+table.sonata-ba-list td .mosaic-inner-box-default {
+  position: relative;
+}
+table.sonata-ba-list td .mosaic-inner-box img {
+  object-fit: contain;
+  z-index: 1;
+}
+table.sonata-ba-list td .mosaic-inner-box {
+  position: relative;
+  overflow: hidden;
+  /* Enforces a 16:9 aspect ratio */
+  aspect-ratio: 16 / 9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #000; /* Fallback background color */
+}
+
+table.sonata-ba-list td .mosaic-inner-box::before {
+  z-index: 0;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* The background uses the URL from the CSS variable */
+  background-image: var(--bg-image-url);
+  background-size: cover;
+  background-position: center;
+  /* Applies the blur effect */
+  filter: blur(10px);
+  /* Scales the background to avoid blurred edges */
+  transform: scale(1.1);
+}
 /* purgecss end ignore */
