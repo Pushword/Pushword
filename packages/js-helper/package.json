@@ -30,8 +30,6 @@
     "simple-jekyll-search": "^1.9.1",
     "tailwindcss": "^3",
     "tailwindcss-animated": "^2",
-    "tailwindcss-hero-patterns": "^0.1",
-    "tailwindcss-multi-column": "^1.0.2",
     "webpack": "^5.94",
     "webpack-cli": "^4.9.1 || ^5.0.1",
     "webpack-watch-files-plugin": "^1.1.0"

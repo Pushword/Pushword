@@ -1,12 +1,8 @@
 const colors = require('tailwindcss/colors')
-const heropatterns = require('tailwindcss-hero-patterns/src/patterns')
 
 module.exports = {
   mode: 'jit',
   theme: {
-    heroPatterns: {
-      bubbles: heropatterns.bubbles,
-    },
     flex: {
       1: '1 1 0%',
       auto: '1 1 auto',
@@ -123,5 +119,5 @@ module.exports = {
     },
     width: ['responsive', 'hover', 'focus'],
   },
-  plugins: [require('@tailwindcss/typography'), require('@tailwindcss/aspect-ratio'), require('tailwindcss-hero-patterns')],
+  plugins: [require('@tailwindcss/typography'), require('@tailwindcss/aspect-ratio')],
 }
