@@ -4,56 +4,34 @@ namespace Pushword\Core\Twig;
 
 use InvalidArgumentException;
 use LogicException;
-use Override;
 use Pagerfanta\Adapter\ArrayAdapter;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\PagerfantaInterface;
 use Pagerfanta\RouteGenerator\RouteGeneratorFactoryInterface;
 use Pagerfanta\Twig\View\TwigView;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\StringToDQLCriteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFunction;
 
-final class PageExtension extends AbstractExtension
+final class PageExtension
 {
     public function __construct(
         private readonly PageRepository $pageRepo,
         public PushwordRouteGenerator $router,
         private readonly AppPool $apps,
         public Twig $twig,
-        private readonly ManagerPool $entityFilterManagerPool,
         private readonly RouteGeneratorFactoryInterface $routeGeneratorFactory,
         private readonly RequestStack $requestStack
     ) {
     }
 
-    /**
-     * @return TwigFunction[]
-     */
-    #[Override]
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('pages', $this->getPublishedPages(...)),
-            new TwigFunction('page_uri_list', $this->getPageUriList(...)),
-            new TwigFunction('p', $this->getPublishedPage(...)),
-            new TwigFunction('pw', $this->entityFilterManagerPool->getProperty(...)),
-            new TwigFunction('breadcrumb_list_position', $this->getBreadcrumbListPosition(...)),
-            new TwigFunction('pageContainsBlock', $this->pageContainsBlock(...)),
-
-            new TwigFunction('pager', $this->renderPager(...), AppExtension::options()),
-            new TwigFunction('pages_list', $this->renderPagesList(...), AppExtension::options()),
-        ];
-    }
-
+    #[AsTwigFunction('pageContainsBlock')]
     public function pageContainsBlock(Page $page, string $blockId): bool
     {
         $mainContent = $page->getMainContent();
@@ -69,6 +47,7 @@ final class PageExtension extends AbstractExtension
         return str_contains($mainContent, ' id='.$blockId.'');
     }
 
+    #[AsTwigFunction('breadcrumb_list_position')]
     public function getBreadcrumbListPosition(Page $page): int
     {
         if (null !== ($parentPage = $page->getParentPage())) {
@@ -83,6 +62,7 @@ final class PageExtension extends AbstractExtension
      *
      * @return string[]
      */
+    #[AsTwigFunction('page_uri_list')]
     public function getPageUriList(string|array|null $host = null): array
     {
         return $this->pageRepo->getPageUriList($host ?? $this->apps->getMainHost() ?? []);
@@ -96,6 +76,7 @@ final class PageExtension extends AbstractExtension
      *
      * @return Page[]
      */
+    #[AsTwigFunction('pages')]
     public function getPublishedPages($host = null, array|string $where = [], array|string $order = 'priority,publishedAt', array|int $max = 0, bool $withRedirection = false): array
     {
         $currentPage = $this->apps->getCurrentPage();
@@ -112,6 +93,7 @@ final class PageExtension extends AbstractExtension
     /**
      * @param string|string[]|null $host
      */
+    #[AsTwigFunction('p')]
     public function getPublishedPage(string $slug, $host = null): ?Page
     {
         $pages = $this->pageRepo->getPublishedPages(
@@ -168,6 +150,7 @@ final class PageExtension extends AbstractExtension
      * @param int|array<(string|int), int>       $max    if max is int => max result,
      *                                                   if max is array => paginate where 0 => item per page and 1 (fac) maxPage
      */
+    #[AsTwigFunction('pages_list', isSafe: ['html'], needsEnvironment: false)]
     public function renderPagesList(
         array|string $search = '',
         array|int $max = 0,
@@ -236,6 +219,7 @@ final class PageExtension extends AbstractExtension
      *
      * @throws InvalidArgumentException if the $viewName argument is an invalid type
      */
+    #[AsTwigFunction('pager', isSafe: ['html'], needsEnvironment: false)]
     public function renderPager(
         PagerfantaInterface $pagerfanta,
         array $options = [],

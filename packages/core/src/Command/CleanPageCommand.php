@@ -5,21 +5,15 @@ namespace Pushword\Core\Command;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'pushword:page:clean')]
-final class CleanPageCommand extends Command
+final readonly class CleanPageCommand
 {
-    public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly PageRepository $pageRepo,
-    ) {
-        parent::__construct();
+    public function __construct(private EntityManagerInterface $em, private PageRepository $pageRepo)
+    {
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function __invoke(): int
     {
         $pages = $this->pageRepo->findAll();
         foreach ($pages as $page) {

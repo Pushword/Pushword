@@ -2,16 +2,15 @@
 
 namespace Pushword\Core\Twig;
 
-use Override;
 use Pushword\Core\Component\App\AppPool;
+use stdClass;
+use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFunction;
 
 /**
  * @template T of object
  */
-class BlockExtension extends AbstractExtension
+class BlockExtension
 {
     public function __construct(
         private readonly AppPool $apps,
@@ -20,22 +19,11 @@ class BlockExtension extends AbstractExtension
     }
 
     /**
-     * @return TwigFunction[]
-     */
-    #[Override]
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('gallery', $this->renderGallery(...), AppExtension::options()),
-            new TwigFunction('attaches', $this->renderAttaches(...), AppExtension::options()),
-        ];
-    }
-
-    /**
      * @param array<mixed> $block
      */
+    #[AsTwigFunction('attaches', isSafe: ['html'], needsEnvironment: false)]
     public function renderAttaches(
-        array $block,
+        array|stdClass $block,
     ): string {
         $template = $this->apps->get()->getView('/component/attaches.html.twig');
 
@@ -47,6 +35,7 @@ class BlockExtension extends AbstractExtension
     /**
      * @param array<mixed> $images
      */
+    #[AsTwigFunction('gallery', isSafe: ['html'], needsEnvironment: false)]
     public function renderGallery(
         array $images,
         ?string $gridCols = null,

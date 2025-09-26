@@ -290,10 +290,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
     {
         return [
             new NotBlank(),
-            new Length([
-                'max' => 100,
-                'maxMessage' => 'conversation.name.long',
-            ]),
+            new Length(max: 100, maxMessage: 'conversation.name.long'),
         ];
     }
 
@@ -306,16 +303,14 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             return [
                 new NotBlank(),
                 new AtLeastOneOf([
-                    new Email(['message' => 'conversation.email.invalid']),
-                    new Regex([
-                        'pattern' => "/^ *(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4} *$/", 'message' => 'user.phoneNumber.invalid',
-                    ]),
+                    new Email(message: 'conversation.email.invalid'),
+                    new Regex(pattern: "/^ *(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4} *$/", message: 'user.phoneNumber.invalid'),
                 ])];
         }
 
         return [
             new NotBlank(),
-            new Email(['message' => 'conversation.email.invalid', 'mode' => 'strict']),
+            new Email(message: 'conversation.email.invalid', mode: 'strict'),
         ];
     }
 }

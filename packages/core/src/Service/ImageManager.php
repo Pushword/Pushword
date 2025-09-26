@@ -17,6 +17,8 @@ use function Safe\filesize;
 
 use Spatie\ImageOptimizer\OptimizerChain;
 use Symfony\Component\Filesystem\Filesystem;
+use Twig\Attribute\AsTwigFilter;
+use Twig\Attribute\AsTwigFunction;
 
 final class ImageManager
 {
@@ -97,7 +99,7 @@ final class ImageManager
 
         $quality = (int) ($filters[$filterName]['quality'] ?? 90); // @phpstan-ignore-line
 
-        $this->createFilterDir(\dirname($this->getFilterPath($media,  $filterName)));
+        $this->createFilterDir(\dirname($this->getFilterPath($media, $filterName)));
 
         $image->encode(new AutoEncoder(quality: $quality))->save($this->getFilterPath($media, $filterName));
         $image->toWebp($quality)->save($this->getFilterPath($media, $filterName, 'webp'));
@@ -141,6 +143,7 @@ final class ImageManager
         return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/'.$filterName.'/'.$fileName;
     }
 
+    #[AsTwigFilter('image')]
     public function getBrowserPath(Media|string $media, string $filterName = 'default', ?string $extension = null): string
     {
         return $this->getFilterPath($media, $filterName, $extension, true);
@@ -149,6 +152,7 @@ final class ImageManager
     /**
      * @return int[] index 0 contains width, index 1 height
      */
+    #[AsTwigFunction('image_dimensions')]
     public function getDimensions(Media|string $media): array
     {
         $path = $this->getFilterPath($media, 'xs');

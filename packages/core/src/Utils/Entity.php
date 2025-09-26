@@ -30,7 +30,7 @@ class Entity
     {
         $reflectionClass = new ReflectionClass($object::class);
         $properties = array_filter($reflectionClass->getProperties(), static function (ReflectionProperty $property) {
-            if (self::containAttribute($property->getAttributes(),  Column::class)) {
+            if (self::containAttribute($property->getAttributes(), Column::class)) {
                 return true;
             }
         });

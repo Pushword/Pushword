@@ -2,14 +2,16 @@
 
 namespace Pushword\Core\Service;
 
+use Cocur\Slugify\Slugify;
 use Exception;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
-final readonly class LinkProvider
+final class LinkProvider
 {
     public function __construct(
         private PushwordRouteGenerator $router,
@@ -27,6 +29,8 @@ final readonly class LinkProvider
      * @param array<string, string>|string|Page $path
      * @param array<string, string>|bool|string $attr
      */
+    #[AsTwigFunction('link', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('jslink', isSafe: ['html'], needsEnvironment: false)]
     public function renderLink(string $anchor, array|Page|string $path, array|bool|string $attr = [], bool $obfuscate = true): string
     {
         if (\is_bool($attr)) {
@@ -70,11 +74,13 @@ final readonly class LinkProvider
     }
 
     /** alias for compatibility with v0.* */
+    #[AsTwigFunction('encrypt')]
     public static function encrypt(string $path): string
     {
         return self::obfuscate($path);
     }
 
+    #[AsTwigFunction('obfuscate')]
     public static function obfuscate(string $path): string
     {
         if (str_starts_with($path, 'http://')) {
@@ -106,6 +112,8 @@ final readonly class LinkProvider
         return $path;
     }
 
+    #[AsTwigFunction('mail', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('email', isSafe: ['html'], needsEnvironment: false)]
     public function renderEncodedMail(string $mail, string $class = ''): string
     {
         // LINK packages/core/src/templates/component/encoded_mail.html.twig
@@ -133,6 +141,7 @@ final readonly class LinkProvider
         .' 0-1.442-.725-1.442-1.914z"/></svg>', $mail);
     }
 
+    #[AsTwigFunction('tel', isSafe: ['html'], needsEnvironment: false)]
     public function renderPhoneNumber(string $number, string $class = ''): string
     {
         $template = $this->apps->get()->getView('/component/phone_number.html.twig');
@@ -142,5 +151,17 @@ final readonly class LinkProvider
             'number_readable' => str_replace(' ', '&nbsp;', preg_replace('#^\+\d{2} ?#', '0', $number) ?? throw new Exception()),
             'class' => $class,
         ]));
+    }
+
+    #[AsTwigFunction('bookmark', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('anchor', isSafe: ['html'], needsEnvironment: false)]
+    public function renderTxtAnchor(string $name): string
+    {
+        $template = $this->apps->get()->getView('/component/txt_anchor.html.twig');
+
+        $slugify = new Slugify();
+        $name = $slugify->slugify($name);
+
+        return $this->twig->render($template, ['name' => $name]);
     }
 }

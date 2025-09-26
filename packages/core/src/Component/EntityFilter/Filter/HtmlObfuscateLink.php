@@ -67,7 +67,7 @@ final class HtmlObfuscateLink extends ObfuscateLink
                 $this->getHrefValue($matches, $k),
                 $attr
             );
-            $body = str_replace($matches[0][$k],  $link, $body);
+            $body = str_replace($matches[0][$k], $link, $body);
         }
 
         return $body;

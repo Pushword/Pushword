@@ -4,7 +4,7 @@ declare(strict_types=1);
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
-use Rector\Symfony\Symfony73\Rector\Class_\GetFunctionsToAsTwigFunctionAttributeRector;
+use Rector\Symfony\Set\SymfonySetList;
 
 $paths = [
     __DIR__.'/packages',
@@ -22,16 +22,16 @@ return RectorConfig::configure()
     ->withRootFiles()
     ->withSymfonyContainerPhp(__DIR__.'/packages/skeleton/tests/symfonyContainer.php')
     ->withComposerBased(
-        doctrine: true,
         twig: true,
+        doctrine: true,
         phpunit: true
     )
     ->withPreparedSets(
         codeQuality: true,
         codingStyle: true,
-        earlyReturn: true,
         typeDeclarations: true,
         instanceOf: true,
+        earlyReturn: true,
         symfonyCodeQuality: true,
         // symfonyConfigs: true
     )
@@ -39,8 +39,8 @@ return RectorConfig::configure()
         symfony: true,
         doctrine: true
     )
-    ->withRules([
-        GetFunctionsToAsTwigFunctionAttributeRector::class,
+    ->withSets([
+        SymfonySetList::SYMFONY_73,
     ])
     ->withSkip([
         'packages/core/src/Twig/AppExtension.php',

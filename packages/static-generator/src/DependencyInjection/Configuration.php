@@ -62,10 +62,10 @@ class Configuration implements ConfigurationInterface
                 ->defaultTrue()
             ->end()
             ->variableNode('static_generators')
-                ->defaultValue(static::DEFAULT_GENERATOR)
+                ->defaultValue(self::DEFAULT_GENERATOR)
                 ->validate()
-                    ->ifInArray(['apache'])->then(static fn (): array => static::DEFAULT_GENERATOR)
-                    ->ifInArray(['github'])->then(static fn (): array => static::DEFAULT_GENERATOR_GITHUB)
+                    ->ifInArray(['apache'])->then(static fn (): array => self::DEFAULT_GENERATOR)
+                    ->ifInArray(['github'])->then(static fn (): array => self::DEFAULT_GENERATOR_GITHUB)
                 ->end()
             ->end()
 
@@ -79,7 +79,7 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->variableNode('static_copy')
                 ->info('file or folder in your public dir to copy in static')
-                ->defaultValue(static::DEFAULT_COPY)
+                ->defaultValue(self::DEFAULT_COPY)
             ->end()
         ->end();
 

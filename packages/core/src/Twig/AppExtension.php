@@ -9,12 +9,11 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FilesizeFormatter;
 use Pushword\Core\Utils\HtmlBeautifer;
 use Pushword\Core\Utils\MarkdownParser;
+use Twig\Attribute\AsTwigFilter;
+use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFilter;
-use Twig\TwigFunction;
 
-final class AppExtension extends AbstractExtension
+final class AppExtension
 {
     public function __construct(
         public PushwordRouteGenerator $router,
@@ -23,37 +22,7 @@ final class AppExtension extends AbstractExtension
     ) {
     }
 
-    /**
-     * @return TwigFilter[]
-     */
-    public function getFilters(): array
-    {
-        return [
-            new TwigFilter('md5', 'md5'),
-            new TwigFilter('html_entity_decode', 'html_entity_decode'),
-            new TwigFilter('slugify', [new Slugify(), 'slugify']),
-            new TwigFilter('preg_replace', [self::class, 'pregReplace']),
-            new TwigFilter('nice_punctuation', [HtmlBeautifer::class, 'punctuationBeautifer'], self::options()),
-            new TwigFilter('markdown', [new MarkdownParser(), 'transform'], self::options()),
-            new TwigFilter('unprose', [$this, 'unprose'], self::options()),
-            new TwigFilter('escapeTwig', [$this, 'escapeTwig'], self::options()),
-        ];
-    }
-
-    /**
-     * @return TwigFunction[]
-     */
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('view', [$this, 'getView'], ['needs_environment' => false]),
-            new TwigFunction('filesize', [FilesizeFormatter::class, 'formatBytes'], self::options()),
-            new TwigFunction('contains_link_to', [$this, 'containsLinkTo'], self::options()),
-            new TwigFunction('class_exists', 'class_exists'),
-            new TwigFunction('breadcrumbJsonLd', [$this, 'generateBreadcrumbJsonLd'], self::options()),
-        ];
-    }
-
+    #[AsTwigFilter('escapeTwig')]
     public function escapeTwig(string $text): string
     {
         $text = htmlspecialchars($text);
@@ -63,16 +32,7 @@ final class AppExtension extends AbstractExtension
         return $text;
     }
 
-    /**
-     * @param array<string> $isSafe
-     *
-     * @return array<string, mixed>
-     */
-    public static function options(bool $needsEnv = false, array $isSafe = ['html']): array
-    {
-        return ['is_safe' => $isSafe, 'needs_environment' => $needsEnv];
-    }
-
+    #[AsTwigFunction('view', needsEnvironment: false)]
     public function getView(string $path, ?string $fallback = null): string
     {
         return null !== $fallback ? $this->apps->get()->getView($path, $fallback)
@@ -86,11 +46,13 @@ final class AppExtension extends AbstractExtension
      *
      * @return ($subject is array ? string[] : string)
      */
+    #[AsTwigFilter('preg_replace')]
     public static function pregReplace(array|string $subject, array|string $pattern, array|string $replacement): array|string
     {
         return preg_replace($pattern, $replacement, $subject) ?? throw new \Exception();
     }
 
+    #[AsTwigFunction('contains_link_to')]
     public function containsLinkTo(string $slug, ?string $content = null): bool
     {
         if (null === $content) {
@@ -107,9 +69,7 @@ final class AppExtension extends AbstractExtension
             || str_contains($content, '"/'.$slug.'\"');
     }
 
-    /**
-     * Twig filters.
-     */
+    #[AsTwigFilter('unprose', isSafe: ['html'], needsEnvironment: false)]
     public function unprose(string $html): string
     {
         /** @var Twig */
@@ -123,6 +83,7 @@ final class AppExtension extends AbstractExtension
         return '<div class="'.$unproseClass.'">'.$html.'</div>';
     }
 
+    #[AsTwigFunction('breadcrumbJsonLd')]
     public function generateBreadcrumbJsonLd(Page $page): string
     {
         $breadcrumbs = [];
@@ -150,5 +111,47 @@ final class AppExtension extends AbstractExtension
         ];
 
         return \Safe\json_encode($jsonLd, \JSON_UNESCAPED_SLASHES | \JSON_PRETTY_PRINT);
+    }
+
+    #[AsTwigFilter('md5')]
+    public function md5Filter(string $string): string
+    {
+        return md5($string);
+    }
+
+    #[AsTwigFilter('html_entity_decode')]
+    public function htmlEntityDecodeFilter(string $string): string
+    {
+        return html_entity_decode($string);
+    }
+
+    #[AsTwigFilter('slugify')]
+    public function slugifyFilter(string $string): string
+    {
+        return (new Slugify())->slugify($string);
+    }
+
+    #[AsTwigFilter('nice_punctuation')]
+    public function nicePunctuationFilter(string $string): string
+    {
+        return HtmlBeautifer::punctuationBeautifer($string);
+    }
+
+    #[AsTwigFilter('markdown')]
+    public function markdownFilter(string $string): string
+    {
+        return (new MarkdownParser())->transform($string);
+    }
+
+    #[AsTwigFunction('filesize')]
+    public function filesizeFunction(int $bytes): string
+    {
+        return FilesizeFormatter::formatBytes($bytes);
+    }
+
+    #[AsTwigFunction('class_exists')]
+    public function classExistsFunction(string $class): bool
+    {
+        return class_exists($class);
     }
 }

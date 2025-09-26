@@ -38,7 +38,7 @@ final readonly class Manager
         private ManagerPool $managerPool,
         private EventDispatcherInterface $eventDispatcher,
         private LinkProvider $linkProvider,
-        public readonly Page $page
+        public Page $page
     ) {
         $this->apps = $managerPool->apps;
         $this->twig = $managerPool->twig;
@@ -96,7 +96,7 @@ final readonly class Manager
         }
 
         return [] !== $filters
-            ? $this->applyFilters($property,  '' !== \strval($propertyValue) ? $propertyValue : '', $filters)
+            ? $this->applyFilters($property, '' !== \strval($propertyValue) ? $propertyValue : '', $filters)
             : $propertyValue;
     }
 

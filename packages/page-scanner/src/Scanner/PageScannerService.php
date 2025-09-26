@@ -39,8 +39,8 @@ final class PageScannerService
         $this->router = $pwRouter;
         $this->router->setUseCustomHostPath(false);
 
-        static::loadKernel($kernel);
-        static::getKernel()->getContainer()->get(PushwordRouteGenerator::class)->setUseCustomHostPath(false);
+        self::loadKernel($kernel);
+        self::getKernel()->getContainer()->get(PushwordRouteGenerator::class)->setUseCustomHostPath(false);
     }
 
     private function resetErrors(): void
@@ -66,7 +66,7 @@ final class PageScannerService
     private function getHtml(Page $page, string $liveUri): string
     {
         $request = Request::create($liveUri);
-        $response = static::getKernel()->handle($request);
+        $response = self::getKernel()->handle($request);
 
         if ($response->isRedirect()) {
             // todo: log: not normal, it must be caught before by doctrine

@@ -9,6 +9,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
 final class ManagerPool
@@ -42,6 +43,7 @@ final class ManagerPool
     /**
      * @return mixed|Manager
      */
+    #[AsTwigFunction('pw')]
     public function getProperty(Page $page, string $property = ''): mixed
     {
         $manager = $this->getManager($page);

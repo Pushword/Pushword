@@ -5,31 +5,20 @@ namespace Pushword\Core\Command;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Pushword\Core\Entity\User;
+use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-#[AsCommand(name: 'pushword:user:create')]
-final class UserCreateCommand extends Command
+#[AsCommand(name: 'pushword:user:create', description: 'Create a new user')]
+final readonly class UserCreateCommand
 {
-    public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly UserPasswordHasherInterface $passwordEncoder,
-    ) {
-        parent::__construct();
-    }
-
-    protected function configure(): void
+    public function __construct(private EntityManagerInterface $em, private UserPasswordHasherInterface $passwordEncoder)
     {
-        $this->setDescription('Create a new user')
-            ->addArgument('email', InputArgument::OPTIONAL)
-            ->addArgument('password', InputArgument::OPTIONAL)
-            ->addArgument('role', InputArgument::OPTIONAL);
     }
 
     protected function createUser(string $email, string $password, string $role): void
@@ -43,7 +32,10 @@ final class UserCreateCommand extends Command
         $this->em->flush();
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function __invoke(#[Argument(name: 'email')]
+        ?string $email, #[Argument(name: 'password')]
+        ?string $password, #[Argument(name: 'role')]
+        ?string $role, InputInterface $input, OutputInterface $output): int
     {
         $email = $this->getOrAskIfNotSetted($input, $output, 'email');
         $password = $this->getOrAskIfNotSetted($input, $output, 'password');
@@ -53,13 +45,12 @@ final class UserCreateCommand extends Command
 
         $output->writeln('<info>User `'.$email.'` created with success.</info>');
 
-        return 0;
+        return Command::SUCCESS;
     }
 
     private function getOrAskIfNotSetted(InputInterface $input, OutputInterface $output, string $argument, string $default = ''): string
     {
-        /** @var QuestionHelper $helper */
-        $helper = $this->getHelper('question');
+        $helper = new QuestionHelper();
         /** @var bool|float|int|string|null */
         $argumentValue = $input->getArgument($argument);
 

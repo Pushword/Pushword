@@ -2,13 +2,11 @@
 
 namespace Pushword\Core\Twig;
 
-use Override;
 use Pushword\Core\Component\App\AppPool;
+use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFunction;
 
-final class VideoExtension extends AbstractExtension
+final class VideoExtension
 {
     public function __construct(
         private readonly Twig $twig,
@@ -16,18 +14,7 @@ final class VideoExtension extends AbstractExtension
     ) {
     }
 
-    /**
-     * @return TwigFunction[]
-     */
-    #[Override]
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('video', $this->renderVideo(...), AppExtension::options()),
-            new TwigFunction('url_to_embed', $this->getEmbedCode(...)),
-        ];
-    }
-
+    #[AsTwigFunction('video', isSafe: ['html'], needsEnvironment: false)]
     public function renderVideo(string $url, string $image, string $alternativeText = '', bool $forceUrl = false): string
     {
         $template = $this->apps->get()->getView('/component/video.html.twig');
@@ -50,7 +37,8 @@ final class VideoExtension extends AbstractExtension
         return '';
     }
 
-    private function getEmbedCode(string $embed_code): string
+    #[AsTwigFunction('url_to_embed')]
+    public function getEmbedCode(string $embed_code): string
     {
         if (($id = $this->getYoutubeVideoUrl($embed_code)) !== '') {
             $template = $this->apps->get()->getView('/component/video_youtube_embed.html.twig');

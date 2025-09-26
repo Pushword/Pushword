@@ -6,6 +6,7 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
+use Twig\Attribute\AsTwigFunction;
 
 final class PushwordRouteGenerator
 {
@@ -37,6 +38,7 @@ final class PushwordRouteGenerator
      * and / for YY page home if your default language is YY
      * X/Y may be en/fr/...
      */
+    #[AsTwigFunction('homepage')]
     public function generatePathForHomePage(?Page $page = null, bool $canonical = false): string
     {
         $homepage = (new Page())->setSlug('');

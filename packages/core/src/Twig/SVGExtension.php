@@ -3,37 +3,25 @@
 namespace Pushword\Core\Twig;
 
 use Exception;
-use Override;
 use PiedWeb\RenderAttributes\Attribute;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Utils\FontAwesome5To6 as SvgFontAwesome5To6;
 
 use function Safe\mime_content_type;
 
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFunction;
+use Twig\Attribute\AsTwigFunction;
 
-class SVGExtension extends AbstractExtension
+class SVGExtension
 {
     public function __construct(private readonly AppPool $apps)
     {
     }
 
     /**
-     * @return TwigFunction[]
-     */
-    #[Override]
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('svg', $this->getSvg(...), ['needs_environment' => false, 'is_safe' => ['html']]),
-        ];
-    }
-
-    /**
      * @param array<string, string>|string $attr
      * @param string[]|string              $dir
      */
+    #[AsTwigFunction('svg', needsEnvironment: false, isSafe: ['html'])]
     public function getSvg(string $name, array|string $attr = ['class' => 'fill-current w-4 inline-block -mt-1'], array|string $dir = '', bool $retryWithFontAwesome5IconsRenamed = true): string
     {
         if (\is_string($attr)) {

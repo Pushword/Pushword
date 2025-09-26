@@ -4,17 +4,15 @@ namespace Pushword\Conversation\Twig;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Override;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\Routing\RouterInterface;
+use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFunction;
 
-class AppExtension extends AbstractExtension
+class AppExtension
 {
     private readonly AppConfig $app;
 
@@ -26,18 +24,7 @@ class AppExtension extends AbstractExtension
         $this->app = $apps->get();
     }
 
-    /**
-     * @return TwigFunction[]
-     */
-    #[Override]
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('showConversation', $this->showConversation(...), ['is_safe' => ['html'], 'needs_environment' => true]),
-            new TwigFunction('conversation', $this->getConversationRoute(...)),
-        ];
-    }
-
+    #[AsTwigFunction('conversation')]
     public function getConversationRoute(string $type): string
     {
         $page = $this->apps->getCurrentPage();
@@ -52,6 +39,7 @@ class AppExtension extends AbstractExtension
         ]);
     }
 
+    #[AsTwigFunction('showConversation', isSafe: ['html'], needsEnvironment: true)]
     public function showConversation(
         Twig $twig,
         string $referring,

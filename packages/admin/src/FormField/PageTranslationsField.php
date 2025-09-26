@@ -9,9 +9,9 @@ use Pushword\Core\Repository\PageRepository;
 use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\AdminBundle\Form\FormMapper;
 use Sonata\AdminBundle\Form\Type\ModelAutocompleteType;
-use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\HttpFoundation\Session\Session;
 
 /**
  * @extends AbstractField<Page>
@@ -45,12 +45,12 @@ class PageTranslationsField extends AbstractField
         ]);
 
         $formBuilder = $form->getFormBuilder();
-        $formBuilder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($page) {
+        $formBuilder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($page): void {
             $form = $event->getForm();
             /** @var ArrayCollection<int, Page> $translations */
             $translations = $form->get('translations')->getData();
 
-            /** @var \Symfony\Component\HttpFoundation\Session\Session */
+            /** @var Session */
             $session = $this->admin->getRequest()->getSession();
 
             if (! $translations->isEmpty() && '' !== $page->getLocale()) {

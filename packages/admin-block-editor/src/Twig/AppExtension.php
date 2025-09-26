@@ -2,7 +2,6 @@
 
 namespace Pushword\AdminBlockEditor\Twig;
 
-use Override;
 use PiedWeb\RenderAttributes\Attribute;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Router\PushwordRouteGenerator;
@@ -11,11 +10,10 @@ use function Safe\json_decode;
 use function Safe\json_encode;
 
 use stdClass;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFilter;
-use Twig\TwigFunction;
+use Twig\Attribute\AsTwigFilter;
+use Twig\Attribute\AsTwigFunction;
 
-class AppExtension extends AbstractExtension
+class AppExtension
 {
     public function __construct(
         private readonly AppPool $appPool,
@@ -24,32 +22,10 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @return TwigFunction[]
-     */
-    #[Override]
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('blockWrapperAttr', $this->blockWrapperAttr(...), ['is_safe' => ['html'], 'needs_environment' => false]),
-            new TwigFunction('needBlockWrapper', $this->needBlockWrapper(...), ['is_safe' => ['html'], 'needs_environment' => false]),
-        ];
-    }
-
-    /**
-     * @return TwigFilter[]
-     */
-    #[Override]
-    public function getFilters(): array
-    {
-        return [
-            new TwigFilter('fixHref', $this->fixHref(...), ['is_safe' => ['html'], 'needs_environment' => false]),
-        ];
-    }
-
-    /**
      * @param array<mixed>|stdClass $blockData
      * @param array<mixed>          $attributes
      */
+    #[AsTwigFunction('blockWrapperAttr', isSafe: ['html'], needsEnvironment: false)]
     public function blockWrapperAttr(array|stdClass $blockData, array $attributes = []): string
     {
         $blockData = (array) json_decode(json_encode($blockData), true);
@@ -91,11 +67,13 @@ class AppExtension extends AbstractExtension
     /**
      * @param array<mixed>|stdClass $blockData
      */
+    #[AsTwigFunction('needBlockWrapper', isSafe: ['html'], needsEnvironment: false)]
     public function needBlockWrapper(array|stdClass $blockData): bool
     {
         return '' !== trim($this->blockWrapperAttr($blockData));
     }
 
+    #[AsTwigFilter('fixHref', isSafe: ['html'], needsEnvironment: false)]
     public function fixHref(string $text): string
     {
         $regex = '/"(https?)?:\/\/([a-zA-Z0-9.-:]+)\/'.$this->getHostsRegex().'\/?([^"]*)"/';

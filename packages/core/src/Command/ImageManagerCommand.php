@@ -2,27 +2,26 @@
 
 namespace Pushword\Core\Command;
 
+use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\ImageManager;
+use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'pushword:image:cache')]
-final class ImageManagerCommand extends Command
+#[AsCommand(name: 'pushword:image:cache', description: 'Generate all images cache')]
+final class ImageManagerCommand
 {
-    use ImageCommandTrait;
-
-    protected function configure(): void
-    {
-        $this->setDescription('Generate all images cache')
-            ->addArgument('media', InputArgument::OPTIONAL, 'Image name (eg: filename.jpg).');
+    public function __construct(
+        private MediaRepository $mediaRepository,
+        private ImageManager $imageManager,
+    ) {
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function __invoke(#[Argument(name: 'media', description: 'Image name (eg: filename.jpg).')]
+        ?string $mediaName, OutputInterface $output): int
     {
-        $medias = $this->getMedias($input);
+        $medias = null !== $mediaName ? $this->mediaRepository->findBy(['media' => $mediaName]) : $this->mediaRepository->findAll();
 
         $progressBar = new ProgressBar($output, \count($medias));
         $progressBar->setMessage('');

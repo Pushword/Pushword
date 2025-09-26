@@ -36,7 +36,7 @@ class CopierGenerator extends AbstractGenerator
         ];
         foreach ($commonFaviconsSpotList as $faviconSpot) {
             if (file_exists($this->publicDir.'/'.$faviconSpot)) {
-                $this->copyOrSymlink($faviconSpot,  $symlink, 'favicon.ico');
+                $this->copyOrSymlink($faviconSpot, $symlink, 'favicon.ico');
             }
         }
     }
@@ -50,7 +50,7 @@ class CopierGenerator extends AbstractGenerator
         return $path;
     }
 
-    private function copyOrSymlink(string $entry,  bool $symlink, ?string $to = null): void
+    private function copyOrSymlink(string $entry, bool $symlink, ?string $to = null): void
     {
         $from = $this->publicDir.'/'.$entry;
         $to = $this->getStaticDir().'/'.($to ?? $entry);
@@ -61,7 +61,7 @@ class CopierGenerator extends AbstractGenerator
 
         if ($symlink) {
             $symlinkDest = str_replace($this->params->get('kernel.project_dir').'/', $this->getSymlinkOriginDir(), $from);
-            $this->filesystem->symlink($symlinkDest,  $to);
+            $this->filesystem->symlink($symlinkDest, $to);
 
             return;
         }

@@ -21,7 +21,7 @@ abstract class AbstractAdminTestClass extends PantherTestCase
             return $this->client;
         }
 
-        $client = $client ?? static::createClient();
+        $client ??= static::createClient();
         $this->client = $client;
 
         self::createUser();

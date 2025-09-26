@@ -12,26 +12,18 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Yaml\Yaml;
 
-#[AsCommand(name: 'pushword:new')]
-final class NewCommand extends Command
+#[AsCommand(name: 'pushword:new', description: 'Add a new website into your config file (config/packages/pushword.yaml).')]
+final readonly class NewCommand
 {
-    public function __construct(
-        private readonly string $projectDir
-    ) {
-        parent::__construct();
-    }
-
-    protected function configure(): void
+    public function __construct(private string $projectDir)
     {
-        $this->setDescription('Add a new website into your config file (config/packages/pushword.yaml).');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function __invoke(InputInterface $input, OutputInterface $output): int
     {
         $configFile = $this->projectDir.'/config/packages/pushword.yaml';
 
-        /** @var QuestionHelper $helper */
-        $helper = $this->getHelper('question');
+        $helper = new QuestionHelper();
         $question = new Question('Main domain (default: localhost.dev):', 'localhost.dev');
         $mainDomain = $helper->ask($input, $output, $question);
 

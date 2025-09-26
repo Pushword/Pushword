@@ -8,23 +8,17 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 #[AsCommand(name: 'bulkContentEdit')]
-final class BulkEditExampleCommand extends Command
+final readonly class BulkEditExampleCommand
 {
-    public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly PageRepository $pageRepo,
-        private readonly Filesystem $fs,
-    ) {
-        parent::__construct();
+    public function __construct(private EntityManagerInterface $em, private PageRepository $pageRepo, private Filesystem $fs)
+    {
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function __invoke(OutputInterface $output): int
     {
         $backupFileName = 'var/app.db~'.date('YmdHis');
         $this->fs->copy('var/app.db', $backupFileName);

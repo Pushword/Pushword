@@ -3,7 +3,6 @@
 namespace Pushword\Core\Twig;
 
 use Exception;
-use Override;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\ImageManager;
@@ -11,17 +10,15 @@ use Pushword\Core\Service\PageOpenGraphImageGenerator;
 
 use function Safe\preg_match;
 
+use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFilter;
-use Twig\TwigFunction;
 
 /**
  * @template T of object
  *
  *
  *  */
-class MediaExtension extends AbstractExtension
+class MediaExtension
 {
     public function __construct(
         public Twig $twig,
@@ -30,30 +27,7 @@ class MediaExtension extends AbstractExtension
     ) {
     }
 
-    /**
-     * @return TwigFilter[]
-     */
-    #[Override]
-    public function getFilters(): array
-    {
-        return [
-            new TwigFilter('image', $this->imageManager->getBrowserPath(...)),
-        ];
-    }
-
-    /**
-     * @return TwigFunction[]
-     */
-    #[Override]
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('media_from_string', $this->transformStringToMedia(...)),
-            new TwigFunction('image_dimensions', $this->imageManager->getDimensions(...)),
-            new TwigFunction('open_graph_image_generated_path', $this->getOpenGraphImageGeneratedPath(...)),
-        ];
-    }
-
+    #[AsTwigFunction('open_graph_image_generated_path')]
     public function getOpenGraphImageGeneratedPath(Page $page): ?string
     {
         $this->pageOpenGraphImageGenerator->page = $page;
@@ -83,6 +57,7 @@ class MediaExtension extends AbstractExtension
      * Convert the source path (often /media/default/... or just ...) in a Media Object
      * /!\ No search in db.
      */
+    #[AsTwigFunction('media_from_string')]
     public function transformStringToMedia(Media|string $src, string $name = ''): Media
     {
         $src = \is_string($src) ? $this->normalizeMediaPath($src) : $src;

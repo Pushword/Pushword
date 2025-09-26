@@ -6,6 +6,7 @@ use Override;
 use Pushword\Admin\FormField\PageMainImageField;
 use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Twig\Attribute\AsTwigFunction;
 
 class PageAdvancedMainImageFormField extends PageMainImageField
 {
@@ -31,6 +32,7 @@ class PageAdvancedMainImageFormField extends PageMainImageField
         ]);
     }
 
+    #[AsTwigFunction('heroSize')]
     public static function formatToRatio(int $format): string
     {
         return match ($format) {

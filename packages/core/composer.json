@@ -13,7 +13,7 @@
     "doctrine/doctrine-bundle": "^2.2.2",
     "doctrine/doctrine-fixtures-bundle": "^4",
     "doctrine/orm": "^3.0",
-    "fortawesome/font-awesome": "^6.1",
+    "fortawesome/font-awesome": "^7",
     "intervention/image": "^3.2",
     "michelf/php-markdown": "^2",
     "pagerfanta/twig": "^4.1",

@@ -10,7 +10,7 @@ use function Safe\json_encode;
 
 final readonly class EditorJsPurifier
 {
-    public function __construct(private string $locale = 'fr_FR', private readonly ?Page $page = null, private readonly string $base = '')
+    public function __construct(private string $locale = 'fr_FR', private ?Page $page = null, private string $base = '')
     {
     }
 
