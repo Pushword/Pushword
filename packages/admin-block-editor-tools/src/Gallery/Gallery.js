@@ -1,9 +1,9 @@
 //require("./index.css").toString(); /
-import css from './index.css'
 
 import CarouselTool from '@vietlongn/editorjs-carousel/src/index.js'
 import make from './../Abstract/make.js'
 import ToolboxIcon from './toolbox-icon.svg'
+import css from './index.css'
 
 export default class Gallery extends CarouselTool {
   static get toolbox() {
@@ -39,17 +39,38 @@ export default class Gallery extends CarouselTool {
   onUpload(response) {
     super.onUpload(response)
     this.list.childNodes[this.list.childNodes.length - 2].firstChild.firstChild.dataset.file = JSON.stringify(response.file)
-    this.list.childNodes[this.list.childNodes.length - 2].firstChild.lastChild.value = response.file.name
+    // Stocker l'URL complète dans le champ pour l'affichage, la méthode save() extraira le nom
+    this.list.childNodes[this.list.childNodes.length - 2].firstChild.lastChild.value = response.file.url
   }
 
   render() {
-    super.render()
+    // Ne pas appeler super.render() car nous devons adapter le rendu pour nos données simplifiées
+
+    // Créer la structure de base comme dans CarouselTool
+    this.wrapper = make.element('div', [this.CSS.wrapper])
+    this.list = make.element('div', [this.CSS.list])
+    this.addButton = this.createAddButton()
+
+    this.list.appendChild(this.addButton)
+    this.wrapper.appendChild(this.list)
+
     if (this.data.length > 0) {
-      for (const load of this.data) {
-        this.list.querySelectorAll('.cdxcarousel-inputUrl').forEach(function (item) {
-          item.dataset.file = JSON.stringify(load.file)
-        })
+      for (const mediaData of this.data) {
+        // Gérer la rétrocompatibilité : soit URL complète (ancien format) soit nom de média (nouveau format)
+        const fullUrl = this.buildFullUrl(mediaData)
+        const loadItem = this.creteNewItem(fullUrl, '')
+        this.list.insertBefore(loadItem, this.addButton)
       }
+
+      // Appliquer le style de background après le rendu
+      setTimeout(() => {
+        const imageElement = this.wrapper.querySelectorAll('.cdxcarousel-item img')
+        for (const image of imageElement) {
+          const imageUrl = image.getAttribute('src')
+          const imageContainer = image.parentElement
+          imageContainer.style.setProperty('--bg-image-url', `url('${imageUrl}')`)
+        }
+      }, 100)
     }
 
     return this.wrapper
@@ -90,6 +111,56 @@ export default class Gallery extends CarouselTool {
     return true
   }
 
+  extractMediaName(url) {
+    if (!url) return ''
+    // Extraire le nom de fichier de l'URL (après le dernier /)
+    const urlParts = url.split('/')
+    return urlParts[urlParts.length - 1]
+  }
+
+  isFullUrl(data) {
+    // Détermine si la donnée est une URL complète ou juste un nom de média
+    if (!data || typeof data !== 'string') return false
+
+    // Une URL complète commence par http://, https://, ou /
+    return data.startsWith('http://') || data.startsWith('https://') || data.startsWith('/') || data.includes('/')
+  }
+
+  getMediaNameFromData(dataItem) {
+    // Extrait le nom du média selon le format des données
+    if (typeof dataItem === 'string') {
+      // Ancien format : chaîne directe (URL ou nom)
+      return this.isFullUrl(dataItem) ? this.extractMediaName(dataItem) : dataItem
+    } else if (dataItem && typeof dataItem === 'object' && dataItem.media) {
+      // Nouveau format : objet {media: "filename"}
+      return dataItem.media
+    }
+    return ''
+  }
+
+  buildFullUrl(dataItem) {
+    // Construit l'URL complète à partir des données
+    if (typeof dataItem === 'string') {
+      // Ancien format : chaîne directe
+      if (this.isFullUrl(dataItem)) {
+        // C'est déjà une URL complète (rétrocompatibilité)
+        return dataItem
+      }
+      // C'est un nom de média, construire l'URL
+      return `/media/md/${dataItem}`
+    } else if (dataItem && typeof dataItem === 'object' && dataItem.url) {
+      return dataItem.url
+    } else if (dataItem && typeof dataItem === 'object' && dataItem.media) {
+      // Nouveau format : objet {media: "filename"}
+      const mediaName = dataItem.media
+      if (this.isFullUrl(mediaName)) {
+        return mediaName
+      }
+      return `/media/md/${mediaName}`
+    }
+    return ''
+  }
+
   save(blockContent) {
     const list = blockContent.getElementsByClassName(this.CSS.item)
     const data = []
@@ -97,18 +168,14 @@ export default class Gallery extends CarouselTool {
     if (list.length > 0) {
       for (const item of list) {
         if (item.firstChild.value) {
-          data.push({
-            file: item.firstChild.dataset.file && this.isJson(item.firstChild.dataset.file) ? JSON.parse(item.firstChild.dataset.file) : {},
-            url: item.firstChild.value,
-            caption: item.lastChild.value,
-          })
+          // Extraire seulement le nom du média de l'URL
+          const mediaName = this.extractMediaName(item.firstChild.value)
+          //data.push({ media: mediaName })
+          data.push(mediaName)
         }
       }
     }
 
-    // data.push({
-    //   clickable: this.data.clickable ?? true,
-    // })
     return data
   }
 

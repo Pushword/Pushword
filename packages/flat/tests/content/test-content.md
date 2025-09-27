@@ -1,8 +1,8 @@
 ---
 h1: test content
-main_image: media/default/logo-test.png
+main_image: logo-test.png
 ---
 
 This is my test content page
 
-{{ gallery({'logo test': '/media/default/logo-test.png'}) }}
+{{ gallery(['logo-test.png']) }}

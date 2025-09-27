@@ -162,6 +162,8 @@
 }
 
 .image-tool__caption {
+  /* display: none !important; */
+  opacity: 50%;
   padding-left: 38px;
   background-repeat: no-repeat;
   background-position: 10px;

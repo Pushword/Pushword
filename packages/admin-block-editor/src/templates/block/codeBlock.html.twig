@@ -1,1 +1,1 @@
-<pre class="microlight"><code class="language-{{ block.data.language|replace({javascript: 'js'}) }}">{{ block.data.html|escapeTwig }}</code></pre>
+{{ codeBlock(block.data.html, block.data.language, block.tunes.anchor ?? '') }}

@@ -20,3 +20,51 @@
   visibility: hidden;
   height: 0;
 }
+
+/* disabled cdxcarousel-caption */
+.cdxcarousel-caption {
+  display: none;
+}
+.cdxcarousel-item {
+  height: unset !important;
+}
+
+/** blur background on images */
+.cdxcarousel-item img {
+  object-fit: contain !important;
+  z-index: 1;
+}
+.cdxcarousel-item {
+  margin-left: 4px;
+  position: relative;
+  overflow: hidden;
+  /* Enforces a 16:9 aspect ratio */
+  aspect-ratio: 16 / 9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #000; /* Fallback background color */
+}
+.cdxcarousel-rightBtn,
+.cdxcarousel-removeBtn,
+.cdxcarousel-leftBtn {
+  z-index: 2;
+}
+
+.cdxcarousel-item::before {
+  z-index: 0;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* The background uses the URL from the CSS variable */
+  background-image: var(--bg-image-url);
+  background-size: cover;
+  background-position: center;
+  /* Applies the blur effect */
+  filter: blur(10px);
+  /* Scales the background to avoid blurred edges */
+  transform: scale(1.1);
+}

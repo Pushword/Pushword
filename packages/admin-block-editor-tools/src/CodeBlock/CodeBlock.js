@@ -46,8 +46,15 @@ export default class CodeBlock extends Raw {
    * @public
    */
   save(wrapper) {
+    let html = ''
+    try {
+      html = this.editorInstance.getValue()
+    } catch (error) {
+      console.error(error)
+    }
+
     this.data = {
-      html: this.editorInstance.getValue(),
+      html: html,
       language: this.data.language, // wrapper.querySelector('select.CodeBlock_language').value
     }
 

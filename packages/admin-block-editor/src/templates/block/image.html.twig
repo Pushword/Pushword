@@ -1,25 +1,18 @@
 
+{#
 {% if block.data.stretched %}<div class="img-stretched">{% endif %}
 {% if block.data.withBackground %}<div class="img-background">{% endif %}
+#}
 
-    {% set image_link = false %}
+{% set image_link = block.tunes is defined and block.tunes.linkTune is defined and block.tunes.linkTune.url ? (block.tunes.linkTune.url is same as ":self" ? true : block.tunes.linkTune.url) : false %}
 
-    {% if block.tunes is defined and block.tunes.linkTune is defined %}
-        {% if block.tunes.linkTune.url and block.tunes.linkTune.url is same as ":self" %}
-            {% set image_link = true %}
-        {% elseif block.tunes.linkTune.url %}
-            {% set image_link = block.tunes.linkTune.url %}
-        {% endif %}
-    {% endif %}
+{{ include(view('/component/image_inline.html.twig'), {
+    image_src: legacyImageName(block.data)|image('default'),
+    image_alt: block.data.caption,
+    image_link: image_link,
+    image_link_attr: (block.tunes.linkTune.targetBlank ?? false) ? {'target': '_blank'} : {},
+    image_link_obf: block.tunes.linkTune.hideForBot ?? true,
+}, false) }}
 
-    {{ include(view('/component/image_inline.html.twig'), {
-        image_src: block.data.file.media|image('default'),
-        image_alt: block.data.caption,
-        image_link: image_link,
-        image_link_attr: (block.tunes.linkTune.targetBlank ?? false) ? {'target': '_blank'} : {},
-        image_link_obf: block.tunes.linkTune.hideForBot ?? true,
-        image_class: ('w-full h-auto max-h-screen max-w-[1600px] mx-auto ' ~ (block.data.withBorder ? 'border border-gray-500' : ''))|trim
-    }, false) }}
 
-{% if block.data.withBackground %}</div>{% endif %}
-{% if block.data.stretched %}</div>{% endif %}
+{# image_class: ('w-full h-auto max-h-screen max-w-[1600px] mx-auto ' ~ (block.data.withBorder ? 'border border-gray-500' : ''))|trim #}

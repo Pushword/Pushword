@@ -1,6 +1,12 @@
+{# @var id string #}
+{# @var pages Page[] #}
+{# @var pager Pagerfanta #}
+{# @var pager_route string #}
+{# @var pager_route_params array<string, string> #}
+
 {% block list %}{% apply spaceless %}
     {% if pages is not empty %}
-        <ul>
+        <ul{{ blockWrapperId(id ?? '') }}>
             {% for page in pages %}
                 <li>
                     <a href="{{ page(page) }}">
@@ -10,7 +16,7 @@
             {% endfor %}
         </ul>
     {% else %}
-        <p>...</p>
+        <p{{ blockWrapperId(id ?? '') }}>...</p>
     {% endif %}
 
     {% if pager is defined and pager is not null %}

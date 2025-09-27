@@ -1,11 +1,1 @@
-{% apply unprose %}
-
-{% if (needBlockWrapper(block) or (block.data.stretched is defined and block.data.stretched)) %}<div{{ blockWrapperAttr(block.data,
-    block.data.stretched is defined and block.data.stretched
-        ? {class: 'lg:-mx-40'} : {}) }}>{% endif %}
-
-    {{ video(block.data.serviceUrl, block.data.image.url, block.data.alternativeText) }}
-
-{% if (needBlockWrapper(block) or (block.data.stretched is defined and block.data.stretched)) %}</div>{% endif %}
-
-{% endapply %}
+{{ video(block.data.serviceUrl, block.data.media ?? block.data.image.url, block.data.alternativeText, id: block.tunes.anchor ?? '')|unprose }}

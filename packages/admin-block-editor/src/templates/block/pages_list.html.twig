@@ -1,10 +1,8 @@
-
-{% if (needBlockWrapper(block)) %}<div{{ blockWrapperAttr(block) }}>{% endif %}
-
-{% if (block.data.display == 'card') %}
-{{ pages_list(block.data.kw, [(block.data.max ? block.data.max : '9'), (block.data.maxPages ? block.data.maxPages : '1')], block.data.order, 'card', '', page)|unprose }}
-{% else %}
-{{ pages_list(block.data.kw, [(block.data.max ? block.data.max : '9'), (block.data.maxPages ? block.data.maxPages : '1')], block.data.order, 'list', '', page) }}
-{% endif %}
-
-{% if (needBlockWrapper(block)) %}</div>{% endif %}
+{{ pages_list(
+    block.data.kw,
+    [(block.data.max ? block.data.max : '9'),
+    (block.data.maxPages ? block.data.maxPages : '1')],
+    block.data.order, block.data.display == 'card' ? 'card' : 'list',
+    '',
+    page, block.tunes.anchor ?? ''
+) }}

@@ -3,7 +3,6 @@
 namespace Pushword\Core\Twig;
 
 use Pushword\Core\Component\App\AppPool;
-use stdClass;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
@@ -18,18 +17,23 @@ class BlockExtension
     ) {
     }
 
-    /**
-     * @param array<mixed> $block
-     */
     #[AsTwigFunction('attaches', isSafe: ['html'], needsEnvironment: false)]
     public function renderAttaches(
-        array|stdClass $block,
+        string $title,
+        string $url,
+        int $size, // bytes
+        string $id = '',
     ): string {
         $template = $this->apps->get()->getView('/component/attaches.html.twig');
 
-        return $this->twig->render($template, [
-            'block' => $block,
+        $html = $this->twig->render($template, [
+            'id' => $id,
+            'title' => $title,
+            'url' => $url,
+            'size' => $size,
         ]);
+
+        return $html;
     }
 
     /**

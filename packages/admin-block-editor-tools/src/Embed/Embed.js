@@ -13,6 +13,11 @@ export default class Embed extends Abstract {
   constructor({ data, config, api, readOnly }) {
     super({ data, config, api, readOnly })
 
+    if (this._data.image) {
+      this._data.media = this._data.image.media
+      delete this._data.image
+    }
+
     this.onSelectFile = config.onSelectFile || this.defaultOnSelectFile
     this.onUploadFile = config.onUploadFile || ''
     this.uploader = new Uploader({
@@ -36,9 +41,11 @@ export default class Embed extends Abstract {
 
   onUpload(response) {
     if (response.success && response.file) {
-      this._data.image = response.file
-      if (this._data.image.url) this.fillImage(this._data.image.url)
-      else this.uploadingFailed('incorrect response: ' + JSON.stringify(response))
+      if (response.file.url) {
+        this._data.media = response.file.media
+
+        this.fillImage('/media/md/' + this._data.media)
+      } else this.uploadingFailed('incorrect response: ' + JSON.stringify(response))
     }
   }
 
@@ -77,7 +84,7 @@ export default class Embed extends Abstract {
     this.nodes.imagePreloader.style.display = 'none'
     this.nodes.fileButton = make.fileButtons(this)
     this.nodes.fileButton.appendChild(this.nodes.imagePreloader)
-    if (this._data.image) this.fillImage(this._data.image.url)
+    if (this._data.media) this.fillImage('/media/md/' + this._data.media)
   }
 
   show(state) {
@@ -86,7 +93,8 @@ export default class Embed extends Abstract {
         //  '<a href="' +  this._data.serviceUrl + '"  target=_blank>
         this.nodes.preview.innerHTML =
           '<div style="display:block;--aspect-ratio:16/9;background: center / cover no-repeat url(\'' +
-          this._data.image.url +
+          '/media/md/' +
+          this._data.media +
           '\');">' +
           '<div style="display: flex;justify-content: center;align-items: center; width:100%;height:100%;color:#c4302b">' +
           ToolboxIcon.replace('width="16"', 'width="100"').replace('height="16"', 'height="100"') +
@@ -137,7 +145,7 @@ export default class Embed extends Abstract {
   }
 
   validate() {
-    return !!(this._data.serviceUrl && this._data.alternativeText && this._data.image && this._data.image.url)
+    return !!(this._data.serviceUrl && this._data.alternativeText && this._data.media)
   }
 
   toggleStatus(status) {

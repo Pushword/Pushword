@@ -22,7 +22,16 @@ final class AppExtension
     ) {
     }
 
-    #[AsTwigFilter('escapeTwig')]
+    #[AsTwigFunction('codeBlock', isSafe: ['html'], needsEnvironment: false)]
+    public function codeBlock(string $code, string $language = 'js', string $id = ''): string
+    {
+        return
+        '<pre class="microlight"'.('' !== $id ? ' id="'.$id.'"' : '').'>'
+            .'<code class="language-'.$language.'">'.$this->escapeTwig($code).'</code>'
+        .'</pre>';
+    }
+
+    #[AsTwigFilter('escapeTwig', isSafe: ['html'], needsEnvironment: false)]
     public function escapeTwig(string $text): string
     {
         $text = htmlspecialchars($text);
@@ -67,20 +76,6 @@ final class AppExtension
             || str_contains($content, "'$slug'")
             || str_contains($content, '"/'.$slug.'"')
             || str_contains($content, '"/'.$slug.'\"');
-    }
-
-    #[AsTwigFilter('unprose', isSafe: ['html'], needsEnvironment: false)]
-    public function unprose(string $html): string
-    {
-        /** @var Twig */
-        $twig = $this->twig;
-        $unproseClass = $this->apps->get()->get('unprose') ?? $twig->getGlobals()['unprose'] ?? '';
-
-        if ('' === $unproseClass || ! \is_string($unproseClass)) {
-            return $html;
-        }
-
-        return '<div class="'.$unproseClass.'">'.$html.'</div>';
     }
 
     #[AsTwigFunction('breadcrumbJsonLd')]

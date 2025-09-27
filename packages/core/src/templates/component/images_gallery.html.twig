@@ -30,7 +30,7 @@
                         {% set galleryPart = _self.gallery_part(
                             current_media,
                             gallery_id,
-                            name,
+                            current_media.name,
                             image_filter|default('thumb'),
                             image_container ?? '',
                             image_otherAttributes ?? {},

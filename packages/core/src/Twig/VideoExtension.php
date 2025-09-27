@@ -15,12 +15,18 @@ final class VideoExtension
     }
 
     #[AsTwigFunction('video', isSafe: ['html'], needsEnvironment: false)]
-    public function renderVideo(string $url, string $image, string $alternativeText = '', bool $forceUrl = false): string
-    {
+    public function renderVideo(
+        string $url,
+        string $image,
+        string $alternativeText = '',
+        bool $forceUrl = false,
+        string $id = '',
+    ): string {
         $template = $this->apps->get()->getView('/component/video.html.twig');
         $youtube = $forceUrl ? null : $this->getYoutubeVideoUrl($url);
 
         return trim($this->twig->render($template, [
+            'id' => $id,
             'url' => $youtube ?? $url,
             'image' => $image,
             'alt' => $alternativeText,

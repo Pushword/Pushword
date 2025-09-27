@@ -1,11 +1,19 @@
+{% set withHeadings = block.data.withHeadings ?? false %}
 <table{{ blockWrapperAttr(block, {class: 'min-w-full divide-y divide-gray-200'}) }}>
     {% for row in block.data.content %}
+         {% set isFirstRow = loop.first %}
+         {% if isFirstRow and withHeadings %}
+          <thead>
+         {% endif %}
         <tr>
             {% for cell in row %}
-                <td>
+                <{% if isFirstRow and withHeadings %}th{% else %}td{% endif %}>
                     {{ cell|raw }}
-                </td>
+                </{% if loop.first and withHeadings %}th{% else %}td{% endif %}>
             {% endfor %}
         </tr>
+        {% if isFirstRow and withHeadings %}
+          </thead>
+         {% endif %}
     {% endfor %}
 </table>

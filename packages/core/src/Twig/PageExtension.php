@@ -157,7 +157,8 @@ final class PageExtension
         array|string $order = 'publishedAt,priority',
         string $view = '',
         array|string $host = '',
-        ?Page $currentPage = null
+        ?Page $currentPage = null,
+        string $id = ''
     ): string {
         $currentPage ??= $this->apps->getCurrentPage();
 
@@ -210,6 +211,7 @@ final class PageExtension
             'pager_route_params' => $this->getPagerRouteParams(),
             'pages' => $pages,
             'pager' => $pagerfanta ?? null,
+            'id' => $id,
         ]);
     }
 
