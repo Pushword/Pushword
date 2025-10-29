@@ -158,7 +158,7 @@ class AppExtension
 
     private function getHostsRegex(): string
     {
-        return $this->hostRegex ??= '('.implode('|', array_map('preg_quote', $this->appPool->getHosts())).')';
+        return $this->hostRegex ??= '('.implode('|', array_map(preg_quote(...), $this->appPool->getHosts())).')';
     }
 
     /**

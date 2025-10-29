@@ -12,7 +12,7 @@ use League\CommonMark\MarkdownConverter;
 
 class MarkdownParser
 {
-    private MarkdownConverter $converter;
+    private readonly MarkdownConverter $converter;
 
     public function __construct()
     {

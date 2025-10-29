@@ -11,6 +11,9 @@
     {% block css %}
       <script>document.head.insertAdjacentHTML('beforeend', '<style>.nojs{display:none !important}</style>');</script>
       {% block css_stylesheets %}
+        {% for stylesheet in apps.get().getViteStylesheets() %}
+          {{ vite_style(stylesheet) }}
+        {% endfor %}
         {% for stylesheet in apps.get().getStylesheets() %}
           <link rel="stylesheet" href="{{ asset(stylesheet) }}">
         {% endfor %}
@@ -56,6 +59,9 @@
     {% block body %}{% endblock %}
 
     {% block script %}
+      {% for javascript in apps.get().getViteJavascripts() %}
+        {{ vite_script(javascript) }}
+      {% endfor %}
       {% for javascript in apps.get().getJavascripts() %}
         <script{% if javascript is iterable %}{{ attr(javascript) }}{% else %} src="{{ asset(javascript) }}" async{% endif %}></script>
       {% endfor %}

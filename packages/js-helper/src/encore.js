@@ -1,20 +1,11 @@
+// @deprecated use vite instead
+
 const WatchExternalFilesPlugin = require('webpack-watch-files-plugin').default
 const tailwindcss = require('tailwindcss')
 const postcssImport = require('postcss-import')
 const autoprefixer = require('autoprefixer')
 const Encore = require('@symfony/webpack-encore')
-
-function getFilesToWatch(basePath = './..') {
-  return [
-    basePath + '/vendor/pushword/core/src/templates/**/*.html.twig',
-    basePath + '/vendor/pushword/conversation/src/templates/**/*.html.twig',
-    basePath + '/vendor/pushword/admin-block-editor/src/templates/**/*.html.twig',
-    basePath + '/vendor/pushword/advanced-main-image/src/templates/**/*.html.twig',
-    basePath + '/templates/**/*.html.twig',
-    basePath + '/var/TailwindGeneratorCache/*',
-    basePath + '/src/Twig/AppExtension.php',
-  ]
-}
+const getFilesToWatch = require('./FilesToWatch')
 
 function getTailwindConfig(watchFiles = null) {
   // Tailwind v4 CSS-first: configuration is now handled in CSS files
@@ -113,7 +104,13 @@ function getEncore(
   if (!isLegacy) {
     Encore.configureBabelPresetEnv((config) => {
       config.targets = {
-        browsers: ['Chrome >= 60', 'Safari >= 10.1', 'iOS >= 10.3', 'Firefox >= 54', 'Edge >= 15'],
+        browsers: [
+          'Chrome >= 60',
+          'Safari >= 10.1',
+          'iOS >= 10.3',
+          'Firefox >= 54',
+          'Edge >= 15',
+        ],
       }
     })
   } else {

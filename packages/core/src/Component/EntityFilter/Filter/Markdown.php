@@ -5,9 +5,11 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Utils\MarkdownParser;
 
+use function Safe\preg_replace;
+
 class Markdown extends AbstractFilter
 {
-    private MarkdownParser $markdownParser;
+    private readonly MarkdownParser $markdownParser;
 
     public ?Manager $manager = null;
 
@@ -51,6 +53,7 @@ class Markdown extends AbstractFilter
             $attribute = $lines[0];
             unset($lines[0]);
         }
+
         $blockText = implode("\n", $lines);
 
         $textFiltered = null;
@@ -62,9 +65,10 @@ class Markdown extends AbstractFilter
             if (str_starts_with($blockText, '{{')) {
                 return $textFiltered;
             }
+
             $textFiltered = trim($textFiltered);
             /** @var string $blockText */
-            $blockText = \Safe\preg_replace('/^ +/m', '', $textFiltered);
+            $blockText = preg_replace('/^ +/m', '', $textFiltered);
         }
 
         return $this->markdownParser->transform(trim($attribute."\n".$blockText));

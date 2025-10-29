@@ -52,6 +52,8 @@ final class Configuration implements ConfigurationInterface
      * @var array<string, array<string>>
      */
     public const array DEFAULT_ASSETS = [
+        'vite_stylesheets' => [],
+        'vite_javascripts' => [],
         'stylesheets' => ['bundles/pushwordcore/style.css'],
         'javascripts' => ['bundles/pushwordcore/app.js'],
         'favicon' => ['bundles/pushwordcore/app.js'],

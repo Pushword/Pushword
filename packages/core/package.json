@@ -5,10 +5,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "dev-server": "encore dev-server",
-    "dev": "encore dev",
-    "watch": "TAILWIND_MODE=watch NODE_ENV=development encore dev --watch",
-    "build": "NODE_ENV=production encore production"
-  },
-  "dependencies": {}
+    "build": "vite build",
+    "watch": "vite build --watch"
+  }
 }

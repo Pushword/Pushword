@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Controller;
 
+use Override;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,6 +30,7 @@ abstract class AbstractPushwordController extends AbstractController
      *
      * @param array<mixed> $parameters
      */
+    #[Override]
     protected function renderView(string $view, array $parameters = []): string
     {
         return $this->twig->render($view, $parameters);

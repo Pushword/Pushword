@@ -30,7 +30,12 @@ final class AppConfig
 
     private bool $entityCanOverrideFilters;
 
-    /** @var array{}|array{javascripts: ?string[], stylesheets: ?string[]} */
+    /** @var array{}|array{
+     *   javascripts: ?string[],
+     *   stylesheets: ?string[],
+     *   vite_stylesheets: ?string[],
+     *   vite_javascripts: ?string[]
+     * } */
     private array $assets = [];
 
     private Twig $twig;
@@ -223,6 +228,18 @@ final class AppConfig
     public function getJavascripts(): array
     {
         return $this->assets['javascripts'] ?? [];
+    }
+
+    /** @return string[] */
+    public function getViteStylesheets(): array
+    {
+        return $this->assets['vite_stylesheets'] ?? [];
+    }
+
+    /** @return string[] */
+    public function getViteJavascripts(): array
+    {
+        return $this->assets['vite_javascripts'] ?? [];
     }
 
     /** @return string[] */

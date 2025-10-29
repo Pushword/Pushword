@@ -1,17 +1,28 @@
-require('fslightbox')
-import { uncloakLinks, addClassForNormalUser, readableEmail, convertImageLinkToWebPLink, replaceOn, liveBlock, convertFormFromRot13 } from './helpers.js'
+import Glightbox from 'glightbox'
+import {
+  uncloakLinks,
+  addClassForNormalUser,
+  readableEmail,
+  convertImageLinkToWebPLink,
+  replaceOn,
+  liveBlock,
+  convertFormFromRot13,
+} from './helpers.js'
 import { allClickable } from './clickable.js'
 
 //import { HorizontalScroll } from '@pushword/js-helper/src/horizontalScroll.js';
 //window.HorizontalScroll = HorizontalScroll;
 
+let lightbox
 function onDomChanged() {
   liveBlock()
   convertImageLinkToWebPLink()
   uncloakLinks()
   readableEmail('.cea')
   replaceOn()
-  refreshFsLightbox()
+  if (lightbox) {
+    lightbox.reload()
+  }
   allClickable('.clickable')
   addClassForNormalUser()
   convertFormFromRot13()
@@ -19,7 +30,7 @@ function onDomChanged() {
 
 function onPageLoaded() {
   onDomChanged()
-  new FsLightbox()
+  lightbox = new Glightbox()
 }
 
 document.addEventListener('DOMContentLoaded', onPageLoaded())

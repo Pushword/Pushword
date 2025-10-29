@@ -14,12 +14,15 @@ If you are doing a major upgrade, find the upgrade guide down there.
 ## To 1.0.0-rc80
 
 - Default static website are now exported under `static/%main_host%` directory instead of `%main_host%`.
+- migrate your configuration to PHP with `composer require symplify/config-transformer --dev && vendor/bin/config-transformer`
 
 ### To tailwind v4 and puswhord/assets
 
 - heropattern plugin has been dropped, import manually the properties used in your css (see https://heropatterns.com)
 - multicolumn plugin has been dropped
+- update your template files to tailwind v4 classes (AI recommended)
 - update your project configuration (see example in `packages/docs/assets/`)
+- transform your `./assets/webpack.config.js` to `./vite.config.js` (see `packages/skeleton/vite.config.js`), same for `./assets/package.json` to `./package.json` and install `composer require pentatrion/vite-bundle`
 
 ### To editorjs backed in markdown
 

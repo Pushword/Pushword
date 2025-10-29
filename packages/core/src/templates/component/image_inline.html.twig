@@ -31,7 +31,10 @@
      {% else %}
       {% set absolute_image_link = (image_link is same as true) ? image|image('default') : image_link %}
       {% set image_link_attr = image_link is not defined
-            ? {'data-fslightbox': 'inline', 'data-dwl': image|image('default', 'webp')} : (image_link_attr ?? {}) %}
+            ? {
+              'class': 'glightbox',
+              'data-dwl': image|image('default', 'webp')
+            } : (image_link_attr ?? {}) %}
       {% set image_link_obf = image_link_obf ?? true %}
 
       {{ link(

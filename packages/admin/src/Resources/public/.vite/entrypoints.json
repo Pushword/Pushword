@@ -1,0 +1,25 @@
+{
+  "base": "/build/",
+  "entryPoints": {
+    "admin": {
+      "css": [
+        "/build/admin.css"
+      ],
+      "dynamic": [],
+      "js": [
+        "/build/admin.js"
+      ],
+      "legacy": false,
+      "preload": []
+    }
+  },
+  "legacy": false,
+  "metadatas": {},
+  "version": [
+    "8.2.2",
+    8,
+    2,
+    2
+  ],
+  "viteServer": null
+}

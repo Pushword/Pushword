@@ -38,7 +38,7 @@ cd ../../;
 ## ADMIN BLOCK EDITOR
 #####################
 
-if [ "$TYPE" = "admin-block-editor" ] || [ "$TYPE" = "editor" ] || [ "$TYPE" = "all" ]
+if [ "$TYPE" = "admin-block-editor" ] || [ "$TYPE" = "editor" ] || [ "$TYPE" = "" ] || [ "$TYPE" = "all" ]
 then
     echo "--- packages/admin-block-editor ---"
     cd packages/admin-block-editor
@@ -52,7 +52,7 @@ fi
 ## ADMIN
 ########
 
-if [ "$TYPE" = "admin" ] || [ "$TYPE" = "all" ]
+if [ "$TYPE" = "admin" ] || [ "$TYPE" = "" ] || [ "$TYPE" = "all" ]
 then
     echo "--- packages/admin ---"
     cd packages/admin
@@ -75,7 +75,7 @@ fi
 ## CORE
 ########
 
-if [ "$TYPE" = "core" ] || [ "$TYPE" = "all" ]
+if [ "$TYPE" = "core" ] || [ "$TYPE" = "" ] || [ "$TYPE" = "all" ]
 then
     echo "--- packages/core ---"
     cd packages/core

@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Controller;
 
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -25,7 +24,7 @@ final class RobotsTxtController extends AbstractPushwordController
         requirements: ['_locale' => RoutePatterns::LOCALE, 'host' => RoutePatterns::HOST],
         priority: -31
     )]
-    public function show(Request $request): Response
+    public function show(): Response
     {
         $response = new Response();
         $response->headers->set('Content-Type', 'text/plain');

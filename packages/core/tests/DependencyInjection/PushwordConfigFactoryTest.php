@@ -90,6 +90,7 @@ class PushwordConfigFactoryTest extends TestCase
         if (! isset($extensionConfig['apps'][0]['custom_properties'])) {
             $extensionConfig['apps'][0]['custom_properties'] = [];
         }
+
         $extensionConfig['apps'][0]['custom_properties'] = array_merge($extensionConfig['apps'][0]['custom_properties'], ['firstCP' => 'blabla']);
 
         return (new Processor())->processConfiguration(new Configuration(), [$extensionConfig]);

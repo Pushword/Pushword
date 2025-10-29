@@ -5,10 +5,9 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "dev-server": "encore dev-server",
-    "dev": "encore dev",
-    "watch": "encore dev --watch",
-    "build": "NODE_ENV=production yarn encore production"
+    "dev": "vite",
+    "watch": "vite build --watch",
+    "build": "NODE_ENV=production vite build"
   },
   "dependencies": {
     "htmx.org": "^1.9.12",

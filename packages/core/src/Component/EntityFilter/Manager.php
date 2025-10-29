@@ -188,6 +188,7 @@ final readonly class Manager
             if (property_exists($filterClass, 'manager')) {
                 $filterClass->manager = $this;
             }
+
             // if (method_exists($filterClass, 'setProperty')) {
             //     $filterClass->setProperty($property);
             // }

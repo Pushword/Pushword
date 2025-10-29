@@ -26,7 +26,7 @@ class TailwindGenerator
             return;
         }
 
-        if (! file_exists($this->projectDir.'/assets')) {
+        if (! file_exists($this->projectDir.'/assets') && ! file_exists($this->projectDir.'/vite.config.js')) {
             return;
         }
 

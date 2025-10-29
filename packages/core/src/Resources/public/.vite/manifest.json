@@ -1,0 +1,16 @@
+{
+  "../js-helper/src/app.css": {
+    "file": "style.css",
+    "src": "../js-helper/src/app.css",
+    "isEntry": true,
+    "names": [
+      "style.css"
+    ]
+  },
+  "../js-helper/src/app.js": {
+    "file": "app.js",
+    "name": "app",
+    "src": "../js-helper/src/app.js",
+    "isEntry": true
+  }
+}

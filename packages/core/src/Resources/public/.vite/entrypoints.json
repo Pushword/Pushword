@@ -1,0 +1,32 @@
+{
+  "base": "/build/",
+  "entryPoints": {
+    "app": {
+      "css": [],
+      "dynamic": [],
+      "js": [
+        "/build/app.js"
+      ],
+      "legacy": false,
+      "preload": []
+    },
+    "style": {
+      "css": [
+        "/build/style.css"
+      ],
+      "dynamic": [],
+      "js": [],
+      "legacy": false,
+      "preload": []
+    }
+  },
+  "legacy": false,
+  "metadatas": {},
+  "version": [
+    "8.2.2",
+    8,
+    2,
+    2
+  ],
+  "viteServer": null
+}

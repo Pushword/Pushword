@@ -46,10 +46,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                 ],
                 'assets' => [
                     'javascripts' => [
-                        'assets/app.min.js',
+                        'assets/app.js',
                     ],
                     'stylesheets' => [
-                        'assets/tw.min.css',
+                        'assets/tw.css',
                     ],
                 ],
                 'color_bg' => '#fff',

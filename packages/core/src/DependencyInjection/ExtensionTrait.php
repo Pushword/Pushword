@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\DependencyInjection;
 
-use Exception;
 use LogicException;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\FileLocator;

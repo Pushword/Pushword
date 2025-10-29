@@ -15,7 +15,7 @@
         <div
             class="relative m-3 my-6 aspect-[16/9]" {% if is_embed %}
             data-replaceBy="{{ embed_code|replace({'"': "'"}) }}"{% endif %}>
-            {% if false == is_embed %}<span data-rot="{{ obfuscate(url) }}" data-fslightbox>{% endif %}
+            {% if false == is_embed %}<span data-rot="{{ obfuscate(url) }}" class="glightbox" data-type="video">{% endif %}
                 {{ _self.videoThumb(image, alt|default(url), btn_title) }}
             {% if false == is_embed %}</span>{% endif %}
             </div>

@@ -21,13 +21,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] cli tool pour convertir le json en markdown (upgrade) qui s'appuie sur EditorJsExportMarkdown.js (ou puppeteer)
   - selecting a block alone like gallery : copy / paste is not working
 
-- [Config] Utiliser prepend plutôt que le système bizarre mis en place
-
-- [JsHelper] Finir la transition tailwind v3 -> v4 et vite
-  - [ ] finir la transition : ajouter vite bundle dans les requirements de skeleton plutôt que gérer les assets de manière autonome
-  - [ ] Mettre à jour la doc pour un upgrade
-  - [ ] Renommer JsHelper en FrontEndHelper or FrontEnd (and transforming it in a bundle wich extends the vite bundle ?)
-
 - [Flat] ⚡ Accélérer l'import-export en changeant de paradigme ➜ **sync**
   1. [ ] Lister les slugs + dernière date de moficiation machine (ajouter le timestamp dans l'entité en le vérouillant pour que seul Doctrine ou le DB engine puisse le modifier, clarifier les 2 autres éléments createdAt et updatedAt)
   2. [ ] Idem en chargeant la liste des slugs depuis la liste des fichiers à importer /(.\*)\.md$/ + la dernière fois que le fichier a été modifié

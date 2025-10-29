@@ -1,5 +1,21 @@
 @import 'tailwindcss';
 
+@import 'tailwindcss-animated';
+@plugin '@tailwindcss/typography';
+/* @plugin "@tailwindcss/forms"; */
+
+/*
+Tailwind content sources for all packages
+-----------------------------------------
+*/
+
+@source "./../../../../vendor/pushword/**/templates/";
+@source "./../../**/templates/";
+@source "./../../../../templates";
+@source "./../../../../var/TailwindGeneratorCache/*";
+@source "./../../../../vendor/pushword/core/src/Twig/**.php";
+@source "./../../packages/core/src/Twig/**.php";
+
 /* Tailwind v4 CSS-first configuration */
 @theme {
   /* Custom minHeight values */
@@ -55,9 +71,6 @@
 .prose .link:hover:not(.not-prose .link:hover) {
   opacity: 0.75;
 }
-
-/* @import './tailwind.prose.scss' layer(utilities); */
-@plugin '@tailwindcss/typography';
 
 .img-stretched {
   @apply w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw];

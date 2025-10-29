@@ -1,8 +1,8 @@
-require('./admin.scss')
+import './admin.scss'
 
 // used for ctrl-s
-import 'htmx.org'
-window.htmx = require('htmx.org')
+import htmx from 'htmx.org'
+window.htmx = htmx
 
 import { easyMDEditor } from './admin.easymde-editor'
 import { filterParentPageFromHost } from './admin.filteringParentPage'

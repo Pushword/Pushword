@@ -9,17 +9,17 @@
     "format": "prettier --write .",
     "type-check": "tsc --noEmit"
   },
-  "dependencies": {
+  "devDependencies": {
+    "@pushword/js-helper": "file:packages/js-helper",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.37.0",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
     "eslint": "^9.36.0",
     "globals": "^16.4",
-    "typescript-eslint": "^8.46.0"
-  },
-  "devDependencies": {
+    "path": "^0.12.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.0"
   }
 }
