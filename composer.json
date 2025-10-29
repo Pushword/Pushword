@@ -84,7 +84,7 @@
     "symfony/profiler-pack": "*",
     "symplify/config-transformer": "*",
     "symplify/monorepo-builder": "*",
-    "tomasvotruba/unused-public": "*",
+    "tomasvotruba/unused-public": "^2.0",
     "twigstan/twigstan": "dev-main",
     "vincentlanglet/twig-cs-fixer": "*"
   },

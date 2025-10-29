@@ -1,9 +1,0 @@
-vich_uploader:
-  db_driver: orm
-
-  mappings:
-    media_media:
-      #uri_prefix:
-      upload_destination: '%pw.media_dir%'
-      namer:
-        service: Pushword\Core\Service\VichUploadPropertyNamer

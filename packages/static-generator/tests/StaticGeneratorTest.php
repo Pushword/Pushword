@@ -44,12 +44,12 @@ class StaticGeneratorTest extends KernelTestCase
         $output = $commandTester->getDisplay();
         self::assertTrue(str_contains($output, 'success'));
 
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/.htaccess');
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/index.html');
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/robots.txt');
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/favicon.ico');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/.htaccess');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/robots.txt');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/favicon.ico');
 
-        $staticDir = __DIR__.'/../../skeleton/localhost.dev';
+        $staticDir = __DIR__.'/../../skeleton/static/localhost.dev';
         $filesystem = new Filesystem();
         $filesystem->remove($staticDir);
     }
@@ -79,9 +79,9 @@ class StaticGeneratorTest extends KernelTestCase
 
         $this->getStaticAppGenerator()->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev');
 
-        $staticDir = __DIR__.'/../../skeleton/localhost.dev';
+        $staticDir = __DIR__.'/../../skeleton/static/localhost.dev';
         $filesystem = new Filesystem();
         $filesystem->remove($staticDir);
         $filesystem->mkdir($staticDir);
@@ -100,7 +100,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/.htaccess');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/.htaccess');
     }
 
     public function testGenerateCNAME(): void
@@ -111,7 +111,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/CNAME');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/CNAME');
     }
 
     public function testCopier(): void
@@ -122,7 +122,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/assets');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/assets');
     }
 
     public function testError(): void
@@ -133,7 +133,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/404.html');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/404.html');
     }
 
     public function testDownload(): void
@@ -144,7 +144,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/media');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/media');
     }
 
     public function testPages(): void
@@ -155,7 +155,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/localhost.dev/index.html');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html');
     }
 
     public function getGeneratorBag(): GeneratorBag

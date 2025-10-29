@@ -5,10 +5,12 @@ namespace Pushword\Core\Controller;
 use LogicException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 final class UserController extends AbstractController
 {
+    #[Route('/login', name: 'pushword_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
         if (null !== $this->getUser()) {
@@ -26,6 +28,7 @@ final class UserController extends AbstractController
         ]);
     }
 
+    #[Route('/logout', name: 'pushword_logout', methods: ['GET', 'HEAD', 'POST'])]
     public function logout(): never
     {
         throw new LogicException('This method can be blank');

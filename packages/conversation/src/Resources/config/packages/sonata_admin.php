@@ -1,7 +1,11 @@
 <?php
 
-return [
-    'sonata_admin' => [
+declare(strict_types=1);
+
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+return static function (ContainerConfigurator $containerConfigurator): void {
+    $containerConfigurator->extension('sonata_admin', [
         'dashboard' => [
             'groups' => [
                 'app.admin.group.conversation' => [
@@ -18,5 +22,5 @@ return [
                 ],
             ],
         ],
-    ],
-];
+    ]);
+};

@@ -1,8 +1,0 @@
-pushword_login:
-  path: /login
-  controller: Pushword\Core\Controller\UserController::login
-
-pushword_logout:
-  path: /logout
-  controller: Pushword\Core\Controller\UserController::logout
-  methods: [GET, HEAD, POST]

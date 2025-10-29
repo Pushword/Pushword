@@ -1,6 +1,0 @@
-pushword_media_download:
-  path: /%pw.public_media_dir%/{media}
-  controller: Pushword\Core\Controller\MediaController::download
-  methods: [GET, HEAD]
-  requirements:
-    media: '[a-zA-Z0-9\-/\.]*'

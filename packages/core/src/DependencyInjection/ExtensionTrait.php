@@ -4,16 +4,12 @@ namespace Pushword\Core\DependencyInjection;
 
 use Exception;
 use LogicException;
-
-use function Safe\file_get_contents;
-
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\Finder\Finder;
-use Symfony\Component\Yaml\Parser;
 
 trait ExtensionTrait
 {
@@ -28,51 +24,27 @@ trait ExtensionTrait
 
     public function prepend(ContainerBuilder $container): void
     {
-        if (! file_exists($this->getConfigFolder().'/packages')) {
+        $configFolder = $this->getConfigFolder().'/packages';
+        if (! file_exists($configFolder)) {
             return;
         }
 
-        // Load configurations for other package
-        $parser = new Parser();
-        $finder = Finder::create()->files()->name('*.yaml')->in($this->getConfigFolder().'/packages');
-        foreach ($finder as $singleFinder) {
-            $configs = $parser->parse(file_get_contents($singleFinder->getRealPath()));
-            if (! \is_array($configs)) {
-                throw new Exception($singleFinder->getRealPath().' is malformed');
-            }
-
-            $this->prependExtensionConfigs($configs, $container);
+        // Load YAML files first (for backward compatibility)
+        $yamlLoader = new YamlFileLoader($container, new FileLocator($configFolder));
+        $yamlFinder = Finder::create()->files()->name('*.yaml')->in($configFolder);
+        foreach ($yamlFinder as $file) {
+            $yamlLoader->load($file->getFilename());
         }
 
-        $finder = Finder::create()->files()->name('*.php')->in($this->getConfigFolder().'/packages');
-        foreach ($finder as $singleFinder) {
-            $configs = @include $singleFinder->getRealPath();
-            if (! \is_array($configs)) {
-                throw new Exception();
-            }
-
-            $this->prependExtensionConfigs($configs, $container);
+        // Load PHP files (new format - takes precedence)
+        $phpLoader = new PhpFileLoader($container, new FileLocator($configFolder));
+        $phpFinder = Finder::create()->files()->name('*.php')->in($configFolder);
+        foreach ($phpFinder as $file) {
+            $phpLoader->load($file->getFilename());
         }
     }
 
-    /**
-     * @param array<mixed> $configs
-     */
-    protected function prependExtensionConfigs(array $configs, ContainerBuilder $container): void
-    {
-        foreach ($configs as $name => $config) {
-            if ('services' === $name) {
-                continue;
-            }
-
-            if (! \is_array($config)) {
-                throw new Exception('Malformed config named `'.((string) $name).'`');
-            }
-
-            /** @var array<string, mixed> $config */
-            $container->prependExtensionConfig((string) $name, $config);
-        }
-    }
+    // Used in PushwordAdminExtension
 
     /**
      * @return ConfigurationInterface|null

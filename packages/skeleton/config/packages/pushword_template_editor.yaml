@@ -1,5 +1,0 @@
-
-pushword_template_editor:
-  disable_creation: true
-  can_be_edited_list:
-    - "/pushword.piedweb.com/page/_footer.html.twig"

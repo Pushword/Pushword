@@ -11,15 +11,11 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
-## To 1.0.0
+## To 1.0.0-rc80
 
-- Delete `App\Entity\*`
-- Upgrade database `bin/console doctrine:schema:update --force`
-- Remove `composer remove pushword/svg` (and from `config/bundles.php`)
-- Drop get('assetsVersionned'), prefer use `getStylesheets` or `getJavascript`
-- Change twig function `page_position` for `breadcrumb_list_position`
+- Default static website are now exported under `static/%main_host%` directory instead of `%main_host%`.
 
-### To tailwind v4
+### To tailwind v4 and puswhord/assets
 
 - heropattern plugin has been dropped, import manually the properties used in your css (see https://heropatterns.com)
 - multicolumn plugin has been dropped
@@ -27,10 +23,15 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 ### To editorjs backed in markdown
 
-```bash
-php bin/console pushword:block:upgrade # upgrade blocks to simplified format
-php bin/console pushword:convert-editorjs-to-markdown
-```
+Nothing to do except if you want to transform all your database content from json to markdown.
+
+## To 1.0.0-rc79
+
+- Delete `App\Entity\*`
+- Upgrade database `bin/console doctrine:schema:update --force`
+- Remove `composer remove pushword/svg` (and from `config/bundles.php`)
+- Drop get('assetsVersionned'), prefer use `getStylesheets` or `getJavascript`
+- Change twig function `page_position` for `breadcrumb_list_position`
 
 ## To 0.1.9973
 

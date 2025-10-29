@@ -9,8 +9,8 @@ use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\PushwordConversationBundle;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Twig\Environment as Twig;
+use Twig\Loader\FilesystemLoader;
 
 class ConfigurationTest extends KernelTestCase
 {
@@ -29,12 +29,14 @@ class ConfigurationTest extends KernelTestCase
         $extension = $bundle->getContainerExtension();
         self::assertSame('conversation', $extension->getAlias());
 
-        $parameterBag = new ParameterBag([]);
-        $containerBuilder = new ContainerBuilder($parameterBag);
-        $extension->prepend($containerBuilder);
+        // Verify Twig paths are configured
+        $twig = self::getContainer()->get(Twig::class);
+        $loader = $twig->getLoader();
 
-        $twigPaths = $containerBuilder->getExtensionConfig('twig')[0]['paths'];
-        self::assertIsIterable($twigPaths);
-        self::assertContains('PushwordConversation', $twigPaths);
+        self::assertInstanceOf(FilesystemLoader::class, $loader);
+
+        /** @var FilesystemLoader $loader */
+        $paths = $loader->getPaths('PushwordConversation');
+        self::assertNotEmpty($paths);
     }
 }

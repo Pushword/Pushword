@@ -19,7 +19,7 @@ cp -R vendor/pushword/skeleton/src/DataFixtures/. src/DataFixtures
 sed -i -e "s/DATABASE_URL=\".*\"/DATABASE_URL=\"sqlite:\/\/\/%kernel\.project_dir%\/var\/app\.db\"/" .env
 
 ## Install default routes
-echo -e "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/all.yaml'" >config/routes.yaml
+echo -e "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/all.php'" >config/routes.yaml
 
 # Create Database:
 php bin/console doctrine:schema:create -q

@@ -2,7 +2,10 @@
 
 namespace Pushword\Core\Tests\Controller;
 
+use Pushword\Core\Controller\FeedController;
 use Pushword\Core\Controller\PageController;
+use Pushword\Core\Controller\RobotsTxtController;
+use Pushword\Core\Controller\SitemapController;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,30 +43,42 @@ class PageControllerTest extends KernelTestCase
     public function testShowFeed(): void
     {
         $slug = 'homepage';
-        $response = $this->getPageController()->showFeed(Request::create('/'.$slug.'.xml'), $slug);
+        $response = $this->getFeedController()->show(Request::create('/'.$slug.'.xml'), $slug);
         self::assertSame(Response::HTTP_MOVED_PERMANENTLY, $response->getStatusCode(), (string) $response->getContent());
     }
 
     public function testShowMainFeed(): void
     {
-        $response = $this->getPageController()->showMainFeed(Request::create('/feed.xml'));
+        $response = $this->getFeedController()->showMain(Request::create('/feed.xml'));
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     public function testShowSitemap(): void
     {
-        $response = $this->getPageController()->showSitemap(Request::create('/sitemap.xml'), 'xml');
+        $response = $this->getSitemapController()->show(Request::create('/sitemap.xml'), 'xml');
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     public function testShowRobotsTxt(): void
     {
-        $response = $this->getPageController()->showRobotsTxt();
+        $robotsTxtController = self::getContainer()->get(RobotsTxtController::class);
+
+        $response = $robotsTxtController->show(Request::create('/robots.txt'));
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
     public function getPageController(): PageController
     {
         return self::getContainer()->get(PageController::class);
+    }
+
+    public function getFeedController(): FeedController
+    {
+        return self::getContainer()->get(FeedController::class);
+    }
+
+    public function getSitemapController(): SitemapController
+    {
+        return self::getContainer()->get(SitemapController::class);
     }
 }

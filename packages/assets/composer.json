@@ -1,0 +1,30 @@
+{
+  "name": "pushword/assets",
+  "type": "symfony-bundle",
+  "description": "Manage Pushword website with **vite** assets bundler",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/assets",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Assets\\": "src"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin D.",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com/"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

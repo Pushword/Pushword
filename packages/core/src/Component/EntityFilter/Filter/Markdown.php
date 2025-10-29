@@ -44,7 +44,7 @@ class Markdown extends AbstractFilter
 
     public function transformPart(string $text): string
     {
-        dump($text);
+        // dump($text);
         $lines = explode("\n", $text);
         $attribute = '';
         if ($this->startWithAttribute($lines[0])) {

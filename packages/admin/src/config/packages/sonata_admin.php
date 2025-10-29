@@ -1,9 +1,12 @@
 <?php
 
-use Pushword\Admin\UserAdmin;
+declare(strict_types=1);
 
-return [
-    'sonata_admin' => [
+use Pushword\Admin\UserAdmin;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+return static function (ContainerConfigurator $containerConfigurator): void {
+    $containerConfigurator->extension('sonata_admin', [
         'security' => [
             'handler' => 'sonata.admin.security.handler.role',
             'role_admin' => 'ROLE_ADMIN',
@@ -60,8 +63,9 @@ return [
         'search' => false,
         'global_search' => ['admin_route' => 'edit'],
         'breadcrumbs' => ['child_admin_route' => 'edit'],
-    ],
-    'sonata_block' => [
+    ]);
+
+    $containerConfigurator->extension('sonata_block', [
         'blocks' => [
             'sonata.admin.block.admin_list' => [
                 'contexts' => [
@@ -74,5 +78,5 @@ return [
                 ],
             ],
         ],
-    ],
-];
+    ]);
+};

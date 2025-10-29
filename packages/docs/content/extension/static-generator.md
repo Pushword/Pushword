@@ -23,7 +23,7 @@ Add in your current `config/package/pushword.yaml` for an App or globally under 
 ```
     static_generators: apache|github|[..., classNameGenerator, ...]
     static_symlink: true
-    static_dir: '' #default /%mainHost.tld%/
+    static_dir: '' #default /static/%mainHost.tld%/
 ```
 
 ## Command

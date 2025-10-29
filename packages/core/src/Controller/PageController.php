@@ -4,75 +4,55 @@ namespace Pushword\Core\Controller;
 
 use DateTime;
 use LogicException;
-use Override;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 
 use function Safe\preg_match;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Translation\DataCollectorTranslator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
 
-final class PageController extends AbstractController
+/**
+ * Handles page rendering with support for multiple locales and multi-domain.
+ *
+ * ## Routes for pages are organized by priority to ensure correct matching.
+ *
+ * For each route, there are typically 2 versions:
+ * - One without host
+ * - One with host prefix for multi-domain support
+ *
+ * - Sitemap routes (in SitemapController)
+ * - Main feed routes (in FeedController)
+ * - Page feed routes (for child pages)
+ * - Page show routes (main page display)
+ * - Pager routes (never caught but allow generating paginated URLs)
+ */
+final class PageController extends AbstractPushwordController
 {
     /** @var DataCollectorTranslator|Translator */
     private readonly TranslatorInterface $translator;
 
     public function __construct(
         RequestStack $requestStack,
-        private readonly ParameterBagInterface $params,
-        private readonly AppPool $apps,
-        TranslatorInterface $translator,
-        private readonly Twig $twig,
+        AppPool $apps,
+        Twig $twig,
         private readonly PageRepository $pageRepository,
+        TranslatorInterface $translator,
     ) {
         if (! $translator instanceof DataCollectorTranslator && ! $translator instanceof Translator) {
             throw new LogicException('A symfony codebase changed make this hack impossible (cf setLocale). Get `'.$translator::class.'`');
         }
 
-        $this->initHost($requestStack);
+        parent::__construct($requestStack, $apps, $twig);
+
         $this->translator = $translator;
-    }
-
-    /**
-     * Returns a rendered view.
-     * Use by abstract controller without de deprecation message.
-     *
-     * @param array<mixed> $parameters
-     */
-    #[Override]
-    protected function renderView(string $view, array $parameters = []): string
-    {
-        return $this->twig->render($view, $parameters);
-    }
-
-    private function initHost(RequestStack|Request $request): void
-    {
-        $request = $request instanceof Request ? $request : $request->getCurrentRequest();
-
-        if (! $request instanceof Request) {
-            return;
-        }
-
-        $host = $request->attributes->getString('host', '');
-        if ('' !== $host) {
-            $this->apps->switchCurrentApp($host);
-
-            return;
-        }
-
-        $host = $this->apps->findHost($request->getHost());
-        if ('' !== $host) {
-            $this->apps->switchCurrentApp($host);
-        }
     }
 
     public function setHost(string $host): self
@@ -82,7 +62,58 @@ final class PageController extends AbstractController
         return $this;
     }
 
-    public function show(Request $request, string $slug): Response
+    #[Route(
+        '/{host}/{slug}',
+        name: 'custom_host_pushword_page',
+        methods: ['GET', 'HEAD', 'POST'],
+        requirements: ['slug' => RoutePatterns::SLUG, 'host' => RoutePatterns::HOST],
+        defaults: ['slug' => ''],
+        priority: -60
+    )]
+    #[Route(
+        '/{slug}',
+        name: 'pushword_page',
+        methods: ['GET', 'HEAD', 'POST'],
+        requirements: ['slug' => RoutePatterns::SLUG],
+        priority: -70
+    )]
+    #[Route(
+        '/{host}/{pager}',
+        name: 'custom_host_pushword_page_homepage_pager',
+        methods: ['GET', 'HEAD', 'POST'],
+        requirements: ['host' => RoutePatterns::HOST, 'pager' => RoutePatterns::PAGER_OPTIONAL],
+        defaults: ['pager' => 1],
+        priority: -80
+    )]
+    #[Route(
+        '/{pager}',
+        name: 'pushword_page_homepage_pager',
+        methods: ['GET', 'HEAD', 'POST'],
+        requirements: ['pager' => RoutePatterns::PAGER],
+        defaults: ['slug' => '', 'pager' => 1],
+        priority: -80
+    )]
+    #[Route(
+        '/{host}/{slug}/{pager}',
+        name: 'custom_host_pushword_page_pager',
+        methods: ['GET', 'HEAD', 'POST'],
+        requirements: [
+            'slug' => RoutePatterns::SLUG,
+            'host' => RoutePatterns::HOST,
+            'pager' => RoutePatterns::PAGER,
+        ],
+        defaults: ['slug' => '', 'pager' => 1],
+        priority: -80
+    )]
+    #[Route(
+        '/{slug}/{pager}',
+        name: 'pushword_page_pager',
+        methods: ['GET', 'HEAD', 'POST'],
+        requirements: ['slug' => RoutePatterns::SLUG_WITH_TRAILING, 'pager' => RoutePatterns::PAGER],
+        defaults: ['slug' => '', 'pager' => 1],
+        priority: -80
+    )]
+    public function show(Request $request, string $slug = ''): Response
     {
         $this->initHost($request);
 
@@ -122,117 +153,6 @@ final class PageController extends AbstractController
         // }
 
         return $this->render($view, $params, $response);
-    }
-
-    private function getView(string $path): string
-    {
-        return $this->apps->getApp()->getView($path);
-    }
-
-    public function showFeed(Request $request, string $slug = ''): Response
-    {
-        $this->initHost($request);
-
-        if ('homepage' === $slug) {
-            return $this->redirectToRoute('pushword_page_feed', ['slug' => 'index'], Response::HTTP_MOVED_PERMANENTLY);
-        }
-
-        $page = $this->getPageElse404($request, $slug);
-
-        $response = new Response();
-        $response->headers->set('Content-Type', 'text/xml');
-
-        if (! $page->hasChildrenPages()) {
-            throw $this->createNotFoundException();
-        }
-
-        $request->setLocale($page->getLocale()); // TODO: move it to event (onRequest + onPageLoad)
-
-        return $this->render(
-            $this->getView('/page/rss.xml.twig'),
-            [...['page' => $page], ...$this->apps->getApp()->getParamsForRendering()],
-            $response
-        );
-    }
-
-    /**
-     * Show Last created page in an XML Feed.
-     */
-    public function showMainFeed(Request $request): Response
-    {
-        $this->initHost($request);
-
-        $locale = '' !== $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->apps->getApp()->getDefaultLocale();
-        $LocaleHomepage = $this->findPage($request, $locale, false);
-        $slug = 'homepage';
-        $page = $LocaleHomepage ?? $this->findPage($request, $slug);
-        if (! $page instanceof Page) {
-            throw $this->createNotFoundException('The page `'.$slug.'` was not found');
-        }
-
-        $request->setLocale($page->getLocale());
-
-        $params = [
-            'pages' => $this->getPages($request, 5),
-            'page' => $page,
-            'feedUri' => ($this->params->get('kernel.default_locale') === $locale ? '' : $locale.'/').'feed.xml',
-        ];
-
-        return $this->render(
-            $this->getView('/page/rss.xml.twig'),
-            [...$params, ...$this->apps->getApp()->getParamsForRendering()]
-        );
-    }
-
-    public function showSitemap(Request $request, string $_format): Response
-    {
-        $this->initHost($request);
-
-        $pages = $this->getPages($request, null);
-
-        if (! \is_array($pages) || ! isset($pages[0])) {
-            throw $this->createNotFoundException();
-        }
-
-        return $this->render(
-            $this->getView('/page/sitemap.'.$_format.'.twig'),
-            [
-                'pages' => $pages,
-                'app_base_url' => $this->apps->getApp()->getBaseUrl(),
-            ]
-        );
-    }
-
-    public function showRobotsTxt(): Response
-    {
-        $response = new Response();
-        $response->headers->set('Content-Type', 'text/plain');
-
-        return $this->render(
-            $this->getView('/page/robots.txt.twig'),
-            [
-                'app_base_url' => $this->apps->getApp()->getBaseUrl(),
-            ],
-            $response
-        );
-    }
-
-    /**
-     * .
-     *
-     * @return mixed //array<Page>
-     */
-    private function getPages(Request $request, ?int $limit = null): mixed
-    {
-        $requestedLocale = rtrim($request->getLocale(), '/');
-
-        return $this->pageRepository->getIndexablePagesQuery(
-            (string) $this->apps->getMainHost(),
-            '' !== $requestedLocale ? $requestedLocale : $this->params->get('kernel.default_locale'),
-            $limit
-        )
-        ->orderBy('p.publishedAt', 'DESC')
-        ->getQuery()->getResult();
     }
 
     private function getPageElse404(Request $request, string $slug, bool $extractPager = false): Page

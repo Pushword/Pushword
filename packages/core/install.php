@@ -30,7 +30,7 @@ PostInstall::mirror('vendor/pushword/skeleton/src/DataFixtures', 'src/DataFixtur
 echo '~~ Adding Puswhord Routes'.chr(10);
 PostInstall::insertIn(
     'config/routes.yaml',
-    "\npushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/all.yaml'\n",
+    "\npushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/all.php'\n",
     PostInstall::INSERT_AT_END
 );
 

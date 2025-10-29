@@ -1,0 +1,22 @@
+{
+    "storeIn": "\/home\/robin\/localhost\/Pushword\/packages\/skeleton\/media",
+    "media": "2.jpg",
+    "mimeType": "image\/jpg",
+    "size": 2,
+    "customProperties": [],
+    "height": 1000,
+    "width": 1000,
+    "mainColor": null,
+    "name": "Demo 2",
+    "names": "",
+    "createdAt": {
+        "date": "2025-10-29 12:44:55.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    },
+    "updatedAt": {
+        "date": "2025-10-29 12:44:55.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    }
+}

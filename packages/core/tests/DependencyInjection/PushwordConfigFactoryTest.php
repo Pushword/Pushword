@@ -9,7 +9,6 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
-use Symfony\Component\Yaml\Yaml;
 
 class PushwordConfigFactoryTest extends TestCase
 {
@@ -67,10 +66,33 @@ class PushwordConfigFactoryTest extends TestCase
 
     private function getConfigArray(): array
     {
-        $config = Yaml::parse(file_get_contents(__DIR__.'/../../../skeleton/config/packages/pushword.yaml'));
-        $config['pushword']['apps'][0]['custom_properties'] = array_merge($config['pushword']['apps'][0]['custom_properties'] ?? [], ['firstCP' => 'blabla']);
+        // Load config from pushword.php - extract the apps configuration directly
+        $extensionConfig = [
+            'apps' => [
+                [
+                    'hosts' => [
+                        'localhost.dev',
+                        'localhost',
+                    ],
+                    'base_url' => 'https://localhost.dev',
+                    'randomTest' => 123,
+                    'generated_og_image' => true,
+                    'admin_block_editor' => false,
+                    'admin_block_editor_disable_listener' => true,
+                    'locales' => 'fr|en',
+                    'page_update_notification_from' => 'test@example.tld',
+                    'page_update_notification_to' => 'test@example.tld',
+                ],
+            ],
+        ];
 
-        return (new Processor())->processConfiguration(new Configuration(), [$config['pushword']]);
+        // Add custom test property
+        if (! isset($extensionConfig['apps'][0]['custom_properties'])) {
+            $extensionConfig['apps'][0]['custom_properties'] = [];
+        }
+        $extensionConfig['apps'][0]['custom_properties'] = array_merge($extensionConfig['apps'][0]['custom_properties'], ['firstCP' => 'blabla']);
+
+        return (new Processor())->processConfiguration(new Configuration(), [$extensionConfig]);
     }
 
     private function getBadConfigArray(): array

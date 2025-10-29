@@ -1,3 +1,0 @@
-babdev_pagerfanta:
-  default_view: default
-  default_twig_template: "@PushwordCoreBundle/component/pager.html.twig"

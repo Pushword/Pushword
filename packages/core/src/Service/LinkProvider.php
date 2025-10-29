@@ -39,7 +39,7 @@ final readonly class LinkProvider
         }
 
         if (\is_array($path)) {
-            dump($path);
+            // dump($path);
             $attr = $path;
             if (! isset($attr['href'])) {
                 throw new Exception('attr must contain href for render a link.');

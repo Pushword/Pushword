@@ -21,7 +21,7 @@ class BlockEditorFilterTest extends KernelTestCase
         $mainContentFiltered = $filter->apply($filter->page->getMainContent());
 
         self::assertStringContainsString('</div>', $mainContentFiltered);
-        self::assertStringContainsString('&test&', $mainContentFiltered);
+        self::assertStringContainsString('--test--', $mainContentFiltered);
     }
 
     private function getEditorFilterTest(): BlockEditorFilter

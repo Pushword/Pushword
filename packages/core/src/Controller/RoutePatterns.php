@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pushword\Core\Controller;
+
+/**
+ * Route pattern constants used in controller attributes.
+ *
+ * These patterns are centralized to ensure consistency and easier maintenance
+ * across all route definitions in the application.
+ */
+final class RoutePatterns
+{
+    // Hostname pattern: domain.com or subdomain.domain.com
+    public const HOST = '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9]*[A-Za-z0-9])$';
+
+    // Locale pattern: matches locale code like 'en', 'fr', 'en_US', 'fr_FR' with optional trailing slash
+    public const LOCALE = '[a-zA-Z]{2}(_[a-zA-Z]+)?\/|';
+
+    // Page slug patterns
+    public const SLUG = '[A-Za-z0-9_\/\.\-]*$';
+
+    public const SLUG_WITH_TRAILING = '[A-Za-z0-9_\/\.\-]*[A-Za-z0-9]+$';
+
+    // Pager pattern
+    public const PAGER = '\d+';
+
+    public const PAGER_OPTIONAL = '(|\d+)';
+
+    // Media file pattern
+    public const MEDIA = '[a-zA-Z0-9\-/\.]*';
+}

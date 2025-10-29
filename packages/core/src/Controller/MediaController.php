@@ -4,6 +4,7 @@ namespace Pushword\Core\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\Routing\Attribute\Route;
 
 final class MediaController extends AbstractController
 {
@@ -13,6 +14,7 @@ final class MediaController extends AbstractController
     ) {
     }
 
+    #[Route('/%pw.public_media_dir%/{media}', name: 'pushword_media_download', requirements: ['media' => RoutePatterns::MEDIA], methods: ['GET', 'HEAD'])]
     public function download(string $media): BinaryFileResponse
     {
         $pathToFile = $this->projectDir.'/'.$this->publicMediaDir.'/'.str_replace('..', '', $media);

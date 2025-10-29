@@ -1,0 +1,1 @@
+Sitemap: https://admin-block-editor.test/sitemap.xml

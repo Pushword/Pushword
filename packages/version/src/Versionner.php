@@ -17,6 +17,7 @@ use function Safe\scandir;
 
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 
 #[AsDoctrineListener(event: Events::postPersist)]
@@ -86,7 +87,10 @@ class Versionner
     {
         $pageVersionned = $this->getPageVersion($pageId ?? $page, $version);
 
-        $this->serializer->deserialize($pageVersionned, $page::class, 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $page]);
+        $this->serializer->deserialize($pageVersionned, $page::class, 'json', [
+            AbstractNormalizer::OBJECT_TO_POPULATE => $page,
+            ObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true, // permits to import tags as string
+        ]);
 
         return $page;
     }

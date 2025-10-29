@@ -5,9 +5,10 @@ use Pushword\Admin\PageAdmin;
 use Pushword\Admin\PageCheatSheetAdmin;
 use Pushword\Admin\PageRedirectionAdmin;
 use Pushword\Core\Security\LoginFormAuthenticator;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
-return [
-    'security' => [
+return static function (ContainerConfigurator $containerConfigurator): void {
+    $containerConfigurator->extension('security', [
         'password_hashers' => [
             '%pw.entity_user%' => [
                 'algorithm' => 'auto',
@@ -64,5 +65,5 @@ return [
                 ],
             ],
         ],
-    ],
-];
+    ]);
+};

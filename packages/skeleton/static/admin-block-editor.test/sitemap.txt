@@ -1,0 +1,2 @@
+https://admin-block-editor.test/test
+https://admin-block-editor.test/kitchen-sink-block
