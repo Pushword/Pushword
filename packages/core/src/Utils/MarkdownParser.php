@@ -2,31 +2,34 @@
 
 namespace Pushword\Core\Utils;
 
-use Michelf\MarkdownExtra;
-use Override;
+use League\CommonMark\Environment\Environment;
+use League\CommonMark\Extension\Attributes\AttributesExtension;
+use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
+use League\CommonMark\Extension\Table\TableExtension;
+use League\CommonMark\Extension\TaskList\TaskListExtension;
+use League\CommonMark\MarkdownConverter;
 
-class MarkdownParser extends MarkdownExtra
+class MarkdownParser
 {
+    private MarkdownConverter $converter;
+
     public function __construct()
     {
-        parent::__construct();
+        $config = [];
 
-        unset($this->block_gamut['doCodeBlocks']);  // break everything witht twig includes
+        $environment = new Environment($config);
+        $environment->addExtension(new CommonMarkCoreExtension());
+        $environment->addExtension(new AttributesExtension());
+        $environment->addExtension(new StrikethroughExtension());
+        $environment->addExtension(new TableExtension());
+        $environment->addExtension(new TaskListExtension());
+
+        $this->converter = new MarkdownConverter($environment);
     }
 
-    /**
-     * Simplify detab.
-     *
-     * @param string $text
-     */
-    #[Override]
-    protected function detab($text): string
+    public function transform(string $text): string
     {
-        return str_replace("\t", str_repeat(' ', $this->tab_width), $text);
-    }
-
-    #[Override]
-    protected function _initDetab(): void
-    {
+        return $this->converter->convert($text)->__toString();
     }
 }

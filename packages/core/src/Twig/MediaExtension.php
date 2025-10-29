@@ -14,11 +14,6 @@ use function Safe\preg_match;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
-/**
- * @template T of object
- *
- *
- *  */
 class MediaExtension
 {
     public function __construct(
@@ -43,7 +38,9 @@ class MediaExtension
 
     public static function mayBeAnInternalImage(string $media): bool
     {
-        return str_starts_with($media, '/media/default/') || ! str_contains($media, '/');
+        return str_starts_with($media, '/media/default/')
+        || str_starts_with($media, '/media/')
+        || ! str_contains($media, '/');
     }
 
     private function normalizeMediaPath(string $src): string
@@ -53,6 +50,8 @@ class MediaExtension
         }
 
         $src = str_starts_with($src, '/media/default/') ? substr($src, \strlen('/media/default/')) : $src;
+        $src = str_starts_with($src, '/media/md/') ? substr($src, \strlen('/media/md/')) : $src;
+        $src = 2 === substr_count($src, '/') && str_starts_with($src, '/media/') ? substr($src, \strlen('/media/')) : $src;
 
         return $src;
     }
@@ -75,7 +74,7 @@ class MediaExtension
             throw new Exception("Can't handle the value submitted (".$src.').');
 
             if ('' !== $name) { // to check if useful
-                $media->setName($name);
+                $media->setName($name, true);
             }
 
             return $media;

@@ -8,6 +8,8 @@ window.monaco = monaco
 window.monacoHelper = MonacoHelper
 
 window.addEventListener('load', function () {
-  const textareaList = document.querySelectorAll('textarea[data-editor="twig"],textarea[data-editor="yaml"],textarea[data-editor="json"]')
+  const textareaList = document.querySelectorAll(
+    'textarea[data-editor="twig"],textarea[data-editor="yaml"],textarea[data-editor="json"]',
+  )
   textareaList.forEach((textarea) => MonacoHelper.transformTextareaToMonaco(textarea))
 })

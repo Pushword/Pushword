@@ -1,0 +1,73 @@
+.ce-header-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  padding-top: 15px;
+}
+
+.ce-header {
+  margin: 0;
+  line-height: 1.25em;
+  outline: none;
+}
+
+.ce-header-level-indicator svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Make the header take up remaining space */
+.ce-header-container h1,
+.ce-header-container h2,
+.ce-header-container h3,
+.ce-header-container h4,
+.ce-header-container h5,
+.ce-header-container h6 {
+  flex: 1;
+  margin: 0;
+  padding: 3px 0 3px !important;
+}
+
+.ce-header-container h2 {
+  font-size: 30px; /* Tailwind 3xl (1.875rem) */
+}
+
+.ce-header-container h3 {
+  font-size: 24px; /* Tailwind 2xl (1.5rem) */
+}
+
+.ce-header-container h4 {
+  font-size: 20px; /* Tailwind xl (1.25rem) */
+}
+
+.ce-header-container h5 {
+  font-size: 18px; /* Tailwind lg (1.125rem) */
+}
+
+.ce-header-container h6 {
+  font-size: 16px; /* Tailwind base (1rem) */
+}
+
+.ce-header-container select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: none;
+  background-color: white;
+  padding-right: 1rem;
+  border: 1px solid #ccc;
+  padding: 3px;
+  font-size: 14px;
+  border-radius: 4px;
+  color: #ccc;
+}
+
+.ce-header-container select:focus {
+  color: #707684;
+  outline: none;
+  border-color: #66afe9;
+  box-shadow:
+    inset 0 1px 1px rgba(0, 0, 0, 0.075),
+    0 0 8px rgba(102, 175, 233, 0.6);
+}

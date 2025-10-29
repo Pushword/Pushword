@@ -2,6 +2,7 @@
 
 namespace Pushword\AdminBlockEditor\Twig;
 
+use Exception;
 use PiedWeb\RenderAttributes\Attribute;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Router\PushwordRouteGenerator;
@@ -29,11 +30,11 @@ class AppExtension
         }
 
         if (str_contains($id, '"')) {
-            throw new \Exception('Block wrapper id cannot contain quotes');
+            throw new Exception('Block wrapper id cannot contain quotes');
         }
 
         if (str_contains($id, ' ')) {
-            throw new \Exception('Block wrapper id cannot contain spaces');
+            throw new Exception('Block wrapper id cannot contain spaces');
         }
 
         return $returnId ? ' id="'.$id.'"' : '#'.$id;
@@ -114,7 +115,7 @@ class AppExtension
             $attributes['class'] .= ' '.$blockData['tunes']['class'];
         }
 
-        $alignment = $blockData['tunes']['textAlign']['alignment'] ?? $blockData['data']['alignment'] ?? ''; // @phpstan-ignore-line
+        $alignment = $blockData['tunes']['textAlign'] ?? $blockData['data']['alignment'] ?? ''; // @phpstan-ignore-line
 
         if ('center' === $alignment) {
             $attributes['class'] .= ' text-center';
@@ -260,7 +261,7 @@ class AppExtension
         }
 
         // If it starts with http or /, it's a URL - extract the filename
-        if (str_starts_with($urlOrName, 'http') || str_starts_with($urlOrName, '/')) {
+        if (str_starts_with($urlOrName, '/')) { // str_starts_with($urlOrName, 'http') ||
             $parts = explode('/', $urlOrName);
 
             return end($parts) ?: '';

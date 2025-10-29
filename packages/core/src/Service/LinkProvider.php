@@ -11,7 +11,7 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
-final class LinkProvider
+final readonly class LinkProvider
 {
     public function __construct(
         private PushwordRouteGenerator $router,
@@ -39,6 +39,7 @@ final class LinkProvider
         }
 
         if (\is_array($path)) {
+            dump($path);
             $attr = $path;
             if (! isset($attr['href'])) {
                 throw new Exception('attr must contain href for render a link.');

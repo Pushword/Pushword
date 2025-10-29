@@ -1,3 +1,4 @@
+{% set host = page.host ?? '' %}
 {% if (block.data.display == 'card') %}
 {# show preview for a 1024px screen max (else client screen width) #}
 <div style="text-align: center; max-width:100%;overflow-x:auto; overflow-y:hidden">
@@ -17,7 +18,18 @@ srcdoc='
 
 {{ block('css', view('/base.html.twig')) }}
 
-{{ pages_list(block.data.kw, [block.data.max|default(9), block.data.maxPages|default(1)], block.data.order, 'card') }}
+{# block.data.maxPages|default('0'), #}
+{{ pages_list(
+  block.data.kw,
+  block.data.max ?? '9',
+  block.data.order,
+  'card',
+  block.data.maxPages ?? '0',
+  block.tunes.class ?? '',
+  block.tunes.anchor ?? '',
+  '',
+  page)
+}}
 
 {% endapply %}
 

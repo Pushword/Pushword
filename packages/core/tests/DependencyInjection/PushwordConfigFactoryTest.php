@@ -81,6 +81,9 @@ class PushwordConfigFactoryTest extends TestCase
         return $array;
     }
 
+    /**
+     * @return array<string, string[]|array<string, string>|string>
+     */
     private function getPwExtensionConfig(): array
     {
         return [

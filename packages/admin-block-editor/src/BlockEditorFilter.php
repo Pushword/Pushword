@@ -12,6 +12,9 @@ use Pushword\Core\Component\EntityFilter\Filter\AbstractFilter;
 use Pushword\Core\Entity\Page;
 use Twig\Environment as Twig;
 
+/**
+ * @deprecated will be removed in next version
+ */
 final class BlockEditorFilter extends AbstractFilter
 {
     public AppConfig $app;
@@ -93,6 +96,8 @@ final class BlockEditorFilter extends AbstractFilter
             throw new LogicException();
         }
 
+        $this->appBlocks = [];
+
         /** @var string[] $blocks */
         foreach ($blocks as $block) {
             if (class_exists($block) && ($blockClass = new $block()) instanceof AbstractBlock) {
@@ -118,6 +123,6 @@ final class BlockEditorFilter extends AbstractFilter
             throw new Exception('Block Manager for `'.$block.'` not found.');
         }
 
-        return $this->appBlocks; // @phpstan-ignore-line
+        return $this->appBlocks;
     }
 }

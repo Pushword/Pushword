@@ -1,1 +1,3 @@
-<p{{ blockWrapperId(block.tunes.anchor ?? '') }}{{ blockWrapperAlignment(block.data.tunes.textAlign.alignment ?? '') }}{{ block.data.text|fixHref|raw }}</p>
+<p{{ blockWrapperAttr(block) }}>
+{{ block.data.text|raw }}
+</p>

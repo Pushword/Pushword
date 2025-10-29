@@ -1,8 +1,11 @@
 {{ pages_list(
     block.data.kw,
-    [(block.data.max ? block.data.max : '9'),
-    (block.data.maxPages ? block.data.maxPages : '1')],
-    block.data.order, block.data.display == 'card' ? 'card' : 'list',
+    (block.data.max ? block.data.max : '9'),
+    block.data.order,
+    block.data.display == 'card' ? 'card' : 'list',
+    (block.data.maxPages ? block.data.maxPages : '0'),
+    block.tunes.class ?? '',
+    block.tunes.anchor ?? '',
     '',
-    page, block.tunes.anchor ?? ''
+    page
 ) }}

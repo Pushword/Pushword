@@ -17,7 +17,7 @@ final class AppConfig
     private string $locale;
 
     /** @var string|string[]|null */
-    private string|array|null $locales = null;  // @phpstan-ignore-line
+    private string|array|null $locales = null;
 
     private string $baseUrl;
 
@@ -31,7 +31,7 @@ final class AppConfig
     private bool $entityCanOverrideFilters;
 
     /** @var array{}|array{javascripts: ?string[], stylesheets: ?string[]} */
-    private array $assets = []; // @phpstan-ignore-line
+    private array $assets = [];
 
     private Twig $twig;
 

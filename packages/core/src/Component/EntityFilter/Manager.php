@@ -96,7 +96,7 @@ final readonly class Manager
         }
 
         return [] !== $filters
-            ? $this->applyFilters($property, '' !== \strval($propertyValue) ? $propertyValue : '', $filters)
+            ? $this->applyFilters('' !== \strval($propertyValue) ? $propertyValue : '', $filters)
             : $propertyValue;
     }
 
@@ -176,7 +176,7 @@ final readonly class Manager
     /**
      * @param string[] $filters
      */
-    private function applyFilters(string $property, bool|float|int|string|null $propertyValue, array $filters): mixed
+    public function applyFilters(bool|float|int|string|null $propertyValue, array $filters): mixed
     {
         foreach ($filters as $filter) {
             if (\in_array($this->page->getCustomProperty('filter_'.$this->className($filter)), [0, false], true)) {
@@ -185,9 +185,12 @@ final readonly class Manager
 
             $filterClass = $this->getFilterClass($filter);
 
-            if (method_exists($filterClass, 'setProperty')) {
-                $filterClass->setProperty($property);
+            if (property_exists($filterClass, 'manager')) {
+                $filterClass->manager = $this;
             }
+            // if (method_exists($filterClass, 'setProperty')) {
+            //     $filterClass->setProperty($property);
+            // }
 
             $propertyValue = $filterClass->apply($propertyValue);
         }

@@ -2,8 +2,8 @@ A few example for the editor possibilities. Best to observe this, it's in admin 
 
 ## Links & Routes
 
-- [Homepage]({{ homepage() }})
-- [Current Page]({{ page(page) }})
+- [Homepage](/)
+- Current Page: {{ page(page) }}
 - Get Url : {{ page('what-you-want-in-same-app') }}
 - Canonical with base: {{ page(page, true) }}
 - Encrypted Link : {{ link('Pied Web', 'https://piedweb.com/') }}
@@ -25,13 +25,15 @@ A few example for the editor possibilities. Best to observe this, it's in admin 
 
 ## Gallery
 
-{{ gallery(['piedweb-logo.png', '1.jpg', '2.jpg', '3.jpg'])|unprose }}
+{{ gallery({'piedweb-logo.png': '', '1.jpg': '', '2.jpg': '', '3.jpg': ''})|unprose }}
 
 ## Not clickable Gallery
 
 (first element with a custom link)
 
-{{ gallery([ ['piedweb-logo.png', 'https://piedweb.com', {}, false], '1.jpg', '2.jpg', '3.jpg'], clickable=false)|unprose }}
+{{ gallery({'piedweb-logo.png': ['pied web logo', 'https://piedweb.com', {}, false], '1.jpg': '', '2.jpg': '', '3.jpg': ''}, clickable=false)|unprose }}
+
+{# {{ gallery({'mediaName': ['atlernativeText', 'link', linkAttr, obf]) }} #}
 
 ## Video
 
@@ -53,10 +55,11 @@ or open an iframe
 
 {{  pages_list('content:fun', 3) }}
 
-{{  pages_list('content:Fun', [3, 3], 'publishedAt DESC', 'card')|unprose }}
+{{  pages_list('content:Fun', 3, 'publishedAt DESC', 'card', 3)|unprose }}
 
 ### Or 100% custom card
 
+<div class="not-prose lg:-mx-40 my-6 md:-mx-20">
 {% set items = [
   {
     'image'  : '3',
@@ -74,8 +77,6 @@ or open an iframe
     'link'    : 'https://piedweb.com',
   },
 ] %}
-
-<div class="not-prose lg:-mx-40 my-6 md:-mx-20">
   <ul class="flex flex-row my-5 flex-wrap justify-center mx-auto">
     {% for item in items %}
       <li class="w-full px-1 my-1 sm:w-1/2 md:w-1/3">
@@ -86,3 +87,28 @@ or open an iframe
 </div>
 
 <a href="https://pushword.piedweb.com" class="btn btn-primary">See the docs</a>
+
+## Table Example
+
+| Fonctionnalité | Statut   | Notes                     |
+| -------------- | -------- | ------------------------- |
+| Table          | ✅ Testé | Nouveau dans Kitchen Sink |
+| Attaches       | ✅ Testé | Gestion des fichiers      |
+| Delimiter      | ✅ Testé | Séparateur de contenu     |
+| linkTune       | ✅ Testé | Liens sur images          |
+
+---
+
+## Attachments & Files
+
+{{ attaches('Demo 2', '/media/2.jpg', '2' )|unprose }}
+
+## Texte avec Formatage Avancé
+
+Texte avec <u>soulignement</u>, **gras**, _italique_, <mark>surlignage</mark> et ~~barré~~ pour tester tous les outils inline.
+
+## Image avec Lien (linkTune)
+
+[![Image cliquable vers la documentation](2.jpg)](https://pushword.piedweb.com)
+
+_Cette image est cliquable et redirige vers la documentation Pushword._

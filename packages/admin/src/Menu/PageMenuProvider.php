@@ -192,7 +192,7 @@ final readonly class PageMenuProvider
     }
 
     /**
-     * @param mixed[] $query
+     * @param array<string, mixed> $query
      */
     private function extractHostFilter(array $query): ?string
     {

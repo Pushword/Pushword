@@ -10,9 +10,9 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 #[AsCommand(name: 'pushword:static:generate', description: 'Generate static version for your website')]
 #[AutoconfigureTag('console.command')]
-final class StaticCommand
+final readonly class StaticCommand
 {
-    public function __construct(private readonly StaticAppGenerator $staticAppGenerator)
+    public function __construct(private StaticAppGenerator $staticAppGenerator)
     {
     }
 

@@ -30,9 +30,9 @@ abstract class AbstractEventSuscriber implements EventSubscriberInterface
             return false;
         } // do not use event for PageRedirection for example
 
-        if (null !== $page && '' !== $page->getMainContent() && null === json_decode($page->getMainContent(), null, 512)) {
-            return false;
-        }
+        // if (null !== $page && '' !== $page->getMainContent() && null === json_decode($page->getMainContent(), null, 512)) {
+        //     return false;
+        // }
 
         if (null !== $page && '' !== $page->getHost()) {
             return $this->apps->get($page->getHost())->getBoolean('admin_block_editor', false);

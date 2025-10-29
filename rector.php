@@ -30,6 +30,7 @@ return RectorConfig::configure()
         codeQuality: true,
         codingStyle: true,
         typeDeclarations: true,
+        typeDeclarationDocblocks: true,
         instanceOf: true,
         earlyReturn: true,
         symfonyCodeQuality: true,

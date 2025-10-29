@@ -1,37 +1,42 @@
 import * as monaco from 'monaco-editor'
 
 export default class MonacoHelper {
-  static get defaultSettings() {
-    return {
-      theme: 'light+', // You can change the theme if needed
-      lineNumbers: 'off',
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false, // Désactiver le défilement au-delà de la dernière ligne
-      automaticLayout: true,
-      codeLens: false,
-      glyphMargin: false,
-      renderLineHighlight: 'none',
-      renderWhitespace: 'trailing',
-      letterSpacing: 0,
-      fontLigatures: true,
-      formatOnPaste: true,
-      folding: false,
-      showFoldingControls: 'never',
-      wordWrap: 'on',
-      guides: { indentation: true },
-      tabSize: 2,
-      insertSpaces: true,
-      detectIndentation: true,
-    }
+  static defaultSettings = {
+    theme: 'light+', // You can change the theme if needed
+    lineNumbers: 'off',
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false, // Désactiver le défilement au-delà de la dernière ligne
+    automaticLayout: true,
+    codeLens: false,
+    glyphMargin: false,
+    renderLineHighlight: 'none',
+    renderWhitespace: 'trailing',
+    letterSpacing: 0,
+    fontLigatures: true,
+    formatOnPaste: true,
+    folding: false,
+    showFoldingControls: 'never',
+    wordWrap: 'on',
+    guides: { indentation: true },
+    tabSize: 2,
+    insertSpaces: true,
+    detectIndentation: true,
   }
 
-  /** @param {HTMLElement} textarea   */
+  /**
+   * @param {HTMLElement} textarea
+   * @param {boolean} enableWidth
+   *
+   * @returns {typeof import('monaco-editor').IStandaloneCodeEditor}
+   */
   static transformTextareaToMonaco(textarea) {
     const language = textarea.getAttribute('data-editor')
 
     // manage hidden
     const collapsedElement = textarea.closest('.collapse')
-    const isCollapsed = collapsedElement ? !collapsedElement.classList.contains('in') : false
+    const isCollapsed = collapsedElement
+      ? !collapsedElement.classList.contains('in')
+      : false
     if (isCollapsed) collapsedElement.classList.remove('collapse')
 
     const textareaWidth = textarea.offsetWidth
@@ -55,8 +60,13 @@ export default class MonacoHelper {
       editor.updateOptions({ readOnly: true })
     }
 
+    window.addEventListener('resize', () => {
+      monacoHelperInstance.updateHeight(textarea)
+    })
+
     // Manage textarea resize
     const resizeObserver = new ResizeObserver((entries) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for (let entry of entries) {
         monacoHelperInstance.updateHeight(textarea)
       }
@@ -67,7 +77,7 @@ export default class MonacoHelper {
 
     editor.onDidChangeModelContent(() => {
       textarea.value = editor.getValue()
-      //monacoHelperInstance.updateHeight(textarea)
+      monacoHelperInstance.updateHeight(textarea)
     })
 
     textarea.style.opacity = 0
@@ -75,13 +85,29 @@ export default class MonacoHelper {
     return editor
   }
 
-  /** @param {typeof import('monaco-editor')} editor */
+  /** @param {typeof import('monaco-editor').IStandaloneCodeEditor} editor */
   constructor(editor) {
     this.editor = editor
   }
 
   autocloseTag() {
-    const selfClosingTags = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr']
+    const selfClosingTags = [
+      'area',
+      'base',
+      'br',
+      'col',
+      'embed',
+      'hr',
+      'img',
+      'input',
+      'keygen',
+      'link',
+      'meta',
+      'param',
+      'source',
+      'track',
+      'wbr',
+    ]
     const position = this.editor.getPosition()
     const model = this.editor.getModel()
     const textBeforePosition = model.getValueInRange({
@@ -98,7 +124,12 @@ export default class MonacoHelper {
         const closingTag = `</${tag}>`
         this.editor.executeEdits('', [
           {
-            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+            range: new monaco.Range(
+              position.lineNumber,
+              position.column,
+              position.lineNumber,
+              position.column,
+            ),
             text: closingTag,
             forceMoveMarkers: true,
           },
@@ -113,18 +144,26 @@ export default class MonacoHelper {
     }
   }
 
+  /**
+   * @param {HTMLElement} wrapperOrTextarea
+   * @param {int} minHeight  in PX
+   */
   updateHeight(wrapperOrTextarea, minHeight = 60) {
     const model = this.editor.getModel()
+    if (!model) return
     const lineCount = model.getLineCount()
     const lineHeight = 21 // Hauteur approximative d'une ligne dans Monaco
 
-    let newHeight = Math.max(lineCount * lineHeight + 10, minHeight)
-    if (parseInt(wrapperOrTextarea.style.height) !== newHeight) {
-      wrapperOrTextarea.style.height = `${newHeight}px`
-      this.resizeEditor(wrapperOrTextarea)
-    }
+    const newHeight = Math.max(lineCount * lineHeight + 10, minHeight)
+    wrapperOrTextarea.style.height = `${newHeight}px`
+    wrapperOrTextarea.style.width = `100%`
+    this.resizeEditor(wrapperOrTextarea)
   }
 
+  /**
+   *
+   * @param {HTMLElement} wrapperOrTextarea
+   */
   resizeEditor(wrapperOrTextarea) {
     const { clientHeight, clientWidth } = wrapperOrTextarea
     if (this.editor) {

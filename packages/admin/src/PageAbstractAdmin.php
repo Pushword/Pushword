@@ -229,7 +229,7 @@ abstract class PageAbstractAdmin extends AbstractAdmin
                 /**
                  * @param ProxyQuery<Page> $queryBuilder
                  */
-                fn (ProxyQuery $queryBuilder, string $alias, string $field, FilterData $filterData): ?bool => $this->getSearchFilterForTitle($queryBuilder, $alias, $field, $filterData),
+                $this->getSearchFilterForTitle(...),
                 'label' => 'admin.page.h1.label',
             ]);
 

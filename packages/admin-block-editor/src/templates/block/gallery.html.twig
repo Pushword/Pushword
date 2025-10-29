@@ -1,4 +1,21 @@
 
 
 
-{{ gallery(legacyImageArray(block.data), pos=pos)|unprose}}
+{% set medias = [] %}
+
+{% if block.data.items is defined %}
+  {% for item in block.data.items %}
+    {% set media = item.media %}
+    {% set caption = item.caption %}
+    {% set medias = medias|merge({(media): caption}) %}
+  {% endfor %}
+{% else %}
+  {% set medias = block.data %} {# legacy #}
+{% endif %}
+
+
+{{ gallery(
+    medias,
+    clickable: block.tunes.clickableTune.value|default(false),
+    pos: pos
+)|unprose}}

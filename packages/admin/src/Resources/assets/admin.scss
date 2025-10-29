@@ -9,7 +9,9 @@
 /* Column Expanding */
 .mainFields,
 .columnFields {
-  transition: width 0.5s ease, margin 0.5s ease;
+  transition:
+    width 0.5s ease,
+    margin 0.5s ease;
 }
 .w-0 {
   width: 0 !important;
@@ -253,13 +255,16 @@ table.sonata-ba-list td .mosaic-inner-box::before {
   left: 0;
   width: 100%;
   height: 100%;
-  /* The background uses the URL from the CSS variable */
   background-image: var(--bg-image-url);
   background-size: cover;
   background-position: center;
-  /* Applies the blur effect */
   filter: blur(10px);
-  /* Scales the background to avoid blurred edges */
   transform: scale(1.1);
+}
+
+@media (width <= 768px) {
+  body.fixed .content-wrapper {
+    padding-top: 0;
+  }
 }
 /* purgecss end ignore */

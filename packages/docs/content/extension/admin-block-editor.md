@@ -100,8 +100,9 @@ The search input permit to perfom action like :
 
 - `CHILDREN` will search for children page
 - `parent_children` will search for children page from the parent page
-- `comment:HELLO-YOU` will search in pages's main content for `<!--HELLO-YOU-->` (case sensitive)
 - `slug:hellow-world` will search for page with slug being exactly `tagada`
 - `slug:hellow-world OR slug:hello-me` ... or operator
 - `slug:hellow-world OR pizza OR comment:HELLO-YOU` ...
 - `slug:%page%` containing `page` in slug
+- `exampleTag` will search in pages's tags for `exampleTag` (case sensitive)
+- `comment:HELLO-YOU` will search in pages's main content for `<!--HELLO-YOU-->` (case sensitive)

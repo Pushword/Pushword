@@ -6,17 +6,28 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    $("#draft").on("ifChanged", toggleDraft); // can't drop jquery because of iCheck
+    if (jQuery) {
+        jQuery("#draft").on("ifChanged", toggleDraft);
+    }
+
+    const draftCheckbox = document.getElementById('draft');
+    if (draftCheckbox) {
+        draftCheckbox.addEventListener('change', toggleDraft);
+    }
 });
 
+
 function toggleDraft() {
-    console.log('toggleDraft');
     const inputDate = document.querySelector('[data-selector="publishedAtToDraft"]');
+    if (!inputDate) {
+        return;
+    }
     let currentDate = new Date(inputDate.value);
-    console.log(currentDate);
 
     const draft = document.getElementById('draft');
-    if (draft.checked) {
+    const isChecked = draft && draft.checked;
+
+    if (isChecked) {
         currentDate.setFullYear(currentDate.getFullYear() + 10);
     } else {
         currentDate = new Date();

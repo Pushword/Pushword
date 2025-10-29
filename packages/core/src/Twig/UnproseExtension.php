@@ -9,7 +9,7 @@ use Twig\Environment as Twig;
 final class UnproseExtension
 {
     public function __construct(
-        private AppPool $apps,
+        private readonly AppPool $apps,
         public Twig $twig,
     ) {
     }

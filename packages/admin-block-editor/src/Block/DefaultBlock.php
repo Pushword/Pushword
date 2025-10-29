@@ -10,12 +10,9 @@ class DefaultBlock extends AbstractBlock
      * @var string[]
      */
     final public const array AVAILABLE_BLOCKS = [
-        'paragraph',
         'list',
         'header',
-        'raw',
         'quote',
-        'code',
         'list',
         'delimiter',
         'table',
@@ -25,6 +22,8 @@ class DefaultBlock extends AbstractBlock
         'pages_list',
         'gallery',
         'codeBlock',
+        'paragraph',
+        'raw',
     ];
 
     public function __construct(string $name)

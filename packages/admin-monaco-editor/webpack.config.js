@@ -1,7 +1,10 @@
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
-const path = require('path')
+import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-module.exports = {
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+export default {
   entry: './index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -21,7 +24,17 @@ module.exports = {
   },
   plugins: [
     new MonacoWebpackPlugin({
-      languages: ['bash', 'shell', 'html', 'javascript', 'twig', 'yaml', 'php', 'json', 'markdown'],
+      languages: [
+        'bash',
+        'shell',
+        'html',
+        'javascript',
+        'twig',
+        'yaml',
+        'php',
+        'json',
+        'markdown',
+      ],
       customLanguages: [
         {
           label: 'yaml',

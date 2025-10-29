@@ -1,6 +1,7 @@
 ---
 title: Pushword - CMS to build rapidly Websites (powered by Symfony)
-h1: <span class="block mt-6 leading-relaxed">Build <em class="font-light">Content First</em> websites rapidly
+h1:
+  <span class="block mt-6 leading-relaxed">Build <em class="font-light">Content First</em> websites rapidly
   <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>
 name: Pushword
 template: /page/homepage.html.twig
@@ -26,7 +27,7 @@ See [how to install easily Pushword](/installation) and take time to adjust it a
 Or look at the <strong>detailled features</strong> ↓
 
 </div>
-<div class="hidden p-3 -mt-3 prose-sm rounded-sm shadow-lg bg-gray-50 dark:bg-gray-900 lg:block" style="width:400px;margin-right:-50px; margin-left:50px" markdown=1>
+<div class="hidden p-3 -mt-3 prose-sm rounded-xs shadow-lg bg-gray-50 dark:bg-gray-900 lg:block" style="width:400px;margin-right:-50px; margin-left:50px" markdown=1>
 
 ### Install
 
@@ -55,7 +56,7 @@ Unzip it on a classic Apache/PHP server and play.
 
 <!-- next: show a preview there -->
 
-<div class="p-3 relative mb-6 shadow-sm bg-gray-50 dark:bg-gray-800 from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+<div class="p-3 relative mb-6 shadow-xs bg-gray-50 dark:bg-gray-800 from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
     <div class="max-w-screen-sm mx-auto">
         <h2 class="pt-12 pb-6 text-4xl">Features<br><small class="text-lg">Create content and publish it on the web smoothly</small></h2>
     </div>
@@ -65,7 +66,7 @@ Unzip it on a classic Apache/PHP server and play.
         <!-- Edit -->
         <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-green-500 rounded-full">{{
                         svg('tools') }}</div>
                 </div>
@@ -80,7 +81,7 @@ Unzip it on a classic Apache/PHP server and play.
         </div>
         <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-indigo-500 rounded-full">
                         {{ svg('wave-square') }}</div>
                 </div>
@@ -98,7 +99,7 @@ Unzip it on a classic Apache/PHP server and play.
     <div class="col-span-2">
         <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-blue-500 rounded-full">
                         {{ svg('feather-alt') }}
                     </div>
@@ -117,7 +118,7 @@ Unzip it on a classic Apache/PHP server and play.
         </div>
         <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-red-500 rounded-full">
                         {{ svg('paint-roller') }}
                     </div>
@@ -135,7 +136,7 @@ Unzip it on a classic Apache/PHP server and play.
     <div class="flex flex-col items-start col-span-2 xl:flex-col md:col-span-4 xl:col-span-2 md:flex-row xl:col-start-auto md:space-x-3 xl:space-x-0">
         <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-pink-500 rounded-full">
                         {{ svg('star') }}
                     </div>
@@ -152,7 +153,7 @@ Unzip it on a classic Apache/PHP server and play.
         </div>
         <div class="px-3 py-6 mb-6 rounded-lg md:-mt-24 xl:mt-0 dark:bg-gray-900 bg-white shadow dark:text-gray-50">
             <h2 class="flex mb-6 text-xl font-medium">
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-purple-500 rounded-full">
                         {{ svg('gem') }}
                     </div>
@@ -192,7 +193,7 @@ And a few more amazon open source ({{ link('dependencies', 'https://github.com/P
 
 </div>
 
-<div class="shadow-sm bg-gray-50 -mb-14 dark:bg-gray-800">
+<div class="shadow-xs bg-gray-50 -mb-14 dark:bg-gray-800">
 <div class="max-w-screen-sm p-3 py-12 mx-auto prose-sm prose md:prose-lg dark:prose-light">
 
 <h2 class="font-bold">Next</h2>

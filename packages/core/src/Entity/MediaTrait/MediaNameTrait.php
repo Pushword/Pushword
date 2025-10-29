@@ -20,8 +20,27 @@ trait MediaNameTrait
         return $this->name.' ';
     }
 
+    private string $softName = '';
+
+    public function setName(?string $name, bool $soft = false): self
+    {
+        if ($soft) {
+            $this->softName = (string) $name;
+
+            return $this;
+        }
+
+        $this->name = (string) $name;
+
+        return $this;
+    }
+
     public function getName(bool $onlyName = false): string
     {
+        if ('' !== $this->softName) {
+            return $this->softName;
+        }
+
         if ($onlyName) {
             return $this->name;
         }
@@ -82,12 +101,5 @@ trait MediaNameTrait
         $names = $this->getNamesParsed();
 
         return $names[$locale] ?? $this->getName();
-    }
-
-    public function setName(?string $name): self
-    {
-        $this->name = (string) $name;
-
-        return $this;
     }
 }

@@ -35,7 +35,7 @@ class PageTranslationsField extends AbstractField
             'help_html' => true,
             'help' => 'admin.page.translations.help',
             'btn_add' => false,
-            'callback' => fn (AdminInterface $admin, string $property, string $value) => $this->getCallback($admin, $property, $value),
+            'callback' => $this->getCallback(...),
             'req_params' => [
                 'pageId' => $page->getId() ?? 0,
                 'pageLocale' => $page->getLocale(),

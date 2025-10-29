@@ -1,46 +1,47 @@
 {% block editorjs_widget %}
 
+<div style="padding-top:8px; text-align:right; padding-right: 4px;">
+    <a href="#" onclick="toggleEditor()" style="color:#4b5563">{{ svg('code', {style: 'width:12px', fill: 'currentColor'}) }}</a>
+    <a href="#" onclick="toggleEditor('markdown')" style="color:#4b5563; display:inline-block; margin-left: 10px;" title="Ctrl + U">{{ svg('markdown', {style: 'width:12px', fill: 'currentColor'}) }}</a>
+</div>
 <div style="padding: 10px 10px 0px;">
     {% set editor_id = 'editorjs_' ~ id %}
-    <input type="hidden" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }} value="{{ value }}">
+    <textarea style="display: none;" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
     <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
 </div>
-
-<div style="padding-top:10px; text-align:center">
-    <a href="#" onclick="toggleEditor()" style="color:#4b5563" title="Alt + U">{{ svg('code', {style: 'width:12px', fill: 'currentColor'}) }}</a>
-    <a href="#" onclick="alert('wip')" style="color:#4b5563; display:inline-block; margin-left: 10px;" title="Alt + M">{{ svg('markdown', {style: 'width:12px', fill: 'currentColor'}) }}</a>
-</div>
 <script>
-window.pagesUriList = {{ page_uri_list()|json_encode|raw }};
+// Attendre que l'éditeur soit initialisé pour créer les fonctions de toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const editorId = '{{ editor_id }}';
 
-window.onkeyup = function(event){
-    if (event.altKey  && event.which === 85) { // 85 = touche U
-        event.preventDefault();
-        toggleEditor();
+    // Fonctions de toggle utilisant la classe EditorModeManager
+    window.toggleEditor = function(type = 'editorjs') {
+        /** @type {editorJsHelper import('../../assets/editorJsHelper.ts').editorJsHelper} */
+        const editorJsHelper = window.editorJsHelper;
+
+        const modeManager = editorJsHelper.modeManagers[editorId];
+        if (!modeManager)
         return;
-    }
-}
 
-function toggleEditor() {
-    editorJsHelper.toggleEditorJs('{{ editor_id }}');
-    var textarea = document.querySelector('textarea[data-editorjs]');
-    if (textarea) {
-        textarea.style.minHeight = '70vh';
-        textarea.style.maxHeight = '71vh';
-        var ugly = textarea.value;
-        var pretty = JSON.stringify(JSON.parse(ugly), undefined, 4);
-        textarea.value = pretty;
-        textarea.setAttribute('data-editor', 'json');
-       // const monacoEditorInstance = window.monacoHelper.transformTextareaToMonaco(textarea)
-        window.monacoEditorInstance{{ editor_id }} = window.monacoHelper.transformTextareaToMonaco(textarea)
-        //monacoEditorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {}, 'editorTextFocus');
-    } else {
-        value = window.monacoEditorInstance{{ editor_id }}.getValue();
-        window.editors['{{ editor_id }}'].blocks.render(JSON.parse(value))
-        var monacoEditor = document.querySelector('.monaco-editor').parentNode
-        monacoEditor.parentNode.removeChild(monacoEditor)
-    }
-}
+        // editorJsHelper.toggleEditorJs(editorId);
+        // return;
+
+        type === 'editorjs' ? modeManager.toggleEditor() : modeManager.toggleMarkdownEditor();
+    };
+
+    window.onkeyup = function(event) {
+        if (event.ctrlKey && event.which === 85) { // 85 = touche U
+            event.preventDefault();
+            window.toggleEditor('markdown');
+        }
+    };
+});
+</script>
+
+<script>
+// used in PagesList.ts
+window.pagesUriList = {{ page_uri_list(attr.page_host|default(''))|json_encode|raw }};
+
 {% block editorjs_config %}
 var editorjsConfig = {
     name: "default",
@@ -73,31 +74,30 @@ var editorjsConfig = {
                     byFile: "/admin/media/block",
                     byUrl: "/admin/media/block",
                 },
-                onSelectFile: editorJsHelper.onSelectImage,
-                onUploadFile: editorJsHelper.onUploadImage,
+                onSelectFile: window.editorJsHelper.onSelectImage,
+                onUploadFile: window.editorJsHelper.onUploadImage,
             },
             conversion: false,
         },
         gallery: {
             name: "gallery",
             className: "Gallery",
-            tunes: ['anchor'],
+            tunes: ['clickableTune'],
             config: {
                 endpoints: {
                     byFile: "/admin/media/block",
                     byUrl: "/admin/media/block",
                 },
-                onSelectFile: editorJsHelper.onSelectImage,
-                onUploadFile: editorJsHelper.onUploadImage,
+                onSelectFile: window.editorJsHelper.onSelectImage,
+                onUploadFile: window.editorJsHelper.onUploadImage,
             }
         },
         embed: {
             name: "embed",
             className: "Embed",
-            tunes: ['anchor'],
             config: {
-                onSelectFile: editorJsHelper.onSelectImage,
-                onUploadFile: editorJsHelper.onUploadImage,
+                onSelectFile: window.editorJsHelper.onSelectImage,
+                onUploadFile: window.editorJsHelper.onUploadImage,
             },
         },
         delimiter: {
@@ -114,11 +114,6 @@ var editorjsConfig = {
                 captionPlaceholder: "...",
             },
         },
-        paragraph: {
-            name: "paragraph",
-            className: "Paragraph",
-            tunes: ['anchor', 'class', 'textAlign'],
-        },
         table: {
             name: "table",
             className: "Table",
@@ -128,22 +123,27 @@ var editorjsConfig = {
             className: "Attaches",
             tunes: ['anchor'],
             config: {
-                onSelectFile: editorJsHelper.onSelectFile,
-                onUploadFile: editorJsHelper.onUploadFile,
+                onSelectFile: window.editorJsHelper.onSelectFile,
+                onUploadFile: window.editorJsHelper.onUploadFile,
             },
         },
         pages_list: {
             name: "pages_list",
             className: "PagesList",
-            tunes: ['anchor'],
             config: {
                 preview: "/admin/page/block/{{ attr.page_id }}",
-            }
+            },
+            tunes: ['anchor', 'class']
         },
         codeBlock: {
             name: "codeBlock",
             className: "CodeBlock",
             tunes: ['anchor'],
+        },
+        paragraph: {
+            name: "paragraph",
+            className: "Paragraph",
+            tunes: ['anchor', 'class', 'textAlign'],
         },
         raw: {
             name: "raw",
@@ -194,32 +194,29 @@ var editorjsConfig = {
 
         /** Tune */
         linkTune: {
-            name: "linkTune",
             className: "HyperlinkTune",
         },
+        clickableTune: {
+            className: "ClickableTune",
+        },
         anchor: {
-            name: "anchor",
-            className: "Anchor",
+            className: "AnchorTune",
         },
         class: {
-            name: "class",
-            className: "Class",
+            className: "ClassTune",
         },
         textAlign: {
-            name: "textAlign",
-            className: "AlignmentTuneTool",
-            config:{
-                default: "left",
-            }
+            className: "AlignementTune",
         }
         {% block editorjs_block_to_add_new_plugin %}{% endblock %}
     },
-
-    data: JSON.parse("{{ (value ? value : '{}')|raw|e('js') }}"),
+    data: {}, //JSON.parse("{{ (value ? value : '{}')|raw|e('js') }}"),
     logLevel: "ERROR",
     holder: "{{ editor_id }}",
 };
 {% endblock %}
+
+window.pageMainContent = "{{ value|default("{}")|raw|e('js') }}"
     </script>
 
 <script>
@@ -235,4 +232,5 @@ var editorjsConfig = {
     };
 })(window);
 </script>
+
 {% endblock %}

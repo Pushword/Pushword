@@ -6,7 +6,7 @@
   "license": "MIT",
   "require": {
     "pushword/core": "*",
-    "symfony/filesystem": "^7.0"
+    "symfony/filesystem": "^7.3"
   },
   "extra": {
     "branch-alias": {

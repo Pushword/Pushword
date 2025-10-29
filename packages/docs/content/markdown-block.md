@@ -1,0 +1,37 @@
+---
+h1: Markdown Block
+title: 'Markdown Block : Markdown adapted for WYSIWYG block editor'
+parent: homepage
+toc: true
+---
+
+Which Markdown specification is used in Pushword — _CommonMark_, _GFM_, or _something else_?
+
+The default Markdown implementation in **Pushword** is based on **CommonMark**, with a few customizations designed to make it easy to switch between Markdown and a WYSIWYG block editor.
+
+## For users
+
+The difference is almost invisible — your usual Markdown syntax will continue to work as expected.
+
+## For developers
+
+Markdown content is **parsed block by block**, rather than as a single document.
+Blocks are **separated by two blank lines**.
+
+**Attributes** can be defined using the syntax `{#attribute-name}`, placed on a separate line just **before** the Markdown block it applies to. _This is conflicting with Prettier Markdown._
+
+Advanced content types such as **galleries**, **attachments**, or **page lists** are supported through **Twig functions**.
+
+## Example
+
+```markdown
+{#example-content}
+
+## Example Content
+
+{#mainParagraph}
+This is a paragraph.
+
+{#mainGallery}
+{{ gallery({'piedweb-logo.png': '', '1.jpg': '', '2.jpg': '', '3.jpg': ''})|unprose }}
+```

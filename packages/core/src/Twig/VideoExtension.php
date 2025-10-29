@@ -6,11 +6,11 @@ use Pushword\Core\Component\App\AppPool;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
-final class VideoExtension
+final readonly class VideoExtension
 {
     public function __construct(
-        private readonly Twig $twig,
-        private readonly AppPool $apps,
+        private Twig $twig,
+        private AppPool $apps,
     ) {
     }
 

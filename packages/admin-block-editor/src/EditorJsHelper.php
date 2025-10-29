@@ -14,12 +14,24 @@ use stdClass;
 final class EditorJsHelper
 {
     /**
+     * @return object{blocks: array<object{type: string, tunes?: object, data?: mixed, text?: string}>}|false
+     */
+    public static function tryToDecode(string $raw): bool|object
+    {
+        try {
+            return self::decode($raw);
+        } catch (Exception) {
+            return false;
+        }
+    }
+
+    /**
      * @return object{blocks: array<object{type: string, tunes?: object, data?: mixed, text?: string}>}
      */
-    public static function decode(string $raw): object
+    public static function decode(string $raw, bool $throw = true): object
     {
-        if ('' === $raw) {
-            throw new Exception('JSON is empty');
+        if ('' === $raw || ! str_contains($raw, 'blocks')) {
+            throw new Exception('JSON is empty or not contains blocks');
         }
 
         $data = json_decode($raw);

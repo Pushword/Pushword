@@ -10,7 +10,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'pushword:image:cache', description: 'Generate all images cache')]
-final class ImageManagerCommand
+final readonly class ImageManagerCommand
 {
     public function __construct(
         private MediaRepository $mediaRepository,

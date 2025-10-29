@@ -38,6 +38,10 @@ class EnityFilterSuscriber extends AbstractEventSuscriber
             return;
         }
 
+        if (null === json_decode($page->getMainContent(), null, 512)) {
+            return;
+        }
+
         if (true === ($appConfig = $this->apps->get($page->getHost()))->get('admin_block_editor_disable_listener')) {
             return;
         }
@@ -54,8 +58,9 @@ class EnityFilterSuscriber extends AbstractEventSuscriber
 
     private function removeMarkdownFilter(AppConfig $appConfig): void
     {
+        dump('removeMarkdown');
         $filters = $appConfig->getFilters();
-        $filters['main_content'] = str_replace(',markdown', '', $filters['main_content']);
+        $filters['main_content'] = str_replace(',markdown', 'twig,date,email,htmlLinkMultisite,obfuscateLink,htmlObfuscateLink,image,phoneNumber', $filters['main_content']);
         $appConfig->setFilters($filters);
     }
 }

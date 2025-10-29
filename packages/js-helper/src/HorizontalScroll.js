@@ -5,9 +5,14 @@ class HorizontalScroll {
     this.scroller =
       scrollerSelectorOrContainer instanceof HTMLElement
         ? scrollerSelectorOrContainer
-        : document.querySelector(scrollerSelectorOrContainer || selectorToFindElementToScroll + '-scroller')
-    this.scrollWidth = this.scrollContainer.offsetWidth + parseInt(window.getComputedStyle(this.scrollContainer).marginLeft)
-    this.scrollContainerWidth = this.elementToScroll.scrollWidth - this.elementToScroll.clientWidth
+        : document.querySelector(
+            scrollerSelectorOrContainer || selectorToFindElementToScroll + '-scroller',
+          )
+    this.scrollWidth =
+      this.scrollContainer.offsetWidth +
+      parseInt(window.getComputedStyle(this.scrollContainer).marginLeft)
+    this.scrollContainerWidth =
+      this.elementToScroll.scrollWidth - this.elementToScroll.clientWidth
   }
 
   init() {
@@ -33,11 +38,21 @@ class HorizontalScroll {
   }
 
   scroll(scrollerClassToToggle = 'opacity-50') {
-    const isRightScroll = window.event.target == this.scroller.children[1] || window.event.target.parentNode == this.scroller.children[1]
-    const scrollPos = isRightScroll ? (this.elementToScroll.scrollLeft += this.scrollWidth) : (this.elementToScroll.scrollLeft -= this.scrollWidth)
+    const isRightScroll =
+      window.event.target == this.scroller.children[1] ||
+      window.event.target.parentNode == this.scroller.children[1]
+    const scrollPos = isRightScroll
+      ? (this.elementToScroll.scrollLeft += this.scrollWidth)
+      : (this.elementToScroll.scrollLeft -= this.scrollWidth)
 
-    this.scroller.children[1].classList.toggle(scrollerClassToToggle, scrollPos >= this.scrollContainerWidth)
-    this.scroller.children[1].classList.toggle('cursor-pointer', scrollPos < this.scrollContainerWidth)
+    this.scroller.children[1].classList.toggle(
+      scrollerClassToToggle,
+      scrollPos >= this.scrollContainerWidth,
+    )
+    this.scroller.children[1].classList.toggle(
+      'cursor-pointer',
+      scrollPos < this.scrollContainerWidth,
+    )
     this.scroller.children[0].classList.toggle(scrollerClassToToggle, scrollPos <= 0)
     this.scroller.children[0].classList.toggle('cursor-pointer', scrollPos > 0)
   }
@@ -89,10 +104,10 @@ class HorizontalScroll {
     </div>
   </div>
   <div id="toScroll2-scroller" class="hidden" onclick="(new HorizontalScroll('#toScroll2', this)).scroll('hidden')">
-    <div class="hidden cursor-default cursor-pointer bg-white px-2 text-2xl text-gray-600 white bg-opacity-50
+    <div class="hidden cursor-default cursor-pointer bg-white px-2 text-2xl text-gray-600 white bg-white/50
                 absolute h-full top-0 left-0 flex items-center"><span>❮</span></div>
     <div class="cursor-default cursor-pointer bg-white px-2 text-2xl text-gray-600
-                absolute h-full top-0 right-0 flex items-center bg-opacity-50"><span>❯</span></div>
+                absolute h-full top-0 right-0 flex items-center bg-white/50"><span>❯</span></div>
   </div>
   <script>document.addEventListener('DOMContentLoaded', function() {
      (new HorizontalScroll('#toScroll2')).init().activateWheelScroll();

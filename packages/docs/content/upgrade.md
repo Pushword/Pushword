@@ -25,6 +25,13 @@ If you are doing a major upgrade, find the upgrade guide down there.
 - multicolumn plugin has been dropped
 - update your project configuration (see example in `packages/docs/assets/`)
 
+### To editorjs backed in markdown
+
+```bash
+php bin/console pushword:block:upgrade # upgrade blocks to simplified format
+php bin/console pushword:convert-editorjs-to-markdown
+```
+
 ## To 0.1.9973
 
 In your `assets/webpack.config.js`, upgrade the getEncore function to add at the first parameter the symfony webpack-encore dependecy (`const Encore = require('@symfony/webpack-encore')`).

@@ -101,7 +101,8 @@ final class PushwordConfigFactory
                 throw new InvalidArgumentException('Something is badly configured in your pushword configuration file.');
             }
 
-            $result[$app['hosts'][0]] = $app;
+            $host = (string) $app['hosts'][0];
+            $result[$host] = $app;
         }
 
         return $result;

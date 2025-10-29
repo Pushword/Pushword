@@ -1,0 +1,17 @@
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+/* TODO : to delete ?
+.ce-popover__custom-content:not(:empty) {
+  margin-bottom: 0;
+} */
+
+.cdx-settings-button {
+  margin: 6px 1px !important;
+}

@@ -14,6 +14,17 @@
       }
     },
     {
+      "id": "4-xRL7yoTW",
+      "type": "paragraph",
+      "data": {
+        "text": "Inline Tool Demo : <b>bold</b> <i>italic</i> <code class=\"inline-code\">inline code</code> <a href=\"/kitchen-sink-block\" rel=\"obfuscate\" target=\"_blank\">link</a> <mark class=\"cdx-marker\">marker</mark> <s class=\"cdx-strikethrough\">strikethrough</s>"
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": "left"
+      }
+    },
+    {
       "id": "YM5xTDe0P0",
       "type": "header",
       "data": {
@@ -22,9 +33,7 @@
       },
       "tunes": {
         "anchor": "",
-        "textAlign": {
-          "alignment": "left"
-        },
+        "textAlign": "left",
         "class": ""
       }
     },
@@ -35,11 +44,11 @@
         "style": "unordered",
         "items": [
           {
-            "content": "<a href=\"{{ homepage() }}\">Homepage</a>",
+            "content": "<a href=\"/\">Homepage</a>",
             "items": []
           },
           {
-            "content": "<a href=\"{{ page(page) }}\">Current Page</a>",
+            "content": "Current Page: {{ page(page) }}",
             "items": []
           },
           {
@@ -81,9 +90,7 @@
       },
       "tunes": {
         "anchor": "",
-        "textAlign": {
-          "alignment": "left"
-        },
+        "textAlign": "left",
         "class": ""
       }
     },
@@ -91,7 +98,7 @@
       "id": "UVJOHHKx_d",
       "type": "quote",
       "data": {
-        "text": " PHP ecosystem is undeniably awesome! With its extensive library of frameworks like Laravel and Symfony, coupled with its flexibility and scalability, PHP empowers developers to build robust and dynamic web applications effortlessly. Its active community constantly contributes to its evolution, ensuring it stays relevant and cutting-edge. Whether it's for small projects or enterprise-level applications, PHP remains a top choice for developers worldwide. In short, PHP rocks!",
+        "text": "PHP ecosystem is undeniably awesome! With its extensive library of frameworks like Laravel and Symfony, coupled with its flexibility and scalability, PHP empowers developers to build robust and dynamic web applications effortlessly. Its active community constantly contributes to its evolution, ensuring it stays relevant and cutting-edge. Whether it's for small projects or enterprise-level applications, PHP remains a top choice for developers worldwide. In short, PHP rocks!",
         "caption": "Author",
         "alignment": "left"
       },
@@ -103,14 +110,12 @@
       "id": "0DNKkNX6_m",
       "type": "header",
       "data": {
-        "text": " Images et Galleries",
+        "text": "Images et Galleries",
         "level": 2
       },
       "tunes": {
         "anchor": "",
-        "textAlign": {
-          "alignment": "left"
-        },
+        "textAlign": "left",
         "class": ""
       }
     },
@@ -118,14 +123,12 @@
       "id": "Nc0PmabD3k",
       "type": "header",
       "data": {
-        "text": " Simple Image",
+        "text": "Simple Image",
         "level": 3
       },
       "tunes": {
         "anchor": "",
-        "textAlign": {
-          "alignment": "left"
-        },
+        "textAlign": "left",
         "class": ""
       }
     },
@@ -133,32 +136,8 @@
       "id": "1T4sQKxoZX",
       "type": "image",
       "data": {
-        "file": {
-          "media": "3.jpg",
-          "mimeType": "image/jpg",
-          "size": 2,
-          "customProperties": [],
-          "height": 1000,
-          "width": 1000,
-          "mainColor": null,
-          "name": "Demo 3",
-          "names": "",
-          "createdAt": {
-            "date": "2024-04-10 12:57:17.000000",
-            "timezone_type": 3,
-            "timezone": "UTC"
-          },
-          "updatedAt": {
-            "date": "2024-04-10 12:57:17.000000",
-            "timezone_type": 3,
-            "timezone": "UTC"
-          },
-          "url": "/media/default/3.jpg"
-        },
-        "caption": "Demo 3",
-        "withBorder": false,
-        "stretched": false,
-        "withBackground": false
+        "media": "3.jpg",
+        "caption": "Demo 3"
       },
       "tunes": {
         "anchor": ""
@@ -173,95 +152,14 @@
       },
       "tunes": {
         "anchor": "",
-        "textAlign": {
-          "alignment": "left"
-        },
+        "textAlign": "left",
         "class": ""
       }
     },
     {
       "id": "3QQ26W8pQ7",
       "type": "gallery",
-      "data": [
-        {
-          "file": {
-            "media": "1.jpg",
-            "mimeType": "image/jpg",
-            "size": 2,
-            "customProperties": [],
-            "height": 1000,
-            "width": 1000,
-            "mainColor": null,
-            "name": "Demo 1",
-            "names": "",
-            "createdAt": {
-              "date": "2024-04-10 12:57:17.000000",
-              "timezone_type": 3,
-              "timezone": "UTC"
-            },
-            "updatedAt": {
-              "date": "2024-04-10 12:57:17.000000",
-              "timezone_type": 3,
-              "timezone": "UTC"
-            },
-            "url": "/media/default/1.jpg"
-          },
-          "url": "/media/default/1.jpg",
-          "caption": "Demo 1"
-        },
-        {
-          "file": {
-            "media": "2.jpg",
-            "mimeType": "image/jpg",
-            "size": 2,
-            "customProperties": [],
-            "height": 1000,
-            "width": 1000,
-            "mainColor": null,
-            "name": "Demo 2",
-            "names": "",
-            "createdAt": {
-              "date": "2024-04-10 12:57:17.000000",
-              "timezone_type": 3,
-              "timezone": "UTC"
-            },
-            "updatedAt": {
-              "date": "2024-04-10 12:57:17.000000",
-              "timezone_type": 3,
-              "timezone": "UTC"
-            },
-            "url": "/media/default/2.jpg"
-          },
-          "url": "/media/default/2.jpg",
-          "caption": "Demo 2"
-        },
-        {
-          "file": {
-            "media": "3.jpg",
-            "mimeType": "image/jpg",
-            "size": 2,
-            "customProperties": [],
-            "height": 1000,
-            "width": 1000,
-            "mainColor": null,
-            "name": "Demo 3",
-            "names": "",
-            "createdAt": {
-              "date": "2024-04-10 12:57:17.000000",
-              "timezone_type": 3,
-              "timezone": "UTC"
-            },
-            "updatedAt": {
-              "date": "2024-04-10 12:57:17.000000",
-              "timezone_type": 3,
-              "timezone": "UTC"
-            },
-            "url": "/media/default/3.jpg"
-          },
-          "url": "/media/default/3.jpg",
-          "caption": "Demo 3"
-        }
-      ],
+      "data": ["1.jpg", "2.jpg", "3.jpg"],
       "tunes": {
         "anchor": ""
       }
@@ -275,9 +173,7 @@
       },
       "tunes": {
         "anchor": "",
-        "textAlign": {
-          "alignment": "left"
-        },
+        "textAlign": "left",
         "class": ""
       }
     },
@@ -335,9 +231,6 @@
       },
       "tunes": {
         "anchor": "",
-        "textAlign": {
-          "alignment": "left"
-        },
         "class": ""
       }
     },
@@ -347,13 +240,6 @@
       "data": {
         "text": "Render Page List",
         "level": 3
-      },
-      "tunes": {
-        "anchor": "",
-        "textAlign": {
-          "alignment": "left"
-        },
-        "class": ""
       }
     },
     {
@@ -362,13 +248,6 @@
       "data": {
         "text": "Page found via Kw",
         "level": 4
-      },
-      "tunes": {
-        "anchor": "",
-        "textAlign": {
-          "alignment": "left"
-        },
-        "class": ""
       }
     },
     {
@@ -428,6 +307,94 @@
       "type": "raw",
       "data": {
         "html": "<p>Example Raw Html</p>"
+      }
+    },
+    {
+      "id": "table_example_1",
+      "type": "header",
+      "data": {
+        "text": "Table Example",
+        "level": 2
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": "left",
+        "class": ""
+      }
+    },
+    {
+      "id": "table_example_2",
+      "type": "table",
+      "data": {
+        "withHeadings": true,
+        "content": [
+          ["Fonctionnalité", "Statut", "Notes"],
+          ["Table", "✅ Testé", "Nouveau dans Kitchen Sink"],
+          ["Attaches", "✅ Testé", "Gestion des fichiers"],
+          ["Delimiter", "✅ Testé", "Séparateur de contenu"],
+          ["linkTune", "✅ Testé", "Liens sur images"]
+        ]
+      }
+    },
+    {
+      "id": "delimiter_example_1",
+      "type": "delimiter",
+      "data": {}
+    },
+    {
+      "id": "attaches_example_1",
+      "type": "header",
+      "data": {
+        "text": "Attachments & Files",
+        "level": 2
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": "left",
+        "class": ""
+      }
+    },
+    {
+      "id": "attaches_example_2",
+      "type": "attaches",
+      "data": {
+        "title": "Document JPG 2",
+        "file": {
+          "media": "2.jpg",
+          "size": 1024000
+        }
+      }
+    },
+    {
+      "id": "underline_text_example",
+      "type": "paragraph",
+      "data": {
+        "text": "Texte avec <u>soulignement</u>, <b>gras</b>, <i>italique</i>, <mark class=\"cdx-marker\">surlignage</mark> et <s class=\"cdx-strikethrough\">barré</s> pour tester tous les outils inline.",
+        "alignment": "left"
+      }
+    },
+    {
+      "id": "image_with_link_example",
+      "type": "header",
+      "data": {
+        "text": "Image avec Lien (linkTune)",
+        "level": 2
+      }
+    },
+    {
+      "id": "image_with_link_data",
+      "type": "image",
+      "data": {
+        "media": "2.jpg",
+        "caption": "Image cliquable vers la documentation",
+        "link": "https://pushword.piedweb.com"
+      },
+      "tunes": {
+        "linkTune": {
+          "url": "https://pushword.piedweb.com",
+          "target": "_blank",
+          "rel": "noopener"
+        }
       }
     }
   ],

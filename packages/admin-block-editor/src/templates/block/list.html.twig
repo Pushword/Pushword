@@ -1,18 +1,18 @@
-{{ _self.nested_list(block.data.items, block.data.style, block.tunes.anchor ?? '') }}
+{{ _self.nested_list(block.data.items, block.data.style, block)|raw }}
 
-{% macro nested_list(items, style, id = '') %}
+{% macro nested_list(items, style, block) %}
     {% if items %}
-        {{ (style == 'unordered' ? '<ul' : '<ol') ~ blockWrapperId(block.tunes.anchor ?? '') ~ '>'|raw}}
+        {{ ((style == 'unordered' ? '<ul' : '<ol') ~ blockWrapperAttr(block) ~ '>')|raw }}
             {% for item in items %}
             {% if item.content is defined %}
                     <li>
                         {{ item.content|raw }}
-                        {{ _self.nested_list(item.items, style) }}
+                        {{ _self.nested_list(item.items, style, block)|raw }}
                     </li>
             {% else %}
                 <li>{{ item|raw }}</li>
             {% endif %}
             {% endfor %}
-            {{ style == 'unordered' ? '</ul>' : '</ol>' }}
+            {{ (style == 'unordered' ? '</ul>' : '</ol>')|raw }}
     {% endif %}
 {% endmacro %}

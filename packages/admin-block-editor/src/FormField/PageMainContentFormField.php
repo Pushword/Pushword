@@ -21,9 +21,7 @@ class PageMainContentFormField extends AbstractField
             'label' => ' ',
             'help_html' => true,
             'help' => 'admin.page.mainContent.help',
-            'mapped' => false,
-            'data' => $page->getMainContent(),
-            'attr' => ['page_id' => $page->getId()],
+            'attr' => ['page_id' => $page->getId(), 'page_host' => $page->getHost()],
         ]);
     }
 }

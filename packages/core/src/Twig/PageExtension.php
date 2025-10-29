@@ -65,7 +65,10 @@ final class PageExtension
     #[AsTwigFunction('page_uri_list')]
     public function getPageUriList(string|array|null $host = null): array
     {
-        return $this->pageRepo->getPageUriList($host ?? $this->apps->getMainHost() ?? []);
+        $host ??= $this->apps->getCurrentPage()?->getHost();
+        $host ??= $this->apps->getMainHost() ?? [];
+
+        return $this->pageRepo->getPageUriList($host);
     }
 
     /**
@@ -119,12 +122,14 @@ final class PageExtension
     {
         $params = [];
         $currentRequest = $this->getCurrentRequest();
-        if (null !== $currentRequest && \is_string($slug = $currentRequest->attributes->get('slug'))) {
-            $params['slug'] = rtrim($slug, '/');
-        } elseif (null !== $this->apps->getCurrentPage()) {
+        if (null !== $this->apps->getCurrentPage()) {
             // normally, only used in admin
             $params['slug'] = $this->apps->getCurrentPage()->getSlug();
             $params['host'] = $this->apps->getCurrentPage()->getHost();
+        }
+
+        if (null !== $currentRequest && \is_string($slug = $currentRequest->attributes->get('slug'))) {
+            $params['slug'] = rtrim($slug, '/');
         }
 
         if (null !== $currentRequest && null !== ($host = $currentRequest->request->get('host'))) {
@@ -144,27 +149,70 @@ final class PageExtension
     }
 
     /**
+     * @param string|string[] $host
+     *
+     * @return string[]
+     */
+    private function getHost(array|string $host, ?Page $currentPage = null): array
+    {
+        if ('' !== $host) {
+            return is_string($host) ? [$host] : $host;
+        }
+
+        if (null !== $currentPage) {
+            return [$currentPage->getHost()];
+        }
+
+        return [$this->apps->get()->getMainHost(), ''];
+    }
+
+    /**
      * @param string|array<mixed>                $search
      * @param string|array<(string|int), string> $order
-     * @param string|string[]                    $host
-     * @param int|array<(string|int), int>       $max    if max is int => max result,
-     *                                                   if max is array => paginate where 0 => item per page and 1 (fac) maxPage
+     * @param int|array<(string|int)>            $max         if max is int => max result,
+     *                                                        if max is array => paginate where 0
+     *                                                        => item per page and 1 (fac) maxPage
+     *                                                        array is a legacy alias for maxPages
+     * @param Page|null                          $currentPage DO NOT USE OUTSIDE PUSHWORD PACKAGES
+     * @param string|string[]                    $host        DO NOT USE OUTSIDE PUSHWORD PACKAGES
      */
     #[AsTwigFunction('pages_list', isSafe: ['html'], needsEnvironment: false)]
     public function renderPagesList(
         array|string $search = '',
-        array|int $max = 0,
+        int|array|string $max = 0,
         array|string $order = 'publishedAt,priority',
         string $view = '',
+        int|string $maxPages = 0,
+        string $wrapperClass = '',
+        string $id = '',
+
+        // next properties are not documented, do not use outside pushword packages
         array|string $host = '',
         ?Page $currentPage = null,
-        string $id = ''
     ): string {
         $currentPage ??= $this->apps->getCurrentPage();
 
-        $view = 'card' === $view ?
-                '/component/pages_list_card.html.twig'
-                : (\in_array($view, ['', 'list'], true) ? '/component/pages_list.html.twig' : $view);
+        // normalize args
+        $maxPages = (int) $maxPages;
+        if (is_array($max)) {
+            if (0 !== $maxPages) {
+                throw new LogicException('maxPages is not supported when max is an array');
+            }
+
+            $maxPages = (int) ($max[1] ?? 0);
+            $max = (int) ($max[0] ?? 0);
+        }
+
+        $max = (int) $max;
+        if ($max < 1) {
+            throw new LogicException();
+        }
+
+        // end normalize args
+
+        $view = 'card' === $view ? '/component/pages_list_card.html.twig'
+            : (\in_array($view, ['', 'list'], true) ? '/component/pages_list.html.twig'
+                : $view);
 
         $search = \is_array($search) ? $search : (new StringToDQLCriteria($search, $currentPage))->retrieve();
 
@@ -172,18 +220,19 @@ final class PageExtension
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
 
+        $host = $this->getHost($host, $currentPage);
         $queryBuilder = $this->pageRepo->getPublishedPageQueryBuilder(
-            '' !== $host ? $host : [$this->apps->get()->getMainHost(), ''],
+            $host,
             $search,
             $order,
-            $this->getLimit($max)
+            $max,
         );
 
         if (null !== $currentPage) {
             $queryBuilder->andWhere('p.id <> '.($currentPage->getId() ?? 0));
         }
 
-        if (\is_array($max) && isset($max[1]) && $max[1] > 1) {
+        if ($maxPages > 1) {
             /** @var Page[] */
             $pages = $queryBuilder->getQuery()->getResult();
             $limit = $this->getLimit($max);
@@ -191,13 +240,9 @@ final class PageExtension
                 $pages = \array_slice($pages, 0, $limit);
             }
 
-            if ($max[0] < 1) {
-                throw new LogicException();
-            }
-
             $pagerfanta = (new Pagerfanta(new ArrayAdapter($pages)))
-                ->setMaxNbPages($max[1])
-                ->setMaxPerPage($max[0])
+                ->setMaxNbPages($maxPages)
+                ->setMaxPerPage($max)
                 ->setCurrentPage($this->getCurrentPage());
             $pages = $pagerfanta->getCurrentPageResults();
         } else {
@@ -212,6 +257,7 @@ final class PageExtension
             'pages' => $pages,
             'pager' => $pagerfanta ?? null,
             'id' => $id,
+            'wrapperClass' => $wrapperClass,
         ]);
     }
 

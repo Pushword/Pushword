@@ -296,7 +296,7 @@ final class LinkedDocsScanner extends AbstractScanner
             ->fakeBrowserHeader()
             ->setNoFollowRedirection()
             ->setMaximumResponseSize()
-            ->setDownloadOnlyIf(static fn (string $line, int $expected = 200): bool => Helper::checkStatusCode($line, $expected))
+            ->setDownloadOnlyIf(Helper::checkStatusCode(...))
             ->setMobileUserAgent();
         // if ($this->proxy) { $client->setProxy($this->proxy); }
         $client->request();

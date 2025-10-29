@@ -10,7 +10,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'pushword:image:optimize', description: 'Optimize all images')]
-final class ImageOptimizerCommand
+final readonly class ImageOptimizerCommand
 {
     public function __construct(
         private MediaRepository $mediaRepository,

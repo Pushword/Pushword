@@ -18,20 +18,24 @@ class Image extends AbstractFilter
 
     public function convertMarkdownImage(string $body): string
     {
-        if (false === preg_match_all('/(?:!\[(.*?)\]\((.*?)\))/', $body, $matches)) {
+        if (false === preg_match_all('/(?:(?:!\[(?<alt>.*)\]\((?<src>.*)\))|(?<hash>#?)\[!\[(?<alt1>.*)\]\((?<src1>.*)\)]\((?<href>.*)\)(?<target>{target="_blank"})?)/', $body, $matches)) {
             return $body;
         }
 
         $nbrMatch = \count($matches[0]);
         for ($k = 0; $k < $nbrMatch; ++$k) {
-            $renderImg = '<div>'.$this->twig->render(
+            dump($matches);
+            $renderImg = $this->twig->render(
                 $this->app->getView('/component/image_inline.html.twig'),
                 [
                     // "image_wrapper_class" : "mimg",'
-                    'image_src' => $matches[2][$k],
-                    'image_alt' => htmlspecialchars($matches[1][$k]),
+                    'image_src' => $matches['src'][$k] ?: $matches['src1'][$k],
+                    'image_alt' => htmlspecialchars($matches['alt'][$k] ?: $matches['alt1'][$k]),
+                    'image_link' => $matches['href'][$k] ?? null,
+                    'image_link_attr' => '' !== $matches['target'][$k] ? ['target' => '_blank'] : null,
+                    'image_link_obf' => '' !== $matches['hash'][$k],
                 ]
-            ).'</div>';
+            );
             $body = str_replace($matches[0][$k], $renderImg, $body);
         }
 

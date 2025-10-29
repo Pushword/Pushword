@@ -40,12 +40,8 @@ cd ../../;
 
 if [ "$TYPE" = "admin-block-editor" ] || [ "$TYPE" = "editor" ] || [ "$TYPE" = "all" ]
 then
-    echo "--- packages/admin-block-editor-tools ---"
-    cd packages/admin-block-editor-tools
-    installDependencies
-    buildAssets
     echo "--- packages/admin-block-editor ---"
-    cd ../admin-block-editor
+    cd packages/admin-block-editor
     installDependencies
     buildAssets
     cd ../../
