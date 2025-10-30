@@ -133,7 +133,7 @@
     "stan": "vendor/bin/phpstan analyze packages/*/src",
     "test": "./.scripts/test && composer validate-monorepo",
     "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
-    "rector": "vendor/bin/rector process && composer format && composer test",
+    "rector": "vendor/bin/rector process && composer format",
     "format": "PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix rector.php && PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix",
     "assets": "./.scripts/generate-assets",
     "publish-js-helper": "cd packages/js-helper && npm version patch && cd ../../ && git add packages/js-helper/. && git commit -m 'update pushword/js-helper version' && git push && cd packages/js-helper && npm publish",

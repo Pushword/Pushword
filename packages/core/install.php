@@ -61,6 +61,6 @@ $defaultConfig = 'pushword:'.chr(10)
     .'    # Documention'.chr(10)
     .'    # https://pushword.piedweb.com/configuration'.chr(10)
     .'    # Example'.chr(10)
-    .'    # https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages/pushword.yaml'.chr(10);
+    .'    # https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages/pushword.php'.chr(10);
 
 PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);

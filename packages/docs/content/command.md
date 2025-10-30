@@ -15,8 +15,8 @@ To get more details on each command line, just type -h (eg `php bin/console push
 
 ```shell
  pushword
-  pushword:flat:import                       Syncing flat file inside database
-  pushword:flat:export                       Export database toward file (yaml+json)
+  pw:flat:import                       Syncing flat file inside database
+  pw:flat:export                       Export database toward file (yaml+json)
   pushword:image:cache                       Generate all images cache
   pushword:image:optimize                    Optimize all images cache
   pushword:page:scan                         Find dead links, 404, 301 and more in your content.

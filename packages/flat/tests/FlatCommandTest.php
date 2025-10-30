@@ -13,7 +13,7 @@ class FlatCommandTest extends KernelTestCase
         $kernel = static::createKernel();
         $application = new Application($kernel);
 
-        $command = $application->find('pushword:flat:import');
+        $command = $application->find('pw:flat:import');
         $commandTester = new CommandTester($command);
         $commandTester->execute([
             'host' => 'pushword.piedweb.com',
@@ -25,7 +25,7 @@ class FlatCommandTest extends KernelTestCase
 
         $exportDir = $kernel->getCacheDir().'/test-exporter';
 
-        $command = $application->find('pushword:flat:export');
+        $command = $application->find('pw:flat:export');
         $commandTester = new CommandTester($command);
         $commandTester->execute([
             'host' => 'pushword.piedweb.com',

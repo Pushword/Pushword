@@ -17,9 +17,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] implémenter prettier markdown
   - [x] enregistrer en DB uniquement le markdown
   - [x] admin - revoir la class qui instantie pour montrer EditorJS si le contenu est en markdown (donc markdown ➜ editorjs à l'initialisation, nouveau comportement par défaut)
-  - [ ] test test test (with docs)
-  - [ ] cli tool pour convertir le json en markdown (upgrade) qui s'appuie sur EditorJsExportMarkdown.js (ou puppeteer)
-  - selecting a block alone like gallery : copy / paste is not working
+  - [ ] how to bulk upgrade ?
 
 - [Flat] ⚡ Accélérer l'import-export en changeant de paradigme ➜ **sync**
   1. [ ] Lister les slugs + dernière date de moficiation machine (ajouter le timestamp dans l'entité en le vérouillant pour que seul Doctrine ou le DB engine puisse le modifier, clarifier les 2 autres éléments createdAt et updatedAt)
@@ -35,6 +33,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] idem pour les médias (/media/test.jpg ➜ ./../../media/test.jpg) : plus simple que le point précédent, il faut calculer le nombre de "../" entre le dossier courant et la racine du projet
 
 ### One day maybe
+
+- [AdminBlockEditor] selecting a block alone like gallery : copy / paste is not working
+  - all the copy paste from markdown
 
 - [Admin] / [Version] Autosave with unsaved state : envoyer un event toutes les secondes si le contenu a été modifié, celui-ci créé une nouvelle version du contenu en précisant que c'est une sauvegarde automatique, si la précédente sauvegarde est une sauvegarde automatique et qu'elle date de moins d'une heure, alors on ne garde qu'une version dans le versionner (la dernière)
 

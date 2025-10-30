@@ -63,7 +63,7 @@ class PageControllerTest extends KernelTestCase
     {
         $robotsTxtController = self::getContainer()->get(RobotsTxtController::class);
 
-        $response = $robotsTxtController->show(Request::create('/robots.txt'));
+        $response = $robotsTxtController->show(); // Request::create('/robots.txt')
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 

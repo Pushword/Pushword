@@ -10,7 +10,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @template T of object
  */
-#[AsCommand(name: 'pushword:flat:import', description: 'Syncing flat file inside database.')]
+#[AsCommand(name: 'pw:flat:import', description: 'Syncing flat file inside database.')]
 final class FlatFileImportCommand
 {
     /**
@@ -20,9 +20,11 @@ final class FlatFileImportCommand
     {
     }
 
-    public function __invoke(#[Argument(name: 'host')]
-        ?string $host, OutputInterface $output): int
-    {
+    public function __invoke(
+        #[Argument(name: 'host')]
+        ?string $host,
+        OutputInterface $output
+    ): int {
         $output->writeln('Import will start in few seconds...');
 
         $this->importer->run($host);

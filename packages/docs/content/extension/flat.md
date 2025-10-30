@@ -29,7 +29,7 @@ Or for _multi-sites_ in `config/package/pushword.yaml`.
 ### Command Line
 
 ```
-php bin/console pushword:flat:import $host
+php bin/console pw:flat:import $host
 ```
 
 Where $host is facultative.

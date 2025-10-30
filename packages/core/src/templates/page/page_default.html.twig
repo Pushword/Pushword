@@ -21,15 +21,16 @@
 {% block alternate_language %}
   {% if page.locale is not null %}
     <link rel="alternate" hreflang="{{ page.locale }}" href="{{ page(page, true) }}">
+    {# x-default must be used only for a page where user must choose language
     {% if  page.locale == apps.get().defaultLocale %}
       <link rel="alternate" hreflang="x-default" href="{{ page(page, true) }}">
-    {% endif %}
+    {% endif %}#}
 
     {% for translation in page.translations %}
       <link rel="alternate" hreflang="{{ translation.locale }}" href="{{ page(translation, true) }}">
-      {% if  translation.locale == apps.get().defaultLocale %}
+      {#{% if  translation.locale == apps.get().defaultLocale %}
         <link rel="alternate" hreflang="x-default" href="{{ page(translation, true) }}">
-      {% endif %}
+      {% endif %}#}
 
     {% endfor %}
 

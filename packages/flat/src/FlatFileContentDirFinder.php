@@ -8,15 +8,17 @@ use Pushword\Core\Component\App\AppPool;
 /**
  * Permit to find error in image or link.
  */
-class FlatFileContentDirFinder
+final class FlatFileContentDirFinder
 {
     /**
      * @var array<string, string>
      */
-    protected array $contentDir = [];
+    private array $contentDir = [];
 
-    public function __construct(protected AppPool $apps, protected string $projectDir)
-    {
+    public function __construct(
+        private AppPool $apps,
+        private string $projectDir
+    ) {
     }
 
     public function get(string $host): string
@@ -26,19 +28,26 @@ class FlatFileContentDirFinder
         }
 
         $app = $this->apps->get($host);
+        $mainHost = $app->getMainHost();
 
         $dir = $app->get('flat_content_dir');
         if ('' === $dir || ! \is_string($dir)) {
             throw new Exception('No `flat_content_dir` dir in `'.$app->getMainHost()."`'s params.");
         }
 
-        $this->contentDir[$host] = $dir;
+        $flatContentDir = str_replace('_host_', $mainHost, $dir);
+        $flatContentDir = \Safe\realpath($flatContentDir);
+        $this->contentDir[$host] = $flatContentDir;
 
-        if (! file_exists($this->contentDir[$host])) {
-            throw new Exception('Content dir `'.$dir.'` not found.');
+        if (! file_exists($flatContentDir)) {
+            if (str_starts_with($flatContentDir, $this->projectDir)) {
+                mkdir($flatContentDir, 0755, true);
+            } else {
+                throw new Exception('Content dir `'.$dir.'` not found.');
+            }
         }
 
-        return $this->contentDir[$host];
+        return $flatContentDir;
     }
 
     public function has(string $host): bool
