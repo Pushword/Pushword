@@ -1,3 +1,5 @@
-# Docs Template Files
+# Documentation Template Files
 
-To make it simple, packages are in [skeleton package](/packages/skeleton/templates/pushword.piedweb.com) (wich is used to generate the docs website).
+The template files for the documentation website are located in this folder.
+
+To maintain compatibility with the skeleton application that generates the documentation site, a symbolic link has been created in packages/skeleton/templates/pushword.piedweb.com that points to this folder.
