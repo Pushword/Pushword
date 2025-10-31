@@ -20,8 +20,11 @@ final class AppPool
     private ?Page $currentPage = null;
 
     /** @param array<string, array<string, mixed>> $rawApps */
-    public function __construct(array $rawApps, Twig $twig, ParameterBagInterface $parameterBag)
-    {
+    public function __construct(
+        array $rawApps,
+        Twig $twig,
+        ParameterBagInterface $parameterBag
+    ) {
         $firstHost = (string) array_key_first($rawApps);
 
         $firstApp = null;

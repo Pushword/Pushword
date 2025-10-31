@@ -71,13 +71,9 @@ class Markdown extends AbstractFilter
             $textFiltered = $this->manager?->applyFilters($textFiltered, ['twig']);
             assert(is_string($textFiltered));
             $textFiltered = $inlineCodeProtector->restore($textFiltered);
-            $textFiltered = $this->manager?->applyFilters(
-                $textFiltered,
-                ['date', 'email', 'htmlLinkMultisite', 'obfuscateLink', 'htmlObfuscateLink', 'image', 'phoneNumber']
-            );
         }
 
-        if (null !== $textFiltered && is_string($textFiltered)) {
+        if (null !== $textFiltered) {
             if (str_starts_with($blockText, '{')) {
                 return $textFiltered;
             }
@@ -90,9 +86,20 @@ class Markdown extends AbstractFilter
 
         $blockText = $this->fixTypo($blockText);
 
-        dump($blockText);
+        $blockText = $this->manager?->applyFilters(
+            $blockText,
+            ['obfuscateLink', 'image'] // TODO : move to markdown extension
+        );
+        assert(is_string($blockText));
+        $markdown = $this->markdownParser->transform(trim($attribute."\n".$blockText));
 
-        return $this->markdownParser->transform(trim($attribute."\n".$blockText));
+        $markdown = $this->manager?->applyFilters(
+            $markdown,
+            ['date', 'email', 'htmlLinkMultisite',  'htmlObfuscateLink', 'phoneNumber']
+        );
+        assert(is_string($markdown));
+
+        return $markdown;
     }
 
     private function fixTypo(string $text): string

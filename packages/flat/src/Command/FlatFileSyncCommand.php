@@ -31,11 +31,11 @@ final readonly class FlatFileSyncCommand
     }
 
     public function __invoke(
+        OutputInterface $output,
         #[Argument(name: 'host')]
         ?string $host,
         #[Option(name: 'force', shortcut: 'f')]
-        bool $force,
-        OutputInterface $output
+        bool $force = false,
     ): int {
         if ($this->flatFileSync->mustImport($host)) {
             $output->writeln('Import detected - running import...');

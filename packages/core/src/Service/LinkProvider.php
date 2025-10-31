@@ -8,6 +8,7 @@ use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Symfony\Bundle\SecurityBundle\Security;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
@@ -16,13 +17,19 @@ final readonly class LinkProvider
     public function __construct(
         private PushwordRouteGenerator $router,
         private AppPool $apps,
-        private Twig $twig
+        private Twig $twig,
+        private Security $security
     ) {
     }
 
     private function getApp(): AppConfig
     {
         return $this->apps->get();
+    }
+
+    private function currentUserIsAdmin(): bool
+    {
+        return $this->security->isGranted('ROLE_ADMIN');
     }
 
     /**
@@ -57,6 +64,10 @@ final readonly class LinkProvider
             $path = $this->router->generate($path);
         }
 
+        if ($this->currentUserIsAdmin()) { // facilite le debug
+            $attr['title'] = (isset($attr['title']) ? $attr['title'].' - ' : '').'obf';
+        }
+
         if ($obfuscate) {
             if (str_contains($path, 'mailto:') && false !== filter_var($anchor, \FILTER_VALIDATE_EMAIL)) {
                 return $this->renderEncodedMail($anchor);
@@ -69,6 +80,7 @@ final readonly class LinkProvider
         }
 
         $attr = [...$attr, ...['href' => $path]];
+
         $template = $this->getApp()->getView('/component/link.html.twig');
 
         return trim($this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]));

@@ -20,7 +20,7 @@ trait TagsTrait
     protected array $tags = [];
 
     /** @var string[] */
-    protected array $reservedTags = ['children', 'sisters', 'grandchildren', 'related'];
+    public const array ReservedTags = ['children', 'sisters', 'grandchildren', 'related'];
 
     public function getTags(): string
     {
@@ -52,7 +52,7 @@ trait TagsTrait
         }
 
         $tags = array_filter(array_map(trim(...), $tags), fn (string $tag): bool => '' !== $tag);
-        $tags = array_diff($tags, $this->reservedTags);
+        $tags = array_diff($tags, self::ReservedTags);
         // tag disappear without message for user ➜ if count != exception ?!
         $tags = array_unique($tags);
         sort($tags);

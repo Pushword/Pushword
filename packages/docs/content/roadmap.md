@@ -17,19 +17,23 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] implémenter prettier markdown
   - [x] enregistrer en DB uniquement le markdown
   - [x] admin - revoir la class qui instantie pour montrer EditorJS si le contenu est en markdown (donc markdown ➜ editorjs à l'initialisation, nouveau comportement par défaut)
+  - [ ] test test test
   - [ ] how to bulk upgrade ?
+  - [ ] Remove all code related to block rendering (in DB, markdown is used so front-end will use markdown)
 
 - [Flat]
+  - [ ] change versionner to rely on flat and create .example-file.md~version-200020210 instead of serialized json, add a command to clear version
   - [x] mettre à jour le dossier par défault : content/%domain%/
   - [ ] prefer yaml over json for media exporter
+  - [ ] check media export (in content/media or in media ?!)
+  - [ ] fix markdown cheatsheet
   - [ ] Revoir la transformation de lien markdown (./../test.md) en lien vers la page (/test) (useful for navigate in docs from editor)
   - [ ] s'assurer que la réciproque fonctionne au moment de l'export
   - [ ] idem pour les médias (/media/test.jpg ➜ ./../../media/test.jpg) : plus simple que le point précédent, il faut calculer le nombre de "../" entre le dossier courant et la racine du projet
 
 - [Ai] Add AiFeature to Flat
-  - [ ] Generate a map of the content
+  - [ ] Generate a map of the content = [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
   - [ ] Generate a map of the media
-- [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
 
 ### One day maybe
 

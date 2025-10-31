@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Events;
+use Doctrine\ORM\Mapping\Column;
 use Exception;
 use Pushword\Core\Entity\Page;
 // use Doctrine\ORM\Event\LifecycleEventArgs;
@@ -142,6 +143,6 @@ class Versionner
      */
     private function getProperties(Page $page): array
     {
-        return Entity::getProperties($page);
+        return Entity::getProperties($page, [Column::class]);
     }
 }

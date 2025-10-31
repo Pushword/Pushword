@@ -7,9 +7,20 @@ cd packages/skeleton
 rm var/app.db|| true
 rm -rf media|| true
 cp -r media~ media
+
+echo "Clearing cache..."
 php bin/console cache:clear -q
+
+echo "Creating database schema..."
 php bin/console doctrine:schema:create -q
+
+echo "Loading fixtures..."
 php bin/console doctrine:fixtures:load -q
+
+echo "Caching images..."
 php bin/console pushword:image:cache -q
+
+echo "Installing assets..."
 php bin/console assets:install --symlink --relative -q
+
 php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN

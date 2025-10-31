@@ -93,12 +93,23 @@ final class HtmlLinkMultisite extends AbstractFilter
         }
 
         $newHref = substr($href, 1);
-        $page = $this->entityManager->getRepository(Page::class)->findOneBy(['slug' => $newHref, 'host' => $currentPage->getHost()]);
-        if (null !== $page) {
-            return $this->router->generate($page);
+
+        if (0 !== \Safe\preg_match('/(#.*$)/', $newHref, $match)) {
+            $hrefHashPart = $match[1] ?? '';
+            $newHref = preg_replace('/#.*$/', '', $newHref);
         }
 
-        return $href;
+        if ('' === $newHref) {
+            return $href;
+        }
+
+        $page = $this->entityManager->getRepository(Page::class)->findOneBy(['slug' => $newHref, 'host' => $currentPage->getHost()]);
+
+        if (null === $page) {
+            return $href;
+        }
+
+        return $this->router->generate($page).($hrefHashPart ?? '');
     }
 
     /**

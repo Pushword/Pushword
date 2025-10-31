@@ -25,19 +25,21 @@ class Entity
     }
 
     /**
+     * @param list<string> $attributesTypesToKeep
+     *
      * @return list<string>
      */
-    public static function getProperties(object $object): array
-    {
+    public static function getProperties(
+        object $object,
+        array $attributesTypesToKeep = [Column::class, ManyToOne::class]
+    ): array {
         $reflectionClass = new ReflectionClass($object::class);
-        $properties = array_filter($reflectionClass->getProperties(), static function (ReflectionProperty $property) {
+        $properties = array_filter($reflectionClass->getProperties(), static function (ReflectionProperty $property) use ($attributesTypesToKeep) {
             $attributes = $property->getAttributes();
-            if (self::containAttribute($attributes, Column::class)) {
-                return true;
-            }
-
-            if (self::containAttribute($attributes, ManyToOne::class)) {
-                return true;
+            foreach ($attributesTypesToKeep as $a) {
+                if (self::containAttribute($attributes, $a)) {
+                    return true;
+                }
             }
         });
         $propertyNames = [];

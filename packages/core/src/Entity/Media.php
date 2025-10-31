@@ -11,8 +11,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Exception;
 use LogicException;
 use Pushword\Core\Entity\MediaTrait\ImageTrait;
-use Pushword\Core\Entity\MediaTrait\MediaHashTrait;
-use Pushword\Core\Entity\MediaTrait\MediaNameTrait;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
@@ -20,11 +18,15 @@ use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Utils\Filepath;
 use Pushword\Core\Utils\SafeMediaMimeType;
+
+use function Safe\sha1_file;
+
 use Stringable;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use Symfony\Component\Yaml\Yaml;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 /**
@@ -41,8 +43,6 @@ class Media implements IdInterface, Stringable
     use CustomPropertiesTrait;
     use IdTrait;
     use ImageTrait;
-    use MediaHashTrait;
-    use MediaNameTrait;
     use TimestampableTrait;
 
     public function __construct()
@@ -181,6 +181,8 @@ class Media implements IdInterface, Stringable
     public function getMediaFileName(): string
     {
         if (! $this->mediaFile instanceof File) {
+            dump(debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS));
+
             throw new Exception('MediaFile is not setted');
         }
 
@@ -189,11 +191,6 @@ class Media implements IdInterface, Stringable
         }
 
         return $this->mediaFile->getFilename();
-    }
-
-    public function __toString(): string
-    {
-        return $this->media;
     }
 
     public function getMedia(): string
@@ -423,5 +420,146 @@ class Media implements IdInterface, Stringable
         $this->slug = (new Slugify())->slugify($this->getName());
 
         return $this->slug;
+    }
+
+    #[ORM\Column(type: Types::STRING, length: 100, unique: true)]
+    protected string $name = ''; // used for alt text
+
+    #[ORM\Column(type: Types::TEXT, options: ['default' => ''], nullable: true)]
+    protected ?string $names = '';
+
+    public function __toString(): string
+    {
+        return $this->name.' ';
+    }
+
+    private string $softName = '';
+
+    public function setName(?string $name, bool $soft = false): self
+    {
+        if ($soft) {
+            $this->softName = (string) $name;
+
+            return $this;
+        }
+
+        $this->name = (string) $name;
+
+        return $this;
+    }
+
+    public function getName(bool $onlyName = false): string
+    {
+        if ('' !== $this->softName) {
+            return $this->softName;
+        }
+
+        if ($onlyName) {
+            return $this->name;
+        }
+
+        if ('' === $this->name && null !== $this->getMediaFile()) {
+            return $this->getMediaFileName();
+        }
+
+        return $this->name;
+    }
+
+    public function getNameLocalized(?string $getLocalized = null, bool $onlyLocalized = false): string
+    {
+        $names = $this->getNamesParsed();
+
+        return null !== $getLocalized ?
+            ($names[$getLocalized] ?? ($onlyLocalized ? '' : $this->name))
+            : $this->name;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getNamesParsed(): array
+    {
+        $this->names = (string) $this->names;
+        $return = '' !== $this->names ? Yaml::parse($this->names) : [];
+
+        if (! \is_array($return)) {
+            throw new Exception('Names malformatted');
+        }
+
+        $toReturn = [];
+
+        foreach ($return as $k => $v) {
+            if (! \is_string($k) || ! \is_string($v)) {
+                throw new Exception();
+            }
+
+            $toReturn[$k] = $v;
+        }
+
+        return $toReturn;
+    }
+
+    public function getNames(bool $yamlParsed = false): mixed
+    {
+        $this->names = (string) $this->names;
+
+        return $yamlParsed && '' !== $this->names ? Yaml::parse($this->names) : $this->names;
+    }
+
+    public function setNames(?string $names): self
+    {
+        $this->names = (string) $names;
+
+        return $this;
+    }
+
+    public function getNameByLocale(string $locale): string
+    {
+        $names = $this->getNamesParsed();
+
+        return $names[$locale] ?? $this->getName();
+    }
+
+    /**
+     * @var string|resource|null
+     */
+    #[ORM\Column(type: Types::BINARY, length: 20, options: ['default' => ''])]
+    protected $hash;
+
+    public function getHash(): mixed
+    {
+        return $this->hash ?? $this->setHash()->getHash();
+    }
+
+    public function resetHash(): self
+    {
+        $this->hash = null;
+
+        return $this;
+    }
+
+    public function setHash(?string $hash = null): self
+    {
+        if (null !== $hash) {
+            $this->hash = $hash;
+
+            return $this;
+        }
+
+        if (($mediaFile = $this->getMediaFile()) !== null && file_exists($mediaFile->getPathname())) {
+            $this->hash = sha1_file($mediaFile->getPathname(), true);
+
+            return $this;
+        }
+
+        $mediaFilePath = $this->getStoreIn().'/'.$this->getMedia();
+
+        if (! file_exists($mediaFilePath) || ! is_file($mediaFilePath)) {
+            throw new Exception('incredible ! `'.$mediaFilePath.'`');
+        }
+
+        $this->hash = sha1_file($mediaFilePath, true);
+
+        return $this;
     }
 }

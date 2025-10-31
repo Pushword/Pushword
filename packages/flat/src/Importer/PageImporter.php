@@ -104,6 +104,10 @@ final class PageImporter extends AbstractImporter
         $data = \is_array($data) ? $data : throw new Exception();
         /** @var array<string, mixed> $data */
         $this->pageList[$slug] = $this->editPage($slug, $data, $document->body(), $lastEditDateTime);
+
+        // next lines permit to debug
+        // dump($slug);
+        // $this->em->flush();
     }
 
     /**

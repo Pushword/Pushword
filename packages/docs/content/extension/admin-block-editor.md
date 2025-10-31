@@ -38,8 +38,6 @@ admin_block_editor_disable_listener: false
 
 # permit to use all the blocks pre-configured in this extension
 admin_block_editor_blocks: \Pushword\AdminBlockEditor\Block\DefaultBlock::AVAILABLE_BLOCKS
-
-admin_block_editor_type_to_prose: ['paragraph', 'image', 'list', 'blockquote', 'code'] # leave empty if you don't want a prose container around this blocks
 ```
 
 ### Disable Listener and use filter

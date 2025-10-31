@@ -36,7 +36,7 @@ Where $host is facultative.
 
 ### Write
 
-By default, the content may be organized in `content/%main_host%/` dir and image may be in `content/%main_host%/media/default` or in `media`
+By default, the content may be organized in `content/%main_host%/` dir and image may be in `content/%main_host%/media` or in `media`
 
 Eg:
 
@@ -72,13 +72,11 @@ h1: 'Welcome in Kitchen Sink'
 locale: fr
 translations:
   - en/kitchen-skink
-main_image: media/default/illustration.jpg
+main_image: illustration.jpg
 images:
-  - media/default/illustration.jpg
+  - illustration.jpg
 parent:
   - homepage
-childrenPages:
-  - other-example-kitchen-sink
 metaRobots: 'no-index'
 name: 'Kitchen Sink'
 title: 'Kitchen Sink - best google restult'

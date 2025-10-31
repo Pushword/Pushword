@@ -9,6 +9,7 @@ use LogicException;
 
 use function Safe\preg_match;
 
+use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -30,6 +31,7 @@ trait CustomPropertiesTrait
      */
     protected string $standAloneCustomProperties = '';
 
+    #[Ignore]
     protected string $buildValidationAtPath = 'standAloneCustomProperties';
 
     /** @return array<mixed> */
