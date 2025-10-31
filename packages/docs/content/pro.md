@@ -4,12 +4,16 @@ h1: Support and pro assistance
 parent: homepage
 ---
 
-Want to get a professionnal support ? Pushword creator, Robin, could be available to offer you custom assistance for advanced installation or custom developpment.
+Looking for professional support?
 
-Price from 500€ or 600$ per day.
+Pushword creator, Robin, may be available to provide custom assistance for advanced installations or bespoke development.
 
-See also partner developper freelance or agency :
+**Rates:** From €500 / $600 per day.
 
-- empty list for now :)
+You can also explore our network of freelance developers or agencies:
 
-First contact via {{ mail('contact@piedweb.com') }}.
+```
+ Currently empty, stay tuned!
+```
+
+**First contact:** {{ mail('contact@piedweb.com') }}

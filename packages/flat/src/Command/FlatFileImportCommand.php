@@ -1,7 +1,8 @@
 <?php
 
-namespace Pushword\Flat;
+namespace Pushword\Flat\Command;
 
+use Pushword\Flat\FlatFileImporter;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

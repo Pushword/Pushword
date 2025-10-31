@@ -36,7 +36,7 @@ Where $host is facultative.
 
 ### Write
 
-By default, the content may be organized in `content` dir and image may be in `content/media/default`
+By default, the content may be organized in `content/%main_host%/` dir and image may be in `content/%main_host%/media/default` or in `media`
 
 Eg:
 

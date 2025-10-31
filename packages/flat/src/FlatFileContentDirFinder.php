@@ -17,8 +17,8 @@ final class FlatFileContentDirFinder
     private array $contentDir = [];
 
     public function __construct(
-        private AppPool $apps,
-        private string $projectDir
+        private readonly AppPool $apps,
+        private readonly string $projectDir
     ) {
     }
 

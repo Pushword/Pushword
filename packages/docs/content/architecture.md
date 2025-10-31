@@ -70,7 +70,7 @@ composer format
 # run rector, format and tests
 composer rector
 
-# run phpstan
+# run phpstan
 composer stan
 
 # run psalm

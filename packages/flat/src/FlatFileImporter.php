@@ -33,7 +33,7 @@ final class FlatFileImporter
         protected FlatFileContentDirFinder $contentDirFinder,
         protected PageImporter $pageImporter,
         protected MediaImporter $mediaImporter,
-        private ?Stopwatch $stopWatch = null
+        private readonly ?Stopwatch $stopWatch = null
     ) {
     }
 

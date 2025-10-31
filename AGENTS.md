@@ -61,7 +61,7 @@ php bin/console pushword:page:scan
 php bin/console pushword:static:generate
 ```
 
-## Monorepo useful commands
+## Monorepo useful commands
 
 ```bash
 # Tests

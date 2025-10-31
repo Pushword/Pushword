@@ -28,7 +28,7 @@ php bin/console pushword:user:create $emailvar $passvar ROLE_SUPER_ADMIN
 
 # Install Bundle Assets
 php bin/console assets:install
-# `yarn build` Should not be runned because it's erasing the documentation assets.
+# `yarn build` Should not be runned because it's erasing the documentation assets.
 # the files are there only to help final user on a new installation
 
 # Launch Server and Play

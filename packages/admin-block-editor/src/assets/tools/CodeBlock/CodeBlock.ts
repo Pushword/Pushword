@@ -103,7 +103,7 @@ export default class CodeBlock extends Raw {
     }
 
     const language = data.language || ''
-    data.html = data.html.replace(/\n{2,}/g, '\n')
+    //data.html = data.html.replace(/\n{2,}/g, '\n')
     return `\`\`\`${language}\n${data.html}\n\`\`\``
   }
 

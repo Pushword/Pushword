@@ -10,7 +10,7 @@
 #}
 
 {% block images_gallery %}
-    {# TODO : check where uniqueGalleryId is used, if it's not used, remove it #}
+    {# TODO : check where uniqueGalleryId is used, if it's not used, remove it #}
     {% set gallery_id = page.uniqueGalleryId|default(random(10, 1000)) %}
     {% set grid_cols = grid_cols|default(images|length < 5 ? images|length : (images|length is odd ? 3 : 4)) %}
 

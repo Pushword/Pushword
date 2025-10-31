@@ -29,16 +29,16 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [Ai] Add AiFeature to Flat
   - [ ] Generate a map of the content
   - [ ] Generate a map of the media
-- [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
+- [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
 
-### One day maybe
+### One day maybe
 
 - [Flat] Implémenter un sync auto depuis [Admin] et un file watcher (bin/console content:watch) pour l'autre sens // l'implémentation rapide c'est un cron sur bin/console flat:sync
 
 - [AdminBlockEditor] selecting a block alone like gallery : copy / paste is not working
   - all the copy paste from markdown
 
-- [Admin] / [Version] Autosave with unsaved state : envoyer un event toutes les secondes si le contenu a été modifié, celui-ci créé une nouvelle version du contenu en précisant que c'est une sauvegarde automatique, si la précédente sauvegarde est une sauvegarde automatique et qu'elle date de moins d'une heure, alors on ne garde qu'une version dans le versionner (la dernière)
+- [Admin] / [Version] Autosave with unsaved state : envoyer un event toutes les secondes si le contenu a été modifié, celui-ci créé une nouvelle version du contenu en précisant que c'est une sauvegarde automatique, si la précédente sauvegarde est une sauvegarde automatique et qu'elle date de moins d'une heure, alors on ne garde qu'une version dans le versionner (la dernière)
 
 - [Core] / [Admin] **Media** :
   - [ ] revoir comment sont récoltés les usages d'un média
@@ -56,13 +56,13 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
       Wich is absolutely not a skeleton, it's more a dev-test env or a demo
 
 - [JsHelper] start-show-more : voir pour améliorer le close :
-  - [ ] show more :
+  - [ ] show more :
     - si l'utilisateur clique sur un jump link qui renvoie vers un contenu dans un bloc show-more
     - si un hash dans l'url renvoie vers un contenu dans un bloc show-more
     - si un hash de type (`#:~:text=`) renvoie vers un contenu dans un bloc show-more
-  - [ ] désactiver si le scroll est très rapide (couvre l'use case l'utilisateur utilise ctrl+f)
-  - [ ] garder en mémoire qui est ouvert, qui est fermé (couvrira le rechargement)
-  - [ ] désactiver si l'utilisateur n'est pas en haut de la page (couvrira ctrl+f ),
+  - [ ] désactiver si le scroll est très rapide (couvre l'use case l'utilisateur utilise ctrl+f)
+  - [ ] garder en mémoire qui est ouvert, qui est fermé (couvrira le rechargement)
+  - [ ] désactiver si l'utilisateur n'est pas en haut de la page (couvrira ctrl+f ),
 
 - [ ] Replace .clickable by css (https://codepen.io/potatoDie/pen/abzvGxG)
 
@@ -74,12 +74,12 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [PageScanner] Ignorer les erreurs :
   - [ ] donner un code unique aux erreurs
-  - [ ] via la config (fait pour les URLs)
+  - [ ] via la config (fait pour les URLs)
   - [ ] via un code inline de type <!-- page-scanner-ignore: what to ignore --> ou othersParameters
-- [PageScanner] Live page scanner
+- [PageScanner] Live page scanner
 - [PageScanner] image ➜ texte alternatif manquant
 
-- [Core] / [Admin] / [PageScanner] Check there is no translation with the same language than current page
+- [Core] / [Admin] / [PageScanner] Check there is no translation with the same language than current page
 
 - check a new blank installation + ci + last details
   - [x] dev environnement setup
@@ -88,7 +88,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] TwigStan + TwigFormatter
   - [ ] translate all packages (fr / en) + manage date i18n a better way than randomly
 
-- [Admin] / [AdminBlockEditor] (cerise) TocAvoir un block à gauche de l'éditeur pour afficher la liste des blocs utilisés, pouvoir déplacer ces blocs facilement en sélecctionnant un bloc, ou un groupe de blocs naturellement groupés sous un header, fonctionne depuis le markdown ou depuis l'editorjs
+- [Admin] / [AdminBlockEditor] (cerise) TocAvoir un block à gauche de l'éditeur pour afficher la liste des blocs utilisés, pouvoir déplacer ces blocs facilement en sélecctionnant un bloc, ou un groupe de blocs naturellement groupés sous un header, fonctionne depuis le markdown ou depuis l'editorjs
 
 - [AdminBlockEditor] New features
   - [ ] upgrade editorjs/list ajoute notamment le support des checklists
@@ -98,17 +98,17 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] Attaches / Images
     - [ ] Add a delete button to change the media
     - [ ] Add the inline uploader (Uploader.ts~) (?)
-  - [ ] inline tool, on right or left from the border of inline tool, go outside the tag inline (bold, italic, strike, underline, link, marker)
+  - [ ] inline tool, on right or left from the border of inline tool, go outside the tag inline (bold, italic, strike, underline, link, marker)
   - [ ] on paste on paragraph, être capable de détecter si le contenu collé est du markdown et créer les blocs en fonction
   - [ ] New Block :
-    - [ ] Audio block ?!
-    - [ ] Notices block (with different notices level)
+    - [ ] Audio block ?!
+    - [ ] Notices block (with different notices level)
     - [ ] Group = div wrapper with anchor and class (and strettched ? flex ? grid ? start-show-more ?), nearest imlpementation:
       - https://github.com/serlo/backlog/issues/83
       - https://github.com/calumk/editorjs-columns/pull/6
-  - [ ] Migrate to tiptap (lol)
+  - [ ] Migrate to tiptap (lol)
 
-- [Admin] Migrate to EasyAdmin
+- [Admin] Migrate to EasyAdmin
 
 - [Static] revoir la compression pour du contenu statique ➜ https://dunglas.dev/2024/12/http-compression-in-php-new-symfony-assetmapper-feature/
 
@@ -116,7 +116,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [AdminBlockEditor] PagesList/CardList/Gallery ➜ Voir pour utiliser grid-col-12 and col-span-3/4/2 to be able to fully customize it - via Class ?
 
-- [Version] Advanced Diff Checker basé sur Monaco et le versionning de markdown
+- [Version] Advanced Diff Checker basé sur Monaco et le versionning de markdown
   And **Change requester**, **Public Historic** (or make accessible historic from page object)
 
 - [Static] Make ErrorPageGenerator consistent with htaccess (on htaccess, filter by beginning url to return the correct one ?!)

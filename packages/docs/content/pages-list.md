@@ -22,7 +22,7 @@ You can do advanced filtering toward the twig `pages_list` like in the [admin-bl
 | `title:`_exampleValue_           | filter pages containing in title (**seo title** or **h1**) the _exampleValue_                                   |
 | `content:`_exampleValue_         | same than `title` + searching in _mainContent_ too                                                              |
 | `slug:`_exampleValue_            | filter pages with the exact slug (useful only with **OR**)                                                      |
-| `slug:`_%exampleValue%_          | same than `slug:` with **%** ➜ filter page with the slug containing _exampleValue_.                             |
+| `slug:`_%exampleValue%_          | same than `slug:` with **%** ➜ filter page with the slug containing _exampleValue_.                             |
 | _exampleValue_                   | filter _tag_ (exact match only !)                                                                               |
 
 ## Using Operators `OR` or `AND`

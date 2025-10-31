@@ -9,7 +9,7 @@ Which Markdown specification is used in Pushword — _CommonMark_, _GFM_, or _so
 
 The default Markdown implementation in **Pushword** is based on **CommonMark**, with a few customizations designed to make it easy to switch between Markdown and a WYSIWYG block editor.
 
-## For users
+## For users
 
 The difference is almost invisible — your usual Markdown syntax will continue to work as expected.
 
@@ -21,6 +21,8 @@ Blocks are **separated by two blank lines**.
 **Attributes** can be defined using the syntax `{#attribute-name}`, placed on a separate line just **before** the Markdown block it applies to. _This is conflicting with Prettier Markdown._
 
 Advanced content types such as **galleries**, **attachments**, or **page lists** are supported through **Twig functions**.
+
+_You can use twig syntax inside markdown inline code or markdown code block, it will not be parsed by twig._
 
 ## Example
 

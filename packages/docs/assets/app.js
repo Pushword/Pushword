@@ -1,7 +1,8 @@
 //require("fslightbox");
 import hljs from 'highlight.js'
 
-import SimpleJekyllSearch from 'simple-jekyll-search'
+//import SimpleJekyllSearch from 'simple-jekyll-search'
+import 'simple-jekyll-search/dest/simple-jekyll-search.min.js'
 
 import {
   uncloakLinks,
@@ -12,10 +13,11 @@ import {
 } from '@pushword/js-helper/src/helpers.js'
 
 function onPageLoaded() {
-  const baseUrl = '' //base || ''
+  // eslint-disable-next-line no-undef
+  const baseUrl = base || ''
   onDomChanged()
   //new FsLightbox();
-  SimpleJekyllSearch({
+  window.SimpleJekyllSearch({
     searchInput: document.getElementById('search'),
     resultsContainer: document.getElementById('search-results'),
     json: baseUrl + (baseUrl == '/' ? '' : '/') + 'search.json',

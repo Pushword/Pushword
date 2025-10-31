@@ -37,7 +37,12 @@ class Markdown extends AbstractFilter
     private function render(string $text): string
     {
         $text = $this->normalizeNewLine($text);
+        $codeBlockProtector = new MarkdownProtectCodeBlock();
+        $text = $codeBlockProtector->protect($text);
         $textPartList = explode("\n\n", $text);
+        $textPartList = $codeBlockProtector->restore($textPartList);
+
+        // must take care of code block
 
         $filteredText = '';
         foreach ($textPartList as $textPart) {
@@ -61,7 +66,15 @@ class Markdown extends AbstractFilter
 
         $textFiltered = null;
         if (! $this->isItCodeBlock($blockText)) {
-            $textFiltered = $this->manager?->applyFilters($blockText, explode(',', 'twig,date,email,htmlLinkMultisite,obfuscateLink,htmlObfuscateLink,image,phoneNumber'));
+            $inlineCodeProtector = new MarkdownProtectInlineCode();
+            $textFiltered = $inlineCodeProtector->protect($blockText);
+            $textFiltered = $this->manager?->applyFilters($textFiltered, ['twig']);
+            assert(is_string($textFiltered));
+            $textFiltered = $inlineCodeProtector->restore($textFiltered);
+            $textFiltered = $this->manager?->applyFilters(
+                $textFiltered,
+                ['date', 'email', 'htmlLinkMultisite', 'obfuscateLink', 'htmlObfuscateLink', 'image', 'phoneNumber']
+            );
         }
 
         if (null !== $textFiltered && is_string($textFiltered)) {
@@ -74,10 +87,24 @@ class Markdown extends AbstractFilter
             // $blockText = preg_replace('/^ +/m', '', $textFiltered);
             $blockText = $textFiltered;
         }
-        $blockText = str_replace("\u{A0}", ' ', $blockText);
+
+        $blockText = $this->fixTypo($blockText);
+
         dump($blockText);
 
         return $this->markdownParser->transform(trim($attribute."\n".$blockText));
+    }
+
+    private function fixTypo(string $text): string
+    {
+        // only when typing #, we are adding an insecable space wich breaks the markdown parser.
+        $text = preg_replace('/^^(#{1,6})[\x{A0}]+/u', '$1 ', $text);
+        assert(is_string($text));
+
+        // next lineto remove when https://github.com/thephpleague/commonmark/pull/1096 is merged
+        $text = str_replace(' viewBox="', ' viewbox="', $text);
+
+        return $text;
     }
 
     private function isItCodeBlock(string $text): bool

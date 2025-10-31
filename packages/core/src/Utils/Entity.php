@@ -3,6 +3,7 @@
 namespace Pushword\Core\Utils;
 
 use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\ManyToOne;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
@@ -30,7 +31,12 @@ class Entity
     {
         $reflectionClass = new ReflectionClass($object::class);
         $properties = array_filter($reflectionClass->getProperties(), static function (ReflectionProperty $property) {
-            if (self::containAttribute($property->getAttributes(), Column::class)) {
+            $attributes = $property->getAttributes();
+            if (self::containAttribute($attributes, Column::class)) {
+                return true;
+            }
+
+            if (self::containAttribute($attributes, ManyToOne::class)) {
                 return true;
             }
         });

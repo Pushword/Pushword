@@ -35,7 +35,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                 'flat_content_dir' => '%kernel.project_dir%/../docs/content',
                 'static_dir' => '%kernel.project_dir%/../../docs',
                 'name' => 'Pushword',
-                'favicon_path' => '/assets/favicons/',
+                'favicon_path' => '/assets/',
                 'static_generators' => [
                     PagesGenerator::class,
                     MediaGenerator::class,

@@ -20,6 +20,7 @@ use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Utils\Filepath;
 use Pushword\Core\Utils\SafeMediaMimeType;
+use Stringable;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -35,7 +36,7 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: MediaRepository::class)]
 #[ORM\Table(name: 'media')]
-class Media implements IdInterface
+class Media implements IdInterface, Stringable
 {
     use CustomPropertiesTrait;
     use IdTrait;
@@ -188,6 +189,11 @@ class Media implements IdInterface
         }
 
         return $this->mediaFile->getFilename();
+    }
+
+    public function __toString(): string
+    {
+        return $this->media;
     }
 
     public function getMedia(): string
