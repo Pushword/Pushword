@@ -27,9 +27,9 @@ final class FlatFileImportCommand
     ): int {
         $output->writeln('Import will start in few seconds...');
 
-        $this->importer->run($host);
+        $duration = $this->importer->run($host);
 
-        $output->writeln('Import ended.');
+        $output->writeln('Import took '.$duration.' ms.');
 
         return Command::SUCCESS;
     }

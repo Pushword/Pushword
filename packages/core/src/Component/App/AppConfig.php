@@ -23,6 +23,10 @@ final class AppConfig
 
     private string $name;
 
+    /**
+     * Defined in packages/core/src/DependencyInjection/Configuration.php / pushword.{yaml|php}
+     * Default value : @Pushword.
+     */
     private string $template;
 
     /** @var array<string, string> */

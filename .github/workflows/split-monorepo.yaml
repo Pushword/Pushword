@@ -25,6 +25,7 @@ jobs:
           - new
           - admin-block-editor
           - advanced-main-image
+          - docs
 
     steps:
       - uses: actions/checkout@v3
@@ -33,7 +34,7 @@ jobs:
 
       - # get git previous tag
         id: previous_tag
-        uses: 'WyriHaximus/github-action-get-previous-tag@master'
+        uses: "WyriHaximus/github-action-get-previous-tag@master"
 
       - # Uses an action in the root directory
         name: Monorepo Split of ${{ matrix.package }}
@@ -41,12 +42,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         with:
-          package_directory: 'packages/${{ matrix.package }}'
-          repository_organization: 'pushword'
-          repository_name: '${{ matrix.package }}'
+          package_directory: "packages/${{ matrix.package }}"
+          repository_organization: "pushword"
+          repository_name: "${{ matrix.package }}"
           tag: ${{ steps.previous_tag.outputs.tag }}
-          user_name: 'RobinDev'
-          user_email: 'contact@piedweb.com'
+          user_name: "RobinDev"
+          user_email: "contact@piedweb.com"
 
   test_installer:
     needs: split_monorepo

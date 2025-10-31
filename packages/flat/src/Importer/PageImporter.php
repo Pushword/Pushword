@@ -159,9 +159,18 @@ final class PageImporter extends AbstractImporter
     /**
      * @param array<string, mixed> $data
      */
-    private function editPage(string $slug, array $data, string $content, DateTime|DateTimeImmutable|DateTimeInterface $lastEditDateTime): Page
-    {
-        $page = $this->getPageFromSlug($slug);
+    private function editPage(
+        string $slug,
+        array $data,
+        string $content,
+        DateTime|DateTimeImmutable|DateTimeInterface $lastEditDateTime
+    ): Page {
+        if (isset($data['id'])) {
+            $page = $this->pageRepo->find($data['id']);
+            unset($data['id']);
+        }
+
+        $page ??= $this->getPageFromSlug($slug);
 
         if (! $this->newPage && $page->getUpdatedAt() >= $lastEditDateTime) {
             return $page; // no update needed

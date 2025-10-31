@@ -13,6 +13,8 @@ use Pushword\Flat\Importer\PageImporter;
 use function Safe\filemtime;
 use function Safe\scandir;
 
+use Symfony\Component\Stopwatch\Stopwatch;
+
 /**
  * Permit to find error in image or link.
  *
@@ -30,15 +32,17 @@ final class FlatFileImporter
         protected AppPool $apps,
         protected FlatFileContentDirFinder $contentDirFinder,
         protected PageImporter $pageImporter,
-        protected MediaImporter $mediaImporter
+        protected MediaImporter $mediaImporter,
+        private ?Stopwatch $stopWatch = null
     ) {
     }
 
-    public function run(?string $host): void
+    public function run(?string $host): int|float
     {
-        if (null !== $host) {
-            $this->app = $this->apps->switchCurrentApp($host)->get();
-        }
+        $this->stopWatch?->start('run');
+        $this->app = null !== $host
+            ? $this->apps->switchCurrentApp($host)->get()
+            : $this->apps->get();
 
         $contentDir = $this->contentDirFinder->get($this->app->getMainHost());
 
@@ -50,6 +54,8 @@ final class FlatFileImporter
 
         $this->importFiles($contentDir, 'page');
         $this->pageImporter->finishImport();
+
+        return $this->stopWatch?->stop('run')->getDuration() ?? 0;
     }
 
     public function setMediaCustomDir(string $dir): void

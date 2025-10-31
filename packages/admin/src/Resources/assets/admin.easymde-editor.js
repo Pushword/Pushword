@@ -1,64 +1,67 @@
-import * as EasyMDE from 'easymde'
+//import * as EasyMDE from 'easymde'
+import EasyMDE from 'easymde'
 window.EasyMDE = EasyMDE
 
 export function easyMDEditor() {
   var timeoutPreviewRender = null
 
-  document.querySelectorAll('textarea[data-editor="markdown"]').forEach(function (editorElement) {
-    new EasyMDE({
-      element: editorElement,
-      toolbar: [
-        'bold',
-        'italic',
-        'heading-2',
-        'heading-3',
-        '|',
-        'unordered-list',
-        'ordered-list',
-        '|',
-        'link',
-        'image',
-        'quote',
-        'code',
-        '|',
-        'side-by-side',
-        'fullscreen',
-        {
-          name: 'guide',
-          action: '/admin/markdown-cheatsheet',
-          className: 'fa fa-question-circle',
-          noDisable: true,
-          title: 'Documentation',
-          default: true,
+  document
+    .querySelectorAll('textarea[data-editor="markdown"]')
+    .forEach(function (editorElement) {
+      new EasyMDE({
+        element: editorElement,
+        toolbar: [
+          'bold',
+          'italic',
+          'heading-2',
+          'heading-3',
+          '|',
+          'unordered-list',
+          'ordered-list',
+          '|',
+          'link',
+          'image',
+          'quote',
+          'code',
+          '|',
+          'side-by-side',
+          'fullscreen',
+          {
+            name: 'guide',
+            action: '/admin/markdown-cheatsheet',
+            className: 'fa fa-question-circle',
+            noDisable: true,
+            title: 'Documentation',
+            default: true,
+          },
+        ],
+        status: ['autosave', 'lines', 'words', 'cursor'],
+        spellChecker: false,
+        nativeSpellcheck: true,
+        previewImagesInEditor: true,
+        forceSync: true,
+        sideBySideFullscreen: false,
+        insertTexts: {
+          link: ['[', ']()'],
+          image: ['![', '](/media/default/...)'],
         },
-      ],
-      status: ['autosave', 'lines', 'words', 'cursor'],
-      spellChecker: false,
-      nativeSpellcheck: true,
-      previewImagesInEditor: true,
-      forceSync: true,
-      sideBySideFullscreen: false,
-      insertTexts: {
-        link: ['[', ']()'],
-        image: ['![', '](/media/default/...)'],
-      },
-      maxHeight: '65vh',
-      syncSideBySidePreviewScroll: false,
-      previewRender: function (editorContent, preview) {
-        resizeSidePreview()
-        editorElement.value = editorContent
-        if (!document.getElementById('previewf')) {
-          customPreview(editorContent, editorElement, preview)
-        }
-        document.addEventListener('keyup', function (e) {
-          clearTimeout(timeoutPreviewRender)
-          timeoutPreviewRender = setTimeout(function () {
+        maxHeight: '65vh',
+        syncSideBySidePreviewScroll: false,
+        previewRender: function (editorContent, preview) {
+          resizeSidePreview()
+          editorElement.value = editorContent
+          if (!document.getElementById('previewf')) {
             customPreview(editorContent, editorElement, preview)
-          }, 1000)
-        })
-      },
+          }
+          document.addEventListener('keyup', function (e) {
+            clearTimeout(timeoutPreviewRender)
+            timeoutPreviewRender = setTimeout(function () {
+              customPreview(editorContent, editorElement, preview)
+            }, 1000)
+          })
+        },
+      })
     })
-  })
 
   function resizeSidePreview() {
     var sidedNoFullScreenContainer = document.querySelector('.editor-preview-side')
@@ -71,7 +74,9 @@ export function easyMDEditor() {
     var preloadIframeElement = document.querySelector('iframe.load-preview')
     var previewIframeElement = document.querySelector('iframe.preview-visible')
 
-    var scrollTop = preloadIframeElement ? previewIframeElement.contentWindow.window.scrollY : 0
+    var scrollTop = preloadIframeElement
+      ? previewIframeElement.contentWindow.window.scrollY
+      : 0
     var XHR = new XMLHttpRequest()
     var form = editorElement.closest('form')
     var actionUrl = form.getAttribute('action')

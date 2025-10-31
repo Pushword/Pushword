@@ -28,6 +28,9 @@ class Markdown extends AbstractFilter
         $text = str_replace("\r\n", "\n", $text);
         $text = str_replace("\r", "\n", $text);
 
+        // small fix for prettier
+        $text = str_replace("}\n\n<", "}\n<", $text);
+
         return $text;
     }
 
@@ -62,14 +65,17 @@ class Markdown extends AbstractFilter
         }
 
         if (null !== $textFiltered && is_string($textFiltered)) {
-            if (str_starts_with($blockText, '{{')) {
+            if (str_starts_with($blockText, '{')) {
                 return $textFiltered;
             }
 
             $textFiltered = trim($textFiltered);
             /** @var string $blockText */
-            $blockText = preg_replace('/^ +/m', '', $textFiltered);
+            // $blockText = preg_replace('/^ +/m', '', $textFiltered);
+            $blockText = $textFiltered;
         }
+        $blockText = str_replace("\u{A0}", ' ', $blockText);
+        dump($blockText);
 
         return $this->markdownParser->transform(trim($attribute."\n".$blockText));
     }

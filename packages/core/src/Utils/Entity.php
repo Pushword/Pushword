@@ -36,9 +36,9 @@ class Entity
         });
         $propertyNames = [];
         foreach ($properties as $property) {
-            if ('id' === $property->getName()) {
-                continue;
-            }
+            // if ('id' === $property->getName()) {
+            //     continue;
+            // }
 
             $propertyNames[] = $property->getName();
         }

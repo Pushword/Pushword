@@ -33,15 +33,15 @@ final readonly class FlatFileSyncCommand
     ): int {
         if ($this->flatFileSync->mustImport($host)) {
             $output->writeln('Import detected - running import...');
-            $this->importer->run($host);
-            $output->writeln('Import ended.');
+            $duration = $this->importer->run($host);
+            $output->writeln('Import took '.$duration.' ms.');
 
             return Command::SUCCESS;
         }
 
         $output->writeln('Export detected - running export...');
-        $this->exporter->run($host ?? '');
-        $output->writeln('Export ended.');
+        $duration = $this->exporter->run($host ?? '');
+        $output->writeln('Export took '.$duration.' ms.');
 
         return Command::SUCCESS;
     }

@@ -13,8 +13,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class FlatFileExportCommand
 {
-    public function __construct(protected FlatFileExporter $exporter)
-    {
+    public function __construct(
+        private FlatFileExporter $exporter,
+    ) {
     }
 
     public function __invoke(
@@ -30,14 +31,14 @@ final class FlatFileExportCommand
             $this->exporter->setExportDir($exportDir);
         }
 
-        $exportDir = $this->exporter->run($host ?? '');
+        $duration = $this->exporter->run($host ?? '');
 
-        if ('' !== $exportDir) {
+        if ('' !== $this->exporter->exportDir) {
             $output->writeln('Results:');
-            $output->writeln($exportDir);
+            $output->writeln($this->exporter->exportDir);
         }
 
-        $output->writeln('Import ended.');
+        $output->writeln('Export took '.$duration.' ms.');
 
         return Command::SUCCESS;
     }

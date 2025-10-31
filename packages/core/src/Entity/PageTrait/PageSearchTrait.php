@@ -8,6 +8,12 @@ use Doctrine\ORM\Mapping as ORM;
 trait PageSearchTrait
 {
     /**
+     * HTML Title - SEO.
+     */
+    #[ORM\Column(type: Types::STRING, length: 200)]
+    protected string $title = '';
+
+    /**
      * may Index ?
      */
     #[ORM\Column(type: Types::STRING, length: 50, options: ['default' => ''])]
@@ -18,12 +24,6 @@ trait PageSearchTrait
      */
     #[ORM\Column(type: Types::STRING, length: 150)]
     protected string $name = '';
-
-    /**
-     * HTML Title - SEO.
-     */
-    #[ORM\Column(type: Types::STRING, length: 200)]
-    protected string $title = '';
 
     /**
      * priority.

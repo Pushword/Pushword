@@ -9,7 +9,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Before v1
 
-### In progress
+### In progress
 
 - [AdminBlockEditor] transition JSON -> Markdown -> EditorJS
   - [x] editorjs to markdown
@@ -17,22 +17,23 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] implémenter prettier markdown
   - [x] enregistrer en DB uniquement le markdown
   - [x] admin - revoir la class qui instantie pour montrer EditorJS si le contenu est en markdown (donc markdown ➜ editorjs à l'initialisation, nouveau comportement par défaut)
-  - [ ] how to bulk upgrade ?
-
-- [Flat] ⚡ Accélérer l'import-export en changeant de paradigme ➜ **sync**
-  1. [ ] Lister les slugs + dernière date de moficiation machine (ajouter le timestamp dans l'entité en le vérouillant pour que seul Doctrine ou le DB engine puisse le modifier, clarifier les 2 autres éléments createdAt et updatedAt)
-  2. [ ] Idem en chargeant la liste des slugs depuis la liste des fichiers à importer /(.\*)\.md$/ + la dernière fois que le fichier a été modifié
-  3. [ ] Diff entre les 2 liste : les slugs à supprimer, les slugs à ajouter, les slugs à mettre à jour
-  4. [ ] Bridge avec versionner (si lastEditMsg change, on créé une nouvelle version ? ou on considère comme une autosave)
-  5. [ ] Implémenter un sync auto depuis [Admin] et un file watcher (bin/console content:watch) pour l'autre sens // l'implémentation rapide c'est un cron sur bin/console flat:sync
+  - [ ] how to bulk upgrade ?
 
 - [Flat]
-  - [ ] mettre à jour le dossier par défault : content/%domain%/
+  - [x] mettre à jour le dossier par défault : content/%domain%/
+  - [ ] prefer yaml over json for media exporter
   - [ ] Revoir la transformation de lien markdown (./../test.md) en lien vers la page (/test) (useful for navigate in docs from editor)
   - [ ] s'assurer que la réciproque fonctionne au moment de l'export
   - [ ] idem pour les médias (/media/test.jpg ➜ ./../../media/test.jpg) : plus simple que le point précédent, il faut calculer le nombre de "../" entre le dossier courant et la racine du projet
 
+- [Ai] Add AiFeature to Flat
+  - [ ] Generate a map of the content
+  - [ ] Generate a map of the media
+- [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
+
 ### One day maybe
+
+- [Flat] Implémenter un sync auto depuis [Admin] et un file watcher (bin/console content:watch) pour l'autre sens // l'implémentation rapide c'est un cron sur bin/console flat:sync
 
 - [AdminBlockEditor] selecting a block alone like gallery : copy / paste is not working
   - all the copy paste from markdown

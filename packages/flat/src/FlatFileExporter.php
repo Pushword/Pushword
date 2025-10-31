@@ -2,6 +2,7 @@
 
 namespace Pushword\Flat;
 
+use DateTimeInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
@@ -15,18 +16,19 @@ use Pushword\Flat\Importer\PageImporter;
 use function Safe\json_encode;
 
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Component\Yaml\Yaml;
 
 /**
  * Permit to find error in image or link.
  */
-class FlatFileExporter
+final class FlatFileExporter
 {
     protected AppConfig $app;
 
     protected string $copyMedia = '';
 
-    protected string $exportDir = '';
+    public string $exportDir = '';
 
     protected Filesystem $filesystem;
 
@@ -39,6 +41,7 @@ class FlatFileExporter
         protected MediaImporter $mediaImporter,
         protected PageRepository $pageRepo,
         protected MediaRepository $mediaRepo,
+        private Stopwatch $stopWatch
     ) {
         $this->filesystem = new Filesystem();
     }
@@ -50,21 +53,21 @@ class FlatFileExporter
         return $this;
     }
 
-    public function run(?string $host): string
+    public function run(string $host): int|float
     {
-        if (null !== $host) {
-            $this->app = $this->apps->switchCurrentApp($host)->get();
-        }
+        $this->stopWatch->start('run');
+
+        $app = $this->apps->switchCurrentApp($host)->get();
 
         $this->exportDir = '' !== $this->exportDir ? $this->exportDir
-            : ($this->contentDirFinder->has($this->app->getMainHost())
-                ? $this->contentDirFinder->get($this->app->getMainHost())
+            : ($this->contentDirFinder->has($app->getMainHost())
+                ? $this->contentDirFinder->get($app->getMainHost())
                 : $this->projectDir.'/var/export/'.uniqid());
 
         $this->exportPages();
         $this->exportMedias();
 
-        return $this->exportDir;
+        return $this->stopWatch->stop('run')->getDuration();
     }
 
     private function exportPages(): void
@@ -72,17 +75,39 @@ class FlatFileExporter
         $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
 
         foreach ($pages as $page) {
+            // compare the filemtime with the page->getUpdatedAt()
             $this->exportPage($page);
         }
     }
 
+    /** @var array<string, mixed> */
+    private array $defaultValueCache = [];
+
+    private function getPageDefaultValue(string $property): mixed
+    {
+        if (isset($this->defaultValueCache[$property])) {
+            return $this->defaultValueCache[$property];
+        }
+
+        $reflection = new \ReflectionClass(Page::class);
+        $reflectionProperty = $reflection->getProperty($property);
+        $this->defaultValueCache[$property] = $reflectionProperty->getDefaultValue();
+
+        return $this->defaultValueCache[$property];
+    }
+
     private function exportPage(Page $page): void
     {
-        $properties = Entity::getProperties($page);
+        $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
+        if (file_exists($exportFilePath) && filemtime($exportFilePath) >= $page->safegetUpdatedAt()->getTimestamp()) {
+            return;
+        }
+
+        $properties = ['title', 'h1', 'slug', 'id'] + Entity::getProperties($page);
 
         $data = [];
         foreach ($properties as $property) {
-            if (\in_array($property, ['mainContent', 'id'], true)) {
+            if (\in_array($property, ['mainContent'], true)) {
                 continue;
             }
 
@@ -92,17 +117,32 @@ class FlatFileExporter
                 continue;
             }
 
-            if ('customProperties' == $property && empty($value)) { // @phpstan-ignore-line
+            if (
+                in_array($property, ['customProperties', 'tags'], true)
+                && in_array($value, [null, [], ''], true)
+            ) {
                 continue;
             }
 
-            $data[$property] = $value;
+            if ($value === $this->getPageDefaultValue($property)) {
+                continue;
+            }
+
+            if (in_array($property, ['createdAt', 'updatedAt', 'host', 'slug'], true)) {
+                continue;
+            }
+
+            if ('locale' === $property && $value === $this->apps->get()->getLocale()) {
+                continue;
+            }
+
+            $data[$property] = $value instanceof DateTimeInterface ? $value->format('Y-m-d H:i') : $value;
         }
 
-        $metaData = Yaml::dump($data);
-        $content = '---'.\PHP_EOL.$metaData.\PHP_EOL.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent();
+        $metaData = Yaml::dump($data, indent: 2);
+        $content = '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent();
 
-        $this->filesystem->dumpFile($this->exportDir.'/'.$page->getSlug().'.md', $content);
+        $this->filesystem->dumpFile($exportFilePath, $content);
     }
 
     private function exportMedias(): void

@@ -35,6 +35,7 @@ Plan.md
 /docs~
 **/public/bundles
 **/skeleton/public/media
+**/skeleton/content
 **/skeleton/admin-block-editor.test
 **/skeleton/localhost.dev
 **/skeleton/admin-block-editor.test

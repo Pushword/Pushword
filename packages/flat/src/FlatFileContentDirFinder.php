@@ -4,6 +4,7 @@ namespace Pushword\Flat;
 
 use Exception;
 use Pushword\Core\Component\App\AppPool;
+use Symfony\Component\Filesystem\Path;
 
 /**
  * Permit to find error in image or link.
@@ -36,7 +37,7 @@ final class FlatFileContentDirFinder
         }
 
         $flatContentDir = str_replace('_host_', $mainHost, $dir);
-        $flatContentDir = \Safe\realpath($flatContentDir);
+        $flatContentDir = Path::canonicalize($flatContentDir);
         $this->contentDir[$host] = $flatContentDir;
 
         if (! file_exists($flatContentDir)) {
