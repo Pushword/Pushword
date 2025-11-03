@@ -42,10 +42,10 @@ final class Configuration implements ConfigurationInterface
      * @var array<string, string>
      */
     public const array DEFAULT_FILTERS = [
-        'main_content' => 'showMore,markdown,mainContentSplitter,extended',
+        'main_content' => 'showMore,markdown,date,email,htmlLinkMultisite,htmlObfuscateLink,phoneNumber,mainContentSplitter,extended',
         'name' => 'twig,date,name,extended',
         'title' => 'elseH1,twig,date,extended',
-        'string' => 'twig,date,email,obfuscateLink,phoneNumber,extended',
+        'string' => 'twig,date,email,phoneNumber,extended',
     ];
 
     /**

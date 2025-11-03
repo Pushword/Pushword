@@ -8,7 +8,6 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FilesizeFormatter;
 use Pushword\Core\Utils\HtmlBeautifer;
-use Pushword\Core\Utils\MarkdownParser;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -130,12 +129,6 @@ final class AppExtension
     public function nicePunctuationFilter(string $string): string
     {
         return HtmlBeautifer::punctuationBeautifer($string);
-    }
-
-    #[AsTwigFilter('markdown')]
-    public function markdownFilter(string $string): string
-    {
-        return (new MarkdownParser())->transform($string);
     }
 
     #[AsTwigFunction('filesize')]

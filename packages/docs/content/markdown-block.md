@@ -22,7 +22,7 @@ Blocks are **separated by two blank lines**.
 
 Advanced content types such as **galleries**, **attachments**, or **page lists** are supported through **Twig functions**.
 
-_You can use twig syntax inside markdown inline code or markdown code block, it will not be parsed by twig._
+_You can use twig syntax inside markdown inline code or markdown code block, it will not be parsed by twig. If you want to use twig inside inline code or code block, use html directly (`<pre></pre>`)._
 
 ## Example
 

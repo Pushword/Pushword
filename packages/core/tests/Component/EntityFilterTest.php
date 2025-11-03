@@ -14,6 +14,7 @@ use Pushword\Core\Service\LinkProvider;
 use function Safe\file_get_contents;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class EntityFilterTest extends KernelTestCase
 {
@@ -34,7 +35,8 @@ class EntityFilterTest extends KernelTestCase
         $filter->twig = self::getContainer()->get('twig');
 
         $router = self::getContainer()->get(PushwordRouteGenerator::class);
-        $filter->linkProvider = new LinkProvider($router, $apps, $filter->twig);
+        $security = self::getContainer()->get(Security::class);
+        $filter->linkProvider = new LinkProvider($router, $apps, $filter->twig, $security);
         self::assertSame('Lorem <span data-rot="_cvrqjro.pbz/">Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
         self::assertSame('Lorem <span class="link-btn" data-rot="_cvrqjro.pbz/">Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn" href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
         self::assertSame('Lorem <span class="link-btn btn-plus" data-rot="_cvrqjro.pbz/">Test</span> ipsum', $filter->convertHtmlRelObfuscateLink('Lorem <a class="link-btn btn-plus" href="https://piedweb.com/" rel="obfuscate">Test</a> ipsum'));
@@ -49,13 +51,15 @@ class EntityFilterTest extends KernelTestCase
     {
         self::bootKernel();
 
+        $security = self::getContainer()->get(Security::class);
+
         return new ManagerPool(
             $apps = self::getContainer()->get(AppPool::class),
             $twig = self::getContainer()->get('twig'),
             self::getContainer()->get('event_dispatcher'),
             /** @var PushwordRouteGenerator */
             $router = self::getContainer()->get(PushwordRouteGenerator::class),
-            new LinkProvider($router, $apps, $twig),
+            new LinkProvider($router, $apps, $twig, $security),
             self::getContainer()->get('doctrine.orm.default_entity_manager')
         );
     }

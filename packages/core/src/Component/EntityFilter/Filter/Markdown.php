@@ -3,20 +3,19 @@
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Pushword\Core\Component\EntityFilter\Manager;
-use Pushword\Core\Utils\MarkdownParser;
 
 use function Safe\preg_replace;
 
+use Twig\Environment;
+
+/**
+ * Name is misleading, it's not a markdown filter, it's a twig-markdown filter.
+ */
 class Markdown extends AbstractFilter
 {
-    private readonly MarkdownParser $markdownParser;
-
     public ?Manager $manager = null;
 
-    public function __construct()
-    {
-        $this->markdownParser = new MarkdownParser();
-    }
+    public Environment $twig;
 
     public function apply(mixed $propertyValue): string
     {
@@ -50,6 +49,11 @@ class Markdown extends AbstractFilter
         }
 
         return $filteredText;
+    }
+
+    private function parseMarkdown(string $text): string
+    {
+        return $this->twig->createTemplate('{% apply markdown %}'.$text.'{% endapply %}')->render();
     }
 
     public function transformPart(string $text): string
@@ -86,18 +90,7 @@ class Markdown extends AbstractFilter
 
         $blockText = $this->fixTypo($blockText);
 
-        $blockText = $this->manager?->applyFilters(
-            $blockText,
-            ['obfuscateLink', 'image'] // TODO : move to markdown extension
-        );
-        assert(is_string($blockText));
-        $markdown = $this->markdownParser->transform(trim($attribute."\n".$blockText));
-
-        $markdown = $this->manager?->applyFilters(
-            $markdown,
-            ['date', 'email', 'htmlLinkMultisite',  'htmlObfuscateLink', 'phoneNumber']
-        );
-        assert(is_string($markdown));
+        $markdown = $this->parseMarkdown(trim($attribute."\n".$blockText));
 
         return $markdown;
     }

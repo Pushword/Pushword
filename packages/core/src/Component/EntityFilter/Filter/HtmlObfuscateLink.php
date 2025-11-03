@@ -3,12 +3,26 @@
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Exception;
-use Override;
+use Pushword\Core\Component\App\AppConfig;
+use Pushword\Core\Service\LinkProvider;
 
 use function Safe\preg_match_all;
 
-final class HtmlObfuscateLink extends ObfuscateLink
+use Twig\Environment;
+
+final class HtmlObfuscateLink extends AbstractFilter
 {
+    public LinkProvider $linkProvider;
+
+    public AppConfig $app;
+
+    public Environment $twig;
+
+    public function apply(mixed $propertyValue): string
+    {
+        return $this->convertObfuscateLink($this->string($propertyValue));
+    }
+
     /**
      * @var string
      *             Attr Regex :     (?<=href=)((?P<hrefQuote>'|")(?P<href>.*?)(?P=hrefQuote)|(?P<href>[^"'>][^> \r\n\t\f\v]*))
@@ -30,7 +44,6 @@ final class HtmlObfuscateLink extends ObfuscateLink
      */
     public const string HTML_REGEX_ANCHOR_KEY = 'anchor';
 
-    #[Override]
     public function convertObfuscateLink(string $body): string
     {
         return $this->convertHtmlRelObfuscateLink($body);

@@ -10,12 +10,14 @@ final class ViteExtension
     #[AsTwigFunction('vite_style', isSafe: ['html'], needsEnvironment: true)]
     public function renderViteStylesheet(Twig $twig, string $path): string
     {
+        // TODO : to test else use
+        // return $twig->createTemplate('{{ vite_entry_link_tags("'.$path.'") }}')->render();
+        // VS.
+        // $functions['vite_entry_link_tags']->getCallable()($path)
         $functions = $twig->getFunctions();
         $return = isset($functions['vite_entry_link_tags'])
-            ? $functions['vite_entry_link_tags']->getCallable()($path) // @phpstan-ignore-line
+            ? $twig->createTemplate('{{ vite_entry_link_tags("'.$path.'") }}')->render()
             : null;
-
-        assert(is_string($return) || null === $return);
 
         return $return ?? '<!--You must install vite bundle to use this function-->';
     }
@@ -25,10 +27,8 @@ final class ViteExtension
     {
         $functions = $twig->getFunctions();
         $return = isset($functions['vite_entry_script_tags'])
-            ? $functions['vite_entry_script_tags']->getCallable()($path) // @phpstan-ignore-line
+            ? $twig->createTemplate('{{ vite_entry_script_tags("'.$path.'") }}')->render()
             : null;
-
-        assert(is_string($return) || null === $return);
 
         return $return ?? '<!--You must install vite bundle to use this function-->';
     }

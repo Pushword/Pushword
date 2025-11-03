@@ -59,7 +59,7 @@ class EnityFilterSuscriber extends AbstractEventSuscriber
     private function removeMarkdownFilter(AppConfig $appConfig): void
     {
         $filters = $appConfig->getFilters();
-        $filters['main_content'] = str_replace(',markdown', ',twig,date,email,htmlLinkMultisite,obfuscateLink,htmlObfuscateLink,image,phoneNumber', $filters['main_content']);
+        $filters['main_content'] = str_replace(',markdown', ',twig,date,email,htmlLinkMultisite,htmlObfuscateLink,phoneNumber', $filters['main_content']);
         $appConfig->setFilters($filters);
     }
 }

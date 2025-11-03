@@ -29,9 +29,9 @@ pushword:
   # template_dir:         '%kernel.project_dir%/templates'
   # page_can_override_filters: true
   # filters:
-  #     main_content: twig,date,email,obfuscateLink,image,phoneNumber,twigVideo,punctuation,markdown
+  #     main_content: twig,date,email,phoneNumber,twigVideo,punctuation,markdown
   #     name:         twig,date,name
-  #     string:       twig,date,email,obfuscateLink,phoneNumber
+  #     string:       twig,date,email,phoneNumber
   # custom_properties:
   #     assets:
   #         stylesheets:

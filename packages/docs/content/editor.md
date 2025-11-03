@@ -1,21 +1,21 @@
 ---
 title: Editor Hidden Super Power - Cheatsheet Pushword
-h1: "Editor Hidden Super Power<br><small>and Markdown Cheatsheet</small>"
+h1: 'Editor Hidden Super Power<br><small>and Markdown Cheatsheet</small>'
 parent: homepage
-prose: " "
+prose: ' '
 raw: true
 main_content_filters: twig,mainContentToBody
 ---
 
 <div class="flex flex-wrap max-w-5xl">
-
     <div class="order-2 w-fulloverflow-hidden lg:order-1 lg:w-4/5">
         <div class="p-3 prose dark:prose-light max-w-none">
             <h1>{{ pw(page).h1|raw }}</h1>
-            <p markdown=>{% apply markdown %}After installing the [admin](/extension/admin), you will be able to read this doc directly from your Pushword installation at `/admin/markdown-cheatsheet`.{% endapply %}</p>
-        </div>
-    </div>
 
+After installing the [admin](/extension/admin), you will be able to read this doc directly from your Pushword installation at `/admin/markdown-cheatsheet`.
+
+</div>
+    </div>
     <div class="order-3 w-full overflow-hidden lg:order-2 lg:w-1/5">
         <div class="max-w-screen-sm p-2 pt-4 m-2 rounded shadow-md bg-gray-50 dark:border-gray-700 lg:max-w-xs lg:absolute">
             <h3 class="block px-1 mb-3 text-sm font-semibold tracking-wide text-gray-900 uppercase dark:text-gray-100 lg:mb-3 lg:text-xs">Contents</h3>

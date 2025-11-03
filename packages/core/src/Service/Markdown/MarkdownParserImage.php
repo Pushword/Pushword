@@ -1,22 +1,19 @@
 <?php
 
-namespace Pushword\Core\Component\EntityFilter\Filter;
+namespace Pushword\Core\Service\Markdown;
 
-use Pushword\Core\Component\App\AppConfig;
+use Pushword\Core\Component\App\AppPool;
 use Twig\Environment;
 
-class Image extends AbstractFilter
+class MarkdownParserImage
 {
-    public AppConfig $app;
-
-    public Environment $twig;
-
-    public function apply(mixed $propertyValue): string
-    {
-        return $this->convertMarkdownImage($this->string($propertyValue));
+    public function __construct(
+        private Environment $twig,
+        private AppPool $apps,
+    ) {
     }
 
-    public function convertMarkdownImage(string $body): string
+    public function parse(string $body): string
     {
         if (false === preg_match_all('/(?:(?:!\[(?<alt>.*)\]\((?<src>.*)\))|(?<hash>#?)\[!\[(?<alt1>.*)\]\((?<src1>.*)\)]\((?<href>.*)\)(?<target>{target="_blank"})?)/', $body, $matches)) {
             return $body;
@@ -26,7 +23,7 @@ class Image extends AbstractFilter
         for ($k = 0; $k < $nbrMatch; ++$k) {
             // dump($matches);
             $renderImg = $this->twig->render(
-                $this->app->getView('/component/image_inline.html.twig'),
+                $this->apps->get()->getView('/component/image_inline.html.twig'),
                 [
                     // "image_wrapper_class" : "mimg",'
                     'image_src' => $matches['src'][$k] ?: $matches['src1'][$k],

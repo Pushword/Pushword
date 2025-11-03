@@ -93,10 +93,10 @@ pushword:
       - bundles/pushwordcore/page.js
   filters:
     # Defaults:
-    main_content: twig,date,email,obfuscateLink,htmlObfuscateLink,image,phoneNumber,punctuation,markdown,mainContentSplitter,extended
+    main_content: twig,date,email,htmlObfuscateLink,phoneNumber,punctuation,markdown,mainContentSplitter,extended
     name: twig,date,name,extended
     title: twig,date,elseH1,extended
-    string: twig,date,email,obfuscateLink,phoneNumber,extended
+    string: twig,date,email,phoneNumber,extended
   entity_can_override_filters: true
   image_filter_sets:
     default:
@@ -165,7 +165,13 @@ Example :
 pushword:
   # ...
   apps:
-    - { hosts: ['localhost.dev', 'localhost'], base_url: 'https://localhost.dev', randomTest: 123, admin_block_editor: false, admin_block_editor_disable_listener: true }
+    - {
+        hosts: ['localhost.dev', 'localhost'],
+        base_url: 'https://localhost.dev',
+        randomTest: 123,
+        admin_block_editor: false,
+        admin_block_editor_disable_listener: true,
+      }
     - {
         hosts: [pushword.piedweb.com],
         base_url: 'https://pushword.piedweb.com',

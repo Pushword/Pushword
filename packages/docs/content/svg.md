@@ -12,7 +12,7 @@ SVG Twig Extension is in the core (previously, it was a dedicated extension `pus
 By default, it's use #[FontAwesome](https://fontawesome.com/icons). You just need to use twig `svg` function :
 
 ```twig
-svg('surprise')
+{{ svg('surprise') }}
 ```
 
 Will show <span style="width:16px;height:16px; display:inline-block;color:var(--primary)" class="fill-current">{{ svg('surprise') }}</span>
@@ -21,4 +21,4 @@ Will show <span style="width:16px;height:16px; display:inline-block;color:var(--
 
 By default, this extension load #[FontAwesome](https://fontawesome.com/icons)'s icons.
 
-You can choose to use your custom SVG icons by specifyng the `svg_dir` in your app config or under `pushword_svg`.
+You can choose to use your custom SVG icons by specifyng the `svg_dir` in configuration (default value is `['%kernel.project_dir%/templates/icons', '...fontawesomeVendorDir...', '%kernel.project_dir%/public/bundles/pushwordcore']`).
