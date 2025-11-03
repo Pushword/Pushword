@@ -10,6 +10,7 @@ use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\Markdown\MarkdownParser;
 
 use function Safe\file_get_contents;
 
@@ -60,7 +61,9 @@ class EntityFilterTest extends KernelTestCase
             /** @var PushwordRouteGenerator */
             $router = self::getContainer()->get(PushwordRouteGenerator::class),
             new LinkProvider($router, $apps, $twig, $security),
-            self::getContainer()->get('doctrine.orm.default_entity_manager')
+            self::getContainer()->get('doctrine.orm.default_entity_manager'),
+            /** @var MarkdownParser */
+            self::getContainer()->get(MarkdownParser::class)
         );
     }
 

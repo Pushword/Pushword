@@ -37,6 +37,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### One day maybe
 
+- [Core] Simplify filter by replacing string configuration by service
+
 - [Flat] Implémenter un sync auto depuis [Admin] et un file watcher (bin/console content:watch) pour l'autre sens // l'implémentation rapide c'est un cron sur bin/console flat:sync
 
 - [AdminBlockEditor] selecting a block alone like gallery : copy / paste is not working

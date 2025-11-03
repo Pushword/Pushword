@@ -12,6 +12,7 @@ use Pushword\Core\Component\EntityFilter\Filter\MainContentSplitter;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\Markdown\MarkdownParser;
 use ReflectionClass;
 
 use function Safe\preg_match;
@@ -32,16 +33,19 @@ final readonly class Manager
 
     private PushwordRouteGenerator $router;
 
+    private MarkdownParser $markdownParser;
+
     private EntityManagerInterface $entityManager;
 
     public function __construct(
         private ManagerPool $managerPool,
         private EventDispatcherInterface $eventDispatcher,
         private LinkProvider $linkProvider,
-        public Page $page
+        public Page $page,
     ) {
         $this->apps = $managerPool->apps;
         $this->twig = $managerPool->twig;
+        $this->markdownParser = $managerPool->markdownParser;
         $this->router = $managerPool->router;
         $this->entityManager = $managerPool->entityManager;
         $this->app = $this->apps->get($page->getHost());
@@ -161,7 +165,16 @@ final readonly class Manager
         $filterClass = new $filterClassName();
 
         $toAutowire = [
-            'page', 'app', 'apps', 'twig', 'entityFilterManager', 'managerPool', 'router', 'entityManager', 'linkProvider',
+            'page',
+            'app',
+            'apps',
+            'twig',
+            'entityFilterManager',
+            'managerPool',
+            'router',
+            'entityManager',
+            'linkProvider',
+            'markdownParser',
         ];
 
         foreach ($toAutowire as $property) {

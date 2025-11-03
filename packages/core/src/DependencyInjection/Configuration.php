@@ -42,10 +42,12 @@ final class Configuration implements ConfigurationInterface
      * @var array<string, string>
      */
     public const array DEFAULT_FILTERS = [
-        'main_content' => 'showMore,markdown,date,email,htmlLinkMultisite,htmlObfuscateLink,phoneNumber,mainContentSplitter,extended',
+        // date,email,phoneNumber ➜ managed by markdown extension in main_content
+        'main_content' => 'showMore,markdown,htmlLinkMultisite,htmlObfuscateLink,mainContentSplitter,extended',
         'name' => 'twig,date,name,extended',
         'title' => 'elseH1,twig,date,extended',
-        'string' => 'twig,date,email,phoneNumber,extended',
+        // fallback for all other properties like title, description, ...
+        'string' => 'twig,date,extended',
     ];
 
     /**

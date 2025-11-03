@@ -3,6 +3,7 @@
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Pushword\Core\Component\EntityFilter\Manager;
+use Pushword\Core\Service\Markdown\MarkdownParser;
 
 use function Safe\preg_replace;
 
@@ -16,6 +17,8 @@ class Markdown extends AbstractFilter
     public ?Manager $manager = null;
 
     public Environment $twig;
+
+    public MarkdownParser $markdownParser;
 
     public function apply(mixed $propertyValue): string
     {
@@ -53,7 +56,9 @@ class Markdown extends AbstractFilter
 
     private function parseMarkdown(string $text): string
     {
-        return $this->twig->createTemplate('{% apply markdown %}'.$text.'{% endapply %}')->render();
+        // return $this->twig->createTemplate('{% apply markdown %}'.$text.'{% endapply %}')->render();
+
+        return $this->markdownParser->transform($text);
     }
 
     public function transformPart(string $text): string
@@ -63,6 +68,7 @@ class Markdown extends AbstractFilter
         $attribute = '';
         if ($this->startWithAttribute($lines[0])) {
             $attribute = $lines[0];
+            $attribute = str_replace('{#', '{id=', $attribute);
             unset($lines[0]);
         }
 
@@ -78,7 +84,7 @@ class Markdown extends AbstractFilter
         }
 
         if (null !== $textFiltered) {
-            if (str_starts_with($blockText, '{')) {
+            if ($this->isItRawBlock($blockText)) {
                 return $textFiltered;
             }
 
@@ -110,6 +116,11 @@ class Markdown extends AbstractFilter
     private function isItCodeBlock(string $text): bool
     {
         return str_starts_with($text, '```') && str_ends_with($text, '```');
+    }
+
+    private function isItRawBlock(string $text): bool
+    {
+        return str_starts_with($text, '{') || str_starts_with($text, '<');
     }
 
     private function startWithAttribute(string $firstLine): bool

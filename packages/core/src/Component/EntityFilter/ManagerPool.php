@@ -8,6 +8,7 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\Markdown\MarkdownParser;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -20,7 +21,8 @@ final class ManagerPool
         public EventDispatcherInterface $eventDispatcher,
         public PushwordRouteGenerator $router,
         public LinkProvider $linkProvider,
-        public EntityManagerInterface $entityManager
+        public EntityManagerInterface $entityManager,
+        public MarkdownParser $markdownParser,
     ) {
     }
 
