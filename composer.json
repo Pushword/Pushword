@@ -27,7 +27,6 @@
     "intervention/image": "^3.2",
     "jolicode/jolitypo": "^1.4",
     "league/commonmark": "^2.7",
-    "michelf/php-markdown": "^2",
     "nette/utils": "^4.0",
     "pagerfanta/twig": "^4.1",
     "pentatrion/vite-bundle": "*",

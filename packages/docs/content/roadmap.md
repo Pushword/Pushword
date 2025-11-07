@@ -29,7 +29,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] prefer yaml over json for media exporter
   - [ ] check media export (in content/media or in media ?!)
   - [ ] fix markdown cheatsheet
-  - [ ] Revoir la transformation de lien markdown (./../test.md) en lien vers la page (/test) (useful for navigate in docs from editor)
+  - [ ] Revoir la transformation de lien markdown (./../test.md ou ./test) en lien vers la page (/test) (useful for navigate in docs from editor)
   - [ ] s'assurer que la réciproque fonctionne au moment de l'export
   - [ ] idem pour les médias (/media/test.jpg ➜ ./../../media/test.jpg) : plus simple que le point précédent, il faut calculer le nombre de "../" entre le dossier courant et la racine du projet
 
