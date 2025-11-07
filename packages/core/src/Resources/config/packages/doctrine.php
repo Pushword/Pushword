@@ -16,12 +16,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'url' => '%pw.database_url%',
         ],
         'orm' => [
-            'report_fields_where_declared' => true,
+            // 'report_fields_where_declared' => true, // disabled for Doctrine 3
+            // 'enable_lazy_ghost_objects' => true, // disabled for Doctrine 3
+            // 'auto_generate_proxy_classes' => '%kernel.debug%', // disabled for Doctrine 3
             'validate_xml_mapping' => true,
-            'auto_generate_proxy_classes' => '%kernel.debug%',
             'naming_strategy' => 'doctrine.orm.naming_strategy.underscore_number_aware',
             'auto_mapping' => true,
-            'enable_lazy_ghost_objects' => true,
             'mappings' => [
                 'PushwordCoreBundle' => [
                     'type' => 'attribute',

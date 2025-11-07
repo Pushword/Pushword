@@ -18,6 +18,8 @@
     "symfony/runtime": "*",
     "symfony/yaml": "^7.3",
     "pushword/core": "*",
+    "pushword/installer": "*",
+    "pushword/skeleton": "*",
     "pushword/admin": "*",
     "pushword/admin-block-editor": "*",
     "pushword/page-scanner": "*",
@@ -26,8 +28,6 @@
   },
   "require-dev": {
     "symfony/profiler-pack": "*",
-    "pushword/installer": "*",
-    "pushword/skeleton": "*",
     "symfony/filesystem": "^7.3"
   },
   "config": {

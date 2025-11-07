@@ -6,6 +6,7 @@
     "pushword/conversation": "self.version",
     "pushword/core": "self.version",
     "pushword/flat-file": "self.version",
+    "pushword/installer": "self.version",
     "pushword/page-scanner": "self.version",
     "pushword/page-update-notifier": "self.version",
     "pushword/static-generator": "self.version",
@@ -18,7 +19,7 @@
     "babdev/pagerfanta-bundle": "^4.0",
     "caseyamcl/toc": "^4.0",
     "cocur/slugify": "^4.6",
-    "doctrine/doctrine-bundle": "^2.2.2",
+    "doctrine/doctrine-bundle": "^3.0",
     "doctrine/doctrine-fixtures-bundle": "^4",
     "doctrine/orm": "^3.0",
     "fortawesome/font-awesome": "^7",
@@ -99,17 +100,17 @@
   "autoload": {
     "psr-4": {
       "Pushword\\Admin\\": "packages/admin/src",
+      "Pushword\\AdminBlockEditor\\": "packages/admin-block-editor/src",
+      "Pushword\\AdvancedMainImage\\": "packages/advanced-main-image/src",
       "Pushword\\Conversation\\": "packages/conversation/src",
       "Pushword\\Core\\": "packages/core/src",
       "Pushword\\Flat\\": "packages/flat/src",
+      "Pushword\\Installer\\": "packages/installer/src",
       "Pushword\\PageScanner\\": "packages/page-scanner/src",
       "Pushword\\PageUpdateNotifier\\": "packages/page-update-notifier/src",
       "Pushword\\StaticGenerator\\": "packages/static-generator/src",
-      "Pushword\\Version\\": "packages/version/src",
-      "Pushword\\AdminBlockEditor\\": "packages/admin-block-editor/src",
       "Pushword\\TemplateEditor\\": "packages/template-editor/src",
-      "Pushword\\AdvancedMainImage\\": "packages/advanced-main-image/src",
-      "Pushword\\Installer\\": "packages/installer/src"
+      "Pushword\\Version\\": "packages/version/src"
     }
   },
   "autoload-dev": {

@@ -10,7 +10,7 @@
     "caseyamcl/toc": "^4.0",
     "cocur/slugify": "^4.6",
     "babdev/pagerfanta-bundle": "^4.0",
-    "doctrine/doctrine-bundle": "^2.2.2",
+    "doctrine/doctrine-bundle": "^3.0",
     "doctrine/doctrine-fixtures-bundle": "^4",
     "doctrine/orm": "^3.0",
     "fortawesome/font-awesome": "^7",

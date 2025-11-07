@@ -72,18 +72,18 @@ class PostInstall
         file_put_contents($file, $content);
     }
 
-    public const INSERT_AT_BEGINING = 'atBeggining';
+    public const INSERT_AT_BEGINNING = 'atBeggining';
 
     public const INSERT_AT_END = 'atEnd';
 
-    public static function insertIn(string $file, string $toAdd, string $where = self::INSERT_AT_BEGINING): void
+    public static function insertIn(string $file, string $toAdd, string $where = self::INSERT_AT_BEGINNING): void
     {
         $content = (string) @file_get_contents($file);
         if (str_contains($content, $toAdd)) {
             return;
         }
 
-        if (self::INSERT_AT_BEGINING === $where) {
+        if (self::INSERT_AT_BEGINNING === $where) {
             $content = $toAdd.$content;
         } elseif (self::INSERT_AT_END === $where) {
             $content .= $toAdd;
