@@ -8,6 +8,7 @@ import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-d
 import { Suggest } from '../../../../../admin/src/Resources/assets/suggest.js'
 import { BaseTool } from '../Abstract/BaseTool'
 import { BLOCK_STATE, StateBlock, StateBlockToolInterface } from '../utils/StateBlock'
+import { exportPagesListToMarkdown } from './PagesListExportToMarkdown'
 
 export interface PagesListData extends BlockToolData {
   kw: string
@@ -265,22 +266,7 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
   }
 
   public static exportToMarkdown(data: PagesListData, tunes: BlockTuneData): string {
-    if (!data || !data.kw) {
-      return ''
-    }
-
-    const max = (data.max || '9').trim()
-    const maxPages = (data.maxPages || '0').trim()
-    const order = data.order || 'publishedAt,priority'
-    const display = data.display || 'list'
-
-    let markdown = `{{ pages_list('${data.kw}', '${max}', '${order}', '${display}'`
-    markdown += maxPages !== '0' || tunes.class || tunes.anchor ? `, '${maxPages}'` : ''
-    markdown += tunes.class || tunes.anchor ? `, '${tunes.class || ''}'` : ''
-    markdown += tunes.anchor ? `, '${tunes.anchor}'` : ''
-    markdown += `) }}`
-
-    return markdown // MarkdownUtils.addAttributes(markdown, tunes)
+    return exportPagesListToMarkdown(data, tunes)
   }
 
   static importFromMarkdown(editor: API, markdown: string): void {

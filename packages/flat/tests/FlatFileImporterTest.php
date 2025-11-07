@@ -68,7 +68,7 @@ class FlatFileImporterTest extends KernelTestCase
 
     private function getContentDir(): string
     {
-        return self::getContainer()->getParameter('kernel.project_dir').'/../docs/content';
+        return realpath(self::getContainer()->getParameter('kernel.project_dir').'/../docs/content');
     }
 
     private function prepare(): string

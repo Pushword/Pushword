@@ -1,6 +1,6 @@
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import globals from 'globals';
+import js from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import globals from 'globals'
 
 // Common ignore patterns
 const ignorePatterns = [
@@ -16,14 +16,15 @@ const ignorePatterns = [
   '**/build/',
   'packages/skeleton/var/',
   'packages/skeleton/public/',
-];
+  'packages/admin-block-editor/src/Command/convert-json-to-markdown-built/', // Generated build files
+]
 
 // Common globals
 const commonGlobals = {
   ...globals.browser,
   ...globals.node,
   ...globals.es2021,
-};
+}
 
 export default tseslint.config(
   js.configs.recommended,
@@ -60,4 +61,4 @@ export default tseslint.config(
     files: ['**/webpack.config.js', '**/vite.config.js', '**/*.config.js'],
     rules: { 'no-console': 'off' },
   },
-);
+)

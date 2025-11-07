@@ -37,6 +37,7 @@
   "private": true,
   "scripts": {
     "build": "vite build",
+    "build:converter": "vite build --config vite.config.converter.js && rm src/Command/convert-json-to-markdown-built/style.css",
     "watch": "vite build --watch"
   },
   "dependencies": {

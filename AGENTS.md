@@ -19,6 +19,34 @@ Pushword is a modular CMS built as a collection of Symfony bundles. This is a mo
 │ └── skeleton/         # Development/demo application
 ```
 
+### Compatibility & Security
+
+- Ensure compatibility with **Symfony** 7.3+ and **PHP** 8.4+ versions
+- Follow secure coding practices to prevent XSS, CSRF, injections, auth bypasses, etc.
+- **DB** : SQLite (via Doctrine)
+
+### Coding Standards & Tooling
+
+- Use **PHPUnit** for unit and functional testing
+- Use php-cs-fixer`composer format` to ensure consistent code style
+- Use **PHPStan** `composer stan` for static analysis
+- Use **CI** `composer test` to run all tests and checks automatically
+- Use Tailwind CSS 4
+
+## PHP Code
+
+- Use modern PHP 8.4+ syntax and features
+- Do not use deprecated features from PHP, Symfony, or Pushword
+- Add type declarations for all properties, arguments, and return values
+- Use `camelCase` for variables and method names
+- Use `SCREAMING_SNAKE_CASE` for constants
+- Use **fast returns** instead of nesting logic unnecessarily
+- Use trailing commas in multi-line arrays and argument lists
+- Use PHPDoc only when necessary (e.g. `@var Collection<ProductInterface>`)
+- Group class elements in this order: constants, properties, constructor, public methods, protected methods, private methods
+- Group getter and setter methods for the same properties together
+- Suffix interfaces with Interface, traits with Trait
+
 ### Entities
 
 - **Page** - packages/core/src/Entity/Page.php
@@ -43,24 +71,6 @@ php bin/console debug:router
 php bin/console debug:container
 ```
 
-### Commandes d'extension
-
-```bash
-# Import/Export flat-file
-php bin/console pushword:flat:import
-php bin/console pushword:flat:export
-
-# Gestion des images
-php bin/console pushword:image:cache
-php bin/console pushword:image:optimize
-
-# Scanner de pages
-php bin/console pushword:page:scan
-
-# Génération statique
-php bin/console pushword:static:generate
-```
-
 ## Monorepo useful commands
 
 ```bash
@@ -80,8 +90,3 @@ composer assets
 # Documentation
 composer docs
 ```
-
-## Asset Management and Developpement server
-
-- You don't need to generate assets, the developer runs yarn watch automatically
-- You don't need to run the developpement server `composer dev`, the developer runs it automatically and it's accessible at `http://localhost:8001`

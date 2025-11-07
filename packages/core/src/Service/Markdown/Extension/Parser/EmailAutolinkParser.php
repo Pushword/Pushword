@@ -7,6 +7,8 @@ use League\CommonMark\Parser\Inline\InlineParserMatch;
 use League\CommonMark\Parser\InlineParserContext;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedEmail;
 
+use function Safe\preg_match;
+
 /**
  * Parse automatiquement les emails et les convertit en liens obfusqués.
  * Note: Ce parser fonctionne en post-processing car league/commonmark
@@ -27,7 +29,7 @@ final class EmailAutolinkParser implements InlineParserInterface
         $cursor = $inlineContext->getCursor();
 
         // Vérifier qu'on a bien un email
-        if (0 === \Safe\preg_match(self::EMAIL_REGEX, $cursor->getRemainder(), $matches)) {
+        if (0 === preg_match(self::EMAIL_REGEX, $cursor->getRemainder(), $matches)) {
             return false;
         }
 

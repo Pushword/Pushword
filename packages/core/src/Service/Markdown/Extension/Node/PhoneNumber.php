@@ -10,7 +10,7 @@ use League\CommonMark\Node\Inline\AbstractInline;
 class PhoneNumber extends AbstractInline
 {
     public function __construct(
-        private string $number
+        private readonly string $number
     ) {
         parent::__construct();
     }

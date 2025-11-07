@@ -15,10 +15,10 @@ use function Safe\date as safeDate;
  * Parse les shortcodes date dans le markdown.
  * Syntax: date(Y), date(M), date(S), date(W), etc.
  */
-final class DateShortcodeParser implements InlineParserInterface
+final readonly class DateShortcodeParser implements InlineParserInterface
 {
     public function __construct(
-        private readonly AppPool $apps
+        private AppPool $apps
     ) {
     }
 

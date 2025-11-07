@@ -21,7 +21,7 @@ class FlatCommandTest extends KernelTestCase
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
-        self::assertTrue(str_contains($output, 'ended'));
+        self::assertStringContainsString('Import took', $output);
 
         $exportDir = $kernel->getCacheDir().'/test-exporter';
 

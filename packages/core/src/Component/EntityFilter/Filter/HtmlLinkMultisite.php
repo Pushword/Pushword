@@ -10,6 +10,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
 
+use function Safe\preg_match;
 use function Safe\preg_match_all;
 
 use Twig\Environment;
@@ -94,7 +95,7 @@ final class HtmlLinkMultisite extends AbstractFilter
 
         $newHref = substr($href, 1);
 
-        if (0 !== \Safe\preg_match('/(#.*$)/', $newHref, $match)) {
+        if (0 !== preg_match('/(#.*$)/', $newHref, $match)) {
             $hrefHashPart = $match[1] ?? '';
             $newHref = preg_replace('/#.*$/', '', $newHref);
         }

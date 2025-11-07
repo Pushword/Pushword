@@ -2,14 +2,8 @@
 
 namespace Pushword\AdminBlockEditor\Twig;
 
-use Exception;
-use PiedWeb\RenderAttributes\Attribute;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Router\PushwordRouteGenerator;
-
-use function Safe\json_decode;
-use function Safe\json_encode;
-
 use stdClass;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
@@ -20,124 +14,6 @@ class AppExtension
         private readonly AppPool $appPool,
         private readonly PushwordRouteGenerator $router
     ) {
-    }
-
-    #[AsTwigFunction('blockWrapperId', isSafe: ['html'], needsEnvironment: false)]
-    public function blockWrapperId(string $id, bool $returnId = false): string
-    {
-        if ('' === $id) {
-            return '';
-        }
-
-        if (str_contains($id, '"')) {
-            throw new Exception('Block wrapper id cannot contain quotes');
-        }
-
-        if (str_contains($id, ' ')) {
-            throw new Exception('Block wrapper id cannot contain spaces');
-        }
-
-        return $returnId ? ' id="'.$id.'"' : '#'.$id;
-    }
-
-    #[AsTwigFunction('blockWrapperClass', isSafe: ['html'], needsEnvironment: false)]
-    public function blockWrapperClass(string $class): string
-    {
-        if ('' === $class) {
-            return '';
-        }
-
-        return ' class="'.str_replace('"', '&quot;', $class).'"';
-    }
-
-    #[AsTwigFunction('blockWrapperAlignment', isSafe: ['html'], needsEnvironment: false)]
-    public function blockWrapperAlignment(string $alignment, bool $returnClass = false): string
-    {
-        if ('' === $alignment) {
-            return '';
-        }
-
-        // text-right text-left text-center text-justify
-        $class = 'text-'.$alignment;
-
-        return $returnClass ? ' class="'.$class.'"' : '.'.$class;
-    }
-
-    /**
-     * @param array<mixed> $attributes
-     */
-    private function renderAttributesForMarkdown(array $attributes): string
-    {
-        if ([] === $attributes) {
-            return '';
-        }
-
-        $attr = [];
-        foreach ($attributes as $k => $v) {
-            if ('class' === $k && is_scalar($v) && '' !== $v) {
-                $attr[] = '.'.str_replace(' ', '.', (string) $v);
-            } elseif ('id' === $k && is_scalar($v) && '' !== $v) {
-                $attr[] = '#'.(string) $v;
-            } elseif (is_scalar($v) && '' !== $v) {
-                $attr[] = $k.'="'.str_replace('"', '\"', (string) $v).'"';
-            }
-        }
-
-        return [] === $attr ? '' : ' { '.implode(' ', $attr).' }';
-    }
-
-    /**
-     * @param array<mixed>|stdClass $blockData
-     * @param array<mixed>          $attributes
-     */
-    #[AsTwigFunction('blockWrapperAttr', isSafe: ['html'], needsEnvironment: false)]
-    public function blockWrapperAttr(array|stdClass $blockData, array $attributes = [], bool $forMarkdown = false): string
-    {
-        $blockData = (array) json_decode(json_encode($blockData), true);
-
-        if (! isset($blockData['tunes']) || ! \is_array($blockData['tunes'])) {
-            return $forMarkdown ? $this->renderAttributesForMarkdown($attributes)
-                : Attribute::renderAll($attributes);
-        }
-
-        if (isset($blockData['tunes']['anchor']) && is_string($blockData['tunes']['anchor']) && '' !== $blockData['tunes']['anchor']) {
-            $attributes['id'] = $blockData['tunes']['anchor'];
-        } else {
-            $attributes['id'] = isset($attributes['id']) && is_string($attributes['id']) ? $attributes['id'] : '';
-        }
-
-        if ('' === $attributes['id']) {
-            unset($attributes['id']);
-        }
-
-        $attributes['class'] = isset($attributes['class']) && is_string($attributes['class']) ? trim($attributes['class']) : '';
-        if (isset($blockData['tunes']['class']) && is_string($blockData['tunes']['class'])) {
-            $attributes['class'] .= ' '.$blockData['tunes']['class'];
-        }
-
-        $alignment = $blockData['tunes']['textAlign'] ?? $blockData['data']['alignment'] ?? ''; // @phpstan-ignore-line
-
-        if ('center' === $alignment) {
-            $attributes['class'] .= ' text-center';
-        } elseif ('right' === $alignment) {
-            $attributes['class'] .= ' text-right';
-        } elseif ('justify' === $alignment) {
-            $attributes['class'] .= ' text-justify';
-        }
-
-        $attributes['class'] = trim($attributes['class']);
-
-        return $forMarkdown ? $this->renderAttributesForMarkdown($attributes)
-            : Attribute::renderAll($attributes);
-    }
-
-    /**
-     * @param array<mixed>|stdClass $blockData
-     */
-    #[AsTwigFunction('needBlockWrapper', isSafe: ['html'], needsEnvironment: false)]
-    public function needBlockWrapper(array|stdClass $blockData): bool
-    {
-        return '' !== trim($this->blockWrapperAttr($blockData));
     }
 
     #[AsTwigFilter('fixHref', isSafe: ['html'], needsEnvironment: false)]

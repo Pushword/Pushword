@@ -11,13 +11,14 @@ use League\CommonMark\Renderer\ChildNodeRendererInterface;
 use League\CommonMark\Renderer\NodeRendererInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Service\Markdown\Extension\Util\RawHtml;
+use Stringable;
 use Twig\Environment;
 
 /**
  * Renderer personnalisé pour les images.
  * Utilise le template Twig pour un rendu personnalisé.
  */
-final class ImageRenderer implements NodeRendererInterface
+final readonly class ImageRenderer implements NodeRendererInterface
 {
     public function __construct(
         private Environment $twig,
@@ -25,7 +26,7 @@ final class ImageRenderer implements NodeRendererInterface
     ) {
     }
 
-    public function render(Node $node, ChildNodeRendererInterface $childRenderer): \Stringable
+    public function render(Node $node, ChildNodeRendererInterface $childRenderer): Stringable
     {
         Image::assertInstanceOf($node);
 

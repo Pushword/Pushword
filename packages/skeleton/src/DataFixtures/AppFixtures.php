@@ -97,13 +97,13 @@ class AppFixtures extends Fixture
 
         $ksPage = (new Page())
             ->setH1('Demo Page - Kitchen Sink Block')
-            ->setSlug('kitchen-sink-block')
+            ->setSlug('kitchen-sink')
             ->setMainImage($media['Demo 1'])
             ->setLocale('en')
             ->setParentPage($homepage)
             ->setCreatedAt(new DateTime('1 day ago'))
             ->setUpdatedAt(new DateTime('1 day ago'))
-            ->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.json'));
+            ->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.md'));
 
         if (in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
             $ksPage->setHost('admin-block-editor.test');

@@ -8,18 +8,19 @@ use League\CommonMark\Renderer\NodeRendererInterface;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedEmail;
 use Pushword\Core\Service\Markdown\Extension\Util\RawHtml;
+use Stringable;
 
 /**
  * Renderer pour les emails obfusqués.
  */
-final class ObfuscatedEmailRenderer implements NodeRendererInterface
+final readonly class ObfuscatedEmailRenderer implements NodeRendererInterface
 {
     public function __construct(
         private LinkProvider $linkProvider
     ) {
     }
 
-    public function render(Node $node, ChildNodeRendererInterface $childRenderer): \Stringable
+    public function render(Node $node, ChildNodeRendererInterface $childRenderer): Stringable
     {
         ObfuscatedEmail::assertInstanceOf($node);
 

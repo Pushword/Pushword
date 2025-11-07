@@ -170,7 +170,6 @@ pushword:
         base_url: 'https://localhost.dev',
         randomTest: 123,
         admin_block_editor: false,
-        admin_block_editor_disable_listener: true,
       }
     - {
         hosts: [pushword.piedweb.com],

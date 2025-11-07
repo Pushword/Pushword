@@ -15,7 +15,7 @@ class ConfigurationTest extends KernelTestCase
 
         // $msgEntity = self::getContainer()->getParameter('pw.conversation.entity_message');
         // $this->assertSame(Message::class, $msgEntity);
-        self::assertSame('', self::getContainer()->get(AppPool::class)->get()->get('flat_content_dir'));
+        self::assertSame(self::getContainer()->getParameter('kernel.project_dir').'/content/_host_', self::getContainer()->get(AppPool::class)->get()->get('flat_content_dir'));
 
         self::assertSame(self::getContainer()->getParameter('kernel.project_dir').'/../docs/content', self::getContainer()->get(AppPool::class)->get('pushword.piedweb.com')->get('flat_content_dir'));
     }

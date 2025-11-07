@@ -18,8 +18,10 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] enregistrer en DB uniquement le markdown
   - [x] admin - revoir la class qui instantie pour montrer EditorJS si le contenu est en markdown (donc markdown ➜ editorjs à l'initialisation, nouveau comportement par défaut)
   - [ ] test test test
-  - [ ] how to bulk upgrade ?
+  - [x] **how to bulk upgrade ?** ➜ `bin/console pushword:json:to-markdown`
   - [ ] Remove all code related to block rendering (in DB, markdown is used so front-end will use markdown)
+
+- best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
 
 - [Flat]
   - [ ] change versionner to rely on flat and create .example-file.md~version-200020210 instead of serialized json, add a command to clear version
@@ -36,6 +38,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] Generate a map of the media
 
 ### One day maybe
+
+- Rewrite tests to permit to run `./vendor/bin/paratest -p 8`
 
 - [Core] Simplify filter by replacing string configuration by service
 

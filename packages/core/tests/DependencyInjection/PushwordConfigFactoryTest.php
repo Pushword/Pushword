@@ -78,7 +78,6 @@ class PushwordConfigFactoryTest extends TestCase
                     'randomTest' => 123,
                     'generated_og_image' => true,
                     'admin_block_editor' => false,
-                    'admin_block_editor_disable_listener' => true,
                     'locales' => 'fr|en',
                     'page_update_notification_from' => 'test@example.tld',
                     'page_update_notification_to' => 'test@example.tld',

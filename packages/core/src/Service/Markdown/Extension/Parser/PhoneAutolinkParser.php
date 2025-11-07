@@ -7,6 +7,8 @@ use League\CommonMark\Parser\Inline\InlineParserMatch;
 use League\CommonMark\Parser\InlineParserContext;
 use Pushword\Core\Service\Markdown\Extension\Node\PhoneNumber;
 
+use function Safe\preg_match;
+
 /**
  * Parse automatiquement les numéros de téléphone français.
  */
@@ -26,7 +28,7 @@ final class PhoneAutolinkParser implements InlineParserInterface
         $cursor = $inlineContext->getCursor();
 
         // Vérifier qu'on a bien un numéro de téléphone
-        if (0 === \Safe\preg_match(self::PHONE_REGEX, $cursor->getRemainder(), $matches)) {
+        if (0 === preg_match(self::PHONE_REGEX, $cursor->getRemainder(), $matches)) {
             return false;
         }
 

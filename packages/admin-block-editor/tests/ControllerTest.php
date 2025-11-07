@@ -28,8 +28,7 @@ class ControllerTest extends AbstractAdminTestClass
 
         $client->request(Request::METHOD_GET, '/admin-block-editor.test/test');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
-        // does'nt throw error = every filters are working (well ?)
-        // if bug encouter, test them via BlockEditorFilterTest
+        // does'nt throw error = markdown rendering is working
     }
 
     private function createNewPage(): ?int

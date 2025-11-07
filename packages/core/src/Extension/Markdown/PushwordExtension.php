@@ -17,7 +17,7 @@ use Twig\Environment;
  * Extension league/commonmark pour Pushword.
  * Gère les liens obfusqués et les images personnalisées.
  */
-final class PushwordExtension implements ExtensionInterface
+final readonly class PushwordExtension implements ExtensionInterface
 {
     public function __construct(
         private LinkProvider $linkProvider,

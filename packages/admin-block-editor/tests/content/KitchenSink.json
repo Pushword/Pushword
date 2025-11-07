@@ -1,0 +1,459 @@
+{
+  "time": 1762515291184,
+  "blocks": [
+    {
+      "id": "f_TItjYhIl",
+      "type": "paragraph",
+      "data": {
+        "text": "A few example for the editor possibilities. Best to observe this, it’s in admin with split editor (live preview Side By Side)."
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": ""
+      }
+    },
+    {
+      "id": "WS4PAD2Gp-",
+      "type": "delimiter",
+      "data": {}
+    },
+    {
+      "id": "O77jR7dv2k",
+      "type": "header",
+      "data": {
+        "text": "Inline Tool Demo",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "fDV6KPKyV1",
+      "type": "paragraph",
+      "data": {
+        "text": "See <b>bold</b> <i>italic</i> <code class=\"inline-code\">inline code</code> <a href=\"/kitchen-sink-block\" rel=\"obfuscate\" target=\"_blank\">link</a> <mark>marker</mark> <s class=\"cdx-strikethrough\">strikethrough</s>"
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": ""
+      }
+    },
+    {
+      "id": "hWx6xiaYqP",
+      "type": "header",
+      "data": {
+        "text": "Links &amp; Routes",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "DkiOPJJK3s",
+      "type": "list",
+      "data": {
+        "style": "unordered",
+        "items": [
+          {
+            "content": "<a href=\"/\">Homepage</a>",
+            "items": []
+          },
+          {
+            "content": "Current Page: {{ page(page) }}",
+            "items": []
+          },
+          {
+            "content": "Get Url : {{ page('what-you-want-in-same-app') }}",
+            "items": []
+          },
+          {
+            "content": "Canonical with base: {{ page(page, true) }}",
+            "items": []
+          },
+          {
+            "content": "Obfuscated Link : <a href=\"https://piedweb.com\">Pied Web</a> — contact@piedweb.com ou {{ mail('contact@piedweb.com') }}",
+            "items": []
+          },
+          {
+            "content": "{{ tel('+33 00 00 00 00') }} ou directement +331 00 00 00 00",
+            "items": []
+          },
+          {
+            "content": "<a href=\"#citation\">AnchorLink</a>",
+            "items": []
+          }
+        ]
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "Al9uZ2Sf2E",
+      "type": "header",
+      "data": {
+        "text": "Quotes",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "sL_pD9P6MN",
+      "type": "quote",
+      "data": {
+        "text": "PHP ecosystem is undeniably awesome! With its extensive library of frameworks like Laravel and Symfony, coupled with its flexibility and scalability, PHP empowers developers to build robust and dynamic web applications effortlessly. Its active community constantly contributes to its evolution, ensuring it stays relevant and cutting-edge. Whether it's for small projects or enterprise-level applications, PHP remains a top choice for developers worldwide. In short, PHP rocks!",
+        "caption": "Author",
+        "alignment": "left"
+      },
+      "tunes": {
+        "anchor": "citation"
+      }
+    },
+    {
+      "id": "QUY0r8oKNl",
+      "type": "header",
+      "data": {
+        "text": "Images et Galleries",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "ydgv-YJiPu",
+      "type": "header",
+      "data": {
+        "text": "Simple Image",
+        "level": 3
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "D_gQwkNXod",
+      "type": "image",
+      "data": {
+        "media": "3.jpg",
+        "caption": "Demo 3"
+      },
+      "tunes": {
+        "linkTune": {
+          "url": "",
+          "hideForBot": false,
+          "targetBlank": false
+        }
+      }
+    },
+    {
+      "id": "San0MCMH3q",
+      "type": "header",
+      "data": {
+        "text": "Gallery",
+        "level": 3
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "lvcnQGoSTo",
+      "type": "gallery",
+      "data": {
+        "items": [
+          {
+            "media": "1.jpg",
+            "caption": ""
+          },
+          {
+            "media": "2.jpg",
+            "caption": ""
+          },
+          {
+            "media": "3.jpg",
+            "caption": ""
+          }
+        ]
+      },
+      "tunes": {
+        "clickableTune": {
+          "value": false
+        }
+      }
+    },
+    {
+      "id": "RNx0a6TAYG",
+      "type": "header",
+      "data": {
+        "text": "Advanced gallery",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "dUlifREnp4",
+      "type": "raw",
+      "data": {
+        "html": "{{ gallery({'piedweb-logo.png': ['pied web logo', 'https://piedweb.com', {}, false], '1.jpg': '', '2.jpg': '', '3.jpg': ''}, clickable=false)|unprose }}"
+      }
+    },
+    {
+      "id": "7JCUIMlTPv",
+      "type": "header",
+      "data": {
+        "text": "Video",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "bdS9UgO3Bi",
+      "type": "embed",
+      "data": {
+        "serviceUrl": "https://www.youtube.com/watch?v=Nwyylc9GQuQ",
+        "alternativeText": "SuperVideo",
+        "media": "3.jpg"
+      }
+    },
+    {
+      "id": "Hi83d1C2zx",
+      "type": "header",
+      "data": {
+        "text": "Video in a popup",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "3MICUU9fsw",
+      "type": "raw",
+      "data": {
+        "html": "{{ video('https://www.youtube.com/watch?v=Nwyylc9GQuQ', '/media/default/3.jpg', 'my video title', true)|unprose }}"
+      }
+    },
+    {
+      "id": "WYUK9s5Ya-",
+      "type": "header",
+      "data": {
+        "text": "Table Example",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "cp6QF48xH2",
+      "type": "table",
+      "data": {
+        "withHeadings": true,
+        "stretched": false,
+        "content": [
+          ["Fonctionnalité", "Statut", "Notes"],
+          ["Table", "✅ Testé", "Nouveau dans Kitchen Sink"],
+          ["Attaches", "✅ Testé", "Gestion des fichiers"],
+          ["Delimiter", "✅ Testé", "Séparateur de contenu"],
+          ["linkTune", "✅ Testé", "Liens sur images"]
+        ]
+      }
+    },
+    {
+      "id": "wbIgIH0jHQ",
+      "type": "header",
+      "data": {
+        "text": "Code Block",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "6KRwdbdycl",
+      "type": "codeBlock",
+      "data": {
+        "html": "<div>\n  {{ hello }}\n  {% include view('codeblockTest.html.twig') %}\n</div>",
+        "language": "html"
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "VSYn-jzq6b",
+      "type": "raw",
+      "data": {
+        "html": "<p data-attribute=\"this attribute permits to avoid paragraph normalization\">Example Raw Html</p>"
+      }
+    },
+    {
+      "id": "Ei0k6V6eOy",
+      "type": "header",
+      "data": {
+        "text": "Render Page List",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "xA35fgfxSj",
+      "type": "header",
+      "data": {
+        "text": "Page found via Kw",
+        "level": 3
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "aQ4l2MLHvI",
+      "type": "pages_list",
+      "data": {
+        "kw": "content:fun",
+        "display": "list",
+        "order": "publishedAt ↓",
+        "max": "9",
+        "maxPages": "0"
+      },
+      "tunes": {
+        "anchor": "",
+        "class": ""
+      }
+    },
+    {
+      "id": "kIwxBiKgD-",
+      "type": "pages_list",
+      "data": {
+        "kw": "content:fun",
+        "display": "card",
+        "order": "publishedAt ↓",
+        "max": "9",
+        "maxPages": "0"
+      },
+      "tunes": {
+        "anchor": "",
+        "class": ""
+      }
+    },
+    {
+      "id": "5bA_sFEHo7",
+      "type": "paragraph",
+      "data": {
+        "text": "<a href=\"https://pushword.piedweb.com\">Continue your exploration with the docs ➜</a>"
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": ""
+      }
+    },
+    {
+      "id": "HSOkZpwo1R",
+      "type": "header",
+      "data": {
+        "text": "Attachments &amp; Files",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "hPer4dJI8y",
+      "type": "attaches",
+      "data": {
+        "title": "Document JPG 2",
+        "file": {
+          "media": "/media/2.jpg",
+          "size": 0
+        }
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
+      "id": "WIACwqUONF",
+      "type": "paragraph",
+      "data": {
+        "text": "Texte avec <u>soulignement</u>, <b>gras</b>, <i>italique</i>, <mark>surlignage</mark> et <s class=\"cdx-strikethrough\">barré</s> pour tester tous les outils inline."
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": ""
+      }
+    },
+    {
+      "id": "XSiD0JJlhD",
+      "type": "header",
+      "data": {
+        "text": "Image avec Lien (linkTune)",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "QV5ojf-dCe",
+      "type": "image",
+      "data": {
+        "media": "2.jpg",
+        "caption": "Image cliquable vers la documentation"
+      },
+      "tunes": {
+        "linkTune": {
+          "url": "https://pushword.piedweb.com",
+          "hideForBot": false,
+          "targetBlank": false
+        }
+      }
+    },
+    {
+      "id": "IHScypq_aw",
+      "type": "header",
+      "data": {
+        "text": "HR — separator",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "dX8CQ2brb1",
+      "type": "delimiter",
+      "data": {}
+    }
+  ],
+  "version": "2.31.0"
+}

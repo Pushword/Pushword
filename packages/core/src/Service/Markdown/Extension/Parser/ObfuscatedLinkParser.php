@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Service\Markdown\Extension\Parser;
 
-use League\CommonMark\Node\Inline\Text;
 use League\CommonMark\Parser\Inline\InlineParserInterface;
 use League\CommonMark\Parser\Inline\InlineParserMatch;
 use League\CommonMark\Parser\InlineParserContext;
@@ -78,6 +77,7 @@ final class ObfuscatedLinkParser implements InlineParserInterface
         if (null !== $attributeClass) {
             $link->setAttributeClass($attributeClass);
         }
+
         if (null !== $attributeId) {
             $link->setAttributeId($attributeId);
         }

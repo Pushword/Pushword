@@ -1,4 +1,0 @@
-{% set media = block.data.media ?? block.data.file.url ?? '' %}
-{% if media %}
-{{ attaches(block.data.title, media, block.data.file.size, block.tunes.anchor ?? '')|unprose }}
-{% endif %}
