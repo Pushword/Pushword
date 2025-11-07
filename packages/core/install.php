@@ -54,8 +54,8 @@ PostInstall::dumpFile('public/build/manifest.json', '{}');
 echo '~~ Copy assets file in ./assets'.chr(10);
 PostInstall::remove(['package.json', 'webpack.config.js', 'assets']);
 PostInstall::mirror('vendor/pushword/skeleton/assets', 'assets');
-PostInstall::mirror('vendor/pushword/skeleton/vite.config.js', 'vite.config.js');
-PostInstall::mirror('vendor/pushword/skeleton/package.json', 'package.json');
+PostInstall::copy('vendor/pushword/skeleton/vite.config.js', 'vite.config.js');
+PostInstall::copy('vendor/pushword/skeleton/package.json', 'package.json');
 
 $defaultConfig = 'pushword:'.chr(10)
     .'    # Documention'.chr(10)

@@ -38,6 +38,11 @@ class PostInstall
         return array_filter($dir, static fn (string $path): bool => ! \in_array($path, ['.', '..'], true));
     }
 
+    public static function copy(string $source, string $dest): void
+    {
+        (new Filesystem())->copy($source, $dest, true);
+    }
+
     public static function mirror(string $source, string $dest): void
     {
         (new Filesystem())->mirror($source, $dest);

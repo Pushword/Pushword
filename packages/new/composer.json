@@ -17,14 +17,14 @@
     "symfony/framework-bundle": "^7.3",
     "symfony/runtime": "*",
     "symfony/yaml": "^7.3",
-    "pushword/core": "^1.0.0-rc83",
-    "pushword/installer": "^1.0.0-rc83",
-    "pushword/skeleton": "^1.0.0-rc83",
-    "pushword/admin": "^1.0.0-rc83",
-    "pushword/admin-block-editor": "^1.0.0-rc83",
-    "pushword/page-scanner": "^1.0.0-rc83",
-    "pushword/static-generator": "^1.0.0-rc83",
-    "pushword/template-editor": "^1.0.0-rc83"
+    "pushword/core": "^1.0.0-rc84",
+    "pushword/installer": "^1.0.0-rc84",
+    "pushword/skeleton": "^1.0.0-rc84",
+    "pushword/admin": "^1.0.0-rc84",
+    "pushword/admin-block-editor": "^1.0.0-rc84",
+    "pushword/page-scanner": "^1.0.0-rc84",
+    "pushword/static-generator": "^1.0.0-rc84",
+    "pushword/template-editor": "^1.0.0-rc84"
   },
   "require-dev": {
     "symfony/profiler-pack": "*",
