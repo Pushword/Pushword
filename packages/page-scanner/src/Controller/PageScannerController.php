@@ -13,6 +13,7 @@ use function Safe\filemtime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_PUSHWORD_ADMIN')]
@@ -42,6 +43,7 @@ final class PageScannerController extends AbstractController
         return self::$fileCache;
     }
 
+    #[Route(path: '/scan/{force}', name: 'pushword_page_scanner', methods: ['GET'])]
     public function scan(int $force = 0): Response
     {
         $force = (bool) $force;

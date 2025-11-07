@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 use Twig\Environment as Twig;
@@ -58,6 +59,7 @@ final class ElementAdmin extends AbstractController
         return new ElementRepository($this->kernel->getProjectDir().'/templates', $this->canBeEditedList, $this->disableCreation);
     }
 
+    #[Route(path: '/list', name: 'pushword_template_editor_list', methods: ['GET'])]
     public function listElement(): Response
     {
         return $this->render('@pwTemplateEditor/list.html.twig', [
@@ -92,6 +94,8 @@ final class ElementAdmin extends AbstractController
         }
     }
 
+    #[Route(path: '/create', name: 'pushword_template_editor_create', methods: ['GET', 'POST'], priority: 1)]
+    #[Route(path: '/edit/{encodedPath}', name: 'pushword_template_editor_edit', methods: ['GET', 'POST'])]
     public function editElement(?string $encodedPath = null, ?Request $request = null): Response
     {
         $element = $this->getElement($encodedPath);
@@ -146,6 +150,7 @@ final class ElementAdmin extends AbstractController
         return $form;
     }
 
+    #[Route(path: '/delete/{encodedPath}', name: 'pushword_template_editor_delete', methods: ['GET', 'POST'])]
     public function deleteElement(string $encodedPath, Request $request): Response
     {
         if ($this->disableCreation) {

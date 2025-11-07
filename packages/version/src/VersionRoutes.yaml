@@ -1,14 +1,4 @@
-pushword_version_reset:
-  path: /admin/version/{id}/reset
-  controller: Pushword\Version\VersionController::resetVersioning
-  methods: [GET]
-
-pushword_version_list:
-  path: /admin/version/{id}/list
-  controller: Pushword\Version\VersionController::listVersion
-  methods: [GET]
-
-pushword_version_load:
-  path: /admin/version/{id}/{version}
-  controller: Pushword\Version\VersionController::loadVersion
-  methods: [GET]
+pushword_version:
+  resource: "@PushwordVersionBundle/VersionController.php"
+  type: attribute
+  prefix: /admin/version

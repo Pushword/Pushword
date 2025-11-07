@@ -1,7 +1,4 @@
-pushword_page_scanner:
-  path: /admin/page/scan/{force}
-  controller: Pushword\PageScanner\Controller\PageScannerController::scan
-  requirements:
-    force: "[0-1]"
-  defaults:
-    force: 0
+page_scanner:
+  resource: "@PushwordPageScannerBundle/Controller/"
+  type: attribute
+  prefix: /admin/page

@@ -1,0 +1,23 @@
+pushword_version:
+    resource: "@PushwordVersionBundle/VersionRoutes.yaml"
+
+pushword_static_generator:
+    resource: "@PushwordStaticGeneratorBundle/StaticRoutes.yaml"
+
+pushword_page_scanner:
+    resource: "@PushwordPageScannerBundle/PageScannerRoutes.yaml"
+
+pushword_template_editor:
+    resource: "@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml"
+
+pushword_admin_block_editor:
+    resource: "@PushwordAdminBlockEditorBundle/AdminBlockEditorRoutes.yaml"
+
+pushword_admin:
+    resource: "@PushwordAdminBundle/AdminRoutes.yaml"
+
+pushword_conversation:
+    resource: "@PushwordConversationBundle/Resources/config/routes/conversation.yaml"
+
+pushword:
+    resource: "@PushwordCoreBundle/Resources/config/routes.yaml"

@@ -1,15 +1,4 @@
-piedweb_static_generate:
-  path: /admin/static/{host}
-  controller: Pushword\StaticGenerator\StaticController::generateStatic
-  methods: [GET]
-  defaults:
-    host: null
-  requirements:
-    host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
-
-old_piedweb_static_generate:
-  path: /~static
-  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirect
-  defaults:
-    route: piedweb_static_generate
-    permanent: true
+static_generator:
+  resource: "@PushwordStaticGeneratorBundle/StaticController.php"
+  type: attribute
+  prefix: /admin/static

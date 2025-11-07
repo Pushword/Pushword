@@ -11,6 +11,9 @@ use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\FlatFileImporter;
 use Pushword\Flat\Importer\MediaImporter;
 use Pushword\Flat\Importer\PageImporter;
+
+use function Safe\realpath;
+
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -68,7 +71,7 @@ class FlatFileImporterTest extends KernelTestCase
 
     private function getContentDir(): string
     {
-        return \Safe\realpath(self::getContainer()->getParameter('kernel.project_dir').'/../docs/content');
+        return realpath(self::getContainer()->getParameter('kernel.project_dir').'/../docs/content');
     }
 
     private function prepare(): string

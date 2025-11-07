@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -43,10 +44,13 @@ class VersionController extends AbstractController
         $this->translator = $translator;
     }
 
+    #[Route(path: '/{id}/reset', name: 'pushword_version_reset', methods: ['GET'], priority: 2)]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
-    public function loadVersion(string $id, string $version): RedirectResponse
+    public function resetVersioning(Request $request, int $id): RedirectResponse
     {
-        $this->versionner->loadVersion($id, $version);
+        $this->versionner->reset($id);
+
+        $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('version.reset_history'));
 
         return $this->redirectToRoute('admin_page_edit', ['id' => $id]);
     }
@@ -62,15 +66,8 @@ class VersionController extends AbstractController
         throw new Exception();
     }
 
-    public function resetVersioning(Request $request, int $id): RedirectResponse
-    {
-        $this->versionner->reset($id);
-
-        $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('version.reset_history'));
-
-        return $this->redirectToRoute('admin_page_edit', ['id' => $id]);
-    }
-
+    #[Route(path: '/{id}/list', name: 'pushword_version_list', methods: ['GET'], priority: 1)]
+    #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function listVersion(string $id): Response
     {
         $page = $this->doctrine->getRepository(Page::class)->findOneBy(['id' => $id]);
@@ -91,5 +88,14 @@ class VersionController extends AbstractController
             'page' => $page,
             'pages' => $pageVersions,
         ]);
+    }
+
+    #[Route(path: '/{id}/{version}', name: 'pushword_version_load', methods: ['GET'])]
+    #[IsGranted('ROLE_PUSHWORD_ADMIN')]
+    public function loadVersion(string $id, string $version): RedirectResponse
+    {
+        $this->versionner->loadVersion($id, $version);
+
+        return $this->redirectToRoute('admin_page_edit', ['id' => $id]);
     }
 }
