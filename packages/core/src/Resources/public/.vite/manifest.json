@@ -3,6 +3,7 @@
     "file": "style.css",
     "src": "../js-helper/src/app.css",
     "isEntry": true,
+    "name": "style",
     "names": [
       "style.css"
     ]

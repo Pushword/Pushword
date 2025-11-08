@@ -10,7 +10,7 @@ import { filterImageFormField } from './admin.filterImageFormField'
 import { memorizeOpenPanel } from './admin.memorizeOpenPanel'
 //import { autosize } from 'autosize/src/autosize.js';
 import 'core-js/stable'
-import 'regenerator-runtime/runtime'
+//import 'regenerator-runtime/runtime'
 
 window.domChanging = false
 window.copyElementText = copyElementText

@@ -17,27 +17,32 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] implémenter prettier markdown
   - [x] enregistrer en DB uniquement le markdown
   - [x] admin - revoir la class qui instantie pour montrer EditorJS si le contenu est en markdown (donc markdown ➜ editorjs à l'initialisation, nouveau comportement par défaut)
-  - [ ] test test test
   - [x] **how to bulk upgrade ?** ➜ `bin/console pushword:json:to-markdown`
-  - [ ] Remove all code related to block rendering (in DB, markdown is used so front-end will use markdown)
-
-- best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
-
-- [Flat]
-  - [ ] change versionner to rely on flat and create .example-file.md~version-200020210 instead of serialized json, add a command to clear version
-  - [x] mettre à jour le dossier par défault : content/%domain%/
-  - [ ] prefer yaml over json for media exporter
-  - [ ] check media export (in content/media or in media ?!)
-  - [ ] fix markdown cheatsheet
-  - [ ] Revoir la transformation de lien markdown (./../test.md ou ./test) en lien vers la page (/test) (useful for navigate in docs from editor)
-  - [ ] s'assurer que la réciproque fonctionne au moment de l'export
-  - [ ] idem pour les médias (/media/test.jpg ➜ ./../../media/test.jpg) : plus simple que le point précédent, il faut calculer le nombre de "../" entre le dossier courant et la racine du projet
+  - [x] Remove all code related to block rendering (in DB, markdown is used so front-end will use markdown)
+  - [ ] test test test
 
 - [Ai] Add AiFeature to Flat
   - [ ] Generate a map of the content = [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
   - [ ] Generate a map of the media
 
+- [Version]
+  - [ ] change versionner to rely on flat and create .example-file.md~version-200020210 instead of serialized json, add a command to clear version
+  - [ ] diffchecker based on Monaco
+
+- [Flat]
+  - [x] mettre à jour le dossier par défault : content/%domain%/
+  - [ ] prefer yaml over json for media exporter
+  - [ ] check media export (in content/media or in media ?!)
+  - [x] fix markdown cheatsheet
+  - [ ] Revoir la transformation de lien markdown (./../test.md ou ./test) en lien vers la page (/test) (useful for navigate in docs from editor)
+  - [ ] s'assurer que la réciproque fonctionne au moment de l'export
+  - [ ] idem pour les médias (/media/test.jpg ➜ ./../../media/test.jpg) : plus simple que le point précédent, il faut calculer le nombre de "../" entre le dossier courant et la racine du projet
+
+- [New] When release v1, remove version from composer.json (restore 1.0.0-rc[0-9]+ to \*)
+
 ### One day maybe
+
+- best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
 
 - Rewrite tests to permit to run `./vendor/bin/paratest -p 8`
 

@@ -1,5 +1,5 @@
 import 'core-js/stable'
-import 'regenerator-runtime/runtime'
+//import 'regenerator-runtime/runtime'
 /**
  * List of all functions
  *
@@ -33,7 +33,9 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
 
   var getLiveBlock = function (item) {
     var url = item.getAttribute('data-' + liveBlockAttribute)
-    url = url.startsWith('e:') ? convertShortchutForLink(rot13ToText(url.substring(2))) : url
+    url = url.startsWith('e:')
+      ? convertShortchutForLink(rot13ToText(url.substring(2)))
+      : url
     fetch(url, {
       //headers: { "Content-Type": "application/json", Accept: "text/plain" },
       method: 'POST',
@@ -51,8 +53,10 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
       })
   }
 
-  const spinner = '<span style="border-top-color: transparent" class="inline-block w-5 h-5 border-4 border-gray-50 border-solid rounded-full animate-spin"></span>'
-  const htmlLoader = '<div>' + spinner.replace('border-gray-50', 'border-gray-800') + '</div>'
+  const spinner =
+    '<span style="border-top-color: transparent" class="inline-block w-5 h-5 border-4 border-gray-50 border-solid rounded-full animate-spin"></span>'
+  const htmlLoader =
+    '<div>' + spinner.replace('border-gray-50', 'border-gray-800') + '</div>'
 
   var setLoader = function (form) {
     var $submitButton = getSubmitButton(form)
@@ -127,7 +131,11 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
 export function replaceOn(attribute = 'data-replaceBy', eventName = 'click') {
   var loadVideo = function (element) {
     var content = element.getAttribute(attribute)
-    if (element.classList.contains('hero-banner-overlay-lg') && element.querySelector('picture') && window.innerWidth < 992) {
+    if (
+      element.classList.contains('hero-banner-overlay-lg') &&
+      element.querySelector('picture') &&
+      window.innerWidth < 992
+    ) {
       element.querySelector('picture').outerHTML = content
       element.querySelector('.btn-play').outerHTML = ' '
     } else {
@@ -140,17 +148,19 @@ export function replaceOn(attribute = 'data-replaceBy', eventName = 'click') {
     document.dispatchEvent(new Event('DOMChanged'))
   }
 
-  document.querySelectorAll('[' + attribute + ']:not([listen])').forEach(function (element) {
-    element.setAttribute('listen', '')
-    element.addEventListener(
-      eventName,
-      function (event) {
-        loadVideo(event.currentTarget) //event.currentTarget;
-        element.removeAttribute('listen')
-      },
-      { once: true },
-    )
-  })
+  document
+    .querySelectorAll('[' + attribute + ']:not([listen])')
+    .forEach(function (element) {
+      element.setAttribute('listen', '')
+      element.addEventListener(
+        eventName,
+        function (event) {
+          loadVideo(event.currentTarget) //event.currentTarget;
+          element.removeAttribute('listen')
+        },
+        { once: true },
+      )
+    })
 }
 
 /**
@@ -201,15 +211,18 @@ export function addClassForNormalUser(attribute = 'data-acinb') {
     }
     if (startScrolling === 4) {
       document.removeEventListener('scroll', scrollEventAddClassHandler)
-      ;[].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
-        var classToAddRaw = element.getAttribute(attribute)
-        var classToAdd = classToAddRaw.split(' ')
-        element.removeAttribute(attribute)
-        element.classList.add(...classToAdd)
-        if (classToAdd.includes('block')) {
-          element.classList.remove('hidden')
-        }
-      })
+      ;[].forEach.call(
+        document.querySelectorAll('[' + attribute + ']'),
+        function (element) {
+          var classToAddRaw = element.getAttribute(attribute)
+          var classToAdd = classToAddRaw.split(' ')
+          element.removeAttribute(attribute)
+          element.classList.add(...classToAdd)
+          if (classToAdd.includes('block')) {
+            element.classList.remove('hidden')
+          }
+        },
+      )
       if (window.location.hash) {
         const targetElement = document.querySelector(window.location.hash)
         if (targetElement) {
@@ -233,7 +246,10 @@ export function addClassForNormalUser(attribute = 'data-acinb') {
  *
  * @param {string}  attribute
  */
-export async function uncloakLinks(attribute = 'data-rot', onClickMouseoverOrTouchstart = true) {
+export async function uncloakLinks(
+  attribute = 'data-rot',
+  onClickMouseoverOrTouchstart = true,
+) {
   var convertLink = function (element) {
     // fix "bug" with img
     if (element.getAttribute(attribute) === null) {
@@ -253,9 +269,12 @@ export async function uncloakLinks(attribute = 'data-rot', onClickMouseoverOrTou
   }
 
   var convertAll = function (attribute) {
-    ;[].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
-      convertLink(element)
-    })
+    ;[].forEach.call(
+      document.querySelectorAll('[' + attribute + ']'),
+      function (element) {
+        convertLink(element)
+      },
+    )
   }
 
   var fireEventLinksBuilt = async function (element, event) {
@@ -277,29 +296,32 @@ export async function uncloakLinks(attribute = 'data-rot', onClickMouseoverOrTou
   }
 
   if (onClickMouseoverOrTouchstart) {
-    ;[].forEach.call(document.querySelectorAll('[' + attribute + ']'), function (element) {
-      element.addEventListener(
-        'touchstart',
-        function (e) {
-          convertLinkOnEvent(e)
-        },
-        { once: true, passive: true },
-      )
-      element.addEventListener(
-        'click',
-        function (e) {
-          convertLinkOnEvent(e)
-        },
-        { once: true },
-      )
-      element.addEventListener(
-        'mouseover',
-        function (e) {
-          convertLinkOnEvent(e)
-        },
-        { once: true },
-      )
-    })
+    ;[].forEach.call(
+      document.querySelectorAll('[' + attribute + ']'),
+      function (element) {
+        element.addEventListener(
+          'touchstart',
+          function (e) {
+            convertLinkOnEvent(e)
+          },
+          { once: true, passive: true },
+        )
+        element.addEventListener(
+          'click',
+          function (e) {
+            convertLinkOnEvent(e)
+          },
+          { once: true },
+        )
+        element.addEventListener(
+          'mouseover',
+          function (e) {
+            convertLinkOnEvent(e)
+          },
+          { once: true },
+        )
+      },
+    )
   } else convertAll(attribute)
 }
 
@@ -352,7 +374,9 @@ export function readableEmail(selector) {
  */
 export function rot13ToText(str) {
   return str.replace(/[a-zA-Z]/g, function (c) {
-    return String.fromCharCode((c <= 'Z' ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26)
+    return String.fromCharCode(
+      (c <= 'Z' ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26,
+    )
   })
 }
 

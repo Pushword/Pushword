@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
 @import 'tailwindcss-animated';
+
 @plugin '@tailwindcss/typography';
 /* @plugin "@tailwindcss/forms"; */
 
@@ -14,7 +15,9 @@ Tailwind content sources for all packages
 @source "./../../../../templates";
 @source "./../../../../var/TailwindGeneratorCache/*";
 @source "./../../../../vendor/pushword/core/src/Twig/**.php";
-@source "./../../packages/core/src/Twig/**.php";
+@source "./../../core/src/Twig/**.php";
+@source "./../../../../vendor/pushword/admin/src/templates/markdown_cheatsheet.html.twig";
+@source "./../../admin/src/templates/markdown_cheatsheet.html.twig";
 
 /* Tailwind v4 CSS-first configuration */
 @theme {

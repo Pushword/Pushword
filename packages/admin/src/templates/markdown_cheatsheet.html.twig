@@ -9,16 +9,15 @@
 {% endblock %}
 
 {% block body %}
-<link rel="stylesheet" href="/bundles/pushwordcore/tailwind.min.css">
+<link rel="stylesheet" href="/bundles/pushwordcore/style.css">
 
 <div class="max-w-screen-md p-3 mx-auto">
 
 <div class="prose"><h1 class="mb-5"><small>{{ 'md_cs.page.h1'|trans }}</small> <br>{{ 'md_cs.page.subtitle'|trans }}</h1></div>
 
-<div class="p-3 mb-5 prose border rounded">
-
+<div class="p-3 mb-5 prose">
 {% apply markdown %}
-###### <small style="text-transform:uppercase;">Sommaire</small>
+
 {% block cheatsheet_toc %}
 - [{{ 'md_cs.title'|trans }}](#title)
 - [{{ 'md_cs.chapeau'|trans }}](#chapeau)
@@ -39,9 +38,6 @@
 </div>
 
 {% block cheatsheet_content %}
-
-<!-- -->
-
 <h2 id="title" class="mb-4 text-3xl font-bold">{{ 'md_cs.title'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
@@ -54,7 +50,7 @@
 #### Title 6 (h6)
 {% endapply %}
     </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
+<pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{% apply spaceless %}
 ## Title 2 (h2)<br>
 ### Title 3 (h3)<br>
 ### Title 4 (h4)<br>
