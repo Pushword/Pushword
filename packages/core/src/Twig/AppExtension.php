@@ -77,7 +77,7 @@ final class AppExtension
             || str_contains($content, '"/'.$slug.'\"');
     }
 
-    #[AsTwigFunction('breadcrumbJsonLd')]
+    #[AsTwigFunction('breadcrumbJsonLd', isSafe: ['html'])]
     public function generateBreadcrumbJsonLd(Page $page): string
     {
         $breadcrumbs = [];
