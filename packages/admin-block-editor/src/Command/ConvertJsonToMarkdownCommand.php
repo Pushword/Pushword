@@ -61,7 +61,7 @@ final readonly class ConvertJsonToMarkdownCommand
         if ($dryRun) {
             $io->section('Pages qui seraient converties (dry-run) :');
             foreach ($jsonPages as $page) {
-                $io->text(\sprintf('  - [%d] %s/%s', $page->getId(), $page->getHost(), $page->getSlug()));
+                $io->text(\sprintf('  - [%d] https://%s/%s', $page->getId(), $page->getHost(), $page->getSlug()));
             }
 
             return Command::SUCCESS;
