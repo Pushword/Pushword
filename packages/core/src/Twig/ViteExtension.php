@@ -2,11 +2,17 @@
 
 namespace Pushword\Core\Twig;
 
+use Pentatrion\ViteBundle\Service\EntrypointsLookupCollection;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
 final class ViteExtension
 {
+    public function __construct(
+        private readonly ?EntrypointsLookupCollection $entrypointsLookupCollection = null,
+    ) {
+    }
+
     #[AsTwigFunction('vite_style', isSafe: ['html'], needsEnvironment: true)]
     public function renderViteStylesheet(Twig $twig, string $path): string
     {
@@ -31,5 +37,18 @@ final class ViteExtension
             : null;
 
         return $return ?? '<!--You must install vite bundle to use this function-->';
+    }
+
+    /**
+     * @return array<string>
+     */
+    #[AsTwigFunction('vite_js_files', isSafe: ['html'], needsEnvironment: true)]
+    public function getEntry(string $entryName, ?string $configName = null): array
+    {
+        if (null === $this->entrypointsLookupCollection) {
+            return [];
+        }
+
+        return $this->entrypointsLookupCollection->getEntrypointsLookup($configName)->getJSFiles($entryName);
     }
 }

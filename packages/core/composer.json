@@ -7,6 +7,8 @@
   "license": "MIT",
   "require": {
     "php": ">=8.4",
+    "ext-gd": "*",
+    "ext-sqlite3": "*",
     "caseyamcl/toc": "^4.0",
     "cocur/slugify": "^4.6",
     "babdev/pagerfanta-bundle": "^4.0",

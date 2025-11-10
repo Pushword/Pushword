@@ -21,7 +21,9 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 - heropattern plugin has been dropped, import manually the properties used in your css (see https://heropatterns.com)
 - multicolumn plugin has been dropped
-- update your template files to tailwind v4 classes (AI recommended)
+- update your template files to tailwind v4 classes (AI recommended `Scan all files inside the ./templates directory.
+Identify and update every Tailwind CSS class name from version 3 syntax to version 4 syntax, ensuring full compatibility with Tailwind 4’s new naming conventions and features.
+https://tailwindcss.com/docs/upgrade-guide#changes-from-v3`)
 - update your project configuration (see example in `packages/docs/assets/`)
 - transform your `./assets/webpack.config.js` to `./vite.config.js` (see `vendor/pushword/skeleton/vite.config.js`), same for `./assets/package.json` to `./package.json` and install `composer require pentatrion/vite-bundle`
 

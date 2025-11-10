@@ -175,7 +175,7 @@ final class ImageManager
         try {
             return InteventionImageManager::gd()->read($path); // default driver GD
         } catch (Exception) {
-            throw new Exception($path);
+            throw new Exception('GD cannot read image `'.$path.'`');
         }
     }
 
