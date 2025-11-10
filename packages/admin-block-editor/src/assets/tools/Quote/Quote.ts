@@ -9,7 +9,7 @@ export interface QuoteData extends BlockToolData {
 }
 
 export default class Quote extends QuoteTool {
-  static exportToMarkdown(data: QuoteData, tunes: BlockTuneData): string {
+  static exportToMarkdown(data: QuoteData, tunes?: BlockTuneData): string {
     if (!data || !data.text) {
       return ''
     }

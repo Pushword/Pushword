@@ -10,7 +10,7 @@ export default class Delimiter extends DelimiterTool {
    * @returns {string} Markdown representation
    */
   // @ts-ignore
-  static exportToMarkdown(data: BlockToolData, tunes: BlockTuneData): string {
+  static exportToMarkdown(data: BlockToolData, tunes?: BlockTuneData): string {
     return '---'
   }
 

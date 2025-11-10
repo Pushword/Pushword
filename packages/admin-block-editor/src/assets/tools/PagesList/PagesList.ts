@@ -265,7 +265,7 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
     }
   }
 
-  public static exportToMarkdown(data: PagesListData, tunes: BlockTuneData): string {
+  public static exportToMarkdown(data: PagesListData, tunes?: BlockTuneData): string {
     return exportPagesListToMarkdown(data, tunes)
   }
 

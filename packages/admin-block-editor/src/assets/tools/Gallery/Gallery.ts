@@ -59,10 +59,10 @@ export default class Gallery extends AbstractMediaTool {
   }) {
     super({ api, config, readOnly, data })
 
-    this.data = this.normalizeData(data)
+    this.data = Gallery.normalizeData(data)
   }
 
-  private normalizeData(data: GalleryDataToNormalize | GalleryData): GalleryData {
+  static normalizeData(data: GalleryDataToNormalize | GalleryData): GalleryData {
     const normalizedItems: GalleryItem[] = []
 
     if (
@@ -72,7 +72,6 @@ export default class Gallery extends AbstractMediaTool {
       Array.isArray(data.items)
     ) {
       for (const item of data.items) {
-        console.log('item', item)
         if (typeof item !== 'object') continue
         let media =
           item.media ||
@@ -175,7 +174,7 @@ export default class Gallery extends AbstractMediaTool {
   }
 
   updateData(data: GalleryDataToNormalize): void {
-    this.data = this.normalizeData(data)
+    this.data = Gallery.normalizeData(data)
     this.render()
   }
 
@@ -319,8 +318,14 @@ export default class Gallery extends AbstractMediaTool {
     this.hidePreloader(STATUS.EMPTY)
   }
 
-  static exportToMarkdown(data: GalleryData, tunes: BlockTuneData): string {
-    if (!data || !data.items || !Array.isArray(data.items) || data.items.length === 0) {
+  static exportToMarkdown(
+    data: GalleryData | GalleryDataToNormalize,
+    tunes?: BlockTuneData,
+  ): string {
+    // Utiliser la méthode de normalisation statique
+    data = Gallery.normalizeData(data)
+
+    if (!data.items || data.items.length === 0) {
       return ''
     }
 
@@ -336,7 +341,7 @@ export default class Gallery extends AbstractMediaTool {
 
     const imagesArray = JSON.stringify(imagesObject)
     let markdown = `{{ gallery(${imagesArray}`
-    if (tunes.clickableTune.value) markdown += `, clickable: true`
+    if (tunes?.clickableTune?.value) markdown += `, clickable: true`
     markdown += `)|unprose }}`
 
     return MarkdownUtils.addAttributes(markdown, tunes)

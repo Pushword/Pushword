@@ -10,7 +10,7 @@ export interface ListData extends BlockToolData {
 }
 
 export default class List extends ListTool {
-  static async exportToMarkdown(data: ListData, tunes: BlockTuneData): Promise<string> {
+  static async exportToMarkdown(data: ListData, tunes?: BlockTuneData): Promise<string> {
     if (!data || !data.items) {
       return ''
     }

@@ -16,7 +16,7 @@ export default class Table extends TableTool {
    * @param {BlockTuneData} tunes - Block tunes
    * @returns {string} Markdown representation
    */
-  static async exportToMarkdown(data: TableData, tunes: BlockTuneData): Promise<string> {
+  static async exportToMarkdown(data: TableData, tunes?: BlockTuneData): Promise<string> {
     if (!data || !data.content) {
       return ''
     }

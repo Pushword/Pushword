@@ -97,7 +97,7 @@ export default class CodeBlock extends Raw {
    * @returns {string} Markdown representation
    */
   // @ts-ignore
-  static exportToMarkdown(data: CodeBlockData, tunes: BlockTuneData): string {
+  static exportToMarkdown(data: CodeBlockData, tunes?: BlockTuneData): string {
     if (!data || !data.html) {
       return ''
     }

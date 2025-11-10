@@ -55,17 +55,14 @@ export default class Image extends AbstractMediaTool {
     api,
     readOnly = false,
   }: {
-    data: ImageData
+    data: ImageData | ImageDataToNormalize
     config: MediaToolConfig
     api: API
     readOnly?: boolean
   }) {
     super({ api, config, readOnly, data })
 
-    this.data = {
-      media: data.media || '',
-      caption: data.caption || '',
-    }
+    this.data = Image.normalizeData(data)
 
     this.nodes = {
       // @ts-ignore
@@ -74,6 +71,13 @@ export default class Image extends AbstractMediaTool {
       caption: make.element('div', [this.api.styles.input, 'image-tool__caption'], {
         contentEditable: !this.readOnly,
       }),
+    }
+  }
+
+  static normalizeData(data: ImageData | ImageDataToNormalize): ImageData {
+    return {
+      media: data.media || MediaUtils.extractMediaName(data.file?.url || ''),
+      caption: data.caption || data.file?.name || '',
     }
   }
 
@@ -164,8 +168,13 @@ export default class Image extends AbstractMediaTool {
     return !!this.media
   }
 
-  public static exportToMarkdown(data: ImageData, tunes: BlockTuneDataPushword): string {
-    if (!data || !data.media) {
+  public static exportToMarkdown(
+    data: ImageData | ImageDataToNormalize,
+    tunes?: BlockTuneDataPushword,
+  ): string {
+    data = Image.normalizeData(data)
+
+    if (!data.media) {
       return ''
     }
 
@@ -173,11 +182,13 @@ export default class Image extends AbstractMediaTool {
     let markdown = `![${data.caption || ''}](${imgSrc})`
 
     // todo manage link
-    if (tunes.linkTune) {
-      markdown = MarkdownUtils.wrapWithLink(markdown, tunes)
+    if (tunes?.linkTune) {
+      markdown = MarkdownUtils.wrapWithLink(markdown, tunes as BlockTuneDataPushword)
     }
 
-    return MarkdownUtils.addAttributes(markdown, tunes)
+    return tunes
+      ? MarkdownUtils.addAttributes(markdown, tunes as BlockTuneDataPushword)
+      : markdown
   }
 
   static isItMarkdownExported(markdown: string): boolean {

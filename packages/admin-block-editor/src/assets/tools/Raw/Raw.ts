@@ -97,7 +97,7 @@ export default class Raw extends BaseTool {
   }
 
   // @ts-ignore
-  static exportToMarkdown(data: RawData, tunes: BlockTuneData): string {
+  static exportToMarkdown(data: RawData, tunes?: BlockTuneData): string {
     if (!data || !data.html) {
       return ''
     }

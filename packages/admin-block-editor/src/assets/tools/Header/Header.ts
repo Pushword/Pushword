@@ -262,7 +262,10 @@ export default class Header {
     }
   }
 
-  static async exportToMarkdown(data: HeaderData, tunes: BlockTuneData): Promise<string> {
+  static async exportToMarkdown(
+    data: HeaderData,
+    tunes?: BlockTuneData,
+  ): Promise<string> {
     if (!data || !data.text) {
       return ''
     }

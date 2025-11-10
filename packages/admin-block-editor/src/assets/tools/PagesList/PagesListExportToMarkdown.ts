@@ -7,7 +7,7 @@ import { PagesListData } from './PagesList'
  */
 export function exportPagesListToMarkdown(
   data: PagesListData,
-  tunes: BlockTuneData,
+  tunes?: BlockTuneData,
 ): string {
   if (!data || !data.kw) {
     return ''
@@ -19,11 +19,10 @@ export function exportPagesListToMarkdown(
   const display = data.display || 'list'
 
   let markdown = `{{ pages_list('${data.kw}', '${max}', '${order}', '${display}'`
-  markdown += maxPages !== '0' || tunes.class || tunes.anchor ? `, '${maxPages}'` : ''
-  markdown += tunes.class || tunes.anchor ? `, '${tunes.class || ''}'` : ''
-  markdown += tunes.anchor ? `, '${tunes.anchor}'` : ''
+  markdown += maxPages !== '0' || tunes?.class || tunes?.anchor ? `, '${maxPages}'` : ''
+  markdown += tunes?.class || tunes?.anchor ? `, '${tunes?.class || ''}'` : ''
+  markdown += tunes?.anchor ? `, '${tunes?.anchor}'` : ''
   markdown += `) }}`
 
   return markdown
 }
-

@@ -69,16 +69,20 @@ export default class Attaches extends AbstractMediaTool {
       // ...
     }
 
-    this.data = {
+    this.data = Attaches.normalizeData(data)
+
+    this.onSelectFile = config.onSelectFile
+    this.onUploadFile = config.onUploadFile
+  }
+
+  static normalizeData(data: AttachesDataToNormalize): AttachesData {
+    return {
       title: data.title || '',
       file: {
         media: data.file?.media || MediaUtils.extractMediaName(data.file?.url || ''),
         size: data.file?.size || 0,
       },
     }
-
-    this.onSelectFile = config.onSelectFile
-    this.onUploadFile = config.onUploadFile
   }
 
   save(block: HTMLElement): BlockToolData {
@@ -201,7 +205,9 @@ export default class Attaches extends AbstractMediaTool {
     return sizeNum.toString()
   }
 
-  static exportToMarkdown(data: AttachesData, tunes: BlockTuneData): string {
+  static exportToMarkdown(data: AttachesDataToNormalize, tunes?: BlockTuneData): string {
+    data = Attaches.normalizeData(data)
+
     if (!data || !data.file.media) {
       return ''
     }
@@ -209,7 +215,7 @@ export default class Attaches extends AbstractMediaTool {
     const fileUrl = MediaUtils.buildFullUrlFromData(data.file)
     const title = data.title
 
-    const markdown = `{{ attaches('${title}', '${fileUrl}', '${data.file.size || 0}' ${tunes.anchor ? ', "' + tunes.anchor + '"' : ''})|unprose }}`
+    const markdown = `{{ attaches('${title}', '${fileUrl}', '${data.file.size || 0}' ${tunes?.anchor ? ', "' + tunes.anchor + '"' : ''})|unprose }}`
 
     return markdown
   }

@@ -62,15 +62,19 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
   }) {
     super({ data, config, api, readOnly })
 
-    this.data = {
-      serviceUrl: data.serviceUrl || '',
-      alternativeText: data.alternativeText || '',
-      media: data.media || data.image?.media || '',
-    }
+    this.data = Embed.normalizeData(data)
 
-    // Initialiser les nodes supplémentaires après l'appel à super()
+    // Initialiser les nodes supplémentaires
     this.nodes.inputAlternativeText = document.createElement('div')
     this.nodes.inputServiceUrl = document.createElement('div')
+  }
+
+  static normalizeData(data: EmbedDataToNormalize | EmbedData): EmbedData {
+    return {
+      serviceUrl: data.serviceUrl || '',
+      alternativeText: data.alternativeText || '',
+      media: data.media || (data as EmbedDataToNormalize).image?.media || '',
+    }
   }
 
   public render(): HTMLElement {
@@ -188,8 +192,14 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
     }
   }
 
-  public static exportToMarkdown(data: EmbedData, tunes: BlockTuneData): string {
-    if (!data || !data.media || !data.serviceUrl) {
+  public static exportToMarkdown(
+    data: EmbedData | EmbedDataToNormalize,
+    tunes?: BlockTuneData,
+  ): string {
+    // Normaliser les données pour gérer les anciens formats
+    data = Embed.normalizeData(data)
+
+    if (!data.media || !data.serviceUrl) {
       return ''
     }
 

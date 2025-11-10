@@ -2902,14 +2902,6 @@ function l(r2) {
   const e2 = globalThis.document.createDocumentFragment();
   return e2.append(...Array.from(t2.childNodes)), e2;
 }
-/**
- * Base Paragraph Block for the Editor.js.
- * Represents a regular text block
- *
- * @author CodeX (team@codex.so)
- * @copyright CodeX 2018
- * @license The MIT License (MIT)
- */
 let n$1 = class n {
   /**
    * Default placeholder for Paragraph Tool
@@ -5401,10 +5393,7 @@ class Image extends AbstractMediaTool {
     readOnly = false
   }) {
     super({ api, config, readOnly, data });
-    this.data = {
-      media: data.media || "",
-      caption: data.caption || ""
-    };
+    this.data = Image.normalizeData(data);
     this.nodes = {
       // @ts-ignore
       ...this.nodes,
@@ -5412,6 +5401,12 @@ class Image extends AbstractMediaTool {
       caption: make.element("div", [this.api.styles.input, "image-tool__caption"], {
         contentEditable: !this.readOnly
       })
+    };
+  }
+  static normalizeData(data) {
+    return {
+      media: data.media || MediaUtils.extractMediaName(data.file?.url || ""),
+      caption: data.caption || data.file?.name || ""
     };
   }
   onUpload(response) {
@@ -5469,15 +5464,16 @@ class Image extends AbstractMediaTool {
     return !!this.media;
   }
   static exportToMarkdown(data, tunes) {
-    if (!data || !data.media) {
+    data = Image.normalizeData(data);
+    if (!data.media) {
       return "";
     }
     const imgSrc = MediaUtils.buildFullUrl(data.media);
     let markdown = `![${data.caption || ""}](${imgSrc})`;
-    if (tunes.linkTune) {
+    if (tunes?.linkTune) {
       markdown = MarkdownUtils.wrapWithLink(markdown, tunes);
     }
-    return MarkdownUtils.addAttributes(markdown, tunes);
+    return tunes ? MarkdownUtils.addAttributes(markdown, tunes) : markdown;
   }
   static isItMarkdownExported(markdown) {
     return markdown.trim().match(/!\[.*\]\(.+\)/) !== null || markdown.trim().match(/#?\[!\[.*\]\(.+\)\]\(.+\)/) !== null;
@@ -6227,13 +6223,12 @@ class Gallery extends AbstractMediaTool {
     readOnly
   }) {
     super({ api, config, readOnly, data });
-    this.data = this.normalizeData(data);
+    this.data = Gallery.normalizeData(data);
   }
-  normalizeData(data) {
+  static normalizeData(data) {
     const normalizedItems = [];
     if (data && typeof data === "object" && "items" in data && Array.isArray(data.items)) {
       for (const item of data.items) {
-        console.log("item", item);
         if (typeof item !== "object") continue;
         let media = item.media || item.file?.media || (item.url ? MediaUtils.extractMediaName(item.url) : null);
         if (!media) continue;
@@ -6310,7 +6305,7 @@ class Gallery extends AbstractMediaTool {
     this.hidePreloader(STATUS.EMPTY);
   }
   updateData(data) {
-    this.data = this.normalizeData(data);
+    this.data = Gallery.normalizeData(data);
     this.render();
   }
   render() {
@@ -6430,7 +6425,8 @@ class Gallery extends AbstractMediaTool {
     this.hidePreloader(STATUS.EMPTY);
   }
   static exportToMarkdown(data, tunes) {
-    if (!data || !data.items || !Array.isArray(data.items) || data.items.length === 0) {
+    data = Gallery.normalizeData(data);
+    if (!data.items || data.items.length === 0) {
       return "";
     }
     const imagesObject = data.items.reduce(
@@ -6442,7 +6438,7 @@ class Gallery extends AbstractMediaTool {
     );
     const imagesArray = JSON.stringify(imagesObject);
     let markdown = `{{ gallery(${imagesArray}`;
-    if (tunes.clickableTune.value) markdown += `, clickable: true`;
+    if (tunes?.clickableTune?.value) markdown += `, clickable: true`;
     markdown += `)|unprose }}`;
     return MarkdownUtils.addAttributes(markdown, tunes);
   }
@@ -7600,14 +7596,6 @@ class Table extends F {
   }
 })();
 const r = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="6" x2="10" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="14" x2="18" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>';
-/**
- * Delimiter Block for the Editor.js.
- *
- * @author CodeX (team@ifmo.su)
- * @copyright CodeX 2018
- * @license The MIT License (MIT)
- * @version 2.0.0
- */
 class n2 {
   /**
    * Notify core that read-only mode is supported
@@ -7797,13 +7785,16 @@ class Embed extends AbstractMediaTool {
     readOnly
   }) {
     super({ data, config, api, readOnly });
-    this.data = {
+    this.data = Embed.normalizeData(data);
+    this.nodes.inputAlternativeText = globalThis.document.createElement("div");
+    this.nodes.inputServiceUrl = globalThis.document.createElement("div");
+  }
+  static normalizeData(data) {
+    return {
       serviceUrl: data.serviceUrl || "",
       alternativeText: data.alternativeText || "",
       media: data.media || data.image?.media || ""
     };
-    this.nodes.inputAlternativeText = globalThis.document.createElement("div");
-    this.nodes.inputServiceUrl = globalThis.document.createElement("div");
   }
   render() {
     return StateBlock.render(this);
@@ -7892,7 +7883,8 @@ class Embed extends AbstractMediaTool {
     }
   }
   static exportToMarkdown(data, tunes) {
-    if (!data || !data.media || !data.serviceUrl) {
+    data = Embed.normalizeData(data);
+    if (!data.media || !data.serviceUrl) {
       return "";
     }
     const markdown = `{{ video('${data.serviceUrl}', '${data.media}', '${data.alternativeText}')|unprose }}`;
@@ -7938,15 +7930,18 @@ class Attaches extends AbstractMediaTool {
       ...this.nodes
       // ...
     };
-    this.data = {
+    this.data = Attaches.normalizeData(data);
+    this.onSelectFile = config.onSelectFile;
+    this.onUploadFile = config.onUploadFile;
+  }
+  static normalizeData(data) {
+    return {
       title: data.title || "",
       file: {
         media: data.file?.media || MediaUtils.extractMediaName(data.file?.url || ""),
         size: data.file?.size || 0
       }
     };
-    this.onSelectFile = config.onSelectFile;
-    this.onUploadFile = config.onUploadFile;
   }
   save(block) {
     if (this.pluginHasData()) {
@@ -8040,12 +8035,13 @@ class Attaches extends AbstractMediaTool {
     return sizeNum.toString();
   }
   static exportToMarkdown(data, tunes) {
+    data = Attaches.normalizeData(data);
     if (!data || !data.file.media) {
       return "";
     }
     const fileUrl = MediaUtils.buildFullUrlFromData(data.file);
     const title = data.title;
-    const markdown = `{{ attaches('${title}', '${fileUrl}', '${data.file.size || 0}' ${tunes.anchor ? ', "' + tunes.anchor + '"' : ""})|unprose }}`;
+    const markdown = `{{ attaches('${title}', '${fileUrl}', '${data.file.size || 0}' ${tunes?.anchor ? ', "' + tunes.anchor + '"' : ""})|unprose }}`;
     return markdown;
   }
   static importFromMarkdown(editor, markdown) {
@@ -8081,25 +8077,28 @@ function exportPagesListToMarkdown(data, tunes) {
   const order = data.order || "publishedAt,priority";
   const display = data.display || "list";
   let markdown = `{{ pages_list('${data.kw}', '${max}', '${order}', '${display}'`;
-  markdown += maxPages !== "0" || tunes.class || tunes.anchor ? `, '${maxPages}'` : "";
-  markdown += tunes.class || tunes.anchor ? `, '${tunes.class || ""}'` : "";
-  markdown += tunes.anchor ? `, '${tunes.anchor}'` : "";
+  markdown += maxPages !== "0" || tunes?.class || tunes?.anchor ? `, '${maxPages}'` : "";
+  markdown += tunes?.class || tunes?.anchor ? `, '${tunes?.class || ""}'` : "";
+  markdown += tunes?.anchor ? `, '${tunes?.anchor}'` : "";
   markdown += `) }}`;
   return markdown;
 }
 globalThis.window = {
   pageHost: process.env.PAGE_HOST || "",
   pageLocale: process.env.PAGE_LOCALE || "en",
+  // @ts-ignore
   location: {
     origin: process.env.PAGE_ORIGIN || ""
   },
   pagesUriList: [],
+  // @ts-ignore
   Promise,
   // Ajouter d'autres propriétés globales nécessaires
   ...globalThis
 };
 globalThis.document = {
   querySelector: () => null,
+  // @ts-ignore
   createElement: () => ({})
 };
 const TOOL_MAP = {
