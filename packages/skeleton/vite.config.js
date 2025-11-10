@@ -6,6 +6,7 @@ import { resolve } from 'path'
 import { existsSync } from 'fs'
 import tailwindcss from '@tailwindcss/vite'
 import viteCopyPlugin from 'vite-plugin-static-copy'
+import { compression, defineAlgorithm } from 'vite-plugin-compression2'
 
 const filesToCopy = [
   {
@@ -26,6 +27,9 @@ const input = existsSync(resolve(__dirname, '../js-helper/src/app.js'))
 
 export default defineConfig({
   plugins: [
+    compression({
+      algorithms: ['zstd', 'gzip', 'brotliCompress'], // todo compare deflate and gzip usage with caddy
+    }),
     symfonyPlugin(),
     tailwindcss(),
     viteCopyPlugin.viteStaticCopy({

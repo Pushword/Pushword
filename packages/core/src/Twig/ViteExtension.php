@@ -42,7 +42,7 @@ final class ViteExtension
     /**
      * @return array<string>
      */
-    #[AsTwigFunction('vite_js_files', isSafe: ['html'], needsEnvironment: true)]
+    #[AsTwigFunction('vite_js_files')]
     public function getEntry(string $entryName, ?string $configName = null): array
     {
         if (null === $this->entrypointsLookupCollection) {
