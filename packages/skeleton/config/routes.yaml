@@ -20,4 +20,4 @@ pushword_conversation:
     resource: "@PushwordConversationBundle/Resources/config/routes/conversation.yaml"
 
 pushword:
-    resource: "@PushwordCoreBundle/Resources/config/routes.yaml"
+    resource: "@PushwordCoreBundle/Resources/config/all.yaml"

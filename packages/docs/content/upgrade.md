@@ -14,7 +14,6 @@ If you are doing a major upgrade, find the upgrade guide down there.
 ## To 1.0.0-rc80
 
 - Default static website are now exported under `static/%main_host%` directory instead of `%main_host%`.
-- migrate your configuration to PHP with `composer require symplify/config-transformer --dev && vendor/bin/config-transformer`
 - remove `admin_block_editor_type_to_prose` config from [AdminBlockEditor] (not used)
 
 ### To tailwind v4 and puswhord/assets

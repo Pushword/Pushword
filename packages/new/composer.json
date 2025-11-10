@@ -28,7 +28,14 @@
   },
   "require-dev": {
     "symfony/profiler-pack": "*",
-    "symfony/filesystem": "^7.3"
+    "symfony/filesystem": "^7.3",
+    "phpstan/phpstan": "*",
+    "phpstan/phpstan-doctrine": "*",
+    "phpstan/phpstan-phpunit": "*",
+    "phpstan/phpstan-strict-rules": "*",
+    "phpstan/phpstan-symfony": "*",
+    "friendsofphp/php-cs-fixer": "*",
+    "phpunit/phpunit": "*"
   },
   "config": {
     "optimize-autoloader": true,
@@ -57,6 +64,7 @@
     "symfony/polyfill-php72": "*"
   },
   "scripts": {
+    "dev": "symfony server:start -d",
     "auto-scripts": [],
     "post-install-cmd": [
       "bash ./vendor/pushword/installer/src/installer",
