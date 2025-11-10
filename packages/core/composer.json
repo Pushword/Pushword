@@ -45,7 +45,8 @@
     "symfony/runtime": "^7.3",
     "twig/intl-extra": "^3.2",
     "vich/uploader-bundle": "^2.0",
-    "villfa/invert-color": "^0.5"
+    "villfa/invert-color": "^0.5",
+    "league/commonmark": "^2.7"
   },
   "extra": {
     "branch-alias": {

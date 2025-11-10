@@ -15,6 +15,7 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 - Default static website are now exported under `static/%main_host%` directory instead of `%main_host%`.
 - remove `admin_block_editor_type_to_prose` config from [AdminBlockEditor] (not used)
+- in your `config/routes.yaml`, replace `resource: "@PushwordCoreBundle/Resources/config/routes/all.yaml"` by `resource: "@PushwordCoreBundle/Resources/config/routes.yaml"`
 
 ### To tailwind v4 and puswhord/assets
 
@@ -22,7 +23,7 @@ If you are doing a major upgrade, find the upgrade guide down there.
 - multicolumn plugin has been dropped
 - update your template files to tailwind v4 classes (AI recommended)
 - update your project configuration (see example in `packages/docs/assets/`)
-- transform your `./assets/webpack.config.js` to `./vite.config.js` (see `packages/skeleton/vite.config.js`), same for `./assets/package.json` to `./package.json` and install `composer require pentatrion/vite-bundle`
+- transform your `./assets/webpack.config.js` to `./vite.config.js` (see `vendor/pushword/skeleton/vite.config.js`), same for `./assets/package.json` to `./package.json` and install `composer require pentatrion/vite-bundle`
 
 ### To editorjs backed in markdown
 
