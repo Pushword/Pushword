@@ -26,6 +26,7 @@ Identify and update every Tailwind CSS class name from version 3 syntax to versi
 https://tailwindcss.com/docs/upgrade-guide#changes-from-v3`)
 - update your project configuration (see example in `packages/docs/assets/`)
 - transform your `./assets/webpack.config.js` to `./vite.config.js` (see `vendor/pushword/skeleton/vite.config.js`), same for `./assets/package.json` to `./package.json` and install `composer require pentatrion/vite-bundle`
+- some utility has been moved from the webpack config helper function to the app.css file, update your app.css to use the new utilities
 
 ### To editorjs backed in markdown
 

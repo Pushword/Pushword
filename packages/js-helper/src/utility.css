@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+@import 'tailwindcss-animated';
+@plugin '@tailwindcss/typography';
+@import './utility.css';
