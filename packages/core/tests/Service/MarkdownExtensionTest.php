@@ -107,18 +107,34 @@ class MarkdownExtensionTest extends KernelTestCase
 
     public function testEmailAutolink(): void
     {
+        $toTest = [
+            'Contact contact@example.com for info.',
+            'contact@example.com for info.',
+            'for info contact@example.com.',
+            'for info contact@example.com',
+        ];
+        foreach ($toTest as $text) {
+            $parser = $this->getMarkdownParser();
+            $result = $parser->transform($text);
+            self::assertStringContainsString('<span', $result);
+            self::assertStringNotContainsString('contact@example.com', $result);
+        }
+    }
+
+    public function testEmailAutolinkPreviouslyParsed(): void
+    {
         $parser = $this->getMarkdownParser();
-        $result = $parser->transform('Contact contact@example.com for info.');
 
-        self::assertStringContainsString('<span', $result);
-        self::assertStringNotContainsString('contact@example.com', $result);
+        $text = 'for info {{ mail("contact@example.com") }}';
+        $result = trim($parser->transform($text));
+        self::assertStringStartsWith('<p>for info {{ mail(&quot;contact@example.com&quot;) }}', $result);
+
+        $text = self::getContainer()->get('twig')->render(self::getContainer()->get('twig')->createTemplate('Contact {{ mail("contact@example.com") }}.'));
+        self::assertStringEndsWith('example.com</span> <span class="cea hidden">pbagnpg@rknzcyr.pbz</span>.', $text);
 
         $parser = $this->getMarkdownParser();
-        $text = str_replace('<p>', '', $result); // quick hack to test if inline parser is parsing twice
-        $result = $parser->transform($text);
-
-        self::assertStringContainsString('<span', $result);
-        self::assertStringNotContainsString('contact@example.com', $result);
+        $result = trim($parser->transform($text));
+        self::assertStringEndsWith('example.com</span> <span class="cea hidden">pbagnpg@rknzcyr.pbz</span>.</p>', $result);
     }
 
     // ===== Tests de l'autolink téléphone =====

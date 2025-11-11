@@ -133,12 +133,12 @@ final readonly class LinkProvider
         $template = $this->getApp()->getView('/component/encoded_mail.html.twig');
         $mail = trim($mail);
 
-        return $this->twig->render($template, [
+        return trim($this->twig->render($template, [
             'mail_readable' => $this->readableEncodedMail($mail),
             'mail_encoded' => str_rot13($mail),
             'mail' => $mail,
             'class' => $class,
-        ]);
+        ]));
     }
 
     private function readableEncodedMail(string $mail): string

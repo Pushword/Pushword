@@ -31,7 +31,11 @@ final class EmailAutolinkParser implements InlineParserInterface
         // Ne pas parser si on est dans du HTML (après un '>')
         // Évite de transformer des emails obfusqués 2 fois
         $previousChar = $cursor->peek(-1);
-        if ('>' === $previousChar) {
+        if (in_array($previousChar, ['>', '"', "'"], true)) {
+            return false;
+        }
+
+        if (0 !== preg_match('/[A-Za-z0-9._+-]/', $previousChar ?? '')) {
             return false;
         }
 
