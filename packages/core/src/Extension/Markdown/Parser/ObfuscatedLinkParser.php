@@ -33,7 +33,7 @@ final class ObfuscatedLinkParser implements InlineParserInterface
         // Pattern pour capturer attr="value" ou attr='value'
         $pattern = '/(\w+)\s*=\s*["\']([^"\']*)["\']/U';
 
-        if (preg_match_all($pattern, $attributeString, $matches, \PREG_SET_ORDER)) {
+        if (false !== preg_match_all($pattern, $attributeString, $matches, \PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 $attributes[$match[1]] = $match[2];
             }

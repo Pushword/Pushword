@@ -4,7 +4,7 @@ A few example for the editor possibilities. Best to observe this, it’s in admi
 
 ## Inline Tool Demo
 
-See **bold** _italic_ `inline code` #[link](/kitchen-sink-block{target="_blank"}) <mark>marker</mark> ~~strikethrough~~
+See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block{target="_blank"}) <mark>marker</mark> ~~strikethrough~~
 
 ## Links & Routes
 

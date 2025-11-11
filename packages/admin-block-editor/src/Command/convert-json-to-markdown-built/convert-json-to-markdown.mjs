@@ -2615,7 +2615,7 @@ class MarkdownUtils {
   }
   static convertInlineHtmlToMarkdown(html) {
     html = MarkdownUtils.fixer(html);
-    return html.replace(/<b>(.*?)<\/b>/gi, "**$1**").replace(/<i>(.*?)<\/i>/gi, "_$1_").replace(/<code( class="inline-code")?>(.*?)<\/code>/gi, "`$2`").replace(/<s( class="cdx-strikethrough")?>(.*?)<\/s>/gi, "~~$2~~").replace(/ class="cdx-marker"/gi, "").replace(
+    return html.replace("&#10140;", "➜").replace(/<b>(.*?)<\/b>/gi, "**$1**").replace(/<i>(.*?)<\/i>/gi, "_$1_").replace(/<code( class="inline-code")?>(.*?)<\/code>/gi, "`$2`").replace(/<s( class="cdx-strikethrough")?>(.*?)<\/s>/gi, "~~$2~~").replace(/ class="cdx-marker"/gi, "").replace(
       /<a\s+([^>]+)>(.*?)<\/a>/gi,
       (_match, attrString, text) => MarkdownUtils.convertAnchorToMarkdown(attrString, text)
     );

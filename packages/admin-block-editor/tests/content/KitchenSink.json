@@ -33,7 +33,7 @@
       "id": "fDV6KPKyV1",
       "type": "paragraph",
       "data": {
-        "text": "See <b>bold</b> <i>italic</i> <code class=\"inline-code\">inline code</code> <a href=\"/kitchen-sink-block\" rel=\"obfuscate\" target=\"_blank\">link</a> <mark>marker</mark> <s class=\"cdx-strikethrough\">strikethrough</s>"
+        "text": "See <b>bold</b> <i>italic</i> <code class=\"inline-code\">inline code</code> <a href=\"/kitchen-sink-block\" rel=\"obfuscate\" target=\"_blank\">link ➜</a> <mark>marker</mark> <s class=\"cdx-strikethrough\">strikethrough</s>"
       },
       "tunes": {
         "anchor": "",

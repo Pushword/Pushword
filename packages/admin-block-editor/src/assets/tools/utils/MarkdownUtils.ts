@@ -333,6 +333,7 @@ export class MarkdownUtils {
   static convertInlineHtmlToMarkdown(html: string): string {
     html = MarkdownUtils.fixer(html)
     return html
+      .replace('&#10140;', '➜')
       .replace(/<b>(.*?)<\/b>/gi, '**$1**')
       .replace(/<i>(.*?)<\/i>/gi, '_$1_')
       .replace(/<code( class="inline-code")?>(.*?)<\/code>/gi, '`$2`')
