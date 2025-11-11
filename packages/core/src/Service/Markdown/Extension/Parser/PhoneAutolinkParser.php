@@ -27,6 +27,12 @@ final class PhoneAutolinkParser implements InlineParserInterface
     {
         $cursor = $inlineContext->getCursor();
 
+        // Ne pas parser si on est dans du HTML (après un '>')
+        $previousChar = $cursor->peek(-1);
+        if ('>' === $previousChar) {
+            return false;
+        }
+
         // Vérifier qu'on a bien un numéro de téléphone
         if (0 === preg_match(self::PHONE_REGEX, $cursor->getRemainder(), $matches)) {
             return false;

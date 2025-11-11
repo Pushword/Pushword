@@ -102,6 +102,13 @@ class MarkdownExtensionTest extends KernelTestCase
 
         self::assertStringContainsString('<span', $result);
         self::assertStringNotContainsString('contact@example.com', $result);
+
+        $parser = $this->getMarkdownParser();
+        $text = str_replace('<p>', '', $result); // quick hack to test if inline parser is parsing twice
+        $result = $parser->transform($text);
+
+        self::assertStringContainsString('<span', $result);
+        self::assertStringNotContainsString('contact@example.com', $result);
     }
 
     // ===== Tests de l'autolink téléphone =====

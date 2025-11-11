@@ -28,6 +28,13 @@ final class EmailAutolinkParser implements InlineParserInterface
     {
         $cursor = $inlineContext->getCursor();
 
+        // Ne pas parser si on est dans du HTML (après un '>')
+        // Évite de transformer des emails obfusqués 2 fois
+        $previousChar = $cursor->peek(-1);
+        if ('>' === $previousChar) {
+            return false;
+        }
+
         // Vérifier qu'on a bien un email
         if (0 === preg_match(self::EMAIL_REGEX, $cursor->getRemainder(), $matches)) {
             return false;
