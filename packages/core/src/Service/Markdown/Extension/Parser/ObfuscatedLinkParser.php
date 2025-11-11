@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Service\Markdown\Extension\Parser;
 
+use League\CommonMark\Node\Inline\Text;
 use League\CommonMark\Parser\Inline\InlineParserInterface;
 use League\CommonMark\Parser\Inline\InlineParserMatch;
 use League\CommonMark\Parser\InlineParserContext;
@@ -9,13 +10,36 @@ use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
 
 /**
  * Parse les liens obfusqués dans le markdown.
- * Syntax: #[text](url) or #[text](url){#id} or #[text](url){.class}.
+ * Syntax: #[text](url) or #[text](url){#id} or #[text](url){.class} or #[text](url){attr="value"}.
  */
 final class ObfuscatedLinkParser implements InlineParserInterface
 {
     public function getMatchDefinition(): InlineParserMatch
     {
         return InlineParserMatch::string('#[');
+    }
+
+    /**
+     * Parse une chaîne d'attributs HTML en tableau.
+     * Exemple : 'target="_blank"' => ['target' => '_blank']
+     * Supporte plusieurs attributs : 'target="_blank" rel="noopener"'.
+     *
+     * @return array<string, string>
+     */
+    private function parseHtmlAttributes(string $attributeString): array
+    {
+        $attributes = [];
+
+        // Pattern pour capturer attr="value" ou attr='value'
+        $pattern = '/(\w+)\s*=\s*["\']([^"\']*)["\']/U';
+
+        if (preg_match_all($pattern, $attributeString, $matches, \PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $attributes[$match[1]] = $match[2];
+            }
+        }
+
+        return $attributes;
     }
 
     public function parse(InlineParserContext $inlineContext): bool
@@ -29,12 +53,21 @@ final class ObfuscatedLinkParser implements InlineParserInterface
         $cursor->advanceBy(2);
 
         // Chercher le texte du lien jusqu'à ']'
-        $text = $cursor->match('/^([^\]]+)\]/');
+        $text = $cursor->match('/^([^\]]+)/');
         if (null === $text) {
             $cursor->restoreState($initialState);
 
             return false;
         }
+
+        // Vérifier qu'on a bien un ']'
+        if (']' !== $cursor->getCharacter()) {
+            $cursor->restoreState($initialState);
+
+            return false;
+        }
+
+        $cursor->advanceBy(1);
 
         // Vérifier qu'on a bien un '('
         if ('(' !== $cursor->getCharacter()) {
@@ -46,16 +79,26 @@ final class ObfuscatedLinkParser implements InlineParserInterface
         $cursor->advanceBy(1);
 
         // Chercher l'URL jusqu'à ')'
-        $url = $cursor->match('/^([^\)]+)\)/');
+        $url = $cursor->match('/^([^\)]+)/');
         if (null === $url) {
             $cursor->restoreState($initialState);
 
             return false;
         }
 
-        // Vérifier s'il y a des attributs {#id} ou {.class}
+        // Vérifier qu'on a bien un ')'
+        if (')' !== $cursor->getCharacter()) {
+            $cursor->restoreState($initialState);
+
+            return false;
+        }
+
+        $cursor->advanceBy(1);
+
+        // Vérifier s'il y a des attributs {#id}, {.class} ou {attr="value"}
         $attributeClass = null;
         $attributeId = null;
+        $htmlAttributes = [];
 
         if ('{' === $cursor->getCharacter()) {
             $cursor->advanceBy(1);
@@ -68,18 +111,27 @@ final class ObfuscatedLinkParser implements InlineParserInterface
                     $attributeId = substr($attributes, 1);
                 } elseif (str_starts_with($attributes, '.')) {
                     $attributeClass = substr($attributes, 1);
+                } else {
+                    // Parse les attributs HTML génériques: attr="value" ou attr='value'
+                    $htmlAttributes = $this->parseHtmlAttributes($attributes);
                 }
             }
         }
 
         // Créer le node ObfuscatedLink
-        $link = new ObfuscatedLink($url, $text);
+        $link = new ObfuscatedLink($url);
+        $link->appendChild(new Text($text));
+
         if (null !== $attributeClass) {
             $link->setAttributeClass($attributeClass);
         }
 
         if (null !== $attributeId) {
             $link->setAttributeId($attributeId);
+        }
+
+        if ([] !== $htmlAttributes) {
+            $link->setAttributes($htmlAttributes);
         }
 
         $inlineContext->getContainer()->appendChild($link);

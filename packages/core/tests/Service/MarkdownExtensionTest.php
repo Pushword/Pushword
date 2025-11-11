@@ -80,6 +80,16 @@ class MarkdownExtensionTest extends KernelTestCase
         self::assertStringContainsString('id="main-link"', $result);
     }
 
+    public function testObfuscatedLinkWithTarget(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform('Visit #[my site](https://piedweb.com){target="_blank"}');
+
+        self::assertStringContainsString('target="_blank"', $result);
+        self::assertStringContainsString('data-rot="_cvrqjro.pbz"', $result);
+        self::assertStringContainsString('my site</span>', $result);
+    }
+
     // ===== Tests du rendu personnalisé des images =====
 
     public function testCustomImageRenderer(): void

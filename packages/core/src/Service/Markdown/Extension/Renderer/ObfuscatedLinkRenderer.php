@@ -26,7 +26,8 @@ final readonly class ObfuscatedLinkRenderer implements NodeRendererInterface
 
         /** @var ObfuscatedLink $node */
         // Récupérer les attributs
-        $attr = [];
+        $attr = $node->getAttributes();
+
         if (null !== $node->getAttributeClass()) {
             $attr['class'] = $node->getAttributeClass();
         }
