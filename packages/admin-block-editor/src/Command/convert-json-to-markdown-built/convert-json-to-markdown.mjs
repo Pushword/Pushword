@@ -3066,7 +3066,7 @@ class Paragraph extends n$1 {
     if (!data || !data.text) {
       return "";
     }
-    let markdown = data.text.replace("&nbsp;", " ").split("<br>").join("\n");
+    let markdown = data.text.replace(/(&nbsp;| |\u00A0)+ */g, " ").split("<br>").join("  \n");
     markdown = MarkdownUtils.convertInlineHtmlToMarkdown(markdown);
     const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown);
     return MarkdownUtils.addAttributes(formattedMarkdown, tunes);
@@ -6230,7 +6230,7 @@ class Gallery extends AbstractMediaTool {
     if (data && typeof data === "object" && "items" in data && Array.isArray(data.items)) {
       for (const item of data.items) {
         if (typeof item !== "object") continue;
-        let media = item.media || item.file?.media || (item.url ? MediaUtils.extractMediaName(item.url) : null);
+        let media = item.media || (item.url ? MediaUtils.extractMediaName(item.url) : null) || item.file?.media;
         if (!media) continue;
         normalizedItems.push({ media, caption: item.caption || "" });
       }
@@ -6243,15 +6243,16 @@ class Gallery extends AbstractMediaTool {
       if (typeof item === "string") {
         normalizedItems.push({ media: item, caption: "" });
       } else if (typeof item === "object" && item !== null) {
-        if ("file" in item && item.file && "media" in item.file) {
-          normalizedItems.push({ media: item.file.media, caption: item.caption || "" });
+        let media = null;
+        if ("media" in item && item.media) {
+          media = item.media;
         } else if ("url" in item && item.url) {
-          normalizedItems.push({
-            media: MediaUtils.extractMediaName(item.url),
-            caption: item.caption || ""
-          });
-        } else if ("media" in item) {
-          normalizedItems.push({ media: item.media, caption: item.caption || "" });
+          media = MediaUtils.extractMediaName(item.url);
+        } else if ("file" in item && item.file && "media" in item.file) {
+          media = item.file.media;
+        }
+        if (media) {
+          normalizedItems.push({ media, caption: item.caption || "" });
         }
       }
     }

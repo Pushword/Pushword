@@ -75,8 +75,8 @@ export default class Gallery extends AbstractMediaTool {
         if (typeof item !== 'object') continue
         let media =
           item.media ||
-          item.file?.media ||
-          (item.url ? MediaUtils.extractMediaName(item.url) : null)
+          (item.url ? MediaUtils.extractMediaName(item.url) : null) ||
+          item.file?.media
         if (!media) continue
         normalizedItems.push({ media: media, caption: item.caption || '' })
       }
@@ -92,15 +92,18 @@ export default class Gallery extends AbstractMediaTool {
       if (typeof item === 'string') {
         normalizedItems.push({ media: item, caption: '' })
       } else if (typeof item === 'object' && item !== null) {
-        if ('file' in item && item.file && 'media' in item.file) {
-          normalizedItems.push({ media: item.file.media, caption: item.caption || '' })
+        // Priorité: item.media > item.url > item.file?.media
+        let media = null
+        if ('media' in item && item.media) {
+          media = item.media
         } else if ('url' in item && item.url) {
-          normalizedItems.push({
-            media: MediaUtils.extractMediaName(item.url),
-            caption: item.caption || '',
-          })
-        } else if ('media' in item) {
-          normalizedItems.push({ media: item.media, caption: item.caption || '' })
+          media = MediaUtils.extractMediaName(item.url)
+        } else if ('file' in item && item.file && 'media' in item.file) {
+          media = item.file.media
+        }
+
+        if (media) {
+          normalizedItems.push({ media: media, caption: item.caption || '' })
         }
       }
     }
