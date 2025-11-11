@@ -64,7 +64,8 @@ final readonly class LinkProvider
             $path = $this->router->generate($path);
         }
 
-        if ($this->currentUserIsAdmin()) { // facilite le debug
+        $class = $attr['class'] ?? '';
+        if ($this->currentUserIsAdmin() && ! str_contains($class, 'glightbox')) { // facilite le debug
             $attr['title'] = (isset($attr['title']) ? $attr['title'].' - ' : '').'obf';
         }
 

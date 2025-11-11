@@ -29,6 +29,10 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] change versionner to rely on flat and create .example-file.md~version-200020210 instead of serialized json, add a command to clear version
   - [ ] diffchecker based on Monaco
 
+- [Core] fix glightbox
+  - [ ] video in lightbox
+  - [ ] simple image self linked (the pb is more a missing code after migrating to markdown block)
+
 - [Flat]
   - [x] mettre à jour le dossier par défault : content/%domain%/
   - [ ] prefer yaml over json for media exporter

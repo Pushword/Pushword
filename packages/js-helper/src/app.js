@@ -15,6 +15,7 @@ import { allClickable } from './clickable.js'
 
 let lightbox
 function onDomChanged() {
+  console.log('onDomChanged')
   liveBlock()
   convertImageLinkToWebPLink()
   uncloakLinks()
@@ -29,8 +30,8 @@ function onDomChanged() {
 }
 
 function onPageLoaded() {
-  onDomChanged()
   lightbox = new Glightbox()
+  onDomChanged()
 }
 
 document.addEventListener('DOMContentLoaded', onPageLoaded())

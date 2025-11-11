@@ -4,6 +4,8 @@
 @import './utility.css'; /* node_modules/@pushword/js-helper/src/utility.css */
 /* @plugin "@tailwindcss/forms"; */
 
+@import './../node_modules/glightbox/dist/css/glightbox.css';
+
 /*
 Tailwind content sources for all packages
 -----------------------------------------
