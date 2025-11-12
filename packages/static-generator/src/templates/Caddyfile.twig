@@ -1,4 +1,4 @@
-(performance) {
+(performance_{{ domain_snake }}) {
 	encode zstd br gzip
 
 	file_server {
@@ -6,7 +6,7 @@
 	}
 }
 
-(cache) {
+(cache_{{ domain_snake }}) {
 	# Default: 1 hour
 	header Cache-Control "max-age=3600, public"
 
@@ -15,7 +15,7 @@
 	header @assets Cache-Control "max-age=31536000, public"
 }
 
-(security) {
+(security_{{ domain_snake }}) {
 	header {
 		X-Content-Type-Options nosniff
 		X-Frame-Options SAMEORIGIN
@@ -33,9 +33,9 @@
     {% block before_rules %}{% endblock %}
 	root * {$ROOT_DIR}/
 
-	import performance
-	import cache
-	import security
+	import performance_{{ domain_snake }}
+	import cache_{{ domain_snake }}
+	import security_{{ domain_snake }}
 
 	# Redirects
 	redir /index.{html,php,aspx,cfm} / 301
