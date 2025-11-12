@@ -2,6 +2,7 @@ import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-d
 import { HyperlinkTuneData } from '../HyperlinkTune/HyperlinkTune'
 import * as prettier from 'prettier/standalone'
 import SmartQuotes from './SmartQuotes'
+import he from 'he'
 
 export interface BlockTuneDataPushword extends BlockTuneData {
   anchor?: string
@@ -332,8 +333,10 @@ export class MarkdownUtils {
 
   static convertInlineHtmlToMarkdown(html: string): string {
     html = MarkdownUtils.fixer(html)
+    // Decode HTML entities first (including numeric ones like &#10140;)
+    html = he.decode(html)
+    
     return html
-      .replace('&#10140;', '➜')
       .replace(/<b>(.*?)<\/b>/gi, '**$1**')
       .replace(/<i>(.*?)<\/i>/gi, '_$1_')
       .replace(/<code( class="inline-code")?>(.*?)<\/code>/gi, '`$2`')

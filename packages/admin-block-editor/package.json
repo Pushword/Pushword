@@ -18,6 +18,7 @@
     "@editorjs/table": "^2.1",
     "@pushword/js-helper": "file:../js-helper",
     "@sotaproject/strikethrough": "^1.0.1",
+    "@types/he": "^1.2.3",
     "autoprefixer": "^10.4",
     "core-js": "^3.33",
     "editorjs-drag-drop": "^1.1",
@@ -42,6 +43,7 @@
   },
   "dependencies": {
     "hast-util-to-mdast": "^10.1.2",
+    "he": "^1.2.0",
     "jsonrepair": "^3.13.1",
     "prettier": "^3.6",
     "rehype-parse": "^9.0.1",
