@@ -17,6 +17,8 @@ class PagesGenerator extends PageGenerator
         foreach ($pages as $page) {
             $this->generatePage($page);
         }
+
+        $this->finishCompression();
     }
 
     public function generatePageBySlug(string $slug, ?string $host = null): void
@@ -29,5 +31,7 @@ class PagesGenerator extends PageGenerator
         foreach ($pages as $page) {
             $this->generatePage($page);
         }
+
+        $this->finishCompression();
     }
 }

@@ -45,7 +45,11 @@ class StaticGeneratorTest extends KernelTestCase
         self::assertTrue(str_contains($output, 'success'));
 
         self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/.htaccess');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/.Caddyfile');
         self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html.zst');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html.br');
+        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html.gz');
         self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/robots.txt');
         self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/favicon.ico');
 

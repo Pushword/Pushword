@@ -114,6 +114,37 @@ class PageGenerator extends AbstractGenerator
         }
 
         $this->filesystem->dumpFile($destination, $content);
+
+        // Generate compressed sidecars for static content
+        if ($this->responseIsHtml($response) || str_contains($destination, '.xml')) {
+            $this->generateCompressedSidecars($destination, $content);
+        }
+    }
+
+    private ?Compressor $compressor = null;
+
+    private function generateCompressedSidecars(string $filePath, string $content): void
+    {
+        if (! $this->useGenerator(PagesCompressor::class)) {
+            return;
+        }
+
+        $compressor = $this->compressor ??= new Compressor();
+
+        foreach ($compressor->availableCompressors as $compressorName) {
+            $compressor->compress($filePath, $compressorName);
+        }
+    }
+
+    /**
+     * Wait for all compression processes to finish.
+     * Should be called after generating all pages.
+     */
+    public function finishCompression(): void
+    {
+        if (null !== $this->compressor) {
+            $this->compressor->waitForCompressionToFinish();
+        }
     }
 
     private function setErrorFor(string $liveUri, ?Page $page = null, string $msg = ''): void

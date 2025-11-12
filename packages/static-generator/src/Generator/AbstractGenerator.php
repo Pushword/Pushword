@@ -68,9 +68,21 @@ abstract class AbstractGenerator implements GeneratorInterface
      */
     protected function mustSymlink(): bool
     {
-        return \is_array($this->app->get('static_generators'))
-            && \in_array(CNAMEGenerator::class, $this->app->getArray('static_generators'), true) ? false
-            : (bool) $this->app->get('static_symlink');
+        return $this->useGenerator(CNAMEGenerator::class) ? false
+          : (bool) $this->app->get('static_symlink');
+    }
+
+    /**
+     * @param class-string<GeneratorInterface> $generatorClass
+     */
+    protected function useGenerator(string $generatorClass): bool
+    {
+        $appGenerators = $this->app->getArray('static_generators');
+        if (! is_array($appGenerators)) {
+            return false;
+        }
+
+        return in_array($generatorClass, $appGenerators, true);
     }
 
     protected function copy(string $file): void

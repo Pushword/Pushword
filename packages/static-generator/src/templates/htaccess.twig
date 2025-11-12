@@ -71,6 +71,52 @@ ErrorDocument 500 /404
 RewriteRule ^\.Caddyfile$ - [F]
 
 #---
+# Precompressed Files (Zstandard, Brotli & Gzip)
+#---
+<IfModule mod_rewrite.c>
+    # Check for Zstandard support (priority: zstd > brotli > gzip)
+    RewriteCond %{HTTP:Accept-Encoding} zstd
+    RewriteCond %{REQUEST_FILENAME}.zst -f
+    RewriteRule ^(.*)$ $1.zst [L]
+
+    # Check for Brotli support
+    RewriteCond %{HTTP:Accept-Encoding} br
+    RewriteCond %{REQUEST_FILENAME}.br -f
+    RewriteRule ^(.*)$ $1.br [L]
+
+    # Check for Gzip support
+    RewriteCond %{HTTP:Accept-Encoding} gzip
+    RewriteCond %{REQUEST_FILENAME}.gz -f
+    RewriteRule ^(.*)$ $1.gz [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Serve correct encoding and content type for precompressed files
+    <FilesMatch "\.zst$">
+        Header set Content-Encoding zstd
+        Header set Vary Accept-Encoding
+    </FilesMatch>
+
+    <FilesMatch "\.br$">
+        Header set Content-Encoding br
+        Header set Vary Accept-Encoding
+    </FilesMatch>
+
+    <FilesMatch "\.gz$">
+        Header set Content-Encoding gzip
+        Header set Vary Accept-Encoding
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_mime.c>
+    # Preserve MIME types for compressed files
+    RemoveType .gz .br .zst
+    AddEncoding zstd .zst
+    AddEncoding br .br
+    AddEncoding gzip .gz
+</IfModule>
+
+#---
 # Security Headers
 #---
 <IfModule mod_headers.c>

@@ -34,10 +34,14 @@ class HtmlMinifier
             });
         }
 
-        $html = preg_replace('/\b\n{1,}\b/u', ' ', $html) ?? $html; // remove new line between two words
-        $html = preg_replace('/\h{2,}/u', ' ', $html) ?? $html; // remove multiple horizontal whitespaces
-        $html = preg_replace('/\n\h{1,}/u', "\n", $html) ?? $html; // remove whitespace starting a new line
-        $html = preg_replace('/\n{1,}/u', '', $html) ?? $html; // remove all newlines (a bit extreme ?!)
+        // remove new line between two words
+        $html = preg_replace('/\b\n{1,}\b/u', ' ', $html) ?? $html;
+        // remove multiple horizontal whitespaces
+        $html = preg_replace('/\h{2,}/u', ' ', $html) ?? $html;
+        // remove whitespace starting a new line
+        $html = preg_replace('/\n\h{1,}/u', "\n", $html) ?? $html;
+        // remove all newlines (a bit extreme ?!)
+        $html = preg_replace('/\n{1,}/u', '', $html) ?? $html;
         // $html = preg_replace('/\n{2,}/', "\n", $html);
 
         // Restore the original content of <pre> and <textarea>

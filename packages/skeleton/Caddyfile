@@ -46,4 +46,4 @@
 }
 
 # -- If you use static import Caddyfile generated --
-# import static/example.tld/Caddyfile
+# import static/example.tld/.Caddyfile
