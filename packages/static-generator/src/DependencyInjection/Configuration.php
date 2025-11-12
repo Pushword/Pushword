@@ -2,6 +2,7 @@
 
 namespace Pushword\StaticGenerator\DependencyInjection;
 
+use Pushword\StaticGenerator\Generator\CaddyfileGenerator;
 use Pushword\StaticGenerator\Generator\CNAMEGenerator;
 use Pushword\StaticGenerator\Generator\CopierGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
@@ -33,6 +34,7 @@ class Configuration implements ConfigurationInterface
         CopierGenerator::class,
         MediaGenerator::class,
         HtaccessGenerator::class,
+        CaddyfileGenerator::class,
     ];
 
     /**

@@ -335,7 +335,7 @@ export class MarkdownUtils {
     html = MarkdownUtils.fixer(html)
     // Decode HTML entities first (including numeric ones like &#10140;)
     html = he.decode(html)
-    
+
     return html
       .replace(/<b>(.*?)<\/b>/gi, '**$1**')
       .replace(/<i>(.*?)<\/i>/gi, '_$1_')

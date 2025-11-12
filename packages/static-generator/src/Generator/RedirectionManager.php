@@ -9,7 +9,7 @@ class RedirectionManager extends AbstractGenerator
     /**
      * Used in .htaccess generation.
      *
-     * @var array<int, array{0: string, 1: string, 2: int}>
+     * @var array<int, array{0: string, 1: string, 2: int}> where 0 is the from, 1 is the to, 2 is the code
      */
     protected $redirections = [];
 
@@ -31,7 +31,7 @@ class RedirectionManager extends AbstractGenerator
     }
 
     /**
-     * @return array<int, array{0: string, 1: string, 2: int}>
+     * @return array<int, array{0: string, 1: string, 2: int}> where 0 is the from, 1 is the to, 2 is the code
      */
     public function get(): array
     {

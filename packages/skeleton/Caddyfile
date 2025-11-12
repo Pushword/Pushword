@@ -3,8 +3,47 @@
 	frankenphp
 }
 
+(performance) {
+	encode zstd br gzip
+
+	file_server {
+		precompressed zstd br gzip
+	}
+}
+
+(cache) {
+	# Images & fonts: 1 year
+	@static path *.ico *.jpg *.jpeg *.png *.gif *.webp *.avif *.svg *.woff *.woff2 *.ttf *.eot
+	header @static Cache-Control "max-age=31536000, public"
+
+	# JS & CSS: 1 week
+	@scripts path *.js *.css
+	header @scripts Cache-Control "max-age=604800, public"
+}
+
+(security) {
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
+
 :0 {
 	root * public/
-	encode zstd br gzip
-	php_server
+
+	php_server {
+		resolve_root_symlink
+	    # Uncomment this for worker mode (no noticeable difference in performance)
+        # root public/
+        # worker index.php 1
+    }
+
+	import performance
+	import cache
+	import security
 }
+
+# -- If you use static import Caddyfile generated --
+# import static/example.tld/Caddyfile

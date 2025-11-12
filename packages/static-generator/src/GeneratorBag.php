@@ -2,6 +2,7 @@
 
 namespace Pushword\StaticGenerator;
 
+use Pushword\StaticGenerator\Generator\CaddyfileGenerator;
 use Pushword\StaticGenerator\Generator\CNAMEGenerator;
 use Pushword\StaticGenerator\Generator\CopierGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
@@ -22,6 +23,7 @@ class GeneratorBag
         private readonly CopierGenerator $copierGenerator,
         private readonly ErrorPageGenerator $errorPageGenerator,
         private readonly HtaccessGenerator $htaccessGenerator,
+        private readonly CaddyfileGenerator $caddyfileGenerator,
         private readonly MediaGenerator $mediaGenerator,
         private readonly PagesGenerator $pagesGenerator,
         private readonly RobotsGenerator $robotsGenerator,

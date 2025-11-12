@@ -1,0 +1,84 @@
+(performance) {
+	encode zstd br gzip
+
+	file_server {
+		precompressed zstd br gzip
+	}
+}
+
+(cache) {
+	# Default: 1 hour
+	header Cache-Control "max-age=3600, public"
+
+	# Assets: 1 year
+	@assets path *.ico *.pdf *.flv *.jpg *.jpeg *.png *.gif *.webp *.avif *.svg *.eot *.ttf *.woff *.woff2 *.js *.css
+	header @assets Cache-Control "max-age=31536000, public"
+}
+
+(security) {
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	@dotfiles path_regexp /\..*
+	respond @dotfiles 403
+}
+
+
+
+{{ domain }} {
+    {% block before_rules %}{% endblock %}
+	root * {$ROOT_DIR}/
+
+	import performance
+	import cache
+	import security
+
+	# Redirects
+	redir /index.{html,php,aspx,cfm} / 301
+
+
+	{% if redirections is not empty %}
+	# Page Redirections
+    {{ redirections|raw }}
+	{% endif %}
+
+
+	# Old media redirect
+	@old_media path_regexp ^/media/(small_thumb|thumb|height_300|xs|sm|md|lg|xl|default)/media(.*)$
+	redir @old_media /media/{re.1}{re.2} 301
+
+	# HTML extension handling
+	@has_slash path_regexp ^/(.+)/$
+	redir @has_slash /{re.1} 301
+
+	@no_ext {
+		path_regexp ^/([a-zA-Z0-9\-_/\.]+)$
+		file {
+			try_files {path}.html
+		}
+	}
+	rewrite @no_ext {path}.html
+
+	# Permit to redirect slug.html to slug
+	@html_ext path_regexp ^(.+)\.html$
+	redir @html_ext {re.1} 301
+
+
+	# Error pages
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+    {% block after_rules %}{% endblock %}
+}
+
+
+# Redirect www subfolder to domain.tld
+# The htaccess version has more scenarios
+www.{{ domain }} {
+    redir https://{{ domain }}{uri} 301
+}
