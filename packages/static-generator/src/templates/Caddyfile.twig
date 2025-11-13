@@ -31,11 +31,13 @@
 
 {{ domain }} {
     {% block before_rules %}{% endblock %}
-	root * {$ROOT_DIR}/
+	root * {{ staticDir }}
 
 	import performance_{{ domain_snake }}
 	import cache_{{ domain_snake }}
 	import security_{{ domain_snake }}
+
+    file_server
 
 	# Redirects
 	redir /index.{html,php,aspx,cfm} / 301
