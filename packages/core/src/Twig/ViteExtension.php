@@ -6,10 +6,10 @@ use Pentatrion\ViteBundle\Service\EntrypointsLookupCollection;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
-final class ViteExtension
+final readonly class ViteExtension
 {
     public function __construct(
-        private readonly ?EntrypointsLookupCollection $entrypointsLookupCollection = null,
+        private ?EntrypointsLookupCollection $entrypointsLookupCollection = null,
     ) {
     }
 

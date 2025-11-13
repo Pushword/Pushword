@@ -13,20 +13,53 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 ## To 1.0.0-rc80
 
-- Default static website are now exported under `static/%main_host%` directory instead of `%main_host%`.
-- remove `admin_block_editor_type_to_prose` config from [AdminBlockEditor] (not used)
-- in your `config/routes.yaml`, replace `resource: "@PushwordCoreBundle/Resources/config/routes/all.yaml"` by `resource: "@PushwordCoreBundle/Resources/config/routes.yaml"`
+- [ ] Default static website are now exported under `static/%main_host%` directory instead of `%main_host%`.
+- [ ] in your `config/routes.yaml`, replace `resource: "@PushwordCoreBundle/Resources/config/routes/all.yaml"` by `resource: "@PushwordCoreBundle/Resources/config/routes.yaml"`
 
-### To tailwind v4 and puswhord/assets
+```bash
+sed -i "s|@PushwordCoreBundle/Resources/config/routes/all.yaml|@PushwordCoreBundle/Resources/config/routes.yaml|g" ./config/routes.yaml
+
+```
+
+### To tailwind v4 and puswhord/js-helper upgrades
+
+- [ ] update your template files to tailwind v4 classes (AI recommended, prompt below)
+
+```
+Scan all files inside the ./templates directory.
+Identify and update every Tailwind CSS class name from version 3 syntax to version 4 syntax, ensuring full compatibility with Tailwind 4’s new naming conventions and features.
+https://tailwindcss.com/docs/upgrade-guide#changes-from-v3`)
+```
+
+- [ ] transform your `./assets/webpack.config.js` to `./vite.config.js`
+      See [`vendor/pushword/skeleton/vite.config.js`](https://github.com/Pushword/Pushword/blob/main/packages/skeleton/vite.config.js)
+- [ ] same for `./assets/package.json` to `./package.json`
+- [ ] install `composer require pentatrion/vite-bundle`
+- [ ] some utility has been moved from the webpack config helper function to the app.css file, update your app.css to use the new utilities
+- [ ] update your project configuration (see example in `packages/docs/assets/`)
+
+```yaml
+# FROM
+...
+        assets:
+          {
+            javascripts: ["/assets/app.js?6"],
+            stylesheets: ["/assets/style.css?65"],
+          },
+
+# TO
+        assets:
+          {
+            vite_javascripts: ["app"],
+            vite_stylesheets: ["theme"],
+          },
+
+```
+
+Notes :
 
 - heropattern plugin has been dropped, import manually the properties used in your css (see https://heropatterns.com)
 - multicolumn plugin has been dropped
-- update your template files to tailwind v4 classes (AI recommended `Scan all files inside the ./templates directory.
-Identify and update every Tailwind CSS class name from version 3 syntax to version 4 syntax, ensuring full compatibility with Tailwind 4’s new naming conventions and features.
-https://tailwindcss.com/docs/upgrade-guide#changes-from-v3`)
-- update your project configuration (see example in `packages/docs/assets/`)
-- transform your `./assets/webpack.config.js` to `./vite.config.js` (see `vendor/pushword/skeleton/vite.config.js`), same for `./assets/package.json` to `./package.json` and install `composer require pentatrion/vite-bundle`
-- some utility has been moved from the webpack config helper function to the app.css file, update your app.css to use the new utilities
 
 ### To editorjs backed in markdown
 

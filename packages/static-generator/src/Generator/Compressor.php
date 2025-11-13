@@ -72,8 +72,8 @@ class Compressor
             $process = Process::fromShellCommandline($cmd);
             $process->start();
             $this->runningProcesses[] = $process;
-        } catch (Exception $e) {
-            throw new Exception('Failed to compress `'.$filePath.'` with `'.$compressorName.'`: '.$e->getMessage());
+        } catch (Exception $exception) {
+            throw new Exception('Failed to compress `'.$filePath.'` with `'.$compressorName.'`: '.$exception->getMessage(), $exception->getCode(), $exception);
         }
     }
 

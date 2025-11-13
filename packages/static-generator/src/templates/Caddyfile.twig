@@ -29,7 +29,12 @@
 
 
 
-{% block route %}{{ domain }}{% endblock %} {
+{% block route %}http://{{ domain }} {
+        redir https://{host}{uri} permanent
+    }
+}
+
+{{ domain }}{% endblock %} {
     {% block before_rules %}{% endblock %}
 
 	root * {{ staticDir }}

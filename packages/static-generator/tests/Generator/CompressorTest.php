@@ -87,8 +87,8 @@ class CompressorTest extends TestCase
             $compressor->waitForCompressionToFinish();
 
             $compressedFile = $testFile.$extension;
-            self::assertFileExists($compressedFile, "Le fichier compressé avec {$compressorName} devrait exister");
-            self::assertGreaterThan(0, filesize($compressedFile), "Le fichier compressé avec {$compressorName} ne devrait pas être vide");
+            self::assertFileExists($compressedFile, sprintf('Le fichier compressé avec %s devrait exister', $compressorName));
+            self::assertGreaterThan(0, filesize($compressedFile), sprintf('Le fichier compressé avec %s ne devrait pas être vide', $compressorName));
 
             // Nettoyer le fichier compressé pour le prochain test
             $this->filesystem->remove($compressedFile);
@@ -129,7 +129,7 @@ class CompressorTest extends TestCase
             self::assertLessThan(
                 $originalSize,
                 $compressedSize,
-                "Le fichier compressé avec {$compressorName} devrait être plus petit que l'original"
+                sprintf("Le fichier compressé avec %s devrait être plus petit que l'original", $compressorName)
             );
 
             // Nettoyer
@@ -148,8 +148,8 @@ class CompressorTest extends TestCase
         // Créer plusieurs fichiers de test
         $files = [];
         for ($i = 1; $i <= 3; ++$i) {
-            $testFile = $this->tempDir."/test{$i}.html";
-            $content = str_repeat("<p>Test content {$i}</p>", 100);
+            $testFile = $this->tempDir.sprintf('/test%d.html', $i);
+            $content = str_repeat(sprintf('<p>Test content %d</p>', $i), 100);
             $this->filesystem->dumpFile($testFile, $content);
             $files[] = $testFile;
         }

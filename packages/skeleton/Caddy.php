@@ -8,10 +8,13 @@ declare(strict_types=1);
  */
 class Caddy
 {
-    private const PIDFILE = '/tmp/caddy.pid';
+    private const string PIDFILE = '/tmp/caddy.pid';
 
-    private const LOGFILE = '/tmp/caddy-output.log';
+    private const string LOGFILE = '/tmp/caddy-output.log';
 
+    /**
+     * @param array<int, mixed> $argv
+     */
     public function run(array $argv): int
     {
         $command = $argv[1] ?? 'start';
@@ -30,7 +33,7 @@ class Caddy
         if (file_exists(self::PIDFILE)) {
             $pid = (int) file_get_contents(self::PIDFILE);
             if ($this->isProcessRunning($pid)) {
-                echo "⚠️  Caddy is already running (PID: $pid)\n";
+                echo "⚠️  Caddy is already running (PID: {$pid})\n";
                 $this->showUrl();
 
                 return 0;
@@ -73,7 +76,7 @@ class Caddy
         if ($port) {
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
             echo "✅ Pushword is running!\n";
-            echo "🌐 Open: http://127.0.0.1:$port\n";
+            echo sprintf('🌐 Open: http://127.0.0.1:%s%s', $port, \PHP_EOL);
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
             echo "\n";
         } else {
@@ -90,7 +93,7 @@ class Caddy
         if (file_exists(self::PIDFILE)) {
             $pid = (int) file_get_contents(self::PIDFILE);
             if ($this->isProcessRunning($pid)) {
-                echo "🛑 Stopping Caddy (PID: $pid)...\n";
+                echo "🛑 Stopping Caddy (PID: {$pid})...\n";
                 posix_kill($pid, \SIGTERM);
                 @unlink(self::PIDFILE);
                 echo "✅ Caddy stopped\n";
@@ -123,7 +126,7 @@ class Caddy
         if (file_exists(self::PIDFILE)) {
             $pid = (int) file_get_contents(self::PIDFILE);
             if ($this->isProcessRunning($pid)) {
-                echo "✅ Caddy is running (PID: $pid)\n";
+                echo "✅ Caddy is running (PID: {$pid})\n";
                 $this->showUrl();
 
                 return 0;
@@ -145,7 +148,7 @@ class Caddy
         if (file_exists(self::LOGFILE)) {
             $port = $this->extractPort();
             if ($port) {
-                echo "🌐 Pushword URL: http://127.0.0.1:$port\n";
+                echo sprintf('🌐 Pushword URL: http://127.0.0.1:%s%s', $port, \PHP_EOL);
             }
         }
     }
@@ -187,7 +190,7 @@ class Caddy
     private function showUsage(): int
     {
         $scriptName = basename($GLOBALS['argv'][0] ?? 'Caddy.php');
-        echo "Usage: $scriptName {start|stop|restart|status}\n";
+        echo "Usage: {$scriptName} {start|stop|restart|status}\n";
         echo "\n";
         echo "Commands:\n";
         echo "  start   - Start FrankenPHP with Caddy (default)\n";

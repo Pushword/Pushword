@@ -166,8 +166,11 @@ final readonly class ConvertJsonToMarkdownCommand
             throw new RuntimeException(\sprintf("Le script de conversion n'existe pas : %s", $scriptPath));
         }
 
-        // Créer le processus
-        $process = new Process(['node', $scriptPath]);
+        // Créer un fichier temporaire pour le localStorage (requis par Node.js v25+)
+        $localStoragePath = sys_get_temp_dir().'/pushword-localstorage-'.uniqid().'.json';
+
+        // Créer le processus avec le flag --localstorage-file
+        $process = new Process(['node', '--localstorage-file='.$localStoragePath, $scriptPath]);
         $process->setInput($jsonContent);
         $process->setTimeout(60); // Timeout de 60 secondes
 
@@ -177,6 +180,11 @@ final readonly class ConvertJsonToMarkdownCommand
             return trim($process->getOutput());
         } catch (ProcessFailedException $processFailedException) {
             throw new RuntimeException(\sprintf('Erreur lors de la conversion JSON vers Markdown : %s', $processFailedException->getMessage()), 0, $processFailedException);
+        } finally {
+            // Nettoyer le fichier temporaire
+            if (file_exists($localStoragePath)) {
+                @unlink($localStoragePath);
+            }
         }
     }
 }

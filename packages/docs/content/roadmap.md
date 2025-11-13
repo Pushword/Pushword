@@ -32,6 +32,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [Core] fix glightbox or rollback to fslightbox
   - [ ] video in lightbox
   - [ ] simple image self linked (the pb is more a missing code after migrating to markdown block)
+  - [ ] convertImageLinkToWebPLink() is not working anymore
 
 - [Flat]
   - [x] mettre à jour le dossier par défault : content/%domain%/
