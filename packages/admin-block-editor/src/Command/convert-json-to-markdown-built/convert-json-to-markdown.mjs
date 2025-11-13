@@ -2829,7 +2829,8 @@ class MarkdownUtils {
       obfuscate = true;
     } else if (attrs.rel) extras.push(`rel="${attrs.rel}"`);
     if (attrs.target) extras.push(`target="${attrs.target}"`);
-    return (obfuscate ? "#" : "") + (extras.length ? `[${text}](${href}{${extras.join(" ")}})` : `[${text}](${href})`);
+    if (attrs.class) extras.push(`class="${attrs.class}"`);
+    return (obfuscate ? "#" : "") + (extras.length ? `[${text}](${href}){${extras.join(" ")}}` : `[${text}](${href})`);
   }
   static fixDash(text) {
     text = text.replace(new RegExp("(?<=[0-9 ])-(?=[0-9 ]|$)", "g"), "—");
@@ -2880,7 +2881,7 @@ class MarkdownUtils {
   static convertMarkdownToAnchor(markdown) {
     const isObfuscated = markdown.startsWith("#");
     const linkText = isObfuscated ? markdown.substring(1) : markdown;
-    const linkWithAttrsRegex = /\[([^\]]+)\]\(([^){]+)\{([^}]+)\}\)/;
+    const linkWithAttrsRegex = /\[([^\]]+)\]\(([^){]+)\)\{([^}]+)\}/;
     const simpleLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/;
     let match = linkText.match(linkWithAttrsRegex);
     let text;

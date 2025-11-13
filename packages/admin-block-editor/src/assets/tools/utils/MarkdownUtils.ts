@@ -247,10 +247,11 @@ export class MarkdownUtils {
       obfuscate = true
     } else if (attrs.rel) extras.push(`rel="${attrs.rel}"`)
     if (attrs.target) extras.push(`target="${attrs.target}"`)
+    if (attrs.class) extras.push(`class="${attrs.class}"`)
 
     return (
       (obfuscate ? '#' : '') +
-      (extras.length ? `[${text}](${href}{${extras.join(' ')}})` : `[${text}](${href})`)
+      (extras.length ? `[${text}](${href}){${extras.join(' ')}}` : `[${text}](${href})`)
     )
   }
 
@@ -352,7 +353,7 @@ export class MarkdownUtils {
     const linkText = isObfuscated ? markdown.substring(1) : markdown
 
     // Match markdown link with optional attributes: [text](url{attrs})
-    const linkWithAttrsRegex = /\[([^\]]+)\]\(([^){]+)\{([^}]+)\}\)/
+    const linkWithAttrsRegex = /\[([^\]]+)\]\(([^){]+)\)\{([^}]+)\}/
     const simpleLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/
 
     let match = linkText.match(linkWithAttrsRegex)

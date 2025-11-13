@@ -450,9 +450,25 @@
       }
     },
     {
-      "id": "dX8CQ2brb1",
       "type": "delimiter",
       "data": {}
+    },
+    {
+      "type": "header",
+      "data": {
+        "text": "Inline Tool",
+        "level": 2
+      }
+    },
+    {
+      "type": "paragraph",
+      "data": {
+        "text": "An <a href=\"/kitchen-sink-block\" target=\"_blank\" rel=\"obfuscate\" class=\"link-btn\" >link</a>."
+      },
+      "tunes": {
+        "anchor": "",
+        "textAlign": ""
+      }
     }
   ],
   "version": "2.31.0"
