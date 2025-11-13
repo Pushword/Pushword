@@ -1,11 +1,11 @@
 controllers:
-    resource:
-        path: ./Controller
-        namespace: Pushword\Admin\Controller
-    type: attribute
+  resource:
+    path: ./Controller
+    namespace: Pushword\Admin\Controller
+  type: attribute
 
 admin_area:
-  resource: '@SonataAdminBundle/Resources/config/routing/sonata_admin.xml'
+  resource: "@SonataAdminBundle/Resources/config/routing/sonata_admin.php"
   prefix: /admin
 
 _sonata_admin:
