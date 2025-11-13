@@ -11,7 +11,7 @@
 {% block body %}
 <link rel="stylesheet" href="/bundles/pushwordcore/style.css">
 
-<div class="max-w-screen-md p-3 mx-auto">
+<div class="max-w-3xl p-3 mx-auto">
 
 <div class="prose"><h1 class="mb-5"><small>{{ 'md_cs.page.h1'|trans }}</small> <br>{{ 'md_cs.page.subtitle'|trans }}</h1></div>
 
@@ -262,7 +262,7 @@ deux espace sont nécessaires.{% endapply %}</code></pre>
 
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>{% apply spaceless %}
-{{ '{{' }} video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }}|unprose {{ '}}' }}
+{{ '{{' }} video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }} {{ '}}' }}
 {% endapply %}</code></pre>
 </div>
 <div class="prose dark:prose-light">

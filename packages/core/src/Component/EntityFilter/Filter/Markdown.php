@@ -4,6 +4,7 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Service\Markdown\MarkdownParser;
+use Pushword\Core\Utils\MarkdownUtils;
 
 use function Safe\preg_replace;
 
@@ -25,24 +26,9 @@ class Markdown extends AbstractFilter
         return $this->render($this->string($propertyValue));
     }
 
-    private function normalizeNewLine(string $text): string
-    {
-        $text = str_replace("\r\n", "\n", $text);
-        $text = str_replace("\r", "\n", $text);
-
-        // small fix for prettier
-        $text = str_replace("}\n\n<", "}\n<", $text);
-
-        return $text;
-    }
-
     private function render(string $text): string
     {
-        $text = $this->normalizeNewLine($text);
-        $codeBlockProtector = new MarkdownProtectCodeBlock();
-        $text = $codeBlockProtector->protect($text);
-        $textPartList = explode("\n\n", $text);
-        $textPartList = $codeBlockProtector->restore($textPartList);
+        $textPartList = MarkdownUtils::prepareText($text);
 
         // must take care of code block
 
@@ -61,12 +47,12 @@ class Markdown extends AbstractFilter
         return $this->markdownParser->transform($text);
     }
 
-    public function transformPart(string $text): string
+    private function transformPart(string $text): string
     {
         // dump($text);
         $lines = explode("\n", $text);
         $attribute = '';
-        if ($this->startWithAttribute($lines[0])) {
+        if (MarkdownUtils::startWithAttribute($lines[0])) {
             $attribute = $lines[0];
             $attribute = str_replace('{#', '{id=', $attribute);
             unset($lines[0]);
@@ -75,7 +61,7 @@ class Markdown extends AbstractFilter
         $blockText = implode("\n", $lines);
 
         $textFiltered = null;
-        if (! $this->isItCodeBlock($blockText)) {
+        if (! MarkdownUtils::isItCodeBlock($blockText)) {
             $inlineCodeProtector = new MarkdownProtectInlineCode();
             $textFiltered = $inlineCodeProtector->protect($blockText);
             $textFiltered = $this->manager?->applyFilters($textFiltered, ['twig']);
@@ -84,7 +70,7 @@ class Markdown extends AbstractFilter
         }
 
         if (null !== $textFiltered) {
-            if ($this->isItRawBlock($blockText)) {
+            if (MarkdownUtils::isItRawBlock($blockText)) {
                 return $textFiltered;
             }
 
@@ -111,33 +97,5 @@ class Markdown extends AbstractFilter
         $text = str_replace(' viewBox="', ' viewbox="', $text);
 
         return $text;
-    }
-
-    private function isItCodeBlock(string $text): bool
-    {
-        return str_starts_with($text, '```') && str_ends_with($text, '```');
-    }
-
-    private function isItRawBlock(string $text): bool
-    {
-        $text = trim($text);
-
-        return str_starts_with($text, '{') || str_starts_with($text, '<');
-    }
-
-    private function startWithAttribute(string $firstLine): bool
-    {
-        $line = trim($firstLine);
-
-        if (str_starts_with($line, '{#') && (str_ends_with($line, '#}') || ! str_ends_with($line, '}'))) {
-            return false; // it's a twig comment
-        }
-
-        return
-            str_starts_with($line, '{')
-            && str_ends_with($line, '}')
-            && ! str_starts_with($line, '{{')
-            && ! str_starts_with($line, '{%')
-        ;
     }
 }

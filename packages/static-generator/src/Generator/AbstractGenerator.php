@@ -78,9 +78,6 @@ abstract class AbstractGenerator implements GeneratorInterface
     protected function useGenerator(string $generatorClass): bool
     {
         $appGenerators = $this->app->getArray('static_generators');
-        if (! is_array($appGenerators)) {
-            return false;
-        }
 
         return in_array($generatorClass, $appGenerators, true);
     }
