@@ -16,7 +16,7 @@ final class RoutePatterns
     public const string HOST = '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9]*[A-Za-z0-9])$';
 
     // Locale pattern: matches locale code like 'en', 'fr', 'en_US', 'en-US', 'fr_FR', 'fr-FR' with optional trailing slash
-    public const string LOCALE = '[a-zA-Z]{2}([-_][a-zA-Z]+)?\/|';
+    public const string LOCALE = '^([a-zA-Z]{2}([-_][a-zA-Z]+)?\/|)$';
 
     // Page slug patterns
     public const string SLUG = '[A-Za-z0-9_\/\.\-]*$';

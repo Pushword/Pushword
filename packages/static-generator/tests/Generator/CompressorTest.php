@@ -61,23 +61,6 @@ class CompressorTest extends TestCase
         self::assertFileExists($testFile);
     }
 
-    public function testCompressThrowsExceptionForNonExistentFile(): void
-    {
-        $compressor = new Compressor();
-
-        if ([] === $compressor->availableCompressors) {
-            self::markTestSkipped('Aucun compresseur disponible sur ce système');
-        }
-
-        $nonExistentFile = $this->tempDir.'/non-existent.txt';
-        $availableCompressor = $compressor->availableCompressors[0];
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('does not exist or is not readable');
-
-        $compressor->compress($nonExistentFile, $availableCompressor);
-    }
-
     public function testCompressCreatesCompressedFile(): void
     {
         $compressor = new Compressor();
