@@ -4,6 +4,7 @@ namespace Pushword\StaticGenerator\Generator;
 
 use Exception;
 use Override;
+use Psr\Log\LoggerInterface;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Core\Entity\Page;
 
@@ -17,6 +18,9 @@ class PageGenerator extends AbstractGenerator
 {
     #[Required]
     public RedirectionManager $redirectionManager;
+
+    #[Required]
+    public LoggerInterface $logger;
 
     #[Override]
     public function generate(?string $host = null): void
@@ -91,8 +95,12 @@ class PageGenerator extends AbstractGenerator
         }
 
         if (Response::HTTP_OK !== $response->getStatusCode()) {
+            // Log error for 500 in dev mode (critical errors)
             if (Response::HTTP_INTERNAL_SERVER_ERROR === $response->getStatusCode() && 'dev' === $this->kernel->getEnvironment()) {
                 $this->setErrorFor($liveUri, $page, 'status code '.$response->getStatusCode());
+            } else {
+                // Log 404 errors to help debug (but don't abort generation)
+                $this->logWarning($liveUri, $page, 'Page not found ('.$response->getStatusCode().') - skipping');
             }
 
             return;
@@ -154,6 +162,14 @@ class PageGenerator extends AbstractGenerator
                      : $liveUri;
         $this->setError('An error occured when generating '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));
         // throw new Exception('An error occured when generating `'.$liveUri.'`'); //exit($this->kernel->handle($request));
+    }
+
+    private function logWarning(string $liveUri, ?Page $page = null, string $msg = ''): void
+    {
+        $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
+                     '['.$liveUri.']('.$this->router->getRouter()->generate('admin_page_edit', ['id' => $page->getId()]).')'
+                     : $liveUri;
+        $this->logger->warning('Skipping generation for '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));
     }
 
     private function responseIsHtml(Response $response): bool
