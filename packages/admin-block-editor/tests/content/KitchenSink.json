@@ -208,7 +208,7 @@
       "id": "dUlifREnp4",
       "type": "raw",
       "data": {
-        "html": "{{ gallery({'piedweb-logo.png': ['pied web logo', 'https://piedweb.com', {}, false], '1.jpg': '', '2.jpg': '', '3.jpg': ''}, clickable=false)|unprose }}"
+        "html": "{{ gallery({'piedweb-logo.png': ['pied web logo', 'https://piedweb.com', {}, false], '1.jpg': '', '2.jpg': '', '3.jpg': ''}, clickable=false) }}"
       }
     },
     {
@@ -248,7 +248,7 @@
       "id": "3MICUU9fsw",
       "type": "raw",
       "data": {
-        "html": "{{ video('https://www.youtube.com/watch?v=Nwyylc9GQuQ', '/media/default/3.jpg', 'my video title', true)|unprose }}"
+        "html": "{{ video('https://www.youtube.com/watch?v=Nwyylc9GQuQ', '/media/default/3.jpg', 'my video title', true) }}"
       }
     },
     {

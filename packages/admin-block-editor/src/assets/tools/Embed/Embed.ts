@@ -203,7 +203,7 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
       return ''
     }
 
-    const markdown = `{{ video('${data.serviceUrl}', '${data.media}', '${data.alternativeText}')|unprose }}`
+    const markdown = `{{ video('${data.serviceUrl}', '${data.media}', '${data.alternativeText}') }}`
     return MarkdownUtils.addAttributes(markdown, tunes)
   }
 

@@ -215,7 +215,7 @@ export default class Attaches extends AbstractMediaTool {
     const fileUrl = MediaUtils.buildFullUrlFromData(data.file)
     const title = data.title
 
-    const markdown = `{{ attaches('${title}', '${fileUrl}', '${data.file.size || 0}' ${tunes?.anchor ? ', "' + tunes.anchor + '"' : ''})|unprose }}`
+    const markdown = `{{ attaches('${title}', '${fileUrl}', '${data.file.size || 0}' ${tunes?.anchor ? ', "' + tunes.anchor + '"' : ''}) }}`
 
     return markdown
   }

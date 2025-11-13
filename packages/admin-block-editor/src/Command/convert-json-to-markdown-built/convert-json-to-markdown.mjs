@@ -6697,7 +6697,7 @@ class Gallery extends AbstractMediaTool {
     const imagesArray = JSON.stringify(imagesObject);
     let markdown = `{{ gallery(${imagesArray}`;
     if (tunes?.clickableTune?.value) markdown += `, clickable: true`;
-    markdown += `)|unprose }}`;
+    markdown += `) }}`;
     return MarkdownUtils.addAttributes(markdown, tunes);
   }
   static importFromMarkdown(editor, markdown) {
@@ -6705,7 +6705,7 @@ class Gallery extends AbstractMediaTool {
     let tunes = result.tunes;
     const markdownWithoutTunes = result.markdown;
     let galleryMatch = markdownWithoutTunes.match(
-      /{{ gallery\(\s*(images:\s*)?(?<medias>\{.*?\})\s*(,\s*clickable:\s*(?<clickable>true|false))?\)\|unprose }}/s
+      /{{ gallery\(\s*(images:\s*)?(?<medias>\{.*?\})\s*(,\s*clickable:\s*(?<clickable>true|false))?\)\ }}/s
     );
     tunes.clickableTune = {
       value: [true, "true", "1"].includes(galleryMatch?.groups?.clickable || false) ? true : false
@@ -6748,7 +6748,7 @@ class Gallery extends AbstractMediaTool {
   }
   static isItMarkdownExported(markdown) {
     return markdown.trim().match(
-      /{{ gallery\(\s*(images:\s*)?\{.*?\}\s*(,\s*clickable:\s*(true|false|0|1))?\)\|unprose }}/s
+      /{{ gallery\(\s*(images:\s*)?\{.*?\}\s*(,\s*clickable:\s*(true|false|0|1))?\)\ }}/s
     ) !== null;
   }
 }
@@ -8145,7 +8145,7 @@ class Embed extends AbstractMediaTool {
     if (!data.media || !data.serviceUrl) {
       return "";
     }
-    const markdown = `{{ video('${data.serviceUrl}', '${data.media}', '${data.alternativeText}')|unprose }}`;
+    const markdown = `{{ video('${data.serviceUrl}', '${data.media}', '${data.alternativeText}') }}`;
     return MarkdownUtils.addAttributes(markdown, tunes);
   }
   static importFromMarkdown(editor, markdown) {
@@ -8299,7 +8299,7 @@ class Attaches extends AbstractMediaTool {
     }
     const fileUrl = MediaUtils.buildFullUrlFromData(data.file);
     const title = data.title;
-    const markdown = `{{ attaches('${title}', '${fileUrl}', '${data.file.size || 0}' ${tunes?.anchor ? ', "' + tunes.anchor + '"' : ""})|unprose }}`;
+    const markdown = `{{ attaches('${title}', '${fileUrl}', '${data.file.size || 0}' ${tunes?.anchor ? ', "' + tunes.anchor + '"' : ""}) }}`;
     return markdown;
   }
   static importFromMarkdown(editor, markdown) {

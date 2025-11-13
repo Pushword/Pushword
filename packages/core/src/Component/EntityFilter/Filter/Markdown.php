@@ -120,6 +120,8 @@ class Markdown extends AbstractFilter
 
     private function isItRawBlock(string $text): bool
     {
+        $text = trim($text);
+
         return str_starts_with($text, '{') || str_starts_with($text, '<');
     }
 

@@ -30,19 +30,19 @@ See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block{target="_bla
 
 ### Gallery
 
-{{ gallery({"1.jpg":"","2.jpg":"","3.jpg":""})|unprose }}
+{{ gallery({"1.jpg":"","2.jpg":"","3.jpg":""}) }}
 
 ## Advanced gallery
 
-{{ gallery({'piedweb-logo.png': ['pied web logo', 'https://piedweb.com', {}, false], '1.jpg': '', '2.jpg': '', '3.jpg': ''}, clickable=false)|unprose }}
+{{ gallery({'piedweb-logo.png': ['pied web logo', 'https://piedweb.com', {}, false], '1.jpg': '', '2.jpg': '', '3.jpg': ''}, clickable=false) }}
 
 ## Video
 
-{{ video('https://www.youtube.com/watch?v=Nwyylc9GQuQ', '3.jpg', 'SuperVideo')|unprose }}
+{{ video('https://www.youtube.com/watch?v=Nwyylc9GQuQ', '3.jpg', 'SuperVideo') }}
 
 ## Video in a popup
 
-{{ video('https://www.youtube.com/watch?v=Nwyylc9GQuQ', '/media/default/3.jpg', 'my video title', true)|unprose }}
+{{ video('https://www.youtube.com/watch?v=Nwyylc9GQuQ', '/media/default/3.jpg', 'my video title', true) }}
 
 ## Table Example
 
@@ -76,7 +76,7 @@ See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block{target="_bla
 
 ## Attachments & Files
 
-{{ attaches('Document JPG 2', '/media/2.jpg', '0' )|unprose }}
+{{ attaches('Document JPG 2', '/media/2.jpg', '0' ) }}
 
 Texte avec <u>soulignement</u>, **gras**, _italique_, <mark>surlignage</mark> et ~~barré~~ pour tester tous les outils inline.
 

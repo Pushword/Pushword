@@ -345,7 +345,7 @@ export default class Gallery extends AbstractMediaTool {
     const imagesArray = JSON.stringify(imagesObject)
     let markdown = `{{ gallery(${imagesArray}`
     if (tunes?.clickableTune?.value) markdown += `, clickable: true`
-    markdown += `)|unprose }}`
+    markdown += `) }}`
 
     return MarkdownUtils.addAttributes(markdown, tunes)
   }
@@ -356,7 +356,7 @@ export default class Gallery extends AbstractMediaTool {
     const markdownWithoutTunes = result.markdown
 
     let galleryMatch = markdownWithoutTunes.match(
-      /{{ gallery\(\s*(images:\s*)?(?<medias>\{.*?\})\s*(,\s*clickable:\s*(?<clickable>true|false))?\)\|unprose }}/s,
+      /{{ gallery\(\s*(images:\s*)?(?<medias>\{.*?\})\s*(,\s*clickable:\s*(?<clickable>true|false))?\)\ }}/s,
     )
 
     tunes.clickableTune = {
@@ -422,7 +422,7 @@ export default class Gallery extends AbstractMediaTool {
       markdown
         .trim()
         .match(
-          /{{ gallery\(\s*(images:\s*)?\{.*?\}\s*(,\s*clickable:\s*(true|false|0|1))?\)\|unprose }}/s,
+          /{{ gallery\(\s*(images:\s*)?\{.*?\}\s*(,\s*clickable:\s*(true|false|0|1))?\)\ }}/s,
         ) !== null
     )
   }
