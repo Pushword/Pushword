@@ -338,6 +338,8 @@ export class MarkdownUtils {
     html = he.decode(html)
 
     return html
+      .replace(/<(b|strong|em|i|a[^>]*)> /gi, ' <$1>')
+      .replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, '<$1> ')
       .replace(/<b>(.*?)<\/b>/gi, '**$1**')
       .replace(/<i>(.*?)<\/i>/gi, '_$1_')
       .replace(/<code( class="inline-code")?>(.*?)<\/code>/gi, '`$2`')
