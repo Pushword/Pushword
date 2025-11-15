@@ -14,7 +14,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autowire()
         ->autoconfigure()
         ->bind('$kernel', service('kernel'))
-        ->bind('$varDir', '%kernel.project_dir%/var');
+        ->bind('$projectDir', '%kernel.project_dir%');
 
     $services->load('Pushword\StaticGenerator\\', __DIR__.'/../*')
         ->exclude([
