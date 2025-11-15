@@ -1,0 +1,22 @@
+{
+    "storeIn": "\/home\/robin\/localhost\/Pushword\/packages\/skeleton\/media",
+    "media": "fluidicon-png.png",
+    "mimeType": "image\/png",
+    "size": 33270,
+    "name": "fluidicon",
+    "names": "",
+    "customProperties": [],
+    "height": 512,
+    "width": 512,
+    "mainColor": "#ffffff00",
+    "createdAt": {
+        "date": "2025-11-15 08:58:20.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    },
+    "updatedAt": {
+        "date": "2025-11-15 08:58:20.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    }
+}

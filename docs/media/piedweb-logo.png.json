@@ -1,0 +1,22 @@
+{
+    "storeIn": "\/home\/robin\/localhost\/Pushword\/packages\/skeleton\/media",
+    "media": "piedweb-logo.png",
+    "mimeType": "image\/png",
+    "size": 2,
+    "name": "Pied Web Logo",
+    "names": "",
+    "customProperties": [],
+    "height": 1000,
+    "width": 1000,
+    "mainColor": null,
+    "createdAt": {
+        "date": "2025-11-15 08:58:18.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    },
+    "updatedAt": {
+        "date": "2025-11-15 08:58:18.000000",
+        "timezone_type": 3,
+        "timezone": "UTC"
+    }
+}
