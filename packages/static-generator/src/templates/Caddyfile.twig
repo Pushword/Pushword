@@ -85,9 +85,10 @@
 
 }
 
-
+{% block redirect_www %}
 # Redirect www subfolder to domain.tld
 # The htaccess version has more scenarios
 www.{{ domain }} {
     redir https://{{ domain }}{uri} 301
 }
+{% endblock %}
