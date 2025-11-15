@@ -1,0 +1,10 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - config
+    symfony:
+        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+        consoleApplicationLoader: bin/console-test.php
+    doctrine:
+        objectManagerLoader: bin/object-test.php

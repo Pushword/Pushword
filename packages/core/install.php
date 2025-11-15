@@ -70,6 +70,8 @@ PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);
 // ---------------
 
 PostInstall::copy('vendor/pushword/skeleton/phpstan.neon.dist', 'phpstan.neon.dist');
+PostInstall::copy('vendor/pushword/skeleton/bin/console-test.php', 'bin/console-test.php');
+PostInstall::copy('vendor/pushword/skeleton/bin/object-test.php', 'bin/object-test.php');
 // À tester si appeler composer depuis composer ne fout pas le bordel
 exec('composer config --no-plugins allow-plugins.phpstan/extension-installer true');
 exec('composer config --no-plugins scripts.stan "vendor/bin/phpstan"');
@@ -77,7 +79,23 @@ exec('composer require --dev phpstan/extension-installer:* phpstan/phpstan:* php
 
 // Install php-cs-fixer
 // -------------------
-
 PostInstall::copy('vendor/pushword/skeleton/.php-cs-fixer.dist.php~', '.php-cs-fixer.dist.php');
 exec('composer config --no-plugins scripts.format "vendor/bin/php-cs-fixer fix"');
 exec('composer require --no-plugins  --dev friendsofphp/php-cs-fixer:*');
+
+// Install RECTOR
+// -------------------
+// Rector is a bit too expensive on a cheap VPS with 4Gb of RAM
+// PostInstall::copy('vendor/pushword/skeleton/rector.php', 'rector.php');
+// PostInstall::copy('vendor/pushword/skeleton/tests/symfonyContainer.php', 'tests/symfonyContainer.php');
+// exec('composer config --no-plugins scripts.rector "vendor/bin/rector process && composer format"');
+// exec('composer require --no-plugins  --dev rector/rector:*');
+
+PostInstall::replace('.gitignore', '/var/', '/var/*');
+PostInstall::insertIn('.gitignore', '###> pushword ###
+public/assets
+public/media
+public/sw.js
+!/var/app.db
+###< pushword ###
+', PostInstall::INSERT_AT_END);
