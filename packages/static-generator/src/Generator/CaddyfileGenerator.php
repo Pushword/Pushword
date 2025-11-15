@@ -11,7 +11,7 @@ class CaddyfileGenerator extends PageGenerator
     {
         $this->init($host);
 
-        $caddyfile = $this->twig->render($this->apps->get()->getView('/Caddyfile.twig', '@pwStaticGenerator'), [
+        $caddyfile = $this->twig->render($this->apps->get()->getView('/Caddyfile.twig', '@PushwordStatic'), [
             'staticDir' => rtrim($this->getStaticDir(), '~'),
             'domain' => $this->app->getMainHost(),
             'domain_snake' => strtolower(str_replace('.', '_', $this->app->getMainHost())),

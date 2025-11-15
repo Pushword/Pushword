@@ -7,7 +7,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->extension('twig', [
         'paths' => [
-            '%pw.package_dir%/static-generator/src/templates' => 'pwStaticGenerator',
+            '%pw.package_dir%/static-generator/src/templates' => 'PushwordStatic',
         ],
     ]);
 };
