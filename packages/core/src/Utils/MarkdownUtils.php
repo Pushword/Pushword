@@ -43,7 +43,7 @@ final class MarkdownUtils
     {
         $text = trim($text);
 
-        return str_starts_with($text, '{') || str_starts_with($text, '<');
+        return str_starts_with($text, '{') || str_starts_with($text, '<') || str_starts_with($text, '-->');
     }
 
     public static function detectMarkdownBlockType(string $text): string

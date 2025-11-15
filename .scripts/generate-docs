@@ -1,5 +1,32 @@
 #!/bin/bash -e
 
+# Check that all code is committed before running the script
+check_git_status() {
+    # Check for uncommitted changes
+    if ! git diff-index --quiet HEAD --; then
+        echo "❌ Error: There are uncommitted changes in your repository."
+        echo "Please commit all your changes before running generate-docs."
+        echo ""
+        echo "Modified files:"
+        git diff --name-status
+        exit 1
+    fi
+
+    # Check for untracked files (excluding those ignored by .gitignore)
+    if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+        echo "❌ Error: There are untracked files in your repository."
+        echo "Please add and commit all necessary files before running generate-docs."
+        echo ""
+        echo "Untracked files:"
+        git ls-files --others --exclude-standard
+        exit 1
+    fi
+
+    echo "✅ All files are committed. Generating documentation..."
+}
+
+check_git_status
+
 #composer reset-skeleton
 
 # function restoreData {
