@@ -8308,7 +8308,7 @@ class Attaches extends AbstractMediaTool {
     }
     const fileUrl = MediaUtils.buildFullUrlFromData(data.file);
     const title = data.title || "";
-    const markdown = `{{ attaches(${e(title)}, ${e(fileUrl)}, '${data.file.size || 0}' ${tunes?.anchor ? ", " + e(tunes.anchor) : ""}) }}`;
+    const markdown = `{{ attaches(${e(he$1.decode(title))}, ${e(fileUrl)}, '${data.file.size || 0}' ${tunes?.anchor ? ", " + e(tunes.anchor) : ""}) }}`;
     return markdown;
   }
   static importFromMarkdown(editor, markdown) {

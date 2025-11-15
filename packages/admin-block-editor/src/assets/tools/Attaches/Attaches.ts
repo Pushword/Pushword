@@ -11,6 +11,7 @@ import {
   MediaToolConfig,
   STATUS,
 } from '../Abstract/AbstractMediaTool'
+import he from 'he'
 
 export interface AttachesData extends BlockToolData {
   title: string
@@ -215,7 +216,7 @@ export default class Attaches extends AbstractMediaTool {
     const fileUrl = MediaUtils.buildFullUrlFromData(data.file)
     const title = data.title || ''
 
-    const markdown = `{{ attaches(${e(title)}, ${e(fileUrl)}, '${data.file.size || 0}' ${tunes?.anchor ? ', ' + e(tunes.anchor) : ''}) }}`
+    const markdown = `{{ attaches(${e(he.decode(title))}, ${e(fileUrl)}, '${data.file.size || 0}' ${tunes?.anchor ? ', ' + e(tunes.anchor) : ''}) }}`
 
     return markdown
   }
