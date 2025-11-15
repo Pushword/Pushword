@@ -1,0 +1,20 @@
+{% extends '@SonataAdmin/standard_layout.html.twig' %}
+
+{% block sonata_admin_content %}
+    <meta http-equiv="refresh" content="3">
+    <div class="alert alert-info">
+        <h3 style="margin-top:0;">
+            {{ 'admin.static.generating'|trans }}
+        </h3>
+        <p>
+            <i class="fa fa-circle-notch fa-spin"></i>
+            {{ 'admin.static.please_wait'|trans }}
+        </p>
+        {% if startTime %}
+            <p><small>{{ 'admin.static.started_at'|trans }}: {{ startTime|date('d/m/Y à H:i:s') }}</small></p>
+        {% endif %}
+        {% if host %}
+            <p><strong>{{ 'admin.static.host'|trans }}:</strong> {{ host }}</p>
+        {% endif %}
+    </div>
+{% endblock %}

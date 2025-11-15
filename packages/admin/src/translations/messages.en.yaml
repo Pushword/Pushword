@@ -211,3 +211,9 @@ admin:
 
   static:
     updated: Site actualisé avec succès.
+    generating: Generating...
+    please_wait: Please wait, generation is in progress. This page will refresh automatically.
+    started_at: Started at
+    host: Host
+    errors: Errors detected
+    output: Command output

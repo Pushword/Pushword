@@ -5,10 +5,17 @@
         <p class="alert alert-success">{{ 'admin.static.updated'|trans }}</p>
     {% else %}
         <div class="alert alert-warning">
-        {% for error in errors %}
-            <p>{{ error|markdown }}</p>
-        {% endfor %}
+            <h4>{{ 'admin.static.errors'|trans }}</h4>
+            {% for error in errors %}
+                <p>{{ error|markdown }}</p>
+            {% endfor %}
         </div>
     {% endif %}
 
+    {% if output is defined and output is not empty %}
+        <div class="mt-3">
+            <h4>{{ 'admin.static.output'|trans }}</h4>
+            <pre class="bg-light p-3 border rounded"><code>{{ output }}</code></pre>
+        </div>
+    {% endif %}
 {% endblock %}

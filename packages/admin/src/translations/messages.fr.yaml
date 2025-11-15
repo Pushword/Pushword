@@ -215,3 +215,9 @@ admin:
 
   static:
     updated: Site actualisé avec succès.
+    generating: Génération en cours...
+    please_wait: Veuillez patienter, la génération est en cours. Cette page se rafraîchira automatiquement.
+    started_at: Démarré à
+    host: Hôte
+    errors: Erreurs détectées
+    output: Sortie de la commande
