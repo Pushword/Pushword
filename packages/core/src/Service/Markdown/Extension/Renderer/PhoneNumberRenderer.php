@@ -8,7 +8,6 @@ use League\CommonMark\Renderer\NodeRendererInterface;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\Node\PhoneNumber;
 use Pushword\Core\Service\Markdown\Extension\Util\RawHtml;
-use Stringable;
 
 /**
  * Renderer pour les numéros de téléphone.
@@ -20,7 +19,7 @@ final readonly class PhoneNumberRenderer implements NodeRendererInterface
     ) {
     }
 
-    public function render(Node $node, ChildNodeRendererInterface $childRenderer): Stringable
+    public function render(Node $node, ChildNodeRendererInterface $childRenderer): RawHtml
     {
         PhoneNumber::assertInstanceOf($node);
 

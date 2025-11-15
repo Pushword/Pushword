@@ -8,7 +8,6 @@ use League\CommonMark\Renderer\NodeRendererInterface;
 use Pushword\Core\Extension\Markdown\Node\ObfuscatedLink;
 use Pushword\Core\Extension\Markdown\Util\RawHtml;
 use Pushword\Core\Service\LinkProvider;
-use Stringable;
 
 /**
  * Renderer pour les liens obfusqués.
@@ -20,7 +19,7 @@ final readonly class ObfuscatedLinkRenderer implements NodeRendererInterface
     ) {
     }
 
-    public function render(Node $node, ChildNodeRendererInterface $childRenderer): Stringable
+    public function render(Node $node, ChildNodeRendererInterface $childRenderer): RawHtml
     {
         ObfuscatedLink::assertInstanceOf($node);
 

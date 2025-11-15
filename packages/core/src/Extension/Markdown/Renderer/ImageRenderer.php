@@ -11,7 +11,6 @@ use League\CommonMark\Renderer\ChildNodeRendererInterface;
 use League\CommonMark\Renderer\NodeRendererInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Extension\Markdown\Util\RawHtml;
-use Stringable;
 use Twig\Environment;
 
 /**
@@ -26,7 +25,7 @@ final readonly class ImageRenderer implements NodeRendererInterface
     ) {
     }
 
-    public function render(Node $node, ChildNodeRendererInterface $childRenderer): Stringable
+    public function render(Node $node, ChildNodeRendererInterface $childRenderer): RawHtml
     {
         Image::assertInstanceOf($node);
 
