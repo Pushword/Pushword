@@ -142,4 +142,11 @@ final class AppExtension
     {
         return class_exists($class);
     }
+
+    #[AsTwigFunction('base')]
+    public function getBase(bool $live = false): string
+    {
+        return $live ? $this->apps->get()->getStr('base_live_url')
+          : $this->apps->get()->getStr('base_url');
+    }
 }
