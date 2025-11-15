@@ -167,7 +167,7 @@ final class Configuration implements ConfigurationInterface
             ->scalarNode('base_url')->defaultValue('https://%pw.host%')->end()
             ->scalarNode('base_live_url')
               ->defaultValue('https://%pw.host%')
-              ->info('Used in twig liveBase()')
+              ->info('Could be `https://my-multi-host.tld/%pw.host%` - used in twig liveBase()')
             ->end()
             ->variableNode('assets')->defaultValue(self::DEFAULT_ASSETS)->end()
             ->variableNode('filters')->defaultValue(self::DEFAULT_FILTERS)->end()
