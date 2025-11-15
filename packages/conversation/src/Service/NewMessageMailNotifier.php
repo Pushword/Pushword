@@ -98,7 +98,7 @@ class NewMessageMailNotifier
         $authorEmail = $message->getAuthorEmail() ?? throw new Exception();
         $subject = $this->translator->trans('admin.conversation.notification.title.singular', ['%appName%' => $this->appName]);
 
-        $cacheKey = 'conversation_message_'.md5($message->getId().$message->getAuthorEmail());
+        $cacheKey = 'conversation_message_'.md5($message->getContent().' '.$message->getAuthorEmail());
 
         $this->cache->get($cacheKey, function (ItemInterface $item) use ($message, $authorEmail, $subject): bool {
             $item->expiresAfter(600); // 10 minutes
