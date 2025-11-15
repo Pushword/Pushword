@@ -422,12 +422,14 @@ export class MarkdownUtils {
     }
   }
 
-  public static wrapInQuotes(text: string, char = '"'): string {
-    const escaped = text.replace(char, '\\' + char)
+  public static wrapInQuotes(text: string): string {
+    if (!text.includes("'")) return "'" + text + "'"
+
+    const escaped = text.replace('"', '\\' + '"')
     return `"${escaped}"`
   }
 }
 
-export function e(text: string, char = '"'): string {
-  return MarkdownUtils.wrapInQuotes(text, char)
+export function e(text: string): string {
+  return MarkdownUtils.wrapInQuotes(text)
 }

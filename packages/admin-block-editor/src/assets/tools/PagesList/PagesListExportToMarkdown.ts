@@ -1,5 +1,6 @@
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { PagesListData } from './PagesList'
+import { e } from '../utils/MarkdownUtils'
 
 /**
  * Export PagesList block data to Markdown
