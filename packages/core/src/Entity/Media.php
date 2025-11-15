@@ -128,9 +128,6 @@ class Media implements IdInterface, Stringable
     private function fixExtension(string $extension): string
     {
         // Todo : when using guessExtension, it's using safe mymetype and returning gpx as txt
-        if ('.xml' !== $extension) {
-            return $extension;
-        }
 
         if ('.gpx' !== $this->extractExtension($this->getMediaFileName())) {
             return $extension;

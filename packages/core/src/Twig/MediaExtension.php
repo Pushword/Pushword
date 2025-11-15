@@ -71,7 +71,7 @@ class MediaExtension
 
         if (self::mayBeAnInternalImage($src)) {
             $media = $this->mediaRepository->findOneBy(['media' => $src]) ??
-            throw new Exception("Internal - Can't handle the value submitted (".$src.').');
+            throw new Exception("Internal - Can't handle the value submitted `".$src.'`.');
 
             if ('' !== $name) { // to check if useful
                 $media->setName($name, true);
