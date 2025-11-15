@@ -70,7 +70,7 @@ final class StaticAppGenerator
     {
         $app = $this->apps->switchCurrentApp($host)->get();
 
-        $staticDir = \strval($app->getStr('static_dir'));
+        $staticDir = $app->getStr('static_dir');
         $app->staticDir = $staticDir.'~'; // @phpstan-ignore-line
 
         $filesystem = new Filesystem();

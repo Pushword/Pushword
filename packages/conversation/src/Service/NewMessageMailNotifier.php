@@ -43,10 +43,10 @@ class NewMessageMailNotifier
         private readonly LoggerInterface $logger,
         private readonly Security $security,
     ) {
-        $this->emailTo = \strval($this->apps->get()->getStr('conversation_notification_email_to'));
-        $this->emailFrom = \strval($this->apps->get()->getStr('conversation_notification_email_from'));
-        $this->interval = \strval($this->apps->get()->getStr('conversation_notification_interval'));
-        $this->appName = \strval($this->apps->get()->getStr('name'));
+        $this->emailTo = $this->apps->get()->getStr('conversation_notification_email_to');
+        $this->emailFrom = $this->apps->get()->getStr('conversation_notification_email_from');
+        $this->interval = $this->apps->get()->getStr('conversation_notification_interval');
+        $this->appName = $this->apps->get()->getStr('name');
         $this->host = $this->apps->get()->getMainHost();
     }
 

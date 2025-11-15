@@ -302,6 +302,6 @@ final class PageExtension
             return 1;
         }
 
-        return \intval($currentRequest->attributes->getInt('pager', 1));
+        return $currentRequest->attributes->getInt('pager', 1);
     }
 }

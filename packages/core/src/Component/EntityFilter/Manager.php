@@ -100,7 +100,7 @@ final readonly class Manager
         }
 
         return [] !== $filters
-            ? $this->applyFilters('' !== \strval($propertyValue) ? $propertyValue : '', $filters)
+            ? $this->applyFilters('' !== (string) $propertyValue ? $propertyValue : '', $filters)
             : $propertyValue;
     }
 

@@ -131,7 +131,7 @@
   "scripts": {
     "console": "cd packages/skeleton && php bin/console $2",
     "dev": "cd packages/skeleton && symfony server:start -d",
-    "stan": "vendor/bin/phpstan analyze packages/*/src",
+    "stan": "vendor/bin/phpstan",
     "test": "./.scripts/test && composer validate-monorepo",
     "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
     "rector": "vendor/bin/rector process && composer format",

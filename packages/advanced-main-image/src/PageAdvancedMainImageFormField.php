@@ -28,7 +28,7 @@ class PageAdvancedMainImageFormField extends PageMainImageField
                 'admin.page.mainImageFormat.34fullscreen' => 3,
                 // 'admin.page.mainImageFormat.fullscreen' => 4,
             ],
-            'data' => \intval($subject->getCustomPropertyScalar('mainImageFormat')),
+            'data' => (int) $subject->getCustomPropertyScalar('mainImageFormat'),
         ]);
     }
 

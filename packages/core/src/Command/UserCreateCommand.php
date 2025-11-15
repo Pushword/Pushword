@@ -55,7 +55,7 @@ final readonly class UserCreateCommand
         $argumentValue = $input->getArgument($argument);
 
         if (null !== $argumentValue) {
-            return \strval($argumentValue);
+            return (string) $argumentValue;
         }
 
         $question = new Question($argument.('' !== $default ? ' (default: '.$default.')' : '').':', $default);
@@ -76,6 +76,6 @@ final readonly class UserCreateCommand
             throw new Exception();
         }
 
-        return \strval($argumentValue);
+        return (string) $argumentValue;
     }
 }

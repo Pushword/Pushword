@@ -206,7 +206,7 @@ final class PageImporter extends AbstractImporter
             $setter = 'set'.ucfirst($camelKey);
             if (method_exists($page, $setter)) {
                 if (\in_array($camelKey, ['publishedAt', 'createdAt', 'updatedAt'], true) && \is_scalar($value)) {
-                    $value = new DateTime(\strval($value));
+                    $value = new DateTime((string) $value);
                 }
 
                 $page->$setter($value); // @phpstan-ignore-line

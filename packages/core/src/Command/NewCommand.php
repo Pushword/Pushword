@@ -30,7 +30,7 @@ final readonly class NewCommand
         $question = new Question('Locale (default: en|fr):', 'en|fr');
         /** @var bool|float|int|string|null */
         $locales = $helper->ask($input, $output, $question);
-        $locale = explode('|', \strval($locales))[0];
+        $locale = explode('|', (string) $locales)[0];
 
         $config = $this->initConfig($configFile, ['hosts' => [$mainDomain], 'locale' => $locale, 'locales' => $locales]);
 

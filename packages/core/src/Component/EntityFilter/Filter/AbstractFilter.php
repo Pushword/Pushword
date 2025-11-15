@@ -17,6 +17,6 @@ abstract class AbstractFilter implements FilterInterface
 
     protected function string(mixed $value): string
     {
-        return \strval($this->scalar($value));
+        return (string) $this->scalar($value);
     }
 }

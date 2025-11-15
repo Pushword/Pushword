@@ -65,3 +65,19 @@ $defaultConfig = 'pushword:'.chr(10)
     .'    # https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages/pushword.php'.chr(10);
 
 PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);
+
+// Install phpstan
+// ---------------
+
+PostInstall::copy('vendor/pushword/skeleton/phpstan.neon.dist', 'phpstan.neon.dist');
+// À tester si appeler composer depuis composer ne fout pas le bordel
+exec('composer config --no-plugins allow-plugins.phpstan/extension-installer true');
+exec('composer config --no-plugins scripts.stan "vendor/bin/phpstan"');
+exec('composer require --dev phpstan/extension-installer:* phpstan/phpstan:* phpstan/phpstan-doctrine:* phpstan/phpstan-phpunit:* phpstan/phpstan-strict-rules:* phpstan/phpstan-symfony:*');
+
+// Install php-cs-fixer
+// -------------------
+
+PostInstall::copy('vendor/pushword/skeleton/.php-cs-fixer.dist.php~', '.php-cs-fixer.dist.php');
+exec('composer config --no-plugins scripts.format "vendor/bin/php-cs-fixer fix"');
+exec('composer require --no-plugins  --dev friendsofphp/php-cs-fixer:*');

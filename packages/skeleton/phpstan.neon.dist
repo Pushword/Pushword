@@ -1,0 +1,18 @@
+parameters:
+    level: max
+    paths:
+        - public
+        - src
+        - config
+        - bin
+    symfony:
+        containerXmlPath: /var/dev/cache/App_KernelDevDebugContainer.xml
+        consoleApplicationLoader: bin/console-test.php
+    doctrine:
+        objectManagerLoader: bin/object-test.php
+    unused_public:
+        methods: false
+        properties: false
+        constants: false
+    ignoreErrors:
+        - "#Short ternary operator is not allowed#"
