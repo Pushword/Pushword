@@ -11,7 +11,8 @@ export default class Delimiter extends DelimiterTool {
    */
   // @ts-ignore
   static exportToMarkdown(data: BlockToolData, tunes?: BlockTuneData): string {
-    return '---'
+    return '<!--break-->'
+    // '---'
   }
 
   static importFromMarkdown(editor: API): void {

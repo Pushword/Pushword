@@ -7957,7 +7957,7 @@ class Delimiter extends n2 {
    */
   // @ts-ignore
   static exportToMarkdown(data, tunes) {
-    return "---";
+    return "<!--break-->";
   }
   static importFromMarkdown(editor) {
     editor.blocks.insert("delimiter");
