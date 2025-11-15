@@ -20,6 +20,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] **how to bulk upgrade ?** ➜ `bin/console pushword:json:to-markdown`
   - [x] Remove all code related to block rendering (in DB, markdown is used so front-end will use markdown)
   - [ ] test test test
+    - [ ] [Example](/example){class="ninja"} n'est pas correctement parsé
 
 - [Ai] Add AiFeature to Flat
   - [ ] Generate a map of the content = [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md

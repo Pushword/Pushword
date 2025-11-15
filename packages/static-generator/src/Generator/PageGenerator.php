@@ -166,9 +166,11 @@ class PageGenerator extends AbstractGenerator
 
     private function logWarning(string $liveUri, ?Page $page = null, string $msg = ''): void
     {
+        $base = $this->apps->get()->getStr('base_live_url');
+        $url = $base.$liveUri;
         $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
-                     '['.$liveUri.']('.$this->router->getRouter()->generate('admin_page_edit', ['id' => $page->getId()]).')'
-                     : $liveUri;
+                     '['.$url.']('.$base.$this->router->getRouter()->generate('admin_page_edit', ['id' => $page->getId()]).')'
+                     : $url;
         $this->logger->warning('Skipping generation for '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));
     }
 
