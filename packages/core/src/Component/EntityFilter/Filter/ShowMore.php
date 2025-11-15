@@ -23,15 +23,16 @@ class ShowMore extends AbstractFilter
         $body = '';
         $template = $this->twig->load($this->app->getView('/component/show_more.html.twig'));
         foreach ($bodyParts as $bodyPart) {
+            $bodyPart .= "\n";
             if (! str_contains($bodyPart, $afterShowMoreTag)) {
-                $body .= $bodyPart."\n";
+                $body .= $bodyPart;
 
                 continue;
             }
 
             $id = 'sh-'.substr(md5('sh'.$bodyPart), 0, 4);
             $replaceWith = "\n".trim($template->renderBlock('after', ['id' => $id]));
-            $body .= $template->renderBlock('before', ['id' => $id])
+            $body .= trim($template->renderBlock('before', ['id' => $id]))."\n\n"
                 .str_replace($afterShowMoreTag, $replaceWith, $bodyPart);
         }
 
