@@ -306,6 +306,8 @@ export class MarkdownUtils {
       .replace(/ <\/([a-z]+)>/gi, '</$1> ')
       // remove empty inline tag
       .replace(/ ?<(b|i|strong|em|span)> ?<\/(b|i|strong|em|span)> ?/gi, ' ')
+      // remove empty inline tag
+      .replace(/<(b|i|strong|em|span|a)[^>]*><\/(b|i|strong|em|span|a)>/gi, '')
       // NoSpaceBeforeComma
       .replace(new RegExp(`([^\\d\\s]+)[${spaces}]{1,},[${spaces}]{1,}`, 'gmu'), '$1, ')
       // NoSpaceBeforeDot

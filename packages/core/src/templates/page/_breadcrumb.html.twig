@@ -19,6 +19,6 @@
         <a itemprop="item" href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}" class="hover:underline">
             <span itemprop="name">{{ pw(page).name|raw|striptags }}</span></a>
             <meta itemprop="position" content="{{ breadcrumb_list_position(page) }}">
-        {% if first != true %}<span class="inline-block px-1">›</span>{% endif %}
+        {% if first != true %}<span class="pr-1">›</span>{% endif %}
     </li>
 {% endmacro %}
