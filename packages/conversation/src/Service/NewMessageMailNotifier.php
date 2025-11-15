@@ -14,6 +14,8 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.conversation.entity_message%', 'event' => 'postPersist'])]
@@ -42,6 +44,7 @@ class NewMessageMailNotifier
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
         private readonly Security $security,
+        private CacheInterface $cache,
     ) {
         $this->emailTo = $this->apps->get()->getStr('conversation_notification_email_to');
         $this->emailFrom = $this->apps->get()->getStr('conversation_notification_email_from');
@@ -93,23 +96,30 @@ class NewMessageMailNotifier
     public function sendMessage(Message $message): void
     {
         $authorEmail = $message->getAuthorEmail() ?? throw new Exception();
+        $subject = $this->translator->trans('admin.conversation.notification.title.singular', ['%appName%' => $this->appName]);
 
-        $templatedEmail = (new TemplatedEmail())
-            ->subject(
-                $this->translator->trans('admin.conversation.notification.title.singular', ['%appName%' => $this->appName])
-            )
-            ->from($this->emailFrom)
-            ->to($this->emailTo)
-            ->replyTo($authorEmail)
-            ->text(
-                htmlspecialchars_decode($message->getContent())
-                ."\n\n---\n"
-                .'Envoyé par '.($message->getAuthorName() ?? '...')
-                .' - '.$message->getAuthorEmail()
-                ."\n".'Depuis '.$message->getHost().' › form['.$message->getReferring().']'
-            );
+        $cacheKey = 'conversation_message_'.md5($message->getId().$message->getAuthorEmail());
 
-        $this->mailer->send($templatedEmail);
+        $this->cache->get($cacheKey, function (ItemInterface $item) use ($message, $authorEmail, $subject): bool {
+            $item->expiresAfter(600); // 10 minutes
+
+            $templatedEmail = (new TemplatedEmail())
+                ->subject($subject)
+                ->from($this->emailFrom)
+                ->to($this->emailTo)
+                ->replyTo($authorEmail)
+                ->text(
+                    htmlspecialchars_decode($message->getContent())
+                    ."\n\n---\n"
+                    .'Envoyé par '.($message->getAuthorName() ?? '...')
+                    .' - '.$message->getAuthorEmail()
+                    ."\n".'Depuis https://'.$message->getHost().'/ › form['.$message->getReferring().']'
+                );
+
+            $this->mailer->send($templatedEmail);
+
+            return true;
+        });
     }
 
     public function send(): void

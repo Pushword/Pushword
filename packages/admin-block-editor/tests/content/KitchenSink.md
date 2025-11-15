@@ -1,6 +1,6 @@
 A few example for the editor possibilities. Best to observe this, it’s in admin with split editor (live preview Side By Side).
 
----
+<!--break-->
 
 ## Inline Tool Demo
 
@@ -86,7 +86,8 @@ Texte avec <u>soulignement</u>, **gras**, _italique_, <mark>surlignage</mark> et
 
 ## HR — separator
 
----
+<!--break-->
+
 
 ## Inline Tool
 

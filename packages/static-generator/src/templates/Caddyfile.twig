@@ -7,12 +7,12 @@
 }
 
 (cache_{{ domain_snake }}) {
-	# Default: 1 hour
-	header Cache-Control "max-age=3600, public"
-
 	# Assets: 1 year
 	@assets path *.ico *.pdf *.flv *.jpg *.jpeg *.png *.gif *.webp *.avif *.svg *.eot *.ttf *.woff *.woff2 *.js *.css
 	header @assets Cache-Control "max-age=31536000, public"
+
+	# Default: 1 hour
+	header Cache-Control "max-age=3600, public"
 }
 
 (security_{{ domain_snake }}) {
@@ -30,8 +30,7 @@
 
 
 {% block route %}http://{{ domain }} {
-        redir https://{host}{uri} permanent
-    }
+	redir https://{host}{uri} permanent
 }
 
 {{ domain }}{% endblock %} {
