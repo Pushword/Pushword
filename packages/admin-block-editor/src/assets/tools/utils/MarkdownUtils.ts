@@ -421,4 +421,13 @@ export class MarkdownUtils {
       return markdownContent
     }
   }
+
+  public static wrapInQuotes(text: string, char = '"'): string {
+    const escaped = text.replace(char, '\\' + char)
+    return `"${escaped}"`
+  }
+}
+
+export function e(text: string, char = '"'): string {
+  return MarkdownUtils.wrapInQuotes(text, char)
 }

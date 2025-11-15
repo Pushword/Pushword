@@ -18,10 +18,10 @@ export function exportPagesListToMarkdown(
   const order = data.order || 'publishedAt,priority'
   const display = data.display || 'list'
 
-  let markdown = `{{ pages_list('${data.kw}', '${max}', '${order}', '${display}'`
-  markdown += maxPages !== '0' || tunes?.class || tunes?.anchor ? `, '${maxPages}'` : ''
-  markdown += tunes?.class || tunes?.anchor ? `, '${tunes?.class || ''}'` : ''
-  markdown += tunes?.anchor ? `, '${tunes?.anchor}'` : ''
+  let markdown = `{{ pages_list(${e(data.kw)}, ${e(max)}, ${e(order)}, ${e(display)}`
+  markdown += maxPages !== '0' || tunes?.class || tunes?.anchor ? `, ${e(maxPages)}` : ''
+  markdown += tunes?.class || tunes?.anchor ? `, ${e(tunes?.class || '')}` : ''
+  markdown += tunes?.anchor ? `, ${e(tunes?.anchor)}` : ''
   markdown += `) }}`
 
   return markdown

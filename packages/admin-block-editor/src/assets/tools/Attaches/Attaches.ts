@@ -4,7 +4,7 @@ import { API, BlockAPI, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { IconFile } from '@codexteam/icons'
 import { MediaUtils } from '../utils/media'
-import { MarkdownUtils } from '../utils/MarkdownUtils'
+import { e, MarkdownUtils } from '../utils/MarkdownUtils'
 import {
   AbstractMediaTool,
   MediaNodes,
@@ -213,9 +213,9 @@ export default class Attaches extends AbstractMediaTool {
     }
 
     const fileUrl = MediaUtils.buildFullUrlFromData(data.file)
-    const title = data.title
+    const title = data.title || ''
 
-    const markdown = `{{ attaches('${title}', '${fileUrl}', '${data.file.size || 0}' ${tunes?.anchor ? ', "' + tunes.anchor + '"' : ''}) }}`
+    const markdown = `{{ attaches(${e(title)}, ${e(fileUrl)}, "${data.file.size || 0}" ${tunes?.anchor ? ', ' + e(tunes.anchor) : ''}) }}`
 
     return markdown
   }

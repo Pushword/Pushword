@@ -7,7 +7,7 @@ import {
 } from '../Abstract/AbstractMediaTool'
 import ToolboxIcon from './toolbox-icon.svg?raw'
 import make from '../utils/make'
-import { MarkdownUtils } from '../utils/MarkdownUtils'
+import { e, MarkdownUtils } from '../utils/MarkdownUtils'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { BLOCK_STATE, StateBlock, StateBlockToolInterface } from '../utils/StateBlock'
@@ -193,17 +193,17 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
   }
 
   public static exportToMarkdown(
-    data: EmbedData | EmbedDataToNormalize,
+    dataToNormalize: EmbedData | EmbedDataToNormalize,
     tunes?: BlockTuneData,
   ): string {
     // Normaliser les données pour gérer les anciens formats
-    data = Embed.normalizeData(data)
+    const data = Embed.normalizeData(dataToNormalize)
 
     if (!data.media || !data.serviceUrl) {
       return ''
     }
 
-    const markdown = `{{ video('${data.serviceUrl}', '${data.media}', '${data.alternativeText}') }}`
+    const markdown = `{{ video(${e(data.serviceUrl)}, ${e(data.media)}, ${e(data.alternativeText)}) }}`
     return MarkdownUtils.addAttributes(markdown, tunes)
   }
 
