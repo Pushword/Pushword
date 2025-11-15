@@ -98,15 +98,11 @@ class Page implements IdInterface, Stringable
         return 'homepage' === $this->getSlug() ? '' : $this->getSlug();
     }
 
-    /**
-     * @return non-empty-string
-     */
     public static function normalizeSlug(string $slug): string
     {
         $slugify = new Slugify(['regexp' => '/[^A-Za-z0-9_\/\.]+/']);
         $slug = $slugify->slugify($slug);
         $slug = trim($slug, '/');
-        assert('' !== $slug);
 
         return $slug;
     }
