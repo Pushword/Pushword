@@ -52,9 +52,7 @@ return [
     FrameworkBundle::class => ['all' => true],
     TwigBundle::class => ['all' => true],
     SecurityBundle::class => ['all' => true],
-
     DoctrineBundle::class => ['all' => true],
-
     BabDevPagerfantaBundle::class => ['all' => true],
 
     // Used for Media

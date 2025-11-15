@@ -12,4 +12,4 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     ]);
 };
 
-// #paths: "%pw.package_dir%/admin-block-editor/src/../src/templates": Pushword # Permit to access component defined here and in core
+// #paths: "%pw.package_dir%/admin-block-editor/src/templates": Pushword # Permit to access component defined here and in core
