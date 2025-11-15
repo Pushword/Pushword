@@ -1,7 +1,5 @@
 A few example for the editor possibilities. Best to observe this, it’s in admin with split editor (live preview Side By Side).
 
-<!--break-->
-
 ## Inline Tool Demo
 
 See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block){target="\_blank"} <mark>marker</mark> ~~strikethrough~~
@@ -83,11 +81,6 @@ Texte avec <u>soulignement</u>, **gras**, _italique_, <mark>surlignage</mark> et
 ## Image avec Lien (linkTune)
 
 [![Image cliquable vers la documentation](/media/2.jpg)](https://pushword.piedweb.com)
-
-## HR — separator
-
-<!--break-->
-
 
 ## Inline Tool
 

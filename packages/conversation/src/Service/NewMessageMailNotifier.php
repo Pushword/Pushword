@@ -44,7 +44,7 @@ class NewMessageMailNotifier
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
         private readonly Security $security,
-        private CacheInterface $cache,
+        private readonly CacheInterface $cache,
     ) {
         $this->emailTo = $this->apps->get()->getStr('conversation_notification_email_to');
         $this->emailFrom = $this->apps->get()->getStr('conversation_notification_email_from');

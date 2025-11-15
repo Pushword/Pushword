@@ -7,37 +7,42 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 #[AsCommand(name: 'pushword:static:generate', description: 'Generate static version for your website')]
 #[AutoconfigureTag('console.command')]
 final readonly class StaticCommand
 {
-    public function __construct(private StaticAppGenerator $staticAppGenerator)
-    {
+    public function __construct(
+        private StaticAppGenerator $staticAppGenerator,
+        private Stopwatch $stopWatch
+    ) {
     }
 
-    public function __invoke(#[Argument(name: 'host')]
-        ?string $host, #[Argument(name: 'page')]
-        ?string $page, OutputInterface $output): int
-    {
+    public function __invoke(
+        #[Argument(name: 'host')]
+        ?string $host,
+        #[Argument(name: 'page')]
+        ?string $page,
+        OutputInterface $output
+    ): int {
+        $this->stopWatch->start('generate');
+
         $host = $host;
+        $page = $page;
         if (null === $host) {
             $this->staticAppGenerator->generate();
-            $this->printStatus($output, 'All websites generated witch success.');
-
-            return Command::SUCCESS;
-        }
-
-        $page = $page;
-        if (null === $page) {
+            $msg = 'All websites generated witch success';
+        } elseif (null === $page) {
             $this->staticAppGenerator->generate($host);
-            $this->printStatus($output, $host.' generated witch success.');
-
-            return Command::SUCCESS;
+            $msg = ($host.' generated witch success.');
+        } else {
+            $this->staticAppGenerator->generatePage($host, $page);
+            $msg = ($host.'/'.$page.' generated witch success.');
         }
 
-        $this->staticAppGenerator->generatePage($host, $page);
-        $this->printStatus($output, $host."'s page generated witch success.");
+        $duration = $this->stopWatch->stop('generate')->getDuration();
+        $this->printStatus($output, $msg.' ('.$duration.'ms).');
 
         return Command::SUCCESS;
     }

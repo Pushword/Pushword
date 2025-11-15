@@ -2,7 +2,6 @@
   "time": 1762515291184,
   "blocks": [
     {
-      "id": "f_TItjYhIl",
       "type": "paragraph",
       "data": {
         "text": "A few example for the editor possibilities. Best to observe this, it’s in admin with split editor (live preview Side By Side)."
@@ -13,12 +12,6 @@
       }
     },
     {
-      "id": "WS4PAD2Gp-",
-      "type": "delimiter",
-      "data": {}
-    },
-    {
-      "id": "O77jR7dv2k",
       "type": "header",
       "data": {
         "text": "Inline Tool Demo",
@@ -436,22 +429,6 @@
           "targetBlank": false
         }
       }
-    },
-    {
-      "id": "IHScypq_aw",
-      "type": "header",
-      "data": {
-        "text": "HR — separator",
-        "level": 2
-      },
-      "tunes": {
-        "textAlign": "",
-        "anchor": ""
-      }
-    },
-    {
-      "type": "delimiter",
-      "data": {}
     },
     {
       "type": "header",
