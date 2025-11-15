@@ -18,19 +18,21 @@ class ShowMore extends AbstractFilter
 
     private function showMore(string $body): string
     {
+        $afterShowMoreTag = "\n".'<!--end-show-more-->';
         $bodyParts = explode("\n".'<!--start-show-more-->', $body);
         $body = '';
         $template = $this->twig->load($this->app->getView('/component/show_more.html.twig'));
         foreach ($bodyParts as $bodyPart) {
-            if (! str_contains($bodyPart, "\n".'<!--end-show-more-->')) {
-                $body .= $bodyPart;
+            if (! str_contains($bodyPart, $afterShowMoreTag)) {
+                $body .= $bodyPart."\n";
 
                 continue;
             }
 
             $id = 'sh-'.substr(md5('sh'.$bodyPart), 0, 4);
+            $replaceWith = "\n".trim($template->renderBlock('after', ['id' => $id]));
             $body .= $template->renderBlock('before', ['id' => $id])
-                .str_replace("\n".'<!--end-show-more-->', $template->renderBlock('after', ['id' => $id]), $bodyPart);
+                .str_replace($afterShowMoreTag, $replaceWith, $bodyPart);
         }
 
         return $body;
