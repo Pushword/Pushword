@@ -16,6 +16,7 @@ sh ./.scripts/data-preserve
 
 
 #XDEBUG_MODE=off php -dxdebug.mode=off
+#  --log-junit report.xml
 vendor/bin/phpunit --stop-on-failure
 #--debug
 

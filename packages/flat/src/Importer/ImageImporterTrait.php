@@ -38,17 +38,12 @@ trait ImageImporterTrait
      */
     private function getImageData(string $filePath): array
     {
-        /*
-        if ('image/jpeg' == $mime) {
-            $manager = Iptc::create();
-            $manager->loadFile($filePath);
-            $data = array_merge($data, $manager->getTags());
-        }*/
+        // Disabling exif read data bringing too much noise in DB
+        // $data = @exif_read_data($filePath);
+        // $data = false === $data ? [] : $data;
 
-        $data = @exif_read_data($filePath);
-        $data = false === $data ? [] : $data;
-
-        return array_merge($data, $this->getData($filePath));
+        // return array_merge($data, $this->getData($filePath));
+        return $this->getData($filePath);
     }
 
     private function importImageMediaData(Media $media, string $filePath): void

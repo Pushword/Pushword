@@ -2,7 +2,6 @@
 
 namespace Pushword\Flat\Importer;
 
-use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Component\App\AppPool;
@@ -13,6 +12,7 @@ use function Safe\filesize;
 use function Safe\json_decode;
 
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Permit to find error in image or link.
@@ -36,17 +36,20 @@ class MediaImporter extends AbstractImporter
 
     public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
     {
-        if (! $this->isImage($filePath)) {
-            if (str_ends_with($filePath, '.json') && file_exists(substr($filePath, 0, -5))) { // data file
-                return;
-            }
-
-            $this->importMedia($filePath, $lastEditDateTime);
+        if ($this->isImage($filePath)) {
+            $this->importImage($filePath, $lastEditDateTime);
 
             return;
         }
 
-        $this->importImage($filePath, $lastEditDateTime);
+        // $isMetaDataFile = str_ends_with($filePath, '.json') || str_ends_with($filePath, '.yaml');
+        // if ($isMetaDataFile && file_exists(substr($filePath, 0, -5))) { // data file
+        //     return; // pas d'import donc pas de sync des données ?
+        // }
+
+        $this->importMedia($filePath, $lastEditDateTime);
+
+        return;
     }
 
     private function isImage(string $filePath): bool
@@ -88,9 +91,8 @@ class MediaImporter extends AbstractImporter
 
             $setter = 'set'.ucfirst($key);
             if (method_exists($media, $setter)) {
-                if (\in_array($key, ['createdAt', 'updatedAt'], true)
-                    && \is_array($value) && isset($value['date']) && \is_string($value['date'])) {
-                    $value = new DateTime($value['date']);
+                if (\in_array($key, ['createdAt', 'updatedAt'], true)) {
+                    continue;
                 }
 
                 $media->$setter($value); // @phpstan-ignore-line
@@ -98,7 +100,7 @@ class MediaImporter extends AbstractImporter
                 continue;
             }
 
-            $media->setCustomProperty($key, $value);
+            $media->setCustomProperty($key, $this->sanitizeUtf8($value));
         }
 
         if ($this->newMedia) {
@@ -109,13 +111,18 @@ class MediaImporter extends AbstractImporter
     /** @return array<string|int, mixed> */
     private function getData(string $filePath): array
     {
-        if (! file_exists($filePath.'.json')) {
-            return [];
+        if (file_exists($filePath.'.yaml')) {
+            $yamlData = Yaml::parseFile($filePath.'.yaml');
+
+            return \is_array($yamlData) ? $yamlData : [];
+        }
+        if (file_exists($filePath.'.json')) {
+            $jsonData = json_decode(file_get_contents($filePath.'.json'), true);
+
+            return \is_array($jsonData) ? $jsonData : [];
         }
 
-        $jsonData = json_decode(file_get_contents($filePath.'.json'), true);
-
-        return \is_array($jsonData) ? $jsonData : [];
+        return [];
     }
 
     public function getFilename(string $filePath): string

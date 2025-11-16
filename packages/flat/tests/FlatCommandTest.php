@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\Tests;
 
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -15,9 +17,7 @@ class FlatCommandTest extends KernelTestCase
 
         $command = $application->find('pw:flat:import');
         $commandTester = new CommandTester($command);
-        $commandTester->execute([
-            'host' => 'pushword.piedweb.com',
-        ]);
+        $commandTester->execute(['host' => 'pushword.piedweb.com']);
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();

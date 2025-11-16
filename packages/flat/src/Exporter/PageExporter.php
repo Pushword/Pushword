@@ -7,7 +7,6 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Utils\Entity;
-use ReflectionClass;
 use Stringable;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
@@ -18,11 +17,14 @@ final class PageExporter
 
     private readonly Filesystem $filesystem;
 
+    private readonly ExporterDefaultValueHelper $defaultValue;
+
     public function __construct(
         private readonly AppPool $apps,
         private readonly PageRepository $pageRepo,
     ) {
         $this->filesystem = new Filesystem();
+        $this->defaultValue = new ExporterDefaultValueHelper();
     }
 
     public function exportPages(bool $force = false): void
@@ -77,7 +79,7 @@ final class PageExporter
         $value = $page->$getter(); // @phpstan-ignore-line
 
         if ($value instanceof Page) {
-            $value = $page->getSlug();
+            $value = $value->getSlug();
         }
 
         if ($value instanceof Stringable) {
@@ -95,7 +97,7 @@ final class PageExporter
             return null;
         }
 
-        if ($value === $this->getPageDefaultValue($property)) {
+        if ($value === $this->defaultValue->get($property)) {
             return null;
         }
 
@@ -114,21 +116,5 @@ final class PageExporter
         assert(is_scalar($value));
 
         return $value;
-    }
-
-    /** @var array<string, mixed> */
-    private array $defaultValueCache = [];
-
-    private function getPageDefaultValue(string $property): mixed
-    {
-        if (isset($this->defaultValueCache[$property])) {
-            return $this->defaultValueCache[$property];
-        }
-
-        $reflection = new ReflectionClass(Page::class);
-        $reflectionProperty = $reflection->getProperty($property);
-        $this->defaultValueCache[$property] = $reflectionProperty->getDefaultValue();
-
-        return $this->defaultValueCache[$property];
     }
 }

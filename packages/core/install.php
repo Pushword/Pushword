@@ -96,6 +96,7 @@ PostInstall::insertIn('.gitignore', '###> pushword ###
 public/assets
 public/media
 public/sw.js
+static/
 !/var/app.db
 ###< pushword ###
 ', PostInstall::INSERT_AT_END);

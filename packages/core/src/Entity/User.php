@@ -131,6 +131,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     public function setPassword(string $password): self
     {
         $this->password = $password;
+        $this->plainPassword = null;
 
         return $this;
     }
@@ -144,12 +145,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return '';
     }
 
-    /**
-     * @see User
-     */
+    #[\Deprecated()]
     public function eraseCredentials(): void
     {
-        $this->plainPassword = null;
     }
 
     #[ORM\PrePersist]

@@ -31,14 +31,11 @@ class FlatFileImporterTest extends KernelTestCase
         $name = $this->prepare();
 
         $importer = $this->getImporter();
-
         $importer->setMediaDir(self::getContainer()->getParameter('kernel.project_dir').'/media');
+        $importer->run('pushword.piedweb.com');
 
-        $importer->run(
-            'pushword.piedweb.com'
-        );
-
-        self::assertFileExists(self::getContainer()->getParameter('kernel.project_dir').'/media/logo-test.png');
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+        self::assertFileExists($projectDir.'/media/logo-test.png');
 
         self::assertLinkToMarkdownFileIsReplacedBySlugPath();
 

@@ -6,6 +6,7 @@
 cd packages/skeleton
 rm var/app.db|| true
 rm -rf media|| true
+rm -rf static|| true
 cp -r media~ media
 
 echo "Clearing cache..."

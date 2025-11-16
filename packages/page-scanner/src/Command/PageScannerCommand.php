@@ -73,9 +73,11 @@ final class PageScannerCommand
 
     private ?OutputInterface $output = null;
 
-    public function __invoke(#[Argument(name: 'host')]
-        ?string $host, OutputInterface $output): int
-    {
+    public function __invoke(
+        OutputInterface $output,
+        #[Argument(name: 'host')]
+        ?string $host,
+    ): int {
         $output->writeln('Acquiring page scanner lock to start the scan...');
         $this->output = $output;
 

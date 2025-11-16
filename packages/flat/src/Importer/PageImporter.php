@@ -300,7 +300,7 @@ final class PageImporter extends AbstractImporter
     private function addPages(Page $page, string $property, array $pages): void
     {
         $setter = 'set'.ucfirst($property);
-        $this->$setter([]); // @phpstan-ignore-line
+        $page->$setter([]); // @phpstan-ignore-line
         foreach ($pages as $p) {
             $adder = 'add'.ucfirst($property);
             $page->$adder($this->getPage($p)); // @phpstan-ignore-line

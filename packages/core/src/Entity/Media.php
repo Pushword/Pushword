@@ -427,7 +427,7 @@ class Media implements IdInterface, Stringable
 
     public function __toString(): string
     {
-        return $this->name.' ';
+        return $this->media;
     }
 
     private string $softName = '';

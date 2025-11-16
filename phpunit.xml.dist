@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- https://phpunit.de/manual/current/en/appendixes.configuration.html -->
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd" colors="true"
-  stopOnFailure="false" bootstrap="packages/core/tests/bootstrap.php"
+<phpunit
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+  colors="true"
+  stopOnFailure="false"
+  bootstrap="packages/core/tests/bootstrap.php"
   cacheDirectory=".phpunit.cache">
   <php>
     <server name="APP_ENV" value="test" force="true" />
-    <server name="SHELL_VERBOSITY" value="-1" />
     <server name="KERNEL_CLASS" value="App\Kernel" />
     <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak" />
     <!-- <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/> -->
@@ -18,6 +20,9 @@
     </testsuite>
   </testsuites>
   <extensions>
+    <bootstrap class="RobinIngelbrecht\PHPUnitPrettyPrint\PhpUnitExtension">
+      <parameter name="displayProfiling" value="true" />
+    </bootstrap>
     <bootstrap class="Symfony\Component\Panther\ServerExtension" />
   </extensions>
   <source>
