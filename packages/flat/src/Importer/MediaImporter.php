@@ -116,6 +116,7 @@ class MediaImporter extends AbstractImporter
 
             return \is_array($yamlData) ? $yamlData : [];
         }
+
         if (file_exists($filePath.'.json')) {
             $jsonData = json_decode(file_get_contents($filePath.'.json'), true);
 

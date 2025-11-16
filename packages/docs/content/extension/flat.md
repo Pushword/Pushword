@@ -1,5 +1,5 @@
 ---
-title: Puswhord Flat File CMS - Markdown and Twig Ready
+title: Pushword Flat File CMS - Markdown and Twig Ready
 h1: Flat
 toc: true
 parent: extensions
@@ -26,13 +26,60 @@ Or for _multi-sites_ in `config/package/pushword.yaml`.
 
 ## Usage
 
-### Command Line
+### Sync with DB (import / export)
 
 ```
-php bin/console pw:flat:import $host
+# Sync : automatically detects whether to import (files newer than DB) or export (DB newer or no files).
+php bin/console pw:flat:sync [host]
+
+# imports flat files into the database
+php bin/console pw:flat:import [host]
+
+# exports database content to flat files
+php bin/console pw:flat:export [host] [exportDir] [--force]
 ```
 
-Where $host is facultative.
+Where:
+
+- `host` is facultative (uses default app if not provided)
+- `exportDir` (for export only) is facultative (uses `flat_content_dir` by default)
+- `--force` (for export only) forces overwriting even if files are newer than DB
+
+## Generate AI index
+
+```
+php bin/console pw:ai-index [host] [exportDir]
+```
+
+Generate two CSV files (`pageIndex.csv` and `mediaIndex.csv`) with metadata useful for AI tools.
+
+Where:
+
+- `host` is facultative (uses default app if not provided)
+- `exportDir` is facultative (uses `flat_content_dir` by default)
+
+### `pageIndex.csv`
+
+Contains page metadata with the following columns:
+
+- `slug` - Page slug
+- `h1` - Page H1 title
+- `createdAt` - Creation date (Y-m-d H:i:s)
+- `tags` - Page tags
+- `summary` - Page summary/excerpt
+- `mediaUsed` - Comma-separated list of media files used in the page
+- `parentPage` - Parent page slug (if any)
+- `pageLinked` - Comma-separated list of page slugs linked in the content
+- `length` - Content length in characters
+
+### `mediaIndex.csv`
+
+Contains media metadata with the following columns:
+
+- `media` - Media filename
+- `mimeType` - MIME type
+- `name` - Media name
+- `usedInPages` - Comma-separated list of page slugs using this media
 
 ### Write
 
@@ -48,23 +95,10 @@ content/other-example-kitchen-sink.md
 content/en/homepage.md
 content/en/kitchen-skink.md
 content/media/default/illustation.jpg
-content/media/default/illustation.jpg.json
+content/media/default/illustation.jpg.yaml
 ```
 
-#### `kitchen-skin.md` may contain :
-
-<!--
-Add to \Pushword\Core\Entity\Page
-    public function getProperties()
-    {
-        return array_keys(get_object_vars($this));
-    }
-Then
-$ php -a
-include 'vendor/autoload.php';
-$properties = (new \Pushword\Core\Entity\Page())->getProperties();
-foreach ($properties as $p) echo $p.chr(10);
--->
+#### `kitchen-sink.md` may contain :
 
 ```yaml
 ---
@@ -94,12 +128,8 @@ Good to know :
 - `homepage` 's file could be named `index.md` or `homepage.md`
 - Other properties will be added to `customProperties`
 
-#### `illustation.jpg.json` may contain
+#### `illustation.jpg.yaml` may contain
 
-```json
-{
-  "name": "My Super Kitchen Sink Illustration",
-  "createdAt": "now",
-  "updatedAt": "now"
-}
+```yaml
+name: My Super Kitchen Sink Illustration
 ```

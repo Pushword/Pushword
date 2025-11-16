@@ -74,10 +74,12 @@ final class MediaExporter
             if (\in_array($property, ['id', 'hash'], true)) {
                 continue;
             }
+
             $value = $this->getValue($property, $media);
             if (null === $value) {
                 continue;
             }
+
             $data[$property] = $value;
         }
 

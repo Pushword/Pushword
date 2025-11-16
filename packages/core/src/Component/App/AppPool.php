@@ -50,6 +50,10 @@ final class AppPool
 
     public function switchCurrentApp(Page|string $host): self
     {
+        if ('' === $host) {
+            return $this;
+        }
+
         if ($host instanceof Page) {
             $this->currentPage = $host;
             $host = $host->getHost();

@@ -67,6 +67,10 @@ final class PageImporter extends AbstractImporter
             return null;
         }
 
+        if (str_ends_with($filePath, 'pageIndex.csv') || str_ends_with($filePath, 'mediaIndex.csv')) {
+            return null;
+        }
+
         $content = file_get_contents($filePath);
         $document = YamlFrontMatter::parse($content);
 

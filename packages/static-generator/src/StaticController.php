@@ -2,7 +2,11 @@
 
 namespace Pushword\StaticGenerator;
 
+use Exception;
+use RuntimeException;
+
 use function Safe\file_get_contents;
+use function Safe\json_encode;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -16,13 +20,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[AutoconfigureTag('controller.service_arguments')]
 class StaticController extends AbstractController
 {
-    private const PID_FILE = 'static-generator.pid';
+    private const string PID_FILE = 'static-generator.pid';
 
-    private const OUTPUT_FILE = 'static-generator-output.txt';
+    private const string OUTPUT_FILE = 'static-generator-output.txt';
 
-    private const LOCK_FILE = 'static-generator.lock';
+    private const string LOCK_FILE = 'static-generator.lock';
 
-    private const MAX_PROCESS_AGE = 3600; // 1 hour timeout
+    private const int MAX_PROCESS_AGE = 3600; // 1 hour timeout
 
     public function __construct(
         private readonly Filesystem $filesystem,
@@ -81,10 +85,10 @@ class StaticController extends AbstractController
         // Start new process
         try {
             $this->startBackgroundProcess($host, $pidFile, $outputFile, $lockFile);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             $this->cleanup($pidFile, $outputFile, $lockFile);
 
-            throw new \RuntimeException('Failed to start background process: '.$e->getMessage(), 0, $e);
+            throw new RuntimeException('Failed to start background process: '.$exception->getMessage(), 0, $exception);
         }
 
         return $this->generateStatic($host);
@@ -131,7 +135,7 @@ class StaticController extends AbstractController
             $info['isRunning'] = $isRunning;
             $info['startTime'] = $startTime;
             $info['pid'] = $pid;
-        } catch (\Exception $e) {
+        } catch (Exception) {
             // If we can't read the file, assume no process is running
             return $info;
         }
@@ -153,7 +157,7 @@ class StaticController extends AbstractController
                 if (str_contains($cmdline, 'pushword:static:generate')) {
                     return true;
                 }
-            } catch (\Exception $e) {
+            } catch (Exception) {
                 // Process exists but we can't read cmdline, assume it's alive
                 return true;
             }
@@ -235,7 +239,7 @@ class StaticController extends AbstractController
         }
 
         // Build the shell command with proper escaping
-        $commandLine = implode(' ', array_map('escapeshellarg', $commandParts));
+        $commandLine = implode(' ', array_map(escapeshellarg(...), $commandParts));
 
         // Use sh -c to properly detach the process in background
         $command = sprintf(
@@ -250,7 +254,7 @@ class StaticController extends AbstractController
         $process->run();
 
         if (! $process->isSuccessful()) {
-            throw new \RuntimeException('Failed to launch background process: '.$process->getErrorOutput());
+            throw new RuntimeException('Failed to launch background process: '.$process->getErrorOutput());
         }
 
         // Get the PID from output
@@ -258,7 +262,7 @@ class StaticController extends AbstractController
         $pid = (int) $pidOutput;
 
         if ($pid <= 0) {
-            throw new \RuntimeException('Invalid PID received: '.$pidOutput);
+            throw new RuntimeException('Invalid PID received: '.$pidOutput);
         }
 
         // Store process information
@@ -268,7 +272,7 @@ class StaticController extends AbstractController
             'host' => $host,
         ];
 
-        $this->filesystem->dumpFile($pidFile, \Safe\json_encode($pidData, \JSON_PRETTY_PRINT));
+        $this->filesystem->dumpFile($pidFile, json_encode($pidData, \JSON_PRETTY_PRINT));
 
         // Remove lock file
         $this->filesystem->remove($lockFile);

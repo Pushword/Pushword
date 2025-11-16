@@ -185,7 +185,10 @@ final class ImageManager
 
         $filterNames = array_keys($this->filterSets);
         foreach ($filterNames as $filterName) {
-            @unlink($this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName.'/'.$media);
+            $path = $this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName.'/'.$media;
+            if (file_exists($path)) {
+                @unlink($path);
+            }
         }
     }
 

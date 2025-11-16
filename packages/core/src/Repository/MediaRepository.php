@@ -13,6 +13,8 @@ use Pushword\Core\Entity\Media;
  *
  * @implements Selectable<int, Media>
  * @implements ObjectRepository<Media>
+ *
+ * @method Media[] findAll()
  */
 class MediaRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
@@ -48,5 +50,35 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         }
 
         return null;
+    }
+
+    public function getOldStoreIn(): ?string
+    {
+        $oldestMedia = $this->createQueryBuilder('m')
+            ->orderBy('m.createdAt', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (! $oldestMedia instanceof Media) {
+            return null;
+        }
+
+        $storeIn = $oldestMedia->getStoreIn();
+        $storeInParts = explode('/media/', $storeIn, 2);
+
+        return $storeInParts[0];
+    }
+
+    /** @return array<string> */
+    public function getAllMedia(): array
+    {
+        /** @var string[] $medias */
+        $medias = $this->createQueryBuilder('m')
+            ->select('m.media AS media')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return $medias;
     }
 }

@@ -19,6 +19,8 @@ use RuntimeException;
  *
  * @implements Selectable<int, Page>
  * @implements ObjectRepository<Page>
+ *
+ * @method Page[] findAll()
  */
 class PageRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
@@ -165,9 +167,13 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      *
      * @return Page[]
      */
-    public function getPagesUsingMedia(Media $media): array
+    public function getPagesUsingMedia(Media $media, ?string $host = null): array
     {
         $queryBuilder = $this->createQueryBuilder('p');
+
+        if (null !== $host) {
+            $queryBuilder->andWhere('p.host = :host')->setParameter('host', $host);
+        }
 
         $orx = $queryBuilder->expr()->orX();
         $orx->add($queryBuilder->expr()->eq('p.mainImage', ':idMedia'));
