@@ -3,7 +3,6 @@
 namespace Pushword\StaticGenerator;
 
 use function Safe\file_get_contents;
-use function Safe\file_put_contents;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -47,6 +46,7 @@ class StaticController extends AbstractController
         }
 
         $staticDir = $this->projectDir.'/var/static';
+        $this->filesystem->mkdir($staticDir);
         $pidFile = $staticDir.'/'.self::PID_FILE;
         $outputFile = $staticDir.'/'.self::OUTPUT_FILE;
         $lockFile = $staticDir.'/'.self::LOCK_FILE;
@@ -229,7 +229,7 @@ class StaticController extends AbstractController
         string $lockFile
     ): void {
         // Create lock file to prevent race conditions
-        file_put_contents($lockFile, (string) time());
+        $this->filesystem->dumpFile($lockFile, (string) time());
 
         $commandParts = ['php', 'bin/console', 'pushword:static:generate'];
         if (null !== $host) {
@@ -270,7 +270,7 @@ class StaticController extends AbstractController
             'host' => $host,
         ];
 
-        file_put_contents($pidFile, json_encode($pidData, \JSON_PRETTY_PRINT));
+        $this->filesystem->dumpFile($pidFile, \Safe\json_encode($pidData, \JSON_PRETTY_PRINT));
 
         // Remove lock file
         $this->filesystem->remove($lockFile);
