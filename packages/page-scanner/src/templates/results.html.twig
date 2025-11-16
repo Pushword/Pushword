@@ -15,9 +15,10 @@
             <div class="box-body">
 
                 {% if errorsByPages is empty and lastEdit != 0 %}
-                    <p class="alert alert-success">Le précédent scan a été complété avec succès : le contenu ne semble comporter aucune erreur. Un nouveau scan vient d'être lancé, revenez dans un instant.</p>
+                    <p class="alert alert-info"><i class="fa fa-check"></i> Scan en cours.</p>
+                    <p class="alert alert-success">Le précédent scan a été complété avec succès : le contenu ne semble comporter aucune erreur.</p>
                 {% elseif lastEdit == 0 %}
-                    <p class="alert alert-success">Premier scan juste lancé. Revenez dans un instant (rafraichissement automatique).</p>
+                    <p class="alert alert-success"><i class="fa fa-spinner fa-spin"></i> Scan en cours.</p>
                     <meta http-equiv="refresh" content="2">
                 {% else %}
                     <p class="alert alert-warning">

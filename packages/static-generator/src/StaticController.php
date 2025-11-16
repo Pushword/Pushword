@@ -46,7 +46,6 @@ class StaticController extends AbstractController
         }
 
         $staticDir = $this->projectDir.'/var/static';
-        $this->filesystem->mkdir($staticDir);
         $pidFile = $staticDir.'/'.self::PID_FILE;
         $outputFile = $staticDir.'/'.self::OUTPUT_FILE;
         $lockFile = $staticDir.'/'.self::LOCK_FILE;
@@ -88,8 +87,7 @@ class StaticController extends AbstractController
             throw new \RuntimeException('Failed to start background process: '.$e->getMessage(), 0, $e);
         }
 
-        // Redirect to show running status
-        return $this->redirectToRoute('piedweb_static_generate', ['host' => $host]);
+        return $this->generateStatic($host);
     }
 
     private function isValidHost(string $host): bool
