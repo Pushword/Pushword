@@ -45,6 +45,7 @@
     "symfony/yaml": "^7.3",
     "symfony/dotenv": "*",
     "symfony/runtime": "^7.3",
+    "symfony/stopwatch": "*",
     "twig/intl-extra": "^3.2",
     "vich/uploader-bundle": "^2.0",
     "villfa/invert-color": "^0.5",
