@@ -51,14 +51,14 @@ Where:
 php bin/console pw:ai-index [host] [exportDir]
 ```
 
-Generate two CSV files (`pageIndex.csv` and `mediaIndex.csv`) with metadata useful for AI tools.
+Generate two CSV files (`pages.csv` and `medias.csv`) with metadata useful for AI tools.
 
 Where:
 
 - `host` is facultative (uses default app if not provided)
 - `exportDir` is facultative (uses `flat_content_dir` by default)
 
-### `pageIndex.csv`
+### `pages.csv`
 
 Contains page metadata with the following columns:
 
@@ -72,7 +72,7 @@ Contains page metadata with the following columns:
 - `pageLinked` - Comma-separated list of page slugs linked in the content
 - `length` - Content length in characters
 
-### `mediaIndex.csv`
+### `medias.csv`
 
 Contains media metadata with the following columns:
 

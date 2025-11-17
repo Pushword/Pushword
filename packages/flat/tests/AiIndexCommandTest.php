@@ -118,16 +118,16 @@ class AiIndexCommandTest extends KernelTestCase
     }
 
     /**
-     * @return array<string>|null
+     * @return list<string>|null
      */
-    private function getPageDataFromCsv(string $slug): ?array
+    private function getDataFromCsv(string $slug, string $filename = 'pages.csv'): ?array
     {
-        $pageIndexFile = $this->exportDir.'/pageIndex.csv';
-        if (! file_exists($pageIndexFile)) {
+        $pagesFile = $this->exportDir.'/'.$filename;
+        if (! file_exists($pagesFile)) {
             return null;
         }
 
-        $lines = file($pageIndexFile, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES);
+        $lines = file($pagesFile, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES);
         if (false === $lines) {
             return null;
         }
@@ -135,32 +135,7 @@ class AiIndexCommandTest extends KernelTestCase
         foreach ($lines as $line) {
             $data = str_getcsv($line, ',', '"', '\\');
             if (isset($data[0]) && $data[0] === $slug) {
-                return $data;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @return array<string>|null
-     */
-    private function getMediaDataFromCsv(string $mediaName): ?array
-    {
-        $mediaIndexFile = $this->exportDir.'/mediaIndex.csv';
-        if (! file_exists($mediaIndexFile)) {
-            return null;
-        }
-
-        $lines = file($mediaIndexFile, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES);
-        if (false === $lines) {
-            return null;
-        }
-
-        foreach ($lines as $line) {
-            $data = str_getcsv($line, ',', '"', '\\');
-            if (isset($data[0]) && $data[0] === $mediaName) {
-                return $data;
+                return $data; // @phpstan-ignore-line
             }
         }
 
@@ -217,12 +192,12 @@ class AiIndexCommandTest extends KernelTestCase
         $commandTester = $this->executeCommand();
 
         $output = $commandTester->getDisplay();
-        self::assertStringContainsString('Generating pageIndex.csv...', $output);
-        self::assertStringContainsString('Generating mediaIndex.csv...', $output);
+        self::assertStringContainsString('Generating pages.csv...', $output);
+        self::assertStringContainsString('Generating medias.csv...', $output);
         self::assertStringContainsString('File generated.', $output);
         self::assertEquals(0, $commandTester->getStatusCode());
-        self::assertFileExists($this->exportDir.'/pageIndex.csv');
-        self::assertFileExists($this->exportDir.'/mediaIndex.csv');
+        self::assertFileExists($this->exportDir.'/pages.csv');
+        self::assertFileExists($this->exportDir.'/medias.csv');
     }
 
     public function testExecuteWithHost(): void
@@ -230,8 +205,8 @@ class AiIndexCommandTest extends KernelTestCase
         $commandTester = $this->executeCommand('pushword.piedweb.com');
 
         $output = $commandTester->getDisplay();
-        self::assertStringContainsString('Generating pageIndex.csv...', $output);
-        self::assertStringContainsString('Generating mediaIndex.csv...', $output);
+        self::assertStringContainsString('Generating pages.csv...', $output);
+        self::assertStringContainsString('Generating medias.csv...', $output);
         self::assertStringContainsString('File generated.', $output);
         self::assertEquals(0, $commandTester->getStatusCode());
     }
@@ -245,11 +220,11 @@ class AiIndexCommandTest extends KernelTestCase
         $commandTester->execute([]);
 
         $output = $commandTester->getDisplay();
-        self::assertStringContainsString('Generating pageIndex.csv...', $output);
+        self::assertStringContainsString('Generating pages.csv...', $output);
         self::assertEquals(0, $commandTester->getStatusCode());
     }
 
-    public function testPageIndexContainsCreatedPageWithMedia(): void
+    public function testpagesContainsCreatedPageWithMedia(): void
     {
         $mediaName = 'test-image-'.uniqid().'.jpg';
         $this->createTestMedia($mediaName, 'image/jpeg');
@@ -259,19 +234,19 @@ class AiIndexCommandTest extends KernelTestCase
 
         $this->executeCommand();
 
-        $pageData = $this->getPageDataFromCsv($pageSlug);
+        $pageData = $this->getDataFromCsv($pageSlug);
         self::assertNotNull($pageData, 'Page should be found in CSV');
         self::assertStringContainsString($mediaName, $pageData[5] ?? '', 'Media should be listed in mediaUsed');
         self::assertNotEmpty($pageData[5] ?? '', 'mediaUsed should not be empty');
 
-        $mediaData = $this->getMediaDataFromCsv($mediaName);
+        $mediaData = $this->getDataFromCsv($mediaName, 'medias.csv');
         self::assertNotNull($mediaData, 'Media should be found in CSV');
         self::assertStringContainsString($pageSlug, $mediaData[3] ?? '', 'Page should be listed in usedInPages');
         self::assertNotEmpty($mediaData[3] ?? '', 'usedInPages should not be empty');
-        self::assertEquals('image/jpeg', $mediaData[1] ?? '', 'mimeType should be correct');
+        self::assertEquals('image/jpeg', $mediaData[1], 'mimeType should be correct');
     }
 
-    public function testPageIndexContainsPageLinks(): void
+    public function testpagesContainsPageLinks(): void
     {
         $parentSlug = 'parent-page-'.uniqid();
         $parentPage = $this->createTestPage($parentSlug, 'This is the parent page.');
@@ -281,14 +256,14 @@ class AiIndexCommandTest extends KernelTestCase
 
         $this->executeCommand();
 
-        $childPageData = $this->getPageDataFromCsv($childSlug);
+        $childPageData = $this->getDataFromCsv($childSlug);
         self::assertNotNull($childPageData, 'Child page should be found in CSV');
         self::assertEquals($parentSlug, $childPageData[6] ?? '', 'Parent page should be listed in parentPage');
         self::assertStringContainsString($parentSlug, $childPageData[7] ?? '', 'Parent page should be in pageLinked');
         self::assertNotEmpty($childPageData[7] ?? '', 'pageLinked should not be empty');
     }
 
-    public function testPageIndexContainsTagsAndSummary(): void
+    public function testpagesContainsTagsAndSummary(): void
     {
         $pageSlug = 'test-page-tags-'.uniqid();
         $this->createTestPage(
@@ -301,7 +276,7 @@ class AiIndexCommandTest extends KernelTestCase
 
         $this->executeCommand();
 
-        $pageData = $this->getPageDataFromCsv($pageSlug);
+        $pageData = $this->getDataFromCsv($pageSlug);
         self::assertNotNull($pageData, 'Page should be found in CSV');
         $tags = $pageData[3] ?? '';
         self::assertStringContainsString('tag1', $tags);
@@ -324,16 +299,16 @@ class AiIndexCommandTest extends KernelTestCase
 
         $this->executeCommand();
 
-        $pageData = $this->getPageDataFromCsv($pageSlug);
+        $pageData = $this->getDataFromCsv($pageSlug);
         self::assertNotNull($pageData, 'Page should be found in CSV');
         self::assertStringContainsString($media1Name, $pageData[5] ?? '', 'First media should be in mediaUsed');
         self::assertStringContainsString($media2Name, $pageData[5] ?? '', 'Second media should be in mediaUsed');
 
-        $media1Data = $this->getMediaDataFromCsv($media1Name);
+        $media1Data = $this->getDataFromCsv($media1Name, 'medias.csv');
         self::assertNotNull($media1Data, 'First media should be found in CSV');
         self::assertStringContainsString($pageSlug, $media1Data[3] ?? '', 'Page should be in usedInPages for first media');
 
-        $media2Data = $this->getMediaDataFromCsv($media2Name);
+        $media2Data = $this->getDataFromCsv($media2Name, 'medias.csv');
         self::assertNotNull($media2Data, 'Second media should be found in CSV');
         self::assertStringContainsString($pageSlug, $media2Data[3] ?? '', 'Page should be in usedInPages for second media');
     }
@@ -351,7 +326,7 @@ class AiIndexCommandTest extends KernelTestCase
 
         $this->executeCommand();
 
-        $mainPageData = $this->getPageDataFromCsv($mainPageSlug);
+        $mainPageData = $this->getDataFromCsv($mainPageSlug);
         self::assertNotNull($mainPageData, 'Main page should be found in CSV');
         self::assertStringContainsString($page1Slug, $mainPageData[7] ?? '', 'First linked page should be in pageLinked');
         self::assertStringContainsString($page2Slug, $mainPageData[7] ?? '', 'Second linked page should be in pageLinked');
@@ -367,11 +342,11 @@ class AiIndexCommandTest extends KernelTestCase
 
         $this->executeCommand();
 
-        $pageData = $this->getPageDataFromCsv($pageSlug);
+        $pageData = $this->getDataFromCsv($pageSlug);
         self::assertNotNull($pageData, 'Page should be found in CSV');
         self::assertEmpty($pageData[5] ?? '', 'mediaUsed should be empty as no media is used');
 
-        $mediaData = $this->getMediaDataFromCsv($unusedMediaName);
+        $mediaData = $this->getDataFromCsv($unusedMediaName, 'medias.csv');
         self::assertNotNull($mediaData, 'Media should be found in CSV');
         self::assertEmpty($mediaData[3] ?? '', 'usedInPages should be empty as media is not used anywhere');
     }

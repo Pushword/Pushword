@@ -16,7 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'pw:ai-index',
-    description: 'Generate pageIndex.csv and mediaIndex.csv with page and media metadata < Useful for AI tools.'
+    description: 'Generate pages.csv and medias.csv with page and media metadata < Useful for AI tools.'
 )]
 final class AiIndexCommand
 {
@@ -64,9 +64,9 @@ final class AiIndexCommand
                 ? $this->contentDirFinder->get($host)
                 : $this->projectDir.'/var/export/'.uniqid());
 
-        $result = $this->createPageIndex($output, $host);
+        $result = $this->createpages($output, $host);
 
-        $result2 = $this->createMediaIndex($output, $host);
+        $result2 = $this->createmedias($output, $host);
 
         if (Command::SUCCESS === $result && Command::SUCCESS === $result2) {
             return Command::SUCCESS;
@@ -85,15 +85,15 @@ final class AiIndexCommand
         return $writer;
     }
 
-    private function createMediaIndex(
+    private function createmedias(
         OutputInterface $output,
         string $host,
     ): int {
-        $output->writeln('Generating mediaIndex.csv...');
+        $output->writeln('Generating medias.csv...');
 
         $output->writeln('Found '.count($this->mediaList).' media files');
 
-        $writer = $this->getCsvWriter($this->exportDir.'/mediaIndex.csv');
+        $writer = $this->getCsvWriter($this->exportDir.'/medias.csv');
         // Write CSV header
         $writer->insertOne([
             'media',
@@ -121,9 +121,9 @@ final class AiIndexCommand
         return Command::SUCCESS;
     }
 
-    private function createPageIndex(OutputInterface $output, string $host): int
+    private function createpages(OutputInterface $output, string $host): int
     {
-        $output->writeln('Generating pageIndex.csv...');
+        $output->writeln('Generating pages.csv...');
 
         $pages = '' === $host
             ? $this->pageRepository->findAll()
@@ -131,7 +131,7 @@ final class AiIndexCommand
 
         $output->writeln('Found '.count($pages).' pages');
 
-        $writer = $this->getCsvWriter($this->exportDir.'/pageIndex.csv');
+        $writer = $this->getCsvWriter($this->exportDir.'/pages.csv');
 
         // Write CSV header
         $writer->insertOne([
