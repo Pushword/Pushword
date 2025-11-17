@@ -7,8 +7,8 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->extension('twig', [
         'paths' => [
-            // '%pw.package_dir%/advanced-main-image/src/templates' => 'Pushword',
-            // this was moved in core packages since 1.0.0-rc80 because something breaks the order
+            '%pw.package_dir%/advanced-main-image/src/templates' => 'Pushword',
+            // this was moved in post install since 1.0.0-rc80 because something breaks the order
             // -- quick and dirty fix
         ],
     ]);

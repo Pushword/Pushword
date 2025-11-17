@@ -15,7 +15,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         'paths' => [
             '%kernel.project_dir%/templates' => 'App',
             '%pw.package_dir%/core/src/templates/TwigBundle' => 'Twig',
-            '%pw.package_dir%/advanced-main-image/src/templates' => 'Pushword',
             '%pw.package_dir%/core/src/templates' => 'Pushword',
             '%kernel.project_dir%/public' => null,
         ],
