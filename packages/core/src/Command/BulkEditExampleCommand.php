@@ -14,8 +14,11 @@ use Symfony\Component\Filesystem\Filesystem;
 #[AsCommand(name: 'bulkContentEdit')]
 final readonly class BulkEditExampleCommand
 {
-    public function __construct(private EntityManagerInterface $em, private PageRepository $pageRepo, private Filesystem $fs)
-    {
+    public function __construct(
+        private EntityManagerInterface $em,
+        private PageRepository $pageRepo,
+        private Filesystem $fs
+    ) {
     }
 
     public function __invoke(OutputInterface $output): int
