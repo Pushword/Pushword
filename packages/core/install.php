@@ -69,7 +69,7 @@ PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);
 // Install phpstan
 // ---------------
 
-PostInstall::copy('vendor/pushword/skeleton/phpstan.neon.dist', 'phpstan.neon.dist');
+PostInstall::copy('vendor/pushword/skeleton/phpstan.dist.neon', 'phpstan.dist.neon');
 PostInstall::copy('vendor/pushword/skeleton/bin/console-test.php', 'bin/console-test.php');
 PostInstall::copy('vendor/pushword/skeleton/bin/object-test.php', 'bin/object-test.php');
 // À tester si appeler composer depuis composer ne fout pas le bordel

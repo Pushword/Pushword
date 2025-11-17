@@ -23,9 +23,11 @@ final readonly class BulkEditExampleCommand
 
     public function __invoke(OutputInterface $output): int
     {
-        $backupFileName = 'var/app.db~'.date('YmdHis');
-        $this->fs->copy('var/app.db', $backupFileName);
-        $output->writeln('Backup created: '.$backupFileName);
+        if ($this->fs->exists('var/app.db')) {
+            $backupFileName = 'var/app.db~'.date('YmdHis');
+            $this->fs->copy('var/app.db', $backupFileName);
+            $output->writeln('Backup created: '.$backupFileName);
+        }
 
         $pages = $this->pageRepo->findAll();
         foreach ($pages as $page) {

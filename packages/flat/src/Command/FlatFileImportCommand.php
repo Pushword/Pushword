@@ -29,8 +29,10 @@ final class FlatFileImportCommand
         ?string $host,
         OutputInterface $output
     ): int {
-        $backupFileName = 'var/app.db~'.date('YmdHis');
-        $this->fs->copy('var/app.db', $backupFileName);
+        if ($this->fs->exists('var/app.db')) {
+            $backupFileName = 'var/app.db~'.date('YmdHis');
+            $this->fs->copy('var/app.db', $backupFileName);
+        }
 
         $output->writeln('Import will start in few seconds...');
 

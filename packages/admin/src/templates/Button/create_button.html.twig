@@ -8,8 +8,8 @@ file that was distributed with this source code.
 {% if admin.hasAccess('create') and admin.hasRoute('create') %}
     {% if admin.subClasses is empty %}
         <li>
-            <a class="sonata-action-element" href="{{ admin.generateUrl('create', app.request.query.all().filter.host.value.0 ?? '' != '' ? {host: (app.request.query.all().filter.host.value.0 ?? '')} : {}
-            ) }}">
+            {% set host = app.request.query.all().filter.host.value.0 ?? '' %}
+            <a class="sonata-action-element" href="{{ admin.generateUrl('create', host ? {host: host} : {}) }}">
                 <i class="fas fa-plus-circle" aria-hidden="true"></i>
                 {{ 'link_action_create'|trans({}, 'SonataAdminBundle') }}
             </a>
