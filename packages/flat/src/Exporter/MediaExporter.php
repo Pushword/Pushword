@@ -46,7 +46,7 @@ final class MediaExporter
         $value = $media->$getter(); // @phpstan-ignore-line
 
         if ('storeIn' === $property) {
-            return $media->getStoreIn() === $this->projectDir.'/media' ? null : $media->getStoreIn();
+            return $media->getStoreIn() === $this->mediaDir ? null : $media->getStoreIn();
         }
 
         if (null === $value) {
