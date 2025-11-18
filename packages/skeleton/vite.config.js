@@ -49,10 +49,12 @@ export default defineConfig({
   //     },
   //   },
   build: {
+    base: '/assets/',
     rollupOptions: {
       input: input,
     },
     outDir: 'public/assets',
+    assetsDir: '.',
     emptyOutDir: true,
     manifest: true,
     sourcemap: true,

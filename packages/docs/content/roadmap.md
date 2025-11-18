@@ -11,6 +11,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### In progress
 
+- [Core] add posibile_host and skip custom_host route when a custom_host is detected
+
 - [AdminBlockEditor] transition JSON -> Markdown -> EditorJS
   - [x] editorjs to markdown
   - [x] markdown to editorjs... en cours, non fonctionnel

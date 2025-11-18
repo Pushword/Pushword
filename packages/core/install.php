@@ -86,6 +86,12 @@ exec('composer require --no-plugins  --dev friendsofphp/php-cs-fixer:*');
 // Install RECTOR
 // -------------------
 // Rector is a bit too expensive on a cheap VPS with 4Gb of RAM
+/*
+cp vendor/pushword/skeleton/rector.php rector.php && \
+cp vendor/pushword/skeleton/tests/symfonyContainer.php tests/symfonyContainer.php && \
+composer config --no-plugins scripts.rector "vendor/bin/rector process && composer format" && \
+composer require --no-plugins --dev rector/rector:*
+*/
 // PostInstall::copy('vendor/pushword/skeleton/rector.php', 'rector.php');
 // PostInstall::copy('vendor/pushword/skeleton/tests/symfonyContainer.php', 'tests/symfonyContainer.php');
 // exec('composer config --no-plugins scripts.rector "vendor/bin/rector process && composer format"');

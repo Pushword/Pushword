@@ -10,6 +10,7 @@ if (! PostInstall::isRoot()) {
 }
 
 if (file_exists('config/packages/twig.yaml')) {
-    PostInstall::replace('config/packages/twig.yaml', 'paths:', 'paths:
+    PostInstall::replace('config/packages/twig.yaml', 'twig:', 'twig:
+    paths:
         "%pw.package_dir%/advanced-main-image/src/templates": "Pushword"');
 }
