@@ -36,7 +36,16 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         $results = $queryBuilder->getQuery()->getResult();
 
-        return array_column($results, 'mimeType');
+        $mimeTypes = array_column($results, 'mimeType');
+
+        // Normalize image/jpg to image/jpeg and remove duplicates
+        $normalized = array_map(
+            fn (?string $mimeType): ?string => 'image/jpg' === $mimeType ? 'image/jpeg' : $mimeType,
+            $mimeTypes
+        );
+
+        // Filter out null values and remove duplicates
+        return array_values(array_unique(array_filter($normalized, fn (?string $mimeType): bool => null !== $mimeType)));
     }
 
     public function findDuplicate(Media $media): ?Media

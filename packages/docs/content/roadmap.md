@@ -11,6 +11,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### In progress
 
+- vérifier que le public media dir et le media dir (config push word) sont bien utilisé partout
+
 - [static] accelerate the generation by skipping the request (and add on all calls to currentRequest by a default value if currentRequest is not set)
 
 - [Core] add posibile_host and skip custom_host route when a custom_host is detected

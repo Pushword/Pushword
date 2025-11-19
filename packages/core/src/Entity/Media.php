@@ -243,7 +243,7 @@ class Media implements IdInterface, Stringable
 
     public function getMimeType(): ?string
     {
-        return $this->mimeType;
+        return $this->normalizeMimeType($this->mimeType);
     }
 
     public function setMimeType(?string $mimeType): self
@@ -254,9 +254,23 @@ class Media implements IdInterface, Stringable
             $mimeType = $uploadedFile->getClientMimeType();
         }
 
-        $this->mimeType = $mimeType;
+        $this->mimeType = $this->normalizeMimeType($mimeType);
 
         return $this;
+    }
+
+    private function normalizeMimeType(?string $mimeType): ?string
+    {
+        if (null === $mimeType) {
+            return null;
+        }
+
+        // Normalize image/jpg to image/jpeg (standard MIME type)
+        if ('image/jpg' === $mimeType) {
+            return 'image/jpeg';
+        }
+
+        return $mimeType;
     }
 
     public function getSize(): int
@@ -392,15 +406,25 @@ class Media implements IdInterface, Stringable
         return $this->slugifyPreservingExtension($filename, $extension);
     }
 
-    private function slugify(string $slug): string
+    private function slugify(string $text): string
     {
-        $slug = str_replace(['®', '™'], ' ', $slug);
+        // early return if text has only char from A to Z, a to z, 0 to 9, ., - _
+        if (1 === \Safe\preg_match('/^[a-z0-9\-_]+$/', $text)) {
+            return $text;
+        }
+
+        $slug = str_replace(['®', '™'], ' ', $text);
 
         $slugifier = new Slugify(['regexp' => '/([^A-Za-z0-9\.]|-)+/']);
+
         $slug = str_replace(['©', '&copy;', '&#169;', '&#xA9;'], '©', $slug);
         $slug = explode('©', $slug, 2);
         $slug = $slugifier->slugify($slug[0])
           .(isset($slug[1]) ? '_'.$slugifier->slugify(str_replace('©', '', $slug[1])) : '');
+
+        if ('' !== $text) {
+            dump($text, $slug);
+        }
 
         return $slug;
     }

@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin;
 
+use Doctrine\ORM\Query\Expr;
 use Exception;
 use Override;
 use Pushword\Admin\Utils\Thumb;
@@ -10,8 +11,11 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
+use Sonata\AdminBundle\Filter\Model\FilterData;
 use Sonata\AdminBundle\Form\FormMapper; // use Sonata\BlockBundle\Meta\Metadata;
 use Sonata\AdminBundle\Object\Metadata;
+use Sonata\DoctrineORMAdminBundle\Datagrid\ProxyQuery;
+use Sonata\DoctrineORMAdminBundle\Filter\CallbackFilter;
 use Sonata\DoctrineORMAdminBundle\Filter\ChoiceFilter;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -92,14 +96,37 @@ final class MediaAdmin extends AbstractAdmin
         }
     }
 
+    /**
+     * @param ProxyQuery<Media> $queryBuilder
+     */
+    public function getSearchFilterForMedia(ProxyQuery $queryBuilder, string $alias, string $field, FilterData $filterData): ?bool
+    {
+        if (! $filterData->hasValue()) {
+            return null;
+        }
+
+        /** @var string */
+        $filterValue = $filterData->getValue();
+
+        $exp = new Expr();
+        $queryBuilder->andWhere(
+            $exp->orX(
+                $exp->like($alias.'.name', $exp->literal('%'.$filterValue.'%')),
+                $exp->like($alias.'.media', $exp->literal('%'.$filterValue.'%')),
+                $exp->like($alias.'.names', $exp->literal('%'.$filterValue.'%'))
+            )
+        );
+
+        return true;
+    }
+
     protected function configureDatagridFilters(DatagridMapper $filter): void
     {
-        $filter->add('name', null, [
-            'label' => 'admin.media.name.label',
-        ]);
-        $filter->add('media', null, [
-            'label' => 'admin.media.mediaFile.label',
-        ]);
+        $filter
+            ->add('search', CallbackFilter::class, [
+                'callback' => $this->getSearchFilterForMedia(...),
+                'label' => 'admin.media.name.label',
+            ]);
 
         /*
         $filter->add('mimeType', ModelAutocompleteFilter::class, [
@@ -121,10 +148,6 @@ final class MediaAdmin extends AbstractAdmin
                 'label' => 'admin.media.filetype.label',
             ]);
         }
-
-        $filter->add('names', null, [
-            'label' => 'admin.media.names.label',
-        ]);
     }
 
     /**

@@ -26,7 +26,7 @@ class MediaRepositoryTest extends KernelTestCase
     {
         return (new Media())->setProjectDir(self::getContainer()->getParameter('kernel.project_dir'))
             ->setStoreIn(self::getContainer()->getParameter('pw.media_dir'))
-            ->setMimeType('image/jpg')
+            ->setMimeType('image/jpeg')
             ->setSize(2)
             ->setDimensions([1000, 1000])
             ->setMedia('1.jpg')
