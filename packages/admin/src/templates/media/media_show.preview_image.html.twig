@@ -8,8 +8,16 @@
      <div class=col-md-6>
          Chemin:<br>
          <code>{{ media|image('default') }}</code>
+
          <br><br>Markdown:<br>
          <pre>![{{ media.name|replace({'[': '', ']': ''}) }}]({{ media|image('default') }})</pre>
+
+
+         <br><br>Markdown:<br>
+         <pre>{
+"{{ media }}": "{{ media.name|replace({'"': '\\"',}) }}",
+}
+</pre>
 
          Couleur dominante:<br>
          <pre style="background-color:{{ media.getMainColor }};color:{{ media.mainColorOpposite }}">{{ media.getMainColor }}</pre>
