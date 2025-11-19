@@ -422,10 +422,6 @@ class Media implements IdInterface, Stringable
         $slug = $slugifier->slugify($slug[0])
           .(isset($slug[1]) ? '_'.$slugifier->slugify(str_replace('©', '', $slug[1])) : '');
 
-        if ('' !== $text) {
-            dump($text, $slug);
-        }
-
         return $slug;
     }
 
