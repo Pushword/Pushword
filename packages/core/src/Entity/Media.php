@@ -394,7 +394,7 @@ class Media implements IdInterface, Stringable
 
     private function slugify(string $slug): string
     {
-        $slug = str_replace(['©', '®', '™'], ' ', $slug);
+        $slug = str_replace(['®', '™'], ' ', $slug);
 
         $slugifier = new Slugify(['regexp' => '/([^A-Za-z0-9\.]|-)+/']);
         $slug = str_replace(['©', '&copy;', '&#169;', '&#xA9;'], '©', $slug);

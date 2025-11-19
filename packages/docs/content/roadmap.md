@@ -11,6 +11,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### In progress
 
+- [static] accelerate the generation by skipping the request (and add on all calls to currentRequest by a default value if currentRequest is not set)
+
 - [Core] add posibile_host and skip custom_host route when a custom_host is detected
 
 - [AdminBlockEditor] transition JSON -> Markdown -> EditorJS
