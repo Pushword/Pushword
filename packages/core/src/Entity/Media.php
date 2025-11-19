@@ -55,9 +55,6 @@ class Media implements IdInterface, Stringable
     #[ORM\Column(type: Types::STRING, length: 255)]
     protected string $storeIn = '';
 
-    /**
-     * Used to abstract storeIn.
-     */
     protected string $projectDir = '';
 
     #[ORM\Column(type: Types::STRING, length: 255, name: 'media')]
@@ -117,7 +114,12 @@ class Media implements IdInterface, Stringable
         }
 
         $extension = $mediaFile->guessExtension(); // From MimeType
-        $extension = null === $extension ? '' : '.'.$extension;
+
+        if (null === $extension || '' === $extension) {
+            $extension = $this->extractExtension($this->getMediaFileName());
+        } else {
+            $extension = '.'.$extension;
+        }
 
         return $this->fixExtension($extension);
     }
@@ -392,7 +394,15 @@ class Media implements IdInterface, Stringable
 
     private function slugify(string $slug): string
     {
-        return (new Slugify(['regexp' => '/([^A-Za-z0-9\.]|-)+/']))->slugify($slug);
+        $slug = str_replace(['©', '®', '™'], ' ', $slug);
+
+        $slugifier = new Slugify(['regexp' => '/([^A-Za-z0-9\.]|-)+/']);
+        $slug = str_replace(['©', '&copy;', '&#169;', '&#xA9;'], '©', $slug);
+        $slug = explode('©', $slug, 2);
+        $slug = $slugifier->slugify($slug[0])
+          .(isset($slug[1]) ? '_'.$slugifier->slugify(str_replace('©', '', $slug[1])) : '');
+
+        return $slug;
     }
 
     protected function slugifyPreservingExtension(string $string, string $extension = ''): string
@@ -414,7 +424,7 @@ class Media implements IdInterface, Stringable
             return $this->slug = Filepath::removeExtension($this->getMedia());
         }
 
-        $this->slug = (new Slugify())->slugify($this->getName());
+        $this->setSlug($this->getName());
 
         return $this->slug;
     }
