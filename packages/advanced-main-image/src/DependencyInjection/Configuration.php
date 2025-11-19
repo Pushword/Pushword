@@ -16,10 +16,19 @@ class Configuration implements ConfigurationInterface
 
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder('admin_block_editor');
+        $treeBuilder = new TreeBuilder('pushword_advanced_main_image');
         $treeBuilder->getRootNode()->children()
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
-            ->booleanNode('advanced_main_image')->defaultValue(true)->info('Set false to disable extesion')->end()
+            ->booleanNode('advanced_main_image')->defaultValue(true)->info('Set false to disable extension')->end()
+            ->variableNode('main_image_formats')
+                ->info('Available main image formats (key = translation label, value = numeric value)')
+                ->defaultValue([
+                    'admin.page.mainImageFormat.none' => 1,
+                    'admin.page.mainImageFormat.normal' => 0,
+                    'admin.page.mainImageFormat.13fullscreen' => 2,
+                    'admin.page.mainImageFormat.34fullscreen' => 3,
+                ])
+            ->end()
         ->end();
 
         return $treeBuilder;
