@@ -193,6 +193,10 @@ admin:
   media:
     preview:
       label: Aperçu
+      path: Chemin
+      markdown: Markdown
+      json: JSON
+      dominant_color: Couleur dominante
     related:
       label: Pages connectées
     name:

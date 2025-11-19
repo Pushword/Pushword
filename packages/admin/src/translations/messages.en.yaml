@@ -188,9 +188,13 @@ admin:
 
   media:
     preview:
-      label: Aperçu
+      label: Preview
+      path: Path
+      markdown: Markdown
+      json: JSON
+      dominant_color: Dominant color
     related:
-      label: Pages connectées
+      label: Related pages
     name:
       label: Nom
       help: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"

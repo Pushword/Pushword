@@ -1,26 +1,35 @@
-
-<div class=row>
-    <div class=col-md-6>
-        <a href="{{ media|image('default') }}">
-            <img src="{{ media|image('md') }}?{{ random() }}" style="max-width:100%">
+<div class="row">
+    <div class="col-md-6" style="margin-bottom: 15px;">
+        <a href="{{ media|image('default') }}" target="_blank" rel="noopener noreferrer" style="display: block;">
+            <img src="{{ media|image('md') }}?{{ random() }}"
+                 alt="{{ media.name|e }}"
+                 class="img-responsive img-thumbnail"
+                 style="max-width: 100%; height: auto;">
         </a>
-     </div>
-     <div class=col-md-6>
-         Chemin:<br>
-         <code>{{ media|image('default') }}</code>
+    </div>
+    <div class="col-md-6">
+        <div style="margin-bottom: 15px;">
+            <strong>{{ 'admin.media.preview.path'|trans }}</strong>
+            <code style="display: block; margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;">{{ media|image('default') }}</code>
+        </div>
 
-         <br><br>Markdown:<br>
-         <pre>![{{ media.name|replace({'[': '', ']': ''}) }}]({{ media|image('default') }})</pre>
+        <div style="margin-bottom: 15px;">
+            <strong>{{ 'admin.media.preview.markdown'|trans }}</strong>
+            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>![{{ media.name|replace({'[': '', ']': ''}) }}]({{ media|image('default') }})</code></pre>
+        </div>
 
+        <div style="margin-bottom: 15px;">
+            <strong>{{ 'admin.media.preview.json'|trans }}</strong>
+            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>{
+  "{{ media }}": "{{ media.name|replace({'"': '\\"',}) }}"
+}</code></pre>
+        </div>
 
-         <br><br>Markdown:<br>
-         <pre>{
-"{{ media }}": "{{ media.name|replace({'"': '\\"',}) }}",
-}
-</pre>
-
-         Couleur dominante:<br>
-         <pre style="background-color:{{ media.getMainColor }};color:{{ media.mainColorOpposite }}">{{ media.getMainColor }}</pre>
-
+        {% if media.getMainColor %}
+        <div style="margin-bottom: 15px;">
+            <strong>{{ 'admin.media.preview.dominant_color'|trans }}</strong>
+            <pre style="margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: {{ media.getMainColor }}; color: {{ media.mainColorOpposite }};">{{ media.getMainColor }}</pre>
+        </div>
+        {% endif %}
     </div>
 </div>
