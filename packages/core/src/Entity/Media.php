@@ -455,7 +455,7 @@ class Media implements IdInterface, Stringable
     #[ORM\Column(type: Types::STRING, length: 100, unique: true)]
     protected string $name = ''; // used for alt text
 
-    #[ORM\Column(type: Types::STRING, length: 100)]
+    #[ORM\Column(type: Types::STRING, length: 100, options: ['default' => ''])]
     protected string $nameSearch = '';
 
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''], nullable: true)]
