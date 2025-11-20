@@ -40,7 +40,7 @@ jobs:
         run: composer reset
 
       - name: Generate Images Cache
-        run: cd packages/skeleton && php bin/console pushword:image:cache
+        run: cd packages/skeleton && php bin/console pw:image:cache
 
       - name: Execute tests
         run: vendor/bin/phpunit --coverage-clover coverage.xml

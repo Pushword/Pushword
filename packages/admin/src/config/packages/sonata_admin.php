@@ -59,6 +59,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'knp_menu_template' => '@pwAdmin/Menu/menu.html.twig',
             'user_block' => '@pwAdmin/user_block.html.twig',
             'button_create' => '@pwAdmin/Button/create_button.html.twig',
+            'outer_list_rows_mosaic' => '@pwAdmin/CRUD/list_outer_rows_mosaic.html.twig',
         ],
         'search' => false,
         'global_search' => ['admin_route' => 'edit'],

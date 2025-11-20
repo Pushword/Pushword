@@ -24,7 +24,7 @@ echo -e "pushword:\n    resource: '@PushwordCoreBundle/Resources/config/routes/a
 # Create Database:
 php bin/console doctrine:schema:create -q
 php bin/console doctrine:fixtures:load -q
-php bin/console pushword:image:cache -q &
+php bin/console pw:image:cache -q &
 
 echo "Configure the SUPER ADMIN (you can skip this step pressing enter if you use flat file)"
 # Add an admin user :

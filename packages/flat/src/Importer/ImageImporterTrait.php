@@ -38,12 +38,29 @@ trait ImageImporterTrait
      */
     private function getImageData(string $filePath): array
     {
-        // Disabling exif read data bringing too much noise in DB
-        // $data = @exif_read_data($filePath);
-        // $data = false === $data ? [] : $data;
+        $data = $this->getData($filePath);
 
-        // return array_merge($data, $this->getData($filePath));
-        return $this->getData($filePath);
+        if ([] !== $data) {
+            return $data;
+        }
+
+        // Disabling exif read data bringing too much noise in DB
+        if (! str_ends_with($filePath, '.jpg') && ! str_ends_with($filePath, '.jpeg')) {
+            return $data;
+        }
+
+        // $exifData = @exif_read_data($filePath);
+        // if getData === []
+        getimagesize($filePath, $info);
+
+        if (isset($info['APP13']) && is_string($info['APP13'])) {
+            $iptc = iptcparse($info['APP13']);
+            if (isset($iptc['2#025'])) {
+                $data['tags'] = implode(' ', $iptc['2#025']);
+            }
+        }
+
+        return $data;
     }
 
     private function importImageMediaData(Media $media, string $filePath): void

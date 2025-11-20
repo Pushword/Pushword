@@ -46,8 +46,10 @@ class PageAdvancedMainImageFormField extends PageMainImageField
     {
         $host = null !== $page ? $page->getHost() : null;
         $app = $this->formFieldManager->apps->get($host);
+
+        /** @var array<string, int> $formats */
         $formats = $app->getArray('main_image_formats', AdvancedMainImageConfiguration::DEFAULT_MAIN_IMAGE_FORMATS);
 
-        return [] === $formats ? AdvancedMainImageConfiguration::DEFAULT_MAIN_IMAGE_FORMATS : $formats;
+        return $formats;
     }
 }

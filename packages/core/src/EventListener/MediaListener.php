@@ -6,7 +6,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Exception;
 use Intervention\Image\Image;
-use Intervention\Image\Interfaces\ImageInterface;
 use LogicException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
@@ -99,8 +98,7 @@ final readonly class MediaListener
                 return;
             }
 
-            $this->updateMainColor($media, $image);
-            // exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+            // exec('cd ../ && php bin/console pw:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
         }
     }
 
@@ -154,7 +152,7 @@ final readonly class MediaListener
             $media->setMediaBeforeUpdate('');
 
             $this->imageManager->generateCache($media);
-            // exec('cd ../ && php bin/console pushword:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+            // exec('cd ../ && php bin/console pw:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
 
             $media->setHash();
         }
@@ -249,18 +247,5 @@ final readonly class MediaListener
         }
 
         // else log TODO
-    }
-
-    private function updateMainColor(Media $media, ?ImageInterface $image = null): void
-    {
-        if (! $image instanceof Image) {
-            return;
-        }
-
-        $imageForPalette = clone $image;
-        $color = $imageForPalette->pickColor(0, 0)->toHex('#'); // ->reduceColors(1)
-        // previously doing this $color = $imageForPalette->limitColors(1)->pickColor(0, 0, 'hex');
-
-        $media->setMainColor($color);
     }
 }

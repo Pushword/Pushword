@@ -13,7 +13,7 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
         $kernel = static::createKernel();
         $application = new Application($kernel);
 
-        $command = $application->find('pushword:image:cache');
+        $command = $application->find('pw:image:cache');
         $commandTester = new CommandTester($command);
         $commandTester->execute([]);
 

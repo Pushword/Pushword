@@ -19,7 +19,7 @@ echo "Loading fixtures..."
 php bin/console doctrine:fixtures:load -q
 
 echo "Caching images..."
-php bin/console pushword:image:cache -q
+php bin/console pw:image:cache -q
 
 echo "Installing assets..."
 php bin/console assets:install --symlink --relative -q

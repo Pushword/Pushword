@@ -9,6 +9,7 @@ use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Utils\SearchNormalizer;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Filter\Model\FilterData;
@@ -107,13 +108,16 @@ final class MediaAdmin extends AbstractAdmin
 
         /** @var string */
         $filterValue = $filterData->getValue();
+        $normalizedFilterValue = SearchNormalizer::normalize($filterValue);
 
         $exp = new Expr();
         $queryBuilder->andWhere(
             $exp->orX(
                 $exp->like($alias.'.name', $exp->literal('%'.$filterValue.'%')),
+                $exp->like($alias.'.nameSearch', $exp->literal('%'.$normalizedFilterValue.'%')),
                 $exp->like($alias.'.media', $exp->literal('%'.$filterValue.'%')),
-                $exp->like($alias.'.names', $exp->literal('%'.$filterValue.'%'))
+                $exp->like($alias.'.names', $exp->literal('%'.$filterValue.'%')),
+                $exp->like($alias.'.tags', $exp->literal('%'.$filterValue.'%'))
             )
         );
 
@@ -137,7 +141,8 @@ final class MediaAdmin extends AbstractAdmin
             'label' => 'admin.media.filetype.label',
         ]);* */
 
-        $mimeTypes = $this->mediaRepo->getMimeTypes();
+        $mimeTypesAndRatio = $this->mediaRepo->getMimeTypesAndRatio();
+        $mimeTypes = $mimeTypesAndRatio['mimeType'];
         if ([] !== $mimeTypes) {
             $filter->add('mimeType', ChoiceFilter::class, [
                 'field_type' => ChoiceType::class,
@@ -146,6 +151,18 @@ final class MediaAdmin extends AbstractAdmin
                     'multiple' => true,
                 ],
                 'label' => 'admin.media.filetype.label',
+            ]);
+        }
+
+        $mimeTypes = $mimeTypesAndRatio['ratioLabel'];
+        if ([] !== $mimeTypes) {
+            $filter->add('ratioLabel', ChoiceFilter::class, [
+                'field_type' => ChoiceType::class,
+                'field_options' => [
+                    'choices' => array_combine($mimeTypes, $mimeTypes),
+                    'multiple' => true,
+                ],
+                'label' => 'admin.media.ratioLabela.label',
             ]);
         }
     }

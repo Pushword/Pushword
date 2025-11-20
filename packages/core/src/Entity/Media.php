@@ -14,10 +14,12 @@ use Pushword\Core\Entity\MediaTrait\ImageTrait;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
+use Pushword\Core\Entity\SharedTrait\TagsTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Utils\Filepath;
 use Pushword\Core\Utils\SafeMediaMimeType;
+use Pushword\Core\Utils\SearchNormalizer;
 
 use function Safe\sha1_file;
 
@@ -43,6 +45,7 @@ class Media implements IdInterface, Stringable
     use CustomPropertiesTrait;
     use IdTrait;
     use ImageTrait;
+    use TagsTrait;
     use TimestampableTrait;
 
     public function __construct()
@@ -348,7 +351,7 @@ class Media implements IdInterface, Stringable
     public function setSlugForce(?string $slug): self
     {
         if ('' === $this->name && null !== $slug) {
-            $this->name = $slug;
+            $this->setName($slug);
         }
 
         return $this->changeSlug((string) $slug);
@@ -452,6 +455,9 @@ class Media implements IdInterface, Stringable
     #[ORM\Column(type: Types::STRING, length: 100, unique: true)]
     protected string $name = ''; // used for alt text
 
+    #[ORM\Column(type: Types::STRING, length: 100)]
+    protected string $nameSearch = '';
+
     #[ORM\Column(type: Types::TEXT, options: ['default' => ''], nullable: true)]
     protected ?string $names = '';
 
@@ -471,6 +477,7 @@ class Media implements IdInterface, Stringable
         }
 
         $this->name = (string) $name;
+        $this->nameSearch = SearchNormalizer::normalize($this->name);
 
         return $this;
     }

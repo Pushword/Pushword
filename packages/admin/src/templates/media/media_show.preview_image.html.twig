@@ -1,6 +1,7 @@
 <div class="row">
     <div class="col-md-6" style="margin-bottom: 15px;">
-        <a href="{{ media|image('default') }}" target="_blank" rel="noopener noreferrer" style="display: block;">
+        <a href="{{ media|image('default') }}" target="_blank" rel="noopener noreferrer" style="display: block; position:relative">
+            <span class="mosaic-box-label label label-default" style="position: absolute; left: 10px; right: unset">{{ media.ratioLabel }}</span>
             <img src="{{ media|image('md') }}?{{ random() }}"
                  alt="{{ media.name|e }}"
                  class="img-responsive img-thumbnail"

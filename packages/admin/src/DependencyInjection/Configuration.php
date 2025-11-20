@@ -85,7 +85,12 @@ class Configuration implements ConfigurationInterface
     ];
 
     final public const array DEFAULT_ADMIN_MEDIA_FORM_FIELDS = [
-        [MediaMediaFileField::class, MediaNameField::class, MediaSlugField::class],
+        [
+            MediaMediaFileField::class,
+            MediaNameField::class,
+            TagsField::class,
+            MediaSlugField::class,
+        ],
         [CustomPropertiesField::class, MediaNamesField::class],
         [MediaPreviewField::class],
     ];

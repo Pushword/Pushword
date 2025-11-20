@@ -5,6 +5,7 @@ namespace Pushword\Core\Service;
 use Cocur\Slugify\Slugify;
 use Exception;
 use Intervention\Image\Encoders\AutoEncoder;
+use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\Entity\Media;
@@ -60,6 +61,10 @@ final class ImageManager
     {
         $image = $this->getImage($media);
 
+        $this->updateMainColor($media, $image);
+
+        $media->setDimensions([$image->width(), $image->height()]);
+
         $filterNames = array_keys($this->filterSets);
         foreach ($filterNames as $filterName) {
             $lastImg = $this->generateFilteredCache($media, $filterName, $image);
@@ -69,6 +74,19 @@ final class ImageManager
         }
 
         exec('cd ../ && php bin/console pushword:image:optimize '.$media->getMedia().' > /dev/null 2>/dev/null &');
+    }
+
+    private function updateMainColor(Media $media, ?ImageInterface $image = null): void
+    {
+        if (! $image instanceof Image) {
+            return;
+        }
+
+        $imageForPalette = clone $image;
+        $color = $imageForPalette->pickColor(0, 0)->toHex('#'); // ->reduceColors(1)
+        // previously doing this $color = $imageForPalette->limitColors(1)->pickColor(0, 0, 'hex');
+
+        $media->setMainColor($color);
     }
 
     public function getLastThumb(): ?ImageInterface

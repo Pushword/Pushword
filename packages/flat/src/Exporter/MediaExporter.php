@@ -42,6 +42,10 @@ final class MediaExporter
      */
     private function getValue(string $property, Media $media): mixed
     {
+        if (in_array($property, ['media', 'ratioLabel', 'ratio', 'width', 'height'], true)) {
+            return null;
+        }
+
         $getter = 'get'.ucfirst($property);
         $value = $media->$getter(); // @phpstan-ignore-line
 

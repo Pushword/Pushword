@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Command;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
 use Symfony\Component\Console\Attribute\Argument;
@@ -9,11 +10,12 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'pushword:image:cache', description: 'Generate all images cache')]
+#[AsCommand(name: 'pw:image:cache', description: 'Generate all images cache')]
 final readonly class ImageManagerCommand
 {
     public function __construct(
         private MediaRepository $mediaRepository,
+        private EntityManagerInterface $entityManager,
         private ImageManager $imageManager,
     ) {
     }
@@ -35,6 +37,8 @@ final readonly class ImageManagerCommand
 
             $progressBar->advance();
         }
+
+        $this->entityManager->flush(); // permits to update mainColor and dimensions
 
         $progressBar->finish();
 

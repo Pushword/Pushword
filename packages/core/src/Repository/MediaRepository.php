@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Selectable;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
 use Pushword\Core\Entity\Media;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * @extends ServiceEntityRepository<Media>
@@ -18,6 +19,9 @@ use Pushword\Core\Entity\Media;
  */
 class MediaRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
+    #[Required]
+    public PageRepository $pageRepository;
+
     public function __construct(
         ManagerRegistry $registry,
     ) {
@@ -25,27 +29,47 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     }
 
     /**
-     * @return string[]
+     * @return array{mimeType: string[], ratioLabel: string[]}
      */
-    public function getMimeTypes(): array
+    public function getMimeTypesAndRatio(): array
     {
-        $queryBuilder = $this->createQueryBuilder('m');
-        $queryBuilder->select('m.mimeType');
-        $queryBuilder->groupBy('m.mimeType');
-        $queryBuilder->orderBy('m.mimeType', 'ASC');
+        $mimeTypesResults = $this->createQueryBuilder('m')
+            ->select('DISTINCT m.mimeType AS mimeType')
+            ->orderBy('m.mimeType', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
 
-        $results = $queryBuilder->getQuery()->getResult();
+        $ratioLabelsResults = $this->createQueryBuilder('m')
+            ->select('DISTINCT m.ratioLabel AS ratioLabel')
+            ->orderBy('m.ratioLabel', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
 
-        $mimeTypes = array_column($results, 'mimeType');
-
-        // Normalize image/jpg to image/jpeg and remove duplicates
-        $normalized = array_map(
-            fn (?string $mimeType): ?string => 'image/jpg' === $mimeType ? 'image/jpeg' : $mimeType,
-            $mimeTypes
+        $normalizedMimeTypes = array_map(
+            static fn (mixed $mimeType): ?string => 'image/jpg' === $mimeType ? 'image/jpeg'
+                    : (is_string($mimeType) ? $mimeType : null),
+            array_column($mimeTypesResults, 'mimeType'),
         );
 
-        // Filter out null values and remove duplicates
-        return array_values(array_unique(array_filter($normalized, fn (?string $mimeType): bool => null !== $mimeType)));
+        $mimeTypes = array_values(
+            array_unique(
+                array_filter($normalizedMimeTypes, static fn (mixed $mimeType): bool => null !== $mimeType),
+            ),
+        );
+
+        $ratioLabels = array_values(
+            array_unique(
+                array_filter(
+                    array_column($ratioLabelsResults, 'ratioLabel'),
+                    static fn (mixed $ratioLabel): bool => is_string($ratioLabel) && '' !== $ratioLabel,
+                ),
+            ),
+        );
+
+        return [
+            'mimeType' => $mimeTypes,
+            'ratioLabel' => $ratioLabels,
+        ];
     }
 
     public function findDuplicate(Media $media): ?Media
@@ -89,5 +113,26 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             ->getSingleColumnResult();
 
         return $medias;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getAllTags(): array
+    {
+        $allTags = $this->pageRepository->getAllTags();
+
+        $queryBuilder = $this->createQueryBuilder('m')
+            ->select('m.tags')
+            ->setMaxResults(30000); // some kind of arbitrary parapet
+
+        /** @var array{tags: string[]}[] */
+        $tags = $queryBuilder->getQuery()->getResult();
+
+        foreach ($tags as $entity) {
+            $allTags = array_merge($allTags, $entity['tags']);
+        }
+
+        return array_values(array_unique($allTags));
     }
 }

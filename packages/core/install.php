@@ -42,7 +42,7 @@ PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.sha1(md5(uniqid())).
 PostInstall::mirror('vendor/pushword/skeleton/media~', 'media');
 exec('php bin/console doctrine:schema:create -q');
 exec('php bin/console doctrine:fixtures:load -q &');
-exec('php bin/console pushword:image:cache -q &');
+exec('php bin/console pw:image:cache -q &');
 
 // Add an admin user
 // exec('php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN');

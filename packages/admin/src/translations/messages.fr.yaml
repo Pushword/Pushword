@@ -213,6 +213,8 @@ admin:
       label: Date d'upload
     filetype:
       label: Type de fichiers
+    ratioLabel:
+      label: Ratio
 
   element:
     deleted: Elément supprimé.

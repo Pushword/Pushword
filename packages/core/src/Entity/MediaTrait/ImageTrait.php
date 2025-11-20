@@ -5,6 +5,7 @@ namespace Pushword\Core\Entity\MediaTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use InvertColor\Color;
+use Pushword\Core\Utils\ImageRatioLabeler;
 
 trait ImageTrait
 {
@@ -13,6 +14,12 @@ trait ImageTrait
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     protected ?int $width = null;
+
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    protected ?float $ratio = null;
+
+    #[ORM\Column(type: Types::STRING, nullable: true, options: ['default' => ''])]
+    protected ?string $ratioLabel = null;
 
     #[ORM\Column(type: Types::STRING, nullable: true)]
     protected ?string $mainColor = null;
@@ -26,7 +33,7 @@ trait ImageTrait
     }
 
     /**
-     * @param array<int>|null $dimensions
+     * @param array<int>|null $dimensions where 0 is width and 1 is height
      */
     public function setDimensions(?array $dimensions): self
     {
@@ -40,6 +47,11 @@ trait ImageTrait
 
         if (isset($dimensions[1])) {
             $this->height = $dimensions[1];
+        }
+
+        if (isset($dimensions[0]) && isset($dimensions[1])) {
+            $this->ratio = $dimensions[0] / $dimensions[1];
+            $this->ratioLabel = ImageRatioLabeler::fromDimensions($dimensions[0], $dimensions[1]);
         }
 
         return $this;
