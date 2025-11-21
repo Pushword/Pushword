@@ -4,9 +4,12 @@ namespace Pushword\Core\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\ORM\Query\Expr;
+use Doctrine\ORM\Query\Expr\Orx;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Utils\SearchNormalizer;
 use Symfony\Contracts\Service\Attribute\Required;
 
 /**
@@ -134,5 +137,37 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         }
 
         return array_values(array_unique($allTags));
+    }
+
+    public function getExprToFilterMedia(string $alias, string $filterValue): Orx
+    {
+        $exp = new Expr();
+        $normalizedFilterValue = SearchNormalizer::normalize($filterValue);
+        if ('' === $normalizedFilterValue) {
+            $normalizedFilterValue = $filterValue;
+        }
+        $likeFilterValue = $exp->literal('%'.$filterValue.'%');
+        $likeNormalizedFilterValue = $exp->literal('%'.$normalizedFilterValue.'%');
+
+        return $exp->orX(
+            $exp->like($alias.'.name', $likeFilterValue),
+            $exp->like($alias.'.nameSearch', $likeNormalizedFilterValue),
+            $exp->like($alias.'.media', $likeFilterValue),
+            $exp->like($alias.'.names', $likeFilterValue),
+            $exp->like($alias.'.tags', $likeFilterValue),
+        );
+    }
+
+    /**
+     * @return Media[]
+     */
+    public function findBySearch(string $search): array
+    {
+        $exp = $this->getExprToFilterMedia('m', $search);
+
+        return $this->createQueryBuilder('m')
+            ->where($exp)
+            ->getQuery()
+            ->getResult();
     }
 }

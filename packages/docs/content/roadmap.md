@@ -11,6 +11,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### In progress
 
+- check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
+
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
   ➜ done, but need test
 

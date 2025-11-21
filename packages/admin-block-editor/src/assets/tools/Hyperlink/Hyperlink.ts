@@ -192,7 +192,8 @@ export default class Hyperlink {
     if (!this.nodes.input) return
 
     const hrefAttr = anchorTag.getAttribute('href')
-    this.nodes.input.value = hrefAttr ? hrefAttr : ''
+    //this.nodes.input.value = hrefAttr ? hrefAttr : ''
+    this.nodes.input.setAttribute('value', hrefAttr ? hrefAttr : '')
 
     const relAttr = anchorTag.getAttribute('rel')
     this.nodes.hideForBot!.querySelector('input')!.checked = !!relAttr

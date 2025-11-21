@@ -2,14 +2,12 @@
 
 namespace Pushword\Admin;
 
-use Doctrine\ORM\Query\Expr;
 use Exception;
 use Override;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
-use Pushword\Core\Utils\SearchNormalizer;
 use Sonata\AdminBundle\Datagrid\DatagridMapper;
 use Sonata\AdminBundle\Datagrid\ListMapper;
 use Sonata\AdminBundle\Filter\Model\FilterData;
@@ -108,17 +106,8 @@ final class MediaAdmin extends AbstractAdmin
 
         /** @var string */
         $filterValue = $filterData->getValue();
-        $normalizedFilterValue = SearchNormalizer::normalize($filterValue);
-
-        $exp = new Expr();
         $queryBuilder->andWhere(
-            $exp->orX(
-                $exp->like($alias.'.name', $exp->literal('%'.$filterValue.'%')),
-                $exp->like($alias.'.nameSearch', $exp->literal('%'.$normalizedFilterValue.'%')),
-                $exp->like($alias.'.media', $exp->literal('%'.$filterValue.'%')),
-                $exp->like($alias.'.names', $exp->literal('%'.$filterValue.'%')),
-                $exp->like($alias.'.tags', $exp->literal('%'.$filterValue.'%'))
-            )
+            $this->mediaRepo->getExprToFilterMedia($alias, $filterValue)
         );
 
         return true;
