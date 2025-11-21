@@ -154,6 +154,7 @@ final class AppExtension
      * @param scalar $value
      */
     #[AsTwigFunction('integer')]
+    #[AsTwigFilter('integer')]
     public function integer(mixed $value): int
     {
         return (int) $value;
@@ -163,6 +164,7 @@ final class AppExtension
      * @param scalar $value
      */
     #[AsTwigFunction('float')]
+    #[AsTwigFilter('float')]
     public function float(mixed $value): float
     {
         return (float) $value;
@@ -171,7 +173,8 @@ final class AppExtension
     /**
      * @param scalar $value
      */
-    #[AsTwigFunction('integer')]
+    #[AsTwigFunction('boolean')]
+    #[AsTwigFilter('boolean')]
     public function boolean(mixed $value): bool
     {
         return (bool) $value;
