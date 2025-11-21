@@ -149,4 +149,31 @@ final class AppExtension
         return $live ? $this->apps->get()->getStr('base_live_url')
           : $this->apps->get()->getStr('base_url');
     }
+
+    /**
+     * @param scalar $value
+     */
+    #[AsTwigFunction('integer')]
+    public function integer(mixed $value): int
+    {
+        return (int) $value;
+    }
+
+    /**
+     * @param scalar $value
+     */
+    #[AsTwigFunction('float')]
+    public function float(mixed $value): float
+    {
+        return (float) $value;
+    }
+
+    /**
+     * @param scalar $value
+     */
+    #[AsTwigFunction('integer')]
+    public function boolean(mixed $value): bool
+    {
+        return (bool) $value;
+    }
 }
