@@ -21,6 +21,15 @@ sed -i "s|@PushwordCoreBundle/Resources/config/routes/all.yaml|@PushwordCoreBund
 
 ```
 
+### Media entity change
+
+- media.media ➜ media.fileName
+- media.name ➜ media.alt
+
+### From Sonata to EasyAdmin
+
+- ...
+
 ### To tailwind v4 and puswhord/js-helper upgrades
 
 - [ ] update your template files to tailwind v4 classes (AI recommended, prompt below)

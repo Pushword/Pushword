@@ -29,6 +29,12 @@ export default defineConfig({
       })),
     }),
   ],
+  resolve: {
+    modules: [
+      resolve(__dirname, '../js-helper/node_modules'),
+      'node_modules',
+    ],
+  },
   build: {
     rollupOptions: {
       input: input,

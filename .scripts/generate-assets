@@ -32,6 +32,12 @@ echo '------------------'
 
 cd packages/js-helper;
 yarn link  > /dev/null 2>&1 || echo "yarn link failed, but continuing..."
+if [ "$DEV" = "watch" ];
+then
+    yarn;
+else
+    yarn && yarn upgrade;
+fi
 cd ../../;
 
 #####################
