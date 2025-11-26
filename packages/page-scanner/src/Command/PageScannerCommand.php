@@ -13,7 +13,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\FlockStore;
 
-#[AsCommand(name: 'pushword:page-scanner:scan', description: 'Find dead links, 404, 301 and more in your content.')]
+#[AsCommand(name: 'pw:page-scan', description: 'Find dead links, 404, 301 and more in your content.')]
 final class PageScannerCommand
 {
     public function __construct(

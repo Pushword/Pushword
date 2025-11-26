@@ -13,13 +13,13 @@ Let's take a look at the commands available in Pushword and their purpose. Keep 
   pw:flat:import              Syncing flat file inside database
   pw:flat:export              Export database toward file (yaml+json)
   pw:image:cache        Generate all images cache
-  pushword:image:optimize     Optimize all images cache
-  pushword:page:scan          Find dead links, 404, 301 and more in your content.
-  pushword:static:generate    Generate a static version for your website(s)
-  pushword:user:create        Create a new user
+  pw:image:optimize     Optimize all images cache
+  pw:page-scan          Find dead links, 404, 301 and more in your content.
+  pw:static:generate    Generate a static version for your website(s)
+  pw:user:create        Create a new user
 ```
 
-To get more details on each command line, just type `-h` (eg `php bin/console pushword:user:create -h`)
+To get more details on each command line, just type `-h` (eg `php bin/console pw:user:create -h`)
 
 You can also view all the available Symfony commands by running:
 

@@ -21,7 +21,7 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         $pageId = $this->createKitchenSinkPage();
 
         // Exécuter la commande de conversion
-        $command = $application->find('pushword:json:to-markdown');
+        $command = $application->find('pw:json:to-markdown');
         $commandTester = new CommandTester($command);
         $commandTester->execute([
             '--page-id' => (string) $pageId,
@@ -64,7 +64,7 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         $pageId = $this->createKitchenSinkPage();
 
         // Exécuter la commande en mode dry-run
-        $command = $application->find('pushword:json:to-markdown');
+        $command = $application->find('pw:json:to-markdown');
         $commandTester = new CommandTester($command);
         $commandTester->execute([
             '--page-id' => (string) $pageId,
@@ -100,7 +100,7 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         $pageId = $this->createMarkdownTestPage();
 
         // Exécuter la commande sur cette page spécifique
-        $command = $application->find('pushword:json:to-markdown');
+        $command = $application->find('pw:json:to-markdown');
         $commandTester = new CommandTester($command);
         $commandTester->execute([
             '--page-id' => (string) $pageId,

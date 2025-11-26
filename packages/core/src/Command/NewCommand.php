@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Yaml\Yaml;
 
-#[AsCommand(name: 'pushword:new', description: 'Add a new website into your config file (config/packages/pushword.yaml).')]
+#[AsCommand(name: 'pw:new', description: 'Add a new website into your config file (config/packages/pushword.yaml).')]
 final readonly class NewCommand
 {
     public function __construct(private string $projectDir)

@@ -78,7 +78,7 @@ abstract class AbstractAdminTestClass extends PantherTestCase
         $kernel = static::createKernel();
         $application = new Application($kernel);
 
-        $command = $application->find('pushword:user:create');
+        $command = $application->find('pw:user:create');
         $commandTester = new CommandTester($command);
         $commandTester->execute([
             'email' => 'admin@example.tld',

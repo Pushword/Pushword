@@ -13,7 +13,7 @@ class PageScannerCommandTest extends KernelTestCase
         $kernel = self::createKernel();
         $application = new Application($kernel);
 
-        $command = $application->find('pushword:page-scanner:scan');
+        $command = $application->find('pw:page-scan');
         $commandTester = new CommandTester($command);
         $commandTester->execute(['localhost.dev']);
 

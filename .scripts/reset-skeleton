@@ -24,4 +24,4 @@ php bin/console pw:image:cache -q
 echo "Installing assets..."
 php bin/console assets:install --symlink --relative -q
 
-php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN
+php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN

@@ -45,7 +45,7 @@ exec('php bin/console doctrine:fixtures:load -q &');
 exec('php bin/console pw:image:cache -q &');
 
 // Add an admin user
-// exec('php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN');
+// exec('php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN');
 
 echo '~~ Symlinking assets'.chr(10);
 exec('php bin/console assets:install --symlink --relative -q');

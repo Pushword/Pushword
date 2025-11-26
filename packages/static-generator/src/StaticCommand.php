@@ -9,7 +9,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Stopwatch\Stopwatch;
 
-#[AsCommand(name: 'pushword:static:generate', description: 'Generate static version for your website')]
+#[AsCommand(name: 'pw:static:generate', description: 'Generate static version for your website')]
 #[AutoconfigureTag('console.command')]
 final readonly class StaticCommand
 {

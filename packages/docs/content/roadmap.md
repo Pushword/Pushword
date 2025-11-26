@@ -20,6 +20,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   Under the hood i want to change page scanner and static generation to avoid to simulate request
   Before, we need to find all the app.request in twig templates or in code related to static generation and to replace it by another solution
 
+- flat export for conversion in a CSV
+  Développer Reviews depuis Conversation + export en yaml ou CSV (avec une première passe pour identifier les custom properties) dans Flat
+
 - [AdminBlockEditor] Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
 
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
@@ -37,7 +40,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] implémenter prettier markdown
   - [x] enregistrer en DB uniquement le markdown
   - [x] admin - revoir la class qui instantie pour montrer EditorJS si le contenu est en markdown (donc markdown ➜ editorjs à l'initialisation, nouveau comportement par défaut)
-  - [x] **how to bulk upgrade ?** ➜ `bin/console pushword:json:to-markdown`
+  - [x] **how to bulk upgrade ?** ➜ `bin/console pw:json:to-markdown`
   - [x] Remove all code related to block rendering (in DB, markdown is used so front-end will use markdown)
   - [ ] test test test
     - [ ] [Example](/example){class="ninja"} n'est pas correctement parsé

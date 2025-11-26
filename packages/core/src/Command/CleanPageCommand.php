@@ -6,7 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 
-#[AsCommand(name: 'pushword:page:clean')]
+#[AsCommand(name: 'pw:page:clean')]
 final readonly class CleanPageCommand
 {
     public function __construct(private EntityManagerInterface $em, private PageRepository $pageRepo)

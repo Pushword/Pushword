@@ -9,7 +9,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'pushword:image:optimize', description: 'Optimize all images')]
+#[AsCommand(name: 'pw:image:optimize', description: 'Optimize all images')]
 final readonly class ImageOptimizerCommand
 {
     public function __construct(

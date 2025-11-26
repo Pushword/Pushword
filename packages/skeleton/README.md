@@ -23,8 +23,8 @@ php bin/console doctrine:fixtures:load
 # Add an admin user :
 read -p 'Email: ' emailvar
 read -sp 'Password: ' passvar
-php bin/console pushword:user:create $emailvar $passvar ROLE_SUPER_ADMIN
-#php bin/console pushword:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN
+php bin/console pw:user:create $emailvar $passvar ROLE_SUPER_ADMIN
+#php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN
 
 # Install Bundle Assets
 php bin/console assets:install

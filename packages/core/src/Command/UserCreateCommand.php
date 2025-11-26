@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-#[AsCommand(name: 'pushword:user:create', description: 'Create a new user')]
+#[AsCommand(name: 'pw:user:create', description: 'Create a new user')]
 final readonly class UserCreateCommand
 {
     public function __construct(private EntityManagerInterface $em, private UserPasswordHasherInterface $passwordEncoder)

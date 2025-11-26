@@ -11,7 +11,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'pushword:block:upgrade', description: 'Convert editorjs blocks (image, gallery, attaches) to new format.')]
+#[AsCommand(name: 'pw:block:upgrade', description: 'Convert editorjs blocks (image, gallery, attaches) to new format.')]
 final readonly class ConvertBlockFormatCommand
 {
     public function __construct(

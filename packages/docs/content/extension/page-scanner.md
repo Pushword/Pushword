@@ -19,7 +19,7 @@ you may have a look inside `vendor/pushword/admin/install.php`.
 ## Command
 
 ```
-php bin/console pushword:page:scan $host
+php bin/console pw:page-scan $host
 ```
 
 ## Configuration

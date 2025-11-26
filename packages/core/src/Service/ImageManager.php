@@ -73,7 +73,7 @@ final class ImageManager
             }
         }
 
-        exec('cd ../ && php bin/console pushword:image:optimize '.$media->getFileName().' > /dev/null 2>/dev/null &');
+        exec('cd ../ && php bin/console pw:image:optimize '.$media->getFileName().' > /dev/null 2>/dev/null &');
     }
 
     private function updateMainColor(Media $media, ?ImageInterface $image = null): void

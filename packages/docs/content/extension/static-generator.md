@@ -34,13 +34,13 @@ _The default generators are compatible with Apache/Litespeed and FrankenPHP/Cadd
 
 ```shell
 # Generate all apps
-php bin/console pushword:static:generate
+php bin/console pw:static:generate
 
 # Generate 1 app
-php bin/console pushword:static:generate $host
+php bin/console pw:static:generate $host
 
 # (re)Generate only one page
-php bin/console pushword:static:generate $host $slug
+php bin/console pw:static:generate $host $slug
 ```
 
 ## Using FrankenPHP (Caddy) to serve your static website

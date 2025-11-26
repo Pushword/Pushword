@@ -35,7 +35,7 @@ class StaticGeneratorTest extends KernelTestCase
         $kernel = static::createKernel();
         $application = new Application($kernel);
 
-        $command = $application->find('pushword:static:generate');
+        $command = $application->find('pw:static:generate');
         $commandTester = new CommandTester($command);
 
         $commandTester->execute(['localhost.dev']);

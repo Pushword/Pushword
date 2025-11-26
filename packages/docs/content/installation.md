@@ -21,13 +21,13 @@ _Note_ : **Node** and **Yarn** may not be required in the near future, [thanks t
 composer create-project pushword/new pushword @dev
 
 # Create the admin user
-cd pushword && php bin/console pushword:user:create
+cd pushword && php bin/console pw:user:create
 ```
 
 That's it ! You can still configure an app or directly launch a PHP Server :
 
 ```shell
-php bin/console pushword:new
+php bin/console pw:new
 php -S 127.0.0.1:8004 -t public/
 # OR symfony server:start -d
 ```
