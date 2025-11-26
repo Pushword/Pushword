@@ -344,6 +344,81 @@ final class ConversationFlatTest extends KernelTestCase
         }
     }
 
+    public function testImportWithMediaNameWithoutExtension(): void
+    {
+        // Crée un média avec extension
+        $media = $this->createTestMedia('piedweb-logo.png');
+
+        // Crée un message avec ce média
+        $message = $this->createTestMessage('Message with media', 'test@example.com', 'Test User');
+        $message->addMedia($media);
+
+        $this->entityManager->persist($message);
+        $this->entityManager->flush();
+
+        if (null !== $message->getId()) {
+            $this->createdMessageIds[] = $message->getId();
+        }
+
+        // Exporte
+        $this->exporter->export($this->testHost);
+
+        // Modifie le CSV pour utiliser le nom sans extension dans mediaList
+        $csvContentRaw = file_get_contents($this->csvPath);
+        self::assertIsString($csvContentRaw);
+        /** @var string $csvContent */
+        $csvContent = $csvContentRaw;
+        $lines = explode("\n", $csvContent);
+        /** @var string $headerLine */
+        $headerLine = $lines[0];
+        $mediaListIndex = $this->getColumnIndex($headerLine, 'mediaList');
+
+        if ($mediaListIndex >= 0) {
+            foreach ($lines as $i => $line) {
+                if (str_contains($line, 'Message with media')) {
+                    $columns = str_getcsv($line, escape: '\\');
+                    if (isset($columns[$mediaListIndex])) {
+                        // Remplace le nom avec extension par le nom sans extension
+                        $columns[$mediaListIndex] = 'piedweb-logo';
+                        $lines[$i] = $this->arrayToCsvLine($columns);
+                    }
+
+                    break;
+                }
+            }
+
+            $csvContent = implode("\n", $lines);
+            file_put_contents($this->csvPath, $csvContent);
+        }
+
+        // Supprime le message
+        $this->entityManager->remove($message);
+        $this->entityManager->flush();
+
+        $this->createdMessageIds = [];
+
+        // Importe - devrait trouver le média même avec le nom sans extension
+        $this->importer->import($this->testHost);
+
+        $importedMessage = $this->messageRepository->findOneBy([
+            'host' => $this->testHost,
+            'content' => 'Message with media',
+        ]);
+        self::assertInstanceOf(Message::class, $importedMessage);
+        // La mediaList devrait contenir le média trouvé par son nom sans extension
+        $mediaList = $importedMessage->getMediaList();
+        self::assertCount(1, $mediaList);
+        $mediaArray = $mediaList->toArray();
+        self::assertArrayHasKey(0, $mediaArray);
+        /** @var Media $firstMedia */
+        $firstMedia = $mediaArray[0];
+        self::assertSame('piedweb-logo.png', $firstMedia->getFileName());
+
+        if (null !== $importedMessage->getId()) {
+            $this->createdMessageIds[] = $importedMessage->getId();
+        }
+    }
+
     private function getColumnIndex(string $headerLine, string $columnName): int
     {
         $columns = str_getcsv($headerLine, escape: '\\');

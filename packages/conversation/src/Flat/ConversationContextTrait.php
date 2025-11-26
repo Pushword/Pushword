@@ -46,8 +46,15 @@ trait ConversationContextTrait
         return $this->messageRepository;
     }
 
-    public function resolveMessageClass(?string $type): ?string
+    /**
+     * @param array<string, string|null> $row
+     */
+    public function resolveMessageClass(?string $type, array $row = []): ?string
     {
+        if (in_array((int) ($row['rating'] ?? 0), [1, 2, 3, 4, 5], true)) {
+            return Review::class;
+        }
+
         $type = trim($type ?? '');
 
         if (Review::class === $type || 'review' === strtolower($type) || str_contains($type, 'Review')) {

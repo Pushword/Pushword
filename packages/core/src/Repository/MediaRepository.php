@@ -176,12 +176,83 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $likeNormalizedFilterValue = $exp->literal('%'.$normalizedFilterValue.'%');
 
         return $exp->orX(
+            $exp->like($alias.'.fileName', $likeFilterValue),
             $exp->like($alias.'.alt', $likeFilterValue),
             $exp->like($alias.'.altSearch', $likeNormalizedFilterValue),
-            $exp->like($alias.'.fileName', $likeFilterValue),
             $exp->like($alias.'.alts', $likeFilterValue),
             $exp->like($alias.'.tags', $likeFilterValue),
         );
+    }
+
+    public function findOneBySearch(string $search): ?Media
+    {
+        // do each test like in getExprToFilterMedia but stoping when the first test is positive
+        $normalizedSearch = SearchNormalizer::normalize($search);
+        if ('' === $normalizedSearch) {
+            $normalizedSearch = $search;
+        }
+
+        /** @var Media|null $result */
+        $result = $this->createQueryBuilder('m')
+            ->where('m.fileName LIKE :search')
+            ->setParameter('search', '%'.$search.'%')
+            ->orWhere('m.fileName LIKE :normalizedSearch')
+            ->setParameter('normalizedSearch', '%'.$normalizedSearch.'%')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (null !== $result) {
+            return $result;
+        }
+
+        /** @var Media|null $result */
+        $result = $this->createQueryBuilder('m')
+            ->where('m.alt LIKE :search')
+            ->setParameter('search', '%'.$search.'%')
+            ->orWhere('m.alt LIKE :normalizedSearch')
+            ->setParameter('normalizedSearch', '%'.$normalizedSearch.'%')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (null !== $result) {
+            return $result;
+        }
+
+        /** @var Media|null $result */
+        $result = $this->createQueryBuilder('m')
+            ->where('m.altSearch LIKE :normalizedSearch')
+            ->setParameter('normalizedSearch', '%'.$normalizedSearch.'%')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (null !== $result) {
+            return $result;
+        }
+
+        /** @var Media|null $result */
+        $result = $this->createQueryBuilder('m')
+            ->where('m.alts LIKE :search')
+            ->setParameter('search', '%'.$search.'%')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (null !== $result) {
+            return $result;
+        }
+
+        /** @var Media|null $result */
+        $result = $this->createQueryBuilder('m')
+            ->where('m.tags LIKE :search')
+            ->setParameter('search', '%'.$search.'%')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $result;
     }
 
     /**

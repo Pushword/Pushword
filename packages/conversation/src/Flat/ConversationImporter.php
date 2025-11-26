@@ -74,7 +74,7 @@ final class ConversationImporter
 
             $message = $this->findMessage($row['id'] ?? null);
             if (null === $message) {
-                $messageClass = $this->resolveMessageClass($row['type'] ?? null);
+                $messageClass = $this->resolveMessageClass($row['type'] ?? null, $row);
                 if (null === $messageClass) {
                     continue;
                 }
@@ -165,8 +165,10 @@ final class ConversationImporter
         $tagsString = $row['tags'] ?? '';
         $tags = '' !== $tagsString ? explode('|', $tagsString) : [];
 
+        $host = isset($row['host']) ? ($row['host'] ?: $defaultHost) : $defaultHost;
+
         $data = [
-            'host' => $row['host'] ?: $defaultHost,
+            'host' => $host,
             'referring' => $row['referring'] ?? '',
             'content' => $row['content'] ?? '',
             'authorName' => $row['authorName'] ?? null,
@@ -238,7 +240,7 @@ final class ConversationImporter
 
         $medias = [];
         foreach ($fileNames as $fileName) {
-            $media = $this->mediaRepository->findOneBy(['fileName' => $fileName]);
+            $media = $this->mediaRepository->findOneBySearch($fileName);
             if (null !== $media) {
                 $medias[] = $media;
             }
