@@ -78,14 +78,28 @@ class ConversationCrudController extends AbstractAdminCrudController
             ->setSortable(false);
         yield TextField::new('tags', 'admin.conversation.tags.label')
             ->setSortable(false)
+            ->renderAsHtml()
             ->formatValue(static function (mixed $value, mixed $entity): string {
-                if (! \is_object($entity) || ! method_exists($entity, 'getTags')) {
+                if (! \is_object($entity) || ! method_exists($entity, 'getTagList')) {
                     return '';
                 }
 
-                $tags = $entity->getTags();
+                $tagList = $entity->getTagList();
+                if (! \is_array($tagList) || [] === $tagList) {
+                    return '';
+                }
 
-                return \is_string($tags) ? $tags : '';
+                $firstThreeTags = \array_slice($tagList, 0, 3);
+                $allTags = implode(' ', $tagList);
+                $displayTags = implode(' ', $firstThreeTags);
+                $hasMoreTags = \count($tagList) > 3;
+
+                return sprintf(
+                    '<span title="%s">%s%s</span>',
+                    htmlspecialchars($allTags, \ENT_QUOTES),
+                    htmlspecialchars($displayTags, \ENT_QUOTES),
+                    $hasMoreTags ? '…' : '',
+                );
             });
         yield TextField::new('authorEmail', 'admin.conversation.authorEmail.label')
             ->setSortable(false);
