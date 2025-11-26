@@ -142,7 +142,7 @@ final readonly class ConvertJsonToMarkdownCommand
         $markdown = $this->convertJsonToMarkdown($jsonContent);
 
         // Mettre à jour la page
-        $page->setMainContent($markdown);
+        $page->setMainContent(trim($markdown));
 
         if ($io->isVerbose()) {
             $io->text(\sprintf(

@@ -94,11 +94,13 @@ class PageRedirectionCrudController extends PageCrudController
         }
 
         $target = $page->getRedirection();
+        $truncated = mb_strlen($target) > 40 ? mb_substr($target, 0, 40).'...' : $target;
 
         return sprintf(
-            '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+            '<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">%s</a>',
             htmlspecialchars($target, \ENT_QUOTES),
             htmlspecialchars($target, \ENT_QUOTES),
+            htmlspecialchars($truncated, \ENT_QUOTES),
         );
     }
 

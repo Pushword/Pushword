@@ -3,7 +3,6 @@
 namespace Pushword\Admin\Controller;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\CrudMenuItem;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\SubMenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
@@ -49,6 +48,11 @@ final readonly class AdminMenu
         yield [
             'weight' => 800,
             'item' => MenuItem::linkToCrud('admin.label.media', 'fas fa-images', Media::class),
+        ];
+
+        yield [
+            'weight' => 750,
+            'item' => $this->buildCheatSheetMenu(),
         ];
 
         yield [
@@ -134,32 +138,36 @@ final readonly class AdminMenu
         }
     }
 
-    private function buildPageMenu(): SubMenuItem
+    private function buildPageMenu(): MenuItemInterface
     {
         $hosts = $this->apps->getHosts();
+        if (\count($hosts) <= 1) {
+            return MenuItem::linkToCrud('admin.label.content', 'fas fa-file', Page::class)
+                ->setController(PageCrudController::class);
+        }
 
         $listItem = MenuItem::linkToCrud('admin.label.list', 'fas fa-list', Page::class)
+            ->setCssClass('d-none')
             ->setController(PageCrudController::class);
         $subItems = [$listItem];
 
-        if (\count($hosts) > 1) {
-            $listItem->setCssClass('d-none');
-            foreach ($hosts as $host) {
-                $subItems[] = $this->createHostMenuItem($host, PageCrudController::class);
-            }
+        foreach ($hosts as $host) {
+            $subItems[] = $this->createHostMenuItem($host, PageCrudController::class);
         }
 
-        $cheatSheetItem = MenuItem::linkToRoute('admin.label.cheatsheet', 'fa fa-book', 'cheatsheetEditRoute')
-            ->setCssClass('opacity-75');
+        return MenuItem::subMenu('admin.label.content', 'fas fa-file')
+            ->setSubItems($subItems);
+    }
+
+    private function buildCheatSheetMenu(): MenuItemInterface
+    {
+        $cheatSheetItem = MenuItem::linkToRoute('admin.label.cheatsheet', 'fa fa-book', 'cheatsheetEditRoute');
 
         if ($this->isCheatSheetActive()) {
             $cheatSheetItem->getAsDto()->setSelected(true);
         }
 
-        $subItems[] = $cheatSheetItem;
-
-        return MenuItem::subMenu('admin.label.content', 'fas fa-file')
-            ->setSubItems($subItems);
+        return $cheatSheetItem;
     }
 
     private function buildRedirectionMenu(): MenuItemInterface
