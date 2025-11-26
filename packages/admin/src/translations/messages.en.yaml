@@ -49,6 +49,7 @@ admin:
     redirection: Redirection
     check_content: Check content
     conversation: Conversation
+    review: Reviews
     cheatsheet: Cheatsheet
 
   action: Action

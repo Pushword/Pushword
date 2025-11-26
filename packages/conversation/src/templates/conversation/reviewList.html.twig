@@ -1,0 +1,9 @@
+{% if reviews is empty %}
+    <!-- <p class="text-sm text-gray-500 italic text-center">{% trans %}conversation.review.empty{% endtrans %}</p> -->
+{% endif %}
+
+{% for message in reviews %}
+    {% include '@PushwordConversation/conversation/review.html.twig' with {
+        message: message,
+    } %}
+{% endfor %}

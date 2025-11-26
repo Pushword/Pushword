@@ -10,14 +10,13 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->defaults()
         ->autowire()
-        ->autoconfigure()
-        ->bind('$env', '%kernel.environment%')
-        ->bind('$message', '%pw.conversation.entity_message%')
-        ->bind('$projectDir', '%kernel.project_dir%')
-    ;
+        ->autoconfigure();
 
     $services->load('Pushword\Conversation\\', __DIR__.'/../../../src/*')
         ->exclude([
             __DIR__.'/../../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
+            __DIR__.'/../../../src/Flat/',
         ]);
+
+    $services->load('Pushword\Conversation\Flat\\', __DIR__.'/../../../src/Flat/');
 };

@@ -32,7 +32,7 @@
     {% set num_results = visible_entities|length %}
     {% set some_results_are_hidden = num_results != entities|length %}
 
-    <div class="media-mosaic-wrapper">
+    <div class="media-mosaic-wrapper" {% if app.request.query.get('pwMediaPicker') %}data-pw-media-picker-embedded="1"{% endif %}>
       {% if has_batch_actions and num_results > 0 %}
         <div class="media-mosaic__select-all form-check mb-3">
           <input type="checkbox" class="form-check-input form-batch-checkbox-all" id="form-batch-checkbox-all">

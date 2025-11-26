@@ -2,22 +2,37 @@ const MEDIA_PICKER_MODAL_ID = 'pw-media-picker-modal'
 const MEDIA_PICKER_IFRAME_CLASS = 'pw-media-picker__iframe'
 const MESSAGE_TYPE = 'pw-media-picker-select'
 
+const debug = (...args) => console.debug('[MediaPicker]', ...args)
+
 export function mediaPicker() {
+  debug('Booting mediaPicker script')
   initParentPickers()
+  initCollectionListeners()
   initPickerChildContext()
 }
 
+let isMessageListenerRegistered = false
+
 function initParentPickers() {
   const pickers = document.querySelectorAll('[data-pw-media-picker]')
-  if (!pickers.length) return
+  debug('initParentPickers: found %s pickers', pickers.length)
+
+  if (!isMessageListenerRegistered) {
+    window.addEventListener('message', handlePickerMessage, false)
+    isMessageListenerRegistered = true
+    debug('Registered window message listener')
+  }
+
+  if (!pickers.length) {
+    return
+  }
 
   pickers.forEach((select) => {
     if (select.dataset.pwMediaPickerReady === '1') return
     select.dataset.pwMediaPickerReady = '1'
+    debug('Enhancing picker', select.id || select.name)
     enhancePicker(select)
   })
-
-  window.addEventListener('message', handlePickerMessage, false)
 }
 
 function enhancePicker(select) {
@@ -58,6 +73,23 @@ function enhancePicker(select) {
     })
 
   select.addEventListener('change', () => renderPickerState(select))
+
+  select.dispatchEvent(new Event('change'))
+}
+
+function initCollectionListeners() {
+  document.addEventListener('ea.collection.item-added', (event) => {
+    const newElement = event.detail?.newElement
+    debug('ea.collection.item-added triggered', newElement)
+    if (!newElement) {
+      return
+    }
+
+    newElement.querySelectorAll('[data-pw-media-picker]').forEach((element) => {
+      debug('Enhancing picker inside collection', element.id || element.name)
+      enhancePicker(element)
+    })
+  })
 }
 
 function buildPickerHtml(select) {
@@ -80,7 +112,7 @@ function buildPickerHtml(select) {
       <button class="btn btn-outline-secondary" type="button" data-pw-media-picker-action="upload">
         ${select.dataset.pwMediaPickerUploadLabel || 'Upload'}
       </button>
-      <button class="btn btn-link text-danger ms-auto" type="button" data-pw-media-picker-action="remove" aria-label="${removeLabel}">
+      <button class="btn btn-link ms-auto" type="button" data-pw-media-picker-action="remove" aria-label="${removeLabel}">
         <span class="fa fa-times" aria-hidden="true"></span>
       </button>
     </div>
@@ -92,6 +124,7 @@ function renderPickerState(select) {
   if (!wrapper) return
 
   const hasSelection = Boolean(select.dataset.pwMediaPickerSelectedId)
+  debug('renderPickerState', select.id || select.name, 'hasSelection:', hasSelection)
   const thumb = wrapper.querySelector('.pw-media-picker__thumb-inner')
   const nameEl = wrapper.querySelector('.pw-media-picker__name')
   const infoEl = wrapper.querySelector('.pw-media-picker__info')
@@ -126,6 +159,15 @@ function renderPickerState(select) {
   }
 
   wrapper.classList.toggle('pw-media-picker--empty', !hasSelection)
+
+  updateCollectionHeader(
+    select,
+    hasSelection
+      ? select.dataset.pwMediaPickerSelectedFilename ||
+          select.dataset.pwMediaPickerSelectedName ||
+          ''
+      : '',
+  )
 }
 
 function getThumbRatio(select, hasSelection) {
@@ -146,12 +188,38 @@ function clearPickerSelection(select) {
   select.value = ''
   delete select.dataset.pwMediaPickerSelectedId
   delete select.dataset.pwMediaPickerSelectedName
+  delete select.dataset.pwMediaPickerSelectedFilename
   delete select.dataset.pwMediaPickerSelectedThumb
   delete select.dataset.pwMediaPickerSelectedMeta
   delete select.dataset.pwMediaPickerSelectedWidth
   delete select.dataset.pwMediaPickerSelectedHeight
   select.dispatchEvent(new Event('change', { bubbles: true }))
   renderPickerState(select)
+}
+
+function updateCollectionHeader(select, label) {
+  const item = select.closest('.field-collection-item')
+  if (!item) {
+    return
+  }
+
+  const button = item.querySelector('.accordion-button')
+  const collapse = item.querySelector('.accordion-collapse')
+  if (button) {
+    button.classList.remove('collapsed')
+    button.setAttribute('aria-expanded', 'true')
+    const titleNode = button.querySelector('.accordion-title')
+    const content = label || select.dataset.pwMediaPickerEmptyLabel || button.textContent
+    if (titleNode) {
+      titleNode.textContent = content
+    } else {
+      button.textContent = content
+    }
+  }
+
+  if (collapse) {
+    collapse.classList.add('show')
+  }
 }
 
 function buildPickerUrl(baseUrl, select) {
@@ -229,6 +297,7 @@ function handlePickerMessage(event) {
   }
 
   const { fieldId, media } = payload
+  debug('Message received from picker', fieldId, media)
   if (!fieldId || !media) {
     return
   }
@@ -238,10 +307,11 @@ function handlePickerMessage(event) {
     return
   }
 
-  const mediaLabel = media.alt ?? media.name ?? media.fileName ?? ''
+  const mediaLabel = media.fileName ?? media.name ?? media.alt ?? ''
 
   select.dataset.pwMediaPickerSelectedId = media.id
   select.dataset.pwMediaPickerSelectedName = mediaLabel
+  select.dataset.pwMediaPickerSelectedFilename = media.fileName || ''
   select.dataset.pwMediaPickerSelectedThumb = media.thumb
   select.dataset.pwMediaPickerSelectedMeta = media.meta || ''
   select.dataset.pwMediaPickerSelectedRatio = media.ratio || ''
@@ -284,18 +354,32 @@ function initPickerChildContext() {
 function bindMosaicSelection() {
   const params = new URLSearchParams(window.location.search)
   const fieldId = params.get('pwMediaPickerFieldId')
+  debug('bindMosaicSelection', { fieldId, params: params.toString() })
   if (!fieldId) return
+
+  const handleCardClick = (event) => {
+    if (!(event.target instanceof Element)) {
+      return
+    }
+
+    const link = event.target.closest('.media-mosaic__card .mosaic-inner-box')
+    if (!link) {
+      return
+    }
+
+    event.preventDefault()
+    const card = link.closest('.media-mosaic__card')
+    if (!card) {
+      return
+    }
+
+    sendSelection(fieldId, extractMediaFromCard(card))
+  }
 
   document
     .querySelectorAll('.media-mosaic__card .mosaic-inner-box')
     .forEach((element) => {
-      element.addEventListener('click', (event) => {
-        event.preventDefault()
-        const card = element.closest('.media-mosaic__card')
-        if (!card) return
-
-        sendSelection(fieldId, extractMediaFromCard(card))
-      })
+      element.addEventListener('click', handleCardClick)
     })
 
   const autoSelectId = params.get('pwMediaPickerSelect')
@@ -313,14 +397,43 @@ function bindMosaicSelection() {
       : window.location.pathname
     window.history.replaceState({}, '', newUrl)
   }
+
+  const embeddedWrapper = document.querySelector('[data-pw-media-picker-embedded]')
+  if (embeddedWrapper) {
+    embeddedWrapper.addEventListener(
+      'click',
+      (event) => {
+        if (!(event.target instanceof Element)) {
+          return
+        }
+
+        const link = event.target.closest('.media-mosaic__card .mosaic-inner-box')
+        if (!link) {
+          return
+        }
+
+        event.preventDefault()
+        const card = link.closest('.media-mosaic__card')
+        if (!card) {
+          return
+        }
+
+        sendSelection(fieldId, extractMediaFromCard(card))
+      },
+      true,
+    )
+  }
 }
 
 function extractMediaFromCard(card) {
   const link = card.querySelector('.mosaic-inner-box')
   const previewImg = card.querySelector('.media-mosaic__preview img')
   const alt = (link?.dataset.mediaAlt || '').trim()
-  const fileName =
-    (link?.dataset.mediaFileName || card.querySelector('.media-mosaic__title')?.textContent || '').trim()
+  const fileName = (
+    link?.dataset.mediaFileName ||
+    card.querySelector('.media-mosaic__title')?.textContent ||
+    ''
+  ).trim()
   const label = alt || fileName
 
   return {
@@ -350,6 +463,7 @@ function buildDimensionsFromLink(link) {
 function sendSelection(fieldId, media) {
   if (!media || !media.id) return
 
+  debug('sendSelection', fieldId, media)
   window.parent.postMessage(
     {
       type: MESSAGE_TYPE,

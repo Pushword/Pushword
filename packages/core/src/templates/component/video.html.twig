@@ -13,7 +13,7 @@
     {% set is_embed = embed_code is defined and embed_code is not null %}
     <div class="max-w-screen-xl mx-auto"{{ blockWrapperId(id ?? '') }}>
         <div
-            class="relative m-3 my-6 aspect-[16/9]" {% if is_embed %}
+            class="relative m-3 my-6 aspect-16/9" {% if is_embed %}
             data-replaceBy="{{ embed_code|replace({'"': "'"}) }}"{% endif %}>
             {% if false == is_embed %}<span data-rot="{{ obfuscate(url) }}" class="glightbox" data-type="video">{% endif %}
                 {{ _self.videoThumb(image, alt|default(url), btn_title) }}

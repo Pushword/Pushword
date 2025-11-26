@@ -23,6 +23,16 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - flat export for conversion in a CSV
   Développer Reviews depuis Conversation + export en yaml ou CSV (avec une première passe pour identifier les custom properties) dans Flat
 
+- conversion ajouter un host dans admin
+
+Flat :
+
+- dissociate page and media export/import because sometime we need to import media and export page or export media and import page
+- create PageSync and MediaSync responsible to know if it's time to import or to export (move FlatFileSync related code into a PageSync)
+- make FlatFile sync with responsability to sync pages and media AND triggering an event to notify sync (permitting other bundle to)
+- simplify the code, i am not sure we need to maintain FlatFileImporter and FlatFileExporter
+- create an event to trigger external sync (bundle)
+
 - [AdminBlockEditor] Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
 
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)

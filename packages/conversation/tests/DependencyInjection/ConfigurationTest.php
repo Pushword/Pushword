@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pushword\Conversation\Tests\DependencyInjection;
 
 use Pushword\Conversation\DependencyInjection\PushwordConversationExtension;
-use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\PushwordConversationBundle;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -17,10 +16,6 @@ class ConfigurationTest extends KernelTestCase
     public function testConf(): void
     {
         self::bootKernel();
-
-        $msgEntity = self::getContainer()->getParameter('pw.conversation.entity_message');
-
-        self::assertSame(Message::class, $msgEntity);
 
         self::assertSame('P1D', self::getContainer()->get(AppPool::class)->get()->get('conversation_notification_interval'));
 

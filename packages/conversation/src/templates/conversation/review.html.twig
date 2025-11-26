@@ -1,0 +1,98 @@
+{# @var review \Pushword\Conversation\Entity\Review #}
+
+
+{% set anonymous = 'Anonymous'|trans %}
+{% set reviewAuthor = review.authorName|default(anonymous) %}
+
+{% set reviewBody = review.content %}
+{% set reviewBodyHtml = reviewBody|markdown %}
+
+
+{% block review %}
+<article
+    class="{{ reviewWrapperClass|default('flex flex-col p-5 card mb-6 not-prose') }}"
+    x-data="{
+        expanded: false,
+        isTruncated: false,
+        checkTruncation() {
+            this.$nextTick(() => {
+                const el = this.$refs.bodyText;
+                if (!el) return;
+                const tempEl = el.cloneNode(true);
+                tempEl.style.position = 'absolute';
+                tempEl.style.visibility = 'hidden';
+                tempEl.style.height = 'auto';
+                tempEl.style.maxHeight = 'none';
+                tempEl.classList.remove('line-clamp-3');
+                document.body.appendChild(tempEl);
+                const actualHeight = tempEl.scrollHeight;
+                const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || parseFloat(getComputedStyle(el).fontSize) * 1.5;
+                const maxHeight = lineHeight * 3;
+                this.isTruncated = actualHeight > maxHeight;
+                document.body.removeChild(tempEl);
+            });
+        }
+    }"
+    x-init="checkTruncation()"
+>
+    <div class="flex items-start justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-semibold shrink-0">
+                <i class="fa-solid fa-user text-sm" aria-hidden="true"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-semibold text-gray-900">{{ reviewAuthor }}</span>
+                {% if review.title %}
+                    <span class="text-sm text-gray-600">{{ review.title }}</span>
+                {% endif %}
+                {% if review.createdAt %}
+                    <span class="text-xs text-gray-500">
+                        {{ review.createdAt|format_date('short', locale=page.locale|default('en')) }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div
+        x-ref="bodyText"
+        class="text-sm text-gray-700 leading-relaxed mt-2 space-y-2"
+        :class="{ 'line-clamp-3': !expanded }"
+    >
+        {% if review.rating %}
+            {% set ratingValue = review.rating %}
+            {% set ratingValue = ratingValue > 5 ? 5 : ratingValue %}
+            {% set ratingValue = ratingValue < 1 ? 1 : ratingValue %}
+            <span class="inline-flex pr-1 text-amber-400" aria-label="{{ ratingValue }}/5">
+                {% for i in 1..ratingValue %}
+                    <i class="fa-solid fa-star text-sm" aria-hidden="true"></i>
+                {% endfor %}
+            </span>
+        {% endif %}
+        <span class="text-gray-500">—&nbsp;&nbsp;</span>
+        <span class="inline">{{ reviewBodyHtml|raw }}</span>
+    </div>
+
+    <button
+        type="button"
+        @click="expanded = !expanded"
+        class="mt-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+        x-show="isTruncated"
+    >
+        <span x-show="!expanded">
+            {% trans %}conversation.review.see_more{% endtrans %}
+            <i class="fa-solid fa-chevron-down text-xs ml-1" aria-hidden="true"></i>
+        </span>
+        <span x-show="expanded" x-cloak>
+            {% trans %}conversation.review.see_less{% endtrans %}
+            <i class="fa-solid fa-chevron-up text-xs ml-1" aria-hidden="true"></i>
+        </span>
+    </button>
+
+    {% if review.mediaList is not empty %}
+        <div class="overflow-x-hidden md:overflow-x-auto w-full mt-4">
+            {{ gallery(review.mediaList) }}
+        </div>
+    {% endif %}
+</article>
+{% endblock %}

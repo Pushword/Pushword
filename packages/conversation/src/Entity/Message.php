@@ -7,9 +7,11 @@ use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Conversation\Repository\MessageRepository;
+use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\HostTrait;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
+use Pushword\Core\Entity\SharedTrait\MediaListTrait;
 use Pushword\Core\Entity\SharedTrait\Taggable;
 use Pushword\Core\Entity\SharedTrait\TagsTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
@@ -18,10 +20,18 @@ use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MessageRepository::class)]
+#[ORM\InheritanceType('SINGLE_TABLE')]
+#[ORM\DiscriminatorColumn(name: 'message_type', type: Types::INTEGER, columnDefinition: 'INT DEFAULT 0 NOT NULL')]
+#[ORM\DiscriminatorMap([
+    0 => Message::class,
+    1 => Review::class,
+])]
 class Message implements Stringable, Taggable, IdInterface
 {
+    use CustomPropertiesTrait;
     use HostTrait;
     use IdTrait;
+    use MediaListTrait;
     use TagsTrait;
     use TimestampableTrait;
 

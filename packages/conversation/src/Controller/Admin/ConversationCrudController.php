@@ -3,18 +3,21 @@
 namespace Pushword\Conversation\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use Override;
 use Pushword\Admin\Controller\AbstractAdminCrudController;
+use Pushword\Admin\FormField\HostField;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\FormField\ConversationTagsField;
 
 /** @extends AbstractAdminCrudController<Message> */
-final class ConversationCrudController extends AbstractAdminCrudController
+class ConversationCrudController extends AbstractAdminCrudController
 {
     public static function getEntityFqcn(): string
     {
@@ -31,6 +34,19 @@ final class ConversationCrudController extends AbstractAdminCrudController
     }
 
     #[Override]
+    public function configureFilters(Filters $filters): Filters
+    {
+        if ($this->hasMultipleHosts()) {
+            $filters->add(
+                ChoiceFilter::new('host', 'admin.page.host.label')
+                    ->setChoices($this->getHostChoices()),
+            );
+        }
+
+        return $filters;
+    }
+
+    #[Override]
     public function configureFields(string $pageName): iterable
     {
         if (Crud::PAGE_INDEX === $pageName) {
@@ -43,10 +59,11 @@ final class ConversationCrudController extends AbstractAdminCrudController
     /**
      * @return iterable<FieldInterface>
      */
-    private function getIndexFields(): iterable
+    protected function getIndexFields(): iterable
     {
         yield TextField::new('referring', 'Referring');
         yield TextField::new('content', 'Content');
+        yield TextField::new('host', 'admin.page.host.label');
         yield TextField::new('tags', 'admin.conversation.tags.label')
             ->formatValue(static function (mixed $value, mixed $entity): string {
                 if (! \is_object($entity) || ! method_exists($entity, 'getTags')) {
@@ -67,28 +84,64 @@ final class ConversationCrudController extends AbstractAdminCrudController
     }
 
     /**
-     * @return iterable<FieldInterface>
+     * @return array<FieldInterface>
      */
-    private function getFormFieldsDefinition(): iterable
+    protected function getMainFields(): array
     {
-        $instance = $this->getContext()?->getEntity()?->getInstance();
-        $message = $instance instanceof Message ? $instance : null;
-        $this->setSubject($message ?? new Message());
+        $fields = [];
 
         $tagsField = new ConversationTagsField($this->adminFormFieldManager, $this);
         $tagsEasyAdminField = $tagsField->getEasyAdminField();
+        if ($tagsEasyAdminField instanceof FieldInterface) {
+            $fields[] = $tagsEasyAdminField;
+        }
+
+        $fields[] = TextareaField::new('content', 'admin.conversation.content.label')
+            ->setFormTypeOption('attr', ['rows' => 6]);
+
+        $hostField = new HostField($this->adminFormFieldManager, $this);
+        $hostEasyAdminField = $hostField->getEasyAdminField();
+        if ($hostEasyAdminField instanceof FieldInterface) {
+            $fields[] = $hostEasyAdminField;
+        }
+
+        $fields[] = TextField::new('referring', 'admin.conversation.referring.label');
+
+        return $fields;
+    }
+
+    #[Override]
+    public function setSubject(?object $subject = null): object
+    {
+        if (! $subject instanceof Message) {
+            $class = $this->getModelClass();
+            $subject = new $class();
+        }
+
+        return parent::setSubject($subject);
+    }
+
+    /**
+     * @return iterable<FieldInterface>
+     */
+    protected function getFormFieldsDefinition(): iterable
+    {
+        $instance = $this->getContext()?->getEntity()?->getInstance();
+        $message = $instance instanceof Message ? $instance : null;
+        if (null === $message) {
+            $class = $this->getModelClass();
+            $message = new $class();
+        }
+
+        /** @var Message $message */
+        $this->setSubject($message);
 
         yield FormField::addColumn('col-12 col-xl-8 mainFields');
         yield FormField::addFieldset()
             ->setCssClass('pw-settings-accordion pw-settings-open');
-        yield TextareaField::new('content', 'admin.conversation.content.label')
-            ->setFormTypeOption('attr', ['rows' => 6]);
-        if ($tagsEasyAdminField instanceof FieldInterface) {
-            yield $tagsEasyAdminField;
+        foreach ($this->getMainFields() as $field) {
+            yield $field;
         }
-
-        yield TextField::new('referring', 'admin.conversation.referring.label');
-        yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label');
 
         yield FormField::addColumn('col-12 col-xl-4 columnFields');
         yield FormField::addFieldset('admin.conversation.label.author')
@@ -97,7 +150,7 @@ final class ConversationCrudController extends AbstractAdminCrudController
         yield TextField::new('authorName', 'admin.conversation.authorName.label')
             ->setFormTypeOption('required', false);
         yield TextField::new('authorIpRaw', 'admin.conversation.authorIp.label')
-            ->setFormTypeOption('disabled', null !== $message?->getAuthorIp());
+            ->setFormTypeOption('disabled', null !== $message->getAuthorIp());
 
         yield FormField::addFieldset('admin.conversation.label.publishedAt')
             ->setCssClass('pw-settings-accordion pw-settings-open');
@@ -105,5 +158,22 @@ final class ConversationCrudController extends AbstractAdminCrudController
             ->setFormTypeOption('html5', true)
             ->setFormTypeOption('widget', 'single_text')
             ->setFormTypeOption('required', false);
+
+        yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')->setDisabled();
+    }
+
+    protected function hasMultipleHosts(): bool
+    {
+        return \count($this->apps->getHosts()) > 1;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function getHostChoices(): array
+    {
+        $hosts = $this->apps->getHosts();
+
+        return [] === $hosts ? [] : array_combine($hosts, $hosts);
     }
 }

@@ -18,6 +18,10 @@ conversation:
   input:
     notset: inconnu
   suscribeToNewsletter: Inscription à la newsletter
+  review:
+    empty: "Aucun avis n'a encore été publié."
+    see_more: "Voir plus"
+    see_less: "Voir moins"
 
 admin:
   conversation:
@@ -51,3 +55,14 @@ admin:
     tags:
       label: Tags
       placeholder: Tags (séparés par des espaces)
+
+  review:
+    rating:
+      label: Note
+      help: Choisissez une note de 1 (décevant) à 5 (excellent)
+    title:
+      label: Titre
+      help: Courte accroche décrivant l'avis
+    medias:
+      label: Médias
+      help: Ajoutez une ou plusieurs images illustrant l'avis

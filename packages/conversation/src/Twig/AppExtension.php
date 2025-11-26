@@ -2,9 +2,8 @@
 
 namespace Pushword\Conversation\Twig;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
@@ -17,9 +16,9 @@ class AppExtension
     private readonly AppConfig $app;
 
     public function __construct(
-        private readonly EntityManagerInterface $em,
         private readonly AppPool $apps,
-        private readonly RouterInterface $router
+        private readonly RouterInterface $router,
+        private readonly MessageRepository $messageRepo
     ) {
         $this->app = $apps->get();
     }
@@ -47,12 +46,46 @@ class AppExtension
         int $limit = 0,
         string $view = '/conversation/messages_list.html.twig'
     ): string {
-        $msgRepo = $this->em->getRepository(Message::class);
-
-        $messages = $msgRepo->getMessagesPublishedByReferring($referring, $orderBy, $limit);
+        $messages = $this->messageRepo->getMessagesPublishedByReferring($referring, $orderBy, $limit);
 
         $view = $this->app->getView($view, '@PushwordConversation');
 
         return $twig->render($view, ['messages' => $messages]);
+    }
+
+    /**
+     * @param Page|array<string>|string $pageOrTag
+     */
+    #[AsTwigFunction('reviewList', isSafe: ['html'], needsEnvironment: true)]
+    public function renderReviewList(
+        Twig $twig,
+        Page|array|string $pageOrTag,
+        int $limit = 0
+    ): string {
+        $tags = $this->resolveReviewTag($pageOrTag);
+        $reviews = [] === $tags ? [] : $this->messageRepo->getPublishedReviewsByTag($tags, $limit);
+        $view = $this->app->getView('/conversation/reviewList.html.twig', '@PushwordConversation');
+
+        return $twig->render($view, [
+            'reviews' => $reviews,
+        ]);
+    }
+
+    /**
+     * @param Page|string|array<string> $pageOrTag
+     *
+     * @return array<string>
+     */
+    private function resolveReviewTag(Page|string|array $pageOrTag): array
+    {
+        if (\is_array($pageOrTag)) {
+            return $pageOrTag;
+        }
+
+        if (\is_string($pageOrTag)) {
+            return '' === $pageOrTag ? [] : [trim($pageOrTag)];
+        }
+
+        return [trim($pageOrTag->getSlug())];
     }
 }

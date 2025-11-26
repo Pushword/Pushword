@@ -14,6 +14,7 @@ use ReflectionClass;
 use function Safe\json_encode;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,6 +41,7 @@ final class ConversationFormController extends AbstractController
         private readonly TokenStorageInterface $tokenStorage,
         private readonly RouterInterface $router,
         private readonly ManagerRegistry $doctrine,
+        #[Autowire('%kernel.environment%')]
         private readonly string $env,
         private readonly MessageRepository $messageRepo,
     ) {

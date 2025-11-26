@@ -33,8 +33,13 @@
      {% endif %}
 
 
-     {% set image_html = _self.renderImage(image, image_class ?? null,
-      image_attr ?? null, image_alt ?? null, lazy ?? true) %}
+     {% set image_html = _self.renderImage(
+        image, image_class ?? null,
+        image_attr ?? null,
+        image_alt ?? null,
+        lazy ?? true,
+        picture_attr ?? null
+      ) %}
 
     {% set image_link = image_link ?? false %}
     {% if image_link is same as false %}
@@ -62,7 +67,14 @@
     {% endif %}
 {% endblock %}
 
-{% macro renderImage(image, image_class = null, image_attr = null, image_alt = null, lazy = true) %}
+{% macro renderImage(
+  image,
+  image_class = null,
+  image_attr = null,
+  image_alt = null,
+  lazy = true,
+  picture_attr = null
+) %}
 {% if image.width is null %}
     {% set dimensions = image_dimensions(image) %}
     {% set width = dimensions[0] %}
@@ -71,7 +83,8 @@
     {% set width = image.width %}
     {% set height = image.height %}
 {% endif %}
-<picture{% if picture_attr is defined %} {{ attr(picture_attr) }}{% else %} style="margin:0"{% endif %}>
+
+<picture{% if picture_attr %} {{ attr(picture_attr) }}{% else %} style="margin:0"{% endif %}>
     <source type="image/webp"
      srcset="{{ image|image('xs', 'webp') ~ ' 576w'
       ~ ',' ~ image|image('sm', 'webp') ~ ' 768w'

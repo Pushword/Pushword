@@ -14,10 +14,13 @@ class ConversationAdminTest extends AbstractAdminTestClass
         $client->catchExceptions(false);
 
         $actions = ['', '/new'];
+        $controllers = ['conversation', 'review'];
 
-        foreach ($actions as $action) {
-            $client->request(Request::METHOD_GET, '/admin/conversation'.$action);
-            self::assertResponseIsSuccessful();
+        foreach ($controllers as $controller) {
+            foreach ($actions as $action) {
+                $client->request(Request::METHOD_GET, '/admin/'.$controller.$action);
+                self::assertResponseIsSuccessful();
+            }
         }
     }
 }

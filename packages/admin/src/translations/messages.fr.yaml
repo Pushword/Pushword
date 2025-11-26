@@ -49,6 +49,7 @@ admin:
     redirection: Redirection
     check_content: Vérifier le contenu
     conversation: Conversation
+    review: Avis
     cheatsheet: Aide-mémoire
 
   action: Action

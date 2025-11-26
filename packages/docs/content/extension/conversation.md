@@ -78,3 +78,13 @@ or `'@PushwordConversation/conversation/'.$type.$referring.'Step'.$step.'.html.t
 Per default, there is 3 form types : `newsletter`, `message` and `multiStepMessage`.
 
 Add a new class in bundle config `pushword_conversation.conversation_form.myNewType: myNewFormClass` or at the app level config `pushword.apps[...].conversation_form: [...]`
+
+## Flat sync integration
+
+When the [Flat extension](/extension/flat) is enabled, every `pw:flat:sync` run also synchronizes
+conversation messages with a CSV file stored at `content/<host>/conversation.csv`.
+
+- **Export** : each message is written with its core fields (content, author, tags, dates, …) and one column per custom property.
+- **Import** : editing the CSV lets you re-import messages, including any custom properties (arrays are encoded as JSON in their dedicated column).
+
+This allows you to backup or edit conversations alongside pages and medias without needing a database access.

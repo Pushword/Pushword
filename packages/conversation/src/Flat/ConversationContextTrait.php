@@ -1,0 +1,57 @@
+<?php
+
+namespace Pushword\Conversation\Flat;
+
+use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Entity\Review;
+use Pushword\Conversation\Repository\MessageRepository;
+use Pushword\Core\Component\App\AppConfig;
+use Pushword\Core\Component\App\AppPool;
+use Pushword\Flat\FlatFileContentDirFinder;
+use Symfony\Contracts\Service\Attribute\Required;
+
+trait ConversationContextTrait
+{
+    private AppPool $apps;
+
+    private FlatFileContentDirFinder $contentDirFinder;
+
+    private MessageRepository $messageRepository;
+
+    #[Required]
+    public function initConversationContext(
+        AppPool $apps,
+        FlatFileContentDirFinder $contentDirFinder,
+        MessageRepository $messageRepository,
+    ): void {
+        $this->apps = $apps;
+        $this->contentDirFinder = $contentDirFinder;
+        $this->messageRepository = $messageRepository;
+    }
+
+    private function resolveApp(?string $host): AppConfig
+    {
+        return null !== $host
+            ? $this->apps->switchCurrentApp($host)->get()
+            : $this->apps->get();
+    }
+
+    private function buildCsvPath(AppConfig $app): string
+    {
+        return $this->contentDirFinder->get($app->getMainHost()).'/conversation.csv';
+    }
+
+    private function getMessageRepository(): MessageRepository
+    {
+        return $this->messageRepository;
+    }
+
+    public function resolveMessageClass(?string $type): ?string
+    {
+        if ('review' === $type) {
+            return Review::class;
+        }
+
+        return Message::class;
+    }
+}

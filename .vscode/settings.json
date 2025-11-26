@@ -24,5 +24,6 @@
         "**/dist": true,
         "**/Resources/public": true,
         "**/skeleton/var": true
-    }
+    },
+    "git.ignoreLimitWarning": true
 }

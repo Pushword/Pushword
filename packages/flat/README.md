@@ -37,7 +37,7 @@ The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/li
 
 ```mermaid
 flowchart TD
-    Start([Commande: pw:flat:sync]) --> Check{FlatFileSync.mustImport}
+    Start([Commande: pw:flat:sync]) --> Check{PageSync & MediaSync}
 
     Check -->|Fichiers plus récents que DB| Import[IMPORT: Fichiers → Base de données]
     Check -->|DB plus récente ou pas de fichiers| Export[EXPORT: Base de données → Fichiers]
@@ -94,12 +94,14 @@ flowchart TD
 
 ### Décision Import/Export
 
-La méthode `FlatFileSync->mustImport()` détermine la direction :
+`PageSync` et `MediaSync` déterminent la direction pour chaque ressource :
 
-- Scanne récursivement le répertoire de contenu
+- `PageSync` scanne récursivement le répertoire de contenu
 - Pour chaque fichier `.md`, compare `filemtime()` avec `Page->getUpdatedAt()`
-- Si un fichier est plus récent que sa page en DB → **IMPORT**
-- Sinon → **EXPORT**
+- Si un fichier est plus récent que sa page en DB → **IMPORT** pour les pages, sinon **EXPORT**
+- `MediaSync` parcourt les répertoires `mediaDir` & `content/<host>/media`
+- Pour chaque média ou fichier de métadonnées, compare `filemtime()` avec `Media->getUpdatedAt()`
+- Si un fichier est plus récent que le média en DB → **IMPORT** pour les médias, sinon **EXPORT**
 
 ### Import (Fichiers → DB)
 

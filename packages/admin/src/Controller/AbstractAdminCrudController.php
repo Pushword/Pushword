@@ -125,16 +125,24 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
     }
 
     /**
-     * @param T $subject
+     * @param T|null $subject
+     *
+     * @return T
      */
-    public function setSubject(object $subject): void
+    public function setSubject(?object $subject = null): object
     {
         $modelClass = $this->getModelClass();
+
+        if (null === $subject) {
+            $subject = new $modelClass();
+        }
 
         if (! $subject instanceof $modelClass) {
             throw new InvalidArgumentException(sprintf('Expected subject of type "%s", "%s" given.', $modelClass, $subject::class));
         }
 
         $this->subject = $subject;
+
+        return $this->subject;
     }
 }

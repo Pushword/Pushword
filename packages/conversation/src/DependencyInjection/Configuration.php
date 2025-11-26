@@ -2,7 +2,6 @@
 
 namespace Pushword\Conversation\DependencyInjection;
 
-use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Form\MessageForm;
 use Pushword\Conversation\Form\MultiStepMessageForm;
 use Pushword\Conversation\Form\NewsletterForm;
@@ -33,7 +32,6 @@ class Configuration implements ConfigurationInterface
             ->getRootNode()
                 ->children()
                     ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
-                    ->scalarNode('entity_message')->defaultValue(Message::class)->cannotBeEmpty()->end()
                     ->scalarNode('conversation_notification_email_to')->defaultNull()->end()
                     ->scalarNode('conversation_notification_email_from')->defaultNull()->end()
                     ->scalarNode('conversation_notification_interval')
@@ -64,6 +62,7 @@ class Configuration implements ConfigurationInterface
                     ->end()
 
                     ->scalarNode('possible_origins')->defaultNull()->end()
+                    ->booleanNode('review_enabled')->defaultTrue()->end()
                 ->end()
         ;
 

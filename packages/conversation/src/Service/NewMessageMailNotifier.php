@@ -13,13 +13,14 @@ use Pushword\Core\Utils\LastTime;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.conversation.entity_message%', 'event' => 'postPersist'])]
-#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.conversation.entity_message%', 'event' => 'postUpdate'])]
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => Message::class, 'event' => 'postPersist'])]
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => Message::class, 'event' => 'postUpdate'])]
 class NewMessageMailNotifier
 {
     private readonly string $emailTo;
@@ -32,13 +33,10 @@ class NewMessageMailNotifier
 
     private readonly string $host;
 
-    /**
-     * @param class-string<Message> $message Entity
-     */
     public function __construct(
-        private readonly string $message,
         private readonly MailerInterface $mailer,
         private readonly AppPool $apps,
+        #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
@@ -58,7 +56,7 @@ class NewMessageMailNotifier
      */
     protected function getMessagesPostedSince(DateTimeInterface $datetime)
     {
-        $query = 'SELECT m FROM '.$this->message.' m WHERE m.authorEmail IS NULL AND m.host = :host AND m.createdAt > :lastNotificationTime';
+        $query = 'SELECT m FROM '.Message::class.' m WHERE m.authorEmail IS NULL AND m.host = :host AND m.createdAt > :lastNotificationTime';
         $query = $this->em->createQuery($query)
             ->setParameter('lastNotificationTime', $datetime, 'datetime')
             ->setParameter('host', $this->host);
@@ -95,6 +93,12 @@ class NewMessageMailNotifier
 
     public function sendMessage(Message $message): void
     {
+        if ('' === $this->emailTo || '' === $this->emailFrom) {
+            $this->logger->info('Not sending conversation notification : missing `conversation_notification_email_from` or `conversation_notification_email_to`.');
+
+            return;
+        }
+
         $authorEmail = $message->getAuthorEmail() ?? throw new Exception();
         $subject = $this->translator->trans('admin.conversation.notification.title.singular', ['%appName%' => $this->appName]);
 

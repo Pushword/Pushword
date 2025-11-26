@@ -22,9 +22,11 @@ interface AdminInterface
     public function getSubject(): object;
 
     /**
-     * @param T $subject
+     * @param T|null $subject
+     *
+     * @return T
      */
-    public function setSubject(object $subject): void;
+    public function setSubject(?object $subject = null): object;
 
     public function getEntityManager(): EntityManagerInterface;
 

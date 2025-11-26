@@ -16,6 +16,10 @@ conversation:
   input:
     notset: inconnu
   suscribeToNewsletter: Inscription à la newsletter
+  review:
+    empty: "No reviews have been published yet."
+    see_more: "See more"
+    see_less: "See less"
 
 admin:
   conversation:
@@ -49,3 +53,14 @@ admin:
     tags:
       label: Tags
       placeholder: Tags (separated by spaces)
+
+  review:
+    rating:
+      label: Rating
+      help: Select a score between 1 (poor) and 5 (excellent)
+    title:
+      label: Title
+      help: Short headline describing the review
+    medias:
+      label: Media
+      help: Attach one or several images illustrating the review
