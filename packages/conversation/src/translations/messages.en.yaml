@@ -45,3 +45,7 @@ admin:
 
     createdAt:
       label: Posté le
+
+    tags:
+      label: Tags
+      placeholder: Tags (separated by spaces)

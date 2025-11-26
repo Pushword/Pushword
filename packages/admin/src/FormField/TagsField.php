@@ -3,8 +3,8 @@
 namespace Pushword\Admin\FormField;
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
-use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\SharedTrait\Taggable;
 
 use function Safe\json_encode;
 
@@ -12,16 +12,16 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormInterface;
 
 /**
- * @template T of Page|Media
+ * @template T of Taggable
  *
- * @extends AbstractField<Page|Media>
+ * @extends AbstractField<Taggable>
  */
 class TagsField extends AbstractField
 {
     /**
      * @return string[]
      */
-    private function getAllTags(): array
+    protected function getAllTags(): array
     {
         $subject = $this->admin->getSubject();
 
@@ -40,7 +40,7 @@ class TagsField extends AbstractField
     {
         $allTags = $this->getAllTags();
         $subject = $this->admin->getSubject();
-        $isMediaAdmin = $subject instanceof Media;
+        $isPageAdmin = $subject instanceof Page;
 
         return $this->buildEasyAdminField('tagsVirtual', TextType::class, [
             'required' => false,
@@ -62,16 +62,16 @@ class TagsField extends AbstractField
             },
             'attr' => [
                 'class' => 'textarea-no-newline tagsField'
-                    .($isMediaAdmin ? ' tagsFieldMedia' : ''),
+                    .($isPageAdmin ? '' : ' tagsFieldMedia'),
                 'placeholder' => 'admin.page.tags.label',
                 'data-tags' => json_encode($allTags),
                 'autofocus' => '',
             ],
             'row_attr' => [
                 'class' => 'tagsFieldWrapper '
-                    .($isMediaAdmin ? ' tagsFieldWrapperMedia' : ' ce-block__content'),
+                    .($isPageAdmin ? ' ce-block__content' : ' tagsFieldWrapperMedia'),
             ],
-            'label' => $isMediaAdmin ? 'Tags' : ' ',
+            'label' => $isPageAdmin ? ' ' : 'Tags',
             'help' => ' <div class="textSuggester" style="display:none;"></div>'
                 .'<script>setTimeout(function () {
                     const element = document.querySelector("'.(null === $subject->getId() ? '[data-tags]' : '[id$=_h1]').'");

@@ -22,19 +22,15 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Exception;
 use Override;
-use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\Filter\PageSearchFilter;
 use Pushword\Admin\FormField\AbstractField;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Controller\PageController;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FlashBag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
@@ -46,18 +42,10 @@ class PageCrudController extends AbstractAdminCrudController
     protected const MESSAGE_PREFIX = 'admin.page';
 
     public function __construct(
-        protected readonly AdminFormFieldManager $adminFormFieldManager,
-        EntityManagerInterface $entityManager,
-        private readonly RequestStack $requestStack,
-        TranslatorInterface $translator,
-        private readonly AppPool $apps,
         private readonly PushwordRouteGenerator $routeGenerator,
         private readonly PageController $pageController,
         private readonly PageRepository $pageRepo,
     ) {
-        parent::__construct($entityManager, $requestStack, $translator, Page::class);
-
-        $this->syncAppContext();
     }
 
     public static function getEntityFqcn(): string
@@ -190,7 +178,7 @@ class PageCrudController extends AbstractAdminCrudController
 
     private function getAction(): string
     {
-        $currentRequest = $this->requestStack->getCurrentRequest();
+        $currentRequest = $this->getRequest();
         $ea = $currentRequest?->request->all('ea') ?? [];
 
         $newForm = $ea['newForm'] ?? null;
@@ -289,42 +277,6 @@ class PageCrudController extends AbstractAdminCrudController
 
         /** @var list<class-string<AbstractField<Page>>> $classes */
         return $classes;
-    }
-
-    private function getHostFromFilter(): ?string
-    {
-        // based on filter : /edit?filter[host][value][0]=localhost.dev
-        $currentRequest = $this->requestStack->getCurrentRequest();
-
-        if (null === $currentRequest) {
-            return null;
-        }
-
-        $query = $currentRequest->query->all();
-
-        $hostFromFilter = $query['filters']['host']['value'] ?? null; // @phpstan-ignore-line
-
-        if (null !== $hostFromFilter) {
-            assert(is_string($hostFromFilter));
-        }
-
-        return $hostFromFilter;
-    }
-
-    private function syncAppContext(?Page $page = null): void
-    {
-        $hostFromFilter = $this->getHostFromFilter();
-        if (null !== $hostFromFilter) {
-            $this->apps->switchCurrentApp($hostFromFilter);
-
-            return;
-        }
-
-        if (null === $page || '' === $page->getHost()) {
-            return;
-        }
-
-        $this->apps->switchCurrentApp($page->getHost());
     }
 
     private function initializeNewPage(Page $page): void

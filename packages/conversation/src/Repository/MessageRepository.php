@@ -35,4 +35,24 @@ class MessageRepository extends ServiceEntityRepository
 
         return $queryBuilder->getQuery()->getResult();
     }
+
+    /**
+     * @return string[]
+     */
+    public function getAllTags(): array
+    {
+        $queryBuilder = $this->createQueryBuilder('m')
+            ->select('m.tags')
+            ->setMaxResults(30000); // some kind of arbitrary parapet
+
+        /** @var array{tags: string[]}[] */
+        $tags = $queryBuilder->getQuery()->getResult();
+
+        $allTags = [];
+        foreach ($tags as $entity) {
+            $allTags = array_merge($allTags, $entity['tags']);
+        }
+
+        return array_values(array_unique($allTags));
+    }
 }

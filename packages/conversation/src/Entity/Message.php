@@ -8,17 +8,21 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Entity\SharedTrait\HostTrait;
+use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
+use Pushword\Core\Entity\SharedTrait\Taggable;
+use Pushword\Core\Entity\SharedTrait\TagsTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Stringable;
 use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MessageRepository::class)]
-class Message implements Stringable
+class Message implements Stringable, Taggable, IdInterface
 {
     use HostTrait;
     use IdTrait;
+    use TagsTrait;
     use TimestampableTrait;
 
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]

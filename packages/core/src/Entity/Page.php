@@ -20,6 +20,7 @@ use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\HostTrait;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
+use Pushword\Core\Entity\SharedTrait\Taggable;
 use Pushword\Core\Entity\SharedTrait\TagsTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Core\Repository\PageRepository;
@@ -32,7 +33,7 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 #[UniqueEntity(fields: ['host', 'slug'], errorPath: 'slug', message: 'page.slug.already_used')]
 #[ORM\Entity(repositoryClass: PageRepository::class)]
 #[ORM\Table(name: 'page')]
-class Page implements IdInterface, Stringable
+class Page implements IdInterface, Taggable, Stringable
 {
     use CustomPropertiesTrait;
     use HostTrait;

@@ -5,10 +5,13 @@ namespace Pushword\Admin\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use InvalidArgumentException;
-use LogicException;
+use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\AdminInterface;
+use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Entity\Page;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -20,17 +23,69 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 abstract class AbstractAdminCrudController extends AbstractCrudController implements AdminInterface
 {
-    private ?object $subject = null;
+    protected ?object $subject = null;
 
-    /**
-     * @param class-string<T> $modelClass
-     */
-    public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly RequestStack $requestStack,
-        private readonly TranslatorInterface $translator,
-        private readonly string $modelClass,
-    ) {
+    protected EntityManagerInterface $entityManager;
+
+    protected RequestStack $requestStack;
+
+    protected TranslatorInterface $translator;
+
+    protected AdminFormFieldManager $adminFormFieldManager;
+
+    protected AppPool $apps;
+
+    #[Required]
+    public function injectBaseServices(
+        AppPool $apps,
+        EntityManagerInterface $entityManager,
+        RequestStack $requestStack,
+        TranslatorInterface $translator,
+        AdminFormFieldManager $adminFormFieldManager,
+    ): void {
+        $this->entityManager = $entityManager;
+        $this->requestStack = $requestStack;
+        $this->translator = $translator;
+        $this->adminFormFieldManager = $adminFormFieldManager;
+        $this->apps = $apps;
+
+        $this->syncAppContext();
+    }
+
+    private function getHostFromFilter(): ?string
+    {
+        // based on filter : /edit?filter[host][value][0]=localhost.dev
+        $currentRequest = $this->getRequest();
+
+        if (null === $currentRequest) {
+            return null;
+        }
+
+        $query = $currentRequest->query->all();
+
+        $hostFromFilter = $query['filters']['host']['value'] ?? null; // @phpstan-ignore-line
+
+        if (null !== $hostFromFilter) {
+            assert(is_string($hostFromFilter));
+        }
+
+        return $hostFromFilter;
+    }
+
+    protected function syncAppContext(?Page $page = null): void
+    {
+        $hostFromFilter = $this->getHostFromFilter();
+        if (null !== $hostFromFilter) {
+            $this->apps->switchCurrentApp($hostFromFilter);
+
+            return;
+        }
+
+        if (null === $page || '' === $page->getHost()) {
+            return;
+        }
+
+        $this->apps->switchCurrentApp($page->getHost());
     }
 
     public function getEntityManager(): EntityManagerInterface
@@ -40,7 +95,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
 
     public function hasRequest(): bool
     {
-        return null !== $this->requestStack->getCurrentRequest();
+        return null !== $this->getRequest();
     }
 
     public function getRequest(): ?Request
@@ -55,7 +110,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
 
     public function getModelClass(): string
     {
-        return $this->modelClass;
+        return static::getEntityFqcn();
     }
 
     /**
@@ -63,10 +118,6 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
      */
     public function getSubject(): object
     {
-        if (null === $this->subject) {
-            throw new LogicException(sprintf('No subject defined for admin "%s".', static::class));
-        }
-
         /** @var T $subject */
         $subject = $this->subject;
 
@@ -78,8 +129,10 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
      */
     public function setSubject(object $subject): void
     {
-        if (! $subject instanceof $this->modelClass) {
-            throw new InvalidArgumentException(sprintf('Expected subject of type "%s", "%s" given.', $this->modelClass, $subject::class));
+        $modelClass = $this->getModelClass();
+
+        if (! $subject instanceof $modelClass) {
+            throw new InvalidArgumentException(sprintf('Expected subject of type "%s", "%s" given.', $modelClass, $subject::class));
         }
 
         $this->subject = $subject;

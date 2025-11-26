@@ -176,7 +176,7 @@ class StaticController extends AbstractController
             // Additional verification: check if it's our process
             try {
                 $cmdline = @file_get_contents('/proc/'.$pid.'/cmdline');
-                if (str_contains($cmdline, 'pw:static:generate')) {
+                if (str_contains($cmdline, 'pw:static')) {
                     return true;
                 }
             } catch (Exception) {
@@ -255,7 +255,7 @@ class StaticController extends AbstractController
         // Create lock file to prevent race conditions
         $this->filesystem->dumpFile($lockFile, (string) time());
 
-        $commandParts = ['php', 'bin/console', 'pw:static:generate'];
+        $commandParts = ['php', 'bin/console', 'pw:static'];
         if (null !== $host) {
             $commandParts[] = $host;
         }

@@ -2,7 +2,6 @@
 
 namespace Pushword\Admin\Controller;
 
-use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
@@ -15,7 +14,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
-use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\Filter\MediaDimensionIntFilter;
 use Pushword\Admin\Filter\MediaDimensionsFilter;
 use Pushword\Admin\Filter\MediaSearchFilter;
@@ -26,8 +24,6 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\ImageManager;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** @extends AbstractAdminCrudController<Media> */
 class MediaCrudController extends AbstractAdminCrudController
@@ -35,16 +31,11 @@ class MediaCrudController extends AbstractAdminCrudController
     public const string MESSAGE_PREFIX = 'admin.media';
 
     public function __construct(
-        private readonly AdminFormFieldManager $adminFormFieldManager,
-        EntityManagerInterface $entityManager,
-        RequestStack $requestStack,
-        TranslatorInterface $translator,
         private readonly ImageManager $imageManager,
         private readonly MediaRepository $mediaRepo,
         private readonly PageRepository $pageRepository,
         private readonly AdminUrlGenerator $adminUrlGenerator,
     ) {
-        parent::__construct($entityManager, $requestStack, $translator, Media::class);
     }
 
     public static function getEntityFqcn(): string

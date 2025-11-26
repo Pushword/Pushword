@@ -2,7 +2,6 @@
 
 namespace Pushword\Admin\Controller;
 
-use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
@@ -13,11 +12,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use LogicException;
 use Override;
-use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Core\Entity\User;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** @extends AbstractAdminCrudController<User> */
 class UserCrudController extends AbstractAdminCrudController
@@ -25,15 +21,6 @@ class UserCrudController extends AbstractAdminCrudController
     public const string MESSAGE_PREFIX = 'admin.user';
 
     private ?AdminUrlGenerator $adminUrlGenerator = null;
-
-    public function __construct(
-        private readonly AdminFormFieldManager $adminFormFieldManager,
-        EntityManagerInterface $entityManager,
-        RequestStack $requestStack,
-        TranslatorInterface $translator,
-    ) {
-        parent::__construct($entityManager, $requestStack, $translator, User::class);
-    }
 
     public static function getEntityFqcn(): string
     {
