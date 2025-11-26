@@ -5,23 +5,15 @@ namespace Pushword\Conversation\Controller\Admin;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 
 use function is_numeric;
-
-use LogicException;
-
-use function mb_strlen;
-use function mb_substr;
 
 use Override;
 use Pushword\Admin\Form\Type\MediaPickerType;
@@ -32,8 +24,6 @@ use function str_repeat;
 
 final class ReviewCrudController extends ConversationCrudController
 {
-    private ?AdminUrlGenerator $adminUrlGenerator = null;
-
     #[Override]
     public static function getEntityFqcn(): string
     {
@@ -90,13 +80,6 @@ final class ReviewCrudController extends ConversationCrudController
         return $fields;
     }
 
-    private function getRatingDisplayField(): IntegerField
-    {
-        return IntegerField::new('rating', 'admin.review.rating.label')
-            ->setSortable(false)
-            ->formatValue(static fn (?int $value): string => self::formatRating($value ?? 0));
-    }
-
     private function getMediaPickerField(): CollectionField
     {
         $field = CollectionField::new('mediaList', 'admin.review.medias.label')
@@ -135,87 +118,10 @@ final class ReviewCrudController extends ConversationCrudController
 
         yield TextField::new('title', 'admin.review.title.label')
             ->setSortable(false)
-            ->renderAsHtml()
-            ->formatValue(fn (?string $value, ?Review $review): string => $this->formatTitleColumn($value, $review));
-
-        yield $this->getRatingDisplayField();
-
-        yield TextField::new('authorName', 'admin.conversation.authorName.label')
-            ->setSortable(false);
-        yield TextField::new('authorEmail', 'admin.conversation.authorEmail.label')
-            ->setSortable(false);
-        yield TextField::new('referring', 'admin.conversation.referring.label')
-            ->setSortable(false);
-        yield TextField::new('tags', 'admin.conversation.tags.label')
-            ->setSortable(false)
-            ->renderAsHtml()
-            ->formatValue(static function (mixed $value, mixed $entity): string {
-                if (! \is_object($entity) || ! method_exists($entity, 'getTagList')) {
-                    return '';
-                }
-
-                $tagList = $entity->getTagList();
-                if (! \is_array($tagList) || [] === $tagList) {
-                    return '';
-                }
-
-                $firstThreeTags = \array_slice($tagList, 0, 3);
-                $allTags = implode(' ', $tagList);
-                $displayTags = implode(' ', $firstThreeTags);
-                $hasMoreTags = \count($tagList) > 3;
-
-                return sprintf(
-                    '<span title="%s">%s%s</span>',
-                    htmlspecialchars($allTags, \ENT_QUOTES),
-                    htmlspecialchars($displayTags, \ENT_QUOTES),
-                    $hasMoreTags ? '…' : '',
-                );
-            });
+            ->setTemplatePath('@PushwordConversation/admin/messageListTitleField.html.twig');
 
         yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')
             ->setSortable(true);
-    }
-
-    private function formatTitleColumn(?string $title, ?Review $review): string
-    {
-        $titleText = trim((string) $title);
-
-        if ('' === $titleText && $review instanceof Review) {
-            $content = strip_tags($review->getContent());
-            $content = trim($content);
-            $titleText = '' !== $content ? $this->truncateText($content) : '';
-        }
-
-        if ('' === $titleText) {
-            return '';
-        }
-
-        if (! $review instanceof Review || null === $review->getId()) {
-            return htmlspecialchars($titleText, \ENT_QUOTES);
-        }
-
-        $editUrl = $this->buildEditUrl($review);
-
-        return sprintf(
-            '<div class="d-flex justify-content-between align-items-center w-100 ms-2" style="gap: 8px;">'
-            .'<a href="%s" class="text-muted text-truncate text-decoration-none">%s</a>'
-            .'<div style="display: flex; gap: 8px;">'
-            .'<a href="%s" class="text-decoration-none" title="Edit"><i class="fa fa-edit me-1 opacity-50"></i></a>'
-            .'</div>'
-            .'</div>',
-            htmlspecialchars($editUrl, \ENT_QUOTES),
-            htmlspecialchars($titleText, \ENT_QUOTES),
-            htmlspecialchars($editUrl, \ENT_QUOTES),
-        );
-    }
-
-    private function truncateText(string $text, int $limit = 90): string
-    {
-        if (mb_strlen($text) <= $limit) {
-            return $text;
-        }
-
-        return rtrim(mb_substr($text, 0, $limit - 1)).'…';
     }
 
     private function getRatingFormField(): ChoiceField
@@ -250,17 +156,6 @@ final class ReviewCrudController extends ConversationCrudController
         return $choices;
     }
 
-    private static function formatRating(int $value): string
-    {
-        if ($value < 1) {
-            return '—';
-        }
-
-        $value = min($value, 5);
-
-        return str_repeat('★', $value).str_repeat('☆', 5 - $value).' '.$value.'/5';
-    }
-
     private function registerRatingCustomProperty(): void
     {
         $message = $this->getContext()?->getEntity()?->getInstance();
@@ -270,34 +165,5 @@ final class ReviewCrudController extends ConversationCrudController
         }
 
         $message->registerCustomPropertyField('rating');
-    }
-
-    private function buildEditUrl(Review $review): string
-    {
-        $generator = clone $this->getAdminUrlGenerator();
-
-        return $generator
-            ->setController(self::class)
-            ->setAction(Action::EDIT)
-            ->setEntityId($review->getId())
-            ->generateUrl();
-    }
-
-    private function getAdminUrlGenerator(): AdminUrlGenerator
-    {
-        if (null !== $this->adminUrlGenerator) {
-            return $this->adminUrlGenerator;
-        }
-
-        if (! isset($this->container)) {
-            throw new LogicException('Container not available to generate admin URLs.');
-        }
-
-        /** @var AdminUrlGenerator $adminUrlGenerator */
-        $adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
-
-        $this->adminUrlGenerator = $adminUrlGenerator;
-
-        return $this->adminUrlGenerator;
     }
 }

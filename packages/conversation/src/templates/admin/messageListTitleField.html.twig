@@ -1,0 +1,119 @@
+{# @var message \Pushword\Conversation\Entity\Message #}
+{% set message = entity.instance %}
+{% set isReview = message.rating is defined and message.rating %}
+{% set review = isReview ? message : null %}
+
+{% if isReview %}
+  {% set editUrl = ea_url()
+      .setController('Pushword\\Conversation\\Controller\\Admin\\ReviewCrudController')
+      .setAction('edit')
+      .setEntityId(message.id)
+  %}
+{% else %}
+  {% set editUrl = ea_url()
+      .setAction('edit')
+      .setEntityId(message.id)
+  %}
+{% endif %}
+
+{# Get title or truncated content #}
+{% set title = '' %}
+{% if isReview and review.title %}
+    {% set title = review.title %}
+{% endif %}
+{% if title == '' %}
+    {% set content = message.content|striptags|trim %}
+    {% if content|length > 90 %}
+        {% set title = content|slice(0, 89) ~ '…' %}
+    {% else %}
+        {% set title = content %}
+    {% endif %}
+{% endif %}
+
+{# Get rating if exists #}
+{% set rating = null %}
+{% if isReview %}
+    {% set rating = review.rating %}
+{% endif %}
+
+{# Get tags #}
+{% set tagList = message.tagList %}
+{% set firstThreeTags = tagList|slice(0, 10) %}
+{% set allTags = tagList|join(' ') %}
+{% set hasMoreTags = tagList|length > 10 %}
+
+<div class="d-flex flex-row align-items-center">
+  <a href="{{ editUrl }}" style="text-decoration: none; flex: 1; padding-right:1rem;">
+    {# Title or content #}
+    {% if title %}
+      <div style="font-size:110%;font-weight:600; margin-bottom: 4px;">
+        {{ title }}
+      </div>
+    {% endif %}
+
+    {# Rating and Author row #}
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+      {# Rating (only if exists) #}
+      {% if rating and rating > 0 %}
+        {% set ratingValue = rating > 5 ? 5 : rating %}
+        {% set ratingValue = ratingValue < 1 ? 1 : ratingValue %}
+        <span style="color: #fbbf24;" aria-label="{{ ratingValue }}/5">
+          {% for i in 1..5 %}
+            {% if i <= ratingValue %}
+              ★
+            {% else %}
+              ☆
+            {% endif %}
+          {% endfor %}
+        </span>
+        <span style="color: #6b7280; font-size: 90%;">{{ ratingValue }}/5</span>
+      {% endif %}
+
+      {# Author metadata #}
+      {% if message.authorName or message.authorEmail %}
+        <span style="color:#6b7280; font-size:85%;">
+          {% if message.authorName %}
+             · <span style="font-weight:500;">{{ message.authorName }}</span>
+            {% if message.authorEmail %} · {% endif %}
+          {% endif %}
+          {% if message.authorEmail %}
+            <span>{{ message.authorEmail }}</span>
+          {% endif %}
+        </span>
+      {% endif %}
+    </div>
+
+    {# Referring and Host #}
+    <div style="color:#94a3b8; font-size:80%; margin-bottom: 4px;">
+      {% if message.referring %}
+        <span title="{{ message.referring }}">
+          <i class="fa fa-link" style="margin-right: 4px;"></i>
+          {% if message.host %}
+            <span>{{ message.host }}</span> ·
+            {% endif %}
+
+          {% if message.referring|length > 40 %}
+            {{ message.referring|slice(0, 40) ~ '…' }}
+          {% else %}
+            {{ message.referring }}
+          {% endif %}
+        </span>
+      {% endif %}
+
+    </div>
+
+    {# Tags #}
+    {% if tagList|length > 0 %}
+      <div style="margin-top: 4px;">
+        {{ firstThreeTags ? '<span style="font-weight:200; color:#94a3b8; display:inline-block; margin-right:4px">#</span>' : '' }}
+        {% for tag in firstThreeTags %}
+          <span class="badge" style="background:white; font-weight:400; color:#333;box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); ">
+        {{ tag }}</span>
+        {% endfor %}
+        {% if hasMoreTags %}
+          <span style="color:#94a3b8; font-size: 85%;" title="{{ allTags }}">…</span>
+        {% endif %}
+      </div>
+    {% endif %}
+  </a>
+</div>

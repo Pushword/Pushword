@@ -70,43 +70,10 @@ class ConversationCrudController extends AbstractAdminCrudController
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
 
-        yield TextField::new('referring', 'admin.conversation.referring.label')
-            ->setSortable(false);
         yield TextField::new('content', 'admin.conversation.content.label')
-            ->setSortable(false);
-        yield TextField::new('host', 'admin.page.host.label')
-            ->setSortable(false);
-        yield TextField::new('tags', 'admin.conversation.tags.label')
             ->setSortable(false)
-            ->renderAsHtml()
-            ->formatValue(static function (mixed $value, mixed $entity): string {
-                if (! \is_object($entity) || ! method_exists($entity, 'getTagList')) {
-                    return '';
-                }
+            ->setTemplatePath('@PushwordConversation/admin/messageListTitleField.html.twig');
 
-                $tagList = $entity->getTagList();
-                if (! \is_array($tagList) || [] === $tagList) {
-                    return '';
-                }
-
-                $firstThreeTags = \array_slice($tagList, 0, 3);
-                $allTags = implode(' ', $tagList);
-                $displayTags = implode(' ', $firstThreeTags);
-                $hasMoreTags = \count($tagList) > 3;
-
-                return sprintf(
-                    '<span title="%s">%s%s</span>',
-                    htmlspecialchars($allTags, \ENT_QUOTES),
-                    htmlspecialchars($displayTags, \ENT_QUOTES),
-                    $hasMoreTags ? '…' : '',
-                );
-            });
-        yield TextField::new('authorEmail', 'admin.conversation.authorEmail.label')
-            ->setSortable(false);
-        yield TextField::new('authorName', 'admin.conversation.authorName.label')
-            ->setSortable(false);
-        yield TextField::new('authorIpRaw', 'admin.conversation.authorIpRaw.label')
-            ->setSortable(false);
         yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')
             ->setSortable(true);
     }
