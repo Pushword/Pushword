@@ -46,8 +46,13 @@ final class ReviewCrudController extends ConversationCrudController
     #[Override]
     public function configureFields(string $pageName): iterable
     {
+        if (Crud::PAGE_INDEX === $pageName) {
+            return $this->getIndexFields();
+        }
+
         $this->registerRatingCustomProperty();
-        yield from $this->getFormFieldsDefinition();
+
+        return $this->getFormFieldsDefinition();
     }
 
     #[Override]
@@ -117,16 +122,24 @@ final class ReviewCrudController extends ConversationCrudController
     #[Override]
     protected function getIndexFields(): iterable
     {
-        yield TextField::new('title', 'admin.review.title.label')
+        yield DateTimeField::new('publishedAt', 'admin.conversation.label.publishedAt')
             ->setSortable(true)
+            ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
+
+        yield TextField::new('title', 'admin.review.title.label')
+            ->setSortable(false)
             ->formatValue(fn (?string $value, ?Review $review): string => $this->formatTitleColumn($value, $review));
 
         yield $this->getRatingDisplayField();
 
-        yield TextField::new('authorName', 'admin.conversation.authorName.label');
-        yield TextField::new('authorEmail', 'admin.conversation.authorEmail.label');
-        yield TextField::new('referring', 'admin.conversation.referring.label');
+        yield TextField::new('authorName', 'admin.conversation.authorName.label')
+            ->setSortable(false);
+        yield TextField::new('authorEmail', 'admin.conversation.authorEmail.label')
+            ->setSortable(false);
+        yield TextField::new('referring', 'admin.conversation.referring.label')
+            ->setSortable(false);
         yield TextField::new('tags', 'admin.conversation.tags.label')
+            ->setSortable(false)
             ->formatValue(static function (mixed $value, mixed $entity): string {
                 if (! \is_object($entity) || ! method_exists($entity, 'getTags')) {
                     return '';
@@ -136,6 +149,7 @@ final class ReviewCrudController extends ConversationCrudController
 
                 return \is_string($tags) ? $tags : '';
             });
+
         yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')
             ->setSortable(true);
     }
@@ -196,7 +210,7 @@ final class ReviewCrudController extends ConversationCrudController
     {
         $choices = [];
 
-        foreach (\range(5, 1) as $value) {
+        foreach (\range(1, 5) as $value) {
             $choices[str_repeat('★', $value)] = $value;
         }
 

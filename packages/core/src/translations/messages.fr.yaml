@@ -25,6 +25,8 @@ security:
     label_button: Se connecter
     remember_me: Se souvenir de moi
     email_not_found: Votre email n'a pu être trouvé.
+    logged_in_as: Vous êtes connecté en tant que %username%
+  logout: Se déconnecter
 
 #---
 # Errors Page(s)

@@ -32,7 +32,7 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('Admin')
+            ->setTitle('admin.label.tools')
             ->disableDarkMode();
     }
 

@@ -12,3 +12,10 @@ pushword_conversation:
     id: "[0-9]*"
     step: "[0-9]*"
     host: '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
+
+pushword_conversation_toggle_publish:
+  path: /admin/conversation/{id}/toggle-published
+  controller: Pushword\Conversation\Controller\Admin\ConversationCrudController::togglePublished
+  methods: [POST]
+  requirements:
+    id: '\d+'

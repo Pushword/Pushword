@@ -8,24 +8,30 @@
 %}
 
 {# Output the link wrapping the formatted value #}
-<a href="{{ editUrl }}" style="text-decoration: none;">
+<div class="d-flex flex-row align-items-center">
+  <a href="{{ editUrl }}" style="text-decoration: none; flex: 1; padding-right:1rem;">
 
-  {% if page.isPublished == 0 %}
-    <span class="badge badge-info" title="{{ page.publishedAt|format_datetime }}">{{ 'admin.draft'|trans }}</span>
-  {% elseif page.metaRobots != '' %}
-    <span class="badge" title="{{ page.metaRobots }}"><i class="fa fa-eye-slash"></i></span>
-  {% endif %}
+    {% if page.isPublished == 0 %}
+      <span class="badge badge-info" title="{{ page.publishedAt|format_datetime }}">{{ 'admin.draft'|trans }}</span>
+    {% elseif page.metaRobots != '' %}
+      <span class="badge" title="{{ page.metaRobots }}"><i class="fa fa-eye-slash"></i></span>
+    {% endif %}
 
-  <span style="color:#333; font-weight:400; font-size:90%">
-  {{ page.host ? page.host ~ ' › ' : '' }}{{ page.slug }}</span>
-  <br>
-  <span style="font-size:110%;font-weight:600">
-  {{ page.h1 is empty ? page.title : page.h1|striptags }}</span>
-  <br>
-  {{ page.tags ? '<span style="font-weight:200; color:#94a3b8; display:inline-block; margin-right:4px">#</span>' : '' }}
+    <span style="color:#333; font-weight:400; font-size:90%">
+    {{ page.host ? page.host ~ ' › ' : '' }}{{ page.slug }}</span>
+    <br>
+    <span style="font-size:110%;font-weight:600">
+    {{ page.h1 is empty ? page.title : page.h1|striptags }}</span>
+    <br>
+    {{ page.tags ? '<span style="font-weight:200; color:#94a3b8; display:inline-block; margin-right:4px">#</span>' : '' }}
 
-  {% for tag in page.tagList %}
-    <span class="badge" style="background:white; font-weight:400; color:#333;box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); margin-right:4px">
-      {{ tag }}</span>
-  {% endfor %}
-</a>
+    {% for tag in page.tagList %}
+      <span class="badge" style="background:white; font-weight:400; color:#333;box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); margin-right:4px">
+        {{ tag }}</span>
+    {% endfor %}
+  </a>
+
+  <a href="{{ page(page ) }}" target="_blank" rel="noopener noreferrer" class="me-2 d-flex align-items-center" style="text-decoration: none; color: var(--gray-400); font-size: 1.2rem;">
+    <i class="fa fa-external-link"></i>
+  </a>
+</div>

@@ -2,7 +2,7 @@
 
 namespace Pushword\Flat\Command;
 
-use Pushword\Flat\FlatFileExporter;
+use Pushword\Flat\FlatFileSync;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -11,12 +11,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'pw:flat:export',
-    description: 'Exporting database toward flat yaml files (and json for media).'
 )]
 final readonly class FlatFileExportCommand
 {
     public function __construct(
-        private FlatFileExporter $exporter,
+        private FlatFileSync $flatFileSync,
     ) {
     }
 
@@ -31,18 +30,13 @@ final readonly class FlatFileExportCommand
     ): int {
         $output->writeln('Export will start in few seconds...');
 
+        $this->flatFileSync->export($host, $exportDir, $force);
+
+        $output->writeln('Export completed.');
+
         if (null !== $exportDir && '' !== $exportDir) {
-            $this->exporter->exportDir = $exportDir;
+            $output->writeln('Results stored in '.$exportDir);
         }
-
-        $duration = $this->exporter->run($host ?? '', $force);
-
-        if ('' !== $this->exporter->exportDir) {
-            $output->writeln('Results:');
-            $output->writeln($this->exporter->exportDir);
-        }
-
-        $output->writeln('Export took '.$duration.' ms.');
 
         return Command::SUCCESS;
     }

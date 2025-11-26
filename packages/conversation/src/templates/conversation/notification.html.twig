@@ -4,8 +4,8 @@
     <div style="padding:10px; background:#eee; border-radius:5px; margin-bottom:10px;">{{ message.content|u.truncate(250, '...')|markdown }}</div>
 
     <p>
-        {% if (message.authorEmail) %}Envoyé par &lt;{{ message.authorEmail }} {{ message.authorName }}&gt;<br>{% endif %}
-        <a href="{{ url('admin_conversation_message_edit', {id: message.id}) }}">Editer</a>
+        {% if (message.authorEmail) %}{{ 'admin.conversation.notification.sent_by'|trans({'%authorName%': message.authorName ?? '', '%authorEmail%': message.authorEmail}) }}<br>{% endif %}
+        <a href="{{ url('admin_conversation_message_edit', {id: message.id}) }}">{{ 'admin.action.edit'|trans({}, 'messages') }}</a>
     </p>
 </div>
 {% endfor %}

@@ -132,7 +132,9 @@ final class PageController extends AbstractPushwordController
             return $this->redirect($page->getRedirection(), $page->getRedirectionCode());
         }
 
-        $request->setLocale($page->getLocale()); // TODO: move it to event (onRequest + onPageLoad)
+        // TODO: move it to event (onRequest + onPageLoad)
+        $request->setLocale($page->getLocale());
+        $this->translator->setLocale($page->getLocale());
 
         return $this->showPage($page);
     }

@@ -19,6 +19,7 @@ final class ConversationCsvHelper
         'authorEmail',
         'authorIp',
         'tags',
+        'mediaList',
         'publishedAt',
         'createdAt',
         'updatedAt',

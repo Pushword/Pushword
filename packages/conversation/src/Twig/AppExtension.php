@@ -57,6 +57,7 @@ class AppExtension
      * @param Page|array<string>|string $pageOrTag
      */
     #[AsTwigFunction('reviewList', isSafe: ['html'], needsEnvironment: true)]
+    #[AsTwigFunction('reviews', isSafe: ['html'], needsEnvironment: true)]
     public function renderReviewList(
         Twig $twig,
         Page|array|string $pageOrTag,

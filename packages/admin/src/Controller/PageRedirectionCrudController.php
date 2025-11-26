@@ -37,11 +37,11 @@ class PageRedirectionCrudController extends PageCrudController
     {
         if (Crud::PAGE_INDEX === $pageName) {
             return [
-                TextField::new('slug', 'From')
+                TextField::new('slug', 'admin.page.redirection.from')
                     ->setSortable(false)
                     ->renderAsHtml()
                     ->formatValue(fn (?string $value, Page $page): string => $this->formatFromColumn($page)),
-                TextField::new('redirection', 'To')
+                TextField::new('redirection', 'admin.page.redirection.to')
                     ->setSortable(false)
                     ->renderAsHtml()
                     ->formatValue(fn (?string $value, Page $page): string => $this->formatToColumn($page)),

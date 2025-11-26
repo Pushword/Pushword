@@ -12,8 +12,10 @@ cp var/app.db~ var/app.db
 rm var/app.db~
 
 rm -rf media
-cp -r media~preserve media
-rm -rf media~preserve
+if [ -e media~preserve ]; then
+    cp -r media~preserve media
+    rm -rf media~preserve
+fi
 
 if [ -e '/tmp/com.github.pushword.pushword/tests/var/dev/cache~' ]; then
  cp -r '/tmp/com.github.pushword.pushword/tests/var/dev/cache~' '/tmp/com.github.pushword.pushword/tests/var/dev/cache'

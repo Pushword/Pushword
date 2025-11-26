@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Controller\Admin;
 
+use DateTime;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
@@ -12,9 +13,13 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use Override;
 use Pushword\Admin\Controller\AbstractAdminCrudController;
+use Pushword\Admin\FormField\CustomPropertiesField;
 use Pushword\Admin\FormField\HostField;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\FormField\ConversationTagsField;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 
 /** @extends AbstractAdminCrudController<Message> */
 class ConversationCrudController extends AbstractAdminCrudController
@@ -61,10 +66,18 @@ class ConversationCrudController extends AbstractAdminCrudController
      */
     protected function getIndexFields(): iterable
     {
-        yield TextField::new('referring', 'Referring');
-        yield TextField::new('content', 'Content');
-        yield TextField::new('host', 'admin.page.host.label');
+        yield DateTimeField::new('publishedAt', 'admin.conversation.label.publishedAt')
+            ->setSortable(true)
+            ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
+
+        yield TextField::new('referring', 'admin.conversation.referring.label')
+            ->setSortable(false);
+        yield TextField::new('content', 'admin.conversation.content.label')
+            ->setSortable(false);
+        yield TextField::new('host', 'admin.page.host.label')
+            ->setSortable(false);
         yield TextField::new('tags', 'admin.conversation.tags.label')
+            ->setSortable(false)
             ->formatValue(static function (mixed $value, mixed $entity): string {
                 if (! \is_object($entity) || ! method_exists($entity, 'getTags')) {
                     return '';
@@ -74,12 +87,13 @@ class ConversationCrudController extends AbstractAdminCrudController
 
                 return \is_string($tags) ? $tags : '';
             });
-        yield TextField::new('authorEmail', 'Author Email');
-        yield TextField::new('authorName', 'Author Name');
-        yield TextField::new('authorIpRaw', 'Author Ip Raw');
-        yield DateTimeField::new('createdAt', 'Created At')
-            ->setSortable(true);
-        yield DateTimeField::new('publishedAt', 'Published At')
+        yield TextField::new('authorEmail', 'admin.conversation.authorEmail.label')
+            ->setSortable(false);
+        yield TextField::new('authorName', 'admin.conversation.authorName.label')
+            ->setSortable(false);
+        yield TextField::new('authorIpRaw', 'admin.conversation.authorIpRaw.label')
+            ->setSortable(false);
+        yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')
             ->setSortable(true);
     }
 
@@ -105,7 +119,8 @@ class ConversationCrudController extends AbstractAdminCrudController
             $fields[] = $hostEasyAdminField;
         }
 
-        $fields[] = TextField::new('referring', 'admin.conversation.referring.label');
+        $fields[] = TextField::new('referring', 'admin.conversation.referring.label')
+            ->setFormTypeOption('required', false);
 
         return $fields;
     }
@@ -154,12 +169,20 @@ class ConversationCrudController extends AbstractAdminCrudController
 
         yield FormField::addFieldset('admin.conversation.label.publishedAt')
             ->setCssClass('pw-settings-accordion pw-settings-open');
-        yield DateTimeField::new('publishedAt', 'admin.conversation.publishedAt.label')
+        yield DateTimeField::new('publishedAt', 'admin.conversation.label.publishedAt')
             ->setFormTypeOption('html5', true)
             ->setFormTypeOption('widget', 'single_text')
             ->setFormTypeOption('required', false);
 
         yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')->setDisabled();
+
+        yield FormField::addFieldset('admin.page.customProperties.label')
+                    ->setCssClass('pw-settings-accordion pw-settings-open');
+        $customPropertiesField = new CustomPropertiesField($this->adminFormFieldManager, $this);
+        $customPropertiesEasyAdminField = $customPropertiesField->getEasyAdminField();
+        if ($customPropertiesEasyAdminField instanceof FieldInterface) {
+            yield $customPropertiesEasyAdminField->setLabel(false); // @phpstan-ignore-line
+        }
     }
 
     protected function hasMultipleHosts(): bool
@@ -175,5 +198,33 @@ class ConversationCrudController extends AbstractAdminCrudController
         $hosts = $this->apps->getHosts();
 
         return [] === $hosts ? [] : array_combine($hosts, $hosts);
+    }
+
+    #[Route(path: '/admin/conversation/{id}/toggle-published', name: 'pushword_conversation_toggle_publish', methods: ['POST'])]
+    public function togglePublished(Request $request, Message $message): Response
+    {
+        $token = (string) $request->request->get('_token');
+
+        if (! $this->isCsrfTokenValid($this->getPublishedToggleTokenId($message), $token)) {
+            return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
+        }
+
+        $shouldPublish = $this->normalizePublishedState((string) $request->request->get('published'));
+
+        $message->setPublishedAt($shouldPublish ? new DateTime() : null);
+
+        $this->getEntityManager()->flush();
+
+        // Re-render the toggle after update
+        return new Response($this->adminFormFieldManager->twig->render('@pwAdmin/components/published_toggle.html.twig', [
+            'entity' => ['instance' => $message],
+            'value' => $message->getPublishedAt(),
+            'field' => null,
+        ]));
+    }
+
+    private function getPublishedToggleTokenId(Message $message): string
+    {
+        return 'conversation_toggle_published_'.$message->getId();
     }
 }

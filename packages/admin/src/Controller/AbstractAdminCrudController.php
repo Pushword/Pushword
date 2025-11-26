@@ -124,6 +124,11 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
         return $subject;
     }
 
+    protected function normalizePublishedState(string $value): bool
+    {
+        return \in_array(strtolower($value), ['1', 'true', 'on'], true);
+    }
+
     /**
      * @param T|null $subject
      *

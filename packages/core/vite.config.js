@@ -15,6 +15,7 @@ const filesToCopy = [
 
 const input = {
   app: resolve(__dirname, '../js-helper/src/app.js'),
+  alpine: resolve(__dirname, '../js-helper/src/alpine.js'),
   style: resolve(__dirname, '../js-helper/src/app.css'),
 }
 
@@ -30,10 +31,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    modules: [
-      resolve(__dirname, '../js-helper/node_modules'),
-      'node_modules',
-    ],
+    modules: [resolve(__dirname, '../js-helper/node_modules'), 'node_modules'],
   },
   build: {
     rollupOptions: {

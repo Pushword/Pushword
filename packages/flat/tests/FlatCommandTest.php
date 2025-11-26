@@ -21,7 +21,7 @@ class FlatCommandTest extends KernelTestCase
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
-        self::assertStringContainsString('Import took', $output);
+        self::assertStringContainsString('Import completed', $output);
 
         $exportDir = $kernel->getCacheDir().'/test-exporter';
 
@@ -32,6 +32,9 @@ class FlatCommandTest extends KernelTestCase
             'exportDir' => $exportDir,
         ]);
 
+        $exportOutput = $commandTester->getDisplay();
+        self::assertStringContainsString('Export completed', $exportOutput);
+        self::assertStringContainsString('Results stored in '.$exportDir, $exportOutput);
         self::assertFileExists($exportDir.'/homepage.md');
         self::assertFileExists($exportDir.'/installation.md');
     }

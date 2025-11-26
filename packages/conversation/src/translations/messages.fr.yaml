@@ -6,6 +6,8 @@ conversation:
     # ou le partage d'un commentaire
   name:
     placeholder: Prénom Nom
+  content:
+    placeholder: Message
   emailOrPhone:
     placeholder: Email ou Téléphone
   email:
@@ -22,6 +24,7 @@ conversation:
     empty: "Aucun avis n'a encore été publié."
     see_more: "Voir plus"
     see_less: "Voir moins"
+    anonymous: "Anonyme"
 
 admin:
   conversation:
@@ -29,6 +32,8 @@ admin:
       title:
         singular: "[%appName%] : Nouveau message"
         plural: "[%appName%] : Nouveaux messages"
+      sent_by: "Envoyé par %authorName% - %authorEmail%"
+      from: "Depuis https://%host%/ › form[%referring%]"
     label:
       conversation: Conversation
       publishedAt: Publié le
@@ -42,6 +47,8 @@ admin:
 
     authorIp:
       label: IP
+    authorIpRaw:
+      label: IP brute
 
     content:
       label: Contenu
@@ -66,3 +73,4 @@ admin:
     medias:
       label: Médias
       help: Ajoutez une ou plusieurs images illustrant l'avis
+    edit: Éditer l'avis

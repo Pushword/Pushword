@@ -2,24 +2,18 @@
 
 namespace Pushword\Flat\Command;
 
-use Pushword\Flat\FlatFileImporter;
+use Pushword\Flat\FlatFileSync;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
-/**
- * @template T of object
- */
 #[AsCommand(name: 'pw:flat:import', description: 'Syncing flat file inside database.')]
 final class FlatFileImportCommand
 {
-    /**
-     * @param FlatFileImporter<T> $importer
-     */
     public function __construct(
-        protected FlatFileImporter $importer,
+        protected FlatFileSync $flatFileSync,
         private readonly Filesystem $fs
     ) {
     }
@@ -36,9 +30,9 @@ final class FlatFileImportCommand
 
         $output->writeln('Import will start in few seconds...');
 
-        $duration = $this->importer->run($host);
+        $this->flatFileSync->import($host);
 
-        $output->writeln('Import took '.$duration.' ms.');
+        $output->writeln('Import completed.');
 
         return Command::SUCCESS;
     }

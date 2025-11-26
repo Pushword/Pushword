@@ -52,7 +52,7 @@ class Message implements Stringable, Taggable, IdInterface
     /**
      * Identifier referring (most of time, URI).
      */
-    #[ORM\Column(type: Types::STRING, length: 180)]
+    #[ORM\Column(type: Types::STRING, length: 180, options: ['default' => ''])]
     protected string $referring = '';
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
@@ -141,9 +141,9 @@ class Message implements Stringable, Taggable, IdInterface
     /**
      * Set identifier referring.
      */
-    public function setReferring(string $referring): self
+    public function setReferring(?string $referring): self
     {
-        $this->referring = $referring;
+        $this->referring = $referring ?? '';
 
         return $this;
     }

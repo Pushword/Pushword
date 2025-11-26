@@ -44,6 +44,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     #[ORM\Column(type: Types::STRING, length: 150, nullable: true)]
     protected ?string $username = null;
 
+    #[ORM\Column(type: Types::STRING, length: 5, options: ['default' => 'en'])]
+    protected string $locale = 'en';
+
     /**
      * Loaded From BaseUser.
      */
@@ -196,6 +199,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     public function setUsername(?string $username): self
     {
         $this->username = $username;
+
+        return $this;
+    }
+
+    public function getLocale(): string
+    {
+        return $this->locale;
+    }
+
+    public function setLocale(string $locale): self
+    {
+        $this->locale = $locale;
 
         return $this;
     }

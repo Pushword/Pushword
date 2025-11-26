@@ -48,7 +48,9 @@ trait ConversationContextTrait
 
     public function resolveMessageClass(?string $type): ?string
     {
-        if ('review' === $type) {
+        $type = trim($type ?? '');
+
+        if (Review::class === $type || 'review' === strtolower($type) || str_contains($type, 'Review')) {
             return Review::class;
         }
 

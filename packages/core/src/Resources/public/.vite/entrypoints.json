@@ -10,6 +10,15 @@
       "legacy": false,
       "preload": []
     },
+    "alpine": {
+      "css": [],
+      "dynamic": [],
+      "js": [
+        "/build/alpine.js"
+      ],
+      "legacy": false,
+      "preload": []
+    },
     "style": {
       "css": [
         "/build/style.css"

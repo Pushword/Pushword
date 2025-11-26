@@ -29,8 +29,11 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FlashBag;
+use ReflectionClass;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
@@ -340,6 +343,10 @@ class PageCrudController extends AbstractAdminCrudController
      */
     private function getIndexFields(): iterable
     {
+        yield DateTimeField::new('publishedAt', 'admin.page.publishedAt.label')
+            ->setSortable(true)
+            ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
+
         yield TextField::new('h1', 'admin.page.h1.label')
             ->setTemplatePath('@pwAdmin/page/pageListTitleField.html.twig')
             ->setSortable(false);
@@ -480,5 +487,41 @@ class PageCrudController extends AbstractAdminCrudController
         }
 
         return 'pw-panel-'.$normalized;
+    }
+
+    #[Route(path: '/admin/page/{id}/toggle-published', name: 'pushword_page_toggle_publish', methods: ['POST'])]
+    public function togglePublished(Request $request, Page $page): Response
+    {
+        $token = (string) $request->request->get('_token');
+
+        if (! $this->isCsrfTokenValid($this->getPublishedToggleTokenId($page), $token)) {
+            return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
+        }
+
+        $shouldPublish = $this->normalizePublishedState((string) $request->request->get('published'));
+
+        if ($shouldPublish) {
+            $publishedAt = new DateTime();
+            $page->setPublishedAt($publishedAt);
+        } else {
+            // Use reflection to set publishedAt to null since setPublishedAt doesn't accept null
+            $reflection = new ReflectionClass($page);
+            $property = $reflection->getProperty('publishedAt');
+            $property->setValue($page, null);
+        }
+
+        $this->getEntityManager()->flush();
+
+        // Re-render the toggle after update
+        return new Response($this->adminFormFieldManager->twig->render('@pwAdmin/components/published_toggle.html.twig', [
+            'entity' => ['instance' => $page],
+            'value' => $page->getPublishedAt(),
+            'field' => null,
+        ]));
+    }
+
+    private function getPublishedToggleTokenId(Page $page): string
+    {
+        return 'page_toggle_published_'.$page->getId();
     }
 }

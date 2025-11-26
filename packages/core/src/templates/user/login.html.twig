@@ -10,7 +10,7 @@
 
     {% if app.user %}
         <div class="mb-3">
-            Vous êtes connecté en tant que {{ app.user.username }}, <a href="{{ path('pushword_logout') }}">Se déconnecter</a>
+            {{ 'security.login.logged_in_as'|trans({'%username%': app.user.username}) }}, <a href="{{ path('pushword_logout') }}">{{ 'security.logout'|trans }}</a>
         </div>
     {% endif %}
 

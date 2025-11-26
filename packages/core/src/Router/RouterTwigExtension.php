@@ -20,6 +20,10 @@ final readonly class RouterTwigExtension
             throw new Exception('`page()` first argument must be a string or a Page Object');
         }
 
+        if ($slug instanceof Page) {
+            $host = $slug->getHost();
+        }
+
         $arg2 = $args[1] ?? null;
         if (\is_string($arg2)) {
             $host = $arg2;

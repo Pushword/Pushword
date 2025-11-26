@@ -6,6 +6,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
 use Pushword\Conversation\Entity\Message;
+use Pushword\Core\Entity\Media;
+use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
@@ -16,6 +18,7 @@ final class ConversationImporter
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly DenormalizerInterface $denormalizer,
+        private readonly MediaRepository $mediaRepository,
     ) {
     }
 
@@ -46,6 +49,8 @@ final class ConversationImporter
             return;
         }
 
+        // Filtre les colonnes vides
+        $header = array_filter($header, fn (string $col): bool => '' !== trim($col));
         $customColumns = array_values(array_diff($header, ConversationCsvHelper::BASE_COLUMNS));
 
         /** @var iterable<int, array<string, string|null>> $records */
@@ -66,8 +71,22 @@ final class ConversationImporter
 
             $data = $this->buildDenormalizationData($row, $customColumns, $app->getMainHost());
 
+            // Extrait mediaList avant la dénormalisation car setMediaList() attend une Collection
+            /** @var Media[] $mediaList */
+            $mediaList = $data['mediaList'] ?? [];
+            unset($data['mediaList']);
+
+            // Ajoute le contexte pour ignorer les propriétés manquantes
+            $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = [];
+            $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
+
             /** @var Message $normalizedMessage */
             $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
+
+            // Ajoute les médias manuellement après la dénormalisation
+            foreach ($mediaList as $media) {
+                $normalizedMessage->addMedia($media);
+            }
 
             if (! isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {
                 $this->entityManager->persist($normalizedMessage);
@@ -99,6 +118,10 @@ final class ConversationImporter
      */
     private function buildDenormalizationData(array $row, array $customColumns, string $defaultHost): array
     {
+        // Convertit tags de string (séparé par |) en array
+        $tagsString = $row['tags'] ?? '';
+        $tags = '' !== $tagsString ? explode('|', $tagsString) : [];
+
         $data = [
             'host' => $row['host'] ?: $defaultHost,
             'referring' => $row['referring'] ?? '',
@@ -106,24 +129,74 @@ final class ConversationImporter
             'authorName' => $row['authorName'] ?? null,
             'authorEmail' => $row['authorEmail'] ?? null,
             'authorIpRaw' => $row['authorIp'] ?? null,
-            'tags' => $row['tags'] ?? '',
-            'publishedAt' => ConversationCsvHelper::parseDate($row['publishedAt'] ?? null),
-            'createdAt' => ConversationCsvHelper::parseDate($row['createdAt'] ?? null),
-            'updatedAt' => ConversationCsvHelper::parseDate($row['updatedAt'] ?? null),
+            'tags' => $tags,
         ];
+
+        // Ajoute les dates seulement si elles ne sont pas null et pas vides
+        // Le dénormaliseur de Symfony attend des chaînes pour les dates, pas des objets DateTime
+        $publishedAtValue = $row['publishedAt'] ?? null;
+        if (null !== $publishedAtValue && '' !== trim($publishedAtValue)) {
+            $data['publishedAt'] = trim($publishedAtValue);
+        }
+
+        $createdAtValue = $row['createdAt'] ?? null;
+        if (null !== $createdAtValue && '' !== trim($createdAtValue)) {
+            $data['createdAt'] = trim($createdAtValue);
+        }
+
+        $updatedAtValue = $row['updatedAt'] ?? null;
+        if (null !== $updatedAtValue && '' !== trim($updatedAtValue)) {
+            $data['updatedAt'] = trim($updatedAtValue);
+        }
+
+        $mediaList = $this->extractMediaList($row['mediaList'] ?? null);
+        if ([] !== $mediaList) {
+            // Le dénormaliseur attend un tableau, pas une ArrayCollection
+            $data['mediaList'] = $mediaList;
+        }
 
         $customProperties = $this->extractCustomProperties($row, $customColumns);
         if ([] !== $customProperties) {
             $data['customProperties'] = $customProperties;
         }
 
+        // Supprime les valeurs null sauf pour les dates qui peuvent être null
         foreach ($data as $key => $value) {
-            if (null === $value) {
+            if (null === $value && ! in_array($key, ['publishedAt', 'createdAt', 'updatedAt'], true)) {
                 unset($data[$key]);
             }
         }
 
         return $data;
+    }
+
+    /**
+     * @return Media[]
+     */
+    private function extractMediaList(?string $mediaListValue): array
+    {
+        if (null === $mediaListValue || '' === trim($mediaListValue)) {
+            return [];
+        }
+
+        $fileNames = array_filter(
+            array_map(trim(...), explode(',', $mediaListValue)),
+            fn (string $fileName): bool => '' !== $fileName,
+        );
+
+        if ([] === $fileNames) {
+            return [];
+        }
+
+        $medias = [];
+        foreach ($fileNames as $fileName) {
+            $media = $this->mediaRepository->findOneBy(['fileName' => $fileName]);
+            if (null !== $media) {
+                $medias[] = $media;
+            }
+        }
+
+        return $medias;
     }
 
     /**

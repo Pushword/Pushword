@@ -72,15 +72,15 @@ class UserCrudController extends AbstractAdminCrudController
      */
     private function getIndexFields(): iterable
     {
-        yield TextField::new('username', "Nom d'utilisateur")
+        yield TextField::new('username', 'admin.user.username.label')
             ->setSortable(false)
             ->renderAsHtml()
             ->formatValue(fn (?string $value, User $user): string => $this->formatUsernameColumn($user));
-        yield EmailField::new('email', 'Adresse mail')
+        yield EmailField::new('email', 'admin.user.email.label')
             ->setSortable(false);
-        yield TextField::new('rolesForListing', 'Role')
+        yield TextField::new('rolesForListing', 'admin.user.role.label')
             ->setSortable(false);
-        yield DateTimeField::new('createdAt', "Date d'enregistrement")
+        yield DateTimeField::new('createdAt', 'admin.user.createdAt.label')
             ->setSortable(true);
     }
 

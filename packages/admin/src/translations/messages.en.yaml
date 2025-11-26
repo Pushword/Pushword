@@ -30,7 +30,7 @@ md_cs:
 #---
 datetimeMediumFormat: 'Y-m-d \a\t H:m'
 
-Page List: Liste des pages
+Page List: Page List
 
 admin:
   draft: Draft
@@ -54,58 +54,59 @@ admin:
 
   action: Action
   details: Details
+  edit: Edit
   edition: Edition # not good
 
   page:
     revisions: Revisions
     gallery:
-      label: Galerie d'images
+      label: Image gallery
     state:
-      label: État
+      label: State
     search:
       label: Search
     permanlien:
-      label: Permanlien
+      label: Permalink
     host:
-      label: Domaine
+      label: Domain
     update_notification:
-      title: "[%appName%] Edition en cours"
+      title: "[%appName%] Editing in progress"
     params:
-      label: Paramètres
+      label: Settings
     title:
       search_label: Title
-      label: Titre
-      help: '<small>Titre visible dans les moteurs de recherches - <span id="titleWidth"></span></small>'
+      label: Title
+      help: '<small>Title visible in search engines - <span id="titleWidth"></span></small>'
     slug:
-      label: Identifiant Url
+      label: URL identifier
       help: " "
     locale:
       label: Language
-      help: "<small>Au format décrit par la norme rfc 5646 (ex: <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>"
+      help: "<small>In the format described by RFC 5646 (e.g. <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>"
     subTitle:
-      label: Sous-titre
+      label: Subtitle
     translations:
-      label: "Traductions"
-      help: "Utiliser l'url pour trouver la page (ex : en/my-other)."
+      label: "Translations"
+      help: "Use the URL to find the page (e.g. en/my-other)."
     searchExcrept:
-      label: Courte Description
-      help: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) - <span id="descWidth"></span></small>'
+      label: Short Description
+      help: '<small>Visible from search engine results pages (meta description) - <span id="descWidth"></span></small>'
     h1:
-      label: Titre
-      help: <small>Le <em>H1</em> est visible sur vos pages tandis que le <code>Titre</code> de votre document s'affichera dans la barre du navigateur et sur les moteurs de recherches.</small>
+      label: Title
+      help: <small>The <em>H1</em> is visible on your pages while the <code>Title</code> of your document will be displayed in the browser bar and in search engines.</small>
     name:
-      label: Nom court
-      help: Permet d'identifier la page, utilisé dans le fil d'arianne.
+      label: Short name
+      help: Allows to identify the page, used in the breadcrumb.
     faq:
-      label: Questions Associées
+      label: Associated Questions
     relatedPage:
-      label: Pages Associées
+      label: Associated Pages
     images:
       label: Images
     metaRobots:
-      label: Moteur de recherches
+      label: Search engines
       choice:
-        noIndex: Interdire l'indexation
+        noIndex: Disallow indexing
     author:
       label: Author
     parentPage:
@@ -121,78 +122,84 @@ admin:
     createdAt:
       label: Created At
     updatedAt:
-      label: Mise à jour le
+      label: Updated on
     template:
-      label: Moteur de thème (facultatif)
+      label: Theme engine (optional)
     mainContent:
-      label: Corps de la page
+      label: Page body
       help: ""
     mainImage:
-      label: Image d'en-tête
+      label: Header image
     markdown:
-      label: Formatage markdown
-      help: Applique l'enrichissement du texte via la syntaxe Markdown à l'intégralité du contenu.<br>Sinon utiliser directement <code>{% filter markdown %}mon texte{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>En savoir plus</a>.
+      label: Markdown formatting
+      help: Applies text enrichment via Markdown syntax to the entire content.<br>Otherwise use directly <code>{% filter markdown %}my text{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>Learn more</a>.
     customProperties:
-      label: Autres paramètres
-      help: Au format <em>YAML</em>.
+      label: Other parameters
+      help: In <em>YAML</em> format.
     tags:
       search_label: Tags
       label: "TagOne, TagTwo, ..."
     og:
       label: Open Graph Card
     ogTitle:
-      label: Titre
-      help: Par défaut, la title de la page sinon le titre.
+      label: Title
+      help: By default, the page title otherwise the title.
     ogDescription:
       label: Description
-      help: Par défaut, la description <code>search</code> sinon un extrait
+      help: By default, the <code>search</code> description otherwise an excerpt
     ogImage:
       label: Image
-      help: Par défaut, l'image principale de la page
+      help: By default, the main image of the page
     twitterSite:
       label: Twitter Site
-      help: <code>@Username</code>, valeur par défaut si régler dans l'App.
+      help: <code>@Username</code>, default value if set in the App.
     twitterCreator:
       label: Twitter Creator
-      help: <code>@Username</code>, valeur par défaut si régler dans l'App.
+      help: <code>@Username</code>, default value if set in the App.
     priority:
       label: Priority
     extra:
       label: Extra
+    redirection:
+      from: From
+      to: To
     error:
       generation_failed: An error occurred while generating the page.
       generation_failed_with_details: 'An error occurred while generating the page: <code>%error%</code><br><textarea style="margin-top:4px; width:100%;" data-editor="twig" readonly>%excerpt%</textarea>'
 
   user:
     label:
-      profile: Profil
-      security: Securité
-      id: Identifiants
+      profile: Profile
+      security: Security
+      id: Identifiers
     enabled:
-      label: Compte activé
+      label: Account enabled
     role:
       label: Role
-      super_admin: Super Administrateur
-      admin: Administrateur
-      editor: Editeur
-      user: Utilisateur
+      super_admin: Super Administrator
+      admin: Administrator
+      editor: Editor
+      user: User
     firstname:
-      label: Prénom
+      label: First name
     password:
-      label: Mot de passe
+      label: Password
     username:
-      label: Nom d'utilisateur
+      label: Username
 
     lastname:
-      label: Nom
+      label: Name
     phone:
-      label: Téléphone
+      label: Phone
     email:
-      label: Adresse mail
+      label: Email address
+    locale:
+      label: Language
+      help: "<small>Language preference for the admin interface (ex: <code>fr</code>, <code>en</code>, <code>en-US</code>...)</small>"
     dateOfBirth:
-      label: Date de naissance
+      label: Date of birth
     createdAt:
-      label: Date d'enregistrement
+      label: Registration date
 
   media:
     preview:
@@ -204,17 +211,19 @@ admin:
     related:
       label: Related pages
     alt:
-      label: Nom
-      help: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"
+      label: Name
+      help: "Alternative text, used for web page accessibility (visually impaired).<br><small>Choose one or more words describing your file. Feel free to use keywords to easily find your image (e.g. Massif des Ecrins - Glacier de la Meije).</small>"
     mediaFile:
-      label: Fichier
+      label: File
     alts:
-      label: "Traduction"
-      help: "Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne."
+      label: "Translation"
+      help: "Format <code>Language: translated name</code> (e.g. <code>en: my image description</code>).<br>One translation per line."
     mainColor:
-      label: Couleur Principale
+      label: Main Color
+    tags:
+      label: Tags
     createdAt:
-      label: Date d'upload
+      label: Upload date
     filetype:
       label: Filetype
     size:
@@ -239,10 +248,10 @@ admin:
       label: Ratio
 
   element:
-    deleted: Elément supprimé.
+    deleted: Element deleted.
 
   static:
-    updated: Site actualisé avec succès.
+    updated: Site updated successfully.
     generating: Generating...
     please_wait: Please wait, generation is in progress. This page will refresh automatically.
     started_at: Started at

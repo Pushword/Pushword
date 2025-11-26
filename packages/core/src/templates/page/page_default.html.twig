@@ -80,7 +80,7 @@
   {% endblock %}
 
   {% block admin_buttons %}
-    {% if class_exists('\\Pushword\\Admin\\PushwordAdminBundle') and is_granted('IS_AUTHENTICATED_REMEMBERED') %}
+    {% if class_exists('\\Pushword\\Admin\\PushwordAdminBundle') and is_granted('ROLE_EDITOR') %}
       <div class="hidden md:block fixed top-1/2 right-2  mx-1 w-10 z-10 bg-gray-500 rounded-lg opacity-50">
       <a href="{{ path('admin_page_edit', {id: page.id}) }}" class="inline-block p-1 text-gray-50 rounded-t-lg hover:bg-gray-800">
         {{ svg('edit', {class: 'w-full p-2 fill-current'}) }}

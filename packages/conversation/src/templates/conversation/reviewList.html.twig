@@ -2,8 +2,10 @@
     <!-- <p class="text-sm text-gray-500 italic text-center">{% trans %}conversation.review.empty{% endtrans %}</p> -->
 {% endif %}
 
+<div class="not-prose" id="{{ 'reviews'|trans() }}">
 {% for message in reviews %}
     {% include '@PushwordConversation/conversation/review.html.twig' with {
-        message: message,
+        review: message,
     } %}
 {% endfor %}
+</div>

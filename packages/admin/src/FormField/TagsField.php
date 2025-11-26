@@ -71,7 +71,7 @@ class TagsField extends AbstractField
                 'class' => 'tagsFieldWrapper '
                     .($isPageAdmin ? ' ce-block__content' : ' tagsFieldWrapperMedia'),
             ],
-            'label' => $isPageAdmin ? ' ' : 'Tags',
+            'label' => $isPageAdmin ? ' ' : 'admin.media.tags.label',
             'help' => ' <div class="textSuggester" style="display:none;"></div>'
                 .'<script>setTimeout(function () {
                     const element = document.querySelector("'.(null === $subject->getId() ? '[data-tags]' : '[id$=_h1]').'");

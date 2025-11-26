@@ -100,5 +100,6 @@ Default credentials are `admin@example.com` / `p@ssword` (ROLE_SUPER_ADMIN). If 
 ## Quality Gates
 
 - Run linters `composer stan|rector` and tests `composer test-filter ...` or `composer test` and fix warnings; never leave broken builds.
+- you must avoid to skip tests by using `self::markTestSkipped('...')` or `@group skip` in tests ➜ fix them !
 - Clear cache after each modification `composer console cache:clear`
 - Write comment and documentation in english only.

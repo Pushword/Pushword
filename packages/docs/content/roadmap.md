@@ -27,11 +27,11 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 Flat :
 
-- dissociate page and media export/import because sometime we need to import media and export page or export media and import page
-- create PageSync and MediaSync responsible to know if it's time to import or to export (move FlatFileSync related code into a PageSync)
-- make FlatFile sync with responsability to sync pages and media AND triggering an event to notify sync (permitting other bundle to)
-- simplify the code, i am not sure we need to maintain FlatFileImporter and FlatFileExporter
-- create an event to trigger external sync (bundle)
+- [x] dissociate page and media export/import because sometime we need to import media and export page or export media and import page (`PageSync` & `MediaSync`)
+- [x] create PageSync and MediaSync responsible to know if it's time to import or to export (move FlatFileSync related code into a PageSync)
+- [x] make FlatFile sync with responsability to sync pages and media AND triggering an event to notify sync (permitting other bundle to react)
+- [x] simplify the code, i am not sure we need to maintain FlatFileImporter and FlatFileExporter (`FlatFileSync` now orchestrates everything)
+- [x] create an event to trigger external sync (bundle) (`FlatSyncCompletedEvent`)
 
 - [AdminBlockEditor] Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
 

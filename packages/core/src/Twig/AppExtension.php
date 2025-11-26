@@ -8,6 +8,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FilesizeFormatter;
 use Pushword\Core\Utils\HtmlBeautifer;
+use Symfony\Bundle\SecurityBundle\Security;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -18,6 +19,7 @@ final class AppExtension
         public PushwordRouteGenerator $router,
         private AppPool $apps,
         public Twig $twig,
+        private Security $security,
     ) {
     }
 
@@ -178,5 +180,32 @@ final class AppExtension
     public function boolean(mixed $value): bool
     {
         return (bool) $value;
+    }
+
+    /**
+     * Check if the current user is granted a permission.
+     * This method forces the security token to be loaded from the session.
+     *
+     * @param string|array<string> $attribute The permission to check
+     * @param mixed                $subject   Optional subject for the permission check
+     */
+    #[AsTwigFunction('pw_is_granted')]
+    public function isGranted(string|array $attribute, mixed $subject = null): bool
+    {
+        // Force token loading by getting the user
+        $this->security->getUser();
+
+        return $this->security->isGranted($attribute, $subject);
+    }
+
+    /**
+     * Get the current authenticated user.
+     * This method forces the security token to be loaded from the session.
+     */
+    #[AsTwigFunction('pw_user')]
+    public function getUser(): ?object
+    {
+        // Force token loading by getting the user
+        return $this->security->getUser();
     }
 }

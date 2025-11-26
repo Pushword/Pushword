@@ -57,7 +57,10 @@ final class Configuration implements ConfigurationInterface
         'vite_stylesheets' => [],
         'vite_javascripts' => [],
         'stylesheets' => ['bundles/pushwordcore/style.css'],
-        'javascripts' => ['bundles/pushwordcore/app.js'],
+        'javascripts' => [
+            'bundles/pushwordcore/app.js',
+            'bundles/pushwordcore/alpine.js',
+        ],
         'favicon' => ['bundles/pushwordcore/app.js'],
     ];
 

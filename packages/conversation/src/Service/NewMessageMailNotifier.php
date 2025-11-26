@@ -115,9 +115,14 @@ class NewMessageMailNotifier
                 ->text(
                     htmlspecialchars_decode($message->getContent())
                     ."\n\n---\n"
-                    .'Envoyé par '.($message->getAuthorName() ?? '...')
-                    .' - '.$message->getAuthorEmail()
-                    ."\n".'Depuis https://'.$message->getHost().'/ › form['.$message->getReferring().']'
+                    .$this->translator->trans('admin.conversation.notification.sent_by', [
+                        '%authorName%' => $message->getAuthorName() ?? '...',
+                        '%authorEmail%' => $message->getAuthorEmail(),
+                    ])
+                    ."\n".$this->translator->trans('admin.conversation.notification.from', [
+                        '%host%' => $message->getHost(),
+                        '%referring%' => $message->getReferring(),
+                    ])
                 );
 
             $this->mailer->send($templatedEmail);

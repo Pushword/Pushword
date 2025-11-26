@@ -3,7 +3,7 @@
 #---
 # Views Component
 video:
-  play: "Lecture"
+  play: "Play"
 
 fr: Français
 en: English
@@ -19,31 +19,33 @@ navigation:
 #---
 security:
   login:
-    title: Connexion
+    title: Login
     email: Email
-    password: Mot de passe
-    label_button: Se connecter
-    remember_me: Se souvenir de moi
-    email_not_found: Votre email n'a pu être trouvé.
+    password: Password
+    label_button: Log in
+    remember_me: Remember me
+    email_not_found: Your email could not be found.
+    logged_in_as: You are logged in as %username%
+  logout: Logout
 
 #---
 # Errors Page(s)
 #---
 
 error:
-  title: Oops! Une erreur...
-  serverSay: Le serveur indique
-  description: <a href="/" class="btn btn-secondary">Retour</a>
+  title: Oops! An error...
+  serverSay: The server indicates
+  description: <a href="/" class="btn btn-secondary">Back</a>
 
 #---
 # Feed
 #---
 feed:
-  description: Dernière page publiée.
-  alternate_title: Flux
+  description: Last published page.
+  alternate_title: Feed
 
 media:
   name_was_changed: Name was changed because another media has a similar name one.
-  duplicate_warning: 'Le fichier semble déjà être présent sur le disque : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Supprimer cette denrière version du doublon</a>'
+  duplicate_warning: 'The file seems to already be present on disk: <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Delete this duplicate version</a>'
 
 powered_by: Powered by

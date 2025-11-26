@@ -1,4 +1,10 @@
 {
+  "../js-helper/src/alpine.js": {
+    "file": "alpine.js",
+    "name": "alpine",
+    "src": "../js-helper/src/alpine.js",
+    "isEntry": true
+  },
   "../js-helper/src/app.css": {
     "file": "style.css",
     "src": "../js-helper/src/app.css",

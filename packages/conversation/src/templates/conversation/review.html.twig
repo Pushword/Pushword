@@ -1,7 +1,7 @@
 {# @var review \Pushword\Conversation\Entity\Review #}
 
 
-{% set anonymous = 'Anonymous'|trans %}
+{% set anonymous = 'conversation.review.anonymous'|trans %}
 {% set reviewAuthor = review.authorName|default(anonymous) %}
 
 {% set reviewBody = review.content %}
@@ -9,8 +9,8 @@
 
 
 {% block review %}
-<article
-    class="{{ reviewWrapperClass|default('flex flex-col p-5 card mb-6 not-prose') }}"
+<blockquote
+    class="{{ reviewWrapperClass|default('text-lg mb-12') }}"
     x-data="{
         expanded: false,
         isTruncated: false,
@@ -35,48 +35,50 @@
     }"
     x-init="checkTruncation()"
 >
-    <div class="flex items-start justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-semibold shrink-0">
-                <i class="fa-solid fa-user text-sm" aria-hidden="true"></i>
-            </div>
-            <div class="flex flex-col">
-                <span class="font-semibold text-gray-900">{{ reviewAuthor }}</span>
-                {% if review.title %}
-                    <span class="text-sm text-gray-600">{{ review.title }}</span>
-                {% endif %}
-                {% if review.createdAt %}
-                    <span class="text-xs text-gray-500">
-                        {{ review.createdAt|format_date('short', locale=page.locale|default('en')) }}
-                    </span>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div
-        x-ref="bodyText"
-        class="text-sm text-gray-700 leading-relaxed mt-2 space-y-2"
-        :class="{ 'line-clamp-3': !expanded }"
-    >
+    <div class="font-bold not-italic mb-3">
         {% if review.rating %}
             {% set ratingValue = review.rating %}
             {% set ratingValue = ratingValue > 5 ? 5 : ratingValue %}
             {% set ratingValue = ratingValue < 1 ? 1 : ratingValue %}
-            <span class="inline-flex pr-1 text-amber-400" aria-label="{{ ratingValue }}/5">
-                {% for i in 1..ratingValue %}
-                    <i class="fa-solid fa-star text-sm" aria-hidden="true"></i>
+            <span class="text-yellow-500" aria-label="{{ ratingValue }}/5">
+                {% for i in 1..5 %}
+                    {% if i <= ratingValue %}
+                        ★
+                    {% else %}
+                        ☆
+                    {% endif %}
                 {% endfor %}
             </span>
+            &nbsp;&nbsp;
         {% endif %}
-        <span class="text-gray-500">—&nbsp;&nbsp;</span>
-        <span class="inline">{{ reviewBodyHtml|raw }}</span>
+        {% if review.title %}
+            <strong>{{ review.title }}</strong>
+        {% endif %}
+        {% if is_granted('ROLE_EDITOR') and review.id and class_exists('\\Pushword\\Admin\\PushwordAdminBundle') %}
+            {% set editUrl = ea_url()
+                .setController('Pushword\\Conversation\\Controller\\Admin\\ReviewCrudController')
+                .setAction('edit')
+                .setEntityId(review.id)
+            %}
+            <a href="{{ editUrl }}"
+               class="inline-block bg-gray-500 rounded p-1 text-gray-50  hover:bg-gray-800 float-right"
+               title="{% trans %}admin.review.edit{% endtrans %}">
+                {{ svg('edit', {class: 'p-2 fill-current', style: 'width:12px'}) }}
+                <span class="sr-only">{% trans %}admin.review.edit{% endtrans %}</span>
+            </a>
+        {% endif %}
     </div>
-
+    <div
+        x-ref="bodyText"
+        class="italic prose-lg"
+        :class="{ 'line-clamp-3': !expanded }"
+    >
+        {{ reviewBodyHtml|raw }}
+    </div>
     <button
         type="button"
         @click="expanded = !expanded"
-        class="mt-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+        class="mt-3 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
         x-show="isTruncated"
     >
         <span x-show="!expanded">
@@ -88,11 +90,21 @@
             <i class="fa-solid fa-chevron-up text-xs ml-1" aria-hidden="true"></i>
         </span>
     </button>
-
+    <footer class="blockquote-footer mt-3 not-italic text-sm prose">
+        <p>
+            Commentaire envoyé par {{ reviewAuthor }}
+            {% set source = review.getCustomProperty('source') %}
+            {% if source %}
+                sur <span>{{ source }}</span>.
+            {% else %}
+                .
+            {% endif %}
+        </p>
+    </footer>
     {% if review.mediaList is not empty %}
         <div class="overflow-x-hidden md:overflow-x-auto w-full mt-4">
             {{ gallery(review.mediaList) }}
         </div>
     {% endif %}
-</article>
+</blockquote>
 {% endblock %}

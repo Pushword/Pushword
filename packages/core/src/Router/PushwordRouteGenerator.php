@@ -76,7 +76,7 @@ final class PushwordRouteGenerator
         }
 
         if (! $canonical) {
-            if ($forceUseCustomPath || $this->mayUseCustomPath()) {
+            if ($forceUseCustomPath || $this->mayUseCustomPath($host)) {
                 return $this->router->generate(self::CUSTOM_HOST_PATH, [
                     'host' => $host ?? $this->apps->safegetCurrentPage()->getHost(),
                     'slug' => $slug,
@@ -105,25 +105,25 @@ final class PushwordRouteGenerator
         return $url;
     }
 
-    public function mayUseCustomPath(): bool
+    public function mayUseCustomPath(?string $host = null): bool
     {
         if (! $this->useCustomHostPath) {
             return false;
         }
 
-        if ('' === $this->currentHost) {
+        if ('' === ($host ?? $this->currentHost)) {
             return false;
         }
 
-        if (null === $this->apps->getCurrentPage()) {
+        if (null === $host && null === $this->apps->getCurrentPage()) {
             return false;
         }
 
-        if ('' === $this->apps->getCurrentPage()->getHost()) {
+        if ('' === ($host ?? $this->apps->getCurrentPage()?->getHost())) {
             return false;
         }
 
-        return ! $this->apps->isDefaultHost($this->currentHost);
+        return ! $this->apps->isDefaultHost($host ?? $this->currentHost);
     }
 
     /**

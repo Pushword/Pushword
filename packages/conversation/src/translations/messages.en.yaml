@@ -1,54 +1,61 @@
 conversation:
   title: Conversation
   send:
-    success: Bien noté !
-    # Permets d'être assez large pour l'envoi d'un formulaire de contact, l'inscription à une newsletter
-    # ou le partage d'un commentaire
+    success: Thank you!
+    # Permits to be broad enough for contact form submission, newsletter subscription
+    # or comment sharing
   name:
-    placeholder: Nom
+    placeholder: Name
+  content:
+    placeholder: Message
   email:
     placeholder: Email
-    invalid: Adresse email invalide
+    invalid: Invalid email address
   phoneNumber:
-    invalid: Numéro de téléphone au format inconnu
-  submitLabel: Valider
-  registerLabel: S'inscrire
+    invalid: Phone number in unknown format
+  submitLabel: Submit
+  registerLabel: Register
   input:
-    notset: inconnu
-  suscribeToNewsletter: Inscription à la newsletter
+    notset: unknown
+  suscribeToNewsletter: Newsletter subscription
   review:
     empty: "No reviews have been published yet."
     see_more: "See more"
     see_less: "See less"
+    anonymous: "Anonymous"
 
 admin:
   conversation:
     notification:
       title:
-        singular: "[%appName%] : Nouveau message"
-        plural: "[%appName%] : Nouveaux messages"
+        singular: "[%appName%] : New message"
+        plural: "[%appName%] : New messages"
+      sent_by: "Sent by %authorName% - %authorEmail%"
+      from: "From https://%host%/ › form[%referring%]"
     label:
       conversation: Conversation
-      publishedAt: Publié le
-      author: Auteur
+      publishedAt: Published on
+      author: Author
 
     authorEmail:
       label: Email
 
     authorName:
-      label: Nom
+      label: Name
 
     authorIp:
       label: IP
+    authorIpRaw:
+      label: IP Raw
 
     content:
-      label: Contenu
+      label: Content
 
     referring:
-      label: Référant
+      label: Referring
 
     createdAt:
-      label: Posté le
+      label: Posted on
 
     tags:
       label: Tags
@@ -64,3 +71,4 @@ admin:
     medias:
       label: Media
       help: Attach one or several images illustrating the review
+    edit: Edit review

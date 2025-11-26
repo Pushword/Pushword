@@ -54,6 +54,7 @@ admin:
 
   action: Action
   details: Details
+  edit: Editer
   edition: Edition # not good
 
   page:
@@ -161,6 +162,9 @@ admin:
     priority:
       label: Priorité
       help: Permet d'ordonner les pages par priorité (puis par date de publication)
+    redirection:
+      from: De
+      to: Vers
     extra:
       label: Extra
     error:
@@ -193,6 +197,9 @@ admin:
       label: Téléphone
     email:
       label: Adresse mail
+    locale:
+      label: Langue
+      help: "<small>Préférence de langue pour l'interface d'administration (ex: <code>fr</code>, <code>en</code>, <code>en-US</code>...)</small>"
     dateOfBirth:
       label: Date de naissance
     createdAt:
@@ -217,6 +224,8 @@ admin:
       help: "Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne."
     mainColor:
       label: Couleur Principale
+    tags:
+      label: Tags
     createdAt:
       label: Date d'upload
     filetype:

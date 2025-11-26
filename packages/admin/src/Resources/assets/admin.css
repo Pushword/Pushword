@@ -15,6 +15,9 @@
 
 :root {
   --color-primary: var(--sky-700);
+  --link-color: var(--sky-700);
+  --link-hover-color: var(--sky-500);
+  --form-switch-checked-bg: var(--sky-500);
   --button-bg: var(--sky-500);
   --button-border-color: var(--sky-600);
   --button-color: var(--sky-50);
