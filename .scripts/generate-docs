@@ -57,15 +57,15 @@ git checkout --orphan docs
 
 git rm -rf .
 
-shopt -s extglob
-rm -rf !("docs"|".git")
-rm -rf .git-hooks
-rm -rf .github
-rm -rf .scripts
-rm -rf .phpunit.cache || true
-rm -rf .vscode || true
-rm -f .gitignore
-find -name '.*' -type f -exec rm {} \; -print
+# Remove everything except docs and .git directories
+find . -mindepth 1 -maxdepth 1 ! -name 'docs' ! -name '.git' -exec rm -rf {} +
+rm -rf .git-hooks 2>/dev/null || true
+rm -rf .github 2>/dev/null || true
+rm -rf .scripts 2>/dev/null || true
+rm -rf .phpunit.cache 2>/dev/null || true
+rm -rf .vscode 2>/dev/null || true
+rm -f .gitignore 2>/dev/null || true
+find . -mindepth 1 -maxdepth 1 -name '.*' -type f -exec rm -f {} + 2>/dev/null || true
 
 git add docs/*
 
