@@ -5,6 +5,7 @@ namespace App\DataFixtures;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -126,5 +127,17 @@ class AppFixtures extends Fixture
         $manager->persist($redirectionPage);
 
         $manager->flush();
+
+        if ('localhost.dev' === $this->apps->getMainHost()) {
+            $message = (new Message())
+                ->setContent('This is a default conversation message for localhost.dev. You can use this to test the conversation features.')
+                ->setAuthorName('Demo User')
+                ->setAuthorEmail('demo@localhost.dev')
+                ->setHost('localhost.dev')
+                ->setPublishedAt(new DateTime('1 day ago'));
+
+            $manager->persist($message);
+            $manager->flush();
+        }
     }
 }

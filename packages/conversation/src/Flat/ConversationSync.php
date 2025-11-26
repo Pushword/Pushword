@@ -12,8 +12,8 @@ final readonly class ConversationSync
     public function __construct(
         private AppPool $apps,
         private FlatFileContentDirFinder $contentDirFinder,
-        private ConversationImporter $importer,
-        private ConversationExporter $exporter,
+        public ConversationImporter $importer,
+        public ConversationExporter $exporter,
     ) {
     }
 

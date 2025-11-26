@@ -10,6 +10,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Throwable;
 
 final class ConversationImporter
 {
@@ -56,6 +57,21 @@ final class ConversationImporter
         /** @var iterable<int, array<string, string|null>> $records */
         $records = $reader->getRecords();
         foreach ($records as $row) {
+            // Ignore les lignes qui sont des headers dupliqués (ligne qui commence par un nom de colonne)
+            if ($this->isHeaderRow($row, $header)) {
+                continue;
+            }
+
+            // Ignore les lignes complètement vides
+            if ($this->isEmptyRow($row)) {
+                continue;
+            }
+
+            // Valide que la ligne a un contenu valide (contrainte NotBlank sur content)
+            if (! $this->isValidRow($row)) {
+                continue;
+            }
+
             $message = $this->findMessage($row['id'] ?? null);
             if (null === $message) {
                 $messageClass = $this->resolveMessageClass($row['type'] ?? null);
@@ -71,25 +87,52 @@ final class ConversationImporter
 
             $data = $this->buildDenormalizationData($row, $customColumns, $app->getMainHost());
 
+            // Valide les dates avant de les passer au dénormaliseur
+            $data = $this->validateDates($data);
+
             // Extrait mediaList avant la dénormalisation car setMediaList() attend une Collection
             /** @var Media[] $mediaList */
             $mediaList = $data['mediaList'] ?? [];
             unset($data['mediaList']);
 
-            // Ajoute le contexte pour ignorer les propriétés manquantes
-            $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = [];
-            $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
-
-            /** @var Message $normalizedMessage */
-            $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
-
-            // Ajoute les médias manuellement après la dénormalisation
-            foreach ($mediaList as $media) {
-                $normalizedMessage->addMedia($media);
+            // Ajoute le contexte pour ignorer les propriétés manquantes ou vides
+            $ignoredAttributes = [];
+            // Ignore authorIpRaw si la valeur est absente ou vide pour éviter les erreurs
+            if (! isset($data['authorIpRaw'])) {
+                $ignoredAttributes[] = 'authorIpRaw';
             }
 
-            if (! isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {
-                $this->entityManager->persist($normalizedMessage);
+            // Ignore les dates si elles sont absentes pour éviter les erreurs de parsing
+            if (! isset($data['publishedAt'])) {
+                $ignoredAttributes[] = 'publishedAt';
+            }
+
+            if (! isset($data['createdAt'])) {
+                $ignoredAttributes[] = 'createdAt';
+            }
+
+            if (! isset($data['updatedAt'])) {
+                $ignoredAttributes[] = 'updatedAt';
+            }
+
+            $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = $ignoredAttributes;
+            $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
+
+            try {
+                /** @var Message $normalizedMessage */
+                $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
+
+                // Ajoute les médias manuellement après la dénormalisation
+                foreach ($mediaList as $media) {
+                    $normalizedMessage->addMedia($media);
+                }
+
+                if (! isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {
+                    $this->entityManager->persist($normalizedMessage);
+                }
+            } catch (Throwable) {
+                // Ignore les lignes qui échouent lors de la dénormalisation
+                continue;
             }
         }
 
@@ -128,9 +171,14 @@ final class ConversationImporter
             'content' => $row['content'] ?? '',
             'authorName' => $row['authorName'] ?? null,
             'authorEmail' => $row['authorEmail'] ?? null,
-            'authorIpRaw' => $row['authorIp'] ?? null,
             'tags' => $tags,
         ];
+
+        // Ajoute authorIpRaw seulement si la valeur n'est pas null et pas vide
+        $authorIpValue = $row['authorIp'] ?? null;
+        if (null !== $authorIpValue && '' !== trim($authorIpValue)) {
+            $data['authorIpRaw'] = trim($authorIpValue);
+        }
 
         // Ajoute les dates seulement si elles ne sont pas null et pas vides
         // Le dénormaliseur de Symfony attend des chaînes pour les dates, pas des objets DateTime
@@ -197,6 +245,93 @@ final class ConversationImporter
         }
 
         return $medias;
+    }
+
+    /**
+     * @param array<string, string|null> $row
+     * @param string[]                   $header
+     */
+    private function isHeaderRow(array $row, array $header): bool
+    {
+        // Une ligne est considérée comme un header si elle contient principalement des noms de colonnes
+        $matches = 0;
+        foreach ($row as $value) {
+            $trimmed = null === $value ? '' : trim($value);
+            if ('' !== $trimmed && in_array($trimmed, $header, true)) {
+                ++$matches;
+            }
+        }
+
+        // Si plus de la moitié des valeurs correspondent à des noms de colonnes, c'est un header
+        return $matches > \count($header) / 2;
+    }
+
+    /**
+     * @param array<string, string|null> $row
+     */
+    private function isEmptyRow(array $row): bool
+    {
+        // Une ligne est vide si toutes les valeurs sont null ou vides
+        foreach ($row as $value) {
+            if (null !== $value && '' !== trim($value)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array<string, string|null> $row
+     */
+    private function isValidRow(array $row): bool
+    {
+        // Valide que content n'est pas vide (contrainte NotBlank)
+        $content = $row['content'] ?? null;
+        if (null === $content || '' === trim($content)) {
+            return false;
+        }
+
+        // Valide que content ne dépasse pas 200000 caractères (contrainte Length max)
+        $contentLength = mb_strlen(trim($content));
+        if ($contentLength > 200000) {
+            return false;
+        }
+
+        // Valide que content a au moins 1 caractère (contrainte Length min)
+        return $contentLength >= 1;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function validateDates(array $data): array
+    {
+        // Valide le format des dates avant de les passer au dénormaliseur
+        $dateFields = ['publishedAt', 'createdAt', 'updatedAt'];
+        foreach ($dateFields as $field) {
+            if (! isset($data[$field])) {
+                continue;
+            }
+
+            $dateValue = $data[$field];
+            if (! \is_string($dateValue)) {
+                unset($data[$field]);
+
+                continue;
+            }
+
+            // Essaie de parser la date pour valider le format
+            $parsed = ConversationCsvHelper::parseDate($dateValue);
+            if (null === $parsed) {
+                // Si le parsing échoue, retire la date pour éviter les erreurs
+                unset($data[$field]);
+            }
+        }
+
+        return $data;
     }
 
     /**

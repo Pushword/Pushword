@@ -36,7 +36,14 @@ final class ConversationExporter
         /** @var array<int, array<string, float|int|string|Stringable|null>> $rows */
         $rows = [];
         foreach ($messages as $message) {
-            $rows[] = $this->buildRow($message, $baseColumns, $customColumns);
+            $row = $this->buildRow($message, $baseColumns, $customColumns);
+            // Réorganise les valeurs dans l'ordre du header pour garantir la cohérence
+            $orderedRow = [];
+            foreach ($header as $column) {
+                $orderedRow[$column] = $row[$column] ?? null;
+            }
+
+            $rows[] = $orderedRow;
         }
 
         $this->ensureDirectoryExists(\dirname($csvPath));
@@ -78,9 +85,22 @@ final class ConversationExporter
         // Combine toutes les colonnes
         $allColumns = array_merge($specialColumns, $properties, $computedColumns);
 
-        // Retire les doublons et trie
+        // Retire les doublons
         $allColumns = array_unique($allColumns);
+
+        // Extrait 'id' s'il existe pour le mettre en premier
+        $hasId = in_array('id', $allColumns, true);
+        if ($hasId) {
+            $allColumns = array_values(array_filter($allColumns, fn (string $col): bool => 'id' !== $col));
+        }
+
+        // Trie le reste des colonnes
         sort($allColumns);
+
+        // Remet 'id' en première position
+        if ($hasId) {
+            array_unshift($allColumns, 'id');
+        }
 
         return $allColumns;
     }

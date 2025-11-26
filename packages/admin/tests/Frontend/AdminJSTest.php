@@ -56,9 +56,7 @@ class AdminJSTest extends AbstractAdminTestClass
             return $this->cachedClient;
         }
 
-        $client = static::createPantherClient([
-            'webServerDir' => __DIR__.'/../../../skeleton/public',
-        ]);
+        $client = static::createPantherClient();
 
         self::createUser();
 

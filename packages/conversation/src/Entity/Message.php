@@ -170,7 +170,24 @@ class Message implements Stringable, Taggable, IdInterface
 
     public function setAuthorIpRaw(string $authorIp): self
     {
-        return $this->setAuthorIp((int) ip2long(IpUtils::anonymize($authorIp)));
+        $trimmed = trim($authorIp);
+        if ('' === $trimmed) {
+            return $this;
+        }
+
+        // Valide que c'est une IP valide avant d'appeler anonymize
+        if (false === filter_var($trimmed, \FILTER_VALIDATE_IP)) {
+            return $this;
+        }
+
+        $anonymized = IpUtils::anonymize($trimmed);
+
+        $ipLong = ip2long($anonymized);
+        if (false === $ipLong) {
+            return $this;
+        }
+
+        return $this->setAuthorIp($ipLong);
     }
 
     public function getAuthorIpRaw(): bool|string
