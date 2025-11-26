@@ -3,6 +3,7 @@
 namespace Pushword\Admin\FormField;
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
@@ -23,11 +24,8 @@ class PageSlugField extends AbstractField
         $page = $this->admin->getSubject();
 
         $url = $page->getHost().$this->formFieldManager->router->generate('pushword_page', ['slug' => $page->getRealSlug()]);
-        $liveUrl = '' !== $page->getHost() ?
-            $this->formFieldManager->router->generate(
-                'custom_host_pushword_page',
-                ['host' => $page->getHost(), 'slug' => $page->getRealSlug()]
-            ) : $url;
+        assert($this->admin instanceof PageCrudController);
+        $liveUrl = $this->admin->getPageUrl($page);
 
         return '<div id="disabledLinkSlug">
                     <span class="btn btn-primary" onclick="toggleDisabled()" style="float:right; margin-top:-36px; z-index:100;position:relative"><i class="fa fa-unlock"></i></span>

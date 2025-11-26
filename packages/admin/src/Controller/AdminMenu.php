@@ -3,6 +3,7 @@
 namespace Pushword\Admin\Controller;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\CrudMenuItem;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\RouteMenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
@@ -159,7 +160,7 @@ final readonly class AdminMenu
             ->setSubItems($subItems);
     }
 
-    private function buildCheatSheetMenu(): MenuItemInterface
+    private function buildCheatSheetMenu(): RouteMenuItem
     {
         $cheatSheetItem = MenuItem::linkToRoute('admin.label.cheatsheet', 'fa fa-book', 'cheatsheetEditRoute');
 

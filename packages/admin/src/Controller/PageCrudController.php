@@ -217,6 +217,17 @@ class PageCrudController extends AbstractAdminCrudController
         return $this->redirectToPage($context) ?? parent::getRedirectResponseAfterSave($context, $action);
     }
 
+    public function getPageUrl(Page $page): string
+    {
+        return $this->routeGenerator->generate(
+            $page->getSlug(),
+            false,
+            null,
+            $page->getHost(),
+            ! $this->apps->isDefaultHost($page->getHost())
+        );
+    }
+
     private function redirectToPage(AdminContext $context): ?RedirectResponse
     {
         $page = $context->getEntity()->getInstance();
@@ -224,13 +235,7 @@ class PageCrudController extends AbstractAdminCrudController
             return null;
         }
 
-        $redirectUrl = $this->routeGenerator->generate(
-            $page->getSlug(),
-            false,
-            null,
-            $page->getHost(),
-            ! $this->apps->isDefaultHost($page->getHost())
-        );
+        $redirectUrl = $this->getPageUrl($page);
 
         if ('' === $redirectUrl) {
             return null;
