@@ -59,8 +59,13 @@ final class PushwordRouteGenerator
     /**
      * @param string|Page $slug
      */
-    public function generate($slug = 'homepage', bool $canonical = false, ?int $pager = null, ?string $host = null): string
-    {
+    public function generate(
+        $slug = 'homepage',
+        bool $canonical = false,
+        ?int $pager = null,
+        ?string $host = null,
+        bool $forceUseCustomPath = false,
+    ): string {
         $page = null;
 
         if ($slug instanceof Page) {
@@ -71,7 +76,7 @@ final class PushwordRouteGenerator
         }
 
         if (! $canonical) {
-            if ($this->mayUseCustomPath()) {
+            if ($forceUseCustomPath || $this->mayUseCustomPath()) {
                 return $this->router->generate(self::CUSTOM_HOST_PATH, [
                     'host' => $host ?? $this->apps->safegetCurrentPage()->getHost(),
                     'slug' => $slug,
@@ -118,7 +123,7 @@ final class PushwordRouteGenerator
             return false;
         }
 
-        return ! $this->apps->get()->isMainHost($this->currentHost);
+        return ! $this->apps->isDefaultHost($this->currentHost);
     }
 
     /**

@@ -54,13 +54,15 @@ export class MediaUtils {
       return this.isFullUrl(dataItem) ? this.extractMediaName(dataItem) : dataItem
     } else if (dataItem && typeof dataItem === 'object' && dataItem.media) {
       return dataItem.media
+    } else if (dataItem && typeof dataItem === 'object' && dataItem.fileName) {
+      return dataItem.fileName
     }
     return ''
   }
 
   /**
    * Construit l'URL complète depuis un objet de données
-   * @param dataItem - Objet de données qui peut contenir media, url, ou être une string
+   * @param dataItem - Objet de données qui peut contenir media, fileName, url, ou être une string
    * @param basePath - Chemin de base pour les médias
    * @returns URL complète
    */
@@ -69,6 +71,9 @@ export class MediaUtils {
       return this.buildFullUrl(dataItem, basePath)
     } else if (dataItem && typeof dataItem === 'object' && dataItem.url) {
       return dataItem.url
+    } else if (dataItem && typeof dataItem === 'object' && dataItem.fileName) {
+      const mediaName = dataItem.fileName
+      return this.buildFullUrl(mediaName, basePath)
     } else if (dataItem && typeof dataItem === 'object' && dataItem.media) {
       const mediaName = dataItem.media
       return this.buildFullUrl(mediaName, basePath)

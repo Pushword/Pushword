@@ -2,15 +2,14 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Repository\MediaRepository;
-use Pushword\Core\Repository\PageRepository;
 
 use function Safe\json_encode;
 
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormInterface;
 
 /**
  * @template T of Page|Media
@@ -27,50 +26,59 @@ class TagsField extends AbstractField
         $subject = $this->admin->getSubject();
 
         if ($subject instanceof Page) {
-            /** @var PageRepository */
-            $pageRepo = $this->admin->getEntityManager()->getRepository(Page::class); // @phpstan-ignore-line
+            $host = $this->currentRequest()->query->getString('host', $subject->getHost());
 
-            $host = $this->admin->getRequest()->query->getString('host', $subject->getHost());
-
-            return $pageRepo->getAllTags($host);
+            return $this->pageRepo()->getAllTags($host);
         }
 
         // assert($subject instanceof Media);
 
-        /** @var MediaRepository */
-        $mediaRepo = $this->admin->getEntityManager()->getRepository(Media::class); // @phpstan-ignore-line
-
-        return $mediaRepo->getAllTags();
+        return $this->mediaRepo()->getAllTags();
     }
 
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
         $allTags = $this->getAllTags();
         $subject = $this->admin->getSubject();
         $isMediaAdmin = $subject instanceof Media;
 
-        $form->add('tags', TextType::class, [
+        return $this->buildEasyAdminField('tagsVirtual', TextType::class, [
             'required' => false,
+            'getter' => static function (?object $viewData, FormInterface $form): string {
+                if (! \is_object($viewData) || ! method_exists($viewData, 'getTags')) {
+                    return '';
+                }
+
+                $value = $viewData->getTags();
+
+                return \is_string($value) ? $value : '';
+            },
+            'setter' => static function (?object &$viewData, mixed $submittedValue, FormInterface $form): void {
+                if (! \is_object($viewData) || ! method_exists($viewData, 'setTags')) {
+                    return;
+                }
+
+                $viewData->setTags($submittedValue);
+            },
             'attr' => [
                 'class' => 'textarea-no-newline tagsField'
-                  .($isMediaAdmin ? ' tagsFieldMedia' : ''),
+                    .($isMediaAdmin ? ' tagsFieldMedia' : ''),
                 'placeholder' => 'admin.page.tags.label',
                 'data-tags' => json_encode($allTags),
-                // 'data-search-results-hook' => 'suggestSearchHookForPageTags', // data-search-results-hook=suggestSearchHookForPageTags
                 'autofocus' => '',
             ],
             'row_attr' => [
                 'class' => 'tagsFieldWrapper '
-                  .($isMediaAdmin ? ' tagsFieldWrapperMedia' : ' ce-block__content'),
+                    .($isMediaAdmin ? ' tagsFieldWrapperMedia' : ' ce-block__content'),
             ],
             'label' => $isMediaAdmin ? 'Tags' : ' ',
             'help' => ' <div class="textSuggester" style="display:none;"></div>'
                 .'<script>setTimeout(function () {
-                    const element = document.querySelector("'.(null === $subject->getId() ? '[data-tags]' : '[id$=_h1] textarea').'");
+                    const element = document.querySelector("'.(null === $subject->getId() ? '[data-tags]' : '[id$=_h1]').'");
                     element.focus();
                     element.selectionStart = element.selectionEnd = element.value.length;
                 }, 500)</script>',
             'help_html' => true,
         ]);
-    }// .($page->getId() === null ?
+    }
 }

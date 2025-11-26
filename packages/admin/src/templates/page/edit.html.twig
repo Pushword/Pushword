@@ -1,0 +1,18 @@
+{% extends '@EasyAdmin/crud/edit.html.twig' %}
+
+{% block edit_form %}
+    {% set autosave_event = 'pw-ctrl-s-event' %}
+    {% set autosave_attrs = edit_form.vars.attr|merge({
+        'data-pw-ctrl-s-form': '1',
+        'data-pw-ctrl-s-event': autosave_event,
+        'data-pw-ctrl-s-indicator': '.action-saveAndContinue .action-label',
+        'data-pw-ctrl-s-button': '.action-saveAndContinue',
+        'hx-post': edit_form.vars.action,
+        'hx-trigger': autosave_event,
+        'hx-swap': 'none',
+    }) %}
+
+    {{ form_start(edit_form, { attr: autosave_attrs }) }}
+        {{ form_widget(edit_form) }}
+    {{ form_end(edit_form) }}
+{% endblock %}

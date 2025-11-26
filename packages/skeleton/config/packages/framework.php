@@ -11,5 +11,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'dsn' => 'null://null',
         ],
         'http_method_override' => false,
+        'property_info' => [
+            'with_constructor_extractor' => false,
+        ],
     ]);
 };

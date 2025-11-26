@@ -8,7 +8,6 @@ use Pushword\Admin\FormField\HostField;
 use Pushword\Admin\FormField\MediaMediaFileField;
 use Pushword\Admin\FormField\MediaNameField;
 use Pushword\Admin\FormField\MediaNamesField;
-use Pushword\Admin\FormField\MediaPreviewField;
 use Pushword\Admin\FormField\MediaSlugField;
 use Pushword\Admin\FormField\PageEditMessageField;
 use Pushword\Admin\FormField\PageH1Field;
@@ -53,8 +52,16 @@ class Configuration implements ConfigurationInterface
     ];
 
     final public const array DEFAULT_ADMIN_REDIRECTION_FORM_FIELDS = [
-        [PageH1Field::class, PageMainContentField::class, HostField::class],
-        [],
+        [PageH1Field::class, PageMainContentField::class],
+        [
+            'admin.page.permanlien.label' => [
+                HostField::class,
+                PageSlugField::class],
+            'admin.page.customProperties.label' => [
+                'expand' => true,
+                'fields' => [CustomPropertiesField::class],
+            ],
+        ],
     ];
 
     final public const array DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
@@ -92,7 +99,7 @@ class Configuration implements ConfigurationInterface
             MediaSlugField::class,
         ],
         [CustomPropertiesField::class, MediaNamesField::class],
-        [MediaPreviewField::class],
+        [],
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder

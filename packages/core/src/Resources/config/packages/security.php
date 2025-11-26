@@ -1,9 +1,7 @@
 <?php
 
-use Pushword\Admin\MediaAdmin;
-use Pushword\Admin\PageAdmin;
-use Pushword\Admin\PageCheatSheetAdmin;
-use Pushword\Admin\PageRedirectionAdmin;
+use Pushword\Admin\Controller\MediaCrudController;
+use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Core\Security\LoginFormAuthenticator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -17,10 +15,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         'role_hierarchy' => [
             'ROLE_EDITOR' => [
                 0 => 'ROLE_USER',
-                1 => 'ROLE_'.strtoupper(PageAdmin::class).'_ALL',
-                2 => 'ROLE_'.strtoupper(PageRedirectionAdmin::class).'_ALL',
-                3 => 'ROLE_'.strtoupper(PageCheatSheetAdmin::class).'_ALL',
-                4 => 'ROLE_'.strtoupper(MediaAdmin::class).'_ALL',
+                1 => 'ROLE_'.strtoupper(PageCrudController::class).'_ALL',
+                2 => 'ROLE_'.strtoupper(MediaCrudController::class).'_ALL',
             ],
             'ROLE_ADMIN' => [
                 0 => 'ROLE_EDITOR',

@@ -10,9 +10,9 @@ class MediaTest extends TestCase
     public function testBasic(): void
     {
         $media = new Media();
-        self::assertEmpty($media->getName());
+        self::assertEmpty($media->getAlt());
 
-        $media->setName('test');
-        self::assertSame('test', $media->getName());
+        $media->setAlt('test');
+        self::assertSame('test', $media->getAlt());
     }
 }

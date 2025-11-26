@@ -11,6 +11,9 @@ export interface RawData extends BlockToolData {
 }
 
 export default class Raw extends BaseTool {
+  private static monacoLoaderPromise: Promise<void> | null = null
+  private static readonly MONACO_SCRIPT_URL = '/bundles/pushwordadmin/monaco/app.js'
+
   public static enableLineBreaks = true
 
   api: API
@@ -63,25 +66,79 @@ export default class Raw extends BaseTool {
     // editorElem.setAttribute('data-editor', 'twig')
     this.wrapper.appendChild(editorElem)
 
-    // Initialize Monaco editor
-
-    // test if window.monaco is defined
-    if (typeof window.monaco === 'undefined') {
-      console.log('monaco is not defined')
-      return this.wrapper
-    }
-
-    //this.editorInstance = window.monacoHelper?.transformTextareaToMonaco(editorElem)
-    this.editorInstance = this.instantiateEditor(editorElem)
-    const monacoHelperInstance = new window.monacoHelper!(this.editorInstance)
-
-    monacoHelperInstance.updateHeight(this.wrapper)
-    this.editorInstance.onDidChangeModelContent(() => {
-      monacoHelperInstance.updateHeight(this.wrapper!)
-      monacoHelperInstance.autocloseTag()
-    })
+    this.initializeMonaco(editorElem)
 
     return this.wrapper
+  }
+
+  private initializeMonaco(editorElem: HTMLElement): void {
+    this.ensureMonacoLoaded()
+      .then((ready) => {
+        if (!ready || !this.wrapper) {
+          return
+        }
+
+        try {
+          this.editorInstance = this.instantiateEditor(editorElem)
+          const monacoHelperInstance = new window.monacoHelper!(this.editorInstance)
+
+          monacoHelperInstance.updateHeight(this.wrapper)
+          this.editorInstance.onDidChangeModelContent(() => {
+            monacoHelperInstance.updateHeight(this.wrapper!)
+            monacoHelperInstance.autocloseTag()
+          })
+        } catch (error) {
+          console.error('Unable to initialize Monaco editor', error)
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load Monaco resources', error)
+      })
+  }
+
+  private async ensureMonacoLoaded(): Promise<boolean> {
+    if (window.monaco && window.monacoHelper) {
+      return true
+    }
+
+    if (!Raw.monacoLoaderPromise) {
+      Raw.monacoLoaderPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = `${Raw.MONACO_SCRIPT_URL}?v=${Date.now()}`
+        script.async = true
+        script.defer = true
+
+        const cleanup = (): void => {
+          script.removeEventListener('load', onLoad)
+          script.removeEventListener('error', onError)
+        }
+
+        const onLoad = (): void => {
+          cleanup()
+          resolve()
+        }
+
+        const onError = (event: Event): void => {
+          cleanup()
+          reject(event)
+        }
+
+        script.addEventListener('load', onLoad)
+        script.addEventListener('error', onError)
+        document.head.appendChild(script)
+      })
+    }
+
+    try {
+      await Raw.monacoLoaderPromise
+    } catch (error) {
+      Raw.monacoLoaderPromise = null
+      console.error('Error loading Monaco script', error)
+
+      return false
+    }
+
+    return typeof window.monaco !== 'undefined' && typeof window.monacoHelper !== 'undefined'
   }
 
   save(): RawData {

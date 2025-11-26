@@ -8,7 +8,6 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Twig\Extension\StringLoaderExtension;
-use Twig\Extra\Intl\IntlExtension;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();
@@ -47,5 +46,5 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(PushwordCoreBundle::class);
     $services->set(StringLoaderExtension::class);
     $services->set(TwigExtension::class);
-    $services->set(IntlExtension::class);
+    // $services->set(IntlExtension::class);
 };

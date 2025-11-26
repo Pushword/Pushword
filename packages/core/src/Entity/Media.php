@@ -4,6 +4,7 @@ namespace Pushword\Core\Entity;
 
 use Cocur\Slugify\Slugify;
 use DateTime;
+use Deprecated;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -61,14 +62,12 @@ class Media implements IdInterface, Stringable
     protected string $projectDir = '';
 
     #[ORM\Column(type: Types::STRING, length: 255, name: 'media')]
-    protected string $media = ''; // eg : my-file.jpg
-
-    // TODO Rename to filename
+    protected string $fileName = ''; // eg : my-file.jpg
 
     /**
      * NOTE : this is used only for media renaming.
      */
-    protected string $mediaBeforeUpdate = '';
+    protected string $fileNameBeforeUpdate = '';
 
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected ?string $mimeType = null; // @phpstan-ignore-line
@@ -195,22 +194,22 @@ class Media implements IdInterface, Stringable
         return $this->mediaFile->getFilename();
     }
 
-    public function getMedia(): string
+    public function getFileName(): string
     {
-        return $this->media;
+        return $this->fileName;
     }
 
-    public function setMedia(?string $media): self
+    public function setFileName(?string $fileName): self
     {
-        if (null === $media) {
+        if (null === $fileName) {
             return $this;
         }
 
-        if ('' !== $this->media) {
-            $this->setMediaBeforeUpdate($this->media);
+        if ('' !== $this->fileName) {
+            $this->setFileNameBeforeUpdate($this->fileName);
         }
 
-        $this->media = $media;
+        $this->fileName = $fileName;
 
         return $this;
     }
@@ -237,11 +236,11 @@ class Media implements IdInterface, Stringable
 
     public function getPath(): string
     {
-        if ('' === $this->media) {
+        if ('' === $this->fileName) {
             throw new LogicException();
         }
 
-        return $this->getStoreIn().'/'.$this->media;
+        return $this->getStoreIn().'/'.$this->fileName;
     }
 
     public function getMimeType(): ?string
@@ -252,8 +251,10 @@ class Media implements IdInterface, Stringable
     public function setMimeType(?string $mimeType): self
     {
         $uploadedFile = $this->getMediaFile();
-        if ($uploadedFile instanceof UploadedFile
-            && \in_array($uploadedFile->getClientMimeType(), SafeMediaMimeType::get(), true)) {
+        if (
+            $uploadedFile instanceof UploadedFile
+            && \in_array($uploadedFile->getClientMimeType(), SafeMediaMimeType::get(), true)
+        ) {
             $mimeType = $uploadedFile->getClientMimeType();
         }
 
@@ -309,18 +310,18 @@ class Media implements IdInterface, Stringable
     /**
      * this is used only for media renaming.
      */
-    public function getMediaBeforeUpdate(): string
+    public function getFileNameBeforeUpdate(): string
     {
-        return $this->mediaBeforeUpdate;
+        return $this->fileNameBeforeUpdate;
     }
 
     /**
      * this is used only for media renaming.
      */
-    public function setMediaBeforeUpdate(string $mediaBeforeUpdate): self
+    public function setFileNameBeforeUpdate(string $fileNameBeforeUpdate): self
     {
-        if ('' === $this->mediaBeforeUpdate || '' === $mediaBeforeUpdate) {
-            $this->mediaBeforeUpdate = $mediaBeforeUpdate;
+        if ('' === $this->fileNameBeforeUpdate || '' === $fileNameBeforeUpdate) {
+            $this->fileNameBeforeUpdate = $fileNameBeforeUpdate;
         }
 
         return $this;
@@ -346,12 +347,12 @@ class Media implements IdInterface, Stringable
     }
 
     /**
-     * Used by MediaAdmin.
+     * Used by the admin interface.
      */
     public function setSlugForce(?string $slug): self
     {
-        if ('' === $this->name && null !== $slug) {
-            $this->setName($slug);
+        if ('' === $this->alt && null !== $slug) {
+            $this->setAlt($slug);
         }
 
         return $this->changeSlug((string) $slug);
@@ -369,8 +370,8 @@ class Media implements IdInterface, Stringable
 
         $this->slug = $this->slugify($slug);
 
-        if ('' !== $this->getMedia()) {
-            $this->setMedia($this->slug.$this->extractExtension($this->getMedia()));
+        if ('' !== $this->getFileName()) {
+            $this->setFileName($this->slug.$this->extractExtension($this->getFileName()));
         }
 
         return $this;
@@ -378,7 +379,7 @@ class Media implements IdInterface, Stringable
 
     /**
      * Used by VichUploader.
-     * Permit to setMedia from filename.
+     * Permit to setFileName from filename.
      */
     private function setSlugForNewMedia(string $filename): self
     {
@@ -389,7 +390,7 @@ class Media implements IdInterface, Stringable
 
         $filenameSlugified = $this->getMediaFromFilename($filename);
         $extension = $this->extractExtensionFromFile();
-        $this->setMedia($filenameSlugified);
+        $this->setFileName($filenameSlugified);
         $this->slug = substr($filenameSlugified, 0, \strlen($filenameSlugified) - \strlen($extension));
 
         return $this;
@@ -423,7 +424,7 @@ class Media implements IdInterface, Stringable
         $slug = str_replace(['©', '&copy;', '&#169;', '&#xA9;'], '©', $slug);
         $slug = explode('©', $slug, 2);
         $slug = $slugifier->slugify($slug[0])
-          .(isset($slug[1]) ? '_'.$slugifier->slugify(str_replace('©', '', $slug[1])) : '');
+            .(isset($slug[1]) ? '_'.$slugifier->slugify(str_replace('©', '', $slug[1])) : '');
 
         return $slug;
     }
@@ -443,81 +444,81 @@ class Media implements IdInterface, Stringable
             return $this->slug;
         }
 
-        if ('' !== $this->getMedia()) {
-            return $this->slug = Filepath::removeExtension($this->getMedia());
+        if ('' !== $this->getFileName()) {
+            return $this->slug = Filepath::removeExtension($this->getFileName());
         }
 
-        $this->setSlug($this->getName());
+        $this->setSlug($this->getAlt());
 
         return $this->slug;
     }
 
-    #[ORM\Column(type: Types::STRING, length: 100, unique: true)]
-    protected string $name = ''; // used for alt text
+    #[ORM\Column(type: Types::STRING, length: 100, unique: true, name: 'name')]
+    protected string $alt = ''; // used for alt text
 
-    #[ORM\Column(type: Types::STRING, length: 100, options: ['default' => ''])]
-    protected string $nameSearch = '';
+    #[ORM\Column(type: Types::STRING, length: 100, options: ['default' => ''], name: 'name_search')]
+    protected string $altSearch = '';
 
-    #[ORM\Column(type: Types::TEXT, options: ['default' => ''], nullable: true)]
-    protected ?string $names = '';
+    #[ORM\Column(type: Types::TEXT, options: ['default' => ''], nullable: true, name: 'names')]
+    protected ?string $alts = '';
 
     public function __toString(): string
     {
-        return $this->media;
+        return $this->fileName;
     }
 
-    private string $softName = '';
+    private string $softAlt = '';
 
-    public function setName(?string $name, bool $soft = false): self
+    public function setAlt(?string $alt, bool $soft = false): self
     {
         if ($soft) {
-            $this->softName = (string) $name;
+            $this->softAlt = (string) $alt;
 
             return $this;
         }
 
-        $this->name = (string) $name;
-        $this->nameSearch = SearchNormalizer::normalize($this->name);
+        $this->alt = (string) $alt;
+        $this->altSearch = SearchNormalizer::normalize($this->alt);
 
         return $this;
     }
 
-    public function getName(bool $onlyName = false): string
+    public function getAlt(bool $onlyAlt = false): string
     {
-        if ('' !== $this->softName) {
-            return $this->softName;
+        if ('' !== $this->softAlt) {
+            return $this->softAlt;
         }
 
-        if ($onlyName) {
-            return $this->name;
+        if ($onlyAlt) {
+            return $this->alt;
         }
 
-        if ('' === $this->name && null !== $this->getMediaFile()) {
+        if ('' === $this->alt && null !== $this->getMediaFile()) {
             return $this->getMediaFileName();
         }
 
-        return $this->name;
+        return $this->alt;
     }
 
-    public function getNameLocalized(?string $getLocalized = null, bool $onlyLocalized = false): string
+    public function getAltLocalized(?string $getLocalized = null, bool $onlyLocalized = false): string
     {
-        $names = $this->getNamesParsed();
+        $alts = $this->getAltsParsed();
 
         return null !== $getLocalized ?
-            ($names[$getLocalized] ?? ($onlyLocalized ? '' : $this->name))
-            : $this->name;
+            ($alts[$getLocalized] ?? ($onlyLocalized ? '' : $this->alt))
+            : $this->alt;
     }
 
     /**
      * @return array<string, string>
      */
-    public function getNamesParsed(): array
+    public function getAltsParsed(): array
     {
-        $this->names = (string) $this->names;
-        $return = '' !== $this->names ? Yaml::parse($this->names) : [];
+        $this->alts = (string) $this->alts;
+        $return = '' !== $this->alts ? Yaml::parse($this->alts) : [];
 
         if (! \is_array($return)) {
-            throw new Exception('Names malformatted');
+            throw new Exception('Alts malformatted');
         }
 
         $toReturn = [];
@@ -533,25 +534,25 @@ class Media implements IdInterface, Stringable
         return $toReturn;
     }
 
-    public function getNames(bool $yamlParsed = false): mixed
+    public function getAlts(bool $yamlParsed = false): mixed
     {
-        $this->names = (string) $this->names;
+        $this->alts = (string) $this->alts;
 
-        return $yamlParsed && '' !== $this->names ? Yaml::parse($this->names) : $this->names;
+        return $yamlParsed && '' !== $this->alts ? Yaml::parse($this->alts) : $this->alts;
     }
 
-    public function setNames(?string $names): self
+    public function setAlts(?string $alts): self
     {
-        $this->names = (string) $names;
+        $this->alts = (string) $alts;
 
         return $this;
     }
 
-    public function getNameByLocale(string $locale): string
+    public function getAltByLocale(string $locale): string
     {
-        $names = $this->getNamesParsed();
+        $alts = $this->getAltsParsed();
 
-        return $names[$locale] ?? $this->getName();
+        return $alts[$locale] ?? $this->getAlt();
     }
 
     /**
@@ -586,7 +587,7 @@ class Media implements IdInterface, Stringable
             return $this;
         }
 
-        $mediaFilePath = $this->getStoreIn().'/'.$this->getMedia();
+        $mediaFilePath = $this->getStoreIn().'/'.$this->getFileName();
 
         if (! file_exists($mediaFilePath) || ! is_file($mediaFilePath)) {
             throw new Exception('incredible ! `'.$mediaFilePath.'`');
@@ -595,5 +596,25 @@ class Media implements IdInterface, Stringable
         $this->hash = sha1_file($mediaFilePath, true);
 
         return $this;
+    }
+
+    /**************** Backward Compatibility (Deprecated) ***************/
+
+    /**
+     * @deprecated Use getFileName() instead
+     */
+    #[Deprecated(message: 'Use getFileName() instead', since: '1.0')]
+    public function getMedia(): string
+    {
+        return $this->getFileName();
+    }
+
+    /**
+     * @deprecated Use getAlt() instead
+     */
+    #[Deprecated(message: 'Use getAlt() instead', since: '1.0')]
+    public function getName(bool $onlyName = false): string
+    {
+        return $this->getAlt($onlyName);
     }
 }

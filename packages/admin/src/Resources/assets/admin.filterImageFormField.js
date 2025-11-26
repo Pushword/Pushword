@@ -1,13 +1,25 @@
+/**
+ * Ajoute des filtres MIME type pour les champs d'image
+ * Restreint la sélection aux formats image/jpeg, image/gif, image/png
+ */
 export function filterImageFormField() {
-  const addToHref = function (element) {
-    element.href =
-      element.href +
-      '&filter[mimeType][value][]=image/jpeg&[mimeType][value][]=image/gif&filter[mimeType][value][]=image/png'
+  /**
+   * Ajoute les filtres MIME type à l'URL d'un lien
+   * @param {HTMLAnchorElement} element - L'élément lien à modifier
+   */
+  const addImageFiltersToHref = (element) => {
+    const imageFilters =
+      '&filter[mimeType][value][]=image/jpeg&filter[mimeType][value][]=image/gif&filter[mimeType][value][]=image/png'
+    element.href = element.href + imageFilters
   }
 
-  let mainImage = document.querySelector('span[id$="_mainImage"] a')
-  if (mainImage) addToHref(mainImage)
+  const mainImageLink = document.querySelector('span[id$="_mainImage"] a')
+  if (mainImageLink) {
+    addImageFiltersToHref(mainImageLink)
+  }
 
-  let inlineImage = document.querySelector('span[id$="_inline_image"] a')
-  if (inlineImage) addToHref(inlineImage)
+  const inlineImageLink = document.querySelector('span[id$="_inline_image"] a')
+  if (inlineImageLink) {
+    addImageFiltersToHref(inlineImageLink)
+  }
 }

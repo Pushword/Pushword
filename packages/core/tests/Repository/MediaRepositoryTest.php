@@ -29,8 +29,8 @@ class MediaRepositoryTest extends KernelTestCase
             ->setMimeType('image/jpeg')
             ->setSize(2)
             ->setDimensions([1000, 1000])
-            ->setMedia('1.jpg')
-            ->setName('Demo 1')
+            ->setFileName('1.jpg')
+            ->setAlt('Demo 1')
             ->setHash();
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Page;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 /**
@@ -11,19 +11,16 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
  */
 class PageMainContentField extends AbstractField
 {
-    /**
-     * @param FormMapper<Page> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('mainContent', TextareaType::class, [
+        return $this->buildEasyAdminField('mainContent', TextareaType::class, [
             'attr' => [
                 'style' => 'min-height: 50vh;font-size:125%; max-width:900px',
                 'data-editor' => 'markdown',
                 'data-gutter' => 0,
             ],
             'required' => false,
-            'label' => ' ',
+            'label' => false,
             'help_html' => true,
             'help' => 'admin.page.mainContent.help',
         ]);

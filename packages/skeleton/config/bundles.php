@@ -3,7 +3,7 @@
 use BabDev\PagerfantaBundle\BabDevPagerfantaBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle;
-use Knp\Bundle\MenuBundle\KnpMenuBundle;
+use EasyCorp\Bundle\EasyAdminBundle\EasyAdminBundle;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle;
 use Pushword\AdvancedMainImage\PushwordAdvancedMainImageBundle;
@@ -15,12 +15,6 @@ use Pushword\PageUpdateNotifier\PushwordPageUpdateNotifierBundle;
 use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 use Pushword\TemplateEditor\PushwordTemplateEditorBundle;
 use Pushword\Version\PushwordVersionBundle;
-use Sonata\AdminBundle\SonataAdminBundle;
-use Sonata\BlockBundle\SonataBlockBundle;
-use Sonata\Doctrine\Bridge\Symfony\SonataDoctrineBundle;
-use Sonata\DoctrineORMAdminBundle\SonataDoctrineORMAdminBundle;
-use Sonata\Form\Bridge\Symfony\SonataFormBundle;
-use Sonata\Twig\Bridge\Symfony\SonataTwigBundle;
 use Symfony\Bundle\DebugBundle\DebugBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\MakerBundle\MakerBundle;
@@ -29,6 +23,8 @@ use Symfony\Bundle\SecurityBundle\SecurityBundle;
 use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Bundle\WebProfilerBundle\WebProfilerBundle;
 use Symfony\UX\StimulusBundle\StimulusBundle;
+use Symfony\UX\TwigComponent\TwigComponentBundle;
+use Twig\Extra\TwigExtraBundle\TwigExtraBundle;
 use Vich\UploaderBundle\VichUploaderBundle;
 
 /**
@@ -62,16 +58,10 @@ return [
     DoctrineFixturesBundle::class => ['all' => true],
 
     // Used for Admin
-    // - Sonata
-    SonataBlockBundle::class => ['all' => true],
-    KnpMenuBundle::class => ['all' => true],
-    SonataAdminBundle::class => ['all' => true],
-    SonataDoctrineORMAdminBundle::class => ['all' => true],
-    SonataFormBundle::class => ['all' => true],
-    SonataTwigBundle::class => ['all' => true],
-    SonataDoctrineBundle::class => ['all' => true],
     StimulusBundle::class => ['all' => true],
-    // Sonata\Exporter\Bridge\Symfony\SonataExporterSymfonyBundle::class => ['all' => true],
+    EasyAdminBundle::class => ['all' => true],
+    TwigComponentBundle::class => ['all' => true],
+    TwigExtraBundle::class => ['all' => true],
 
     // Used for tests
     MakerBundle::class => ['dev' => true, 'test' => true],

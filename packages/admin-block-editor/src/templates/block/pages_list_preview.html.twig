@@ -13,7 +13,7 @@
 srcdoc='
 <base target="_blank" />
 
-{% apply replace({"'": "\'"}) %}
+{% apply replace({"'": "'"}) %} {# {% apply replace({"'": "\'"}) %} #}
 
 {{ block('css', view('/base.html.twig')) }}
 

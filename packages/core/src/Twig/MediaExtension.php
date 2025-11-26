@@ -11,6 +11,7 @@ use Pushword\Core\Service\PageOpenGraphImageGenerator;
 
 use function Safe\preg_match;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
@@ -21,7 +22,19 @@ class MediaExtension
         private readonly ImageManager $imageManager,
         private readonly MediaRepository $mediaRepository,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
+        #[Autowire('%pw.public_media_dir%')]
+        private readonly string $publicMediaDir,
     ) {
+    }
+
+    #[AsTwigFunction('isInstanceOfMedia')]
+    public function isInstanceOfMedia(mixed $src): bool
+    {
+        if (! \is_object($src)) {
+            return false;
+        }
+
+        return $src instanceof Media;
     }
 
     #[AsTwigFunction('open_graph_image_generated_path')]
@@ -36,10 +49,10 @@ class MediaExtension
         return $this->pageOpenGraphImageGenerator->getPath(true);
     }
 
-    public static function mayBeAnInternalImage(string $media): bool
+    public function mayBeAnInternalImage(string $media): bool
     {
-        return str_starts_with($media, '/media/default/')
-        || str_starts_with($media, '/media/')
+        return str_starts_with($media, '/'.$this->publicMediaDir.'/default/')
+        || str_starts_with($media, '/'.$this->publicMediaDir.'/')
         || ! str_contains($media, '/');
     }
 
@@ -49,9 +62,14 @@ class MediaExtension
             return $src.'.jpg';
         }
 
-        $src = str_starts_with($src, '/media/default/') ? substr($src, \strlen('/media/default/')) : $src;
-        $src = str_starts_with($src, '/media/md/') ? substr($src, \strlen('/media/md/')) : $src;
-        $src = 2 === substr_count($src, '/') && str_starts_with($src, '/media/') ? substr($src, \strlen('/media/')) : $src;
+        $mediaDir = $this->publicMediaDir;
+        if (str_starts_with($src, '/'.$mediaDir.'/default/')) {
+            $src = substr($src, \strlen('/'.$mediaDir.'/default/'));
+        } elseif (str_starts_with($src, '/'.$mediaDir.'/md/')) {
+            $src = substr($src, \strlen('/'.$mediaDir.'/md/'));
+        } elseif (2 === substr_count($src, '/') && str_starts_with($src, '/'.$mediaDir.'/')) {
+            $src = substr($src, \strlen('/'.$mediaDir.'/'));
+        }
 
         return $src;
     }
@@ -69,12 +87,12 @@ class MediaExtension
 
         $src = $this->normalizeMediaPath($src);
 
-        if (self::mayBeAnInternalImage($src)) {
-            $media = $this->mediaRepository->findOneBy(['media' => $src]) ??
+        if ($this->mayBeAnInternalImage($src)) {
+            $media = $this->mediaRepository->findOneBy(['fileName' => $src]) ??
             throw new Exception("Internal - Can't handle the value submitted `".$src.'`.');
 
             if ('' !== $name) { // to check if useful
-                $media->setName($name, true);
+                $media->setAlt($name, true);
             }
 
             return $media;

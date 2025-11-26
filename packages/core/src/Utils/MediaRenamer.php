@@ -15,11 +15,11 @@ class MediaRenamer
 
     public function rename(Media $media): Media
     {
-        $newName = (1 === $this->iterate ? $media->getName()
-            : preg_replace('/ \(\d+\)$/', '', $media->getName()));
+        $newName = (1 === $this->iterate ? $media->getAlt()
+            : preg_replace('/ \(\d+\)$/', '', $media->getAlt()));
         $newName .= ' ('.($this->iterate + 1).')';
 
-        $media->setName($newName);
+        $media->setAlt($newName);
         $media->setSlug($newName);
 
         ++$this->iterate;

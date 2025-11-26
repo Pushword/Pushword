@@ -23,7 +23,7 @@ final readonly class ImageManagerCommand
     public function __invoke(#[Argument(name: 'media', description: 'Image name (eg: filename.jpg).')]
         ?string $mediaName, OutputInterface $output): int
     {
-        $medias = null !== $mediaName ? $this->mediaRepository->findBy(['media' => $mediaName]) : $this->mediaRepository->findAll();
+        $medias = null !== $mediaName ? $this->mediaRepository->findBy(['fileName' => $mediaName]) : $this->mediaRepository->findAll();
 
         $progressBar = new ProgressBar($output, \count($medias));
         $progressBar->setMessage('');

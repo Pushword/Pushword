@@ -35,7 +35,7 @@
                     {{
                         include(view('/component/image_inline.html.twig'), {
                             image_src: bg.1,
-                            image_alt: bg.0 ~ ' ' ~ (page.mainImage.name(page.locale, true)|default(page.getTitle(true)))|striptags,
+                            image_alt: bg.0 ~ ' ' ~ (page.mainImage.altLocalized(page.locale, true)|default(page.getTitle(true)))|striptags,
                             image_link: false,
                             image_attr: {
                                 style: 'display:none',
@@ -50,7 +50,7 @@
                     include(view('/component/image_inline.html.twig'), {
                         image_src: page.mainImage|image('default'),
                         image_link: false,
-                        image_alt: page.mainImage.name(page.locale, true)|default(page.getTitle(true))|striptags,
+                        image_alt: page.mainImage.altLocalized(page.locale, true)|default(page.getTitle(true))|striptags,
                         image_class: hero_image_class ?? 'md:object-cover md:h-full md:absolute md:top-0 md:z-0 w-full h-auto'
                     }
                 ) }}

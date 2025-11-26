@@ -1,0 +1,206 @@
+{% extends '@EasyAdmin/crud/index.html.twig' %}
+
+{% set pwMediaView = app.request.query.get('view') ?? '' %}
+{% set isTableView = pwMediaView == 'table' %}
+{% set mosaicActive = not isTableView %}
+{% set mediaFallbackThumb = constant('Pushword\\Admin\\Utils\\Thumb::PLACEHOLDER_DATA_URI') %}
+
+{% block global_actions %}
+  {{ parent() }}
+  <div class="btn-group ms-2 media-view-switch" role="group" aria-label="{{ 'admin.media.view.label'|trans }}">
+    <a href="{{ ea_url().set('view', null) }}"
+       class="btn btn-secondary btn-outline-Save  {{ mosaicActive ? 'active' }}"
+       aria-pressed="{{ mosaicActive ? 'true' : 'false' }}">
+      <i class="fa fa-th-large" aria-hidden="true"></i>
+      <span class="d-none d-sm-inline ms-1">{{ 'admin.media.view.mosaic'|trans }}</span>
+    </a>
+    <a href="{{ ea_url().set('view', 'table') }}"
+       class="btn  btn-secondary btn-outline-default {{ isTableView ? 'active' }}"
+       aria-pressed="{{ isTableView ? 'true' : 'false' }}">
+      <i class="fa fa-list" aria-hidden="true"></i>
+      <span class="d-none d-sm-inline ms-1">{{ 'admin.media.view.table'|trans }}</span>
+    </a>
+  </div>
+{% endblock %}
+
+{% block main %}
+  {% if mosaicActive %}
+    {% set eaContext = ea() %}
+    {% set has_batch_actions = batch_actions|length > 0 %}
+    {% set has_filters = filters|length > 0 %}
+    {% set visible_entities = entities|filter(item => item.isAccessible) %}
+    {% set num_results = visible_entities|length %}
+    {% set some_results_are_hidden = num_results != entities|length %}
+
+    <div class="media-mosaic-wrapper">
+      {% if has_batch_actions and num_results > 0 %}
+        <div class="media-mosaic__select-all form-check mb-3">
+          <input type="checkbox" class="form-check-input form-batch-checkbox-all" id="form-batch-checkbox-all">
+          <label class="form-check-label" for="form-batch-checkbox-all">
+            {{ 'admin.media.view.select_all'|trans }}
+          </label>
+        </div>
+      {% endif %}
+
+      <div class="media-mosaic" data-count="{{ num_results }}">
+        {% for entity in visible_entities %}
+          {# @var \Pushword\Core\Entity\Media media #}
+          {% set media = entity.instance %}
+          {% set isImage = media.isImage %}
+          {% set thumbnail = isImage ? media|image('md') : mediaFallbackThumb %}
+          {% set bytes = media.size ?? 0 %}
+          {% if bytes >= 1048576 %}
+            {% set readableSize = (bytes / 1048576)|number_format(1, '.', ' ') ~ ' MB' %}
+          {% elseif bytes >= 1024 %}
+            {% set readableSize = (bytes / 1024)|number_format(0, '.', ' ') ~ ' KB' %}
+          {% else %}
+            {% set readableSize = bytes|number_format(0, '.', ' ') ~ ' B' %}
+          {% endif %}
+          {% set editUrl = ea_url().setAction('edit').setEntityId(media.id) %}
+          <article class="media-mosaic__card card shadow-sm" data-id="{{ entity.primaryKeyValueAsString }}">
+            {% if has_batch_actions %}
+              <div class="form-check media-mosaic__checkbox">
+                <input type="checkbox"
+                     class="form-check-input form-batch-checkbox"
+                     id="form-batch-checkbox-{{ loop.index0 }}"
+                     value="{{ entity.primaryKeyValue }}">
+              </div>
+            {% endif %}
+
+            <a
+              class="mosaic-inner-box"
+              style="--bg-image-url: url('{{ thumbnail }}');"
+              href="{{ editUrl }}"
+              data-media-width="{{ media.width ?? '' }}"
+              data-media-height="{{ media.height ?? '' }}"
+              data-ratio-label="{{ media.ratioLabel ?? '' }}"
+              data-media-alt="{{ media.alt }}"
+              data-media-file-name="{{ media.fileName }}"
+              data-main-color="{{ media.mainColor ?? '' }}"
+            >
+              {% if media.ratioLabel %}
+                <span class="mosaic-box-label badge bg-dark text-white">{{ media.ratioLabel }}</span>
+              {% endif %}
+              <span class="media-mosaic__preview">
+                <img src="{{ thumbnail }}" alt="{{ media.alt ?: media.fileName }}" loading="lazy">
+              </span>
+            </a>
+
+            <div class="media-mosaic__body">
+              <h3 class="media-mosaic__title">
+                {{ media.fileName }}
+              </h3>
+
+              <ul class="media-mosaic__meta list-unstyled">
+                <li>
+                  <span>{{ 'admin.media.name.label'|trans }}</span>
+                  <strong>{{ media.alt }}</strong>
+                </li>
+                <li>
+                  <span>{{ 'admin.media.filetype.label'|trans }}</span>
+                  <strong>{{ media.mimeType ?? '—' }}</strong>
+                </li>
+                <li>
+                  <span>{{ 'admin.media.size.label'|trans }}</span>
+                  <strong>{{ readableSize }}</strong>
+                </li>
+                {% if media.width and media.height %}
+                  <li>
+                    <span>{{ 'admin.media.dimensions.label'|trans }}</span>
+                    <strong>{{ media.width }}×{{ media.height }}</strong>
+                  </li>
+                {% endif %}
+                <li>
+                  <span>{{ 'admin.page.updatedAt.label'|trans }}</span>
+                  <strong>{{ media.updatedAt ? media.updatedAt|format_datetime : '—' }}</strong>
+                </li>
+              </ul>
+
+              {% if media.tagList is not empty %}
+                <div class="media-mosaic__tags">
+                  {% for tag in media.tagList %}
+                    <span class="badge bg-light text-body">#{{ tag }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="media-mosaic__actions actions {{ eaContext.crud.showEntityActionsAsDropdown ? 'actions-as-dropdown' }}">
+              {% if entity.actions.count > 0 %}
+                {% if eaContext.crud.showEntityActionsAsDropdown %}
+                  {% set hasAnyActionWithIcon = entity.actions|filter(item => item.isActionGroup ? false : item.icon is not null)|length > 0 %}
+                  <twig:ea:ActionMenu class="dropdown-actions">
+                    <twig:ea:ActionMenu:Button withoutDropdownToggleMarker>
+                      <twig:ea:Icon name="internal:dots-horizontal" />
+                    </twig:ea:ActionMenu:Button>
+                    <twig:ea:ActionMenu:Overlay>
+                      <twig:ea:ActionMenu:ActionList hasSubmenus="{{ entity.actions|filter(item => item.isActionGroup)|length > 0 }}">
+                        {% for item in entity.actions %}
+                          {% if item.isActionGroup %}
+                            <twig:ea:ActionMenu:ActionList:ItemGroup
+                              group="{{ item }}"
+                              showBlankIcons="{{ hasAnyActionWithIcon }}"
+                              entity="{{ entity }}" />
+                          {% else %}
+                            <twig:ea:ActionMenu:ActionList:Item
+                              class="{{ item.cssClass }} dropdown-item-variant-{{ item.variant.value }}"
+                              url="{{ item.linkUrl }}"
+                              icon="{{ item.icon }}"
+                              icon:class="action-icon"
+                              htmlAttributes="{{ item.htmlAttributes }}"
+                              renderAsForm="{{ item.isRenderedAsForm }}"
+                              label="{{ item.label|trans }}"
+                              label:class="action-label"
+                              renderLabelRaw
+                              showBlankIcons="{{ hasAnyActionWithIcon }}" />
+                          {% endif %}
+                        {% endfor %}
+                      </twig:ea:ActionMenu:ActionList>
+                    </twig:ea:ActionMenu:Overlay>
+                  </twig:ea:ActionMenu>
+                {% else %}
+                  {% for action in entity.actions %}
+                    {% if action.isActionGroup %}
+                      {{ include(action.templatePath, {group: action, entity: entity}, with_context: false) }}
+                    {% else %}
+                      {{ include(action.templatePath, {action: action, entity: entity, isIncludedInDropdown: eaContext.crud.showEntityActionsAsDropdown}, with_context: false) }}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+              {% endif %}
+            </div>
+          </article>
+        {% else %}
+          <div class="media-mosaic__empty">
+            {{ 'admin.media.mosaic.empty'|trans }}
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if some_results_are_hidden %}
+        <div class="alert alert-warning mt-3 d-flex align-items-center gap-2">
+          <twig:ea:Icon name="internal:lock" />
+          <span>{{ 'datagrid.hidden_results'|trans({}, 'EasyAdminBundle') }}</span>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if num_results > 0 %}
+      <div class="content-panel-footer without-padding without-border">
+        {{ include(eaContext.templatePath('crud/paginator'), {render_detailed_pagination: not some_results_are_hidden}) }}
+      </div>
+    {% endif %}
+
+    {{ include('@EasyAdmin/crud/includes/_delete_form.html.twig', with_context: false) }}
+
+    {% if has_filters %}
+      {{ include('@EasyAdmin/crud/includes/_filters_modal.html.twig') }}
+    {% endif %}
+
+    {% if has_batch_actions %}
+      {{ include('@EasyAdmin/crud/includes/_batch_action_modal.html.twig', {}, with_context: false) }}
+    {% endif %}
+  {% else %}
+    {{ parent() }}
+  {% endif %}
+{% endblock %}

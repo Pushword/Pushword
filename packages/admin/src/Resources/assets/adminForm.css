@@ -1,0 +1,142 @@
+/* Reduce gutter */
+.row > * {
+  padding-left: calc(var(--bs-gutter-x) * 0.25);
+  padding-right: calc(var(--bs-gutter-x) * 0.25);
+}
+
+/** Add some space between the Admin Header and the panel under */
+.content-header {
+  margin-bottom: 30px;
+  padding: 0;
+  background-color: transparent;
+}
+
+/* Remove "Edit Page" h1 on edit */
+.ea-edit-Page .page-actions {
+  background-color: rgba(255, 255, 255, 0.5);
+  padding: 5px;
+  margin-top: -10px;
+  margin-right: -5px;
+}
+
+/* Remove "Edit Page" h1 on edit */
+.ea-new-Page .content-header-title,
+.ea-edit-Page .content-header-title {
+  margin-top: -144px;
+}
+
+/* Have sticky save button even on mobile */
+body.ea-edit .content-header,
+body.ea-new .content-header {
+  inset-block-start: 0px !important;
+  position: sticky;
+  z-index: 999;
+  /*
+  top: 0;
+  animation: stuck-styles linear both;
+  animation-timeline: scroll();
+  animation-range: 0px 100px;
+  @keyframes stuck-styles {
+    to {
+      background: pink;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding-bottom: 2rem;
+    }
+  }
+  */
+}
+
+.columnFields .form-fieldset.pw-settings-accordion {
+  background-color: var(--sidebar-bg, #f9fafb);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+}
+
+.pw-settings-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: 0;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.4rem 0;
+  cursor: pointer;
+}
+
+.pw-settings-toggle:focus-visible {
+  outline: 2px solid var(--color-primary, #0284c7);
+  outline-offset: 2px;
+}
+
+.pw-settings-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pw-settings-title-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.pw-settings-chevron {
+  display: inline-flex;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.05);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.pw-settings-chevron svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  fill: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.pw-settings-chevron.is-open svg {
+  transform: rotate(90deg);
+}
+
+.pw-settings-chevron.is-open {
+  background: rgba(3, 105, 161, 0.12);
+  color: var(--color-primary, #0369a1);
+}
+
+.pw-settings-accordion .form-fieldset-body {
+  padding: 0.75rem 15px 5px !important;
+}
+
+.form-column .form-fieldset-header {
+  padding: calc(var(--bs-gutter-x) / 4) var(--bs-gutter-x) calc(var(--bs-gutter-x) / 4);
+  box-shadow: 0 1px 2px #0000000d;
+}
+
+/* Transform the current input file to a drop area */
+
+#Media_mediaFile {
+  border: 2px dashed #adb5bd;
+  background-color: #f8f9fa;
+  position: relative;
+  height: 125px;
+  padding: 50px;
+  text-align: center;
+}
+
+#Media_mediaFile:hover {
+  background-color: #e9ecef;
+  border-color: #0d6efd;
+  cursor: pointer;
+}
+
+/*************************************************/

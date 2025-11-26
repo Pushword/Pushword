@@ -2,61 +2,36 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use Pushword\Core\Entity\SharedTrait\HostInterface;
-use Sonata\AdminBundle\Datagrid\DatagridMapper;
-use Sonata\AdminBundle\Form\FormMapper;
-use Sonata\DoctrineORMAdminBundle\Filter\ChoiceFilter;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @extends AbstractField<HostInterface>
  */
 class HostField extends AbstractField
 {
-    /**
-     * @param FormMapper<HostInterface> $form
-     */
-    public function formField(FormMapper $form): void
-    {
-        if (1 === \count($this->formFieldManager->apps->getHosts())) {
-            $this->admin->getSubject()->setHost($this->formFieldManager->apps->get()->getMainHost());
-
-            return;
-        }
-
-        if ('' === $this->admin->getSubject()->getHost()) {
-            $this->admin->getSubject()->setHost($this->getDefaultHost());
-        }
-
-        $form->add('host', HiddenType::class);
-    }
-
     private function getDefaultHost(): string
     {
-        if ($this->admin->hasRequest() && \is_string($host = $this->admin->getRequest()->query->get('host'))) {
-            $this->formFieldManager->apps->switchCurrentApp($host); // todo move it before fields initializations
+        $request = $this->admin->getRequest();
 
-            return $host;
+        if ($request instanceof Request) {
+            $host = $request->query->get('host');
+
+            if (\is_string($host)) {
+                $this->formFieldManager->apps->switchCurrentApp($host); // todo move it before fields initializations
+
+                return $host;
+            }
+
+            if ($request->isMethod('POST')) {
+                // POST request query parameter is not transmitted
+                return '';
+            }
         }
 
-        return $this->admin->hasRequest() && $this->admin->getRequest()->isMethod('POST') ? '' // POST request query parameter is not transmitted
-            : $this->getHosts()[0];
-    }
-
-    /**
-     * @param DatagridMapper<HostInterface> $datagrid
-     */
-    public function datagridMapper(DatagridMapper $datagrid): void
-    {
-        $datagrid->add('host', ChoiceFilter::class, [
-            'field_type' => ChoiceType::class,
-            'field_options' => [
-                'choices' => array_combine($this->getHosts(), $this->getHosts()),
-                'multiple' => true,
-            ],
-            'label' => 'admin.page.host.label',
-        ]);
+        return $this->getHosts()[0];
     }
 
     /**
@@ -65,5 +40,26 @@ class HostField extends AbstractField
     private function getHosts(): array
     {
         return $this->formFieldManager->apps->getHosts();
+    }
+
+    public function getEasyAdminField(): ?FieldInterface
+    {
+        $hosts = $this->getHosts();
+
+        if (1 === \count($hosts)) {
+            $this->admin->getSubject()->setHost($this->formFieldManager->apps->get()->getMainHost());
+
+            return null;
+        }
+
+        if ('' === $this->admin->getSubject()->getHost()) {
+            $this->admin->getSubject()->setHost($this->getDefaultHost());
+        }
+
+        return ChoiceField::new('host', 'admin.page.host.label')
+            ->onlyOnForms()
+            ->setChoices(array_combine($hosts, $hosts))
+            ->renderAsNativeWidget()
+            ->setFormTypeOption('required', true);
     }
 }

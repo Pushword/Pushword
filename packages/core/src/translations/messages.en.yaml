@@ -44,6 +44,6 @@ feed:
 
 media:
   name_was_changed: Name was changed because another media has a similar name one.
-  duplicate_warning: 'Le fichier semble déjà être présent sur le disque : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block;margin-top:5px" href="%deleteMediaUrl%">Delete</a>'
+  duplicate_warning: 'Le fichier semble déjà être présent sur le disque : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Supprimer cette denrière version du doublon</a>'
 
 powered_by: Powered by

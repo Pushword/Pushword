@@ -2,23 +2,26 @@
 
 namespace Pushword\AdvancedMainImage\EventSuscriber;
 
+use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityPersistedEvent;
+use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityUpdatedEvent;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageMainImageField;
-use Pushword\Admin\PageAdmin;
 use Pushword\Admin\Utils\FormFieldReplacer;
 use Pushword\AdvancedMainImage\PageAdvancedMainImageFormField;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
-use Sonata\AdminBundle\Event\PersistenceEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * @template T of object
  */
 final readonly class AdminFormEventSuscriber implements EventSubscriberInterface
 {
-    public function __construct(private AppPool $apps)
-    {
+    public function __construct(
+        private AppPool $apps,
+        public RequestStack $requestStack,
+    ) {
     }
 
     /**
@@ -28,13 +31,13 @@ final readonly class AdminFormEventSuscriber implements EventSubscriberInterface
     {
         return [
             'pushword.admin.load_field' => 'replaceFields',
-            'sonata.admin.event.persistence.pre_update' => 'setAdvancedMainImage',
-            'sonata.admin.event.persistence.pre_persist' => 'setAdvancedMainImage',
+            BeforeEntityPersistedEvent::class => 'setAdvancedMainImage',
+            BeforeEntityUpdatedEvent::class => 'setAdvancedMainImage',
         ];
     }
 
     /**
-     * @param FormEvent<T> $formEvent
+     * @param FormEvent<object> $formEvent
      */
     public function replaceFields(FormEvent $formEvent): void
     {
@@ -51,24 +54,64 @@ final readonly class AdminFormEventSuscriber implements EventSubscriberInterface
         $fields = $formEvent->getFields();
         (new FormFieldReplacer())->run(PageMainImageField::class, PageAdvancedMainImageFormField::class, $fields);
 
-        $formEvent->setFields($fields); // @phpstan-ignore-line
+        // @phpstan-ignore-next-line
+        $formEvent->setFields($fields);
     }
 
     /**
-     * @param PersistenceEvent<T> $persistenceEvent
+     * @param BeforeEntityPersistedEvent<object>|BeforeEntityUpdatedEvent<object>|object $event
      */
-    public function setAdvancedMainImage(PersistenceEvent $persistenceEvent): void
+    public function setAdvancedMainImage(object $event): void
     {
-        if (! $persistenceEvent->getAdmin() instanceof PageAdmin) {
+        if (! $event instanceof BeforeEntityPersistedEvent && ! $event instanceof BeforeEntityUpdatedEvent) {
             return;
         }
 
-        $returnValues = $persistenceEvent->getAdmin()->getRequest()->request
-            ->all($persistenceEvent->getAdmin()->getRequest()->query->getString('uniqid') ?: null); // @phpstan-ignore-line
+        $entity = $event->getEntityInstance();
 
-        $persistenceEvent->getAdmin()->getSubject()->setCustomProperty(
-            'mainImageFormat',
-            isset($returnValues['mainImageFormat']) ? (int) ($returnValues['mainImageFormat']) : 0 // @phpstan-ignore-line
-        );
+        if (! $entity instanceof Page) {
+            return;
+        }
+
+        $request = $this->requestStack->getCurrentRequest();
+        if (null === $request) {
+            return;
+        }
+
+        /** @var array<string, array<mixed>|bool|float|int|string> $returnValues */
+        $returnValues = $request->request->all();
+        $value = $this->extractSubmittedValue($returnValues, 'mainImageFormat');
+
+        if (null === $value) {
+            return;
+        }
+
+        $entity->setCustomProperty('mainImageFormat', (int) $value);
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    private function extractSubmittedValue(array $values, string $needle): ?string
+    {
+        $candidate = $values[$needle] ?? null;
+
+        if (\is_scalar($candidate) && '' !== (string) $candidate) {
+            return (string) $candidate;
+        }
+
+        foreach ($values as $value) {
+            if (! \is_array($value)) {
+                continue;
+            }
+
+            /** @var array<string, mixed> $value */
+            $result = $this->extractSubmittedValue($value, $needle);
+            if (null !== $result) {
+                return $result;
+            }
+        }
+
+        return null;
     }
 }

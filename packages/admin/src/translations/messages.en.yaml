@@ -37,17 +37,19 @@ admin:
   label:
     page: Page
     media: Media
+    medias: Medias
     content: Pages
-    list: Liste
-    user: Utilisateur
-    users: Utilisateurs
-    manage: Mettre en ligne
-    update: Actualiser
-    params: Réglages
+    list: List
+    user: User
+    users: Users
+    tools: Tools
+    manage: Publish
+    update: Refresh
+    params: Settings
     redirection: Redirection
-    check_content: Vérifier le contenu
+    check_content: Check content
     conversation: Conversation
-    cheatsheet: Aide-mémoire
+    cheatsheet: Cheatsheet
 
   action: Action
   details: Details
@@ -154,6 +156,11 @@ admin:
       help: <code>@Username</code>, valeur par défaut si régler dans l'App.
     priority:
       label: Priority
+    extra:
+      label: Extra
+    error:
+      generation_failed: An error occurred while generating the page.
+      generation_failed_with_details: 'An error occurred while generating the page: <code>%error%</code><br><textarea style="margin-top:4px; width:100%;" data-editor="twig" readonly>%excerpt%</textarea>'
 
   user:
     label:
@@ -195,12 +202,12 @@ admin:
       dominant_color: Dominant color
     related:
       label: Related pages
-    name:
+    alt:
       label: Nom
       help: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"
     mediaFile:
       label: Fichier
-    names:
+    alts:
       label: "Traduction"
       help: "Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne."
     mainColor:
@@ -209,6 +216,24 @@ admin:
       label: Date d'upload
     filetype:
       label: Filetype
+    size:
+      label: File size
+    dimensions:
+      label: Dimensions
+      int_filter_label: Width/height (px)
+    view:
+      label: View mode
+      mosaic: Mosaic
+      table: List
+      select_all: Select all
+    mosaic:
+      empty: No media matches your search.
+    picker:
+      title: Media library
+      choose: Choose
+      upload: Upload
+      remove: Remove
+      empty: No image selected
     ratioLabel:
       label: Ratio
 

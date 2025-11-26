@@ -49,7 +49,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             return new RedirectResponse($targetPath);
         }
 
-        return new RedirectResponse($this->urlGenerator->generate('pushword_admin_dashboard'));
+        return new RedirectResponse($this->urlGenerator->generate('pushword_admin'));
     }
 
     protected function getLoginUrl(Request $request): string

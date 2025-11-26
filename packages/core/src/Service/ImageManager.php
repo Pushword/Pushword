@@ -73,7 +73,7 @@ final class ImageManager
             }
         }
 
-        exec('cd ../ && php bin/console pushword:image:optimize '.$media->getMedia().' > /dev/null 2>/dev/null &');
+        exec('cd ../ && php bin/console pushword:image:optimize '.$media->getFileName().' > /dev/null 2>/dev/null &');
     }
 
     private function updateMainColor(Media $media, ?ImageInterface $image = null): void
@@ -154,7 +154,7 @@ final class ImageManager
 
     public function getFilterPath(Media|string $media, string $filterName, ?string $extension = null, bool $browserPath = false): string
     {
-        $media = $media instanceof Media ? $media->getMedia() : Filepath::filename($media);
+        $media = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
 
         $fileName = null === $extension ? $media : Filepath::removeExtension($media).'.'.$extension;
 
@@ -199,7 +199,7 @@ final class ImageManager
 
     public function remove(Media|string $media): void
     {
-        $media = $media instanceof Media ? $media->getMedia() : Filepath::filename($media);
+        $media = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
 
         $filterNames = array_keys($this->filterSets);
         foreach ($filterNames as $filterName) {
@@ -244,9 +244,9 @@ final class ImageManager
                 ->setMimeType($imgSize['mime'])
                 ->setSize(filesize($imageLocalImport))
                 ->setDimensions([$imgSize[0], $imgSize[1]])
-                ->setMedia($fileName)
+                ->setFileName($fileName)
                 ->setSlug(Filepath::removeExtension($fileName))
-                ->setName(str_replace(["\n", '"'], ' ', $name));
+                ->setAlt(str_replace(["\n", '"'], ' ', $name));
 
         $this->finishImportExternalByCopyingLocally($media, $imageLocalImport);
         $this->renamer->reset();
@@ -256,7 +256,7 @@ final class ImageManager
 
     private function finishImportExternalByCopyingLocally(Media $media, string $imageLocalImport): void
     {
-        $newFilePath = $this->mediaDir.'/'.$media->getMedia();
+        $newFilePath = $this->mediaDir.'/'.$media->getFileName();
 
         if (file_exists($newFilePath)) {
             if (sha1_file($newFilePath) !== sha1_file($imageLocalImport)) {

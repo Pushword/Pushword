@@ -1,0 +1,137 @@
+#Page_mainImage-ts-control {
+  display: none;
+}
+
+.ts-wrapper:has(#Page_mainImage-ts-control),
+.ts-control:has(#Page_mainImage-ts-control) {
+  display: none !important;
+}
+
+.pw-media-picker {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background: var(--form-field-bg, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pw-media-picker__select {
+  display: none !important;
+}
+
+.pw-media-picker__preview {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pw-media-picker__thumb {
+  width: 140px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f3f3f3;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.pw-media-picker__thumb-inner {
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: block;
+}
+
+.pw-media-picker__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pw-media-picker__details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pw-media-picker__name {
+  font-weight: 600;
+}
+
+.pw-media-picker__info {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pw-media-picker__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pw-media-picker--empty .pw-media-picker__thumb {
+  display: none;
+}
+
+.pw-media-picker__modal .modal-body {
+  min-height: 70vh;
+  height: 100%;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.6), rgba(17, 17, 17, 0.9));
+}
+
+.pw-media-picker__modal .modal-content,
+.pw-media-picker__modal .modal-dialog {
+  height: 100%;
+}
+
+.pw-media-picker__iframe {
+  width: 100%;
+  flex: 1;
+  max-width: 1200px;
+  height: 90%;
+  border: 0;
+  display: block;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 992px) {
+  .pw-media-picker__modal .modal-body {
+    padding: 3rem;
+  }
+}
+
+body.pw-media-picker-modal .sidebar,
+body.pw-media-picker-modal header.navbar,
+body.pw-media-picker-modal .user-menu-wrapper {
+  display: none !important;
+}
+
+body.pw-media-picker-modal .content {
+  margin-left: 0;
+  padding: 1rem;
+}
+
+body.pw-media-picker-modal .responsive-header,
+body.pw-media-picker-modal .media-mosaic__actions,
+body.pw-media-picker-modal .global-actions {
+  display: none !important;
+}
+
+body.pw-media-picker-modal .wrapper {
+  --sidebar-max-width: 0;
+}
+
+body.pw-media-picker-modal .modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.85);
+  opacity: 1 !important;
+}

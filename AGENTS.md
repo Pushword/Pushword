@@ -58,16 +58,16 @@ Pushword is a modular CMS built as a collection of Symfony bundles. This is a mo
 You can run this command from skeleton folder `cd packages/skeleton` :
 
 ```bash
-# Lister toutes les commandes
+# List all commands
 php bin/console list pushword
 
-# Vérifier la configuration
+# Configuration
 php bin/console debug:config pushword
 
-# Voir les routes
+# Routes
 php bin/console debug:router
 
-# Vérifier les services
+# Services
 php bin/console debug:container
 ```
 
@@ -76,17 +76,29 @@ php bin/console debug:container
 ```bash
 # Tests
 composer test
-vendor/bin/phpunit --filter ...
+composer test-filter ...
 
-# Formatage du code
-composer format
+# Code formatting
+composer rector
 
-# Analyse statique
+# PHP Static Analysis
 composer stan
 
-# Génération des assets
+# Generate assets
 composer assets
 
-# Documentation
-composer docs
 ```
+
+## Debugging
+
+When a task impacts the admin UI or other frontend pieces, feel free to open the running site with the integrated browser to validate the behaviour and grab screenshots.
+
+Use `symfony server:list` to see if a local server is already running, or start one with `composer dev`.
+
+Default credentials are `admin@example.com` / `p@ssword` (ROLE_SUPER_ADMIN). If that user fails, reset the demo via `composer reset`.
+
+## Quality Gates
+
+- Run linters `composer stan|rector` and tests `composer test-filter ...` or `composer test` and fix warnings; never leave broken builds.
+- Clear cache after each modification `composer console cache:clear`
+- Write comment and documentation in english only.

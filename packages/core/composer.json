@@ -49,7 +49,9 @@
     "twig/intl-extra": "^3.2",
     "vich/uploader-bundle": "^2.0",
     "villfa/invert-color": "^0.5",
-    "league/commonmark": "^2.7"
+    "league/commonmark": "^2.7",
+    "twig/extra-bundle": "^3",
+    "symfony/ux-twig-component": "^2"
   },
   "extra": {
     "branch-alias": {
@@ -76,7 +78,7 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "suggest": {
-    "pushword/admin": "Create, edit, delete Page, Media, User with an interface built on top of Sonata Admin",
+    "pushword/admin": "Create, edit, delete Page, Media, User with an interface built on top of Easy Admin",
     "pushword/conversation": "Extend your Pushword website with **comments**, a **contact** form or just an **user input**.",
     "pushword/flat": " Transform Pushword in a FlatFile CMS.",
     "pushword/page-scanner": "Find dead links, 404, 301 and more (command line or admin).",

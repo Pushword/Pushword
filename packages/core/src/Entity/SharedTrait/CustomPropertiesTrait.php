@@ -34,6 +34,15 @@ trait CustomPropertiesTrait
     #[Ignore]
     protected string $buildValidationAtPath = 'standAloneCustomProperties';
 
+    /**
+     * List of custom properties that are managed by dedicated form fields and
+     * therefore must not appear inside the "Autres paramètres" textarea.
+     *
+     * @var array<string, true>
+     */
+    #[Ignore]
+    protected array $registeredCustomPropertyFields = [];
+
     /** @return array<mixed> */
     public function getCustomProperties(): array
     {
@@ -76,6 +85,13 @@ trait CustomPropertiesTrait
         if ($merge) {
             $this->mergeStandAloneCustomProperties();
         }
+
+        return $this;
+    }
+
+    public function registerCustomPropertyField(string $name): self
+    {
+        $this->registeredCustomPropertyFields[$this->normalizeCustomPropertyIdentifier($name)] = true;
 
         return $this;
     }
@@ -138,6 +154,10 @@ trait CustomPropertiesTrait
 
     public function isStandAloneCustomProperty(string $name): bool
     {
+        if ($this->isRegisteredCustomPropertyField($name)) {
+            return false;
+        }
+
         return ! method_exists($this, 'set'.ucfirst($name)) && ! method_exists($this, 'set'.$name);
     }
 
@@ -223,5 +243,15 @@ trait CustomPropertiesTrait
         }
 
         return \call_user_func_array($getter, $arguments);
+    }
+
+    private function isRegisteredCustomPropertyField(string $name): bool
+    {
+        return isset($this->registeredCustomPropertyFields[$this->normalizeCustomPropertyIdentifier($name)]);
+    }
+
+    private function normalizeCustomPropertyIdentifier(string $name): string
+    {
+        return strtolower($name);
     }
 }

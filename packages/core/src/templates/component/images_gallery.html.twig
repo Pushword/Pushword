@@ -30,7 +30,7 @@
                             {% set name = mediaData[0] %}
                         {% else %}
                             {# normalize {'caption': 'media.jpg'} to {'media.jpg': 'caption'} #}
-                            {% if mediaData matches '/^[a-zA-Z0-9_-]+\.(jpg|jpeg|png|gif)$/' %}
+                            {% if mediaData matches '/^[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|gif)$/' %}
                                 {% set name = media %}
                                 {% set media = mediaData %}
                             {% else %}
@@ -42,7 +42,7 @@
                         {% set galleryPart = _self.gallery_part(
                             current_media,
                             gallery_id,
-                            current_media.name,
+                            current_media.alt,
                             image_filter|default('thumb'),
                             image_container ?? '',
                             image_otherAttributes ?? {},

@@ -13,7 +13,7 @@ class PageScannerControllerTest extends AbstractAdminTestClass
 
         $client->catchExceptions(false);
 
-        $client->request(Request::METHOD_GET, '/admin/page/scan');
+        $client->request(Request::METHOD_GET, '/admin/scan');
         self::assertResponseIsSuccessful();
     }
 }

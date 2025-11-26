@@ -3,7 +3,7 @@
 namespace Pushword\Admin\FormField;
 
 use Pushword\Admin\AdminFormFieldManager;
-use Sonata\AdminBundle\Admin\AdminInterface;
+use Pushword\Admin\AdminInterface;
 use Symfony\Contracts\EventDispatcher\Event as SfEvent;
 
 /**

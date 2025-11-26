@@ -1,0 +1,66 @@
+{% extends '@EasyAdmin/crud/form_theme.html.twig' %}
+
+{% block ea_form_fieldset_open_row %}
+    {% set fieldset_has_header = form.vars.label or ea_icon or ea_help %}
+    {% set css_class = ea_css_class ?? '' %}
+    {% set is_pw_settings = css_class is not null and 'pw-settings-accordion' in css_class %}
+
+    {% if is_pw_settings %}
+        {% set initially_open = 'pw-settings-open' in css_class %}
+
+        {% set panel_key = form.vars.attr['data-pw-panel-key'] ?? form.vars.name %}
+        <div class="form-fieldset {{ not fieldset_has_header ? 'form-fieldset-no-header' }} {{ ea_css_class }}"
+             data-pw-panel-key="{{ panel_key }}"
+             x-data="pwSettingsToggle('{{ form.vars.name|e('js') }}', {{ initially_open ? 'true' : 'false' }})">
+            <fieldset>
+                {% if fieldset_has_header %}
+                    <div class="form-fieldset-header {{ ea_help is not empty ? 'with-help' }} pw-settings-header">
+                        <button type="button"
+                                class="pw-settings-toggle"
+                                @click.prevent="toggle()"
+                                :aria-expanded="open.toString()"
+                                aria-controls="content-{{ form.vars.name }}">
+                            <span class="pw-settings-title">
+                                {% if ea_icon %}
+                                    <twig:ea:Icon name="{{ ea_icon }}" class="pw-settings-title-icon" />
+                                {% endif %}
+                                {{ form.vars.label|trans(domain: ea().i18n.translationDomain)|raw }}
+                            </span>
+                            <span class="pw-settings-chevron" :class="{'is-open': open}">
+                                <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                                    <path d="M7.293 4.293a1 1 0 0 0 0 1.414L10.586 9 7.293 12.293a1 1 0 1 0 1.414 1.414l4-4a1 1 0 0 0 0-1.414l-4-4a1 1 0 0 0-1.414 0z"/>
+                                </svg>
+                            </span>
+                        </button>
+
+                        {% if ea_help %}
+                            <div class="form-fieldset-help">{{ ea_help|trans(domain: ea().i18n.translationDomain)|raw }}</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <div id="content-{{ form.vars.name }}"
+                     data-pw-panel-key="{{ panel_key }}"
+                     class="form-fieldset-body {{ not fieldset_has_header ? 'without-header' }}"
+                     x-show="open"
+                     x-transition.opacity.duration.150ms
+                     :aria-hidden="(!open).toString()">
+                    <div class="row">
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock ea_form_fieldset_open_row %}
+
+{% block ea_form_fieldset_close_row %}
+    {% set css_class = ea_css_class ?? '' %}
+    {% set is_pw_settings = css_class is not null and 'pw-settings-accordion' in css_class %}
+
+    {% if is_pw_settings %}
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock ea_form_fieldset_close_row %}

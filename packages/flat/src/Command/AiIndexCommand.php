@@ -52,7 +52,7 @@ final class AiIndexCommand
     ): int {
         $this->pages = $this->pageRepository->findAll();
         $this->medias = $this->mediaRepository->findAll();
-        $this->mediaList = array_map(fn (Media $media): string => $media->getMedia(), $this->medias);
+        $this->mediaList = array_map(fn (Media $media): string => $media->getFileName(), $this->medias);
         $this->pageSlugList = array_map(fn (Page $page): string => $page->getSlug(), $this->pages);
         $host ??= '';
 
@@ -104,12 +104,12 @@ final class AiIndexCommand
 
         $rows = [];
         foreach ($this->medias as $media) {
-            $usedInPages = $this->mediaUsedInPage[$media->getMedia()] ?? [];
+            $usedInPages = $this->mediaUsedInPage[$media->getFileName()] ?? [];
 
             $rows[] = [
-                $media->getMedia(),
+                $media->getFileName(),
                 $media->getMimeType() ?? '',
-                $media->getName(),
+                $media->getAlt(),
                 implode(', ', $usedInPages),
             ];
         }

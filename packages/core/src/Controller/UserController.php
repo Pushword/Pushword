@@ -14,7 +14,7 @@ final class UserController extends AbstractController
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
         if (null !== $this->getUser()) {
-            return $this->redirectToRoute('pushword_admin_dashboard');
+            return $this->redirectToRoute('pushword_admin');
         }
 
         // get the login error if there is one

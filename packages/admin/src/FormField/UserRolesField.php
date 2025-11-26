@@ -2,39 +2,40 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use Pushword\Core\Entity\User;
-use Sonata\AdminBundle\Form\FormMapper;
-use Sonata\Form\Type\ImmutableArrayType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 /**
  * @extends AbstractField<User>
  */
 class UserRolesField extends AbstractField
 {
-    /**
-     * @param FormMapper<User> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('roles', ImmutableArrayType::class, [
-            'label' => false,
-            'keys' => [
-                ['0', ChoiceType::class, [
-                    'required' => false,
-                    'label' => 'admin.user.role.label',
-                    'choices' => \in_array('ROLE_SUPER_ADMIN', $this->formFieldManager->user?->getRoles() ?? [], true) ? [
-                        'admin.user.role.super_admin' => 'ROLE_SUPER_ADMIN',
-                        'admin.user.role.admin' => 'ROLE_ADMIN',
-                        'admin.user.role.editor' => 'ROLE_EDITOR',
-                        'admin.user.role.user' => 'ROLE_USER',
-                    ] : [
-                        'admin.user.role.admin' => 'ROLE_ADMIN',
-                        'admin.user.role.editor' => 'ROLE_EDITOR',
-                        'admin.user.role.user' => 'ROLE_USER',
-                    ],
-                ]],
-            ],
-        ]);
+        return ChoiceField::new('roles', 'admin.user.role.label')
+            ->onlyOnForms()
+            ->setChoices($this->getRoleChoices())
+            ->allowMultipleChoices()
+            ->renderAsNativeWidget()
+            ->setFormTypeOption('required', false);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getRoleChoices(): array
+    {
+        $choices = [
+            'admin.user.role.admin' => 'ROLE_ADMIN',
+            'admin.user.role.editor' => 'ROLE_EDITOR',
+            'admin.user.role.user' => 'ROLE_USER',
+        ];
+
+        if (\in_array('ROLE_SUPER_ADMIN', $this->formFieldManager->user?->getRoles() ?? [], true)) {
+            return ['admin.user.role.super_admin' => 'ROLE_SUPER_ADMIN'] + $choices;
+        }
+
+        return $choices;
     }
 }

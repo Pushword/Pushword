@@ -48,6 +48,18 @@ class CustomPropertiesTraitTest extends TestCase
         self::assertArrayNotHasKey('newCustomPropertyNotIndexed', $customProperties->getCustomProperties());
     }
 
+    public function testRegisteredCustomPropertyFieldIsHidden(): void
+    {
+        $customProperties = new Page();
+        $customProperties->setCustomProperties(['handledExternally' => 'foo']);
+
+        self::assertStringContainsString('handledExternally', $customProperties->getStandAloneCustomProperties());
+
+        $customProperties->registerCustomPropertyField('handledExternally');
+
+        self::assertSame('', $customProperties->getStandAloneCustomProperties());
+    }
+
     protected function getExceptionContextInterface(): MockObject
     {
         $mockConstraintViolationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);

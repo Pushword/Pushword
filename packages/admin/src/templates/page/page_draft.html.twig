@@ -6,10 +6,6 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    if (jQuery) {
-        jQuery("#draft").on("ifChanged", toggleDraft);
-    }
-
     const draftCheckbox = document.getElementById('draft');
     if (draftCheckbox) {
         draftCheckbox.addEventListener('change', toggleDraft);

@@ -2,3 +2,10 @@
 admin:
   label:
     theme: Éditeur de code
+
+template_editor:
+  creation_disabled: La création (et donc la suppression) est désactivée.
+  delete:
+    label: Supprimer
+  element:
+    deleted: Élément supprimé.

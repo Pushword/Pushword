@@ -2,9 +2,9 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Version\PushwordVersionBundle;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 /**
@@ -12,12 +12,9 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
  */
 class PageEditMessageField extends AbstractField
 {
-    /**
-     * @param FormMapper<Page> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('editMessage', TextareaType::class, [
+        return $this->buildEasyAdminField('editMessage', TextareaType::class, [
             'required' => false,
             'attr' => ['class' => 'autosize textarea-no-newline'],
             'label' => $this->formFieldManager->getMessagePrefix().'.editMessage.label',

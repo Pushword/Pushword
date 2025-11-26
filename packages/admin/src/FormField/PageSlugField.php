@@ -2,8 +2,8 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Page;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 use function Symfony\Component\String\u;
@@ -30,7 +30,7 @@ class PageSlugField extends AbstractField
             ) : $url;
 
         return '<div id="disabledLinkSlug">
-                    <span class="btn btn-primary" onclick="toggleDisabled()" style="float:right; margin-top:-39px; z-index:100;position:relative"><i class="fa fa-unlock"></i></span>
+                    <span class="btn btn-primary" onclick="toggleDisabled()" style="float:right; margin-top:-36px; z-index:100;position:relative"><i class="fa fa-unlock"></i></span>
                     <script>function toggleDisabled() {
                         document.querySelector(".slug_disabled").removeAttribute("disabled");
                         document.querySelector(".slug_disabled").focus();
@@ -38,12 +38,9 @@ class PageSlugField extends AbstractField
                     }</script> <small><a href="'.$liveUrl.'"><small><i class="fa fa-link"></i></small> '.u($url)->truncate(30, '…').'</a></small></div>';
     }
 
-    /**
-     * @param FormMapper<Page> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('slug', TextType::class, [
+        return $this->buildEasyAdminField('slug', TextType::class, [
             'required' => false,
             'label' => 'admin.page.slug.label',
             'help_html' => true,

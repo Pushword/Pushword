@@ -126,7 +126,7 @@ final class AppPool
     }
 
     /** @param string|array<string>|null $host */
-    public function isFirstApp(string|array|null $host = null): bool
+    public function isDefaultHost(string|array|null $host = null): bool
     {
         $firstApp = array_key_first($this->apps);
 
@@ -151,7 +151,7 @@ final class AppPool
 
     public function sameHost(?string $host): bool
     {
-        if (! $this->isFirstApp()) {
+        if (! $this->isDefaultHost()) {
             return $host === $this->currentApp;
         }
 

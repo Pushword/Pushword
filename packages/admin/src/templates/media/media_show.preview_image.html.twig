@@ -3,7 +3,7 @@
         <a href="{{ media|image('default') }}" target="_blank" rel="noopener noreferrer" style="display: block; position:relative">
             <span class="mosaic-box-label label label-default" style="position: absolute; left: 10px; right: unset">{{ media.ratioLabel }}</span>
             <img src="{{ media|image('md') }}?{{ random() }}"
-                 alt="{{ media.name|e }}"
+                 alt="{{ media.alt|e }}"
                  class="img-responsive img-thumbnail"
                  style="max-width: 100%; height: auto;">
         </a>
@@ -16,13 +16,13 @@
 
         <div style="margin-bottom: 15px;">
             <strong>{{ 'admin.media.preview.markdown'|trans }}</strong>
-            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>![{{ media.name|replace({'[': '', ']': ''}) }}]({{ media|image('default') }})</code></pre>
+            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>![{{ media.alt|replace({'[': '', ']': ''}) }}]({{ media|image('default') }})</code></pre>
         </div>
 
         <div style="margin-bottom: 15px;">
             <strong>{{ 'admin.media.preview.json'|trans }}</strong>
             <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>{
-  "{{ media }}": "{{ media.name|replace({'"': '\\"',}) }}"
+  "{{ media }}": "{{ media.alt|replace({'"': '\\"',}) }}"
 }</code></pre>
         </div>
 

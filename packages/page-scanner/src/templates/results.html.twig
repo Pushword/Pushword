@@ -1,73 +1,81 @@
-{% extends '@SonataAdmin/standard_layout.html.twig' %}
+{% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block title %}
-- Vérification du contenu
+{% block content_title %}{{ 'page_scanner.title'|trans }}{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-outline-primary" href="{{ path('admin_page_scanner', {force: 1}) }}">
+        <i class="fa fa-sync-alt me-2" aria-hidden="true"></i>{{ 'page_scanner.force_scan'|trans }}
+    </a>
 {% endblock %}
 
-{% block sonata_admin_content %}
+{% block main %}
     {% if message is defined %}
-        <p class="alert alert-success">{{ message|trans }}</p>
+        <div class="alert alert-success" role="alert">
+            {{ message|trans }}
+        </div>
     {% else %}
-        <div class="box box-{{ errorsByPages is empty ? 'success' : 'warning' }}">
-             <div class="box-header">
-                <h3 class="box-title">Scan du site</h3>
-            </div>
-            <div class="box-body">
-
+        <div class="card border-{{ errorsByPages is empty ? 'success' : 'warning' }}">
+            <div class="card-header fw-semibold">{{ 'page_scanner.site_scan'|trans }}</div>
+            <div class="card-body">
                 {% if errorsByPages is empty and lastEdit != 0 %}
-                    <p class="alert alert-info"><i class="fa fa-check"></i> Scan en cours.</p>
-                    <p class="alert alert-success">Le précédent scan a été complété avec succès : le contenu ne semble comporter aucune erreur.</p>
+                    <div class="alert alert-success mb-3" role="alert">
+                        <i class="fa fa-check me-2"></i>{{ 'page_scanner.scan_in_progress_no_errors'|trans }}
+                    </div>
                 {% elseif lastEdit == 0 %}
-                    <p class="alert alert-success"><i class="fa fa-spinner fa-spin"></i> Scan en cours.</p>
+                    <div class="alert alert-info mb-0" role="alert">
+                        <i class="fa fa-spinner fa-spin me-2"></i>{{ 'page_scanner.scan_in_progress'|trans }}
+                    </div>
                     <meta http-equiv="refresh" content="2">
                 {% else %}
-                    <p class="alert alert-warning">
-                        Résultat du scan du {{ lastEdit|date('d/m/Y à H:i') }}
-                        {{ newRun ? ' (<em>nouveau scan en cours</em>, la page s\'actualisera automatiquement à la fin de celui-ci<meta http-equiv="refresh" content="4">
+                    <div class="alert alert-warning" role="alert">
+                        {{ 'page_scanner.scan_result'|trans({'%date%': lastEdit|date('d/m/Y à H:i')}) }}
+                        {{ newRun
+                            ? (' (' ~ 'page_scanner.new_scan_in_progress'|trans ~ '<meta http-equiv="refresh" content="4">)')|raw
+                            : (' (<a href="' ~ path('admin_page_scanner', {force: 1}) ~ '">' ~ 'page_scanner.force_new_scan'|trans ~ '</a>)')|raw
+                        }}
+                    </div>
 
-)' : ('(<a href="' ~ path('pushword_page_scanner', {force: '1'}) ~ '">forcer un nouveau scan</a>)')|raw }}.
-                    </p>
-
-                    <table class="table table-bordered table-striped table-hover sonata-ba-list">
-                        <thead>
-                            <tr>
-                                <th>Page</th>
-                                <th>Erreur</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for errorsBypage in errorsByPages %}
-                            {% set object = errorsBypage.0.page %}
-                            <tr>
-                                <td>
-                                    <a href="{{ path('admin_page_edit', {id: object.id}) }}">
-                                        {% if object.metaRobots != '' %}<span class="badge" title="{{ object.metaRobots }}"><i class="fa fa-eye-slash"></i></span> {% endif %}
-                                        <span style="color:#333; font-weight:400; font-size:90%">{{ object.host ? object.host ~ ' › ' : '' }}{{ object.slug }}</span><br>
-                                        <span style="font-size:110%;font-weight:600">{{ object.h1|raw }}</span>
-                                    </a>
-                                </td>
-                                <td>
-                                    <ul>
-                                        {% for error in errorsBypage %}
-                                            <li>{{ error.message|raw }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                 </td>
-                                 <td>
-                                    <a href="{{ path('admin_page_show', {id: object.id}) }}" target=_blank class="btn btn-sm btn-default view_link">
-                                        <i class="fa fa-eye" aria-hidden="true"></i>
-                                     </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">{{ 'page_scanner.table.page'|trans }}</th>
+                                    <th scope="col">{{ 'page_scanner.table.errors'|trans }}</th>
+                                    <th scope="col" class="text-end">{{ 'page_scanner.table.action'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for errorsBypage in errorsByPages %}
+                                {% set object = errorsBypage.0.page %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ path('admin_page_edit', {id: object.id}) }}" class="text-decoration-none">
+                                            {% if object.metaRobots != '' %}
+                                                <span class="badge bg-secondary me-2" title="{{ object.metaRobots }}"><i class="fa fa-eye-slash"></i></span>
+                                            {% endif %}
+                                            <div class="small text-muted">{{ object.host ? object.host ~ ' › ' : '' }}{{ object.slug }}</div>
+                                            <div class="fw-semibold text-dark">{{ object.h1|raw }}</div>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <ul class="mb-0 ps-3">
+                                            {% for error in errorsBypage %}
+                                                <li>{{ error.message|raw }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ path('admin_page_show', {id: object.id}) }}" target="_blank" class="btn btn-sm btn-outline-secondary px-2">
+                                            <i class="fa fa-eye me-1" aria-hidden="true"></i> {{ 'page_scanner.view'|trans }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 {% endif %}
-            </div>
-            <div class="clearfix box-footer">
             </div>
         </div>
     {% endif %}
-
 {% endblock %}

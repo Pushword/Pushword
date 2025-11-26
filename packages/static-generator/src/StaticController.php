@@ -2,6 +2,8 @@
 
 namespace Pushword\StaticGenerator;
 
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
 use RuntimeException;
 
@@ -16,6 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 #[AutoconfigureTag('controller.service_arguments')]
 class StaticController extends AbstractController
@@ -34,13 +37,32 @@ class StaticController extends AbstractController
     ) {
     }
 
+    private AdminContextProviderInterface $adminContextProvider;
+
+    #[Required]
+    public function setAdminContextProvider(AdminContextProviderInterface $adminContextProvider): void
+    {
+        $this->adminContextProvider = $adminContextProvider;
+    }
+
     #[Route(path: '/~static', name: 'old_piedweb_static_generate', methods: ['GET'], priority: 1)]
     public function redirectOldStaticRoute(): RedirectResponse
     {
         return $this->redirectToRoute('piedweb_static_generate', [], Response::HTTP_MOVED_PERMANENTLY);
     }
 
-    #[Route(path: '/{host}', name: 'piedweb_static_generate', methods: ['GET'], priority: -1)]
+    #[AdminRoute(
+        path: '/static/{host}',
+        name: 'static_generator',
+        options: ['defaults' => ['host' => null]]
+    )]
+    #[Route(
+        path: '/{host}',
+        name: 'piedweb_static_generate',
+        methods: ['GET'],
+        priority: -1,
+        defaults: ['host' => null]
+    )]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function generateStatic(?string $host = null): Response
     {
@@ -61,7 +83,7 @@ class StaticController extends AbstractController
         $processInfo = $this->getProcessInfo($pidFile);
 
         if ($processInfo['isRunning']) {
-            return $this->render('@PushwordStatic/running.html.twig', [
+            return $this->renderAdmin('@PushwordStatic/running.html.twig', [
                 'host' => $host,
                 'startTime' => $processInfo['startTime'],
             ]);
@@ -75,7 +97,7 @@ class StaticController extends AbstractController
             // Clean up files
             $this->cleanup($pidFile, $outputFile, $lockFile);
 
-            return $this->render('@PushwordStatic/results.html.twig', [
+            return $this->renderAdmin('@PushwordStatic/results.html.twig', [
                 'errors' => $errors,
                 'output' => $output,
                 'host' => $host,
@@ -287,5 +309,20 @@ class StaticController extends AbstractController
                 $this->filesystem->remove($file);
             }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    private function renderAdmin(string $view, array $parameters = []): Response
+    {
+        $context = $this->adminContextProvider->getContext();
+        if (null === $context) {
+            throw new RuntimeException('EasyAdmin context is not available for this request.');
+        }
+
+        $parameters['ea'] = $context;
+
+        return $this->render($view, $parameters);
     }
 }

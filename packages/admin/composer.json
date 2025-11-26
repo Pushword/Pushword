@@ -7,8 +7,9 @@
   "license": "MIT",
   "require": {
     "pushword/core": "*",
-    "sonata-project/admin-bundle": "^4",
-    "sonata-project/doctrine-orm-admin-bundle": "^4.9"
+    "easycorp/easyadmin-bundle": "^4",
+    "symfony/ux-twig-component": "^2",
+    "twig/extra-bundle": "^3"
   },
   "extra": {
     "branch-alias": {
@@ -28,5 +29,10 @@
     }
   ],
   "minimum-stability": "dev",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "symfony/runtime": true
+    }
+  }
 }

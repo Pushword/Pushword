@@ -146,15 +146,15 @@ class MediaImporter extends AbstractImporter
 
     protected function getMedia(string $media): Media
     {
-        $mediaEntity = $this->em->getRepository(Media::class)->findOneBy(['media' => $media]);
+        $mediaEntity = $this->em->getRepository(Media::class)->findOneBy(['fileName' => $media]);
         $this->newMedia = false;
 
         if (! $mediaEntity instanceof Media) {
             $this->newMedia = true;
             $mediaEntity = new Media();
             $mediaEntity
-                ->setMedia($media)
-                ->setName($media.' - '.uniqid());
+                ->setFileName($media)
+                ->setAlt($media.' - '.uniqid());
         }
 
         return $mediaEntity;

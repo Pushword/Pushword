@@ -4,7 +4,7 @@
 {# @var pager_route string #}
 {# @var pager_route_params array<string, string> #}
 
-{% block list %}{% apply spaceless %}
+{% block list %}
     {% if pages is not empty %}
         <ul{{ blockWrapperId(id ?? '') }}>
             {% for page in pages %}
@@ -22,5 +22,4 @@
     {% if pager is defined and pager is not null %}
         {{ pager(pager, {omitFirstPage: true, pageParameter: '[pager]', routeName: pager_route, routeParams: pager_route_params}) }}
     {% endif %}
-{% endapply %}
 {% endblock %}

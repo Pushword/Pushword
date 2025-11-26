@@ -4,11 +4,6 @@ controllers:
     namespace: Pushword\Admin\Controller
   type: attribute
 
-admin_area:
-  resource: "@SonataAdminBundle/Resources/config/routing/sonata_admin.php"
-  prefix: /admin
-
-_sonata_admin:
+easyadmin_routes:
   resource: .
-  type: sonata_admin
-  prefix: /admin
+  type: easyadmin.routes

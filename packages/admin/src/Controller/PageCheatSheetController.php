@@ -3,7 +3,7 @@
 namespace Pushword\Admin\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Pushword\Admin\PageCheatSheetAdmin;
+use Pushword\Admin\Service\AdminUrlGeneratorAlias;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,20 +19,24 @@ class PageCheatSheetController extends AbstractController
         private readonly PageRepository $pageRepo,
         private readonly TranslatorInterface $translator,
         private readonly EntityManagerInterface $entityManager,
+        private readonly AdminUrlGeneratorAlias $adminUrlGenerator,
     ) {
     }
 
     #[Route('admin/cheatsheet', methods: ['GET', 'HEAD', 'POST'], name: 'cheatsheetEditRoute')]
     public function cheatsheet(): Response
     {
-        if (null === ($page = $this->pageRepo->findOneBy(['slug' => PageCheatSheetAdmin::CHEATSHEET_SLUG]))) {
+        if (null === ($page = $this->pageRepo->findOneBy(['slug' => PageCheatSheetCrudController::CHEATSHEET_SLUG]))) {
             $page = (new Page());
-            $page->setSlug(PageCheatSheetAdmin::CHEATSHEET_SLUG);
+            $page->setSlug(PageCheatSheetCrudController::CHEATSHEET_SLUG);
             $page->setH1($this->translator->trans('admin.label.cheatsheet'));
+            $page->setMetaRobots('noindex');
             $this->entityManager->persist($page);
             $this->entityManager->flush();
         }
 
-        return $this->redirectToRoute('admin_cheatsheet_edit', ['id' => $page->getId()]);
+        return $this->redirect($this->adminUrlGenerator->generate('admin_cheatsheet_edit', [
+            'id' => $page->getId(),
+        ]));
     }
 }

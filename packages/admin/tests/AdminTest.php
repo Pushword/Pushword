@@ -25,20 +25,37 @@ class AdminTest extends AbstractAdminTestClass
 
         $client->catchExceptions(false);
 
-        $actions = ['list', 'create', '1/edit'];
-        $admins = ['user', 'media', 'page'];
+        $routes = [
+            'admin_user_list' => [],
+            'admin_user_create' => [],
+            'admin_user_edit' => ['id' => 1],
+            'admin_media_list' => [],
+            'admin_media_create' => [],
+            'admin_media_edit' => ['id' => 1],
+            'admin_page_list' => [],
+            'admin_page_create' => [],
+            'admin_page_edit' => ['id' => 1],
+            'admin_page_show' => ['id' => 1],
+            'admin_cheatsheet_edit' => ['id' => 1],
+        ];
 
-        foreach ($admins as $admin) {
-            foreach ($actions as $action) {
-                $client->request(Request::METHOD_GET, '/admin/'.$admin.'/'.$action);
-                self::assertResponseIsSuccessful();
+        foreach ($routes as $route => $parameters) {
+            $client->request(Request::METHOD_GET, $this->generateAdminUrl($route, $parameters));
+
+            if ('admin_page_show' === $route) {
+                self::assertTrue($client->getResponse()->isRedirection());
+                $client->followRedirect();
             }
+
+            self::assertResponseIsSuccessful();
         }
 
-        $client->request(Request::METHOD_GET, '/admin/page/2/edit');
+        $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_edit', ['id' => 2]));
         self::assertResponseIsSuccessful();
 
         $client->request(Request::METHOD_GET, '/admin/cheatsheet');
-        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertTrue($client->getResponse()->isRedirection(), (string) $client->getResponse()->getContent());
+        $client->followRedirect();
+        self::assertResponseIsSuccessful();
     }
 }

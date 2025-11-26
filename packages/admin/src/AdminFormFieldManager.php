@@ -3,13 +3,17 @@
 namespace Pushword\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\ImageManager;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment;
@@ -27,6 +31,10 @@ class AdminFormFieldManager
         // TokenStorageInterface $securityTokenStorage,
         Security $security,
         public readonly EventDispatcherInterface $eventDispatcher,
+        public readonly RequestStack $requestStack,
+        public readonly PageRepository $pageRepo,
+        public readonly MediaRepository $mediaRepo,
+        public readonly AdminUrlGenerator $adminUrlGenerator,
     ) {
         /** @var ?User */
         $user = $security->getUser();
@@ -73,12 +81,32 @@ class AdminFormFieldManager
     /**
      * @template T of object
      *
-     * @param class-string<AbstractField<T>> $field
-     * @param FormMapper<T>                  $form
-     * @param AdminInterface<T>              $admin
+     * @param iterable<class-string<AbstractField<T>>> $fieldClasses
+     * @param AdminInterface<T>                        $admin
+     *
+     * @return list<FieldInterface>
      */
-    public function addFormField(string $field, FormMapper $form, AdminInterface $admin): void
+    public function getEasyAdminFields(iterable $fieldClasses, AdminInterface $admin): array
     {
-        (new $field($this, $admin))->formField($form);
+        $fields = [];
+
+        foreach ($fieldClasses as $fieldClass) {
+            $fieldInstance = new $fieldClass($this, $admin);
+            $eaField = $fieldInstance->getEasyAdminField();
+
+            if ($eaField instanceof FieldInterface) {
+                $fields[] = $eaField;
+
+                continue;
+            }
+
+            if (is_iterable($eaField)) {
+                foreach ($eaField as $field) {
+                    $fields[] = $field;
+                }
+            }
+        }
+
+        return $fields;
     }
 }

@@ -10,6 +10,7 @@ export function easyMDEditor() {
     .forEach(function (editorElement) {
       new EasyMDE({
         element: editorElement,
+        autoDownloadFontAwesome: false,
         toolbar: [
           'bold',
           'italic',
@@ -29,7 +30,7 @@ export function easyMDEditor() {
           {
             name: 'guide',
             action: '/admin/markdown-cheatsheet',
-            className: 'fa fa-question-circle',
+            className: 'fa-solid fa-circle-question',
             noDisable: true,
             title: 'Documentation',
             default: true,

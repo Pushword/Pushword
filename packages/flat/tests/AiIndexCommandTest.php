@@ -56,8 +56,8 @@ class AiIndexCommandTest extends KernelTestCase
         $media = new Media();
         $media->setProjectDir(self::getContainer()->getParameter('kernel.project_dir'));
         $media->setStoreIn($mediaDir);
-        $media->setMedia($name);
-        $media->setName('Test '.$name);
+        $media->setFileName($name);
+        $media->setAlt('Test '.$name);
         $media->setMimeType($mimeType);
 
         $mediaFilePath = $mediaDir.'/'.$name;
@@ -168,7 +168,7 @@ class AiIndexCommandTest extends KernelTestCase
                 }
 
                 foreach ($this->createdMediaNames as $mediaName) {
-                    $media = $em->getRepository(Media::class)->findOneBy(['media' => $mediaName]);
+                    $media = $em->getRepository(Media::class)->findOneBy(['fileName' => $mediaName]);
                     if (null !== $media) {
                         $em->remove($media);
                     }

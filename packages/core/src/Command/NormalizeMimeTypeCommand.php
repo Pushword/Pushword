@@ -42,7 +42,7 @@ final readonly class NormalizeMimeTypeCommand
         $progressBar->start();
 
         foreach ($medias as $media) {
-            $progressBar->setMessage('Updating: '.$media->getMedia());
+            $progressBar->setMessage('Updating: '.$media->getFileName());
             $media->setMimeType('image/jpeg');
             $progressBar->advance();
         }

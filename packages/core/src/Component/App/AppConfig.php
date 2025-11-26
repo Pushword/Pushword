@@ -54,7 +54,7 @@ final class AppConfig
     public function __construct(
         private readonly ParameterBagInterface $params,
         array $properties,
-        private readonly bool $isFirstApp,
+        private readonly bool $isDefaultHost,
     ) {
         foreach ($properties as $prop => $value) {
             $this->setCustomProperty($prop, $value);
@@ -92,15 +92,11 @@ final class AppConfig
      */
     public function getMainHost(): string
     {
-        return $this->hosts[0];
-    }
+        if ([] === $this->hosts) {
+            throw new \LogicException('No hosts defined for this app');
+        }
 
-    /**
-     * Used in Router Extension.
-     */
-    public function isMainHost(?string $host): bool
-    {
-        return $this->getMainHost() === $host;
+        return $this->hosts[0];
     }
 
     /** @return string[] */
@@ -312,9 +308,9 @@ final class AppConfig
         return str_starts_with($path, '@') && str_contains($path, '/');
     }
 
-    public function isFirstApp(): bool
+    public function isDefaultHost(): bool
     {
-        return $this->isFirstApp;
+        return $this->isDefaultHost;
     }
 
     /**
@@ -322,7 +318,7 @@ final class AppConfig
      */
     public function getHostForDoctrineSearch(): array|string
     {
-        return $this->isFirstApp ? ['', $this->getMainHost()] : $this->getMainHost();
+        return $this->isDefaultHost ? ['', $this->getMainHost()] : $this->getMainHost();
     }
 
     /**

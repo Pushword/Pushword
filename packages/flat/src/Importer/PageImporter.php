@@ -351,7 +351,7 @@ final class PageImporter extends AbstractImporter
 
     private function getMedia(string $media): ?Media
     {
-        return $this->em->getRepository(Media::class)->findOneBy(['media' => $media]);
+        return $this->em->getRepository(Media::class)->findOneBy(['fileName' => $media]);
     }
 
     private function getPage(mixed $criteria): ?Page

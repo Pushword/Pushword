@@ -2,38 +2,34 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use Pushword\Core\Entity\Page;
-use Sonata\AdminBundle\Form\FormMapper;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 /**
  * @extends AbstractField<Page>
  */
 class PageH1Field extends AbstractField
 {
-    /**
-     * @var string
-     */
-    private const string DEFAULT_STYLE = 'font-size: 22px !important; font-weight: 700; border:0; color:#111827;'
-        .'padding: 10px 10px 0px 10px; margin-top:-23px; margin-bottom:-23px;
-        max-width: 640px; ';
-
-    /**
-     * @param FormMapper<Page> $form
-     */
-    public function formField(FormMapper $form, string $style = ''): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $style = '' !== $style ? $style : self::DEFAULT_STYLE;
-
-        // Todo move style to view
-        $form->add('h1', TextareaType::class, [
-            'required' => false,
-            'attr' => [
-                'class' => 'autosize textarea-no-newline ce-block__content',
+        return TextareaField::new('h1', 'admin.page.title.label')
+            ->setNumOfRows(1)
+            ->setLabel(false)
+            ->onlyOnForms()
+            ->setFormTypeOption('attr', [
+                'class' => 'autosize textarea-no-newline h1Field',
                 'placeholder' => 'admin.page.title.label',
-                'style' => $style,
-            ],
-            'label' => ' ',
-        ]);
+                'rows' => 1,
+                'style' => '
+                  --form-input-hover-shadow: 0;
+                  font-weight: 700;
+                  border: 0px;
+                  color: rgb(17, 24, 39);
+                  padding: 10px 10px 0px;
+                  margin-top: -23px;
+                  margin-bottom: -13px;
+                  font-size: 22px !important; ',
+            ]);
     }
 }

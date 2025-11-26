@@ -2,23 +2,21 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Media;
-use Sonata\AdminBundle\Form\FormMapper;
 
 /**
  * @extends AbstractField<Media>
  */
 final class MediaNamesField extends AbstractField
 {
-    /**
-     * @param FormMapper<Media> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): FieldInterface
     {
-        $form->add('names', null, [
+        return $this->buildEasyAdminField('alts', null, [
             'required' => false,
-            'help_html' => true, 'help' => 'admin.media.names.help',
-            'label' => 'admin.media.names.label',
+            'help_html' => true,
+            'help' => 'admin.media.alts.help',
+            'label' => 'admin.media.alts.label',
             'attr' => ['ismedia' => 1, 'class' => 'col-md-6'],
         ]);
     }

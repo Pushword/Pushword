@@ -3,6 +3,8 @@
 namespace Pushword\PageScanner\Controller;
 
 use DateInterval;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
 use LogicException;
 use Pushword\Core\Utils\LastTime;
@@ -15,6 +17,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 #[IsGranted('ROLE_PUSHWORD_ADMIN')]
 final class PageScannerController extends AbstractController
@@ -27,6 +30,14 @@ final class PageScannerController extends AbstractController
         private readonly string $pageScanInterval
     ) {
         self::setFileCache($varDir);
+    }
+
+    private AdminContextProviderInterface $adminContextProvider;
+
+    #[Required]
+    public function setAdminContextProvider(AdminContextProviderInterface $adminContextProvider): void
+    {
+        $this->adminContextProvider = $adminContextProvider;
     }
 
     public static function setFileCache(string $varDir): void
@@ -43,7 +54,17 @@ final class PageScannerController extends AbstractController
         return self::$fileCache;
     }
 
-    #[Route(path: '/scan/{force}', name: 'pushword_page_scanner', methods: ['GET'])]
+    #[AdminRoute(
+        path: '/scan/{force}',
+        name: 'page_scanner',
+        options: ['defaults' => ['force' => 0]]
+    )]
+    #[Route(
+        path: '/scan/{force}',
+        name: 'pushword_page_scanner',
+        methods: ['GET'],
+        defaults: ['force' => 0]
+    )]
     public function scan(int $force = 0): Response
     {
         $force = (bool) $force;
@@ -67,10 +88,25 @@ final class PageScannerController extends AbstractController
             $lastTime->setWasRun('now', false);
         }
 
-        return $this->render('@pwPageScanner/results.html.twig', [
+        return $this->renderAdmin('@pwPageScanner/results.html.twig', [
             'newRun' => $newRunLaunched ?? false,
             'lastEdit' => $lastEdit,
             'errorsByPages' => $errors,
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    private function renderAdmin(string $view, array $parameters = []): Response
+    {
+        $context = $this->adminContextProvider->getContext();
+        if (null === $context) {
+            throw new LogicException('EasyAdmin context is not available for this request.');
+        }
+
+        $parameters['ea'] = $context;
+
+        return $this->render($view, $parameters);
     }
 }

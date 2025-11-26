@@ -2,6 +2,7 @@
 
 namespace Pushword\Admin\Tests;
 
+use Pushword\Admin\Service\AdminUrlGeneratorAlias;
 use Pushword\Core\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -33,6 +34,31 @@ abstract class AbstractAdminTestClass extends PantherTestCase
         $crawler = $client->submit($form);
 
         return $client;
+    }
+
+    /**
+     * Generate an admin URL using the alias service so tests stay agnostic to the underlying admin stack.
+     *
+     * @param array<string, mixed> $parameters
+     */
+    protected function generateAdminUrl(string $routeName, array $parameters = []): string
+    {
+        /** @var AdminUrlGeneratorAlias $alias */
+        $alias = static::getContainer()->get(AdminUrlGeneratorAlias::class);
+        $url = $alias->generate($routeName, $parameters);
+        $parsed = parse_url($url);
+
+        if (false === $parsed) {
+            return $url;
+        }
+
+        $path = $parsed['path'] ?? '/';
+
+        if (isset($parsed['query'])) {
+            $path .= '?'.$parsed['query'];
+        }
+
+        return $path;
     }
 
     protected static function createUser(): void

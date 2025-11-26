@@ -9,6 +9,7 @@ interface ToolWithCallbacks {
 
 export class editorJsHelper {
   private static modeManagers: Record<string, EditorModeManager> = {}
+  private static pickerChangeHandlers = new WeakMap<Element, EventListener>()
   public modeManagers: Record<string, EditorModeManager> = {}
 
   constructor() {
@@ -33,6 +34,25 @@ export class editorJsHelper {
     }
   }
 
+  private static registerPickerChangeHandler(
+    select: HTMLSelectElement,
+    handler: EventListener,
+  ): void {
+    const previousHandler = this.pickerChangeHandlers.get(select)
+    if (previousHandler) {
+      select.removeEventListener('change', previousHandler)
+    }
+
+    const wrappedHandler: EventListener = (event) => {
+      handler(event)
+      select.removeEventListener('change', wrappedHandler)
+      this.pickerChangeHandlers.delete(select)
+    }
+
+    select.addEventListener('change', wrappedHandler)
+    this.pickerChangeHandlers.set(select, wrappedHandler)
+  }
+
   /**
    * @param Tool - Tool instance with callbacks
    * @param event - DOM event
@@ -47,72 +67,76 @@ export class editorJsHelper {
   ): void {
     console.log('abstractOn called', { action, inlineImageFieldSelector })
 
-    //
-    // const buttonClicked = _event.target as HTMLElement
-    // const originalTextContent = buttonClicked.textContent
-    //buttonClicked.textContent = ". . . ";
+    const selectElement = document.querySelector(
+      'select' + inlineImageFieldSelector,
+    ) as HTMLSelectElement | null
 
-    const inlineImageField = document.querySelector(
-      'div' +
-        inlineImageFieldSelector +
-        ' ' +
-        (action === 'select' ? 'a' : 'a:nth-child(2)'),
-    ) as HTMLAnchorElement
-
-    console.log('inlineImageField found:', inlineImageField)
-
-    if (!inlineImageField) {
+    if (!selectElement) {
       console.error(
-        'inlineImageField not found with selector:',
-        'div' +
-          inlineImageFieldSelector +
-          ' ' +
-          (action === 'select' ? 'a' : 'a:nth-child(2)'),
+        'select element not found with selector:',
+        'select' + inlineImageFieldSelector,
       )
       return
     }
 
-    inlineImageField.click()
+    const pickerWrapper = selectElement.closest('.pw-media-picker') as HTMLElement | null
 
-    const inputElement = document.querySelector(
-      'input' + inlineImageFieldSelector,
-    ) as HTMLInputElement
-
-    console.log('inputElement found:', inputElement)
-
-    if (!inputElement) {
-      console.error(
-        'inputElement not found with selector:',
-        'input' + inlineImageFieldSelector,
-      )
+    if (!pickerWrapper) {
+      console.error('media picker wrapper not found for selector:', selectElement.id)
       return
     }
 
-    inputElement.onchange = function () {
-      console.log('inputElement onchange triggered')
-      const id = (window as any).jQuery(this).val()
-      console.log('jQuery value:', id)
+    const actionButton = pickerWrapper.querySelector(
+      action === 'select'
+        ? '[data-pw-media-picker-action="choose"]'
+        : '[data-pw-media-picker-action="upload"]',
+    ) as HTMLButtonElement | null
 
-      ajax
-        .post({
-          url: '/admin/media/block',
-          data: Object.assign({
-            id: id,
-          }),
-          type: ajax.contentType.JSON,
-        })
-        .then((response: any) => {
-          console.log('AJAX response:', response)
-          if (Tool.onFileLoading) Tool.onFileLoading()
-          Tool.onUpload(response.body)
-          //buttonClicked.textContent = originalTextContent;
-        })
-        .catch((error: any) => {
-          console.log('AJAX error:', error)
-
-          Tool.handleUploadError(error)
-        })
+    if (!actionButton) {
+      console.error('media picker action button not found', { action, selectId: selectElement.id })
+      return
     }
+
+    // Listen for postMessage from iframe instead of select change
+    const messageHandler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      const payload = event.data
+      if (!payload || payload.type !== 'pw-media-picker-select') {
+        return
+      }
+
+      const { fieldId, media } = payload
+      if (!fieldId || !media || fieldId !== selectElement.id) {
+        return
+      }
+
+      // Remove listener after receiving message
+      window.removeEventListener('message', messageHandler)
+
+      // Format response to match expected format from /admin/media/block
+      // The 'media' field should be the fileName (used as identifier)
+      const response = {
+        success: 1,
+        file: {
+          media: media.fileName || String(media.id),
+          name: media.alt || media.name || media.fileName || '',
+          url: media.thumb || '',
+          fileName: media.fileName || String(media.id),
+          alt: media.alt || '',
+          width: media.width || '',
+          height: media.height || '',
+        },
+      }
+
+      if (Tool.onFileLoading) Tool.onFileLoading()
+      Tool.onUpload(response)
+    }
+
+    // Register message listener before opening modal
+    window.addEventListener('message', messageHandler, { once: false })
+
+    // Open the media picker modal (iframe)
+    actionButton.click()
   }
 
   onSelectImage(Tool: ToolWithCallbacks, event: Event): void {

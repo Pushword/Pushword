@@ -32,7 +32,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     }
 
     /**
-     * @return array{mimeType: string[], ratioLabel: string[]}
+     * @return array{mimeType: string[], ratioLabel: string[], dimensions: string[]}
      */
     public function getMimeTypesAndRatio(): array
     {
@@ -48,9 +48,18 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             ->getQuery()
             ->getArrayResult();
 
+        $dimensionsResults = $this->createQueryBuilder('m')
+            ->select('DISTINCT m.width AS width, m.height AS height')
+            ->where('m.width IS NOT NULL')
+            ->andWhere('m.height IS NOT NULL')
+            ->orderBy('m.width', 'ASC')
+            ->addOrderBy('m.height', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
         $normalizedMimeTypes = array_map(
             static fn (mixed $mimeType): ?string => 'image/jpg' === $mimeType ? 'image/jpeg'
-                    : (is_string($mimeType) ? $mimeType : null),
+            : (is_string($mimeType) ? $mimeType : null),
             array_column($mimeTypesResults, 'mimeType'),
         );
 
@@ -69,9 +78,43 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             ),
         );
 
+        $dimensions = array_values(
+            array_unique(
+                array_map(
+                    static function (mixed $dimensionRow): ?string {
+                        if (! \is_array($dimensionRow)) {
+                            return null;
+                        }
+
+                        $width = $dimensionRow['width'] ?? null;
+                        $height = $dimensionRow['height'] ?? null;
+
+                        if (! \is_int($width) && ! (is_string($width) && ctype_digit($width))) {
+                            return null;
+                        }
+
+                        if (! \is_int($height) && ! (is_string($height) && ctype_digit($height))) {
+                            return null;
+                        }
+
+                        return sprintf('%d×%d', (int) $width, (int) $height);
+                    },
+                    $dimensionsResults,
+                ),
+            ),
+        );
+
+        $dimensions = array_values(
+            array_filter(
+                $dimensions,
+                \is_string(...),
+            ),
+        );
+
         return [
             'mimeType' => $mimeTypes,
             'ratioLabel' => $ratioLabels,
+            'dimensions' => $dimensions,
         ];
     }
 
@@ -88,30 +131,12 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         return null;
     }
 
-    public function getOldStoreIn(): ?string
-    {
-        $oldestMedia = $this->createQueryBuilder('m')
-            ->orderBy('m.createdAt', 'ASC')
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
-
-        if (! $oldestMedia instanceof Media) {
-            return null;
-        }
-
-        $storeIn = $oldestMedia->getStoreIn();
-        $storeInParts = explode('/media/', $storeIn, 2);
-
-        return $storeInParts[0];
-    }
-
     /** @return array<string> */
     public function getAllMedia(): array
     {
         /** @var string[] $medias */
         $medias = $this->createQueryBuilder('m')
-            ->select('m.media AS media')
+            ->select('m.fileName AS fileName')
             ->getQuery()
             ->getSingleColumnResult();
 
@@ -146,14 +171,15 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         if ('' === $normalizedFilterValue) {
             $normalizedFilterValue = $filterValue;
         }
+
         $likeFilterValue = $exp->literal('%'.$filterValue.'%');
         $likeNormalizedFilterValue = $exp->literal('%'.$normalizedFilterValue.'%');
 
         return $exp->orX(
-            $exp->like($alias.'.name', $likeFilterValue),
-            $exp->like($alias.'.nameSearch', $likeNormalizedFilterValue),
-            $exp->like($alias.'.media', $likeFilterValue),
-            $exp->like($alias.'.names', $likeFilterValue),
+            $exp->like($alias.'.alt', $likeFilterValue),
+            $exp->like($alias.'.altSearch', $likeNormalizedFilterValue),
+            $exp->like($alias.'.fileName', $likeFilterValue),
+            $exp->like($alias.'.alts', $likeFilterValue),
             $exp->like($alias.'.tags', $likeFilterValue),
         );
     }

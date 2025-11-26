@@ -6,3 +6,18 @@ page_scan:
   unreachable: unreacheable - errorMessage
   status_code: Unexpected status code
   canonical: Canonical is different
+
+page_scanner:
+  title: Content verification
+  force_scan: Force a scan
+  site_scan: Site scan
+  scan_in_progress_no_errors: Scan in progress. The previous scan detected no errors.
+  scan_in_progress: Scan in progress...
+  scan_result: Scan result from %date%
+  new_scan_in_progress: '<em>new scan in progress</em>, the page will refresh automatically when it completes'
+  force_new_scan: force a new scan
+  table:
+    page: Page
+    errors: Errors
+    action: Action
+  view: View

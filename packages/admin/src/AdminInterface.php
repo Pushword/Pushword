@@ -3,14 +3,34 @@
 namespace Pushword\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Sonata\AdminBundle\Admin\AdminInterface as AdminAdminInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @template T of object
- *
- * @extends AdminAdminInterface<T>
  */
-interface AdminInterface extends AdminAdminInterface
+interface AdminInterface
 {
+    /**
+     * @return class-string<T>
+     */
+    public function getModelClass(): string;
+
+    /**
+     * @return T
+     */
+    public function getSubject(): object;
+
+    /**
+     * @param T $subject
+     */
+    public function setSubject(object $subject): void;
+
     public function getEntityManager(): EntityManagerInterface;
+
+    public function hasRequest(): bool;
+
+    public function getRequest(): ?Request;
+
+    public function getTranslator(): TranslatorInterface;
 }

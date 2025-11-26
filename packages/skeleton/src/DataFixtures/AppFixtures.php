@@ -52,8 +52,8 @@ class AppFixtures extends Fixture
             ->setMimeType('image/'.substr($file, -3))
             ->setSize(2)
             ->setDimensions([1000, 1000])
-            ->setMedia($file)
-            ->setName($name)
+            ->setFileName($file)
+            ->setAlt($name)
             ->setHash();
 
             $manager->persist($media[$name]);
@@ -110,6 +110,20 @@ class AppFixtures extends Fixture
         }
 
         $manager->persist($ksPage);
+
+        $redirectionPage = (new Page())
+            ->setH1('Redirection')
+            ->setSlug('pushword')
+            ->setLocale('en')
+            ->setCreatedAt(new DateTime('1 day ago'))
+            ->setUpdatedAt(new DateTime('1 day ago'))
+            ->setMainContent('Location: https://pushword.piedweb.com');
+
+        if ('localhost.dev' === $this->apps->getMainHost()) {
+            $redirectionPage->setHost('localhost.dev');
+        }
+
+        $manager->persist($redirectionPage);
 
         $manager->flush();
     }

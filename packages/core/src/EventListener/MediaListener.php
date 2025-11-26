@@ -5,7 +5,6 @@ namespace Pushword\Core\EventListener;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Exception;
-use Intervention\Image\Image;
 use LogicException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
@@ -76,8 +75,8 @@ final readonly class MediaListener
         $this->setNameIfEmpty($media);
         $this->renameIfIdentifiersAreToken($media);
 
-        if ('' === $media->getMedia()) {
-            $media->setMedia($media->getMediaFromFilename($media->getSlug()));
+        if ('' === $media->getFileName()) {
+            $media->setFileName($media->getMediaFromFilename($media->getSlug()));
         }
     }
 
@@ -98,7 +97,7 @@ final readonly class MediaListener
                 return;
             }
 
-            // exec('cd ../ && php bin/console pw:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+            // exec('cd ../ && php bin/console pw:image:cache '.$media->getFileName().' > /dev/null 2>/dev/null &');
         }
     }
 
@@ -118,9 +117,9 @@ final readonly class MediaListener
 
         if (null !== $duplicate) {
             $this->alert('warning', 'media.duplicate_warning', [
-                '%deleteMediaUrl%' => $this->router->generate('admin_media_delete', ['id' => $media->getId()]),
-                '%sameMediaEditUrl%' => $this->router->generate('admin_media_edit', ['id' => $duplicate->getId()]),
-                '%name%' => $duplicate->getName(),
+                '%deleteMediaUrl%' => $this->router->generate('admin_media_delete', ['entityId' => $media->getId()]),
+                '%sameMediaEditUrl%' => $this->router->generate('admin_media_edit', ['entityId' => $duplicate->getId()]),
+                '%name%' => $duplicate->getAlt(),
             ]);
         }
     }
@@ -130,29 +129,29 @@ final readonly class MediaListener
      */
     public function preUpdate(Media $media, PreUpdateEventArgs $preUpdateEventArgs): void
     {
-        if ($preUpdateEventArgs->hasChangedField('media')) {
+        if ($preUpdateEventArgs->hasChangedField('fileName')) {
             $this->renameIfIdentifiersAreToken($media);
 
             if (file_exists($media->getPath())) {
-                $media->setMedia($media->getMediaBeforeUpdate());
+                $media->setFileName($media->getFileNameBeforeUpdate());
 
-                throw new Exception('Impossible to rename '.$media->getMediaBeforeUpdate().' in '.$media->getMedia().'. File ever exist');
+                throw new Exception('Impossible to rename '.$media->getFileNameBeforeUpdate().' in '.$media->getFileName().'. File ever exist');
             }
 
-            if ('' === $media->getMediaBeforeUpdate()) {
-                // dd($media->getMediaBeforeUpdate());
+            if ('' === $media->getFileNameBeforeUpdate()) {
+                // dd($media->getFileNameBeforeUpdate());
                 throw new LogicException();
             }
 
             $this->filesystem->rename(
-                $media->getStoreIn().'/'.$media->getMediaBeforeUpdate(),
-                $media->getStoreIn().'/'.$media->getMedia()
+                $media->getStoreIn().'/'.$media->getFileNameBeforeUpdate(),
+                $media->getStoreIn().'/'.$media->getFileName()
             );
-            $this->imageManager->remove($media->getMediaBeforeUpdate());
-            $media->setMediaBeforeUpdate('');
+            $this->imageManager->remove($media->getFileNameBeforeUpdate());
+            $media->setFileNameBeforeUpdate('');
 
             $this->imageManager->generateCache($media);
-            // exec('cd ../ && php bin/console pw:image:cache '.$media->getMedia().' > /dev/null 2>/dev/null &');
+            // exec('cd ../ && php bin/console pw:image:cache '.$media->getFileName().' > /dev/null 2>/dev/null &');
 
             $media->setHash();
         }
@@ -161,7 +160,7 @@ final readonly class MediaListener
     public function preRemove(Media $media): void
     {
         if (str_starts_with($media->getStoreIn(), $this->projectDir)) {
-            $this->filesystem->remove($media->getStoreIn().'/'.$media->getMedia());
+            $this->filesystem->remove($media->getStoreIn().'/'.$media->getFileName());
         }
 
         $this->imageManager->remove($media);
@@ -169,29 +168,29 @@ final readonly class MediaListener
 
     private function setNameIfEmpty(Media $media): void
     {
-        if ('' !== $media->getName(true)) {
+        if ('' !== $media->getAlt(true)) {
             return;
         }
 
         if ('' !== $media->getSlug()) {
-            $media->setName($media->getSlug());
+            $media->setAlt($media->getSlug());
         }
 
         /** @var string */
         $name = preg_replace('/\\.[^.\\s]{3,4}$/', '', $media->getMediaFileName());
-        $media->setName($name);
+        $media->setAlt($name);
     }
 
     private function getMediaString(Media $media): string
     {
-        if (($return = $media->getMedia()) !== '') {
+        if (($return = $media->getFileName()) !== '') {
             return $return;
         }
 
         $extension = ($mediaFile = $media->getMediaFile()) instanceof UploadedFile
             ? (string) $mediaFile->guessExtension() : '';
 
-        return $media->getName().('' !== $extension ? '.'.$extension : '');
+        return $media->getAlt().('' !== $extension ? '.'.$extension : '');
     }
 
     private function identifiersAreToken(Media $media): bool
@@ -203,14 +202,14 @@ final readonly class MediaListener
             return true;
         }*/
 
-        $sameName = $this->em->getRepository($media::class)->findOneBy(['name' => $media->getName()]);
+        $sameName = $this->em->getRepository($media::class)->findOneBy(['alt' => $media->getAlt()]);
         if (null !== $sameName && $media->getId() !== $sameName->getId()) {
             // dump('sameName '.$sameName->getId());
             return true;
         }
 
         $mediaString = $this->getMediaString($media);
-        $sameMedia = $this->em->getRepository($media::class)->findOneBy(['media' => $mediaString]);
+        $sameMedia = $this->em->getRepository($media::class)->findOneBy(['fileName' => $mediaString]);
 
         // dump('sameMedia '.$sameMedia->getId());
         return null !== $sameMedia && $media->getId() !== $sameMedia->getId();
@@ -227,7 +226,7 @@ final readonly class MediaListener
         $this->renamer->rename($media);
 
         if (10 === $this->renamer->getIteration()) {
-            throw new Exception('Too much file with similar name `'.$media->getMedia().'`');
+            throw new Exception('Too much file with similar name `'.$media->getFileName().'`');
         }
 
         if (1 === $this->renamer->getIteration()) {

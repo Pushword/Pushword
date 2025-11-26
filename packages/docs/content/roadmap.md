@@ -13,6 +13,15 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
+- drop public media dir and hardcode a const php side and a js side
+
+- Pushword\PageScanner\Tests\PageScannerCommandTest > page scanner comm 26.84s
+  This is very slow
+  Under the hood i want to change page scanner and static generation to avoid to simulate request
+  Before, we need to find all the app.request in twig templates or in code related to static generation and to replace it by another solution
+
+- [AdminBlockEditor] Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
+
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
   ➜ done, but need test
 

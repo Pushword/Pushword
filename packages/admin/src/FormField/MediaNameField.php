@@ -2,8 +2,8 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Media;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
@@ -11,16 +11,13 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
  */
 final class MediaNameField extends AbstractField
 {
-    /**
-     * @param FormMapper<Media> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): FieldInterface
     {
-        $form->add('name', TextType::class, [
+        return $this->buildEasyAdminField('alt', TextType::class, [
             'required' => null !== $this->admin->getSubject()->getId(),
             'help_html' => true,
-            'help' => 'admin.media.name.help',
-            'label' => 'admin.media.name.label',
+            'help' => 'admin.media.alt.help',
+            'label' => 'admin.media.alt.label',
             'attr' => ['ismedia' => 1, 'class' => 'col-md-6'],
         ]);
     }

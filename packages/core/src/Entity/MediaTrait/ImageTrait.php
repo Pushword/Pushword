@@ -57,6 +57,11 @@ trait ImageTrait
         return $this;
     }
 
+    public function getRatioLabel(): ?string
+    {
+        return $this->ratioLabel;
+    }
+
     /**
      * @return int[]|null
      */

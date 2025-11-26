@@ -17,6 +17,7 @@ use function Safe\mime_content_type;
 use function Safe\preg_match;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,6 +30,8 @@ final class MediaBlockController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
+        #[Autowire('%pw.public_media_dir%')]
+        private readonly string $publicMediaDir,
     ) {
     }
 
@@ -56,8 +59,8 @@ final class MediaBlockController extends AbstractController
             }
         }
 
-        $url = $imageManager->isImage($media) ? $imageManager->getBrowserPath($media->getMedia())
-             : '/'.$publicMediaDir.'/'.$media->getMedia();
+        $url = $imageManager->isImage($media) ? $imageManager->getBrowserPath($media->getFileName())
+            : '/'.$publicMediaDir.'/'.$media->getFileName();
 
         return new Response(json_encode([
             'success' => 1,
@@ -107,8 +110,8 @@ final class MediaBlockController extends AbstractController
             throw new Exception();
         }
 
-        if (str_starts_with($content['url'], '/media/default/')) {
-            return $this->getMediaFromMedia(substr($content['url'], \strlen('/media/default/')));
+        if (str_starts_with($content['url'], '/'.$this->publicMediaDir.'/default/')) {
+            return $this->getMediaFromMedia(substr($content['url'], \strlen('/'.$this->publicMediaDir.'/default/')));
         }
 
         return $this->getMediaFileFromUrl($content['url']);
@@ -116,7 +119,7 @@ final class MediaBlockController extends AbstractController
 
     private function getMediaFromMedia(string $media): Media
     {
-        if (($media = $this->em->getRepository(Media::class)->findOneBy(['media' => $media])) === null) {
+        if (($media = $this->em->getRepository(Media::class)->findOneBy(['fileName' => $media])) === null) {
             throw new LogicException('Media not found');
         }
 

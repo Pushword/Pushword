@@ -1,0 +1,121 @@
+/* purgecss start ignore */
+
+/*@import '~codemirror/lib/codemirror.css'; //./../../../core/node_modules/
+//@import "~codemirror/lib/codemirror.css";
+//@import "~easymde/src/css/easymde.css";
+*/
+@import 'easymde/dist/easymde.min.css';
+@import 'codemirror-spell-checker/src/css/spell-checker.css';
+@import './admin.mediaMosaic.css';
+@import './adminForm.css';
+@import './admin.easymde-editor.css';
+@import './admin.mediaPicker.css';
+@import './admin.textareaHelper.css';
+@import './admin.tagsField.css';
+
+:root {
+  --color-primary: var(--sky-700);
+  --button-bg: var(--sky-500);
+  --button-border-color: var(--sky-600);
+  --button-color: var(--sky-50);
+  --button-hover-bg: var(--sky-600);
+  --button-hover-border-color: var(--sky-700);
+  --button-hover-color: var(--sky-100);
+  --button-focus-outline-color: var(--sky-600);
+  --button-primary-bg: linear-gradient(180deg, var(--sky-600), var(--sky-600));
+  --button-primary-hover-bg: linear-gradient(180deg, var(--sky-600), var(--sky-700));
+  --button-primary-active-bg: linear-gradient(180deg, var(--sky-500), var(--sky-400));
+  --resize-handler-hover-bg: var(--sky-600);
+}
+
+.btn-outline-secondary,
+.btn-outline-primary {
+  --bs-btn-color: var(--bs-gray-900);
+  --bs-btn-border-color: var(--bs-border-color);
+  --bs-btn-hover-color: var(--bs-gray-900);
+  --bs-btn-hover-bg: var(--bs-gray-100);
+  --bs-btn-hover-border-color: var(--bs-border-color);
+  --bs-btn-active-color: var(--button-hover-color, var(--sky-100));
+  --bs-btn-active-bg: var(--button-hover-bg, var(--sky-600));
+  --bs-btn-active-border-color: var(--button-hover-border-color, var(--sky-700));
+}
+/* Column Expanding */
+.mainFields,
+.columnFields {
+  transition:
+    width 0.5s ease,
+    margin 0.5s ease;
+}
+.w-0 {
+  width: 0 !important;
+}
+@media (min-width: 992px) {
+  #columnFields {
+    padding-left: 0px;
+    margin-left: -5px;
+  }
+}
+
+.ace_scrollbar {
+  z-index: 0 !important;
+}
+
+.codex-editor .textSuggester {
+  width: 91%;
+  margin-top: -7px;
+}
+
+.textSuggester {
+  max-height: 120px;
+  overflow-y: auto;
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #e8e8eb;
+  width: 100%;
+  z-index: 3;
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  div {
+    display: block;
+    width: 100%;
+    padding: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+    border-bottom: 1px solid #e8e8eb;
+  }
+  div:last-child {
+    border-bottom: 0;
+  }
+
+  div.select {
+    /* keydown, keyup */
+    background-color: rgba(34, 186, 255, 0.08);
+  }
+  div.over {
+    /* mouse over */
+    background-color: #eff2f5;
+  }
+}
+
+.content {
+  padding-top: 30px;
+}
+
+#main-menu .menu .submenu a {
+  padding: 3px 0 3px 3px;
+}
+
+.action-saveAndContinue[data-pw-ctrl-s-state='saving'] {
+  opacity: 0.8;
+  position: relative;
+}
+
+.action-saveAndContinue[data-pw-ctrl-s-state='success'] {
+  box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.25);
+}
+
+.action-saveAndContinue[data-pw-ctrl-s-state='error'] {
+  box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.3);
+}
+
+/* purgecss end ignore */

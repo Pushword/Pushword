@@ -2,30 +2,42 @@
 
 namespace Pushword\AdvancedMainImage;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use Override;
 use Pushword\Admin\FormField\PageMainImageField;
 use Pushword\AdvancedMainImage\DependencyInjection\Configuration as AdvancedMainImageConfiguration;
 use Pushword\Core\Entity\Page;
-use Sonata\AdminBundle\Form\FormMapper;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Twig\Attribute\AsTwigFunction;
 
 class PageAdvancedMainImageFormField extends PageMainImageField
 {
     #[Override]
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): FieldInterface|iterable|null
     {
-        parent::formField($form);
+        $fields = [];
+        $baseField = parent::getEasyAdminField();
 
+        if ($baseField instanceof FieldInterface) {
+            $fields[] = $baseField;
+        } elseif (is_iterable($baseField)) {
+            foreach ($baseField as $field) {
+                $fields[] = $field;
+            }
+        }
+
+        /** @var Page $subject */
         $subject = $this->admin->getSubject();
+        $subject->registerCustomPropertyField('mainImageFormat');
 
-        $form->add('mainImageFormat', ChoiceType::class, [
-            'required' => false,
-            'mapped' => false,
-            'label' => 'admin.page.mainImageFormat.label',
-            'choices' => $this->resolveMainImageFormats($subject),
-            'data' => (int) $subject->getCustomPropertyScalar('mainImageFormat'),
-        ]);
+        $fields[] = ChoiceField::new('mainImageFormat', 'admin.page.mainImageFormat.label')
+            ->onlyOnForms()
+            ->setChoices($this->resolveMainImageFormats($subject))
+            ->setFormTypeOption('required', false)
+            ->setFormTypeOption('mapped', false)
+            ->setFormTypeOption('data', (int) $subject->getCustomPropertyScalar('mainImageFormat'));
+
+        return $fields;
     }
 
     #[AsTwigFunction('heroSize')]

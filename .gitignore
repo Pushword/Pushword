@@ -3,6 +3,7 @@
 
 # composer
 /vendor
+/packages/*/vendor
 composer.lock
 
 # node

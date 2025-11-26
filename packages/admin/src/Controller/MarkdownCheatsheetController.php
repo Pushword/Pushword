@@ -10,10 +10,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AutoconfigureTag('controller.service_arguments')]
 class MarkdownCheatsheetController extends AbstractController
 {
-    #[Route('/admin/dashboard', name: 'pushword_admin_dashboard')]
+    #[Route('/admin/dashboard', name: 'pushword_admin')]
     public function redirectDashboard(): Response
     {
-        return $this->redirectToRoute('admin_page_list');
+        return $this->redirectToRoute('admin');
     }
 
     #[Route('/admin/markdown-cheatsheet', name: 'pushword_markdown_cheatsheet', methods: ['GET', 'HEAD'])]

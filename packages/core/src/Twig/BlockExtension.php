@@ -7,6 +7,7 @@ use Pushword\Core\Component\App\AppPool;
 
 use function Safe\json_encode;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
@@ -19,6 +20,8 @@ class BlockExtension
         private readonly AppPool $apps,
         public Twig $twig,
         private readonly MediaExtension $mediaExtension,
+        #[Autowire('%pw.public_media_dir%')]
+        private readonly string $publicMediaDir,
     ) {
     }
 
@@ -30,7 +33,7 @@ class BlockExtension
         string $id = '',
     ): string {
         $url = $this->mediaExtension->transformStringToMedia($url);
-        $url = '/media/'.$url->getMedia();
+        $url = '/'.$this->publicMediaDir.'/'.$url->getFileName();
 
         $template = $this->apps->get()->getView('/component/attaches.html.twig');
 

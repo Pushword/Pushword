@@ -2,8 +2,8 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\User;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
@@ -11,15 +11,11 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
  */
 class UserPasswordField extends AbstractField
 {
-    /**
-     * @param FormMapper<User> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form
-            ->add('plainPassword', TextType::class, [
-                'required' => null === $this->admin->getSubject()->getId(),
-                'label' => 'admin.user.password.label',
-            ]);
+        return $this->buildEasyAdminField('plainPassword', TextType::class, [
+            'required' => null === $this->admin->getSubject()->getId(),
+            'label' => 'admin.user.password.label',
+        ]);
     }
 }

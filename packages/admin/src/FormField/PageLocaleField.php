@@ -2,8 +2,8 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Page;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
@@ -11,12 +11,9 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
  */
 class PageLocaleField extends AbstractField
 {
-    /**
-     * @param FormMapper<Page> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('locale', TextType::class, [
+        return $this->buildEasyAdminField('locale', TextType::class, [
             'label' => 'admin.page.locale.label',
             'help_html' => true,
             'help' => 'admin.page.locale.help',

@@ -7,6 +7,8 @@ use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Tests\PathTrait;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -22,13 +24,13 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
 
         $mediaRepo = $em->getRepository(Media::class);
 
-        $media = $mediaRepo->findOneBy(['media' => 'piedweb-logo.png']) ?? throw new Exception();
-        $media->setMedia('piedweb.png');
+        $media = $mediaRepo->findOneBy(['fileName' => 'piedweb-logo.png']) ?? throw new Exception();
+        $media->setFileName('piedweb.png');
 
         $em->flush();
         self::assertSame(file_exists($this->mediaDir.'/piedweb.png'), true);
 
-        $media->setMedia('piedweb-logo.png');
+        $media->setFileName('piedweb-logo.png');
         $em->flush();
     }
 
@@ -46,7 +48,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         // If import twice, return the existing one and not create a new copy
         $mediaEntity = $this->getImageManager()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
         self::assertFileDoesNotExist($this->mediaDir.'/1-3.jpg');
-        self::assertSame($mediaEntity->getMedia(), '1-2.jpg');
+        self::assertSame($mediaEntity->getFileName(), '1-2.jpg');
         unlink(__DIR__.'/../../../skeleton/media/1-2.jpg');
         self::assertFileDoesNotExist($this->mediaDir.'/1-2.jpg');
     }
@@ -61,32 +63,34 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         ];
 
         foreach ($files as $file) {
-            // dump($file);
             $client = $this->loginUser();
             $client->catchExceptions(false);
-            $crawler = $client->request(Request::METHOD_GET, '/admin/media/create');
-            $formId = strtok($crawler->filter('[type="file"]')->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
-            $form = $crawler->filter('[role="form"]')->form([
+            $crawler = $this->requestMediaCreateForm($client);
+            $fileInput = $crawler->filter('[type="file"]');
+            $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
+            $form = $crawler->filter('form[method="post"]')->form([
                 $formId.'[mediaFile]' => $file,
             ]);
             $client->submit($form);
             self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
             self::assertFileExists($this->mediaDir.'/2-2.jpg');
 
-            $crawler = $client->request(Request::METHOD_GET, '/admin/media/create');
-            $formId = strtok($crawler->filter('[type="file"]')->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
-            $form = $crawler->filter('[role="form"]')->form([
+            $crawler = $this->requestMediaCreateForm($client);
+            $fileInput = $crawler->filter('[type="file"]');
+            $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
+            $form = $crawler->filter('form[method="post"]')->form([
                 $formId.'[mediaFile]' => $file,
-                $formId.'[name]' => '1',
+                $formId.'[alt]' => '1',
             ]);
 
             $client->submit($form);
             self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
             self::assertFileExists($this->mediaDir.'/1-2.jpg');
 
-            $crawler = $client->request(Request::METHOD_GET, '/admin/media/create');
-            $formId = strtok($crawler->filter('[type="file"]')->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
-            $form = $crawler->filter('[role="form"]')->form([
+            $crawler = $this->requestMediaCreateForm($client);
+            $fileInput = $crawler->filter('[type="file"]');
+            $formId = strtok($fileInput->getNode(0)->getAttribute('name'), '['); // @phpstan-ignore-line
+            $form = $crawler->filter('form[method="post"]')->form([
                 $formId.'[mediaFile]' => $file,
                 $formId.'[slugForce]' => '1',
             ]);
@@ -124,5 +128,12 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         }
 
         return $this->imageManager = new ImageManager([], $this->publicDir, $this->projectDir, $this->publicMediaDir, $this->mediaDir);
+    }
+
+    private function requestMediaCreateForm(KernelBrowser $client): Crawler
+    {
+        $createUrl = $this->generateAdminUrl('admin_media_create');
+
+        return $client->request(Request::METHOD_GET, $createUrl);
     }
 }

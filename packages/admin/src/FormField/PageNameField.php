@@ -2,8 +2,8 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Page;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 /**
@@ -11,12 +11,9 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
  */
 class PageNameField extends AbstractField
 {
-    /**
-     * @param FormMapper<Page> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('name', TextareaType::class, [
+        return $this->buildEasyAdminField('name', TextareaType::class, [
             'label' => 'admin.page.name.label',
             'required' => false,
             'help_html' => true,

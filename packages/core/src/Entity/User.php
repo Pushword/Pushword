@@ -116,6 +116,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return $this;
     }
 
+    public function getRolesForListing(): string
+    {
+        return implode(', ', $this->getRoles());
+    }
+
     public function hasRole(string $role): bool
     {
         return \in_array(strtoupper($role), $this->getRoles(), true);

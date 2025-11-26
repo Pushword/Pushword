@@ -25,9 +25,9 @@ final class AppExtension
     public function codeBlock(string $code, string $language = 'js', string $id = ''): string
     {
         return
-        '<pre class="microlight"'.('' !== $id ? ' id="'.$id.'"' : '').'>'
+            '<pre class="microlight"'.('' !== $id ? ' id="'.$id.'"' : '').'>'
             .'<code class="language-'.$language.'">'.$this->escapeTwig($code).'</code>'
-        .'</pre>';
+            .'</pre>';
     }
 
     #[AsTwigFilter('escapeTwig', isSafe: ['html'], needsEnvironment: false)]
@@ -147,7 +147,7 @@ final class AppExtension
     public function getBase(bool $live = true): string
     {
         return $live ? $this->apps->get()->getStr('base_live_url')
-          : $this->apps->get()->getStr('base_url');
+            : $this->apps->get()->getStr('base_url');
     }
 
     /**

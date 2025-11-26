@@ -1,82 +1,57 @@
-{% extends '@SonataAdmin/standard_layout.html.twig' %}
+{% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block title %}
- {{ page.slug }} ›  Versions
-{% endblock %}
-
-{% block navbar_title %}
-     <a href="{{ path('admin_page_edit', {id: page.id}) }}">{{ page.slug }}</a> › Versions
-{% endblock %}
-
-{% block tab_menu_navbar_header %}
-        <div class="navbar-header">
-             <span class="navbar-brand"><a href="{{ path('admin_page_edit', {id: page.id}) }}">{{ page.slug }}</a> › <b>Versions</b></span>
-        </div>
-{% endblock %}
+{% block title %}{{ page.slug }} › Versions{% endblock %}
 
 {% block actions %}
-               <ul class="nav navbar-nav navbar-right">
-                  <li><a class="sonata-action-element" href="{{ path('pushword_version_reset', {id: page.id}) }}"><i class="fa fa-trash" aria-hidden="true"></i>
-                     Reset
-                     </a>
-                  </li>
-               </ul>
+    <a class="btn btn-danger" href="{{ path('pushword_version_reset', {id: page.id}) }}">
+        <i class="fa fa-trash" aria-hidden="true"></i> Reset
+    </a>
 {% endblock %}
 
-{% block sonata_admin_content %}
-    {{ include('@SonataTwig/FlashMessage/render.html.twig') }}
-<div class="box box-primary" style="margin-bottom: 100px;">
-   <div class="box-body table-responsive no-padding">
-      <table class="table table-bordered table-striped table-hover sonata-ba-list">
-         <thead>
-            <tr class="sonata-ba-list-field-header">
-               <th class="sonata-ba-list-field-header-text">
-                    {{ 'Titre' }}
-               </th>
-               <th class="sonata-ba-list-field-header-text">
-                    {{ 'Date' }}
-               </th>
-
-               <th class="sonata-ba-list-field-header-text">
-                    {{ 'Reason' }}
-               </th>
-               <th class="text-right sonata-ba-list-field-header-text">
-                  Action
-               </th>
-            </tr>
-         </thead>
-         <tbody>
+{% block main %}
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h3 class="card-title mb-0">
+            <a href="{{ path('admin_page_edit', {id: page.id}) }}" class="link-primary">{{ page.slug }}</a> › Versions
+        </h3>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Titre</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Reason</th>
+                    <th scope="col" class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
             {% for version, p in pages %}
-            <tr>
-                <td class="sonata-ba-list-field sonata-ba-list-field-html">
-                  <a class="sonata-link-identifier" href="{{ path('pushword_version_load', {id: page.id, version: version}) }}">
-                      {{ p.h1|default(p.title) }}
-                  </a>
-               </td>
-               <td class="sonata-ba-list-field sonata-ba-list-field-text">
-                  {{ p.updatedAt|date }} {{ p.editedBy ? '(<small>' ~ p.editedBy.username ~ ')</small>' : '' }}
-               </td>
-
-               <td class="sonata-ba-list-field sonata-ba-list-field-text">
-                  {{ p.editMessage }}
-               </td>
-               <td class="sonata-ba-list-field sonata-ba-list-field-text" objectid="34" style="text-align:right">
-                  <div class="btn-group">
-                     <a href="{{ path('pushword_version_load', {id: page.id, version: version}) }}" class="btn btn-sm btn-default view_link" title="Editer">
-                     <i class="fa fa-edit" aria-hidden="true"></i>
-                     Switch
-                     </a>
-                     <!--<a href="{{ path('pushword_version_load', {id: page.id, version: version}) }}" class="btn btn-sm btn-default delete_link" title="Supprimer">
-                     <i class="fa fa-times" aria-hidden="true"></i>
-                     Supprimer
-                     </a>-->
-                  </div>
-               </td>
-            </tr>
+                <tr>
+                    <td>
+                        <a class="link-primary" href="{{ path('pushword_version_load', {id: page.id, version: version}) }}">
+                            {{ p.h1|default(p.title) }}
+                        </a>
+                    </td>
+                    <td class="text-muted">
+                        {{ p.updatedAt|date }}{{ p.editedBy ? ' (<small>' ~ p.editedBy.username ~ '</small>)' : '' }}
+                    </td>
+                    <td class="text-muted">
+                        {{ p.editMessage }}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ path('pushword_version_load', {id: page.id, version: version}) }}" class="btn btn-outline-secondary btn-sm px-2">
+                            <i class="fa fa-edit me-2" aria-hidden="true"></i> Switch
+                        </a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">Aucune version disponible.</td>
+                </tr>
             {% endfor %}
-         </tbody>
-      </table>
-   </div>
+            </tbody>
+        </table>
+    </div>
 </div>
-
 {% endblock %}

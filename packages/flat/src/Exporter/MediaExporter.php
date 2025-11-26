@@ -96,12 +96,12 @@ final class MediaExporter
                 throw new Exception('Media file not found: '.$media->getPath());
             }
 
-            $destination = $this->exportDir.'/'.$this->copyMedia.'/'.$media->getMedia();
+            $destination = $this->exportDir.'/'.$this->copyMedia.'/'.$media->getFileName();
             $this->filesystem->copy($media->getPath(), $destination);
         }
 
         $yamlData = Yaml::dump($data, indent: 2);
-        $yamlFilePath = $this->getYamlFileDir().'/'.$media->getMedia().'.yaml';
+        $yamlFilePath = $this->getYamlFileDir().'/'.$media->getFileName().'.yaml';
         $this->filesystem->dumpFile($yamlFilePath, $yamlData);
     }
 

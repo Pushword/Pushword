@@ -58,16 +58,16 @@ class ImageManagerTest extends KernelTestCase
     public function testImportExternal(): void
     {
         $media = $this->getManager()->importExternal('https://piedweb.com/assets/pw/favicon-32x32.png', 'favicon', 'favicon');
-        self::assertSame('favicon', $media->getName());
-        self::assertSame('favicon-dd93.png', $media->getMedia());
-        self::assertFileExists($this->mediaDir.'/'.$media->getMedia());
+        self::assertSame('favicon', $media->getAlt());
+        self::assertSame('favicon-dd93.png', $media->getFileName());
+        self::assertFileExists($this->mediaDir.'/'.$media->getFileName());
 
         $media = $this->getManager()->importExternal('https://piedweb.com/assets/pw/favicon-32x32.png', 'favicon', 'favicon', false);
-        self::assertSame('favicon.png', $media->getMedia());
-        self::assertFileExists($this->mediaDir.'/'.$media->getMedia());
+        self::assertSame('favicon.png', $media->getFileName());
+        self::assertFileExists($this->mediaDir.'/'.$media->getFileName());
 
         $media = $this->getManager()->importExternal('https://piedweb.com/assets/pw/favicon-32x32.png', 'favicon from pied web');
-        self::assertSame('favicon-from-pied-web-dd93.png', $media->getMedia());
-        self::assertFileExists($this->mediaDir.'/'.$media->getMedia());
+        self::assertSame('favicon-from-pied-web-dd93.png', $media->getFileName());
+        self::assertFileExists($this->mediaDir.'/'.$media->getFileName());
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Pushword\Admin\FormField;
 
-use Sonata\AdminBundle\Form\FormMapper;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 /**
@@ -12,20 +12,17 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
  */
 class CustomPropertiesField extends AbstractField
 {
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('standAloneCustomProperties', TextareaType::class, [
+        return $this->buildEasyAdminField('standAloneCustomProperties', TextareaType::class, [
             'required' => false,
             'attr' => [
                 'style' => 'width:100%; height:100px;min-height:15vh;font-size:10px',
                 'data-editor' => 'yaml',
-                // 'class' => 'autosize',
             ],
-            // 'label' => $this->formFieldManager->getMessagePrefix().'.customProperties.label',
             'label' => 'admin.page.customProperties.label',
             'help_html' => true,
             'help' => 'admin.page.customProperties.help',
-            // 'help' => $this->formFieldManager->getMessagePrefix().'.customProperties.help',
         ]);
     }
 }

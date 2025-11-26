@@ -2,7 +2,10 @@
 
 namespace Pushword\TemplateEditor;
 
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
+use LogicException;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -19,6 +22,7 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
 
 #[IsGranted('ROLE_PUSHWORD_ADMIN')]
@@ -29,11 +33,14 @@ final class ElementAdmin extends AbstractController
 
     private Twig $twig;
 
+    private AdminContextProviderInterface $adminContextProvider;
+
     /** @param string[] $canBeEditedList */
     public function __construct(
         public array $canBeEditedList, // template_editor_can_be_edited
         public bool $disableCreation,  // template_editor_disable_creation
         Security $security,
+        private readonly TranslatorInterface $translator,
     ) {
         $user = $security->getUser();
         if ($user instanceof User && $user->hasRole('ROLE_SUPER_ADMIN')) {
@@ -54,15 +61,21 @@ final class ElementAdmin extends AbstractController
         $this->kernel = $kernel;
     }
 
+    #[Required]
+    public function setAdminContextProvider(AdminContextProviderInterface $adminContextProvider): void
+    {
+        $this->adminContextProvider = $adminContextProvider;
+    }
+
     private function getElements(): ElementRepository
     {
         return new ElementRepository($this->kernel->getProjectDir().'/templates', $this->canBeEditedList, $this->disableCreation);
     }
 
-    #[Route(path: '/list', name: 'pushword_template_editor_list', methods: ['GET'])]
+    #[AdminRoute(path: '/template/list', name: 'template_editor_list')]
     public function listElement(): Response
     {
-        return $this->render('@pwTemplateEditor/list.html.twig', [
+        return $this->renderAdmin('@pwTemplateEditor/list.html.twig', [
             'elements' => $this->getElements()->getAll(),
             'canCreate' => ! $this->disableCreation,
         ]);
@@ -94,8 +107,10 @@ final class ElementAdmin extends AbstractController
         }
     }
 
-    #[Route(path: '/create', name: 'pushword_template_editor_create', methods: ['GET', 'POST'], priority: 1)]
-    #[Route(path: '/edit/{encodedPath}', name: 'pushword_template_editor_edit', methods: ['GET', 'POST'])]
+    #[AdminRoute(path: '/template/create', name: 'template_editor_create')]
+    #[Route(path: '/template/create', name: 'pushword_template_editor_create', methods: ['GET', 'POST'], priority: 1)]
+    #[AdminRoute(path: '/template/edit/{encodedPath}', name: 'template_editor_edit')]
+    #[Route(path: '/template/edit/{encodedPath}', name: 'pushword_template_editor_edit', methods: ['GET', 'POST'])]
     public function editElement(?string $encodedPath = null, ?Request $request = null): Response
     {
         $element = $this->getElement($encodedPath);
@@ -110,15 +125,12 @@ final class ElementAdmin extends AbstractController
 
             $this->clearTwigCache();
 
-            return $this->redirectToRoute(
-                'pushword_template_editor_edit',
-                [
-                    'encodedPath' => $element->getEncodedPath(),
-                ]
-            );
+            return $this->redirectToRoute('admin_template_editor_edit', [
+                'encodedPath' => $element->getEncodedPath(),
+            ]);
         }
 
-        return $this->render(
+        return $this->renderAdmin(
             '@pwTemplateEditor/edit.html.twig',
             [
                 'element' => $element,
@@ -150,30 +162,32 @@ final class ElementAdmin extends AbstractController
         return $form;
     }
 
+    #[AdminRoute(path: '/delete/{encodedPath}', name: 'template_editor_delete')]
     #[Route(path: '/delete/{encodedPath}', name: 'pushword_template_editor_delete', methods: ['GET', 'POST'])]
     public function deleteElement(string $encodedPath, Request $request): Response
     {
         if ($this->disableCreation) {
-            $this->addFlash('warning', 'Creation (so deletion) are disabled');
-            $this->redirectToRoute('pushword_template_editor_list');
+            $this->addFlash('warning', $this->translator->trans('template_editor.creation_disabled'));
+
+            return $this->redirectToRoute('admin_template_editor_list');
         }
 
         $element = $this->getElement($encodedPath);
 
         $form = $this->createFormBuilder()
-            ->add('delete', SubmitType::class, ['label' => 'Supprimer', 'attr' => ['class' => 'btn-danger']])
+            ->add('delete', SubmitType::class, ['label' => $this->translator->trans('template_editor.delete.label'), 'attr' => ['class' => 'btn-danger']])
             ->getForm();
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $element->deleteElement();
 
-            $this->addFlash('error', 'Element supprimé.');
+            $this->addFlash('error', $this->translator->trans('template_editor.element.deleted'));
 
-            return $this->redirectToRoute('pushword_template_editor_list');
+            return $this->redirectToRoute('admin_template_editor_list');
         }
 
-        return $this->render(
+        return $this->renderAdmin(
             '@pwTemplateEditor/delete.html.twig',
             [
                 'form' => $form->createView(),
@@ -181,5 +195,20 @@ final class ElementAdmin extends AbstractController
                 'disableCreation' => $this->disableCreation,
             ]
         );
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    private function renderAdmin(string $view, array $parameters = []): Response
+    {
+        $context = $this->adminContextProvider->getContext();
+        if (null === $context) {
+            throw new LogicException('EasyAdmin context is not available. Please use the admin routes (admin_template_editor_*) to access this page.');
+        }
+
+        $parameters['ea'] = $context;
+
+        return $this->render($view, $parameters);
     }
 }

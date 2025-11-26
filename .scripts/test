@@ -17,12 +17,28 @@ sh ./.scripts/data-preserve
 
 #XDEBUG_MODE=off php -dxdebug.mode=off
 #  --log-junit report.xml
-vendor/bin/phpunit --stop-on-failure
-#--debug
+FILTER_ARG=""
+if [ "$1" = "--filter" ] && [ -n "$2" ]
+then
+    FILTER_ARG="--filter $2"
+elif [ "$1" != "full" ] && [ -n "$1" ]
+then
+    # If first argument is not "full" and not empty, treat it as a filter
+    FILTER_ARG="--filter $1"
+fi
 
 if [ "$1" = "full" ]
 then
     trap restoreDataAndComposerDependencies EXIT
     composer update --prefer-lowest
-    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug --no-cache-result
+    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug --no-cache-result $FILTER_ARG
+    composer validate-monorepo
+else
+    vendor/bin/phpunit --stop-on-failure $FILTER_ARG
+    # Only run validate-monorepo if no filter was applied (i.e., no arguments passed)
+    if [ -z "$FILTER_ARG" ]
+    then
+        composer validate-monorepo
+    fi
 fi
+#--debug

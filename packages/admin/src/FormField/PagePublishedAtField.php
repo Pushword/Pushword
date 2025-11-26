@@ -3,23 +3,21 @@
 namespace Pushword\Admin\FormField;
 
 use DateTime;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Page;
-use Sonata\AdminBundle\Form\FormMapper;
-use Sonata\Form\Type\DateTimePickerType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
 /**
  * @extends AbstractField<Page>
  */
 class PagePublishedAtField extends AbstractField
 {
-    /**
-     * @param FormMapper<Page> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('publishedAt', DateTimePickerType::class, [
-            'format' => CreatedAtField::DateTimePickerFormat,
-            'datepicker_options' => CreatedAtField::DateTimePickerOptions,
+        return $this->buildEasyAdminField('publishedAt', DateTimeType::class, [
+            'widget' => 'single_text',
+            'with_seconds' => false,
+            'html5' => true,
             'label' => $this->formFieldManager->getMessagePrefix().'.publishedAt.label',
             'help' => $this->getHelp(),
             'help_html' => true,
@@ -35,10 +33,5 @@ class PagePublishedAtField extends AbstractField
     private function getSubject(): Page
     {
         return $this->admin->getSubject();
-    }
-
-    private function trans(string $id): string
-    {
-        return $this->admin->getTranslator()->trans($id);
     }
 }

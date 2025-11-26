@@ -2,20 +2,16 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\User;
-use Sonata\AdminBundle\Form\FormMapper;
 
 /**
  * @extends AbstractField<User>
  */
 class UserEmailField extends AbstractField
 {
-    /**
-     * @param FormMapper<User> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form
-                ->add('email', null, ['label' => 'admin.user.email.label']);
+        return $this->buildEasyAdminField('email', null, ['label' => 'admin.user.email.label']);
     }
 }

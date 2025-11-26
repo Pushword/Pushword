@@ -7,7 +7,7 @@ final class ImageRatioLabeler
     /**
      * @var array<string, array{int, int}>
      */
-    private const FORMATS = [
+    private const array FORMATS = [
         '16:9' => [16, 9],
         '9:16' => [9, 16],
         '4:3' => [4, 3],

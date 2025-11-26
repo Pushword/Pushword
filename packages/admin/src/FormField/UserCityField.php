@@ -2,8 +2,8 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\User;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
@@ -11,18 +11,11 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
  */
 class UserCityField extends AbstractField
 {
-    /**
-     * @param FormMapper<User> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add(
-            'city',
-            TextType::class,
-            [
-                'required' => false,
-                'label' => 'admin.user.city.label',
-            ]
-        );
+        return $this->buildEasyAdminField('city', TextType::class, [
+            'required' => false,
+            'label' => 'admin.user.city.label',
+        ]);
     }
 }

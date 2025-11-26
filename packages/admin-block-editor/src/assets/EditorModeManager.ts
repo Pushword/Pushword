@@ -5,8 +5,10 @@ import { logger } from './tools/utils/logger'
  * Gestionnaire des modes d'édition (EditorJS, JSON, Markdown)
  */
 export class EditorModeManager {
+  private static monacoLoaderPromise: Promise<void> | null = null
+  private static readonly MONACO_SCRIPT_URL = '/bundles/pushwordadmin/monaco/app.js'
   private readonly editorId: string
-  private readonly monacoInstanceKey: string
+  private monacoInstance: any = null
 
   // Constantes
   private readonly EDITOR_MODES = {
@@ -24,7 +26,6 @@ export class EditorModeManager {
 
   constructor(editorId: string) {
     this.editorId = editorId
-    this.monacoInstanceKey = `monacoEditorInstance${editorId}`
   }
 
   /**
@@ -77,12 +78,11 @@ export class EditorModeManager {
    * Récupère l'instance Monaco
    */
   private getMonacoInstance(): any {
-    const instance = (window as any)[this.monacoInstanceKey]
-    return instance
+    return this.monacoInstance
   }
 
   private setMonacoInstance(instance: any): void {
-    ;(window as any)[this.monacoInstanceKey] = instance
+    this.monacoInstance = instance
   }
 
   private disposeMonacoInstance(): void {
@@ -162,9 +162,26 @@ export class EditorModeManager {
    * Initialise Monaco Editor pour un textarea
    */
   private initMonacoEditor(textarea: HTMLTextAreaElement): void {
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        const monacoInstance = window.monacoHelper?.transformTextareaToMonaco(textarea)
+        const helperReady = await this.ensureMonacoHelperLoaded()
+        if (!helperReady || !window.monacoHelper) {
+          logger.error('Monaco helper non disponible', {
+            editorId: this.editorId,
+          })
+          return
+        }
+
+        const monacoInstance = window.monacoHelper.transformTextareaToMonaco(
+          textarea,
+        )
+        if (!monacoInstance) {
+          logger.warn('Impossible de créer Monaco Editor', {
+            editorId: this.editorId,
+          })
+          return
+        }
+
         this.setMonacoInstance(monacoInstance)
         // Vérifier que l'instance est bien accessible
         setTimeout(() => {
@@ -182,6 +199,64 @@ export class EditorModeManager {
         })
       }
     }, 0)
+  }
+
+  private async ensureMonacoHelperLoaded(): Promise<boolean> {
+    if (window.monacoHelper) {
+      return true
+    }
+
+    if (!EditorModeManager.monacoLoaderPromise) {
+      EditorModeManager.monacoLoaderPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        const cacheBuster = Date.now()
+        script.src = `${EditorModeManager.MONACO_SCRIPT_URL}?v=${cacheBuster}`
+        script.dataset.pwMonaco = '1'
+        script.async = true
+        script.defer = true
+
+        const cleanup = (): void => {
+          script.removeEventListener('load', onLoad)
+          script.removeEventListener('error', onError)
+        }
+
+        const onLoad = (): void => {
+          cleanup()
+          resolve()
+        }
+
+        const onError = (event: Event): void => {
+          cleanup()
+          reject(event)
+        }
+
+        script.addEventListener('load', onLoad)
+        script.addEventListener('error', onError)
+        document.head.appendChild(script)
+      })
+    }
+
+    try {
+      await EditorModeManager.monacoLoaderPromise
+    } catch (error) {
+      logger.error('Erreur lors du chargement de Monaco', {
+        editorId: this.editorId,
+        error,
+      })
+      EditorModeManager.monacoLoaderPromise = null
+
+      return false
+    }
+
+    if (!window.monacoHelper) {
+      logger.error('Monaco helper toujours indisponible après chargement', {
+        editorId: this.editorId,
+      })
+
+      return false
+    }
+
+    return true
   }
 
   private switchTo(format: string = 'json'): void {
@@ -375,7 +450,6 @@ export class EditorModeManager {
 
     const diagnostic = {
       editorId: this.editorId,
-      monacoInstanceKey: this.monacoInstanceKey,
       currentMode: currentMode || 'EditorJS (par défaut)',
       hasInput: !!input,
       inputInfo: input

@@ -67,11 +67,6 @@ final class Configuration implements ConfigurationInterface
     public const array DEFAULT_CUSTOM_PROPERTIES = [];
 
     /**
-     * @var string
-     */
-    public const string DEFAULT_PUBLIC_MEDIA_DIR = 'media';
-
-    /**
      * @var array<string, array<string, mixed>>
      */
     public const array IMAGE_FILTERS_SET = [
@@ -147,7 +142,7 @@ final class Configuration implements ConfigurationInterface
                 ->info('Dir where files will be uploaded when using admin.')
                 ->end()
             ->scalarNode('public_media_dir')
-                ->defaultValue(self::DEFAULT_PUBLIC_MEDIA_DIR)->cannotBeEmpty()
+                ->defaultValue('media')->cannotBeEmpty()
                 ->info('Used to generate browser path. Must be accessible from public_dir.')
                 ->end()
             ->scalarNode('database_url')->defaultValue('sqlite:///%kernel.project_dir%/var/app.db')->cannotBeEmpty()->end()

@@ -2,7 +2,7 @@
 
 namespace Pushword\Admin\FormField;
 
-use Sonata\AdminBundle\Form\FormMapper;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 
 /**
@@ -12,9 +12,9 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
  */
 class PriorityField extends AbstractField
 {
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('priority', NumberType::class, [
+        return $this->buildEasyAdminField('priority', NumberType::class, [
             'required' => false,
             'label' => 'admin.page.priority.label',
         ]);

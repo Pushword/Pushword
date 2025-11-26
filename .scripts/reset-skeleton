@@ -10,7 +10,7 @@ rm -rf static|| true
 cp -r media~ media
 
 echo "Clearing cache..."
-php bin/console cache:clear -q
+php bin/console cache:clear --no-warmup -q
 
 echo "Creating database schema..."
 php bin/console doctrine:schema:create -q

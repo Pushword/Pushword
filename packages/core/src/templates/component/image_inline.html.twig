@@ -2,7 +2,7 @@
     Media    image
       or
     string   image_src       ...
-    string   image_alt       image.name(page is defined ? page.locale : '')
+    string   image_alt       image.altLocalized(page is defined ? page.locale : '')
 
     bool     image_link      default: false
     bool     image_link_attr default: {}
@@ -19,11 +19,11 @@
      xl: #1200px+
 #}
 
-{% if image is defined %}
-    {% set image_src = media.media %}
-    {% set image_alt = image_alt ?? media.name(page is defined ? page.locale : '') %}
+{% if image is defined and isInstanceOfMedia(image) %}
+    {% set image_src = image.fileName %}
+    {% set image_alt = image_alt ?? media.altLocalized(page is defined ? page.locale : '') %}
 {% else  %}
-    {% set image = media_from_string(image_src, image_alt ?? '') %}
+    {% set image = media_from_string(image_src ?? image, image_alt ?? '') %}
 {% endif %}
 
 {% block inline_image %}
@@ -97,7 +97,7 @@
      class: image_class ?? 'w-full h-auto mb-4',
      width: width,
      height: height,
-     alt: image_alt|default(image.alt ?? image.name)
+     alt: image_alt|default(image.alt ?? image.fileName)
     }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }}>
 </picture>
 {% endmacro %}

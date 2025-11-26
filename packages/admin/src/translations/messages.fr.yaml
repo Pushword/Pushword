@@ -37,10 +37,12 @@ admin:
   label:
     page: Page
     media: Media
+    medias: Médias
     content: Pages
     list: Liste
     user: Utilisateur
     users: Utilisateurs
+    tools: Outils
     manage: Mettre en ligne
     update: Actualiser
     params: Réglages
@@ -158,6 +160,11 @@ admin:
     priority:
       label: Priorité
       help: Permet d'ordonner les pages par priorité (puis par date de publication)
+    extra:
+      label: Extra
+    error:
+      generation_failed: Une erreur est survenue lors de la génération de la page.
+      generation_failed_with_details: 'Une erreur est survenue lors de la génération de la page : <code>%error%</code><br><textarea style="margin-top:4px; width:100%;" data-editor="twig" readonly>%excerpt%</textarea>'
 
   user:
     label:
@@ -199,12 +206,12 @@ admin:
       dominant_color: Couleur dominante
     related:
       label: Pages connectées
-    name:
+    alt:
       label: Nom
       help: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"
     mediaFile:
       label: Fichier
-    names:
+    alts:
       label: "Traduction"
       help: "Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne."
     mainColor:
@@ -213,6 +220,24 @@ admin:
       label: Date d'upload
     filetype:
       label: Type de fichiers
+    size:
+      label: Taille du fichier
+    dimensions:
+      label: Dimensions
+      int_filter_label: Largeur/hauteur (px)
+    view:
+      label: Mode d'affichage
+      mosaic: Vue mosaïque
+      table: Vue liste
+      select_all: Tout sélectionner
+    mosaic:
+      empty: Aucun média ne correspond à votre recherche.
+    picker:
+      title: Bibliothèque média
+      choose: Choisir
+      upload: Importer
+      remove: Supprimer
+      empty: Aucune image sélectionnée
 
   element:
     deleted: Elément supprimé.

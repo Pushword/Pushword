@@ -24,7 +24,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'unprose' => 'not-prose lg:-mx-40 my-6 md:-mx-20',
         ],
         'form_themes' => [
-            '@SonataForm/Form/datepicker.html.twig',
+            'bootstrap_5_layout.html.twig',
         ],
     ]);
 };

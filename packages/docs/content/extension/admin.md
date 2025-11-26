@@ -1,5 +1,5 @@
 ---
-title: "Standard Admin for Pushword : Admin User Interface"
+title: 'Standard Admin for Pushword : Admin User Interface'
 h1: Admin
 toc: true
 parent: extensions
@@ -29,6 +29,8 @@ You may be intersted by the [block editor](/extension/admin-block-editor).
 ## Customize the admin
 
 Admin is built on top of Sonata Admin with one more feature : the ability to manage displayed form fields from the configuration ([not yet for list fields and search fields](/roadmap)).
+
+You can also [customize the admin menu](/extension/admin-menu) to add, remove or reorder menu items.
 
 So, in your configuration, your default configuration is :
 

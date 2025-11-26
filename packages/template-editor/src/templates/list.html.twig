@@ -1,61 +1,65 @@
-{% extends '@SonataAdmin/standard_layout.html.twig' %}
+{% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block title %}
-- Liste des fichiers Thème
+{% block head_stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('bundles/pushwordadmin/admin.css') }}">
 {% endblock %}
 
-{% block actions %}
-{% if (canCreate) %}
-   <ul class="nav navbar-nav navbar-right">
-      <li><a class="sonata-action-element" href="{{ path ('pushword_template_editor_create') }}"><i class="fa fa-plus-circle" aria-hidden="true"></i>
-         Ajouter
-         </a>
-      </li>
-   </ul>
-{% endif %}
+{% block body_javascript %}
+    {{ parent() }}
+    <script src="{{ asset('/bundles/pushwordadmin/admin.js') }}"></script>
 {% endblock %}
-{% block sonata_admin_content %}
-    {{ include('@SonataTwig/FlashMessage/render.html.twig') }}
-<div class="box box-primary" style="margin-bottom: 100px;">
-   <div class="box-body table-responsive no-padding">
-      <table class="table table-bordered table-striped table-hover sonata-ba-list">
-         <thead>
-            <tr class="sonata-ba-list-field-header">
-               <th class="sonata-ba-list-field-header-text">
-                    Path
-               </th>
-               <th class="text-right sonata-ba-list-field-header-text">
-                  Action
-               </th>
-            </tr>
-         </thead>
-         <tbody>
+
+{% block content_title %}Templates{% endblock %}
+
+{% block page_actions %}
+    {% if canCreate %}
+        <a class="btn btn-primary" href="{{ path('admin_template_editor_create') }}">
+            <i class="fa fa-plus-circle me-2" aria-hidden="true"></i> Ajouter
+        </a>
+    {% endif %}
+{% endblock %}
+
+{% block main %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Path</th>
+                    <th scope="col" class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
             {% for element in elements %}
-            <tr>
-                <td class="sonata-ba-list-field sonata-ba-list-field-html">
-                  <a class="sonata-link-identifier" href="{{ path ('pushword_template_editor_edit', {encodedPath: element.encodedPath}) }}">
-                      {{ element.path }}
-                  </a>
-               </td>
-               <td class="sonata-ba-list-field sonata-ba-list-field-text" objectid="34" style="text-align:right">
-                  <div class="btn-group">
-                     <a href="{{ path ('pushword_template_editor_edit', {encodedPath: element.encodedPath}) }}" class="btn btn-sm btn-default view_link" title="Editer">
-                        <i class="fa fa-edit" aria-hidden="true"></i>
-                        Editer
-                     </a>
-                  {% if (canCreate) %}
-                     <a href="{{ path ('pushword_template_editor_delete', {encodedPath: element.encodedPath}) }}" class="btn btn-sm btn-default delete_link" title="Supprimer">
-                     <i class="fa fa-times" aria-hidden="true"></i>
-                     Supprimer
-                     </a>
-                  {% endif %}
-                  </div>
-               </td>
-            </tr>
+                <tr>
+                    <td>
+                        <a href="{{ path('admin_template_editor_edit', {encodedPath: element.encodedPath}) }}" class="link-primary text-decoration-none">
+                            {{ element.path }}
+                        </a>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{{ path('admin_template_editor_edit', {encodedPath: element.encodedPath}) }}" class="btn btn-outline-primary">
+                                <i class="fa fa-edit me-1" aria-hidden="true"></i> Éditer
+                            </a>
+                            {% if canCreate %}
+                                <a href="{{ path('admin_template_editor_delete', {encodedPath: element.encodedPath}) }}" class="btn btn-outline-danger">
+                                    <i class="fa fa-times me-1" aria-hidden="true"></i> Supprimer
+                                </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="2" class="text-center text-muted py-4">
+                        Aucun template disponible.
+                    </td>
+                </tr>
             {% endfor %}
-         </tbody>
-      </table>
-   </div>
+            </tbody>
+        </table>
+    </div>
 </div>
-
 {% endblock %}

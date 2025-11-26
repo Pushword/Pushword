@@ -9,10 +9,11 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
 use LogicException;
-use Pushword\Admin\PageCheatSheetAdmin;
+use Pushword\Admin\Controller\PageCheatSheetCrudController;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use RuntimeException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * @extends ServiceEntityRepository<Page>
@@ -26,8 +27,18 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 {
     public function __construct(
         ManagerRegistry $registry,
+        #[Autowire('%pw.public_media_dir%')]
+        private readonly string $publicMediaDir,
     ) {
         parent::__construct($registry, Page::class);
+    }
+
+    public function create(string $host): Page
+    {
+        $page = new Page();
+        $page->setHost($host);
+
+        return $page;
     }
 
     protected bool $hostCanBeNull = false;
@@ -90,7 +101,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             ->andWhere($alias.'.publishedAt <=  :now')
             ->setParameter('now', new DateTime(), 'datetime')
             ->andWhere($alias.'.slug <> :cheatsheet')
-            ->setParameter('cheatsheet', PageCheatSheetAdmin::CHEATSHEET_SLUG);
+            ->setParameter('cheatsheet', PageCheatSheetCrudController::CHEATSHEET_SLUG);
     }
 
     /**
@@ -183,13 +194,15 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $orx->add($queryBuilder->expr()->like('p.mainContent', ':defaultMedia')); // catch: media/default/example.jpg
         $orx->add($queryBuilder->expr()->like('p.mainContent', ':thumbMedia'));
 
+        $mediaDir = $this->publicMediaDir;
+
         $query = $queryBuilder->where($orx)
             ->setParameter('idMedia', $media->getId())
-            ->setParameter('nameMedia', "%'".$media->getName()."'%")
-            ->setParameter('apostrophMedia', "%'".$media->getMedia()."'%")
-            ->setParameter('quotedMedia', '%"'.$media->getMedia().'"%')
-            ->setParameter('defaultMedia', '/media/default/'.$media->getMedia().'%')
-            ->setParameter('thumbMedia', '/media/thumb/'.$media->getMedia().'%')
+            ->setParameter('nameMedia', "%'".$media->getAlt()."'%")
+            ->setParameter('apostrophMedia', "%'".$media->getFileName()."'%")
+            ->setParameter('quotedMedia', '%"'.$media->getFileName().'"%')
+            ->setParameter('defaultMedia', '/'.$mediaDir.'/default/'.$media->getFileName().'%')
+            ->setParameter('thumbMedia', '/'.$mediaDir.'/thumb/'.$media->getFileName().'%')
             ->getQuery();
 
         return $query->getResult();

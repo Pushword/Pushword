@@ -2,8 +2,8 @@
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use Pushword\Core\Entity\Media;
-use Sonata\AdminBundle\Form\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 /**
@@ -11,12 +11,9 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
  */
 class MediaSlugField extends AbstractField
 {
-    /**
-     * @param FormMapper<Media> $form
-     */
-    public function formField(FormMapper $form): void
+    public function getEasyAdminField(): ?FieldInterface
     {
-        $form->add('slugForce', TextType::class, [
+        return $this->buildEasyAdminField('slugForce', TextType::class, [
             'label' => 'admin.page.slug.label',
             'help_html' => true,
             'required' => false,

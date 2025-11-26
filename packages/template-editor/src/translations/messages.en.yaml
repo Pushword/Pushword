@@ -1,4 +1,11 @@
 
 admin:
   label:
-    theme: Éditeur de code
+    theme: Code Editor
+
+template_editor:
+  creation_disabled: Creation (and deletion) are disabled.
+  delete:
+    label: Delete
+  element:
+    deleted: Element deleted.
