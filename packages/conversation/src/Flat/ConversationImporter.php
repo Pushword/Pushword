@@ -170,7 +170,8 @@ final class ConversationImporter
 
         $medias = [];
         foreach ($fileNames as $fileName) {
-            $media = $this->mediaRepository->findOneBySearch($fileName);
+            $media = $this->mediaRepository->findOneByFileName($fileName)
+              ?? $this->mediaRepository->findOneBySearch($fileName);
             if (null !== $media) {
                 $medias[] = $media;
             }

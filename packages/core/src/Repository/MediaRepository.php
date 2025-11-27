@@ -31,6 +31,26 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         parent::__construct($registry, Media::class);
     }
 
+    /** @var array<string, Media> */
+    private array $mediasByFileNameCache = [];
+
+    public function loadMedias(): void
+    {
+        $medias = $this->findAll();
+        foreach ($medias as $media) {
+            $this->mediasByFileNameCache[$media->getFileName()] = $media;
+        }
+    }
+
+    public function findOneByFileName(string $fileName): ?Media
+    {
+        if ([] === $this->mediasByFileNameCache) {
+            $this->loadMedias();
+        }
+
+        return $this->mediasByFileNameCache[$fileName] ?? null;
+    }
+
     /**
      * @return array{mimeType: string[], ratioLabel: string[], dimensions: string[]}
      */
