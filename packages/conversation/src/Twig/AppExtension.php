@@ -60,9 +60,11 @@ class AppExtension
     #[AsTwigFunction('reviews', isSafe: ['html'], needsEnvironment: true)]
     public function renderReviewList(
         Twig $twig,
-        Page|array|string $pageOrTag,
+        Page|array|string|null $pageOrTag = null,
         int $limit = 10
     ): string {
+        $pageOrTag ??= $this->apps->getCurrentPage();
+
         $tags = $this->resolveReviewTag($pageOrTag);
         $reviews = [] === $tags ? []
           : $this->messageRepo->getPublishedReviewsByTag($tags, $limit);
@@ -78,8 +80,10 @@ class AppExtension
      */
     #[AsTwigFunction('reviewsCount', needsEnvironment: false)]
     public function count(
-        Page|array|string $pageOrTag,
+        Page|array|string|null $pageOrTag = null,
     ): int {
+        $pageOrTag ??= $this->apps->getCurrentPage();
+
         $tags = $this->resolveReviewTag($pageOrTag);
         $reviews = [] === $tags ? []
           : $this->messageRepo->getPublishedReviewsByTag($tags, 0);
