@@ -36,16 +36,16 @@ class MediaImporter extends AbstractImporter
 
     public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
     {
+        $isMetaDataFile = str_ends_with($filePath, '.json') || str_ends_with($filePath, '.yaml');
+        if ($isMetaDataFile && file_exists(substr($filePath, 0, -5))) { // data file
+            return; // sidecar metadata file
+        }
+
         if ($this->isImage($filePath)) {
             $this->importImage($filePath, $lastEditDateTime);
 
             return;
         }
-
-        // $isMetaDataFile = str_ends_with($filePath, '.json') || str_ends_with($filePath, '.yaml');
-        // if ($isMetaDataFile && file_exists(substr($filePath, 0, -5))) { // data file
-        //     return; // pas d'import donc pas de sync des données ?
-        // }
 
         $this->importMedia($filePath, $lastEditDateTime);
 
