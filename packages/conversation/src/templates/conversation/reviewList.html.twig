@@ -3,14 +3,14 @@
 {% endif %}
 
 {% set id = 'sh-' ~ random(1000, 9999) %}
-{% use '@PushwordCore/component/show_more.html.twig' %}
+{% use '@Pushword/component/show_more.html.twig' %}
 
-<div class="not-prose" id="{{ 'reviews'|trans() }}">
+<div class="not-prose" id="{{ 'reviewList'|trans() }}">
   {% for message in reviews %}
     {% if loop.index == 2 %}
       {{ block('before') }}
     {% endif %}
-    {% include '@PushwordConversation/conversation/review.html.twig' with {
+    {% include view('@PushwordConversation/conversation/review.html.twig') with {
       review: message,
     } %}
     {% if loop.last and loop.index > 3 %}

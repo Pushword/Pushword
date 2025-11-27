@@ -63,7 +63,7 @@ class AppExtension
         Page|array|string|null $pageOrTag = null,
         int $limit = 10
     ): string {
-        $pageOrTag ??= $this->apps->getCurrentPage();
+        $pageOrTag ??= $this->apps->getCurrentPage() ?? throw new Exception('No page or tag provided');
 
         $tags = $this->resolveReviewTag($pageOrTag);
         $reviews = [] === $tags ? []
@@ -82,7 +82,7 @@ class AppExtension
     public function count(
         Page|array|string|null $pageOrTag = null,
     ): int {
-        $pageOrTag ??= $this->apps->getCurrentPage();
+        $pageOrTag ??= $this->apps->getCurrentPage() ?? throw new Exception('No page or tag provided');
 
         $tags = $this->resolveReviewTag($pageOrTag);
         $reviews = [] === $tags ? []

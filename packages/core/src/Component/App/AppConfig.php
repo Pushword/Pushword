@@ -281,6 +281,14 @@ final class AppConfig
 
     private function getOverridedView(string $name): ?string
     {
+        if (str_starts_with($name, '@')) {
+            $namePart = explode('/', $name, 2);
+            if (! isset($namePart[1])) {
+                throw new \Exception('Invalid view name: '.$name);
+            }
+            $name = $namePart[1];
+        }
+
         $name = ('/' === $name[0] ? '' : '/').$name;
 
         $templateDir = $this->getStr('template_dir');
