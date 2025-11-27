@@ -24,9 +24,12 @@ class ShowMore
     }
 
     #[AsTwigFunction('startShowMore', isSafe: ['html'], needsEnvironment: false)]
-    public function startShowMore(string $id): string
+    public function startShowMore(string $id, string $showMoreExtraClass = ''): string
     {
-        return $this->getTemplate()->renderBlock('before', ['id' => $id]);
+        return $this->getTemplate()->renderBlock('before', [
+            'id' => $id,
+            'showMoreExtraClass' => $showMoreExtraClass,
+        ]);
     }
 
     #[AsTwigFunction('endShowMore', isSafe: ['html'], needsEnvironment: false)]

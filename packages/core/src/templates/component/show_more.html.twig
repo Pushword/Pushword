@@ -1,5 +1,5 @@
 {% block before %}
-<div class="show-more -mt-7">
+<div class="show-more {{ showMoreExtraClass|default('') }}">
   <input type="checkbox" id="{{ id }}" class="hidden show-hide-input">
   <div class="overflow-hidden transition-all delay-75 duration-300" data-acinb="max-h-[250px]" id="csm_{{ id }}">
 {% endblock %}
@@ -12,7 +12,6 @@
         class="text-3xl text-gray-500 cursor-pointer after:content-['\21A5'] after:cursor-pointer"
         onclick="
           const wrapper = this.closest('.show-more');
-          wrapper.classList.add('-mt-7');
           const content = wrapper.children[1];
           content.classList.add('overflow-hidden');
           content.style.maxHeight = '250px';
@@ -31,7 +30,6 @@
         const wrapper = this.closest('.show-more');
         const content = wrapper.children[1];
         window.previousScrollPositionForShowMore = wrapper.getBoundingClientRect().top;
-        wrapper.classList.remove('-mt-7');
         content.classList.remove('overflow-hidden');
         content.style.maxHeight = content.scrollHeight + 'px';
       ">
