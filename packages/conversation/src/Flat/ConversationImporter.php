@@ -68,6 +68,26 @@ final class ConversationImporter
     }
 
     /**
+     * @return string[]
+     */
+    private function prepareTags(string $tagsString): array
+    {
+        if ('' === $tagsString) {
+            return [];
+        }
+
+        if (str_contains($tagsString, '|')) {
+            return explode('|', $tagsString);
+        }
+
+        if (str_contains($tagsString, ',')) {
+            return explode(',', $tagsString);
+        }
+
+        return explode(' ', $tagsString);
+    }
+
+    /**
      * @param array<string, string|null> $row
      * @param string[]                   $customColumns
      *
@@ -75,9 +95,7 @@ final class ConversationImporter
      */
     private function buildDenormalizationData(array $row, array $customColumns, string $host): array
     {
-        // Convertit tags de string (séparé par |) en array
-        $tagsString = $row['tags'] ?? '';
-        $tags = '' !== $tagsString ? explode('|', $tagsString) : [];
+        $tags = $this->prepareTags($row['tags'] ?? '');
 
         $data = [
             'host' => $host,
