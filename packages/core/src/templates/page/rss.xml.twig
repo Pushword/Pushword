@@ -14,7 +14,7 @@
         {% set pages = pages is defined ? pages : (page.childrenPages|reverse)|slice(0, 5) %}
         {% for page in pages %}
         {% block item %}
-            {% if page.metaRobots != 'noindex' %}
+            {% if page.metaRobots != 'noindex' and page.isPublished %}
                 <item>
                     <title><![CDATA[{{ pw(page).h1|striptags|html_entity_decode }}]]></title>
                     <link>{{ page(page, true) }}</link>

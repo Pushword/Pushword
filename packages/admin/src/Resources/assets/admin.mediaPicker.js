@@ -362,8 +362,33 @@ function setSelectValue(select, value, label) {
   select.dispatchEvent(new Event('change', { bubbles: true }))
 }
 
+const PICKER_FIELD_STORAGE_KEY = 'pwMediaPickerFieldId'
+const PICKER_ACTIVE_STORAGE_KEY = 'pwMediaPickerActive'
+
 function initPickerChildContext() {
-  if (!new URLSearchParams(window.location.search).has('pwMediaPicker')) {
+  const params = new URLSearchParams(window.location.search)
+  const isPickerContextFromUrl = params.has('pwMediaPicker')
+
+  // Store fieldId and active state in sessionStorage so it persists across navigation
+  // (pagination, search form submission which loses URL params)
+  const fieldIdFromUrl = params.get('pwMediaPickerFieldId')
+  if (fieldIdFromUrl && isPickerContextFromUrl) {
+    try {
+      sessionStorage.setItem(PICKER_FIELD_STORAGE_KEY, fieldIdFromUrl)
+      sessionStorage.setItem(PICKER_ACTIVE_STORAGE_KEY, '1')
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  // Check if we're in picker context from URL or sessionStorage
+  // Only use sessionStorage fallback if we're in an iframe (to avoid false positives)
+  const isInIframe = window.parent !== window
+  const isPickerContextFromStorage =
+    isInIframe && getSessionStorageItem(PICKER_ACTIVE_STORAGE_KEY) === '1'
+  const isPickerContext = isPickerContextFromUrl || isPickerContextFromStorage
+
+  if (!isPickerContext) {
     return
   }
 
@@ -371,37 +396,75 @@ function initPickerChildContext() {
   bindMosaicSelection()
 }
 
-function bindMosaicSelection() {
+function getSessionStorageItem(key) {
+  try {
+    return sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Get the fieldId from URL or fallback to sessionStorage.
+ * This ensures we have the fieldId even after navigation (pagination, search).
+ */
+function getPickerFieldId() {
   const params = new URLSearchParams(window.location.search)
-  const fieldId = params.get('pwMediaPickerFieldId')
-  debug('bindMosaicSelection', { fieldId, params: params.toString() })
-  if (!fieldId) return
-
-  const handleCardClick = (event) => {
-    if (!(event.target instanceof Element)) {
-      return
-    }
-
-    const link = event.target.closest('.media-mosaic__card .mosaic-inner-box')
-    if (!link) {
-      return
-    }
-
-    event.preventDefault()
-    const card = link.closest('.media-mosaic__card')
-    if (!card) {
-      return
-    }
-
-    sendSelection(fieldId, extractMediaFromCard(card))
+  const fieldIdFromUrl = params.get('pwMediaPickerFieldId')
+  if (fieldIdFromUrl) {
+    return fieldIdFromUrl
   }
 
-  document
-    .querySelectorAll('.media-mosaic__card .mosaic-inner-box')
-    .forEach((element) => {
-      element.addEventListener('click', handleCardClick)
-    })
+  try {
+    return sessionStorage.getItem(PICKER_FIELD_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
 
+let mosaicSelectionBound = false
+
+function bindMosaicSelection() {
+  const fieldId = getPickerFieldId()
+  debug('bindMosaicSelection', { fieldId })
+  if (!fieldId) return
+
+  // Use event delegation on document to handle clicks on dynamically loaded content
+  // (pagination, search results, etc.)
+  if (!mosaicSelectionBound) {
+    document.addEventListener(
+      'click',
+      (event) => {
+        if (!(event.target instanceof Element)) {
+          return
+        }
+
+        const link = event.target.closest('.media-mosaic__card .mosaic-inner-box')
+        if (!link) {
+          return
+        }
+
+        // Get fieldId (from URL or sessionStorage)
+        const currentFieldId = getPickerFieldId()
+        if (!currentFieldId) {
+          return
+        }
+
+        event.preventDefault()
+        const card = link.closest('.media-mosaic__card')
+        if (!card) {
+          return
+        }
+
+        sendSelection(currentFieldId, extractMediaFromCard(card))
+      },
+      true,
+    )
+    mosaicSelectionBound = true
+    debug('Registered document click listener for mosaic selection')
+  }
+
+  const params = new URLSearchParams(window.location.search)
   const autoSelectId = params.get('pwMediaPickerSelect')
   if (autoSelectId) {
     const autoCard = document.querySelector(
@@ -416,32 +479,6 @@ function bindMosaicSelection() {
       ? `${window.location.pathname}?${newSearch}`
       : window.location.pathname
     window.history.replaceState({}, '', newUrl)
-  }
-
-  const embeddedWrapper = document.querySelector('[data-pw-media-picker-embedded]')
-  if (embeddedWrapper) {
-    embeddedWrapper.addEventListener(
-      'click',
-      (event) => {
-        if (!(event.target instanceof Element)) {
-          return
-        }
-
-        const link = event.target.closest('.media-mosaic__card .mosaic-inner-box')
-        if (!link) {
-          return
-        }
-
-        event.preventDefault()
-        const card = link.closest('.media-mosaic__card')
-        if (!card) {
-          return
-        }
-
-        sendSelection(fieldId, extractMediaFromCard(card))
-      },
-      true,
-    )
   }
 }
 

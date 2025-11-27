@@ -16,7 +16,7 @@
         max="9999"
         step="1"
         hx-post="{{ action }}"
-        hx-trigger="change delay:300ms"
+        hx-trigger="change, blur"
         hx-target="#{{ target }}"
         hx-swap="outerHTML"
         hx-vals='js:{field: "weight", value: event.target.value, _token: "{{ token|e('js') }}"}'

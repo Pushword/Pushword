@@ -29,7 +29,6 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FlashBag;
-use ReflectionClass;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -501,13 +500,9 @@ class PageCrudController extends AbstractAdminCrudController
         $shouldPublish = $this->normalizePublishedState((string) $request->request->get('published'));
 
         if ($shouldPublish) {
-            $publishedAt = new DateTime();
-            $page->setPublishedAt($publishedAt);
+            $page->setPublishedAt(new DateTime());
         } else {
-            // Use reflection to set publishedAt to null since setPublishedAt doesn't accept null
-            $reflection = new ReflectionClass($page);
-            $property = $reflection->getProperty('publishedAt');
-            $property->setValue($page, null);
+            $page->setPublishedAt(null);
         }
 
         $this->getEntityManager()->flush();

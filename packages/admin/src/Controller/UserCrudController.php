@@ -28,6 +28,15 @@ class UserCrudController extends AbstractAdminCrudController
     }
 
     #[Override]
+    public function configureCrud(Crud $crud): Crud
+    {
+        return $crud
+            ->setEntityLabelInSingular('admin.label.user')
+            ->setEntityLabelInPlural('admin.label.users')
+            ->setDefaultSort(['createdAt' => 'DESC']);
+    }
+
+    #[Override]
     public function configureFields(string $pageName): iterable
     {
         if (Crud::PAGE_INDEX === $pageName) {
@@ -46,24 +55,26 @@ class UserCrudController extends AbstractAdminCrudController
         $this->setSubject($instance instanceof User ? $instance : new User());
         $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
 
-        $fields = array_replace([[], [], []], $this->adminFormFieldManager->getFormFields($this, 'admin_user_form_fields'));
+        $fields = array_replace(
+            [[], [], []],
+            $this->adminFormFieldManager->getFormFields($this, 'admin_user_form_fields'),
+        );
         [$mainFields, $sidebarBlocks] = $fields;
 
-        yield FormField::addFieldset('admin.user.label.id')->setCssClass('col-md-9');
+        yield FormField::addColumn('col-12 col-md-8 mainFields');
+        yield FormField::addFieldset();
         yield from $this->adminFormFieldManager->getEasyAdminFields($mainFields, $this);
 
-        if ([] === $sidebarBlocks) {
-            return;
-        }
+        if ([] !== $sidebarBlocks) {
+            yield FormField::addColumn('col-12 col-md-4 columnFields');
+            foreach ($sidebarBlocks as $groupName => $block) {
+                if (\is_string($groupName)) {
+                    yield FormField::addFieldset($groupName);
+                }
 
-        yield FormField::addFieldset('admin.user.label.security')->setCssClass('col-md-3');
-        foreach ($sidebarBlocks as $groupName => $block) {
-            if (\is_string($groupName)) {
-                yield FormField::addFieldset($groupName);
+                $classes = $this->normalizeBlock($block);
+                yield from $this->adminFormFieldManager->getEasyAdminFields($classes, $this);
             }
-
-            $classes = $this->extractFieldClasses($block);
-            yield from $this->adminFormFieldManager->getEasyAdminFields($classes, $this);
         }
     }
 
@@ -89,7 +100,7 @@ class UserCrudController extends AbstractAdminCrudController
      *
      * @return list<class-string<AbstractField<User>>>
      */
-    private function extractFieldClasses(array|string $block): array
+    private function normalizeBlock(array|string $block): array
     {
         if (\is_array($block)) {
             if (isset($block['fields']) && \is_array($block['fields'])) {

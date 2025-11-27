@@ -69,8 +69,8 @@ class Page implements IdInterface, Taggable, Stringable
     #[ORM\Column(type: Types::TEXT)]
     protected string $mainContent = '';
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
-    protected ?DateTimeInterface $publishedAt = null;  // @phpstan-ignore-line
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['default' => 'CURRENT_TIMESTAMP'])]
+    protected ?DateTimeInterface $publishedAt = null;
 
     public function __toString(): string
     {
@@ -133,23 +133,12 @@ class Page implements IdInterface, Taggable, Stringable
         return $this;
     }
 
-    /**
-     * Get the value of publishedAt.
-     */
-    public function getPublishedAt(bool $safe = true): ?DateTimeInterface
+    public function getPublishedAt(): ?DateTimeInterface
     {
-        if (! $safe) {
-            return $this->publishedAt;
-        }
-
-        if (null !== $this->publishedAt) {
-            return $this->publishedAt;
-        }
-
-        return new DateTime();
+        return $this->publishedAt;
     }
 
-    public function setPublishedAt(DateTimeInterface $publishedAt): self
+    public function setPublishedAt(?DateTimeInterface $publishedAt): self
     {
         $this->publishedAt = $publishedAt;
 
@@ -158,7 +147,7 @@ class Page implements IdInterface, Taggable, Stringable
 
     public function isPublished(): bool
     {
-        return $this->publishedAt <= new DateTime('now');
+        return null !== $this->publishedAt && $this->publishedAt <= new DateTime('now');
     }
 
     public static function loadValidatorMetadata(ClassMetadata $metadata): void

@@ -100,7 +100,7 @@ When a task impacts the admin UI or other frontend pieces, feel free to open the
 
 Use `symfony server:list` to see if a local server is already running, or start one with `composer dev`.
 
-Default credentials are `admin@example.com` / `p@ssword` (ROLE_SUPER_ADMIN). If that user fails, reset the demo via `composer reset`.
+Default credentials are `admin@example.tld` / `p@ssword` (ROLE_SUPER_ADMIN). If that user fails, reset the demo via `composer reset`.
 
 ## Quality Gates
 

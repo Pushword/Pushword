@@ -98,6 +98,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         // $this->andNotRedirection($queryBuilder);
 
         return $this->createQueryBuilder($alias)
+            ->andWhere($alias.'.publishedAt IS NOT NULL')
             ->andWhere($alias.'.publishedAt <=  :now')
             ->setParameter('now', new DateTime(), 'datetime')
             ->andWhere($alias.'.slug <> :cheatsheet')

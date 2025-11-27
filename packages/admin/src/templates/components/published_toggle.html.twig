@@ -9,7 +9,11 @@
     {% set publishedAt = value ?? field.value ?? entityInstance.publishedAt %}
     {% set isPublished = publishedAt is not null %}
     {% set entityId = entityInstance.id %}
-    {% set entityType = entityInstance.slug is defined ? 'page' : 'conversation' %}
+    {% if entityInstance.slug is defined and entityInstance.slug is not null and entityInstance.slug != '' %}
+        {% set entityType = 'page' %}
+    {% else %}
+        {% set entityType = 'conversation' %}
+    {% endif %}
     {% set target = 'pw-published-' ~ entityType ~ '-' ~ entityId %}
     {% set routeName = entityType == 'page' ? 'pushword_page_toggle_publish' : 'pushword_conversation_toggle_publish' %}
     {% set action = url(routeName, {id: entityId}) %}
