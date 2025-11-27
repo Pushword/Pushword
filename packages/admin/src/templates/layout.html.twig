@@ -1,6 +1,8 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block body_class %}pw-legacy-admin bg-gray-50 min-h-screen{% endblock %}
+{% set isInlineWindow = app.request.query.get('pwInline') is not null %}
+
+{% block body_class %}pw-legacy-admin bg-gray-50 min-h-screen{{ isInlineWindow ? ' pw-inline-window' : '' }}{% endblock %}
 
 {% block head_stylesheets %}
     {{ parent() }}
@@ -12,6 +14,19 @@
     {{ parent() }}
     <script src="/bundles/pushwordadmin/monaco/app.js"></script>
     <script src="{{ asset('/bundles/pushwordadmin/admin.js') }}"></script>
+    {% if isInlineWindow %}
+        <script>
+            window.addEventListener('load', function () {
+                const params = new URLSearchParams(window.location.search)
+                if (params.has('pwInlineSaved')) {
+                    window.parent.postMessage(
+                        { type: 'pw-inline-close', refresh: true },
+                        window.location.origin,
+                    )
+                }
+            })
+        </script>
+    {% endif %}
     {% block javascripts %}{% endblock %}
 {% endblock %}
 

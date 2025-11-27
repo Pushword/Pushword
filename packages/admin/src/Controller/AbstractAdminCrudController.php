@@ -3,12 +3,14 @@
 namespace Pushword\Admin\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use InvalidArgumentException;
 use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\AdminInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -127,6 +129,71 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
     protected function normalizePublishedState(string $value): bool
     {
         return \in_array(strtolower($value), ['1', 'true', 'on'], true);
+    }
+
+    #[Override]
+    #[\Override]
+    protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
+    {
+        $response = parent::getRedirectResponseAfterSave($context, $action);
+
+        $request = $context->getRequest();
+        if (null === $request || ! $request->query->has('pwInline')) {
+            return $response;
+        }
+
+        $targetUrl = $this->withInlineQueryParameters($response->getTargetUrl());
+        if ($targetUrl === $response->getTargetUrl()) {
+            return $response;
+        }
+
+        return new RedirectResponse($targetUrl, $response->getStatusCode(), $response->headers->all());
+    }
+
+    private function withInlineQueryParameters(string $url): string
+    {
+        $originalUrl = $url;
+        $fragment = '';
+
+        $hashPos = strpos($url, '#');
+        if (false !== $hashPos) {
+            $fragment = substr($url, $hashPos);
+            $url = substr($url, 0, $hashPos);
+        }
+
+        $queryString = '';
+        $basePath = $url;
+
+        $queryPos = strpos($url, '?');
+        if (false !== $queryPos) {
+            $basePath = substr($url, 0, $queryPos);
+            $queryString = substr($url, $queryPos + 1);
+        }
+
+        $params = [];
+        if ('' !== $queryString) {
+            parse_str($queryString, $params);
+        }
+
+        $hasChanges = false;
+
+        if (! isset($params['pwInline'])) {
+            $params['pwInline'] = 1;
+            $hasChanges = true;
+        }
+
+        if (($params['pwInlineSaved'] ?? null) !== '1') {
+            $params['pwInlineSaved'] = 1;
+            $hasChanges = true;
+        }
+
+        if (! $hasChanges) {
+            return $originalUrl;
+        }
+
+        $query = http_build_query($params);
+
+        return sprintf('%s?%s%s', $basePath, $query, $fragment);
     }
 
     /**

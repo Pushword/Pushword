@@ -57,9 +57,20 @@ admin:
     createdAt:
       label: Posted on
 
+    weight:
+      label: Weight
+      help: Lower values appear first
+
     tags:
       label: Tags
       placeholder: Tags (separated by spaces)
+
+    inline:
+      open_popup: "Open in a popup"
+      placeholder:
+        title: "Title…"
+        content: "Content…"
+        tags: "Tags (separated by spaces)"
 
   review:
     rating:

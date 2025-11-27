@@ -11,6 +11,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 use function is_numeric;
@@ -115,6 +116,10 @@ final class ReviewCrudController extends ConversationCrudController
         yield DateTimeField::new('publishedAt', 'admin.conversation.label.publishedAt')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
+
+        yield IntegerField::new('weight', 'admin.conversation.weight.label')
+            ->setSortable(true)
+            ->setTemplatePath('@PushwordConversation/admin/weightInlineField.html.twig');
 
         yield TextField::new('title', 'admin.review.title.label')
             ->setSortable(false)

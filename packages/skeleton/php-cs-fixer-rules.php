@@ -24,6 +24,7 @@ return [
     'class_attributes_separation' => [
         'elements' => ['const' => 'one', 'method' => 'one', 'property' => 'one'],
     ],
+    'ordered_traits' => false,
     'method_argument_space' => [
         'on_multiline' => 'ensure_fully_multiline',
     ],

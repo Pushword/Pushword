@@ -15,6 +15,7 @@ use Pushword\Core\Entity\SharedTrait\MediaListTrait;
 use Pushword\Core\Entity\SharedTrait\Taggable;
 use Pushword\Core\Entity\SharedTrait\TagsTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
+use Pushword\Core\Entity\SharedTrait\WeightTrait;
 use Stringable;
 use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -28,12 +29,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 ])]
 class Message implements Stringable, Taggable, IdInterface
 {
-    use CustomPropertiesTrait;
-    use HostTrait;
     use IdTrait;
-    use MediaListTrait;
-    use TagsTrait;
     use TimestampableTrait;
+    use HostTrait;
+    use WeightTrait;
+    use TagsTrait;
+    use MediaListTrait;
+    use CustomPropertiesTrait;
 
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
     protected ?string $authorName = '';

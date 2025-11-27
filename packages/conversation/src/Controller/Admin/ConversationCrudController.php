@@ -3,27 +3,36 @@
 namespace Pushword\Conversation\Controller\Admin;
 
 use DateTime;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use LogicException;
 use Override;
 use Pushword\Admin\Controller\AbstractAdminCrudController;
 use Pushword\Admin\FormField\CustomPropertiesField;
 use Pushword\Admin\FormField\HostField;
 use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Entity\Review as ReviewEntity;
 use Pushword\Conversation\FormField\ConversationTagsField;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 /** @extends AbstractAdminCrudController<Message> */
 class ConversationCrudController extends AbstractAdminCrudController
 {
+    private ?AdminUrlGenerator $adminUrlGenerator = null;
+
     public static function getEntityFqcn(): string
     {
         return Message::class;
@@ -69,6 +78,10 @@ class ConversationCrudController extends AbstractAdminCrudController
         yield DateTimeField::new('publishedAt', 'admin.conversation.label.publishedAt')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
+
+        yield IntegerField::new('weight', 'admin.conversation.weight.label')
+            ->setSortable(true)
+            ->setTemplatePath('@PushwordConversation/admin/weightInlineField.html.twig');
 
         yield TextField::new('content', 'admin.conversation.content.label')
             ->setSortable(false)
@@ -154,6 +167,9 @@ class ConversationCrudController extends AbstractAdminCrudController
             ->setFormTypeOption('html5', true)
             ->setFormTypeOption('widget', 'single_text')
             ->setFormTypeOption('required', false);
+        yield IntegerField::new('weight', 'admin.conversation.weight.label')
+            ->setFormTypeOption('required', false)
+            ->setHelp('admin.conversation.weight.help');
 
         yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')->setDisabled();
 
@@ -204,8 +220,173 @@ class ConversationCrudController extends AbstractAdminCrudController
         ]));
     }
 
+    #[Route(path: '/admin/conversation/{id}/inline-update', name: 'pushword_conversation_inline_update', methods: ['POST'])]
+    public function inlineUpdate(Request $request, Message $message): Response
+    {
+        $token = (string) $request->request->get('_token');
+
+        if (! $this->isCsrfTokenValid($this->getInlineTokenId($message), $token)) {
+            return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
+        }
+
+        $field = trim((string) $request->request->get('field', ''));
+        $value = (string) $request->request->get('value', '');
+
+        if ('' === $field || ! $this->applyInlineUpdate($message, $field, $value)) {
+            return new Response('Field not editable.', Response::HTTP_BAD_REQUEST);
+        }
+
+        $this->getEntityManager()->flush();
+
+        $template = 'weight' === $field
+            ? '@PushwordConversation/admin/weightInlineField.html.twig'
+            : '@PushwordConversation/admin/messageListTitleField.html.twig';
+
+        return new Response($this->adminFormFieldManager->twig->render($template, [
+            'entity' => ['instance' => $message],
+            'value' => 'weight' === $field ? $message->weight : null,
+            'field' => null,
+        ]));
+    }
+
     private function getPublishedToggleTokenId(Message $message): string
     {
         return 'conversation_toggle_published_'.$message->getId();
+    }
+
+    private function getInlineTokenId(Message $message): string
+    {
+        return 'conversation_inline_'.$message->getId();
+    }
+
+    private function applyInlineUpdate(Message $message, string $field, string $value): bool
+    {
+        $trimmed = trim($value);
+
+        return match ($field) {
+            'content' => $this->updateContent($message, $value),
+            'authorName' => $this->updateNullableString(fn (?string $val): Message => $message->setAuthorName($val), $trimmed),
+            'authorEmail' => $this->updateNullableString(fn (?string $val): Message => $message->setAuthorEmail($val), $trimmed),
+            'referring' => $this->updateNullableString(fn (?string $val): Message => $message->setReferring($val), $trimmed),
+            'host' => $this->updateNullableString(fn (?string $val): Message => $message->setHost($val), $trimmed),
+            'tags' => $this->updateTags($message, $value),
+            'weight' => $this->updateWeightField($message, $trimmed),
+            'title' => $this->updateReviewField($message, $trimmed, 'title'),
+            'rating' => $this->updateReviewField($message, $trimmed, 'rating'),
+            default => false,
+        };
+    }
+
+    /**
+     * @param callable(?string): Message $callback
+     */
+    private function updateNullableString(callable $callback, string $value): bool
+    {
+        $callback('' === $value ? null : $value);
+
+        return true;
+    }
+
+    private function updateContent(Message $message, string $value): bool
+    {
+        $message->setContent($value);
+
+        return true;
+    }
+
+    private function updateTags(Message $message, string $value): bool
+    {
+        $message->setTags($value);
+
+        return true;
+    }
+
+    private function updateWeightField(Message $message, string $value): bool
+    {
+        if ('' === $value) {
+            $message->weight = 0;
+
+            return true;
+        }
+
+        if (! \is_numeric($value)) {
+            return false;
+        }
+
+        $message->weight = (int) $value;
+
+        return true;
+    }
+
+    private function updateReviewField(Message $message, string $value, string $field): bool
+    {
+        if (! $message instanceof ReviewEntity) {
+            return false;
+        }
+
+        if ('title' === $field) {
+            $message->setTitle('' === $value ? null : $value);
+
+            return true;
+        }
+
+        if ('rating' === $field) {
+            if ('' === $value) {
+                $message->setRating(null);
+
+                return true;
+            }
+
+            if (! \is_numeric($value)) {
+                return false;
+            }
+
+            $intValue = max(1, min(5, (int) $value));
+            $message->setRating($intValue);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    #[Override]
+    protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
+    {
+        if ($context->getRequest()->query->has('pwInline')) {
+            $entityId = $context->getEntity()->getPrimaryKeyValue();
+            if (null !== $entityId) {
+                $controller = $context->getCrud()?->getControllerFqcn() ?? static::class;
+
+                $url = $this->getAdminUrlGenerator()
+                    ->setController($controller)
+                    ->setAction(Action::EDIT)
+                    ->setEntityId($entityId)
+                    ->set('pwInline', 1)
+                    ->set('pwInlineSaved', 1)
+                    ->generateUrl();
+
+                return new RedirectResponse($url);
+            }
+        }
+
+        return parent::getRedirectResponseAfterSave($context, $action);
+    }
+
+    private function getAdminUrlGenerator(): AdminUrlGenerator
+    {
+        if (null !== $this->adminUrlGenerator) {
+            return $this->adminUrlGenerator;
+        }
+
+        if (! isset($this->container)) {
+            throw new LogicException('AdminUrlGenerator is not available.');
+        }
+
+        /** @var AdminUrlGenerator $generator */
+        $generator = $this->container->get(AdminUrlGenerator::class);
+        $this->adminUrlGenerator = $generator;
+
+        return $this->adminUrlGenerator;
     }
 }

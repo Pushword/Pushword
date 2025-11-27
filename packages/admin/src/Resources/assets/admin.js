@@ -13,6 +13,7 @@ import { filterImageFormField } from './admin.filterImageFormField'
 
 // Modules de sélection
 import { mediaPicker } from './admin.mediaPicker'
+import { inlinePopup } from './admin.inlinePopup'
 
 // Modules de formulaire
 import { textareaAutoSize, textareaWithoutNewLine } from './admin.textareaHelper'
@@ -68,6 +69,7 @@ window.addEventListener('load', function () {
 
   // Sélecteurs
   mediaPicker()
+  inlinePopup()
   suggestTags()
 
   // État de la page

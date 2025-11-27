@@ -12,6 +12,8 @@ Let's take a look at the commands available in Pushword and their purpose. Keep 
   pw:flat:sync                Import to database or Export to flat file
   pw:flat:import              Syncing flat file inside database
   pw:flat:export              Export database toward file (yaml+json)
+  pw:message:flat             Sync conversation CSV with database (auto import/export)
+  pw:message:import           Import an external conversation CSV
   pw:image:cache        Generate all images cache
   pw:image:optimize     Optimize all images cache
   pw:page-scan          Find dead links, 404, 301 and more in your content.

@@ -9,8 +9,8 @@ use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'pw:conversation:flat', description: 'Convert conversation to flat file.')]
-final readonly class ConversationFlatCommand
+#[AsCommand(name: 'pw:message:flat', description: 'Convert conversation to flat file.')]
+final readonly class MessageFlatCommand
 {
     public function __construct(
         private AppPool $apps,

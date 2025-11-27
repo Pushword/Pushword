@@ -59,9 +59,20 @@ admin:
     createdAt:
       label: Posté le
 
+    weight:
+      label: Poids
+      help: Les valeurs les plus basses apparaissent en premier
+
     tags:
       label: Tags
       placeholder: Tags (séparés par des espaces)
+
+    inline:
+      open_popup: "Ouvrir dans une popup"
+      placeholder:
+        title: "Titre…"
+        content: "Contenu…"
+        tags: "Tags (séparés par des espaces)"
 
   review:
     rating:

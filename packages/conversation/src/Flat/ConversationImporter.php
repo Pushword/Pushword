@@ -16,6 +16,13 @@ final class ConversationImporter
 {
     use ConversationContextTrait;
 
+    private const float DUPLICATE_SIMILARITY_THRESHOLD = 90.0;
+
+    /**
+     * @var array<string, Message[]>
+     */
+    private array $messagesCacheByHost = [];
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly DenormalizerInterface $denormalizer,
@@ -23,120 +30,27 @@ final class ConversationImporter
     ) {
     }
 
+    public function importExternal(string $csvPath): void
+    {
+        $defaultHost = $this->apps->get()->getMainHost();
+
+        $this->importFromCsv(
+            $csvPath,
+            $defaultHost,
+            fn (array $row, string $host): ?Message => $this->findSimilarMessage($row, $host),
+            skipExisting: true,
+        );
+    }
+
     public function import(?string $host = null): void
     {
         $app = $this->resolveApp($host);
-        $csvPath = $this->buildCsvPath($app);
 
-        if (! file_exists($csvPath)) {
-            return;
-        }
-
-        try {
-            $reader = Reader::from($csvPath, 'r');
-        } catch (CsvException) {
-            return;
-        }
-
-        try {
-            $reader->setHeaderOffset(0);
-        } catch (CsvException) {
-            return;
-        }
-
-        /** @var string[] $header */
-        $header = $reader->getHeader();
-        if ([] === $header) {
-            return;
-        }
-
-        // Filtre les colonnes vides
-        $header = array_filter($header, fn (string $col): bool => '' !== trim($col));
-        $customColumns = array_values(array_diff($header, ConversationCsvHelper::BASE_COLUMNS));
-
-        /** @var iterable<int, array<string, string|null>> $records */
-        $records = $reader->getRecords();
-        foreach ($records as $row) {
-            // Ignore les lignes qui sont des headers dupliqués (ligne qui commence par un nom de colonne)
-            if ($this->isHeaderRow($row, $header)) {
-                continue;
-            }
-
-            // Ignore les lignes complètement vides
-            if ($this->isEmptyRow($row)) {
-                continue;
-            }
-
-            // Valide que la ligne a un contenu valide (contrainte NotBlank sur content)
-            if (! $this->isValidRow($row)) {
-                continue;
-            }
-
-            $message = $this->findMessage($row['id'] ?? null);
-            if (null === $message) {
-                $messageClass = $this->resolveMessageClass($row['type'] ?? null, $row);
-                if (null === $messageClass) {
-                    continue;
-                }
-
-                $options = [];
-            } else {
-                $messageClass = $message::class;
-                $options = [AbstractNormalizer::OBJECT_TO_POPULATE => $message];
-            }
-
-            $data = $this->buildDenormalizationData($row, $customColumns, $app->getMainHost());
-
-            // Valide les dates avant de les passer au dénormaliseur
-            $data = $this->validateDates($data);
-
-            // Extrait mediaList avant la dénormalisation car setMediaList() attend une Collection
-            /** @var Media[] $mediaList */
-            $mediaList = $data['mediaList'] ?? [];
-            unset($data['mediaList']);
-
-            // Ajoute le contexte pour ignorer les propriétés manquantes ou vides
-            $ignoredAttributes = [];
-            // Ignore authorIpRaw si la valeur est absente ou vide pour éviter les erreurs
-            if (! isset($data['authorIpRaw'])) {
-                $ignoredAttributes[] = 'authorIpRaw';
-            }
-
-            // Ignore les dates si elles sont absentes pour éviter les erreurs de parsing
-            if (! isset($data['publishedAt'])) {
-                $ignoredAttributes[] = 'publishedAt';
-            }
-
-            if (! isset($data['createdAt'])) {
-                $ignoredAttributes[] = 'createdAt';
-            }
-
-            if (! isset($data['updatedAt'])) {
-                $ignoredAttributes[] = 'updatedAt';
-            }
-
-            $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = $ignoredAttributes;
-            $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
-
-            try {
-                /** @var Message $normalizedMessage */
-                $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
-
-                // Ajoute les médias manuellement après la dénormalisation
-                foreach ($mediaList as $media) {
-                    $normalizedMessage->addMedia($media);
-                }
-
-                if (! isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {
-                    $this->entityManager->persist($normalizedMessage);
-                }
-            } catch (Throwable) {
-                // Ignore les lignes qui échouent lors de la dénormalisation
-                continue;
-            }
-        }
-
-        $this->entityManager->flush();
+        $this->importFromCsv(
+            $this->buildCsvPath($app),
+            $app->getMainHost(),
+            fn (array $row, string $_host): ?Message => $this->findMessage($row['id'] ?? null),
+        );
     }
 
     public function getLastUpdatedMessage(string $host): ?Message
@@ -159,13 +73,11 @@ final class ConversationImporter
      *
      * @return array<string, mixed>
      */
-    private function buildDenormalizationData(array $row, array $customColumns, string $defaultHost): array
+    private function buildDenormalizationData(array $row, array $customColumns, string $host): array
     {
         // Convertit tags de string (séparé par |) en array
         $tagsString = $row['tags'] ?? '';
         $tags = '' !== $tagsString ? explode('|', $tagsString) : [];
-
-        $host = isset($row['host']) ? ($row['host'] ?: $defaultHost) : $defaultHost;
 
         $data = [
             'host' => $host,
@@ -365,5 +277,216 @@ final class ConversationImporter
         }
 
         return $customProperties;
+    }
+
+    /**
+     * @param callable(array<string, string|null>, string): ?Message $messageResolver
+     */
+    private function importFromCsv(
+        string $csvPath,
+        string $defaultHost,
+        callable $messageResolver,
+        bool $skipExisting = false,
+    ): void {
+        $reader = $this->createReader($csvPath);
+        if (null === $reader) {
+            return;
+        }
+
+        $header = $this->prepareHeader($reader);
+        if ([] === $header) {
+            return;
+        }
+
+        $customColumns = array_values(array_diff($header, ConversationCsvHelper::BASE_COLUMNS));
+
+        $records = $reader->getRecords();
+        foreach ($records as $row) {
+            if ($this->shouldSkipRow($row, $header)) {
+                continue;
+            }
+
+            $host = $this->resolveRowHost($row, $defaultHost);
+            $message = $messageResolver($row, $host);
+
+            if ($skipExisting && null !== $message) {
+                continue;
+            }
+
+            if (null === $message) {
+                $messageClass = $this->resolveMessageClass($row['type'] ?? null, $row);
+                if (null === $messageClass) {
+                    continue;
+                }
+
+                $options = [];
+            } else {
+                $messageClass = $message::class;
+                $options = [AbstractNormalizer::OBJECT_TO_POPULATE => $message];
+            }
+
+            $data = $this->buildDenormalizationData($row, $customColumns, $host);
+
+            // Valide les dates avant de les passer au dénormaliseur
+            $data = $this->validateDates($data);
+
+            // Extrait mediaList avant la dénormalisation car setMediaList() attend une Collection
+            /** @var Media[] $mediaList */
+            $mediaList = $data['mediaList'] ?? [];
+            unset($data['mediaList']);
+
+            // Ajoute le contexte pour ignorer les propriétés manquantes ou vides
+            $ignoredAttributes = [];
+            // Ignore authorIpRaw si la valeur est absente ou vide pour éviter les erreurs
+            if (! isset($data['authorIpRaw'])) {
+                $ignoredAttributes[] = 'authorIpRaw';
+            }
+
+            // Ignore les dates si elles sont absentes pour éviter les erreurs de parsing
+            if (! isset($data['publishedAt'])) {
+                $ignoredAttributes[] = 'publishedAt';
+            }
+
+            if (! isset($data['createdAt'])) {
+                $ignoredAttributes[] = 'createdAt';
+            }
+
+            if (! isset($data['updatedAt'])) {
+                $ignoredAttributes[] = 'updatedAt';
+            }
+
+            $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = $ignoredAttributes;
+            $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
+
+            try {
+                /** @var Message $normalizedMessage */
+                $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
+
+                // Ajoute les médias manuellement après la dénormalisation
+                foreach ($mediaList as $media) {
+                    $normalizedMessage->addMedia($media);
+                }
+
+                if (! isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {
+                    $this->entityManager->persist($normalizedMessage);
+                }
+            } catch (Throwable) {
+                // Ignore les lignes qui échouent lors de la dénormalisation
+                continue;
+            }
+        }
+
+        $this->entityManager->flush();
+    }
+
+    /**
+     * @param array<string, string|null> $row
+     */
+    private function resolveRowHost(array $row, string $defaultHost): string
+    {
+        $host = $row['host'] ?? null;
+        if (! \is_string($host)) {
+            return $defaultHost;
+        }
+
+        $trimmed = trim($host);
+
+        return '' === $trimmed ? $defaultHost : $trimmed;
+    }
+
+    /**
+     * @param array<string, string|null> $row
+     * @param string[]                   $header
+     */
+    private function shouldSkipRow(array $row, array $header): bool
+    {
+        if ($this->isHeaderRow($row, $header)) {
+            return true;
+        }
+        if ($this->isEmptyRow($row)) {
+            return true;
+        }
+
+        return ! $this->isValidRow($row);
+    }
+
+    /**
+     * @return Reader<array<string, string|null>>|null
+     */
+    private function createReader(string $csvPath): ?Reader
+    {
+        if (! file_exists($csvPath)) {
+            return null;
+        }
+
+        try {
+            $reader = Reader::from($csvPath, 'r');
+        } catch (CsvException) {
+            return null;
+        }
+
+        try {
+            $reader->setHeaderOffset(0);
+        } catch (CsvException) {
+            return null;
+        }
+
+        return $reader;
+    }
+
+    /**
+     * @param Reader<array<string, string|null>> $reader
+     *
+     * @return string[]
+     */
+    private function prepareHeader(Reader $reader): array
+    {
+        /** @var string[] $header */
+        $header = $reader->getHeader();
+        if ([] === $header) {
+            return [];
+        }
+
+        // Filtre les colonnes vides
+        return array_values(array_filter($header, fn (string $col): bool => '' !== trim($col)));
+    }
+
+    /**
+     * @param array<string, string|null> $row
+     */
+    private function findSimilarMessage(array $row, string $host): ?Message
+    {
+        $content = $row['content'] ?? null;
+        if (! \is_string($content)) {
+            return null;
+        }
+
+        $normalized = trim($content);
+        if ('' === $normalized) {
+            return null;
+        }
+
+        foreach ($this->getMessagesForHost($host) as $message) {
+            $percent = 0.0;
+            similar_text($normalized, $message->getContent(), $percent);
+
+            if ($percent >= self::DUPLICATE_SIMILARITY_THRESHOLD) {
+                return $message;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return Message[]
+     */
+    private function getMessagesForHost(string $host): array
+    {
+        if (! array_key_exists($host, $this->messagesCacheByHost)) {
+            $this->messagesCacheByHost[$host] = $this->getMessageRepository()->findByHost($host);
+        }
+
+        return $this->messagesCacheByHost[$host];
     }
 }

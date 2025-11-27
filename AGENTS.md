@@ -46,6 +46,11 @@ Pushword is a modular CMS built as a collection of Symfony bundles. This is a mo
 - Group class elements in this order: constants, properties, constructor, public methods, protected methods, private methods
 - Group getter and setter methods for the same properties together
 - Suffix interfaces with Interface, traits with Trait
+- indent with 4 spaces
+
+## Twig Templates
+
+- indent with 2 spaces
 
 ### Entities
 

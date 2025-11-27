@@ -1,119 +1,133 @@
 {# @var message \Pushword\Conversation\Entity\Message #}
 {% set message = entity.instance %}
+
 {% set isReview = message.rating is defined and message.rating %}
 {% set review = isReview ? message : null %}
 
-{% if isReview %}
-  {% set editUrl = ea_url()
-      .setController('Pushword\\Conversation\\Controller\\Admin\\ReviewCrudController')
-      .setAction('edit')
-      .setEntityId(message.id)
-  %}
-{% else %}
-  {% set editUrl = ea_url()
-      .setAction('edit')
-      .setEntityId(message.id)
-  %}
-{% endif %}
+{% set inlineTarget = 'pw-message-inline-' ~ message.id %}
+{% set inlineAction = url('pushword_conversation_inline_update', {id: message.id}) %}
+{% set inlineToken = csrf_token('conversation_inline_' ~ message.id) %}
 
-{# Get title or truncated content #}
-{% set title = '' %}
-{% if isReview and review.title %}
-    {% set title = review.title %}
-{% endif %}
-{% if title == '' %}
-    {% set content = message.content|striptags|trim %}
-    {% if content|length > 90 %}
-        {% set title = content|slice(0, 89) ~ '…' %}
-    {% else %}
-        {% set title = content %}
-    {% endif %}
-{% endif %}
+{% set editUrl = ea_url()
+  .setController(isReview
+    ? 'Pushword\\Conversation\\Controller\\Admin\\ReviewCrudController'
+    : 'Pushword\\Conversation\\Controller\\Admin\\ConversationCrudController')
+  .setAction('edit')
+  .set('pwInline', 1)
+  .setEntityId(message.id)
+%}
 
-{# Get rating if exists #}
-{% set rating = null %}
-{% if isReview %}
-    {% set rating = review.rating %}
-{% endif %}
 
-{# Get tags #}
-{% set tagList = message.tagList %}
-{% set firstThreeTags = tagList|slice(0, 10) %}
-{% set allTags = tagList|join(' ') %}
-{% set hasMoreTags = tagList|length > 10 %}
-
-<div class="d-flex flex-row align-items-center">
-  <a href="{{ editUrl }}" style="text-decoration: none; flex: 1; padding-right:1rem;">
-    {# Title or content #}
-    {% if title %}
-      <div style="font-size:110%;font-weight:600; margin-bottom: 4px;">
-        {{ title }}
-      </div>
-    {% endif %}
-
-    {# Rating and Author row #}
-    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-      {# Rating (only if exists) #}
-      {% if rating and rating > 0 %}
-        {% set ratingValue = rating > 5 ? 5 : rating %}
-        {% set ratingValue = ratingValue < 1 ? 1 : ratingValue %}
-        <span style="color: #fbbf24;" aria-label="{{ ratingValue }}/5">
-          {% for i in 1..5 %}
-            {% if i <= ratingValue %}
-              ★
-            {% else %}
-              ☆
-            {% endif %}
-          {% endfor %}
-        </span>
-        <span style="color: #6b7280; font-size: 90%;">{{ ratingValue }}/5</span>
-      {% endif %}
-
-      {# Author metadata #}
-      {% if message.authorName or message.authorEmail %}
-        <span style="color:#6b7280; font-size:85%;">
-          {% if message.authorName %}
-             · <span style="font-weight:500;">{{ message.authorName }}</span>
-            {% if message.authorEmail %} · {% endif %}
-          {% endif %}
-          {% if message.authorEmail %}
-            <span>{{ message.authorEmail }}</span>
-          {% endif %}
-        </span>
-      {% endif %}
+<div id="{{ inlineTarget }}" class="pw-message-inline d-flex flex-column">
+  {% if isReview %}
+    <div
+      class="fw-semibold text-truncate p-1"
+      style="display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;"
+      contenteditable="true"
+      hx-post="{{ inlineAction }}"
+      hx-trigger="blur"
+      hx-target="#{{ inlineTarget }}"
+      hx-swap="outerHTML"
+      hx-vals='js:{field: "title", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+      data-placeholder="{{ 'admin.conversation.inline.placeholder.title'|trans }}"
+    >
+      {{ review.title ?: '—' }}
     </div>
+  {% endif %}
 
-    {# Referring and Host #}
-    <div style="color:#94a3b8; font-size:80%; margin-bottom: 4px;">
-      {% if message.referring %}
-        <span title="{{ message.referring }}">
-          <i class="fa fa-link" style="margin-right: 4px;"></i>
-          {% if message.host %}
-            <span>{{ message.host }}</span> ·
-            {% endif %}
+  <div
+    class="pw-inline-content text-muted p-1"
+    style="-webkit-line-clamp:3; display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;"
+    contenteditable="true"
+    hx-post="{{ inlineAction }}"
+    hx-trigger="blur"
+    hx-target="#{{ inlineTarget }}"
+    hx-swap="outerHTML"
+    hx-vals='js:{field: "content", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+    data-placeholder="{{ 'admin.conversation.inline.placeholder.content'|trans }}"
+  >
+    {{ message.content|striptags|trim ?: '—' }}
+  </div>
 
-          {% if message.referring|length > 40 %}
-            {{ message.referring|slice(0, 40) ~ '…' }}
-          {% else %}
-            {{ message.referring }}
-          {% endif %}
+  <div class="text-muted small d-flex flex-wrap gap1">
+    {% if isReview %}
+      <span class="d-flex align-items-center gap-1 me-3">
+        <i class="fa fa-star text-warning"></i>
+        <span
+          class="fw-semibold px-1"
+          contenteditable="true"
+          hx-post="{{ inlineAction }}"
+          hx-trigger="blur"
+          hx-target="#{{ inlineTarget }}"
+          hx-swap="outerHTML"
+          hx-vals='js:{field: "rating", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+        >
+          {{ review.rating ?? 1 }}
         </span>
-      {% endif %}
+        /5
+      </span>
 
-    </div>
-
-    {# Tags #}
-    {% if tagList|length > 0 %}
-      <div style="margin-top: 4px;">
-        {{ firstThreeTags ? '<span style="font-weight:200; color:#94a3b8; display:inline-block; margin-right:4px">#</span>' : '' }}
-        {% for tag in firstThreeTags %}
-          <span class="badge" style="background:white; font-weight:400; color:#333;box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); ">
-        {{ tag }}</span>
-        {% endfor %}
-        {% if hasMoreTags %}
-          <span style="color:#94a3b8; font-size: 85%;" title="{{ allTags }}">…</span>
-        {% endif %}
-      </div>
+      <span>·</span>
     {% endif %}
-  </a>
+
+    <span class="d-flex align-items-center gap-1 me-3">
+      <i class="fa fa-user"></i>
+      <span
+        class="px-1"
+        contenteditable="true"
+        hx-post="{{ inlineAction }}"
+        hx-trigger="blur"
+        hx-target="#{{ inlineTarget }}"
+        hx-swap="outerHTML"
+        hx-vals='js:{field: "authorName", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+      >
+        {{ message.authorName ?: '' }}
+      </span>
+    </span>
+
+    <span>·</span>
+
+    <span class="d-flex align-items-center gap-1 me-3">
+      <i class="fa fa-envelope"></i>
+      <span
+        class="px-1"
+        contenteditable="true"
+        hx-post="{{ inlineAction }}"
+        hx-trigger="blur"
+        hx-target="#{{ inlineTarget }}"
+        hx-swap="outerHTML"
+        hx-vals='js:{field: "authorEmail", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+        class="text-decoration-underline"
+      >
+        {{ message.authorEmail ?: '' }}
+      </span>
+    </span>
+
+    <span class="flex-grow-1"></span>
+
+    <button
+      type="button"
+      class="btn btn-sm btn-default px-2"
+      data-pw-inline-edit-url="{{ editUrl }}"
+    >
+      <i class="fa fa-edit"></i>
+    </button>
+  </div>
+
+  <div class="d-flex flex-wrap align-items-center text-muted small">
+    <span>#</span>
+    <span
+      class="grow px-1"
+      contenteditable="true"
+      hx-post="{{ inlineAction }}"
+      hx-trigger="blur"
+      hx-target="#{{ inlineTarget }}"
+      hx-swap="outerHTML"
+      hx-vals='js:{field: "tags", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+      data-placeholder="{{ 'admin.conversation.inline.placeholder.tags'|trans }}"
+    >
+      {{ message.tags|default('')|trim }}
+    </span>
+  </div>
+
 </div>

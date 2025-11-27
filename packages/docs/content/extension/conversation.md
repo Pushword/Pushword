@@ -88,3 +88,13 @@ conversation messages with a CSV file stored at `content/<host>/conversation.csv
 - **Import** : editing the CSV lets you re-import messages, including any custom properties (arrays are encoded as JSON in their dedicated column).
 
 This allows you to backup or edit conversations alongside pages and medias without needing a database access.
+
+### CLI helpers
+
+```bash
+# Auto-detect import vs export (or force with --force=import|export|sync)
+php bin/console pw:message:flat [host] [--force=sync]
+
+# Import an external CSV without touching local files
+php bin/console pw:message:import path/to/conversation.csv [--host=example.com]
+```

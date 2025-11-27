@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
+use Pushword\Conversation\Flat\ConversationCsvHelper;
 use Pushword\Conversation\Flat\ConversationExporter;
 use Pushword\Conversation\Flat\ConversationImporter;
 use Pushword\Conversation\Repository\MessageRepository;
@@ -40,6 +41,9 @@ final class ConversationFlatTest extends KernelTestCase
 
     /** @var array<string> */
     private array $createdMediaFileNames = [];
+
+    /** @var string[] */
+    private array $temporaryCsvPaths = [];
 
     protected function setUp(): void
     {
@@ -112,10 +116,15 @@ final class ConversationFlatTest extends KernelTestCase
             }
         }
 
-        // Supprime le fichier CSV de test
-        if (file_exists($this->csvPath)) {
-            @unlink($this->csvPath);
+        // Supprime les fichiers CSV temporaires
+        $csvPaths = array_merge([$this->csvPath], $this->temporaryCsvPaths);
+        foreach ($csvPaths as $path) {
+            if ('' !== $path && file_exists($path)) {
+                @unlink($path);
+            }
         }
+
+        $this->temporaryCsvPaths = [];
 
         parent::tearDown();
     }
@@ -419,6 +428,64 @@ final class ConversationFlatTest extends KernelTestCase
         }
     }
 
+    public function testImportExternalCreatesMessage(): void
+    {
+        $csvPath = $this->createCsvFile([
+            [
+                'content' => 'External message',
+                'authorEmail' => 'external@example.com',
+                'authorName' => 'External User',
+                'referring' => '/external',
+                'host' => $this->testHost,
+            ],
+        ]);
+
+        $this->importer->importExternal($csvPath);
+
+        $message = $this->messageRepository->findOneBy([
+            'host' => $this->testHost,
+            'content' => 'External message',
+        ]);
+
+        self::assertInstanceOf(Message::class, $message);
+        self::assertSame('external@example.com', $message->getAuthorEmail());
+
+        if (null !== $message->getId()) {
+            $this->createdMessageIds[] = $message->getId();
+        }
+    }
+
+    public function testImportExternalSkipsDuplicateContent(): void
+    {
+        $existing = $this->createTestMessage('Duplicate content', 'dup@example.com', 'Dup User');
+        $this->entityManager->persist($existing);
+        $this->entityManager->flush();
+
+        if (null !== $existing->getId()) {
+            $this->createdMessageIds[] = $existing->getId();
+        }
+
+        $csvPath = $this->createCsvFile([
+            [
+                'content' => 'Duplicate content',
+                'authorEmail' => 'new@example.com',
+                'authorName' => 'New User',
+                'referring' => '/external',
+                'host' => $this->testHost,
+            ],
+        ]);
+
+        $this->importer->importExternal($csvPath);
+
+        $messages = $this->messageRepository->findBy([
+            'host' => $this->testHost,
+            'content' => 'Duplicate content',
+        ]);
+
+        self::assertCount(1, $messages);
+        self::assertSame('dup@example.com', $messages[0]->getAuthorEmail());
+    }
+
     private function getColumnIndex(string $headerLine, string $columnName): int
     {
         $columns = str_getcsv($headerLine, escape: '\\');
@@ -513,5 +580,42 @@ final class ConversationFlatTest extends KernelTestCase
         $this->createdMediaFileNames[] = $fileName;
 
         return $media;
+    }
+
+    /**
+     * @param array<int, array<string, string>> $rows
+     */
+    private function createCsvFile(array $rows): string
+    {
+        $columns = ConversationCsvHelper::BASE_COLUMNS;
+
+        foreach ($rows as $row) {
+            foreach (array_keys($row) as $column) {
+                if (! in_array($column, $columns, true)) {
+                    $columns[] = $column;
+                }
+            }
+        }
+
+        $path = sys_get_temp_dir().'/conversation_import_'.uniqid('', true).'.csv';
+        $handle = fopen($path, 'w');
+        if (false === $handle) {
+            self::fail('Unable to create temporary CSV file');
+        }
+
+        fputcsv($handle, $columns);
+        foreach ($rows as $row) {
+            $line = [];
+            foreach ($columns as $column) {
+                $line[] = $row[$column] ?? '';
+            }
+
+            fputcsv($handle, $line);
+        }
+
+        fclose($handle);
+        $this->temporaryCsvPaths[] = $path;
+
+        return $path;
     }
 }

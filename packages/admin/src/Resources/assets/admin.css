@@ -121,4 +121,23 @@
   box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.3);
 }
 
+body.pw-inline-window .sidebar,
+body.pw-inline-window header.navbar,
+body.pw-inline-window .user-menu-wrapper,
+body.pw-inline-window .responsive-header,
+body.pw-inline-window .global-actions,
+body.pw-inline-window .action-buttons,
+body.pw-inline-window .main-header {
+  display: none !important;
+}
+
+body.pw-inline-window .content {
+  margin-left: 0;
+  padding: 1rem;
+}
+
+body.pw-inline-window .wrapper {
+  --sidebar-max-width: 0;
+}
+
 /* purgecss end ignore */

@@ -1,8 +1,19 @@
 const MEDIA_PICKER_MODAL_ID = 'pw-media-picker-modal'
-const MEDIA_PICKER_IFRAME_CLASS = 'pw-media-picker__iframe'
+const MEDIA_PICKER_IFRAME_CLASS = 'pw-admin-popup-iframe'
 const MESSAGE_TYPE = 'pw-media-picker-select'
 
 const debug = (...args) => console.debug('[MediaPicker]', ...args)
+
+function getDatasetValue(select, ...keys) {
+  for (const key of keys) {
+    const value = select.dataset[key]
+    if (value) {
+      return value
+    }
+  }
+
+  return null
+}
 
 export function mediaPicker() {
   debug('Booting mediaPicker script')
@@ -53,7 +64,10 @@ function enhancePicker(select) {
   wrapper
     .querySelector('[data-pw-media-picker-action="choose"]')
     ?.addEventListener('click', () => {
-      const targetUrl = buildPickerUrl(select.dataset.pwMediaPickerModalUrl, select)
+      const targetUrl = buildPickerUrl(
+        getDatasetValue(select, 'pwMediaPickerModalUrl', 'pwAdminPopupModalUrl'),
+        select,
+      )
       if (!targetUrl) return
       openPickerModal(select, targetUrl)
     })
@@ -246,7 +260,13 @@ function ensureModalElements(select) {
       <div class="modal-dialog modal-fullscreen">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">${select.dataset.pwMediaPickerModalTitle || ''}</h5>
+            <h5 class="modal-title">${
+              getDatasetValue(
+                select,
+                'pwMediaPickerModalTitle',
+                'pwAdminPopupModalTitle',
+              ) || ''
+            }</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body p-0">
@@ -347,7 +367,7 @@ function initPickerChildContext() {
     return
   }
 
-  document.body.classList.add('pw-media-picker-modal')
+  document.body.classList.add('pw-admin-popup-modal')
   bindMosaicSelection()
 }
 
