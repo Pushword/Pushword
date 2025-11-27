@@ -36,15 +36,15 @@ final class PageExtension
     {
         $mainContent = $page->getMainContent();
 
-        if (str_contains($mainContent, '"anchor":"'.$blockId.'"')) {
+        if (str_contains($mainContent, '{#'.$blockId.'')) {
             return true;
         }
 
-        if (str_contains($mainContent, ' id="'.$blockId.'"')) {
+        if (str_contains($mainContent, 'id="'.$blockId.'"')) {
             return true;
         }
 
-        return str_contains($mainContent, ' id='.$blockId.'');
+        return str_contains($mainContent, 'id='.$blockId.'');
     }
 
     #[AsTwigFunction('breadcrumb_list_position')]
