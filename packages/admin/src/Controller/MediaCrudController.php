@@ -15,7 +15,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
 use Pushword\Admin\Filter\MediaDimensionIntFilter;
-use Pushword\Admin\Filter\MediaDimensionsFilter;
 use Pushword\Admin\Filter\MediaSearchFilter;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\Utils\Thumb;
@@ -156,16 +155,9 @@ class MediaCrudController extends AbstractAdminCrudController
         $ratioChoices = $this->formatChoiceList($available['ratioLabel']);
         if ([] !== $ratioChoices) {
             $filters->add(
-                ChoiceFilter::new('ratioLabel', 'admin.media.ratioLabela.label')
+                ChoiceFilter::new('ratioLabel', 'admin.media.ratioLabel.label')
                     ->setChoices($ratioChoices)
                     ->canSelectMultiple(),
-            );
-        }
-
-        $dimensionChoices = $this->formatChoiceList($available['dimensions']);
-        if ([] !== $dimensionChoices) {
-            $filters->add(
-                MediaDimensionsFilter::new($dimensionChoices, 'admin.media.dimensions.label'),
             );
         }
 

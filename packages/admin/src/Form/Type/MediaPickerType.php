@@ -120,6 +120,11 @@ final class MediaPickerType extends AbstractType
     {
         $urlGenerator = clone $this->adminUrlGenerator;
 
+        // Remove sort and filters from the current page context
+        // as they may not be valid for the Media entity
+        $urlGenerator->unset('sort');
+        $urlGenerator->unset('filters');
+
         if (isset($query['crudControllerFqcn']) && \is_string($query['crudControllerFqcn'])) {
             $urlGenerator->setController($query['crudControllerFqcn']);
             unset($query['crudControllerFqcn']);

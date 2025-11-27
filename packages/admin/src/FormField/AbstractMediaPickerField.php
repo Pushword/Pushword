@@ -78,6 +78,11 @@ abstract class AbstractMediaPickerField extends AbstractField
     {
         $adminUrlGenerator = clone $this->formFieldManager->adminUrlGenerator;
 
+        // Remove sort and filters from the current page context
+        // as they may not be valid for the Media entity
+        $adminUrlGenerator->unset('sort');
+        $adminUrlGenerator->unset('filters');
+
         if (isset($query['crudControllerFqcn']) && \is_string($query['crudControllerFqcn'])) {
             $adminUrlGenerator->setController($query['crudControllerFqcn']);
             unset($query['crudControllerFqcn']);
