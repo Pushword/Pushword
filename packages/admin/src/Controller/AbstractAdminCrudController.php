@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use Override;
 use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\AdminInterface;
+use Pushword\Admin\FormField\AbstractField;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -216,5 +217,50 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
         $this->subject = $subject;
 
         return $this->subject;
+    }
+
+    /**
+     * Normalize a block definition to a list of field class names.
+     *
+     * @param array<int|string, mixed>|class-string<AbstractField<T>> $block
+     *
+     * @return list<class-string<AbstractField<T>>>
+     */
+    protected function normalizeBlock(array|string $block): array
+    {
+        if (\is_array($block)) {
+            if (isset($block['fields']) && \is_array($block['fields'])) {
+                /** @var list<class-string<AbstractField<T>>> $fields */
+                $fields = $block['fields'];
+
+                return $fields;
+            }
+
+            return $this->filterFieldClassList($block);
+        }
+
+        /** @var class-string<AbstractField<T>> $block */
+        return [$block];
+    }
+
+    /**
+     * Filter an array to only include valid field class names.
+     *
+     * @param array<int|string, mixed> $values
+     *
+     * @return list<class-string<AbstractField<T>>>
+     */
+    protected function filterFieldClassList(array $values): array
+    {
+        $classes = [];
+        foreach ($values as $value) {
+            if (\is_string($value) && is_subclass_of($value, AbstractField::class)) {
+                /** @var class-string<AbstractField<T>> $value */
+                $classes[] = $value;
+            }
+        }
+
+        /** @var list<class-string<AbstractField<T>>> $classes */
+        return $classes;
     }
 }

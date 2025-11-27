@@ -18,6 +18,7 @@ use function Safe\filesize;
 
 use Spatie\ImageOptimizer\OptimizerChain;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Process\Process;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
 
@@ -73,7 +74,7 @@ final class ImageManager
             }
         }
 
-        exec('cd ../ && php bin/console pw:image:optimize '.$media->getFileName().' > /dev/null 2>/dev/null &');
+        $this->runBackgroundOptimization($media->getFileName());
     }
 
     private function updateMainColor(Media $media, ?ImageInterface $image = null): void
@@ -305,5 +306,21 @@ final class ImageManager
         file_put_contents($filePath, $content);
 
         return $filePath;
+    }
+
+    private function runBackgroundOptimization(string $fileName): void
+    {
+        // before
+        // exec('cd ../ && php bin/console pw:image:optimize '.
+        //  $media->getFileName().' > /dev/null 2>/dev/null &');
+        $process = new Process([
+            'php',
+            'bin/console',
+            'pw:image:optimize',
+            $fileName,
+        ]);
+        $process->setWorkingDirectory($this->projectDir);
+        $process->disableOutput();
+        $process->start();
     }
 }

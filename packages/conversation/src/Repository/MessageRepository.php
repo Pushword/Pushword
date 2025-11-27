@@ -52,11 +52,20 @@ class MessageRepository extends ServiceEntityRepository
         foreach ($tags as $i => $tag) {
             $expr = $queryBuilder->expr();
             $orConditions->add($expr->like('m.tags', ':tag'.$i));
-            $tagEscaped = '%"'.addslashes($tag).'"%';
+            $tagEscaped = '%"'.$this->escapeLikePattern($tag).'"%';
             $queryBuilder->setParameter('tag'.$i, $tagEscaped);
         }
 
         $queryBuilder->andWhere($orConditions);
+    }
+
+    /**
+     * Escape special characters for LIKE pattern matching.
+     * This properly escapes %, _, \, and " characters.
+     */
+    private function escapeLikePattern(string $value): string
+    {
+        return addcslashes($value, '%_\\"');
     }
 
     /**

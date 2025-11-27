@@ -13,8 +13,10 @@ use function Safe\file_get_contents;
 use function Safe\filemtime;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Process\Process;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -27,7 +29,9 @@ final class PageScannerController extends AbstractController
     public function __construct(
         private readonly Filesystem $filesystem,
         string $varDir,
-        private readonly string $pageScanInterval
+        private readonly string $pageScanInterval,
+        #[Autowire('%kernel.project_dir%')]
+        private readonly string $projectDir,
     ) {
         self::setFileCache($varDir);
     }
@@ -83,7 +87,7 @@ final class PageScannerController extends AbstractController
 
         $lastTime = new LastTime(self::$fileCache);
         if ($force || ! $lastTime->wasRunSince(new DateInterval($this->pageScanInterval))) {
-            exec('cd ../ && php bin/console pw:page-scan > /dev/null 2>/dev/null &');
+            $this->runBackgroundPageScan();
             $newRunLaunched = true;
             $lastTime->setWasRun('now', false);
         }
@@ -93,6 +97,22 @@ final class PageScannerController extends AbstractController
             'lastEdit' => $lastEdit,
             'errorsByPages' => $errors,
         ]);
+    }
+
+    /**
+     * Run page scan command in background using Symfony Process.
+     * This prevents command injection vulnerabilities.
+     */
+    private function runBackgroundPageScan(): void
+    {
+        $process = new Process([
+            'php',
+            'bin/console',
+            'pw:page-scan',
+        ]);
+        $process->setWorkingDirectory($this->projectDir);
+        $process->disableOutput();
+        $process->start();
     }
 
     /**

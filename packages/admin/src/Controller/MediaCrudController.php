@@ -16,7 +16,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
 use Pushword\Admin\Filter\MediaDimensionIntFilter;
 use Pushword\Admin\Filter\MediaSearchFilter;
-use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
@@ -164,47 +163,6 @@ class MediaCrudController extends AbstractAdminCrudController
         $filters->add(MediaDimensionIntFilter::new('admin.media.dimensions.int_filter_label'));
 
         return $filters;
-    }
-
-    /**
-     * @param array<int|string, mixed>|class-string<AbstractField<Media>> $block
-     *
-     * @return list<class-string<AbstractField<Media>>>
-     */
-    private function normalizeBlock(array|string $block): array
-    {
-        if (\is_array($block)) {
-            if (isset($block['fields']) && \is_array($block['fields'])) {
-                /** @var list<class-string<AbstractField<Media>>> $fields */
-                $fields = $block['fields'];
-
-                return $fields;
-            }
-
-            return $this->filterFieldClassList($block);
-        }
-
-        /** @var class-string<AbstractField<Media>> $block */
-        return [$block];
-    }
-
-    /**
-     * @param array<int|string, mixed> $values
-     *
-     * @return list<class-string<AbstractField<Media>>>
-     */
-    private function filterFieldClassList(array $values): array
-    {
-        $classes = [];
-        foreach ($values as $value) {
-            if (\is_string($value) && is_subclass_of($value, AbstractField::class)) {
-                /** @var class-string<AbstractField<Media>> $value */
-                $classes[] = $value;
-            }
-        }
-
-        /** @var list<class-string<AbstractField<Media>>> $classes */
-        return $classes;
     }
 
     public function getThumbnailUrl(?Media $media): string

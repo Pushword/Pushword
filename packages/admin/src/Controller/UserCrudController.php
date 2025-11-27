@@ -12,7 +12,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use LogicException;
 use Override;
-use Pushword\Admin\FormField\AbstractField;
 use Pushword\Core\Entity\User;
 
 /** @extends AbstractAdminCrudController<User> */
@@ -93,47 +92,6 @@ class UserCrudController extends AbstractAdminCrudController
             ->setSortable(false);
         yield DateTimeField::new('createdAt', 'admin.user.createdAt.label')
             ->setSortable(true);
-    }
-
-    /**
-     * @param array<int|string, mixed>|class-string<AbstractField<User>> $block
-     *
-     * @return list<class-string<AbstractField<User>>>
-     */
-    private function normalizeBlock(array|string $block): array
-    {
-        if (\is_array($block)) {
-            if (isset($block['fields']) && \is_array($block['fields'])) {
-                /** @var list<class-string<AbstractField<User>>> $fields */
-                $fields = $block['fields'];
-
-                return $fields;
-            }
-
-            return $this->filterFieldClassList($block);
-        }
-
-        /** @var class-string<AbstractField<User>> $block */
-        return [$block];
-    }
-
-    /**
-     * @param array<int|string, mixed> $values
-     *
-     * @return list<class-string<AbstractField<User>>>
-     */
-    private function filterFieldClassList(array $values): array
-    {
-        $classes = [];
-        foreach ($values as $value) {
-            if (\is_string($value) && is_subclass_of($value, AbstractField::class)) {
-                /** @var class-string<AbstractField<User>> $value */
-                $classes[] = $value;
-            }
-        }
-
-        /** @var list<class-string<AbstractField<User>>> $classes */
-        return $classes;
     }
 
     private function formatUsernameColumn(User $user): string

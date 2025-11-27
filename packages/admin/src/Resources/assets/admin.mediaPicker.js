@@ -1,3 +1,12 @@
+import {
+  ensureModal,
+  openModal as openModalBase,
+  closeModal,
+  createMessageHandler,
+  sendMessageToParent,
+  normalizeUrl,
+} from './admin.modalUtils.js'
+
 const MEDIA_PICKER_MODAL_ID = 'pw-media-picker-modal'
 const MEDIA_PICKER_IFRAME_CLASS = 'pw-admin-popup-iframe'
 const MESSAGE_TYPE = 'pw-media-picker-select'
@@ -29,7 +38,11 @@ function initParentPickers() {
   debug('initParentPickers: found %s pickers', pickers.length)
 
   if (!isMessageListenerRegistered) {
-    window.addEventListener('message', handlePickerMessage, false)
+    window.addEventListener(
+      'message',
+      createMessageHandler(MESSAGE_TYPE, handlePickerPayload),
+      false,
+    )
     isMessageListenerRegistered = true
     debug('Registered window message listener')
   }
@@ -238,84 +251,40 @@ function updateCollectionHeader(select, label) {
 
 function buildPickerUrl(baseUrl, select) {
   if (!baseUrl) return null
-  try {
-    const url = new URL(baseUrl, window.location.origin)
-    url.searchParams.set('pwMediaPickerFieldId', select.id)
-
-    return url.toString()
-  } catch (e) {
-    console.warn('Invalid media picker URL', baseUrl)
-    return null
-  }
+  return normalizeUrl(baseUrl, { pwMediaPickerFieldId: select.id })
 }
 
 function ensureModalElements(select) {
-  let modal = document.getElementById(MEDIA_PICKER_MODAL_ID)
-  if (!modal) {
-    modal = document.createElement('div')
-    modal.id = MEDIA_PICKER_MODAL_ID
-    modal.className = 'modal fade pw-media-picker__modal'
-    modal.tabIndex = -1
-    modal.innerHTML = `
-      <div class="modal-dialog modal-fullscreen">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">${
-              getDatasetValue(
-                select,
-                'pwMediaPickerModalTitle',
-                'pwAdminPopupModalTitle',
-              ) || ''
-            }</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body p-0">
-            <iframe class="${MEDIA_PICKER_IFRAME_CLASS}" title="Media picker" loading="lazy"></iframe>
-          </div>
-        </div>
-      </div>
-    `
-    document.body.appendChild(modal)
-  }
+  const title = getDatasetValue(
+    select,
+    'pwMediaPickerModalTitle',
+    'pwAdminPopupModalTitle',
+  ) || 'Media picker'
 
-  const iframe = modal.querySelector(`.${MEDIA_PICKER_IFRAME_CLASS}`)
-  return { modal, iframe }
+  return ensureModal({
+    id: MEDIA_PICKER_MODAL_ID,
+    iframeClass: MEDIA_PICKER_IFRAME_CLASS,
+    title,
+    hasHeader: true,
+  })
 }
 
 function openPickerModal(select, url) {
-  const { modal, iframe } = ensureModalElements(select)
-  if (!iframe) {
-    window.open(url, '_blank', 'noopener')
-    return
-  }
+  // Ensure modal elements exist with proper title from select element
+  ensureModalElements(select)
 
-  iframe.src = url
-
-  const modalInstance = window.bootstrap
-    ? window.bootstrap.Modal.getOrCreateInstance(modal, { backdrop: 'static' })
-    : null
-
-  if (modalInstance) {
-    modalInstance.show()
-    modal.addEventListener(
-      'hidden.bs.modal',
-      () => {
-        iframe.src = ''
-      },
-      { once: true },
-    )
-  } else {
-    window.open(url, '_blank', 'noopener')
-  }
+  openModalBase(
+    {
+      id: MEDIA_PICKER_MODAL_ID,
+      iframeClass: MEDIA_PICKER_IFRAME_CLASS,
+      title: getDatasetValue(select, 'pwMediaPickerModalTitle', 'pwAdminPopupModalTitle') || 'Media picker',
+      hasHeader: true,
+    },
+    url,
+  )
 }
 
-function handlePickerMessage(event) {
-  if (event.origin !== window.location.origin) return
-  const payload = event.data
-  if (!payload || payload.type !== MESSAGE_TYPE) {
-    return
-  }
-
+function handlePickerPayload(payload) {
   const { fieldId, media } = payload
   debug('Message received from picker', fieldId, media)
   if (!fieldId || !media) {
@@ -341,10 +310,7 @@ function handlePickerMessage(event) {
   setSelectValue(select, media.id, mediaLabel)
   renderPickerState(select)
 
-  const modal = document.getElementById(MEDIA_PICKER_MODAL_ID)
-  if (modal && window.bootstrap) {
-    window.bootstrap.Modal.getInstance(modal)?.hide()
-  }
+  closeModal(MEDIA_PICKER_MODAL_ID)
 }
 
 function setSelectValue(select, value, label) {
@@ -521,12 +487,5 @@ function sendSelection(fieldId, media) {
   if (!media || !media.id) return
 
   debug('sendSelection', fieldId, media)
-  window.parent.postMessage(
-    {
-      type: MESSAGE_TYPE,
-      fieldId,
-      media,
-    },
-    window.location.origin,
-  )
+  sendMessageToParent(MESSAGE_TYPE, { fieldId, media })
 }

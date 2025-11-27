@@ -240,47 +240,6 @@ class PageCrudController extends AbstractAdminCrudController
         return $this->redirectToPage($context) ?? throw new Exception('Page not found');
     }
 
-    /**
-     * @param array<int|string, mixed>|class-string<AbstractField<Page>> $block
-     *
-     * @return list<class-string<AbstractField<Page>>>
-     */
-    private function extractFieldClasses(array|string $block): array
-    {
-        if (\is_array($block)) {
-            if (isset($block['fields']) && \is_array($block['fields'])) {
-                /** @var list<class-string<AbstractField<Page>>> $fields */
-                $fields = $block['fields'];
-
-                return $fields;
-            }
-
-            return $this->filterFieldClassList($block);
-        }
-
-        /** @var class-string<AbstractField<Page>> $block */
-        return [$block];
-    }
-
-    /**
-     * @param array<int|string, mixed> $values
-     *
-     * @return list<class-string<AbstractField<Page>>>
-     */
-    private function filterFieldClassList(array $values): array
-    {
-        $classes = [];
-        foreach ($values as $value) {
-            if (\is_string($value) && is_subclass_of($value, AbstractField::class)) {
-                /** @var class-string<AbstractField<Page>> $value */
-                $classes[] = $value;
-            }
-        }
-
-        /** @var list<class-string<AbstractField<Page>>> $classes */
-        return $classes;
-    }
-
     private function initializeNewPage(Page $page): void
     {
         if ('' === $page->getLocale()) {
@@ -384,7 +343,7 @@ class PageCrudController extends AbstractAdminCrudController
                     yield $this->buildSettingsFieldset($groupName, $block);
                 }
 
-                $blockFields = $this->extractFieldClasses($block);
+                $blockFields = $this->normalizeBlock($block);
                 yield from $this->adminFormFieldManager->getEasyAdminFields($blockFields, $this);
             }
         }
@@ -393,7 +352,7 @@ class PageCrudController extends AbstractAdminCrudController
             yield FormField::addColumn('col-12 extraFields');
             yield FormField::addFieldset('admin.page.extra.label');
             foreach ($extraBlocks as $block) {
-                $blockFields = $this->extractFieldClasses($block);
+                $blockFields = $this->normalizeBlock($block);
                 yield from $this->adminFormFieldManager->getEasyAdminFields($blockFields, $this);
             }
         }

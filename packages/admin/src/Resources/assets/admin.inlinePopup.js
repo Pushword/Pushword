@@ -1,3 +1,13 @@
+import {
+  openModal,
+  closeModal,
+  createMessageHandler,
+  sendMessageToParent,
+  normalizeUrl,
+  registerIframeBodyClassHandler,
+  ensureModal,
+} from './admin.modalUtils.js'
+
 const INLINE_MODAL_ID = 'pw-admin-popup-modal'
 const INLINE_IFRAME_BODY_CLASS = 'pw-admin-popup-modal'
 const INLINE_IFRAME_CLASS = 'pw-admin-popup-iframe'
@@ -7,7 +17,11 @@ let inlineModalListenerRegistered = false
 
 export function inlinePopup() {
   if (!inlineModalListenerRegistered) {
-    window.addEventListener('message', handleInlineMessage, false)
+    window.addEventListener(
+      'message',
+      createMessageHandler(INLINE_MESSAGE_TYPE, handleInlinePayload),
+      false,
+    )
     inlineModalListenerRegistered = true
   }
 
@@ -26,105 +40,39 @@ export function inlinePopup() {
 }
 
 function ensureInlineModal() {
-  let modal = document.getElementById(INLINE_MODAL_ID)
-  if (!modal) {
-    modal = document.createElement('div')
-    modal.id = INLINE_MODAL_ID
-    modal.className = 'modal fade pw-inline-edit__modal'
-    modal.tabIndex = -1
-    modal.innerHTML = `
-      <div class="modal-dialog modal-fullscreen">
-        <div class="modal-content">
-          <div class="modal-body p-0">
-            <iframe class="${INLINE_IFRAME_CLASS}" title="Inline editor" loading="lazy"></iframe>
-          </div>
-        </div>
-      </div>
-    `
+  const result = ensureModal({
+    id: INLINE_MODAL_ID,
+    iframeClass: INLINE_IFRAME_CLASS,
+    title: 'Inline editor',
+    hasHeader: false,
+  })
 
-    document.body.appendChild(modal)
+  if (result.iframe) {
+    registerIframeBodyClassHandler(result.iframe, INLINE_IFRAME_BODY_CLASS)
   }
 
-  const iframe = modal.querySelector(`.${INLINE_IFRAME_CLASS}`)
-  registerIframeBodyClassHandler(iframe)
-  return { modal, iframe }
+  return result
 }
 
 function openInlineModal(url) {
-  const { modal, iframe } = ensureInlineModal()
-  if (!iframe) {
-    window.open(url, '_blank', 'noopener')
-    return
-  }
+  // Ensure modal is created
+  ensureInlineModal()
 
-  iframe.src = normalizeInlineUrl(url)
-  const modalInstance = window.bootstrap
-    ? window.bootstrap.Modal.getOrCreateInstance(modal, { backdrop: 'static' })
-    : null
+  const normalizedUrl = normalizeUrl(url, { pwInline: '1' })
 
-  if (modalInstance) {
-    modalInstance.show()
-    modal.addEventListener(
-      'hidden.bs.modal',
-      () => {
-        iframe.src = ''
-      },
-      { once: true },
-    )
-  } else {
-    window.open(url, '_blank', 'noopener')
-  }
+  openModal(
+    {
+      id: INLINE_MODAL_ID,
+      iframeClass: INLINE_IFRAME_CLASS,
+      title: 'Inline editor',
+      hasHeader: false,
+    },
+    normalizedUrl,
+  )
 }
 
-function handleInlineMessage(event) {
-  if (event.origin !== window.location.origin) return
-  const payload = event.data
-  if (!payload || payload.type !== INLINE_MESSAGE_TYPE) {
-    return
-  }
-
-  closeInlineModal(Boolean(payload.refresh))
-}
-
-function closeInlineModal(shouldRefresh) {
-  const modal = document.getElementById(INLINE_MODAL_ID)
-  if (modal && window.bootstrap) {
-    window.bootstrap.Modal.getOrCreateInstance(modal)?.hide()
-  }
-
-  if (shouldRefresh) {
-    window.location.reload()
-  }
-}
-
-function registerIframeBodyClassHandler(iframe) {
-  if (!iframe || iframe.dataset.inlineBodyClassHandler === 'true') return
-
-  iframe.addEventListener('load', () => setIframeBodyClass(iframe))
-  iframe.dataset.inlineBodyClassHandler = 'true'
-  setIframeBodyClass(iframe)
-}
-
-function setIframeBodyClass(iframe) {
-  try {
-    const iframeBody = iframe.contentDocument?.body
-    iframeBody?.classList.add(INLINE_IFRAME_BODY_CLASS)
-  } catch {
-    // Ignore cross-origin access errors
-  }
-}
-
-function normalizeInlineUrl(url) {
-  try {
-    const inlineUrl = new URL(url, window.location.origin)
-    if (!inlineUrl.searchParams.has('pwInline')) {
-      inlineUrl.searchParams.set('pwInline', '1')
-    }
-
-    return inlineUrl.toString()
-  } catch {
-    return url
-  }
+function handleInlinePayload(payload) {
+  closeModal(INLINE_MODAL_ID, Boolean(payload.refresh))
 }
 
 function initInlineChildContext() {
@@ -138,13 +86,7 @@ function initInlineChildContext() {
 
 function bindInlineSaveHandlers() {
   const notifyParentRefresh = () => {
-    window.parent.postMessage(
-      {
-        type: INLINE_MESSAGE_TYPE,
-        refresh: true,
-      },
-      window.location.origin,
-    )
+    sendMessageToParent(INLINE_MESSAGE_TYPE, { refresh: true })
   }
 
   const params = new URLSearchParams(window.location.search)

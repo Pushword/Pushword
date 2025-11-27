@@ -243,11 +243,11 @@ final class PageImporter extends AbstractImporter
             $page->setPublishedAt($lastEditDateTime);
         }
 
-        if (null === $page->getCreatedAt()) {
+        if (null === $page->getCreatedAt(false)) {
             $page->setCreatedAt($lastEditDateTime);
         }
 
-        if (null === $page->getUpdatedAt()) {
+        if (null === $page->getUpdatedAt(false)) {
             $page->setUpdatedAt($lastEditDateTime);
         }
     }

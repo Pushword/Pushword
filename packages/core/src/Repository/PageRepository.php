@@ -27,8 +27,8 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 {
     public function __construct(
         ManagerRegistry $registry,
-        #[Autowire('%pw.public_media_dir%')]
-        private readonly string $publicMediaDir,
+        // #[Autowire('%pw.public_media_dir%')]
+        // private readonly string $publicMediaDir,
     ) {
         parent::__construct($registry, Page::class);
     }
@@ -176,6 +176,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
     /**
      * Used in admin Media.
+     * Finds pages that reference a given media file.
      *
      * @return Page[]
      */
@@ -188,25 +189,30 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         }
 
         $orx = $queryBuilder->expr()->orX();
-        $orx->add($queryBuilder->expr()->eq('p.mainImage', ':idMedia'));
-        $orx->add($queryBuilder->expr()->like('p.mainContent', ':nameMedia')); // catch: 'example'
-        $orx->add($queryBuilder->expr()->like('p.mainContent', ':apostrophMedia')); // catch: 'example.jpg'
-        $orx->add($queryBuilder->expr()->like('p.mainContent', ':quotedMedia')); // catch: "example.jpg'
-        $orx->add($queryBuilder->expr()->like('p.mainContent', ':defaultMedia')); // catch: media/default/example.jpg
-        $orx->add($queryBuilder->expr()->like('p.mainContent', ':thumbMedia'));
 
-        $mediaDir = $this->publicMediaDir;
+        // Direct relation via mainImage
+        $orx->add($queryBuilder->expr()->eq('p.mainImage', ':idMedia'));
+
+        // Escape special characters for LIKE patterns
+        $escapedFileName = $this->escapeLikePattern($media->getFileName());
+        $escapedAlt = $this->escapeLikePattern($media->getAlt());
+
+        // Search for filename in content (with proper escaping)
+        $orx->add($queryBuilder->expr()->like('p.mainContent', ':fileNamePattern'));
 
         $query = $queryBuilder->where($orx)
             ->setParameter('idMedia', $media->getId())
-            ->setParameter('nameMedia', "%'".$media->getAlt()."'%")
-            ->setParameter('apostrophMedia', "%'".$media->getFileName()."'%")
-            ->setParameter('quotedMedia', '%"'.$media->getFileName().'"%')
-            ->setParameter('defaultMedia', '/'.$mediaDir.'/default/'.$media->getFileName().'%')
-            ->setParameter('thumbMedia', '/'.$mediaDir.'/thumb/'.$media->getFileName().'%')
-            ->getQuery();
+            ->setParameter('fileNamePattern', '%'.$escapedFileName.'%');
 
-        return $query->getResult();
+        return $query->getQuery()->getResult();
+    }
+
+    /**
+     * Escape special characters for LIKE pattern matching.
+     */
+    private function escapeLikePattern(string $value): string
+    {
+        return addcslashes($value, '%_\\');
     }
 
     private function getRootAlias(QueryBuilder $queryBuilder): string
