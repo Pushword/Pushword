@@ -2,10 +2,19 @@
     <!-- <p class="text-sm text-gray-500 italic text-center">{% trans %}conversation.review.empty{% endtrans %}</p> -->
 {% endif %}
 
+{% set id = 'sh-' ~ random(1000, 9999) %}
+{% use '@PushwordCore/component/show_more.html.twig' %}
+
 <div class="not-prose" id="{{ 'reviews'|trans() }}">
-{% for message in reviews %}
+  {% for message in reviews %}
+    {% if loop.index == 2 %}
+      {{ block('before') }}
+    {% endif %}
     {% include '@PushwordConversation/conversation/review.html.twig' with {
-        review: message,
+      review: message,
     } %}
-{% endfor %}
+    {% if loop.last and loop.index > 3 %}
+      {{ block('after') }}
+    {% endif %}
+  {% endfor %}
 </div>

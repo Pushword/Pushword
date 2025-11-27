@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use InvalidArgumentException;
+use Override;
 use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\AdminInterface;
 use Pushword\Core\Component\App\AppPool;
@@ -132,7 +133,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
     }
 
     #[Override]
-    #[\Override]
+    #[Override]
     protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
     {
         $response = parent::getRedirectResponseAfterSave($context, $action);

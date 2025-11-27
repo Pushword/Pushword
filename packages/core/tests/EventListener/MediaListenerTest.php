@@ -16,6 +16,12 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
 {
     use PathTrait;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->ensureMediaFileExists();
+    }
+
     public function testRenameMediaOnNameUpdate(): void
     {
         self::bootKernel();

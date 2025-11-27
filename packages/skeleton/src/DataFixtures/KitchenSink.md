@@ -87,3 +87,7 @@ Texte avec <u>soulignement</u>, **gras**, _italique_, <mark>surlignage</mark> et
 ## HR — separator
 
 ---
+
+## Reviews
+
+{{ reviews(page) }}

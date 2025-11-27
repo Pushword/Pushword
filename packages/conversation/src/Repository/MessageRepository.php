@@ -73,7 +73,7 @@ class MessageRepository extends ServiceEntityRepository
             ->setParameter('noteFilter', '%"rating":%');
 
         $this->addFilteringByTagsConditions($queryBuilder, $tags);
-        $queryBuilder->orderBy('m.createdAt', 'DESC');
+        $queryBuilder->orderBy('m.weight DESC,m.createdAt', 'DESC');
 
         if (0 !== $limit) {
             $queryBuilder->setMaxResults($limit);

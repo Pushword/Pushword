@@ -61,10 +61,11 @@ class AppExtension
     public function renderReviewList(
         Twig $twig,
         Page|array|string $pageOrTag,
-        int $limit = 0
+        int $limit = 10
     ): string {
         $tags = $this->resolveReviewTag($pageOrTag);
-        $reviews = [] === $tags ? [] : $this->messageRepo->getPublishedReviewsByTag($tags, $limit);
+        $reviews = [] === $tags ? []
+          : $this->messageRepo->getPublishedReviewsByTag($tags, $limit);
         $view = $this->app->getView('/conversation/reviewList.html.twig', '@PushwordConversation');
 
         return $twig->render($view, [

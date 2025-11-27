@@ -6,11 +6,13 @@ use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Entity\Review;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Service\Attribute\Required;
 
 class AppFixtures extends Fixture
@@ -137,6 +139,26 @@ class AppFixtures extends Fixture
                 ->setPublishedAt(new DateTime('1 day ago'));
 
             $manager->persist($message);
+
+            // Create reviews from YAML file
+            $reviewsData = Yaml::parseFile(__DIR__.'/reviews.yaml');
+            $reviews = $reviewsData['reviews'] ?? [];
+
+            foreach ($reviews as $reviewData) {
+                /** @var Review $review */
+                $review = (new Review())
+                    ->setTitle($reviewData['title'])
+                    ->setContent($reviewData['content'])
+                    ->setAuthorName($reviewData['authorName'])
+                    ->setAuthorEmail($reviewData['authorEmail'])
+                    ->setRating($reviewData['rating'])
+                    ->setHost('localhost.dev')
+                    ->setPublishedAt(new DateTime($reviewData['publishedAt']))
+                    ->setTags('kitchen-sink');
+
+                $manager->persist($review);
+            }
+
             $manager->flush();
         }
     }

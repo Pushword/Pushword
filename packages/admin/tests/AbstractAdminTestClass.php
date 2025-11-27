@@ -4,10 +4,12 @@ namespace Pushword\Admin\Tests;
 
 use Pushword\Admin\Service\AdminUrlGeneratorAlias;
 use Pushword\Core\Repository\UserRepository;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Panther\Client;
 use Symfony\Component\Panther\PantherTestCase;
 
 abstract class AbstractAdminTestClass extends PantherTestCase
@@ -15,6 +17,23 @@ abstract class AbstractAdminTestClass extends PantherTestCase
     protected static bool $userCreated = false;
 
     protected ?KernelBrowser $client = null;
+
+    /**
+     * Surcharge pour utiliser le chemin absolu du répertoire public.
+     */
+    protected static function createPantherClient(array $options = [], array $kernelOptions = [], array $managerOptions = []): Client
+    {
+        if (! isset($options['webServerDir'])) {
+            $publicDir = realpath(__DIR__.'/../../skeleton/public');
+            if (false === $publicDir) {
+                throw new RuntimeException('Public directory not found: '.__DIR__.'/../../skeleton/public');
+            }
+
+            $options['webServerDir'] = $publicDir;
+        }
+
+        return parent::createPantherClient($options, $kernelOptions, $managerOptions);
+    }
 
     protected function loginUser(?KernelBrowser $client = null): KernelBrowser
     {

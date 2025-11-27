@@ -403,6 +403,7 @@ final class ConversationImporter
         if ($this->isHeaderRow($row, $header)) {
             return true;
         }
+
         if ($this->isEmptyRow($row)) {
             return true;
         }
