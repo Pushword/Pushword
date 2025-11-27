@@ -24,11 +24,10 @@
       </label>
     </div>
   </div>
-  <div class="show-more-btn transition-all delay-75 duration-300 text-center pt-[80px] -mt-[100px] h-[100px] bg-linear-to-b from-transparent {{ to_background|default('to-white') }} relative z-10 mb-14 hidden" data-acinb="block">
-    {# ↧ #}
-    <label for="{{ id }}"
-      class="text-4xl inline-block w-full text-gray-500 cursor-pointer after:content-['\21A7']"
-      onclick="
+  <div
+    class="show-more-btn transition-all delay-75 duration-300 text-center pt-[80px] -mt-[100px] h-[100px] bg-linear-to-b from-transparent {{ via_background|default('via-white') }} {{ to_background|default('to-white') }} relative z-10 mb-14 hidden cursor-pointer"
+    data-acinb="block"
+    onclick="
         const wrapper = this.closest('.show-more');
         const content = wrapper.children[1];
         window.previousScrollPositionForShowMore = wrapper.getBoundingClientRect().top;
@@ -36,6 +35,9 @@
         content.classList.remove('overflow-hidden');
         content.style.maxHeight = content.scrollHeight + 'px';
       ">
+    {# ↧ #}
+    <label for="{{ id }}"
+      class="text-4xl inline-block w-full text-gray-500 after:content-['\21A7'] cursor-pointer">
     </label>
   </div>
 </div>

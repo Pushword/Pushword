@@ -3,32 +3,32 @@
  */
 .text-color-inherit,
 .link-text {
-    color: inherit !important;
+  color: inherit !important;
 }
 
 .no-decoration,
 .ninja {
-    text-decoration: none !important;
-    color: inherit !important;
-    cursor: auto !important;
-    border-bottom: 0 !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  cursor: auto !important;
+  border-bottom: 0 !important;
 }
 
 .link-btn {
-    padding: 6px 12px;
-    margin-bottom: 0;
-    border-radius: 3px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    color: #fff !important;
-    background-color: var(--primary);
-    border-color: var(--primary);
-    outline: none;
-    text-decoration: none !important;
+  padding: 6px 12px;
+  margin-bottom: 0;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: #fff !important;
+  background-color: var(--primary);
+  border-color: var(--primary);
+  outline: none;
+  text-decoration: none !important;
 }
 
 .link-btn:hover {
-    color: #fff !important;
+  color: #fff !important;
 }
 
 /**
@@ -36,8 +36,8 @@
  */
 
 html {
-    font-family: var(--font-family);
-    scroll-behavior: smooth;
+  font-family: var(--font-family);
+  scroll-behavior: smooth;
 }
 
 /**
@@ -46,21 +46,21 @@ html {
 
 .show-hide-input:checked ~ ul,
 .show-hide-input:checked ~ nav {
-    max-height: 100vh;
-    padding-top: 1rem;
+  max-height: 100vh;
+  padding-top: 1rem;
 }
 
 /** Pure CSS accordion and show more
     Example  https: //play.tailwindcss.com/VxdXWMH64M
 
 **/
-.show-hide-input:checked~div {
-    max-height: 100%;
+.show-hide-input:checked ~ div {
+  max-height: 100%;
 }
 
-.show-more>.show-hide-input:checked~div.show-more-btn {
-    max-height: 0;
-    overflow: hidden;
-    padding-top: 0;
-    margin-top: 0;
+.show-more > .show-hide-input:checked ~ div.show-more-btn {
+  max-height: 0;
+  overflow: hidden;
+  padding-top: 0;
+  margin-top: 0;
 }

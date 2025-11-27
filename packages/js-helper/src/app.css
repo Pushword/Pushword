@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tailwindcss-animated';
 @plugin '@tailwindcss/typography';
+@import './tailwind.prose.scss';
 @import './utility.css'; /* node_modules/@pushword/js-helper/src/utility.css */
 /* @plugin "@tailwindcss/forms"; */
 
