@@ -91,7 +91,7 @@ class MediaCrudController extends AbstractAdminCrudController
         return $crud
             ->setEntityLabelInSingular('admin.label.media')
             ->setEntityLabelInPlural('admin.label.medias')
-            ->setSearchFields(['alt', 'fileName', 'slug', 'tags'])
+            ->setSearchFields(['alt', 'fileName', 'altSearch', 'tags'])
             ->setDefaultSort(['updatedAt' => 'DESC'])
             ->overrideTemplates([
                 'crud/index' => '@pwAdmin/media/index.html.twig',
