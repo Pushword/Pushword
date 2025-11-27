@@ -141,20 +141,19 @@ class AppFixtures extends Fixture
             $manager->persist($message);
 
             // Create reviews from YAML file
+            /** @var array<array{title: string, content: string, authorName: string, authorEmail: string, rating: int, publishedAt: string}>[] $reviewsData */
             $reviewsData = Yaml::parseFile(__DIR__.'/reviews.yaml');
-            $reviews = $reviewsData['reviews'] ?? [];
 
-            foreach ($reviews as $reviewData) {
-                /** @var Review $review */
-                $review = (new Review())
-                    ->setTitle($reviewData['title'])
-                    ->setContent($reviewData['content'])
-                    ->setAuthorName($reviewData['authorName'])
-                    ->setAuthorEmail($reviewData['authorEmail'])
-                    ->setRating($reviewData['rating'])
-                    ->setHost('localhost.dev')
-                    ->setPublishedAt(new DateTime($reviewData['publishedAt']))
-                    ->setTags('kitchen-sink');
+            foreach ($reviewsData['reviews'] as $reviewData) {
+                $review = new Review();
+                $review->setTitle($reviewData['title']);
+                $review->setContent($reviewData['content']);
+                $review->setAuthorName($reviewData['authorName']);
+                $review->setAuthorEmail($reviewData['authorEmail']);
+                $review->setRating($reviewData['rating']);
+                $review->setHost('localhost.dev');
+                $review->setPublishedAt(new DateTime($reviewData['publishedAt']));
+                $review->setTags('kitchen-sink');
 
                 $manager->persist($review);
             }

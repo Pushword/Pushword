@@ -74,6 +74,20 @@ class AppExtension
     }
 
     /**
+     * @param Page|array<string>|string $pageOrTag
+     */
+    #[AsTwigFunction('reviewsCount', needsEnvironment: false)]
+    public function count(
+        Page|array|string $pageOrTag,
+    ): int {
+        $tags = $this->resolveReviewTag($pageOrTag);
+        $reviews = [] === $tags ? []
+          : $this->messageRepo->getPublishedReviewsByTag($tags, 0);
+
+        return \count($reviews);
+    }
+
+    /**
      * @param Page|string|array<string> $pageOrTag
      *
      * @return array<string>

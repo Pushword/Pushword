@@ -20,7 +20,12 @@ abstract class AbstractAdminTestClass extends PantherTestCase
 
     /**
      * Surcharge pour utiliser le chemin absolu du répertoire public.
+     *
+     * @param array<string, mixed> $options
+     * @param array<string, mixed> $kernelOptions
+     * @param array<string, mixed> $managerOptions
      */
+    // @phpstan-ignore-next-line
     protected static function createPantherClient(array $options = [], array $kernelOptions = [], array $managerOptions = []): Client
     {
         if (! isset($options['webServerDir'])) {

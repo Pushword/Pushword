@@ -133,13 +133,12 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
     }
 
     #[Override]
-    #[Override]
     protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
     {
         $response = parent::getRedirectResponseAfterSave($context, $action);
 
         $request = $context->getRequest();
-        if (null === $request || ! $request->query->has('pwInline')) {
+        if (! $request->query->has('pwInline')) {
             return $response;
         }
 
