@@ -14,6 +14,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use LogicException;
 use Override;
@@ -56,6 +57,11 @@ class ConversationCrudController extends AbstractAdminCrudController
                     ->setChoices($this->getHostChoices()),
             );
         }
+
+        $filters
+            ->add(TextFilter::new('tags', 'admin.conversation.tags.label'))
+            ->add(TextFilter::new('content', 'admin.conversation.content.label'))
+            ->add(TextFilter::new('weight', 'admin.conversation.weight.label'));
 
         return $filters;
     }

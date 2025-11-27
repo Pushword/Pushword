@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\Component;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Component\App\AppConfig;
 use ReflectionMethod;
@@ -44,7 +45,7 @@ class AppConfigTest extends TestCase
 
         // Test getOverridedView directly via reflection to test the new code
         $reflection = new ReflectionMethod($appConfig, 'getOverridedView');
-        $reflection->setAccessible(true);
+
         $result = $reflection->invoke($appConfig, '@PushwordConversation/conversation/review.html.twig');
 
         // Should return the host-specific override
@@ -66,7 +67,7 @@ class AppConfigTest extends TestCase
 
         // Test getOverridedView directly via reflection
         $reflection = new ReflectionMethod($appConfig, 'getOverridedView');
-        $reflection->setAccessible(true);
+
         $result = $reflection->invoke($appConfig, '@PushwordConversation/conversation/review.html.twig');
 
         // Should return the template-specific override
@@ -87,7 +88,7 @@ class AppConfigTest extends TestCase
 
         // Test getOverridedView directly via reflection
         $reflection = new ReflectionMethod($appConfig, 'getOverridedView');
-        $reflection->setAccessible(true);
+
         $result = $reflection->invoke($appConfig, '@PushwordConversation/conversation/review.html.twig');
 
         // Should return the global override
@@ -103,9 +104,8 @@ class AppConfigTest extends TestCase
 
         // Test that getOverridedView throws exception when name starts with @ but has no /
         $reflection = new ReflectionMethod($appConfig, 'getOverridedView');
-        $reflection->setAccessible(true);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Invalid view name: @Invalid');
 
         $reflection->invoke($appConfig, '@Invalid');
@@ -139,7 +139,7 @@ class AppConfigTest extends TestCase
         // Test getOverridedView with path starting with @
         // This tests the code added in lines 284-290
         $reflection = new ReflectionMethod($appConfig, 'getOverridedView');
-        $reflection->setAccessible(true);
+
         $result = $reflection->invoke($appConfig, '@PushwordConversation/conversation/review.html.twig');
 
         // Should extract the part after / and find the host override

@@ -21,7 +21,8 @@ class ShowMore extends AbstractFilter
         $afterShowMoreTag = "\n".'<!--end-show-more-->';
         $bodyParts = explode("\n".'<!--start-show-more-->', $body);
         $body = '';
-        $template = $this->twig->load($this->app->getView('/component/show_more.html.twig'));
+        $templatePath = $this->app->getView('/component/show_more.html.twig');
+        $template = $this->twig->load($templatePath);
         foreach ($bodyParts as $bodyPart) {
             $bodyPart .= "\n";
             if (! str_contains($bodyPart, $afterShowMoreTag)) {
