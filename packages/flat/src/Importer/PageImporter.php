@@ -239,15 +239,15 @@ final class PageImporter extends AbstractImporter
 
     private function initDateTimeProperties(Page $page, DateTimeInterface $lastEditDateTime): void
     {
-        if (null === $page->getPublishedAt(false)) {
+        if (null === $page->getPublishedAt()) {
             $page->setPublishedAt($lastEditDateTime);
         }
 
-        if (null === $page->getCreatedAt(false)) {
+        if (null === $page->getCreatedAt()) {
             $page->setCreatedAt($lastEditDateTime);
         }
 
-        if (null === $page->getUpdatedAt(false)) {
+        if (null === $page->getUpdatedAt()) {
             $page->setUpdatedAt($lastEditDateTime);
         }
     }
