@@ -48,10 +48,17 @@ Plan.md
 **/skeleton/admin-block-editor.test
 **/skeleton/pushword.piedweb.com
 **/skeleton/src/Migrations
-**/skeleton/var/*
-**/skeleton/var/app.db
 packages/skeleton/templates/newTemplateFile2.html.twig
-# restore via `composer reset`
-**/skeleton/media
+
+# Skeleton var - high file activity during tests (SQLite journal, sessions, cache)
+packages/skeleton/var/
+**/skeleton/var/**
+**/app.db-journal
+**/app.db-wal
+**/app.db-shm
+
+# Skeleton media - recreated during tests
+packages/skeleton/media/
+**/skeleton/media/**
 
 !.gitkeep

@@ -137,6 +137,7 @@
     "stan": "vendor/bin/phpstan",
     "test": "./.scripts/test $*",
     "test-filter": "./.scripts/test --filter $*",
+    "test-cursor": "vendor/bin/phpunit -c phpunit-cursor.xml.dist --stop-on-failure",
     "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
     "rector": "vendor/bin/rector process && composer format",
     "format": "PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix rector.php && PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix",

@@ -18,11 +18,7 @@ import { inlinePopup } from './admin.inlinePopup'
 // Modules de formulaire
 import { textareaAutoSize, textareaWithoutNewLine } from './admin.textareaHelper'
 import { memorizeOpenPanel } from './admin.memorizeOpenPanel'
-import {
-  showTitlePixelWidth,
-  removePreviewBtn,
-  columnSizeManager,
-} from './admin.formHelpers'
+import { showTitlePixelWidth } from './admin.formHelpers'
 
 // Modules d'état
 import { retrieveCurrentPageLocale, retrieveCurrentPageHost } from './admin.pageState'
@@ -53,8 +49,6 @@ window.addEventListener('load', function () {
   // Helpers de formulaire
   showTitlePixelWidth()
   showTitlePixelWidth('desc', 150)
-  removePreviewBtn()
-  columnSizeManager()
 
   // Gestion des panels
   memorizeOpenPanel()

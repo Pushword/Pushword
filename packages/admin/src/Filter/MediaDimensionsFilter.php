@@ -84,3 +84,8 @@ final class MediaDimensionsFilter implements FilterInterface
         $queryBuilder->andWhere($expr);
     }
 }
+
+
+
+
+
