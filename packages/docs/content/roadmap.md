@@ -16,8 +16,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - on #hash, the show more block must not closed
   - on document ready, if scroll != 0, the show more block must be opened
 
-- refactor admin.inlinePopup.js and admin.mediaPicker.js to avoid duplicate code
-
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
 - drop public media dir and hardcode a const php side and a js side
