@@ -260,7 +260,12 @@ export async function uncloakLinks(
     var href = element.getAttribute(attribute)
     element.removeAttribute(attribute)
     for (var i = 0, n = element.attributes.length; i < n; i++) {
-      link.setAttribute(element.attributes[i].nodeName, element.attributes[i].nodeValue)
+      const attr = element.attributes[i]
+      if (attr.nodeName.startsWith('@') || attr.nodeName.startsWith(':')) {
+        console.log("You can't use @alpine.js attribute on", element)
+        continue
+      }
+      link.setAttribute(attr.nodeName, attr.nodeValue)
     }
     link.innerHTML = element.innerHTML
     link.setAttribute('href', responsiveImage(convertShortchutForLink(rot13ToText(href))))

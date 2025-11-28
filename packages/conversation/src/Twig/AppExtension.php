@@ -73,6 +73,7 @@ class AppExtension
 
         return $twig->render($view, [
             'reviews' => $reviews,
+            'page' => $this->apps->getCurrentPage(),
         ]);
     }
 

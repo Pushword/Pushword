@@ -17,7 +17,9 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('admin_block_editor');
-        $treeBuilder->getRootNode()->children()
+        $rootNode = $treeBuilder->getRootNode();
+
+        $rootNode->children()
             ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
             ->booleanNode('new_page')->defaultValue(true)->info('Set false to disable block editor for new page')->end()
             ->booleanNode('admin_block_editor')->defaultValue(true)->info('set false to disable block editor (and get the default Mardown Editor)')->end()

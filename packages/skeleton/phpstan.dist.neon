@@ -3,6 +3,8 @@ parameters:
     paths:
         - src
         - config
+    excludePaths:
+        - config/reference.php
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
         consoleApplicationLoader: bin/console-test.php

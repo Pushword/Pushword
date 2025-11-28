@@ -21,7 +21,7 @@
 
 {% if image is defined and isInstanceOfMedia(image) %}
     {% set image_src = image.fileName %}
-    {% set image_alt = image_alt ?? media.altLocalized(page is defined ? page.locale : '') %}
+    {% set image_alt = image_alt ?? image.altLocalized(page is defined ? page.locale : '') %}
 {% else  %}
     {% set image = media_from_string(image_src ?? image, image_alt ?? '') %}
 {% endif %}

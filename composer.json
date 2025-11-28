@@ -84,6 +84,8 @@
     "symfony/debug-bundle": "*",
     "symfony/dotenv": "*",
     "symfony/maker-bundle": "*",
+    "symfony/browser-kit": "^7.3",
+    "symfony/dom-crawler": "^7.3",
     "symfony/panther": "*",
     "symfony/phpunit-bridge": "*",
     "symfony/profiler-pack": "*",

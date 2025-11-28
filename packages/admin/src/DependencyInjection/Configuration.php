@@ -32,9 +32,6 @@ use Pushword\Admin\FormField\UserUsernameField;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-/**
- * @template T of object
- */
 class Configuration implements ConfigurationInterface
 {
     final public const array DEFAULT_APP_FALLBACK = [
