@@ -27,6 +27,8 @@ then
     FILTER_ARG="--filter $1"
 fi
 
+# lsof -ti:9080 | xargs -r kill -9 2>/dev/null; pkill -f chromedriver 2>/dev/null; sleep 1
+
 if [ "$1" = "full" ]
 then
     trap restoreDataAndComposerDependencies EXIT

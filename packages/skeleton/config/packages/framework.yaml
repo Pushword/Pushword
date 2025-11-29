@@ -30,3 +30,9 @@ when@prod:
   framework:
     router:
       strict_requirements: true
+
+when@test:
+  framework:
+    test: true
+    session:
+      storage_factory_id: session.storage.factory.mock_file

@@ -1262,9 +1262,9 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *             lifetime?: int, // Default: 31536000
  *             path?: scalar|null, // Default: "/"
  *             domain?: scalar|null, // Default: null
- *             secure?: true|false|"auto", // Default: false
+ *             secure?: true|false|"auto", // Default: null
  *             httponly?: bool, // Default: true
- *             samesite?: null|"lax"|"strict"|"none", // Default: null
+ *             samesite?: null|"lax"|"strict"|"none", // Default: "lax"
  *             always_remember_me?: bool, // Default: false
  *             remember_me_parameter?: scalar|null, // Default: "_remember_me"
  *         },
@@ -1618,7 +1618,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     stimulus?: StimulusConfig,
  *     twig_component?: TwigComponentConfig,
  *     twig_extra?: TwigExtraConfig,
- *     maker?: MakerConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1647,6 +1646,32 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         maker?: MakerConfig,
  *         web_profiler?: WebProfilerConfig,
  *         debug?: DebugConfig,
+ *     },
+ *     "when@prod"?: array{
+ *         imports?: ImportsConfig,
+ *         parameters?: ParametersConfig,
+ *         services?: ServicesConfig,
+ *         pushword?: PushwordConfig,
+ *         pushword_admin?: PushwordAdminConfig,
+ *         page_update_notifier?: PageUpdateNotifierConfig,
+ *         static_generator?: StaticGeneratorConfig,
+ *         pushword_page_scanner?: PushwordPageScannerConfig,
+ *         pushword_template_editor?: PushwordTemplateEditorConfig,
+ *         pushword_flat?: PushwordFlatConfig,
+ *         conversation?: ConversationConfig,
+ *         pushword_version?: PushwordVersionConfig,
+ *         pushword_admin_block_editor?: PushwordAdminBlockEditorConfig,
+ *         pushword_advanced_main_image?: PushwordAdvancedMainImageConfig,
+ *         monolog?: MonologConfig,
+ *         framework?: FrameworkConfig,
+ *         twig?: TwigConfig,
+ *         security?: SecurityConfig,
+ *         doctrine?: DoctrineConfig,
+ *         babdev_pagerfanta?: BabdevPagerfantaConfig,
+ *         vich_uploader?: VichUploaderConfig,
+ *         stimulus?: StimulusConfig,
+ *         twig_component?: TwigComponentConfig,
+ *         twig_extra?: TwigExtraConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1755,6 +1780,7 @@ namespace Symfony\Component\Routing\Loader\Configurator;
  * }
  * @psalm-type RoutesConfig = array{
  *     "when@dev"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
+ *     "when@prod"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
  *     "when@test"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
  *     ...<string, RouteConfig|ImportConfig|AliasConfig>
  * }

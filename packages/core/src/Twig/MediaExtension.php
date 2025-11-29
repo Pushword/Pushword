@@ -67,6 +67,8 @@ class MediaExtension
             $src = substr($src, \strlen('/'.$mediaDir.'/default/'));
         } elseif (str_starts_with($src, '/'.$mediaDir.'/md/')) {
             $src = substr($src, \strlen('/'.$mediaDir.'/md/'));
+        } elseif (str_starts_with($src, '/'.$mediaDir.'/thumb/')) {
+            $src = substr($src, \strlen('/'.$mediaDir.'/thumb/'));
         } elseif (2 === substr_count($src, '/') && str_starts_with($src, '/'.$mediaDir.'/')) {
             $src = substr($src, \strlen('/'.$mediaDir.'/'));
         }
