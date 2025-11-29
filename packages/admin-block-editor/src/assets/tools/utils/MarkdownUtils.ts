@@ -390,7 +390,7 @@ export class MarkdownUtils {
       .replace(/_(.+?)_/g, '<i>$1</i>')
       .replace(/`(.+?)`/g, '<code class="inline-code">$1</code>')
       .replace(/~~(.+?)~~/g, '<s class="cdx-strikethrough">$1</s>')
-      .replace(/#?\[([^\]]+)\]\(([^)]+?)(?:\{([^}]+)\})?\)/g, (match) =>
+      .replace(/#?\[([^\]]+)\]\(([^){]+)\)(?:\{([^}]+)\})?/g, (match) =>
         MarkdownUtils.convertMarkdownToAnchor(match),
       )
   }
