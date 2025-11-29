@@ -7,6 +7,9 @@ use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+
+use function Safe\json_encode;
+
 use Symfony\Component\Routing\RouterInterface;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -109,5 +112,14 @@ class AppExtension
         }
 
         return [trim($pageOrTag->getSlug())];
+    }
+
+    /**
+     * Get all conversation tags as JSON string for suggestions.
+     */
+    #[AsTwigFunction('pw_conversation_all_tags_json')]
+    public function getAllTagsJson(): string
+    {
+        return json_encode($this->messageRepo->getAllTags());
     }
 }

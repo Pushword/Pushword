@@ -114,20 +114,22 @@
     </button>
   </div>
 
-  <div class="d-flex flex-wrap align-items-center text-muted small">
+  <div class="d-flex flex-wrap align-items-center text-muted small pw-inline-tags-wrapper">
     <span>#</span>
-    <span
-      class="grow px-1"
-      contenteditable="true"
+    <input
+      type="text"
+      class="grow px-1 pw-inline-tags-input"
+      style="min-width: 50px; border: none; background: transparent; outline: none; font-size: inherit; color: inherit;"
+      value="{{ message.tags|default('')|trim }}"
+      placeholder="{{ 'admin.conversation.inline.placeholder.tags'|trans }}"
       hx-post="{{ inlineAction }}"
-      hx-trigger="blur"
+      hx-trigger="blur changed"
       hx-target="#{{ inlineTarget }}"
       hx-swap="outerHTML"
-      hx-vals='js:{field: "tags", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
-      data-placeholder="{{ 'admin.conversation.inline.placeholder.tags'|trans }}"
+      hx-vals='js:{field: "tags", value: event.target.value.trim(), _token: "{{ inlineToken|e('js') }}"}'
+      data-tags="{{ pw_conversation_all_tags_json() }}"
     >
-      {{ message.tags|default('')|trim }}
-    </span>
+    <div class="textSuggester" style="display:none;"></div>
   </div>
 
 </div>
