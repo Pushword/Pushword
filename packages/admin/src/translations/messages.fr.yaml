@@ -139,6 +139,7 @@ admin:
     tags:
       search_label: Tags
       label: "TagOne, TagTwo, ..."
+      placeholder: "Ajouter des tags..."
     og:
       label: Open Graph Card
     ogTitle:
@@ -248,6 +249,8 @@ admin:
       upload: Importer
       remove: Supprimer
       empty: Aucune image sélectionnée
+  pagination:
+    per_page: Par page
 
   element:
     deleted: Elément supprimé.

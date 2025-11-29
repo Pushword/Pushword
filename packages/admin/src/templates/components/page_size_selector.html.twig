@@ -1,0 +1,27 @@
+{% set currentSize = currentPageSize|default(100) %}
+{% set options = pageSizeOptions|default([25, 50, 100, 250, 500]) %}
+
+<div class="page-size-selector d-flex align-items-center gap-2 ms-2">
+  <label for="pageSize" class="form-label mb-0 text-muted small">
+    {{ 'admin.pagination.per_page'|trans }}
+  </label>
+  <select id="pageSize"
+          class="form-select form-select-sm"
+          style="width: auto; min-width: 80px;"
+          onchange="updatePageSize(this.value)">
+    {% for size in options %}
+      <option value="{{ size }}" {{ currentSize == size ? 'selected' }}>
+        {{ size }}
+      </option>
+    {% endfor %}
+  </select>
+</div>
+
+<script>
+function updatePageSize(size) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('pageSize', size);
+  url.searchParams.delete('page'); // Reset to page 1 when changing page size
+  window.location.href = url.toString();
+}
+</script>

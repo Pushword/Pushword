@@ -3,6 +3,8 @@
 namespace Pushword\Admin\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use InvalidArgumentException;
@@ -27,6 +29,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 abstract class AbstractAdminCrudController extends AbstractCrudController implements AdminInterface
 {
+    /** @var int[] */
+    protected array $pageSizeOptions = [25, 50, 100, 250, 500];
+
+    protected int $defaultPageSize = 100;
+
     protected ?object $subject = null;
 
     protected EntityManagerInterface $entityManager;
@@ -262,5 +269,74 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
 
         /** @var list<class-string<AbstractField<T>>> $classes */
         return $classes;
+    }
+
+    // ========== Pagination PageSize ==========
+
+    #[Override]
+    public function configureResponseParameters(KeyValueStore $responseParameters): KeyValueStore
+    {
+        $responseParameters = parent::configureResponseParameters($responseParameters);
+        $context = $this->getContext();
+
+        if (null === $context || Crud::PAGE_INDEX !== $context->getCrud()?->getCurrentPage()) {
+            return $responseParameters;
+        }
+
+        $responseParameters->set('pageSizeOptions', $this->getPageSizeOptions());
+        $responseParameters->set('currentPageSize', $this->getCurrentPageSize());
+
+        return $responseParameters;
+    }
+
+    protected function getRequestedPageSize(): int
+    {
+        $request = $this->requestStack->getCurrentRequest();
+        if (null === $request) {
+            return $this->defaultPageSize;
+        }
+
+        $session = $request->getSession();
+        $sessionKey = $this->getPageSizeSessionKey();
+
+        // Priority 1: Query parameter
+        if ($request->query->has('pageSize')) {
+            $size = $request->query->getInt('pageSize');
+
+            if (\in_array($size, $this->pageSizeOptions, true)) {
+                $session->set($sessionKey, $size);
+
+                return $size;
+            }
+        }
+
+        // Priority 2: Session
+        if ($session->has($sessionKey)) {
+            $size = $session->get($sessionKey);
+            if (\is_int($size) && \in_array($size, $this->pageSizeOptions, true)) {
+                return $size;
+            }
+        }
+
+        // Priority 3: Default
+        return $this->defaultPageSize;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getPageSizeOptions(): array
+    {
+        return $this->pageSizeOptions;
+    }
+
+    public function getCurrentPageSize(): int
+    {
+        return $this->getRequestedPageSize();
+    }
+
+    private function getPageSizeSessionKey(): string
+    {
+        return 'admin_page_size_'.static::class;
     }
 }

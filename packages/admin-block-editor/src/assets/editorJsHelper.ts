@@ -1,4 +1,4 @@
-import ajax from '@codexteam/ajax'
+// import ajax from '@codexteam/ajax'
 import { EditorModeManager } from './EditorModeManager'
 
 interface ToolWithCallbacks {
@@ -93,7 +93,10 @@ export class editorJsHelper {
     ) as HTMLButtonElement | null
 
     if (!actionButton) {
-      console.error('media picker action button not found', { action, selectId: selectElement.id })
+      console.error('media picker action button not found', {
+        action,
+        selectId: selectElement.id,
+      })
       return
     }
 

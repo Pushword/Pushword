@@ -139,6 +139,7 @@ admin:
     tags:
       search_label: Tags
       label: "TagOne, TagTwo, ..."
+      placeholder: "Add tags..."
     og:
       label: Open Graph Card
     ogTitle:
@@ -236,6 +237,9 @@ admin:
       mosaic: Mosaic
       table: List
       select_all: Select all
+
+  pagination:
+    per_page: Per page
     mosaic:
       empty: No media matches your search.
     picker:

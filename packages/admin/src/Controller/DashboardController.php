@@ -4,6 +4,7 @@ namespace Pushword\Admin\Controller;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\UserMenu;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
@@ -36,6 +37,15 @@ class DashboardController extends AbstractDashboardController
             ->setFaviconPath('/bundles/pushwordcore/favicon.ico')
             // ->setLocales(['en', 'fr']) - use User's Locale instead
             ->disableDarkMode();
+    }
+
+    #[Override]
+    public function configureCrud(): Crud
+    {
+        return Crud::new()
+            ->overrideTemplates([
+                'crud/index' => '@pwAdmin/crud/index.html.twig',
+            ]);
     }
 
     #[Override]

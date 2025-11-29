@@ -43,7 +43,7 @@ class ConversationCrudController extends AbstractAdminCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setPaginatorPageSize(100)
+            ->setPaginatorPageSize($this->getRequestedPageSize())
             ->setEntityLabelInSingular('admin.label.conversation')
             ->setEntityLabelInPlural('admin.label.conversation')
             ->setDefaultSort(['createdAt' => 'DESC']);
