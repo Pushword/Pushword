@@ -4,6 +4,7 @@ declare(strict_types=1);
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
+use Rector\Symfony\CodeQuality\Rector\Class_\ControllerMethodInjectionToConstructorRector;
 use Rector\Symfony\Set\SymfonySetList;
 
 $paths = [
@@ -49,5 +50,10 @@ return RectorConfig::configure()
         'packages/core/src/Component/App/AppConfig.php',
         NullToStrictStringFuncCallArgRector::class,
         FlipTypeControlToUseExclusiveTypeRector::class,
+        // @see https://github.com/rectorphp/rector/issues/9519
+        ControllerMethodInjectionToConstructorRector::class => [
+            '*CrudController.php',
+            'DashboardController.php',
+        ],
     ])
 ;

@@ -2,7 +2,7 @@
 
 namespace Pushword\Admin\FormField;
 
-use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use Pushword\Core\Entity\Media;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
@@ -11,7 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
  */
 final class MediaNameField extends AbstractField
 {
-    public function getEasyAdminField(): FieldInterface
+    public function getEasyAdminField(): Field
     {
         return $this->buildEasyAdminField('alt', TextType::class, [
             'required' => null !== $this->admin->getSubject()->getId(),

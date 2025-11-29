@@ -32,7 +32,9 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('admin.label.tools')
+            ->setTitle('Pushword')
+            ->setFaviconPath('/bundles/pushwordcore/favicon.ico')
+            // ->setLocales(['en', 'fr']) - use User's Locale instead
             ->disableDarkMode();
     }
 

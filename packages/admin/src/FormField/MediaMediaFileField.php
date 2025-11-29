@@ -2,7 +2,7 @@
 
 namespace Pushword\Admin\FormField;
 
-use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use Pushword\Core\Entity\Media;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 
@@ -11,7 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\FileType;
  */
 final class MediaMediaFileField extends AbstractField
 {
-    public function getEasyAdminField(): FieldInterface
+    public function getEasyAdminField(): Field
     {
         return $this->buildEasyAdminField('mediaFile', FileType::class, [
             'label' => 'admin.media.mediaFile.label',

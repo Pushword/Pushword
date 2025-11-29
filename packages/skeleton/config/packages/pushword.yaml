@@ -1,0 +1,51 @@
+pushword:
+  apps:
+    - hosts:
+        - localhost.dev
+        - localhost
+      base_url: "https://localhost.dev"
+      randomTest: 123
+      generated_og_image: true
+      admin_block_editor: false
+      locales: "fr|en"
+      page_update_notification_from: "test@example.tld"
+      page_update_notification_to: "test@example.tld"
+    - hosts:
+        - pushword.piedweb.com
+      base_url: "https://pushword.piedweb.com"
+      flat_content_dir: "%kernel.project_dir%/../docs/content"
+      static_dir: "%kernel.project_dir%/../../docs"
+      name: Pushword
+      favicon_path: "/assets/"
+      static_generators:
+        - Pushword\StaticGenerator\Generator\PagesGenerator
+        - Pushword\StaticGenerator\Generator\MediaGenerator
+        - Pushword\StaticGenerator\Generator\RobotsGenerator
+        - Pushword\StaticGenerator\Generator\ErrorPageGenerator
+        - Pushword\StaticGenerator\Generator\CopierGenerator
+        - Pushword\StaticGenerator\Generator\CNAMEGenerator
+      assets:
+        javascripts:
+          - "assets/app.js"
+        stylesheets:
+          - "assets/tw.css"
+      color_bg: "#fff"
+      static_copy:
+        - assets
+    - hosts:
+        - admin-block-editor.test
+      base_url: "https://admin-block-editor.test"
+
+static_generator:
+  static_symlink: false
+
+pushword_advanced_main_image:
+  main_image_formats:
+    "admin.page.mainImageFormat.none": 1
+    "admin.page.mainImageFormat.normal": 0
+    "admin.page.mainImageFormat.13fullscreen": 2
+
+pushword_template_editor:
+  disable_creation: true
+  can_be_edited_list:
+    - "/pushword.piedweb.com/page/_footer.html.twig"

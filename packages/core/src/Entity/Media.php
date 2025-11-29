@@ -45,9 +45,13 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
 class Media implements IdInterface, Taggable, Stringable
 {
     use CustomPropertiesTrait;
+
     use IdTrait;
+
     use ImageTrait;
+
     use TagsTrait;
+
     use TimestampableTrait;
 
     public function __construct()

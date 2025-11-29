@@ -21,7 +21,7 @@ sed -i "s|@PushwordCoreBundle/Resources/config/routes/all.yaml|@PushwordCoreBund
 
 ```
 
-- [ ] Delete your doctrine related configuration (default one added by core do the job)
+- [ ] Check your `config/packages` and compare it with the new one in [`vendor/pushword/skeleton/config/packages`](https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages) - flex add tons of config but you need to maintain them. Best practice is to remove theme and to keep `framework.yaml` (you can easily compare with the maintained one in the skeleton), `pentatrion.yaml`, `twig.yaml`, `web_profiler.yaml`, `pushword.yaml` .
 
 ### Media entity change
 
@@ -62,7 +62,7 @@ https://tailwindcss.com/docs/upgrade-guide#changes-from-v3`)
 - [ ] same for `./assets/package.json` to `./package.json`
 - [ ] install `composer require pentatrion/vite-bundle`
 - [ ] some utility has been moved from the webpack config helper function to the app.css file, update your app.css to use the new utilities
-- [ ] update your project configuration (see example in `packages/docs/assets/`)
+- [ ] update your project configuration `config/packages/pushword.yaml`
 
 ```yaml
 # FROM
@@ -73,13 +73,21 @@ https://tailwindcss.com/docs/upgrade-guide#changes-from-v3`)
             stylesheets: ["/assets/style.css?65"],
           },
 
-# TO
+# TO (adapt with your vite.config.js output)
         assets:
           {
             vite_javascripts: ["app"],
             vite_stylesheets: ["theme"],
           },
 
+```
+
+- [ ] if you have a custom `app.css`, upgrade it to tailwind v4 (see [`vendor/pushword/js-helper/src/app.css`](https://github.com/Pushword/Pushword/blob/main/packages/js-helper/src/app.css)) - be careful with the `@source` paths.
+- [ ] Check your pentatrion config in `config/packages/`, must be like this :
+
+```yaml
+pentatrion_vite:
+build_directory: assets
 ```
 
 Notes :

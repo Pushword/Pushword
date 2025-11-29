@@ -15,7 +15,6 @@ import { allClickable } from './clickable.js'
 
 let lightbox
 function onDomChanged() {
-  console.log('onDomChanged')
   liveBlock()
   convertImageLinkToWebPLink()
   uncloakLinks()

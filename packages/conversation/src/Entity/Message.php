@@ -30,11 +30,17 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Message implements Stringable, Taggable, IdInterface
 {
     use IdTrait;
+
     use TimestampableTrait;
+
     use HostTrait;
+
     use WeightTrait;
+
     use TagsTrait;
+
     use MediaListTrait;
+
     use CustomPropertiesTrait;
 
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]

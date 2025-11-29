@@ -21,7 +21,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             // 'auto_generate_proxy_classes' => '%kernel.debug%', // disabled for Doctrine 3
             'validate_xml_mapping' => true,
             'naming_strategy' => 'doctrine.orm.naming_strategy.underscore_number_aware',
-            'auto_mapping' => true,
+            'auto_mapping' => true, // TODO, test it with set to false
             'mappings' => [
                 'PushwordCoreBundle' => [
                     'type' => 'attribute',

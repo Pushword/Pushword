@@ -13,6 +13,7 @@ use Pushword\Conversation\Flat\ConversationCsvHelper;
 use Pushword\Conversation\Flat\ConversationExporter;
 use Pushword\Conversation\Flat\ConversationImporter;
 use Pushword\Conversation\Repository\MessageRepository;
+use Pushword\Conversation\Service\ImportContext;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
@@ -69,6 +70,7 @@ final class ConversationFlatTest extends KernelTestCase
             $this->entityManager,
             $denormalizer,
             $this->mediaRepository,
+            new ImportContext(),
         );
         $this->importer->initConversationContext(
             $appPool,

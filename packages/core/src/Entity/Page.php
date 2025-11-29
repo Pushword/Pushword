@@ -36,17 +36,29 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 class Page implements IdInterface, Taggable, Stringable
 {
     use CustomPropertiesTrait;
+
     use HostTrait;
+
     use IdTrait;
+
     use PageEditorTrait;
+
     use PageExtendedTrait;
+
     use PageI18nTrait;
+
     use PageMainImageTrait;
+
     use PageOpenGraphTrait;
+
     use PageParentTrait;
+
     use PageRedirectionTrait;
+
     use PageSearchTrait;
+
     use TagsTrait;
+
     use TimestampableTrait;
 
     public function __construct(bool $initDateTimeProperties = true)

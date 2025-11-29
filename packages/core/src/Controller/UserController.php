@@ -10,17 +10,21 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 final class UserController extends AbstractController
 {
+    public function __construct(private readonly AuthenticationUtils $authenticationUtils)
+    {
+    }
+
     #[Route('/login', name: 'pushword_login')]
-    public function login(AuthenticationUtils $authenticationUtils): Response
+    public function login(): Response
     {
         if (null !== $this->getUser()) {
             return $this->redirectToRoute('pushword_admin');
         }
 
         // get the login error if there is one
-        $authenticationException = $authenticationUtils->getLastAuthenticationError();
+        $authenticationException = $this->authenticationUtils->getLastAuthenticationError();
         // last username entered by the user
-        $lastUsername = $authenticationUtils->getLastUsername();
+        $lastUsername = $this->authenticationUtils->getLastUsername();
 
         return $this->render('@Pushword/user/login.html.twig', [
             'last_username' => $lastUsername,

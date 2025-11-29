@@ -1,0 +1,3 @@
+pushword_page_scanner:
+    links_to_ignore:
+        - 'https://example.tld/*'

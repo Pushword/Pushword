@@ -32,11 +32,12 @@ final class MediaBlockController extends AbstractController
         private readonly EntityManagerInterface $em,
         #[Autowire('%pw.public_media_dir%')]
         private readonly string $publicMediaDir,
+        private readonly ImageManager $imageManager,
     ) {
     }
 
     #[Route('/admin/media/block', name: 'admin_media_block', methods: ['POST'])]
-    public function manage(Request $request, ImageManager $imageManager, string $publicMediaDir): Response
+    public function manage(Request $request, string $publicMediaDir): Response
     {
         /** @var File|Media $mediaFile */
         $mediaFile = '' !== $request->getContent() && '0' !== $request->getContent() ? $this->getMediaFrom($request->getContent())
@@ -59,7 +60,7 @@ final class MediaBlockController extends AbstractController
             }
         }
 
-        $url = $imageManager->isImage($media) ? $imageManager->getBrowserPath($media->getFileName())
+        $url = $this->imageManager->isImage($media) ? $this->imageManager->getBrowserPath($media->getFileName())
             : '/'.$publicMediaDir.'/'.$media->getFileName();
 
         return new Response(json_encode([

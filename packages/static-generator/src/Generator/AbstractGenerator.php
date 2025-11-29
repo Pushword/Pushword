@@ -22,6 +22,7 @@ use Twig\Environment as Twig;
 abstract class AbstractGenerator implements GeneratorInterface
 {
     use GenerateLivePathForTrait;
+
     use KernelTrait;
 
     protected Filesystem $filesystem;

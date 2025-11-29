@@ -2,7 +2,7 @@
 
 namespace Pushword\Admin\FormField;
 
-use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use Pushword\Core\Entity\Media;
 
 /**
@@ -10,7 +10,7 @@ use Pushword\Core\Entity\Media;
  */
 final class MediaNamesField extends AbstractField
 {
-    public function getEasyAdminField(): FieldInterface
+    public function getEasyAdminField(): Field
     {
         return $this->buildEasyAdminField('alts', null, [
             'required' => false,

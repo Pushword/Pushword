@@ -18,6 +18,7 @@ use Symfony\Contracts\Service\Attribute\Required;
 final class PageScannerService
 {
     use GenerateLivePathForTrait;
+
     use KernelTrait;
 
     /**
