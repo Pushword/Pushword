@@ -15,9 +15,9 @@ class OgTwitterCardField extends AbstractField
     {
         return $this->buildEasyAdminField('twitterCard', TextType::class, [
             'required' => false,
-            'label' => 'admin.page.twitterCard.label',
+            'label' => 'adminPageTwitterCardLabel',
             'help_html' => true,
-            'help' => 'admin.page.twitterCard.help',
+            'help' => 'adminPageTwitterCardHelp',
         ]);
     }
 }

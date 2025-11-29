@@ -109,7 +109,7 @@ class NewMessageMailNotifier
         }
 
         $authorEmail = $message->getAuthorEmail() ?? throw new Exception();
-        $subject = $this->translator->trans('admin.conversation.notification.title.singular', ['%appName%' => $this->appName]);
+        $subject = $this->translator->trans('adminConversationNotificationTitleSingular', ['%appName%' => $this->appName]);
 
         $cacheKey = 'conversation_message_'.md5($message->getContent().' '.$message->getAuthorEmail());
 
@@ -124,11 +124,11 @@ class NewMessageMailNotifier
                 ->text(
                     htmlspecialchars_decode($message->getContent())
                     ."\n\n---\n"
-                    .$this->translator->trans('admin.conversation.notification.sent_by', [
+                    .$this->translator->trans('adminConversationNotificationSentBy', [
                         '%authorName%' => $message->getAuthorName() ?? '...',
                         '%authorEmail%' => $message->getAuthorEmail(),
                     ])
-                    ."\n".$this->translator->trans('admin.conversation.notification.from', [
+                    ."\n".$this->translator->trans('adminConversationNotificationFrom', [
                         '%host%' => $message->getHost(),
                         '%referring%' => $message->getReferring(),
                     ])
@@ -167,7 +167,7 @@ class NewMessageMailNotifier
         $templatedEmail = (new TemplatedEmail())
             ->subject(
                 $this->translator->trans(
-                    'admin.conversation.notification.title.'.(\count($messages) > 1 ? 'plural' : 'singular'),
+                    \count($messages) > 1 ? 'adminConversationNotificationTitlePlural' : 'adminConversationNotificationTitleSingular',
                     ['%appName%' => $this->appName]
                 )
             )

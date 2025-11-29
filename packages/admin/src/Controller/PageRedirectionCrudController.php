@@ -27,8 +27,8 @@ class PageRedirectionCrudController extends PageCrudController
         $crud = parent::configureCrud($crud);
 
         return $crud
-            ->setEntityLabelInSingular('admin.label.redirection')
-            ->setEntityLabelInPlural('admin.label.redirection')
+            ->setEntityLabelInSingular('adminLabelRedirection')
+            ->setEntityLabelInPlural('adminLabelRedirection')
             ->showEntityActionsInlined();
     }
 
@@ -37,11 +37,11 @@ class PageRedirectionCrudController extends PageCrudController
     {
         if (Crud::PAGE_INDEX === $pageName) {
             return [
-                TextField::new('slug', 'admin.page.redirection.from')
+                TextField::new('slug', 'adminPageRedirectionFrom')
                     ->setSortable(false)
                     ->renderAsHtml()
                     ->formatValue(fn (?string $value, Page $page): string => $this->formatFromColumn($page)),
-                TextField::new('redirection', 'admin.page.redirection.to')
+                TextField::new('redirection', 'adminPageRedirectionTo')
                     ->setSortable(false)
                     ->renderAsHtml()
                     ->formatValue(fn (?string $value, Page $page): string => $this->formatToColumn($page)),

@@ -216,6 +216,7 @@ final class PageExtension
 
         $search = \is_array($search) ? $search : (new StringToDQLCriteria($search, $currentPage))->retrieve();
 
+        $order = str_replace('priority', 'weight', $order); // bc
         $order = '' === $order ? 'publishedAt,weight' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];

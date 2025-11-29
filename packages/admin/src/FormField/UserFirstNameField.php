@@ -15,7 +15,7 @@ class UserFirstNameField extends AbstractField
     {
         return $this->buildEasyAdminField('firstname', TextType::class, [
             'required' => false,
-            'label' => 'admin.user.firstname.label',
+            'label' => 'adminUserFirstnameLabel',
         ]);
     }
 }

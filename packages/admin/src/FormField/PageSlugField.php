@@ -17,7 +17,7 @@ class PageSlugField extends AbstractField
     protected function getSlugHelp(): string
     {
         if ('' === $this->admin->getSubject()->getSlug()) {
-            return 'admin.page.slug.help';
+            return 'adminPageSlugHelp';
         }
 
         /** @param Page $page */
@@ -40,7 +40,7 @@ class PageSlugField extends AbstractField
     {
         return $this->buildEasyAdminField('slug', TextType::class, [
             'required' => false,
-            'label' => 'admin.page.slug.label',
+            'label' => 'adminPageSlugLabel',
             'help_html' => true,
             'help' => $this->getSlugHelp(),
             'attr' => [

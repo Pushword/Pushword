@@ -41,9 +41,9 @@ static_generator:
 
 pushword_advanced_main_image:
   main_image_formats:
-    "admin.page.mainImageFormat.none": 1
-    "admin.page.mainImageFormat.normal": 0
-    "admin.page.mainImageFormat.13fullscreen": 2
+    "adminPageMainImageFormatNone": 1
+    "adminPageMainImageFormatNormal": 0
+    "adminPageMainImageFormat13fullscreen": 2
 
 pushword_template_editor:
   disable_creation: true

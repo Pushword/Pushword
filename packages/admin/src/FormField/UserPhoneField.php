@@ -15,7 +15,7 @@ class UserPhoneField extends AbstractField
     {
         return $this->buildEasyAdminField('phone', TextType::class, [
             'required' => false,
-            'label' => 'admin.user.phone.label',
+            'label' => 'adminUserPhoneLabel',
         ]);
     }
 }

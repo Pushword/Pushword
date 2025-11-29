@@ -165,7 +165,7 @@ class PageUpdateNotifier
 
         $message = (new Email())
             ->subject(
-                $this->translator->trans('admin.page.update_notification.title', ['%appName%' => $this->appName])
+                $this->translator->trans('adminPageUpdateNotificationTitle', ['%appName%' => $this->appName])
             )
             ->from($this->emailFrom)
             ->to($this->emailTo)

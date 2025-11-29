@@ -14,10 +14,10 @@ class PageNameField extends AbstractField
     public function getEasyAdminField(): ?FieldInterface
     {
         return $this->buildEasyAdminField('name', TextareaType::class, [
-            'label' => 'admin.page.name.label',
+            'label' => 'adminPageNameLabel',
             'required' => false,
             'help_html' => true,
-            'help' => 'admin.page.name.help',
+            'help' => 'adminPageNameHelp',
             'attr' => ['class' => 'autosize'],
         ]);
     }

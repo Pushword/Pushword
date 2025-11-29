@@ -20,7 +20,7 @@ class UserDateOfBirthField extends AbstractField
             'widget' => 'single_text',
             'html5' => true,
             'required' => false,
-            'label' => 'admin.user.dateOfBirth.label',
+            'label' => 'adminUserDateOfBirthLabel',
             'attr' => [
                 'min' => '1900-01-01',
                 'max' => $dateTime->format('Y-m-d'),

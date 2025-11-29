@@ -19,10 +19,10 @@ class Configuration implements ConfigurationInterface
      * @var array<string, int>
      */
     final public const array DEFAULT_MAIN_IMAGE_FORMATS = [
-        'admin.page.mainImageFormat.none' => 1,
-        'admin.page.mainImageFormat.normal' => 0,
-        'admin.page.mainImageFormat.13fullscreen' => 2,
-        'admin.page.mainImageFormat.34fullscreen' => 3,
+        'adminPageMainImageFormatNone' => 1,
+        'adminPageMainImageFormatNormal' => 0,
+        'adminPageMainImageFormat13fullscreen' => 2,
+        'adminPageMainImageFormat34fullscreen' => 3,
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder

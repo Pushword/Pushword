@@ -1,23 +1,19 @@
-page_scan:
-  different_host: Parent page has a different host
-  obfuscate_mail: to prevent spam, obfuscate this link.
-  not_found: not found
-  is_redirection: redirection
-  unreachable: unreacheable - errorMessage
-  status_code: Unexpected status code
-  canonical: Canonical is different
-
-page_scanner:
-  title: Content verification
-  force_scan: Force a scan
-  site_scan: Site scan
-  scan_in_progress_no_errors: Scan in progress. The previous scan detected no errors.
-  scan_in_progress: Scan in progress...
-  scan_result: Scan result from %date%
-  new_scan_in_progress: '<em>new scan in progress</em>, the page will refresh automatically when it completes'
-  force_new_scan: force a new scan
-  table:
-    page: Page
-    errors: Errors
-    action: Action
-  view: View
+page_scanCanonical: 'Canonical is different'
+page_scanDifferentHost: 'Parent page has a different host'
+page_scanIsRedirection: redirection
+page_scanNotFound: 'not found'
+page_scanObfuscateMail: 'to prevent spam, obfuscate this link.'
+page_scanStatusCode: 'Unexpected status code'
+page_scanUnreachable: 'unreacheable - errorMessage'
+page_scannerForceNewScan: 'force a new scan'
+page_scannerForceScan: 'Force a scan'
+page_scannerNewScanInProgress: '<em>new scan in progress</em>, the page will refresh automatically when it completes'
+page_scannerScanInProgress: 'Scan in progress...'
+page_scannerScanInProgressNoErrors: 'Scan in progress. The previous scan detected no errors.'
+page_scannerScanResult: 'Scan result from %date%'
+page_scannerSiteScan: 'Site scan'
+page_scannerTableAction: Action
+page_scannerTableErrors: Errors
+page_scannerTablePage: Page
+page_scannerTitle: 'Content verification'
+page_scannerView: View

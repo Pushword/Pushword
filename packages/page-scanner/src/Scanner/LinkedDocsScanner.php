@@ -139,7 +139,7 @@ final class LinkedDocsScanner extends AbstractScanner
             // @phpstan-ignore-next-line
             $uri .= $matches[4][$k] ? '' : '#(obfuscate)'; // not elegant but permit to remember it's an obfuscate link
             if ($this->isMailtoOrTelLink($uri) && ! $isDataRotAttribute) {
-                $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scan.obfuscate_mail'));
+                $this->addError('<code>'.$uri.'</code> '.$this->trans('page_scanObfuscateMail'));
             } elseif ('' !== $uri && $this->isWebLink($uri)) {
                 $linkedDocs[] = $uri;
             }
@@ -223,9 +223,9 @@ final class LinkedDocsScanner extends AbstractScanner
 
         if ('/' === $uri[0]) {
             if (! $this->uriExist($this->removeParameters($uri))) {
-                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scan.not_found'));
+                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
             } elseif ($checkRedirection && $this->lastPageChecked instanceof Page && $this->lastPageChecked->hasRedirection()) {
-                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scan.is_redirection'));
+                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
             }
 
             return;
@@ -309,19 +309,19 @@ final class LinkedDocsScanner extends AbstractScanner
             /** @var string */
             $httpCode = $client->getCurlInfo(\CURLINFO_HTTP_CODE);
 
-            return $this->urlExistCache[$url] = $this->trans('page_scan.status_code').' ('.$httpCode.')';
+            return $this->urlExistCache[$url] = $this->trans('page_scanStatusCode').' ('.$httpCode.')';
         }
 
         if ($client->getError() > 0) {
             return $this->urlExistCache[$url] = $this->trans(
-                'page_scan.unreachable',
+                'page_scanUnreachable',
                 92832 === $client->getError() ? [' - errorMessage' => ''] : ['errorMessage' => $client->getErrorMessage()]
             );
         }
 
         // $canonical = new CanonicalExtractor(new Url($url), new DomCrawler($client->getResponse()->getBody()));
         // if (! $canonical->ifCanonicalExistsIsItCorrectOrPartiallyCorrect()) {
-        //     return $this->urlExistCache[$url] = $this->trans('page_scan.canonical').' ('.($canonical->get() ?? 'null').')';
+        //     return $this->urlExistCache[$url] = $this->trans('page_scanCanonical').' ('.($canonical->get() ?? 'null').')';
         // }
 
         return $this->urlExistCache[$url] = true;

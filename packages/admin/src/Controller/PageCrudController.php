@@ -97,35 +97,35 @@ class PageCrudController extends AbstractAdminCrudController
     {
         if ($this->hasMultipleHosts()) {
             $filters->add(
-                ChoiceFilter::new('host', 'admin.page.host.label')
+                ChoiceFilter::new('host', 'adminPageHostLabel')
                     ->setChoices($this->getHostChoices()),
             );
         }
 
         $filters
-            ->add(PageSearchFilter::new(['h1', 'title', 'slug'], 'admin.page.h1.label'))
-            ->add(TextFilter::new('tags', 'admin.page.tags.search_label'))
-            ->add(TextFilter::new('slug', 'admin.page.slug.label'))
-            ->add(TextFilter::new('mainContent', 'admin.page.mainContent.label'));
+            ->add(PageSearchFilter::new(['h1', 'title', 'slug'], 'adminPageH1Label'))
+            ->add(TextFilter::new('tags', 'adminPageTagsSearchLabel'))
+            ->add(TextFilter::new('slug', 'adminPageSlugLabel'))
+            ->add(TextFilter::new('mainContent', 'adminPageMainContentLabel'));
 
         $localeChoices = $this->getLocaleChoices();
         if ([] !== $localeChoices) {
             $filters->add(
-                ChoiceFilter::new('locale', 'admin.page.locale.label')
+                ChoiceFilter::new('locale', 'adminPageLocaleLabel')
                     ->setChoices($localeChoices),
             );
         } else {
-            $filters->add(TextFilter::new('locale', 'admin.page.locale.label'));
+            $filters->add(TextFilter::new('locale', 'adminPageLocaleLabel'));
         }
 
         $filters
-            ->add(TextFilter::new('name', 'admin.page.name.label'))
-            ->add(EntityFilter::new('parentPage', 'admin.page.parentPage.label'))
+            ->add(TextFilter::new('name', 'adminPageNameLabel'))
+            ->add(EntityFilter::new('parentPage', 'adminPageParentPageLabel'))
             ->add(
-                ChoiceFilter::new('metaRobots', 'admin.page.metaRobots.label')
+                ChoiceFilter::new('metaRobots', 'adminPageMetaRobotsLabel')
                     ->setChoices($this->getMetaRobotsChoices()),
             )
-            ->add(TextFilter::new('customProperties', 'admin.page.customProperties.label'));
+            ->add(TextFilter::new('customProperties', 'adminPageCustomPropertiesLabel'));
 
         return $filters;
     }
@@ -267,12 +267,12 @@ class PageCrudController extends AbstractAdminCrudController
         try {
             $response = $this->pageController->showPage($page);
             if (Response::HTTP_OK !== $response->getStatusCode()) {
-                $flashBag->add('warning', $this->getTranslator()->trans('admin.page.error.generation_failed'));
+                $flashBag->add('warning', $this->getTranslator()->trans('adminPageErrorGenerationFailed'));
             }
         } catch (RuntimeError|SyntaxError $runtimeError) {
             $flashBag->add(
                 'warning',
-                $this->getTranslator()->trans('admin.page.error.generation_failed_with_details', [
+                $this->getTranslator()->trans('adminPageErrorGenerationFailedWithDetails', [
                     '%error%' => $runtimeError->getRawMessage(),
                     '%excerpt%' => htmlentities($this->getErrorExcerpt($runtimeError)),
                 ])
@@ -304,18 +304,18 @@ class PageCrudController extends AbstractAdminCrudController
      */
     private function getIndexFields(): iterable
     {
-        yield DateTimeField::new('publishedAt', 'admin.page.publishedAt.label')
+        yield DateTimeField::new('publishedAt', 'adminPagePublishedAtLabel')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
 
-        yield IntegerField::new('weight', 'admin.page.weight.label')
+        yield IntegerField::new('weight', 'adminPageWeightLabel')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
 
-        yield TextField::new('h1', 'admin.page.h1.label')
+        yield TextField::new('h1', 'adminPageH1Label')
             ->setTemplatePath('@pwAdmin/page/pageListTitleField.html.twig')
             ->setSortable(false);
-        yield DateTimeField::new('updatedAt', 'admin.page.updatedAt.label')
+        yield DateTimeField::new('updatedAt', 'adminPageUpdatedAtLabel')
             ->setSortable(true);
     }
 
@@ -357,7 +357,7 @@ class PageCrudController extends AbstractAdminCrudController
 
         if ([] !== $extraBlocks) {
             yield FormField::addColumn('col-12 extraFields');
-            yield FormField::addFieldset('admin.page.extra.label');
+            yield FormField::addFieldset('adminPageExtraLabel');
             foreach ($extraBlocks as $block) {
                 $blockFields = $this->normalizeBlock($block);
                 yield from $this->adminFormFieldManager->getEasyAdminFields($blockFields, $this);
@@ -394,7 +394,7 @@ class PageCrudController extends AbstractAdminCrudController
     private function getMetaRobotsChoices(): array
     {
         return [
-            'admin.page.metaRobots.choice.noIndex' => 'noindex',
+            'adminPageMetaRobotsChoiceNoIndex' => 'noindex',
         ];
     }
 

@@ -81,11 +81,11 @@ final class MediaPickerType extends AbstractType
             'data-pw-media-picker-placeholder' => Thumb::PLACEHOLDER_DATA_URI,
             'data-pw-media-picker-modal-url' => $this->buildAdminUrl($this->buildPickerQuery('index', $filters)),
             'data-pw-media-picker-upload-url' => $this->buildAdminUrl($this->buildPickerQuery('new', $filters)),
-            'data-pw-media-picker-modal-title' => $this->translator->trans('admin.media.picker.title'),
-            'data-pw-media-picker-choose-label' => $this->translator->trans('admin.media.picker.choose'),
-            'data-pw-media-picker-upload-label' => $this->translator->trans('admin.media.picker.upload'),
-            'data-pw-media-picker-remove-label' => $this->translator->trans('admin.media.picker.remove'),
-            'data-pw-media-picker-empty-label' => $this->translator->trans('admin.media.picker.empty'),
+            'data-pw-media-picker-modal-title' => $this->translator->trans('adminMediaPickerTitle'),
+            'data-pw-media-picker-choose-label' => $this->translator->trans('adminMediaPickerChoose'),
+            'data-pw-media-picker-upload-label' => $this->translator->trans('adminMediaPickerUpload'),
+            'data-pw-media-picker-remove-label' => $this->translator->trans('adminMediaPickerRemove'),
+            'data-pw-media-picker-empty-label' => $this->translator->trans('adminMediaPickerEmpty'),
         ];
     }
 

@@ -63,7 +63,7 @@ class TagsField extends AbstractField
             'attr' => [
                 'class' => 'textarea-no-newline tagsField'
                     .($isPageAdmin ? '' : ' tagsFieldMedia'),
-                'placeholder' => 'admin.page.tags.label',
+                'placeholder' => 'adminPageTagsLabel',
                 'data-tags' => json_encode($allTags),
                 'autofocus' => '',
             ],
@@ -71,7 +71,7 @@ class TagsField extends AbstractField
                 'class' => 'tagsFieldWrapper '
                     .($isPageAdmin ? ' ce-block__content' : ' tagsFieldWrapperMedia'),
             ],
-            'label' => $isPageAdmin ? ' ' : 'admin.media.tags.label',
+            'label' => $isPageAdmin ? ' ' : 'adminMediaTagsLabel',
             'help' => ' <div class="textSuggester" style="display:none;"></div>'
                 .'<script>setTimeout(function () {
                     const element = document.querySelector("'.(null === $subject->getId() ? '[data-tags]' : '[id$=_h1]').'");

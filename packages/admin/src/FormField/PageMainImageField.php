@@ -22,7 +22,7 @@ class PageMainImageField extends AbstractMediaPickerField
             ->onlyOnForms()
             ->setFormTypeOption('required', false)
             ->setFormTypeOption('choice_label', static fn (Media $media): string => $media->getAlt() ?: $media->getFileName())
-            ->setFormTypeOption('placeholder', 'admin.page.mainImage.label')
+            ->setFormTypeOption('placeholder', 'adminPageMainImageLabel')
             ->setFormTypeOption('attr', $this->mediaPickerAttributes('mainImage', $this->defaultFilters(), $page->getMainImage()));
     }
 

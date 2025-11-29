@@ -30,8 +30,8 @@ class UserCrudController extends AbstractAdminCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('admin.label.user')
-            ->setEntityLabelInPlural('admin.label.users')
+            ->setEntityLabelInSingular('adminLabelUser')
+            ->setEntityLabelInPlural('adminLabelUsers')
             ->setDefaultSort(['createdAt' => 'DESC']);
     }
 
@@ -82,15 +82,15 @@ class UserCrudController extends AbstractAdminCrudController
      */
     private function getIndexFields(): iterable
     {
-        yield TextField::new('username', 'admin.user.username.label')
+        yield TextField::new('username', 'adminUserUsernameLabel')
             ->setSortable(false)
             ->renderAsHtml()
             ->formatValue(fn (?string $value, User $user): string => $this->formatUsernameColumn($user));
-        yield EmailField::new('email', 'admin.user.email.label')
+        yield EmailField::new('email', 'adminUserEmailLabel')
             ->setSortable(false);
-        yield TextField::new('rolesForListing', 'admin.user.role.label')
+        yield TextField::new('rolesForListing', 'adminUserRoleLabel')
             ->setSortable(false);
-        yield DateTimeField::new('createdAt', 'admin.user.createdAt.label')
+        yield DateTimeField::new('createdAt', 'adminUserCreatedAtLabel')
             ->setSortable(true);
     }
 

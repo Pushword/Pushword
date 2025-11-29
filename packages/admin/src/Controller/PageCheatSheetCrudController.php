@@ -20,8 +20,8 @@ class PageCheatSheetCrudController extends PageCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return parent::configureCrud($crud)
-            ->setEntityLabelInSingular('admin.label.cheatsheet')
-            ->setEntityLabelInPlural('admin.label.cheatsheet')
+            ->setEntityLabelInSingular('adminLabelCheatsheet')
+            ->setEntityLabelInPlural('adminLabelCheatsheet')
             ->showEntityActionsInlined();
     }
 

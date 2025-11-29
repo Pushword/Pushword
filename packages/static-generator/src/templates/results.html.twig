@@ -1,21 +1,21 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}{{ 'admin.static.output'|trans }}{% endblock %}
+{% block content_title %}{{ 'adminStaticOutput'|trans }}{% endblock %}
 
 {% block page_actions %}
     <a class="btn btn-outline-secondary" href="{{ path('admin_static_generator') }}">
-        <i class="fa fa-sync-alt me-2" aria-hidden="true"></i>{{ 'admin.label.update'|trans }}
+        <i class="fa fa-sync-alt me-2" aria-hidden="true"></i>{{ 'adminLabelUpdate'|trans }}
     </a>
 {% endblock %}
 
 {% block main %}
     {% if errors is empty %}
         <div class="alert alert-success" role="alert">
-            {{ 'admin.static.updated'|trans }}
+            {{ 'adminStaticUpdated'|trans }}
         </div>
     {% else %}
         <div class="alert alert-warning" role="alert">
-            <h5 class="alert-heading">{{ 'admin.static.errors'|trans }}</h5>
+            <h5 class="alert-heading">{{ 'adminStaticErrors'|trans }}</h5>
             <div class="mb-0">
                 {% for error in errors %}
                     <p class="mb-1">{{ error|markdown }}</p>

@@ -46,16 +46,16 @@ class Configuration implements ConfigurationInterface
      */
     final public const array DEFAULT_ADMIN_USER_FORM_FIELDS = [
         [UserEmailField::class, UserUsernameField::class, UserPasswordField::class, CreatedAtField::class],
-        ['admin.user.label.security' => [UserRolesField::class, UserLocaleField::class]],
+        ['adminUserLabelSecurity' => [UserRolesField::class, UserLocaleField::class]],
     ];
 
     final public const array DEFAULT_ADMIN_REDIRECTION_FORM_FIELDS = [
         [PageH1Field::class, PageMainContentField::class],
         [
-            'admin.page.permanlien.label' => [
+            'adminPagePermanlienLabel' => [
                 HostField::class,
                 PageSlugField::class],
-            'admin.page.customProperties.label' => [
+            'adminPageCustomPropertiesLabel' => [
                 'expand' => true,
                 'fields' => [CustomPropertiesField::class],
             ],
@@ -65,22 +65,22 @@ class Configuration implements ConfigurationInterface
     final public const array DEFAULT_ADMIN_PAGE_FORM_FIELDS = [
         [TagsField::class, PageH1Field::class, PageMainContentField::class],
         [
-            'admin.page.revisions' => [PageEditMessageField::class],
-            'admin.page.state.label' => [PagePublishedAtField::class, PageMetaRobotsField::class],
-            'admin.page.permanlien.label' => [HostField::class, PageSlugField::class],
-            'admin.page.mainImage.label' => [PageMainImageField::class],
-            'admin.page.parentPage.label' => [PageParentPageField::class],
-            'admin.page.search.label' => [
+            'adminPageRevisions' => [PageEditMessageField::class],
+            'adminPageStateLabel' => [PagePublishedAtField::class, PageMetaRobotsField::class],
+            'adminPagePermanlienLabel' => [HostField::class, PageSlugField::class],
+            'adminPageMainImageLabel' => [PageMainImageField::class],
+            'adminPageParentPageLabel' => [PageParentPageField::class],
+            'adminPageSearchLabel' => [
                 'expand' => true,
                 'fields' => [PageTitleField::class, PageNameField::class, PageSearchExcreptField::class, WeightField::class],
             ],
-            'admin.page.translations.label' => [PageLocaleField::class, PageTranslationsField::class],
-            'admin.page.customProperties.label' => [
+            'adminPageTranslationsLabel' => [PageLocaleField::class, PageTranslationsField::class],
+            'adminPageCustomPropertiesLabel' => [
                 'expand' => true,
                 'fields' => [CustomPropertiesField::class],
             ],
             /*
-            'admin.page.og.label' => [
+            'adminPageOgLabel' => [
                 'expand' => true,
                 'fields' => [OgTitleField::class, OgDescriptionField::class, OgImageField::class,
              ],

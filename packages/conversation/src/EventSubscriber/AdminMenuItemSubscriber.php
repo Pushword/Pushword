@@ -55,7 +55,7 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
         $hosts = $this->apps->getHosts();
 
         if (\count($hosts) <= 1) {
-            return MenuItem::linkToCrud('admin.label.conversation', 'fa fa-comments', Message::class)
+            return MenuItem::linkToCrud('adminLabelConversation', 'fa fa-comments', Message::class)
                 ->setController(ConversationCrudController::class);
         }
 
@@ -67,7 +67,7 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
             $subItems[] = $this->createHostMenuItem($host, ConversationCrudController::class);
         }
 
-        return MenuItem::subMenu('admin.label.conversation', 'fa fa-comments')
+        return MenuItem::subMenu('adminLabelConversation', 'fa fa-comments')
             ->setSubItems($subItems);
     }
 
@@ -76,7 +76,7 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
         $hosts = $this->apps->getHosts();
 
         if (\count($hosts) <= 1) {
-            return MenuItem::linkToCrud('admin.label.review', 'fa fa-star', Message::class)
+            return MenuItem::linkToCrud('adminLabelReview', 'fa fa-star', Message::class)
                 ->setController(ReviewCrudController::class);
         }
 
@@ -88,13 +88,13 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
             $subItems[] = $this->createHostMenuItem($host, ReviewCrudController::class);
         }
 
-        return MenuItem::subMenu('admin.label.review', 'fa fa-star')
+        return MenuItem::subMenu('adminLabelReview', 'fa fa-star')
             ->setSubItems($subItems);
     }
 
     private function createHiddenListItem(string $controller): CrudMenuItem
     {
-        return MenuItem::linkToCrud('admin.label.list', 'fas fa-list', Message::class)
+        return MenuItem::linkToCrud('adminLabelList', 'fas fa-list', Message::class)
             ->setCssClass('d-none')
             ->setController($controller);
     }

@@ -1,6 +1,6 @@
 {% extends view('/user/layout.html.twig') %}
 
-{% block title %}{{ 'security.login.title'|trans }}{% endblock %}
+{% block title %}{{ 'securityLoginTitle'|trans }}{% endblock %}
 {# tailwind UI #}
 {% block main_content %}
 <form method="post" class="mt-8 space-y-6">
@@ -10,18 +10,18 @@
 
     {% if app.user %}
         <div class="mb-3">
-            {{ 'security.login.logged_in_as'|trans({'%username%': app.user.username}) }}, <a href="{{ path('pushword_logout') }}">{{ 'security.logout'|trans }}</a>
+            {{ 'securityLoginLoggedInAs'|trans({'%username%': app.user.username}) }}, <a href="{{ path('pushword_logout') }}">{{ 'securityLogout'|trans }}</a>
         </div>
     {% endif %}
 
     <div class="-space-y-px rounded-md shadow-xs">
         <div>
-            <label for="inputEmail" class="sr-only">{{ 'security.login.email'|trans }}</label>
+            <label for="inputEmail" class="sr-only">{{ 'securityLoginEmail'|trans }}</label>
             <input type="email" id="inputEmail" name="email" value="{{ last_username }}" required="required" class="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-none appearance-none rounded-t-md focus:outline-hidden focus:ring-primary focus:border-primary focus:z-10 sm:text-sm" />
         </div>
 
         <div>
-            <label for="inputPassword" class="sr-only">{{ 'security.login.password'|trans }}</label>
+            <label for="inputPassword" class="sr-only">{{ 'securityLoginPassword'|trans }}</label>
             <input type="password" id="inputPassword" name="password" required="required" class="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-none appearance-none rounded-b-md focus:outline-hidden focus:ring-primary focus:border-primary focus:z-10 sm:text-sm" />
         </div>
     </div>
@@ -32,7 +32,7 @@
 
     <div class="flex items-center ">
         <input type="checkbox" id="remember_me" name="_remember_me" value="on" class="w-4 h-4 border-gray-300 rounded text-primary focus:ring-primary" checked />
-        <label for="remember_me" class="block ml-2 text-sm text-gray-900">{{ 'security.login.remember_me'|trans }}</label>
+        <label for="remember_me" class="block ml-2 text-sm text-gray-900">{{ 'securityLoginRememberMe'|trans }}</label>
     </div>
 
     <div>
@@ -42,7 +42,7 @@
               <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
             </svg>
           </span>
-          {{ 'security.login.label_button'|trans }}
+          {{ 'securityLoginLabelButton'|trans }}
         </button>
       </div>
 

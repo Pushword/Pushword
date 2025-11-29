@@ -1,265 +1,175 @@
 # Markdown Cheatsheet
 #---
-md_cs:
-  page:
-    h1: "Aide-Mémoire Markdown"
-    subtitle: "La syntaxe en détails"
-  title: "Titre et sous-titre"
-  chapeau: Chapeau
-  chapeau_description: Le chapeau est le paragraphe introductif placé sous le titre.
-  emphasis: Accentuation
-  link: Lien
-  link_homepage: Lien vers la page d'accueil
-  link_other_site: Lien vers un autre site
-  link_bot_hidden: Lien Invisible pour les robots
-  link_to_mail: Vers une adresse mail
-  link_to_phone: Vers un n° de téléphone
-  link_to_fragment: Vers une partie de la page
-  lists: Listes
-  paragraph: Paragraphe et saut de ligne
-  quote: Citation
-  image: Image et galeries
-  video: Vidéo
-  page_list: Lister des pages
-  redirection: Redirection
-  others: Autres
+'Page List': 'Liste des pages'
+adminAction: Action
+adminDetails: Details
+adminDraft: Brouillon
+adminEdit: Editer
+adminEdition: Edition
+adminElementDeleted: 'Elément supprimé.'
+adminLabelCheatsheet: Aide-mémoire
+adminLabelCheckContent: 'Vérifier le contenu'
+adminLabelContent: Pages
+adminLabelConversation: Conversation
+adminLabelList: Liste
+adminLabelManage: 'Mettre en ligne'
+adminLabelMedia: Media
+adminLabelMedias: Médias
+adminLabelPage: Page
+adminLabelParams: Réglages
+adminLabelRedirection: Redirection
+adminLabelReview: Avis
+adminLabelTools: Outils
+adminLabelUpdate: Actualiser
+adminLabelUser: Utilisateur
+adminLabelUsers: Utilisateurs
+adminMediaAltHelp: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"
+adminMediaAltLabel: Nom
+adminMediaAltsHelp: 'Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne.'
+adminMediaAltsLabel: Traduction
+adminMediaCreatedAtLabel: "Date d'upload"
+adminMediaDimensionsIntFilterLabel: 'Largeur/hauteur (px)'
+adminMediaDimensionsLabel: Dimensions
+adminMediaFiletypeLabel: 'Type de fichiers'
+adminMediaMainColorLabel: 'Couleur Principale'
+adminMediaMediaFileLabel: Fichier
+adminMediaMosaicEmpty: 'Aucun média ne correspond à votre recherche.'
+adminMediaPickerChoose: Choisir
+adminMediaPickerEmpty: 'Aucune image sélectionnée'
+adminMediaPickerRemove: Supprimer
+adminMediaPickerTitle: 'Bibliothèque média'
+adminMediaPickerUpload: Importer
+adminMediaPreviewDominantColor: 'Couleur dominante'
+adminMediaPreviewJson: JSON
+adminMediaPreviewLabel: Aperçu
+adminMediaPreviewMarkdown: Markdown
+adminMediaPreviewPath: Chemin
+adminMediaRelatedLabel: 'Pages connectées'
+adminMediaSizeLabel: 'Taille du fichier'
+adminMediaTagsLabel: Tags
+adminMediaViewLabel: "Mode d'affichage"
+adminMediaViewMosaic: 'Vue mosaïque'
+adminMediaViewSelectAll: 'Tout sélectionner'
+adminMediaViewTable: 'Vue liste'
+adminPaginationRatioLabelLabel: Ratio
+adminPageAuthorLabel: Auteur
+adminPageCreatedAtLabel: 'Créé le'
+adminPageCustomPropertiesHelp: 'Au format <em>YAML</em>.'
+adminPageCustomPropertiesLabel: 'Autres paramètres'
+adminPageEditMessageHelp: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>'
+adminPageEditMessageHelpVersionned: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">Voir l''historique</a>'
+adminPageEditMessageLabel: "Motif d'édition"
+adminPageErrorGenerationFailed: 'Une erreur est survenue lors de la génération de la page.'
+adminPageErrorGenerationFailedWithDetails: 'Une erreur est survenue lors de la génération de la page : <code>%error%</code><br><textarea style="margin-top:4px; width:100%;" data-editor="twig" readonly>%excerpt%</textarea>'
+adminPageExtraLabel: Extra
+adminPageFaqLabel: 'Questions Associées'
+adminPageGalleryLabel: "Galerie d'images"
+adminPageH1Help: "<small>Le <em>H1</em> est visible sur vos pages tandis que le <code>Titre</code> de votre document s'affichera dans la barre du navigateur et sur les moteurs de recherches.</small>"
+adminPageH1Label: Titre
+adminPageHostLabel: Domaine
+adminPageImagesLabel: Images
+adminPageLocaleHelp: '<small>Au format décrit par la norme rfc 5646 (ex: <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>'
+adminPageLocaleLabel: Language
+adminPageMainContentHelp: ''
+adminPageMainContentLabel: 'Corps de la page'
+adminPageMainImageLabel: "Image d'en-tête"
+adminPageMarkdownHelp: 'Applique l''enrichissement du texte via la syntaxe Markdown à l''intégralité du contenu.<br>Sinon utiliser directement <code>{% filter markdown %}mon texte{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>En savoir plus</a>.'
+adminPageMarkdownLabel: 'Formatage markdown'
+adminPageMetaRobotsChoiceNoIndex: "Interdire l'indexation"
+adminPageMetaRobotsLabel: 'Moteur de recherches'
+adminPageNameHelp: "Permet d'identifier la page, utilisé dans le fil d'arianne."
+adminPageNameLabel: 'Nom court'
+adminPageOgDescriptionHelp: 'Par défaut, la description <code>search</code> sinon un extrait'
+adminPageOgDescriptionLabel: Description
+adminPageOgImageHelp: "Par défaut, l'image principale de la page"
+adminPageOgImageLabel: Image
+adminPageOgLabel: 'Open Graph Card'
+adminPageOgTitleHelp: 'Par défaut, la title de la page sinon le titre.'
+adminPageOgTitleLabel: Titre
+adminPageParamsLabel: Paramètres
+adminPageParentPageLabel: 'Page Parente'
+adminPagePermanlienLabel: Permanlien
+adminPagePublishedAtDraft: Brouillon
+adminPagePublishedAtLabel: 'Publié le'
+adminPagePublishedAtOnline: '<span style="color:#449d44">Publié</span>'
+adminPageRedirectionFrom: De
+adminPageRedirectionTo: Vers
+adminPageRelatedPageLabel: 'Pages Associées'
+adminPageRevisions: Révisions
+adminPageSearchExcreptHelp: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) - <span id="descWidth"></span></small>'
+adminPageSearchExcreptLabel: 'Courte Description'
+adminPageSearchLabel: Search
+adminPageSlugHelp: ' '
+adminPageSlugLabel: 'Identifiant Url'
+adminPageStateLabel: État
+adminPageSubTitleLabel: Sous-titre
+adminPageTagsLabel: 'TagOne, TagTwo, ...'
+adminPageTagsPlaceholder: 'Ajouter des tags...'
+adminPageTagsSearchLabel: Tags
+adminPageTemplateLabel: 'Moteur de thème (facultatif)'
+adminPageTitleHelp: '<small>Titre visible dans les moteurs de recherches - <span id="titleWidth"></span></small>'
+adminPageTitleLabel: Titre
+adminPageTitleSearchLabel: 'Titre (search)'
+adminPageTranslationsHelp: "Utiliser l'url pour trouver la page (ex : en/my-other)."
+adminPageTranslationsLabel: Traductions
+adminPageTwitterCardHelp: '<a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>En savoir plus</a>'
+adminPageTwitterCardLabel: 'Twitter Card'
+adminPageTwitterCreatorHelp: "<code>@Username</code>, valeur par défaut si régler dans l'App."
+adminPageTwitterCreatorLabel: 'Twitter Creator'
+adminPageTwitterSiteHelp: "<code>@Username</code>, valeur par défaut si régler dans l'App."
 
-#---
-# Admin
-#---
-datetimeMediumFormat: "d/m/Y à H:m"
-
-Page List: Liste des pages
-
-admin:
-  draft: Brouillon
-
-  label:
-    page: Page
-    media: Media
-    medias: Médias
-    content: Pages
-    list: Liste
-    user: Utilisateur
-    users: Utilisateurs
-    tools: Outils
-    manage: Mettre en ligne
-    update: Actualiser
-    params: Réglages
-    redirection: Redirection
-    check_content: Vérifier le contenu
-    conversation: Conversation
-    review: Avis
-    cheatsheet: Aide-mémoire
-
-  action: Action
-  details: Details
-  edit: Editer
-  edition: Edition # not good
-
-  page:
-    revisions: Révisions
-    gallery:
-      label: Galerie d'images
-    state:
-      label: État
-    search:
-      label: Search
-    permanlien:
-      label: Permanlien
-    host:
-      label: Domaine
-    update_notification:
-      title: "[%appName%] Edition en cours"
-    params:
-      label: Paramètres
-    title:
-      search_label: Titre (search)
-      label: Titre
-      help: '<small>Titre visible dans les moteurs de recherches - <span id="titleWidth"></span></small>'
-    slug:
-      label: Identifiant Url
-      help: " "
-    locale:
-      label: Language
-      help: "<small>Au format décrit par la norme rfc 5646 (ex: <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>"
-    subTitle:
-      label: Sous-titre
-    translations:
-      label: "Traductions"
-      help: "Utiliser l'url pour trouver la page (ex : en/my-other)."
-    searchExcrept:
-      label: Courte Description
-      help: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) - <span id="descWidth"></span></small>'
-    h1:
-      label: Titre
-      help: <small>Le <em>H1</em> est visible sur vos pages tandis que le <code>Titre</code> de votre document s'affichera dans la barre du navigateur et sur les moteurs de recherches.</small>
-    name:
-      label: Nom court
-      help: Permet d'identifier la page, utilisé dans le fil d'arianne.
-    faq:
-      label: Questions Associées
-    relatedPage:
-      label: Pages Associées
-    images:
-      label: Images
-    metaRobots:
-      label: Moteur de recherches
-      choice:
-        noIndex: Interdire l'indexation
-    author:
-      label: Auteur
-    parentPage:
-      label: Page Parente
-    publishedAt:
-      label: Publié le
-      online: <span style="color:#449d44">Publié</span>
-      draft: Brouillon
-    editMessage:
-      label: Motif d'édition
-      help: Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>
-      helpVersionned: Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">Voir l'historique</a>
-    createdAt:
-      label: Créé le
-    updatedAt:
-      label: Mise à jour le
-    template:
-      label: Moteur de thème (facultatif)
-    mainContent:
-      label: Corps de la page
-      help: ""
-    mainImage:
-      label: Image d'en-tête
-    markdown:
-      label: Formatage markdown
-      help: Applique l'enrichissement du texte via la syntaxe Markdown à l'intégralité du contenu.<br>Sinon utiliser directement <code>{% filter markdown %}mon texte{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>En savoir plus</a>.
-    customProperties:
-      label: Autres paramètres
-      help: Au format <em>YAML</em>.
-    tags:
-      search_label: Tags
-      label: "TagOne, TagTwo, ..."
-      placeholder: "Ajouter des tags..."
-    og:
-      label: Open Graph Card
-    ogTitle:
-      label: Titre
-      help: Par défaut, la title de la page sinon le titre.
-    ogDescription:
-      label: Description
-      help: Par défaut, la description <code>search</code> sinon un extrait
-    ogImage:
-      label: Image
-      help: Par défaut, l'image principale de la page
-    twitterSite:
-      label: Twitter Site
-      help: <code>@Username</code>, valeur par défaut si régler dans l'App.
-    twitterCreator:
-      label: Twitter Creator
-      help: <code>@Username</code>, valeur par défaut si régler dans l'App.
-    twitterCard:
-      label: Twitter Card
-      help: <a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>En savoir plus</a>
-    weight:
-      label: Poids
-      help: 'Permet d''ordonner les pages. Les valeurs les plus hautes apparaissent en premier.'
-    redirection:
-      from: De
-      to: Vers
-    extra:
-      label: Extra
-    error:
-      generation_failed: Une erreur est survenue lors de la génération de la page.
-      generation_failed_with_details: 'Une erreur est survenue lors de la génération de la page : <code>%error%</code><br><textarea style="margin-top:4px; width:100%;" data-editor="twig" readonly>%excerpt%</textarea>'
-
-  user:
-    label:
-      profile: Profil
-      security: Securité
-      id: Identifiants
-    enabled:
-      label: Compte activé
-    role:
-      label: Role
-      super_admin: Super Administrateur
-      admin: Administrateur
-      editor: Editeur
-      user: Utilisateur
-    firstname:
-      label: Prénom
-    password:
-      label: Mot de passe
-    username:
-      label: Nom d'utilisateur
-
-    lastname:
-      label: Nom
-    phone:
-      label: Téléphone
-    email:
-      label: Adresse mail
-    locale:
-      label: Langue
-      help: "<small>Préférence de langue pour l'interface d'administration (ex: <code>fr</code>, <code>en</code>, <code>en-US</code>...)</small>"
-    dateOfBirth:
-      label: Date de naissance
-    createdAt:
-      label: Date d'enregistrement
-
-  media:
-    preview:
-      label: Aperçu
-      path: Chemin
-      markdown: Markdown
-      json: JSON
-      dominant_color: Couleur dominante
-    related:
-      label: Pages connectées
-    alt:
-      label: Nom
-      help: "Texte alternatif, utilisé pour l'accessibilité des pages web (non-voyant).<br><small>Choisissez un à plusieurs mots décrivant votre fichier. N'hésitez pas à utiliser des mots clefs pour retrouver facilement votre image (ex: Massif des Ecrins - Glacier de la Meije).</small>"
-    mediaFile:
-      label: Fichier
-    alts:
-      label: "Traduction"
-      help: "Format <code>Language: nom traduit</code> (ex: <code>en: my image description</code>).<br>Une traduction par ligne."
-    mainColor:
-      label: Couleur Principale
-    tags:
-      label: Tags
-    createdAt:
-      label: Date d'upload
-    filetype:
-      label: Type de fichiers
-    size:
-      label: Taille du fichier
-    dimensions:
-      label: Dimensions
-      int_filter_label: Largeur/hauteur (px)
-    view:
-      label: Mode d'affichage
-      mosaic: Vue mosaïque
-      table: Vue liste
-      select_all: Tout sélectionner
-    mosaic:
-      empty: Aucun média ne correspond à votre recherche.
-    picker:
-      title: Bibliothèque média
-      choose: Choisir
-      upload: Importer
-      remove: Supprimer
-      empty: Aucune image sélectionnée
-  pagination:
-    per_page: Par page
-
-  element:
-    deleted: Elément supprimé.
-
-  static:
-    updated: Site actualisé avec succès.
-    generating: Génération en cours...
-    please_wait: Veuillez patienter, la génération est en cours. Cette page se rafraîchira automatiquement.
-    started_at: Démarré à
-    host: Hôte
-    errors: Erreurs détectées
-    output: Sortie de la commande
+adminPageTwitterSiteLabel: 'Twitter Site'
+adminPageUpdateNotificationTitle: '[%appName%] Edition en cours'
+adminPageUpdatedAtLabel: 'Mise à jour le'
+adminPageWeightHelp: "Permet d'ordonner les pages. Les valeurs les plus hautes apparaissent en premier."
+adminPageWeightLabel: Poids
+adminPaginationPerPage: 'Par page'
+adminStaticErrors: 'Erreurs détectées'
+adminStaticGenerating: 'Génération en cours...'
+adminStaticHost: Hôte
+adminStaticOutput: 'Sortie de la commande'
+adminStaticPleaseWait: 'Veuillez patienter, la génération est en cours. Cette page se rafraîchira automatiquement.'
+adminStaticStartedAt: 'Démarré à'
+adminStaticUpdated: 'Site actualisé avec succès.'
+adminUserCreatedAtLabel: "Date d'enregistrement"
+adminUserDateOfBirthLabel: 'Date de naissance'
+adminUserEmailLabel: 'Adresse mail'
+adminUserEnabledLabel: 'Compte activé'
+adminUserFirstnameLabel: Prénom
+adminUserLabelId: Identifiants
+adminUserLabelProfile: Profil
+adminUserLabelSecurity: Securité
+adminUserLastnameLabel: Nom
+adminUserLocaleHelp: "<small>Préférence de langue pour l'interface d'administration (ex: <code>fr</code>, <code>en</code>, <code>en-US</code>...)</small>"
+adminUserLocaleLabel: Langue
+adminUserPasswordLabel: 'Mot de passe'
+adminUserPhoneLabel: Téléphone
+adminUserRoleAdmin: Administrateur
+adminUserRoleEditor: Editeur
+adminUserRoleLabel: Role
+adminUserRoleSuperAdmin: 'Super Administrateur'
+adminUserRoleUser: Utilisateur
+adminUserUsernameLabel: "Nom d'utilisateur"
+datetimeMediumFormat: 'd/m/Y à H:m'
+md_csChapeau: Chapeau
+md_csChapeauDescription: 'Le chapeau est le paragraphe introductif placé sous le titre.'
+md_csChildrenList: 'Lister les pages enfants (blog/actualités/...)'
+md_csEmphasis: Accentuation
+md_csImage: 'Image et galeries'
+md_csLink: Lien
+md_csLinkBotHidden: 'Lien Invisible pour les robots'
+md_csLinkHomepage: "Lien vers la page d'accueil"
+md_csLinkOtherSite: 'Lien vers un autre site'
+md_csLinkToFragment: 'Vers une partie de la page'
+md_csLinkToMail: 'Vers une adresse mail'
+md_csLinkToPhone: 'Vers un n° de téléphone'
+md_csLists: Listes
+md_csOthers: Autres
+md_csPageH1: 'Aide-Mémoire Markdown'
+md_csPageList: 'Lister des pages'
+md_csPageSubtitle: 'La syntaxe en détails'
+md_csParagraph: 'Paragraphe et saut de ligne'
+md_csQuote: Citation
+md_csRedirection: Redirection
+md_csTitle: 'Titre et sous-titre'
+md_csVideo: Vidéo

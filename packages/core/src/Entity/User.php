@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
-#[UniqueEntity('email', message: 'user.email.already_used')]
+#[UniqueEntity('email', message: 'userEmailAlreadyUsed')]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'user')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringable
@@ -38,7 +38,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     protected ?DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::STRING, length: 180, unique: true)]
-    #[Assert\Email(message: 'user.email.invalid', mode: 'strict')]
+    #[Assert\Email(message: 'userEmailInvalid', mode: 'strict')]
     protected string $email = '';
 
     #[ORM\Column(type: Types::STRING, length: 150, nullable: true)]
@@ -50,7 +50,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     /**
      * Loaded From BaseUser.
      */
-    #[Assert\Length(min: 7, max: 100, minMessage: 'user.password.short')]
+    #[Assert\Length(min: 7, max: 100, minMessage: 'userPasswordShort')]
     protected ?string $plainPassword = null;
 
     /**

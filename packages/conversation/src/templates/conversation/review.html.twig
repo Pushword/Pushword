@@ -1,7 +1,7 @@
 {# @var review \Pushword\Conversation\Entity\Review #}
 
 
-{% set anonymous = 'conversation.review.anonymous'|trans %}
+{% set anonymous = 'conversationReviewAnonymous'|trans %}
 {% set reviewAuthor = review.authorName|default(anonymous) %}
 
 {% set reviewBody = review.content %}
@@ -47,9 +47,9 @@
             %}
             <a href="{{ editUrl }}"
                class="inline-block rounded p-1 text-gray-300  hover:bg-gray-300 hover:text-gray-900 float-right"
-               title="{% trans %}admin.review.edit{% endtrans %}">
+               title="{% trans %}adminReviewEdit{% endtrans %}">
                 {{ svg('edit', {class: 'fill-current', style: 'width:14px'}) }}
-                <span class="sr-only">{% trans %}admin.review.edit{% endtrans %}</span>
+                <span class="sr-only">{% trans %}adminReviewEdit{% endtrans %}</span>
             </a>
         {% endif %}
     </div>
@@ -95,10 +95,10 @@
         x-show="isTruncated"
     >
         <span x-show="!expanded">
-            {% trans %}conversation.review.see_more{% endtrans %} <span class="inline-block">▼</span>
+            {% trans %}conversationReviewSeeMore{% endtrans %} <span class="inline-block">▼</span>
         </span>
         <span x-show="expanded" x-cloak>
-            {% trans %}conversation.review.see_less{% endtrans %} <span class="inline-block">▲</span>
+            {% trans %}conversationReviewSeeLess{% endtrans %} <span class="inline-block">▲</span>
         </span>
     </button>
     {% if review.mediaList is not empty %}

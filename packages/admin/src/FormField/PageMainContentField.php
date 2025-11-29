@@ -22,7 +22,7 @@ class PageMainContentField extends AbstractField
             'required' => false,
             'label' => false,
             'help_html' => true,
-            'help' => 'admin.page.mainContent.help',
+            'help' => 'adminPageMainContentHelp',
         ]);
     }
 }

@@ -56,7 +56,7 @@ class HostField extends AbstractField
             $this->admin->getSubject()->setHost($this->getDefaultHost());
         }
 
-        return ChoiceField::new('host', 'admin.page.host.label')
+        return ChoiceField::new('host', 'adminPageHostLabel')
             ->onlyOnForms()
             ->setChoices(array_combine($hosts, $hosts))
             ->renderAsNativeWidget()

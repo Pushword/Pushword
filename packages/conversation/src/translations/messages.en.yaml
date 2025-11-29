@@ -1,85 +1,45 @@
-conversation:
-  title: Conversation
-  send:
-    success: Thank you!
-    # Permits to be broad enough for contact form submission, newsletter subscription
-    # or comment sharing
-  name:
-    placeholder: Name
-  content:
-    placeholder: Message
-  email:
-    placeholder: Email
-    invalid: Invalid email address
-  phoneNumber:
-    invalid: Phone number in unknown format
-  submitLabel: Submit
-  registerLabel: Register
-  input:
-    notset: unknown
-  suscribeToNewsletter: Newsletter subscription
-  review:
-    empty: "No reviews have been published yet."
-    see_more: "See more"
-    see_less: "See less"
-    anonymous: "Anonymous"
-
-admin:
-  conversation:
-    notification:
-      title:
-        singular: "[%appName%] : New message"
-        plural: "[%appName%] : New messages"
-      sent_by: "Sent by %authorName% - %authorEmail%"
-      from: "From https://%host%/ › form[%referring%]"
-    label:
-      conversation: Conversation
-      publishedAt: Published on
-      author: Author
-
-    authorEmail:
-      label: Email
-
-    authorName:
-      label: Name
-
-    authorIp:
-      label: IP
-    authorIpRaw:
-      label: IP Raw
-
-    content:
-      label: Content
-
-    referring:
-      label: Referring
-
-    createdAt:
-      label: Posted on
-
-    weight:
-      label: Weight
-      help: Lower values appear first
-
-    tags:
-      label: Tags
-      placeholder: Tags (separated by spaces)
-
-    inline:
-      open_popup: "Open in a popup"
-      placeholder:
-        title: "Title…"
-        content: "Content…"
-        tags: "Tags (separated by spaces)"
-
-  review:
-    rating:
-      label: Rating
-      help: Select a score between 1 (poor) and 5 (excellent)
-    title:
-      label: Title
-      help: Short headline describing the review
-    medias:
-      label: Media
-      help: Attach one or several images illustrating the review
-    edit: Edit review
+adminConversationAuthorEmailLabel: Email
+adminConversationAuthorIpLabel: IP
+adminConversationAuthorIpRawLabel: 'IP Raw'
+adminConversationAuthorNameLabel: Name
+adminConversationContentLabel: Content
+adminConversationCreatedAtLabel: 'Posted on'
+adminConversationInlineOpenPopup: 'Open in a popup'
+adminConversationInlinePlaceholderContent: Content…
+adminConversationInlinePlaceholderTags: 'Tags (separated by spaces)'
+adminConversationInlinePlaceholderTitle: Title…
+adminConversationLabelAuthor: Author
+adminConversationLabelConversation: Conversation
+adminConversationLabelPublishedAt: 'Published on'
+adminConversationNotificationFrom: 'From https://%host%/ › form[%referring%]'
+adminConversationNotificationSentBy: 'Sent by %authorName% - %authorEmail%'
+adminConversationNotificationTitlePlural: '[%appName%] : New messages'
+adminConversationNotificationTitleSingular: '[%appName%] : New message'
+adminConversationReferringLabel: Referring
+adminConversationTagsLabel: Tags
+adminConversationTagsPlaceholder: 'Tags (separated by spaces)'
+adminConversationWeightHelp: 'Lower values appear first'
+adminConversationWeightLabel: Weight
+adminReviewEdit: 'Edit review'
+adminReviewMediasHelp: 'Attach one or several images illustrating the review'
+adminReviewMediasLabel: Media
+adminReviewRatingHelp: 'Select a score between 1 (poor) and 5 (excellent)'
+adminReviewRatingLabel: Rating
+adminReviewTitleHelp: 'Short headline describing the review'
+adminReviewTitleLabel: Title
+conversationContentPlaceholder: Message
+conversationEmailInvalid: 'Invalid email address'
+conversationEmailOrPhonePlaceholder: 'Email or Phone'
+conversationEmailPlaceholder: Email
+conversationInputNotset: unknown
+conversationNamePlaceholder: Name
+conversationPhoneNumberInvalid: 'Phone number in unknown format'
+conversationRegisterLabel: Register
+conversationReviewAnonymous: Anonymous
+conversationReviewEmpty: 'No reviews have been published yet.'
+conversationReviewSeeLess: 'See less'
+conversationReviewSeeMore: 'See more'
+conversationSendSuccess: 'Thank you!'
+conversationSubmitLabel: Submit
+conversationSuscribeToNewsletter: 'Newsletter subscription'
+conversationTitle: Conversation

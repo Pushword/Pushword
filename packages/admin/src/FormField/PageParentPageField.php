@@ -32,7 +32,7 @@ class PageParentPageField extends AbstractField
         /** @var Page $page */
         $page = $this->admin->getSubject();
 
-        return AssociationField::new('parentPage', 'admin.page.parentPage.label')
+        return AssociationField::new('parentPage', 'adminPageParentPageLabel')
             ->onlyOnForms()
             ->setFormTypeOption('required', false)
             ->setQueryBuilder(fn (QueryBuilder $qb): QueryBuilder => $this->configureQueryBuilder($qb, $page));

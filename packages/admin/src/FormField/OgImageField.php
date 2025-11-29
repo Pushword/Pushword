@@ -15,9 +15,9 @@ class OgImageField extends AbstractField
     {
         return $this->buildEasyAdminField('ogImage', TextType::class, [
             'required' => false,
-            'label' => 'admin.page.ogImage.label',
+            'label' => 'adminPageOgImageLabel',
             'help_html' => true,
-            'help' => 'admin.page.ogImage.help',
+            'help' => 'adminPageOgImageHelp',
         ]);
     }
 }

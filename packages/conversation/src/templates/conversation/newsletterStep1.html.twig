@@ -11,9 +11,9 @@
     {% form_theme conversation 'form_div_layout.html.twig' %}
         {{ form_widget(conversation.authorEmail, {
             attr: {
-                placeholder: 'conversation.email.placeholder'|trans,
+                placeholder: 'conversationEmailPlaceholder'|trans,
                 onfocus: "this.placeholder = ''",
-                onblur: "this.placeholder = '" ~ 'conversation.email.placeholder'|trans ~ "'",
+                onblur: "this.placeholder = '" ~ 'conversationEmailPlaceholder'|trans ~ "'",
                 required: 'text',
                 pattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$',
                 type: 'email',
@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block submit %}
-    <button class="shrink-0 px-2 py-1 link-btn">{{ submitLabel|default('conversation.registerLabel'|trans) }}</button>
+    <button class="shrink-0 px-2 py-1 link-btn">{{ submitLabel|default('conversationRegisterLabel'|trans) }}</button>
 {% endblock %}
 
 {% block after %}

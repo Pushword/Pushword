@@ -30,7 +30,7 @@ class PageAdvancedMainImageFormField extends PageMainImageField
         $subject = $this->admin->getSubject();
         $subject->registerCustomPropertyField('mainImageFormat');
 
-        $fields[] = ChoiceField::new('mainImageFormat', 'admin.page.mainImageFormat.label')
+        $fields[] = ChoiceField::new('mainImageFormat', 'adminPageMainImageFormatLabel')
             ->onlyOnForms()
             ->setChoices($this->resolveMainImageFormats($subject))
             ->setFormTypeOption('required', false)

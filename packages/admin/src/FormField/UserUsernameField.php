@@ -12,6 +12,6 @@ class UserUsernameField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
-        return $this->buildEasyAdminField('username', null, ['label' => 'admin.user.username.label']);
+        return $this->buildEasyAdminField('username', null, ['label' => 'adminUserUsernameLabel']);
     }
 }

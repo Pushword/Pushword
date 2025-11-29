@@ -71,7 +71,7 @@ class VersionController extends AbstractController
     {
         $this->versionner->reset($id);
 
-        $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('version.reset_history'));
+        $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('versionResetHistory'));
 
         return $this->redirect($this->adminUrlGenerator->generate('admin_page_edit', ['id' => $id]));
     }

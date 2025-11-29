@@ -23,7 +23,7 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
     public function onMenuItems(AdminMenuItemsEvent $event): void
     {
         $event->addMenuItem(
-            MenuItem::linkToRoute('admin.label.check_content', 'fa fa-check-circle', 'admin_page_scanner'),
+            MenuItem::linkToRoute('adminLabelCheckContent', 'fa fa-check-circle', 'admin_page_scanner'),
             400
         );
     }

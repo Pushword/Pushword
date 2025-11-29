@@ -13,7 +13,7 @@ class UserRolesField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
-        return ChoiceField::new('roles', 'admin.user.role.label')
+        return ChoiceField::new('roles', 'adminUserRoleLabel')
             ->onlyOnForms()
             ->setChoices($this->getRoleChoices())
             ->allowMultipleChoices()
@@ -27,13 +27,13 @@ class UserRolesField extends AbstractField
     private function getRoleChoices(): array
     {
         $choices = [
-            'admin.user.role.admin' => 'ROLE_ADMIN',
-            'admin.user.role.editor' => 'ROLE_EDITOR',
-            'admin.user.role.user' => 'ROLE_USER',
+            'adminUserRoleAdmin' => 'ROLE_ADMIN',
+            'adminUserRoleEditor' => 'ROLE_EDITOR',
+            'adminUserRoleUser' => 'ROLE_USER',
         ];
 
         if (\in_array('ROLE_SUPER_ADMIN', $this->formFieldManager->user?->getRoles() ?? [], true)) {
-            return ['admin.user.role.super_admin' => 'ROLE_SUPER_ADMIN'] + $choices;
+            return ['adminUserRoleSuperAdmin' => 'ROLE_SUPER_ADMIN'] + $choices;
         }
 
         return $choices;

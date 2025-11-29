@@ -167,7 +167,7 @@ final class ElementAdmin extends AbstractController
     public function deleteElement(string $encodedPath, Request $request): Response
     {
         if ($this->disableCreation) {
-            $this->addFlash('warning', $this->translator->trans('template_editor.creation_disabled'));
+            $this->addFlash('warning', $this->translator->trans('template_editorCreationDisabled'));
 
             return $this->redirectToRoute('admin_template_editor_list');
         }
@@ -175,14 +175,14 @@ final class ElementAdmin extends AbstractController
         $element = $this->getElement($encodedPath);
 
         $form = $this->createFormBuilder()
-            ->add('delete', SubmitType::class, ['label' => $this->translator->trans('template_editor.delete.label'), 'attr' => ['class' => 'btn-danger']])
+            ->add('delete', SubmitType::class, ['label' => $this->translator->trans('template_editorDeleteLabel'), 'attr' => ['class' => 'btn-danger']])
             ->getForm();
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $element->deleteElement();
 
-            $this->addFlash('error', $this->translator->trans('template_editor.element.deleted'));
+            $this->addFlash('error', $this->translator->trans('template_editorElementDeleted'));
 
             return $this->redirectToRoute('admin_template_editor_list');
         }

@@ -20,8 +20,6 @@ export default class Delimiter extends DelimiterTool {
   }
 
   static isItMarkdownExported(markdown: string): boolean {
-    //return markdown.trim().match(/^-{3,}$/) !== null && markdown.split('\n').length === 1
-    console.log('markdown', markdown)
     return (
       (markdown.trim().match(/^-{3,}$/) !== null && markdown.split('\n').length === 1) ||
       markdown.trim() === '<!--break-->'

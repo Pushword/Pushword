@@ -7,18 +7,18 @@
 
 {% block global_actions %}
   {{ parent() }}
-  <div class="btn-group ms-2 media-view-switch" role="group" aria-label="{{ 'admin.media.view.label'|trans }}">
+  <div class="btn-group ms-2 media-view-switch" role="group" aria-label="{{ 'adminMediaViewLabel'|trans }}">
     <a href="{{ ea_url().set('view', null) }}"
        class="btn btn-secondary btn-outline-Save  {{ mosaicActive ? 'active' }}"
        aria-pressed="{{ mosaicActive ? 'true' : 'false' }}">
       <i class="fa fa-th-large" aria-hidden="true"></i>
-      <span class="d-none d-sm-inline ms-1">{{ 'admin.media.view.mosaic'|trans }}</span>
+      <span class="d-none d-sm-inline ms-1">{{ 'adminMediaViewMosaic'|trans }}</span>
     </a>
     <a href="{{ ea_url().set('view', 'table') }}"
        class="btn  btn-secondary btn-outline-default {{ isTableView ? 'active' }}"
        aria-pressed="{{ isTableView ? 'true' : 'false' }}">
       <i class="fa fa-list" aria-hidden="true"></i>
-      <span class="d-none d-sm-inline ms-1">{{ 'admin.media.view.table'|trans }}</span>
+      <span class="d-none d-sm-inline ms-1">{{ 'adminMediaViewTable'|trans }}</span>
     </a>
   </div>
 {% endblock %}
@@ -37,7 +37,7 @@
         <div class="media-mosaic__select-all form-check mb-3">
           <input type="checkbox" class="form-check-input form-batch-checkbox-all" id="form-batch-checkbox-all">
           <label class="form-check-label" for="form-batch-checkbox-all">
-            {{ 'admin.media.view.select_all'|trans }}
+            {{ 'adminMediaViewSelectAll'|trans }}
           </label>
         </div>
       {% endif %}
@@ -93,25 +93,25 @@
 
               <ul class="media-mosaic__meta list-unstyled">
                 <li>
-                  <span>{{ 'admin.media.name.label'|trans }}</span>
+                  <span>{{ 'adminMediaAltLabel'|trans }}</span>
                   <strong>{{ media.alt }}</strong>
                 </li>
                 <li>
-                  <span>{{ 'admin.media.filetype.label'|trans }}</span>
+                  <span>{{ 'adminMediaFiletypeLabel'|trans }}</span>
                   <strong>{{ media.mimeType ?? '—' }}</strong>
                 </li>
                 <li>
-                  <span>{{ 'admin.media.size.label'|trans }}</span>
+                  <span>{{ 'adminMediaSizeLabel'|trans }}</span>
                   <strong>{{ readableSize }}</strong>
                 </li>
                 {% if media.width and media.height %}
                   <li>
-                    <span>{{ 'admin.media.dimensions.label'|trans }}</span>
+                    <span>{{ 'adminMediaDimensionsLabel'|trans }}</span>
                     <strong>{{ media.width }}×{{ media.height }}</strong>
                   </li>
                 {% endif %}
                 <li>
-                  <span>{{ 'admin.page.updatedAt.label'|trans }}</span>
+                  <span>{{ 'adminPageUpdatedAtLabel'|trans }}</span>
                   <strong>{{ media.updatedAt ? media.updatedAt|format_datetime : '—' }}</strong>
                 </li>
               </ul>
@@ -172,7 +172,7 @@
           </article>
         {% else %}
           <div class="media-mosaic__empty">
-            {{ 'admin.media.mosaic.empty'|trans }}
+            {{ 'adminMediaMosaicEmpty'|trans }}
           </div>
         {% endfor %}
       </div>

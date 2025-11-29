@@ -29,7 +29,7 @@
       hx-target="#{{ inlineTarget }}"
       hx-swap="outerHTML"
       hx-vals='js:{field: "title", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
-      data-placeholder="{{ 'admin.conversation.inline.placeholder.title'|trans }}"
+      data-placeholder="{{ 'adminConversationInlinePlaceholderTitle'|trans }}"
     >
       {{ review.title ?: '—' }}
     </div>
@@ -44,7 +44,7 @@
     hx-target="#{{ inlineTarget }}"
     hx-swap="outerHTML"
     hx-vals='js:{field: "content", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
-    data-placeholder="{{ 'admin.conversation.inline.placeholder.content'|trans }}"
+    data-placeholder="{{ 'adminConversationInlinePlaceholderContent'|trans }}"
   >
     {{ message.content|striptags|trim ?: '—' }}
   </div>
@@ -121,7 +121,7 @@
       class="grow px-1 pw-inline-tags-input"
       style="min-width: 50px; border: none; background: transparent; outline: none; font-size: inherit; color: inherit;"
       value="{{ message.tags|default('')|trim }}"
-      placeholder="{{ 'admin.conversation.inline.placeholder.tags'|trans }}"
+      placeholder="{{ 'adminConversationInlinePlaceholderTags'|trans }}"
       hx-post="{{ inlineAction }}"
       hx-trigger="blur changed"
       hx-target="#{{ inlineTarget }}"
