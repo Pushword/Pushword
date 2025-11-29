@@ -43,6 +43,7 @@ class NewMessageMailNotifier
         private readonly LoggerInterface $logger,
         private readonly Security $security,
         private readonly CacheInterface $cache,
+        private readonly ImportContext $importContext,
     ) {
         $this->emailTo = $this->apps->get()->getStr('conversation_notification_email_to');
         $this->emailFrom = $this->apps->get()->getStr('conversation_notification_email_from');
@@ -69,6 +70,10 @@ class NewMessageMailNotifier
 
     public function postUpdate(Message $message): void
     {
+        if ($this->importContext->isImporting()) {
+            return; // Skip notifications during import
+        }
+
         if (null !== $this->security->getUser()) {
             return;
         } // we send notification only for message sent by not logged people
@@ -82,6 +87,10 @@ class NewMessageMailNotifier
 
     public function postPersist(Message $message): void
     {
+        if ($this->importContext->isImporting()) {
+            return; // Skip notifications during import
+        }
+
         if (false === filter_var($message->getAuthorEmail(), \FILTER_VALIDATE_EMAIL)) {
             // $this->send();
 

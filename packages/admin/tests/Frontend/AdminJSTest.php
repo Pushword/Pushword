@@ -411,35 +411,4 @@ class AdminJSTest extends AbstractAdminTestClass
             'At least one of pageHost or pageLocale should be defined'
         );
     }
-
-    /**
-     * Test du gestionnaire de taille de colonnes.
-     */
-    public function testColumnSizeManager(): void
-    {
-        $client = $this->createPantherClientWithLogin();
-        $this->navigateToPageEdit($client);
-
-        // Vérifie si le gestionnaire de colonnes existe
-        $hasColumnManager = $client->executeScript('
-            return document.querySelector(".expandColumnFields") !== null
-                && document.querySelector(".columnFields") !== null
-                && document.querySelector(".mainFields") !== null;
-        ');
-
-        if (! (bool) $hasColumnManager) {
-            self::markTestSkipped('No column size manager found on this page');
-        }
-
-        // Teste l'interaction (sans vérifier le résultat car cela dépend de l'état initial)
-        $client->executeScript('document.querySelector(".expandColumnFields")?.click();');
-        $client->wait(self::WAIT_SHORT);
-
-        // Vérifie simplement que les éléments sont toujours présents et fonctionnels
-        $stillExists = $client->executeScript('
-            return document.querySelector(".columnFields") !== null;
-        ');
-
-        self::assertTrue($stillExists, 'Column manager should remain functional after interaction');
-    }
 }

@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
 use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Service\ImportContext;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
@@ -27,6 +28,7 @@ final class ConversationImporter
         private readonly EntityManagerInterface $entityManager,
         private readonly DenormalizerInterface $denormalizer,
         private readonly MediaRepository $mediaRepository,
+        private readonly ImportContext $importContext,
     ) {
     }
 
@@ -307,95 +309,101 @@ final class ConversationImporter
         callable $messageResolver,
         bool $skipExisting = false,
     ): void {
-        $reader = $this->createReader($csvPath);
-        if (null === $reader) {
-            return;
-        }
+        $this->importContext->startImport();
 
-        $header = $this->prepareHeader($reader);
-        if ([] === $header) {
-            return;
-        }
-
-        $customColumns = array_values(array_diff($header, ConversationCsvHelper::BASE_COLUMNS));
-
-        $records = $reader->getRecords();
-        foreach ($records as $row) {
-            if ($this->shouldSkipRow($row, $header)) {
-                continue;
+        try {
+            $reader = $this->createReader($csvPath);
+            if (null === $reader) {
+                return;
             }
 
-            $host = $this->resolveRowHost($row, $defaultHost);
-            $message = $messageResolver($row, $host);
-
-            if ($skipExisting && null !== $message) {
-                continue;
+            $header = $this->prepareHeader($reader);
+            if ([] === $header) {
+                return;
             }
 
-            if (null === $message) {
-                $messageClass = $this->resolveMessageClass($row['type'] ?? null, $row);
-                if (null === $messageClass) {
+            $customColumns = array_values(array_diff($header, ConversationCsvHelper::BASE_COLUMNS));
+
+            $records = $reader->getRecords();
+            foreach ($records as $row) {
+                if ($this->shouldSkipRow($row, $header)) {
                     continue;
                 }
 
-                $options = [];
-            } else {
-                $messageClass = $message::class;
-                $options = [AbstractNormalizer::OBJECT_TO_POPULATE => $message];
-            }
+                $host = $this->resolveRowHost($row, $defaultHost);
+                $message = $messageResolver($row, $host);
 
-            $data = $this->buildDenormalizationData($row, $customColumns, $host);
-
-            // Valide les dates avant de les passer au dénormaliseur
-            $data = $this->validateDates($data);
-
-            // Extrait mediaList avant la dénormalisation car setMediaList() attend une Collection
-            /** @var Media[] $mediaList */
-            $mediaList = $data['mediaList'] ?? [];
-            unset($data['mediaList']);
-
-            // Ajoute le contexte pour ignorer les propriétés manquantes ou vides
-            $ignoredAttributes = [];
-            // Ignore authorIpRaw si la valeur est absente ou vide pour éviter les erreurs
-            if (! isset($data['authorIpRaw'])) {
-                $ignoredAttributes[] = 'authorIpRaw';
-            }
-
-            // Ignore les dates si elles sont absentes pour éviter les erreurs de parsing
-            if (! isset($data['publishedAt'])) {
-                $ignoredAttributes[] = 'publishedAt';
-            }
-
-            if (! isset($data['createdAt'])) {
-                $ignoredAttributes[] = 'createdAt';
-            }
-
-            if (! isset($data['updatedAt'])) {
-                $ignoredAttributes[] = 'updatedAt';
-            }
-
-            $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = $ignoredAttributes;
-            $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
-
-            try {
-                /** @var Message $normalizedMessage */
-                $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
-
-                // Ajoute les médias manuellement après la dénormalisation
-                foreach ($mediaList as $media) {
-                    $normalizedMessage->addMedia($media);
+                if ($skipExisting && null !== $message) {
+                    continue;
                 }
 
-                if (! isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {
-                    $this->entityManager->persist($normalizedMessage);
+                if (null === $message) {
+                    $messageClass = $this->resolveMessageClass($row['type'] ?? null, $row);
+                    if (null === $messageClass) {
+                        continue;
+                    }
+
+                    $options = [];
+                } else {
+                    $messageClass = $message::class;
+                    $options = [AbstractNormalizer::OBJECT_TO_POPULATE => $message];
                 }
-            } catch (Throwable) {
-                // Ignore les lignes qui échouent lors de la dénormalisation
-                continue;
+
+                $data = $this->buildDenormalizationData($row, $customColumns, $host);
+
+                // Valide les dates avant de les passer au dénormaliseur
+                $data = $this->validateDates($data);
+
+                // Extrait mediaList avant la dénormalisation car setMediaList() attend une Collection
+                /** @var Media[] $mediaList */
+                $mediaList = $data['mediaList'] ?? [];
+                unset($data['mediaList']);
+
+                // Ajoute le contexte pour ignorer les propriétés manquantes ou vides
+                $ignoredAttributes = [];
+                // Ignore authorIpRaw si la valeur est absente ou vide pour éviter les erreurs
+                if (! isset($data['authorIpRaw'])) {
+                    $ignoredAttributes[] = 'authorIpRaw';
+                }
+
+                // Ignore les dates si elles sont absentes pour éviter les erreurs de parsing
+                if (! isset($data['publishedAt'])) {
+                    $ignoredAttributes[] = 'publishedAt';
+                }
+
+                if (! isset($data['createdAt'])) {
+                    $ignoredAttributes[] = 'createdAt';
+                }
+
+                if (! isset($data['updatedAt'])) {
+                    $ignoredAttributes[] = 'updatedAt';
+                }
+
+                $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = $ignoredAttributes;
+                $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
+
+                try {
+                    /** @var Message $normalizedMessage */
+                    $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
+
+                    // Ajoute les médias manuellement après la dénormalisation
+                    foreach ($mediaList as $media) {
+                        $normalizedMessage->addMedia($media);
+                    }
+
+                    if (! isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {
+                        $this->entityManager->persist($normalizedMessage);
+                    }
+                } catch (Throwable) {
+                    // Ignore les lignes qui échouent lors de la dénormalisation
+                    continue;
+                }
             }
+
+            $this->entityManager->flush();
+        } finally {
+            $this->importContext->stopImport();
         }
-
-        $this->entityManager->flush();
     }
 
     /**

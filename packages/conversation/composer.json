@@ -6,7 +6,8 @@
   "homepage": "https://pushword.piedweb.com/extension/conversation",
   "license": "MIT",
   "require": {
-    "pushword/core": "*"
+    "pushword/core": "*",
+    "pushword/flat-file": "*"
   },
   "autoload": {
     "psr-4": {
