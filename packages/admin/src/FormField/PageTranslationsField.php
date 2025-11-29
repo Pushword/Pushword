@@ -37,9 +37,9 @@ class PageTranslationsField extends AbstractField
         /** @var Page $page */
         $page = $this->admin->getSubject();
 
-        return AssociationField::new('translations', 'admin.page.translations.label')
+        return AssociationField::new('translations', 'adminPageTranslationsLabel')
             ->onlyOnForms()
-            ->setHelp('admin.page.translations.help')
+            ->setHelp('adminPageTranslationsHelp')
             ->setFormTypeOption('help_html', true)
             ->setFormTypeOption('multiple', true)
             ->setFormTypeOption('required', false)

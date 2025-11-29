@@ -1,10 +1,10 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}{{ 'admin.static.generating'|trans }}{% endblock %}
+{% block content_title %}{{ 'adminStaticGenerating'|trans }}{% endblock %}
 
 {% block page_actions %}
     <a class="btn btn-outline-secondary" href="{{ path('admin_static_generator') }}">
-        <i class="fa fa-sync-alt me-2" aria-hidden="true"></i>{{ 'admin.label.update'|trans }}
+        <i class="fa fa-sync-alt me-2" aria-hidden="true"></i>{{ 'adminLabelUpdate'|trans }}
     </a>
 {% endblock %}
 
@@ -13,13 +13,13 @@
     <div class="alert alert-info" role="alert">
         <div class="d-flex align-items-center mb-2">
             <i class="fa fa-circle-notch fa-spin me-2"></i>
-            <strong>{{ 'admin.static.please_wait'|trans }}</strong>
+            <strong>{{ 'adminStaticPleaseWait'|trans }}</strong>
         </div>
         {% if startTime %}
-            <p class="mb-1"><small>{{ 'admin.static.started_at'|trans }}: {{ startTime|date('d/m/Y à H:i:s') }}</small></p>
+            <p class="mb-1"><small>{{ 'adminStaticStartedAt'|trans }}: {{ startTime|date('d/m/Y à H:i:s') }}</small></p>
         {% endif %}
         {% if host %}
-            <p class="mb-0"><strong>{{ 'admin.static.host'|trans }}:</strong> {{ host }}</p>
+            <p class="mb-0"><strong>{{ 'adminStaticHost'|trans }}:</strong> {{ host }}</p>
         {% endif %}
     </div>
 {% endblock %}

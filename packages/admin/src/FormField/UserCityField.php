@@ -15,7 +15,7 @@ class UserCityField extends AbstractField
     {
         return $this->buildEasyAdminField('city', TextType::class, [
             'required' => false,
-            'label' => 'admin.user.city.label',
+            'label' => 'adminUserCityLabel',
         ]);
     }
 }

@@ -35,8 +35,8 @@ final class ReviewCrudController extends ConversationCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return parent::configureCrud($crud)
-            ->setEntityLabelInSingular('admin.label.review')
-            ->setEntityLabelInPlural('admin.label.review')
+            ->setEntityLabelInSingular('adminLabelReview')
+            ->setEntityLabelInPlural('adminLabelReview')
             ->setDefaultSort(['createdAt' => 'DESC'])
             ->addFormTheme('@PushwordConversation/admin/review_form_theme.html.twig');
     }
@@ -83,7 +83,7 @@ final class ReviewCrudController extends ConversationCrudController
 
     private function getMediaPickerField(): CollectionField
     {
-        $field = CollectionField::new('mediaList', 'admin.review.medias.label')
+        $field = CollectionField::new('mediaList', 'adminReviewMediasLabel')
             ->onlyOnForms()
             ->setEntryType(MediaPickerType::class)
             ->setFormTypeOption('entry_options', [
@@ -98,43 +98,43 @@ final class ReviewCrudController extends ConversationCrudController
             ->setFormTypeOption('allow_delete', true)
             ->setFormTypeOption('by_reference', false)
             ->setFormTypeOption('prototype', true)
-            ->setHelp('admin.review.medias.help');
+            ->setHelp('adminReviewMediasHelp');
 
         return $field;
     }
 
     private function getTitleField(): TextField
     {
-        return TextField::new('title', 'admin.review.title.label')
-            ->setHelp('admin.review.title.help')
+        return TextField::new('title', 'adminReviewTitleLabel')
+            ->setHelp('adminReviewTitleHelp')
             ->setColumns(12);
     }
 
     #[Override]
     protected function getIndexFields(): iterable
     {
-        yield DateTimeField::new('publishedAt', 'admin.conversation.label.publishedAt')
+        yield DateTimeField::new('publishedAt', 'adminConversationLabelPublishedAt')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
 
-        yield IntegerField::new('weight', 'admin.conversation.weight.label')
+        yield IntegerField::new('weight', 'adminConversationWeightLabel')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
 
-        yield TextField::new('title', 'admin.review.title.label')
+        yield TextField::new('title', 'adminReviewTitleLabel')
             ->setSortable(false)
             ->setTemplatePath('@PushwordConversation/admin/messageListTitleField.html.twig');
 
-        yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')
+        yield DateTimeField::new('createdAt', 'adminConversationCreatedAtLabel')
             ->setSortable(true);
     }
 
     private function getRatingFormField(): ChoiceField
     {
-        return ChoiceField::new('rating', 'admin.review.rating.label')
+        return ChoiceField::new('rating', 'adminReviewRatingLabel')
             ->setChoices($this->buildRatingChoices())
             ->renderExpanded()
-            ->setHelp('admin.review.rating.help')
+            ->setHelp('adminReviewRatingHelp')
             ->setFormTypeOption('required', true)
             ->setFormTypeOption('row_attr', [
                 'class' => 'pw-rating-field-row',

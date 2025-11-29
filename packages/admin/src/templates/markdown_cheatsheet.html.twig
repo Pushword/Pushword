@@ -1,6 +1,6 @@
 {% extends view('/base.html.twig') %}
 
-{% block title %}{{ 'md_cs.page.h1'|trans }}{% endblock %}
+{% block title %}{{ 'md_csPageH1'|trans }}{% endblock %}
 
 {% block robots %}
     {% if page.metaRobots is defined and page.metaRobots is not null %}
@@ -13,32 +13,32 @@
 
 <div class="max-w-3xl p-3 mx-auto">
 
-<div class="prose"><h1 class="mb-5"><small>{{ 'md_cs.page.h1'|trans }}</small> <br>{{ 'md_cs.page.subtitle'|trans }}</h1></div>
+<div class="prose"><h1 class="mb-5"><small>{{ 'md_csPageH1'|trans }}</small> <br>{{ 'md_csPageSubtitle'|trans }}</h1></div>
 
 <div class="p-3 mb-5 prose">
 {% apply markdown %}
 
 {% block cheatsheet_toc %}
-- [{{ 'md_cs.title'|trans }}](#title)
-- [{{ 'md_cs.chapeau'|trans }}](#chapeau)
-- [{{ 'md_cs.emphasis'|trans }}](#style)
-- [{{ 'md_cs.link'|trans }}](#link)
-    - [{{ 'md_cs.link_to_mail'|trans }}](#mail)
-    - [{{ 'md_cs.link_to_phone'|trans }}](#tel)
-- [{{ 'md_cs.lists'|trans }}](#lists)
-- [{{ 'md_cs.paragraph'|trans }}](#p)
-- [{{ 'md_cs.quote'|trans }}](#quote)
-- [{{ 'md_cs.image'|trans }}](#img)
-- [{{ 'md_cs.video'|trans }}](#video)
-- [{{ 'md_cs.page_list'|trans }}](#pageslist)
-- [{{ 'md_cs.redirection'|trans }}](#redirect)
-- [{{ 'md_cs.others'|trans }}](#others)
+- [{{ 'md_csTitle'|trans }}](#title)
+- [{{ 'md_csChapeau'|trans }}](#chapeau)
+- [{{ 'md_csEmphasis'|trans }}](#style)
+- [{{ 'md_csLink'|trans }}](#link)
+    - [{{ 'md_csLinkToMail'|trans }}](#mail)
+    - [{{ 'md_csLinkToPhone'|trans }}](#tel)
+- [{{ 'md_csLists'|trans }}](#lists)
+- [{{ 'md_csParagraph'|trans }}](#p)
+- [{{ 'md_csQuote'|trans }}](#quote)
+- [{{ 'md_csImage'|trans }}](#img)
+- [{{ 'md_csVideo'|trans }}](#video)
+- [{{ 'md_csPageList'|trans }}](#pageslist)
+- [{{ 'md_csRedirection'|trans }}](#redirect)
+- [{{ 'md_csOthers'|trans }}](#others)
 {% endblock %}
 {% endapply %}
 </div>
 
 {% block cheatsheet_content %}
-<h2 id="title" class="mb-4 text-3xl font-bold">{{ 'md_cs.title'|trans }}</h2>
+<h2 id="title" class="mb-4 text-3xl font-bold">{{ 'md_csTitle'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
@@ -69,10 +69,10 @@
 
 <!-- -->
 
-<h2 id="chapeau" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.chapeau'|trans }}</h2>
+<h2 id="chapeau" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csChapeau'|trans }}</h2>
 
 <div class="mb-4 prose dark:prose-light">
-    <p>{{ 'md_cs.chapeau_description'|trans }}</p>
+    <p>{{ 'md_csChapeauDescription'|trans }}</p>
 </div>
 
 <div class="relative mb-8 overflow-hidden">
@@ -87,7 +87,7 @@ Ceci est le reste de mon contenu...
 
 <!-- -->
 
-<h2 id="style" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.emphasis'|trans }}</h2>
+<h2 id="style" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csEmphasis'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
@@ -108,30 +108,30 @@ Ceci est le reste de mon contenu...
 
 <!-- -->
 
-<h2 id="link" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.link'|trans }}</h2>
+<h2 id="link" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csLink'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
-[{{ 'md_cs.link_homepage'|trans }}](/)
+[{{ 'md_csLinkHomepage'|trans }}](/)
 
-[{{ 'md_cs.link_other_site'|trans }}](https://piedweb.com/)
+[{{ 'md_csLinkOtherSite'|trans }}](https://piedweb.com/)
 
-{{ link('md_cs.link_bot_hidden'|trans, 'https://example.tld/') }}
+{{ link('md_csLinkBotHidden'|trans, 'https://example.tld/') }}
 {% endapply %}
     </div>
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
-[{{ 'md_cs.link_homepage'|trans }}](/)
+[{{ 'md_csLinkHomepage'|trans }}](/)
 
-[{{ 'md_cs.link_other_site'|trans }}](https://piedweb.com/)
+[{{ 'md_csLinkOtherSite'|trans }}](https://piedweb.com/)
 
-{{ "{{ link('" ~ ('md_cs.link_bot_hidden'|trans) ~ "', 'https://example.tld/') }}" }}
+{{ "{{ link('" ~ ('md_csLinkBotHidden'|trans) ~ "', 'https://example.tld/') }}" }}
 </code></pre>
 </div>
 
 <!-- -->
 
-<h2 id="mail" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.link_to_mail'|trans }}</h2>
+<h2 id="mail" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csLinkToMail'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
@@ -144,7 +144,7 @@ Ceci est le reste de mon contenu...
 
 <!-- -->
 
-<h2 id="tel" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.link_to_phone'|trans }}</h2>
+<h2 id="tel" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csLinkToPhone'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
@@ -157,7 +157,7 @@ Ceci est le reste de mon contenu...
 
 <!-- -->
 
-<h2 id="lists" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.lists'|trans }}</h2>
+<h2 id="lists" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csLists'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
@@ -191,7 +191,7 @@ Ceci est le reste de mon contenu...
 </div>
 <!-- -->
 
-<h2 id="p" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.paragraph'|trans }}</h2>
+<h2 id="p" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csParagraph'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
@@ -221,7 +221,7 @@ deux espace sont nécessaires.</code></pre>
 
 <!-- -->
 
-<h2 id="quote" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.quote'|trans }}</h2>
+<h2 id="quote" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csQuote'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
@@ -237,7 +237,7 @@ deux espace sont nécessaires.</code></pre>
 
 <!-- -->
 
-<h2 id="img" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.image'|trans }}</h2>
+<h2 id="img" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csImage'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
@@ -260,7 +260,7 @@ deux espace sont nécessaires.</code></pre>
 
 <!-- -->
 
-<h2 id="video" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.video'|trans }}</h2>
+<h2 id="video" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csVideo'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
@@ -278,7 +278,7 @@ deux espace sont nécessaires.</code></pre>
 
 <!-- -->
 
-<h2 id="pageslist" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.page_list'|trans }}</h2>
+<h2 id="pageslist" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csPageList'|trans }}</h2>
 
 <div class="relative mb-8 overflow-hidden">
     <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
@@ -290,13 +290,13 @@ deux espace sont nécessaires.</code></pre>
 Discover more on {{ link('Advanced Pages Listing', 'https://pushword.piedweb.com/pages-list', false) }}.
 
 - `max` nombre maximum d'items à montrer, peut être un tableau pour paginer le résultat, défault : `0`, no limit
-- `order`  default `publishedAt DESC,priority DESC`
+- `order`  default `publishedAt DESC,weight DESC`
 - `view` default `/component/pages_list.html.twig`, accepte tout chemin vers un template ou `card` pour `/component/pages_list_card.html.twig`
 - `host` default current host, if set to '', will be set to current host
 {% endapply %}
 </div>
 
-<h2 id="redirect" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.redirection'|trans }}</h2>
+<h2 id="redirect" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csRedirection'|trans }}</h2>
 
 <div class="prose dark:prose-light">
 <p>Votre contenu doit contenir uniquement :</p></div>
@@ -309,7 +309,7 @@ Location: http://example.eg/
 
 <!-- -->
 
-<h2 id="others" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_cs.others'|trans }}</h2>
+<h2 id="others" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csOthers'|trans }}</h2>
 
 <div class="prose dark:prose-light">
 {% apply markdown %}

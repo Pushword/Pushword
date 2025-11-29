@@ -12,6 +12,6 @@ class UserEmailField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
-        return $this->buildEasyAdminField('email', null, ['label' => 'admin.user.email.label']);
+        return $this->buildEasyAdminField('email', null, ['label' => 'adminUserEmailLabel']);
     }
 }

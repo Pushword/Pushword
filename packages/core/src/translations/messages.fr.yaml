@@ -1,51 +1,20 @@
----
-#---
-#---
-# Views Component
-video:
-  play: "Lecture"
-
-fr: Français
 en: English
-
-navigation:
-  toggle: Afficher/Cacher le menu
-#---
-# Entity
-#---
-
-#---
-# Security
-#---
-security:
-  login:
-    title: Connexion
-    email: Email
-    password: Mot de passe
-    label_button: Se connecter
-    remember_me: Se souvenir de moi
-    email_not_found: Votre email n'a pu être trouvé.
-    logged_in_as: Vous êtes connecté en tant que %username%
-  logout: Se déconnecter
-
-#---
-# Errors Page(s)
-#---
-
-error:
-  title: Oops! Une erreur...
-  serverSay: Le serveur indique
-  description: <a href="/" class="btn btn-secondary">Retour</a>
-
-#---
-# Feed
-#---
-feed:
-  description: Dernière page publiée.
-  alternate_title: Flux
-
-media:
-  name_was_changed: Le nom a été changé du fait d'un média similaire.
-  duplicate_warning: 'It looks like file was ever added on the disk : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block;margin-top:5px" href="%deleteMediaUrl%">Delete</a>'
-
-powered_by: Propulsé par
+errorDescription: '<a href="/" class="btn btn-secondary">Retour</a>'
+errorServerSay: 'Le serveur indique'
+errorTitle: 'Oops! Une erreur...'
+feedAlternateTitle: Flux
+feedDescription: 'Dernière page publiée.'
+fr: Français
+mediaDuplicateWarning: 'It looks like file was ever added on the disk : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block;margin-top:5px" href="%deleteMediaUrl%">Delete</a>'
+mediaNameWasChanged: "Le nom a été changé du fait d'un média similaire."
+navigationToggle: 'Afficher/Cacher le menu'
+powered_by: 'Propulsé par'
+securityLoginEmail: Email
+securityLoginEmailNotFound: "Votre email n'a pu être trouvé."
+securityLoginLabelButton: 'Se connecter'
+securityLoginLoggedInAs: 'Vous êtes connecté en tant que %username%'
+securityLoginPassword: 'Mot de passe'
+securityLoginRememberMe: 'Se souvenir de moi'
+securityLoginTitle: Connexion
+securityLogout: 'Se déconnecter'
+videoPlay: Lecture

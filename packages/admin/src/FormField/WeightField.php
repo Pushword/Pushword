@@ -16,7 +16,7 @@ class WeightField extends AbstractField
     {
         return $this->buildEasyAdminField('weight', NumberType::class, [
             'required' => false,
-            'label' => 'admin.page.weight.label',
+            'label' => 'adminPageWeightLabel',
         ]);
     }
 }

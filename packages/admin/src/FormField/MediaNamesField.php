@@ -15,8 +15,8 @@ final class MediaNamesField extends AbstractField
         return $this->buildEasyAdminField('alts', null, [
             'required' => false,
             'help_html' => true,
-            'help' => 'admin.media.alts.help',
-            'label' => 'admin.media.alts.label',
+            'help' => 'adminMediaAltsHelp',
+            'label' => 'adminMediaAltsLabel',
             'attr' => ['ismedia' => 1, 'class' => 'col-md-6'],
         ]);
     }

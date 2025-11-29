@@ -15,7 +15,7 @@ class UserPasswordField extends AbstractField
     {
         return $this->buildEasyAdminField('plainPassword', TextType::class, [
             'required' => null === $this->admin->getSubject()->getId(),
-            'label' => 'admin.user.password.label',
+            'label' => 'adminUserPasswordLabel',
         ]);
     }
 }

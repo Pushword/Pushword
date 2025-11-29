@@ -15,9 +15,9 @@ class PageSearchExcreptField extends AbstractField
     {
         return $this->buildEasyAdminField('searchExcrept', TextareaType::class, [
             'required' => false,
-            'label' => 'admin.page.searchExcrept.label',
+            'label' => 'adminPageSearchExcreptLabel',
             'help_html' => true,
-            'help' => 'admin.page.searchExcrept.help',
+            'help' => 'adminPageSearchExcreptHelp',
             'attr' => ['class' => 'descToMeasure autosize textarea-no-newline'],
         ]);
     }

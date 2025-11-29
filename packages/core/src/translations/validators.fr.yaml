@@ -1,13 +1,6 @@
-user:
-  email:
-    already_used: 'Un compte est déjà associé à cette adresse mail.'
-    invalid: "L'adresse e-mail est invalide."
-  password:
-    short: 'Le mot de passe est trop court (7 caractères min.).'
-
-page:
-  slug:
-    already_used: 'Une page utilise déjà cet identifiant URL'
-  customProperties:
-    malformed: 'Les propriétés supplémentaires doivent respecter le format YAML.'
-  pageRendering: "Une erreur s'est glissée dans votre contenu... impossible de générer la page."
+pageCustomPropertiesMalformed: 'Les propriétés supplémentaires doivent respecter le format YAML.'
+pagePageRendering: "Une erreur s'est glissée dans votre contenu... impossible de générer la page."
+pageSlugAlreadyUsed: 'Une page utilise déjà cet identifiant URL'
+userEmailAlreadyUsed: 'Un compte est déjà associé à cette adresse mail.'
+userEmailInvalid: "L'adresse e-mail est invalide."
+userPasswordShort: 'Le mot de passe est trop court (7 caractères min.).'

@@ -10,17 +10,17 @@
     </div>
     <div class="col-md-6">
         <div style="margin-bottom: 15px;">
-            <strong>{{ 'admin.media.preview.path'|trans }}</strong>
+            <strong>{{ 'adminMediaPreviewPath'|trans }}</strong>
             <code style="display: block; margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;">{{ media|image('default') }}</code>
         </div>
 
         <div style="margin-bottom: 15px;">
-            <strong>{{ 'admin.media.preview.markdown'|trans }}</strong>
+            <strong>{{ 'adminMediaPreviewMarkdown'|trans }}</strong>
             <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>![{{ media.alt|replace({'[': '', ']': ''}) }}]({{ media|image('default') }})</code></pre>
         </div>
 
         <div style="margin-bottom: 15px;">
-            <strong>{{ 'admin.media.preview.json'|trans }}</strong>
+            <strong>{{ 'adminMediaPreviewJson'|trans }}</strong>
             <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>{
   "{{ media }}": "{{ media.alt|replace({'"': '\\"',}) }}"
 }</code></pre>
@@ -28,7 +28,7 @@
 
         {% if media.getMainColor %}
         <div style="margin-bottom: 15px;">
-            <strong>{{ 'admin.media.preview.dominant_color'|trans }}</strong>
+            <strong>{{ 'adminMediaPreviewDominantColor'|trans }}</strong>
             <pre style="margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: {{ media.getMainColor }}; color: {{ media.mainColorOpposite }};">{{ media.getMainColor }}</pre>
         </div>
         {% endif %}

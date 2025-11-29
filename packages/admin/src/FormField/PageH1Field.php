@@ -13,13 +13,13 @@ class PageH1Field extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
-        return TextareaField::new('h1', 'admin.page.title.label')
+        return TextareaField::new('h1', 'adminPageTitleLabel')
             ->setNumOfRows(1)
             ->setLabel(false)
             ->onlyOnForms()
             ->setFormTypeOption('attr', [
                 'class' => 'autosize textarea-no-newline h1Field',
-                'placeholder' => 'admin.page.title.label',
+                'placeholder' => 'adminPageTitleLabel',
                 'rows' => 1,
                 'style' => '
                   --form-input-hover-shadow: 0;

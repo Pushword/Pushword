@@ -20,9 +20,9 @@ class CustomPropertiesField extends AbstractField
                 'style' => 'width:100%; height:100px;min-height:15vh;font-size:10px',
                 'data-editor' => 'yaml',
             ],
-            'label' => 'admin.page.customProperties.label',
+            'label' => 'adminPageCustomPropertiesLabel',
             'help_html' => true,
-            'help' => 'admin.page.customProperties.help',
+            'help' => 'adminPageCustomPropertiesHelp',
         ]);
     }
 }

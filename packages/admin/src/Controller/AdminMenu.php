@@ -48,7 +48,7 @@ final readonly class AdminMenu
 
         yield [
             'weight' => 800,
-            'item' => MenuItem::linkToCrud('admin.label.media', 'fas fa-images', Media::class),
+            'item' => MenuItem::linkToCrud('adminLabelMedia', 'fas fa-images', Media::class),
         ];
 
         yield [
@@ -58,12 +58,12 @@ final readonly class AdminMenu
 
         yield [
             'weight' => 700,
-            'item' => MenuItem::linkToCrud('admin.label.users', 'fas fa-users', User::class),
+            'item' => MenuItem::linkToCrud('adminLabelUsers', 'fas fa-users', User::class),
         ];
 
         yield [
             'weight' => 500,
-            'item' => MenuItem::section('admin.label.tools'),
+            'item' => MenuItem::section('adminLabelTools'),
         ];
     }
 
@@ -143,11 +143,11 @@ final readonly class AdminMenu
     {
         $hosts = $this->apps->getHosts();
         if (\count($hosts) <= 1) {
-            return MenuItem::linkToCrud('admin.label.content', 'fas fa-file', Page::class)
+            return MenuItem::linkToCrud('adminLabelContent', 'fas fa-file', Page::class)
                 ->setController(PageCrudController::class);
         }
 
-        $listItem = MenuItem::linkToCrud('admin.label.list', 'fas fa-list', Page::class)
+        $listItem = MenuItem::linkToCrud('adminLabelList', 'fas fa-list', Page::class)
             ->setCssClass('d-none')
             ->setController(PageCrudController::class);
         $subItems = [$listItem];
@@ -156,13 +156,13 @@ final readonly class AdminMenu
             $subItems[] = $this->createHostMenuItem($host, PageCrudController::class);
         }
 
-        return MenuItem::subMenu('admin.label.content', 'fas fa-file')
+        return MenuItem::subMenu('adminLabelContent', 'fas fa-file')
             ->setSubItems($subItems);
     }
 
     private function buildCheatSheetMenu(): RouteMenuItem
     {
-        $cheatSheetItem = MenuItem::linkToRoute('admin.label.cheatsheet', 'fa fa-book', 'cheatsheetEditRoute');
+        $cheatSheetItem = MenuItem::linkToRoute('adminLabelCheatsheet', 'fa fa-book', 'cheatsheetEditRoute');
 
         if ($this->isCheatSheetActive()) {
             $cheatSheetItem->getAsDto()->setSelected(true);
@@ -175,11 +175,11 @@ final readonly class AdminMenu
     {
         $hosts = $this->apps->getHosts();
         if (\count($hosts) <= 1) {
-            return MenuItem::linkToCrud('admin.label.redirection', 'fa fa-random', Page::class)
+            return MenuItem::linkToCrud('adminLabelRedirection', 'fa fa-random', Page::class)
                 ->setController(PageRedirectionCrudController::class);
         }
 
-        $listItem = MenuItem::linkToCrud('admin.label.list', 'fas fa-list', Page::class)
+        $listItem = MenuItem::linkToCrud('adminLabelList', 'fas fa-list', Page::class)
             ->setCssClass('d-none')
             ->setController(PageRedirectionCrudController::class);
         $subItems = [$listItem];
@@ -188,7 +188,7 @@ final readonly class AdminMenu
             $subItems[] = $this->createHostMenuItem($host, PageRedirectionCrudController::class);
         }
 
-        return MenuItem::subMenu('admin.label.redirection', 'fa fa-random')
+        return MenuItem::subMenu('adminLabelRedirection', 'fa fa-random')
             ->setSubItems($subItems);
     }
 

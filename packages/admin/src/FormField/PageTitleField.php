@@ -14,10 +14,10 @@ class PageTitleField extends AbstractField
     public function getEasyAdminField(): ?FieldInterface
     {
         return $this->buildEasyAdminField('title', TextareaType::class, [
-            'label' => 'admin.page.title.label',
+            'label' => 'adminPageTitleLabel',
             'required' => false,
             'help_html' => true,
-            'help' => 'admin.page.title.help',
+            'help' => 'adminPageTitleHelp',
             'attr' => ['class' => 'titleToMeasure autosize textarea-no-newline'],
         ]);
     }

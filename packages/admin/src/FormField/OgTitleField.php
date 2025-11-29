@@ -14,10 +14,10 @@ class OgTitleField extends AbstractField
     public function getEasyAdminField(): ?FieldInterface
     {
         return $this->buildEasyAdminField('ogTitle', TextType::class, [
-            'label' => 'admin.page.ogTitle.label',
+            'label' => 'adminPageOgTitleLabel',
             'required' => false,
             'help_html' => true,
-            'help' => 'admin.page.ogTitle.help',
+            'help' => 'adminPageOgTitleHelp',
         ]);
     }
 }

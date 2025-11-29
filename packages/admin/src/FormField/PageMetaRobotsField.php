@@ -15,9 +15,9 @@ class PageMetaRobotsField extends AbstractField
     {
         return $this->buildEasyAdminField('metaRobots', ChoiceType::class, [
             'choices' => [
-                'admin.page.metaRobots.choice.noIndex' => 'noindex',
+                'adminPageMetaRobotsChoiceNoIndex' => 'noindex',
             ],
-            'label' => 'admin.page.metaRobots.label',
+            'label' => 'adminPageMetaRobotsLabel',
             'required' => false,
         ]);
     }

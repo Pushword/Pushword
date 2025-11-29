@@ -12,7 +12,7 @@ class NewsletterForm extends AbstractConversationForm implements ConversationFor
         $form = $this->initForm();
         $form->add('authorEmail', options: ['constraints' => $this->getAuthorEmailConstraints(true)]);
 
-        $this->message->setContent($this->translator->trans('conversation.suscribeToNewsletter'));
+        $this->message->setContent($this->translator->trans('conversationSuscribeToNewsletter'));
 
         return $form;
     }

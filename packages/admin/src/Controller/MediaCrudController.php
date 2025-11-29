@@ -75,7 +75,7 @@ class MediaCrudController extends AbstractAdminCrudController
 
         if ([] !== $previewBlocks) {
             yield FormField::addColumn('col-12 extraFields');
-            yield FormField::addFieldset('admin.media.preview.label');
+            yield FormField::addFieldset('adminMediaPreviewLabel');
             foreach ($previewBlocks as $block) {
                 $classes = $this->normalizeBlock($block);
                 yield from $this->adminFormFieldManager->getEasyAdminFields($classes, $this);
@@ -87,8 +87,8 @@ class MediaCrudController extends AbstractAdminCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('admin.label.media')
-            ->setEntityLabelInPlural('admin.label.medias')
+            ->setEntityLabelInSingular('adminLabelMedia')
+            ->setEntityLabelInPlural('adminLabelMedias')
             ->setSearchFields(['alt', 'fileName', 'altSearch', 'tags'])
             ->setDefaultSort(['updatedAt' => 'DESC'])
             ->overrideTemplates([
@@ -139,13 +139,13 @@ class MediaCrudController extends AbstractAdminCrudController
     #[Override]
     public function configureFilters(Filters $filters): Filters
     {
-        $filters->add(MediaSearchFilter::new($this->mediaRepo, 'admin.media.alt.label'));
+        $filters->add(MediaSearchFilter::new($this->mediaRepo, 'adminMediaAltLabel'));
 
         $available = $this->getAvailableMimeTypes();
         $mimeChoices = $this->formatChoiceList($available['mimeType']);
         if ([] !== $mimeChoices) {
             $filters->add(
-                ChoiceFilter::new('mimeType', 'admin.media.filetype.label')
+                ChoiceFilter::new('mimeType', 'adminMediaFiletypeLabel')
                     ->setChoices($mimeChoices)
                     ->canSelectMultiple(),
             );
@@ -154,13 +154,13 @@ class MediaCrudController extends AbstractAdminCrudController
         $ratioChoices = $this->formatChoiceList($available['ratioLabel']);
         if ([] !== $ratioChoices) {
             $filters->add(
-                ChoiceFilter::new('ratioLabel', 'admin.media.ratioLabel.label')
+                ChoiceFilter::new('ratioLabel', 'adminPaginationRatioLabelLabel')
                     ->setChoices($ratioChoices)
                     ->canSelectMultiple(),
             );
         }
 
-        $filters->add(MediaDimensionIntFilter::new('admin.media.dimensions.int_filter_label'));
+        $filters->add(MediaDimensionIntFilter::new('adminMediaDimensionsIntFilterLabel'));
 
         return $filters;
     }
@@ -202,11 +202,11 @@ class MediaCrudController extends AbstractAdminCrudController
      */
     private function getIndexFields(): iterable
     {
-        yield TextField::new('alt', 'admin.media.alt.label')
+        yield TextField::new('alt', 'adminMediaAltLabel')
             ->setSortable(true);
-        yield TextField::new('mimeType', 'admin.media.filetype.label')
+        yield TextField::new('mimeType', 'adminMediaFiletypeLabel')
             ->setSortable(true);
-        yield DateTimeField::new('updatedAt', 'admin.page.updatedAt.label')
+        yield DateTimeField::new('updatedAt', 'adminPageUpdatedAtLabel')
             ->setSortable(true);
     }
 

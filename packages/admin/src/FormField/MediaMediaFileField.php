@@ -14,7 +14,7 @@ final class MediaMediaFileField extends AbstractField
     public function getEasyAdminField(): Field
     {
         return $this->buildEasyAdminField('mediaFile', FileType::class, [
-            'label' => 'admin.media.mediaFile.label',
+            'label' => 'adminMediaMediaFileLabel',
             'required' => null === $this->admin->getSubject()->getId(),
         ]);
     }

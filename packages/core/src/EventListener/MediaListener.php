@@ -116,7 +116,7 @@ final readonly class MediaListener
         $duplicate = $this->mediaRepo->findDuplicate($media);
 
         if (null !== $duplicate) {
-            $this->alert('warning', 'media.duplicate_warning', [
+            $this->alert('warning', 'mediaDuplicateWarning', [
                 '%deleteMediaUrl%' => $this->router->generate('admin_media_delete', ['entityId' => $media->getId()]),
                 '%sameMediaEditUrl%' => $this->router->generate('admin_media_edit', ['entityId' => $duplicate->getId()]),
                 '%name%' => $duplicate->getAlt(),
@@ -230,7 +230,7 @@ final readonly class MediaListener
         }
 
         if (1 === $this->renamer->getIteration()) {
-            $this->alert('success', 'media.name_was_changed');
+            $this->alert('success', 'mediaNameWasChanged');
         }
 
         $this->renameIfIdentifiersAreToken($media);

@@ -14,9 +14,9 @@ class PageLocaleField extends AbstractField
     public function getEasyAdminField(): ?FieldInterface
     {
         return $this->buildEasyAdminField('locale', TextType::class, [
-            'label' => 'admin.page.locale.label',
+            'label' => 'adminPageLocaleLabel',
             'help_html' => true,
-            'help' => 'admin.page.locale.help',
+            'help' => 'adminPageLocaleHelp',
         ]);
     }
 }

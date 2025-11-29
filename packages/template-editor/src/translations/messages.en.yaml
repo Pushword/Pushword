@@ -1,11 +1,4 @@
-
-admin:
-  label:
-    theme: Code Editor
-
-template_editor:
-  creation_disabled: Creation (and deletion) are disabled.
-  delete:
-    label: Delete
-  element:
-    deleted: Element deleted.
+adminLabelTheme: 'Code Editor'
+template_editorCreationDisabled: 'Creation (and deletion) are disabled.'
+template_editorDeleteLabel: Delete
+template_editorElementDeleted: 'Element deleted.'

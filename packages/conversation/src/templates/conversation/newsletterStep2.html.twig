@@ -11,9 +11,9 @@
     {% form_theme conversation 'form_div_layout.html.twig' %}
         {{ form_widget(conversation.authorName, {
             attr: {
-                placeholder: 'conversation.name.placeholder'|trans,
+                placeholder: 'conversationNamePlaceholder'|trans,
                 onfocus: "this.placeholder = ''",
-                onblur: "this.placeholder = '" ~ 'conversation.name.placeholder'|trans ~ "'",
+                onblur: "this.placeholder = '" ~ 'conversationNamePlaceholder'|trans ~ "'",
                 required: 'text',
                 type: 'text',
                 class: authorNameInputClass ?? 'appearance-none bg-transparent border-none focus:ring-transparent focus:border-transparent focus:shadow-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-hidden'
@@ -22,7 +22,7 @@
 {% endblock %}
 
 {% block submit %}
-        <button class="shrink-0 px-2 py-1 link-btn">{{ submitLabel|default('conversation.registerLabel'|trans) }}</button>
+        <button class="shrink-0 px-2 py-1 link-btn">{{ submitLabel|default('conversationRegisterLabel'|trans) }}</button>
 {% endblock %}
 
 {% block after %}

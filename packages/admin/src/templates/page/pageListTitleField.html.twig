@@ -15,7 +15,7 @@
     <a href="{{ editUrl }}" style="text-decoration: none; flex: 1; padding-right:1rem;">
 
       {% if page.isPublished == 0 %}
-        <span class="badge badge-info" title="{{ page.publishedAt ? page.publishedAt|format_datetime : 'admin.draft'|trans }}">{{ (page.publishedAt ? 'admin.planified' : 'admin.draft')|trans }}</span>
+        <span class="badge badge-info" title="{{ page.publishedAt ? page.publishedAt|format_datetime : 'adminDraft'|trans }}">{{ (page.publishedAt ? 'admin.planified' : 'adminDraft')|trans }}</span>
       {% elseif page.metaRobots != '' %}
         <span class="badge" title="{{ page.metaRobots }}"><i class="fa fa-eye-slash"></i></span>
       {% endif %}
@@ -39,7 +39,7 @@
       class="grow px-1 pw-inline-tags-input"
       style="min-width: 50px; border: none; background: transparent; outline: none; font-size: inherit; color: inherit;"
       value="{{ page.tags|default('')|trim }}"
-      placeholder="{{ 'admin.page.tags.placeholder'|trans }}"
+      placeholder="{{ 'adminPageTagsPlaceholder'|trans }}"
       hx-post="{{ inlineAction }}"
       hx-trigger="blur changed"
       hx-target="#{{ inlineTarget }}"

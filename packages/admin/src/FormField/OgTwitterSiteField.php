@@ -15,9 +15,9 @@ class OgTwitterSiteField extends AbstractField
     {
         return $this->buildEasyAdminField('twitterSite', TextType::class, [
             'required' => false,
-            'label' => 'admin.page.twitterSite.label',
+            'label' => 'adminPageTwitterSiteLabel',
             'help_html' => true,
-            'help' => 'admin.page.twitterSite.help',
+            'help' => 'adminPageTwitterSiteHelp',
         ]);
     }
 }

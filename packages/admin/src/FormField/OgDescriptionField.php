@@ -15,9 +15,9 @@ class OgDescriptionField extends AbstractField
     {
         return $this->buildEasyAdminField('ogDescription', TextareaType::class, [
             'required' => false,
-            'label' => 'admin.page.ogDescription.label',
+            'label' => 'adminPageOgDescriptionLabel',
             'help_html' => true,
-            'help' => 'admin.page.ogDescription.help',
+            'help' => 'adminPageOgDescriptionHelp',
         ]);
     }
 }

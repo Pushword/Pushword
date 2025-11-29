@@ -14,7 +14,7 @@ class MediaSlugField extends AbstractField
     public function getEasyAdminField(): ?FieldInterface
     {
         return $this->buildEasyAdminField('slugForce', TextType::class, [
-            'label' => 'admin.page.slug.label',
+            'label' => 'adminPageSlugLabel',
             'help_html' => true,
             'required' => false,
             'help' => '' !== $this->admin->getSubject()->getSlug()
@@ -27,7 +27,7 @@ class MediaSlugField extends AbstractField
                         document.getElementById("disabledLinkSlug").remove();
                     }</script>'
                     .'<small>Changer le slug change l\'URL de l\'image et peut créer des erreurs.</small>'
-                : 'admin.page.slug.help',
+                : 'adminPageSlugHelp',
             'attr' => [
                 'class' => 'slug_disabled',
                 ('' !== $this->admin->getSubject()->getSlug() ? 'disabled' : 't') => '',

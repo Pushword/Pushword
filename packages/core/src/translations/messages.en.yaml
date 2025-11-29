@@ -1,51 +1,20 @@
----
-#---
-#---
-# Views Component
-video:
-  play: "Play"
-
-fr: Français
 en: English
-
-navigation:
-  toggle: Toggle Navigation
-#---
-# Entity
-#---
-
-#---
-# Security
-#---
-security:
-  login:
-    title: Login
-    email: Email
-    password: Password
-    label_button: Log in
-    remember_me: Remember me
-    email_not_found: Your email could not be found.
-    logged_in_as: You are logged in as %username%
-  logout: Logout
-
-#---
-# Errors Page(s)
-#---
-
-error:
-  title: Oops! An error...
-  serverSay: The server indicates
-  description: <a href="/" class="btn btn-secondary">Back</a>
-
-#---
-# Feed
-#---
-feed:
-  description: Last published page.
-  alternate_title: Feed
-
-media:
-  name_was_changed: Name was changed because another media has a similar name one.
-  duplicate_warning: 'The file seems to already be present on disk: <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Delete this duplicate version</a>'
-
-powered_by: Powered by
+errorDescription: '<a href="/" class="btn btn-secondary">Back</a>'
+errorServerSay: 'The server indicates'
+errorTitle: 'Oops! An error...'
+feedAlternateTitle: Feed
+feedDescription: 'Last published page.'
+fr: Français
+mediaDuplicateWarning: 'The file seems to already be present on disk: <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Delete this duplicate version</a>'
+mediaNameWasChanged: 'Name was changed because another media has a similar name one.'
+navigationToggle: 'Toggle Navigation'
+powered_by: 'Powered by'
+securityLoginEmail: Email
+securityLoginEmailNotFound: 'Your email could not be found.'
+securityLoginLabelButton: 'Log in'
+securityLoginLoggedInAs: 'You are logged in as %username%'
+securityLoginPassword: Password
+securityLoginRememberMe: 'Remember me'
+securityLoginTitle: Login
+securityLogout: Logout
+videoPlay: Play

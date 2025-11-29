@@ -44,8 +44,8 @@ class ConversationCrudController extends AbstractAdminCrudController
     {
         return $crud
             ->setPaginatorPageSize($this->getRequestedPageSize())
-            ->setEntityLabelInSingular('admin.label.conversation')
-            ->setEntityLabelInPlural('admin.label.conversation')
+            ->setEntityLabelInSingular('adminLabelConversation')
+            ->setEntityLabelInPlural('adminLabelConversation')
             ->setDefaultSort(['createdAt' => 'DESC']);
     }
 
@@ -54,15 +54,15 @@ class ConversationCrudController extends AbstractAdminCrudController
     {
         if ($this->hasMultipleHosts()) {
             $filters->add(
-                ChoiceFilter::new('host', 'admin.page.host.label')
+                ChoiceFilter::new('host', 'adminPageHostLabel')
                     ->setChoices($this->getHostChoices()),
             );
         }
 
         $filters
-            ->add(TextFilter::new('tags', 'admin.conversation.tags.label'))
-            ->add(TextFilter::new('content', 'admin.conversation.content.label'))
-            ->add(TextFilter::new('weight', 'admin.conversation.weight.label'));
+            ->add(TextFilter::new('tags', 'adminConversationTagsLabel'))
+            ->add(TextFilter::new('content', 'adminConversationContentLabel'))
+            ->add(TextFilter::new('weight', 'adminConversationWeightLabel'));
 
         return $filters;
     }
@@ -82,19 +82,19 @@ class ConversationCrudController extends AbstractAdminCrudController
      */
     protected function getIndexFields(): iterable
     {
-        yield DateTimeField::new('publishedAt', 'admin.conversation.label.publishedAt')
+        yield DateTimeField::new('publishedAt', 'adminConversationLabelPublishedAt')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
 
-        yield IntegerField::new('weight', 'admin.conversation.weight.label')
+        yield IntegerField::new('weight', 'adminConversationWeightLabel')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
 
-        yield TextField::new('content', 'admin.conversation.content.label')
+        yield TextField::new('content', 'adminConversationContentLabel')
             ->setSortable(false)
             ->setTemplatePath('@PushwordConversation/admin/messageListTitleField.html.twig');
 
-        yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')
+        yield DateTimeField::new('createdAt', 'adminConversationCreatedAtLabel')
             ->setSortable(true);
     }
 
@@ -111,7 +111,7 @@ class ConversationCrudController extends AbstractAdminCrudController
             $fields[] = $tagsEasyAdminField;
         }
 
-        $fields[] = TextareaField::new('content', 'admin.conversation.content.label')
+        $fields[] = TextareaField::new('content', 'adminConversationContentLabel')
             ->setFormTypeOption('attr', ['rows' => 6]);
 
         $hostField = new HostField($this->adminFormFieldManager, $this);
@@ -120,7 +120,7 @@ class ConversationCrudController extends AbstractAdminCrudController
             $fields[] = $hostEasyAdminField;
         }
 
-        $fields[] = TextField::new('referring', 'admin.conversation.referring.label')
+        $fields[] = TextField::new('referring', 'adminConversationReferringLabel')
             ->setFormTypeOption('required', false);
 
         return $fields;
@@ -160,27 +160,27 @@ class ConversationCrudController extends AbstractAdminCrudController
         }
 
         yield FormField::addColumn('col-12 col-xl-4 columnFields');
-        yield FormField::addFieldset('admin.conversation.label.author')
+        yield FormField::addFieldset('adminConversationLabelAuthor')
             ->setCssClass('pw-settings-accordion pw-settings-open');
-        yield TextField::new('authorEmail', 'admin.conversation.authorEmail.label');
-        yield TextField::new('authorName', 'admin.conversation.authorName.label')
+        yield TextField::new('authorEmail', 'adminConversationAuthorEmailLabel');
+        yield TextField::new('authorName', 'adminConversationAuthorNameLabel')
             ->setFormTypeOption('required', false);
-        yield TextField::new('authorIpRaw', 'admin.conversation.authorIp.label')
+        yield TextField::new('authorIpRaw', 'adminConversationAuthorIpLabel')
             ->setFormTypeOption('disabled', null !== $message->getAuthorIp());
 
-        yield FormField::addFieldset('admin.conversation.label.publishedAt')
+        yield FormField::addFieldset('adminConversationLabelPublishedAt')
             ->setCssClass('pw-settings-accordion pw-settings-open');
-        yield DateTimeField::new('publishedAt', 'admin.conversation.label.publishedAt')
+        yield DateTimeField::new('publishedAt', 'adminConversationLabelPublishedAt')
             ->setFormTypeOption('html5', true)
             ->setFormTypeOption('widget', 'single_text')
             ->setFormTypeOption('required', false);
-        yield IntegerField::new('weight', 'admin.conversation.weight.label')
+        yield IntegerField::new('weight', 'adminConversationWeightLabel')
             ->setFormTypeOption('required', false)
-            ->setHelp('admin.conversation.weight.help');
+            ->setHelp('adminConversationWeightHelp');
 
-        yield DateTimeField::new('createdAt', 'admin.conversation.createdAt.label')->setDisabled();
+        yield DateTimeField::new('createdAt', 'adminConversationCreatedAtLabel')->setDisabled();
 
-        yield FormField::addFieldset('admin.page.customProperties.label')
+        yield FormField::addFieldset('adminPageCustomPropertiesLabel')
                     ->setCssClass('pw-settings-accordion pw-settings-open');
         $customPropertiesField = new CustomPropertiesField($this->adminFormFieldManager, $this);
         $customPropertiesEasyAdminField = $customPropertiesField->getEasyAdminField();

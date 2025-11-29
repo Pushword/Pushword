@@ -140,7 +140,7 @@ trait CustomPropertiesTrait
         try {
             $this->mergeStandAloneCustomProperties();
         } catch (ParseException) {
-            $executionContext->buildViolation('page.customProperties.malformed') // '$exception->getMessage())
+            $executionContext->buildViolation('pageCustomPropertiesMalformed') // '$exception->getMessage())
                     ->atPath($this->buildValidationAtPath)
                     ->addViolation();
         } catch (CustomPropertiesException) {

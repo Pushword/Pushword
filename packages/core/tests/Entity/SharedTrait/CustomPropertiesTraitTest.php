@@ -68,7 +68,7 @@ class CustomPropertiesTraitTest extends TestCase
 
         $mock = $this->createMock(ExecutionContextInterface::class);
         $mock->method('buildViolation')->willReturnCallback(static function ($arg) use ($mockConstraintViolationBuilder): MockObject {
-            if (\in_array($arg, ['page.customProperties.malformed', 'page.customProperties.notStandAlone'], true)) {
+            if (\in_array($arg, ['pageCustomPropertiesMalformed', 'page.customProperties.notStandAlone'], true)) {
                 throw new Error();
             }
 

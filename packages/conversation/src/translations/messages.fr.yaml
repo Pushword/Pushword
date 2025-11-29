@@ -1,87 +1,45 @@
-conversation:
-  title: Conversation
-  send:
-    success: Bien noté !
-    # Permets d'être assez large pour l'envoi d'un formulaire de contact, l'inscription à une newsletter
-    # ou le partage d'un commentaire
-  name:
-    placeholder: Prénom Nom
-  content:
-    placeholder: Message
-  emailOrPhone:
-    placeholder: Email ou Téléphone
-  email:
-    placeholder: Email
-    invalid: Adresse email invalide
-  phoneNumber:
-    invalid: Numéro de téléphone au format inconnu
-  submitLabel: Valider
-  registerLabel: S'inscrire
-  input:
-    notset: inconnu
-  suscribeToNewsletter: Inscription à la newsletter
-  review:
-    empty: "Aucun avis n'a encore été publié."
-    see_more: "Voir plus"
-    see_less: "Voir moins"
-    anonymous: "Anonyme"
-
-admin:
-  conversation:
-    notification:
-      title:
-        singular: "[%appName%] : Nouveau message"
-        plural: "[%appName%] : Nouveaux messages"
-      sent_by: "Envoyé par %authorName% - %authorEmail%"
-      from: "Depuis https://%host%/ › form[%referring%]"
-    label:
-      conversation: Conversation
-      publishedAt: Publié le
-      author: Auteur
-
-    authorEmail:
-      label: Email
-
-    authorName:
-      label: Nom
-
-    authorIp:
-      label: IP
-    authorIpRaw:
-      label: IP brute
-
-    content:
-      label: Contenu
-
-    referring:
-      label: Référant
-
-    createdAt:
-      label: Posté le
-
-    weight:
-      label: Poids
-      help: Les valeurs les plus basses apparaissent en premier
-
-    tags:
-      label: Tags
-      placeholder: Tags (séparés par des espaces)
-
-    inline:
-      open_popup: "Ouvrir dans une popup"
-      placeholder:
-        title: "Titre…"
-        content: "Contenu…"
-        tags: "Tags (séparés par des espaces)"
-
-  review:
-    rating:
-      label: Note
-      help: Choisissez une note de 1 (décevant) à 5 (excellent)
-    title:
-      label: Titre
-      help: Courte accroche décrivant l'avis
-    medias:
-      label: Médias
-      help: Ajoutez une ou plusieurs images illustrant l'avis
-    edit: Éditer l'avis
+adminConversationAuthorEmailLabel: Email
+adminConversationAuthorIpLabel: IP
+adminConversationAuthorIpRawLabel: 'IP brute'
+adminConversationAuthorNameLabel: Nom
+adminConversationContentLabel: Contenu
+adminConversationCreatedAtLabel: 'Posté le'
+adminConversationInlineOpenPopup: 'Ouvrir dans une popup'
+adminConversationInlinePlaceholderContent: Contenu…
+adminConversationInlinePlaceholderTags: 'Tags (séparés par des espaces)'
+adminConversationInlinePlaceholderTitle: Titre…
+adminConversationLabelAuthor: Auteur
+adminConversationLabelConversation: Conversation
+adminConversationLabelPublishedAt: 'Publié le'
+adminConversationNotificationFrom: 'Depuis https://%host%/ › form[%referring%]'
+adminConversationNotificationSentBy: 'Envoyé par %authorName% - %authorEmail%'
+adminConversationNotificationTitlePlural: '[%appName%] : Nouveaux messages'
+adminConversationNotificationTitleSingular: '[%appName%] : Nouveau message'
+adminConversationReferringLabel: Référant
+adminConversationTagsLabel: Tags
+adminConversationTagsPlaceholder: 'Tags (séparés par des espaces)'
+adminConversationWeightHelp: 'Les valeurs les plus basses apparaissent en premier'
+adminConversationWeightLabel: Poids
+adminReviewEdit: "Éditer l'avis"
+adminReviewMediasHelp: "Ajoutez une ou plusieurs images illustrant l'avis"
+adminReviewMediasLabel: Médias
+adminReviewRatingHelp: 'Choisissez une note de 1 (décevant) à 5 (excellent)'
+adminReviewRatingLabel: Note
+adminReviewTitleHelp: "Courte accroche décrivant l'avis"
+adminReviewTitleLabel: Titre
+conversationContentPlaceholder: Message
+conversationEmailInvalid: 'Adresse email invalide'
+conversationEmailOrPhonePlaceholder: 'Email ou Téléphone'
+conversationEmailPlaceholder: Email
+conversationInputNotset: inconnu
+conversationNamePlaceholder: 'Prénom Nom'
+conversationPhoneNumberInvalid: 'Numéro de téléphone au format inconnu'
+conversationRegisterLabel: "S'inscrire"
+conversationReviewAnonymous: Anonyme
+conversationReviewEmpty: "Aucun avis n'a encore été publié."
+conversationReviewSeeLess: 'Voir moins'
+conversationReviewSeeMore: 'Voir plus'
+conversationSendSuccess: 'Bien noté !'
+conversationSubmitLabel: Valider
+conversationSuscribeToNewsletter: 'Inscription à la newsletter'
+conversationTitle: Conversation

@@ -13,12 +13,12 @@ class UserLocaleField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
-        return ChoiceField::new('locale', 'admin.user.locale.label')
+        return ChoiceField::new('locale', 'adminUserLocaleLabel')
             ->onlyOnForms()
             ->setChoices($this->getLocaleChoices())
             ->renderAsNativeWidget()
             ->setFormTypeOption('required', true)
-            ->setHelp('admin.user.locale.help');
+            ->setHelp('adminUserLocaleHelp');
     }
 
     /**

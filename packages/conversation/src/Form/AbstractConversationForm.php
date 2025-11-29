@@ -41,7 +41,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
     ];
 
     /** @var string */
-    protected $successMessage = 'conversation.send.success';
+    protected $successMessage = 'conversationSendSuccess';
 
     protected ?int $currentStep = null;
 
@@ -303,14 +303,14 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             return [
                 new NotBlank(),
                 new AtLeastOneOf([
-                    new Email(message: 'conversation.email.invalid'),
+                    new Email(message: 'conversationEmailInvalid'),
                     new Regex(pattern: "/^ *(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4} *$/", message: 'user.phoneNumber.invalid'),
                 ])];
         }
 
         return [
             new NotBlank(),
-            new Email(message: 'conversation.email.invalid', mode: 'strict'),
+            new Email(message: 'conversationEmailInvalid', mode: 'strict'),
         ];
     }
 }
