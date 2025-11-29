@@ -23,6 +23,8 @@ use Pushword\Core\Entity\SharedTrait\IdTrait;
 use Pushword\Core\Entity\SharedTrait\Taggable;
 use Pushword\Core\Entity\SharedTrait\TagsTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
+use Pushword\Core\Entity\SharedTrait\Weightable;
+use Pushword\Core\Entity\SharedTrait\WeightTrait;
 use Pushword\Core\Repository\PageRepository;
 use Stringable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -33,13 +35,13 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 #[UniqueEntity(fields: ['host', 'slug'], errorPath: 'slug', message: 'page.slug.already_used')]
 #[ORM\Entity(repositoryClass: PageRepository::class)]
 #[ORM\Table(name: 'page')]
-class Page implements IdInterface, Taggable, Stringable
+class Page implements IdInterface, Taggable, Stringable, Weightable
 {
-    use CustomPropertiesTrait;
+    use IdTrait;
 
     use HostTrait;
 
-    use IdTrait;
+    use TimestampableTrait;
 
     use PageEditorTrait;
 
@@ -59,7 +61,9 @@ class Page implements IdInterface, Taggable, Stringable
 
     use TagsTrait;
 
-    use TimestampableTrait;
+    use WeightTrait;
+
+    use CustomPropertiesTrait;
 
     public function __construct(bool $initDateTimeProperties = true)
     {

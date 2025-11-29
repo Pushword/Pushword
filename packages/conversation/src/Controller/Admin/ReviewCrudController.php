@@ -119,7 +119,7 @@ final class ReviewCrudController extends ConversationCrudController
 
         yield IntegerField::new('weight', 'admin.conversation.weight.label')
             ->setSortable(true)
-            ->setTemplatePath('@PushwordConversation/admin/weightInlineField.html.twig');
+            ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
 
         yield TextField::new('title', 'admin.review.title.label')
             ->setSortable(false)

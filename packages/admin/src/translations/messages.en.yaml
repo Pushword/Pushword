@@ -157,8 +157,9 @@ admin:
     twitterCreator:
       label: Twitter Creator
       help: <code>@Username</code>, default value if set in the App.
-    priority:
-      label: Priority
+    weight:
+      label: Weight
+      help: "Allows sorting pages. Higher values appear first."
     extra:
       label: Extra
     redirection:

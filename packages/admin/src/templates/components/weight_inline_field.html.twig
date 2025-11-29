@@ -1,0 +1,39 @@
+{# Generic template for inline weight editing
+   Works with any entity that implements Weightable interface (Page, Message, etc.)
+   @var entity object with weight property and getId() method
+   @var entityType string - type identifier for CSRF token and route (e.g., 'page', 'conversation')
+#}
+{% set entityInstance = entity.instance ?? entity ?? null %}
+{% if entityInstance is null or (entityInstance.id is defined and entityInstance.id is null) %}
+    <span class="text-muted">—</span>
+{% else %}
+    {% set currentValue = entityInstance.weight ?? 0 %}
+    {% set entityId = entityInstance.id ?? 0 %}
+    {% set entityType = entityType|default('page') %}
+    {% set target = 'pw-weight-' ~ entityType ~ '-' ~ entityId %}
+    {% set routeName = 'pushword_' ~ entityType ~ '_inline_update' %}
+    {% set action = url(routeName, {id: entityId}) %}
+    {% set token = csrf_token(entityType ~ '_inline_' ~ entityId) %}
+
+    <div id="{{ target }}" class="pw-weight-input d-inline-flex align-items-center">
+        <input
+            type="number"
+            name="weight"
+            value="{{ currentValue }}"
+            class="form-control form-control-sm text-center bg-transparent border-0"
+            style="width: 5rem;"
+            min="-9999"
+            max="9999"
+            step="1"
+            hx-post="{{ action }}"
+            hx-trigger="change, blur"
+            hx-target="#{{ target }}"
+            hx-swap="outerHTML"
+            hx-vals='js:{field: "weight", value: event.target.value, _token: "{{ token|e('js') }}"}'
+            title="{{ ('admin.' ~ entityType ~ '.weight.help')|trans({}, 'messages', 'en') }}"
+        >
+    </div>
+{% endif %}
+
+
+

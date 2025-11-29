@@ -16,7 +16,7 @@ export function exportPagesListToMarkdown(
 
   const max = (data.max || '9').trim()
   const maxPages = (data.maxPages || '0').trim()
-  const order = data.order || 'publishedAt,priority'
+  const order = data.order || 'publishedAt,weight'
   const display = data.display || 'list'
 
   let markdown = `{{ pages_list(${e(data.kw)}, ${e(max)}, ${e(order)}, ${e(display)}`

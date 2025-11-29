@@ -88,7 +88,7 @@ class ConversationCrudController extends AbstractAdminCrudController
 
         yield IntegerField::new('weight', 'admin.conversation.weight.label')
             ->setSortable(true)
-            ->setTemplatePath('@PushwordConversation/admin/weightInlineField.html.twig');
+            ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
 
         yield TextField::new('content', 'admin.conversation.content.label')
             ->setSortable(false)
@@ -189,19 +189,10 @@ class ConversationCrudController extends AbstractAdminCrudController
         }
     }
 
-    protected function hasMultipleHosts(): bool
+    #[Override]
+    protected function getEntityTypeIdentifier(): string
     {
-        return \count($this->apps->getHosts()) > 1;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    protected function getHostChoices(): array
-    {
-        $hosts = $this->apps->getHosts();
-
-        return [] === $hosts ? [] : array_combine($hosts, $hosts);
+        return 'conversation';
     }
 
     #[Route(
@@ -224,7 +215,6 @@ class ConversationCrudController extends AbstractAdminCrudController
 
         $this->getEntityManager()->flush();
 
-        // Re-render the toggle after update
         return new Response($this->adminFormFieldManager->twig->render('@pwAdmin/components/published_toggle.html.twig', [
             'entity' => ['instance' => $message],
             'value' => $message->getPublishedAt(),
@@ -256,24 +246,14 @@ class ConversationCrudController extends AbstractAdminCrudController
         $this->getEntityManager()->flush();
 
         $template = 'weight' === $field
-            ? '@PushwordConversation/admin/weightInlineField.html.twig'
+            ? '@pwAdmin/components/weight_inline_field.html.twig'
             : '@PushwordConversation/admin/messageListTitleField.html.twig';
 
         return new Response($this->adminFormFieldManager->twig->render($template, [
             'entity' => ['instance' => $message],
-            'value' => 'weight' === $field ? $message->weight : null,
+            'value' => 'weight' === $field ? $message->getWeight() : null,
             'field' => null,
         ]));
-    }
-
-    private function getPublishedToggleTokenId(Message $message): string
-    {
-        return 'conversation_toggle_published_'.$message->getId();
-    }
-
-    private function getInlineTokenId(Message $message): string
-    {
-        return 'conversation_inline_'.$message->getId();
     }
 
     private function applyInlineUpdate(Message $message, string $field, string $value): bool
@@ -287,7 +267,7 @@ class ConversationCrudController extends AbstractAdminCrudController
             'referring' => $this->updateNullableString(fn (?string $val): Message => $message->setReferring($val), $trimmed),
             'host' => $this->updateNullableString(fn (?string $val): Message => $message->setHost($val), $trimmed),
             'tags' => $this->updateTags($message, $value),
-            'weight' => $this->updateWeightField($message, $trimmed),
+            'weight' => $message->setWeight($value),
             'title' => $this->updateReviewField($message, $trimmed, 'title'),
             'rating' => $this->updateReviewField($message, $trimmed, 'rating'),
             default => false,
@@ -314,23 +294,6 @@ class ConversationCrudController extends AbstractAdminCrudController
     private function updateTags(Message $message, string $value): bool
     {
         $message->setTags($value);
-
-        return true;
-    }
-
-    private function updateWeightField(Message $message, string $value): bool
-    {
-        if ('' === $value) {
-            $message->weight = 0;
-
-            return true;
-        }
-
-        if (! \is_numeric($value)) {
-            return false;
-        }
-
-        $message->weight = (int) $value;
 
         return true;
     }

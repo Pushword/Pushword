@@ -160,9 +160,9 @@ admin:
     twitterCard:
       label: Twitter Card
       help: <a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>En savoir plus</a>
-    priority:
-      label: Priorité
-      help: Permet d'ordonner les pages par priorité (puis par date de publication)
+    weight:
+      label: Poids
+      help: 'Permet d''ordonner les pages. Les valeurs les plus hautes apparaissent en premier.'
     redirection:
       from: De
       to: Vers

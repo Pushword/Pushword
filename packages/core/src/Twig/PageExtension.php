@@ -80,13 +80,13 @@ final class PageExtension
      * @return Page[]
      */
     #[AsTwigFunction('pages')]
-    public function getPublishedPages($host = null, array|string $where = [], array|string $order = 'priority,publishedAt', array|int $max = 0, bool $withRedirection = false): array
+    public function getPublishedPages($host = null, array|string $where = [], array|string $order = 'weight,publishedAt', array|int $max = 0, bool $withRedirection = false): array
     {
         $currentPage = $this->apps->getCurrentPage();
         $where = [\is_array($where) ? $where : (new StringToDQLCriteria($where, $currentPage))->retrieve()];
         $where[] = ['id',  '<>', $currentPage?->getId() ?? 0];
 
-        $order = '' === $order ? 'publishedAt,priority' : $order;
+        $order = '' === $order ? 'publishedAt,weight' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
 
@@ -180,7 +180,7 @@ final class PageExtension
     public function renderPagesList(
         array|string $search = '',
         int|array|string $max = 0,
-        array|string $order = 'publishedAt,priority',
+        array|string $order = 'publishedAt,weight',
         string $view = '',
         int|string $maxPages = 0,
         string $wrapperClass = '',
@@ -216,7 +216,7 @@ final class PageExtension
 
         $search = \is_array($search) ? $search : (new StringToDQLCriteria($search, $currentPage))->retrieve();
 
-        $order = '' === $order ? 'publishedAt,priority' : $order;
+        $order = '' === $order ? 'publishedAt,weight' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
 

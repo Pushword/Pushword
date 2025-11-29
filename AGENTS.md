@@ -51,6 +51,7 @@ Pushword is a modular CMS built as a collection of Symfony bundles. This is a mo
 ## Twig Templates
 
 - indent with 2 spaces
+- i18n : use camelCase for translatable text and keep them organized in `packages/<package>/translations/messages.<locale>.yaml` in alphabetical order.
 
 ### Entities
 

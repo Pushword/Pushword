@@ -25,12 +25,6 @@ trait PageSearchTrait
     #[ORM\Column(type: Types::STRING, length: 150)]
     protected string $name = '';
 
-    /**
-     * priority.
-     */
-    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    protected int $priority = 0;
-
     public function getTemplate(): ?string
     {
         return $this->hasCustomProperty('template') ? (string) $this->getCustomPropertyScalar('template') : null;
@@ -97,18 +91,6 @@ trait PageSearchTrait
     public function setName(?string $name): self
     {
         $this->name = (string) $name;
-
-        return $this;
-    }
-
-    public function getPriority(): int
-    {
-        return $this->priority;
-    }
-
-    public function setPriority(int $priority): self
-    {
-        $this->priority = $priority;
 
         return $this;
     }

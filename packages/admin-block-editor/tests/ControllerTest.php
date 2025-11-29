@@ -59,7 +59,7 @@ class ControllerTest extends AbstractAdminTestClass
             [],
             [],
             [],
-            json_encode(['kw' => 'content:fun', 'display' => 'list', 'order' => 'priority ↓', 'max' => '', 'maxPages' => ''])
+            json_encode(['kw' => 'content:fun', 'display' => 'list', 'order' => 'weight ↓', 'max' => '', 'maxPages' => ''])
         );
 
         self::assertSame(
@@ -80,7 +80,7 @@ class ControllerTest extends AbstractAdminTestClass
             [],
             [],
             [],
-            json_encode(['kw' => 'fun', 'display' => 'list', 'order' => 'priority ↓,publishedAt ↓', 'max' => '', 'maxPages' => ''])
+            json_encode(['kw' => 'fun', 'display' => 'list', 'order' => 'weight ↓,publishedAt ↓', 'max' => '', 'maxPages' => ''])
         );
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }

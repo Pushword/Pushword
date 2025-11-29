@@ -186,7 +186,7 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
     select.classList.add('cdx-select')
     make.option(select, '', 'orderBy', { disabled: true })
     make.option(select, 'publishedAt ↓', null, {}, this.data.order)
-    make.option(select, 'priority ↓, publishedAt ↓', null, {}, this.data.order)
+    make.option(select, 'weight ↓, publishedAt ↓', null, {}, this.data.order)
     make.option(select, 'publishedAt ↑', null, {}, this.data.order)
     select.value = this.data.order
     this.nodes.orderSelect = select

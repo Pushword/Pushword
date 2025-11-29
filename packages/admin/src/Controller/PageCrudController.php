@@ -16,6 +16,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
@@ -307,6 +308,10 @@ class PageCrudController extends AbstractAdminCrudController
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
 
+        yield IntegerField::new('weight', 'admin.page.weight.label')
+            ->setSortable(true)
+            ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
+
         yield TextField::new('h1', 'admin.page.h1.label')
             ->setTemplatePath('@pwAdmin/page/pageListTitleField.html.twig')
             ->setSortable(false);
@@ -360,19 +365,10 @@ class PageCrudController extends AbstractAdminCrudController
         }
     }
 
-    private function hasMultipleHosts(): bool
+    #[Override]
+    protected function getEntityTypeIdentifier(): string
     {
-        return \count($this->apps->getHosts()) > 1;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function getHostChoices(): array
-    {
-        $hosts = $this->apps->getHosts();
-
-        return [] === $hosts ? [] : array_combine($hosts, $hosts);
+        return 'page';
     }
 
     /**
@@ -460,25 +456,15 @@ class PageCrudController extends AbstractAdminCrudController
 
         $shouldPublish = $this->normalizePublishedState((string) $request->request->get('published'));
 
-        if ($shouldPublish) {
-            $page->setPublishedAt(new DateTime());
-        } else {
-            $page->setPublishedAt(null);
-        }
+        $page->setPublishedAt($shouldPublish ? new DateTime() : null);
 
         $this->getEntityManager()->flush();
 
-        // Re-render the toggle after update
         return new Response($this->adminFormFieldManager->twig->render('@pwAdmin/components/published_toggle.html.twig', [
             'entity' => ['instance' => $page],
             'value' => $page->getPublishedAt(),
             'field' => null,
         ]));
-    }
-
-    private function getPublishedToggleTokenId(Page $page): string
-    {
-        return 'page_toggle_published_'.$page->getId();
     }
 
     #[Route(path: '/admin/page/{id}/inline-update', name: 'pushword_page_inline_update', methods: ['POST'])]
@@ -499,22 +485,22 @@ class PageCrudController extends AbstractAdminCrudController
 
         $this->getEntityManager()->flush();
 
-        return new Response($this->adminFormFieldManager->twig->render('@pwAdmin/page/pageListTitleField.html.twig', [
+        $template = 'weight' === $field
+            ? '@pwAdmin/components/weight_inline_field.html.twig'
+            : '@pwAdmin/page/pageListTitleField.html.twig';
+
+        return new Response($this->adminFormFieldManager->twig->render($template, [
             'entity' => ['instance' => $page],
-            'value' => null,
+            'value' => 'weight' === $field ? $page->getWeight() : null,
             'field' => null,
         ]));
-    }
-
-    private function getInlineTokenId(Page $page): string
-    {
-        return 'page_inline_'.$page->getId();
     }
 
     private function applyInlineUpdate(Page $page, string $field, string $value): bool
     {
         return match ($field) {
             'tags' => $this->updateTags($page, $value),
+            'weight' => $page->setWeight($value),
             default => false,
         };
     }

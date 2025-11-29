@@ -10,13 +10,13 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
  *
  * @extends AbstractField<T>
  */
-class PriorityField extends AbstractField
+class WeightField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
-        return $this->buildEasyAdminField('priority', NumberType::class, [
+        return $this->buildEasyAdminField('weight', NumberType::class, [
             'required' => false,
-            'label' => 'admin.page.priority.label',
+            'label' => 'admin.page.weight.label',
         ]);
     }
 }

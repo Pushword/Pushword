@@ -14,6 +14,7 @@ use Pushword\Admin\AdminInterface;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -338,5 +339,48 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
     private function getPageSizeSessionKey(): string
     {
         return 'admin_page_size_'.static::class;
+    }
+
+    // ========== Multi-host support ==========
+
+    protected function hasMultipleHosts(): bool
+    {
+        return \count($this->apps->getHosts()) > 1;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function getHostChoices(): array
+    {
+        $hosts = $this->apps->getHosts();
+
+        return [] === $hosts ? [] : array_combine($hosts, $hosts);
+    }
+
+    // ========== Inline editing support ==========
+
+    /**
+     * Get the entity type identifier for CSRF tokens.
+     * Override in child controllers if needed.
+     */
+    protected function getEntityTypeIdentifier(): string
+    {
+        return 'entity';
+    }
+
+    protected function getPublishedToggleTokenId(object $entity): string
+    {
+        return sprintf('%s_toggle_published_%d', $this->getEntityTypeIdentifier(), $this->getEntityId($entity));
+    }
+
+    protected function getInlineTokenId(object $entity): string
+    {
+        return sprintf('%s_inline_%d', $this->getEntityTypeIdentifier(), $this->getEntityId($entity));
+    }
+
+    private function getEntityId(object $entity): int
+    {
+        return $entity instanceof IdInterface ? ($entity->getId() ?? 0) : 0;
     }
 }

@@ -17,7 +17,7 @@ trait PageParentTrait
      * @var Collection<int, Page>
      */
     #[ORM\OneToMany(targetEntity: Page::class, mappedBy: 'parentPage')]
-    #[ORM\OrderBy(['publishedAt' => 'DESC', 'priority' => 'DESC'])]
+    #[ORM\OrderBy(['publishedAt' => 'DESC', 'weight' => 'DESC'])]
     protected ?Collection $childrenPages;  // @phpstan-ignore-line
 
     public function getParentPage(): ?Page

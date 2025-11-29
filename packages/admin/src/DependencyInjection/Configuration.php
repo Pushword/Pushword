@@ -22,13 +22,13 @@ use Pushword\Admin\FormField\PageSearchExcreptField;
 use Pushword\Admin\FormField\PageSlugField;
 use Pushword\Admin\FormField\PageTitleField;
 use Pushword\Admin\FormField\PageTranslationsField;
-use Pushword\Admin\FormField\PriorityField;
 use Pushword\Admin\FormField\TagsField;
 use Pushword\Admin\FormField\UserEmailField;
 use Pushword\Admin\FormField\UserLocaleField;
 use Pushword\Admin\FormField\UserPasswordField;
 use Pushword\Admin\FormField\UserRolesField;
 use Pushword\Admin\FormField\UserUsernameField;
+use Pushword\Admin\FormField\WeightField;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -72,7 +72,7 @@ class Configuration implements ConfigurationInterface
             'admin.page.parentPage.label' => [PageParentPageField::class],
             'admin.page.search.label' => [
                 'expand' => true,
-                'fields' => [PageTitleField::class, PageNameField::class, PageSearchExcreptField::class, PriorityField::class],
+                'fields' => [PageTitleField::class, PageNameField::class, PageSearchExcreptField::class, WeightField::class],
             ],
             'admin.page.translations.label' => [PageLocaleField::class, PageTranslationsField::class],
             'admin.page.customProperties.label' => [

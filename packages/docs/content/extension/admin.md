@@ -60,7 +60,7 @@ pushword_admin:
                     - Pushword\Admin\FormField\PageTitleField
                     - Pushword\Admin\FormField\PageNameField
                     - Pushword\Admin\FormField\PageSearchExcreptField
-                    - Pushword\Admin\FormField\PriorityField
+                    - Pushword\Admin\FormField\WeightField
             admin.page.translations.label:
                 - Pushword\Admin\FormField\PageLocaleField
                 - Pushword\Admin\FormField\PageTranslationsField
