@@ -1,4 +1,7 @@
 framework:
     test: true
+    lock: "flock"
+    mailer:
+        dsn: "null://null"
     session:
         storage_factory_id: "session.storage.factory.mock_file"

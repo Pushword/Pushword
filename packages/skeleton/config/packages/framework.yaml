@@ -12,7 +12,7 @@ framework:
     dsn: "%env(MAILER_DSN)%"
   lock: "%env(LOCK_DSN)%"
   cache:
-    app: cache.adapter.apcu
+    #app: cache.adapter.apcu
   secret: "%env(APP_SECRET)%"
   #csrf_protection: true
   http_method_override: false
@@ -21,8 +21,6 @@ framework:
     cookie_secure: auto
     cookie_samesite: lax
     storage_factory_id: session.storage.factory.native
-  assets:
-    json_manifest_path: "%kernel.project_dir%/public/build/manifest.json"
   #esi: true
   #fragments: true
 
@@ -34,5 +32,8 @@ when@prod:
 when@test:
   framework:
     test: true
+    lock: "flock"
+    mailer:
+      dsn: "null://null"
     session:
       storage_factory_id: session.storage.factory.mock_file
