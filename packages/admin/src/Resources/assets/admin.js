@@ -72,4 +72,8 @@ window.addEventListener('load', function () {
 
   // Sauvegarde automatique
   initCtrlSAutoSave()
+
+  // document.body.addEventListener('htmx:afterSwap', function () {
+  //   suggestTags()
+  // })
 })

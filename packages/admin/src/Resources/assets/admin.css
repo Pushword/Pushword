@@ -68,6 +68,13 @@
   margin-top: -7px;
 }
 
+.pw-inline-tags-wrapper {
+  position: relative;
+  .textSuggester {
+    top: 24px;
+  }
+}
+
 .textSuggester {
   max-height: 120px;
   overflow-y: auto;

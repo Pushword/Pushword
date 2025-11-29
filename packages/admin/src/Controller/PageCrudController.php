@@ -60,6 +60,7 @@ class PageCrudController extends AbstractAdminCrudController
     {
         return $crud
             ->setDefaultSort(['updatedAt' => 'DESC'])
+            ->setPaginatorPageSize(100)
             ->addFormTheme('@pwAdmin/form/page_form_theme.html.twig')
             ->addFormTheme('@PushwordAdminBlockEditor/editorjs_widget.html.twig')
             ->overrideTemplates([
@@ -477,5 +478,50 @@ class PageCrudController extends AbstractAdminCrudController
     private function getPublishedToggleTokenId(Page $page): string
     {
         return 'page_toggle_published_'.$page->getId();
+    }
+
+    #[Route(path: '/admin/page/{id}/inline-update', name: 'pushword_page_inline_update', methods: ['POST'])]
+    public function inlineUpdate(Request $request, Page $page): Response
+    {
+        $token = (string) $request->request->get('_token');
+
+        if (! $this->isCsrfTokenValid($this->getInlineTokenId($page), $token)) {
+            return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
+        }
+
+        $field = trim((string) $request->request->get('field', ''));
+        $value = (string) $request->request->get('value', '');
+
+        if ('' === $field || ! $this->applyInlineUpdate($page, $field, $value)) {
+            return new Response('Field not editable.', Response::HTTP_BAD_REQUEST);
+        }
+
+        $this->getEntityManager()->flush();
+
+        return new Response($this->adminFormFieldManager->twig->render('@pwAdmin/page/pageListTitleField.html.twig', [
+            'entity' => ['instance' => $page],
+            'value' => null,
+            'field' => null,
+        ]));
+    }
+
+    private function getInlineTokenId(Page $page): string
+    {
+        return 'page_inline_'.$page->getId();
+    }
+
+    private function applyInlineUpdate(Page $page, string $field, string $value): bool
+    {
+        return match ($field) {
+            'tags' => $this->updateTags($page, $value),
+            default => false,
+        };
+    }
+
+    private function updateTags(Page $page, string $value): bool
+    {
+        $page->setTags($value);
+
+        return true;
     }
 }

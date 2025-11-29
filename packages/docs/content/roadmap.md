@@ -11,6 +11,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### In progress
 
+- dissociate languages for same host in MenuProvider Admin
+- create bulk trait command (create back ups, restore back ups...)
+
 - improve start show more
   - on ctrl+f, the show more block wich contains the search text must be opened
   - on #hash, the show more block must not closed

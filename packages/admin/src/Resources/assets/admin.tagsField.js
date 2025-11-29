@@ -53,10 +53,11 @@ export function suggestSearchHookForPageTags(
  */
 export function suggestTags() {
   document.querySelectorAll('[data-tags]').forEach(function (tagsInput) {
+    // Skip if already initialized
+    if (tagsInput.dataset.suggestInitialized) return
+
     const list = JSON.parse(tagsInput.getAttribute('data-tags'))
-    const suggester = document
-      .querySelector('[data-tags]')
-      .parentElement.querySelector('.textSuggester')
+    const suggester = tagsInput.parentElement?.querySelector('.textSuggester')
     const options = {
       highlight: true,
       dispMax: 10,
@@ -65,7 +66,10 @@ export function suggestTags() {
     }
     if (tagsInput.getAttribute('data-search-results-hook'))
       options.hookSearchResults = tagsInput.getAttribute('data-search-results-hook')
-    if (list && suggester) new Suggest.LocalMulti(tagsInput, suggester, list, options)
+    if (list && suggester) {
+      new Suggest.LocalMulti(tagsInput, suggester, list, options)
+      tagsInput.dataset.suggestInitialized = 'true'
+    }
   })
 }
 
