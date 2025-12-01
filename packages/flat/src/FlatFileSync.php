@@ -11,8 +11,8 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 final readonly class FlatFileSync
 {
     public function __construct(
-        private PageSync $pageSync,
-        private MediaSync $mediaSync,
+        public PageSync $pageSync,
+        public MediaSync $mediaSync,
         private EventDispatcherInterface $eventDispatcher,
         private AppPool $apps,
     ) {
