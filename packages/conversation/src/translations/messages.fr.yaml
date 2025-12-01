@@ -37,6 +37,8 @@ conversationPhoneNumberInvalid: "Numéro de téléphone au format inconnu"
 conversationRegisterLabel: "S'inscrire"
 conversationReviewAnonymous: Anonyme
 conversationReviewCommentSentBy: "Commentaire envoyé par"
+conversationReviewIn: "en"
+conversationReviewOn: "sur"
 conversationReviewEmpty: "Aucun avis n'a encore été publié."
 conversationReviewSeeLess: "Voir moins"
 conversationReviewSeeMore: "Voir plus"

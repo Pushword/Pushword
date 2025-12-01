@@ -5,6 +5,7 @@
 {% set reviewAuthor = review.authorName|default(anonymous) %}
 
 {% set reviewBody = review.content %}
+{% set reviewMonth = review.createdAt|date('F') %}
 {% set reviewBodyHtml = reviewBody|markdown %}
 
 
@@ -73,11 +74,11 @@
 
     <span class="inline-block">
       {% trans %}conversationReviewCommentSentBy{% endtrans %} {{ reviewAuthor }}
+
+      {{ 'conversationReviewIn'|trans }} <span>{{ reviewMonth }}</span>
       {% set source = review.getCustomProperty('source') %}
       {% if source %}
-        sur <span>{{ _self.renderSource(source) }}</span>.
-      {% else %}
-        .
+        {{ 'conversationReviewOn'|trans }} <span>{{ _self.renderSource(source) }}</span>
       {% endif %}
     </span>
   </div>

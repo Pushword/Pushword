@@ -37,6 +37,8 @@ conversationPhoneNumberInvalid: 'Phone number in unknown format'
 conversationRegisterLabel: Register
 conversationReviewAnonymous: Anonymous
 conversationReviewCommentSentBy: 'Comment sent by'
+conversationReviewIn: 'in'
+conversationReviewOn: 'on'
 conversationReviewEmpty: 'No reviews have been published yet.'
 conversationReviewSeeLess: 'See less'
 conversationReviewSeeMore: 'See more'
