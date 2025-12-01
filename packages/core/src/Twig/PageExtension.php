@@ -305,4 +305,14 @@ final class PageExtension
 
         return $currentRequest->attributes->getInt('pager', 1);
     }
+
+    #[AsTwigFunction('isInstanceOfPage')]
+    public function isInstanceOfPage(mixed $value): bool
+    {
+        if (! \is_object($value)) {
+            return false;
+        }
+
+        return $value instanceof Page;
+    }
 }

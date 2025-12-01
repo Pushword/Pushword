@@ -22,3 +22,7 @@ Tailwind content sources for all packages
 @source "./../../core/src/Twig/**.php";
 @source "./../../../../vendor/pushword/admin/src/templates/markdown_cheatsheet.html.twig";
 @source "./../../admin/src/templates/markdown_cheatsheet.html.twig";
+
+[x-cloak] {
+  display: none !important;
+}

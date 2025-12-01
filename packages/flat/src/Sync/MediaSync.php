@@ -3,6 +3,7 @@
 namespace Pushword\Flat\Sync;
 
 use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
@@ -24,6 +25,7 @@ final readonly class MediaSync
         private MediaImporter $mediaImporter,
         private MediaExporter $mediaExporter,
         private MediaRepository $mediaRepository,
+        private EntityManagerInterface $entityManager,
         private string $mediaDir,
         private ?Stopwatch $stopwatch = null,
     ) {
@@ -46,12 +48,24 @@ final readonly class MediaSync
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
 
         $this->measure('media_import', function () use ($contentDir): void {
+            // Load index files before importing
+            $this->mediaImporter->resetIndex();
+            $this->mediaImporter->loadIndex($this->mediaDir);
+
+            $localMediaDir = $contentDir.'/media';
+            if (file_exists($localMediaDir)) {
+                $this->mediaImporter->loadIndex($localMediaDir);
+            }
+
+            // Import media files
             $this->importDirectory($this->mediaDir);
             $this->mediaImporter->finishImport();
 
-            $localMediaDir = $contentDir.'/media';
             $this->importDirectory($localMediaDir);
             $this->mediaImporter->finishImport();
+
+            // Delete media that are missing from CSV (only if CSV was loaded)
+            $this->deleteMissingMedia();
         });
     }
 
@@ -167,6 +181,12 @@ final readonly class MediaSync
     {
         $fileName = basename($filePath);
 
+        // Skip index.csv when checking for newer files
+        if (MediaExporter::INDEX_FILE === $fileName) {
+            return '';
+        }
+
+        // Legacy sidecar files support (for backward compatibility)
         if (
             str_ends_with($fileName, '.yaml')
             || str_ends_with($fileName, '.json')
@@ -175,6 +195,44 @@ final readonly class MediaSync
         }
 
         return $fileName;
+    }
+
+    /**
+     * Delete media that exist in DB but are missing from the CSV.
+     * Only runs if the index CSV was loaded and contains IDs.
+     *
+     * Logic:
+     * - If CSV has no data, don't delete anything
+     * - If CSV has data but no IDs (all empty), don't delete anything (new import scenario)
+     * - If CSV has IDs, delete media that exist in DB but are not in CSV
+     */
+    private function deleteMissingMedia(): void
+    {
+        // Only delete if we have index data (CSV was loaded)
+        if (! $this->mediaImporter->hasIndexData()) {
+            return;
+        }
+
+        $importedIds = $this->mediaImporter->getImportedIds();
+
+        // If no IDs in CSV, don't delete anything
+        // This handles the case of fresh imports or CSVs with only new media
+        if ([] === $importedIds) {
+            return;
+        }
+
+        // Find all media in DB
+        $allMedia = $this->mediaRepository->findAll();
+
+        foreach ($allMedia as $media) {
+            $mediaId = $media->getId();
+            if (null !== $mediaId && ! \in_array($mediaId, $importedIds, true)) {
+                // Media exists in DB but not in CSV - delete it
+                $this->entityManager->remove($media);
+            }
+        }
+
+        $this->entityManager->flush();
     }
 
     private function resolveApp(?string $host): AppConfig

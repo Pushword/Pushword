@@ -31,6 +31,9 @@ final class ConversationExporter
 
         $baseColumns = $this->detectBaseColumns($messages[0] ?? null);
         $customColumns = $this->collectCustomColumns($messages);
+        // Filter out custom columns that are already in base columns to avoid duplicates
+        $customColumns = array_values(array_diff($customColumns, $baseColumns));
+
         $header = array_merge($baseColumns, $customColumns);
 
         /** @var array<int, array<string, float|int|string|Stringable|null>> $rows */

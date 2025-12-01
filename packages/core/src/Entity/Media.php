@@ -483,9 +483,18 @@ class Media implements IdInterface, Taggable, Stringable
         }
 
         $this->alt = (string) $alt;
-        $this->altSearch = SearchNormalizer::normalize($this->alt);
+        $this->updateAltSearch();
 
         return $this;
+    }
+
+    private function updateAltSearch(): void
+    {
+        $altSearch = [$this->alt];
+        $altSearch = array_merge($altSearch, array_values($this->getAltsParsed()));
+        $altSearch = array_map(SearchNormalizer::normalize(...), $altSearch);
+        $altSearch = array_unique($altSearch);
+        $this->altSearch = implode(' ', $altSearch);
     }
 
     public function getAlt(bool $onlyAlt = false): string

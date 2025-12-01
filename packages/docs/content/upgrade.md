@@ -24,6 +24,8 @@ sed -i "s|@PushwordCoreBundle/Resources/config/routes/all.yaml|@PushwordCoreBund
 - [ ] Check your `config/packages` and compare it with the new one in [`vendor/pushword/skeleton/config/packages`](https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages) - flex add tons of config but you need to maintain them. Best practice is to remove theme and to keep `framework.yaml` (you can easily compare with the maintained one in the skeleton), `pentatrion.yaml`, `twig.yaml`, `web_profiler.yaml`, `pushword.yaml` .
 - [ ] check if flex install you a `templates/base.html.twig` file, if yes, remove it.
 
+- [ ] remove sidecar yaml or json files in media `rm media/*.{yaml,json}` (we are now using a global index.csv)
+
 ### Media entity change
 
 - media.media ➜ media.fileName

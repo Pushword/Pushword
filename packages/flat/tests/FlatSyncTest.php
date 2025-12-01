@@ -15,6 +15,7 @@ final class FlatSyncTest extends KernelTestCase
     public function testImportReplacesMarkdownLinks(): void
     {
         self::bootKernel();
+        $this->cleanGlobalIndexBeforeTest();
         $this->prepareFixtures();
 
         /** @var FlatFileSync $sync */
@@ -40,6 +41,7 @@ final class FlatSyncTest extends KernelTestCase
         $filesystem->copy(__DIR__.'/content/test-content.md', $contentDir.'/test-content.md', true);
         $filesystem->copy(__DIR__.'/content/test-link.md', $contentDir.'/test-link.md', true);
         $filesystem->copy(__DIR__.'/content/media/logo-test.png', $contentDir.'/media/logo-test.png', true);
+        $filesystem->copy(__DIR__.'/content/media/index.csv', $contentDir.'/media/index.csv', true);
     }
 
     private function cleanFixtures(): void
@@ -47,7 +49,15 @@ final class FlatSyncTest extends KernelTestCase
         @unlink($this->getContentDir().'/test-content.md');
         @unlink($this->getContentDir().'/test-link.md');
         @unlink($this->getContentDir().'/media/logo-test.png');
+        @unlink($this->getContentDir().'/media/index.csv');
         @unlink($this->getMediaDir().'/logo-test.png');
+        @unlink($this->getMediaDir().'/index.csv');
+    }
+
+    private function cleanGlobalIndexBeforeTest(): void
+    {
+        // Remove any existing index.csv from global media dir to avoid ID conflicts
+        @unlink($this->getMediaDir().'/index.csv');
     }
 
     private function getContentDir(): string
