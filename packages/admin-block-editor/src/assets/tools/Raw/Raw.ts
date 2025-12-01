@@ -20,6 +20,7 @@ export default class Raw extends BaseTool {
   wrapper?: HTMLElement
   editorInstance?: editor.IStandaloneCodeEditor
   private _rawData: RawData = { html: '' }
+  private initialHtmlValue: string = ''
 
   static get toolbox() {
     return {
@@ -31,18 +32,20 @@ export default class Raw extends BaseTool {
   constructor({ data, api, readOnly }: { api: API; data: RawData; readOnly: boolean }) {
     super({ data, api, readOnly })
     this.api = api
-    this._rawData = { html: data?.html || '' }
+    const html = data?.html || ''
+    this._rawData = { html }
+    this.initialHtmlValue = html
 
     // Override data property with getter/setter to update Monaco when data changes
     Object.defineProperty(this, 'data', {
       get: () => this._rawData,
       set: (newData: RawData) => {
-        const html = newData?.html || ''
-        this._rawData = { html }
+        const htmlValue = newData?.html || ''
+        this._rawData = { html: htmlValue }
 
         // Update Monaco editor if it exists
-        if (this.editorInstance && this.editorInstance.getValue() !== html) {
-          this.editorInstance.setValue(html)
+        if (this.editorInstance && this.editorInstance.getValue() !== htmlValue) {
+          this.editorInstance.setValue(htmlValue)
         }
       },
       configurable: true,
@@ -58,11 +61,14 @@ export default class Raw extends BaseTool {
       throw new Error('monaco is not defined')
     }
 
+    // Use initialHtmlValue if available, otherwise fallback to current data.html
+    const htmlValue = this.initialHtmlValue || this.data.html || ''
+
     return monaco.editor.create(
       editorElem,
       // @ts-ignore
       {
-        value: this.data.html,
+        value: htmlValue,
         language: 'twig',
         ...monacoHelper.defaultSettings,
       },
@@ -72,6 +78,9 @@ export default class Raw extends BaseTool {
   render(): HTMLElement {
     this.wrapper = document.createElement('div')
     this.wrapper.classList.add('editorjs-monaco-wrapper')
+
+    // Capture the HTML value at render time to ensure it's available when Monaco initializes
+    this.initialHtmlValue = this.data.html || ''
 
     // Create Monaco editor container
     const editorElem = document.createElement('div')
