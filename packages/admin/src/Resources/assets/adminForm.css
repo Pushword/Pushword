@@ -23,7 +23,7 @@
 /* Remove "Edit Page" h1 on edit */
 .ea-new .content-header-title,
 .ea-edit .content-header-title {
-  margin-top: -144px;
+  margin-top: -10144px;
 }
 
 /* Have sticky save button even on mobile */

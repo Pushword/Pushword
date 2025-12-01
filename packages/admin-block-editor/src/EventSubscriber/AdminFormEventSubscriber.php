@@ -97,6 +97,10 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
             return;
         }
 
+        if (isset($_GET['disableEditorJs'])) {
+            return;
+        }
+
         $fields = $formEvent->getFields();
         $replacer = new FormFieldReplacer();
         $replacer->run(PageMainContentField::class, PageMainContentEditorJsField::class, $fields);
