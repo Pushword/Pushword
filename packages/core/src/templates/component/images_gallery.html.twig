@@ -1,105 +1,107 @@
 {#
-    @var string gallery_container_class
-    @var int pos permit to disable lazy loading on first image
-    @var string gallery_class
-    @var string image_filter
-    @var array images where key is path and value could be
-                        - string alternativeText
-                        - array {0: alternativeText, 1: link, 2: linkAttr, 3: obf}
-    @var bool clickable
+  @var string gallery_container_class
+  @var int pos permit to disable lazy loading on first image
+  @var string gallery_class
+  @var string image_filter
+  @var array images where key is path and value could be
+            - string alternativeText
+            - array {0: alternativeText, 1: link, 2: linkAttr, 3: obf}
+  @var bool clickable
 #}
 
 {% block images_gallery %}
-    {# TODO : check where uniqueGalleryId is used, if it's not used, remove it #}
-    {% set gallery_id = page.uniqueGalleryId|default(random(10, 1000)) %}
-    {% set grid_cols = grid_cols|default(images|length < 5 ? images|length : (images|length is odd ? 3 : 4)) %}
+  {# TODO : check where uniqueGalleryId is used, if it's not used, remove it #}
+  {% set gallery_id = page.uniqueGalleryId|default(random(10, 1000)) %}
+  {% set grid_cols = grid_cols|default(images|length < 5 ? images|length : (images|length is odd ? 3 : 4)) %}
 
-        <div class="{{ gallery_container_class|default('my-3') }}">{# w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw] #}
-            <ul class="{{ gallery_class|default('grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-screen-2xl mx-auto') }}">
-                {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
-                {% for media, mediaData in images %}
-                    {{ gallery_li_opener|default('<li>')|raw }}
+    <div class="{{ gallery_container_class|default('my-3') }}">{# w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw] #}
+      <ul class="{{ gallery_class|default('grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-screen-2xl mx-auto') }}">
+        {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
+        {% for media, mediaData in images %}
+          {{ gallery_li_opener|default('<li>')|raw }}
 
-                        {% set imageClickable = clickable ?? true %}
+            {% set imageClickable = clickable ?? true %}
 
-                        {# Test if image is an array, if it's an array 0 is the image and 1 the link #}
-                        {% if mediaData is iterable %}
-                            {% set linkObfuscate = mediaData[3] ?? true %}
-                            {% set linkAttr = mediaData[2] ?? null %}
-                            {% set imageClickable = mediaData[1] ?? imageClickable %}
-                            {% set name = mediaData[0] %}
-                        {% else %}
-                            {# normalize {'caption': 'media.jpg'} to {'media.jpg': 'caption'} #}
-                            {% if mediaData matches '/^[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|gif)$/' %}
-                                {% set name = media %}
-                                {% set media = mediaData %}
-                            {% else %}
-                                {% set name = mediaData %}
-                            {% endif %}
-                        {% endif %}
+            {# Test if image is an array, if it's an array 0 is the image and 1 the link #}
+            {% if isInstanceOfMedia(mediaData) %}
+              {% set current_media = mediaData %}
+            {% else if mediaData is iterable %}
+              {% set linkObfuscate = mediaData[3] ?? true %}
+              {% set linkAttr = mediaData[2] ?? null %}
+              {% set imageClickable = mediaData[1] ?? imageClickable %}
+              {% set name = mediaData[0] %}
+            {% else %}
+              {# normalize {'caption': 'media.jpg'} to {'media.jpg': 'caption'} #}
+              {% if mediaData matches '/^[a-zA-Z0-9_-]+\\.(jpg|jpeg|png|gif)$/' %}
+                {% set name = media %}
+                {% set media = mediaData %}
+              {% else %}
+                {% set name = mediaData %}
+              {% endif %}
+            {% endif %}
 
-                        {% set current_media = media_from_string(media, name) %}
-                        {% set galleryPart = _self.gallery_part(
-                            current_media,
-                            gallery_id,
-                            current_media.alt,
-                            image_filter|default('thumb'),
-                            image_container ?? '',
-                            image_otherAttributes ?? {},
-                            imageClickable,
-                            linkAttr ?? null,
-                            linkObfuscate ?? true
+            {% set current_media = current_media ??media_from_string(media, name) %}
+            {% set galleryPart = _self.gallery_part(
+              current_media,
+              gallery_id,
+              current_media.alt,
+              image_filter|default('thumb'),
+              image_container ?? '',
+              image_otherAttributes ?? {},
+              imageClickable,
+              linkAttr ?? null,
+              linkObfuscate ?? true
 
-                        ) %}
-                        {{ ((loop.index == 1 and (pos ?? 100) < 3)
-                            ? galleryPart|replace({'loading="lazy"': '', 'loading=lazy': ''})
-                            : galleryPart
-                        )|raw }}
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
+            ) %}
+            {{ ((loop.index == 1 and (pos ?? 100) < 3)
+              ? galleryPart|replace({'loading="lazy"': '', 'loading=lazy': ''})
+              : galleryPart
+            )|raw }}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
 {% endblock %}
 
 {% macro gallery_part(
-    image,
-    gallery_id,
-    name,
-    default_filter = 'xs',
-    image_container = null,
-    image_otherAttributes = {},
-    link = true,
-    linkAttr = null,
-    linkObfuscate = true
+  image,
+  gallery_id,
+  name,
+  default_filter = 'xs',
+  image_container = null,
+  image_otherAttributes = {},
+  link = true,
+  linkAttr = null,
+  linkObfuscate = true
 ) %}
-    {% import view('/component/image_helper.html.twig') as helper %}
-    {% import view('/component/image_inline.html.twig') as image_inline %}
+  {% import view('/component/image_helper.html.twig') as helper %}
+  {% import view('/component/image_inline.html.twig') as image_inline %}
 
-    {% set image_otherAttributes = image_otherAttributes|merge({'alt': name}) %}
+  {% set image_otherAttributes = image_otherAttributes|merge({'alt': name}) %}
 
 
-    {% set image_html = default_filter == 'thumb'
-            ? helper.thumb(image, null, default_filter, image_otherAttributes)
-            : image_inline.renderImage(image, image_otherAttributes.class|default(null))
-    %}
-    {% if image_container is same as('') %}{% else %}<div class="{{ image_container|default('mx-auto max-w-[330px]') }}">{% endif %}
+  {% set image_html = default_filter == 'thumb'
+      ? helper.thumb(image, null, default_filter, image_otherAttributes)
+      : image_inline.renderImage(image, image_otherAttributes.class|default(null))
+  %}
+  {% if image_container is same as('') %}{% else %}<div class="{{ image_container|default('mx-auto max-w-[330px]') }}">{% endif %}
 
-    {% if link is same as true %}
-        {{ link(image_html,
-            image|image('default'),
-            linkAttr ?? {
-            'class': 'glightbox',
-            'data-gallery': gallery_id,
-            'data-dwl': image|image('default', 'webp')
-        }) }}
-    {% elseif link is not same as false %}
-        {{ link(image_html,
-            link,
-            linkAttr ?? {},
-            linkObfuscate
-        ) }}
-    {% else %}
-        {{ image_html }}
-    {% endif %}
-     {% if image_container is same as('') %}{% else %}</div>{% endif %}
+  {% if link is same as true %}
+    {{ link(image_html,
+      image|image('default'),
+      linkAttr ?? {
+      'class': 'glightbox',
+      'data-gallery': gallery_id,
+      'data-dwl': image|image('default', 'webp')
+    }) }}
+  {% elseif link is not same as false %}
+    {{ link(image_html,
+      link,
+      linkAttr ?? {},
+      linkObfuscate
+    ) }}
+  {% else %}
+    {{ image_html }}
+  {% endif %}
+   {% if image_container is same as('') %}{% else %}</div>{% endif %}
 {% endmacro %}
