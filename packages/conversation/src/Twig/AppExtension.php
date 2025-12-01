@@ -107,6 +107,10 @@ class AppExtension
             return $pageOrTag;
         }
 
+        if ('#' === $pageOrTag) {
+            return [];
+        }
+
         if (\is_string($pageOrTag)) {
             return '' === $pageOrTag ? [] : [trim($pageOrTag)];
         }

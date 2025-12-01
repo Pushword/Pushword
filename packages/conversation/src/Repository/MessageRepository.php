@@ -84,7 +84,9 @@ class MessageRepository extends ServiceEntityRepository
             ->andWhere('m.customProperties LIKE :noteFilter')
             ->setParameter('noteFilter', '%"rating":%');
 
-        $this->addFilteringByTagsConditions($queryBuilder, $tags);
+        if ([] !== $tags) {
+            $this->addFilteringByTagsConditions($queryBuilder, $tags);
+        }
         $queryBuilder->orderBy('m.weight DESC,m.createdAt', 'DESC');
 
         if (0 !== $limit) {
