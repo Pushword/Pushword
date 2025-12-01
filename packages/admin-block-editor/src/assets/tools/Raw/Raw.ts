@@ -163,7 +163,9 @@ export default class Raw extends BaseTool {
       return false
     }
 
-    return typeof window.monaco !== 'undefined' && typeof window.monacoHelper !== 'undefined'
+    return (
+      typeof window.monaco !== 'undefined' && typeof window.monacoHelper !== 'undefined'
+    )
   }
 
   save(): RawData {

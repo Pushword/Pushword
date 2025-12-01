@@ -10,7 +10,7 @@
     {% if loop.index == 2 %}
       {{ block('before') }}
     {% endif %}
-    {% include view('@PushwordConversation/conversation/review.html.twig') with {
+    {% include view('/conversation/review.html.twig', '@PushwordConversation') with {
       review: message,
     } %}
     {% if loop.last and loop.index > 3 %}
