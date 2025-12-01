@@ -6,6 +6,7 @@ use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Flat\Exporter\MediaCsvHelper;
@@ -48,6 +49,7 @@ class MediaImporter extends AbstractImporter
         protected AppPool $apps,
         public string $mediaDir,
         public string $projectDir,
+        private readonly ?LoggerInterface $logger = null,
     ) {
         parent::__construct($em, $apps);
         $this->filesystem = new Filesystem();
@@ -166,6 +168,8 @@ class MediaImporter extends AbstractImporter
 
     public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
     {
+        $this->logger?->info('Importing media from {filePath}', ['filePath' => $filePath]);
+
         // Skip index.csv file itself
         if (str_ends_with($filePath, MediaExporter::INDEX_FILE)) {
             return;

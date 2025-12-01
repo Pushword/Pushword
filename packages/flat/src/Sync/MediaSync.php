@@ -46,38 +46,36 @@ final readonly class MediaSync
     {
         $app = $this->resolveApp($host);
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
+        $localMediaDir = $contentDir.'/media';
 
-        $this->measure('media_import', function () use ($contentDir): void {
-            // Load index files before importing
-            $this->mediaImporter->resetIndex();
-            $this->mediaImporter->loadIndex($this->mediaDir);
+        // 1. Parse CSV indexes
+        $this->mediaImporter->resetIndex();
+        $this->mediaImporter->loadIndex($this->mediaDir);
+        // if (file_exists($localMediaDir)) {
+        //     $this->mediaImporter->loadIndex($localMediaDir);
+        // }
 
-            $localMediaDir = $contentDir.'/media';
+        // 2. Validate files exist and prepare renames
+        if ($this->mediaImporter->hasIndexData()) {
+            $this->mediaImporter->validateFilesExist($this->mediaDir);
+            $this->mediaImporter->prepareFileRenames($this->mediaDir);
+
             if (file_exists($localMediaDir)) {
-                $this->mediaImporter->loadIndex($localMediaDir);
+                $this->mediaImporter->validateFilesExist($localMediaDir);
+                $this->mediaImporter->prepareFileRenames($localMediaDir);
             }
+        }
 
-            // Validate files exist and prepare renames
-            if ($this->mediaImporter->hasIndexData()) {
-                $this->mediaImporter->validateFilesExist($this->mediaDir);
-                $this->mediaImporter->prepareFileRenames($this->mediaDir);
+        // 3. Delete media removed from CSV (before importing new files)
+        $this->deleteMissingMedia();
+        $this->mediaImporter->finishImport();
 
-                if (file_exists($localMediaDir)) {
-                    $this->mediaImporter->validateFilesExist($localMediaDir);
-                    $this->mediaImporter->prepareFileRenames($localMediaDir);
-                }
-            }
+        // 4. Import/update media files (including new files not in CSV)
+        $this->importDirectory($this->mediaDir);
+        $this->mediaImporter->finishImport();
 
-            // Import media files
-            $this->importDirectory($this->mediaDir);
-            $this->mediaImporter->finishImport();
-
-            $this->importDirectory($localMediaDir);
-            $this->mediaImporter->finishImport();
-
-            // Delete media that are missing from CSV (only if CSV was loaded)
-            $this->deleteMissingMedia();
-        });
+        $this->importDirectory($localMediaDir);
+        $this->mediaImporter->finishImport();
     }
 
     public function export(?string $host = null, bool $force = false, ?string $exportDir = null): void
@@ -212,10 +210,7 @@ final readonly class MediaSync
      * Delete media that exist in DB but are missing from the CSV.
      * Only runs if the index CSV was loaded and contains IDs.
      *
-     * Logic:
-     * - If CSV has no data, don't delete anything
-     * - If CSV has data but no IDs (all empty), don't delete anything (new import scenario)
-     * - If CSV has IDs, delete media that exist in DB but are not in CSV
+     * Must be called BEFORE importing new files to avoid deleting newly created media.
      */
     private function deleteMissingMedia(): void
     {
@@ -232,7 +227,7 @@ final readonly class MediaSync
             return;
         }
 
-        // Find all media in DB
+        // Find all media in DB and delete those not in CSV
         $allMedia = $this->mediaRepository->findAll();
 
         foreach ($allMedia as $media) {
