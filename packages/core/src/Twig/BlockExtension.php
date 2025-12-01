@@ -60,6 +60,7 @@ class BlockExtension
         bool $clickable = true,
         int $pos = 100
     ): string {
+        // @see ./../templates/component/images_gallery.html.twig
         $template = $this->apps->get()->getView('/component/images_gallery.html.twig');
 
         return $this->twig->render($template, [

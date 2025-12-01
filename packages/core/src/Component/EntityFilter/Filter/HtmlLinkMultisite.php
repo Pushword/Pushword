@@ -32,7 +32,7 @@ final class HtmlLinkMultisite extends AbstractFilter
     /**
      * @var string
      */
-    public const string HTML_REGEX = '/href=((?P<hrefQuote>\'|")(?P<href1>(?:(?!(?P=hrefQuote)).)*)(?P=hrefQuote)|(?P<href2>[^"\'>][^> \r\n\t\f\v]*))/iJ';
+    public const string HTML_REGEX = '/href=((?P<hrefQuote>\'|")(?P<href1>(?:(?!(?P=hrefQuote)).)+)(?P=hrefQuote)|(?P<href2>[^"\'>][^> \r\n\t\f\v]*))/iJ';
 
     /** @var string */
     public const string HTML_REGEX_HREF_KEY = 'href';
