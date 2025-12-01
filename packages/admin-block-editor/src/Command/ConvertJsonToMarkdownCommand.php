@@ -15,7 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
-#[AsCommand(name: 'pw:json:to-markdown', description: 'Convert EditorJS JSON content to Markdown for all pages.')]
+#[AsCommand(name: 'pw:json-to-markdown', description: 'Convert EditorJS JSON content to Markdown for all pages.')]
 final readonly class ConvertJsonToMarkdownCommand
 {
     public function __construct(private PageRepository $pageRepo, private EntityManagerInterface $em)

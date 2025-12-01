@@ -104,17 +104,17 @@ Notes :
 2. Run the command to see what will be converted
 
 ```
-php bin/console pw:json:to-markdown --dry-run
+php bin/console pw:json-to-markdown --dry-run
 ```
 
 3. Run the command to convert the data
 
 ```
-php bin/console pw:json:to-markdown --force
+php bin/console pw:json-to-markdown --force
 # by host
-php bin/console pw:json:to-markdown --host=example.com
+php bin/console pw:json-to-markdown --host=example.com
 # or by page id
-php bin/console pw:json:to-markdown --page-id=123
+php bin/console pw:json-to-markdown --page-id=123
 ```
 
 4. Check the result

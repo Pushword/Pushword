@@ -45,7 +45,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] implémenter prettier markdown
   - [x] enregistrer en DB uniquement le markdown
   - [x] admin - revoir la class qui instantie pour montrer EditorJS si le contenu est en markdown (donc markdown ➜ editorjs à l'initialisation, nouveau comportement par défaut)
-  - [x] **how to bulk upgrade ?** ➜ `bin/console pw:json:to-markdown`
+  - [x] **how to bulk upgrade ?** ➜ `bin/console pw:json-to-markdown`
   - [x] Remove all code related to block rendering (in DB, markdown is used so front-end will use markdown)
   - [ ] test test test
     - [ ] [Example](/example){class="ninja"} n'est pas correctement parsé
