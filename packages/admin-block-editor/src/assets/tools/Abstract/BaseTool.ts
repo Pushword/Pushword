@@ -10,7 +10,7 @@ export interface ToolConstructorOptions {
 
 export abstract class BaseTool implements BlockTool {
   protected logger = logger
-  protected data: BlockToolData
+  protected data: BlockToolData = {}
   public api: API
   public readOnly: boolean
   //protected nodes: Record<string, HTMLElement | null> = {}

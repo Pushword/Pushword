@@ -19,7 +19,7 @@ export default class Raw extends BaseTool {
   api: API
   wrapper?: HTMLElement
   editorInstance?: editor.IStandaloneCodeEditor
-  data: RawData
+  private _rawData: RawData = { html: '' }
 
   static get toolbox() {
     return {
@@ -31,7 +31,23 @@ export default class Raw extends BaseTool {
   constructor({ data, api, readOnly }: { api: API; data: RawData; readOnly: boolean }) {
     super({ data, api, readOnly })
     this.api = api
-    this.data = { html: data.html || '' }
+    this._rawData = { html: data?.html || '' }
+
+    // Override data property with getter/setter to update Monaco when data changes
+    Object.defineProperty(this, 'data', {
+      get: () => this._rawData,
+      set: (newData: RawData) => {
+        const html = newData?.html || ''
+        this._rawData = { html }
+
+        // Update Monaco editor if it exists
+        if (this.editorInstance && this.editorInstance.getValue() !== html) {
+          this.editorInstance.setValue(html)
+        }
+      },
+      configurable: true,
+      enumerable: true,
+    })
   }
 
   instantiateEditor(editorElem: HTMLElement): editor.IStandaloneCodeEditor {

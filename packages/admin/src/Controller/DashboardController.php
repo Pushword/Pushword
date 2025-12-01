@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Twig\Attribute\AsTwigFunction;
 
 #[AdminDashboard(routePath: '/admin', routeName: 'admin')]
 class DashboardController extends AbstractDashboardController
@@ -52,8 +53,8 @@ class DashboardController extends AbstractDashboardController
     public function configureAssets(): Assets
     {
         return Assets::new()
-            ->addCssFile('/bundles/pushwordadmin/admin.css')
-            ->addJsFile('/bundles/pushwordadmin/admin.js')
+            ->addCssFile($this->versionedAsset('/bundles/pushwordadmin/admin.css'))
+            ->addJsFile($this->versionedAsset('/bundles/pushwordadmin/admin.js'))
             ->addJsFile($this->versionedAsset('/bundles/pushwordadminblockeditor/admin-block-editor.js'))
             ->addCssFile($this->versionedAsset('/bundles/pushwordadminblockeditor/style.css'));
     }
@@ -71,6 +72,7 @@ class DashboardController extends AbstractDashboardController
             ->displayUserName(false);
     }
 
+    #[AsTwigFunction('versionedAsset')]
     private function versionedAsset(string $assetPath): string
     {
         /** @var string $projectDir */
