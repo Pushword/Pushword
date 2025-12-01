@@ -72,10 +72,10 @@
         {% endif %}
 
         <span class="inline-block">
-            Commentaire envoyé par {{ reviewAuthor }}
+            {% trans %}conversationReviewCommentSentBy{% endtrans %} {{ reviewAuthor }}
             {% set source = review.getCustomProperty('source') %}
             {% if source %}
-                sur <span>{{ source }}</span>.
+                sur <span>{{ _self.renderSource(source) }}</span>.
             {% else %}
                 .
             {% endif %}
@@ -103,8 +103,24 @@
     </button>
     {% if review.mediaList is not empty %}
         <div class="overflow-x-hidden md:overflow-x-auto w-full mt-4">
-            {{ gallery(review.mediaList) }}
+            {% include view('/component/images_gallery.html.twig') with {images: review.mediaList} %}
         </div>
     {% endif %}
 </blockquote>
 {% endblock %}
+
+{% macro renderSource(source) %}
+  {% set sourceName =
+    'tripa' in source? 'TripAdvisor' :
+    'google' in source ? 'Google' :
+    'facebook' in source ? 'Facebook' :
+    'linkedin' in source ? 'LinkedIn' :
+    'twitter' in source ? 'Twitter' :
+    'instagram' in source ? 'Instagram' :
+    'youtube' in source ? 'YouTube' :
+    'pinterest' in source ? 'Pinterest' :
+    'tiktok' in source ? 'TikTok'
+      : 'Direct' %}
+
+  {{ link(sourceName, source) }}
+{% endmacro %}

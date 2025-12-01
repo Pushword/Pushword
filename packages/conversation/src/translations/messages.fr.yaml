@@ -1,45 +1,46 @@
 adminConversationAuthorEmailLabel: Email
 adminConversationAuthorIpLabel: IP
-adminConversationAuthorIpRawLabel: 'IP brute'
+adminConversationAuthorIpRawLabel: "IP brute"
 adminConversationAuthorNameLabel: Nom
 adminConversationContentLabel: Contenu
-adminConversationCreatedAtLabel: 'Posté le'
-adminConversationInlineOpenPopup: 'Ouvrir dans une popup'
+adminConversationCreatedAtLabel: "Posté le"
+adminConversationInlineOpenPopup: "Ouvrir dans une popup"
 adminConversationInlinePlaceholderContent: Contenu…
-adminConversationInlinePlaceholderTags: 'Tags (séparés par des espaces)'
+adminConversationInlinePlaceholderTags: "Tags (séparés par des espaces)"
 adminConversationInlinePlaceholderTitle: Titre…
 adminConversationLabelAuthor: Auteur
 adminConversationLabelConversation: Conversation
-adminConversationLabelPublishedAt: 'Publié le'
-adminConversationNotificationFrom: 'Depuis https://%host%/ › form[%referring%]'
-adminConversationNotificationSentBy: 'Envoyé par %authorName% - %authorEmail%'
-adminConversationNotificationTitlePlural: '[%appName%] : Nouveaux messages'
-adminConversationNotificationTitleSingular: '[%appName%] : Nouveau message'
+adminConversationLabelPublishedAt: "Publié le"
+adminConversationNotificationFrom: "Depuis https://%host%/ › form[%referring%]"
+adminConversationNotificationSentBy: "Envoyé par %authorName% - %authorEmail%"
+adminConversationNotificationTitlePlural: "[%appName%] : Nouveaux messages"
+adminConversationNotificationTitleSingular: "[%appName%] : Nouveau message"
 adminConversationReferringLabel: Référant
 adminConversationTagsLabel: Tags
-adminConversationTagsPlaceholder: 'Tags (séparés par des espaces)'
-adminConversationWeightHelp: 'Les valeurs les plus basses apparaissent en premier'
+adminConversationTagsPlaceholder: "Tags (séparés par des espaces)"
+adminConversationWeightHelp: "Les valeurs les plus basses apparaissent en premier"
 adminConversationWeightLabel: Poids
 adminReviewEdit: "Éditer l'avis"
 adminReviewMediasHelp: "Ajoutez une ou plusieurs images illustrant l'avis"
 adminReviewMediasLabel: Médias
-adminReviewRatingHelp: 'Choisissez une note de 1 (décevant) à 5 (excellent)'
+adminReviewRatingHelp: "Choisissez une note de 1 (décevant) à 5 (excellent)"
 adminReviewRatingLabel: Note
 adminReviewTitleHelp: "Courte accroche décrivant l'avis"
 adminReviewTitleLabel: Titre
 conversationContentPlaceholder: Message
-conversationEmailInvalid: 'Adresse email invalide'
-conversationEmailOrPhonePlaceholder: 'Email ou Téléphone'
+conversationEmailInvalid: "Adresse email invalide"
+conversationEmailOrPhonePlaceholder: "Email ou Téléphone"
 conversationEmailPlaceholder: Email
 conversationInputNotset: inconnu
-conversationNamePlaceholder: 'Prénom Nom'
-conversationPhoneNumberInvalid: 'Numéro de téléphone au format inconnu'
+conversationNamePlaceholder: "Prénom Nom"
+conversationPhoneNumberInvalid: "Numéro de téléphone au format inconnu"
 conversationRegisterLabel: "S'inscrire"
 conversationReviewAnonymous: Anonyme
+conversationReviewCommentSentBy: "Commentaire envoyé par"
 conversationReviewEmpty: "Aucun avis n'a encore été publié."
-conversationReviewSeeLess: 'Voir moins'
-conversationReviewSeeMore: 'Voir plus'
-conversationSendSuccess: 'Bien noté !'
+conversationReviewSeeLess: "Voir moins"
+conversationReviewSeeMore: "Voir plus"
+conversationSendSuccess: "Bien noté !"
 conversationSubmitLabel: Valider
-conversationSuscribeToNewsletter: 'Inscription à la newsletter'
+conversationSuscribeToNewsletter: "Inscription à la newsletter"
 conversationTitle: Conversation
