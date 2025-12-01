@@ -18,6 +18,7 @@
       <ul class="{{ gallery_class|default('grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-screen-2xl mx-auto') }}">
         {# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
         {% for media, mediaData in images %}
+          {% set current_media = null %}
           {{ gallery_li_opener|default('<li>')|raw }}
 
             {% set imageClickable = clickable ?? true %}
@@ -40,7 +41,7 @@
               {% endif %}
             {% endif %}
 
-            {% set current_media = current_media ??media_from_string(media, name) %}
+            {% set current_media = current_media ?? media_from_string(media, name) %}
             {% set galleryPart = _self.gallery_part(
               current_media,
               gallery_id,
