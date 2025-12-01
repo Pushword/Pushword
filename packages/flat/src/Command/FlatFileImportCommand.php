@@ -36,8 +36,10 @@ final class FlatFileImportCommand
         if ('all' === $force) {
             $this->flatFileSync->import($host);
         } elseif ('media' === $force) {
+            $output->writeln('-- only media');
             $this->flatFileSync->mediaSync->import($host);
         } elseif ('page' === $force) {
+            $output->writeln('-- only page');
             $this->flatFileSync->pageSync->import($host);
         }
 
