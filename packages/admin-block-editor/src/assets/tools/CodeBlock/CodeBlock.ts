@@ -14,7 +14,10 @@ export interface CodeBlockData extends RawData {
  * The code is contains in html, but it could be whatever you want
  */
 export default class CodeBlock extends Raw {
-  public data: { html: string; language: string }
+  private _codeBlockData: {
+    html: string
+    language: string
+  } = { html: '', language: 'html' }
 
   //public static readonly toolName = 'codeBlock'
 
@@ -28,10 +31,27 @@ export default class CodeBlock extends Raw {
     readOnly: boolean
   }) {
     super({ data, api, readOnly })
-    this.data = {
-      html: data.html || '',
-      language: data.language || 'html',
+    this._codeBlockData = {
+      html: data?.html || '',
+      language: data?.language || 'html',
     }
+
+    // Override data property with getter/setter to update Monaco when data changes
+    Object.defineProperty(this, 'data', {
+      get: () => this._codeBlockData,
+      set: (newData: CodeBlockData) => {
+        const html = newData?.html || ''
+        const language = newData?.language || this._codeBlockData.language || 'html'
+        this._codeBlockData = { html, language }
+
+        // Update Monaco editor if it exists
+        if (this.editorInstance && this.editorInstance.getValue() !== html) {
+          this.editorInstance.setValue(html)
+        }
+      },
+      configurable: true,
+      enumerable: true,
+    })
   }
 
   render(): HTMLElement {
@@ -42,12 +62,12 @@ export default class CodeBlock extends Raw {
         'max-width: 100px;padding: 5px 6px;margin: auto; position: absolute; right: 5px; z-index: 5; background: white',
     }) as HTMLSelectElement
     make.options(select, ['html', 'twig', 'javascript', 'php', 'json', 'yaml'])
-    select.value = this.data.language
+    select.value = this._codeBlockData.language
     select.addEventListener('change', (event: Event) => {
       const target = event.target as HTMLSelectElement
-      this.data.language = target.value
+      this._codeBlockData.language = target.value
       // @ts-ignore
-      this.editorInstance.getModel().setLanguage(this.data.language)
+      this.editorInstance.getModel().setLanguage(this._codeBlockData.language)
     })
 
     //wrapper.appendChild(select)
@@ -75,12 +95,9 @@ export default class CodeBlock extends Raw {
       console.error(error)
     }
 
-    this.data = {
-      html: html,
-      language: this.data.language,
-    }
+    this._codeBlockData.html = html
 
-    return this.data
+    return this._codeBlockData
   }
 
   static get toolbox() {
