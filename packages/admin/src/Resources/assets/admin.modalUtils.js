@@ -11,6 +11,7 @@ const debug = (...args) => console.debug('[ModalUtils]', ...args)
  * @property {string} iframeClass - CSS class for the iframe
  * @property {string} [title] - Optional modal title
  * @property {boolean} [hasHeader] - Whether to show modal header (default: false)
+ * @property {string} [modalClass] - Additional CSS class for the modal element
  */
 
 /**
@@ -26,13 +27,13 @@ const debug = (...args) => console.debug('[ModalUtils]', ...args)
  * @returns {ModalElements}
  */
 export function ensureModal(config) {
-  const { id, iframeClass, title = '', hasHeader = false } = config
+  const { id, iframeClass, title = '', hasHeader = false, modalClass = '' } = config
 
   let modal = document.getElementById(id)
   if (!modal) {
     modal = document.createElement('div')
     modal.id = id
-    modal.className = 'modal fade pw-admin-modal'
+    modal.className = `modal fade pw-admin-modal ${modalClass}`.trim()
     modal.tabIndex = -1
 
     const headerHtml = hasHeader

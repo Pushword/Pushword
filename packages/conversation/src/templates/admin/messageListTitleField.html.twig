@@ -13,9 +13,8 @@
     ? 'Pushword\\Conversation\\Controller\\Admin\\ReviewCrudController'
     : 'Pushword\\Conversation\\Controller\\Admin\\ConversationCrudController')
   .setAction('edit')
-  .set('pwInline', 1)
   .setEntityId(message.id)
-%}
+%}{#.set('pwInline', 1)#}
 
 
 <div id="{{ inlineTarget }}" class="pw-message-inline d-flex flex-column">
@@ -105,13 +104,12 @@
 
     <span class="flex-grow-1"></span>
 
-    <button
-      type="button"
+    <a
       class="btn btn-sm btn-default px-2"
-      data-pw-inline-edit-url="{{ editUrl }}"
+      href="{{ editUrl }}"
     >
       <i class="fa fa-edit"></i>
-    </button>
+    </a>
   </div>
 
   <div class="d-flex flex-wrap align-items-center text-muted small pw-inline-tags-wrapper">

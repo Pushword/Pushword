@@ -119,7 +119,6 @@
 .pw-admin-popup-iframe {
   width: 100%;
   flex: 1;
-  max-width: 1200px;
   /*
   height: 90%;
   border-radius: 0.75rem;
