@@ -1,20 +1,20 @@
 en: English
 errorDescription: '<a href="/" class="btn btn-secondary">Retour</a>'
-errorServerSay: 'Le serveur indique'
-errorTitle: 'Oops! Une erreur...'
+errorServerSay: "Le serveur indique"
+errorTitle: "Oops! Une erreur..."
 feedAlternateTitle: Flux
-feedDescription: 'Dernière page publiée.'
+feedDescription: "Dernière page publiée."
 fr: Français
-mediaDuplicateWarning: 'It looks like file was ever added on the disk : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block;margin-top:5px" href="%deleteMediaUrl%">Delete</a>'
+mediaDuplicateWarning: 'It looks like file was ever added on the disk : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" href="%deleteMediaUrl%">Delete</a>'
 mediaNameWasChanged: "Le nom a été changé du fait d'un média similaire."
-navigationToggle: 'Afficher/Cacher le menu'
-powered_by: 'Propulsé par'
+navigationToggle: "Afficher/Cacher le menu"
+powered_by: "Propulsé par"
 securityLoginEmail: Email
 securityLoginEmailNotFound: "Votre email n'a pu être trouvé."
-securityLoginLabelButton: 'Se connecter'
-securityLoginLoggedInAs: 'Vous êtes connecté en tant que %username%'
-securityLoginPassword: 'Mot de passe'
-securityLoginRememberMe: 'Se souvenir de moi'
+securityLoginLabelButton: "Se connecter"
+securityLoginLoggedInAs: "Vous êtes connecté en tant que %username%"
+securityLoginPassword: "Mot de passe"
+securityLoginRememberMe: "Se souvenir de moi"
 securityLoginTitle: Connexion
-securityLogout: 'Se déconnecter'
+securityLogout: "Se déconnecter"
 videoPlay: Lecture
