@@ -25,7 +25,7 @@
             {# Test if image is an array, if it's an array 0 is the image and 1 the link #}
             {% if isInstanceOfMedia(mediaData) %}
               {% set current_media = mediaData %}
-            {% else if mediaData is iterable %}
+            {% elseif mediaData is iterable %}
               {% set linkObfuscate = mediaData[3] ?? true %}
               {% set linkAttr = mediaData[2] ?? null %}
               {% set imageClickable = mediaData[1] ?? imageClickable %}
