@@ -5,15 +5,16 @@
 {% set id = 'sh-' ~ random(1000, 9999) %}
 {% use '@Pushword/component/show_more.html.twig' %}
 
+{% set reviewsLength = reviews|length %}
 <div class="not-prose" id="{{ 'reviewList'|trans() }}">
   {% for message in reviews %}
-    {% if loop.index == 2 %}
+    {% if loop.index == 2  and reviewsLength > 2 %}
       {{ block('before') }}
     {% endif %}
     {% include view('/conversation/review.html.twig', '@PushwordConversation') with {
       review: message,
     } %}
-    {% if loop.last and loop.index > 2 %}
+    {% if loop.last and loop.index >= 2 and reviewsLength > 2 %}
       {{ block('after') }}
     {% endif %}
   {% endfor %}

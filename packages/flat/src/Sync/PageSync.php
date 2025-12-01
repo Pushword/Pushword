@@ -184,19 +184,4 @@ final readonly class PageSync
             ? $this->apps->switchCurrentApp($host)->get()
             : $this->apps->get();
     }
-
-    private function measure(string $name, callable $operation): float
-    {
-        if (null !== $this->stopwatch) {
-            $this->stopwatch->start($name);
-            $operation();
-
-            return $this->stopwatch->stop($name)->getDuration();
-        }
-
-        $start = microtime(true);
-        $operation();
-
-        return (microtime(true) - $start) * 1000;
-    }
 }
