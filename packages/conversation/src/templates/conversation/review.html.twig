@@ -103,7 +103,7 @@
     </button>
     {% if review.mediaList is not empty %}
         <div class="overflow-x-hidden md:overflow-x-auto w-full mt-4">
-            {% include view('/component/images_gallery.html.twig') with {images: review.mediaList} %}
+            {% include view('/component/images_gallery.html.twig') with {images: review.mediaList, isReview: true} %}
         </div>
     {% endif %}
 </blockquote>
