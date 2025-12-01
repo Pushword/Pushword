@@ -17,7 +17,7 @@ class CreatedAtField extends AbstractField
         return $this->buildEasyAdminField('createdAt', DateTimeType::class, [
             'widget' => 'single_text',
             'with_seconds' => false,
-            'label' => $this->formFieldManager->getMessagePrefix().'.createdAt.label',
+            'label' => 'adminPageCreatedAtLabel',
             'html5' => true,
         ]);
     }

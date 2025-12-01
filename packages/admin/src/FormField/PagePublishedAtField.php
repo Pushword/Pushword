@@ -18,7 +18,7 @@ class PagePublishedAtField extends AbstractField
             'widget' => 'single_text',
             'with_seconds' => false,
             'html5' => true,
-            'label' => $this->formFieldManager->getMessagePrefix().'.publishedAt.label',
+            'label' => 'adminPagePublishedAtLabel',
             'help' => $this->getHelp(),
             'help_html' => true,
             'attr' => ['data-selector' => 'publishedAtToDraft'],

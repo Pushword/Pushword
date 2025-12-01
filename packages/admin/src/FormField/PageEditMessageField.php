@@ -17,7 +17,7 @@ class PageEditMessageField extends AbstractField
         return $this->buildEasyAdminField('editMessage', TextareaType::class, [
             'required' => false,
             'attr' => ['class' => 'autosize textarea-no-newline'],
-            'label' => $this->formFieldManager->getMessagePrefix().'.editMessage.label',
+            'label' => 'adminPageEditMessageLabel',
             'help' => $this->getHelp(),
             'help_html' => true,
         ]);
@@ -30,9 +30,9 @@ class PageEditMessageField extends AbstractField
         $page->setEditMessage('');
 
         return null !== $page->getId() ?
-            $this->admin->getTranslator()->trans($this->formFieldManager->getMessagePrefix().'.editMessage.help'.(class_exists(PushwordVersionBundle::class) ? 'Versionned' : ''), [
+            $this->admin->getTranslator()->trans('adminPageEditMessageHelp' . (class_exists(PushwordVersionBundle::class) ? 'Versionned' : ''), [
                 '%lastEditDatetime%' => $page->safegetUpdatedAt()->format($this->admin->getTranslator()->trans('datetimeMediumFormat')),
-                '%lastEditMessage%' => '' !== $editMessage ? '«&nbsp;'.$editMessage.'&nbsp;»' : '-',
+                '%lastEditMessage%' => '' !== $editMessage ? '«&nbsp;' . $editMessage . '&nbsp;»' : '-',
                 '%seeVersionLink%' => class_exists(PushwordVersionBundle::class)
                     ? $this->formFieldManager->router->generate('pushword_version_list', ['id' => $page->getId()])
                     : '',
