@@ -679,4 +679,6 @@ class Media implements IdInterface, Taggable, Stringable
     {
         return $this->getAlt($onlyName);
     }
+
+    public bool $disableRemoveFile = false;
 }

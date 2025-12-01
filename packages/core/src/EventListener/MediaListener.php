@@ -159,6 +159,10 @@ final readonly class MediaListener
 
     public function preRemove(Media $media): void
     {
+        if ($media->disableRemoveFile) {
+            return;
+        }
+
         if (str_starts_with($media->getStoreIn(), $this->projectDir)) {
             $this->filesystem->remove($media->getStoreIn().'/'.$media->getFileName());
         }
