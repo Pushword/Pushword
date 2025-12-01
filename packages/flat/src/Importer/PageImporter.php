@@ -67,7 +67,11 @@ final class PageImporter extends AbstractImporter
             return null;
         }
 
-        if (str_ends_with($filePath, 'pages.csv') || str_ends_with($filePath, 'medias.csv')) {
+        if (str_ends_with($filePath, 'pages.csv')
+          || str_ends_with($filePath, 'medias.csv')
+          || str_ends_with($filePath, 'index.csv')
+          || str_ends_with($filePath, 'conversation.csv')
+        ) {
             return null;
         }
 
