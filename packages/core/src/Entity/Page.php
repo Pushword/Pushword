@@ -143,6 +143,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
     public function setMainContent(?string $mainContent): self
     {
         $this->mainContent = (string) $mainContent;
+        $this->mainContent = trim($this->mainContent);
         // clean empty link added by editor.js
         $this->mainContent = preg_replace('@<a[^>]+"></a>@U', '', $this->mainContent) ?? throw new Exception();
 
