@@ -3,8 +3,10 @@
 namespace Pushword\Flat\Sync;
 
 use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\Flat\Exporter\PageExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Importer\PageImporter;
@@ -21,6 +23,8 @@ final readonly class PageSync
         private FlatFileContentDirFinder $contentDirFinder,
         private PageImporter $pageImporter,
         private PageExporter $pageExporter,
+        private PageRepository $pageRepository,
+        private EntityManagerInterface $entityManager,
         private ?Stopwatch $stopwatch = null,
     ) {
     }
@@ -41,10 +45,14 @@ final readonly class PageSync
         $app = $this->resolveApp($host);
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
 
-        $this->measure('page_import', function () use ($contentDir): void {
-            $this->importDirectory($contentDir);
-            $this->pageImporter->finishImport();
-        });
+        $this->pageImporter->resetImport();
+
+        // 2. Import all .md files
+        $this->importDirectory($contentDir);
+        $this->pageImporter->finishImport();
+
+        // 3. Delete pages that no longer have .md files
+        $this->deleteMissingPages($app->getMainHost());
     }
 
     public function export(?string $host = null, bool $force = false, ?string $exportDir = null): void
@@ -52,10 +60,8 @@ final readonly class PageSync
         $app = $this->resolveApp($host);
         $targetDir = $exportDir ?? $this->contentDirFinder->get($app->getMainHost());
 
-        $this->measure('page_export', function () use ($force, $targetDir): void {
-            $this->pageExporter->exportDir = $targetDir;
-            $this->pageExporter->exportPages($force);
-        });
+        $this->pageExporter->exportDir = $targetDir;
+        $this->pageExporter->exportPages($force);
     }
 
     public function mustImport(?string $host = null): bool
@@ -145,6 +151,31 @@ final readonly class PageSync
         $lastEditDateTime = (new DateTime())->setTimestamp(filemtime($filePath));
 
         return $lastEditDateTime > $page->getUpdatedAt();
+    }
+
+    /**
+     * Delete pages that exist in DB but have no corresponding .md file.
+     */
+    private function deleteMissingPages(string $host): void
+    {
+        // Only delete if we imported at least one page
+        if (! $this->pageImporter->hasImportedPages()) {
+            return;
+        }
+
+        $importedSlugs = $this->pageImporter->getImportedSlugs();
+
+        // Find all pages for this host
+        $allPages = $this->pageRepository->findByHost($host);
+
+        foreach ($allPages as $page) {
+            if (! \in_array($page->getSlug(), $importedSlugs, true)) {
+                // Page exists in DB but no .md file was found - delete it
+                $this->entityManager->remove($page);
+            }
+        }
+
+        $this->entityManager->flush();
     }
 
     private function resolveApp(?string $host): AppConfig

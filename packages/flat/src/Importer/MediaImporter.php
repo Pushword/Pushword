@@ -479,6 +479,7 @@ class MediaImporter extends AbstractImporter
             if ('' === $id) {
                 continue;
             }
+
             if (! is_numeric($id)) {
                 continue;
             }

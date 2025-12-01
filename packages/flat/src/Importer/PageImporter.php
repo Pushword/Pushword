@@ -386,4 +386,33 @@ final class PageImporter extends AbstractImporter
 
         return $this->pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
     }
+
+    /**
+     * Get slugs of pages imported from .md files.
+     *
+     * @return string[]
+     */
+    public function getImportedSlugs(): array
+    {
+        return array_keys($this->pageList);
+    }
+
+    /**
+     * Check if any pages were imported.
+     */
+    public function hasImportedPages(): bool
+    {
+        return [] !== $this->pageList;
+    }
+
+    /**
+     * Reset import state for a new import cycle.
+     */
+    public function resetImport(): void
+    {
+        $this->pages = null;
+        $this->toAddAtTheEnd = [];
+        $this->slugs = [];
+        $this->pageList = [];
+    }
 }

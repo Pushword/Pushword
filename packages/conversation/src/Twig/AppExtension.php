@@ -90,7 +90,7 @@ class AppExtension
         $pageOrTag ??= $this->apps->getCurrentPage() ?? throw new Exception('No page or tag provided');
 
         $tags = $this->resolveReviewTag($pageOrTag);
-        $reviews = [] === $tags ? []
+        $reviews = [] === $tags && '#' !== $pageOrTag ? []
           : $this->messageRepo->getPublishedReviewsByTag($tags, 0);
 
         return \count($reviews);
