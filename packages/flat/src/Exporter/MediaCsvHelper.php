@@ -12,7 +12,7 @@ final class MediaCsvHelper
     public const array DIMENSION_COLUMNS = ['width', 'height', 'ratio'];
 
     /** @var string[] Columns that should not be imported (read-only) */
-    public const array READ_ONLY_COLUMNS = ['id', 'width', 'height', 'ratio'];
+    public const array READ_ONLY_COLUMNS = ['id', 'width', 'height', 'ratio', 'fileNameHistory'];
 
     public const string ALT_COLUMN_PREFIX = 'alt_';
 

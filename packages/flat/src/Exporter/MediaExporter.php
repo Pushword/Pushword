@@ -38,6 +38,7 @@ final class MediaExporter
         $header = array_merge(
             MediaCsvHelper::BASE_COLUMNS,
             MediaCsvHelper::DIMENSION_COLUMNS,
+            ['fileNameHistory'],
             $altLocaleColumns,
             $customColumns,
         );
@@ -120,6 +121,7 @@ final class MediaExporter
      */
     private function buildRow(Media $media, array $altLocaleColumns, array $customColumns): array
     {
+        $fileNameHistory = $media->getFileNameHistory();
         $row = [
             'id' => null !== $media->getId() ? (string) $media->getId() : '',
             'fileName' => $media->getFileName(),
@@ -127,6 +129,7 @@ final class MediaExporter
             'width' => null !== $media->getWidth() ? (string) $media->getWidth() : '',
             'height' => null !== $media->getHeight() ? (string) $media->getHeight() : '',
             'ratio' => null !== $media->getRatio() ? (string) $media->getRatio() : '',
+            'fileNameHistory' => [] !== $fileNameHistory ? implode(',', $fileNameHistory) : '',
         ];
 
         // Add localized alts

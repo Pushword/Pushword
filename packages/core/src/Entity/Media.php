@@ -74,6 +74,15 @@ class Media implements IdInterface, Taggable, Stringable
      */
     protected string $fileNameBeforeUpdate = '';
 
+    /**
+     * History of previous file names (JSON array).
+     * Used to track filename changes and prevent reuse of old filenames.
+     *
+     * @var string[]
+     */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    protected array $fileNameHistory = [];
+
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected ?string $mimeType = null; // @phpstan-ignore-line
 
@@ -210,8 +219,9 @@ class Media implements IdInterface, Taggable, Stringable
             return $this;
         }
 
-        if ('' !== $this->fileName) {
+        if ('' !== $this->fileName && $this->fileName !== $fileName) {
             $this->setFileNameBeforeUpdate($this->fileName);
+            $this->addFileNameToHistory($this->fileName);
         }
 
         $this->fileName = $fileName;
@@ -330,6 +340,44 @@ class Media implements IdInterface, Taggable, Stringable
         }
 
         return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getFileNameHistory(): array
+    {
+        return $this->fileNameHistory;
+    }
+
+    /**
+     * @param string[] $fileNameHistory
+     */
+    public function setFileNameHistory(array $fileNameHistory): self
+    {
+        $this->fileNameHistory = $fileNameHistory;
+
+        return $this;
+    }
+
+    /**
+     * Add a filename to history (if not already present).
+     */
+    public function addFileNameToHistory(string $fileName): self
+    {
+        if ('' !== $fileName && ! \in_array($fileName, $this->fileNameHistory, true)) {
+            $this->fileNameHistory[] = $fileName;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Check if a filename is in this media's history.
+     */
+    public function hasFileNameInHistory(string $fileName): bool
+    {
+        return \in_array($fileName, $this->fileNameHistory, true);
     }
 
     /**************** Slug ***************/

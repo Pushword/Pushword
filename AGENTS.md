@@ -23,7 +23,7 @@ Pushword is a modular CMS built as a collection of Symfony bundles. This is a mo
 
 - Ensure compatibility with **Symfony** 7.3+ and **PHP** 8.4+ versions
 - Follow secure coding practices to prevent XSS, CSRF, injections, auth bypasses, etc.
-- **DB** : SQLite (via Doctrine)
+- **DB** : SQLite (via Doctrine) - No migrations, use `bin/console doctrine:schema:update --force`
 
 ### Coding Standards & Tooling
 

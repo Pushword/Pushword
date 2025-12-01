@@ -54,6 +54,65 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     }
 
     /**
+     * Find media by filename, falling back to filename history if not found.
+     */
+    public function findOneByFileNameOrHistory(string $fileName): ?Media
+    {
+        // First try exact filename match
+        $media = $this->findOneByFileName($fileName);
+        if (null !== $media) {
+            return $media;
+        }
+
+        // Fallback: search in fileNameHistory (JSON contains)
+        /** @var Media|null */
+        return $this->createQueryBuilder('m')
+            ->where('m.fileNameHistory LIKE :fileName')
+            ->setParameter('fileName', '%"'.$fileName.'"%')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Check if a filename is already used by another media (current or historical).
+     * Returns the media that uses this filename, or null if available.
+     *
+     * @param int|null $excludeId ID of media to exclude from check (for updates)
+     */
+    public function isFileNameUsed(string $fileName, ?int $excludeId = null): ?Media
+    {
+        // Check current filenames
+        $qb = $this->createQueryBuilder('m')
+            ->where('m.fileName = :fileName')
+            ->setParameter('fileName', $fileName);
+
+        if (null !== $excludeId) {
+            $qb->andWhere('m.id != :excludeId')
+                ->setParameter('excludeId', $excludeId);
+        }
+
+        /** @var Media|null $result */
+        $result = $qb->setMaxResults(1)->getQuery()->getOneOrNullResult();
+        if (null !== $result) {
+            return $result;
+        }
+
+        // Check historical filenames
+        $qb = $this->createQueryBuilder('m')
+            ->where('m.fileNameHistory LIKE :fileName')
+            ->setParameter('fileName', '%"'.$fileName.'"%');
+
+        if (null !== $excludeId) {
+            $qb->andWhere('m.id != :excludeId')
+                ->setParameter('excludeId', $excludeId);
+        }
+
+        /** @var Media|null */
+        return $qb->setMaxResults(1)->getQuery()->getOneOrNullResult();
+    }
+
+    /**
      * @return array{mimeType: string[], ratioLabel: string[], dimensions: string[]}
      */
     public function getMimeTypesAndRatio(): array

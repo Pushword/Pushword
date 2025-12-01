@@ -57,6 +57,17 @@ final readonly class MediaSync
                 $this->mediaImporter->loadIndex($localMediaDir);
             }
 
+            // Validate files exist and prepare renames
+            if ($this->mediaImporter->hasIndexData()) {
+                $this->mediaImporter->validateFilesExist($this->mediaDir);
+                $this->mediaImporter->prepareFileRenames($this->mediaDir);
+
+                if (file_exists($localMediaDir)) {
+                    $this->mediaImporter->validateFilesExist($localMediaDir);
+                    $this->mediaImporter->prepareFileRenames($localMediaDir);
+                }
+            }
+
             // Import media files
             $this->importDirectory($this->mediaDir);
             $this->mediaImporter->finishImport();

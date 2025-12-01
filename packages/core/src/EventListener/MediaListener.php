@@ -195,24 +195,17 @@ final readonly class MediaListener
 
     private function identifiersAreToken(Media $media): bool
     {
-        /*
-        if (substr($media->getPath(), -1) !== '/' // debug why path is not always
-            && file_exists($media->getPath())) {
-            //dump('file exist: '.$media->getPath());
-            return true;
-        }*/
-
         $sameName = $this->em->getRepository($media::class)->findOneBy(['alt' => $media->getAlt()]);
         if (null !== $sameName && $media->getId() !== $sameName->getId()) {
-            // dump('sameName '.$sameName->getId());
             return true;
         }
 
         $mediaString = $this->getMediaString($media);
-        $sameMedia = $this->em->getRepository($media::class)->findOneBy(['fileName' => $mediaString]);
 
-        // dump('sameMedia '.$sameMedia->getId());
-        return null !== $sameMedia && $media->getId() !== $sameMedia->getId();
+        // Check if filename is used by another media (current or in history)
+        $conflictingMedia = $this->mediaRepo->isFileNameUsed($mediaString, $media->getId());
+
+        return null !== $conflictingMedia;
     }
 
     private function renameIfIdentifiersAreToken(Media $media): void

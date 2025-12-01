@@ -10,6 +10,7 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Flat\Exporter\MediaCsvHelper;
 use Pushword\Flat\Exporter\MediaExporter;
+use RuntimeException;
 
 use function Safe\filesize;
 
@@ -31,11 +32,16 @@ class MediaImporter extends AbstractImporter
     /** @var int[] IDs of media found in CSV (for deletion detection) */
     private array $importedIds = [];
 
+    /** @var array<int, string> ID -> newFileName mapping for renames */
+    private array $fileNameChanges = [];
+
     /** @var string[] */
     private array $altLocaleColumns = [];
 
     /** @var string[] */
     private array $customColumns = [];
+
+    private Filesystem $filesystem;
 
     public function __construct(
         protected EntityManagerInterface $em,
@@ -44,6 +50,7 @@ class MediaImporter extends AbstractImporter
         public string $projectDir,
     ) {
         parent::__construct($em, $apps);
+        $this->filesystem = new Filesystem();
     }
 
     private bool $newMedia = false;
@@ -77,7 +84,14 @@ class MediaImporter extends AbstractImporter
                 // Track IDs for deletion detection
                 $id = $row['id'] ?? '';
                 if ('' !== $id && is_numeric($id)) {
-                    $this->importedIds[] = (int) $id;
+                    $intId = (int) $id;
+                    $this->importedIds[] = $intId;
+
+                    // Check if filename changed (for auto-rename)
+                    $existingMedia = $this->em->getRepository(Media::class)->find($intId);
+                    if ($existingMedia instanceof Media && $existingMedia->getFileName() !== $fileName) {
+                        $this->fileNameChanges[$intId] = $fileName;
+                    }
                 }
             }
         }
@@ -179,7 +193,8 @@ class MediaImporter extends AbstractImporter
 
     public function importMedia(string $filePath, DateTimeInterface $dateTime): void
     {
-        $media = $this->getMedia($this->getFilename($filePath));
+        $fileName = $this->getFilename($filePath);
+        $media = $this->getMediaFromIndex($fileName);
 
         if (! $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
             return; // no update needed
@@ -192,6 +207,11 @@ class MediaImporter extends AbstractImporter
             ->setStoreIn(\dirname($filePath))
             ->setSize(filesize($filePath))
             ->setMimeType($this->getMimeTypeFromFile($filePath));
+
+        // Update fileName if it changed (for existing media found by id)
+        if ($media->getFileName() !== $fileName) {
+            $media->setFileName($fileName);
+        }
 
         $data = $this->getData($filePath);
 
@@ -328,6 +348,36 @@ class MediaImporter extends AbstractImporter
         return $filePath;
     }
 
+    /**
+     * Get media from index data, looking up by id first if available.
+     */
+    protected function getMediaFromIndex(string $fileName): Media
+    {
+        $this->newMedia = false;
+
+        // Check if we have index data for this file
+        $indexData = $this->indexData[$fileName] ?? null;
+        if (null !== $indexData) {
+            $id = $indexData['id'] ?? '';
+            if ('' !== $id && is_numeric($id)) {
+                // Look up by ID first
+                $mediaEntity = $this->em->getRepository(Media::class)->find((int) $id);
+                if ($mediaEntity instanceof Media) {
+                    return $mediaEntity;
+                }
+            }
+        }
+
+        // Create new media
+        $this->newMedia = true;
+        $mediaEntity = new Media();
+        $mediaEntity
+            ->setFileName($fileName)
+            ->setAlt($fileName.' - '.uniqid());
+
+        return $mediaEntity;
+    }
+
     protected function getMedia(string $media): Media
     {
         $mediaEntity = $this->em->getRepository(Media::class)->findOneBy(['fileName' => $media]);
@@ -348,6 +398,7 @@ class MediaImporter extends AbstractImporter
     {
         $this->indexData = [];
         $this->importedIds = [];
+        $this->fileNameChanges = [];
         $this->altLocaleColumns = [];
         $this->customColumns = [];
     }
@@ -368,5 +419,91 @@ class MediaImporter extends AbstractImporter
     public function hasIndexData(): bool
     {
         return [] !== $this->indexData;
+    }
+
+    /**
+     * Prepare file renames based on CSV changes.
+     * If CSV has a different fileName for an existing ID, rename the file on disk.
+     *
+     * @throws RuntimeException if a file cannot be renamed
+     */
+    public function prepareFileRenames(string $dir): void
+    {
+        foreach ($this->fileNameChanges as $mediaId => $newFileName) {
+            $media = $this->em->getRepository(Media::class)->find($mediaId);
+            if (! $media instanceof Media) {
+                continue;
+            }
+
+            $media->setProjectDir($this->projectDir);
+            $oldFileName = $media->getFileName();
+            $oldPath = $dir.'/'.$oldFileName;
+            $newPath = $dir.'/'.$newFileName;
+
+            // Check if old file exists
+            if (! file_exists($oldPath)) {
+                // Maybe already renamed, check if new file exists
+                if (file_exists($newPath)) {
+                    continue; // Already renamed
+                }
+
+                throw new RuntimeException(\sprintf('Cannot rename media #%d: file "%s" does not exist in "%s"', $mediaId, $oldFileName, $dir));
+            }
+
+            // Check if new path already exists (collision)
+            if (file_exists($newPath)) {
+                throw new RuntimeException(\sprintf('Cannot rename media #%d from "%s" to "%s": target file already exists', $mediaId, $oldFileName, $newFileName));
+            }
+
+            // Rename the file
+            $this->filesystem->rename($oldPath, $newPath);
+        }
+    }
+
+    /**
+     * Validate that files referenced in the CSV with IDs exist on disk.
+     * Only validates files that have IDs (existing media), not new files.
+     *
+     * @throws RuntimeException if a file with ID is missing
+     */
+    public function validateFilesExist(string $dir): void
+    {
+        foreach ($this->indexData as $fileName => $data) {
+            // Only validate files with IDs (existing media)
+            // New media (empty ID) might not have files yet
+            $id = $data['id'] ?? '';
+            if ('' === $id) {
+                continue;
+            }
+            if (! is_numeric($id)) {
+                continue;
+            }
+
+            $filePath = $dir.'/'.$fileName;
+
+            // Skip if file exists with new name
+            if (file_exists($filePath)) {
+                continue;
+            }
+
+            // Check if this is a renamed file (old file might exist)
+            $media = $this->em->getRepository(Media::class)->find((int) $id);
+            if ($media instanceof Media) {
+                $media->setProjectDir($this->projectDir);
+                $oldPath = $dir.'/'.$media->getFileName();
+                if (file_exists($oldPath)) {
+                    // File exists with old name, will be renamed
+                    continue;
+                }
+
+                // Check if file is in another directory (skip validation for this dir)
+                // The file might be in a different media directory
+                if ($media->getStoreIn() !== $dir) {
+                    continue;
+                }
+            }
+
+            throw new RuntimeException(\sprintf('Media file "%s" referenced in CSV does not exist in "%s"', $fileName, $dir));
+        }
     }
 }
