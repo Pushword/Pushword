@@ -97,7 +97,7 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
             return;
         }
 
-        if (isset($_GET['disableEditorJs'])) {
+        if (true === $this->requestStack->getCurrentRequest()?->query->has('disableEditorJs')) {
             return;
         }
 

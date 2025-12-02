@@ -167,7 +167,7 @@ final readonly class ConvertJsonToMarkdownCommand
         }
 
         // Créer un fichier temporaire pour le localStorage (requis par Node.js v25+)
-        $localStoragePath = sys_get_temp_dir().'/pushword-localstorage-'.uniqid().'.json';
+        $localStoragePath = sys_get_temp_dir().'/pushword-localstorage-'.bin2hex(random_bytes(8)).'.json';
 
         // Créer le processus avec le flag --localstorage-file
         $process = new Process(['node', '--localstorage-file='.$localStoragePath, $scriptPath]);

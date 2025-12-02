@@ -54,6 +54,7 @@ export default class CardList extends BaseTool {
   declare public data: CardListData
   private itemNodes: CardListItemNodes[] = []
   private itemsContainer?: HTMLElement
+  private mediaPickerMessageHandler: ((event: MessageEvent) => void) | null = null
 
   public static toolbox = {
     title: 'Card List',
@@ -501,13 +502,16 @@ export default class CardList extends BaseTool {
     ) as HTMLButtonElement | null
     if (!actionButton) return
 
-    const messageHandler = (event: MessageEvent) => {
+    // Clean up any existing handler before adding a new one
+    this.cleanupMediaPickerHandler()
+
+    this.mediaPickerMessageHandler = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
       const payload = event.data
       if (!payload || payload.type !== 'pw-media-picker-select') return
       if (payload.fieldId !== selectElement.id) return
 
-      window.removeEventListener('message', messageHandler)
+      this.cleanupMediaPickerHandler()
 
       const media = payload.media
       if (!media) return
@@ -516,8 +520,19 @@ export default class CardList extends BaseTool {
       this.setItemImage(itemIndex, mediaName)
     }
 
-    window.addEventListener('message', messageHandler)
+    window.addEventListener('message', this.mediaPickerMessageHandler)
     actionButton.click()
+  }
+
+  private cleanupMediaPickerHandler(): void {
+    if (this.mediaPickerMessageHandler) {
+      window.removeEventListener('message', this.mediaPickerMessageHandler)
+      this.mediaPickerMessageHandler = null
+    }
+  }
+
+  public destroy(): void {
+    this.cleanupMediaPickerHandler()
   }
 
   private setItemImage(itemIndex: number, mediaName: string): void {

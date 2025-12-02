@@ -15,6 +15,8 @@ class Compressor
 
     public const COMPRESSORS = [self::ZSTD, self::BROTLI, self::GZIP];
 
+    private const int MAX_CONCURRENT_PROCESSES = 10;
+
     /** @var array<string> */
     public readonly array $availableCompressors;
 
@@ -57,6 +59,8 @@ class Compressor
             return;
         }
 
+        $this->throttleIfNeeded();
+
         try {
             $cmd = match ($compressorName) {
                 'zstd' => 'zstd -f --stdout '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.zst'),
@@ -90,5 +94,27 @@ class Compressor
         }
 
         $this->runningProcesses = [];
+    }
+
+    private function throttleIfNeeded(): void
+    {
+        if (\count($this->runningProcesses) < self::MAX_CONCURRENT_PROCESSES) {
+            return;
+        }
+
+        // Remove finished processes and wait for one to finish if still at limit
+        $this->runningProcesses = array_filter(
+            $this->runningProcesses,
+            static fn (Process $p): bool => $p->isRunning()
+        );
+
+        // Still at limit? Wait for at least one to finish
+        while (\count($this->runningProcesses) >= self::MAX_CONCURRENT_PROCESSES) {
+            usleep(10000); // 10ms
+            $this->runningProcesses = array_filter(
+                $this->runningProcesses,
+                static fn (Process $p): bool => $p->isRunning()
+            );
+        }
     }
 }

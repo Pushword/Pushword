@@ -3,7 +3,7 @@
 namespace Pushword\AdminBlockEditor\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
+use InvalidArgumentException;
 use LogicException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\ImageManager;
@@ -101,14 +101,14 @@ final class MediaBlockController extends AbstractController
 
         if (isset($content['id'])) {
             if (! \is_scalar($content['id'])) {
-                throw new Exception();
+                throw new InvalidArgumentException('Content ID must be a scalar value');
             }
 
             return $this->getMediaFileFromId((string) $content['id']);
         }
 
         if (! \is_string($content['url'])) {
-            throw new Exception();
+            throw new InvalidArgumentException('Content URL must be a string');
         }
 
         if (str_starts_with($content['url'], '/'.$this->publicMediaDir.'/default/')) {
@@ -143,7 +143,7 @@ final class MediaBlockController extends AbstractController
         $filename = md5($originalName);
         $filePath = sys_get_temp_dir().'/'.$filename;
         if (0 === file_put_contents($filePath, $fileContent)) {
-            throw new LogicException('Storing in tmp folder filed');
+            throw new LogicException('Storing in tmp folder failed');
         }
 
         $mimeType = mime_content_type($filePath);

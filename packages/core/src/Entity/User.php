@@ -144,11 +144,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return $this;
     }
 
-    // to remove when upgrading to Symfony 8
-    public function eraseCredentials(): void
-    {
-    }
-
     /**
      * @see User
      */

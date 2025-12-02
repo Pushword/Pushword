@@ -49,11 +49,11 @@ final class EditorJsHelper
             }
 
             if (property_exists($block, 'tunes') && ! \is_object($block->tunes)) {
-                throw new Exception('if tunes is seted, must be an object');
+                throw new Exception('if tunes is set, must be an object');
             }
 
             if (property_exists($block, 'text') && ! \is_string($block->text)) {
-                throw new Exception('if text is seted, must be a string');
+                throw new Exception('if text is set, must be a string');
             }
         }
 
