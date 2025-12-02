@@ -64,6 +64,31 @@ export default class CardList extends BaseTool {
     items: [],
   }
 
+  /**
+   * Sanitizer rules - allow inline HTML in title field
+   */
+  static get sanitize() {
+    return {
+      items: {
+        title: {
+          br: true,
+          span: { class: true },
+          b: true,
+          strong: true,
+          i: true,
+          em: true,
+          u: true,
+          s: true,
+          small: true,
+          a: { href: true, target: true, rel: true },
+          sup: true,
+          sub: true,
+        },
+        description: true,
+      },
+    }
+  }
+
   constructor({
     data,
     api,
@@ -351,16 +376,22 @@ export default class CardList extends BaseTool {
     labelEl.textContent = label
     const editable = make.element(
       'div',
-      ['cardlist-title', 'ce-paragraph', 'cdx-block'],
+      ['cardlist-title'],
       {
         contentEditable: !this.readOnly ? 'true' : 'false',
         'data-name': name,
         'data-placeholder': label,
       },
     )
-    // Keep raw HTML as-is
+    // Keep raw HTML as-is, decode entities if needed
     if (value) {
-      editable.innerHTML = value
+      // Decode HTML entities in case they were encoded during storage
+      const decoded = value
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+      editable.innerHTML = decoded
     }
     field.appendChild(labelEl)
     field.appendChild(editable)
