@@ -140,7 +140,8 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
     this.nodes.displaySelect.value = this.data.display
 
     const detailsWrapper = make.element('div', ['flex'])
-    detailsWrapper.style.marginBottom = '15px'
+    detailsWrapper.style.marginBottom = '12px'
+    detailsWrapper.style.marginTop = '4px'
 
     this.nodes.maxInput = make.input(
       this,

@@ -1,12 +1,13 @@
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { CardListData } from './CardList'
+import { e } from '../utils/MarkdownUtils'
 
 /**
  * Export CardList block data to Markdown
  */
 export function exportCardListToMarkdown(
   data: CardListData,
-  _tunes?: BlockTuneData,
+  tunes?: BlockTuneData,
 ): string {
   if (!data || !data.items || data.items.length === 0) {
     return ''
@@ -26,5 +27,10 @@ export function exportCardListToMarkdown(
   })
 
   const itemsJson = JSON.stringify(items, null, 2)
-  return `{{ card_list(${itemsJson}) }}`
+  let markdown = `{{ card_list(${itemsJson}`
+  markdown += tunes?.class || tunes?.anchor ? `, ${e(tunes?.class || '')}` : ''
+  markdown += tunes?.anchor ? `, ${e(tunes?.anchor)}` : ''
+  markdown += `) }}`
+
+  return markdown
 }

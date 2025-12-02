@@ -374,15 +374,11 @@ export default class CardList extends BaseTool {
     const field = make.element('div', 'cardlist-item-field')
     const labelEl = make.element('label')
     labelEl.textContent = label
-    const editable = make.element(
-      'div',
-      ['cardlist-title'],
-      {
-        contentEditable: !this.readOnly ? 'true' : 'false',
-        'data-name': name,
-        'data-placeholder': label,
-      },
-    )
+    const editable = make.element('div', ['cardlist-title'], {
+      contentEditable: !this.readOnly ? 'true' : 'false',
+      'data-name': name,
+      'data-placeholder': label,
+    })
     // Keep raw HTML as-is, decode entities if needed
     if (value) {
       // Decode HTML entities in case they were encoded during storage
@@ -413,7 +409,10 @@ export default class CardList extends BaseTool {
     if (checked) {
       input.checked = true
     }
-    const labelEl = make.element('label', 'cardlist-icon-checkbox-label', { for: input.id, title })
+    const labelEl = make.element('label', 'cardlist-icon-checkbox-label', {
+      for: input.id,
+      title,
+    })
     labelEl.innerHTML = icon
     field.appendChild(input)
     field.appendChild(labelEl)
@@ -653,15 +652,23 @@ export default class CardList extends BaseTool {
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    const tunes: BlockTuneData = result.tunes
+    let tunes: BlockTuneData = result.tunes
     markdown = result.markdown
 
-    const match = markdown.match(/\{\{\s*card_list\(\s*(\[.*\])\s*\)\s*\}\}/s)
+    // Match: {{ card_list([...]) }} or {{ card_list([...], 'class', 'anchor') }}
+    // Supports both single and double quotes
+    const match = markdown.match(
+      /\{\{\s*card_list\(\s*(\[.*\])(?:\s*,\s*['"]([^'"]*)['"]\s*)?(?:\s*,\s*['"]([^'"]*)['"]\s*)?\s*\)\s*\}\}/s,
+    )
     if (!match || !match[1]) return
 
     try {
       const items = JSON.parse(jsonrepair(match[1])) as CardListItem[]
       const data: CardListData = { items }
+
+      // Extract class and anchor from additional arguments
+      if (match[2]) tunes.class = match[2]
+      if (match[3]) tunes.anchor = match[3]
 
       const block = editor.blocks.insert('card_list', data)
       editor.blocks.update(block.id, data, tunes)
@@ -672,6 +679,12 @@ export default class CardList extends BaseTool {
   }
 
   static isItMarkdownExported(markdown: string): boolean {
-    return markdown.trim().match(/\{\{\s*card_list\(\s*\[.*\]\s*\)\s*\}\}/s) !== null
+    return (
+      markdown
+        .trim()
+        .match(
+          /\{\{\s*card_list\(\s*\[.*\](?:\s*,\s*['"][^'"]*['"])?(?:\s*,\s*['"][^'"]*['"])?\s*\)\s*\}\}/s,
+        ) !== null
+    )
   }
 }
