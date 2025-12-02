@@ -163,8 +163,11 @@ final class ImageManager
     }
 
     #[AsTwigFilter('image')]
-    public function getBrowserPath(Media|string $media, string $filterName = 'default', ?string $extension = null): string
-    {
+    public function getBrowserPath(
+        Media|string $media,
+        string $filterName = 'default',
+        ?string $extension = null
+    ): string {
         return $this->getFilterPath($media, $filterName, $extension, true);
     }
 

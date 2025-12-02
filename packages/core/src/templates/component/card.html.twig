@@ -1,33 +1,71 @@
+{% import view('/component/image_helper.html.twig') as helper %}
+
 {#
-    image
-    date
-    hLevel
-    title
+  @var Page|string|null   page
+  @var Media|string|null  image
+  @var ?string            imageAlt
+  @var ?string            title
+  @var ?string            link
+  @var ?bool              obfuscateLink
+  @var ?DateTime          date
+
+  @var ?string       title_tag
+  @var ?int          hLevel (to use only if title_tag is not defined or null)
+
+  @var ?string     buttonLink
+  @var ?string     buttonLinkLabel
+  @var ?string     description
 #}
-{% if page is defined %}
- {% set image = page.mainImage %}
- {% set date = page.createdAt %}
- {% set title = pw(page).h1 %}
- {% set link = page(page) %}
+
+{% set page = page ?? null %}
+{% if page %}
+ {% set page = isInstanceOfPage(page) ? page : loadPageEntity(page) %}
+ {% set image = image|default(page.mainImage) %}
+ {% set date = date|default(page.createdAt) %}
+ {% set title = title|default(pw(page).h1) %}
+ {% set link = link|default(page(page)) %}
 {% endif %}
 
-{% block card %}
-    {% import view('/component/image_helper.html.twig') as helper %}
-<article class="overflow-hidden rounded-lg shadow-xl transition-all duration-75 ease-in-out hover:shadow clickable cursor-pointer">
-    {% if image is defined and image is not null %}
-        {{ helper.thumb(media_from_string(image), page ?? null, 'thumb', {class: 'block w-full h-auto m-0'}) }}
+{% set title_tag = title_tag|default('h' ~ (hLevel|default(2))) %}
+{% set obfuscateLink = obfuscateLink ?? false %}
+{% set description = description ?? null %}
+{% set buttonLink = buttonLink ?? null %}
+{% set imageAlt = imageAlt ?? null %}
+{% set image = image ?? null %}
+
+{% set isClickable = link is defined and (buttonLink is not defined or buttonLink == link) ? true : false %}
+
+<article
+  class="overflow-hidden rounded-lg shadow-xl transition-all duration-75 ease-in-out hover:shadow {{ isClickable ? 'clickable cursor-pointer' : '' }}">
+  {% if image %}
+    {{ helper.thumb(
+      image,
+      page,
+      'thumb',
+      {class: 'block w-full h-auto m-0'}|merge(imageAlt ? {alt: imageAlt} : {}))
+    }}
+  {% endif %}
+  {% block card_date %}
+  {#<span class="block p-2 text-sm text-white bg-primary">
+    {{ (date ?? 'now')|date('d/m/Y à H:i') }}
+  </span>#}
+  {% endblock %}
+  <{{ title_tag }}
+    class="py-4 px-6 mt-0 font-bold text-xl leading-tight">
+    {{ link is defined
+      ? link(title, link, obfuscateLink)
+      : title|raw }}
+  </{{ title_tag }}>
+  {% block card_description %}
+  {% if description or buttonLink %}
+  <div class="prose">
+    {% if description %}
+      {{ description|markdown }}
     {% endif %}
-        {% block card_date %}
-        <!--<span class="block p-2 text-sm text-white bg-primary">
-            {{ (date ?? 'now')|date('d/m/Y à H:i') }}
-        </span>-->
-        {% endblock %}
-        <{{ title_tag|default('h' ~ (hLevel|default(2))) }} class="py-4 px-6 mt-0 font-bold text-xl leading-tight">
-            {% if obfuscate_link is defined %}{{ link(title, link) }}{% else %}
-                <a href="{{ link }}" style="text-decoration:none">
-                    {{ title|raw }}
-                </a>
-            {% endif %}
-        </{{ title_tag|default('h' ~ (hLevel|default(2))) }}>
+    {% if buttonLink %}
+      <p>{{ link(buttonLinkLabel|default('Réserver'), buttonLink, {'class': 'link-btn'}) }}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% endblock %}
 </article>
-{% endblock %}

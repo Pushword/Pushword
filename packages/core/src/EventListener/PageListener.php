@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\EventListener;
 
+use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Events;
 use Pushword\Core\Entity\Page;
@@ -52,6 +53,7 @@ final readonly class PageListener
 
     public function preUpdate(Page $page): void
     {
+        $page->setUpdatedAt(new DateTime());
         $this->updatePageEditor($page);
         $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
     }

@@ -1,7 +1,21 @@
-
-{% macro thumb(image, page = null, filter = 'thumb', otherAttributes = {}) %}
+{#
+  @var Media|string|null  image
+  @var Page|null          page
+  @var string             filter
+  @var array              otherAttributes
+#}
+{% macro thumb(
+  image,
+  page = null,
+  filter = 'thumb',
+  otherAttributes = {}
+) %}
+{% set image = isInstanceOfMedia(image) ? image : media_from_string(image) %}
 <picture>
-  <source type="image/webp" srcset="{{ image|image(filter, 'webp') }} 576w" sizes="(max-width: 576px) 100vw, 576px">
+  <source
+    type="image/webp"
+    srcset="{{ image|image(filter, 'webp') }} 576w"
+    sizes="(max-width: 576px) 100vw, 576px">
   <img
     srcset="{{ image|image(filter) }} 576w"
     sizes="(max-width: 576px) 100vw, 576px"
@@ -9,8 +23,8 @@
     loading=lazy
     width="{{ filter == 'thumb' ? '1000' : image.width }}"
     height="{{ filter == 'thumb' ? '1000' : image.height }}"
-    {% if otherAttributes.alt is not defined %}
-      alt="{{ image.nameByLocale(page is not null ? page.locale : '') }}"
+    {% if otherAttributes.alt is not defined or otherAttributes.alt %}
+      alt="{{ image.altByLocale(page is not null ? page.locale : '') }}"
     {% endif %}
     {{ otherAttributes ? attr(otherAttributes) : '' }}>
 </picture>

@@ -1,16 +1,12 @@
-{% block list %}
-  {%- if pages is not empty -%}
-    <ul class="not-prose flex flex-row my-5 flex-wrap justify-center mx-auto">
-      {%- for p in pages -%}
-        <li class="w-full px-1 my-1 sm:w-1/2 md:w-1/3">
-          {{- include(view('/component/card.html.twig'), {page: p}) -}}
-        </li>
-      {%- endfor -%}
-    </ul>
-  {%- else -%}
-    <p>...</p>
-  {%- endif -%}
-  {%- if pager is defined and pager is not null and (pager.currentPage != 1 or pager.hasNextPage) -%}
-    <div class="mb-5">{{ pager(pager, {omitFirstPage: true, pageParameter: '[pager]', routeName: pager_route, routeParams: pager_route_params}) }}</div>
-  {%- endif -%}
-{% endblock %}
+
+{%- if pages is not empty -%}
+  {% include view('/component/cardList.html.twig') with { items: pages } %}
+{%- else -%}
+  <p>...<!-- empty list --></p>
+{%- endif -%}
+{%- if pager is defined
+      and pager is not null
+      and (pager.currentPage != 1 or pager.hasNextPage)
+-%}
+  <div class="mb-5">{{ pager(pager, {omitFirstPage: true, pageParameter: '[pager]', routeName: pager_route, routeParams: pager_route_params}) }}</div>
+{%- endif -%}

@@ -17,7 +17,7 @@ class MarkdownUtilsTest extends TestCase
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
-        $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.\n\n";
+        $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.";
         self::assertSame($expected, $page->getMainContent());
     }
 
@@ -30,7 +30,7 @@ class MarkdownUtilsTest extends TestCase
 
         MarkdownUtils::addAnchor($page, 'paragraphe-important', '/paragraphe important/', ['paragraph']);
 
-        $expected = "# Titre\n\n{#paragraphe-important}\nUn paragraphe important.\n\n";
+        $expected = "# Titre\n\n{#paragraphe-important}\nUn paragraphe important.";
         self::assertSame($expected, $page->getMainContent());
     }
 
@@ -43,7 +43,7 @@ class MarkdownUtilsTest extends TestCase
 
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
-        $expected = "{.class #mon-titre}\n# Mon titre\n\nUn paragraphe.\n\n";
+        $expected = "{.class #mon-titre}\n# Mon titre\n\nUn paragraphe.";
         self::assertSame($expected, $page->getMainContent());
     }
 
@@ -102,7 +102,7 @@ class MarkdownUtilsTest extends TestCase
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
         // Seul le premier header correspondant doit être modifié
-        $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.\n\n# Mon titre\n\nAutre paragraphe.\n\n";
+        $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.\n\n# Mon titre\n\nAutre paragraphe.";
         self::assertSame($expected, $page->getMainContent());
     }
 
@@ -136,7 +136,7 @@ class MarkdownUtilsTest extends TestCase
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
         // Les blocs de code doivent être préservés
-        $expected = "{#mon-titre}\n# Mon titre\n\n```php\ncode here\n```\n\nUn paragraphe.\n\n";
+        $expected = "{#mon-titre}\n# Mon titre\n\n```php\ncode here\n```\n\nUn paragraphe.";
         self::assertSame($expected, $page->getMainContent());
     }
 
@@ -151,7 +151,7 @@ class MarkdownUtilsTest extends TestCase
 
         // Le premier bloc qui correspond est le paragraphe "Un paragraphe important."
         // Note: les blocs précédents non modifiés ne sont pas inclus dans le résultat
-        $expected = "Autre texte.\n\n{#paragraphe-important}\nUn paragraphe important.\n\n# Titre\n\n";
+        $expected = "Autre texte.\n\n{#paragraphe-important}\nUn paragraphe important.\n\n# Titre";
         self::assertSame($expected, $page->getMainContent());
     }
 
@@ -165,7 +165,7 @@ class MarkdownUtilsTest extends TestCase
         MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
 
         // Les fins de ligne doivent être normalisées
-        $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.\n\n";
+        $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.";
         self::assertSame($expected, $page->getMainContent());
     }
 }

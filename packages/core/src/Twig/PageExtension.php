@@ -97,6 +97,7 @@ final class PageExtension
      * @param string|string[]|null $host
      */
     #[AsTwigFunction('p')]
+    #[AsTwigFunction('loadPageEntity')]
     public function getPublishedPage(string $slug, $host = null): ?Page
     {
         $pages = $this->pageRepo->getPublishedPages(
