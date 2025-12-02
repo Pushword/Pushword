@@ -21,7 +21,6 @@ final readonly class UserListener
     {
         if ('' !== $user->getPlainPassword()) {
             $user->setPassword($this->passwordEncoder->hashPassword($user, $user->getPlainPassword()));
-            $user->eraseCredentials();
         }
     }
 
