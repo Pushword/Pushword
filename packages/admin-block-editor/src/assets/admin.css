@@ -18,10 +18,6 @@ a[rel='encrypt']:not(.link-btn) {
   }
 }
 
-.ce-popover__items {
-  overflow-x: hidden;
-}
-
 /** editorjs quote ui inspired by https://github.com/editor-js/quote/pull/23 */
 
 .cdx-quote {
@@ -62,16 +58,29 @@ div[data-item-name='convert-to'] {
 }
 
 /** Agressive customization **/
-.ce-popover__items {
+
+.ce-popover__items:has([data-item-name='move-up']) {
   display: flex;
   flex-wrap: wrap;
+
+  .ce-popover-item__title {
+    display: none;
+  }
 }
+
+.ce-popover__items:not(:has([data-item-name='move-up'])) {
+  overflow-x: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
 .ce-popover--inline .ce-popover__items {
+  display: flex;
   flex-wrap: unset !important;
 }
 
-.ce-popover-item__title {
-  display: none;
+.ce-popover__items:not(:has([data-item-name='move-up'])) .ce-popover-item-html {
+  grid-column: span 2;
 }
 
 .ce-popover-item-html {
@@ -79,10 +88,6 @@ div[data-item-name='convert-to'] {
 }
 .ce-popover__search {
   display: none;
-}
-
-.ce-popover--inline .ce-popover-item__title {
-  display: unset !important;
 }
 .ce-popover--inline .ce-popover__search {
   display: unset !important;

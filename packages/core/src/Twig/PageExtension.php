@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Twig;
 
+use DateTime;
 use InvalidArgumentException;
 use LogicException;
 use Pagerfanta\Adapter\ArrayAdapter;
@@ -10,6 +11,7 @@ use Pagerfanta\PagerfantaInterface;
 use Pagerfanta\RouteGenerator\RouteGeneratorFactoryInterface;
 use Pagerfanta\Twig\View\TwigView;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
@@ -165,6 +167,37 @@ final class PageExtension
         }
 
         return [$this->apps->get()->getMainHost(), ''];
+    }
+
+    /**
+     * @param array<array{
+     *      page: Page,
+     *      image: Media|string,
+     *      imageAlt: ?string,
+     *      title: ?string,
+     *      link: ?string,
+     *      obfuscateLink: ?bool,
+     *      date: DateTime|string|null,
+     *      title_tag: ?string,
+     *      buttonLink: ?string,
+     *      buttonLinkLabel: ?string,
+     *      description: ?string,
+     * }> $items items to render
+     */
+    #[AsTwigFunction('card_list', isSafe: ['html'], needsEnvironment: false)]
+    public function renderCardList(
+        array $items,
+        string $wrapperClass = '',
+        string $id = '',
+    ): string {
+        return $this->twig->render(
+            $this->apps->get()->getView('/component/cardList.html.twig'),
+            [
+                'items' => $items,
+                'wrapperClass' => $wrapperClass,
+                'id' => $id,
+            ]
+        );
     }
 
     /**

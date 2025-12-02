@@ -38,8 +38,12 @@ final readonly class LinkProvider
      */
     #[AsTwigFunction('link', isSafe: ['html'], needsEnvironment: false)]
     #[AsTwigFunction('jslink', isSafe: ['html'], needsEnvironment: false)]
-    public function renderLink(string $anchor, array|Page|string $path, array|bool|string $attr = [], bool $obfuscate = true): string
-    {
+    public function renderLink(
+        string $anchor,
+        array|Page|string $path,
+        array|bool|string $attr = [],
+        bool $obfuscate = true
+    ): string {
         if (\is_bool($attr)) {
             $obfuscate = $attr;
             $attr = [];

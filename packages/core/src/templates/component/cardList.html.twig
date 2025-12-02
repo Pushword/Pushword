@@ -1,4 +1,6 @@
-<ul class="not-prose flex flex-row my-5 flex-wrap justify-center mx-auto">
+<ul
+  {% if id is defined and id is not null %}id="{{ id }}"{% endif %}
+  class="{{ wrapperClass|default('not-prose flex flex-row my-5 flex-wrap justify-center mx-auto') }}">
   {%- for item in items -%}
     <li class="w-full px-1 my-1 sm:w-1/2 md:w-1/3">
       {{- include(view('/component/card.html.twig'), isInstanceOfPage(item)

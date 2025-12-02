@@ -1,0 +1,462 @@
+.cardlist-wrapper {
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  background: #fafafa;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.cardlist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardlist-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  background: white;
+  position: relative;
+}
+
+.cardlist-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Header input wrapper for slug */
+.cardlist-header-input {
+  flex: 1;
+  position: relative;
+}
+
+.cardlist-slug-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+
+.cardlist-slug-input:focus {
+  border-color: #388ae5;
+  outline: none;
+}
+
+.cardlist-slug-input::placeholder {
+  color: #aaa;
+}
+
+.cardlist-slug-input.cardlist-slug-invalid {
+  border-color: #d00;
+  background: #fff5f5;
+}
+
+.cardlist-slug-input.cardlist-slug-invalid:focus {
+  border-color: #d00;
+}
+
+.cardlist-item-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.cardlist-item-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.cardlist-item-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.cardlist-item-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.cardlist-item-btn--delete:hover {
+  background-color: #fee;
+}
+
+.cardlist-item-btn--delete:hover svg {
+  stroke: #d00;
+}
+
+.cardlist-item-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cardlist-item-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cardlist-item-field--full {
+  grid-column: 1 / -1;
+}
+
+.cardlist-item-field label {
+  display: none;
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cardlist-item-field input,
+.cardlist-item-field textarea {
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+
+.cardlist-item-field input:focus,
+.cardlist-item-field textarea:focus {
+  border-color: #388ae5;
+  outline: none;
+}
+
+.cardlist-item-field textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.cardlist-description {
+  min-height: 60px;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  transition: border-color 0.2s;
+  outline: none;
+  background: white;
+}
+
+.cardlist-description:focus {
+  border-color: #388ae5;
+}
+
+.cardlist-description:empty::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  pointer-events: none;
+}
+
+.cardlist-description b,
+.cardlist-description strong {
+  font-weight: bold;
+}
+
+.cardlist-description i,
+.cardlist-description em {
+  font-style: italic;
+}
+
+.cardlist-description code {
+  background: #f4f4f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.cardlist-description a {
+  color: #388ae5;
+  text-decoration: underline;
+}
+
+/* Media Picker */
+.cardlist-media-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-height: 50px;
+  background: white;
+}
+
+.cardlist-media-preview {
+  flex-shrink: 0;
+  width: 60px;
+  height: 45px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardlist-media-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
+
+.cardlist-media-actions {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.cardlist-media-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.cardlist-media-btn:hover {
+  background: #e0e0e0;
+  border-color: #ccc;
+}
+
+.cardlist-media-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cardlist-media-btn--remove {
+  padding: 4px 6px;
+  background: #fee;
+  border-color: #fcc;
+}
+
+.cardlist-media-btn--remove:hover {
+  background: #fdd;
+  border-color: #f99;
+}
+
+.cardlist-media-btn--remove svg {
+  stroke: #c00;
+}
+
+/* Toggle button for customization (inline in header) */
+.cardlist-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #888;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.cardlist-toggle-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.cardlist-toggle-btn--active {
+  background: #e8f4ff;
+  color: #388ae5;
+}
+
+.cardlist-toggle-btn--active svg {
+  transform: rotate(45deg);
+}
+
+.cardlist-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s;
+}
+
+/* Dot indicator when toggle has custom content */
+.cardlist-toggle-dot {
+  display: none;
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 6px;
+  height: 6px;
+  background: #388ae5;
+  border-radius: 50%;
+}
+
+.cardlist-toggle-btn--has-content .cardlist-toggle-dot {
+  display: block;
+}
+
+.cardlist-toggle-btn--active .cardlist-toggle-dot {
+  display: none;
+}
+
+/* Custom fields container */
+.cardlist-custom-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  margin-inline: -13px;
+  margin-bottom: -13px;
+  margin-top: 10px;
+  border: 1px solid #e8e8e8;
+  border-radius: 0 0 4px 4px;
+}
+
+.cardlist-custom-fields--hidden {
+  display: none;
+}
+
+/* Button fields in 2 columns */
+.cardlist-button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Link row with obfuscate checkbox */
+.cardlist-link-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.cardlist-link-field {
+  flex: 1;
+}
+
+/* Icon checkbox for obfuscate */
+.cardlist-icon-checkbox {
+  display: flex;
+  align-items: center;
+  padding-bottom: 1px;
+}
+
+.cardlist-icon-checkbox input[type='checkbox'] {
+  display: none;
+}
+
+.cardlist-icon-checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #999;
+  background: #f8f8f8;
+  transition: all 0.2s;
+}
+
+.cardlist-icon-checkbox-label:hover {
+  border-color: #aaa;
+  color: #666;
+  background: #f0f0f0;
+}
+
+.cardlist-icon-checkbox input[type='checkbox']:checked + .cardlist-icon-checkbox-label {
+  background: #e8f4ff;
+  border-color: #388ae5;
+  color: #388ae5;
+}
+
+/* Page suggester styling */
+.cardlist-header-input .page-suggester {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 2px;
+  padding: 4px;
+  z-index: 100;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.cardlist-header-input .page-suggester .suggest-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.cardlist-header-input .page-suggester .suggest-item:hover,
+.cardlist-header-input .page-suggester .suggest-item.active {
+  background: #f0f0f0;
+}
+
+.cardlist-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: #fff;
+  border: 2px dashed #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.cardlist-add-btn:hover {
+  border-color: #388ae5;
+  color: #388ae5;
+  background: #f8fbff;
+}
+
+.cardlist-add-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cardlist-item-field .checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.cardlist-item-field .checkbox-wrapper input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+}
+
+.cardlist-item-field .checkbox-wrapper label {
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #333;
+  padding: unset;
+  display: inline-block;
+}

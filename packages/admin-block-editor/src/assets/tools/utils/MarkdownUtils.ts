@@ -350,6 +350,9 @@ export class MarkdownUtils {
       .replace(/<a\s+([^>]+)>(.*?)<\/a>/gi, (_match, attrString, text) =>
         MarkdownUtils.convertAnchorToMarkdown(attrString, text),
       )
+      .replace(/<br\s*\/?>/gi, '\n') // Convert <br> to newlines
+      .replace(/<div>/gi, '\n') // Convert <div> (line wraps in contenteditable) to newlines
+      .replace(/<\/div>/gi, '')
   }
 
   private static convertMarkdownToAnchor(markdown: string): string {
@@ -393,6 +396,7 @@ export class MarkdownUtils {
       .replace(/#?\[([^\]]+)\]\(([^){]+)\)(?:\{([^}]+)\})?/g, (match) =>
         MarkdownUtils.convertMarkdownToAnchor(match),
       )
+      .replace(/\n/g, '<br>') // Convert newlines to <br>
   }
 
   /**

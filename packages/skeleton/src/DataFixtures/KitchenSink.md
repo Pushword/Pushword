@@ -72,6 +72,10 @@ See **bold** _italic_ `inline code` #[link](/kitchen-sink-block{target="_blank"}
 
 {{ pages_list('content:fun', '9', 'publishedAt ↓', 'card') }}
 
+## Card List (Custom Items)
+
+{{ card_list([{"page":"kitchen-sink-block","title":"Kitchen Sink"},{"title":"Custom Card","image":"1.jpg","link":"https://piedweb.com","description":"A custom card with **bold** and _italic_ text.","buttonLink":"https://piedweb.com","buttonLinkLabel":"Visit"}]) }}
+
 [Continue your exploration with the docs ➜](https://pushword.piedweb.com)
 
 ## Attachments & Files

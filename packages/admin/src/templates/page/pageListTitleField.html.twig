@@ -12,24 +12,30 @@
 
 <div id="{{ inlineTarget }}" class="pw-page-inline d-flex flex-column">
   <div class="d-flex flex-row align-items-center">
-    <a href="{{ editUrl }}" style="text-decoration: none; flex: 1; padding-right:1rem;">
 
+    <div style="flex: 1;">
       {% if page.isPublished == 0 %}
         <span class="badge badge-info" title="{{ page.publishedAt ? page.publishedAt|format_datetime : 'adminDraft'|trans }}">{{ (page.publishedAt ? 'admin.planified' : 'adminDraft')|trans }}</span>
       {% elseif page.metaRobots != '' %}
         <span class="badge" title="{{ page.metaRobots }}"><i class="fa fa-eye-slash"></i></span>
       {% endif %}
 
-      <span style="color:#333; font-weight:400; font-size:90%">
-      {{ page.host ? page.host ~ ' › ' : '' }}{{ page.slug }}</span>
-      <br>
-      <span style="font-size:110%;font-weight:600">
-      {{ page.h1 is empty ? page.title : page.h1|striptags }}</span>
-    </a>
 
-    <a href="{{ page(page ) }}" target="_blank" rel="noopener noreferrer" class="me-2 d-flex align-items-center" style="text-decoration: none; color: var(--gray-400); font-size: 1.2rem;">
-      <i class="fa fa-external-link"></i>
-    </a>
+      <a
+        href="{{ page(page ) }}" target="_blank"
+        class="me-2 align-items-center"
+        style="text-decoration: none; color:#333; font-weight:400; font-size:90%">
+        <i class="fa fa-external-link me-1" style="opacity:0.5;"></i>
+        {{ page.host ? page.host ~ ' › ' : '' }}{{ page.slug }}</a>
+      <br>
+      <a
+        href="{{ editUrl }}"
+        class="py-2"
+        style="display: inline-block; text-decoration: none; font-size:110%;font-weight:600">
+        {{ page.h1 is empty ? page.title : page.h1|striptags }}
+      </a>
+    </div>
+
   </div>
 
   <div class="d-flex flex-wrap align-items-center text-muted small pw-inline-tags-wrapper">

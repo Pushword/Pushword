@@ -14,8 +14,6 @@ use Pushword\Flat\Importer\PageImporter;
 use function Safe\filemtime;
 use function Safe\scandir;
 
-use Symfony\Component\Stopwatch\Stopwatch;
-
 final readonly class PageSync
 {
     public function __construct(
@@ -25,7 +23,6 @@ final readonly class PageSync
         private PageExporter $pageExporter,
         private PageRepository $pageRepository,
         private EntityManagerInterface $entityManager,
-        private ?Stopwatch $stopwatch = null,
     ) {
     }
 

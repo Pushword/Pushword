@@ -50,7 +50,7 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
   declare public config: PagesListConfig
 
   public static toolbox = {
-    title: 'Pages',
+    title: 'Pages List',
     icon: ToolboxIcon,
   }
 
