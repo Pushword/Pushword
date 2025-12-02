@@ -196,6 +196,7 @@ final class PageExtension
                 'items' => $items,
                 'wrapperClass' => $wrapperClass,
                 'id' => $id,
+                'isCardList' => true,
             ]
         );
     }

@@ -36,6 +36,7 @@
 
 {% set isClickable = link is defined and (buttonLink is not defined or buttonLink == link) ? true : false %}
 
+{% block card %}
 <article
   class="overflow-hidden rounded-lg shadow-xl transition-all duration-75 ease-in-out hover:shadow {{ isClickable ? 'clickable cursor-pointer' : '' }}">
   {% if image %}
@@ -70,3 +71,4 @@
   {% endif %}
   {% endblock %}
 </article>
+{% endblock %}
