@@ -361,6 +361,17 @@ export default class CardList extends BaseTool {
     if (value) {
       editable.innerHTML = MarkdownUtils.convertInlineMarkdownToHtml(value)
     }
+
+    // Prevent Editor.js from intercepting paste events in this field
+    editable.addEventListener('paste', (e: ClipboardEvent) => {
+      e.stopPropagation()
+      e.preventDefault()
+      const text = e.clipboardData?.getData('text/plain') || ''
+      if (text) {
+        document.execCommand('insertText', false, text)
+      }
+    })
+
     field.appendChild(labelEl)
     field.appendChild(editable)
     return field
