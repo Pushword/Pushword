@@ -14,7 +14,7 @@ final class UnproseExtension
     ) {
     }
 
-    #[AsTwigFilter('unprose', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFilter('unprose', needsEnvironment: false, isSafe: ['html'])]
     public function unprose(string $html): string
     {
         /** @var Twig */

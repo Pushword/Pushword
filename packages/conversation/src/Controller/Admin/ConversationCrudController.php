@@ -195,12 +195,7 @@ class ConversationCrudController extends AbstractAdminCrudController
         return 'conversation';
     }
 
-    #[Route(
-        path: '/admin/conversation/{id}/toggle-published',
-        name: 'pushword_conversation_toggle_publish',
-        methods: ['POST'],
-        requirements: ['id' => '\d+'],
-    )]
+    #[Route(path: '/admin/conversation/{id}/toggle-published', name: 'pushword_conversation_toggle_publish', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function togglePublished(Request $request, Message $message): Response
     {
         $token = (string) $request->request->get('_token');
@@ -222,12 +217,7 @@ class ConversationCrudController extends AbstractAdminCrudController
         ]));
     }
 
-    #[Route(
-        path: '/admin/conversation/{id}/inline-update',
-        name: 'pushword_conversation_inline_update',
-        methods: ['POST'],
-        requirements: ['id' => '\d+'],
-    )]
+    #[Route(path: '/admin/conversation/{id}/inline-update', name: 'pushword_conversation_inline_update', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function inlineUpdate(Request $request, Message $message): Response
     {
         $token = (string) $request->request->get('_token');

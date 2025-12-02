@@ -156,23 +156,17 @@ final class ConversationFormController extends AbstractController
         return $response;
     }
 
-    #[Route(
-        path: '/conversation/{type}/{referring}/{host}',
-        name: 'pushword_conversation',
-        methods: ['POST', 'GET'],
-        defaults: [
-            'step' => 1,
-            'id' => 0,
-            'host' => null,
-        ],
-        requirements: [
-            'type' => '[a-zA-Z0-9-]*',
-            'referring' => '[-A-Za-z0-9_\/\.]*',
-            'id' => '[0-9]*',
-            'step' => '[0-9]*',
-            'host' => '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$',
-        ],
-    )]
+    #[Route(path: '/conversation/{type}/{referring}/{host}', name: 'pushword_conversation', requirements: [
+        'type' => '[a-zA-Z0-9-]*',
+        'referring' => '[-A-Za-z0-9_\/\.]*',
+        'id' => '[0-9]*',
+        'step' => '[0-9]*',
+        'host' => '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$',
+    ], defaults: [
+        'step' => 1,
+        'id' => 0,
+        'host' => null,
+    ], methods: ['POST', 'GET'])]
     public function show(Request $request, string $type, ?string $host = null): Response
     {
         // $host = $host ?? $request->getHost();

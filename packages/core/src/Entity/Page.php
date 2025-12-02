@@ -32,7 +32,7 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
-#[UniqueEntity(fields: ['host', 'slug'], errorPath: 'slug', message: 'pageSlugAlreadyUsed')]
+#[UniqueEntity(fields: ['host', 'slug'], message: 'pageSlugAlreadyUsed', errorPath: 'slug')]
 #[ORM\Entity(repositoryClass: PageRepository::class)]
 #[ORM\Table(name: 'page')]
 class Page implements IdInterface, Taggable, Stringable, Weightable

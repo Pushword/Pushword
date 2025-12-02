@@ -356,6 +356,41 @@
       }
     },
     {
+      "id": "cardlist-header",
+      "type": "header",
+      "data": {
+        "text": "Card List (Custom Items)",
+        "level": 2
+      },
+      "tunes": {
+        "textAlign": "",
+        "anchor": ""
+      }
+    },
+    {
+      "id": "cardlist-block",
+      "type": "card_list",
+      "data": {
+        "items": [
+          {
+            "page": "kitchen-sink-block",
+            "title": "Kitchen Sink"
+          },
+          {
+            "title": "Custom Card",
+            "image": "1.jpg",
+            "link": "https://piedweb.com",
+            "description": "A custom card with **bold** and _italic_ text.",
+            "buttonLink": "https://piedweb.com",
+            "buttonLinkLabel": "Visit"
+          }
+        ]
+      },
+      "tunes": {
+        "anchor": ""
+      }
+    },
+    {
       "id": "5bA_sFEHo7",
       "type": "paragraph",
       "data": {

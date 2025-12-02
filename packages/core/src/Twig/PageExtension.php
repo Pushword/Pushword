@@ -184,7 +184,7 @@ final class PageExtension
      *      description: ?string,
      * }> $items items to render
      */
-    #[AsTwigFunction('card_list', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('card_list', needsEnvironment: false, isSafe: ['html'])]
     public function renderCardList(
         array $items,
         string $wrapperClass = '',
@@ -210,7 +210,7 @@ final class PageExtension
      * @param Page|null                          $currentPage DO NOT USE OUTSIDE PUSHWORD PACKAGES
      * @param string|string[]                    $host        DO NOT USE OUTSIDE PUSHWORD PACKAGES
      */
-    #[AsTwigFunction('pages_list', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('pages_list', needsEnvironment: false, isSafe: ['html'])]
     public function renderPagesList(
         array|string $search = '',
         int|array|string $max = 0,
@@ -307,7 +307,7 @@ final class PageExtension
      *
      * @throws InvalidArgumentException if the $viewName argument is an invalid type
      */
-    #[AsTwigFunction('pager', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('pager', needsEnvironment: false, isSafe: ['html'])]
     public function renderPager(
         PagerfantaInterface $pagerfanta,
         array $options = [],

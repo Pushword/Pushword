@@ -24,20 +24,8 @@ final class SitemapController extends AbstractPushwordController
         parent::__construct($requestStack, $apps, $twig);
     }
 
-    #[Route(
-        '/{_locale}sitemap.{_format}',
-        name: 'pushword_page_sitemap',
-        methods: ['GET', 'HEAD'],
-        requirements: ['_locale' => RoutePatterns::LOCALE, '_format' => 'xml|txt'],
-        priority: -10
-    )]
-    #[Route(
-        '/{host}/{_locale}sitemap.{_format}',
-        name: 'custom_host_pushword_page_sitemap',
-        methods: ['GET', 'HEAD'],
-        requirements: ['_locale' => RoutePatterns::LOCALE, '_format' => 'xml|txt', 'host' => RoutePatterns::HOST],
-        priority: -11
-    )]
+    #[Route('/{_locale}sitemap.{_format}', name: 'pushword_page_sitemap', requirements: ['_locale' => RoutePatterns::LOCALE, '_format' => 'xml|txt'], methods: ['GET', 'HEAD'], priority: -10)]
+    #[Route('/{host}/{_locale}sitemap.{_format}', name: 'custom_host_pushword_page_sitemap', requirements: ['_locale' => RoutePatterns::LOCALE, '_format' => 'xml|txt', 'host' => RoutePatterns::HOST], methods: ['GET', 'HEAD'], priority: -11)]
     public function show(Request $request, string $_format): Response
     {
         $this->initHost($request);

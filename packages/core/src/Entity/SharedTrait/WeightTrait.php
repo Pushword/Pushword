@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 trait WeightTrait
 {
     // name 'priority' permits backward compatibility
-    #[ORM\Column(type: Types::INTEGER, name: 'priority', options: ['default' => 0])]
+    #[ORM\Column(name: 'priority', type: Types::INTEGER, options: ['default' => 0])]
     private int $weight = 0;
 
     public function getWeight(): int

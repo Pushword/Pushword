@@ -56,13 +56,7 @@ class StaticController extends AbstractController
         name: 'static_generator',
         options: ['defaults' => ['host' => null]]
     )]
-    #[Route(
-        path: '/{host}',
-        name: 'piedweb_static_generate',
-        methods: ['GET'],
-        priority: -1,
-        defaults: ['host' => null]
-    )]
+    #[Route(path: '/{host}', name: 'piedweb_static_generate', defaults: ['host' => null], methods: ['GET'], priority: -1)]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function generateStatic(?string $host = null): Response
     {

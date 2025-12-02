@@ -10,20 +10,8 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 final class RobotsTxtController extends AbstractPushwordController
 {
-    #[Route(
-        '/{_locale}robots.txt',
-        name: 'pushword_page_robots_txt',
-        methods: ['GET', 'HEAD'],
-        requirements: ['_locale' => RoutePatterns::LOCALE],
-        priority: -30
-    )]
-    #[Route(
-        '/{host}/{_locale}robots.txt',
-        name: 'custom_host_pushword_page_robots_txt',
-        methods: ['GET', 'HEAD'],
-        requirements: ['_locale' => RoutePatterns::LOCALE, 'host' => RoutePatterns::HOST],
-        priority: -31
-    )]
+    #[Route('/{_locale}robots.txt', name: 'pushword_page_robots_txt', requirements: ['_locale' => RoutePatterns::LOCALE], methods: ['GET', 'HEAD'], priority: -30)]
+    #[Route('/{host}/{_locale}robots.txt', name: 'custom_host_pushword_page_robots_txt', requirements: ['_locale' => RoutePatterns::LOCALE, 'host' => RoutePatterns::HOST], methods: ['GET', 'HEAD'], priority: -31)]
     public function show(): Response
     {
         $response = new Response();

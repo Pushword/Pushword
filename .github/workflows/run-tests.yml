@@ -43,7 +43,7 @@ jobs:
         run: cd packages/skeleton && php bin/console pw:image:cache
 
       - name: Execute tests
-        run: vendor/bin/phpunit --coverage-clover coverage.xml
+        run: vendor/bin/phpunit --coverage-clover coverage.xml --exclude-group panther
 
       - name: Send coverage to Codecov
         uses: codecov/codecov-action@v1

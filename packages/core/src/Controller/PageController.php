@@ -62,57 +62,16 @@ final class PageController extends AbstractPushwordController
         return $this;
     }
 
-    #[Route(
-        '/{host}/{slug}',
-        name: 'custom_host_pushword_page',
-        methods: ['GET', 'HEAD', 'POST'],
-        requirements: ['slug' => RoutePatterns::SLUG, 'host' => RoutePatterns::HOST],
-        defaults: ['slug' => ''],
-        priority: -60
-    )]
-    #[Route(
-        '/{slug}',
-        name: 'pushword_page',
-        methods: ['GET', 'HEAD', 'POST'],
-        requirements: ['slug' => RoutePatterns::SLUG],
-        priority: -70
-    )]
-    #[Route(
-        '/{host}/{pager}',
-        name: 'custom_host_pushword_page_homepage_pager',
-        methods: ['GET', 'HEAD', 'POST'],
-        requirements: ['host' => RoutePatterns::HOST, 'pager' => RoutePatterns::PAGER_OPTIONAL],
-        defaults: ['pager' => 1],
-        priority: -80
-    )]
-    #[Route(
-        '/{pager}',
-        name: 'pushword_page_homepage_pager',
-        methods: ['GET', 'HEAD', 'POST'],
-        requirements: ['pager' => RoutePatterns::PAGER],
-        defaults: ['slug' => '', 'pager' => 1],
-        priority: -80
-    )]
-    #[Route(
-        '/{host}/{slug}/{pager}',
-        name: 'custom_host_pushword_page_pager',
-        methods: ['GET', 'HEAD', 'POST'],
-        requirements: [
-            'slug' => RoutePatterns::SLUG,
-            'host' => RoutePatterns::HOST,
-            'pager' => RoutePatterns::PAGER,
-        ],
-        defaults: ['slug' => '', 'pager' => 1],
-        priority: -80
-    )]
-    #[Route(
-        '/{slug}/{pager}',
-        name: 'pushword_page_pager',
-        methods: ['GET', 'HEAD', 'POST'],
-        requirements: ['slug' => RoutePatterns::SLUG_WITH_TRAILING, 'pager' => RoutePatterns::PAGER],
-        defaults: ['slug' => '', 'pager' => 1],
-        priority: -80
-    )]
+    #[Route('/{host}/{slug}', name: 'custom_host_pushword_page', requirements: ['slug' => RoutePatterns::SLUG, 'host' => RoutePatterns::HOST], defaults: ['slug' => ''], methods: ['GET', 'HEAD', 'POST'], priority: -60)]
+    #[Route('/{slug}', name: 'pushword_page', requirements: ['slug' => RoutePatterns::SLUG], methods: ['GET', 'HEAD', 'POST'], priority: -70)]
+    #[Route('/{host}/{pager}', name: 'custom_host_pushword_page_homepage_pager', requirements: ['host' => RoutePatterns::HOST, 'pager' => RoutePatterns::PAGER_OPTIONAL], defaults: ['pager' => 1], methods: ['GET', 'HEAD', 'POST'], priority: -80)]
+    #[Route('/{pager}', name: 'pushword_page_homepage_pager', requirements: ['pager' => RoutePatterns::PAGER], defaults: ['slug' => '', 'pager' => 1], methods: ['GET', 'HEAD', 'POST'], priority: -80)]
+    #[Route('/{host}/{slug}/{pager}', name: 'custom_host_pushword_page_pager', requirements: [
+        'slug' => RoutePatterns::SLUG,
+        'host' => RoutePatterns::HOST,
+        'pager' => RoutePatterns::PAGER,
+    ], defaults: ['slug' => '', 'pager' => 1], methods: ['GET', 'HEAD', 'POST'], priority: -80)]
+    #[Route('/{slug}/{pager}', name: 'pushword_page_pager', requirements: ['slug' => RoutePatterns::SLUG_WITH_TRAILING, 'pager' => RoutePatterns::PAGER], defaults: ['slug' => '', 'pager' => 1], methods: ['GET', 'HEAD', 'POST'], priority: -80)]
     public function show(Request $request, string $slug = ''): Response
     {
         $this->initHost($request);

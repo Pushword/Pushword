@@ -48,20 +48,8 @@ final class FeedController extends AbstractPushwordController
     /**
      * Show last created pages in an XML Feed.
      */
-    #[Route(
-        '/{_locale}feed.xml',
-        name: 'pushword_page_main_feed',
-        methods: ['GET', 'HEAD'],
-        requirements: ['_locale' => RoutePatterns::LOCALE],
-        priority: -20
-    )]
-    #[Route(
-        '/{host}/{_locale}feed.xml',
-        name: 'custom_host_pushword_page_main_feed',
-        methods: ['GET', 'HEAD'],
-        requirements: ['_locale' => RoutePatterns::LOCALE, 'host' => RoutePatterns::HOST],
-        priority: -21
-    )]
+    #[Route('/{_locale}feed.xml', name: 'pushword_page_main_feed', requirements: ['_locale' => RoutePatterns::LOCALE], methods: ['GET', 'HEAD'], priority: -20)]
+    #[Route('/{host}/{_locale}feed.xml', name: 'custom_host_pushword_page_main_feed', requirements: ['_locale' => RoutePatterns::LOCALE, 'host' => RoutePatterns::HOST], methods: ['GET', 'HEAD'], priority: -21)]
     public function showMain(Request $request): Response
     {
         $this->initHost($request);
@@ -91,20 +79,8 @@ final class FeedController extends AbstractPushwordController
     /**
      * Show child pages of a page in an XML Feed.
      */
-    #[Route(
-        '/{host}/{slug}.xml',
-        name: 'custom_host_pushword_page_feed',
-        methods: ['GET', 'HEAD'],
-        requirements: ['slug' => RoutePatterns::SLUG, 'host' => RoutePatterns::HOST],
-        priority: -40
-    )]
-    #[Route(
-        '/{slug}.xml',
-        name: 'pushword_page_feed',
-        methods: ['GET', 'HEAD'],
-        requirements: ['slug' => RoutePatterns::SLUG],
-        priority: -50
-    )]
+    #[Route('/{host}/{slug}.xml', name: 'custom_host_pushword_page_feed', requirements: ['slug' => RoutePatterns::SLUG, 'host' => RoutePatterns::HOST], methods: ['GET', 'HEAD'], priority: -40)]
+    #[Route('/{slug}.xml', name: 'pushword_page_feed', requirements: ['slug' => RoutePatterns::SLUG], methods: ['GET', 'HEAD'], priority: -50)]
     public function show(Request $request, string $slug = ''): Response
     {
         $this->initHost($request);

@@ -14,7 +14,7 @@ final readonly class VideoExtension
     ) {
     }
 
-    #[AsTwigFunction('video', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('video', needsEnvironment: false, isSafe: ['html'])]
     public function renderVideo(
         string $url,
         string $image,

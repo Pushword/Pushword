@@ -16,7 +16,7 @@ class AppExtension
     ) {
     }
 
-    #[AsTwigFilter('fixHref', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFilter('fixHref', needsEnvironment: false, isSafe: ['html'])]
     public function fixHref(string $text): string
     {
         $regex = '/"(https?)?:\/\/([a-zA-Z0-9.-:]+)\/'.$this->getHostsRegex().'\/?([^"]*)"/';

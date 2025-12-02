@@ -36,8 +36,8 @@ final readonly class LinkProvider
      * @param array<string, string>|string|Page $path
      * @param array<string, string>|bool|string $attr
      */
-    #[AsTwigFunction('link', isSafe: ['html'], needsEnvironment: false)]
-    #[AsTwigFunction('jslink', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('link', needsEnvironment: false, isSafe: ['html'])]
+    #[AsTwigFunction('jslink', needsEnvironment: false, isSafe: ['html'])]
     public function renderLink(
         string $anchor,
         array|Page|string $path,
@@ -130,8 +130,8 @@ final readonly class LinkProvider
         return $path;
     }
 
-    #[AsTwigFunction('mail', isSafe: ['html'], needsEnvironment: false)]
-    #[AsTwigFunction('email', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('mail', needsEnvironment: false, isSafe: ['html'])]
+    #[AsTwigFunction('email', needsEnvironment: false, isSafe: ['html'])]
     public function renderEncodedMail(string $mail, string $class = ''): string
     {
         // LINK packages/core/src/templates/component/encoded_mail.html.twig
@@ -159,7 +159,7 @@ final readonly class LinkProvider
         .' 0-1.442-.725-1.442-1.914z"/></svg>', $mail);
     }
 
-    #[AsTwigFunction('tel', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('tel', needsEnvironment: false, isSafe: ['html'])]
     public function renderPhoneNumber(string $number, string $class = ''): string
     {
         $template = $this->apps->get()->getView('/component/phone_number.html.twig');
@@ -171,8 +171,8 @@ final readonly class LinkProvider
         ]));
     }
 
-    #[AsTwigFunction('bookmark', isSafe: ['html'], needsEnvironment: false)]
-    #[AsTwigFunction('anchor', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('bookmark', needsEnvironment: false, isSafe: ['html'])]
+    #[AsTwigFunction('anchor', needsEnvironment: false, isSafe: ['html'])]
     public function renderTxtAnchor(string $name): string
     {
         $template = $this->apps->get()->getView('/component/txt_anchor.html.twig');

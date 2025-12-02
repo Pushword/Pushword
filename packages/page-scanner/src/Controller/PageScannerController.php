@@ -63,12 +63,7 @@ final class PageScannerController extends AbstractController
         name: 'page_scanner',
         options: ['defaults' => ['force' => 0]]
     )]
-    #[Route(
-        path: '/scan/{force}',
-        name: 'pushword_page_scanner',
-        methods: ['GET'],
-        defaults: ['force' => 0]
-    )]
+    #[Route(path: '/scan/{force}', name: 'pushword_page_scanner', defaults: ['force' => 0], methods: ['GET'])]
     public function scan(int $force = 0): Response
     {
         $force = (bool) $force;

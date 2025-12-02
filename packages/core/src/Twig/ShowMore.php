@@ -23,7 +23,7 @@ class ShowMore
         return $this->twig->load($templatePath);
     }
 
-    #[AsTwigFunction('startShowMore', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('startShowMore', needsEnvironment: false, isSafe: ['html'])]
     public function startShowMore(string $id, string $showMoreExtraClass = ''): string
     {
         return $this->getTemplate()->renderBlock('before', [
@@ -32,7 +32,7 @@ class ShowMore
         ]);
     }
 
-    #[AsTwigFunction('endShowMore', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('endShowMore', needsEnvironment: false, isSafe: ['html'])]
     public function endShowMore(string $id): string
     {
         return $this->getTemplate()->renderBlock('after', ['id' => $id]);

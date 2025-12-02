@@ -66,7 +66,7 @@ class Media implements IdInterface, Taggable, Stringable
 
     protected string $projectDir = '';
 
-    #[ORM\Column(type: Types::STRING, length: 255, name: 'media')]
+    #[ORM\Column(name: 'media', type: Types::STRING, length: 255)]
     protected string $fileName = ''; // eg : my-file.jpg
 
     /**
@@ -92,7 +92,7 @@ class Media implements IdInterface, Taggable, Stringable
     /**
      * @var UploadedFile|File|null
      */
-    #[Vich\UploadableField(mapping: 'media_media', fileNameProperty: 'slug', mimeType: 'mimeType', size: 'size', dimensions: 'dimensions')]
+    #[Vich\UploadableField(mapping: 'media_media', fileNameProperty: 'slug', size: 'size', mimeType: 'mimeType', dimensions: 'dimensions')]
     protected $mediaFile;
 
     /**
@@ -506,13 +506,13 @@ class Media implements IdInterface, Taggable, Stringable
         return $this->slug;
     }
 
-    #[ORM\Column(type: Types::STRING, length: 100, unique: true, name: 'name')]
+    #[ORM\Column(name: 'name', type: Types::STRING, length: 100, unique: true)]
     protected string $alt = ''; // used for alt text
 
-    #[ORM\Column(type: Types::STRING, length: 100, options: ['default' => ''], name: 'name_search')]
+    #[ORM\Column(name: 'name_search', type: Types::STRING, length: 100, options: ['default' => ''])]
     protected string $altSearch = '';
 
-    #[ORM\Column(type: Types::TEXT, options: ['default' => ''], nullable: true, name: 'names')]
+    #[ORM\Column(name: 'names', type: Types::TEXT, nullable: true, options: ['default' => ''])]
     protected ?string $alts = '';
 
     public function __toString(): string

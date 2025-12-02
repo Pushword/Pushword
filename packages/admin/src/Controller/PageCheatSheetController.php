@@ -23,7 +23,7 @@ class PageCheatSheetController extends AbstractController
     ) {
     }
 
-    #[Route('admin/cheatsheet', methods: ['GET', 'HEAD', 'POST'], name: 'cheatsheetEditRoute')]
+    #[Route('admin/cheatsheet', name: 'cheatsheetEditRoute', methods: ['GET', 'HEAD', 'POST'])]
     public function cheatsheet(): Response
     {
         if (null === ($page = $this->pageRepo->findOneBy(['slug' => PageCheatSheetCrudController::CHEATSHEET_SLUG]))) {

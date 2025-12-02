@@ -18,7 +18,7 @@ final readonly class ImageOptimizerCommand
     ) {
     }
 
-    public function __invoke(#[Argument(name: 'media', description: 'Image name (eg: filename.jpg).')]
+    public function __invoke(#[Argument(description: 'Image name (eg: filename.jpg).', name: 'media')]
         ?string $mediaName, OutputInterface $output): int
     {
         $medias = null !== $mediaName ? $this->mediaRepository->findBy(['fileName' => $mediaName]) : $this->mediaRepository->findAll();

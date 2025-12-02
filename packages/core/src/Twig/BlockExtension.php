@@ -26,7 +26,7 @@ class BlockExtension
     ) {
     }
 
-    #[AsTwigFunction('attaches', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('attaches', needsEnvironment: false, isSafe: ['html'])]
     public function renderAttaches(
         string $title,
         string $url,
@@ -52,7 +52,7 @@ class BlockExtension
      * @param array<mixed>|Collection<int, mixed> $images is very tolerant, most of the time it's an array of string corresponding to the mediaName (eg: ['filename.jpg', 'filename2.jpg'])
      * @param int                                 $pos    set to < 3 permit to disable lazy loading on first image
      */
-    #[AsTwigFunction('gallery', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('gallery', needsEnvironment: false, isSafe: ['html'])]
     public function renderGallery(
         array|Collection $images,
         ?string $gridCols = null,
@@ -109,7 +109,7 @@ class BlockExtension
     /**
      * @param array<mixed> $additionalAttrs
      */
-    #[AsTwigFunction('blockWrapperAttr', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('blockWrapperAttr', needsEnvironment: false, isSafe: ['html'])]
     public function blockWrapperAttr(object $block, array $additionalAttrs = []): string
     {
         $block = $this->normalizeBlock($block);
@@ -154,7 +154,7 @@ class BlockExtension
      *
      * @return string - HTML id attribute
      */
-    #[AsTwigFunction('blockWrapperId', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('blockWrapperId', needsEnvironment: false, isSafe: ['html'])]
     public function blockWrapperId(string $anchor = ''): string
     {
         return '' !== $anchor ? ' id="'.htmlspecialchars($anchor).'"' : '';
@@ -167,7 +167,7 @@ class BlockExtension
      *
      * @return string - CSS class string
      */
-    #[AsTwigFunction('blockWrapperAlignment', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('blockWrapperAlignment', needsEnvironment: false, isSafe: ['html'])]
     public function blockWrapperAlignment(string $alignment = ''): string
     {
         if ('' === $alignment || 'left' === $alignment) {
@@ -187,7 +187,7 @@ class BlockExtension
      *
      * @return mixed[][] - Legacy image array format
      */
-    #[AsTwigFunction('legacyImageArray', isSafe: ['html'], needsEnvironment: false)]
+    #[AsTwigFunction('legacyImageArray', needsEnvironment: false, isSafe: ['html'])]
     public function legacyImageArray(array $images): array
     {
         return array_map(fn ($mediaName): array => ['media' => $mediaName], $images);

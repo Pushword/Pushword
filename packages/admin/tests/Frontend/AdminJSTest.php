@@ -6,6 +6,7 @@ use Exception;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\WebDriverBy;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Panther\Client;
@@ -16,6 +17,7 @@ use Symfony\Component\Panther\Client;
  *
  * IMPORTANT: Ces tests nécessitent Chrome/Chromium et peuvent être lents.
  */
+#[Group('panther')]
 class AdminJSTest extends AbstractAdminTestClass
 {
     // Configuration des timeouts (en secondes)

@@ -27,6 +27,7 @@ import Raw from '../assets/tools/Raw/Raw'
 import Embed from '../assets/tools/Embed/Embed'
 import Attaches from '../assets/tools/Attaches/Attaches'
 import { exportPagesListToMarkdown } from '../assets/tools/PagesList/PagesListExportToMarkdown'
+import { exportCardListToMarkdown } from '../assets/tools/CardList/CardListExportToMarkdown'
 
 // Mock de window et document pour Node.js
 // Les valeurs peuvent être transmises via variables d'environnement
@@ -84,6 +85,7 @@ const TOOL_MAP: Record<string, any> = {
   embed: Embed,
   attaches: Attaches,
   pages_list: { exportToMarkdown: exportPagesListToMarkdown },
+  card_list: { exportToMarkdown: exportCardListToMarkdown },
 }
 
 interface BlockData {

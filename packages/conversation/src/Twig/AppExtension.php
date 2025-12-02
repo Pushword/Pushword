@@ -41,7 +41,7 @@ class AppExtension
         ]);
     }
 
-    #[AsTwigFunction('showConversation', isSafe: ['html'], needsEnvironment: true)]
+    #[AsTwigFunction('showConversation', needsEnvironment: true, isSafe: ['html'])]
     public function showConversation(
         Twig $twig,
         string $referring,
@@ -59,8 +59,8 @@ class AppExtension
     /**
      * @param Page|array<string>|string $pageOrTag
      */
-    #[AsTwigFunction('reviewList', isSafe: ['html'], needsEnvironment: true)]
-    #[AsTwigFunction('reviews', isSafe: ['html'], needsEnvironment: true)]
+    #[AsTwigFunction('reviewList', needsEnvironment: true, isSafe: ['html'])]
+    #[AsTwigFunction('reviews', needsEnvironment: true, isSafe: ['html'])]
     public function renderReviewList(
         Twig $twig,
         Page|array|string|null $pageOrTag = null,

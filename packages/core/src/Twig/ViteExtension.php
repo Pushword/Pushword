@@ -13,7 +13,7 @@ final readonly class ViteExtension
     ) {
     }
 
-    #[AsTwigFunction('vite_style', isSafe: ['html'], needsEnvironment: true)]
+    #[AsTwigFunction('vite_style', needsEnvironment: true, isSafe: ['html'])]
     public function renderViteStylesheet(Twig $twig, string $path): string
     {
         // TODO : to test else use
@@ -28,7 +28,7 @@ final readonly class ViteExtension
         return $return ?? '<!--You must install vite bundle to use this function-->';
     }
 
-    #[AsTwigFunction('vite_script', isSafe: ['html'], needsEnvironment: true)]
+    #[AsTwigFunction('vite_script', needsEnvironment: true, isSafe: ['html'])]
     public function renderViteScript(Twig $twig, string $path): string
     {
         $functions = $twig->getFunctions();

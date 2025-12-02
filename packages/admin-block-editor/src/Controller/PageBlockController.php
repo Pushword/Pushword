@@ -26,7 +26,7 @@ final class PageBlockController extends AbstractController
     ) {
     }
 
-    #[Route('/admin/page/block/{id}', name: 'admin_page_block', methods: ['POST'], defaults: ['id' => '0'], requirements: ['id' => '\d*'])]
+    #[Route('/admin/page/block/{id}', name: 'admin_page_block', requirements: ['id' => '\d*'], defaults: ['id' => '0'], methods: ['POST'])]
     public function manage(Request $request, string $id = '0'): Response
     {
         $id = (int) $id;
