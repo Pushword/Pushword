@@ -25,6 +25,6 @@ export function exportCardListToMarkdown(
     return obj
   })
 
-  const itemsJson = JSON.stringify(items)
+  const itemsJson = JSON.stringify(items, null, 2)
   return `{{ card_list(${itemsJson}) }}`
 }
