@@ -182,6 +182,29 @@
   text-decoration: underline;
 }
 
+/* Title field (contenteditable for inline HTML support) */
+.cardlist-title {
+  min-height: 20px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  transition: border-color 0.2s;
+  outline: none;
+  background: white;
+}
+
+.cardlist-title:focus {
+  border-color: #388ae5;
+}
+
+.cardlist-title:empty::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  pointer-events: none;
+}
+
 /* Media Picker */
 .cardlist-media-picker {
   display: flex;

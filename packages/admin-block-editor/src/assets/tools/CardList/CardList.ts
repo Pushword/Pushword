@@ -35,7 +35,7 @@ export interface CardListData extends BlockToolData {
 interface CardListItemNodes {
   wrapper: HTMLElement
   pageInput: HTMLInputElement
-  titleInput: HTMLInputElement
+  titleInput: HTMLElement
   imageContainer: HTMLElement
   imageValue: string
   linkInput: HTMLInputElement
@@ -197,9 +197,9 @@ export default class CardList extends BaseTool {
       : ['cardlist-custom-fields', 'cardlist-custom-fields--hidden']
     const customFields = make.element('div', customFieldsClasses)
 
-    // Title field
-    const titleField = this.createField('Title', 'title', item.title || '')
-    const titleInput = titleField.querySelector('input') as HTMLInputElement
+    // Title field (contenteditable to preserve inline HTML)
+    const titleField = this.createHtmlEditableField('Title', 'title', item.title || '')
+    const titleInput = titleField.querySelector('[contenteditable]') as HTMLElement
 
     // Image field with media picker
     const {
@@ -228,7 +228,7 @@ export default class CardList extends BaseTool {
     // Update placeholder when title or link changes (only if slug is empty)
     const updatePlaceholder = () => {
       if (!pageInput.value) {
-        const hint = titleInput.value || linkInput.value || ''
+        const hint = titleInput.textContent || linkInput.value || ''
         pageInput.placeholder = hint ? `→ ${hint}` : 'Page slug...'
       }
     }
@@ -335,6 +335,32 @@ export default class CardList extends BaseTool {
     // Convert markdown to HTML for editing
     if (value) {
       editable.innerHTML = MarkdownUtils.convertInlineMarkdownToHtml(value)
+    }
+    field.appendChild(labelEl)
+    field.appendChild(editable)
+    return field
+  }
+
+  private createHtmlEditableField(
+    label: string,
+    name: string,
+    value: string,
+  ): HTMLElement {
+    const field = make.element('div', 'cardlist-item-field')
+    const labelEl = make.element('label')
+    labelEl.textContent = label
+    const editable = make.element(
+      'div',
+      ['cardlist-title', 'ce-paragraph', 'cdx-block'],
+      {
+        contentEditable: !this.readOnly ? 'true' : 'false',
+        'data-name': name,
+        'data-placeholder': label,
+      },
+    )
+    // Keep raw HTML as-is
+    if (value) {
+      editable.innerHTML = value
     }
     field.appendChild(labelEl)
     field.appendChild(editable)
@@ -505,7 +531,9 @@ export default class CardList extends BaseTool {
     this.data.items = this.itemNodes.map((nodes): CardListItem => {
       const item: CardListItem = {}
       if (nodes.pageInput.value) item.page = nodes.pageInput.value
-      if (nodes.titleInput.value) item.title = nodes.titleInput.value
+      // Get HTML content from title (contenteditable)
+      const titleHtml = nodes.titleInput.innerHTML?.trim()
+      if (titleHtml) item.title = titleHtml
       // Get image from media picker container
       const imageValue = nodes.imageContainer.dataset.value
       if (imageValue) item.image = imageValue
