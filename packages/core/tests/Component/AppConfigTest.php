@@ -6,6 +6,7 @@ use Exception;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Component\App\AppConfig;
 use ReflectionMethod;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\Filesystem\Filesystem;
 use Twig\Environment as Twig;
@@ -172,6 +173,7 @@ class AppConfigTest extends TestCase
         $loader = new FilesystemLoader();
         $twig = new Twig($loader);
         $appConfig->setTwig($twig);
+        $appConfig->setCache(new ArrayAdapter());
 
         return $appConfig;
     }

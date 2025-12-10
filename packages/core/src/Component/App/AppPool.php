@@ -6,6 +6,7 @@ use Exception;
 use LogicException;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Contracts\Cache\CacheInterface;
 use Twig\Environment as Twig;
 
 final class AppPool
@@ -23,7 +24,8 @@ final class AppPool
     public function __construct(
         array $rawApps,
         Twig $twig,
-        ParameterBagInterface $parameterBag
+        ParameterBagInterface $parameterBag,
+        CacheInterface $cache
     ) {
         $firstHost = (string) array_key_first($rawApps);
 
@@ -31,6 +33,7 @@ final class AppPool
         foreach ($rawApps as $mainHost => $app) {
             $this->apps[$mainHost] = new AppConfig($parameterBag, $app, $firstHost === $mainHost);
             $this->apps[$mainHost]->setTwig($twig);
+            $this->apps[$mainHost]->setCache($cache);
             if (null === $firstApp) {
                 $firstApp = $this->apps[$mainHost];
             }

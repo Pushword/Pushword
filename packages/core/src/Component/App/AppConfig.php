@@ -3,6 +3,7 @@
 namespace Pushword\Core\Component\App;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Contracts\Cache\CacheInterface;
 use Twig\Environment as Twig;
 
 #[\AllowDynamicProperties]
@@ -44,6 +45,8 @@ final class AppConfig
 
     private Twig $twig;
 
+    private CacheInterface $cache;
+
     /**
      * First app locale is a bit weird ?
      * It's assuming when defaultLocale is not set, it's the first app locale wich is the default locale.
@@ -75,6 +78,11 @@ final class AppConfig
     public function setTwig(Twig $twig): void
     {
         $this->twig = $twig;
+    }
+
+    public function setCache(CacheInterface $cache): void
+    {
+        $this->cache = $cache;
     }
 
     /** @return array{app_base_url: string, app_name: string, app_color: mixed} */
@@ -250,6 +258,15 @@ final class AppConfig
 
     public function getView(?string $path = null, string $fallback = '@Pushword'): string
     {
+        $cacheKey = 'pushword.view.'.md5($this->getMainHost().'|'.$path.'|'.$fallback);
+
+        return $this->cache->get($cacheKey, function () use ($path, $fallback): string {
+            return $this->resolveView($path, $fallback);
+        });
+    }
+
+    private function resolveView(?string $path, string $fallback): string
+    {
         if (null === $path) {
             return $this->template.'/page/page.html.twig';
         }
@@ -301,6 +318,11 @@ final class AppConfig
         $templateOverrided = $templateDir.'/'.ltrim($this->getTemplate(), '@').$name;
         if (file_exists($templateOverrided)) {
             return '/'.ltrim($this->getTemplate(), '@').$name;
+        }
+
+        $puswhordOverrided = $templateDir.'/pushword'.$name;
+        if (file_exists($puswhordOverrided)) {
+            return '/pushword'.$name;
         }
 
         $globalOverride = $templateDir.$name;
