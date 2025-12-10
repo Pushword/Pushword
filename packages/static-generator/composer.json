@@ -8,6 +8,11 @@
   "require": {
     "pushword/core": "*"
   },
+  "suggest": {
+    "ext-zstd": "For zstd compression support",
+    "brotli": "System binary for brotli compression (apt install brotli)",
+    "gzip": "System binary for gzip compression"
+  },
   "extra": {
     "branch-alias": {
       "dev-main": "1.0.x-dev"

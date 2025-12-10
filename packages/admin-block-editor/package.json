@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": ">=24"
+  },
   "devDependencies": {
     "@codexteam/ajax": "^4.2",
     "@codexteam/icons": "^0.3",
