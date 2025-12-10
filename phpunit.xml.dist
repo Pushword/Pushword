@@ -13,7 +13,7 @@
     <server name="KERNEL_CLASS" value="App\Kernel" />
     <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak" />
     <env name="PANTHER_WEB_SERVER_DIR" value="packages/skeleton/public" />
-    <env name="PANTHER_CHROME_BINARY" value="/usr/bin/google-chrome" />
+    <env name="PANTHER_CHROME_BINARY" value="/usr/bin/chromium-browser" />
     <env name="PANTHER_CHROME_DRIVER_BINARY" value="/usr/bin/chromedriver" />
     <!-- <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/> -->
   </php>

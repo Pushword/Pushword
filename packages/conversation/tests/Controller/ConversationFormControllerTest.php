@@ -3,11 +3,11 @@
 namespace Pushword\Conversation\Tests\Controller;
 
 use Pushword\Conversation\Controller\ConversationFormController;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Panther\PantherTestCase;
 
-class ConversationFormControllerTest extends PantherTestCase
+class ConversationFormControllerTest extends WebTestCase
 {
     public function testMessageForm(): void
     {

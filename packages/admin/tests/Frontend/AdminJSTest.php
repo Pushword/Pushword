@@ -46,19 +46,41 @@ class AdminJSTest extends AbstractAdminTestClass
 
     private const string SELECTOR_HOST_SELECT = 'select[name$="[host]"]';
 
-    private ?Client $cachedClient = null;
+    /**
+     * Static cached client - shared across all tests for performance.
+     * Login is performed once and reused.
+     */
+    private static ?Client $loggedInClient = null;
+
+    private static bool $isLoggedIn = false;
+
+    #[Override]
+    public static function setUpBeforeClass(): void
+    {
+        // Clean up any stale processes from previous test runs that may have crashed
+        // Kill any process using port 9080 (Panther's default web server port)
+        exec('lsof -ti:9080 2>/dev/null | xargs -r kill -9 2>/dev/null');
+        // Kill any stale chromedriver processes
+        exec('pkill -9 -f chromedriver 2>/dev/null');
+        // Give time for ports to be released
+        usleep(500000); // 500ms
+
+        parent::setUpBeforeClass();
+    }
 
     /**
      * Crée un client Panther et effectue le login.
-     * Le client est mis en cache pour accélérer les tests.
+     * Le client est mis en cache statiquement pour être réutilisé entre les tests.
      */
     protected function createPantherClientWithLogin(): Client
     {
-        if (null !== $this->cachedClient) {
-            return $this->cachedClient;
+        // Reuse existing logged-in client if available
+        if (null !== self::$loggedInClient && self::$isLoggedIn) {
+            return self::$loggedInClient;
         }
 
         $client = static::createPantherClient();
+        self::$loggedInClient = $client;
 
         self::createUser();
 
@@ -80,7 +102,7 @@ class AdminJSTest extends AbstractAdminTestClass
         // Attend la redirection
         $client->wait(self::WAIT_MEDIUM);
 
-        $this->cachedClient = $client;
+        self::$isLoggedIn = true;
 
         return $client;
     }
@@ -88,12 +110,21 @@ class AdminJSTest extends AbstractAdminTestClass
     #[Override]
     protected function tearDown(): void
     {
-        if (null !== $this->cachedClient) {
-            $this->cachedClient->quit();
-            $this->cachedClient = null;
-        }
-
+        // Don't quit the client between tests - reuse the logged-in session
         parent::tearDown();
+    }
+
+    #[Override]
+    public static function tearDownAfterClass(): void
+    {
+        // Reset static state
+        self::$loggedInClient = null;
+        self::$isLoggedIn = false;
+
+        // Ensure all Panther resources (webserver, chromedriver) are properly cleaned up
+        static::stopWebServer();
+
+        parent::tearDownAfterClass();
     }
 
     /**

@@ -13,9 +13,9 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@pushword/js-helper": "file:packages/js-helper",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.37.0",
+    "@pushword/js-helper": "file:packages/js-helper",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
     "eslint": "^9.36.0",

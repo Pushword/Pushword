@@ -11,10 +11,18 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### In progress
 
+- finish upgrade to Symfony 8
+
+  - [ ] https://github.com/symplify/monorepo-builder/pulls
+  - [ ] https://github.com/nunomaduro/termwind/pull/205
+  - [ ] https://github.com/nunomaduro/collision/pull/340
+  - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
+
 - dissociate languages for same host in MenuProvider Admin
 - create bulk trait command (create back ups, restore back ups...)
 
 - improve start show more
+
   - on ctrl+f, the show more block wich contains the search text must be opened
   - on #hash, the show more block must not closed
   - on document ready, if scroll != 0, the show more block must be opened
@@ -40,6 +48,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [Core] add posibile_host and skip custom_host route when a custom_host is detected
 
 - [AdminBlockEditor] transition JSON -> Markdown -> EditorJS
+
   - [x] editorjs to markdown
   - [x] markdown to editorjs... en cours, non fonctionnel
   - [x] implémenter prettier markdown
@@ -51,19 +60,23 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
     - [ ] [Example](/example){class="ninja"} n'est pas correctement parsé
 
 - [Ai] Add AiFeature to Flat
+
   - [ ] Generate a map of the content = [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
   - [ ] Generate a map of the media
 
 - [Version]
+
   - [ ] change versionner to rely on flat and create .example-file.md~version-200020210 instead of serialized json, add a command to clear version
   - [ ] diffchecker based on Monaco
 
 - [Core] fix glightbox or rollback to fslightbox
+
   - [ ] video in lightbox
   - [ ] simple image self linked (the pb is more a missing code after migrating to markdown block)
   - [ ] convertImageLinkToWebPLink() is not working anymore
 
 - [Flat]
+
   - [x] mettre à jour le dossier par défault : content/%domain%/
   - [ ] prefer yaml over json for media exporter
   - [ ] check media export (in content/media or in media ?!)
@@ -85,17 +98,20 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [Flat] Implémenter un sync auto depuis [Admin] et un file watcher (bin/console content:watch) pour l'autre sens // l'implémentation rapide c'est un cron sur bin/console flat:sync
 
 - [AdminBlockEditor] selecting a block alone like gallery : copy / paste is not working
+
   - all the copy paste from markdown
 
 - [Admin] / [Version] Autosave with unsaved state : envoyer un event toutes les secondes si le contenu a été modifié, celui-ci créé une nouvelle version du contenu en précisant que c'est une sauvegarde automatique, si la précédente sauvegarde est une sauvegarde automatique et qu'elle date de moins d'une heure, alors on ne garde qu'une version dans le versionner (la dernière)
 
 - [Core] / [Admin] **Media** :
+
   - [ ] revoir comment sont récoltés les usages d'un média
   - [ ] stocker en DB (donc mieux tuiler avec pages, quid des medias utiliser dans des templates ?)
   - [ ] pouvoir filtrer les médias non utilisés (cf point précédent) via Admin
   - [ ] cli tool to clean unused media ?
 
 - [Core] / [Admin] **Media** : Ajouter les tags au media
+
   - [ ] Tags manuellement
   - [ ] Tags importé depuis les pages qui utilisent le média
 
@@ -105,6 +121,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
       Wich is absolutely not a skeleton, it's more a dev-test env or a demo
 
 - [JsHelper] start-show-more : voir pour améliorer le close :
+
   - [ ] show more :
     - si l'utilisateur clique sur un jump link qui renvoie vers un contenu dans un bloc show-more
     - si un hash dans l'url renvoie vers un contenu dans un bloc show-more
@@ -118,6 +135,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [Admin] / [Core] easily customize navbar with favorites `page` ➜ utiliser plutôt les tags et ajouter un loader spécifique : #navbar100 #navbar200 #navbar300, charger toutes les pages qui ont un tag commençant par #navbar, organisé par ordre alphabétique et créer le menu d'après ces pages)
 
 - [Core] **pagination** : tester & documenter
+
   - Bug quand une page a le même URI qu'une page de la pagination OU sur l'ID (attrapé avant la pagination)
     => En fait, c'est paginer la page d'accueil qui fait le max de bordel - changer pour un format d'uril + robuste (ex : /1 ➜ /p1 et interdire les slugs de type /p[0-9]+)
 
@@ -131,6 +149,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [Core] / [Admin] / [PageScanner] Check there is no translation with the same language than current page
 
 - check a new blank installation + ci + last details
+
   - [x] dev environnement setup
   - [ ] Docker image / Frankenphp ?
   - [ ] usage setup - see if there is a prompt for first user
@@ -140,6 +159,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [Admin] / [AdminBlockEditor] (cerise) TocAvoir un block à gauche de l'éditeur pour afficher la liste des blocs utilisés, pouvoir déplacer ces blocs facilement en sélecctionnant un bloc, ou un groupe de blocs naturellement groupés sous un header, fonctionne depuis le markdown ou depuis l'editorjs
 
 - [AdminBlockEditor] New features
+
   - [ ] upgrade editorjs/list ajoute notamment le support des checklists
         https://github.com/editor-js/list/pull/126
   - [ ] Hyperlink - Custom rel (onclick button to configure the rel instead of hideForBot)
