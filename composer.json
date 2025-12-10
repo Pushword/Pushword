@@ -63,7 +63,7 @@
     "symfony/ux-twig-component": "^2",
     "twig/extra-bundle": "^3",
     "twig/intl-extra": "^3.2",
-    "vich/uploader-bundle": "^2.0",
+    "vich/uploader-bundle": "^2.9",
     "villfa/invert-color": "^0.5"
   },
   "require-dev": {
@@ -135,7 +135,7 @@
   },
   "scripts": {
     "console": "cd packages/skeleton && php bin/console $2",
-    "dev": "cd packages/skeleton && symfony server:start -d",
+    "dev": "cd packages/skeleton && symfony server:start -d --no-tls",
     "stan": "vendor/bin/phpstan",
     "test": "./.scripts/test $*",
     "test-filter": "./.scripts/test --filter $*",

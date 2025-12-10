@@ -15,7 +15,7 @@
   {% if page.metaRobots %}
     <meta name="robots" content="{{ page.metaRobots }}">
   {% endif %}
-  <link rel="canonical" href="{{ page(page, true, app.request ? app.request.get('pager') : 0) }}">
+  <link rel="canonical" href="{{ page(page, true, app.request ? app.request.query.get('pager') : 0) }}">
 {% endblock %}
 
 {% block alternate_language %}
