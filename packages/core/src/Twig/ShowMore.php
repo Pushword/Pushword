@@ -50,7 +50,7 @@ class ShowMore
     }
 
     #[AsTwigFunction('endShowMore', needsEnvironment: false, isSafe: ['html'])]
-    public function endShowMore(string $showMoreBackground = null, ?string $id = null): string
+    public function endShowMore(?string $showMoreBackground = null, ?string $id = null): string
     {
         $id ??= $this->currentId;
         $this->currentId = null;

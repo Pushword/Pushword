@@ -19,11 +19,10 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
   - [ ] php 8.5 - https://github.com/symfony/panther/issues/687
 
-- create bulk trait command (create back ups, restore back ups...)
-
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
 - drop public media dir and hardcode a const php side and a js side
+  → use league/flysystem instead with bundle configuration to have a more flexible way to store media
 
 - Pushword\PageScanner\Tests\PageScannerCommandTest > page scanner comm 26.84s
   This is very slow
