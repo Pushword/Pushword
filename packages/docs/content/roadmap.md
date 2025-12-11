@@ -11,14 +11,14 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### In progress
 
-- finish upgrade to Symfony 8
+- finish upgrade to Symfony 8 /PHP 8.5
 
   - [ ] https://github.com/symplify/monorepo-builder/pulls
   - [ ] https://github.com/nunomaduro/termwind/pull/205
   - [ ] https://github.com/nunomaduro/collision/pull/340
   - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
+  - [ ] php 8.5 - https://github.com/symfony/panther/issues/687
 
-- dissociate languages for same host in MenuProvider Admin
 - create bulk trait command (create back ups, restore back ups...)
 
 - improve start show more

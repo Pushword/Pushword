@@ -142,7 +142,9 @@ final readonly class AdminMenu
     private function buildPageMenu(): MenuItemInterface
     {
         $hosts = $this->apps->getHosts();
-        if (\count($hosts) <= 1) {
+        $hasMultipleHostsOrLocales = $this->hasMultipleHostsOrLocales();
+
+        if (! $hasMultipleHostsOrLocales) {
             return MenuItem::linkToCrud('adminLabelContent', 'fas fa-file', Page::class)
                 ->setController(PageCrudController::class);
         }
@@ -153,7 +155,7 @@ final readonly class AdminMenu
         $subItems = [$listItem];
 
         foreach ($hosts as $host) {
-            $subItems[] = $this->createHostMenuItem($host, PageCrudController::class);
+            $subItems = [...$subItems, ...$this->createHostMenuItems($host, PageCrudController::class)];
         }
 
         return MenuItem::subMenu('adminLabelContent', 'fas fa-file')
@@ -174,7 +176,9 @@ final readonly class AdminMenu
     private function buildRedirectionMenu(): MenuItemInterface
     {
         $hosts = $this->apps->getHosts();
-        if (\count($hosts) <= 1) {
+        $hasMultipleHostsOrLocales = $this->hasMultipleHostsOrLocales();
+
+        if (! $hasMultipleHostsOrLocales) {
             return MenuItem::linkToCrud('adminLabelRedirection', 'fa fa-random', Page::class)
                 ->setController(PageRedirectionCrudController::class);
         }
@@ -185,30 +189,76 @@ final readonly class AdminMenu
         $subItems = [$listItem];
 
         foreach ($hosts as $host) {
-            $subItems[] = $this->createHostMenuItem($host, PageRedirectionCrudController::class);
+            $subItems = [...$subItems, ...$this->createHostMenuItems($host, PageRedirectionCrudController::class)];
         }
 
         return MenuItem::subMenu('adminLabelRedirection', 'fa fa-random')
             ->setSubItems($subItems);
     }
 
-    private function createHostMenuItem(string $host, string $controller): CrudMenuItem
+    private function hasMultipleHostsOrLocales(): bool
     {
-        $menuItem = MenuItem::linkToCrud($host, 'fa fa-globe', Page::class)
+        $hosts = $this->apps->getHosts();
+        if (\count($hosts) > 1) {
+            return true;
+        }
+
+        foreach ($hosts as $host) {
+            $locales = $this->apps->get($host)->getLocales();
+            if (\count($locales) > 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return CrudMenuItem[]
+     */
+    private function createHostMenuItems(string $host, string $controller): array
+    {
+        $app = $this->apps->get($host);
+        $locales = $app->getLocales();
+
+        if (\count($locales) <= 1) {
+            return [$this->createHostLocaleMenuItem($host, null, $controller)];
+        }
+
+        $items = [];
+        foreach ($locales as $locale) {
+            $items[] = $this->createHostLocaleMenuItem($host, $locale, $controller);
+        }
+
+        return $items;
+    }
+
+    private function createHostLocaleMenuItem(string $host, ?string $locale, string $controller): CrudMenuItem
+    {
+        $label = null !== $locale ? $host.' ('.$locale.')' : $host;
+
+        $menuItem = MenuItem::linkToCrud($label, 'fa fa-globe', Page::class)
             ->setController($controller)
             ->setQueryParameter('filters[host]', [
                 'comparison' => '=',
                 'value' => $host,
             ]);
 
-        if ($this->isHostActive($host, $controller)) {
+        if (null !== $locale) {
+            $menuItem->setQueryParameter('filters[locale]', [
+                'comparison' => '=',
+                'value' => $locale,
+            ]);
+        }
+
+        if ($this->isHostLocaleActive($host, $locale, $controller)) {
             $menuItem->getAsDto()->setSelected(true);
         }
 
         return $menuItem;
     }
 
-    private function isHostActive(string $host, string $controller): bool
+    private function isHostLocaleActive(string $host, ?string $locale, string $controller): bool
     {
         $context = $this->adminContextProvider->getContext();
 
@@ -224,8 +274,18 @@ final readonly class AdminMenu
         /** @var array<string, mixed> $filters */
         $filters = $context->getRequest()->query->all(EA::FILTERS);
         $filteredHost = \is_array($filters['host'] ?? null) ? ($filters['host']['value'] ?? null) : null;
+        $filteredLocale = \is_array($filters['locale'] ?? null) ? ($filters['locale']['value'] ?? null) : null;
+
         if (\is_string($filteredHost)) {
-            return $filteredHost === $host;
+            if ($filteredHost !== $host) {
+                return false;
+            }
+
+            if (null !== $locale) {
+                return $filteredLocale === $locale;
+            }
+
+            return null === $filteredLocale;
         }
 
         $entityDto = $context->getEntity();
@@ -234,7 +294,15 @@ final readonly class AdminMenu
             return false;
         }
 
-        return $entity->getHost() === $host;
+        if ($entity->getHost() !== $host) {
+            return false;
+        }
+
+        if (null !== $locale && method_exists($entity, 'getLocale')) {
+            return $entity->getLocale() === $locale;
+        }
+
+        return true;
     }
 
     private function isCheatSheetActive(): bool

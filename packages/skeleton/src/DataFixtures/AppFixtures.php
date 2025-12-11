@@ -128,6 +128,22 @@ class AppFixtures extends Fixture
 
         $manager->persist($redirectionPage);
 
+        // French page for localhost.dev to test multilingual menu
+        $homepageFr = (new Page())
+            ->setH1('Bienvenue sur Pushword !')
+            ->setSlug('homepage')
+            ->setMainImage($media['Demo 3'])
+            ->setLocale('fr')
+            ->setCreatedAt(new DateTime('2 days ago'))
+            ->setUpdatedAt(new DateTime('2 days ago'))
+            ->setMainContent('Ceci est la page d\'accueil en français.');
+
+        if ('localhost.dev' === $this->apps->getMainHost()) {
+            $homepageFr->setHost('localhost.dev');
+        }
+
+        $manager->persist($homepageFr);
+
         $manager->flush();
 
         if ('localhost.dev' === $this->apps->getMainHost()) {
