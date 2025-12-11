@@ -41,12 +41,12 @@ parameters:
     ignoreErrors:
         - '#Short ternary operator is not allowed#'
         # Symfony 7.4+ TreeBuilder generics are not well supported by PHPStan
-        -
-            identifier: class.notFound
-            path: packages/*/src/DependencyInjection/Configuration.php
-        -
-            identifier: method.nonObject
-            path: packages/*/src/DependencyInjection/Configuration.php
-        -
-            identifier: missingType.generics
-            path: packages/*/src/DependencyInjection/Configuration.php
+ #       -
+ #           identifier: class.notFound
+ #           path: packages/*/src/DependencyInjection/Configuration.php
+ #       -
+ #           identifier: method.nonObject
+ #           path: packages/*/src/DependencyInjection/Configuration.php
+ #       -
+ #          identifier: missingType.generics
+ #           path: packages/*/src/DependencyInjection/Configuration.php

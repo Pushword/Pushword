@@ -12,11 +12,11 @@
     "symfony/flex": "^2.9"
   },
   "flex-require": {
-    "symfony/console": "^7.3",
+    "symfony/console": "^7.3 || ^8.0",
     "symfony/dotenv": "*",
-    "symfony/framework-bundle": "^7.3",
+    "symfony/framework-bundle": "^8.0",
     "symfony/runtime": "*",
-    "symfony/yaml": "^7.3",
+    "symfony/yaml": "^8.0",
     "pushword/core": "^1.0.0-rc84",
     "pushword/installer": "^1.0.0-rc84",
     "pushword/skeleton": "^1.0.0-rc84",
