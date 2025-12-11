@@ -9,10 +9,25 @@ use Twig\TemplateWrapper;
 
 class ShowMore
 {
+    private ?string $currentId = null;
+
+    private int $counter = 0;
+
     public function __construct(
         public Twig $twig,
-        public AppPool $apps
+        public AppPool $apps,
     ) {
+    }
+
+    private ?string $pagePrefix = null;
+
+    private function getPagePrefix(): string
+    {
+        if (null === $this->pagePrefix) {
+            $this->pagePrefix = $this->apps->getCurrentPage()?->getSlug() ?? uniqid();
+        }
+
+        return $this->pagePrefix;
     }
 
     private function getTemplate(): TemplateWrapper
@@ -24,17 +39,25 @@ class ShowMore
     }
 
     #[AsTwigFunction('startShowMore', needsEnvironment: false, isSafe: ['html'])]
-    public function startShowMore(string $id, string $showMoreExtraClass = ''): string
+    public function startShowMore(?string $id = null, string $showMoreExtraClass = ''): string
     {
+        $this->currentId = $id ?? 'sm-'.substr(md5($this->getPagePrefix().'__'.(++$this->counter)), 0, 6);
+
         return $this->getTemplate()->renderBlock('before', [
-            'id' => $id,
+            'id' => $this->currentId,
             'showMoreExtraClass' => $showMoreExtraClass,
         ]);
     }
 
     #[AsTwigFunction('endShowMore', needsEnvironment: false, isSafe: ['html'])]
-    public function endShowMore(string $id): string
+    public function endShowMore(string $showMoreBackground = 'via-white to-white', ?string $id = null): string
     {
-        return $this->getTemplate()->renderBlock('after', ['id' => $id]);
+        $id ??= $this->currentId;
+        $this->currentId = null;
+
+        return $this->getTemplate()->renderBlock('after', [
+            'id' => $id,
+            'showMoreBackground' => $showMoreBackground,
+        ]);
     }
 }
