@@ -17,6 +17,9 @@ use Twig\Environment as Twig;
 
 class MediaExtension
 {
+    /** @var array<string, Media>|null */
+    private ?array $mediaCache = null;
+
     public function __construct(
         public Twig $twig,
         private readonly ImageManager $imageManager,
@@ -25,6 +28,23 @@ class MediaExtension
         #[Autowire('%pw.public_media_dir%')]
         private readonly string $publicMediaDir,
     ) {
+    }
+
+    /**
+     * Preload all media into cache for batch operations like static generation.
+     * Call this before processing multiple pages to avoid N+1 queries.
+     */
+    public function preloadMediaCache(): void
+    {
+        if (null !== $this->mediaCache) {
+            return;
+        }
+
+        $this->mediaCache = [];
+        $allMedia = $this->mediaRepository->findAll();
+        foreach ($allMedia as $media) {
+            $this->mediaCache[$media->getFileName()] = $media;
+        }
     }
 
     #[AsTwigFunction('isInstanceOfMedia')]
@@ -113,6 +133,11 @@ class MediaExtension
      */
     private function findMediaByFileName(string $fileName): ?Media
     {
+        // Use cache if available (populated by preloadMediaCache for batch operations)
+        if (null !== $this->mediaCache) {
+            return $this->findMediaInCache($fileName);
+        }
+
         // First try exact match
         $media = $this->mediaRepository->findOneBy(['fileName' => $fileName]);
         if (null !== $media) {
@@ -127,6 +152,26 @@ class MediaExtension
                 $media = $this->mediaRepository->findOneBy(['fileName' => $baseName.'.'.$ext]);
                 if (null !== $media) {
                     return $media;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function findMediaInCache(string $fileName): ?Media
+    {
+        if (isset($this->mediaCache[$fileName])) {
+            return $this->mediaCache[$fileName];
+        }
+
+        // If extension is webp/avif, try finding with common image extensions
+        $extension = strtolower(pathinfo($fileName, \PATHINFO_EXTENSION));
+        if (\in_array($extension, ['webp', 'avif'], true)) {
+            $baseName = pathinfo($fileName, \PATHINFO_FILENAME);
+            foreach (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'] as $ext) {
+                if (isset($this->mediaCache[$baseName.'.'.$ext])) {
+                    return $this->mediaCache[$baseName.'.'.$ext];
                 }
             }
         }

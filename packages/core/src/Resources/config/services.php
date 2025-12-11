@@ -4,8 +4,10 @@ declare(strict_types=1);
 use PiedWeb\RenderAttributes\TwigExtension;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\PushwordCoreBundle;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
+use Pushword\Core\Twig\MediaExtension;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -42,6 +44,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->public();
 
     $services->set(AppPool::class)
+        ->public();
+
+    $services->set(MediaRepository::class)
+        ->public();
+
+    $services->set(MediaExtension::class)
         ->public();
 
     // See who to avoid limit for this one too
