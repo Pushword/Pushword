@@ -11,6 +11,15 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc247
+
+If you customized your app.js, add if you use startShowMore component :
+
+```js
+import { initShowMore } from './ShowMore.js'
+initShowMore()
+```
+
 ## To 1.0.0-rc80
 
 - [ ] Default static website are now exported under `static/%main_host%` directory instead of `%main_host%`.

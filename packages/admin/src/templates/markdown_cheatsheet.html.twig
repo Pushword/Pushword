@@ -32,6 +32,7 @@
 - [{{ 'md_csVideo'|trans }}](#video)
 - [{{ 'md_csPageList'|trans }}](#pageslist)
 - [{{ 'md_csRedirection'|trans }}](#redirect)
+- [Show More](#showmore)
 - [{{ 'md_csOthers'|trans }}](#others)
 {% endblock %}
 {% endapply %}
@@ -304,6 +305,36 @@ Discover more on {{ link('Advanced Pages Listing', 'https://pushword.piedweb.com
 <div class="relative mb-8 overflow-hidden">
 <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
 Location: http://example.eg/
+</code></pre>
+</div>
+
+<!-- -->
+
+<h2 id="showmore" class="mt-16 mb-4 text-3xl font-bold">Show More</h2>
+
+<div class="prose dark:prose-light mb-4">
+{% apply markdown %}
+Collapse long content blocks with expand/collapse functionality.
+{% endapply %}
+</div>
+
+<div class="relative mb-8 overflow-hidden">
+    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
+{{ "{{ startShowMore() }}"|escapeTwig }}
+
+Your long content here (only first 250px height will be visible base on your templete file `/component/show_more.html.twig`)...
+
+{{ "{{ endShowMore() }}"|escapeTwig }}
+
+# With custom background (for non-white backgrounds)
+{{ "{{ startShowMore() }}"|escapeTwig }}
+...
+{{ "{{ endShowMore('via-gray-100 to-gray-100') }}"|escapeTwig }}
+
+# With custom ID (for linking via #hash)
+{{ "{{ startShowMore('my-custom-id') }}"|escapeTwig }}
+...
+{{ "{{ endShowMore() }}"|escapeTwig }}
 </code></pre>
 </div>
 

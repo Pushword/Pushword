@@ -21,12 +21,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - create bulk trait command (create back ups, restore back ups...)
 
-- improve start show more
-
-  - on ctrl+f, the show more block wich contains the search text must be opened
-  - on #hash, the show more block must not closed
-  - on document ready, if scroll != 0, the show more block must be opened
-
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
 - drop public media dir and hardcode a const php side and a js side

@@ -3,10 +3,13 @@
  *
  * Features:
  * - [x] Open/close show-more blocks
+ *    1. Page loads → blocks are fully visible (no max-height - best for SEO)
+ *    2. On scroll → `addClassForNormalUser` adds `max-h-[250px]` via `data-acinb`, collapsing them
+ *       Exception → blocks previously opened by user (in localStorage) stay open
  * - [x] Auto-open when URL contains hash pointing inside block
  * - [x] Auto-open when page loads with scroll position (browser back/refresh)
  * - [x] Auto-open on hash change (SPA navigation)
- * - [ ] Ctrl+F: Browser limitation - overflow:hidden content is not searchable
+ * - [x] Ctrl+F: Auto-open when browser finds text in collapsed block
  */
 
 const STORAGE_KEY = 'showmore_opened'
@@ -280,6 +283,25 @@ const ShowMore = {
           // Delay to let default navigation happen first
           setTimeout(() => this.scrollToHash(hash), 10)
         }
+      }
+    })
+
+    // Ctrl+F: open all collapsed blocks so browser can find text
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        this.openAllCollapsed()
+      }
+    })
+  },
+
+  /**
+   * Open all collapsed show-more blocks
+   * Useful for Ctrl+F to make all content searchable
+   */
+  openAllCollapsed() {
+    document.querySelectorAll('.show-more').forEach((wrapper) => {
+      if (this.isCollapsed(wrapper)) {
+        this.openContaining(wrapper, true)
       }
     })
   },
