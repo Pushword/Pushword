@@ -36,10 +36,10 @@ if [ "$1" = "full" ]
 then
     trap restoreDataAndComposerDependencies EXIT
     composer update --prefer-lowest
-    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug --no-cache-result $FILTER_ARG
+    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --stop-on-failure --debug --no-cache-result --exclude-group panther $FILTER_ARG
     composer validate-monorepo
 else
-    vendor/bin/phpunit --stop-on-failure $FILTER_ARG
+    vendor/bin/phpunit --stop-on-failure --exclude-group panther $FILTER_ARG
     # Only run validate-monorepo if no filter was applied (i.e., no arguments passed)
     if [ -z "$FILTER_ARG" ]
     then

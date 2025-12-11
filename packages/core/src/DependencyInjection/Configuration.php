@@ -76,42 +76,42 @@ final class Configuration implements ConfigurationInterface
         'default' => [
             'quality' => 90,
             'filters' => ['scaleDown' => [1980, 1280]],
-            'formats' => ['original'],
+            'formats' => ['original', 'webp'],
         ],
         'height_300' => [
             'quality' => 82,
             'filters' => ['scaleDown' => [null, 300]],
-            'formats' => ['avif'],
+            'formats' => ['webp'],
         ],
         'thumb' => [
             'quality' => 80,
             'filters' => ['coverDown' => [330, 330]],
-            'formats' => ['avif'],
+            'formats' => ['webp'],
         ],
         'xs' => [
             'quality' => 85,
             'filters' => ['scaleDown' => [576]],
-            'formats' => ['avif'],
+            'formats' => ['webp'],
         ],
         'sm' => [
             'quality' => 85,
             'filters' => ['scaleDown' => [768]],
-            'formats' => ['avif'],
+            'formats' => ['webp'],
         ],
         'md' => [
             'quality' => 85,
             'filters' => ['scaleDown' => [992]],
-            'formats' => ['avif', 'original'], // original is kept for rapid admin preview
+            'formats' => ['webp', 'original'], // original is kept for rapid admin preview
         ],
         'lg' => [
             'quality' => 85,
             'filters' => ['scaleDown' => [1200]],
-            'formats' => ['avif'],
+            'formats' => ['webp'],
         ],
         'xl' => [
             'quality' => 90,
             'filters' => ['scaleDown' => [1600]],
-            'formats' => ['avif'],
+            'formats' => ['webp'],
         ],
     ];
 
