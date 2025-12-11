@@ -73,9 +73,6 @@ composer rector
 # run phpstan
 composer stan
 
-# run psalm
-composer psalm
-
 # to play with default app console (skeleton)
-composer console
+composer console ...
 ```

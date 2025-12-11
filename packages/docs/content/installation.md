@@ -14,7 +14,7 @@ toc: true
 - **yarn** - [how to install yarn](https://classic.yarnpkg.com/lang/en/docs/install/#debian-stable) or _pnpm_, _npm_
 - **brotli**
 
-_Note_ : **Node** and **Yarn** may not be required in the near future, [thanks to asset mapper](https://symfony.com/doc/current/frontend/asset_mapper.html).
+_Note_ : **Node** and **Yarn** are not required if you have your custom logic to manage assets.
 
 ## Automatic installer via composer
 
