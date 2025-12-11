@@ -15,7 +15,7 @@
                 onfocus: "this.placeholder = ''",
                 onblur: "this.placeholder = '" ~ 'conversationEmailPlaceholder'|trans ~ "'",
                 required: 'text',
-                pattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$',
+                pattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{1,63}$',
                 type: 'email',
                 class: authorEmailInputClass ??'appearance-none bg-transparent border-none focus:ring-transparent focus:border-transparent focus:shadow-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-hidden'
             }

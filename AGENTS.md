@@ -97,3 +97,13 @@ Default credentials are `admin@example.tld` / `p@ssword` (ROLE_SUPER_ADMIN). If 
 - you must avoid to skip tests by using `self::markTestSkipped('...')` or `@group skip` in tests ➜ fix them !
 - Clear cache after each modification `composer console cache:clear`
 - Write comment and documentation in english only.
+
+## Fix deprecations
+
+```
+# Symfony runtime deprecations (strict mode)
+SYMFONY_DEPRECATIONS_HELPER='max[self]=0&max[direct]=0' composer test
+
+# Container deprecations
+php bin/console debug:container --deprecations
+```
