@@ -73,7 +73,6 @@ final class ImageManager
 
     private function findAvifenc(): ?string
     {
-
         // Fall back to system avifenc
         $finder = new ExecutableFinder();
 

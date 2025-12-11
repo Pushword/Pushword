@@ -358,6 +358,28 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
+     * Fetch published pages with eager loading of relations to avoid N+1 queries.
+     *
+     * @return Page[]
+     */
+    public function getPublishedPagesWithEagerLoading(string $host): array
+    {
+        $queryBuilder = $this->createQueryBuilder('p')
+            ->leftJoin('p.parentPage', 'parent')->addSelect('parent')
+            ->leftJoin('p.childrenPages', 'children')->addSelect('children')
+            ->leftJoin('p.mainImage', 'mainImage')->addSelect('mainImage')
+            ->andWhere('p.publishedAt IS NOT NULL')
+            ->andWhere('p.publishedAt <= :now')
+            ->setParameter('now', new DateTime(), 'datetime');
+
+        if ('' !== $host) {
+            $queryBuilder->andWhere('p.host = :host')->setParameter('host', $host);
+        }
+
+        return $queryBuilder->getQuery()->getResult();
+    }
+
+    /**
      * @param string|string[]|null $host
      *
      * @return string[]

@@ -2,6 +2,7 @@ page_scanCanonical: 'La canonical est différente'
 page_scanDifferentHost: 'La page parente a un domaine différent'
 page_scanIsRedirection: redirection
 page_scanNotFound: 'non trouvé'
+page_scanNotPublished: 'non publié'
 page_scanObfuscateMail: 'pour prévenir le spam, vous pouvez obfusquer ce lien.'
 page_scanStatusCode: 'Code de réponse HTTP innatendu'
 page_scanUnreachable: 'inaccessible - errorMessage'

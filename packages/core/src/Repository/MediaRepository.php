@@ -38,6 +38,10 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     public function loadMedias(): void
     {
+        if ([] !== $this->mediasByFileNameCache) {
+            return;
+        }
+
         $medias = $this->findAll();
         foreach ($medias as $media) {
             $this->mediasByFileNameCache[$media->getFileName()] = $media;

@@ -37,6 +37,13 @@ final class LinkedDocsScanner extends AbstractScanner
     private array $urlExistCache = [];
 
     /**
+     * Cache of all pages indexed by "host/slug" for fast lookup.
+     *
+     * @var array<string, Page>|null
+     */
+    private ?array $pageCache = null;
+
+    /**
      * @param string[] $linksToIgnore
      */
     public function __construct(
@@ -46,6 +53,33 @@ final class LinkedDocsScanner extends AbstractScanner
         TranslatorInterface $translator,
     ) {
         parent::__construct($translator);
+    }
+
+    /**
+     * Preload pages into cache for fast internal link checking.
+     * If host is provided, only pages from that host are loaded.
+     */
+    public function preloadPageCache(string $host = ''): void
+    {
+        if (null !== $this->pageCache) {
+            return;
+        }
+
+        $this->pageCache = [];
+
+        $repo = $this->entityManager->getRepository(Page::class);
+        $queryBuilder = $repo->createQueryBuilder('p');
+
+        if ('' !== $host) {
+            $queryBuilder->andWhere('p.host = :host')->setParameter('host', $host);
+        }
+
+        /** @var Page[] $pages */
+        $pages = $queryBuilder->getQuery()->getResult();
+        foreach ($pages as $page) {
+            $key = $page->getHost().'/'.$page->getSlug();
+            $this->pageCache[$key] = $page;
+        }
     }
 
     /**
@@ -224,6 +258,8 @@ final class LinkedDocsScanner extends AbstractScanner
         if ('/' === $uri[0]) {
             if (! $this->uriExist($this->removeParameters($uri))) {
                 $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
+            } elseif ($this->lastPageChecked instanceof Page && ! $this->lastPageChecked->isPublished()) {
+                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
             } elseif ($checkRedirection && $this->lastPageChecked instanceof Page && $this->lastPageChecked->hasRedirection()) {
                 $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
             }
@@ -341,9 +377,9 @@ final class LinkedDocsScanner extends AbstractScanner
 
         $checkDatabase = ! str_starts_with($slug, 'media/'); // we avoid to check in db the media, file exists is enough
 
-        $this->lastPageChecked = $checkDatabase ? $this->entityManager->getRepository(Page::class)
-            ->getPage($slug, $this->page->getHost(), true) :
-            null;
+        if ($checkDatabase) {
+            $this->lastPageChecked = $this->findPageInCacheOrDb($slug);
+        }
 
         $this->everChecked[$slug] = (
             ! $this->lastPageChecked instanceof Page
@@ -353,5 +389,19 @@ final class LinkedDocsScanner extends AbstractScanner
         ) ? false : true;
 
         return $this->everChecked[$slug];
+    }
+
+    private function findPageInCacheOrDb(string $slug): ?Page
+    {
+        // Use cache if available
+        if (null !== $this->pageCache) {
+            $hostKey = $this->page->getHost().'/'.$slug;
+
+            return $this->pageCache[$hostKey] ?? null;
+        }
+
+        // Fall back to database query
+        return $this->entityManager->getRepository(Page::class)
+            ->getPage($slug, $this->page->getHost(), true);
     }
 }

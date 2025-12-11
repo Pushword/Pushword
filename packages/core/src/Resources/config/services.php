@@ -7,8 +7,8 @@ use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
-use Pushword\Core\Twig\MediaExtension;
 use Pushword\Core\Service\VichUploadPropertyNamer;
+use Pushword\Core\Twig\MediaExtension;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;

@@ -4,6 +4,7 @@ namespace Pushword\PageScanner\Scanner;
 
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Twig\MediaExtension;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,6 +43,21 @@ final class PageScannerService
 
         self::loadKernel($kernel);
         self::getKernel()->getContainer()->get(PushwordRouteGenerator::class)->setUseCustomHostPath(false);
+    }
+
+    /**
+     * Preload caches to avoid N+1 queries during scanning.
+     * Call this before scanning multiple pages.
+     *
+     * @param string $host If provided, only preload pages from this host
+     */
+    public function preloadCaches(string $host = ''): void
+    {
+        /** @var MediaExtension $mediaExtension */
+        $mediaExtension = self::getKernel()->getContainer()->get(MediaExtension::class);
+        $mediaExtension->preloadMediaCache();
+
+        $this->linkedDocsScanner->preloadPageCache($host);
     }
 
     private function resetErrors(): void

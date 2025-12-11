@@ -25,6 +25,7 @@ final class PageScannerCommand
         PageScannerController::setFileCache($varDir);
     }
 
+
     protected function scanAllWithLock(string $host): bool
     {
         $lock = (new LockFactory(new FlockStore()))->createLock('page-scan');
@@ -46,7 +47,8 @@ final class PageScannerCommand
      */
     protected function scanAll(string $host): array
     {
-        $pages = $this->pageRepo->getPublishedPages($host);
+        $this->scanner->preloadCaches($host);
+        $pages = $this->pageRepo->getPublishedPagesWithEagerLoading($host);
 
         $errors = [];
         $errorNbr = 0;

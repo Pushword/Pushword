@@ -2,6 +2,7 @@ page_scanCanonical: 'Canonical is different'
 page_scanDifferentHost: 'Parent page has a different host'
 page_scanIsRedirection: redirection
 page_scanNotFound: 'not found'
+page_scanNotPublished: 'not published'
 page_scanObfuscateMail: 'to prevent spam, obfuscate this link.'
 page_scanStatusCode: 'Unexpected status code'
 page_scanUnreachable: 'unreacheable - errorMessage'
