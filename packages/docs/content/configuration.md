@@ -222,3 +222,7 @@ This one could be directly overrided, see [overriding twig template](override-th
 ### `pushword.apps[...].favicons_path`
 
 A deprecated way to update favicons is to use favicons_path at the app level configuration. It will use this folder path in [component/favicon.html.twig](https://github.com/Pushword/Pushword/blob/main/packages/core/src/templates/component/favicon.html.twig)
+
+### Media Storage
+
+Pushword uses [League Flysystem](https://flysystem.thephpleague.com/) via the [flysystem-bundle](https://github.com/thephpleague/flysystem-bundle) for media storage. This allows you to store your media files locally (default) or on remote services like Amazon S3, FTP, SFTP, and more. See [storage](/storage) for more details.

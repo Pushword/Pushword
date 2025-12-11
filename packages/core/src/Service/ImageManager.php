@@ -28,8 +28,6 @@ final class ImageManager
 
     private ?ImageInterface $lastThumb = null;
 
-    private readonly Filesystem $fileSystem;
-
     /**
      * @param array<string, array<string, mixed>> $filterSets
      */
@@ -38,9 +36,9 @@ final class ImageManager
         private readonly string $publicDir,
         private readonly string $projectDir,
         private readonly string $publicMediaDir,
-        private readonly string $mediaDir
+        private readonly string $mediaDir,
+        private readonly MediaStorageAdapter $mediaStorage,
     ) {
-        $this->fileSystem = new Filesystem();
         $this->optimizer = OptimizerChainFactory::create(); // t o d o make optimizer bin path configurable
         $this->renamer = new MediaRenamer();
     }
@@ -192,7 +190,9 @@ final class ImageManager
      */
     private function getImage(Media|string $media): ImageInterface
     {
-        $path = $media instanceof Media ? $media->getPath() : $media;
+        $path = $media instanceof Media
+            ? $this->mediaStorage->getLocalPath($media->getFileName())
+            : $media;
 
         try {
             return InteventionImageManager::gd()->read($path); // default driver GD
@@ -260,21 +260,26 @@ final class ImageManager
 
     private function finishImportExternalByCopyingLocally(Media $media, string $imageLocalImport): void
     {
-        $newFilePath = $this->mediaDir.'/'.$media->getFileName();
-
-        if (file_exists($newFilePath)) {
-            if (sha1_file($newFilePath) !== sha1_file($imageLocalImport)) {
-                // an image exist locally with same name/slug but is a different file
+        if ($this->mediaStorage->fileExists($media->getFileName())) {
+            $existingLocalPath = $this->mediaStorage->getLocalPath($media->getFileName());
+            if (sha1_file($existingLocalPath) !== sha1_file($imageLocalImport)) {
+                // an image exist with same name/slug but is a different file
                 $this->renamer->rename($media);
                 $this->finishImportExternalByCopyingLocally($media, $imageLocalImport);
 
                 return;
             }
 
-            return; // same image is ever exist locally
+            return; // same image already exists
         }
 
-        $this->fileSystem->copy($imageLocalImport, $newFilePath);
+        // Upload file to storage
+        $stream = fopen($imageLocalImport, 'r');
+        if (false !== $stream) {
+            $this->mediaStorage->writeStream($media->getFileName(), $stream);
+            fclose($stream);
+        }
+
         $this->generateCache($media);
     }
 
@@ -293,7 +298,7 @@ final class ImageManager
             curl_setopt($curl, \CURLOPT_RETURNTRANSFER, true);
             /** @var false|string $content */
             $content = curl_exec($curl);
-            curl_close($curl);
+            unset($curl);
         } else {
             $content = file_get_contents($src);
         }

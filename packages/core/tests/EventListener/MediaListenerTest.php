@@ -133,7 +133,10 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
             return $this->imageManager;
         }
 
-        return $this->imageManager = new ImageManager([], $this->publicDir, $this->projectDir, $this->publicMediaDir, $this->mediaDir);
+        /** @var \Pushword\Core\Service\MediaStorageAdapter $mediaStorage */
+        $mediaStorage = self::getContainer()->get(\Pushword\Core\Service\MediaStorageAdapter::class);
+
+        return $this->imageManager = new ImageManager([], $this->publicDir, $this->projectDir, $this->publicMediaDir, $this->mediaDir, $mediaStorage);
     }
 
     private function requestMediaCreateForm(KernelBrowser $client): Crawler

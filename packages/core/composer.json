@@ -51,6 +51,7 @@
     "vich/uploader-bundle": "^2.9",
     "villfa/invert-color": "^0.5",
     "league/commonmark": "^2.7",
+    "league/flysystem-bundle": "^3.6",
     "twig/extra-bundle": "^3",
     "symfony/ux-twig-component": "^2"
   },

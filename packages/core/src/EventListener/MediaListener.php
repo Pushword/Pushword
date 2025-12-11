@@ -9,13 +9,13 @@ use LogicException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Utils\FlashBag;
 use Pushword\Core\Utils\MediaRenamer;
 
 use function Safe\preg_replace;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface;
@@ -36,7 +36,7 @@ final readonly class MediaListener
     public function __construct(
         private string $projectDir,
         private EntityManagerInterface $em,
-        private Filesystem $filesystem,
+        private MediaStorageAdapter $mediaStorage,
         private ImageManager $imageManager,
         private RequestStack $requestStack,
         private RouterInterface $router,
@@ -108,7 +108,14 @@ final readonly class MediaListener
 
     public function prePersist(Media $media): void
     {
-        $media->setHash();
+        // If mediaFile is set (upload), setHash() will use it
+        // Otherwise, calculate from storage
+        if (null === $media->getMediaFile() && '' !== $media->getFileName()) {
+            $localPath = $this->mediaStorage->getLocalPath($media->getFileName());
+            $media->setHash(\Safe\sha1_file($localPath, true));
+        } else {
+            $media->setHash();
+        }
     }
 
     public function postPersist(Media $media): void
@@ -132,7 +139,7 @@ final readonly class MediaListener
         if ($preUpdateEventArgs->hasChangedField('fileName')) {
             $this->renameIfIdentifiersAreToken($media);
 
-            if (file_exists($media->getPath())) {
+            if ($this->mediaStorage->fileExists($media->getFileName())) {
                 $media->setFileName($media->getFileNameBeforeUpdate());
 
                 throw new Exception('Impossible to rename '.$media->getFileNameBeforeUpdate().' in '.$media->getFileName().'. File ever exist');
@@ -143,9 +150,9 @@ final readonly class MediaListener
                 throw new LogicException();
             }
 
-            $this->filesystem->rename(
-                $media->getStoreIn().'/'.$media->getFileNameBeforeUpdate(),
-                $media->getStoreIn().'/'.$media->getFileName()
+            $this->mediaStorage->move(
+                $media->getFileNameBeforeUpdate(),
+                $media->getFileName()
             );
             $this->imageManager->remove($media->getFileNameBeforeUpdate());
             $media->setFileNameBeforeUpdate('');
@@ -153,7 +160,9 @@ final readonly class MediaListener
             $this->imageManager->generateCache($media);
             // exec('cd ../ && php bin/console pw:image:cache '.$media->getFileName().' > /dev/null 2>/dev/null &');
 
-            $media->setHash();
+            // Calculate hash using storage adapter
+            $localPath = $this->mediaStorage->getLocalPath($media->getFileName());
+            $media->setHash(\Safe\sha1_file($localPath, true));
         }
     }
 
@@ -163,8 +172,8 @@ final readonly class MediaListener
             return;
         }
 
-        if (str_starts_with($media->getStoreIn(), $this->projectDir)) {
-            $this->filesystem->remove($media->getStoreIn().'/'.$media->getFileName());
+        if ($this->mediaStorage->fileExists($media->getFileName())) {
+            $this->mediaStorage->delete($media->getFileName());
         }
 
         $this->imageManager->remove($media);

@@ -27,7 +27,7 @@ Pushword is a modular CMS built as a collection of Symfony bundles. This is a mo
 
 ### Coding Standards & Tooling
 
-- Use **PHPUnit** for unit and functional testing via `composer test` or `composer test-filter ...` (do not use directly `vendor/bin/phpunit`)
+- Use **PHPUnit** for unit and functional testing via `composer test` or `composer test-filter ...` (never use directly `vendor/bin/phpunit`)
 - Use php-cs-fixer`composer rector` to ensure consistent code style
 - Use **PHPStan** `composer stan` for static analysis
 - Use **CI** `composer test` to run all tests and checks automatically

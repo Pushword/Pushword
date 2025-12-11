@@ -4,6 +4,7 @@ use BabDev\PagerfantaBundle\BabDevPagerfantaBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle;
 use EasyCorp\Bundle\EasyAdminBundle\EasyAdminBundle;
+use League\FlysystemBundle\FlysystemBundle;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle;
 use Pushword\AdvancedMainImage\PushwordAdvancedMainImageBundle;
@@ -52,6 +53,7 @@ return [
     BabDevPagerfantaBundle::class => ['all' => true],
 
     // Used for Media
+    FlysystemBundle::class => ['all' => true],
     VichUploaderBundle::class => ['all' => true],
 
     // - generate default welcome page

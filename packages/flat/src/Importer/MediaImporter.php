@@ -9,13 +9,13 @@ use League\Csv\Reader;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Flat\Exporter\MediaCsvHelper;
 use Pushword\Flat\Exporter\MediaExporter;
 use RuntimeException;
 
 use function Safe\filesize;
 
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -42,17 +42,15 @@ class MediaImporter extends AbstractImporter
     /** @var string[] */
     private array $customColumns = [];
 
-    private Filesystem $filesystem;
-
     public function __construct(
         protected EntityManagerInterface $em,
         protected AppPool $apps,
         public string $mediaDir,
         public string $projectDir,
+        private readonly MediaStorageAdapter $mediaStorage,
         private readonly ?LoggerInterface $logger = null,
     ) {
         parent::__construct($em, $apps);
-        $this->filesystem = new Filesystem();
     }
 
     private bool $newMedia = false;
@@ -341,15 +339,19 @@ class MediaImporter extends AbstractImporter
 
     private function copyToMediaDir(string $filePath): string
     {
-        $newFilePath = $this->mediaDir.'/'.$this->getFilename($filePath);
+        $fileName = $this->getFilename($filePath);
 
-        if ('' !== $this->mediaDir && $filePath !== $newFilePath) {
-            (new Filesystem())->copy($filePath, $newFilePath);
-
-            return $newFilePath;
+        if ('' !== $this->mediaDir) {
+            // Copy from local flat file to media storage
+            $stream = fopen($filePath, 'r');
+            if (false !== $stream) {
+                $this->mediaStorage->writeStream($fileName, $stream);
+                fclose($stream);
+            }
         }
 
-        return $filePath;
+        // Return the local path for further processing (storeIn, size, mimeType)
+        return $this->mediaStorage->getLocalPath($fileName);
     }
 
     /**
@@ -427,7 +429,7 @@ class MediaImporter extends AbstractImporter
 
     /**
      * Prepare file renames based on CSV changes.
-     * If CSV has a different fileName for an existing ID, rename the file on disk.
+     * If CSV has a different fileName for an existing ID, rename the file in storage.
      *
      * @throws RuntimeException if a file cannot be renamed
      */
@@ -441,31 +443,29 @@ class MediaImporter extends AbstractImporter
 
             $media->setProjectDir($this->projectDir);
             $oldFileName = $media->getFileName();
-            $oldPath = $dir.'/'.$oldFileName;
-            $newPath = $dir.'/'.$newFileName;
 
-            // Check if old file exists
-            if (! file_exists($oldPath)) {
+            // Check if old file exists in storage
+            if (! $this->mediaStorage->fileExists($oldFileName)) {
                 // Maybe already renamed, check if new file exists
-                if (file_exists($newPath)) {
+                if ($this->mediaStorage->fileExists($newFileName)) {
                     continue; // Already renamed
                 }
 
-                throw new RuntimeException(\sprintf('Cannot rename media #%d: file "%s" does not exist in "%s"', $mediaId, $oldFileName, $dir));
+                throw new RuntimeException(\sprintf('Cannot rename media #%d: file "%s" does not exist in storage', $mediaId, $oldFileName));
             }
 
             // Check if new path already exists (collision)
-            if (file_exists($newPath)) {
+            if ($this->mediaStorage->fileExists($newFileName)) {
                 throw new RuntimeException(\sprintf('Cannot rename media #%d from "%s" to "%s": target file already exists', $mediaId, $oldFileName, $newFileName));
             }
 
-            // Rename the file
-            $this->filesystem->rename($oldPath, $newPath);
+            // Rename the file in storage
+            $this->mediaStorage->move($oldFileName, $newFileName);
         }
     }
 
     /**
-     * Validate that files referenced in the CSV with IDs exist on disk.
+     * Validate that files referenced in the CSV with IDs exist in storage or flat directory.
      * Only validates files that have IDs (existing media), not new files.
      *
      * @throws RuntimeException if a file with ID is missing
@@ -484,31 +484,31 @@ class MediaImporter extends AbstractImporter
                 continue;
             }
 
+            // Check flat directory first (source for import)
             $filePath = $dir.'/'.$fileName;
-
-            // Skip if file exists with new name
             if (file_exists($filePath)) {
                 continue;
             }
 
-            // Check if this is a renamed file (old file might exist)
+            // Check storage (already imported)
+            if ($this->mediaStorage->fileExists($fileName)) {
+                continue;
+            }
+
+            // Check if this is a renamed file (old file might exist in storage)
             $media = $this->em->getRepository(Media::class)->find((int) $id);
             if ($media instanceof Media) {
                 $media->setProjectDir($this->projectDir);
-                $oldPath = $dir.'/'.$media->getFileName();
-                if (file_exists($oldPath)) {
-                    // File exists with old name, will be renamed
-                    continue;
-                }
+                $oldFileName = $media->getFileName();
 
-                // Check if file is in another directory (skip validation for this dir)
-                // The file might be in a different media directory
-                if ($media->getStoreIn() !== $dir) {
+                // Check if old file exists in flat dir or storage
+                if (file_exists($dir.'/'.$oldFileName) || $this->mediaStorage->fileExists($oldFileName)) {
+                    // File exists with old name, will be renamed
                     continue;
                 }
             }
 
-            throw new RuntimeException(\sprintf('Media file "%s" referenced in CSV does not exist in "%s"', $fileName, $dir));
+            throw new RuntimeException(\sprintf('Media file "%s" referenced in CSV does not exist in "%s" or storage', $fileName, $dir));
         }
     }
 }

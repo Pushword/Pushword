@@ -1,17 +1,9 @@
 <?php
 
-namespace App\Command;
+namespace Pushword\Core\Command;
 
-use Doctrine\ORM\EntityManagerInterface;
-use Exception;
-use Pushword\AdminBlockEditor\EditorJsHelper;
-use Pushword\Core\Repository\PageRepository;
-use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
-use Pushword\Core\Entity\Page;
 
 final class CommandHelper
 {
@@ -27,4 +19,10 @@ final class CommandHelper
         $output->writeln('Backup created: '.$backupFileName);
     }
 
+
+    public function restoreLastBackup( OutputInterface $output): void
+    {
+        // find last backup file in var/app.db~* and restore it
+        // tranform this in a command class with this method as invokable (the other one - create backup - could be used in other command)
+    }
 }

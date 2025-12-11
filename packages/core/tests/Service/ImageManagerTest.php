@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Service;
 
 use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -18,7 +19,17 @@ class ImageManagerTest extends KernelTestCase
             return $this->imageManager;
         }
 
-        return $this->imageManager = new ImageManager([], $this->publicDir, $this->projectDir, $this->publicMediaDir, $this->mediaDir);
+        $mediaStorage = $this->createMediaStorageAdapter();
+
+        return $this->imageManager = new ImageManager([], $this->publicDir, $this->projectDir, $this->publicMediaDir, $this->mediaDir, $mediaStorage);
+    }
+
+    private function createMediaStorageAdapter(): MediaStorageAdapter
+    {
+        self::bootKernel();
+
+        /** @var MediaStorageAdapter */
+        return self::getContainer()->get(MediaStorageAdapter::class);
     }
 
     public function testBrowserAndFilterPath(): void

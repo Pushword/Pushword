@@ -21,8 +21,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
-- drop public media dir and hardcode a const php side and a js side
-  → use league/flysystem instead with bundle configuration to have a more flexible way to store media
+- Media → use league/flysystem instead with bundle configuration default to local to have a more flexible way to store media for enduser instead of direct php filesystem acess or symfony/filesystem use
+
+- WebP → Avif
 
 - Pushword\PageScanner\Tests\PageScannerCommandTest > page scanner comm 26.84s
   This is very slow

@@ -5,8 +5,12 @@ use PiedWeb\RenderAttributes\TwigExtension;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
+
 use Twig\Extension\StringLoaderExtension;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -47,4 +51,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(StringLoaderExtension::class);
     $services->set(TwigExtension::class);
     // $services->set(IntlExtension::class);
+
+    // Media Storage (Flysystem)
+    $services->set(MediaStorageAdapter::class)
+        ->args([
+            '$storage' => service('pushword.mediaStorage'),
+            '$mediaDir' => '%pw.media_dir%',
+            '$isLocal' => true,
+        ]);
 };

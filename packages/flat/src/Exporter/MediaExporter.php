@@ -6,7 +6,7 @@ use Exception;
 use League\Csv\Writer;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
-use Symfony\Component\Filesystem\Filesystem;
+use Pushword\Core\Service\MediaStorageAdapter;
 
 final class MediaExporter
 {
@@ -16,13 +16,11 @@ final class MediaExporter
 
     public string $exportDir = '';
 
-    private readonly Filesystem $filesystem;
-
     public function __construct(
         private readonly MediaRepository $mediaRepo,
         private readonly string $mediaDir,
+        private readonly MediaStorageAdapter $mediaStorage,
     ) {
-        $this->filesystem = new Filesystem();
     }
 
     public function exportMedias(): void
@@ -157,12 +155,17 @@ final class MediaExporter
             return;
         }
 
-        if (! file_exists($media->getPath())) {
-            throw new Exception('Media file not found: '.$media->getPath());
+        if (! $this->mediaStorage->fileExists($media->getFileName())) {
+            throw new Exception('Media file not found: '.$media->getFileName());
         }
 
         $destination = $this->exportDir.'/'.$this->copyMedia.'/'.$media->getFileName();
-        $this->filesystem->copy($media->getPath(), $destination);
+        $this->ensureDirectoryExists(\dirname($destination));
+
+        // Read from storage and write to local export directory
+        $stream = $this->mediaStorage->readStream($media->getFileName());
+        file_put_contents($destination, $stream);
+        fclose($stream);
     }
 
     private function getCsvFilePath(): string

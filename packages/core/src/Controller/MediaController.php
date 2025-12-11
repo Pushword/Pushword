@@ -2,35 +2,68 @@
 
 namespace Pushword\Core\Controller;
 
+use League\Flysystem\FilesystemException;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class MediaController extends AbstractController
 {
     public function __construct(
-        private readonly string $publicMediaDir,
-        private readonly string $projectDir,
+        private readonly MediaStorageAdapter $mediaStorage,
     ) {
     }
 
     #[Route('/%pw.public_media_dir%/{media}', name: 'pushword_media_download', requirements: ['media' => RoutePatterns::MEDIA], methods: ['GET', 'HEAD'])]
-    public function download(string $media): BinaryFileResponse
+    public function download(string $media): BinaryFileResponse|StreamedResponse
     {
-        $pathToFile = $this->projectDir.'/'.$this->publicMediaDir.'/'.str_replace('..', '', $media);
+        $mediaPath = str_replace('..', '', $media);
 
-        if (! file_exists($pathToFile)) {
+        try {
+            if (! $this->mediaStorage->fileExists($mediaPath)) {
+                throw $this->createNotFoundException('The media does not exist...');
+            }
+        } catch (FilesystemException) {
             throw $this->createNotFoundException('The media does not exist...');
         }
 
-        $binaryFileResponse = new BinaryFileResponse($pathToFile);
-        // $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT); ResponseHeaderBag::DISPOSITION_INLINE);
+        // For local storage, use BinaryFileResponse for better performance
+        if ($this->mediaStorage->isLocal()) {
+            $pathToFile = $this->mediaStorage->getLocalPath($mediaPath);
+            $binaryFileResponse = new BinaryFileResponse($pathToFile);
 
-        // temporary hack until I dig why svg+xml file are return with this mimeType...
-        if ('image/svg' === $binaryFileResponse->getFile()->getMimeType()) {
-            $binaryFileResponse->headers->set('content-type', 'image/svg+xml');
+            // temporary hack until I dig why svg+xml file are return with this mimeType...
+            if ('image/svg' === $binaryFileResponse->getFile()->getMimeType()) {
+                $binaryFileResponse->headers->set('content-type', 'image/svg+xml');
+            }
+
+            return $binaryFileResponse;
         }
 
-        return $binaryFileResponse;
+        // For remote storage, use StreamedResponse
+        try {
+            $mimeType = $this->mediaStorage->mimeType($mediaPath);
+        } catch (FilesystemException) {
+            $mimeType = 'application/octet-stream';
+        }
+
+        // Fix for SVG mime type
+        if ('image/svg' === $mimeType) {
+            $mimeType = 'image/svg+xml';
+        }
+
+        $storage = $this->mediaStorage;
+
+        return new StreamedResponse(
+            static function () use ($storage, $mediaPath): void {
+                $stream = $storage->readStream($mediaPath);
+                fpassthru($stream);
+                fclose($stream);
+            },
+            200,
+            ['Content-Type' => $mimeType]
+        );
     }
 }

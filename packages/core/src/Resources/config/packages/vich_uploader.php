@@ -8,9 +8,11 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->extension('vich_uploader', [
         'db_driver' => 'orm',
+        'storage' => 'flysystem',
         'mappings' => [
             'media_media' => [
-                'upload_destination' => '%pw.media_dir%',
+                'uri_prefix' => '/%pw.public_media_dir%',
+                'upload_destination' => 'pushword.mediaStorage',
                 'namer' => [
                     'service' => VichUploadPropertyNamer::class,
                 ],

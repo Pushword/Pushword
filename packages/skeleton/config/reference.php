@@ -1440,6 +1440,21 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         not_valid_current_page?: "to_http_not_found"|"custom", // Default: "to_http_not_found"
  *     },
  * }
+ * @psalm-type FlysystemConfig = array{
+ *     storages?: array<string, array{ // Default: []
+ *         adapter: scalar|null,
+ *         options?: list<mixed>,
+ *         visibility?: scalar|null, // Default: null
+ *         directory_visibility?: scalar|null, // Default: null
+ *         case_sensitive?: bool, // Default: true
+ *         disable_asserts?: bool, // Default: false
+ *         public_url?: list<scalar|null>,
+ *         path_normalizer?: scalar|null, // Default: null
+ *         public_url_generator?: scalar|null, // Default: null
+ *         temporary_url_generator?: scalar|null, // Default: null
+ *         read_only?: bool, // Default: false
+ *     }>,
+ * }
  * @psalm-type VichUploaderConfig = array{
  *     default_filename_attribute_suffix?: scalar|null, // Default: "_name"
  *     db_driver: scalar|null,
@@ -1579,6 +1594,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     security?: SecurityConfig,
  *     doctrine?: DoctrineConfig,
  *     babdev_pagerfanta?: BabdevPagerfantaConfig,
+ *     flysystem?: FlysystemConfig,
  *     vich_uploader?: VichUploaderConfig,
  *     stimulus?: StimulusConfig,
  *     twig_component?: TwigComponentConfig,
@@ -1604,6 +1620,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         security?: SecurityConfig,
  *         doctrine?: DoctrineConfig,
  *         babdev_pagerfanta?: BabdevPagerfantaConfig,
+ *         flysystem?: FlysystemConfig,
  *         vich_uploader?: VichUploaderConfig,
  *         stimulus?: StimulusConfig,
  *         twig_component?: TwigComponentConfig,
@@ -1633,6 +1650,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         security?: SecurityConfig,
  *         doctrine?: DoctrineConfig,
  *         babdev_pagerfanta?: BabdevPagerfantaConfig,
+ *         flysystem?: FlysystemConfig,
  *         vich_uploader?: VichUploaderConfig,
  *         stimulus?: StimulusConfig,
  *         twig_component?: TwigComponentConfig,
@@ -1659,6 +1677,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         security?: SecurityConfig,
  *         doctrine?: DoctrineConfig,
  *         babdev_pagerfanta?: BabdevPagerfantaConfig,
+ *         flysystem?: FlysystemConfig,
  *         vich_uploader?: VichUploaderConfig,
  *         stimulus?: StimulusConfig,
  *         twig_component?: TwigComponentConfig,
