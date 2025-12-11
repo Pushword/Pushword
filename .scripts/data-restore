@@ -6,6 +6,12 @@
 #     rm -rf docs~preserve
 # fi
 
+# Clean up test files created during tests
+rm -f packages/docs/content/test-content.md
+rm -f packages/docs/content/test-link.md
+rm -f packages/docs/content/media/index.csv
+rm -f packages/docs/content/media/logo-test.png
+
 cd packages/skeleton
 
 cp var/app.db~ var/app.db

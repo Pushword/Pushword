@@ -28,7 +28,7 @@ then
 fi
 
 # Install nodejs dependencies
-yarn
+[ -d "node_modules" ] || yarn
 
 # lsof -ti:9080 | xargs -r kill -9 2>/dev/null; pkill -f chromedriver 2>/dev/null; sleep 1
 

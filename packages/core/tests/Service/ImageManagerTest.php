@@ -158,6 +158,11 @@ class ImageManagerTest extends KernelTestCase
         $media = $this->getManager()->importExternal('https://piedweb.com/assets/pw/favicon-32x32.png', 'favicon from pied web');
         self::assertSame('favicon-from-pied-web-dd93.png', $media->getFileName());
         self::assertFileExists($this->mediaDir.'/'.$media->getFileName());
+
+        // Cleanup imported files
+        @unlink($this->mediaDir.'/favicon-dd93.png');
+        @unlink($this->mediaDir.'/favicon.png');
+        @unlink($this->mediaDir.'/favicon-from-pied-web-dd93.png');
     }
 
     public function testDriverSelection(): void

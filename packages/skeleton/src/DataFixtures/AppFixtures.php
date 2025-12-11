@@ -46,7 +46,6 @@ class AppFixtures extends Fixture
             'Demo 1' => ['file' => '1.jpg', 'mime' => 'image/jpeg'],
             'Demo 2' => ['file' => '2.jpg', 'mime' => 'image/jpeg'],
             'Demo 3' => ['file' => '3.jpg', 'mime' => 'image/jpeg'],
-            'Demo AVIF' => ['file' => 'hato.avif', 'mime' => 'image/avif'],
         ];
         $media = [];
         foreach ($medias as $name => $data) {

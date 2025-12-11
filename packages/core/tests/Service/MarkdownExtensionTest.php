@@ -99,7 +99,9 @@ class MarkdownExtensionTest extends KernelTestCase
 
         // Vérifie que c'est bien le rendu personnalisé avec picture
         self::assertStringContainsString('<picture', $result);
-        self::assertStringContainsString('2.jpg', $result);
+        // The image is optimized to webp format in browser paths
+        self::assertStringContainsString('/media/', $result);
+        self::assertMatchesRegularExpression('/2\.(jpg|webp|avif)/', $result);
         self::assertStringContainsString('Alt text', $result);
     }
 

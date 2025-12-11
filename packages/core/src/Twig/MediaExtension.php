@@ -90,7 +90,7 @@ class MediaExtension
         $src = $this->normalizeMediaPath($src);
 
         if ($this->mayBeAnInternalImage($src)) {
-            $media = $this->mediaRepository->findOneBy(['fileName' => $src]) ??
+            $media = $this->findMediaByFileName($src) ??
             throw new Exception("Internal - Can't handle the value submitted `".$src.'`.');
 
             if ('' !== $name) { // to check if useful
@@ -105,5 +105,32 @@ class MediaExtension
         }
 
         throw new Exception("Can't handle the value submitted (".$src.')');
+    }
+
+    /**
+     * Find media by filename, handling modern format extensions (.webp, .avif).
+     * When browser paths use optimized formats, the original file may have a different extension.
+     */
+    private function findMediaByFileName(string $fileName): ?Media
+    {
+        // First try exact match
+        $media = $this->mediaRepository->findOneBy(['fileName' => $fileName]);
+        if (null !== $media) {
+            return $media;
+        }
+
+        // If extension is webp/avif, try finding with common image extensions
+        $extension = strtolower(pathinfo($fileName, \PATHINFO_EXTENSION));
+        if (\in_array($extension, ['webp', 'avif'], true)) {
+            $baseName = pathinfo($fileName, \PATHINFO_FILENAME);
+            foreach (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'] as $ext) {
+                $media = $this->mediaRepository->findOneBy(['fileName' => $baseName.'.'.$ext]);
+                if (null !== $media) {
+                    return $media;
+                }
+            }
+        }
+
+        return null;
     }
 }
