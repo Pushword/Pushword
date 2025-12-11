@@ -23,7 +23,13 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - Media → use league/flysystem instead with bundle configuration default to local to have a more flexible way to store media for enduser instead of direct php filesystem acess or symfony/filesystem use
 
-- WebP → Avif
+- [x] WebP → Avif
+
+- improve static generation performance by
+
+  - avoid to rely on currentRequest (same for page scanner)
+  - instead of creating a full new folder, replace only what need to be replaced (page or media)
+  - digg the codebase to see what we can improve
 
 - Pushword\PageScanner\Tests\PageScannerCommandTest > page scanner comm 26.84s
   This is very slow

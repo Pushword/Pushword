@@ -11,11 +11,14 @@
   otherAttributes = {}
 ) %}
 {% set image = isInstanceOfMedia(image) ? image : media_from_string(image) %}
+{% set modern_format = preferred_modern_format(filter) %}
 <picture>
+{% if modern_format %}
   <source
-    type="image/webp"
-    srcset="{{ image|image(filter, 'webp') }} 576w"
+    type="image/{{ modern_format }}"
+    srcset="{{ image|image(filter, modern_format) }} 576w"
     sizes="(max-width: 576px) 100vw, 576px">
+{% endif %}
   <img
     srcset="{{ image|image(filter) }} 576w"
     sizes="(max-width: 576px) 100vw, 576px"

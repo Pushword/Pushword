@@ -58,6 +58,55 @@ RewriteCond %{REQUEST_URI} ^/?(.*).(html)$
 RewriteCond %{DOCUMENT_ROOT}/%1.html -f
 RewriteRule ^/?(.*).(html)$ /$1 [R=301,NC,L,END]
 
+{% if image_fallback_order is defined and (image_fallback_order.webp_fallback|length > 0 or image_fallback_order.avif_fallback|length > 0) %}
+#---
+# Image Format Fallback (webp/avif to available format)
+#---
+{% if image_fallback_order.webp_fallback|length > 0 %}
+# WebP fallback: if .webp doesn't exist, try {{ image_fallback_order.webp_fallback|join(', ') }}
+RewriteCond %{REQUEST_URI} ^/media/(.+)\.webp$
+RewriteCond %{REQUEST_FILENAME} !-f
+{% if 'avif' in image_fallback_order.webp_fallback %}
+RewriteCond %{DOCUMENT_ROOT}/media/%1.avif -f
+RewriteRule ^media/(.+)\.webp$ /media/$1.avif [L,END]
+
+RewriteCond %{REQUEST_URI} ^/media/(.+)\.webp$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{DOCUMENT_ROOT}/media/%1.avif !-f
+{% endif %}
+{% if 'original' in image_fallback_order.webp_fallback %}
+# Try common original formats (jpg, jpeg, png, gif)
+RewriteCond %{DOCUMENT_ROOT}/media/%1.jpg -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/media/%1.jpeg -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/media/%1.png -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/media/%1.gif -f
+RewriteRule ^media/(.+)\.webp$ /media/$1 [L,END]
+{% endif %}
+{% endif %}
+
+{% if image_fallback_order.avif_fallback|length > 0 %}
+# AVIF fallback: if .avif doesn't exist, try {{ image_fallback_order.avif_fallback|join(', ') }}
+RewriteCond %{REQUEST_URI} ^/media/(.+)\.avif$
+RewriteCond %{REQUEST_FILENAME} !-f
+{% if 'webp' in image_fallback_order.avif_fallback %}
+RewriteCond %{DOCUMENT_ROOT}/media/%1.webp -f
+RewriteRule ^media/(.+)\.avif$ /media/$1.webp [L,END]
+
+RewriteCond %{REQUEST_URI} ^/media/(.+)\.avif$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{DOCUMENT_ROOT}/media/%1.webp !-f
+{% endif %}
+{% if 'original' in image_fallback_order.avif_fallback %}
+# Try common original formats (jpg, jpeg, png, gif)
+RewriteCond %{DOCUMENT_ROOT}/media/%1.jpg -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/media/%1.jpeg -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/media/%1.png -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/media/%1.gif -f
+RewriteRule ^media/(.+)\.avif$ /media/$1 [L,END]
+{% endif %}
+{% endif %}
+{% endif %}
+
 #---
 # Errors
 #---

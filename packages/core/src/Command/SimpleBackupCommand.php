@@ -9,7 +9,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 #[AsCommand(name: 'pw:backup', description: 'Restore the last backup of the database.')]
-final class SimpleBackupCommand
+final readonly class SimpleBackupCommand
 {
     public function __construct(
         private Filesystem $fs,

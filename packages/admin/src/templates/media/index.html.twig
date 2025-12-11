@@ -47,7 +47,7 @@
           {# @var \Pushword\Core\Entity\Media media #}
           {% set media = entity.instance %}
           {% set isImage = media.isImage %}
-          {% set thumbnail = isImage ? media|image('md') : mediaFallbackThumb %}
+          {% set thumbnail = isImage ? media|image('md', checkFileExists: true) : mediaFallbackThumb %}
           {% set bytes = media.size ?? 0 %}
           {% if bytes >= 1048576 %}
             {% set readableSize = (bytes / 1048576)|number_format(1, '.', ' ') ~ ' MB' %}

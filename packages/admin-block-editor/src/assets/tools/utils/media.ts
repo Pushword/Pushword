@@ -35,7 +35,7 @@ export class MediaUtils {
    * @param basePath - Chemin de base pour les médias (par défaut: /media/md/)
    * @returns URL complète
    */
-  static buildFullUrl(mediaNameOrUrl: string, basePath: string = '/media/'): string {
+  static buildFullUrl(mediaNameOrUrl: string, basePath: string = '/media/md/'): string {
     if (this.isFullUrl(mediaNameOrUrl)) {
       // C'est déjà une URL complète (rétrocompatibilité)
       return mediaNameOrUrl
@@ -66,7 +66,7 @@ export class MediaUtils {
    * @param basePath - Chemin de base pour les médias
    * @returns URL complète
    */
-  static buildFullUrlFromData(dataItem: any, basePath: string = '/media/'): string {
+  static buildFullUrlFromData(dataItem: any, basePath: string = '/media/md/'): string {
     if (typeof dataItem === 'string') {
       return this.buildFullUrl(dataItem, basePath)
     } else if (dataItem && typeof dataItem === 'object' && dataItem.url) {

@@ -14,6 +14,7 @@ use Pushword\Core\Utils\FlashBag;
 use Pushword\Core\Utils\MediaRenamer;
 
 use function Safe\preg_replace;
+use function Safe\sha1_file;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -82,8 +83,8 @@ final readonly class MediaListener
 
     /**
      * - Update storeIn
-     * - generate image cache
-     * - updateMainColor.
+     * - generate quick thumb for admin preview
+     * - run full cache generation in background.
      */
     public function onVichUploaderPostUpload(Event $event): void
     {
@@ -91,13 +92,12 @@ final readonly class MediaListener
 
         if ($this->imageManager->isImage($media)) {
             $this->imageManager->remove($media);
-            $this->imageManager->generateCache($media);
-            $image = $this->imageManager->getLastThumb();
-            if (null === $image) {
-                return;
-            }
 
-            // exec('cd ../ && php bin/console pw:image:cache '.$media->getFileName().' > /dev/null 2>/dev/null &');
+            // Generate only quick thumb (no AVIF) for fast upload experience
+            $this->imageManager->generateQuickThumb($media);
+
+            // Run full cache generation in background (including AVIF)
+            $this->imageManager->runBackgroundCacheGeneration($media->getFileName());
         }
     }
 
@@ -112,7 +112,7 @@ final readonly class MediaListener
         // Otherwise, calculate from storage
         if (null === $media->getMediaFile() && '' !== $media->getFileName()) {
             $localPath = $this->mediaStorage->getLocalPath($media->getFileName());
-            $media->setHash(\Safe\sha1_file($localPath, true));
+            $media->setHash(sha1_file($localPath, true));
         } else {
             $media->setHash();
         }
@@ -157,12 +157,13 @@ final readonly class MediaListener
             $this->imageManager->remove($media->getFileNameBeforeUpdate());
             $media->setFileNameBeforeUpdate('');
 
-            $this->imageManager->generateCache($media);
-            // exec('cd ../ && php bin/console pw:image:cache '.$media->getFileName().' > /dev/null 2>/dev/null &');
+            // Generate only quick thumb for fast response, full cache in background
+            $this->imageManager->generateQuickThumb($media);
+            $this->imageManager->runBackgroundCacheGeneration($media->getFileName());
 
             // Calculate hash using storage adapter
             $localPath = $this->mediaStorage->getLocalPath($media->getFileName());
-            $media->setHash(\Safe\sha1_file($localPath, true));
+            $media->setHash(sha1_file($localPath, true));
         }
     }
 

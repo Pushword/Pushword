@@ -56,7 +56,11 @@ class MediaGenerator extends AbstractGenerator
         }
 
         while (false !== $entry = $dir->read()) {
-            if ('.' === $entry || '..' === $entry) {
+            if ('.' === $entry) {
+                continue;
+            }
+
+            if ('..' === $entry) {
                 continue;
             }
 

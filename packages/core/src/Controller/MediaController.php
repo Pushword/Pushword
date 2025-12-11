@@ -6,6 +6,7 @@ use League\Flysystem\FilesystemException;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -62,7 +63,7 @@ final class MediaController extends AbstractController
                 fpassthru($stream);
                 fclose($stream);
             },
-            200,
+            Response::HTTP_OK,
             ['Content-Type' => $mimeType]
         );
     }

@@ -500,9 +500,13 @@ class MediaImporter extends AbstractImporter
             if ($media instanceof Media) {
                 $media->setProjectDir($this->projectDir);
                 $oldFileName = $media->getFileName();
-
                 // Check if old file exists in flat dir or storage
-                if (file_exists($dir.'/'.$oldFileName) || $this->mediaStorage->fileExists($oldFileName)) {
+                if (file_exists($dir.'/'.$oldFileName)) {
+                    // File exists with old name, will be renamed
+                    continue;
+                }
+
+                if ($this->mediaStorage->fileExists($oldFileName)) {
                     // File exists with old name, will be renamed
                     continue;
                 }

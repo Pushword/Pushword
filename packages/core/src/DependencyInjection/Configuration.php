@@ -73,64 +73,45 @@ final class Configuration implements ConfigurationInterface
      * @var array<string, array<string, mixed>>
      */
     public const array IMAGE_FILTERS_SET = [
-        'default' => ['quality' => 90, 'filters' => ['scaleDown' => [1980, 1280]]],
+        'default' => [
+            'quality' => 90,
+            'filters' => ['scaleDown' => [1980, 1280]],
+            'formats' => ['original'],
+        ],
         'height_300' => [
             'quality' => 82,
-            'filters' => [
-                'scaleDown' => [
-                    null,
-                    300,
-                ],
-            ],
+            'filters' => ['scaleDown' => [null, 300]],
+            'formats' => ['avif'],
         ],
         'thumb' => [
             'quality' => 80,
-            'filters' => [
-                'coverDown' => [
-                    330,
-                    330,
-                ],
-            ],
+            'filters' => ['coverDown' => [330, 330]],
+            'formats' => ['avif'],
         ],
         'xs' => [
             'quality' => 85,
-            'filters' => [
-                'scaleDown' => [
-                    576,
-                ],
-            ],
+            'filters' => ['scaleDown' => [576]],
+            'formats' => ['avif'],
         ],
         'sm' => [
             'quality' => 85,
-            'filters' => [
-                'scaleDown' => [
-                    768,
-                ],
-            ],
+            'filters' => ['scaleDown' => [768]],
+            'formats' => ['avif'],
         ],
         'md' => [
             'quality' => 85,
-            'filters' => [
-                'scaleDown' => [
-                    992,
-                ],
-            ],
+            'filters' => ['scaleDown' => [992]],
+            'formats' => ['avif', 'original'], // original is kept for rapid admin preview
         ],
         'lg' => [
             'quality' => 85,
-            'filters' => [
-                'scaleDown' => [
-                    1200,
-                ],
-            ],
+            'filters' => ['scaleDown' => [1200]],
+            'formats' => ['avif'],
         ],
         'xl' => [
-            'quality' => 85,
-            'filters' => [
-                'scaleDown' => [
-                    1600,
-                ],
-            ],
+            'quality' => 90,
+            'filters' => ['scaleDown' => [1600]],
+            'formats' => ['avif'],
         ],
     ];
 
@@ -171,6 +152,11 @@ final class Configuration implements ConfigurationInterface
             ->variableNode('filters')->defaultValue(self::DEFAULT_FILTERS)->end()
             ->booleanNode('entity_can_override_filters')->defaultValue(self::DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS)->end()
             ->scalarNode('image_filter_sets')->defaultValue(self::IMAGE_FILTERS_SET)->cannotBeEmpty()->end()
+            ->enumNode('image_driver')
+                ->values(['auto', 'imagick', 'gd'])
+                ->defaultValue('auto')
+                ->info('Image driver: auto (imagick if available, else gd), imagick, or gd')
+                ->end()
             ->scalarNode('template')->defaultValue(self::DEFAULT_TEMPLATE)->cannotBeEmpty()->end()
             ->scalarNode('template_dir')->defaultValue('%kernel.project_dir%/templates')->cannotBeEmpty()->end()
             // The following is a garbage, useful for quick new extension not well designed (no check for conf values)

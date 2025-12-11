@@ -2,7 +2,7 @@
     <div class="col-md-6" style="margin-bottom: 15px;">
         <a href="{{ media|image('default') }}" target="_blank" rel="noopener noreferrer" style="display: block; position:relative">
             <span class="mosaic-box-label label label-default" style="position: absolute; left: 10px; right: unset">{{ media.ratioLabel }}</span>
-            <img src="{{ media|image('md') }}?{{ random() }}"
+            <img src="{{ media|image('md', checkFileExists: true) }}?{{ random() }}"
                  alt="{{ media.alt|e }}"
                  class="img-responsive img-thumbnail"
                  style="max-width: 100%; height: auto;">

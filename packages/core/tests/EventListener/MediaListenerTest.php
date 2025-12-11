@@ -6,6 +6,7 @@ use Exception;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DomCrawler\Crawler;
@@ -133,8 +134,8 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
             return $this->imageManager;
         }
 
-        /** @var \Pushword\Core\Service\MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(\Pushword\Core\Service\MediaStorageAdapter::class);
+        /** @var MediaStorageAdapter $mediaStorage */
+        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
 
         return $this->imageManager = new ImageManager([], $this->publicDir, $this->projectDir, $this->publicMediaDir, $this->mediaDir, $mediaStorage);
     }

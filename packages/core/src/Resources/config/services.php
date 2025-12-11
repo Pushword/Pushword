@@ -26,7 +26,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$rawApps', '%pw.apps%')
         ->bind('$publicDir', '%pw.public_dir%')
         ->bind('$pathToBin', '%pw.path_to_bin%')
-        ->bind('$tailwindGeneratorisActive', '%pw.tailwind_generator%');
+        ->bind('$tailwindGeneratorisActive', '%pw.tailwind_generator%')
+        ->bind('$imageDriver', '%pw.image_driver%');
 
     $services->load('Pushword\Core\\', __DIR__.'/../../../src/*')
         ->exclude([

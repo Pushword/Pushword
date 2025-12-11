@@ -226,3 +226,81 @@ A deprecated way to update favicons is to use favicons_path at the app level con
 ### Media Storage
 
 Pushword uses [League Flysystem](https://flysystem.thephpleague.com/) via the [flysystem-bundle](https://github.com/thephpleague/flysystem-bundle) for media storage. This allows you to store your media files locally (default) or on remote services like Amazon S3, FTP, SFTP, and more. See [storage](/storage) for more details.
+
+## Image Cache Configuration {id=image-cache}
+
+Pushword generates optimized image variants for responsive loading. Each filter in `image_filter_sets` can specify which formats to generate.
+
+### Available Formats
+
+- `original`: Keep the uploaded format (jpg, png, etc.)
+- `avif`: Modern format with best compression (~20% smaller than WebP for photos)
+- `webp`: Good compression with wider browser support
+
+### Default Configuration
+
+```yaml
+pushword:
+  image_filter_sets:
+    default:
+      quality: 90
+      filters: { scaleDown: [1980, 1280] }
+      formats: ['original'] # Only original for default filter
+    thumb:
+      quality: 80
+      filters: { coverDown: [330, 330] }
+      formats: ['avif', 'webp']
+    xs:
+      quality: 85
+      filters: { scaleDown: [576] }
+      formats: ['avif']
+    # sm, md, lg, xl follow the same pattern with ['avif']
+```
+
+### AVIF Encoding Requirements {id=avif-requirements}
+
+For optimal AVIF quality and compression, install one of the following (in order of preference):
+
+1. **avifenc** (recommended - best quality/size ratio):
+
+```bash
+# Debian/Ubuntu
+apt install libavif-bin
+```
+
+2. **Imagick extension** with AVIF support:
+
+```bash
+# Check if imagick supports AVIF
+php -r "echo in_array('AVIF', Imagick::queryFormats()) ? 'OK' : 'No AVIF';"
+```
+
+3. **GD extension** (fallback - larger file sizes):
+
+```bash
+# Check GD AVIF support
+php -r "echo gd_info()['AVIF Support'] ?? false ? 'OK' : 'No AVIF';"
+```
+
+If none of the above support AVIF, use WebP instead:
+
+```yaml
+pushword:
+  image_filter_sets:
+    xs:
+      quality: 85
+      filters: { scaleDown: [576] }
+      formats: ['webp'] # Use WebP as fallback
+    ...
+```
+
+### Image Driver Configuration {id=image-driver}
+
+You can force a specific image processing driver:
+
+```yaml
+pushword:
+  image_driver: auto # Default: uses imagick if available, else gd
+  # image_driver: imagick
+  # image_driver: gd
+```

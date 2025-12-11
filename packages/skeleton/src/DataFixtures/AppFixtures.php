@@ -42,20 +42,21 @@ class AppFixtures extends Fixture
         $manager->persist($user);
 
         $medias = [
-            'Pied Web Logo' => 'piedweb-logo.png',
-            'Demo 1' => '1.jpg',
-            'Demo 2' => '2.jpg',
-            'Demo 3' => '3.jpg',
+            'Pied Web Logo' => ['file' => 'piedweb-logo.png', 'mime' => 'image/png'],
+            'Demo 1' => ['file' => '1.jpg', 'mime' => 'image/jpeg'],
+            'Demo 2' => ['file' => '2.jpg', 'mime' => 'image/jpeg'],
+            'Demo 3' => ['file' => '3.jpg', 'mime' => 'image/jpeg'],
+            'Demo AVIF' => ['file' => 'hato.avif', 'mime' => 'image/avif'],
         ];
         $media = [];
-        foreach ($medias as $name => $file) {
+        foreach ($medias as $name => $data) {
             $media[$name] = (new Media())
             ->setProjectDir($this->params->get('kernel.project_dir'))
             ->setStoreIn($this->params->get('pw.media_dir'))
-            ->setMimeType('image/'.substr($file, -3))
+            ->setMimeType($data['mime'])
             ->setSize(2)
             ->setDimensions([1000, 1000])
-            ->setFileName($file)
+            ->setFileName($data['file'])
             ->setAlt($name)
             ->setHash();
 

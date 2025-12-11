@@ -74,6 +74,27 @@
 	@html_ext path_regexp ^(.+)\.html$
 	redir @html_ext {re.1} 301
 
+{% if image_fallback_order is defined and (image_fallback_order.webp_fallback|length > 0 or image_fallback_order.avif_fallback|length > 0) %}
+	# Image Format Fallback (webp/avif to available format)
+{% if image_fallback_order.webp_fallback|length > 0 %}
+	# WebP fallback: if .webp doesn't exist, try {{ image_fallback_order.webp_fallback|join(', ') }}
+	@webp_fallback {
+		path_regexp webp ^/media/(.+)\.webp$
+		not file {path}
+	}
+	rewrite @webp_fallback /media/{re.webp.1}{% if 'avif' in image_fallback_order.webp_fallback %}.avif{% elseif 'original' in image_fallback_order.webp_fallback %}{http.request.uri.path_regexp.1}{% endif %}
+
+{% endif %}
+{% if image_fallback_order.avif_fallback|length > 0 %}
+	# AVIF fallback: if .avif doesn't exist, try {{ image_fallback_order.avif_fallback|join(', ') }}
+	@avif_fallback {
+		path_regexp avif ^/media/(.+)\.avif$
+		not file {path}
+	}
+	rewrite @avif_fallback /media/{re.avif.1}{% if 'webp' in image_fallback_order.avif_fallback %}.webp{% elseif 'original' in image_fallback_order.avif_fallback %}{http.request.uri.path_regexp.1}{% endif %}
+
+{% endif %}
+{% endif %}
 
 	# Error pages
 	handle_errors {

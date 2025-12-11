@@ -13,12 +13,14 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 ## To 1.0.0-rc247
 
-If you customized your app.js, add if you use startShowMore component :
+1. If you customized your app.js, add if you use startShowMore component :
 
 ```js
 import { initShowMore } from './ShowMore.js'
 initShowMore()
 ```
+
+2. Run `php bin/console pw:image:cache` to generate the new avif images.
 
 ## To 1.0.0-rc80
 

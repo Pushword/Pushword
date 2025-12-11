@@ -4,6 +4,7 @@ namespace Pushword\Core\Service;
 
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
+use League\Flysystem\StorageAttributes;
 use League\Flysystem\UnableToDeleteFile;
 use League\Flysystem\UnableToMoveFile;
 use League\Flysystem\UnableToReadFile;
@@ -16,12 +17,12 @@ use function Safe\file_put_contents;
  * Provides a getLocalPath() method for libraries requiring filesystem paths
  * (like Intervention Image or Spatie Image Optimizer).
  */
-final class MediaStorageAdapter
+final readonly class MediaStorageAdapter
 {
     public function __construct(
-        private readonly FilesystemOperator $storage,
-        private readonly string $mediaDir,
-        private readonly bool $isLocal = true,
+        private FilesystemOperator $storage,
+        private string $mediaDir,
+        private bool $isLocal = true,
     ) {
     }
 
@@ -142,7 +143,7 @@ final class MediaStorageAdapter
     /**
      * List contents of a directory.
      *
-     * @return iterable<\League\Flysystem\StorageAttributes>
+     * @return iterable<StorageAttributes>
      *
      * @throws FilesystemException
      */
