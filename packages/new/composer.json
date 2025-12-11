@@ -28,7 +28,7 @@
   },
   "require-dev": {
     "symfony/profiler-pack": "*",
-    "symfony/filesystem": "^7.3",
+    "symfony/filesystem": "^7.3 || ^8.0",
     "phpstan/phpstan": "*",
     "phpstan/phpstan-doctrine": "*",
     "phpstan/phpstan-phpunit": "*",
@@ -76,7 +76,10 @@
     ],
     "post-autoload-dump": [
       "Pushword\\Installer\\PostAutoloadDump::runPostAutoload"
-    ]
+    ],
+    "stan": "vendor/bin/phpstan",
+    "format": "vendor/bin/php-cs-fixer fix",
+    "rector": "vendor/bin/rector process && composer format"
   },
   "conflict": {
     "symfony/symfony": "*"
@@ -84,7 +87,7 @@
   "extra": {
     "symfony": {
       "allow-contrib": true,
-      "require": "^7"
+      "require": "^7 || ^8"
     }
   },
   "authors": [
