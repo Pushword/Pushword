@@ -513,7 +513,7 @@ final class ImageManager
 
         // Otherwise, return the first available format that exists: avif > webp > original
         /** @var string[] $formats */
-        $formats = $this->filterSets[$filterName]['formats'] ?? ['original', 'webp'];
+        $formats = $this->filterSets[$filterName]['formats'] ?? ['webp', 'original'];
 
         // Get the original file extension to check if source is already avif
         $mediaFileName = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);

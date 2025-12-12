@@ -11,18 +11,18 @@
     <div class="col-md-6">
         <div style="margin-bottom: 15px;">
             <strong>{{ 'adminMediaPreviewPath'|trans }}</strong>
-            <code style="display: block; margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;">{{ media|image('default') }}</code>
+            <code style="display: block; margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;">{{ media.fileName }}</code>
         </div>
 
         <div style="margin-bottom: 15px;">
             <strong>{{ 'adminMediaPreviewMarkdown'|trans }}</strong>
-            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>![{{ media.alt|replace({'[': '', ']': ''}) }}]({{ media|image('default') }})</code></pre>
+            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>![{{ media.alt|replace({'[': '', ']': ''}) }}]({{ media.fileName }})</code></pre>
         </div>
 
         <div style="margin-bottom: 15px;">
             <strong>{{ 'adminMediaPreviewJson'|trans }}</strong>
             <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>{
-  "{{ media }}": "{{ media.alt|replace({'"': '\\"',}) }}"
+  "{{ media.fileName }}": "{{ media.alt|replace({'"': '\\"',}) }}"
 }</code></pre>
         </div>
 
