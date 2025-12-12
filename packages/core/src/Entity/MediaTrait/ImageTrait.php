@@ -50,7 +50,7 @@ trait ImageTrait
         }
 
         if (isset($dimensions[0]) && isset($dimensions[1])) {
-            $this->ratio = $dimensions[0] / $dimensions[1];
+            $this->ratio = round($dimensions[0] / $dimensions[1], 2);
             $this->ratioLabel = ImageRatioLabeler::fromDimensions($dimensions[0], $dimensions[1]);
         }
 
@@ -80,15 +80,7 @@ trait ImageTrait
 
     public function getRatio(): ?float
     {
-        if (null === $this->height) {
-            return null;
-        }
-
-        if (null === $this->width) {
-            return null;
-        }
-
-        return $this->height / $this->width;
+        return $this->ratio;
     }
 
     public function getWidth(): ?int

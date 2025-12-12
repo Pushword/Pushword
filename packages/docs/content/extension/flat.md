@@ -172,4 +172,14 @@ php bin/console pw:pdf:optimize
 php bin/console pw:flat:import && php bin/console pw:image:cache && php bin/console pw:pdf:optimize
 ```
 
-> **Note:** Browser-side scaling (1980x1280) only happens via admin upload. For large images imported via flat files, consider resizing them before import or they will be stored at full size.
+### Pre-import image resizing
+
+Browser-side scaling (1980x1280) only happens via admin upload. For flat file imports, resize images beforehand using ImageMagick:
+
+```bash
+# Resize all images in media/ to max 1980x1280 (preserves aspect ratio, only shrinks)
+find content/media/ -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) \
+  -exec mogrify -resize '1980x1280>' {} \;
+```
+
+> **Tip:** The `>` flag means "only shrink larger images, never enlarge smaller ones".

@@ -193,7 +193,18 @@ class MediaImporter extends AbstractImporter
 
     private function isImage(string $filePath): bool
     {
-        return false !== getimagesize($filePath);
+        $mimeType = $this->getMimeTypeFromFile($filePath);
+
+        // SVG files are images but getimagesize() doesn't support them
+        if ('image/svg+xml' === $mimeType) {
+            return false;
+        }
+
+        if (! str_starts_with($mimeType, 'image/')) {
+            return false;
+        }
+
+        return false !== @getimagesize($filePath);
     }
 
     public function importMedia(string $filePath, DateTimeInterface $dateTime): void
