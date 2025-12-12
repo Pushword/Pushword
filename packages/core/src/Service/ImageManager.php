@@ -113,23 +113,92 @@ final class ImageManager
         return $media->isImage();
     }
 
-    public function generateCache(Media $media): void
+    /**
+     * Check if all cache files for a filter exist and are newer than the source image.
+     */
+    private function isFilterCacheFresh(Media $media, string $filterName): bool
     {
+        $sourcePath = $this->mediaStorage->getLocalPath($media->getFileName());
+        if (! file_exists($sourcePath)) {
+            return false;
+        }
+
+        $sourceTime = filemtime($sourcePath);
+        if (false === $sourceTime) {
+            return false;
+        }
+
+        /** @var string[] $formats */
+        $formats = $this->filterSets[$filterName]['formats'] ?? ['original', 'webp'];
+
+        foreach ($formats as $format) {
+            $cachePath = 'original' === $format
+                ? $this->getFilterPath($media, $filterName)
+                : $this->getFilterPath($media, $filterName, $format);
+
+            if (! file_exists($cachePath)) {
+                return false;
+            }
+
+            $cacheTime = filemtime($cachePath);
+            if (false === $cacheTime || $cacheTime < $sourceTime) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if all cache files for all filters are fresh.
+     */
+    private function isAllCacheFresh(Media $media): bool
+    {
+        foreach (array_keys($this->filterSets) as $filterName) {
+            if (! $this->isFilterCacheFresh($media, $filterName)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return bool True if cache was generated, false if skipped (already fresh)
+     */
+    public function generateCache(Media $media, bool $force = false): bool
+    {
+        // Skip if all cache is fresh (unless force)
+        if (! $force && $this->isAllCacheFresh($media)) {
+            return false;
+        }
+
         $image = $this->getImage($media);
 
         $this->updateMainColor($media, $image);
 
         $media->setDimensions([$image->width(), $image->height()]);
 
+        $generated = false;
         $filterNames = array_keys($this->filterSets);
         foreach ($filterNames as $filterName) {
+            // Skip fresh filters unless force
+            if (! $force && $this->isFilterCacheFresh($media, $filterName)) {
+                continue;
+            }
+
             $lastImg = $this->generateFilteredCache($media, $filterName, $image);
+            $generated = true;
             if ('thumb' === $filterName) {
                 $this->lastThumb = $lastImg;
             }
         }
 
-        $this->runBackgroundOptimization($media->getFileName());
+        if ($generated) {
+            $this->runBackgroundOptimization($media->getFileName());
+        }
+
+        return $generated;
     }
 
     private function runBackgroundOptimization(string $fileName): void
@@ -446,11 +515,23 @@ final class ImageManager
         /** @var string[] $formats */
         $formats = $this->filterSets[$filterName]['formats'] ?? ['original', 'webp'];
 
+        // Get the original file extension to check if source is already avif
+        $mediaFileName = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
+        $originalExt = strtolower(pathinfo($mediaFileName, \PATHINFO_EXTENSION));
+
         // Try avif first if configured
         if (\in_array('avif', $formats, true)) {
             $avifPath = $this->getFilterPath($media, $filterName, 'avif');
             if (! $checkFileExists || file_exists($avifPath)) {
                 return $this->getFilterPath($media, $filterName, 'avif', true);
+            }
+        }
+
+        // Try original if it's avif (avif has priority over webp)
+        if (\in_array('original', $formats, true) && 'avif' === $originalExt) {
+            $originalPath = $this->getFilterPath($media, $filterName);
+            if (! $checkFileExists || file_exists($originalPath)) {
+                return $this->getFilterPath($media, $filterName, null, true);
             }
         }
 
