@@ -37,6 +37,7 @@ final readonly class ImageManagerCommand
         $progressBar->setFormat("%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% \r\n %message%");
         $progressBar->start();
         $errors = [];
+
         foreach ($medias as $media) {
             if ($this->imageManager->isImage($media)) {
                 $progressBar->setMessage($media->getPath());
@@ -51,8 +52,7 @@ final readonly class ImageManagerCommand
             $progressBar->advance();
         }
 
-        $this->entityManager->flush(); // permits to update mainColor and dimensions
-
+        $this->entityManager->flush();
         $progressBar->finish();
 
         if ([] !== $errors) {

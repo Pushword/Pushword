@@ -37,6 +37,11 @@ final class ImageManager
 
     private ?string $avifencPath = null;
 
+    /** @var array<Process> */
+    private array $runningProcesses = [];
+
+    private readonly int $maxConcurrentProcesses;
+
     /**
      * @param array<string, array<string, mixed>> $filterSets
      */
@@ -53,6 +58,12 @@ final class ImageManager
         $this->renamer = new MediaRenamer();
         $this->interventionManager = $this->createInterventionManager();
         $this->avifencPath = $this->findAvifenc();
+        $this->maxConcurrentProcesses = (int) (shell_exec('nproc') ?: 10);
+    }
+
+    public function __destruct()
+    {
+        $this->waitForOptimizationToFinish();
     }
 
     private function createInterventionManager(): InteventionImageManager
@@ -119,6 +130,47 @@ final class ImageManager
         }
 
         $this->runBackgroundOptimization($media->getFileName());
+    }
+
+    private function runBackgroundOptimization(string $fileName): void
+    {
+        $this->throttleIfNeeded();
+
+        $process = new Process(['php', 'bin/console', 'pw:image:optimize', $fileName]);
+        $process->setWorkingDirectory($this->projectDir);
+        $process->start();
+        $this->runningProcesses[] = $process;
+    }
+
+    public function waitForOptimizationToFinish(): void
+    {
+        foreach ($this->runningProcesses as $process) {
+            if ($process->isRunning()) {
+                $process->wait();
+            }
+        }
+
+        $this->runningProcesses = [];
+    }
+
+    private function throttleIfNeeded(): void
+    {
+        if (\count($this->runningProcesses) < $this->maxConcurrentProcesses) {
+            return;
+        }
+
+        $this->runningProcesses = array_filter(
+            $this->runningProcesses,
+            static fn (Process $p): bool => $p->isRunning()
+        );
+
+        while (\count($this->runningProcesses) >= $this->maxConcurrentProcesses) {
+            usleep(10000); // 10ms
+            $this->runningProcesses = array_filter(
+                $this->runningProcesses,
+                static fn (Process $p): bool => $p->isRunning()
+            );
+        }
     }
 
     /**
@@ -602,21 +654,5 @@ final class ImageManager
         file_put_contents($filePath, $content);
 
         return $filePath;
-    }
-
-    private function runBackgroundOptimization(string $fileName): void
-    {
-        // before
-        // exec('cd ../ && php bin/console pw:image:optimize '.
-        //  $media->getFileName().' > /dev/null 2>/dev/null &');
-        $process = new Process([
-            'php',
-            'bin/console',
-            'pw:image:optimize',
-            $fileName,
-        ]);
-        $process->setWorkingDirectory($this->projectDir);
-        $process->disableOutput();
-        $process->start();
     }
 }
