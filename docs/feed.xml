@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Pushword - CMS to build rapidly Websites (powered by Symfony)</title>
+        <link>https://pushword.piedweb.com/</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/feed.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Roadmap]]></title>
+                    <link>https://pushword.piedweb.com/roadmap</link>
+                    <guid>https://pushword.piedweb.com/roadmap</guid>
+                    <pubDate>Mon, 01 Dec 2025 09:57:26 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Upgrade Guide]]></title>
+                    <link>https://pushword.piedweb.com/upgrade</link>
+                    <guid>https://pushword.piedweb.com/upgrade</guid>
+                    <pubDate>Mon, 01 Dec 2025 09:57:26 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Admin]]></title>
+                    <link>https://pushword.piedweb.com/extension/admin</link>
+                    <guid>https://pushword.piedweb.com/extension/admin</guid>
+                    <pubDate>Sat, 29 Nov 2025 15:01:41 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Command]]></title>
+                    <link>https://pushword.piedweb.com/command</link>
+                    <guid>https://pushword.piedweb.com/command</guid>
+                    <pubDate>Thu, 27 Nov 2025 16:17:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Static Generator]]></title>
+                    <link>https://pushword.piedweb.com/extension/static-generator</link>
+                    <guid>https://pushword.piedweb.com/extension/static-generator</guid>
+                    <pubDate>Wed, 26 Nov 2025 06:16:48 +0000</pubDate>
+                </item>
+                            
+    </channel>
+</rss>
