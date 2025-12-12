@@ -11,6 +11,7 @@
     "build": "NODE_ENV=production vite build"
   },
   "dependencies": {
+    "browser-image-compression": "^2.0.2",
     "htmx.org": "^1.9.12",
     "suggest.js": "https://github.com/onozaty/suggest.js"
   }

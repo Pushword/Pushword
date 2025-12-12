@@ -11,6 +11,9 @@ import { easyMDEditor } from './admin.easymde-editor'
 import { filterParentPageFromHost } from './admin.filteringParentPage'
 import { filterImageFormField } from './admin.filterImageFormField'
 
+// Modules de compression
+import { initImageCompressor } from './admin.imageCompressor'
+
 // Modules de sélection
 import { mediaPicker } from './admin.mediaPicker'
 import { inlinePopup } from './admin.inlinePopup'
@@ -60,6 +63,9 @@ window.addEventListener('load', function () {
   // Filtres
   filterParentPageFromHost()
   filterImageFormField()
+
+  // Compression d'image avant upload
+  initImageCompressor()
 
   // Sélecteurs
   mediaPicker()

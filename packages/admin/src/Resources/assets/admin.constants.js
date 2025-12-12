@@ -46,7 +46,7 @@ export const CONFIG = {
   },
 
   // Mode debug
-  DEBUG: false,
+  DEBUG: true,
 }
 
 // Types MIME pour les images

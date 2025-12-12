@@ -19,10 +19,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
-- Media → skip image file cache generation when possible on pw:image:cache (test if thumb exists, if not generate all filters, if yes, generate thumb and test if file hash is the same, if not, regenerate all filters ?)
-
-- compress image before user upload (mainly on easy admin) browser-image-compression by scaling down like the `default` filter set. In docs, offer a way to do it programmatically with a command for previous uploaded image.
-
+- compress image before user upload (mainly on easy admin) browser-image-compression by scaling down like the `default` filter set.
+- In docs, offer a way to do it programmatically with a command for previous uploaded image.
 - same for PDF
 
 - improve static generation performance by

@@ -15,7 +15,7 @@ export default defineConfig({
       output: {
         entryFileNames: 'admin-block-editor.js',
         assetFileNames: 'style.css',
-        format: 'es',
+        format: 'iife',
       },
     },
     outDir: './src/Resources/public',
