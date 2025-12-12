@@ -92,6 +92,8 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         $form->setAction($this->router->generate('pushword_conversation', [
             'type' => $this->getType(),
             'referring' => $this->getReferring(),
+            'host' => $this->app->getMainHost(),
+            'locale' => $this->request->getLocale(),
             'id' => $this->getId(),
             'step' => $this->getStep(),
         ], UrlGeneratorInterface::ABSOLUTE_URL));

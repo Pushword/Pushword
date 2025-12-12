@@ -38,6 +38,7 @@ class AppExtension
             'type' => $type,
             'referring' => $type.'-'.$page->getRealSlug(),
             'host' => $page->getHost(),
+            'locale' => $page->getLocale(),
         ]);
     }
 
