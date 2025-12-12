@@ -42,6 +42,7 @@ Plan.md
 **/public/bundles
 **/skeleton/public/media
 **/skeleton/content
+**/skeleton/config/reference.php
 **/skeleton/static/
 **/skeleton/admin-block-editor.test
 **/skeleton/localhost.dev

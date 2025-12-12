@@ -133,3 +133,43 @@ Good to know :
 ```yaml
 name: My Super Kitchen Sink Illustration
 ```
+
+## Media Optimization
+
+When uploading media through the admin interface, Pushword automatically:
+
+**For images:**
+- Scales down to max 1980x1280 pixels (browser-side, before upload)
+- Generates responsive variants (xs, sm, md, lg, xl)
+- Converts to WebP format
+- Extracts dominant color for placeholders
+
+**For PDFs:**
+- Compresses with Ghostscript (downsamples images to 150dpi)
+- Linearizes with qpdf (fast first-page web streaming)
+
+### Bulk optimization for flat file users
+
+When importing media via flat files, server-side optimizations are skipped. The optimization commands work on **Media entities in the database**, so you must import first:
+
+```bash
+# 1. First, import flat files to database (registers media)
+php bin/console pw:flat:import
+
+# 2. Then generate image cache (responsive variants + WebP)
+php bin/console pw:image:cache
+
+# 3. Optimize images (lossless compression with optipng, jpegoptim, etc.)
+php bin/console pw:image:optimize
+
+# 4. Optimize PDFs (requires ghostscript and/or qpdf)
+php bin/console pw:pdf:optimize
+```
+
+**One-liner:**
+
+```bash
+php bin/console pw:flat:import && php bin/console pw:image:cache && php bin/console pw:pdf:optimize
+```
+
+> **Note:** Browser-side scaling (1980x1280) only happens via admin upload. For large images imported via flat files, consider resizing them before import or they will be stored at full size.

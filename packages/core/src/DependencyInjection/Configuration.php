@@ -166,6 +166,17 @@ final class Configuration implements ConfigurationInterface
             ->booleanNode('tailwind_generator')->defaultTrue()->end()
             ->scalarNode('path_to_bin')->defaultValue('')->end()
 
+            // PDF optimization
+            ->enumNode('pdf_preset')
+                ->values(['screen', 'ebook', 'printer', 'prepress'])
+                ->defaultValue('ebook')
+                ->info('Ghostscript preset: screen (72dpi), ebook (150dpi), printer (300dpi), prepress (300dpi+)')
+                ->end()
+            ->booleanNode('pdf_linearize')
+                ->defaultTrue()
+                ->info('Linearize PDFs for web streaming (fast first-page load)')
+                ->end()
+
             ->variableNode('svg_dir')->defaultValue([
                 '%kernel.project_dir%/templates/icons',
                 '%vendor_dir%/fortawesome/font-awesome/free/svgs/solid',

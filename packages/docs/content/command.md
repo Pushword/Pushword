@@ -16,6 +16,7 @@ Let's take a look at the commands available in Pushword and their purpose. Keep 
   pw:message:import           Import an external conversation CSV
   pw:image:cache        Generate all images cache
   pw:image:optimize     Optimize all images cache
+  pw:pdf:optimize       Optimize PDF files (compress and linearize)
   pw:page-scan          Find dead links, 404, 301 and more in your content.
   pw:static    Generate a static version for your website(s)
   pw:user:create        Create a new user

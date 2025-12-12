@@ -10,6 +10,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Service\MediaStorageAdapter;
+use Pushword\Core\Service\PdfOptimizer;
 use Pushword\Core\Utils\FlashBag;
 use Pushword\Core\Utils\MediaRenamer;
 
@@ -39,6 +40,7 @@ final readonly class MediaListener
         private EntityManagerInterface $em,
         private MediaStorageAdapter $mediaStorage,
         private ImageManager $imageManager,
+        private PdfOptimizer $pdfOptimizer,
         private RequestStack $requestStack,
         private RouterInterface $router,
         private TranslatorInterface $translator,
@@ -84,7 +86,8 @@ final readonly class MediaListener
     /**
      * - Update storeIn
      * - generate quick thumb for admin preview
-     * - run full cache generation in background.
+     * - run full cache generation in background
+     * - run PDF optimization in background.
      */
     public function onVichUploaderPostUpload(Event $event): void
     {
@@ -98,6 +101,11 @@ final readonly class MediaListener
 
             // Run full cache generation in background (including AVIF)
             $this->imageManager->runBackgroundCacheGeneration($media->getFileName());
+        }
+
+        if ('application/pdf' === $media->getMimeType()) {
+            // Run PDF optimization in background (compress + linearize)
+            $this->pdfOptimizer->runBackgroundOptimization($media->getFileName());
         }
     }
 

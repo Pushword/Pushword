@@ -29,7 +29,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$publicDir', '%pw.public_dir%')
         ->bind('$pathToBin', '%pw.path_to_bin%')
         ->bind('$tailwindGeneratorisActive', '%pw.tailwind_generator%')
-        ->bind('$imageDriver', '%pw.image_driver%');
+        ->bind('$imageDriver', '%pw.image_driver%')
+        ->bind('$pdfPreset', '%pw.pdf_preset%')
+        ->bind('$pdfLinearize', '%pw.pdf_linearize%');
 
     $services->load('Pushword\Core\\', __DIR__.'/../../../src/*')
         ->exclude([
