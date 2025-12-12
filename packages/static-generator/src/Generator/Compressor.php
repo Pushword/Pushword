@@ -15,13 +15,13 @@ class Compressor
 
     public const COMPRESSORS = [self::ZSTD, self::BROTLI, self::GZIP];
 
-    private const int MAX_CONCURRENT_PROCESSES = 10;
-
     /** @var array<string> */
     public readonly array $availableCompressors;
 
     /** @var array<Process> */
     private array $runningProcesses = [];
+
+    private readonly int $maxConcurrentProcesses;
 
     public function __construct()
     {
@@ -33,6 +33,7 @@ class Compressor
         }
 
         $this->availableCompressors = $availableCompressors;
+        $this->maxConcurrentProcesses = (int) (shell_exec('nproc') ?: 10);
     }
 
     public function __destruct()
@@ -98,7 +99,7 @@ class Compressor
 
     private function throttleIfNeeded(): void
     {
-        if (\count($this->runningProcesses) < self::MAX_CONCURRENT_PROCESSES) {
+        if (\count($this->runningProcesses) < $this->maxConcurrentProcesses) {
             return;
         }
 
@@ -109,7 +110,7 @@ class Compressor
         );
 
         // Still at limit? Wait for at least one to finish
-        while (\count($this->runningProcesses) >= self::MAX_CONCURRENT_PROCESSES) {
+        while (\count($this->runningProcesses) >= $this->maxConcurrentProcesses) {
             usleep(10000); // 10ms
             $this->runningProcesses = array_filter(
                 $this->runningProcesses,
