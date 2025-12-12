@@ -58,6 +58,6 @@ trait PageParentTrait
 
     public function hasChildrenPages(): bool
     {
-        return null !== $this->childrenPages && false === $this->childrenPages->isEmpty();
+        return ! $this->getChildrenPages()->isEmpty();
     }
 }
