@@ -13,10 +13,18 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 ## To 1.0.0-rc247
 
-1. If you customized your app.js, add if you use startShowMore component :
+0. Upgrade to Symfony 8
+
+```
+sed -i "s|#resource: '@FrameworkBundle/Resources/config/routing/errors.xml'|resource: '@FrameworkBundle/Resources/config/routing/errors.php'|g" ./config/routes/dev/framework.yaml
+sed -i "s|resource: '@WebProfilerBundle/Resources/config/routing/wdt.xml'|resource: '@WebProfilerBundle/Resources/config/routing/wdt.php'|g" ./config/routes/dev/web_profiler.yaml
+sed -i "s|resource: '@WebProfilerBundle/Resources/config/routing/profiler.xml'|resource: '@WebProfilerBundle/Resources/config/routing/profiler.php'|g" ./config/routes/dev/web_profiler.yaml
+```
+
+0. If you customized your app.js, add if you use startShowMore component :
 
 ```js
-import { initShowMore } from './ShowMore.js'
+import { initShowMore } from '@pushword/js-helper/src/ShowMore.js'
 initShowMore()
 ```
 

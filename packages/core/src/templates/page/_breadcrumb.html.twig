@@ -15,7 +15,7 @@
     {% if page.parentPage is not null %}
         {{ _self.breadcrumbPart(page.parentPage) }}
     {% endif %}
-    <li class="inline-block" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+    <li class="inline-block line-camp-1" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
         <a itemprop="item" href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}" class="hover:underline">
             <span itemprop="name">{{ pw(page).name|raw|striptags }}</span></a>
             <meta itemprop="position" content="{{ breadcrumb_list_position(page) }}">

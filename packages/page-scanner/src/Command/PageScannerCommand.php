@@ -25,7 +25,6 @@ final class PageScannerCommand
         PageScannerController::setFileCache($varDir);
     }
 
-
     protected function scanAllWithLock(string $host): bool
     {
         $lock = (new LockFactory(new FlockStore()))->createLock('page-scan');

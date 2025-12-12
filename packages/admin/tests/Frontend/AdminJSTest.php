@@ -68,6 +68,7 @@ class AdminJSTest extends AbstractAdminTestClass
             ] as $binary) {
                 if (is_executable($binary)) {
                     $_SERVER['PANTHER_CHROME_BINARY'] = $binary;
+
                     break;
                 }
             }
