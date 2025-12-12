@@ -33,5 +33,8 @@
   "bugs": {
     "url": "https://github.com/Pushword/Pushword/issues"
   },
-  "homepage": "https://pushword.piedweb.com"
+  "homepage": "https://pushword.piedweb.com",
+  "peerDependencies": {
+    "tailwindcss": ">=4.0.0"
+  }
 }

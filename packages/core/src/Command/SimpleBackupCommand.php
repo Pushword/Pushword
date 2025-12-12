@@ -19,10 +19,18 @@ final readonly class SimpleBackupCommand
     public function __invoke(
         OutputInterface $output,
         #[Option(name: 'create', shortcut: 'c')]
-        bool $create = false
+        bool $create = false,
+        #[Option(name: 'clean', description: 'Remove old backups, keeping only the most recent ones')]
+        bool $clean = false
     ): int {
         if ($create) {
             $this->createBackup($output);
+
+            return Command::SUCCESS;
+        }
+
+        if ($clean) {
+            $this->cleanBackups($output);
 
             return Command::SUCCESS;
         }
@@ -53,5 +61,31 @@ final readonly class SimpleBackupCommand
 
         $this->fs->copy($lastBackup, 'var/app.db', true);
         $output?->writeln('Restored from: '.$lastBackup);
+    }
+
+    public function cleanBackups(?OutputInterface $output = null, int $keep = 1): void
+    {
+        $backupFiles = glob('var/app.db~*');
+        if ([] === $backupFiles || false === $backupFiles) {
+            $output?->writeln('No backup files to clean');
+
+            return;
+        }
+
+        rsort($backupFiles);
+        $filesToDelete = \array_slice($backupFiles, $keep);
+
+        if ([] === $filesToDelete) {
+            $output?->writeln('No old backups to remove (keeping '.$keep.' most recent)');
+
+            return;
+        }
+
+        foreach ($filesToDelete as $file) {
+            $this->fs->remove($file);
+            $output?->writeln('Removed: '.$file);
+        }
+
+        $output?->writeln(\sprintf('Cleaned %d old backup(s), kept %d most recent', \count($filesToDelete), min($keep, \count($backupFiles))));
     }
 }
