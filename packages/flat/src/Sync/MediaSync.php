@@ -116,6 +116,10 @@ final readonly class MediaSync
                 continue;
             }
 
+            if ($this->isLockOrTempFile($file)) {
+                continue;
+            }
+
             $path = $dir.'/'.$file;
             if (is_dir($path)) {
                 $this->importDirectory($path);
@@ -149,6 +153,10 @@ final readonly class MediaSync
         $files = scandir($dir);
         foreach ($files as $file) {
             if (\in_array($file, ['.', '..'], true)) {
+                continue;
+            }
+
+            if ($this->isLockOrTempFile($file)) {
                 continue;
             }
 
@@ -204,6 +212,26 @@ final readonly class MediaSync
         }
 
         return $fileName;
+    }
+
+    /**
+     * Check if a file is a lock or temporary file that should be skipped.
+     * Examples: .~lock.index.csv# (LibreOffice), ~$document.xlsx (MS Office).
+     */
+    private function isLockOrTempFile(string $fileName): bool
+    {
+        // LibreOffice lock files: .~lock.filename#
+        if (str_starts_with($fileName, '.~lock.') && str_ends_with($fileName, '#')) {
+            return true;
+        }
+
+        // Microsoft Office temp files: ~$filename
+        if (str_starts_with($fileName, '~$')) {
+            return true;
+        }
+
+        // Generic temp files starting with .~ or ~
+        return str_starts_with($fileName, '.~') || str_starts_with($fileName, '~');
     }
 
     /**
