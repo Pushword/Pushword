@@ -57,6 +57,25 @@ class AdminJSTest extends AbstractAdminTestClass
     #[Override]
     public static function setUpBeforeClass(): void
     {
+        // Ensure Panther uses a compatible Chromium binary in sandbox-less mode (CI/snap)
+        if (! isset($_SERVER['PANTHER_CHROME_BINARY'])) {
+            foreach ([
+                '/usr/bin/chromium-browser',
+                '/usr/bin/chromium',
+                '/usr/bin/google-chrome',
+                '/usr/bin/chrome',
+                '/snap/bin/chromium',
+            ] as $binary) {
+                if (is_executable($binary)) {
+                    $_SERVER['PANTHER_CHROME_BINARY'] = $binary;
+                    break;
+                }
+            }
+        }
+
+        $_SERVER['PANTHER_NO_SANDBOX'] ??= '1';
+        $_SERVER['PANTHER_CHROME_ARGUMENTS'] ??= '--disable-dev-shm-usage --no-sandbox --remote-allow-origins=*';
+
         // Clean up any stale processes from previous test runs that may have crashed
         // Kill any process using port 9080 (Panther's default web server port)
         exec('lsof -ti:9080 2>/dev/null | xargs -r kill -9 2>/dev/null');
