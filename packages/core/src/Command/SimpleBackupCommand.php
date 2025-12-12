@@ -20,7 +20,7 @@ final readonly class SimpleBackupCommand
         OutputInterface $output,
         #[Option(name: 'create', shortcut: 'c')]
         bool $create = false,
-        #[Option(name: 'clean', description: 'Remove old backups, keeping only the most recent ones')]
+        #[Option(description: 'Remove old backups, keeping only the most recent ones', name: 'clean')]
         bool $clean = false
     ): int {
         if ($create) {

@@ -7,7 +7,9 @@ use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 
 #[AsCommand(name: 'pw:flat:import', description: 'Syncing flat file inside database.')]
@@ -15,17 +17,20 @@ final class FlatFileImportCommand
 {
     public function __construct(
         protected FlatFileSync $flatFileSync,
-        private readonly Filesystem $fs
+        private readonly Filesystem $fs,
     ) {
     }
 
     public function __invoke(
         #[Argument(name: 'host')]
         ?string $host,
+        InputInterface $input,
         OutputInterface $output,
         #[Option(name: 'force', shortcut: 'f')]
-        string $force = 'all'
+        string $force = 'all',
     ): int {
+        $io = new SymfonyStyle($input, $output);
+
         if ($this->fs->exists('var/app.db')) {
             $backupFileName = 'var/app.db~'.date('YmdHis');
             $this->fs->copy('var/app.db', $backupFileName);
@@ -41,6 +46,13 @@ final class FlatFileImportCommand
         } elseif ('page' === $force) {
             $output->writeln('-- only page');
             $this->flatFileSync->pageSync->import($host);
+        }
+
+        // Display warnings for missing media files
+        $missingFiles = $this->flatFileSync->mediaSync->getMissingFiles();
+        if ([] !== $missingFiles) {
+            $io->warning('Some media files were not found and skipped:');
+            $io->listing($missingFiles);
         }
 
         $output->writeln('Import completed.');

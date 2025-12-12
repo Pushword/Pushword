@@ -34,6 +34,7 @@ final readonly class ImageOptimizerCommand
         $progressBar->setMessage('');
         $progressBar->setFormat("%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% \r\n %message%");
         $progressBar->start();
+
         $errors = [];
         foreach ($medias as $media) {
             if ($this->imageManager->isImage($media)) {

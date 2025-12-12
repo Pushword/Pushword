@@ -39,6 +39,7 @@ final readonly class ImageManagerCommand
         $progressBar->setMessage('');
         $progressBar->setFormat("%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% \r\n %message%");
         $progressBar->start();
+
         $errors = [];
         $skipped = 0;
 

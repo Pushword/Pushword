@@ -42,6 +42,9 @@ class MediaImporter extends AbstractImporter
     /** @var string[] */
     private array $customColumns = [];
 
+    /** @var string[] */
+    private array $missingFiles = [];
+
     public function __construct(
         protected EntityManagerInterface $em,
         protected AppPool $apps,
@@ -407,6 +410,7 @@ class MediaImporter extends AbstractImporter
         $this->fileNameChanges = [];
         $this->altLocaleColumns = [];
         $this->customColumns = [];
+        $this->missingFiles = [];
     }
 
     /**
@@ -467,8 +471,7 @@ class MediaImporter extends AbstractImporter
     /**
      * Validate that files referenced in the CSV with IDs exist in storage or flat directory.
      * Only validates files that have IDs (existing media), not new files.
-     *
-     * @throws RuntimeException if a file with ID is missing
+     * Missing files are logged as warnings and skipped instead of stopping the import.
      */
     public function validateFilesExist(string $dir): void
     {
@@ -512,7 +515,23 @@ class MediaImporter extends AbstractImporter
                 }
             }
 
-            throw new RuntimeException(\sprintf('Media file "%s" referenced in CSV does not exist in "%s" or storage', $fileName, $dir));
+            // Log warning and skip instead of throwing exception
+            $warningMessage = \sprintf('Media file "%s" referenced in CSV does not exist in "%s" or storage - skipping', $fileName, $dir);
+            $this->logger?->warning($warningMessage);
+            $this->missingFiles[] = $fileName;
+
+            // Remove from index to prevent import attempt
+            unset($this->indexData[$fileName]);
         }
+    }
+
+    /**
+     * Get list of missing files detected during validation.
+     *
+     * @return string[]
+     */
+    public function getMissingFiles(): array
+    {
+        return $this->missingFiles;
     }
 }

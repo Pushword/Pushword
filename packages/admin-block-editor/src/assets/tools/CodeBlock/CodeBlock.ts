@@ -87,15 +87,9 @@ export default class CodeBlock extends Raw {
    * @public
    */
   save(): { html: string; language: string } {
-    let html = ''
-    try {
-      // @ts-ignore
-      html = this.editorInstance.getValue()
-    } catch (error) {
-      console.error(error)
+    if (this.editorInstance) {
+      this._codeBlockData.html = this.editorInstance.getValue()
     }
-
-    this._codeBlockData.html = html
 
     return this._codeBlockData
   }

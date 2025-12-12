@@ -43,7 +43,6 @@ Pushword is a modular CMS built as a collection of Symfony bundles. This is a mo
 - Use **fast returns** instead of nesting logic unnecessarily
 - Use trailing commas in multi-line arrays and argument lists
 - Use PHPDoc only when necessary (e.g. `@var Collection<ProductInterface>`)
-- Group class elements in this order: constants, properties, constructor, public methods, protected methods, private methods
 - Group getter and setter methods for the same properties together
 - Suffix interfaces with Interface, traits with Trait
 - indent with 4 spaces
