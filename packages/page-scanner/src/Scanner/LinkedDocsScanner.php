@@ -14,6 +14,8 @@ use function Safe\preg_match;
 use function Safe\preg_match_all;
 
 use Symfony\Component\DomCrawler\Crawler as DomCrawler;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -43,6 +45,14 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private ?array $pageCache = null;
 
+    private bool $collectMode = false;
+
+    /** @var string[] */
+    private array $collectedExternalUrls = [];
+
+    /** @var array<string, true|string> */
+    private array $externalUrlResults = [];
+
     /**
      * @param string[] $linksToIgnore
      */
@@ -51,8 +61,38 @@ final class LinkedDocsScanner extends AbstractScanner
         private readonly array $linksToIgnore,
         private readonly string $publicDir,
         TranslatorInterface $translator,
+        private readonly ?CacheInterface $externalUrlCache = null,
+        private readonly int $externalUrlCacheTtl = 86400,
+        private readonly bool $skipExternalUrlCheck = false,
     ) {
         parent::__construct($translator);
+    }
+
+    public function enableCollectMode(): void
+    {
+        $this->collectMode = true;
+        $this->collectedExternalUrls = [];
+    }
+
+    public function disableCollectMode(): void
+    {
+        $this->collectMode = false;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getCollectedExternalUrls(): array
+    {
+        return array_unique($this->collectedExternalUrls);
+    }
+
+    /**
+     * @param array<string, true|string> $results
+     */
+    public function setExternalUrlResults(array $results): void
+    {
+        $this->externalUrlResults = $results;
     }
 
     /**
@@ -269,7 +309,33 @@ final class LinkedDocsScanner extends AbstractScanner
 
         // external
         if (str_starts_with($url, 'http')) {
-            if (! $this->patchUnreachableDomain($url) && true !== ($errorMsg = $this->urlExist($url))) {
+            if ($this->skipExternalUrlCheck) {
+                return;
+            }
+
+            if ($this->patchUnreachableDomain($url)) {
+                return;
+            }
+
+            // In collect mode, just collect URLs for later parallel checking
+            if ($this->collectMode) {
+                $this->collectedExternalUrls[] = $url;
+
+                return;
+            }
+
+            // Use pre-computed results if available
+            if (isset($this->externalUrlResults[$url])) {
+                $result = $this->externalUrlResults[$url];
+                if (true !== $result) {
+                    $this->addError('<code>'.$url.'</code> '.$result);
+                }
+
+                return;
+            }
+
+            // Fallback to synchronous check
+            if (true !== ($errorMsg = $this->urlExist($url))) {
                 $this->addError('<code>'.$url.'</code> '.$errorMsg);
             }
 
@@ -315,17 +381,32 @@ final class LinkedDocsScanner extends AbstractScanner
         return null !== $node;
     }
 
-    /**
-     * this is really slow on big website.
-     *
-     * @return true|string
-     */
-    private function urlExist(string $url)
+    private function urlExist(string $url): true|string
     {
+        // Check in-memory cache first
         if (isset($this->urlExistCache[$url])) {
             return $this->urlExistCache[$url];
         }
 
+        // Use persistent cache if available
+        if (null !== $this->externalUrlCache) {
+            $cacheKey = 'url_'.hash('xxh3', $url);
+
+            /** @var true|string $result */
+            $result = $this->externalUrlCache->get($cacheKey, function (ItemInterface $item) use ($url): true|string {
+                $item->expiresAfter($this->externalUrlCacheTtl);
+
+                return $this->checkUrlViaHttp($url);
+            });
+
+            return $this->urlExistCache[$url] = $result;
+        }
+
+        return $this->urlExistCache[$url] = $this->checkUrlViaHttp($url);
+    }
+
+    private function checkUrlViaHttp(string $url): true|string
+    {
         $client = new ExtendedClient($url);
         $client
             ->setDefaultSpeedOptions()
@@ -334,33 +415,27 @@ final class LinkedDocsScanner extends AbstractScanner
             ->setMaximumResponseSize()
             ->setDownloadOnlyIf(Helper::checkStatusCode(...))
             ->setMobileUserAgent();
-        // if ($this->proxy) { $client->setProxy($this->proxy); }
         $client->request();
 
         if (in_array($client->getCurlInfo(\CURLINFO_HTTP_CODE), [403, 410], true)) {
-            return $this->urlExistCache[$url] = true;
+            return true;
         }
 
         if (200 !== $client->getCurlInfo(\CURLINFO_HTTP_CODE) && 0 !== $client->getCurlInfo(\CURLINFO_HTTP_CODE)) {
             /** @var string */
             $httpCode = $client->getCurlInfo(\CURLINFO_HTTP_CODE);
 
-            return $this->urlExistCache[$url] = $this->trans('page_scanStatusCode').' ('.$httpCode.')';
+            return $this->trans('page_scanStatusCode').' ('.$httpCode.')';
         }
 
         if ($client->getError() > 0) {
-            return $this->urlExistCache[$url] = $this->trans(
+            return $this->trans(
                 'page_scanUnreachable',
                 92832 === $client->getError() ? [' - errorMessage' => ''] : ['errorMessage' => $client->getErrorMessage()]
             );
         }
 
-        // $canonical = new CanonicalExtractor(new Url($url), new DomCrawler($client->getResponse()->getBody()));
-        // if (! $canonical->ifCanonicalExistsIsItCorrectOrPartiallyCorrect()) {
-        //     return $this->urlExistCache[$url] = $this->trans('page_scanCanonical').' ('.($canonical->get() ?? 'null').')';
-        // }
-
-        return $this->urlExistCache[$url] = true;
+        return true;
     }
 
     private ?Page $lastPageChecked = null;

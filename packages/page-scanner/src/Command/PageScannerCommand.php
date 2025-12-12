@@ -5,6 +5,7 @@ namespace Pushword\PageScanner\Command;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\PageScanner\Controller\PageScannerController;
 use Pushword\PageScanner\Scanner\PageScannerService;
+use Pushword\PageScanner\Scanner\ParallelUrlChecker;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -20,6 +21,7 @@ final class PageScannerCommand
         private readonly PageScannerService $scanner,
         private readonly Filesystem $filesystem,
         private readonly PageRepository $pageRepo,
+        private readonly ParallelUrlChecker $parallelUrlChecker,
         string $varDir,
     ) {
         PageScannerController::setFileCache($varDir);
@@ -48,6 +50,29 @@ final class PageScannerCommand
     {
         $this->scanner->preloadCaches($host);
         $pages = $this->pageRepo->getPublishedPagesWithEagerLoading($host);
+        $pagesCount = \count($pages);
+
+        // Phase 1: Collect all external URLs
+        $this->output?->writeln(\sprintf('Phase 1: Scanning %d pages to collect external URLs...', $pagesCount));
+        $this->scanner->linkedDocsScanner->enableCollectMode();
+
+        foreach ($pages as $page) {
+            $this->scanner->scan($page);
+        }
+
+        $externalUrls = $this->scanner->linkedDocsScanner->getCollectedExternalUrls();
+        $this->scanner->linkedDocsScanner->disableCollectMode();
+
+        // Phase 2: Parallel URL validation
+        $urlCount = \count($externalUrls);
+        if ($urlCount > 0) {
+            $this->output?->writeln(\sprintf('Phase 2: Checking %d external URLs in parallel...', $urlCount));
+            $urlResults = $this->parallelUrlChecker->checkUrls($externalUrls);
+            $this->scanner->linkedDocsScanner->setExternalUrlResults($urlResults);
+        }
+
+        // Phase 3: Full scan with pre-computed URL results
+        $this->output?->writeln('Phase 3: Running full scan with pre-computed results...');
 
         $errors = [];
         $errorNbr = 0;
