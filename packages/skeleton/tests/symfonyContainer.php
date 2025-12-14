@@ -9,7 +9,7 @@ $autoload = __DIR__.'/../vendor/autoload.php';
 $autoload = file_exists($autoload) ? $autoload : __DIR__.'/../../../vendor/autoload.php';
 require $autoload;
 
-(new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
+new Dotenv()->bootEnv(dirname(__DIR__).'/.env');
 
 $kernel = new Kernel('test', true);
 $kernel->boot();

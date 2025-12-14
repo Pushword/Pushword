@@ -81,7 +81,7 @@ class EntityFilterTest extends KernelTestCase
 
     private function getPage(?string $content = null): Page
     {
-        $page = (new Page())
+        $page = new Page()
             ->setH1('Demo Page - Kitchen Sink  Markdown + Twig')
             ->setSlug('kitchen-sink')
             ->setLocale('en')

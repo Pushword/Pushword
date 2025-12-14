@@ -116,7 +116,7 @@ class NewMessageMailNotifier
         $this->cache->get($cacheKey, function (ItemInterface $item) use ($message, $authorEmail, $subject): bool {
             $item->expiresAfter(600); // 10 minutes
 
-            $templatedEmail = (new TemplatedEmail())
+            $templatedEmail = new TemplatedEmail()
                 ->subject($subject)
                 ->from($this->emailFrom)
                 ->to($this->emailTo)
@@ -164,7 +164,7 @@ class NewMessageMailNotifier
             return;
         }
 
-        $templatedEmail = (new TemplatedEmail())
+        $templatedEmail = new TemplatedEmail()
             ->subject(
                 $this->translator->trans(
                     \count($messages) > 1 ? 'adminConversationNotificationTitlePlural' : 'adminConversationNotificationTitleSingular',

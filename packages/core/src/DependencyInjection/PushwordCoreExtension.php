@@ -23,7 +23,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
 
         $configuration = $this->getConfiguration($mergedConfig, $container) ?? throw new LogicException(); // @phpstan-ignore-line
 
-        (new PushwordConfigFactory($container, $mergedConfig, $configuration))
+        new PushwordConfigFactory($container, $mergedConfig, $configuration)
             ->loadConfigToParams()
             ->loadApps();
 

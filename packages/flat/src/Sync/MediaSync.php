@@ -94,13 +94,7 @@ final readonly class MediaSync
         $app = $this->resolveApp($host);
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
 
-        foreach ($this->getDirectoriesToScan($contentDir) as $directory) {
-            if ($this->hasNewerFiles($directory)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->getDirectoriesToScan($contentDir), fn (string $directory): bool => $this->hasNewerFiles($directory));
     }
 
     private function importDirectory(string $dir): void
@@ -127,7 +121,7 @@ final readonly class MediaSync
                 continue;
             }
 
-            $lastEditDateTime = (new DateTime())->setTimestamp(filemtime($path));
+            $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
             $this->mediaImporter->import($path, $lastEditDateTime);
         }
     }
@@ -189,7 +183,7 @@ final readonly class MediaSync
             return true;
         }
 
-        $lastEditDateTime = (new DateTime())->setTimestamp(filemtime($filePath));
+        $lastEditDateTime = new DateTime()->setTimestamp(filemtime($filePath));
 
         return $lastEditDateTime > $media->safegetUpdatedAt();
     }

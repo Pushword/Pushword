@@ -19,7 +19,7 @@ $finder = Finder::create()
 
 $rules = require __DIR__.'/packages/skeleton/php-cs-fixer-rules.php';
 
-return (new Config())
+return new Config()
     ->setRules($rules)
     ->setRiskyAllowed(true)
     ->setFinder($finder);

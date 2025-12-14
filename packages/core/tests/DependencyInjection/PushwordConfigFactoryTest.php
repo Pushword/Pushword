@@ -15,7 +15,7 @@ class PushwordConfigFactoryTest extends TestCase
     public function testWithoutConfiguration(): void
     {
         $container = new ContainerBuilder(new ParameterBag([]));
-        $config = (new Processor())->processConfiguration(new Configuration(), []);
+        $config = new Processor()->processConfiguration(new Configuration(), []);
         $factory = new PushwordConfigFactory($container, $config, new Configuration());
         $factory->loadConfigToParams();
         $factory->loadApps();
@@ -92,7 +92,7 @@ class PushwordConfigFactoryTest extends TestCase
 
         $extensionConfig['apps'][0]['custom_properties'] = array_merge($extensionConfig['apps'][0]['custom_properties'], ['firstCP' => 'blabla']);
 
-        return (new Processor())->processConfiguration(new Configuration(), [$extensionConfig]);
+        return new Processor()->processConfiguration(new Configuration(), [$extensionConfig]);
     }
 
     private function getBadConfigArray(): array

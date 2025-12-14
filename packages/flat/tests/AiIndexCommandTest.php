@@ -147,7 +147,7 @@ class AiIndexCommandTest extends KernelTestCase
         parent::setUp();
         $kernel = static::createKernel();
         $this->exportDir = $kernel->getCacheDir().'/test-ai-index-'.uniqid();
-        (new Filesystem())->mkdir($this->exportDir);
+        new Filesystem()->mkdir($this->exportDir);
     }
 
     #[Override]
@@ -181,7 +181,7 @@ class AiIndexCommandTest extends KernelTestCase
         }
 
         if (is_dir($this->exportDir)) {
-            (new Filesystem())->remove($this->exportDir);
+            new Filesystem()->remove($this->exportDir);
         }
 
         parent::tearDown();

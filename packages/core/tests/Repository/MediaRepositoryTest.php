@@ -15,7 +15,7 @@ class MediaRepositoryTest extends KernelTestCase
 
         $mediaRepo = $em->getRepository(Media::class);
 
-        $duplicate = $mediaRepo->findDuplicate((new Media())->setHash('testFakeHash'));
+        $duplicate = $mediaRepo->findDuplicate(new Media()->setHash('testFakeHash'));
         self::assertNull($duplicate);
 
         $duplicate = $em->getRepository(Media::class)->findDuplicate($this->getMediaToTestDuplicate());
@@ -24,7 +24,7 @@ class MediaRepositoryTest extends KernelTestCase
 
     public function getMediaToTestDuplicate(): Media
     {
-        return (new Media())->setProjectDir(self::getContainer()->getParameter('kernel.project_dir'))
+        return new Media()->setProjectDir(self::getContainer()->getParameter('kernel.project_dir'))
             ->setStoreIn(self::getContainer()->getParameter('pw.media_dir'))
             ->setMimeType('image/jpeg')
             ->setSize(2)

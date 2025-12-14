@@ -203,7 +203,7 @@ class StaticGeneratorTest extends KernelTestCase
 
     public function getPageRepo(): MockObject
     {
-        $page = (new Page())
+        $page = new Page()
             ->setH1('Welcome to Pushword !')
             ->setSlug('homepage')
             ->setLocale('en')

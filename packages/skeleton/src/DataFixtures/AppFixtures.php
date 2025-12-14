@@ -35,7 +35,7 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        $user = (new User())
+        $user = new User()
             ->setEmail('contact@piedweb.com')
             ->setRoles([User::ROLE_DEFAULT]);
 
@@ -49,7 +49,7 @@ class AppFixtures extends Fixture
         ];
         $media = [];
         foreach ($medias as $name => $data) {
-            $media[$name] = (new Media())
+            $media[$name] = new Media()
             ->setProjectDir($this->params->get('kernel.project_dir'))
             ->setStoreIn($this->params->get('pw.media_dir'))
             ->setMimeType($data['mime'])
@@ -64,7 +64,7 @@ class AppFixtures extends Fixture
 
         $manager->flush();
 
-        $homepage = (new Page())
+        $homepage = new Page()
             ->setH1('Welcome to Pushword !')
             ->setSlug('homepage')
             ->setMainImage($media['Demo 2'])
@@ -82,7 +82,7 @@ class AppFixtures extends Fixture
         $manager->persist($homepage);
         $manager->flush();
 
-        $ksPage = (new Page())
+        $ksPage = new Page()
             ->setH1('Demo Page - Kitchen Sink  Markdown + Twig')
             ->setSlug('kitchen-sink')
             ->setMainImage($media['Demo 1'])
@@ -98,7 +98,7 @@ class AppFixtures extends Fixture
 
         $manager->persist($ksPage);
 
-        $ksPage = (new Page())
+        $ksPage = new Page()
             ->setH1('Demo Page - Kitchen Sink Block')
             ->setSlug('kitchen-sink')
             ->setMainImage($media['Demo 1'])
@@ -114,7 +114,7 @@ class AppFixtures extends Fixture
 
         $manager->persist($ksPage);
 
-        $redirectionPage = (new Page())
+        $redirectionPage = new Page()
             ->setH1('Redirection')
             ->setSlug('pushword')
             ->setLocale('en')
@@ -129,7 +129,7 @@ class AppFixtures extends Fixture
         $manager->persist($redirectionPage);
 
         // French page for localhost.dev to test multilingual menu
-        $homepageFr = (new Page())
+        $homepageFr = new Page()
             ->setH1('Bienvenue sur Pushword !')
             ->setSlug('homepage')
             ->setMainImage($media['Demo 3'])
@@ -147,7 +147,7 @@ class AppFixtures extends Fixture
         $manager->flush();
 
         if ('localhost.dev' === $this->apps->getMainHost()) {
-            $message = (new Message())
+            $message = new Message()
                 ->setContent('This is a default conversation message for localhost.dev. You can use this to test the conversation features.')
                 ->setAuthorName('Demo User')
                 ->setAuthorEmail('demo@localhost.dev')

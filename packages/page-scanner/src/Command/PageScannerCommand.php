@@ -29,7 +29,7 @@ final class PageScannerCommand
 
     protected function scanAllWithLock(string $host): bool
     {
-        $lock = (new LockFactory(new FlockStore()))->createLock('page-scan');
+        $lock = new LockFactory(new FlockStore())->createLock('page-scan');
         if ($lock->acquire()) {
             // sleep(30);
             $errors = $this->scanAll($host);

@@ -41,7 +41,7 @@ class PostAutoloadDump extends PostInstall
                     throw new Exception();
                 }
 
-                (new $className())->run();
+                new $className()->run();
 
                 // TODO find a way to use autowiring
                 // self::getKernel()->getContainer()->get($classname)->run();
@@ -58,7 +58,7 @@ class PostAutoloadDump extends PostInstall
             return self::$kernel;
         }
 
-        (new Dotenv())->loadEnv(file_exists('.env') ? '.env' : 'packages/skeleton/.env');
+        new Dotenv()->loadEnv(file_exists('.env') ? '.env' : 'packages/skeleton/.env');
         if (class_exists(Debug::class)) {
             Debug::enable();
         }

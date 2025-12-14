@@ -39,7 +39,7 @@ class LinkedDocsScannerTest extends KernelTestCase
 
     public function getPage(): Page
     {
-        $page = (new Page())
+        $page = new Page()
             ->setH1('Welcome to Pushword !')
             ->setSlug('homepage')
             ->setLocale('en')

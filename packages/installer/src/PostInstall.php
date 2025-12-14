@@ -40,12 +40,12 @@ class PostInstall
 
     public static function copy(string $source, string $dest): void
     {
-        (new Filesystem())->copy($source, $dest, true);
+        new Filesystem()->copy($source, $dest, true);
     }
 
     public static function mirror(string $source, string $dest): void
     {
-        (new Filesystem())->mirror($source, $dest);
+        new Filesystem()->mirror($source, $dest);
     }
 
     /**
@@ -53,12 +53,12 @@ class PostInstall
      */
     public static function remove(array|string $path): void
     {
-        (new Filesystem())->remove($path);
+        new Filesystem()->remove($path);
     }
 
     public static function dumpFile(string $path, string $content): void
     {
-        (new Filesystem())->dumpFile($path, $content);
+        new Filesystem()->dumpFile($path, $content);
     }
 
     public static function replace(string $file, string $search, string $replace): void

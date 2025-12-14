@@ -35,7 +35,7 @@ class ControllerTest extends AbstractAdminTestClass
     {
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-        $page = (new Page())
+        $page = new Page()
             ->setH1('Test editorJsPage')
             ->setSlug('test')
             ->setHost('admin-block-editor.test')

@@ -18,7 +18,7 @@ final class MediaDimensionIntFilter implements FilterInterface
 
     public static function new(TranslatableInterface|string|false|null $label = null): self
     {
-        return (new self())
+        return new self()
             ->setFilterFqcn(self::class)
             ->setProperty('dimensionIntFilter')
             ->setLabel($label)

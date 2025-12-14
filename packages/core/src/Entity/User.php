@@ -144,10 +144,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return $this;
     }
 
-    public function eraseCredentials(): void
-    {
-    }
-
     /**
      * @see User
      */

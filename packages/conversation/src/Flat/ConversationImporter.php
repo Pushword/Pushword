@@ -206,14 +206,7 @@ final class ConversationImporter
      */
     private function isEmptyRow(array $row): bool
     {
-        // Une ligne est vide si toutes les valeurs sont null ou vides
-        foreach ($row as $value) {
-            if (null !== $value && '' !== trim($value)) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($row, fn ($value): bool => ! (null !== $value && '' !== trim($value)));
     }
 
     /**

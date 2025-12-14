@@ -121,7 +121,7 @@ final class PushwordConfigFactory
         $node->finalize($app); // it will check value
 
         if (! isset($app['hosts']) || ! \is_array($app['hosts'])) {
-            $app = (new Processor())->processConfiguration($this->configuration, $app);
+            $app = new Processor()->processConfiguration($this->configuration, $app);
             // throw new LogicException();
         }
 

@@ -87,7 +87,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $queryBuilder = $this->buildPublishedPageQuery('p');
 
         $this->andHost($queryBuilder, $host);
-        (new FilterWhereParser($queryBuilder, $where))->parseAndAdd();
+        new FilterWhereParser($queryBuilder, $where)->parseAndAdd();
         $this->orderBy($queryBuilder, $orderBy);
         $this->limit($queryBuilder, $limit);
 

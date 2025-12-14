@@ -58,7 +58,7 @@ class LastTime
             file_put_contents($this->filePath, '');
         }
 
-        touch($this->filePath, (new DateTime($datetime))->getTimestamp());
+        touch($this->filePath, new DateTime($datetime)->getTimestamp());
     }
 
     /**

@@ -89,7 +89,7 @@ final readonly class PageSync
                 continue;
             }
 
-            $lastEditDateTime = (new DateTime())->setTimestamp(filemtime($path));
+            $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
             $this->pageImporter->import($path, $lastEditDateTime);
         }
     }
@@ -145,7 +145,7 @@ final readonly class PageSync
             return true;
         }
 
-        $lastEditDateTime = (new DateTime())->setTimestamp(filemtime($filePath));
+        $lastEditDateTime = new DateTime()->setTimestamp(filemtime($filePath));
 
         return $lastEditDateTime > $page->getUpdatedAt();
     }

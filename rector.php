@@ -17,7 +17,7 @@ $paths = [
 
 return RectorConfig::configure()
     ->withImportNames(removeUnusedImports: true)
-    ->withPhpSets(php83: true)
+    ->withPhpSets(php84: true)
     ->withParallel()
     ->withPaths($paths)
     ->withRootFiles()
@@ -42,7 +42,7 @@ return RectorConfig::configure()
         doctrine: true
     )
     ->withSets([
-        SymfonySetList::SYMFONY_73,
+        SymfonySetList::SYMFONY_80,
     ])
     ->withSkip([
         'packages/core/src/Twig/AppExtension.php',

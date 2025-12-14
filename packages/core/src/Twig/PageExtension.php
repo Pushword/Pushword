@@ -85,7 +85,7 @@ final class PageExtension
     public function getPublishedPages($host = null, array|string $where = [], array|string $order = 'weight,publishedAt', array|int $max = 0, bool $withRedirection = false): array
     {
         $currentPage = $this->apps->getCurrentPage();
-        $where = [\is_array($where) ? $where : (new StringToDQLCriteria($where, $currentPage))->retrieve()];
+        $where = [\is_array($where) ? $where : new StringToDQLCriteria($where, $currentPage)->retrieve()];
         $where[] = ['id',  '<>', $currentPage?->getId() ?? 0];
 
         $order = '' === $order ? 'publishedAt,weight' : $order;
@@ -249,7 +249,7 @@ final class PageExtension
             : (\in_array($view, ['', 'list'], true) ? '/component/pages_list.html.twig'
                 : $view);
 
-        $search = \is_array($search) ? $search : (new StringToDQLCriteria($search, $currentPage))->retrieve();
+        $search = \is_array($search) ? $search : new StringToDQLCriteria($search, $currentPage)->retrieve();
 
         $order = str_replace('priority', 'weight', $order); // bc
         $order = '' === $order ? 'publishedAt,weight' : $order;
@@ -276,7 +276,7 @@ final class PageExtension
                 $pages = \array_slice($pages, 0, $limit);
             }
 
-            $pagerfanta = (new Pagerfanta(new ArrayAdapter($pages)))
+            $pagerfanta = new Pagerfanta(new ArrayAdapter($pages))
                 ->setMaxNbPages($maxPages)
                 ->setMaxPerPage($max)
                 ->setCurrentPage($this->getCurrentPage());

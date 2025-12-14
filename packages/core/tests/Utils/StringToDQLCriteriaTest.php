@@ -12,8 +12,8 @@ class StringToDQLCriteriaTest extends KernelTestCase
 {
     public function testIt(): void
     {
-        self::assertSame([['mainContent', 'LIKE', '%<!--blog-->%']], (new StringToDQLCriteria('comment:blog', null))->retrieve());
-        self::assertSame([['slug', 'LIKE', 'blog'], 'OR', ['tags', 'LIKE', '%"a"%']], (new StringToDQLCriteria('slug:blog OR a', null))->retrieve());
+        self::assertSame([['mainContent', 'LIKE', '%<!--blog-->%']], new StringToDQLCriteria('comment:blog', null)->retrieve());
+        self::assertSame([['slug', 'LIKE', 'blog'], 'OR', ['tags', 'LIKE', '%"a"%']], new StringToDQLCriteria('slug:blog OR a', null)->retrieve());
 
         self::bootKernel();
         /** @var EntityManager */
@@ -21,7 +21,7 @@ class StringToDQLCriteriaTest extends KernelTestCase
 
         $pageRepo = $em->getRepository(Page::class);
 
-        $where = (new StringToDQLCriteria('related:comment:blog OR related:comment:story', null))->retrieve();
+        $where = new StringToDQLCriteria('related:comment:blog OR related:comment:story', null)->retrieve();
         $query = $pageRepo->getPublishedPageQueryBuilder(where: $where)->getQuery();
         $sql = $query->getSQL();
         self::assertIsString($sql);

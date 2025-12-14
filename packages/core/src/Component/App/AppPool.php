@@ -72,7 +72,7 @@ final class AppPool
     public function get(?string $host = ''): AppConfig
     {
         $host = \in_array($host, [null, ''], true) ? $this->currentApp : $host;
-        if (isset($this->apps[$host])) {
+        if (null !== $host && isset($this->apps[$host])) {
             return $this->apps[$host];
         }
 

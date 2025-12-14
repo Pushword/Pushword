@@ -11,17 +11,14 @@ use ReflectionProperty;
 class Entity
 {
     /**
-     * @param ReflectionAttribute[] $attributes
+     * @param array<ReflectionAttribute<object>> $attributes
      */
-    private static function containAttribute(array $attributes, string $searchedName): bool // @phpstan-ignore-line
+    private static function containAttribute(array $attributes, string $searchedName): bool
     {
-        foreach ($attributes as $attribute) {
-            if ($attribute->getName() === $searchedName) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $attributes,
+            static fn (ReflectionAttribute $attribute): bool => $attribute->getName() === $searchedName,
+        );
     }
 
     /**

@@ -661,19 +661,12 @@ class Media implements IdInterface, Taggable, Stringable
     }
 
     /**************** Backward Compatibility (Deprecated) ***************/
-
-    /**
-     * @deprecated Use getFileName() instead
-     */
     #[Deprecated(message: 'Use getFileName() instead', since: '1.0')]
     public function getMedia(): string
     {
         return $this->getFileName();
     }
 
-    /**
-     * @deprecated Use getAlt() instead
-     */
     #[Deprecated(message: 'Use getAlt() instead', since: '1.0')]
     public function getName(bool $onlyName = false): string
     {

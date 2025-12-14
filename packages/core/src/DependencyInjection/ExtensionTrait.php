@@ -57,7 +57,7 @@ trait ExtensionTrait
     {
         $configuration = $this->getConfiguration($mergedConfig, $container) ?? throw new LogicException(); // @phpstan-ignore-line
 
-        (new PushwordConfigFactory($container, $mergedConfig, $configuration, $this->getAlias()))
+        new PushwordConfigFactory($container, $mergedConfig, $configuration, $this->getAlias())
             ->loadConfigToParams()
             ->processAppsConfiguration();
 

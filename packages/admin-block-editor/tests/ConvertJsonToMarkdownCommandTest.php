@@ -117,7 +117,7 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
 
         $jsonContent = file_get_contents(__DIR__.'/content/KitchenSink.json');
 
-        $page = (new Page())
+        $page = new Page()
             ->setH1('Demo Page - Kitchen Sink Block')
             ->setSlug('kitchen-sink')
             ->setHost('admin-block-editor.test')
@@ -134,7 +134,7 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
     {
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-        $page = (new Page())
+        $page = new Page()
             ->setH1('Test Markdown Page')
             ->setSlug('test-markdown')
             ->setHost('admin-block-editor.test')

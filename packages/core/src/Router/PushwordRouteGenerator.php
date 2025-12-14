@@ -41,7 +41,7 @@ final class PushwordRouteGenerator
     #[AsTwigFunction('homepage')]
     public function generatePathForHomePage(?Page $page = null, bool $canonical = false): string
     {
-        $homepage = (new Page())->setSlug('');
+        $homepage = new Page()->setSlug('');
 
         if (null !== $page) {
             if ($page->getLocale() !== $this->apps->get()->getLocale()) {

@@ -154,13 +154,7 @@ final class ImageManager
      */
     private function isAllCacheFresh(Media $media): bool
     {
-        foreach (array_keys($this->filterSets) as $filterName) {
-            if (! $this->isFilterCacheFresh($media, $filterName)) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all(array_keys($this->filterSets), fn (string $filterName): bool => $this->isFilterCacheFresh($media, $filterName));
     }
 
     /**
@@ -400,7 +394,7 @@ final class ImageManager
     private function createFilterDir(string $path): void
     {
         if (! file_exists($path)) {
-            (new Filesystem())->mkdir($path);
+            new Filesystem()->mkdir($path);
         }
     }
 
@@ -640,7 +634,7 @@ final class ImageManager
 
     private function generateFileName(string $url, string $mimeType, string $slug, bool $hashInFilename): string
     {
-        $slug = (new Slugify())->slugify($slug);
+        $slug = new Slugify()->slugify($slug);
 
         return ('' !== $slug ? $slug : pathinfo($url, \PATHINFO_BASENAME))
             .($hashInFilename ? '-'.substr(md5(sha1($url)), 0, 4) : '')

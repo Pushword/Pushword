@@ -44,7 +44,7 @@ class PageUpdateNotifierTest extends KernelTestCase
 
     protected function getPage(): Page
     {
-        return (new Page())
+        return new Page()
             ->setSlug('page-updater')
             ->setTitle('Just created')
             ->setCreatedAt(new DateTime())

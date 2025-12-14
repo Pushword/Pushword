@@ -73,7 +73,7 @@ final class ConversationFormController extends AbstractController
         }
 
         if (! class_exists($class)
-            || ! (new ReflectionClass($class))->implementsInterface(ConversationFormInterface::class)) {
+            || ! new ReflectionClass($class)->implementsInterface(ConversationFormInterface::class)) {
             throw new Exception('`'.$type."` does'nt exist.");
         }
 

@@ -605,14 +605,14 @@ final class ConversationFlatTest extends KernelTestCase
             self::fail('Unable to create temporary CSV file');
         }
 
-        fputcsv($handle, $columns);
+        fputcsv($handle, $columns, escape: '\\');
         foreach ($rows as $row) {
             $line = [];
             foreach ($columns as $column) {
                 $line[] = $row[$column] ?? '';
             }
 
-            fputcsv($handle, $line);
+            fputcsv($handle, $line, escape: '\\');
         }
 
         fclose($handle);

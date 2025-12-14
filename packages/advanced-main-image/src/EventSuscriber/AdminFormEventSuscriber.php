@@ -52,7 +52,7 @@ final readonly class AdminFormEventSuscriber implements EventSubscriberInterface
         }
 
         $fields = $formEvent->getFields();
-        (new FormFieldReplacer())->run(PageMainImageField::class, PageAdvancedMainImageFormField::class, $fields);
+        new FormFieldReplacer()->run(PageMainImageField::class, PageAdvancedMainImageFormField::class, $fields);
 
         // @phpstan-ignore-next-line
         $formEvent->setFields($fields);

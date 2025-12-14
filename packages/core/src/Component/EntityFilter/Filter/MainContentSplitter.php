@@ -67,7 +67,7 @@ class MainContentSplitter extends AbstractFilter
 
     private function parseToc(): void
     {
-        $this->content = (new MarkupFixer())->fix($this->content); // this work only on good html
+        $this->content = new MarkupFixer()->fix($this->content); // this work only on good html
 
         // this is a bit crazy
         // Because if there is a wrapper, it will make shit ?!
@@ -112,7 +112,7 @@ class MainContentSplitter extends AbstractFilter
         $content = explode('<!--end-toc-->', $content, 2);
         $content = $content[0];
 
-        return $html ? (new TocGenerator())->getHtmlMenu($content, 2)
-            : (new TocGenerator())->getMenu($content, 2);
+        return $html ? new TocGenerator()->getHtmlMenu($content, 2)
+            : new TocGenerator()->getMenu($content, 2);
     }
 }

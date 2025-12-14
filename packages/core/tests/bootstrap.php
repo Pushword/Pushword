@@ -28,7 +28,7 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline): bool {
 }, \E_WARNING);
 // ----------------------------------
 
-(new Dotenv())->loadEnv(__DIR__.'/.env');
+new Dotenv()->loadEnv(__DIR__.'/.env');
 
 // Some reset here
 $fs = new Filesystem();

@@ -34,7 +34,7 @@ class PageScannerTest extends KernelTestCase
 
     public function getPage(): Page
     {
-        return (new Page())
+        return new Page()
             ->setH1('Welcome to Pushword !')
             ->setSlug('homepage')
             ->setLocale('en')

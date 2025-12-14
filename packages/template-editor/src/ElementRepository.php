@@ -21,7 +21,7 @@ final readonly class ElementRepository
      */
     public function getAll(): array
     {
-        $templateFileList = (new Finder())->files()->in($this->templateDir);
+        $templateFileList = new Finder()->files()->in($this->templateDir);
         $elements = [];
 
         foreach ($templateFileList as $templateFile) {
