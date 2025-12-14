@@ -50,7 +50,7 @@ final class ParallelUrlChecker
             }
         }
 
-        $batches = array_chunk($uncachedUrls, $this->parallelBatchSize);
+        $batches = array_chunk($uncachedUrls, max(1, $this->parallelBatchSize));
         foreach ($batches as $batch) {
             $this->checkBatch($batch);
         }
@@ -89,7 +89,7 @@ final class ParallelUrlChecker
             $this->cacheResult($url, $result);
 
             curl_multi_remove_handle($multiHandle, $ch);
-            curl_close($ch);
+            unset($ch);
         }
 
         curl_multi_close($multiHandle);
