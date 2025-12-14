@@ -12,9 +12,9 @@ jobs:
         php: [8.4] # , 8.5 wait for symfony/panther upgrade
         node: [25, 24]
         stability: [prefer-stable]
-        exclude:
-          - php: 8.5
-            node: 24
+        # exclude:
+        #   - php: 8.5
+        #     node: 24
 
     name: P${{ matrix.php }} - N${{ matrix.node }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
