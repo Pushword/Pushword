@@ -19,11 +19,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
-- compress image before user upload (mainly on easy admin) browser-image-compression by scaling down like the `default` filter set.
-- In docs, offer a way to do it programmatically with a command for previous uploaded image.
-- same for PDF
-
-- improve static generation performance by
+- improve static generation performance by digg the codebase to see what we can improve
   - avoid to rely on currentRequest (same for page scanner)
   - instead of creating a full new folder, replace only what need to be replaced (page or media)
   - digg the codebase to see what we can improve
@@ -38,26 +34,11 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
   ➜ done, but need test
 
-- vérifier que le public media dir et le media dir (config push word) sont bien utilisé partout
-
-- [static+page-scanner] accelerate the generation by skipping the request (and add on all calls to currentRequest by a default value if currentRequest is not set)
-
-- [Core] add posibile_host and skip custom_host route when a custom_host is detected
-
-- [AdminBlockEditor] transition JSON -> Markdown -> EditorJS
-  - [x] editorjs to markdown
-  - [x] markdown to editorjs... en cours, non fonctionnel
-  - [x] implémenter prettier markdown
-  - [x] enregistrer en DB uniquement le markdown
-  - [x] admin - revoir la class qui instantie pour montrer EditorJS si le contenu est en markdown (donc markdown ➜ editorjs à l'initialisation, nouveau comportement par défaut)
-  - [x] **how to bulk upgrade ?** ➜ `bin/console pw:json-to-markdown`
-  - [x] Remove all code related to block rendering (in DB, markdown is used so front-end will use markdown)
-  - [ ] test test test
-    - [ ] [Example](/example){class="ninja"} n'est pas correctement parsé
-
 - [Ai] Add AiFeature to Flat
-  - [ ] Generate a map of the content = [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
-  - [ ] Generate a map of the media
+  - [x] Generate a map of the content = [Docs] Generate a map eg : https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
+        index.{locale}.csv
+  - [x] Generate a map of the media
+  - [ ] In new, create default AGENTS.md (inspired from altimood)
 
 - [Version]
   - [ ] change versionner to rely on flat and create .example-file.md~version-200020210 instead of serialized json, add a command to clear version
@@ -70,7 +51,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [Flat]
   - [x] mettre à jour le dossier par défault : content/%domain%/
-  - [ ] prefer yaml over json for media exporter
   - [ ] check media export (in content/media or in media ?!)
   - [x] fix markdown cheatsheet
   - [ ] Revoir la transformation de lien markdown (./../test.md ou ./test) en lien vers la page (/test) (useful for navigate in docs from editor)
