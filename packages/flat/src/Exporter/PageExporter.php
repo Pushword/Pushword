@@ -29,6 +29,10 @@ final class PageExporter
     /** @var string[] */
     private readonly array $pageIndexColumns;
 
+    private int $exportedCount = 0;
+
+    private int $skippedCount = 0;
+
     /**
      * @param string[] $pageIndexColumns
      */
@@ -46,6 +50,9 @@ final class PageExporter
 
     public function exportPages(bool $force = false): void
     {
+        $this->exportedCount = 0;
+        $this->skippedCount = 0;
+
         $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
 
         foreach ($pages as $page) {
@@ -213,8 +220,12 @@ final class PageExporter
             && file_exists($exportFilePath)
             && filemtime($exportFilePath) >= $page->safegetUpdatedAt()->getTimestamp()
         ) {
+            ++$this->skippedCount;
+
             return;
         }
+
+        ++$this->exportedCount;
 
         $properties = array_unique([...['title', 'h1', 'slug', 'id'], ...Entity::getProperties($page)]);
 
@@ -290,5 +301,15 @@ final class PageExporter
         assert(is_scalar($value));
 
         return $value;
+    }
+
+    public function getExportedCount(): int
+    {
+        return $this->exportedCount;
+    }
+
+    public function getSkippedCount(): int
+    {
+        return $this->skippedCount;
     }
 }

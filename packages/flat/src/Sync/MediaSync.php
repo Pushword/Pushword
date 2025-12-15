@@ -315,4 +315,9 @@ final class MediaSync
     {
         return $this->deletedCount;
     }
+
+    public function getExportedCount(): int
+    {
+        return $this->mediaExporter->getExportedCount();
+    }
 }

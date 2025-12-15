@@ -233,4 +233,14 @@ final class PageSync
     {
         return $this->deletedCount;
     }
+
+    public function getExportedCount(): int
+    {
+        return $this->pageExporter->getExportedCount();
+    }
+
+    public function getExportSkippedCount(): int
+    {
+        return $this->pageExporter->getSkippedCount();
+    }
 }

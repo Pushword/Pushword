@@ -16,6 +16,8 @@ final class MediaExporter
 
     public string $exportDir = '';
 
+    private int $exportedCount = 0;
+
     public function __construct(
         private readonly MediaRepository $mediaRepo,
         private readonly string $mediaDir,
@@ -25,11 +27,15 @@ final class MediaExporter
 
     public function exportMedias(): void
     {
+        $this->exportedCount = 0;
+
         $medias = $this->mediaRepo->findAll();
 
         if ([] === $medias) {
             return;
         }
+
+        $this->exportedCount = \count($medias);
 
         $altLocaleColumns = $this->collectAltLocaleColumns($medias);
         $customColumns = $this->collectCustomColumns($medias);
@@ -184,5 +190,10 @@ final class MediaExporter
         }
 
         mkdir($directory, 0755, true);
+    }
+
+    public function getExportedCount(): int
+    {
+        return $this->exportedCount;
     }
 }

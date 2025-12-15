@@ -41,29 +41,51 @@ final readonly class FlatFileSyncCommand
     {
         $mediaImported = $this->flatFileSync->mediaSync->getImportedCount();
         $pageImported = $this->flatFileSync->pageSync->getImportedCount();
+        $mediaExported = $this->flatFileSync->mediaSync->getExportedCount();
+        $pageExported = $this->flatFileSync->pageSync->getExportedCount();
 
-        // Only show table if there was an import operation
-        if (0 === $mediaImported && 0 === $pageImported
-            && 0 === $this->flatFileSync->mediaSync->getDeletedCount()
-            && 0 === $this->flatFileSync->pageSync->getDeletedCount()
-        ) {
-            $io->success('Sync completed (export mode - no changes detected)');
+        $isImportMode = $mediaImported > 0 || $pageImported > 0
+            || $this->flatFileSync->mediaSync->getDeletedCount() > 0
+            || $this->flatFileSync->pageSync->getDeletedCount() > 0;
+
+        $isExportMode = $mediaExported > 0 || $pageExported > 0
+            || $this->flatFileSync->pageSync->getExportSkippedCount() > 0;
+
+        if (! $isImportMode && ! $isExportMode) {
+            $io->success('Sync completed (no changes detected)');
 
             return;
         }
 
-        $io->table(['Type', 'Imported', 'Skipped', 'Deleted'], [
+        if ($isImportMode) {
+            $io->table(['Type', 'Imported', 'Skipped', 'Deleted'], [
+                [
+                    'Media',
+                    $this->flatFileSync->mediaSync->getImportedCount(),
+                    $this->flatFileSync->mediaSync->getSkippedCount(),
+                    $this->flatFileSync->mediaSync->getDeletedCount(),
+                ],
+                [
+                    'Pages',
+                    $this->flatFileSync->pageSync->getImportedCount(),
+                    $this->flatFileSync->pageSync->getSkippedCount(),
+                    $this->flatFileSync->pageSync->getDeletedCount(),
+                ],
+            ]);
+
+            return;
+        }
+
+        $io->table(['Type', 'Exported', 'Skipped'], [
             [
                 'Media',
-                $this->flatFileSync->mediaSync->getImportedCount(),
-                $this->flatFileSync->mediaSync->getSkippedCount(),
-                $this->flatFileSync->mediaSync->getDeletedCount(),
+                $mediaExported,
+                0,
             ],
             [
                 'Pages',
-                $this->flatFileSync->pageSync->getImportedCount(),
-                $this->flatFileSync->pageSync->getSkippedCount(),
-                $this->flatFileSync->pageSync->getDeletedCount(),
+                $pageExported,
+                $this->flatFileSync->pageSync->getExportSkippedCount(),
             ],
         ]);
     }
