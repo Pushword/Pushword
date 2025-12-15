@@ -77,7 +77,7 @@ final class MediaExporter
     }
 
     /**
-     * @param string[] $header
+     * @param string[]                               $header
      * @param array<int, array<string, string|null>> $rows
      */
     private function generateCsvContent(array $header, array $rows): string

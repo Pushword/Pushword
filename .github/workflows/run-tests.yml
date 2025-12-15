@@ -75,6 +75,9 @@ jobs:
       - name: Install dependencies
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
+      - name: Install PDF optimization tools
+        run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf
+
       #- name: Install browsers
       #  run: vendor/bin/bdi detect drivers
       - name: Initialize
