@@ -243,6 +243,9 @@ final class PageExporter
         $content = '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent();
 
         $this->filesystem->dumpFile($exportFilePath, $content);
+
+        // Sync file timestamp with page updatedAt to prevent import/export cycles
+        touch($exportFilePath, $page->safegetUpdatedAt()->getTimestamp());
     }
 
     /**

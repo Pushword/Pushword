@@ -48,11 +48,10 @@ final readonly class FlatFileSyncCommand
             || $this->flatFileSync->mediaSync->getDeletedCount() > 0
             || $this->flatFileSync->pageSync->getDeletedCount() > 0;
 
-        $isExportMode = $mediaExported > 0 || $pageExported > 0
-            || $this->flatFileSync->pageSync->getExportSkippedCount() > 0;
+        $isExportMode = $mediaExported > 0 || $pageExported > 0;
 
         if (! $isImportMode && ! $isExportMode) {
-            $io->success('Sync completed (no changes detected)');
+            $io->success('Sync completed (export mode - no changes detected)');
 
             return;
         }

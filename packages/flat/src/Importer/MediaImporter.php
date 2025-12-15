@@ -220,7 +220,7 @@ class MediaImporter extends AbstractImporter
             return; // no update needed
         }
 
-        $this->logger?->info('Importing media {fileName}', ['fileName' => $fileName]);
+        $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->getId()).')');
         ++$this->importedCount;
 
         $filePath = $this->copyToMediaDir($filePath);

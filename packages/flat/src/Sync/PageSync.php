@@ -204,7 +204,7 @@ final class PageSync
                 continue;
             }
 
-            $this->logger?->info('Deleting page {slug}', ['slug' => $page->getSlug()]);
+            $this->logger?->info('Deleting page `'.$page->getSlug().'`');
             ++$this->deletedCount;
             $this->entityManager->remove($page);
         }

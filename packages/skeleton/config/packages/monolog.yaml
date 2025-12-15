@@ -1,0 +1,24 @@
+when@dev:
+    monolog:
+        handlers:
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine"]
+                verbosity_levels:
+                    VERBOSITY_NORMAL: WARNING
+                    VERBOSITY_VERBOSE: INFO
+                    VERBOSITY_VERY_VERBOSE: DEBUG
+                    VERBOSITY_DEBUG: DEBUG
+
+when@test:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: error
+                handler: nested
+            nested:
+                type: stream
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug

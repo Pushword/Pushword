@@ -35,8 +35,6 @@ final class MediaExporter
             return;
         }
 
-        $this->exportedCount = \count($medias);
-
         $altLocaleColumns = $this->collectAltLocaleColumns($medias);
         $customColumns = $this->collectCustomColumns($medias);
         $header = array_merge(
@@ -65,9 +63,35 @@ final class MediaExporter
         $csvFilePath = $this->getCsvFilePath();
         $this->ensureDirectoryExists(\dirname($csvFilePath));
 
-        $writer = Writer::from($csvFilePath, 'w+');
+        // Generate new CSV content
+        $newContent = $this->generateCsvContent($header, $rows);
+
+        // Compare with existing content
+        $existingContent = file_exists($csvFilePath) ? file_get_contents($csvFilePath) : '';
+        if ($newContent === $existingContent) {
+            return; // No changes, skip export
+        }
+
+        $this->exportedCount = \count($medias);
+        file_put_contents($csvFilePath, $newContent);
+    }
+
+    /**
+     * @param string[] $header
+     * @param array<int, array<string, string|null>> $rows
+     */
+    private function generateCsvContent(array $header, array $rows): string
+    {
+        $stream = fopen('php://temp', 'r+');
+        if (false === $stream) {
+            throw new Exception('Failed to open temp stream');
+        }
+
+        $writer = Writer::from($stream);
         $writer->insertOne($header);
         $writer->insertAll($rows);
+
+        return $writer->toString();
     }
 
     /**

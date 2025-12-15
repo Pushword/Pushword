@@ -260,7 +260,7 @@ final class MediaSync
         foreach ($allMedia as $media) {
             $mediaId = $media->getId();
             if (null !== $mediaId && ! \in_array($mediaId, $importedIds, true)) {
-                $this->logger?->info('Deleting media {fileName}', ['fileName' => $media->getFileName()]);
+                $this->logger?->info('Deleting media `'.$media->getFileName().'`');
                 ++$this->deletedCount;
                 $this->entityManager->remove($media);
             }

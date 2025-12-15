@@ -209,7 +209,7 @@ final class PageImporter extends AbstractImporter
             return $page; // no update needed
         }
 
-        $this->logger->info('Importing page {slug}', ['slug' => $slug]);
+        $this->logger->info('Importing page `'.$slug.'` ('.($this->newPage ? 'new' : $page->getId()).')');
         ++$this->importedCount;
 
         $page->setCustomProperties([]);
