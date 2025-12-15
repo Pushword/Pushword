@@ -131,7 +131,7 @@ class AppFixtures extends Fixture
         // French page for localhost.dev to test multilingual menu
         $homepageFr = new Page()
             ->setH1('Bienvenue sur Pushword !')
-            ->setSlug('homepage')
+            ->setSlug('fr/homepage')
             ->setMainImage($media['Demo 3'])
             ->setLocale('fr')
             ->setCreatedAt(new DateTime('2 days ago'))
