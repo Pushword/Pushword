@@ -49,6 +49,10 @@ final class PageImporter extends AbstractImporter
 
     private bool $newPage = false;
 
+    private int $importedCount = 0;
+
+    private int $skippedCount = 0;
+
     /** @var array<string, string> where key is the relative file path and value is the slug */
     private array $slugs = [];
 
@@ -200,8 +204,13 @@ final class PageImporter extends AbstractImporter
         $page ??= $this->getPageFromSlug($slug);
 
         if (! $this->newPage && $page->getUpdatedAt() >= $lastEditDateTime) {
+            ++$this->skippedCount;
+
             return $page; // no update needed
         }
+
+        $this->logger->info('Importing page {slug}', ['slug' => $slug]);
+        ++$this->importedCount;
 
         $page->setCustomProperties([]);
         $publishedAtExplicitlySet = false;
@@ -422,5 +431,17 @@ final class PageImporter extends AbstractImporter
         $this->toAddAtTheEnd = [];
         $this->slugs = [];
         $this->pageList = [];
+        $this->importedCount = 0;
+        $this->skippedCount = 0;
+    }
+
+    public function getImportedCount(): int
+    {
+        return $this->importedCount;
+    }
+
+    public function getSkippedCount(): int
+    {
+        return $this->skippedCount;
     }
 }

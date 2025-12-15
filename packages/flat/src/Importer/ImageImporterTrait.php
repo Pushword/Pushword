@@ -22,11 +22,17 @@ trait ImageImporterTrait
 
     public function importImage(string $filePath, DateTimeInterface $dateTime): void
     {
-        $media = $this->getMedia($this->getFilename($filePath));
+        $fileName = $this->getFilename($filePath);
+        $media = $this->getMedia($fileName);
 
         if (false === $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
+            ++$this->skippedCount;
+
             return; // no update needed
         }
+
+        $this->logger?->info('Importing media {fileName}', ['fileName' => $fileName]);
+        ++$this->importedCount;
 
         $filePath = $this->copyToMediaDir($filePath);
 

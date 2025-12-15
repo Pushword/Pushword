@@ -45,6 +45,10 @@ class MediaImporter extends AbstractImporter
     /** @var string[] */
     private array $missingFiles = [];
 
+    private int $importedCount = 0;
+
+    private int $skippedCount = 0;
+
     public function __construct(
         protected EntityManagerInterface $em,
         protected AppPool $apps,
@@ -169,8 +173,6 @@ class MediaImporter extends AbstractImporter
 
     public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
     {
-        $this->logger?->info('Importing media from {filePath}', ['filePath' => $filePath]);
-
         // Skip index.csv file itself
         if (str_ends_with($filePath, MediaExporter::INDEX_FILE)) {
             return;
@@ -213,8 +215,13 @@ class MediaImporter extends AbstractImporter
         $media = $this->getMediaFromIndex($fileName);
 
         if (! $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
+            ++$this->skippedCount;
+
             return; // no update needed
         }
+
+        $this->logger?->info('Importing media {fileName}', ['fileName' => $fileName]);
+        ++$this->importedCount;
 
         $filePath = $this->copyToMediaDir($filePath);
 
@@ -422,6 +429,8 @@ class MediaImporter extends AbstractImporter
         $this->altLocaleColumns = [];
         $this->customColumns = [];
         $this->missingFiles = [];
+        $this->importedCount = 0;
+        $this->skippedCount = 0;
     }
 
     /**
@@ -544,5 +553,15 @@ class MediaImporter extends AbstractImporter
     public function getMissingFiles(): array
     {
         return $this->missingFiles;
+    }
+
+    public function getImportedCount(): int
+    {
+        return $this->importedCount;
+    }
+
+    public function getSkippedCount(): int
+    {
+        return $this->skippedCount;
     }
 }

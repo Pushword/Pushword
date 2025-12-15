@@ -4,6 +4,7 @@ namespace Pushword\Flat\Sync;
 
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
@@ -17,17 +18,20 @@ use function Safe\scandir;
 
 use Symfony\Component\Stopwatch\Stopwatch;
 
-final readonly class MediaSync
+final class MediaSync
 {
+    private int $deletedCount = 0;
+
     public function __construct(
-        private AppPool $apps,
-        private FlatFileContentDirFinder $contentDirFinder,
-        private MediaImporter $mediaImporter,
-        private MediaExporter $mediaExporter,
-        private MediaRepository $mediaRepository,
-        private EntityManagerInterface $entityManager,
-        private string $mediaDir,
-        private ?Stopwatch $stopwatch = null,
+        private readonly AppPool $apps,
+        private readonly FlatFileContentDirFinder $contentDirFinder,
+        private readonly MediaImporter $mediaImporter,
+        private readonly MediaExporter $mediaExporter,
+        private readonly MediaRepository $mediaRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly string $mediaDir,
+        private readonly ?Stopwatch $stopwatch = null,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -44,6 +48,7 @@ final readonly class MediaSync
 
     public function import(?string $host = null): void
     {
+        $this->deletedCount = 0;
         $app = $this->resolveApp($host);
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
         $localMediaDir = $contentDir.'/media';
@@ -255,7 +260,8 @@ final readonly class MediaSync
         foreach ($allMedia as $media) {
             $mediaId = $media->getId();
             if (null !== $mediaId && ! \in_array($mediaId, $importedIds, true)) {
-                // Media exists in DB but not in CSV - delete it
+                $this->logger?->info('Deleting media {fileName}', ['fileName' => $media->getFileName()]);
+                ++$this->deletedCount;
                 $this->entityManager->remove($media);
             }
         }
@@ -293,5 +299,20 @@ final readonly class MediaSync
     public function getMissingFiles(): array
     {
         return $this->mediaImporter->getMissingFiles();
+    }
+
+    public function getImportedCount(): int
+    {
+        return $this->mediaImporter->getImportedCount();
+    }
+
+    public function getSkippedCount(): int
+    {
+        return $this->mediaImporter->getSkippedCount();
+    }
+
+    public function getDeletedCount(): int
+    {
+        return $this->deletedCount;
     }
 }

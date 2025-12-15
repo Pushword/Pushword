@@ -55,8 +55,33 @@ final class FlatFileImportCommand
             $io->listing($missingFiles);
         }
 
-        $output->writeln('Import completed.');
+        $this->displaySummary($io, $force);
 
         return Command::SUCCESS;
+    }
+
+    private function displaySummary(SymfonyStyle $io, string $force): void
+    {
+        $rows = [];
+
+        if ('all' === $force || 'media' === $force) {
+            $rows[] = [
+                'Media',
+                $this->flatFileSync->mediaSync->getImportedCount(),
+                $this->flatFileSync->mediaSync->getSkippedCount(),
+                $this->flatFileSync->mediaSync->getDeletedCount(),
+            ];
+        }
+
+        if ('all' === $force || 'page' === $force) {
+            $rows[] = [
+                'Pages',
+                $this->flatFileSync->pageSync->getImportedCount(),
+                $this->flatFileSync->pageSync->getSkippedCount(),
+                $this->flatFileSync->pageSync->getDeletedCount(),
+            ];
+        }
+
+        $io->table(['Type', 'Imported', 'Skipped', 'Deleted'], $rows);
     }
 }

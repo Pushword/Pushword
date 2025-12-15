@@ -4,6 +4,7 @@ namespace Pushword\Flat\Sync;
 
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Repository\PageRepository;
@@ -16,17 +17,20 @@ use Pushword\Flat\Importer\RedirectionImporter;
 use function Safe\filemtime;
 use function Safe\scandir;
 
-final readonly class PageSync
+final class PageSync
 {
+    private int $deletedCount = 0;
+
     public function __construct(
-        private AppPool $apps,
-        private FlatFileContentDirFinder $contentDirFinder,
-        private PageImporter $pageImporter,
-        private PageExporter $pageExporter,
-        private RedirectionExporter $redirectionExporter,
-        private RedirectionImporter $redirectionImporter,
-        private PageRepository $pageRepository,
-        private EntityManagerInterface $entityManager,
+        private readonly AppPool $apps,
+        private readonly FlatFileContentDirFinder $contentDirFinder,
+        private readonly PageImporter $pageImporter,
+        private readonly PageExporter $pageExporter,
+        private readonly RedirectionExporter $redirectionExporter,
+        private readonly RedirectionImporter $redirectionImporter,
+        private readonly PageRepository $pageRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -43,6 +47,7 @@ final readonly class PageSync
 
     public function import(?string $host = null): void
     {
+        $this->deletedCount = 0;
         $app = $this->resolveApp($host);
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
 
@@ -199,7 +204,8 @@ final readonly class PageSync
                 continue;
             }
 
-            // Page exists in DB but no .md file or redirection.csv entry - delete it
+            $this->logger?->info('Deleting page {slug}', ['slug' => $page->getSlug()]);
+            ++$this->deletedCount;
             $this->entityManager->remove($page);
         }
 
@@ -211,5 +217,20 @@ final readonly class PageSync
         return null !== $host
             ? $this->apps->switchCurrentApp($host)->get()
             : $this->apps->get();
+    }
+
+    public function getImportedCount(): int
+    {
+        return $this->pageImporter->getImportedCount();
+    }
+
+    public function getSkippedCount(): int
+    {
+        return $this->pageImporter->getSkippedCount();
+    }
+
+    public function getDeletedCount(): int
+    {
+        return $this->deletedCount;
     }
 }
