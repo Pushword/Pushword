@@ -9,6 +9,7 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Utils\Entity;
+use Pushword\Flat\Converter\PublishedAtConverter;
 use Stringable;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
@@ -215,7 +216,7 @@ final class PageExporter
             return;
         }
 
-        $properties = ['title', 'h1', 'slug', 'id'] + Entity::getProperties($page);
+        $properties = array_unique([...['title', 'h1', 'slug', 'id'], ...Entity::getProperties($page)]);
 
         $data = [];
         foreach ($properties as $property) {
@@ -244,6 +245,12 @@ final class PageExporter
 
         $getter = 'get'.ucfirst($property);
         $value = $page->$getter(); // @phpstan-ignore-line
+
+        if ('publishedAt' === $property) {
+            assert(null === $value || $value instanceof DateTimeInterface);
+
+            return PublishedAtConverter::toFlatValue($value);
+        }
 
         if ($value instanceof Page) {
             $value = $value->getSlug();

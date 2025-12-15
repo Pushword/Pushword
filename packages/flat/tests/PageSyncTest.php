@@ -11,10 +11,11 @@ use Override;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\PageSync;
-use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\Filesystem\Filesystem;
 
 use function Safe\file_get_contents;
+
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Tests for PageSync covering redirection sync, page deletion, and edge cases.
@@ -497,5 +498,158 @@ MD;
         // Cleanup
         $this->em->remove($frPage);
         $this->em->flush();
+    }
+
+    /**
+     * Test 13: Null publishedAt exports as "draft" and imports back as null.
+     */
+    public function testNullPublishedAtRoundTrip(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a page with null publishedAt (true draft)
+        $draftPage = new Page();
+        $draftPage->setSlug('null-published-at-test');
+        $draftPage->setH1('Null PublishedAt Test');
+        $draftPage->setHost('localhost.dev');
+        $draftPage->setLocale('en');
+        $draftPage->setMainContent('Content with null publishedAt');
+        $draftPage->setPublishedAt(null);
+
+        $this->em->persist($draftPage);
+        $this->em->flush();
+
+        $pageId = $draftPage->getId();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Verify the .md file contains publishedAt: draft
+        $mdFilePath = $contentDir.'/null-published-at-test.md';
+        self::assertFileExists($mdFilePath);
+        $mdContent = file_get_contents($mdFilePath);
+        self::assertStringContainsString('publishedAt: draft', $mdContent, 'Null publishedAt should export as "draft"');
+
+        // Clear entity manager and remove the page
+        $this->em->clear();
+        $pageToRemove = $this->em->find(Page::class, $pageId);
+        self::assertNotNull($pageToRemove);
+        $this->em->remove($pageToRemove);
+        $this->em->flush();
+
+        // Import - should recreate page with null publishedAt
+        $this->pageSync->import('localhost.dev');
+
+        // Verify page was recreated with null publishedAt
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'null-published-at-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page should be recreated after import');
+        self::assertNull($importedPage->getPublishedAt(), 'PublishedAt should remain null after round-trip');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        @unlink($mdFilePath);
+    }
+
+    /**
+     * Test 14: Explicit publishedAt date survives round-trip unchanged.
+     */
+    public function testExplicitPublishedAtRoundTrip(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        $specificDate = new DateTime('2023-05-15 10:30:00');
+
+        // Create a page with specific publishedAt
+        $page = new Page();
+        $page->setSlug('explicit-date-test');
+        $page->setH1('Explicit Date Test');
+        $page->setHost('localhost.dev');
+        $page->setLocale('en');
+        $page->setMainContent('Content with explicit date');
+        $page->setPublishedAt($specificDate);
+
+        $this->em->persist($page);
+        $this->em->flush();
+
+        $pageId = $page->getId();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Verify the .md file contains the formatted date
+        $mdFilePath = $contentDir.'/explicit-date-test.md';
+        self::assertFileExists($mdFilePath);
+        $mdContent = file_get_contents($mdFilePath);
+        self::assertMatchesRegularExpression('/publishedAt: [\'"]?2023-05-15 10:30[\'"]?/', $mdContent, 'Date should be formatted correctly. Content: '.$mdContent);
+
+        // Clear entity manager and remove the page
+        $this->em->clear();
+        $pageToRemove = $this->em->find(Page::class, $pageId);
+        self::assertNotNull($pageToRemove);
+        $this->em->remove($pageToRemove);
+        $this->em->flush();
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify page was recreated with correct date
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'explicit-date-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page should be recreated after import');
+        self::assertNotNull($importedPage->getPublishedAt(), 'PublishedAt should not be null');
+        self::assertSame('2023-05-15 10:30', $importedPage->getPublishedAt()->format('Y-m-d H:i'), 'PublishedAt should match original');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        @unlink($mdFilePath);
+    }
+
+    /**
+     * Test 15: publishedAt exports in exact YAML format 'Y-m-d H:i'.
+     */
+    public function testPublishedAtYamlFormat(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a page with specific publishedAt including seconds (which should be truncated)
+        $page = new Page();
+        $page->setSlug('yaml-format-test');
+        $page->setH1('YAML Format Test');
+        $page->setHost('localhost.dev');
+        $page->setLocale('en');
+        $page->setMainContent('Testing YAML format');
+        $page->setPublishedAt(new DateTime('2024-12-25 14:30:45'));
+
+        $this->em->persist($page);
+        $this->em->flush();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Read and parse the .md file
+        $mdFilePath = $contentDir.'/yaml-format-test.md';
+        self::assertFileExists($mdFilePath);
+        $mdContent = file_get_contents($mdFilePath);
+
+        // Extract YAML front matter
+        preg_match('/^---\n(.+?)\n---/s', $mdContent, $matches);
+        self::assertNotEmpty($matches[1], 'YAML front matter should exist');
+
+        // Verify exact format: 'publishedAt: 2024-12-25 14:30' (no seconds, no quotes needed for this format)
+        self::assertStringContainsString("publishedAt: '2024-12-25 14:30'", $matches[1], 'publishedAt should be in Y-m-d H:i format with YAML string quoting');
+
+        // Cleanup
+        $this->em->remove($page);
+        $this->em->flush();
+        @unlink($mdFilePath);
     }
 }
