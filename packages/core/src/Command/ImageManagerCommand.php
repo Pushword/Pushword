@@ -55,6 +55,9 @@ final readonly class ImageManagerCommand
                 } catch (Throwable $exception) {
                     $errors[] = $media->getFileName().': '.$exception->getMessage();
                 }
+            } else {
+                // For non-images, create symlink from public/media to media
+                $this->imageManager->ensurePublicSymlink($media);
             }
 
             $progressBar->advance();

@@ -162,9 +162,6 @@ final class ImageManager
      */
     public function generateCache(Media $media, bool $force = false): bool
     {
-        // Ensure symlink exists from public/media to media (for direct web server access)
-        $this->ensurePublicSymlink($media);
-
         // Skip if all cache is fresh (unless force)
         if (! $force && $this->isAllCacheFresh($media)) {
             return false;
@@ -200,9 +197,10 @@ final class ImageManager
 
     /**
      * Create symlink from public/media/{filename} to ../../media/{filename}.
-     * This allows direct web server access to original files without Symfony controller.
+     * This allows direct web server access to non-image files without Symfony controller.
+     * For images, the cache is served from public/media/{filter}/ directories instead.
      */
-    private function ensurePublicSymlink(Media $media): void
+    public function ensurePublicSymlink(Media $media): void
     {
         if (! $this->mediaStorage->isLocal()) {
             return;

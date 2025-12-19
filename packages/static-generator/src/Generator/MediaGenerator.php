@@ -59,7 +59,7 @@ class MediaGenerator extends AbstractGenerator
     }
 
     /**
-     * Copy image cache directories (md/, thumb/, xs/, etc.) to static folder.
+     * Copy image cache directories (md/, thumb/, xs/, etc.) and symlinked files to static folder.
      */
     private function copyImageCache(string $sourceDir, string $targetDir, bool $symlink): void
     {
@@ -76,23 +76,40 @@ class MediaGenerator extends AbstractGenerator
             $sourcePath = $sourceDir.'/'.$entry;
             $targetPath = $targetDir.'/'.$entry;
 
-            // Only copy directories (image cache formats like md/, thumb/, xs/, etc.)
-            if (! is_dir($sourcePath)) {
+            // Skip if already exists
+            if (file_exists($targetPath) || is_link($targetPath)) {
                 continue;
             }
 
-            // Skip if already exists (original files already copied)
-            if (file_exists($targetPath)) {
+            // Handle directories (image cache formats like md/, thumb/, xs/, etc.)
+            if (is_dir($sourcePath) && ! is_link($sourcePath)) {
+                if ($symlink) {
+                    $this->filesystem->symlink($sourcePath, $targetPath);
+                } else {
+                    $this->filesystem->mirror($sourcePath, $targetPath);
+                }
+
                 continue;
             }
 
-            if ($symlink) {
-                $this->filesystem->symlink($sourcePath, $targetPath);
+            // Handle symlinks to original files (public/media/1.jpg -> ../../media/1.jpg)
+            if (is_link($sourcePath)) {
+                // Skip broken symlinks
+                if (! file_exists($sourcePath)) {
+                    continue;
+                }
 
-                continue;
+                if ($symlink) {
+                    // Recreate the symlink with same target
+                    $linkTarget = readlink($sourcePath);
+                    if (false !== $linkTarget) {
+                        @symlink($linkTarget, $targetPath);
+                    }
+                } else {
+                    // Copy the actual file content (resolve symlink)
+                    $this->filesystem->copy($sourcePath, $targetPath);
+                }
             }
-
-            $this->filesystem->mirror($sourcePath, $targetPath);
         }
     }
 
@@ -111,13 +128,20 @@ class MediaGenerator extends AbstractGenerator
                 continue;
             }
 
+            $targetPath = $targetDir.'/'.$entry;
+
+            // Skip if already exists
+            if (file_exists($targetPath) || is_link($targetPath)) {
+                continue;
+            }
+
             if ($symlink) {
-                $this->filesystem->symlink($sourceDir.'/'.$entry, $targetDir.'/'.$entry);
+                $this->filesystem->symlink($sourceDir.'/'.$entry, $targetPath);
 
                 continue;
             }
 
-            $this->filesystem->copy($sourceDir.'/'.$entry, $targetDir.'/'.$entry);
+            $this->filesystem->copy($sourceDir.'/'.$entry, $targetPath);
         }
     }
 
@@ -135,7 +159,14 @@ class MediaGenerator extends AbstractGenerator
                 }
 
                 $fileName = $item->path();
-                $this->filesystem->symlink($mediaDir.'/'.$fileName, $staticMediaDir.'/'.$fileName);
+                $targetPath = $staticMediaDir.'/'.$fileName;
+
+                // Skip if already exists
+                if (file_exists($targetPath) || is_link($targetPath)) {
+                    continue;
+                }
+
+                $this->filesystem->symlink($mediaDir.'/'.$fileName, $targetPath);
             }
 
             return;
@@ -149,6 +180,11 @@ class MediaGenerator extends AbstractGenerator
 
             $fileName = $item->path();
             $targetPath = $staticMediaDir.'/'.$fileName;
+
+            // Skip if already exists
+            if (file_exists($targetPath) || is_link($targetPath)) {
+                continue;
+            }
 
             // Read from storage and write to local static dir
             $stream = $this->mediaStorage->readStream($fileName);

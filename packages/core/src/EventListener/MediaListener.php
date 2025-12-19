@@ -87,7 +87,8 @@ final readonly class MediaListener
      * - Update storeIn
      * - generate quick thumb for admin preview
      * - run full cache generation in background
-     * - run PDF optimization in background.
+     * - run PDF optimization in background
+     * - create symlink for non-images.
      */
     public function onVichUploaderPostUpload(Event $event): void
     {
@@ -101,7 +102,12 @@ final readonly class MediaListener
 
             // Run full cache generation in background (including AVIF)
             $this->imageManager->runBackgroundCacheGeneration($media->getFileName());
+
+            return;
         }
+
+        // For non-images, create symlink from public/media to media for direct access
+        $this->imageManager->ensurePublicSymlink($media);
 
         if ('application/pdf' === $media->getMimeType()) {
             // Run PDF optimization in background (compress + linearize)
