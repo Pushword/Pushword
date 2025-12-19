@@ -2,12 +2,14 @@
 <!-- https://phpunit.de/manual/current/en/appendixes.configuration.html -->
 <phpunit
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.0/phpunit.xsd"
   colors="true"
   stopOnFailure="false"
   bootstrap="packages/core/tests/bootstrap.php"
   cacheDirectory=".phpunit.cache"
-  beStrictAboutOutputDuringTests="false">
+  beStrictAboutOutputDuringTests="false"
+  displayDetailsOnTestsThatTriggerWarnings="true"
+  testdox="true">
   <php>
     <server name="APP_ENV" value="test" force="true" />
     <server name="KERNEL_CLASS" value="App\Kernel" />
@@ -24,9 +26,6 @@
     </testsuite>
   </testsuites>
   <extensions>
-    <bootstrap class="RobinIngelbrecht\PHPUnitPrettyPrint\PhpUnitExtension">
-      <parameter name="displayProfiling" value="true" />
-    </bootstrap>
     <bootstrap class="Symfony\Component\Panther\ServerExtension" />
   </extensions>
   <source>

@@ -82,7 +82,6 @@
     "phpstan/phpstan-symfony": "*",
     "phpunit/phpunit": "*",
     "rector/rector": "*",
-    "robiningelbrecht/phpunit-pretty-print": "^1",
     "squizlabs/php_codesniffer": "*",
     "symfony/debug-bundle": "*",
     "symfony/dotenv": "*",
