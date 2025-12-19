@@ -235,7 +235,7 @@ class Media implements IdInterface, Taggable, Stringable
             throw new Exception('must set project dir before');
         }
 
-        return str_replace('%kernel.project_dir%', $this->projectDir, $this->storeIn);
+        return rtrim(str_replace('%kernel.project_dir%', $this->projectDir, $this->storeIn), '/');
     }
 
     public function setStoreIn(string $pathToDir): self
