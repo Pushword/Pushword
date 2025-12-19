@@ -23,7 +23,8 @@ class MediaGenerator extends AbstractGenerator
     }
 
     /**
-     * Copy or Symlink "not image" media to download folder.
+     * Copy or Symlink media files to static folder.
+     * This includes both original files and the image cache (thumbnails, webp versions).
      */
     protected function copyMediaToDownload(): void
     {
@@ -42,35 +43,81 @@ class MediaGenerator extends AbstractGenerator
             $this->filesystem->mkdir($staticMediaDir);
         }
 
-        // Use MediaStorageAdapter if available, otherwise fall back to direct filesystem
+        // Copy original media files from storage
         if (null !== $this->mediaStorage) {
             $this->copyFromStorage($staticMediaDir, $symlink, $mediaDir);
-
-            return;
+        } else {
+            // Fallback for local-only (backward compatibility)
+            $this->copyDirectoryContents($mediaDir, $staticMediaDir, $symlink);
         }
 
-        // Fallback for local-only (backward compatibility)
-        $dir = dir($mediaDir);
+        // Copy image cache from public/media (thumbnails, webp versions, etc.)
+        $publicMediaCacheDir = $this->publicDir.'/'.$publicMediaDir;
+        if (file_exists($publicMediaCacheDir)) {
+            $this->copyImageCache($publicMediaCacheDir, $staticMediaDir, $symlink);
+        }
+    }
+
+    /**
+     * Copy image cache directories (md/, thumb/, xs/, etc.) to static folder.
+     */
+    private function copyImageCache(string $sourceDir, string $targetDir, bool $symlink): void
+    {
+        $dir = dir($sourceDir);
         if (false === $dir) {
             return;
         }
 
         while (false !== $entry = $dir->read()) {
-            if ('.' === $entry) {
+            if (\in_array($entry, ['.', '..'], true)) {
                 continue;
             }
 
-            if ('..' === $entry) {
+            $sourcePath = $sourceDir.'/'.$entry;
+            $targetPath = $targetDir.'/'.$entry;
+
+            // Only copy directories (image cache formats like md/, thumb/, xs/, etc.)
+            if (! is_dir($sourcePath)) {
+                continue;
+            }
+
+            // Skip if already exists (original files already copied)
+            if (file_exists($targetPath)) {
                 continue;
             }
 
             if ($symlink) {
-                $this->filesystem->symlink($mediaDir.'/'.$entry, $staticMediaDir.'/'.$entry);
+                $this->filesystem->symlink($sourcePath, $targetPath);
 
                 continue;
             }
 
-            $this->filesystem->copy($mediaDir.'/'.$entry, $staticMediaDir.'/'.$entry);
+            $this->filesystem->mirror($sourcePath, $targetPath);
+        }
+    }
+
+    /**
+     * Copy directory contents (fallback for local-only).
+     */
+    private function copyDirectoryContents(string $sourceDir, string $targetDir, bool $symlink): void
+    {
+        $dir = dir($sourceDir);
+        if (false === $dir) {
+            return;
+        }
+
+        while (false !== $entry = $dir->read()) {
+            if (\in_array($entry, ['.', '..'], true)) {
+                continue;
+            }
+
+            if ($symlink) {
+                $this->filesystem->symlink($sourceDir.'/'.$entry, $targetDir.'/'.$entry);
+
+                continue;
+            }
+
+            $this->filesystem->copy($sourceDir.'/'.$entry, $targetDir.'/'.$entry);
         }
     }
 

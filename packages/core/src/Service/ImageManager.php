@@ -162,6 +162,9 @@ final class ImageManager
      */
     public function generateCache(Media $media, bool $force = false): bool
     {
+        // Ensure symlink exists from public/media to media (for direct web server access)
+        $this->ensurePublicSymlink($media);
+
         // Skip if all cache is fresh (unless force)
         if (! $force && $this->isAllCacheFresh($media)) {
             return false;
@@ -193,6 +196,39 @@ final class ImageManager
         }
 
         return $generated;
+    }
+
+    /**
+     * Create symlink from public/media/{filename} to ../../media/{filename}.
+     * This allows direct web server access to original files without Symfony controller.
+     */
+    private function ensurePublicSymlink(Media $media): void
+    {
+        if (! $this->mediaStorage->isLocal()) {
+            return;
+        }
+
+        $fileName = $media->getFileName();
+        $publicPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$fileName;
+        $relativePath = '../../media/'.$fileName;
+
+        // Skip if symlink already exists and is valid
+        if (is_link($publicPath)) {
+            return;
+        }
+
+        // Skip if a real file exists (don't overwrite)
+        if (file_exists($publicPath)) {
+            return;
+        }
+
+        // Ensure public/media directory exists
+        $publicMediaPath = $this->publicDir.'/'.$this->publicMediaDir;
+        if (! file_exists($publicMediaPath)) {
+            (new Filesystem())->mkdir($publicMediaPath);
+        }
+
+        @symlink($relativePath, $publicPath);
     }
 
     private function runBackgroundOptimization(string $fileName): void
