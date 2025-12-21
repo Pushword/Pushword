@@ -1,3 +1,4 @@
+# TO RESTORE WHEN PANTHER SUPPORT SF 8
 <?php
 
 namespace Pushword\Admin\Tests\Frontend;

@@ -128,23 +128,47 @@ Good to know :
 - `homepage` 's file could be named `index.md` or `homepage.md`
 - Other properties will be added to `customProperties`
 
-#### `illustation.jpg.yaml` may contain
+### Translations (hreflang) Sync
+
+The `translations` property handles the bidirectional many-to-many relationship between pages for internationalization (hreflang).
+
+**Key behaviors:**
+
+- **Addition takes precedence**: If page A declares page B as a translation, the link is created even if B.md doesn't list A. You only need to add the translation in one file.
+- **No translations key = no changes**: If a page's markdown file doesn't have a `translations` property, existing translations in the database are preserved unchanged.
+- **Explicit empty array removes all**: Use `translations: []` to explicitly remove all translations from a page.
+
+**Examples:**
 
 ```yaml
-name: My Super Kitchen Sink Illustration
+# In fr/about.md - adds en/about as translation
+---
+translations:
+  - en/about
+---
+# In en/about.md - no translations key, existing links preserved
+---
+h1: About Us
+---
 ```
+
+With this setup, both pages will be linked as translations of each other after sync.
+
+To remove a translation, you must explicitly set an empty array in **both** files, or remove the translation from **one** file while the other file doesn't have a translations key (letting the removal propagate).
 
 ## Media Optimization
 
 When uploading media through the admin interface, Pushword automatically:
 
 **For images:**
+
 - Scales down to max 1980x1280 pixels (browser-side, before upload)
 - Generates responsive variants (xs, sm, md, lg, xl)
 - Converts to WebP format
 - Extracts dominant color for placeholders
 
 **For PDFs:**
+
 - Compresses with Ghostscript (downsamples images to 150dpi)
 - Linearizes with qpdf (fast first-page web streaming)
 

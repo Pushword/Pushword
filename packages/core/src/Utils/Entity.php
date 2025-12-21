@@ -3,6 +3,7 @@
 namespace Pushword\Core\Utils;
 
 use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\ManyToMany;
 use Doctrine\ORM\Mapping\ManyToOne;
 use ReflectionAttribute;
 use ReflectionClass;
@@ -28,7 +29,7 @@ class Entity
      */
     public static function getProperties(
         object $object,
-        array $attributesTypesToKeep = [Column::class, ManyToOne::class]
+        array $attributesTypesToKeep = [Column::class, ManyToOne::class, ManyToMany::class]
     ): array {
         $reflectionClass = new ReflectionClass($object::class);
         $properties = array_filter($reflectionClass->getProperties(), static function (ReflectionProperty $property) use ($attributesTypesToKeep) {

@@ -4,6 +4,7 @@ namespace Pushword\Flat\Exporter;
 
 use DateTime;
 use DateTimeInterface;
+use Doctrine\Common\Collections\Collection;
 use League\Csv\Writer;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
@@ -249,7 +250,7 @@ final class PageExporter
     }
 
     /**
-     * @return scalar|null
+     * @return scalar|string[]|null
      */
     private function getValue(string $property, Page $page): mixed
     {
@@ -268,6 +269,21 @@ final class PageExporter
 
         if ($value instanceof Page) {
             $value = $value->getSlug();
+        }
+
+        if ($value instanceof Collection) {
+            if ($value->isEmpty()) {
+                return null;
+            }
+
+            $slugs = [];
+            foreach ($value as $item) {
+                if ($item instanceof Page) {
+                    $slugs[] = $item->getSlug();
+                }
+            }
+
+            return [] === $slugs ? null : $slugs;
         }
 
         if ($value instanceof Stringable) {
@@ -301,7 +317,9 @@ final class PageExporter
             $value = $value->format('Y-m-d H:i');
         }
 
-        assert(is_scalar($value));
+        if (! is_scalar($value)) {
+            return null;
+        }
 
         return $value;
     }

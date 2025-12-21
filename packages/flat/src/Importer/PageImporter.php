@@ -59,6 +59,9 @@ final class PageImporter extends AbstractImporter
     /** @var array<string, Page> where key is the slug */
     private array $pageList = [];
 
+    /** @var array<string, true> translation pairs that were explicitly added (format: "slugA|slugB") */
+    private array $addedTranslationPairs = [];
+
     private function getContentDir(): string
     {
         $host = $this->apps->get()->getMainHost();
@@ -320,16 +323,80 @@ final class PageImporter extends AbstractImporter
     }
 
     /**
-     * @param string[] $pages
+     * @param string[] $pageSlugs
      */
-    private function addPages(Page $page, string $property, array $pages): void
+    private function addPages(Page $page, string $property, array $pageSlugs): void
     {
+        if ('translations' === $property) {
+            $this->syncTranslations($page, $pageSlugs);
+
+            return;
+        }
+
         $setter = 'set'.ucfirst($property);
         $page->$setter([]); // @phpstan-ignore-line
-        foreach ($pages as $p) {
+        foreach ($pageSlugs as $p) {
             $adder = 'add'.ucfirst($property);
             $page->$adder($this->getPage($p)); // @phpstan-ignore-line
         }
+    }
+
+    /**
+     * Sync translations for a page, handling additions and removals.
+     *
+     * Addition takes precedence: if page A adds B, the link is created even if B.md doesn't list A.
+     * Removal only happens if no other page added the translation during this import cycle.
+     *
+     * @param string[] $newTranslationSlugs
+     */
+    private function syncTranslations(Page $page, array $newTranslationSlugs): void
+    {
+        $currentTranslations = $page->getTranslations()->toArray();
+        $currentSlugs = array_map(static fn (Page $p): string => $p->getSlug(), $currentTranslations);
+        $pageSlug = $page->getSlug();
+
+        $toAdd = array_diff($newTranslationSlugs, $currentSlugs);
+        $toRemove = array_diff($currentSlugs, $newTranslationSlugs);
+
+        // First, add new translations and mark them
+        foreach ($toAdd as $slug) {
+            $translationPage = $this->getPage($slug);
+            if ($translationPage instanceof Page) {
+                $page->addTranslation($translationPage);
+                $this->markTranslationAsAdded($pageSlug, $slug);
+            }
+        }
+
+        // Then, remove translations only if they weren't added by another page
+        foreach ($toRemove as $slug) {
+            // Don't remove a translation that was explicitly added earlier in this import
+            if ($this->wasTranslationAdded($pageSlug, $slug)) {
+                continue;
+            }
+
+            $translationPage = $this->getPage($slug);
+            if ($translationPage instanceof Page) {
+                $page->removeTranslation($translationPage);
+            }
+        }
+    }
+
+    /**
+     * Mark a translation pair as explicitly added during this import cycle.
+     */
+    private function markTranslationAsAdded(string $slugA, string $slugB): void
+    {
+        // Store both directions to catch the pair regardless of order
+        $this->addedTranslationPairs[$slugA.'|'.$slugB] = true;
+        $this->addedTranslationPairs[$slugB.'|'.$slugA] = true;
+    }
+
+    /**
+     * Check if a translation pair was explicitly added during this import cycle.
+     */
+    private function wasTranslationAdded(string $slugA, string $slugB): bool
+    {
+        return isset($this->addedTranslationPairs[$slugA.'|'.$slugB]);
     }
 
     #[Override]
@@ -431,6 +498,7 @@ final class PageImporter extends AbstractImporter
         $this->toAddAtTheEnd = [];
         $this->slugs = [];
         $this->pageList = [];
+        $this->addedTranslationPairs = [];
         $this->importedCount = 0;
         $this->skippedCount = 0;
     }

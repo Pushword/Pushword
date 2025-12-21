@@ -652,4 +652,557 @@ MD;
         $this->em->flush();
         @unlink($mdFilePath);
     }
+
+    /**
+     * Test 16: Translations export as array of slugs and import back correctly.
+     */
+    public function testTranslationsExportImportRoundTrip(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create two pages and link them as translations
+        $enPage = new Page();
+        $enPage->setSlug('translation-test-en');
+        $enPage->setH1('English Page');
+        $enPage->setHost('localhost.dev');
+        $enPage->setLocale('en');
+        $enPage->setMainContent('English content');
+        $enPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('translation-test-fr');
+        $frPage->setH1('Page française');
+        $frPage->setHost('localhost.dev');
+        $frPage->setLocale('fr');
+        $frPage->setMainContent('Contenu français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->flush();
+
+        // Link as translations (bidirectional)
+        $enPage->addTranslation($frPage);
+        $this->em->flush();
+
+        $enPageId = $enPage->getId();
+        $frPageId = $frPage->getId();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Verify the .md files contain translations
+        $enMdFilePath = $contentDir.'/translation-test-en.md';
+        $frMdFilePath = $contentDir.'/translation-test-fr.md';
+        self::assertFileExists($enMdFilePath);
+        self::assertFileExists($frMdFilePath);
+
+        $enMdContent = file_get_contents($enMdFilePath);
+        $frMdContent = file_get_contents($frMdFilePath);
+
+        self::assertStringContainsString('translations:', $enMdContent, 'EN page should have translations key');
+        self::assertStringContainsString('translation-test-fr', $enMdContent, 'EN page should reference FR page');
+        self::assertStringContainsString('translations:', $frMdContent, 'FR page should have translations key');
+        self::assertStringContainsString('translation-test-en', $frMdContent, 'FR page should reference EN page');
+
+        // Clear entity manager and remove the pages
+        $this->em->clear();
+        $enPageToRemove = $this->em->find(Page::class, $enPageId);
+        $frPageToRemove = $this->em->find(Page::class, $frPageId);
+        self::assertNotNull($enPageToRemove);
+        self::assertNotNull($frPageToRemove);
+        $enPageToRemove->removeTranslation($frPageToRemove);
+        $this->em->remove($enPageToRemove);
+        $this->em->remove($frPageToRemove);
+        $this->em->flush();
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify pages were recreated with translations
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'translation-test-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'translation-test-fr', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedEnPage, 'EN page should be recreated');
+        self::assertNotNull($importedFrPage, 'FR page should be recreated');
+
+        // Verify bidirectional translations
+        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'EN should have FR as translation');
+        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage), 'FR should have EN as translation');
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedFrPage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->flush();
+        @unlink($enMdFilePath);
+        @unlink($frMdFilePath);
+    }
+
+    /**
+     * Test 17: Removing a translation from one page's flat file removes it from both sides.
+     */
+    public function testTranslationRemovalSync(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create three pages linked as translations
+        $enPage = new Page();
+        $enPage->setSlug('trans-removal-en');
+        $enPage->setH1('English');
+        $enPage->setHost('localhost.dev');
+        $enPage->setLocale('en');
+        $enPage->setMainContent('English');
+        $enPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('trans-removal-fr');
+        $frPage->setH1('Français');
+        $frPage->setHost('localhost.dev');
+        $frPage->setLocale('fr');
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $dePage = new Page();
+        $dePage->setSlug('trans-removal-de');
+        $dePage->setH1('Deutsch');
+        $dePage->setHost('localhost.dev');
+        $dePage->setLocale('de');
+        $dePage->setMainContent('Deutsch');
+        $dePage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->persist($dePage);
+        $this->em->flush();
+
+        // Link all three as translations
+        $enPage->addTranslation($frPage);
+        $enPage->addTranslation($dePage);
+
+        $this->em->flush();
+
+        // Verify initial state
+        self::assertCount(2, $enPage->getTranslations());
+        self::assertCount(2, $frPage->getTranslations());
+        self::assertCount(2, $dePage->getTranslations());
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Modify EN page to remove DE translation
+        $enMdFilePath = $contentDir.'/trans-removal-en.md';
+        $enMdContent = file_get_contents($enMdFilePath);
+        // Replace translations to only include FR
+        $enMdContent = preg_replace(
+            '/translations:\n(  - .+\n)+/',
+            "translations:\n  - trans-removal-fr\n",
+            $enMdContent
+        );
+        file_put_contents($enMdFilePath, $enMdContent);
+
+        // Touch the file to ensure it's newer than updatedAt
+        touch($enMdFilePath, time() + 10);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify EN no longer has DE as translation
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'trans-removal-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'trans-removal-fr', 'host' => 'localhost.dev']);
+        $importedDePage = $this->pageRepo->findOneBy(['slug' => 'trans-removal-de', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedEnPage);
+        self::assertNotNull($importedFrPage);
+        self::assertNotNull($importedDePage);
+
+        // EN should only have FR
+        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should only have 1 translation now');
+        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'EN should still have FR');
+        self::assertFalse($importedEnPage->getTranslations()->contains($importedDePage), 'EN should no longer have DE');
+
+        // DE should no longer have EN (bidirectional removal)
+        self::assertFalse($importedDePage->getTranslations()->contains($importedEnPage), 'DE should no longer have EN');
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedFrPage);
+        $importedFrPage->removeTranslation($importedDePage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->remove($importedDePage);
+        $this->em->flush();
+        @unlink($contentDir.'/trans-removal-en.md');
+        @unlink($contentDir.'/trans-removal-fr.md');
+        @unlink($contentDir.'/trans-removal-de.md');
+    }
+
+    /**
+     * Test 18: Removing translations key from flat file does NOT clear translations.
+     * Only explicit translations: [] would clear them.
+     */
+    public function testTranslationsNotClearedWhenKeyRemoved(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create two pages linked as translations
+        $enPage = new Page();
+        $enPage->setSlug('trans-keep-en');
+        $enPage->setH1('English');
+        $enPage->setHost('localhost.dev');
+        $enPage->setLocale('en');
+        $enPage->setMainContent('English');
+        $enPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('trans-keep-fr');
+        $frPage->setH1('Français');
+        $frPage->setHost('localhost.dev');
+        $frPage->setLocale('fr');
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->flush();
+
+        $enPage->addTranslation($frPage);
+        $this->em->flush();
+
+        // Verify initial state
+        self::assertCount(1, $enPage->getTranslations());
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Remove translations key from EN page entirely (but FR still has it)
+        $enMdFilePath = $contentDir.'/trans-keep-en.md';
+        $enMdContent = file_get_contents($enMdFilePath);
+        $enMdContent = preg_replace('/translations:\n(  - .+\n)+/', '', $enMdContent);
+        file_put_contents($enMdFilePath, $enMdContent);
+        touch($enMdFilePath, time() + 10);
+
+        // FR file still lists EN, touch to ensure import
+        $frMdFilePath = $contentDir.'/trans-keep-fr.md';
+        touch($frMdFilePath, time() + 10);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify translations are KEPT because FR still lists EN (addition takes precedence)
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'trans-keep-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'trans-keep-fr', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedEnPage);
+        self::assertNotNull($importedFrPage);
+
+        // Both should still have the translation because FR added it
+        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should still have FR (addition takes precedence)');
+        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage), 'FR should still have EN');
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedFrPage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->flush();
+        @unlink($enMdFilePath);
+        @unlink($frMdFilePath);
+    }
+
+    /**
+     * Test 19: Addition takes precedence - if A removes B but B still lists A, they ARE linked.
+     */
+    public function testTranslationAdditionTakesPrecedence(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create two pages linked as translations
+        // Using 'a-' and 'b-' prefixes to control alphabetical order (a comes before b)
+        $aPage = new Page();
+        $aPage->setSlug('a-trans-precedence');
+        $aPage->setH1('Page A');
+        $aPage->setHost('localhost.dev');
+        $aPage->setLocale('en');
+        $aPage->setMainContent('Page A content');
+        $aPage->setPublishedAt(new DateTime());
+
+        $bPage = new Page();
+        $bPage->setSlug('b-trans-precedence');
+        $bPage->setH1('Page B');
+        $bPage->setHost('localhost.dev');
+        $bPage->setLocale('fr');
+        $bPage->setMainContent('Page B content');
+        $bPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($aPage);
+        $this->em->persist($bPage);
+        $this->em->flush();
+
+        $aPage->addTranslation($bPage);
+        $this->em->flush();
+
+        // Verify initial state
+        self::assertCount(1, $aPage->getTranslations());
+        self::assertCount(1, $bPage->getTranslations());
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Modify A's file to remove B from translations (A no longer lists B)
+        $aMdFilePath = $contentDir.'/a-trans-precedence.md';
+        $aMdContent = file_get_contents($aMdFilePath);
+        $aMdContent = preg_replace('/translations:\n(  - .+\n)+/', '', $aMdContent);
+        file_put_contents($aMdFilePath, $aMdContent);
+        touch($aMdFilePath, time() + 10);
+
+        // B's file still lists A, touch to ensure import
+        $bMdFilePath = $contentDir.'/b-trans-precedence.md';
+        touch($bMdFilePath, time() + 10);
+
+        // Import - B still lists A, so addition takes precedence
+        $this->pageSync->import('localhost.dev');
+
+        // Verify: both should still have the translation because B added it
+        // Addition takes precedence!
+        $this->em->clear();
+        $importedAPage = $this->pageRepo->findOneBy(['slug' => 'a-trans-precedence', 'host' => 'localhost.dev']);
+        $importedBPage = $this->pageRepo->findOneBy(['slug' => 'b-trans-precedence', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedAPage);
+        self::assertNotNull($importedBPage);
+
+        self::assertCount(1, $importedAPage->getTranslations(), 'A should have B (addition takes precedence)');
+        self::assertCount(1, $importedBPage->getTranslations(), 'B should have A');
+
+        // Cleanup
+        $importedAPage->removeTranslation($importedBPage);
+        $this->em->remove($importedAPage);
+        $this->em->remove($importedBPage);
+        $this->em->flush();
+        @unlink($aMdFilePath);
+        @unlink($bMdFilePath);
+    }
+
+    /**
+     * Test 20: Removing translations key (not setting empty) keeps existing translations.
+     * To remove translations, use explicit empty array: translations: [].
+     */
+    public function testRemovingKeyKeepsExistingTranslations(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create two pages linked as translations
+        $enPage = new Page();
+        $enPage->setSlug('trans-keep-existing-en');
+        $enPage->setH1('English');
+        $enPage->setHost('localhost.dev');
+        $enPage->setLocale('en');
+        $enPage->setMainContent('English');
+        $enPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('trans-keep-existing-fr');
+        $frPage->setH1('Français');
+        $frPage->setHost('localhost.dev');
+        $frPage->setLocale('fr');
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->flush();
+
+        $enPage->addTranslation($frPage);
+        $this->em->flush();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Remove translations KEY from BOTH files (not setting empty array)
+        $enMdFilePath = $contentDir.'/trans-keep-existing-en.md';
+        $enMdContent = file_get_contents($enMdFilePath);
+        $enMdContent = preg_replace('/translations:\n(  - .+\n)+/', '', $enMdContent);
+        file_put_contents($enMdFilePath, $enMdContent);
+        touch($enMdFilePath, time() + 10);
+
+        $frMdFilePath = $contentDir.'/trans-keep-existing-fr.md';
+        $frMdContent = file_get_contents($frMdFilePath);
+        $frMdContent = preg_replace('/translations:\n(  - .+\n)+/', '', $frMdContent);
+        file_put_contents($frMdFilePath, $frMdContent);
+        touch($frMdFilePath, time() + 10);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify: translations are KEPT (no explicit translations key means "don't modify")
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'trans-keep-existing-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'trans-keep-existing-fr', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedEnPage);
+        self::assertNotNull($importedFrPage);
+
+        // Translations remain because no explicit translations key was set
+        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should keep FR (no translations key = dont modify)');
+        self::assertCount(1, $importedFrPage->getTranslations(), 'FR should keep EN');
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedFrPage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->flush();
+        @unlink($enMdFilePath);
+        @unlink($frMdFilePath);
+    }
+
+    /**
+     * Test 20b: Explicit empty translations array removes all translations.
+     */
+    public function testExplicitEmptyTranslationsArrayRemoves(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create two pages linked as translations
+        $enPage = new Page();
+        $enPage->setSlug('trans-explicit-empty-en');
+        $enPage->setH1('English');
+        $enPage->setHost('localhost.dev');
+        $enPage->setLocale('en');
+        $enPage->setMainContent('English');
+        $enPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('trans-explicit-empty-fr');
+        $frPage->setH1('Français');
+        $frPage->setHost('localhost.dev');
+        $frPage->setLocale('fr');
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->flush();
+
+        $enPage->addTranslation($frPage);
+        $this->em->flush();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Set explicit empty translations array in BOTH files
+        $enMdFilePath = $contentDir.'/trans-explicit-empty-en.md';
+        $enMdContent = file_get_contents($enMdFilePath);
+        $enMdContent = preg_replace('/translations:\n(  - .+\n)+/', "translations: []\n", $enMdContent);
+        file_put_contents($enMdFilePath, $enMdContent);
+        touch($enMdFilePath, time() + 10);
+
+        $frMdFilePath = $contentDir.'/trans-explicit-empty-fr.md';
+        $frMdContent = file_get_contents($frMdFilePath);
+        $frMdContent = preg_replace('/translations:\n(  - .+\n)+/', "translations: []\n", $frMdContent);
+        file_put_contents($frMdFilePath, $frMdContent);
+        touch($frMdFilePath, time() + 10);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify: neither should have translations (explicit empty array)
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'trans-explicit-empty-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'trans-explicit-empty-fr', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedEnPage);
+        self::assertNotNull($importedFrPage);
+
+        self::assertCount(0, $importedEnPage->getTranslations(), 'EN should have no translations');
+        self::assertCount(0, $importedFrPage->getTranslations(), 'FR should have no translations');
+
+        // Cleanup
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->flush();
+        @unlink($enMdFilePath);
+        @unlink($frMdFilePath);
+    }
+
+    /**
+     * Test 21: Adding translation to one file creates bidirectional link.
+     */
+    public function testTranslationAddedFromOneFile(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create two pages NOT linked
+        $enPage = new Page();
+        $enPage->setSlug('trans-add-one-en');
+        $enPage->setH1('English');
+        $enPage->setHost('localhost.dev');
+        $enPage->setLocale('en');
+        $enPage->setMainContent('English');
+        $enPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('trans-add-one-fr');
+        $frPage->setH1('Français');
+        $frPage->setHost('localhost.dev');
+        $frPage->setLocale('fr');
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->flush();
+
+        // Export (no translations yet)
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Add translations to EN file only (forgot to update FR)
+        $enMdFilePath = $contentDir.'/trans-add-one-en.md';
+        $enMdContent = file_get_contents($enMdFilePath);
+        $enMdContent = str_replace("---\n\n", "translations:\n  - trans-add-one-fr\n---\n\n", $enMdContent);
+        file_put_contents($enMdFilePath, $enMdContent);
+        touch($enMdFilePath, time() + 10);
+
+        // FR file not modified (forgot to add reciprocal)
+        $frMdFilePath = $contentDir.'/trans-add-one-fr.md';
+        touch($frMdFilePath, time() + 10);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify: both should have the translation (EN added it, bidirectional)
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'trans-add-one-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'trans-add-one-fr', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedEnPage);
+        self::assertNotNull($importedFrPage);
+
+        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have FR');
+        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage));
+        self::assertCount(1, $importedFrPage->getTranslations(), 'FR should have EN (bidirectional)');
+        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage));
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedFrPage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->flush();
+        @unlink($enMdFilePath);
+        @unlink($frMdFilePath);
+    }
 }

@@ -223,7 +223,7 @@ final class ImageManager
         // Ensure public/media directory exists
         $publicMediaPath = $this->publicDir.'/'.$this->publicMediaDir;
         if (! file_exists($publicMediaPath)) {
-            (new Filesystem())->mkdir($publicMediaPath);
+            new Filesystem()->mkdir($publicMediaPath);
         }
 
         @symlink($relativePath, $publicPath);

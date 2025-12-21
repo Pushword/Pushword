@@ -75,9 +75,12 @@ class MediaGenerator extends AbstractGenerator
 
             $sourcePath = $sourceDir.'/'.$entry;
             $targetPath = $targetDir.'/'.$entry;
-
             // Skip if already exists
-            if (file_exists($targetPath) || is_link($targetPath)) {
+            if (file_exists($targetPath)) {
+                continue;
+            }
+
+            if (is_link($targetPath)) {
                 continue;
             }
 
@@ -129,9 +132,12 @@ class MediaGenerator extends AbstractGenerator
             }
 
             $targetPath = $targetDir.'/'.$entry;
-
             // Skip if already exists
-            if (file_exists($targetPath) || is_link($targetPath)) {
+            if (file_exists($targetPath)) {
+                continue;
+            }
+
+            if (is_link($targetPath)) {
                 continue;
             }
 
@@ -160,9 +166,12 @@ class MediaGenerator extends AbstractGenerator
 
                 $fileName = $item->path();
                 $targetPath = $staticMediaDir.'/'.$fileName;
-
                 // Skip if already exists
-                if (file_exists($targetPath) || is_link($targetPath)) {
+                if (file_exists($targetPath)) {
+                    continue;
+                }
+
+                if (is_link($targetPath)) {
                     continue;
                 }
 
@@ -180,9 +189,12 @@ class MediaGenerator extends AbstractGenerator
 
             $fileName = $item->path();
             $targetPath = $staticMediaDir.'/'.$fileName;
-
             // Skip if already exists
-            if (file_exists($targetPath) || is_link($targetPath)) {
+            if (file_exists($targetPath)) {
+                continue;
+            }
+
+            if (is_link($targetPath)) {
                 continue;
             }
 
