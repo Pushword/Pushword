@@ -232,12 +232,21 @@ final class PageExporter
 
         $data = [];
         foreach ($properties as $property) {
+            if ('customProperties' === $property) {
+                continue; // Will be unpacked separately
+            }
+
             $value = $this->getValue($property, $page);
             if (null === $value) {
                 continue;
             }
 
             $data[$property] = $value;
+        }
+
+        // Unpack custom properties at top level
+        foreach ($page->getCustomProperties() as $key => $value) {
+            $data[$key] = $value;
         }
 
         $metaData = Yaml::dump($data, indent: 2);
@@ -294,10 +303,7 @@ final class PageExporter
             return null;
         }
 
-        if (
-            in_array($property, ['customProperties', 'tags'], true)
-            && in_array($value, [null, [], ''], true)
-        ) {
+        if ('tags' === $property && in_array($value, [null, [], ''], true)) {
             return null;
         }
 

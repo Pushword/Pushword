@@ -1205,4 +1205,71 @@ MD;
         @unlink($enMdFilePath);
         @unlink($frMdFilePath);
     }
+
+    /**
+     * Test 22: Custom properties are exported at top level and imported back correctly.
+     */
+    public function testCustomPropertiesExportImportRoundTrip(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a page with custom properties
+        $page = new Page();
+        $page->setSlug('custom-props-test');
+        $page->setH1('Custom Properties Test');
+        $page->setHost('localhost.dev');
+        $page->setLocale('en');
+        $page->setMainContent('Content');
+        $page->setPublishedAt(new DateTime());
+        $page->setCustomProperty('mainImageFormat', 'default');
+        $page->setCustomProperty('customField', 'customValue');
+        $page->setCustomProperty('numberProp', 42);
+
+        $this->em->persist($page);
+        $this->em->flush();
+
+        $pageId = $page->getId();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Verify the .md file contains custom properties at top level (not nested)
+        $mdFilePath = $contentDir.'/custom-props-test.md';
+        self::assertFileExists($mdFilePath);
+
+        $mdContent = file_get_contents($mdFilePath);
+
+        // Custom properties should be at top level, not under customProperties:
+        self::assertStringContainsString('mainImageFormat: default', $mdContent, 'mainImageFormat should be at top level');
+        self::assertStringContainsString('customField: customValue', $mdContent, 'customField should be at top level');
+        self::assertStringContainsString('numberProp: 42', $mdContent, 'numberProp should be at top level');
+        self::assertStringNotContainsString('customProperties:', $mdContent, 'Should not have nested customProperties key');
+
+        // Clear and remove the page
+        $this->em->clear();
+        $pageToRemove = $this->em->find(Page::class, $pageId);
+        self::assertNotNull($pageToRemove);
+        $this->em->remove($pageToRemove);
+        $this->em->flush();
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify page was recreated with custom properties
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'custom-props-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page should be recreated');
+
+        // Verify custom properties
+        self::assertSame('default', $importedPage->getCustomProperty('mainImageFormat'), 'mainImageFormat should be imported');
+        self::assertSame('customValue', $importedPage->getCustomProperty('customField'), 'customField should be imported');
+        self::assertSame(42, $importedPage->getCustomProperty('numberProp'), 'numberProp should be imported');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        @unlink($mdFilePath);
+    }
 }
