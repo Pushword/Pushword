@@ -6,6 +6,7 @@ use DateTime;
 use Error;
 use Nette\Utils\FileSystem;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\PageUpdateNotifier\PageUpdateNotifier;
@@ -60,10 +61,23 @@ class PageUpdateNotifierTest extends KernelTestCase
         $this->getApps()->get()->setCustomProperty('page_update_notification_interval', 'P1D');
 
         // Clear pages from previous tests that may have recent createdAt timestamps
+        // But save their data first so we can restore them after the test
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $pageRepo = $em->getRepository(Page::class);
         $pages = $pageRepo->findByHost('localhost.dev');
+
+        /** @var array<array{slug: string, h1: string, mainContent: string, locale: string, publishedAt: ?\DateTimeInterface, createdAt: ?\DateTimeInterface, updatedAt: ?\DateTimeInterface}> $savedPagesData */
+        $savedPagesData = [];
         foreach ($pages as $page) {
+            $savedPagesData[] = [
+                'slug' => $page->getSlug(),
+                'h1' => $page->getH1(),
+                'mainContent' => $page->getMainContent(),
+                'locale' => $page->getLocale(),
+                'publishedAt' => $page->getPublishedAt(),
+                'createdAt' => $page->getCreatedAt(),
+                'updatedAt' => $page->getUpdatedAt(),
+            ];
             $em->remove($page);
         }
 
@@ -79,18 +93,41 @@ class PageUpdateNotifierTest extends KernelTestCase
 
         self::assertSame(PageUpdateNotifier::WAS_EVER_RUN_SINCE_INTERVAL, $notifier->run($this->getPage()));
 
-        return;
+        // Restore original pages for other tests
+        foreach ($savedPagesData as $pageData) {
+            $restoredPage = new Page()
+                ->setSlug($pageData['slug'])
+                ->setH1($pageData['h1'])
+                ->setMainContent($pageData['mainContent'])
+                ->setLocale($pageData['locale'])
+                ->setHost('localhost.dev');
+            if (null !== $pageData['createdAt']) {
+                $restoredPage->setCreatedAt($pageData['createdAt']);
+            }
+
+            if (null !== $pageData['updatedAt']) {
+                $restoredPage->setUpdatedAt($pageData['updatedAt']);
+            }
+
+            if (null !== $pageData['publishedAt']) {
+                $restoredPage->setPublishedAt($pageData['publishedAt']);
+            }
+
+            $em->persist($restoredPage);
+        }
+
+        $em->flush();
     }
 
     /**
-     * @return AbstractTransport&MockObject
+     * @return AbstractTransport&Stub
      */
-    protected function getTransporter(): MockObject
+    protected function getTransporter(): Stub
     {
-        $mock = $this->createMock(AbstractTransport::class);
-        $mock->method('send')->willReturn(null);
+        $stub = $this->createStub(AbstractTransport::class);
+        $stub->method('send')->willReturn(null);
 
-        return $mock;
+        return $stub;
     }
 
     /** @return ExecutionContextInterface&MockObject */

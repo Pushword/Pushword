@@ -6,6 +6,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use Pushword\Admin\Controller\AdminMenu;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
 use Pushword\Core\Component\App\AppPool;
@@ -22,7 +23,7 @@ class AdminMenuTest extends KernelTestCase
 
     private AppPool $appPool;
 
-    private AdminContextProviderInterface&MockObject $adminContextProvider;
+    private AdminContextProviderInterface&Stub $adminContextProvider;
 
     private RequestStack $requestStack;
 
@@ -32,7 +33,7 @@ class AdminMenuTest extends KernelTestCase
         $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         // AppPool is final, get real instance from container
         $this->appPool = self::getContainer()->get(AppPool::class);
-        $this->adminContextProvider = $this->createMock(AdminContextProviderInterface::class);
+        $this->adminContextProvider = $this->createStub(AdminContextProviderInterface::class);
         $this->requestStack = new RequestStack();
         $this->requestStack->push(new Request());
 
