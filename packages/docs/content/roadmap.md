@@ -20,10 +20,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
-- improve static generation performance
-  - avoid to rely on currentRequest (same for page scanner)
-  - incremential generation : instead of creating a full new folder, replace only what need to be replaced (page or media)
-  - digg the codebase to see what else we can improve
+- refactor EntityFilter component to use modern tools (PHP Attribute, Real autowiring, etc.)
 
 - Pushword\PageScanner\Tests\PageScannerCommandTest > page scanner comm 26.84s digg the codebase to see what we can improve
   This is very slow

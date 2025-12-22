@@ -27,7 +27,7 @@ final class GenerationStateManager
 
     private function getStateFilePath(): string
     {
-        return $this->projectDir.'/'.self::STATE_FILE;
+        return $this->projectDir.'/var/'.self::STATE_FILE;
     }
 
     private function load(): void

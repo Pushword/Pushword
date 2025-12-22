@@ -116,6 +116,11 @@ final class AppPool
         return '';
     }
 
+    public function isKnownHost(string $host): bool
+    {
+        return '' !== $this->findHost($host);
+    }
+
     /** @return array<string, AppConfig> */
     public function getApps(): array
     {

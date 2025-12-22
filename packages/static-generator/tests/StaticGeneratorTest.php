@@ -55,8 +55,10 @@ class StaticGeneratorTest extends KernelTestCase
         self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/favicon.ico');
 
         $staticDir = __DIR__.'/../../skeleton/static/localhost.dev';
+        $stateFile = __DIR__.'/../../skeleton/var/.static-generation-state.json';
         $filesystem = new Filesystem();
         $filesystem->remove($staticDir);
+        $filesystem->remove($stateFile);
     }
 
     public function testIncrementalGeneration(): void
@@ -65,7 +67,7 @@ class StaticGeneratorTest extends KernelTestCase
         $application = new Application($kernel);
         $filesystem = new Filesystem();
         $staticDir = __DIR__.'/../../skeleton/static/localhost.dev';
-        $stateFile = __DIR__.'/../../skeleton/.static-generation-state.json';
+        $stateFile = __DIR__.'/../../skeleton/var/.static-generation-state.json';
 
         // Clean up before test
         $filesystem->remove($staticDir);
@@ -115,7 +117,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         self::bootKernel();
         $projectDir = self::getContainer()->getParameter('kernel.project_dir');
-        $stateFile = $projectDir.'/.static-generation-state.json';
+        $stateFile = $projectDir.'/var/.static-generation-state.json';
         $filesystem = new Filesystem();
 
         // Clean up
