@@ -20,12 +20,12 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
-- improve static generation performance by digg the codebase to see what we can improve
+- improve static generation performance
   - avoid to rely on currentRequest (same for page scanner)
-  - instead of creating a full new folder, replace only what need to be replaced (page or media)
-  - digg the codebase to see what we can improve
+  - incremential generation : instead of creating a full new folder, replace only what need to be replaced (page or media)
+  - digg the codebase to see what else we can improve
 
-- Pushword\PageScanner\Tests\PageScannerCommandTest > page scanner comm 26.84s
+- Pushword\PageScanner\Tests\PageScannerCommandTest > page scanner comm 26.84s digg the codebase to see what we can improve
   This is very slow
   Under the hood i want to change page scanner and static generation to avoid to simulate request
   Before, we need to find all the need for arequest in twig templates or in code related to static generation and to replace it by another solution
@@ -49,14 +49,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] video in lightbox
   - [ ] simple image self linked (the pb is more a missing code after migrating to markdown block)
   - [ ] convertImageLinkToWebPLink() is not working anymore
-
-- [Flat]
-  - [x] mettre à jour le dossier par défault : content/%domain%/
-  - [ ] check media export (in content/media or in media ?!)
-  - [x] fix markdown cheatsheet
-  - [ ] Revoir la transformation de lien markdown (./../test.md ou ./test) en lien vers la page (/test) (useful for navigate in docs from editor)
-  - [ ] s'assurer que la réciproque fonctionne au moment de l'export
-  - [ ] idem pour les médias (/media/test.jpg ➜ ./../../media/test.jpg) : plus simple que le point précédent, il faut calculer le nombre de "../" entre le dossier courant et la racine du projet
 
 - [New] When release v1, remove version from composer.json (restore 1.0.0-rc[0-9]+ to \*)
 
