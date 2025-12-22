@@ -68,6 +68,16 @@ final class PageExporter
     }
 
     /**
+     * Export only index.csv files without re-exporting .md files.
+     * Useful after import to ensure indexes reflect current database state.
+     */
+    public function exportIndexOnly(): void
+    {
+        $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
+        $this->exportIndex($pages);
+    }
+
+    /**
      * @param Page[] $pages
      */
     private function exportIndex(array $pages): void

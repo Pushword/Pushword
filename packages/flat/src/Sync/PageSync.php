@@ -67,6 +67,18 @@ final class PageSync
 
         // 4. Delete pages that no longer have .md files (excluding redirections from CSV)
         $this->deleteMissingPages($app->getMainHost());
+
+        // 5. Regenerate index.csv to reflect the current database state
+        $this->regenerateIndex($contentDir);
+    }
+
+    /**
+     * Regenerate index.csv files after import to ensure they reflect current database state.
+     */
+    private function regenerateIndex(string $contentDir): void
+    {
+        $this->pageExporter->exportDir = $contentDir;
+        $this->pageExporter->exportIndexOnly();
     }
 
     public function export(?string $host = null, bool $force = false, ?string $exportDir = null): void

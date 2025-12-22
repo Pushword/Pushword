@@ -81,6 +81,17 @@ final class MediaSync
 
         $this->importDirectory($localMediaDir);
         $this->mediaImporter->finishImport();
+
+        // 5. Regenerate index.csv to reflect the current database state
+        $this->regenerateIndex();
+    }
+
+    /**
+     * Regenerate index.csv after import to ensure it reflects current database state.
+     */
+    private function regenerateIndex(): void
+    {
+        $this->mediaExporter->exportMedias();
     }
 
     public function export(?string $host = null, bool $force = false, ?string $exportDir = null): void
