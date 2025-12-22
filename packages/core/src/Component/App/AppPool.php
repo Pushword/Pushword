@@ -20,6 +20,14 @@ final class AppPool
      * Why there ? Because often, need to check current page don't override App Config. */
     private ?Page $currentPage = null;
 
+    private ?string $currentHost = null;
+
+    private ?string $currentRoute = null;
+
+    private int $currentPager = 1;
+
+    private ?string $currentSlug = null;
+
     /** @param array<string, array<string, mixed>> $rawApps */
     public function __construct(
         array $rawApps,
@@ -126,6 +134,36 @@ final class AppPool
         }
 
         return $this->currentPage;
+    }
+
+    public function setRequestContext(string $host, string $route = '', string $slug = '', int $pager = 1): self
+    {
+        $this->currentHost = $host;
+        $this->currentRoute = $route;
+        $this->currentSlug = $slug;
+        $this->currentPager = $pager;
+
+        return $this;
+    }
+
+    public function getCurrentHost(): ?string
+    {
+        return $this->currentHost;
+    }
+
+    public function getCurrentRoute(): ?string
+    {
+        return $this->currentRoute;
+    }
+
+    public function getCurrentPager(): int
+    {
+        return $this->currentPager;
+    }
+
+    public function getCurrentSlug(): ?string
+    {
+        return $this->currentSlug;
     }
 
     /** @param string|array<string>|null $host */

@@ -4,7 +4,6 @@ namespace Pushword\Core\Router;
 
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
 use Twig\Attribute\AsTwigFunction;
 
@@ -22,15 +21,10 @@ final class PushwordRouteGenerator
 
     private bool $useCustomHostPath = true;
 
-    private readonly string $currentHost;
-
     public function __construct(
         private readonly SfRouterInterface $router,
         private readonly AppPool $apps,
-        RequestStack $requestStack
     ) {
-        $currentRequest = $requestStack->getCurrentRequest();
-        $this->currentHost = null !== $currentRequest ? $currentRequest->getHost() : '';
     }
 
     /**
@@ -111,7 +105,8 @@ final class PushwordRouteGenerator
             return false;
         }
 
-        if ('' === ($host ?? $this->currentHost)) {
+        $currentHost = $this->apps->getCurrentHost() ?? '';
+        if ('' === ($host ?? $currentHost)) {
             return false;
         }
 
@@ -123,7 +118,7 @@ final class PushwordRouteGenerator
             return false;
         }
 
-        return ! $this->apps->isDefaultHost($host ?? $this->currentHost);
+        return ! $this->apps->isDefaultHost($host ?? $currentHost);
     }
 
     /**

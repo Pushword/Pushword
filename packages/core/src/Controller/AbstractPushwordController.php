@@ -5,8 +5,6 @@ namespace Pushword\Core\Controller;
 use Override;
 use Pushword\Core\Component\App\AppPool;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Environment as Twig;
 
 /**
@@ -17,11 +15,9 @@ use Twig\Environment as Twig;
 abstract class AbstractPushwordController extends AbstractController
 {
     public function __construct(
-        protected readonly RequestStack $requestStack,
         protected readonly AppPool $apps,
         protected readonly Twig $twig,
     ) {
-        $this->initHost($requestStack);
     }
 
     /**
@@ -34,31 +30,6 @@ abstract class AbstractPushwordController extends AbstractController
     protected function renderView(string $view, array $parameters = []): string
     {
         return $this->twig->render($view, $parameters);
-    }
-
-    /**
-     * Initialize the current app based on the request host.
-     * Supports both explicit host from request attributes and implicit host lookup.
-     */
-    protected function initHost(RequestStack|Request $request): void
-    {
-        $request = $request instanceof Request ? $request : $request->getCurrentRequest();
-
-        if (! $request instanceof Request) {
-            return;
-        }
-
-        $host = $request->attributes->getString('host', '');
-        if ('' !== $host) {
-            $this->apps->switchCurrentApp($host);
-
-            return;
-        }
-
-        $host = $this->apps->findHost($request->getHost());
-        if ('' !== $host) {
-            $this->apps->switchCurrentApp($host);
-        }
     }
 
     /**

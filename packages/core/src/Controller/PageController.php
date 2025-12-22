@@ -12,7 +12,6 @@ use function Safe\preg_match;
 
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Translation\DataCollectorTranslator;
@@ -40,7 +39,6 @@ final class PageController extends AbstractPushwordController
     private readonly TranslatorInterface $translator;
 
     public function __construct(
-        RequestStack $requestStack,
         AppPool $apps,
         Twig $twig,
         private readonly PageRepository $pageRepository,
@@ -50,7 +48,7 @@ final class PageController extends AbstractPushwordController
             throw new LogicException('A symfony codebase changed make this hack impossible (cf setLocale). Get `'.$translator::class.'`');
         }
 
-        parent::__construct($requestStack, $apps, $twig);
+        parent::__construct($apps, $twig);
 
         $this->translator = $translator;
     }
@@ -74,8 +72,6 @@ final class PageController extends AbstractPushwordController
     #[Route('/{slug}/{pager}', name: 'pushword_page_pager', requirements: ['slug' => RoutePatterns::SLUG_WITH_TRAILING, 'pager' => RoutePatterns::PAGER], defaults: ['slug' => '', 'pager' => 1], methods: ['GET', 'HEAD', 'POST'], priority: -80)]
     public function show(Request $request, string $slug = ''): Response
     {
-        $this->initHost($request);
-
         $page = $this->getPageElse404($request, $slug, true);
 
         // SEO redirection if we are not on the good URI (for exemple /fr/tagada instead of /tagada)

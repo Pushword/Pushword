@@ -13,7 +13,6 @@ use function Safe\preg_match;
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Translation\DataCollectorTranslator;
@@ -29,7 +28,6 @@ final class FeedController extends AbstractPushwordController
     private readonly TranslatorInterface $translator;
 
     public function __construct(
-        RequestStack $requestStack,
         AppPool $apps,
         Twig $twig,
         private readonly ParameterBagInterface $params,
@@ -40,7 +38,7 @@ final class FeedController extends AbstractPushwordController
             throw new LogicException('A symfony codebase changed make this hack impossible (cf setLocale). Get `'.$translator::class.'`');
         }
 
-        parent::__construct($requestStack, $apps, $twig);
+        parent::__construct($apps, $twig);
 
         $this->translator = $translator;
     }
@@ -52,8 +50,6 @@ final class FeedController extends AbstractPushwordController
     #[Route('/{host}/{_locale}feed.xml', name: 'custom_host_pushword_page_main_feed', requirements: ['_locale' => RoutePatterns::LOCALE, 'host' => RoutePatterns::HOST], methods: ['GET', 'HEAD'], priority: -21)]
     public function showMain(Request $request): Response
     {
-        $this->initHost($request);
-
         $locale = '' !== $request->getLocale() ? rtrim($request->getLocale(), '/') : $this->apps->getApp()->getDefaultLocale();
         $LocaleHomepage = $this->findPage($request, $locale, false);
         $slug = 'homepage';
@@ -83,8 +79,6 @@ final class FeedController extends AbstractPushwordController
     #[Route('/{slug}.xml', name: 'pushword_page_feed', requirements: ['slug' => RoutePatterns::SLUG], methods: ['GET', 'HEAD'], priority: -50)]
     public function show(Request $request, string $slug = ''): Response
     {
-        $this->initHost($request);
-
         if ('homepage' === $slug) {
             return $this->redirectToRoute('pushword_page_feed', ['slug' => 'index'], Response::HTTP_MOVED_PERMANENTLY);
         }

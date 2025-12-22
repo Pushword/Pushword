@@ -16,8 +16,6 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\StringToDQLCriteria;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
@@ -29,7 +27,6 @@ final class PageExtension
         private readonly AppPool $apps,
         public Twig $twig,
         private readonly RouteGeneratorFactoryInterface $routeGeneratorFactory,
-        private readonly RequestStack $requestStack
     ) {
     }
 
@@ -113,30 +110,19 @@ final class PageExtension
         return $pages[0] ?? null;
     }
 
-    private function getCurrentRequest(): ?Request
-    {
-        return $this->requestStack->getCurrentRequest();
-    }
-
     /**
      * @return array<string, string|null>
      */
     private function getPagerRouteParams(): array
     {
         $params = [];
-        $currentRequest = $this->getCurrentRequest();
         if (null !== $this->apps->getCurrentPage()) {
-            // normally, only used in admin
             $params['slug'] = $this->apps->getCurrentPage()->getSlug();
             $params['host'] = $this->apps->getCurrentPage()->getHost();
         }
 
-        if (null !== $currentRequest && \is_string($slug = $currentRequest->attributes->get('slug'))) {
+        if (null !== ($slug = $this->apps->getCurrentSlug())) {
             $params['slug'] = rtrim($slug, '/');
-        }
-
-        if (null !== $currentRequest && null !== ($host = $currentRequest->request->get('host'))) {
-            $params['host'] = (string) $host;
         }
 
         return $params;
@@ -144,11 +130,10 @@ final class PageExtension
 
     private function getPagerRouteName(): string
     {
-        $currentRequest = $this->getCurrentRequest();
-        $pagerRouter = null !== $currentRequest ? $currentRequest->attributes->getString('_route') : 'pushword_page';
-        $pagerRouter .= null !== $currentRequest && '' === $currentRequest->attributes->getString('slug') ? '_homepage' : '';
+        $route = $this->apps->getCurrentRoute() ?? 'pushword_page';
+        $route .= '' === ($this->apps->getCurrentSlug() ?? '') ? '_homepage' : '';
 
-        return $pagerRouter.'_pager';
+        return $route.'_pager';
     }
 
     /**
@@ -279,7 +264,7 @@ final class PageExtension
             $pagerfanta = new Pagerfanta(new ArrayAdapter($pages))
                 ->setMaxNbPages($maxPages)
                 ->setMaxPerPage($max)
-                ->setCurrentPage($this->getCurrentPage());
+                ->setCurrentPage($this->getCurrentPagerNumber());
             $pages = $pagerfanta->getCurrentPageResults();
         } else {
             $pages = $queryBuilder->getQuery()->getResult();
@@ -329,16 +314,9 @@ final class PageExtension
         return \is_int($max) ? $max : (isset($max[1]) ? $max[1] * $max[0] : 0);
     }
 
-    private function getCurrentPage(): int
+    private function getCurrentPagerNumber(): int
     {
-        $currentRequest = $this->requestStack->getCurrentRequest();
-
-        if (null === $currentRequest) {
-            // throw new Exception('no current request'); // only in test ?!
-            return 1;
-        }
-
-        return $currentRequest->attributes->getInt('pager', 1);
+        return $this->apps->getCurrentPager();
     }
 
     #[AsTwigFunction('isInstanceOfPage')]
