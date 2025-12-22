@@ -1272,4 +1272,104 @@ MD;
         $this->em->flush();
         @unlink($mdFilePath);
     }
+
+    /**
+     * Test 23: mainImageFormat is exported as text label and imported back as int.
+     */
+    public function testMainImageFormatConverterExportImport(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a page with mainImageFormat as integer (1 = none)
+        $page = new Page();
+        $page->setSlug('main-image-format-test');
+        $page->setH1('Main Image Format Test');
+        $page->setHost('localhost.dev');
+        $page->setLocale('en');
+        $page->setMainContent('Content');
+        $page->setPublishedAt(new DateTime());
+        $page->setCustomProperty('mainImageFormat', 1); // Integer value for "none"
+
+        $this->em->persist($page);
+        $this->em->flush();
+
+        $pageId = $page->getId();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Verify the .md file contains mainImageFormat as text label
+        $mdFilePath = $contentDir.'/main-image-format-test.md';
+        self::assertFileExists($mdFilePath);
+
+        $mdContent = file_get_contents($mdFilePath);
+
+        // Should be exported as 'none', not 1
+        self::assertStringContainsString('mainImageFormat: none', $mdContent, 'mainImageFormat should be exported as text label');
+        self::assertStringNotContainsString('mainImageFormat: 1', $mdContent, 'mainImageFormat should NOT be exported as integer');
+
+        // Clear and remove the page
+        $this->em->clear();
+        $pageToRemove = $this->em->find(Page::class, $pageId);
+        self::assertNotNull($pageToRemove);
+        $this->em->remove($pageToRemove);
+        $this->em->flush();
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify page was recreated with mainImageFormat as integer
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'main-image-format-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page should be recreated');
+
+        // Should be imported back as integer 1
+        self::assertSame(1, $importedPage->getCustomProperty('mainImageFormat'), 'mainImageFormat should be imported as integer');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        @unlink($mdFilePath);
+    }
+
+    /**
+     * Test 24: Legacy files with mainImageFormat as integer are imported correctly.
+     */
+    public function testLegacyMainImageFormatIntegerImport(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a legacy .md file with mainImageFormat as integer
+        $mdFilePath = $contentDir.'/legacy-format-test.md';
+        $mdContent = <<<'YAML'
+---
+h1: Legacy Format Test
+mainImageFormat: 2
+---
+
+Content
+YAML;
+        file_put_contents($mdFilePath, $mdContent);
+        touch($mdFilePath, time() + 10); // Ensure it's newer than any DB entry
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify page was imported with mainImageFormat as integer
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'legacy-format-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page should be imported');
+
+        // Should be imported as integer 2 (unchanged from legacy format)
+        self::assertSame(2, $importedPage->getCustomProperty('mainImageFormat'), 'Legacy integer mainImageFormat should be preserved');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        @unlink($mdFilePath);
+    }
 }

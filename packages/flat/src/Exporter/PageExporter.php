@@ -10,6 +10,7 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Utils\Entity;
+use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Stringable;
 use Symfony\Component\Filesystem\Filesystem;
@@ -40,6 +41,7 @@ final class PageExporter
     public function __construct(
         private readonly AppPool $apps,
         private readonly PageRepository $pageRepo,
+        private readonly PropertyConverterRegistry $converterRegistry,
         array $pageIndexColumns = [],
     ) {
         $this->filesystem = new Filesystem();
@@ -212,13 +214,14 @@ final class PageExporter
             'tags' => trim($page->getTags()),
         ];
 
-        /** @var array<string, mixed> $customProperties */
-        $customProperties = $page->getCustomProperties();
-        foreach ($customColumns as $column) {
-            $row[$column] = array_key_exists($column, $customProperties)
-                ? MediaCsvHelper::encodeValue($customProperties[$column])
-                : '';
-        }
+        // custom properties
+        // /** @var array<string, mixed> $customProperties */
+        // $customProperties = $page->getCustomProperties();
+        // foreach ($customColumns as $column) {
+        //     $row[$column] = array_key_exists($column, $customProperties)
+        //         ? MediaCsvHelper::encodeValue($customProperties[$column])
+        //         : '';
+        // }
 
         return $row;
     }
@@ -254,9 +257,9 @@ final class PageExporter
             $data[$property] = $value;
         }
 
-        // Unpack custom properties at top level
+        // Unpack custom properties at top level and apply converters
         foreach ($page->getCustomProperties() as $key => $value) {
-            $data[$key] = $value;
+            $data[$key] = $this->converterRegistry->toFlatValue($key, $value);
         }
 
         $metaData = Yaml::dump($data, indent: 2);

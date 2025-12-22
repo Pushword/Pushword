@@ -59,6 +59,16 @@ class PageUpdateNotifierTest extends KernelTestCase
         $this->getApps()->get()->setCustomProperty('page_update_notification_to', 'contact@example.tld');
         $this->getApps()->get()->setCustomProperty('page_update_notification_interval', 'P1D');
 
+        // Clear pages from previous tests that may have recent createdAt timestamps
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+        $pages = $pageRepo->findByHost('localhost.dev');
+        foreach ($pages as $page) {
+            $em->remove($page);
+        }
+
+        $em->flush();
+
         FileSystem::delete($notifier->getCacheDir());
         self::assertSame(PageUpdateNotifier::NOTHING_TO_NOTIFY, $notifier->run($this->getPage()));
 

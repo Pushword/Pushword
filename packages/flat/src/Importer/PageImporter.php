@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Pushword\Flat\FlatFileContentDirFinder;
 
@@ -46,6 +47,9 @@ final class PageImporter extends AbstractImporter
 
     #[Required]
     public LoggerInterface $logger;
+
+    #[Required]
+    public PropertyConverterRegistry $converterRegistry;
 
     private bool $newPage = false;
 
@@ -242,7 +246,7 @@ final class PageImporter extends AbstractImporter
                 continue;
             }
 
-            $page->setCustomProperty($key, $value);
+            $page->setCustomProperty($key, $this->converterRegistry->fromFlatValue($key, $value));
         }
 
         $page->setHost($this->apps->get()->getMainHost());
