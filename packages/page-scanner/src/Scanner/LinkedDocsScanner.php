@@ -55,7 +55,7 @@ final class LinkedDocsScanner extends AbstractScanner
     /** @var array<string, true|string> */
     private array $externalUrlResults = [];
 
-    /** @var array<int, array{url: string, pageId: int, pageHost: string, pageSlug: string}> */
+    /** @var array<int, array{url: string, pageId: int, pageHost: string, pageSlug: string, pageH1: string, pageMetaRobots: string}> */
     private array $deferredExternalChecks = [];
 
     /**
@@ -103,7 +103,7 @@ final class LinkedDocsScanner extends AbstractScanner
     /**
      * Resolve deferred external URL errors after parallel validation.
      *
-     * @return array<int, array<int, array{page: array{host: string, slug: string}, message: string}>>
+     * @return array<int, array<int, array{page: array{id: int, host: string, slug: string, h1: string, metaRobots: string}, message: string}>>
      */
     public function resolveDeferredExternalErrors(): array
     {
@@ -114,7 +114,13 @@ final class LinkedDocsScanner extends AbstractScanner
                 $pageId = $check['pageId'];
                 $errors[$pageId] ??= [];
                 $errors[$pageId][] = [
-                    'page' => ['host' => $check['pageHost'], 'slug' => $check['pageSlug']],
+                    'page' => [
+                        'id' => $check['pageId'],
+                        'host' => $check['pageHost'],
+                        'slug' => $check['pageSlug'],
+                        'h1' => $check['pageH1'],
+                        'metaRobots' => $check['pageMetaRobots'],
+                    ],
                     'message' => '<code>'.$url.'</code> '.$this->externalUrlResults[$url],
                 ];
             }
@@ -372,6 +378,8 @@ final class LinkedDocsScanner extends AbstractScanner
                     'pageId' => (int) $this->page->getId(),
                     'pageHost' => $this->page->getHost(),
                     'pageSlug' => $this->page->getSlug(),
+                    'pageH1' => $this->page->getH1(),
+                    'pageMetaRobots' => $this->page->getMetaRobots(),
                 ];
 
                 return;

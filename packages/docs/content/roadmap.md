@@ -22,11 +22,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - refactor EntityFilter component to use modern tools (PHP Attribute, Real autowiring, etc.)
 
-- Pushword\PageScanner\Tests\PageScannerCommandTest > page scanner comm 26.84s digg the codebase to see what we can improve
-  This is very slow
-  Under the hood i want to change page scanner and static generation to avoid to simulate request
-  Before, we need to find all the need for arequest in twig templates or in code related to static generation and to replace it by another solution
-
 - [AdminBlockEditor] Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
 
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
