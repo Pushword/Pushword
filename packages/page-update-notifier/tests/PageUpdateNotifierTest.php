@@ -124,7 +124,7 @@ class PageUpdateNotifierTest extends KernelTestCase
      */
     protected function getTransporter(): Stub
     {
-        $stub = $this->createStub(AbstractTransport::class);
+        $stub = self::createStub(AbstractTransport::class);
         $stub->method('send')->willReturn(null);
 
         return $stub;

@@ -99,23 +99,26 @@ class Compressor
 
     private function throttleIfNeeded(): void
     {
-        if (\count($this->runningProcesses) < $this->maxConcurrentProcesses) {
-            return;
-        }
-
-        // Remove finished processes and wait for one to finish if still at limit
+        // Remove finished processes first
         $this->runningProcesses = array_filter(
             $this->runningProcesses,
             static fn (Process $p): bool => $p->isRunning()
         );
 
-        // Still at limit? Wait for at least one to finish
-        while (\count($this->runningProcesses) >= $this->maxConcurrentProcesses) {
-            usleep(10000); // 10ms
-            $this->runningProcesses = array_filter(
-                $this->runningProcesses,
-                static fn (Process $p): bool => $p->isRunning()
-            );
+        if (\count($this->runningProcesses) < $this->maxConcurrentProcesses) {
+            return;
         }
+
+        // Wait for at least one process to finish (blocking, no CPU waste)
+        $processToWait = reset($this->runningProcesses);
+        if (false !== $processToWait) {
+            $processToWait->wait();
+        }
+
+        // Clean up after waiting
+        $this->runningProcesses = array_filter(
+            $this->runningProcesses,
+            static fn (Process $p): bool => $p->isRunning()
+        );
     }
 }

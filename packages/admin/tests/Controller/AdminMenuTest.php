@@ -33,7 +33,7 @@ class AdminMenuTest extends KernelTestCase
         $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         // AppPool is final, get real instance from container
         $this->appPool = self::getContainer()->get(AppPool::class);
-        $this->adminContextProvider = $this->createStub(AdminContextProviderInterface::class);
+        $this->adminContextProvider = self::createStub(AdminContextProviderInterface::class);
         $this->requestStack = new RequestStack();
         $this->requestStack->push(new Request());
 

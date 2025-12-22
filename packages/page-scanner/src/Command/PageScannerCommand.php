@@ -49,7 +49,7 @@ final class PageScannerCommand
     protected function scanAll(string $host): array
     {
         $this->scanner->preloadCaches($host);
-        $pages = $this->pageRepo->getPublishedPagesWithEagerLoading($host);
+        $pages = $this->pageRepo->getPublishedPages($host);
         $pagesCount = \count($pages);
 
         // Phase 1: Collect all external URLs

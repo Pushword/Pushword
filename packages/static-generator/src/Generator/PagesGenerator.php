@@ -13,7 +13,7 @@ class PagesGenerator extends PageGenerator
         parent::generate($host);
 
         $this->preloadMediaCache();
-        $pages = $this->getPageRepository()->getPublishedPagesWithEagerLoading($this->app->getMainHost());
+        $pages = $this->getPageRepository()->getPublishedPages($this->app->getMainHost());
 
         foreach ($pages as $page) {
             $this->generatePage($page);
@@ -36,6 +36,7 @@ class PagesGenerator extends PageGenerator
     {
         parent::generate($host);
 
+        $this->preloadMediaCache();
         $pages = $this->getPageRepository()
             ->getPublishedPages($this->app->getMainHost(), ['slug', 'LIKE', $slug]);
 

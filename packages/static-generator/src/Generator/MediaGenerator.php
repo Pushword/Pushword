@@ -14,6 +14,11 @@ class MediaGenerator extends AbstractGenerator
         $this->mediaStorage = $mediaStorage;
     }
 
+    private function targetExists(string $targetPath): bool
+    {
+        return is_link($targetPath) || file_exists($targetPath);
+    }
+
     #[Override]
     public function generate(?string $host = null): void
     {
@@ -75,12 +80,8 @@ class MediaGenerator extends AbstractGenerator
 
             $sourcePath = $sourceDir.'/'.$entry;
             $targetPath = $targetDir.'/'.$entry;
-            // Skip if already exists
-            if (file_exists($targetPath)) {
-                continue;
-            }
 
-            if (is_link($targetPath)) {
+            if ($this->targetExists($targetPath)) {
                 continue;
             }
 
@@ -132,12 +133,8 @@ class MediaGenerator extends AbstractGenerator
             }
 
             $targetPath = $targetDir.'/'.$entry;
-            // Skip if already exists
-            if (file_exists($targetPath)) {
-                continue;
-            }
 
-            if (is_link($targetPath)) {
+            if ($this->targetExists($targetPath)) {
                 continue;
             }
 
@@ -166,12 +163,8 @@ class MediaGenerator extends AbstractGenerator
 
                 $fileName = $item->path();
                 $targetPath = $staticMediaDir.'/'.$fileName;
-                // Skip if already exists
-                if (file_exists($targetPath)) {
-                    continue;
-                }
 
-                if (is_link($targetPath)) {
+                if ($this->targetExists($targetPath)) {
                     continue;
                 }
 
@@ -182,6 +175,17 @@ class MediaGenerator extends AbstractGenerator
         }
 
         // Copy from storage to static directory
+        $this->copyFilesFromRemoteStorage($staticMediaDir);
+    }
+
+    private function copyFilesFromRemoteStorage(string $staticMediaDir): void
+    {
+        if (null === $this->mediaStorage) {
+            return;
+        }
+
+        // Collect files to copy first
+        $filesToCopy = [];
         foreach ($this->mediaStorage->listContents('') as $item) {
             if (! $item->isFile()) {
                 continue;
@@ -189,19 +193,42 @@ class MediaGenerator extends AbstractGenerator
 
             $fileName = $item->path();
             $targetPath = $staticMediaDir.'/'.$fileName;
-            // Skip if already exists
-            if (file_exists($targetPath)) {
+
+            if ($this->targetExists($targetPath)) {
                 continue;
             }
 
-            if (is_link($targetPath)) {
-                continue;
+            $filesToCopy[$fileName] = $targetPath;
+        }
+
+        // Copy files in batches
+        $this->copyFilesInBatches($filesToCopy);
+    }
+
+    private const int BATCH_SIZE = 20;
+
+    /**
+     * @param array<string, string> $filesToCopy [sourcePath => targetPath]
+     */
+    private function copyFilesInBatches(array $filesToCopy): void
+    {
+        if (null === $this->mediaStorage) {
+            return;
+        }
+
+        $batches = array_chunk($filesToCopy, self::BATCH_SIZE, true);
+        foreach ($batches as $batch) {
+            // Pre-fetch all streams
+            $streams = [];
+            foreach ($batch as $source => $target) {
+                $streams[$target] = $this->mediaStorage->readStream($source);
             }
 
-            // Read from storage and write to local static dir
-            $stream = $this->mediaStorage->readStream($fileName);
-            file_put_contents($targetPath, $stream);
-            fclose($stream);
+            // Write all files
+            foreach ($streams as $target => $stream) {
+                file_put_contents($target, $stream);
+                fclose($stream);
+            }
         }
     }
 }
