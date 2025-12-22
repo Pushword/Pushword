@@ -58,6 +58,102 @@ class StaticGeneratorTest extends KernelTestCase
         $filesystem->remove($staticDir);
     }
 
+    public function testIncrementalGeneration(): void
+    {
+        $kernel = static::createKernel();
+        $application = new Application($kernel);
+        $filesystem = new Filesystem();
+        $staticDir = __DIR__.'/../../skeleton/static/localhost.dev';
+        $stateFile = __DIR__.'/../../skeleton/.static-generation-state.json';
+
+        // Clean up before test
+        $filesystem->remove($staticDir);
+        $filesystem->remove($stateFile);
+
+        $command = $application->find('pw:static');
+        $commandTester = new CommandTester($command);
+
+        // First full generation
+        $commandTester->execute(['localhost.dev']);
+        $output = $commandTester->getDisplay();
+        self::assertStringContainsString('success', $output);
+        self::assertStringNotContainsString('incremental', $output);
+
+        // State file should be created
+        self::assertFileExists($stateFile);
+        $stateContent = file_get_contents($stateFile);
+        self::assertNotFalse($stateContent);
+        self::assertStringContainsString('localhost.dev', $stateContent);
+
+        // Get modification time of index.html
+        $indexFile = $staticDir.'/index.html';
+        self::assertFileExists($indexFile);
+        $originalMtime = filemtime($indexFile);
+
+        // Wait a bit to ensure different mtime
+        sleep(1);
+
+        // Second generation with incremental flag
+        $commandTester->execute(['localhost.dev', '--incremental' => true]);
+        $output = $commandTester->getDisplay();
+        self::assertStringContainsString('success', $output);
+        self::assertStringContainsString('incremental mode', $output);
+
+        // Index.html should NOT be regenerated (same mtime since page unchanged)
+        clearstatcache();
+        $newMtime = filemtime($indexFile);
+        self::assertSame($originalMtime, $newMtime, 'File should not be regenerated in incremental mode when unchanged');
+
+        // Clean up
+        $filesystem->remove($staticDir);
+        $filesystem->remove($stateFile);
+    }
+
+    public function testGenerationStateManager(): void
+    {
+        self::bootKernel();
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+        $stateFile = $projectDir.'/.static-generation-state.json';
+        $filesystem = new Filesystem();
+
+        // Clean up
+        $filesystem->remove($stateFile);
+
+        $stateManager = new GenerationStateManager($projectDir);
+
+        // Initially no state
+        self::assertFalse($stateManager->hasState('test.host'));
+        self::assertNull($stateManager->getLastGenerationTime('test.host'));
+
+        // Set generation time
+        $now = new \DateTimeImmutable();
+        $stateManager->setLastGenerationTime('test.host', $now);
+        $stateManager->save();
+
+        // Verify state file created
+        self::assertFileExists($stateFile);
+
+        // Create new instance to verify persistence
+        $stateManager2 = new GenerationStateManager($projectDir);
+        self::assertTrue($stateManager2->hasState('test.host'));
+        self::assertNotNull($stateManager2->getLastGenerationTime('test.host'));
+
+        // Test page state
+        $pageUpdatedAt = new \DateTimeImmutable('2024-01-15 10:00:00');
+        $stateManager2->setPageState('test.host', 'test-page', $pageUpdatedAt);
+        $stateManager2->save();
+
+        // Verify page doesn't need regeneration with same timestamp
+        self::assertFalse($stateManager2->needsRegeneration('test.host', 'test-page', $pageUpdatedAt));
+
+        // Verify page needs regeneration with different timestamp
+        $newUpdatedAt = new \DateTimeImmutable('2024-01-16 10:00:00');
+        self::assertTrue($stateManager2->needsRegeneration('test.host', 'test-page', $newUpdatedAt));
+
+        // Clean up
+        $filesystem->remove($stateFile);
+    }
+
     private function getStaticAppGenerator(): StaticAppGenerator
     {
         if (null !== $this->staticAppGenerator) {
@@ -69,11 +165,14 @@ class StaticGeneratorTest extends KernelTestCase
         $container = self::getContainer();
         $logger = $container->get(LoggerInterface::class);
 
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+
         return $this->staticAppGenerator = new StaticAppGenerator(
             self::getContainer()->get(AppPool::class),
             $generatorBag,
             $generatorBag->get(RedirectionManager::class), // @phpstan-ignore-line
             $logger,
+            new GenerationStateManager($projectDir),
         );
     }
 

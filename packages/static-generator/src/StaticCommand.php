@@ -4,6 +4,7 @@ namespace Pushword\StaticGenerator;
 
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -15,30 +16,36 @@ final readonly class StaticCommand
 {
     public function __construct(
         private StaticAppGenerator $staticAppGenerator,
-        private Stopwatch $stopWatch
+        private Stopwatch $stopWatch,
     ) {
     }
 
     public function __invoke(
+        OutputInterface $output,
         #[Argument(name: 'host')]
         ?string $host,
         #[Argument(name: 'page')]
         ?string $page,
-        OutputInterface $output
+        #[Option(name: 'incremental', shortcut: 'i', description: 'Only regenerate pages that have changed since last generation')]
+        bool $incremental = false,
     ): int {
         $this->stopWatch->start('generate');
 
-        $host = $host;
-        $page = $page;
         if (null === $host) {
-            $this->staticAppGenerator->generate();
-            $msg = 'All websites generated witch success';
+            $this->staticAppGenerator->generate(null, $incremental);
+            $msg = 'All websites generated with success';
+            if ($incremental) {
+                $msg .= ' (incremental mode)';
+            }
         } elseif (null === $page) {
-            $this->staticAppGenerator->generate($host);
-            $msg = ($host.' generated witch success.');
+            $this->staticAppGenerator->generate($host, $incremental);
+            $msg = $host.' generated with success.';
+            if ($incremental) {
+                $msg .= ' (incremental mode)';
+            }
         } else {
             $this->staticAppGenerator->generatePage($host, $page);
-            $msg = ($host.'/'.$page.' generated witch success.');
+            $msg = $host.'/'.$page.' generated with success.';
         }
 
         $duration = $this->stopWatch->stop('generate')->getDuration();

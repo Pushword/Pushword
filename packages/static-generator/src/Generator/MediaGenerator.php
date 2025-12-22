@@ -4,19 +4,46 @@ namespace Pushword\StaticGenerator\Generator;
 
 use Override;
 use Pushword\Core\Service\MediaStorageAdapter;
+use Pushword\StaticGenerator\IncrementalGeneratorInterface;
 
-class MediaGenerator extends AbstractGenerator
+class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorInterface
 {
     private ?MediaStorageAdapter $mediaStorage = null;
+
+    private bool $incremental = false;
 
     public function setMediaStorage(MediaStorageAdapter $mediaStorage): void
     {
         $this->mediaStorage = $mediaStorage;
     }
 
+    public function setIncremental(bool $incremental): void
+    {
+        $this->incremental = $incremental;
+    }
+
     private function targetExists(string $targetPath): bool
     {
         return is_link($targetPath) || file_exists($targetPath);
+    }
+
+    /**
+     * Check if source file is newer than target file.
+     */
+    private function isSourceNewer(string $sourcePath, string $targetPath): bool
+    {
+        if (! file_exists($targetPath) && ! is_link($targetPath)) {
+            return true;
+        }
+
+        $sourceMtime = @filemtime($sourcePath);
+        $targetMtime = @filemtime($targetPath);
+
+        if (false === $sourceMtime || false === $targetMtime) {
+            return true;
+        }
+
+        return $sourceMtime > $targetMtime;
     }
 
     #[Override]
@@ -81,12 +108,17 @@ class MediaGenerator extends AbstractGenerator
             $sourcePath = $sourceDir.'/'.$entry;
             $targetPath = $targetDir.'/'.$entry;
 
-            if ($this->targetExists($targetPath)) {
-                continue;
-            }
-
             // Handle directories (image cache formats like md/, thumb/, xs/, etc.)
             if (is_dir($sourcePath) && ! is_link($sourcePath)) {
+                if ($this->targetExists($targetPath)) {
+                    // In incremental mode, update existing directories
+                    if ($this->incremental && ! $symlink) {
+                        $this->copyImageCacheIncremental($sourcePath, $targetPath);
+                    }
+
+                    continue;
+                }
+
                 if ($symlink) {
                     $this->filesystem->symlink($sourcePath, $targetPath);
                 } else {
@@ -103,6 +135,10 @@ class MediaGenerator extends AbstractGenerator
                     continue;
                 }
 
+                if ($this->targetExists($targetPath)) {
+                    continue;
+                }
+
                 if ($symlink) {
                     // Recreate the symlink with same target
                     $linkTarget = readlink($sourcePath);
@@ -113,6 +149,40 @@ class MediaGenerator extends AbstractGenerator
                     // Copy the actual file content (resolve symlink)
                     $this->filesystem->copy($sourcePath, $targetPath);
                 }
+            }
+        }
+    }
+
+    /**
+     * Incrementally update image cache directory by copying only modified files.
+     */
+    private function copyImageCacheIncremental(string $sourceDir, string $targetDir): void
+    {
+        $dir = dir($sourceDir);
+        if (false === $dir) {
+            return;
+        }
+
+        while (false !== $entry = $dir->read()) {
+            if (\in_array($entry, ['.', '..'], true)) {
+                continue;
+            }
+
+            $sourcePath = $sourceDir.'/'.$entry;
+            $targetPath = $targetDir.'/'.$entry;
+
+            if (is_dir($sourcePath) && ! is_link($sourcePath)) {
+                if (! file_exists($targetPath)) {
+                    $this->filesystem->mkdir($targetPath);
+                }
+
+                $this->copyImageCacheIncremental($sourcePath, $targetPath);
+
+                continue;
+            }
+
+            if (is_file($sourcePath) && $this->isSourceNewer($sourcePath, $targetPath)) {
+                $this->filesystem->copy($sourcePath, $targetPath, true);
             }
         }
     }
@@ -132,19 +202,29 @@ class MediaGenerator extends AbstractGenerator
                 continue;
             }
 
+            $sourcePath = $sourceDir.'/'.$entry;
             $targetPath = $targetDir.'/'.$entry;
+
+            // In incremental mode, check modification time
+            if ($this->incremental && $this->targetExists($targetPath)) {
+                if (! $symlink && $this->isSourceNewer($sourcePath, $targetPath)) {
+                    $this->filesystem->copy($sourcePath, $targetPath, true);
+                }
+
+                continue;
+            }
 
             if ($this->targetExists($targetPath)) {
                 continue;
             }
 
             if ($symlink) {
-                $this->filesystem->symlink($sourceDir.'/'.$entry, $targetPath);
+                $this->filesystem->symlink($sourcePath, $targetPath);
 
                 continue;
             }
 
-            $this->filesystem->copy($sourceDir.'/'.$entry, $targetPath);
+            $this->filesystem->copy($sourcePath, $targetPath);
         }
     }
 

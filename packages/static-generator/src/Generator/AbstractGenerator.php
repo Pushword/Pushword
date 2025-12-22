@@ -14,7 +14,6 @@ use function Safe\copy;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
@@ -37,11 +36,10 @@ abstract class AbstractGenerator implements GeneratorInterface
         protected PageRepository $pageRepository,
         protected Twig $twig,
         protected ParameterBagInterface $params,
-        protected RequestStack $requestStack,
         protected TranslatorInterface $translator,
         protected PushwordRouteGenerator $router,
         KernelInterface $kernel,
-        protected AppPool $apps
+        protected AppPool $apps,
     ) {
         $this->filesystem = new Filesystem();
         $this->router->setUseCustomHostPath(false);

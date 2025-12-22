@@ -21,21 +21,26 @@ final class StaticAppGenerator
     /** @var array<string> */
     private array $errors = [];
 
+    private bool $incremental = false;
+
     public function __construct(
         private readonly AppPool $apps,
         private readonly GeneratorBag $generatorBag,
         private readonly RedirectionManager $redirectionManager,
         private readonly LoggerInterface $logger,
+        private readonly GenerationStateManager $stateManager,
     ) {
     }
 
     /**
      * @param ?string $hostToGenerate if null, generate all apps
+     * @param bool    $incremental    if true, only regenerate changed pages
      *
      * @return int the number of site generated
      */
-    public function generate(?string $hostToGenerate = null): int
+    public function generate(?string $hostToGenerate = null, bool $incremental = false): int
     {
+        $this->incremental = $incremental;
         $i = 0;
         foreach ($this->apps->getHosts() as $host) {
             if (null !== $hostToGenerate && $hostToGenerate !== $host) {
@@ -69,29 +74,57 @@ final class StaticAppGenerator
     private function generateHost(string $host): void
     {
         $app = $this->apps->switchCurrentApp($host)->get();
-
         $staticDir = $app->getStr('static_dir');
-        $app->staticDir = $staticDir.'~'; // @phpstan-ignore-line
-
         $filesystem = new Filesystem();
-        $filesystem->remove($staticDir.'~');
-        $filesystem->mkdir($staticDir.'~');
 
+        // In incremental mode, work directly in the static dir
+        // In full mode, use a temporary directory for atomic swap
+        if ($this->incremental && $this->stateManager->hasState($host) && file_exists($staticDir)) {
+            // Incremental mode: update in place
+            $this->logger->info('Incremental generation for '.$host);
+            $this->runGenerators($app);
+        } else {
+            // Full generation: use temp dir + atomic swap
+            $app->staticDir = $staticDir.'~'; // @phpstan-ignore-line
+
+            $filesystem->remove($staticDir.'~');
+            $filesystem->mkdir($staticDir.'~');
+
+            $this->runGenerators($app);
+
+            if (! $this->abortGeneration) {
+                $filesystem->remove($staticDir);
+                $filesystem->rename($staticDir.'~', $staticDir);
+                $filesystem->remove($staticDir.'~');
+            }
+        }
+
+        // Save state after successful generation
+        if (! $this->abortGeneration) {
+            $this->stateManager->setLastGenerationTime($host);
+            $this->stateManager->save();
+        }
+
+        $this->abortGeneration = false;
+    }
+
+    /**
+     * @param \Pushword\Core\Component\App\AppConfig $app
+     */
+    private function runGenerators($app): void
+    {
         foreach ($app->get('static_generators') as $generator) { // @phpstan-ignore-line
             if (! \is_string($generator)) {
                 throw new LogicException();
             }
 
-            $this->getGenerator($generator)->generate();
-        }
+            $generatorInstance = $this->getGenerator($generator);
+            if ($generatorInstance instanceof IncrementalGeneratorInterface) {
+                $generatorInstance->setIncremental($this->incremental);
+            }
 
-        if (! $this->abortGeneration) {
-            $filesystem->remove($staticDir);
-            $filesystem->rename($staticDir.'~', $staticDir);
-            $filesystem->remove($staticDir.'~');
+            $generatorInstance->generate();
         }
-
-        $this->abortGeneration = false;
     }
 
     private function getGenerator(string $name): GeneratorInterface
@@ -111,5 +144,15 @@ final class StaticAppGenerator
     public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    public function isIncremental(): bool
+    {
+        return $this->incremental;
+    }
+
+    public function getStateManager(): GenerationStateManager
+    {
+        return $this->stateManager;
     }
 }

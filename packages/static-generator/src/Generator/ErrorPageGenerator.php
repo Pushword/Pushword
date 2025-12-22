@@ -3,7 +3,8 @@
 namespace Pushword\StaticGenerator\Generator;
 
 use Override;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Translation\LocaleAwareInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ErrorPageGenerator extends AbstractGenerator
 {
@@ -24,28 +25,29 @@ class ErrorPageGenerator extends AbstractGenerator
         }
     }
 
-    // TODO : make it useful when using a .htaccess else disable it
     protected function generateErrorPage(?string $locale = null, string $uri = '404.html'): void
     {
-        $request = $this->requestStack->getCurrentRequest();
-        if (! $request instanceof Request) {
-            $request = new Request();
-        }
-
-        if (null !== $locale) {
-            $request->setLocale($locale);
-        }
-
-        $this->requestStack->push($request);
-
         $filepath = $this->getStaticDir().(null !== $locale ? '/'.$locale : '').'/'.$uri;
 
         if (file_exists($filepath)) {
             return;
         }
 
-        $html = $this->twig->render('@Twig/Exception/error.html.twig');
-        $dump = HtmlMinifier::compress($html);
-        $this->filesystem->dumpFile($filepath, $dump);
+        /** @var LocaleAwareInterface&TranslatorInterface $translator */
+        $translator = $this->translator;
+
+        // Set locale for translation during rendering
+        $originalLocale = $translator->getLocale();
+        if (null !== $locale) {
+            $translator->setLocale($locale);
+        }
+
+        try {
+            $html = $this->twig->render('@Twig/Exception/error.html.twig');
+            $dump = HtmlMinifier::compress($html);
+            $this->filesystem->dumpFile($filepath, $dump);
+        } finally {
+            $translator->setLocale($originalLocale);
+        }
     }
 }
