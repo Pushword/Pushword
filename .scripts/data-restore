@@ -19,11 +19,12 @@ rm var/app.db~
 
 rm -rf media
 if [ -e media~preserve ]; then
-    cp -r media~preserve media
-    rm -rf media~preserve
+    # Use mv instead of cp+rm for better performance
+    mv media~preserve media
 fi
 
 if [ -e '/tmp/com.github.pushword.pushword/tests/var/dev/cache~' ]; then
- cp -r '/tmp/com.github.pushword.pushword/tests/var/dev/cache~' '/tmp/com.github.pushword.pushword/tests/var/dev/cache'
- rm -rf '/tmp/com.github.pushword.pushword/tests/var/dev/cache~'
+ # Use mv instead of cp+rm for better performance
+ rm -rf '/tmp/com.github.pushword.pushword/tests/var/dev/cache'
+ mv '/tmp/com.github.pushword.pushword/tests/var/dev/cache~' '/tmp/com.github.pushword.pushword/tests/var/dev/cache'
 fi

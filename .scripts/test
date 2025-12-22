@@ -9,6 +9,9 @@ function restoreDataAndComposerDependencies {
 function restoreData {
     echo 'restore data...'
     bash ./.scripts/data-restore
+    # Kill any lingering Chrome/Chromedriver processes from Panther tests
+    pkill -f chromedriver 2>/dev/null || true
+    pkill -f 'chrome.*headless' 2>/dev/null || true
 }
 
 trap restoreData EXIT
