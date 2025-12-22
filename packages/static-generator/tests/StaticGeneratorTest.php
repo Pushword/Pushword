@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator;
 
 use DateTime;
+use DateTimeImmutable;
 use Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
@@ -75,6 +76,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         // First full generation
         $commandTester->execute(['localhost.dev']);
+
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('success', $output);
         self::assertStringNotContainsString('incremental', $output);
@@ -126,7 +128,7 @@ class StaticGeneratorTest extends KernelTestCase
         self::assertNull($stateManager->getLastGenerationTime('test.host'));
 
         // Set generation time
-        $now = new \DateTimeImmutable();
+        $now = new DateTimeImmutable();
         $stateManager->setLastGenerationTime('test.host', $now);
         $stateManager->save();
 
@@ -139,7 +141,7 @@ class StaticGeneratorTest extends KernelTestCase
         self::assertNotNull($stateManager2->getLastGenerationTime('test.host'));
 
         // Test page state
-        $pageUpdatedAt = new \DateTimeImmutable('2024-01-15 10:00:00');
+        $pageUpdatedAt = new DateTimeImmutable('2024-01-15 10:00:00');
         $stateManager2->setPageState('test.host', 'test-page', $pageUpdatedAt);
         $stateManager2->save();
 
@@ -147,7 +149,7 @@ class StaticGeneratorTest extends KernelTestCase
         self::assertFalse($stateManager2->needsRegeneration('test.host', 'test-page', $pageUpdatedAt));
 
         // Verify page needs regeneration with different timestamp
-        $newUpdatedAt = new \DateTimeImmutable('2024-01-16 10:00:00');
+        $newUpdatedAt = new DateTimeImmutable('2024-01-16 10:00:00');
         self::assertTrue($stateManager2->needsRegeneration('test.host', 'test-page', $newUpdatedAt));
 
         // Clean up

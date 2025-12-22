@@ -26,7 +26,7 @@ final readonly class StaticCommand
         ?string $host,
         #[Argument(name: 'page')]
         ?string $page,
-        #[Option(name: 'incremental', shortcut: 'i', description: 'Only regenerate pages that have changed since last generation')]
+        #[Option(description: 'Only regenerate pages that have changed since last generation', name: 'incremental', shortcut: 'i')]
         bool $incremental = false,
     ): int {
         $this->stopWatch->start('generate');

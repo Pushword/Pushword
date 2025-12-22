@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator;
 
 use DateTimeImmutable;
+use DateTimeInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -85,7 +86,7 @@ final class GenerationStateManager
             $this->state[$host] = ['lastGeneration' => '', 'pages' => []];
         }
 
-        $this->state[$host]['lastGeneration'] = $time->format(\DateTimeInterface::ATOM);
+        $this->state[$host]['lastGeneration'] = $time->format(DateTimeInterface::ATOM);
     }
 
     public function getPageState(string $host, string $slug): ?DateTimeImmutable
@@ -109,8 +110,8 @@ final class GenerationStateManager
 
         $now = new DateTimeImmutable();
         $this->state[$host]['pages'][$slug] = [
-            'generatedAt' => $now->format(\DateTimeInterface::ATOM),
-            'pageUpdatedAt' => $pageUpdatedAt->format(\DateTimeInterface::ATOM),
+            'generatedAt' => $now->format(DateTimeInterface::ATOM),
+            'pageUpdatedAt' => $pageUpdatedAt->format(DateTimeInterface::ATOM),
         ];
     }
 
@@ -127,7 +128,7 @@ final class GenerationStateManager
 
         $storedUpdatedAt = $this->state[$host]['pages'][$slug]['pageUpdatedAt'];
 
-        return $pageUpdatedAt->format(\DateTimeInterface::ATOM) !== $storedUpdatedAt;
+        return $pageUpdatedAt->format(DateTimeInterface::ATOM) !== $storedUpdatedAt;
     }
 
     /**

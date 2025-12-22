@@ -4,6 +4,7 @@ namespace Pushword\StaticGenerator;
 
 use LogicException;
 use Psr\Log\LoggerInterface;
+use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
@@ -108,10 +109,7 @@ final class StaticAppGenerator
         $this->abortGeneration = false;
     }
 
-    /**
-     * @param \Pushword\Core\Component\App\AppConfig $app
-     */
-    private function runGenerators($app): void
+    private function runGenerators(AppConfig $app): void
     {
         foreach ($app->get('static_generators') as $generator) { // @phpstan-ignore-line
             if (! \is_string($generator)) {

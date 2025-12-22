@@ -26,12 +26,16 @@ final class PageScannerController extends AbstractController
 {
     private static ?string $fileCache = null;
 
+    /**
+     * @param string[] $errorsToIgnore
+     */
     public function __construct(
         private readonly Filesystem $filesystem,
         string $varDir,
         private readonly string $pageScanInterval,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
+        private readonly array $errorsToIgnore = [],
     ) {
         self::setFileCache($varDir);
     }
@@ -73,6 +77,7 @@ final class PageScannerController extends AbstractController
         }
 
         if ($this->filesystem->exists(self::$fileCache)) {
+            /** @var array<int, array<int, array{page: array{host: string, slug: string}, message: string}>> */
             $errors = unserialize(file_get_contents(self::$fileCache));
             $lastEdit = filemtime(self::$fileCache);
         } else {
@@ -90,8 +95,55 @@ final class PageScannerController extends AbstractController
         return $this->renderAdmin('@pwPageScanner/results.html.twig', [
             'newRun' => $newRunLaunched ?? false,
             'lastEdit' => $lastEdit,
-            'errorsByPages' => $errors,
+            'errorsByPages' => $this->filterErrors($errors),
         ]);
+    }
+
+    /**
+     * @param array<int, array<int, array{page: array{host: string, slug: string}, message: string}>> $errorsByPages
+     *
+     * @return array<int, array<int, array{page: array{host: string, slug: string}, message: string}>>
+     */
+    private function filterErrors(array $errorsByPages): array
+    {
+        if ([] === $this->errorsToIgnore) {
+            return $errorsByPages;
+        }
+
+        $filtered = [];
+        foreach ($errorsByPages as $pageId => $pageErrors) {
+            $filteredPageErrors = [];
+            foreach ($pageErrors as $error) {
+                $route = $error['page']['host'].'/'.$error['page']['slug'];
+                if (! $this->mustIgnoreError($route, $error['message'])) {
+                    $filteredPageErrors[] = $error;
+                }
+            }
+
+            if ([] !== $filteredPageErrors) {
+                $filtered[$pageId] = $filteredPageErrors;
+            }
+        }
+
+        return $filtered;
+    }
+
+    private function mustIgnoreError(string $route, string $message): bool
+    {
+        $plainMessage = strip_tags($message);
+
+        foreach ($this->errorsToIgnore as $pattern) {
+            if (str_contains($pattern, ': ')) {
+                [$routePattern, $messagePattern] = explode(': ', $pattern, 2);
+                if (fnmatch($routePattern, $route) && fnmatch($messagePattern, $plainMessage)) {
+                    return true;
+                }
+            } elseif (fnmatch($pattern, $plainMessage)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

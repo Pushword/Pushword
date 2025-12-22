@@ -17,11 +17,15 @@ use Symfony\Component\Lock\Store\FlockStore;
 #[AsCommand(name: 'pw:page-scan', description: 'Find dead links, 404, 301 and more in your content.')]
 final class PageScannerCommand
 {
+    /**
+     * @param string[] $errorsToIgnore
+     */
     public function __construct(
         private readonly PageScannerService $scanner,
         private readonly Filesystem $filesystem,
         private readonly PageRepository $pageRepo,
         private readonly ParallelUrlChecker $parallelUrlChecker,
+        private readonly array $errorsToIgnore,
         string $varDir,
     ) {
         PageScannerController::setFileCache($varDir);
@@ -65,7 +69,10 @@ final class PageScannerCommand
                 $pageId = (int) $page->getId();
                 $errors[$pageId] = $scan;
                 foreach ($scan as $s) {
-                    $this->output?->writeln($s['page']['host'].'/'.$s['page']['slug'].' ➜ '.str_replace(['<code>', '</code>'], '`', $s['message']));
+                    $route = $s['page']['host'].'/'.$s['page']['slug'];
+                    if (! $this->mustIgnoreError($route, $s['message'])) {
+                        $this->output?->writeln($route.' ➜ '.str_replace(['<code>', '</code>'], '`', $s['message']));
+                    }
                 }
 
                 $errorNbr += \count($errors[$pageId]);
@@ -89,7 +96,10 @@ final class PageScannerCommand
         $externalErrors = $this->scanner->linkedDocsScanner->resolveDeferredExternalErrors();
         foreach ($externalErrors as $pageId => $pageErrors) {
             foreach ($pageErrors as $error) {
-                $this->output?->writeln($error['page']['host'].'/'.$error['page']['slug'].' ➜ '.str_replace(['<code>', '</code>'], '`', $error['message']));
+                $route = $error['page']['host'].'/'.$error['page']['slug'];
+                if (! $this->mustIgnoreError($route, $error['message'])) {
+                    $this->output?->writeln($route.' ➜ '.str_replace(['<code>', '</code>'], '`', $error['message']));
+                }
             }
 
             $errors[$pageId] = [...($errors[$pageId] ?? []), ...$pageErrors];
@@ -101,6 +111,24 @@ final class PageScannerCommand
     }
 
     private ?OutputInterface $output = null;
+
+    private function mustIgnoreError(string $route, string $message): bool
+    {
+        $plainMessage = strip_tags($message);
+
+        foreach ($this->errorsToIgnore as $pattern) {
+            if (str_contains($pattern, ': ')) {
+                [$routePattern, $messagePattern] = explode(': ', $pattern, 2);
+                if (fnmatch($routePattern, $route) && fnmatch($messagePattern, $plainMessage)) {
+                    return true;
+                }
+            } elseif (fnmatch($pattern, $plainMessage)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public function __invoke(
         OutputInterface $output,

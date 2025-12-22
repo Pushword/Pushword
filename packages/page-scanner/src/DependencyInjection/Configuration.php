@@ -39,6 +39,12 @@ class Configuration implements ConfigurationInterface
                     ->arrayNode('links_to_ignore')
                         ->prototype('scalar')
                             ->defaultValue(['https://www.example.tld/*'])
+                        ->end()
+                    ->end()
+                    ->arrayNode('errors_to_ignore')
+                        ->prototype('scalar')->end()
+                        ->defaultValue([])
+                        ->info('Error messages to ignore. Format: "message" (global) or "host/slug: message" (per-route). Supports fnmatch patterns.')
         ;
 
         return $treeBuilder;
