@@ -3,6 +3,7 @@
 namespace Pushword\PageUpdateNotifier\Tests;
 
 use DateTime;
+use DateTimeInterface;
 use Error;
 use Nette\Utils\FileSystem;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -66,7 +67,7 @@ class PageUpdateNotifierTest extends KernelTestCase
         $pageRepo = $em->getRepository(Page::class);
         $pages = $pageRepo->findByHost('localhost.dev');
 
-        /** @var array<array{slug: string, h1: string, mainContent: string, locale: string, publishedAt: ?\DateTimeInterface, createdAt: ?\DateTimeInterface, updatedAt: ?\DateTimeInterface}> $savedPagesData */
+        /** @var array<array{slug: string, h1: string, mainContent: string, locale: string, publishedAt: ?DateTimeInterface, createdAt: ?DateTimeInterface, updatedAt: ?DateTimeInterface}> $savedPagesData */
         $savedPagesData = [];
         foreach ($pages as $page) {
             $savedPagesData[] = [

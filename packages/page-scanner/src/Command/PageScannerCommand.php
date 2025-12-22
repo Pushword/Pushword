@@ -52,27 +52,9 @@ final class PageScannerCommand
         $pages = $this->pageRepo->getPublishedPages($host);
         $pagesCount = \count($pages);
 
-        // Phase 1: Collect all external URLs
-        $this->output?->writeln(\sprintf('Phase 1: Scanning %d pages to collect external URLs...', $pagesCount));
-        $this->scanner->linkedDocsScanner->enableCollectMode();
-
-        foreach ($pages as $page) {
-            $this->scanner->scan($page);
-        }
-
-        $externalUrls = $this->scanner->linkedDocsScanner->getCollectedExternalUrls();
-        $this->scanner->linkedDocsScanner->disableCollectMode();
-
-        // Phase 2: Parallel URL validation
-        $urlCount = \count($externalUrls);
-        if ($urlCount > 0) {
-            $this->output?->writeln(\sprintf('Phase 2: Checking %d external URLs in parallel...', $urlCount));
-            $urlResults = $this->parallelUrlChecker->checkUrls($externalUrls);
-            $this->scanner->linkedDocsScanner->setExternalUrlResults($urlResults);
-        }
-
-        // Phase 3: Full scan with pre-computed URL results
-        $this->output?->writeln('Phase 3: Running full scan with pre-computed results...');
+        // Single pass: scan all pages, collect internal errors AND external URLs
+        $this->output?->writeln(\sprintf('Scanning %d pages...', $pagesCount));
+        $this->scanner->linkedDocsScanner->enableDeferredExternalMode();
 
         $errors = [];
         $errorNbr = 0;
@@ -93,6 +75,27 @@ final class PageScannerCommand
                 break;
             }
         }
+
+        // Parallel external URL validation
+        $externalUrls = $this->scanner->linkedDocsScanner->getCollectedExternalUrls();
+        $urlCount = \count($externalUrls);
+        if ($urlCount > 0) {
+            $this->output?->writeln(\sprintf('Checking %d external URLs in parallel...', $urlCount));
+            $urlResults = $this->parallelUrlChecker->checkUrls($externalUrls);
+            $this->scanner->linkedDocsScanner->setExternalUrlResults($urlResults);
+        }
+
+        // Resolve deferred external URL errors
+        $externalErrors = $this->scanner->linkedDocsScanner->resolveDeferredExternalErrors();
+        foreach ($externalErrors as $pageId => $pageErrors) {
+            foreach ($pageErrors as $error) {
+                $this->output?->writeln($error['page']['host'].'/'.$error['page']['slug'].' ➜ '.str_replace(['<code>', '</code>'], '`', $error['message']));
+            }
+
+            $errors[$pageId] = [...($errors[$pageId] ?? []), ...$pageErrors];
+        }
+
+        $this->scanner->linkedDocsScanner->disableDeferredExternalMode();
 
         return $errors;
     }

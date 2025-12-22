@@ -1,3 +1,4 @@
 pushword_page_scanner:
+    skip_external_url_check: true
     links_to_ignore:
         - 'https://example.tld/*'

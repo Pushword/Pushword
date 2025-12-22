@@ -47,11 +47,16 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private bool $collectMode = false;
 
+    private bool $deferredExternalMode = false;
+
     /** @var string[] */
     private array $collectedExternalUrls = [];
 
     /** @var array<string, true|string> */
     private array $externalUrlResults = [];
+
+    /** @var array<int, array{url: string, pageId: int, pageHost: string, pageSlug: string}> */
+    private array $deferredExternalChecks = [];
 
     /**
      * @param string[] $linksToIgnore
@@ -77,6 +82,47 @@ final class LinkedDocsScanner extends AbstractScanner
     public function disableCollectMode(): void
     {
         $this->collectMode = false;
+    }
+
+    /**
+     * Enable deferred external mode: returns internal errors immediately
+     * while collecting external URLs for later parallel validation.
+     */
+    public function enableDeferredExternalMode(): void
+    {
+        $this->deferredExternalMode = true;
+        $this->collectedExternalUrls = [];
+        $this->deferredExternalChecks = [];
+    }
+
+    public function disableDeferredExternalMode(): void
+    {
+        $this->deferredExternalMode = false;
+    }
+
+    /**
+     * Resolve deferred external URL errors after parallel validation.
+     *
+     * @return array<int, array<int, array{page: array{host: string, slug: string}, message: string}>>
+     */
+    public function resolveDeferredExternalErrors(): array
+    {
+        $errors = [];
+        foreach ($this->deferredExternalChecks as $check) {
+            $url = $check['url'];
+            if (isset($this->externalUrlResults[$url]) && true !== $this->externalUrlResults[$url]) {
+                $pageId = $check['pageId'];
+                $errors[$pageId] ??= [];
+                $errors[$pageId][] = [
+                    'page' => ['host' => $check['pageHost'], 'slug' => $check['pageSlug']],
+                    'message' => '<code>'.$url.'</code> '.$this->externalUrlResults[$url],
+                ];
+            }
+        }
+
+        $this->deferredExternalChecks = [];
+
+        return $errors;
     }
 
     /**
@@ -311,9 +357,22 @@ final class LinkedDocsScanner extends AbstractScanner
                 return;
             }
 
-            // In collect mode, just collect URLs for later parallel checking
+            // In collect mode, just collect URLs for later parallel checking (no errors)
             if ($this->collectMode) {
                 $this->collectedExternalUrls[] = $url;
+
+                return;
+            }
+
+            // In deferred mode, collect URLs AND store page context for later error resolution
+            if ($this->deferredExternalMode) {
+                $this->collectedExternalUrls[] = $url;
+                $this->deferredExternalChecks[] = [
+                    'url' => $url,
+                    'pageId' => (int) $this->page->getId(),
+                    'pageHost' => $this->page->getHost(),
+                    'pageSlug' => $this->page->getSlug(),
+                ];
 
                 return;
             }
