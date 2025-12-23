@@ -8,13 +8,17 @@ use Pushword\PageScanner\Scanner\PageScannerService;
 use Pushword\PageScanner\Scanner\ParallelUrlChecker;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\FlockStore;
 
-#[AsCommand(name: 'pw:page-scan', description: 'Find dead links, 404, 301 and more in your content.')]
+#[AsCommand(
+    name: 'pw:page-scan',
+    description: 'Find dead links, 404, 301 and more in your content.'
+)]
 final class PageScannerCommand
 {
     /**
@@ -84,16 +88,18 @@ final class PageScannerCommand
         }
 
         // Parallel external URL validation
-        $externalUrls = $this->scanner->linkedDocsScanner->getCollectedExternalUrls();
-        $urlCount = \count($externalUrls);
-        if ($urlCount > 0) {
-            $this->output?->writeln(\sprintf('Checking %d external URLs in parallel...', $urlCount));
-            $urlResults = $this->parallelUrlChecker->checkUrls($externalUrls);
-            $this->scanner->linkedDocsScanner->setExternalUrlResults($urlResults);
+        if (! $this->skipExternal) {
+            $externalUrls = $this->scanner->linkedDocsScanner->getCollectedExternalUrls();
+            $urlCount = \count($externalUrls);
+            if ($urlCount > 0) {
+                $this->output?->writeln(\sprintf('Checking %d external URLs in parallel...', $urlCount));
+                $urlResults = $this->parallelUrlChecker->checkUrls($externalUrls);
+                $this->scanner->linkedDocsScanner->setExternalUrlResults($urlResults);
+            }
         }
 
         // Resolve deferred external URL errors
-        $externalErrors = $this->scanner->linkedDocsScanner->resolveDeferredExternalErrors();
+        $externalErrors = $this->skipExternal ? [] : $this->scanner->linkedDocsScanner->resolveDeferredExternalErrors();
         foreach ($externalErrors as $pageId => $pageErrors) {
             foreach ($pageErrors as $error) {
                 $route = $error['page']['host'].'/'.$error['page']['slug'];
@@ -111,6 +117,8 @@ final class PageScannerCommand
     }
 
     private ?OutputInterface $output = null;
+
+    private bool $skipExternal = false;
 
     private function mustIgnoreError(string $route, string $message): bool
     {
@@ -134,9 +142,13 @@ final class PageScannerCommand
         OutputInterface $output,
         #[Argument(name: 'host')]
         ?string $host,
+        #[Option(description: 'Skip external link checks', name: 'skip-external')]
+        bool $skipExternal = false,
     ): int {
         $output->writeln('Acquiring page scanner lock to start the scan...');
         $this->output = $output;
+
+        $this->skipExternal = $skipExternal;
 
         if ($this->scanAllWithLock($host ?? '')) {
             $output->writeln('done...');
