@@ -91,12 +91,34 @@ final class MarkdownUtils
         return $textPartList;
     }
 
+    public static function hasAnchor(string $text, string $anchor): bool
+    {
+        $escapedAnchor = preg_quote($anchor, '/');
+
+        // Check markdown-style: {#anchor} or {.class #anchor}
+        if (preg_match('/\{[^}]*#'.$escapedAnchor.'(?:\s|\})/', $text) > 0) {
+            return true;
+        }
+
+        // Check HTML-style: id="anchor", id='anchor', or id=anchor (not data-id or other variants)
+        if (preg_match('/(?<![a-zA-Z0-9_-])id=(?:["\']'.$escapedAnchor.'["\']|'.$escapedAnchor.'(?:\s|>|$))/', $text) > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * @param string[] $on types de blocs markdown à cibler (ex: ['header', 'paragraph'])
      */
     public static function addAnchor(Page $page, string $anchor, string $regex, array $on = ['header'], ?callable $outputCallback = null): void
     {
         $text = $page->getMainContent();
+
+        if (self::hasAnchor($text, $anchor)) {
+            return;
+        }
+
         $textPartList = self::prepareText($text);
 
         $modified = false;
@@ -116,14 +138,11 @@ final class MarkdownUtils
                 unset($lines[0]);
             }
 
+            // Skip blocks that already have any anchor
             if (str_contains($attribute, '#')) {
                 $modifiedText .= $textPart."\n\n";
 
                 continue;
-            }
-
-            if (str_contains($attribute, '#'.$anchor.'}')) {
-                break;
             }
 
             $blockText = implode("\n", $lines);

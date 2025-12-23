@@ -168,4 +168,43 @@ class MarkdownUtilsTest extends TestCase
         $expected = "{#mon-titre}\n# Mon titre\n\nUn paragraphe.";
         self::assertSame($expected, $page->getMainContent());
     }
+
+    public function testHasAnchorWithMarkdownStyle(): void
+    {
+        self::assertTrue(MarkdownUtils::hasAnchor('{#my-anchor}', 'my-anchor'));
+        self::assertTrue(MarkdownUtils::hasAnchor('{.class #my-anchor}', 'my-anchor'));
+        self::assertTrue(MarkdownUtils::hasAnchor('{#my-anchor .class}', 'my-anchor'));
+        self::assertFalse(MarkdownUtils::hasAnchor('{#other-anchor}', 'my-anchor'));
+        self::assertFalse(MarkdownUtils::hasAnchor('Text without anchor', 'my-anchor'));
+    }
+
+    public function testHasAnchorWithHtmlStyle(): void
+    {
+        // Quoted styles
+        self::assertTrue(MarkdownUtils::hasAnchor('<div id="my-anchor">', 'my-anchor'));
+        self::assertTrue(MarkdownUtils::hasAnchor("<div id='my-anchor'>", 'my-anchor'));
+        self::assertTrue(MarkdownUtils::hasAnchor('<h2 class="title" id="my-anchor">', 'my-anchor'));
+        // Unquoted style
+        self::assertTrue(MarkdownUtils::hasAnchor('<div id=my-anchor>', 'my-anchor'));
+        self::assertTrue(MarkdownUtils::hasAnchor('<div id=my-anchor class="foo">', 'my-anchor'));
+        // Non-matching
+        self::assertFalse(MarkdownUtils::hasAnchor('<div id="other-anchor">', 'my-anchor'));
+        self::assertFalse(MarkdownUtils::hasAnchor('<div data-id="my-anchor">', 'my-anchor'));
+        self::assertFalse(MarkdownUtils::hasAnchor('<div data-id=my-anchor>', 'my-anchor'));
+    }
+
+    public function testAddAnchorSkipIfHtmlAnchorExists(): void
+    {
+        $page = new Page();
+        $page->setHost('example.com');
+        $page->setSlug('test-page');
+
+        $originalContent = "# Mon titre\n\n<div id=\"mon-titre\">Content</div>";
+        $page->setMainContent($originalContent);
+
+        MarkdownUtils::addAnchor($page, 'mon-titre', '/^# Mon titre/');
+
+        // Content should not be modified because the anchor already exists in HTML
+        self::assertSame($originalContent, $page->getMainContent());
+    }
 }
