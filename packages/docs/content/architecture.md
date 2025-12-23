@@ -1,8 +1,10 @@
 ---
-title: Puswhord Code Architecture and preparing a development environment
-h1: The Code Architecture
+title: 'Puswhord Code Architecture and preparing a development environment'
+h1: 'The Code Architecture'
+id: 20
+publishedAt: '2025-12-21 21:55'
+parentPage: contribute
 toc: true
-parent: contribute
 ---
 
 If you are searching for :

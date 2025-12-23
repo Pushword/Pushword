@@ -1,8 +1,10 @@
 ---
 title: 'Standard Admin for Pushword : Admin User Interface'
 h1: Admin
+id: 31
+publishedAt: '2025-12-21 21:55'
+parentPage: extensions
 toc: true
-parent: extensions
 ---
 
 Create, edit, delete Page, Media, User with an interface built on top of Sonata Admin.

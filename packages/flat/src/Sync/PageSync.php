@@ -73,12 +73,13 @@ final class PageSync
     }
 
     /**
-     * Regenerate index.csv files after import to ensure they reflect current database state.
+     * Regenerate index.csv and markdown files after import to ensure they reflect current database state.
+     * This is necessary to write back auto-generated IDs to markdown files that were imported without IDs.
      */
     private function regenerateIndex(string $contentDir): void
     {
         $this->pageExporter->exportDir = $contentDir;
-        $this->pageExporter->exportIndexOnly();
+        $this->pageExporter->exportPages(force: true);
     }
 
     public function export(?string $host = null, bool $force = false, ?string $exportDir = null): void

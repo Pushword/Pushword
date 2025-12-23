@@ -1,8 +1,10 @@
 ---
-title: Pushword Flat File CMS - Markdown and Twig Ready
+title: 'Pushword Flat File CMS - Markdown and Twig Ready'
 h1: Flat
+id: 34
+publishedAt: '2025-12-21 21:55'
+parentPage: extensions
 toc: true
-parent: extensions
 ---
 
 Transform Pushword in a FlatFile CMS.
@@ -101,7 +103,9 @@ content/media/default/illustation.jpg.yaml
 #### `kitchen-sink.md` may contain :
 
 ```yaml
+
 ---
+
 h1: 'Welcome in Kitchen Sink'
 locale: fr
 translations:
@@ -116,7 +120,9 @@ name: 'Kitchen Sink'
 title: 'Kitchen Sink - best google restult'
 #created_at: 'now' # see https://www.php.net/manual/fr/datetime.construct.php
 #updated_at: 'now'
+
 ---
+
 My Page content Yeah !
 ```
 
@@ -142,14 +148,22 @@ The `translations` property handles the bidirectional many-to-many relationship 
 
 ```yaml
 # In fr/about.md - adds en/about as translation
+
 ---
+
 translations:
   - en/about
+
 ---
+
 # In en/about.md - no translations key, existing links preserved
+
 ---
+
 h1: About Us
+
 ---
+
 ```
 
 With this setup, both pages will be linked as translations of each other after sync.

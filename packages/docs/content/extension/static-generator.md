@@ -1,8 +1,10 @@
 ---
-title: Static Website Generator with Pushword CMS
-h1: Static Generator
+title: 'Static Website Generator with Pushword CMS'
+h1: 'Static Generator'
+id: 38
+publishedAt: '2025-12-21 21:55'
+parentPage: extensions
 toc: true
-parent: extensions
 ---
 
 Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).

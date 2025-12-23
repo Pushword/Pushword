@@ -1,8 +1,10 @@
 ---
-title: Pushword CMS License and contributors
-h1: License and contributors
+title: 'Pushword CMS License and contributors'
+h1: 'License and contributors'
+id: 45
+publishedAt: '2025-12-21 21:55'
+parentPage: installation
 toc: true
-parent: installation
 ---
 
 ## Contributors

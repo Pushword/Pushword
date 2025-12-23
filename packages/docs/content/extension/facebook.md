@@ -1,8 +1,10 @@
 ---
-title: Write from Facebook on Pushword CMS
+title: 'Write from Facebook on Pushword CMS'
 h1: Facebook
+id: 33
+publishedAt: '2025-12-21 21:55'
+parentPage: extensions
 toc: true
-parent: extensions
 ---
 
 **Extension not maintained anymore**

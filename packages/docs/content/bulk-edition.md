@@ -1,8 +1,10 @@
 ---
 title: 'How to perform bulk editing of content with Pushword'
-h1: Edit content in batches
+h1: 'Edit content in batches'
+id: 21
+publishedAt: '2025-12-21 21:55'
+parentPage: homepage
 toc: true
-parent: homepage
 ---
 
 The best way to edit page content in bulk is to do in directly in PHP.

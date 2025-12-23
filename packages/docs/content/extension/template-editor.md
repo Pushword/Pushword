@@ -1,8 +1,10 @@
 ---
-title: Template Editor with Pushword CMS
-h1: Template Editor
+title: 'Template Editor with Pushword CMS'
+h1: 'Template Editor'
+id: 39
+publishedAt: '2025-12-21 21:55'
+parentPage: extensions
 toc: true
-parent: extensions
 ---
 
 Edit view file online in the [admin](https://pushword.piedweb.com/extension/admin).

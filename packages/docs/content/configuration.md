@@ -1,8 +1,10 @@
 ---
-title: Configure a fresh install of Pushword
+title: 'Configure a fresh install of Pushword'
 h1: Configuration
+id: 24
+publishedAt: '2025-12-21 21:55'
+parentPage: installation
 toc: true
-parent: installation
 ---
 
 Before to **code**, Pushword offers the ability to configure a lot of things from a **yaml** (or PHP if you preferred) configuration file.
@@ -217,7 +219,7 @@ pushword:
 
 This configuration variables are used in the default [base.html.twig](https://github.com/Pushword/Pushword/blob/main/packages/core/src/templates/base.html.twig#).
 
-This one could be directly overrided, see [overriding twig template](override-theme.md).
+This one could be directly overrided, see [overriding twig template](/override-theme).
 
 ### `pushword.apps[...].favicons_path`
 

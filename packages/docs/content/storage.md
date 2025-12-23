@@ -1,8 +1,10 @@
 ---
-title: Media Storage Configuration
+title: 'Media Storage Configuration'
 h1: Storage
+id: 53
+publishedAt: '2025-12-21 21:55'
+parentPage: configuration
 toc: true
-parent: configuration
 ---
 
 Pushword uses [League Flysystem](https://flysystem.thephpleague.com/) via the [flysystem-bundle](https://github.com/thephpleague/flysystem-bundle) for media storage. This allows you to store your media files locally (default) or on remote services like Amazon S3, FTP, SFTP, and more.

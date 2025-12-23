@@ -1,8 +1,10 @@
 ---
-title: Manage your Pushword CMS with command
+title: 'Manage your Pushword CMS with command'
 h1: Command
+id: 22
+publishedAt: '2025-12-21 21:55'
+parentPage: homepage
 toc: true
-parent: homepage
 ---
 
 Let's take a look at the commands available in Pushword and their purpose. Keep in mind that the exact list may vary depending on the [installed extensions](extensions).

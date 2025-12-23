@@ -1,8 +1,10 @@
 ---
 title: 'Admin block editor to supercharge the default markdown admin with a rich text editor'
-h1: Admin Block Editor
+h1: 'Admin Block Editor'
+id: 29
+publishedAt: '2025-12-21 21:55'
+parentPage: extensions
 toc: true
-parent: extensions
 ---
 
 Supercharge default admin with a rich text editor wich managed blocks.

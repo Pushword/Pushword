@@ -1,7 +1,9 @@
 ---
-h1: Markdown Block
 title: 'Markdown Block : Markdown adapted for WYSIWYG block editor'
-parent: homepage
+h1: 'Markdown Block'
+id: 47
+publishedAt: '2025-12-21 21:55'
+parentPage: homepage
 toc: true
 ---
 

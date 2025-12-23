@@ -1,8 +1,10 @@
 ---
-title: How to manage assets CSS / Javascript in Pushword CMS ?
-h1: Managing Assets (css/js)
+title: 'How to manage assets CSS / Javascript in Pushword CMS ?'
+h1: 'Managing Assets (css/js)'
+id: 46
+publishedAt: '2025-12-21 21:55'
+parentPage: themes
 toc: true
-parent: themes
 ---
 
 The default installer copy/paste a skeleton for a website stylized with tailwindcss.

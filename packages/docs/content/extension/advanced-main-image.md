@@ -1,8 +1,10 @@
 ---
-title: "Page HERO and custom field in admin to manage main image format"
-h1: Advanced Main Image
+title: 'Page HERO and custom field in admin to manage main image format'
+h1: 'Advanced Main Image'
+id: 32
+publishedAt: '2025-12-21 21:55'
+parentPage: extensions
 toc: true
-parent: extensions
 ---
 
 Supercharge the Pushword Admin with a new admin form field to customize the main image format from not visible to HERO + default template files.

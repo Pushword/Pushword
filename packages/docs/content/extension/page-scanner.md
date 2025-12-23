@@ -1,8 +1,10 @@
 ---
 title: 'Pushword Page Scanner : Find dead links, 404, 301 and more.'
-h1: Page Scanner
+h1: 'Page Scanner'
+id: 36
+publishedAt: '2025-12-21 21:55'
+parentPage: extensions
 toc: true
-parent: extensions
 ---
 
 Find dead links, 404, 301 and more (command line or admin).

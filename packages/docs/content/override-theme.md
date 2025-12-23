@@ -1,8 +1,10 @@
 ---
 title: 'How to override default theme with Pushword CMS ? '
-h1: Customize the current theme
+h1: 'Customize the current theme'
+id: 48
+publishedAt: '2025-12-21 21:55'
+parentPage: themes
 toc: true
-parent: themes
 ---
 
 There is at least two ways to override template file and customize the html wich is rendered by Pushword : First is [App Way](#app) (app per app), second is the [bundle way](#symfony) (global).

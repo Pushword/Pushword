@@ -1,8 +1,8 @@
 ---
-title: Pushword - CMS to build rapidly Websites (powered by Symfony)
-h1:
-  <span class="block mt-6 leading-relaxed">Build <em class="font-light">Content First</em> websites rapidly
-  <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>
+title: 'Pushword - CMS to build rapidly Websites (powered by Symfony)'
+h1: '<span class="block mt-6 leading-relaxed">Build <em class="font-light">Content First</em> websites rapidly <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>'
+id: 43
+publishedAt: '2025-12-21 21:55'
 name: Pushword
 template: /page/homepage.html.twig
 prose: 'max-w-screen-sm prose-sm md:prose-lg mx-auto p-3 prose dark:prose-light'

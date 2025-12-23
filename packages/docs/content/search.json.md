@@ -1,7 +1,9 @@
 ---
-template: none
 h1: search.json
-main_content_filters: twig,mainContentToBody
+id: 52
+publishedAt: '2025-12-21 21:55'
+template: none
+main_content_filters: 'twig,mainContentToBody'
 headers:
   - [Content-type, application/json]
 ---

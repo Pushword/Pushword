@@ -1,8 +1,10 @@
 ---
 title: 'Where Pushword is going ? Roadmap, TODO and Ideas'
 h1: Roadmap
+id: 51
+publishedAt: '2025-12-23 05:48'
+parentPage: contribute
 toc: true
-parent: contribute
 ---
 
 Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
@@ -19,6 +21,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
+
+- performance improvement for Page Scanner - run console with profiling
+- performance improvement for Static Generator - run console with profiling
 
 - refactor EntityFilter component to use modern tools (PHP Attribute, Real autowiring, etc.)
 

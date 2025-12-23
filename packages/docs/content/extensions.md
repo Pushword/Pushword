@@ -1,9 +1,11 @@
 ---
-h1: Find your missing feature with a Pushword Extension
 title: Extensions
-todo: Faire un script pour générer automatiquement un tableau avec le titre, la description, officially maintained (X/V), le nombre de Stars
-parent: homepage
+h1: 'Find your missing feature with a Pushword Extension'
+id: 42
+publishedAt: '2025-12-21 21:55'
+parentPage: homepage
 name: Extensions
+todo: 'Faire un script pour générer automatiquement un tableau avec le titre, la description, officially maintained (X/V), le nombre de Stars'
 ---
 
 - [Admin](/extension/admin)

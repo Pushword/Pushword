@@ -1,8 +1,9 @@
 ---
-title: Configure the Admin Menu
-h1: Configure the Admin Menu
+title: 'Configure the Admin Menu'
+h1: 'Configure the Admin Menu'
+id: 25
+publishedAt: '2025-12-21 21:55'
 toc: true
-parent: admin
 ---
 
 The admin menu in Pushword is highly customizable through Symfony events. You can add new items, modify existing ones, or completely replace the menu structure.
