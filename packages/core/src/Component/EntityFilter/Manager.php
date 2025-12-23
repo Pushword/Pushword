@@ -60,7 +60,7 @@ final class Manager
         }
 
         $property = substr($method, 3);
-        $cacheKey = [] !== $arguments ? $property.':'.md5(serialize($arguments)) : $property;
+        $cacheKey = [] !== $arguments ? $property.':'.hash('xxh3', (string) json_encode($arguments)) : $property;
 
         if (isset($this->propertyCache[$cacheKey])) {
             return $this->propertyCache[$cacheKey];
