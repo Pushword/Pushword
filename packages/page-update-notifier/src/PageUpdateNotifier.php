@@ -32,26 +32,6 @@ class PageUpdateNotifier
 
     private AppConfig $app;
 
-    /**
-     * @var int
-     */
-    final public const int ERROR_NO_EMAIL = 1;
-
-    /**
-     * @var int
-     */
-    final public const int ERROR_NO_INTERVAL = 2;
-
-    /**
-     * @var int
-     */
-    final public const int WAS_EVER_RUN_SINCE_INTERVAL = 3;
-
-    /**
-     * @var int
-     */
-    final public const int NOTHING_TO_NOTIFY = 4;
-
     public function __construct(
         private readonly MailerInterface $mailer,
         private readonly AppPool $apps,
@@ -112,15 +92,15 @@ class PageUpdateNotifier
         $this->init($page);
 
         if ('' === $this->emailTo) {
-            throw new Exception('`page_update_notification_from` must be set to use this extension.', self::ERROR_NO_EMAIL);
+            throw new Exception('`page_update_notification_from` must be set to use this extension.', NotificationStatus::ErrorNoEmail->value);
         }
 
         if ('' === $this->emailFrom) {
-            throw new Exception('`page_update_notification_to` must be set to use this extension.', self::ERROR_NO_EMAIL);
+            throw new Exception('`page_update_notification_to` must be set to use this extension.', NotificationStatus::ErrorNoEmail->value);
         }
 
         if ('' === $this->interval) {
-            throw new Exception('`page_update_notification_interval` must be set to use this extension.', self::ERROR_NO_INTERVAL);
+            throw new Exception('`page_update_notification_interval` must be set to use this extension.', NotificationStatus::ErrorNoInterval->value);
         }
     }
 
@@ -139,7 +119,7 @@ class PageUpdateNotifier
         return $this->getCacheDir().'/lastPageUpdateNotification'; // .md5($this->app->getMainHost())
     }
 
-    public function run(Page $page): int|string
+    public function run(Page $page): NotificationStatus|string
     {
         $this->checkConfig($page);
 
@@ -148,7 +128,7 @@ class PageUpdateNotifier
         if ($lastTime->wasRunSince(new DateInterval($this->interval))) {
             $this->logger?->info('[PageUpdateNotifier] was ever run since interval');
 
-            return self::WAS_EVER_RUN_SINCE_INTERVAL;
+            return NotificationStatus::WasEverRunSinceInterval;
         }
 
         if (($lastTime30min = $lastTime->get('30 minutes ago')) === null) {
@@ -160,7 +140,7 @@ class PageUpdateNotifier
         if ([] === $pages) {
             $this->logger?->info('[PageUpdateNotifier] Nothing to notify');
 
-            return self::NOTHING_TO_NOTIFY;
+            return NotificationStatus::NothingToNotify;
         }
 
         $message = new Email()

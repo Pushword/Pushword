@@ -10,6 +10,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\PageUpdateNotifier\NotificationStatus;
 use Pushword\PageUpdateNotifier\PageUpdateNotifier;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Mailer\Mailer;
@@ -87,14 +88,14 @@ class PageUpdateNotifierTest extends KernelTestCase
         $em->flush();
 
         FileSystem::delete($notifier->getCacheDir());
-        self::assertSame(PageUpdateNotifier::NOTHING_TO_NOTIFY, $notifier->run($this->getPage()));
+        self::assertSame(NotificationStatus::NothingToNotify, $notifier->run($this->getPage()));
 
         self::getContainer()->get('doctrine.orm.default_entity_manager')->persist($this->getPage());
         self::getContainer()->get('doctrine.orm.default_entity_manager')->flush();
 
         self::assertSame('Notification sent', $notifier->run($this->getPage()));
 
-        self::assertSame(PageUpdateNotifier::WAS_EVER_RUN_SINCE_INTERVAL, $notifier->run($this->getPage()));
+        self::assertSame(NotificationStatus::WasEverRunSinceInterval, $notifier->run($this->getPage()));
 
         // Restore original pages for other tests
         foreach ($savedPagesData as $pageData) {

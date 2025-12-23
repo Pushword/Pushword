@@ -7,15 +7,7 @@ use Symfony\Component\Process\Process;
 
 class Compressor
 {
-    public const ZSTD = 'zstd';
-
-    public const BROTLI = 'brotli';
-
-    public const GZIP = 'gzip';
-
-    public const COMPRESSORS = [self::ZSTD, self::BROTLI, self::GZIP];
-
-    /** @var array<string> */
+    /** @var array<CompressionAlgorithm> */
     public readonly array $availableCompressors;
 
     /** @var array<Process> */
@@ -26,9 +18,9 @@ class Compressor
     public function __construct()
     {
         $availableCompressors = [];
-        foreach (self::COMPRESSORS as $compressor) {
-            if ($this->initCompressorsAvailability($compressor)) {
-                $availableCompressors[] = $compressor;
+        foreach (CompressionAlgorithm::cases() as $algorithm) {
+            if ($this->isAlgorithmInstalled($algorithm)) {
+                $availableCompressors[] = $algorithm;
             }
         }
 
@@ -41,44 +33,39 @@ class Compressor
         $this->waitForCompressionToFinish();
     }
 
-    private function initCompressorsAvailability(string $compressorName): bool
+    private function isAlgorithmInstalled(CompressionAlgorithm $algorithm): bool
     {
-        $process = new Process(['which', $compressorName]);
+        $process = new Process(['which', $algorithm->value]);
         $process->run();
 
         return $process->isSuccessful();
     }
 
-    private function isCompressorAvailable(string $compressor): bool
+    private function isAlgorithmAvailable(CompressionAlgorithm $algorithm): bool
     {
-        return in_array($compressor, $this->availableCompressors, true);
+        return \in_array($algorithm, $this->availableCompressors, true);
     }
 
-    public function compress(string $filePath, string $compressorName): void
+    public function compress(string $filePath, CompressionAlgorithm $algorithm): void
     {
-        if (! $this->isCompressorAvailable($compressorName)) {
+        if (! $this->isAlgorithmAvailable($algorithm)) {
             return;
         }
 
         $this->throttleIfNeeded();
 
         try {
-            $cmd = match ($compressorName) {
-                'zstd' => 'zstd -f --stdout '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.zst'),
-                'brotli' => 'brotli --stdout '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.br'),
-                'gzip' => 'gzip -c '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.gz'),
-                default => null,
+            $cmd = match ($algorithm) {
+                CompressionAlgorithm::Zstd => 'zstd -f --stdout '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.zst'),
+                CompressionAlgorithm::Brotli => 'brotli --stdout '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.br'),
+                CompressionAlgorithm::Gzip => 'gzip -c '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.gz'),
             };
-
-            if (null === $cmd) {
-                return;
-            }
 
             $process = Process::fromShellCommandline($cmd);
             $process->start();
             $this->runningProcesses[] = $process;
         } catch (Exception $exception) {
-            throw new Exception('Failed to compress `'.$filePath.'` with `'.$compressorName.'`: '.$exception->getMessage(), $exception->getCode(), $exception);
+            throw new Exception('Failed to compress `'.$filePath.'` with `'.$algorithm->value.'`: '.$exception->getMessage(), $exception->getCode(), $exception);
         }
     }
 
