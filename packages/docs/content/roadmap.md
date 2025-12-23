@@ -34,7 +34,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   {{ mainContentParts.chapeau|raw }}
   Think about performance to avoid the need to do for the same content multiple time the call
 
-- [AdminBlockEditor] Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
+- [AdminBlockEditor] Minor UI improvement - Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
 
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
   ➜ done, but need test
@@ -62,12 +62,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - Rewrite tests to permit to run `./vendor/bin/paratest -p 8`
 
-- [Core] Simplify filter by replacing string configuration by service
-
 - [Flat] Implémenter un sync auto depuis [Admin] et un file watcher (bin/console content:watch) pour l'autre sens // l'implémentation rapide c'est un cron sur bin/console flat:sync
 
-- [AdminBlockEditor] selecting a block alone like gallery : copy / paste is not working
-  - all the copy paste from markdown
+- [AdminBlockEditor] selecting a block alone like gallery : copy / paste is not working ➜ all the copy paste is done in markdown (pasting must import markdown)
 
 - [Admin] / [Version] Autosave with unsaved state : envoyer un event toutes les secondes si le contenu a été modifié, celui-ci créé une nouvelle version du contenu en précisant que c'est une sauvegarde automatique, si la précédente sauvegarde est une sauvegarde automatique et qu'elle date de moins d'une heure, alors on ne garde qu'une version dans le versionner (la dernière)
 

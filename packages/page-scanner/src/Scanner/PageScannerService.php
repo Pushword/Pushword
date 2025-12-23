@@ -2,26 +2,22 @@
 
 namespace Pushword\PageScanner\Scanner;
 
+use Pushword\Core\Controller\PageController;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Twig\MediaExtension;
-use Pushword\Core\Utils\GenerateLivePathForTrait;
-use Pushword\Core\Utils\KernelTrait;
-use Symfony\Component\HttpFoundation\Request;
+use Pushword\Core\Utils\TwigErrorExtractor;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Contracts\Service\Attribute\Required;
+use Throwable;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 /**
  * Permit to find error in image or link.
- *
- *   */
+ */
 final class PageScannerService
 {
-    use GenerateLivePathForTrait;
-
-    use KernelTrait;
-
     /**
      * @var array{message: string, page: array{id:int, slug: string, h1: string, metaRobots: string, host: string}}[]
      */
@@ -34,15 +30,12 @@ final class PageScannerService
     public ParentPageScanner $parentPageScanner;
 
     public function __construct(
-        PushwordRouteGenerator $pwRouter, // required for GenerateLivePathForTrait
-        KernelInterface $kernel,// required for KernelTrait
-        // private readonly PushwordRouteGenerator $pushwordRouteGenerator,
+        private readonly PushwordRouteGenerator $router,
+        private readonly PageController $pageController,
+        private readonly TwigErrorExtractor $errorExtractor,
+        private readonly MediaExtension $mediaExtension,
     ) {
-        $this->router = $pwRouter;
         $this->router->setUseCustomHostPath(false);
-
-        self::loadKernel($kernel);
-        self::getKernel()->getContainer()->get(PushwordRouteGenerator::class)->setUseCustomHostPath(false);
     }
 
     /**
@@ -53,10 +46,7 @@ final class PageScannerService
      */
     public function preloadCaches(string $host = ''): void
     {
-        /** @var MediaExtension $mediaExtension */
-        $mediaExtension = self::getKernel()->getContainer()->get(MediaExtension::class);
-        $mediaExtension->preloadMediaCache();
-
+        $this->mediaExtension->preloadMediaCache();
         $this->linkedDocsScanner->preloadPageCache($host);
     }
 
@@ -72,7 +62,7 @@ final class PageScannerService
     {
         $this->resetErrors();
 
-        $pageHtml = $page->hasRedirection() ? '' : $this->getHtml($page, $this->generateLivePathFor($page));
+        $pageHtml = $page->hasRedirection() ? '' : $this->getHtml($page);
 
         $this->addErrors($page, $this->linkedDocsScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->parentPageScanner->scan($page, $pageHtml));
@@ -80,23 +70,39 @@ final class PageScannerService
         return [] === $this->errors ? true : $this->errors;
     }
 
-    private function getHtml(Page $page, string $liveUri): string
+    private function getHtml(Page $page): string
     {
-        $request = Request::create($liveUri);
-        $response = self::getKernel()->handle($request);
+        try {
+            $this->pageController->setHost($page->getHost());
+            $response = $this->pageController->showPage($page);
 
-        if ($response->isRedirect()) {
-            // todo: log: not normal, it must be caught before by doctrine
+            if ($response->isRedirect()) {
+                return '';
+            }
+
+            if (Response::HTTP_OK !== $response->getStatusCode()) {
+                $this->addError($page, sprintf('error occurred generating the page (%d)', $response->getStatusCode()));
+
+                return '';
+            }
+
+            $content = $response->getContent();
+            if (false === $content) {
+                $this->addError($page, 'error occurred generating the page (empty response)');
+
+                return '';
+            }
+
+            return $content;
+        } catch (RuntimeError|SyntaxError $twigError) {
+            $this->addError($page, $this->errorExtractor->formatErrorMessage($twigError));
+
+            return '';
+        } catch (Throwable $exception) {
+            $this->addError($page, $this->errorExtractor->formatGenericErrorMessage($exception));
+
             return '';
         }
-
-        if (false === ($content = $response->getContent()) || Response::HTTP_OK !== $response->getStatusCode()) {
-            $this->addError($page, 'error occured generating the page ('.$response->getStatusCode().')');
-
-            return '';
-        }
-
-        return $content;
     }
 
     /**

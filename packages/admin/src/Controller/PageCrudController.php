@@ -30,6 +30,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FlashBag;
+use Pushword\Core\Utils\TwigErrorExtractor;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -48,6 +49,7 @@ class PageCrudController extends AbstractAdminCrudController
         private readonly PushwordRouteGenerator $routeGenerator,
         private readonly PageController $pageController,
         private readonly PageRepository $pageRepo,
+        private readonly TwigErrorExtractor $errorExtractor,
     ) {
     }
 
@@ -274,29 +276,10 @@ class PageCrudController extends AbstractAdminCrudController
                 'warning',
                 $this->getTranslator()->trans('adminPageErrorGenerationFailedWithDetails', [
                     '%error%' => $runtimeError->getRawMessage(),
-                    '%excerpt%' => htmlentities($this->getErrorExcerpt($runtimeError)),
-                ])
+                    '%excerpt%' => htmlentities($this->errorExtractor->getErrorExcerpt($runtimeError)),
+                ]),
             );
         }
-    }
-
-    private function getErrorExcerpt(RuntimeError|SyntaxError $exception, int $context = 1): string
-    {
-        $sourceContext = $exception->getSourceContext();
-        if (null === $sourceContext) {
-            return '';
-        }
-
-        $code = $sourceContext->getCode();
-        $lines = explode("\n", $code);
-        $line = $exception->getTemplateLine();
-
-        $start = max(0, $line - $context - 1);
-        $end = min(count($lines) - 1, $line + $context - 1);
-
-        $excerpt = array_slice($lines, $start, $end - $start + 1, true);
-
-        return trim(implode("\n", $excerpt));
     }
 
     /**
