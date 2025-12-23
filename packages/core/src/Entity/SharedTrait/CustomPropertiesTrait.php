@@ -17,6 +17,9 @@ use Symfony\Component\Yaml\Yaml;
 
 trait CustomPropertiesTrait
 {
+    /** @var array<string, bool> */
+    private static array $methodExistsCache = [];
+
     /**
      * YAML Format.
      *
@@ -158,7 +161,12 @@ trait CustomPropertiesTrait
             return false;
         }
 
-        return ! method_exists($this, 'set'.ucfirst($name)) && ! method_exists($this, 'set'.$name);
+        $cacheKey = static::class.':'.$name;
+
+        return self::$methodExistsCache[$cacheKey] ??= (
+            ! method_exists($this, 'set'.ucfirst($name))
+            && ! method_exists($this, 'set'.$name)
+        );
     }
 
     public function setCustomProperty(string $name, mixed $value): void
