@@ -34,8 +34,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   {{ mainContentParts.chapeau|raw }}
   Think about performance to avoid the need to do for the same content multiple time the call
 
-- refactor EntityFilter component to use modern tools (PHP Attribute, Real autowiring, etc.)
-
 - [AdminBlockEditor] Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
 
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)

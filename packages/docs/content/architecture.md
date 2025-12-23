@@ -29,7 +29,7 @@ It's kind of [majestic monolith](https://m.signalvnoise.com/the-majestic-monolit
 
 The [core](https://github.com/Pushword/Pushword/tree/main/packages/core) contain the minimum features, then everything is done via extensions.
 
-The core code follow as much as it can the #[symfony good practices](https://symfony.com/doc/current/best_practices.html) and have a special folder named `componenent` for bigger thing (components will may have their own independant package one day).
+The core code follow as much as it can the #[symfony good practices](https://symfony.com/doc/current/best_practices.html) and have a special folder named `component` for bigger features like the [Entity Filter](/component/entity-filter) system (components may have their own independent package one day).
 
 Each extension are facultative.
 
