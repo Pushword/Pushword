@@ -30,6 +30,11 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline): bool {
 
 new Dotenv()->loadEnv(__DIR__.'/.env');
 
+// Skip fixtures loading if SKIP_FIXTURES env var is set (for sequential package testing)
+if (getenv('SKIP_FIXTURES')) {
+    return;
+}
+
 // Some reset here
 $fs = new Filesystem();
 $fs->remove('/tmp/com.github.pushword.pushword/tests/var/dev/cache');

@@ -90,6 +90,42 @@ Use `symfony server:list` to see if a local server is already running, or start 
 
 Default credentials are `admin@example.tld` / `p@ssword` (ROLE_SUPER_ADMIN). If that user fails, reset the demo via `composer reset`.
 
+## UI Testing with dev-browser
+
+Use the `dev-browser` skill for automated UI checks and browser testing. This skill provides browser automation with persistent page state using Playwright.
+
+```bash
+# Start the dev-browser server first
+/dev-browser
+```
+
+Example usage for checking the admin interface:
+
+```typescript
+import { connect, waitForPageLoad } from "@/client.js";
+
+const client = await connect();
+const page = await client.page("pushword-admin");
+await page.setViewportSize({ width: 1280, height: 800 });
+
+// Navigate to admin
+await page.goto("https://127.0.0.1:8000/admin");
+await waitForPageLoad(page);
+
+// Login
+await page.fill('input[name="_username"]', 'admin@example.tld');
+await page.fill('input[name="_password"]', 'p@ssword');
+await page.click('button[type="submit"]');
+await waitForPageLoad(page);
+
+// Take screenshot for verification
+await page.screenshot({ path: "tmp/admin-dashboard.png" });
+
+await client.disconnect();
+```
+
+Use `getAISnapshot()` to discover page elements and `selectSnapshotRef()` to interact with them when you don't know the exact selectors.
+
 ## Quality Gates
 
 - Run linters `composer stan|rector` and tests `composer test-filter ...` or `composer test` and fix warnings; never leave broken builds.
