@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Pushword - CMS to build rapidly Websites (powered by Symfony)</title>
+        <link>https://pushword.piedweb.com/</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/index.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Themes]]></title>
+                    <link>https://pushword.piedweb.com/themes</link>
+                    <guid>https://pushword.piedweb.com/themes</guid>
+                    <pubDate>Sun, 21 Dec 2025 21:55:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Support and pro assistance]]></title>
+                    <link>https://pushword.piedweb.com/pro</link>
+                    <guid>https://pushword.piedweb.com/pro</guid>
+                    <pubDate>Sun, 21 Dec 2025 21:55:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Markdown Block]]></title>
+                    <link>https://pushword.piedweb.com/markdown-block</link>
+                    <guid>https://pushword.piedweb.com/markdown-block</guid>
+                    <pubDate>Sun, 21 Dec 2025 21:55:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Installation]]></title>
+                    <link>https://pushword.piedweb.com/installation</link>
+                    <guid>https://pushword.piedweb.com/installation</guid>
+                    <pubDate>Sun, 21 Dec 2025 21:55:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Find your missing feature with a Pushword Extension]]></title>
+                    <link>https://pushword.piedweb.com/extensions</link>
+                    <guid>https://pushword.piedweb.com/extensions</guid>
+                    <pubDate>Sun, 21 Dec 2025 21:55:00 +0000</pubDate>
+                </item>
+                            
+    </channel>
+</rss>
