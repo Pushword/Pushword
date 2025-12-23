@@ -1,7 +1,7 @@
 Pushword is a modular CMS built as a collection of Symfony bundles. This is a monorepo containing the core bundle and multiple extensions.
 
 - **PHP** >= 8.4
-- **Symfony** 7.3 (Framework principal)
+- **Symfony** 8.0 (Framework principal)
 - **Doctrine ORM** 3.0 (Gestion de base de données)
 - **Twig** (Moteur de templates)
 - **Node.js** + **Yarn** (Assets frontend)
@@ -21,7 +21,7 @@ Pushword is a modular CMS built as a collection of Symfony bundles. This is a mo
 
 ### Compatibility & Security
 
-- Ensure compatibility with **Symfony** 7.3+ and **PHP** 8.4+ versions
+- Ensure compatibility with **Symfony** 8.0+ and **PHP** 8.4+ versions
 - Follow secure coding practices to prevent XSS, CSRF, injections, auth bypasses, etc.
 - **DB** : SQLite (via Doctrine) - No migrations, use `bin/console doctrine:schema:update --force`
 
@@ -88,7 +88,7 @@ When a task impacts the admin UI or other frontend pieces, feel free to open the
 
 Use `symfony server:list` to see if a local server is already running, or start one with `composer dev`.
 
-Default credentials are `admin@example.tld` / `p@ssword` (ROLE_SUPER_ADMIN). If that user fails, reset the demo via `composer reset`.
+Default credentials are `admin@example.tld` / `p@ssword` (ROLE_SUPER_ADMIN). If that user fails, reset the demo via `composer reset-skeleton`.
 
 ## UI Testing with dev-browser
 

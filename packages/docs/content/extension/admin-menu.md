@@ -3,6 +3,7 @@ title: 'Configure the Admin Menu'
 h1: 'Configure the Admin Menu'
 id: 30
 publishedAt: '2025-12-21 21:55'
+parentPage: extension/admin
 toc: true
 ---
 
@@ -10,13 +11,13 @@ The admin menu in Pushword is highly customizable through Symfony events. You ca
 
 ## How it works
 
-The `AdminMenu` class dispatches the `AdminMenuItemsEvent` event (`pushword.admin.menu_items`) during menu configuration. This event allows any bundle or custom code to interact with the menu items before they are displayed.
+The `AdminMenu` class dispatches the `AdminItemsEvent` event (`pushword.admin.menu_items`) during menu configuration. This event allows any bundle or custom code to interact with the menu items before they are displayed.
 
 Each menu item has a **weight** that determines its position in the menu. Items with higher weights appear first in the menu.
 
 ## Adding an item
 
-To add a new item to the admin menu, create an `EventSubscriber` that listens to the `AdminMenuItemsEvent`:
+To add a new item to the admin menu, create an `EventSubscriber` that listens to the `AdminItemsEvent`:
 
 ```php
 <?php
@@ -24,7 +25,7 @@ To add a new item to the admin menu, create an `EventSubscriber` that listens to
 namespace App\EventSubscriber;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
-use Pushword\Admin\Menu\AdminMenuItemsEvent;
+use Pushword\Admin\Menu\AdminItemsEvent;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -34,11 +35,11 @@ final readonly class AdminMenuSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            AdminMenuItemsEvent::NAME => 'onMenuItems',
+            AdminItemsEvent::NAME => 'onMenuItems',
         ];
     }
 
-    public function onMenuItems(AdminMenuItemsEvent $event): void
+    public function onMenuItems(AdminItemsEvent $event): void
     {
         $event->addMenuItem(
             MenuItem::linkToRoute('My Custom Page', 'fa fa-star', 'my_custom_route'),
@@ -106,7 +107,7 @@ If you need to completely customize the menu structure, you can use `setItems()`
 namespace App\EventSubscriber;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
-use Pushword\Admin\Menu\AdminMenuItemsEvent;
+use Pushword\Admin\Menu\AdminItemsEvent;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -117,11 +118,11 @@ final readonly class AdminMenuSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            AdminMenuItemsEvent::NAME => 'onMenuItems',
+            AdminItemsEvent::NAME => 'onMenuItems',
         ];
     }
 
-    public function onMenuItems(AdminMenuItemsEvent $event): void
+    public function onMenuItems(AdminItemsEvent $event): void
     {
         // Get existing items
         $items = $event->getItems();
@@ -156,22 +157,22 @@ The conversation bundle adds its menu item when the `Message` entity exists:
 namespace Pushword\Conversation\EventSubscriber;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
-use Pushword\Admin\Menu\AdminMenuItemsEvent;
+use Pushword\Admin\Menu\AdminItemsEvent;
 use Pushword\Conversation\Entity\Message;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 #[AutoconfigureTag('kernel.event_subscriber')]
-final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
+final readonly class MenuItemsSubscriber implements EventSubscriberInterface
 {
     public static function getSubscribedEvents(): array
     {
         return [
-            AdminMenuItemsEvent::NAME => 'onMenuItems',
+            AdminItemsEvent::NAME => 'onMenuItems',
         ];
     }
 
-    public function onMenuItems(AdminMenuItemsEvent $event): void
+    public function onMenuItems(AdminItemsEvent $event): void
     {
         if (class_exists(Message::class)) {
             $event->addMenuItem(
@@ -191,21 +192,21 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
 namespace Pushword\PageScanner\EventSubscriber;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
-use Pushword\Admin\Menu\AdminMenuItemsEvent;
+use Pushword\Admin\Menu\AdminItemsEvent;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 #[AutoconfigureTag('kernel.event_subscriber')]
-final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
+final readonly class MenuItemsSubscriber implements EventSubscriberInterface
 {
     public static function getSubscribedEvents(): array
     {
         return [
-            AdminMenuItemsEvent::NAME => 'onMenuItems',
+            AdminItemsEvent::NAME => 'onMenuItems',
         ];
     }
 
-    public function onMenuItems(AdminMenuItemsEvent $event): void
+    public function onMenuItems(AdminItemsEvent $event): void
     {
         $event->addMenuItem(
             MenuItem::linkToRoute('admin.label.check_content', 'fa fa-check-circle', 'admin_page_scanner'),

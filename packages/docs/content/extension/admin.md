@@ -7,7 +7,7 @@ parentPage: extensions
 toc: true
 ---
 
-Create, edit, delete Page, Media, User with an interface built on top of Sonata Admin.
+Create, edit, delete Page, Media, User with an interface built on top of EasyAdmin.
 
 ## Install
 
@@ -30,7 +30,7 @@ You may be intersted by the [block editor](/extension/admin-block-editor).
 
 ## Customize the admin
 
-Admin is built on top of Sonata Admin with one more feature : the ability to manage displayed form fields from the configuration ([not yet for list fields and search fields](/roadmap)).
+Admin is built on top of EasyAdmin with one more feature : the ability to manage displayed form fields from the configuration ([not yet for list fields and search fields](/roadmap)).
 
 You can also [customize the admin menu](/extension/admin-menu) to add, remove or reorder menu items.
 

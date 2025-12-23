@@ -50,6 +50,7 @@ class CompressorTest extends TestCase
         foreach (CompressionAlgorithm::cases() as $algorithm) {
             if (! \in_array($algorithm, $compressor->availableCompressors, true)) {
                 $unavailableAlgorithm = $algorithm;
+
                 break;
             }
         }

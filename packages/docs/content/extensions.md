@@ -9,9 +9,9 @@ todo: 'Faire un script pour générer automatiquement un tableau avec le titre, 
 ---
 
 - [Admin](/extension/admin)
-  Create, edit, delete Page, Media, User with an interface built on top of Sonata Admin.
+  Create, edit, delete Page, Media, User with an interface built on top of EasyAdmin.
 - [Admin Block Editor](/extension/admin-block-editor)
-  Supercharge default admin with a rich text editor wich managed blocks.
+  Supercharge default admin with a rich text editor which managed blocks.
 - [Advanced Main Image](/extension/advanced-main-image)
   Supercharge the Pushword Admin with a new admin form field to customize the main image format from not visible to HERO + default template files.
 - [Conversation](/extension/conversation)
@@ -24,8 +24,6 @@ todo: 'Faire un script pour générer automatiquement un tableau avec le titre, 
   Get mail notification when your pushword content (page) is edited.
 - [Static Generator](/extension/static-generator)
   Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).
-- [Svg](/svg)
-  Add SVG with ease in your main content or in a template file via a twig function.
 - [Template Editor](/extension/template-editor)
   Edit view file online in the [admin](https://pushword.piedweb.com/extension/admin).
 - [Version](/extension/version)
