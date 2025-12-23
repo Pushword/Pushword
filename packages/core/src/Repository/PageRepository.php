@@ -454,11 +454,9 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         /** @var array{slug: string}[] */
         $results = $queryBuilder->getQuery()->getResult();
 
-        $pageUriList = [];
-        foreach ($results as $result) {
-            $pageUriList[] = '/'.('homepage' === $result['slug'] ? '' : $result['slug']);
-        }
-
-        return $pageUriList;
+        return array_map(
+            fn(array $r): string => '/'.('homepage' === $r['slug'] ? '' : $r['slug']),
+            $results,
+        );
     }
 }
