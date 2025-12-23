@@ -3,24 +3,26 @@
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Exception;
-use Pushword\Core\Component\App\AppConfig;
+use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
+use Pushword\Core\Component\EntityFilter\Manager;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
 
 use function Safe\preg_match_all;
 
-use Twig\Environment;
-
-final class HtmlObfuscateLink extends AbstractFilter
+#[AsFilter]
+final readonly class HtmlObfuscateLink implements FilterInterface
 {
-    public LinkProvider $linkProvider;
+    public function __construct(
+        private LinkProvider $linkProvider,
+    ) {
+    }
 
-    public AppConfig $app;
-
-    public Environment $twig;
-
-    public function apply(mixed $propertyValue): string
+    public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
     {
-        return $this->convertObfuscateLink($this->string($propertyValue));
+        assert(is_scalar($propertyValue));
+
+        return $this->convertObfuscateLink((string) $propertyValue);
     }
 
     /**

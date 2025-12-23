@@ -2,27 +2,18 @@
 
 namespace Pushword\Core\Component\EntityFilter;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Router\PushwordRouteGenerator;
-use Pushword\Core\Service\LinkProvider;
-use Pushword\Core\Service\Markdown\MarkdownParser;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Attribute\AsTwigFunction;
-use Twig\Environment as Twig;
 
 final class ManagerPool
 {
     public function __construct(
         public AppPool $apps,
-        public Twig $twig,
         public EventDispatcherInterface $eventDispatcher,
-        public PushwordRouteGenerator $router,
-        public LinkProvider $linkProvider,
-        public EntityManagerInterface $entityManager,
-        public MarkdownParser $markdownParser,
+        private readonly FilterRegistry $filterRegistry,
     ) {
     }
 
@@ -31,13 +22,18 @@ final class ManagerPool
 
     public function getManager(Page $page): Manager
     {
-        $id = $page->getId() ?? 0;
+        $id = $page->getId() ?? 'obj_'.spl_object_id($page);
 
         if (isset($this->entityFilterManagers[$id])) {
             return $this->entityFilterManagers[$id];
         }
 
-        $this->entityFilterManagers[$id] = new Manager($this, $this->eventDispatcher, $this->linkProvider, $page);
+        $this->entityFilterManagers[$id] = new Manager(
+            $this,
+            $this->eventDispatcher,
+            $this->filterRegistry,
+            $page
+        );
 
         return $this->entityFilterManagers[$id];
     }

@@ -2,33 +2,19 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
+use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
-use Pushword\Core\Service\LinkProvider;
 
-use function Safe\preg_match;
 use function Safe\preg_match_all;
 
-use Twig\Environment;
-
-final class HtmlLinkMultisite extends AbstractFilter
+#[AsFilter]
+final readonly class HtmlLinkMultisite implements FilterInterface
 {
-    public LinkProvider $linkProvider;
-
-    public AppPool $apps;
-
-    public AppConfig $app;
-
-    public Environment $twig;
-
-    public EntityManagerInterface $entityManager;
-
-    public PushwordRouteGenerator $router;
-
     /**
      * @var string
      */
@@ -37,10 +23,17 @@ final class HtmlLinkMultisite extends AbstractFilter
     /** @var string */
     public const string HTML_REGEX_HREF_KEY = 'href';
 
-    public function apply(mixed $propertyValue): string
+    public function __construct(
+        private PushwordRouteGenerator $router,
+        private AppPool $apps,
+        private PageRepository $pageRepository,
+    ) {
+    }
+
+    public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
     {
-        $propertyValue = $this->string($propertyValue);
-        // if (! $this->router instanceof PushwordRouteGenerator) { return $propertyValue; }
+        assert(is_scalar($propertyValue));
+        $propertyValue = (string) $propertyValue;
 
         if (! $this->router->mayUseCustomPath()) {
             return $propertyValue;
@@ -93,24 +86,36 @@ final class HtmlLinkMultisite extends AbstractFilter
             return $href;
         }
 
-        $newHref = substr($href, 1);
+        $slug = $this->extractSlug($href);
+        $hrefHashPart = '';
 
-        if (0 !== preg_match('/(#.*$)/', $newHref, $match)) {
-            $hrefHashPart = $match[1] ?? '';
-            $newHref = preg_replace('/#.*$/', '', $newHref);
+        $hashPos = strpos($href, '#');
+        if (false !== $hashPos) {
+            $hrefHashPart = substr($href, $hashPos);
         }
 
-        if ('' === $newHref) {
+        if ('' === $slug) {
             return $href;
         }
 
-        $page = $this->entityManager->getRepository(Page::class)->findOneBy(['slug' => $newHref, 'host' => $currentPage->getHost()]);
+        $page = $this->pageRepository->getPageBySlug($slug, $currentPage->getHost());
 
         if (null === $page) {
             return $href;
         }
 
-        return $this->router->generate($page).($hrefHashPart ?? '');
+        return $this->router->generate($page).$hrefHashPart;
+    }
+
+    private function extractSlug(string $href): string
+    {
+        $slug = substr($href, 1);
+        $hashPos = strpos($slug, '#');
+        if (false !== $hashPos) {
+            return substr($slug, 0, $hashPos);
+        }
+
+        return $slug;
     }
 
     /**

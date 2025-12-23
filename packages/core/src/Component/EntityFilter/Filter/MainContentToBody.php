@@ -2,19 +2,18 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
-class MainContentToBody extends AbstractFilter
+use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
+use Pushword\Core\Component\EntityFilter\Manager;
+use Pushword\Core\Component\EntityFilter\ValueObject\ContentBody;
+use Pushword\Core\Entity\Page;
+
+#[AsFilter]
+class MainContentToBody implements FilterInterface
 {
-    private string $body = '';
-
-    public function apply(mixed $propertyValue): self
+    public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
     {
-        $this->body = $this->string($propertyValue);
+        assert(is_scalar($propertyValue));
 
-        return $this;
-    }
-
-    public function getBody(): string
-    {
-        return $this->body;
+        return new ContentBody((string) $propertyValue);
     }
 }

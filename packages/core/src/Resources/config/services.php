@@ -3,6 +3,8 @@
 declare(strict_types=1);
 use PiedWeb\RenderAttributes\TwigExtension;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
+use Pushword\Core\Component\EntityFilter\FilterRegistry;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
@@ -12,6 +14,7 @@ use Pushword\Core\Twig\MediaExtension;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
 
 use Twig\Extension\StringLoaderExtension;
 
@@ -40,6 +43,15 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->load('Pushword\Core\Controller\\', __DIR__.'/../../../src/Controller')
         ->tag('controller.service_arguments');
+
+    // Auto-tag all filters
+    $services->instanceof(FilterInterface::class)
+        ->tag('pushword.entity_filter');
+
+    // Make FilterRegistry available and autowire tagged filters
+    $services->set(FilterRegistry::class)
+        ->arg('$filters', tagged_iterator('pushword.entity_filter'))
+        ->public();
 
     // # todo limit to test https://stackoverflow.com/questions/54466158/symfony-4-2-how-to-do-a-service-public-only-for-tests
     $services->set(PushwordRouteGenerator::class)

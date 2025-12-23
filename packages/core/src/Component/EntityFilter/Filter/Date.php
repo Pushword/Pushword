@@ -4,23 +4,45 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Exception;
 use IntlDateFormatter;
-use Pushword\Core\Component\App\AppConfig;
+use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
+use Pushword\Core\Component\EntityFilter\Manager;
+use Pushword\Core\Entity\Page;
 
 use function Safe\preg_replace;
 
-class Date extends AbstractFilter
+#[AsFilter]
+class Date implements FilterInterface
 {
-    public AppConfig $app;
+    /** @var array<string, IntlDateFormatter> */
+    private array $formatterCache = [];
 
-    public function apply(mixed $propertyValue): string
+    public function __construct(
+        private readonly AppPool $apps,
+    ) {
+    }
+
+    public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
     {
-        return $this->convertDateShortCode($this->string($propertyValue), $this->app->getLocale());
+        assert(is_scalar($propertyValue));
+        $propertyValue = (string) $propertyValue;
+
+        return $this->convertDateShortCode($propertyValue, $this->apps->get($page->getHost())->getLocale());
+    }
+
+    private function getFormatter(string $locale): IntlDateFormatter
+    {
+        return $this->formatterCache[$locale] ??= new IntlDateFormatter(
+            $locale,
+            IntlDateFormatter::FULL,
+            IntlDateFormatter::NONE
+        );
     }
 
     private function convertDateShortCode(string $string, ?string $locale = null): string
     {
         $locale = null !== $locale ? $this->convertLocale($locale) : 'fr_FR';
-        $intlDateFormatter = new IntlDateFormatter($locale, IntlDateFormatter::FULL, IntlDateFormatter::NONE);
+        $intlDateFormatter = $this->getFormatter($locale);
 
         // $string = preg_replace('/date\([\'"]?([a-z% ]+)[\'"]?\)/i',
         //  strftime(strpos('\1', '%') ? '\1': '%\1'), $string);

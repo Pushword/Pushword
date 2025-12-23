@@ -2,31 +2,33 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
 use Pushword\Core\Component\EntityFilter\Manager;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Utils\MarkdownUtils;
 
 use function Safe\preg_replace;
 
-use Twig\Environment;
-
 /**
  * Name is misleading, it's not a markdown filter, it's a twig-markdown filter.
  */
-class Markdown extends AbstractFilter
+#[AsFilter]
+class Markdown implements FilterInterface
 {
-    public ?Manager $manager = null;
-
-    public Environment $twig;
-
-    public MarkdownParser $markdownParser;
-
-    public function apply(mixed $propertyValue): string
-    {
-        return $this->render($this->string($propertyValue));
+    public function __construct(
+        private readonly MarkdownParser $markdownParser,
+    ) {
     }
 
-    private function render(string $text): string
+    public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
+    {
+        assert(is_scalar($propertyValue));
+
+        return $this->render((string) $propertyValue, $manager);
+    }
+
+    private function render(string $text, Manager $manager): string
     {
         $textPartList = MarkdownUtils::prepareText($text);
 
@@ -34,7 +36,7 @@ class Markdown extends AbstractFilter
 
         $filteredText = '';
         foreach ($textPartList as $textPart) {
-            $filteredText .= $this->transformPart($textPart)."\n\n";
+            $filteredText .= $this->transformPart($textPart, $manager)."\n\n";
         }
 
         return $filteredText;
@@ -42,12 +44,10 @@ class Markdown extends AbstractFilter
 
     private function parseMarkdown(string $text): string
     {
-        // return $this->twig->createTemplate('{% apply markdown %}'.$text.'{% endapply %}')->render();
-
         return $this->markdownParser->transform($text);
     }
 
-    private function transformPart(string $text): string
+    private function transformPart(string $text, Manager $manager): string
     {
         // dump($text);
         $lines = explode("\n", $text);
@@ -64,7 +64,7 @@ class Markdown extends AbstractFilter
         if (! MarkdownUtils::isItCodeBlock($blockText)) {
             $inlineCodeProtector = new MarkdownProtectInlineCode();
             $textFiltered = $inlineCodeProtector->protect($blockText);
-            $textFiltered = $this->manager?->applyFilters($textFiltered, ['twig']);
+            $textFiltered = $manager->applyFilters($textFiltered, ['twig']);
             assert(is_string($textFiltered));
             $textFiltered = $inlineCodeProtector->restore($textFiltered);
         }

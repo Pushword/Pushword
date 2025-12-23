@@ -2,36 +2,41 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
-use Pushword\Core\Component\EntityFilter\ManagerPool;
+use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
+use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
 
-// TODO: Documenter
-// TODO: Tester
-class Extended extends AbstractFilter
+#[AsFilter]
+class Extended implements FilterInterface
 {
-    public ManagerPool $managerPool;
+    /** @var array<string, true> */
+    private array $resolutionStack = [];
 
-    public Page $page;
-
-    public string $property;
-
-    public function apply(mixed $propertyValue): mixed
-    {
-        return $this->loadExtendedValue($propertyValue);
-    }
-
-    private function loadExtendedValue(mixed $propertyValue): mixed
+    public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
     {
         if ('' !== $propertyValue) {
             return $propertyValue;
         }
 
-        if (! $this->page->getExtendedPage() instanceof Page) {
+        $extendedPage = $page->getExtendedPage();
+        if (! $extendedPage instanceof Page) {
             return $propertyValue;
         }
 
-        $getter = 'get'.ucfirst($this->property);
+        $stackKey = ($page->getId() ?? spl_object_id($page)).':'.$property;
 
-        return $this->managerPool->getManager($this->page)->$getter(); // @phpstan-ignore-line
+        if (isset($this->resolutionStack[$stackKey])) {
+            return $propertyValue;
+        }
+
+        $this->resolutionStack[$stackKey] = true;
+
+        try {
+            $getter = 'get'.ucfirst($property);
+
+            return $manager->getManagerPool()->getManager($extendedPage)->$getter(); // @phpstan-ignore-line
+        } finally {
+            unset($this->resolutionStack[$stackKey]);
+        }
     }
 }

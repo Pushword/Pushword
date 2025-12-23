@@ -3,8 +3,10 @@
 namespace Pushword\Core\Repository;
 
 use DateTime;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\ORM\Events;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
@@ -22,9 +24,16 @@ use RuntimeException;
  *
  * @method Page[] findAll()
  */
+#[AsDoctrineListener(event: Events::onClear)]
 class PageRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
     use TagsRepositoryTrait;
+
+    /** @var array<string, array<string, Page>> host => [slug => Page] */
+    private array $slugCache = [];
+
+    /** @var array<string, true> */
+    private array $warmedHosts = [];
 
     public function __construct(
         ManagerRegistry $registry,
@@ -32,6 +41,74 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         // private readonly string $publicMediaDir,
     ) {
         parent::__construct($registry, Page::class);
+    }
+
+    /**
+     * Preload all pages for a host into the slug cache.
+     * Call this before batch operations (static generation, page scanning) to avoid N+1 queries.
+     */
+    public function warmupSlugCache(string $host): void
+    {
+        if (isset($this->warmedHosts[$host])) {
+            return;
+        }
+
+        $pages = $this->findByHost($host);
+
+        $this->slugCache[$host] = [];
+        foreach ($pages as $page) {
+            $this->slugCache[$host][$page->getSlug()] = $page;
+        }
+
+        $this->warmedHosts[$host] = true;
+    }
+
+    /**
+     * Get a page by slug with caching support.
+     * Uses the warmed cache if available, otherwise falls back to single query.
+     */
+    public function getPageBySlug(string $slug, string $host): ?Page
+    {
+        // Check if host is warmed up - use cache
+        if (isset($this->warmedHosts[$host])) {
+            return $this->slugCache[$host][$slug] ?? null;
+        }
+
+        // Check if this specific slug is cached
+        if (isset($this->slugCache[$host][$slug])) {
+            return $this->slugCache[$host][$slug];
+        }
+
+        // Fallback to single query and cache the result
+        $page = $this->findOneBy(['slug' => $slug, 'host' => $host]);
+
+        if (! isset($this->slugCache[$host])) {
+            $this->slugCache[$host] = [];
+        }
+
+        if (null !== $page) {
+            $this->slugCache[$host][$slug] = $page;
+        }
+
+        return $page;
+    }
+
+    /**
+     * Check if a host's pages are fully loaded in cache.
+     */
+    public function isHostWarmed(string $host): bool
+    {
+        return isset($this->warmedHosts[$host]);
+    }
+
+    /**
+     * Clear the internal slug cache.
+     * Called automatically when EntityManager::clear() is invoked.
+     */
+    public function onClear(): void
+    {
+        $this->slugCache = [];
+        $this->warmedHosts = [];
     }
 
     public function create(string $host): Page

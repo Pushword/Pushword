@@ -2,26 +2,35 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
-use Pushword\Core\Component\App\AppConfig;
+use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
+use Pushword\Core\Component\EntityFilter\Manager;
+use Pushword\Core\Entity\Page;
 use Twig\Environment;
 
-class ShowMore extends AbstractFilter
+#[AsFilter]
+class ShowMore implements FilterInterface
 {
-    public AppConfig $app;
-
-    public Environment $twig;
-
-    public function apply(mixed $propertyValue): string
-    {
-        return $this->showMore($this->string($propertyValue));
+    public function __construct(
+        private readonly Environment $twig,
+        private readonly AppPool $apps,
+    ) {
     }
 
-    private function showMore(string $body): string
+    public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
+    {
+        assert(is_scalar($propertyValue));
+
+        return $this->showMore((string) $propertyValue, $page);
+    }
+
+    private function showMore(string $body, Page $page): string
     {
         $afterShowMoreTag = "\n".'<!--end-show-more-->';
         $bodyParts = explode("\n".'<!--start-show-more-->', $body);
         $body = '';
-        $templatePath = $this->app->getView('/component/show_more.html.twig');
+        $app = $this->apps->get($page->getHost());
+        $templatePath = $app->getView('/component/show_more.html.twig');
         $template = $this->twig->load($templatePath);
         foreach ($bodyParts as $bodyPart) {
             $bodyPart .= "\n";

@@ -2,21 +2,27 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
+use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
-use Twig\Environment as TwigEnv;
+use Twig\Environment;
 
-class Twig extends AbstractFilter
+#[AsFilter]
+class Twig implements FilterInterface
 {
-    public Page $page;
-
-    public TwigEnv $twig;
-
-    public function apply(mixed $propertyValue): string
-    {
-        return $this->render($this->string($propertyValue));
+    public function __construct(
+        private readonly Environment $twig,
+    ) {
     }
 
-    protected function render(string $string): string
+    public function apply(mixed $propertyValue, Page $page, Manager $manager, string $property = ''): mixed
+    {
+        assert(is_scalar($propertyValue));
+
+        return $this->render((string) $propertyValue, $page);
+    }
+
+    protected function render(string $string, Page $page): string
     {
         if (! str_contains($string, '{')) {
             return $string;
@@ -24,6 +30,6 @@ class Twig extends AbstractFilter
 
         $templateWrapper = $this->twig->createTemplate($string);
 
-        return $templateWrapper->render(['page' => $this->page]);
+        return $templateWrapper->render(['page' => $page]);
     }
 }

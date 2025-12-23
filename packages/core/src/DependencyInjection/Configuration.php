@@ -2,6 +2,16 @@
 
 namespace Pushword\Core\DependencyInjection;
 
+use Pushword\Core\Component\EntityFilter\Filter\Date;
+use Pushword\Core\Component\EntityFilter\Filter\ElseH1;
+use Pushword\Core\Component\EntityFilter\Filter\Extended;
+use Pushword\Core\Component\EntityFilter\Filter\HtmlLinkMultisite;
+use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
+use Pushword\Core\Component\EntityFilter\Filter\MainContentSplitter;
+use Pushword\Core\Component\EntityFilter\Filter\Markdown;
+use Pushword\Core\Component\EntityFilter\Filter\Name;
+use Pushword\Core\Component\EntityFilter\Filter\ShowMore;
+use Pushword\Core\Component\EntityFilter\Filter\Twig;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
@@ -39,15 +49,36 @@ final class Configuration implements ConfigurationInterface
     public const bool DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS = true;
 
     /**
-     * @var array<string, string>
+     * @var array<string, array<class-string>>
      */
     public const array DEFAULT_FILTERS = [
         // date,email,phoneNumber ➜ managed by markdown extension in main_content
-        'main_content' => 'showMore,markdown,htmlLinkMultisite,htmlObfuscateLink,mainContentSplitter,extended',
-        'name' => 'twig,date,name,extended',
-        'title' => 'elseH1,twig,date,extended',
+        'main_content' => [
+            ShowMore::class,
+            Markdown::class,
+            HtmlLinkMultisite::class,
+            HtmlObfuscateLink::class,
+            MainContentSplitter::class,
+            Extended::class,
+        ],
+        'name' => [
+            Twig::class,
+            Date::class,
+            Name::class,
+            Extended::class,
+        ],
+        'title' => [
+            ElseH1::class,
+            Twig::class,
+            Date::class,
+            Extended::class,
+        ],
         // fallback for all other properties like title, description, ...
-        'string' => 'twig,date,extended',
+        'string' => [
+            Twig::class,
+            Date::class,
+            Extended::class,
+        ],
     ];
 
     /**

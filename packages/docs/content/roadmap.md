@@ -25,6 +25,15 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - performance improvement for Page Scanner - run console with profiling
 - performance improvement for Static Generator - run console with profiling
 
+- Neutral: Value objects add slight overhead but improve immutability
+  Deprecated Value Object in favor of twig function :
+  removing MainContentSplitter from default configuration
+  in favor of something like
+  {% set mainContentParts = mainContentSplit(pw(page).mainContent) %}
+  And usage
+  {{ mainContentParts.chapeau|raw }}
+  Think about performance to avoid the need to do for the same content multiple time the call
+
 - refactor EntityFilter component to use modern tools (PHP Attribute, Real autowiring, etc.)
 
 - [AdminBlockEditor] Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)

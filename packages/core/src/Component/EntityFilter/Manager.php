@@ -2,58 +2,50 @@
 
 namespace Pushword\Core\Component\EntityFilter;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use LogicException;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
-use Pushword\Core\Component\EntityFilter\Filter\MainContentSplitter;
+use Pushword\Core\Component\EntityFilter\ValueObject\SplitContent;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Router\PushwordRouteGenerator;
-use Pushword\Core\Service\LinkProvider;
-use Pushword\Core\Service\Markdown\MarkdownParser;
-use ReflectionClass;
 
 use function Safe\preg_match;
 
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Twig\Environment as Twig;
 
 /**
- * @method MainContentSplitter getMainContent()
+ * @method SplitContent getMainContent()
  */
-final readonly class Manager
+final class Manager
 {
-    private AppConfig $app;
+    private readonly AppConfig $app;
 
-    private AppPool $apps;
+    private readonly AppPool $apps;
 
-    private Twig $twig;
+    /** @var array<string, mixed> */
+    private array $propertyCache = [];
 
-    private PushwordRouteGenerator $router;
-
-    private MarkdownParser $markdownParser;
-
-    private EntityManagerInterface $entityManager;
+    /** @var array<string, string> */
+    private static array $snakeCaseCache = [];
 
     public function __construct(
-        private ManagerPool $managerPool,
-        private EventDispatcherInterface $eventDispatcher,
-        private LinkProvider $linkProvider,
-        public Page $page,
+        private readonly ManagerPool $managerPool,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly FilterRegistry $filterRegistry,
+        public readonly Page $page,
     ) {
         $this->apps = $managerPool->apps;
-        $this->twig = $managerPool->twig;
-        $this->markdownParser = $managerPool->markdownParser;
-        $this->router = $managerPool->router;
-        $this->entityManager = $managerPool->entityManager;
         $this->app = $this->apps->get($page->getHost());
     }
 
     public function getPage(): Page
     {
         return $this->page;
+    }
+
+    public function getManagerPool(): ManagerPool
+    {
+        return $this->managerPool;
     }
 
     /**
@@ -67,7 +59,14 @@ final readonly class Manager
             $method = 'get'.ucfirst($method);
         }
 
-        $filterEvent = new FilterEvent($this, substr($method, 3));
+        $property = substr($method, 3);
+        $cacheKey = [] !== $arguments ? $property.':'.md5(serialize($arguments)) : $property;
+
+        if (isset($this->propertyCache[$cacheKey])) {
+            return $this->propertyCache[$cacheKey];
+        }
+
+        $filterEvent = new FilterEvent($this, $property);
         $this->eventDispatcher->dispatch($filterEvent, FilterEvent::NAME_BEFORE);
 
         if (! \is_callable($pageMethod = [$this->page, $method])) {
@@ -80,9 +79,11 @@ final readonly class Manager
             throw new LogicException();
         }
 
-        $returnValue = $this->filter(substr($method, 3), $returnValue);
+        $returnValue = $this->filter($property, $returnValue);
 
         $this->eventDispatcher->dispatch($filterEvent, FilterEvent::NAME_AFTER);
+
+        $this->propertyCache[$cacheKey] = $returnValue;
 
         return $returnValue;
     }
@@ -100,13 +101,15 @@ final readonly class Manager
         }
 
         return [] !== $filters
-            ? $this->applyFilters('' !== (string) $propertyValue ? $propertyValue : '', $filters)
+            ? $this->applyFilters('' !== (string) $propertyValue ? $propertyValue : '', $filters, $property)
             : $propertyValue;
     }
 
     private function camelCaseToSnakeCase(string $string): string
     {
-        return strtolower(preg_replace('/[A-Z]/', '_\\0', lcfirst($string)) ?? throw new Exception());
+        return self::$snakeCaseCache[$string] ??= strtolower(
+            preg_replace('/[A-Z]/', '_\\0', lcfirst($string)) ?? throw new Exception()
+        );
     }
 
     /**
@@ -136,77 +139,22 @@ final readonly class Manager
     }
 
     /**
-     * @return false|class-string
-     */
-    private function isFilter(string $className): false|string
-    {
-        $filterClass = class_exists($className) ? $className
-            : 'Pushword\Core\Component\EntityFilter\Filter\\'.ucfirst($className);
-
-        if (! class_exists($filterClass)) {
-            return false;
-        }
-
-        $reflectionClass = new ReflectionClass($filterClass);
-        if (! $reflectionClass->implementsInterface(FilterInterface::class)) {
-            return false;
-        }
-
-        return $filterClass;
-    }
-
-    private function getFilterClass(string $filter): FilterInterface
-    {
-        if (false === ($filterClassName = $this->isFilter($filter))) {
-            throw new Exception('Filter `'.$filter.'` not found');
-        }
-
-        /** @var class-string<FilterInterface> $filterClassName */
-        $filterClass = new $filterClassName();
-
-        $toAutowire = [
-            'page',
-            'app',
-            'apps',
-            'twig',
-            'entityFilterManager',
-            'managerPool',
-            'router',
-            'entityManager',
-            'linkProvider',
-            'markdownParser',
-        ];
-
-        foreach ($toAutowire as $property) {
-            if (property_exists($filterClass, $property)) {
-                $filterClass->$property = 'entityFilterManager' === $property ? $this : $this->$property; // @phpstan-ignore-line
-            }
-        }
-
-        return $filterClass;
-    }
-
-    /**
      * @param string[] $filters
      */
-    public function applyFilters(bool|float|int|string|null $propertyValue, array $filters): mixed
+    public function applyFilters(bool|float|int|string|null $propertyValue, array $filters, string $property = ''): mixed
     {
         foreach ($filters as $filter) {
             if (\in_array($this->page->getCustomProperty('filter_'.$this->className($filter)), [0, false], true)) {
                 continue;
             }
 
-            $filterClass = $this->getFilterClass($filter);
+            $filterInstance = $this->filterRegistry->getFilter($filter);
 
-            if (property_exists($filterClass, 'manager')) {
-                $filterClass->manager = $this;
+            if (null === $filterInstance) {
+                throw new Exception('Filter `'.$filter.'` not found');
             }
 
-            // if (method_exists($filterClass, 'setProperty')) {
-            //     $filterClass->setProperty($property);
-            // }
-
-            $propertyValue = $filterClass->apply($propertyValue);
+            $propertyValue = $filterInstance->apply($propertyValue, $this->page, $this, $property);
         }
 
         return $propertyValue;

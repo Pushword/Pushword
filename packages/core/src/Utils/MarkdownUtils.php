@@ -101,11 +101,7 @@ final class MarkdownUtils
         }
 
         // Check HTML-style: id="anchor", id='anchor', or id=anchor (not data-id or other variants)
-        if (preg_match('/(?<![a-zA-Z0-9_-])id=(?:["\']'.$escapedAnchor.'["\']|'.$escapedAnchor.'(?:\s|>|$))/', $text) > 0) {
-            return true;
-        }
-
-        return false;
+        return preg_match('/(?<![a-zA-Z0-9_-])id=(?:["\']'.$escapedAnchor.'["\']|'.$escapedAnchor.'(?:\s|>|$))/', $text) > 0;
     }
 
     /**
