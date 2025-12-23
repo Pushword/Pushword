@@ -128,7 +128,7 @@ class Versionner
 
     private function getVersionDir(int|Page $page): string
     {
-        $pageId = ($page instanceof Page ? (string) $page->getId() : $page);
+        $pageId = ($page instanceof Page ? (string) $page->id : $page);
 
         return $this->logDir.'/version/'.$pageId;
     }

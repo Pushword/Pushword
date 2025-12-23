@@ -46,12 +46,14 @@ class PageUpdateNotifierTest extends KernelTestCase
 
     protected function getPage(): Page
     {
-        return new Page()
-            ->setSlug('page-updater')
-            ->setTitle('Just created')
-            ->setCreatedAt(new DateTime())
-            ->setLocale('en')
-            ->setHost('localhost.dev');
+        $page = new Page();
+        $page->setSlug('page-updater');
+        $page->setTitle('Just created');
+        $page->createdAt = new DateTime();
+        $page->locale = 'en';
+        $page->host = 'localhost.dev';
+
+        return $page;
     }
 
     public function testRun(): void
@@ -74,10 +76,10 @@ class PageUpdateNotifierTest extends KernelTestCase
                 'slug' => $page->getSlug(),
                 'h1' => $page->getH1(),
                 'mainContent' => $page->getMainContent(),
-                'locale' => $page->getLocale(),
+                'locale' => $page->locale,
                 'publishedAt' => $page->getPublishedAt(),
-                'createdAt' => $page->getCreatedAt(),
-                'updatedAt' => $page->getUpdatedAt(),
+                'createdAt' => $page->createdAt,
+                'updatedAt' => $page->updatedAt,
             ];
             $em->remove($page);
         }
@@ -96,18 +98,18 @@ class PageUpdateNotifierTest extends KernelTestCase
 
         // Restore original pages for other tests
         foreach ($savedPagesData as $pageData) {
-            $restoredPage = new Page()
-                ->setSlug($pageData['slug'])
-                ->setH1($pageData['h1'])
-                ->setMainContent($pageData['mainContent'])
-                ->setLocale($pageData['locale'])
-                ->setHost('localhost.dev');
+            $restoredPage = new Page();
+            $restoredPage->setSlug($pageData['slug']);
+            $restoredPage->setH1($pageData['h1']);
+            $restoredPage->setMainContent($pageData['mainContent']);
+            $restoredPage->locale = $pageData['locale'];
+            $restoredPage->host = 'localhost.dev';
             if (null !== $pageData['createdAt']) {
-                $restoredPage->setCreatedAt($pageData['createdAt']);
+                $restoredPage->createdAt = $pageData['createdAt'];
             }
 
             if (null !== $pageData['updatedAt']) {
-                $restoredPage->setUpdatedAt($pageData['updatedAt']);
+                $restoredPage->updatedAt = $pageData['updatedAt'];
             }
 
             if (null !== $pageData['publishedAt']) {

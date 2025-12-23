@@ -306,12 +306,12 @@ class StaticGeneratorTest extends KernelTestCase
 
     public function getPageRepo(): MockObject
     {
-        $page = new Page()
-            ->setH1('Welcome to Pushword !')
-            ->setSlug('homepage')
-            ->setLocale('en')
-            ->setCreatedAt(new DateTime('2 days ago'))
-            ->setMainContent('...');
+        $page = new Page();
+        $page->setH1('Welcome to Pushword !');
+        $page->setSlug('homepage');
+        $page->locale = 'en';
+        $page->createdAt = new DateTime('2 days ago');
+        $page->setMainContent('...');
 
         $pageRepo = $this->createMock(PageRepository::class);
         $pageRepo->method('getPublishedPages')

@@ -77,7 +77,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             $this->message = new Message();
             $this->message->setAuthorIpRaw((string) $this->request->getClientIp());
             $this->message->setReferring($this->getReferring());
-            $this->message->setHost($this->app->getMainHost());
+            $this->message->host = $this->app->getMainHost();
         } else {
             $this->message = $this->messageRepo->find($this->getId())
                 ?? throw new NotFoundHttpException('An error occured during the validation ('.$this->getId().')');
@@ -153,7 +153,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
             $this->sanitizeConversation();
             $this->getDoctrine()->getManager()->persist($this->message);
             $this->getDoctrine()->getManager()->flush();
-            $this->messageId = (int) $this->message->getId();
+            $this->messageId = (int) $this->message->id;
 
             if (false !== $this->getNextStepFunctionName()) {
                 $this->incrementStep();
@@ -162,7 +162,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
                 /*
                 return $this->redirectToRoute('pushword_conversation', [
                     'type' => $this->getType(),
-                    'id' => $this->message->getId(),
+                    'id' => $this->message->id,
                     'step' => $this->getStep() + 1,
                 ]);*/
             }

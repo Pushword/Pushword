@@ -14,25 +14,13 @@ trait PageI18nTrait
      * //rfc5646.
      */
     #[ORM\Column(type: Types::STRING, length: 5)]
-    protected string $locale = '';
+    public string $locale = '';
 
     /**
      * @var Collection<int, Page>
      */
     #[ORM\ManyToMany(targetEntity: Page::class)]
     protected ?Collection $translations = null;  // @phpstan-ignore-line
-
-    public function getLocale(): string
-    {
-        return $this->locale;
-    }
-
-    public function setLocale(string $locale): self
-    {
-        $this->locale = $locale;
-
-        return $this;
-    }
 
     /** @param Collection<int, Page> $translations */
     public function setTranslations(Collection $translations): self
@@ -51,7 +39,7 @@ trait PageI18nTrait
     public function getTranslation(string $locale): ?Page
     {
         foreach ($this->getTranslations() as $translation) {
-            if ($translation->getLocale() === $locale) {
+            if ($translation->locale === $locale) {
                 return $translation;
             }
         }

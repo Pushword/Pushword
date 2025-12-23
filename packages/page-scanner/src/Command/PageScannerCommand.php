@@ -70,7 +70,7 @@ final class PageScannerCommand
         foreach ($pages as $page) {
             $scan = $this->scanner->scan($page);
             if (true !== $scan) {
-                $pageId = (int) $page->getId();
+                $pageId = (int) $page->id;
                 $errors[$pageId] = $scan;
                 foreach ($scan as $s) {
                     $route = $s['page']['host'].'/'.$s['page']['slug'];

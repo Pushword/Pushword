@@ -36,6 +36,7 @@ final readonly class PageListener
 
     public function prePersist(Page $page): void
     {
+        $page->initTimestampableProperties();
         $this->setIdAsSlugIfNotDefined($page);
         $this->updatePageEditor($page);
         $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
@@ -53,7 +54,7 @@ final readonly class PageListener
 
     public function preUpdate(Page $page): void
     {
-        $page->setUpdatedAt(new DateTime());
+        $page->updatedAt = new DateTime();
         $this->updatePageEditor($page);
         $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
     }
@@ -75,7 +76,7 @@ final readonly class PageListener
             $page->setCreatedBy($user);
         }
 
-        if ($page->getEditedBy()->getId() !== $user->getId()) {
+        if ($page->getEditedBy()->id !== $user->id) {
             $page->setEditedBy($user);
         }
         /**/

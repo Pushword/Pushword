@@ -21,7 +21,7 @@ class ControllerTest extends AbstractAdminTestClass
         $page = $em->getRepository(Page::class)->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev']);
         self::assertNotNull($page, 'Homepage should exist');
         /** @var int $pageId */
-        $pageId = $page->getId();
+        $pageId = $page->id;
         self::assertGreaterThan(0, $pageId, 'Page ID should be a positive integer');
 
         $client->request(Request::METHOD_GET, '/admin/version/'.$pageId.'/list');

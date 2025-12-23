@@ -31,26 +31,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     public const ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN';
 
     #[ORM\Id, ORM\Column(type: Types::INTEGER), ORM\GeneratedValue(strategy: 'AUTO')]
-    protected ?int $id = null;
+    public private(set) ?int $id = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    protected ?DateTimeInterface $createdAt = null;
+    public ?DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::STRING, length: 180, unique: true)]
     #[Assert\Email(message: 'userEmailInvalid', mode: 'strict')]
-    protected string $email = '';
+    public string $email = '';
 
     #[ORM\Column(type: Types::STRING, length: 150, nullable: true)]
-    protected ?string $username = null;
+    public ?string $username = null;
 
     #[ORM\Column(type: Types::STRING, length: 5, options: ['default' => 'en'])]
-    protected string $locale = 'en';
+    public string $locale = 'en';
 
     /**
      * Loaded From BaseUser.
      */
     #[Assert\Length(min: 7, max: 100, minMessage: 'userPasswordShort')]
-    protected ?string $plainPassword = null;
+    private ?string $plainPassword = null;
 
     /**
      * @var string[]
@@ -69,18 +69,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): self
-    {
-        $this->email = $email;
-
-        return $this;
     }
 
     public function setPlainPassword(?string $password): self
@@ -128,9 +116,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return \in_array(strtoupper($role), $this->getRoles(), true);
     }
 
-    /**
-     * @see User
-     */
     public function getPassword(): ?string
     {
         return $this->password;
@@ -144,9 +129,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return $this;
     }
 
-    /**
-     * @see User
-     */
     public function getSalt(): string
     {
         // not needed when using the "bcrypt" algorithm in security.yaml
@@ -156,25 +138,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     #[ORM\PrePersist]
     public function updatedTimestamps(): self
     {
-        $this->setCreatedAt(new DateTime('now'));
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
+        $this->createdAt = new DateTime('now');
 
         return $this;
     }
 
     /**
-     * Get the value of username.
+     * Get the value of username (fallback to email if not set).
      */
     public function getUsername(): string
     {
@@ -185,27 +155,5 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     {
         return $this->getUsername() ?:
             throw new Exception();
-    }
-
-    /**
-     * Set the value of username.
-     */
-    public function setUsername(?string $username): self
-    {
-        $this->username = $username;
-
-        return $this;
-    }
-
-    public function getLocale(): string
-    {
-        return $this->locale;
-    }
-
-    public function setLocale(string $locale): self
-    {
-        $this->locale = $locale;
-
-        return $this;
     }
 }

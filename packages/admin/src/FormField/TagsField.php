@@ -26,7 +26,7 @@ class TagsField extends AbstractField
         $subject = $this->admin->getSubject();
 
         if ($subject instanceof Page) {
-            $host = $this->currentRequest()->query->getString('host', $subject->getHost());
+            $host = $this->currentRequest()->query->getString('host', $subject->host);
 
             return $this->pageRepo()->getAllTags($host);
         }
@@ -74,7 +74,7 @@ class TagsField extends AbstractField
             'label' => $isPageAdmin ? ' ' : 'adminMediaTagsLabel',
             'help' => ' <div class="textSuggester" style="display:none;"></div>'
                 .'<script>setTimeout(function () {
-                    const element = document.querySelector("'.(null === $subject->getId() ? '[data-tags]' : '[id$=_h1]').'");
+                    const element = document.querySelector("'.(null === $subject->id ? '[data-tags]' : '[id$=_h1]').'");
                     element.focus();
                     element.selectionStart = element.selectionEnd = element.value.length;
                 }, 500)</script>',

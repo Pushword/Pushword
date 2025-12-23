@@ -39,12 +39,12 @@ class LinkedDocsScannerTest extends KernelTestCase
 
     public function getPage(): Page
     {
-        $page = new Page()
-            ->setH1('Welcome to Pushword !')
-            ->setSlug('homepage')
-            ->setLocale('en')
-            ->setCreatedAt(new DateTime('2 days ago'))
-            ->setMainContent('...'); // \Safe\file_get_contents( __DIR__.'/../../skeleton/src/DataFixtures/WelcomePage.md')
+        $page = new Page();
+        $page->setH1('Welcome to Pushword !');
+        $page->setSlug('homepage');
+        $page->locale = 'en';
+        $page->createdAt = new DateTime('2 days ago');
+        $page->setMainContent('...'); // \Safe\file_get_contents( __DIR__.'/../../skeleton/src/DataFixtures/WelcomePage.md')
         $page->setCustomProperty('pageScanLinksToIgnore', ['https://example2.tld/*']);
 
         return $page;

@@ -35,7 +35,7 @@ final class Manager
         public readonly Page $page,
     ) {
         $this->apps = $managerPool->apps;
-        $this->app = $this->apps->get($page->getHost());
+        $this->app = $this->apps->get($page->host);
     }
 
     public function getPage(): Page

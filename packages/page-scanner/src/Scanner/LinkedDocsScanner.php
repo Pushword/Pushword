@@ -169,7 +169,7 @@ final class LinkedDocsScanner extends AbstractScanner
         /** @var Page[] $pages */
         $pages = $queryBuilder->getQuery()->getResult();
         foreach ($pages as $page) {
-            $key = $page->getHost().'/'.$page->getSlug();
+            $key = $page->host.'/'.$page->getSlug();
             $this->pageCache[$key] = $page;
         }
     }
@@ -294,8 +294,8 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function removeBase(string $url): string
     {
-        if ('' !== $this->page->getHost() && str_starts_with($url, 'https://'.$this->page->getHost())) {
-            return substr($url, \strlen('https://'.$this->page->getHost()));
+        if ('' !== $this->page->host && str_starts_with($url, 'https://'.$this->page->host)) {
+            return substr($url, \strlen('https://'.$this->page->host));
         }
 
         return $url;
@@ -375,8 +375,8 @@ final class LinkedDocsScanner extends AbstractScanner
                 $this->collectedExternalUrls[] = $url;
                 $this->deferredExternalChecks[] = [
                     'url' => $url,
-                    'pageId' => (int) $this->page->getId(),
-                    'pageHost' => $this->page->getHost(),
+                    'pageId' => (int) $this->page->id,
+                    'pageHost' => $this->page->host,
                     'pageSlug' => $this->page->getSlug(),
                     'pageH1' => $this->page->getH1(),
                     'pageMetaRobots' => $this->page->getMetaRobots(),
@@ -531,13 +531,13 @@ final class LinkedDocsScanner extends AbstractScanner
     {
         // Use cache if available
         if (null !== $this->pageCache) {
-            $hostKey = $this->page->getHost().'/'.$slug;
+            $hostKey = $this->page->host.'/'.$slug;
 
             return $this->pageCache[$hostKey] ?? null;
         }
 
         // Fall back to database query
         return $this->entityManager->getRepository(Page::class)
-            ->getPage($slug, $this->page->getHost(), true);
+            ->getPage($slug, $this->page->host, true);
     }
 }

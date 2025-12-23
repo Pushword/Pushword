@@ -10,9 +10,9 @@ class UserTest extends TestCase
     public function testBasics(): void
     {
         $user = new User();
-        self::assertEmpty($user->getEmail());
+        self::assertEmpty($user->email);
 
-        $user->setEmail('test@example.tld');
+        $user->email = 'test@example.tld';
         self::assertSame('test@example.tld', (string) $user);
     }
 }

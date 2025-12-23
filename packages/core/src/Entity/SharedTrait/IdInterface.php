@@ -4,5 +4,5 @@ namespace Pushword\Core\Entity\SharedTrait;
 
 interface IdInterface
 {
-    public function getId(): ?int;
+    public ?int $id { get; }
 }

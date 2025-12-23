@@ -74,7 +74,7 @@ class PageRedirectionCrudController extends PageCrudController
 
     private function formatFromColumn(Page $page): string
     {
-        $path = trim(sprintf('%s/%s', $page->getHost(), $page->getSlug()), '/');
+        $path = trim(sprintf('%s/%s', $page->host, $page->getSlug()), '/');
         $editUrl = $this->buildEditUrl($page);
 
         return sprintf(
@@ -111,7 +111,7 @@ class PageRedirectionCrudController extends PageCrudController
         return $generator
             ->setController(static::class)
             ->setAction(Action::EDIT)
-            ->setEntityId($page->getId())
+            ->setEntityId($page->id)
             ->generateUrl();
     }
 

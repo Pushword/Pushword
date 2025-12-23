@@ -73,7 +73,7 @@ final class PageScannerService
     private function getHtml(Page $page): string
     {
         try {
-            $this->pageController->setHost($page->getHost());
+            $this->pageController->setHost($page->host);
             $response = $this->pageController->showPage($page);
 
             if ($response->isRedirect()) {
@@ -120,11 +120,11 @@ final class PageScannerService
         $this->errors[] = [
             'message' => $message,
             'page' => [
-                'id' => $page->getId() ?? 0,
+                'id' => $page->id ?? 0,
                 'slug' => $page->getSlug(),
                 'h1' => $page->getH1(),
                 'metaRobots' => $page->getMetaRobots(),
-                'host' => $page->getHost(),
+                'host' => $page->host,
             ],
         ];
     }

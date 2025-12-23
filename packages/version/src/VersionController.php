@@ -103,7 +103,7 @@ class VersionController extends AbstractController
         $pageVersions = [];
         foreach ($versions as $version) {
             $object = new Page();
-            $pageVersions[$version] = $this->versionner->populate($object, $version, (int) $page->getId());
+            $pageVersions[$version] = $this->versionner->populate($object, $version, (int) $page->id);
         }
 
         return $this->renderAdmin('@PushwordVersion/list.html.twig', [

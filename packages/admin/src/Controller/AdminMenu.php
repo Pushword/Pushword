@@ -290,16 +290,16 @@ final readonly class AdminMenu
 
         $entityDto = $context->getEntity();
         $entity = $entityDto->getInstance();
-        if (! \is_object($entity) || ! method_exists($entity, 'getHost')) {
+        if (! \is_object($entity) || ! property_exists($entity, 'host')) {
             return false;
         }
 
-        if ($entity->getHost() !== $host) {
+        if ($entity->host !== $host) {
             return false;
         }
 
-        if (null !== $locale && method_exists($entity, 'getLocale')) {
-            return $entity->getLocale() === $locale;
+        if (null !== $locale && property_exists($entity, 'locale')) {
+            return $entity->locale === $locale;
         }
 
         return true;

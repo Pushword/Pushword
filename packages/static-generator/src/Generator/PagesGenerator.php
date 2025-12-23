@@ -43,10 +43,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
             $this->generatePage($page);
 
             // Update state for this page
-            $updatedAt = $page->getUpdatedAt();
-            if (null !== $updatedAt) {
-                $stateManager->setPageState($hostName, $page->getSlug(), $this->toImmutable($updatedAt));
-            }
+            $stateManager->setPageState($hostName, $page->getSlug(), $this->toImmutable($page->updatedAt)); // @phpstan-ignore argument.type
         }
 
         // Cleanup deleted pages from state
@@ -67,17 +64,12 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
             return true;
         }
 
-        $updatedAt = $page->getUpdatedAt();
-        if (null === $updatedAt) {
-            return true;
-        }
-
         $stateManager = $this->staticAppGenerator->getStateManager();
 
         return $stateManager->needsRegeneration(
             $host,
             $page->getSlug(),
-            $this->toImmutable($updatedAt)
+            $this->toImmutable($page->updatedAt) // @phpstan-ignore argument.type
         );
     }
 

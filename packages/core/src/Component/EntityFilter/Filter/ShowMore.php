@@ -29,7 +29,7 @@ class ShowMore implements FilterInterface
         $afterShowMoreTag = "\n".'<!--end-show-more-->';
         $bodyParts = explode("\n".'<!--start-show-more-->', $body);
         $body = '';
-        $app = $this->apps->get($page->getHost());
+        $app = $this->apps->get($page->host);
         $templatePath = $app->getView('/component/show_more.html.twig');
         $template = $this->twig->load($templatePath);
         foreach ($bodyParts as $bodyPart) {

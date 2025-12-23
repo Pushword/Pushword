@@ -23,7 +23,7 @@ final readonly class UserCreateCommand
     protected function createUser(string $email, string $password, string $role): void
     {
         $user = new User();
-        $user->setEmail($email);
+        $user->email = $email;
         $user->setPassword($this->passwordEncoder->hashPassword($user, $password));
         $user->setRoles([$role]);
 

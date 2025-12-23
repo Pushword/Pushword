@@ -64,7 +64,7 @@ final class PageExtension
     #[AsTwigFunction('page_uri_list')]
     public function getPageUriList(string|array|null $host = null): array
     {
-        $host ??= $this->apps->getCurrentPage()?->getHost();
+        $host ??= $this->apps->getCurrentPage()?->host;
         $host ??= $this->apps->getMainHost() ?? [];
 
         return $this->pageRepo->getPageUriList($host);
@@ -83,7 +83,7 @@ final class PageExtension
     {
         $currentPage = $this->apps->getCurrentPage();
         $where = [\is_array($where) ? $where : new StringToDQLCriteria($where, $currentPage)->retrieve()];
-        $where[] = ['id',  '<>', $currentPage?->getId() ?? 0];
+        $where[] = ['id',  '<>', $currentPage?->id ?? 0]; // @phpstan-ignore nullsafe.neverNull
 
         $order = '' === $order ? 'publishedAt,weight' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
@@ -118,7 +118,7 @@ final class PageExtension
         $params = [];
         if (null !== $this->apps->getCurrentPage()) {
             $params['slug'] = $this->apps->getCurrentPage()->getSlug();
-            $params['host'] = $this->apps->getCurrentPage()->getHost();
+            $params['host'] = $this->apps->getCurrentPage()->host;
         }
 
         if (null !== ($slug = $this->apps->getCurrentSlug())) {
@@ -148,7 +148,7 @@ final class PageExtension
         }
 
         if (null !== $currentPage) {
-            return [$currentPage->getHost()];
+            return [$currentPage->host];
         }
 
         return [$this->apps->get()->getMainHost(), ''];
@@ -250,7 +250,7 @@ final class PageExtension
         );
 
         if (null !== $currentPage) {
-            $queryBuilder->andWhere('p.id <> '.($currentPage->getId() ?? 0));
+            $queryBuilder->andWhere('p.id <> '.($currentPage->id ?? 0));
         }
 
         if ($maxPages > 1) {

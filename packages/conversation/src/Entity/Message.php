@@ -2,7 +2,6 @@
 
 namespace Pushword\Conversation\Entity;
 
-use DateTime;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -68,8 +67,7 @@ class Message implements Stringable, Taggable, IdInterface
 
     public function __construct()
     {
-        $this->updatedAt ??= new DateTime();
-        $this->createdAt ??= new DateTime();
+        $this->initTimestampableProperties();
     }
 
     public function getPublishedAt(): ?DateTimeInterface

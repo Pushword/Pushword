@@ -58,7 +58,7 @@ final class FeedController extends AbstractPushwordController
             throw $this->createNotFoundException('The page `'.$slug.'` was not found');
         }
 
-        $request->setLocale($page->getLocale());
+        $request->setLocale($page->locale);
 
         $params = [
             'pages' => $this->getPages($request, 5),
@@ -92,7 +92,7 @@ final class FeedController extends AbstractPushwordController
             throw $this->createNotFoundException();
         }
 
-        $request->setLocale($page->getLocale());
+        $request->setLocale($page->locale);
 
         return $this->render(
             $this->getView('/page/rss.xml.twig'),
@@ -151,14 +151,14 @@ final class FeedController extends AbstractPushwordController
             return null;
         }
 
-        if ('' === $page->getLocale()) { // avoid bc break
-            $page->setLocale($this->apps->getApp()->getLocale());
+        if ('' === $page->locale) { // avoid bc break
+            $page->locale = $this->apps->getApp()->getLocale();
         }
 
-        $this->translator->setLocale($page->getLocale());
+        $this->translator->setLocale($page->locale);
 
         // Check if page is public
-        if ($page->getCreatedAt() > new DateTime() && ! $this->isGranted('ROLE_EDITOR')) {
+        if ($page->createdAt > new DateTime() && ! $this->isGranted('ROLE_EDITOR')) {
             return null;
         }
 

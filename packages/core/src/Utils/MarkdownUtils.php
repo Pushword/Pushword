@@ -156,7 +156,7 @@ final class MarkdownUtils
                 $modifiedText .= $attribute."\n".$blockText."\n\n";
 
                 if (null !== $outputCallback) {
-                    $outputCallback($page->getHost().'/'.$page->getSlug().' : '.$blockType.' updated with anchor `'.$anchor.'`');
+                    $outputCallback($page->host.'/'.$page->getSlug().' : '.$blockType.' updated with anchor `'.$anchor.'`');
                 }
 
                 $modified = true;

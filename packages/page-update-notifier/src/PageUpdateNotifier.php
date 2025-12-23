@@ -100,7 +100,7 @@ class PageUpdateNotifier
 
     protected function init(Page $page): void
     {
-        $this->app = $this->apps->get($page->getHost());
+        $this->app = $this->apps->get($page->host);
         $this->emailFrom = $this->app->getStr('page_update_notification_from');
         $this->emailTo = $this->app->getStr('page_update_notification_to');
         $this->interval = $this->app->getStr('page_update_notification_interval');

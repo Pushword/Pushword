@@ -117,34 +117,34 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
 
         $jsonContent = file_get_contents(__DIR__.'/content/KitchenSink.json');
 
-        $page = new Page()
-            ->setH1('Demo Page - Kitchen Sink Block')
-            ->setSlug('kitchen-sink')
-            ->setHost('admin-block-editor.test')
-            ->setLocale('en')
-            ->setMainContent($jsonContent);
+        $page = new Page();
+        $page->setH1('Demo Page - Kitchen Sink Block');
+        $page->setSlug('kitchen-sink');
+        $page->host = 'admin-block-editor.test';
+        $page->locale = 'en';
+        $page->setMainContent($jsonContent);
 
         $em->persist($page);
         $em->flush();
 
-        return (int) $page->getId();
+        return (int) $page->id;
     }
 
     private function createMarkdownTestPage(): int
     {
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-        $page = new Page()
-            ->setH1('Test Markdown Page')
-            ->setSlug('test-markdown')
-            ->setHost('admin-block-editor.test')
-            ->setLocale('en')
-            ->setMainContent('# Test\n\nThis is markdown content.');
+        $page = new Page();
+        $page->setH1('Test Markdown Page');
+        $page->setSlug('test-markdown');
+        $page->host = 'admin-block-editor.test';
+        $page->locale = 'en';
+        $page->setMainContent('# Test\n\nThis is markdown content.');
 
         $em->persist($page);
         $em->flush();
 
-        return (int) $page->getId();
+        return (int) $page->id;
     }
 
     private function isJsonContent(string $string): bool

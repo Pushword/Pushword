@@ -22,7 +22,7 @@ final class ManagerPool
 
     public function getManager(Page $page): Manager
     {
-        $id = $page->getId() ?? 'obj_'.spl_object_id($page);
+        $id = $page->id ?? 'obj_'.spl_object_id($page);
 
         if (isset($this->entityFilterManagers[$id])) {
             return $this->entityFilterManagers[$id];

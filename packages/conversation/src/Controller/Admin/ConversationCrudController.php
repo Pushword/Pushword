@@ -255,7 +255,11 @@ class ConversationCrudController extends AbstractAdminCrudController
             'authorName' => $this->updateNullableString(fn (?string $val): Message => $message->setAuthorName($val), $trimmed),
             'authorEmail' => $this->updateNullableString(fn (?string $val): Message => $message->setAuthorEmail($val), $trimmed),
             'referring' => $this->updateNullableString(fn (?string $val): Message => $message->setReferring($val), $trimmed),
-            'host' => $this->updateNullableString(fn (?string $val): Message => $message->setHost($val), $trimmed),
+            'host' => $this->updateNullableString(function (?string $val) use ($message): Message {
+                $message->host = $val;
+
+                return $message;
+            }, $trimmed),
             'tags' => $this->updateTags($message, $value),
             'weight' => $message->setWeight($value),
             'title' => $this->updateReviewField($message, $trimmed, 'title'),

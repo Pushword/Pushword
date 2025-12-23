@@ -57,8 +57,7 @@ class Media implements IdInterface, Taggable, Stringable
     public function __construct()
     {
         $this->mainImagePages = new ArrayCollection();
-        $this->updatedAt ??= new DateTime();
-        $this->createdAt ??= new DateTime();
+        $this->initTimestampableProperties();
     }
 
     #[ORM\Column(type: Types::STRING, length: 255)]

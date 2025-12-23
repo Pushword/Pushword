@@ -53,7 +53,7 @@ final readonly class UserLocaleSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $locale = $user->getLocale();
+        $locale = $user->locale;
 
         if ('' === $locale) {
             return;

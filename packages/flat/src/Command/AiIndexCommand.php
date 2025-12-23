@@ -155,7 +155,7 @@ final class AiIndexCommand
             $rows[] = [
                 $page->getSlug(),
                 $page->getTitle() ?? $page->getH1(),
-                $page->getCreatedAt(false)?->format('Y-m-d H:i:s') ?? '',
+                $page->getCreatedAtNullable()?->format('Y-m-d H:i:s') ?? '',
                 $page->getTags(),
                 $page->getSearchExcrept() ?? '',
                 implode(', ', $mediaUsed),

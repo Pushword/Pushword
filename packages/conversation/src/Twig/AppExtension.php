@@ -37,8 +37,8 @@ class AppExtension
         return $this->router->generate('pushword_conversation', [
             'type' => $type,
             'referring' => $type.'-'.$page->getRealSlug(),
-            'host' => $page->getHost(),
-            'locale' => $page->getLocale(),
+            'host' => $page->host,
+            'locale' => $page->locale,
         ]);
     }
 

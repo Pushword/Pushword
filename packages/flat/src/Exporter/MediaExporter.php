@@ -151,7 +151,7 @@ final class MediaExporter
     {
         $fileNameHistory = $media->getFileNameHistory();
         $row = [
-            'id' => null !== $media->getId() ? (string) $media->getId() : '',
+            'id' => null !== $media->id ? (string) $media->id : '',
             'fileName' => $media->getFileName(),
             'alt' => $media->getAlt(true),
             'width' => null !== $media->getWidth() ? (string) $media->getWidth() : '',

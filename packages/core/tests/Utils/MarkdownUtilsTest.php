@@ -11,7 +11,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorToHeader(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
         $page->setMainContent("# Mon titre\n\nUn paragraphe.");
 
@@ -24,7 +24,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorToParagraph(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
         $page->setMainContent("# Titre\n\nUn paragraphe important.");
 
@@ -37,7 +37,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorWithExistingAttribute(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
         $page->setMainContent("{.class}\n# Mon titre\n\nUn paragraphe.");
 
@@ -50,7 +50,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorSkipIfAlreadyHasAnchor(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
 
         $originalContent = "{#existing-anchor}\n# Mon titre\n\nUn paragraphe.";
@@ -65,7 +65,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorWithMultipleAnchorsInAttribute(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
 
         $originalContent = "{.class #anchor1}\n# Mon titre\n\nUn paragraphe.";
@@ -80,7 +80,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorNoMatch(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
 
         $originalContent = "# Mon titre\n\nUn paragraphe.";
@@ -95,7 +95,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorOnlyFirstMatch(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
         $page->setMainContent("# Mon titre\n\nUn paragraphe.\n\n# Mon titre\n\nAutre paragraphe.");
 
@@ -109,7 +109,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorWithCallback(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
         $page->setMainContent("# Mon titre\n\nUn paragraphe.");
 
@@ -129,7 +129,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorWithCodeBlock(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
         $page->setMainContent("# Mon titre\n\n```php\ncode here\n```\n\nUn paragraphe.");
 
@@ -143,7 +143,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorWithMultipleBlockTypes(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
         $page->setMainContent("Autre texte.\n\nUn paragraphe important.\n\n# Titre");
 
@@ -158,7 +158,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorWithWindowsLineEndings(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
         $page->setMainContent("# Mon titre\r\n\r\nUn paragraphe.");
 
@@ -196,7 +196,7 @@ class MarkdownUtilsTest extends TestCase
     public function testAddAnchorSkipIfHtmlAnchorExists(): void
     {
         $page = new Page();
-        $page->setHost('example.com');
+        $page->host = 'example.com';
         $page->setSlug('test-page');
 
         $originalContent = "# Mon titre\n\n<div id=\"mon-titre\">Content</div>";

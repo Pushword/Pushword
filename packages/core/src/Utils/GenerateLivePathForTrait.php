@@ -21,7 +21,7 @@ trait GenerateLivePathForTrait
 
         if ($host instanceof Page) {
             $page = $host;
-            $host = $page->getHost();
+            $host = $page->host;
             $params['slug'] = $page->getRealSlug();
         }
 

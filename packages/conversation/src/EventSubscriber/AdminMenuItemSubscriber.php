@@ -136,10 +136,10 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
         }
 
         $entity = $context->getEntity()->getInstance();
-        if (! \is_object($entity) || ! method_exists($entity, 'getHost')) {
+        if (! \is_object($entity) || ! property_exists($entity, 'host')) {
             return false;
         }
 
-        return $entity->getHost() === $host;
+        return $entity->host === $host;
     }
 }

@@ -23,7 +23,7 @@ class PageSlugField extends AbstractField
         /** @param Page $page */
         $page = $this->admin->getSubject();
 
-        $url = $page->getHost().$this->formFieldManager->router->generate('pushword_page', ['slug' => $page->getRealSlug()]);
+        $url = $page->host.$this->formFieldManager->router->generate('pushword_page', ['slug' => $page->getRealSlug()]);
         assert($this->admin instanceof PageCrudController);
         $liveUrl = $this->admin->getPageUrl($page);
 

@@ -201,7 +201,7 @@ final class MediaSync
 
         $lastEditDateTime = new DateTime()->setTimestamp(filemtime($filePath));
 
-        return $lastEditDateTime > $media->safegetUpdatedAt();
+        return $lastEditDateTime > $media->updatedAt;
     }
 
     private function extractMediaName(string $filePath): string
@@ -269,7 +269,7 @@ final class MediaSync
         $allMedia = $this->mediaRepository->findAll();
 
         foreach ($allMedia as $media) {
-            $mediaId = $media->getId();
+            $mediaId = $media->id;
             if (null !== $mediaId && ! \in_array($mediaId, $importedIds, true)) {
                 $this->logger?->info('Deleting media `'.$media->getFileName().'`');
                 ++$this->deletedCount;

@@ -14,7 +14,7 @@ final class MediaNameField extends AbstractField
     public function getEasyAdminField(): Field
     {
         return $this->buildEasyAdminField('alt', TextType::class, [
-            'required' => null !== $this->admin->getSubject()->getId(),
+            'required' => null !== $this->admin->getSubject()->id,
             'help_html' => true,
             'help' => 'adminMediaAltHelp',
             'label' => 'adminMediaAltLabel',

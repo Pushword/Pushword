@@ -26,15 +26,15 @@ class PageEditMessageField extends AbstractField
     private function getHelp(): string
     {
         $page = $this->admin->getSubject();
-        $editMessage = $page->getEditMessage();
-        $page->setEditMessage('');
+        $editMessage = $page->editMessage;
+        $page->editMessage = '';
 
-        return null !== $page->getId() ?
+        return null !== $page->id ?
             $this->admin->getTranslator()->trans('adminPageEditMessageHelp'.(class_exists(PushwordVersionBundle::class) ? 'Versionned' : ''), [
-                '%lastEditDatetime%' => $page->safegetUpdatedAt()->format($this->admin->getTranslator()->trans('datetimeMediumFormat')),
+                '%lastEditDatetime%' => $page->updatedAt->format($this->admin->getTranslator()->trans('datetimeMediumFormat')), // @phpstan-ignore method.nonObject (property hook guarantees non-null)
                 '%lastEditMessage%' => '' !== $editMessage ? '«&nbsp;'.$editMessage.'&nbsp;»' : '-',
                 '%seeVersionLink%' => class_exists(PushwordVersionBundle::class)
-                    ? $this->formFieldManager->router->generate('pushword_version_list', ['id' => $page->getId()])
+                    ? $this->formFieldManager->router->generate('pushword_version_list', ['id' => $page->id])
                     : '',
             ]) : '';
     }

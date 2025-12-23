@@ -122,6 +122,8 @@ final readonly class MediaListener
 
     public function prePersist(Media $media): void
     {
+        $media->initTimestampableProperties();
+
         // If mediaFile is set (upload), setHash() will use it
         // Otherwise, calculate from storage
         if (null === $media->getMediaFile() && '' !== $media->getFileName()) {
@@ -138,8 +140,8 @@ final readonly class MediaListener
 
         if (null !== $duplicate) {
             $this->alert('warning', 'mediaDuplicateWarning', [
-                '%deleteMediaUrl%' => $this->router->generate('admin_media_delete', ['entityId' => $media->getId()]),
-                '%sameMediaEditUrl%' => $this->router->generate('admin_media_edit', ['entityId' => $duplicate->getId()]),
+                '%deleteMediaUrl%' => $this->router->generate('admin_media_delete', ['entityId' => $media->id]),
+                '%sameMediaEditUrl%' => $this->router->generate('admin_media_edit', ['entityId' => $duplicate->id]),
                 '%name%' => $duplicate->getAlt(),
             ]);
         }
@@ -224,14 +226,14 @@ final readonly class MediaListener
     private function identifiersAreToken(Media $media): bool
     {
         $sameName = $this->em->getRepository($media::class)->findOneBy(['alt' => $media->getAlt()]);
-        if (null !== $sameName && $media->getId() !== $sameName->getId()) {
+        if (null !== $sameName && $media->id !== $sameName->id) {
             return true;
         }
 
         $mediaString = $this->getMediaString($media);
 
         // Check if filename is used by another media (current or in history)
-        $conflictingMedia = $this->mediaRepo->isFileNameUsed($mediaString, $media->getId());
+        $conflictingMedia = $this->mediaRepo->isFileNameUsed($mediaString, $media->id);
 
         return null !== $conflictingMedia;
     }

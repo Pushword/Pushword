@@ -210,13 +210,13 @@ final class PageImporter extends AbstractImporter
 
         $page ??= $this->getPageFromSlug($slug);
 
-        if (! $this->newPage && $page->getUpdatedAt() >= $lastEditDateTime) {
+        if (! $this->newPage && $page->updatedAt >= $lastEditDateTime) {
             ++$this->skippedCount;
 
             return $page; // no update needed
         }
 
-        $this->logger->info('Importing page `'.$slug.'` ('.($this->newPage ? 'new' : $page->getId()).')');
+        $this->logger->info('Importing page `'.$slug.'` ('.($this->newPage ? 'new' : $page->id).')');
         ++$this->importedCount;
 
         $page->setCustomProperties([]);
@@ -249,10 +249,10 @@ final class PageImporter extends AbstractImporter
             $page->setCustomProperty($key, $this->converterRegistry->fromFlatValue($key, $value));
         }
 
-        $page->setHost($this->apps->get()->getMainHost());
+        $page->host = $this->apps->get()->getMainHost();
         $page->setSlug($slug);
-        if ('' === $page->getLocale() || '0' === $page->getLocale()) {
-            $page->setLocale($this->apps->get()->getLocale());
+        if ('' === $page->locale || '0' === $page->locale) {
+            $page->locale = $this->apps->get()->getLocale();
         }
 
         $page->setMainContent($content);
@@ -271,12 +271,12 @@ final class PageImporter extends AbstractImporter
             $page->setPublishedAt($lastEditDateTime);
         }
 
-        if (null === $page->getCreatedAt(false)) {
-            $page->setCreatedAt($lastEditDateTime);
+        if (null === $page->getCreatedAtNullable()) {
+            $page->createdAt = $lastEditDateTime;
         }
 
-        if (null === $page->getUpdatedAt(false)) {
-            $page->setUpdatedAt($lastEditDateTime);
+        if (null === $page->getUpdatedAtNullable()) {
+            $page->updatedAt = $lastEditDateTime;
         }
     }
 

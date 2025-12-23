@@ -154,8 +154,8 @@ final class ConversationFlatTest extends KernelTestCase
         $this->entityManager->persist($message2);
         $this->entityManager->flush();
 
-        $message1Id = $message1->getId();
-        $message2Id = $message2->getId();
+        $message1Id = $message1->id;
+        $message2Id = $message2->id;
 
         if (null !== $message1Id) {
             $this->createdMessageIds[] = $message1Id;
@@ -252,12 +252,12 @@ final class ConversationFlatTest extends KernelTestCase
         self::assertCount(1, $importedMessage2->getMediaList());
 
         // Nettoie les messages importés
-        if (null !== $importedMessage1->getId()) {
-            $this->createdMessageIds[] = $importedMessage1->getId();
+        if (null !== $importedMessage1->id) {
+            $this->createdMessageIds[] = $importedMessage1->id;
         }
 
-        if (null !== $importedMessage2->getId()) {
-            $this->createdMessageIds[] = $importedMessage2->getId();
+        if (null !== $importedMessage2->id) {
+            $this->createdMessageIds[] = $importedMessage2->id;
         }
     }
 
@@ -267,8 +267,8 @@ final class ConversationFlatTest extends KernelTestCase
         $this->entityManager->persist($message);
         $this->entityManager->flush();
 
-        if (null !== $message->getId()) {
-            $this->createdMessageIds[] = $message->getId();
+        if (null !== $message->id) {
+            $this->createdMessageIds[] = $message->id;
         }
 
         $this->exporter->export($this->testHost);
@@ -299,8 +299,8 @@ final class ConversationFlatTest extends KernelTestCase
         $this->entityManager->persist($message);
         $this->entityManager->flush();
 
-        if (null !== $message->getId()) {
-            $this->createdMessageIds[] = $message->getId();
+        if (null !== $message->id) {
+            $this->createdMessageIds[] = $message->id;
         }
 
         // Exporte
@@ -350,8 +350,8 @@ final class ConversationFlatTest extends KernelTestCase
         // La mediaList devrait être vide car le média n'existe pas
         self::assertCount(0, $importedMessage->getMediaList());
 
-        if (null !== $importedMessage->getId()) {
-            $this->createdMessageIds[] = $importedMessage->getId();
+        if (null !== $importedMessage->id) {
+            $this->createdMessageIds[] = $importedMessage->id;
         }
     }
 
@@ -367,8 +367,8 @@ final class ConversationFlatTest extends KernelTestCase
         $this->entityManager->persist($message);
         $this->entityManager->flush();
 
-        if (null !== $message->getId()) {
-            $this->createdMessageIds[] = $message->getId();
+        if (null !== $message->id) {
+            $this->createdMessageIds[] = $message->id;
         }
 
         // Exporte
@@ -425,8 +425,8 @@ final class ConversationFlatTest extends KernelTestCase
         $firstMedia = $mediaArray[0];
         self::assertSame('piedweb-logo.png', $firstMedia->getFileName());
 
-        if (null !== $importedMessage->getId()) {
-            $this->createdMessageIds[] = $importedMessage->getId();
+        if (null !== $importedMessage->id) {
+            $this->createdMessageIds[] = $importedMessage->id;
         }
     }
 
@@ -452,8 +452,8 @@ final class ConversationFlatTest extends KernelTestCase
         self::assertInstanceOf(Message::class, $message);
         self::assertSame('external@example.com', $message->getAuthorEmail());
 
-        if (null !== $message->getId()) {
-            $this->createdMessageIds[] = $message->getId();
+        if (null !== $message->id) {
+            $this->createdMessageIds[] = $message->id;
         }
     }
 
@@ -463,8 +463,8 @@ final class ConversationFlatTest extends KernelTestCase
         $this->entityManager->persist($existing);
         $this->entityManager->flush();
 
-        if (null !== $existing->getId()) {
-            $this->createdMessageIds[] = $existing->getId();
+        if (null !== $existing->id) {
+            $this->createdMessageIds[] = $existing->id;
         }
 
         $csvPath = $this->createCsvFile([
@@ -522,7 +522,7 @@ final class ConversationFlatTest extends KernelTestCase
         string $name
     ): Message {
         $message = new Message();
-        $message->setHost($this->testHost);
+        $message->host = $this->testHost;
         $message->setContent($content);
         $message->setAuthorEmail($email);
         $message->setAuthorName($name);
@@ -540,7 +540,7 @@ final class ConversationFlatTest extends KernelTestCase
         int $rating
     ): Review {
         $review = new Review();
-        $review->setHost($this->testHost);
+        $review->host = $this->testHost;
         $review->setContent($content);
         $review->setAuthorEmail($email);
         $review->setAuthorName($name);

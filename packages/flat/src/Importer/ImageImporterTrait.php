@@ -25,13 +25,13 @@ trait ImageImporterTrait
         $fileName = $this->getFilename($filePath);
         $media = $this->getMedia($fileName);
 
-        if (false === $this->newMedia && $media->getUpdatedAt() >= $dateTime) {
+        if (false === $this->newMedia && $media->updatedAt >= $dateTime) {
             ++$this->skippedCount;
 
             return; // no update needed
         }
 
-        $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->getId()).')');
+        $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');
         ++$this->importedCount;
 
         $filePath = $this->copyToMediaDir($filePath);

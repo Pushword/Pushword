@@ -218,8 +218,8 @@ class PageCrudController extends AbstractAdminCrudController
             $page->getSlug(),
             false,
             null,
-            $page->getHost(),
-            ! $this->apps->isDefaultHost($page->getHost())
+            $page->host,
+            ! $this->apps->isDefaultHost($page->host)
         );
     }
 
@@ -247,18 +247,18 @@ class PageCrudController extends AbstractAdminCrudController
 
     private function initializeNewPage(Page $page): void
     {
-        if ('' === $page->getLocale()) {
-            $page->setLocale($this->apps->get()->getLocale());
+        if ('' === $page->locale) {
+            $page->locale = $this->apps->get()->getLocale();
         }
 
-        if ('' === $page->getHost()) {
-            $page->setHost($this->apps->get()->getMainHost());
+        if ('' === $page->host) {
+            $page->host = $this->apps->get()->getMainHost();
         }
     }
 
     private function refreshPreview(Page $page): void
     {
-        $page->setUpdatedAt(new DateTime());
+        $page->updatedAt = new DateTime();
 
         $flashBag = FlashBag::get($this->getRequest());
 

@@ -98,7 +98,7 @@ final readonly class HtmlLinkMultisite implements FilterInterface
             return $href;
         }
 
-        $page = $this->pageRepository->getPageBySlug($slug, $currentPage->getHost());
+        $page = $this->pageRepository->getPageBySlug($slug, $currentPage->host);
 
         if (null === $page) {
             return $href;

@@ -158,7 +158,7 @@ class PageGenerator extends AbstractGenerator
     private function setErrorFor(string $liveUri, ?Page $page = null, string $msg = ''): void
     {
         $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
-                     '['.$liveUri.']('.$this->router->getRouter()->generate('admin_page_edit', ['entityId' => $page->getId()]).')'
+                     '['.$liveUri.']('.$this->router->getRouter()->generate('admin_page_edit', ['entityId' => $page->id]).')'
                      : $liveUri;
         $this->setError('An error occured when generating '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));
         // throw new Exception('An error occured when generating `'.$liveUri.'`'); //exit($this->kernel->handle($request));
@@ -169,7 +169,7 @@ class PageGenerator extends AbstractGenerator
         $base = $this->apps->get()->getStr('base_live_url');
         $url = $base.$liveUri;
         $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
-                     '['.$url.']('.$base.$this->router->getRouter()->generate('admin_page_edit', ['entityId' => $page->getId()]).')'
+                     '['.$url.']('.$base.$this->router->getRouter()->generate('admin_page_edit', ['entityId' => $page->id]).')'
                      : $url;
         $this->logger->warning('Skipping generation for '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));
     }

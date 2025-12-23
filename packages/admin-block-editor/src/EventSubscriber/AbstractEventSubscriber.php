@@ -32,8 +32,8 @@ abstract class AbstractEventSubscriber implements EventSubscriberInterface
         //     return false;
         // }
 
-        if (null !== $page && '' !== $page->getHost()) {
-            return $this->apps->get($page->getHost())->getBoolean('admin_block_editor', false);
+        if (null !== $page && '' !== $page->host) {
+            return $this->apps->get($page->host)->getBoolean('admin_block_editor', false);
         }
 
         return $this->editorBlockForNewPage;

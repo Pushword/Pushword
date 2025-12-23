@@ -93,11 +93,11 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
             return;
         }
 
-        if (null === $page || '' === $page->getHost()) {
+        if (null === $page || '' === $page->host) {
             return;
         }
 
-        $this->apps->switchCurrentApp($page->getHost());
+        $this->apps->switchCurrentApp($page->host);
     }
 
     public function getEntityManager(): EntityManagerInterface
@@ -381,6 +381,6 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
 
     private function getEntityId(object $entity): int
     {
-        return $entity instanceof IdInterface ? ($entity->getId() ?? 0) : 0;
+        return $entity instanceof IdInterface ? ($entity->id ?? 0) : 0;
     }
 }

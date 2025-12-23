@@ -72,8 +72,8 @@ final class PageSyncTest extends KernelTestCase
         $testRedirection = new Page();
         $testRedirection->setSlug('test-redirection-to-delete');
         $testRedirection->setH1('Test Redirection');
-        $testRedirection->setHost('localhost.dev');
-        $testRedirection->setLocale('en');
+        $testRedirection->host = 'localhost.dev';
+        $testRedirection->locale = 'en';
         $testRedirection->setMainContent('Location: https://example.com');
 
         $this->em->persist($testRedirection);
@@ -158,7 +158,7 @@ final class PageSyncTest extends KernelTestCase
         $redirectionPage = $this->pageRepo->findOneBy(['slug' => 'pushword', 'host' => 'localhost.dev']);
         self::assertNotNull($redirectionPage);
         $originalTarget = $redirectionPage->getRedirection();
-        $pageId = $redirectionPage->getId();
+        $pageId = $redirectionPage->id;
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
@@ -196,8 +196,8 @@ final class PageSyncTest extends KernelTestCase
         $tempPage = new Page();
         $tempPage->setSlug('temp-page-for-deletion-test');
         $tempPage->setH1('Temporary Page');
-        $tempPage->setHost('localhost.dev');
-        $tempPage->setLocale('en');
+        $tempPage->host = 'localhost.dev';
+        $tempPage->locale = 'en';
         $tempPage->setMainContent('Temporary content');
         $tempPage->setPublishedAt(new DateTime());
 
@@ -284,7 +284,7 @@ MD;
 
         // Modify index.csv to change homepage h1 (this should be ignored)
         $modifiedCsv = "id,slug,h1,publishedAt,locale,parentPage,tags\n";
-        $modifiedCsv .= $homepage->getId().',homepage,MODIFIED H1 FROM INDEX CSV,2024-01-01 00:00,en,,
+        $modifiedCsv .= $homepage->id.',homepage,MODIFIED H1 FROM INDEX CSV,2024-01-01 00:00,en,,
 ';
         file_put_contents($indexCsvPath, $modifiedCsv);
 
@@ -311,8 +311,8 @@ MD;
         $draftPage = new Page();
         $draftPage->setSlug('draft-page-test');
         $draftPage->setH1('Draft Page');
-        $draftPage->setHost('localhost.dev');
-        $draftPage->setLocale('en');
+        $draftPage->host = 'localhost.dev';
+        $draftPage->locale = 'en';
         $draftPage->setMainContent('Draft content');
         $draftPage->setPublishedAt(new DateTime('+1 year'));
         // Future date = draft
@@ -493,7 +493,7 @@ MD;
         $this->em->clear();
         $frPage = $this->pageRepo->findOneBy(['slug' => 'fr/old-french-page', 'host' => 'localhost.dev']);
         self::assertNotNull($frPage, 'French redirection should be created');
-        self::assertSame('fr', $frPage->getLocale(), 'Locale should be detected from slug prefix');
+        self::assertSame('fr', $frPage->locale, 'Locale should be detected from slug prefix');
 
         // Cleanup
         $this->em->remove($frPage);
@@ -513,15 +513,15 @@ MD;
         $draftPage = new Page();
         $draftPage->setSlug('null-published-at-test');
         $draftPage->setH1('Null PublishedAt Test');
-        $draftPage->setHost('localhost.dev');
-        $draftPage->setLocale('en');
+        $draftPage->host = 'localhost.dev';
+        $draftPage->locale = 'en';
         $draftPage->setMainContent('Content with null publishedAt');
         $draftPage->setPublishedAt(null);
 
         $this->em->persist($draftPage);
         $this->em->flush();
 
-        $pageId = $draftPage->getId();
+        $pageId = $draftPage->id;
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
@@ -569,15 +569,15 @@ MD;
         $page = new Page();
         $page->setSlug('explicit-date-test');
         $page->setH1('Explicit Date Test');
-        $page->setHost('localhost.dev');
-        $page->setLocale('en');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
         $page->setMainContent('Content with explicit date');
         $page->setPublishedAt($specificDate);
 
         $this->em->persist($page);
         $this->em->flush();
 
-        $pageId = $page->getId();
+        $pageId = $page->id;
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
@@ -624,8 +624,8 @@ MD;
         $page = new Page();
         $page->setSlug('yaml-format-test');
         $page->setH1('YAML Format Test');
-        $page->setHost('localhost.dev');
-        $page->setLocale('en');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
         $page->setMainContent('Testing YAML format');
         $page->setPublishedAt(new DateTime('2024-12-25 14:30:45'));
 
@@ -666,16 +666,16 @@ MD;
         $enPage = new Page();
         $enPage->setSlug('translation-test-en');
         $enPage->setH1('English Page');
-        $enPage->setHost('localhost.dev');
-        $enPage->setLocale('en');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
         $enPage->setMainContent('English content');
         $enPage->setPublishedAt(new DateTime());
 
         $frPage = new Page();
         $frPage->setSlug('translation-test-fr');
         $frPage->setH1('Page française');
-        $frPage->setHost('localhost.dev');
-        $frPage->setLocale('fr');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
         $frPage->setMainContent('Contenu français');
         $frPage->setPublishedAt(new DateTime());
 
@@ -687,8 +687,8 @@ MD;
         $enPage->addTranslation($frPage);
         $this->em->flush();
 
-        $enPageId = $enPage->getId();
-        $frPageId = $frPage->getId();
+        $enPageId = $enPage->id;
+        $frPageId = $frPage->id;
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
@@ -754,24 +754,24 @@ MD;
         $enPage = new Page();
         $enPage->setSlug('trans-removal-en');
         $enPage->setH1('English');
-        $enPage->setHost('localhost.dev');
-        $enPage->setLocale('en');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
         $enPage->setMainContent('English');
         $enPage->setPublishedAt(new DateTime());
 
         $frPage = new Page();
         $frPage->setSlug('trans-removal-fr');
         $frPage->setH1('Français');
-        $frPage->setHost('localhost.dev');
-        $frPage->setLocale('fr');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
         $frPage->setPublishedAt(new DateTime());
 
         $dePage = new Page();
         $dePage->setSlug('trans-removal-de');
         $dePage->setH1('Deutsch');
-        $dePage->setHost('localhost.dev');
-        $dePage->setLocale('de');
+        $dePage->host = 'localhost.dev';
+        $dePage->locale = 'de';
         $dePage->setMainContent('Deutsch');
         $dePage->setPublishedAt(new DateTime());
 
@@ -855,16 +855,16 @@ MD;
         $enPage = new Page();
         $enPage->setSlug('trans-keep-en');
         $enPage->setH1('English');
-        $enPage->setHost('localhost.dev');
-        $enPage->setLocale('en');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
         $enPage->setMainContent('English');
         $enPage->setPublishedAt(new DateTime());
 
         $frPage = new Page();
         $frPage->setSlug('trans-keep-fr');
         $frPage->setH1('Français');
-        $frPage->setHost('localhost.dev');
-        $frPage->setLocale('fr');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
         $frPage->setPublishedAt(new DateTime());
 
@@ -930,16 +930,16 @@ MD;
         $aPage = new Page();
         $aPage->setSlug('a-trans-precedence');
         $aPage->setH1('Page A');
-        $aPage->setHost('localhost.dev');
-        $aPage->setLocale('en');
+        $aPage->host = 'localhost.dev';
+        $aPage->locale = 'en';
         $aPage->setMainContent('Page A content');
         $aPage->setPublishedAt(new DateTime());
 
         $bPage = new Page();
         $bPage->setSlug('b-trans-precedence');
         $bPage->setH1('Page B');
-        $bPage->setHost('localhost.dev');
-        $bPage->setLocale('fr');
+        $bPage->host = 'localhost.dev';
+        $bPage->locale = 'fr';
         $bPage->setMainContent('Page B content');
         $bPage->setPublishedAt(new DateTime());
 
@@ -1006,16 +1006,16 @@ MD;
         $enPage = new Page();
         $enPage->setSlug('trans-keep-existing-en');
         $enPage->setH1('English');
-        $enPage->setHost('localhost.dev');
-        $enPage->setLocale('en');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
         $enPage->setMainContent('English');
         $enPage->setPublishedAt(new DateTime());
 
         $frPage = new Page();
         $frPage->setSlug('trans-keep-existing-fr');
         $frPage->setH1('Français');
-        $frPage->setHost('localhost.dev');
-        $frPage->setLocale('fr');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
         $frPage->setPublishedAt(new DateTime());
 
@@ -1079,16 +1079,16 @@ MD;
         $enPage = new Page();
         $enPage->setSlug('trans-explicit-empty-en');
         $enPage->setH1('English');
-        $enPage->setHost('localhost.dev');
-        $enPage->setLocale('en');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
         $enPage->setMainContent('English');
         $enPage->setPublishedAt(new DateTime());
 
         $frPage = new Page();
         $frPage->setSlug('trans-explicit-empty-fr');
         $frPage->setH1('Français');
-        $frPage->setHost('localhost.dev');
-        $frPage->setLocale('fr');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
         $frPage->setPublishedAt(new DateTime());
 
@@ -1150,16 +1150,16 @@ MD;
         $enPage = new Page();
         $enPage->setSlug('trans-add-one-en');
         $enPage->setH1('English');
-        $enPage->setHost('localhost.dev');
-        $enPage->setLocale('en');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
         $enPage->setMainContent('English');
         $enPage->setPublishedAt(new DateTime());
 
         $frPage = new Page();
         $frPage->setSlug('trans-add-one-fr');
         $frPage->setH1('Français');
-        $frPage->setHost('localhost.dev');
-        $frPage->setLocale('fr');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
         $frPage->setMainContent('Français');
         $frPage->setPublishedAt(new DateTime());
 
@@ -1219,8 +1219,8 @@ MD;
         $page = new Page();
         $page->setSlug('custom-props-test');
         $page->setH1('Custom Properties Test');
-        $page->setHost('localhost.dev');
-        $page->setLocale('en');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
         $page->setMainContent('Content');
         $page->setPublishedAt(new DateTime());
         $page->setCustomProperty('mainImageFormat', 'default');
@@ -1230,7 +1230,7 @@ MD;
         $this->em->persist($page);
         $this->em->flush();
 
-        $pageId = $page->getId();
+        $pageId = $page->id;
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
@@ -1286,8 +1286,8 @@ MD;
         $page = new Page();
         $page->setSlug('main-image-format-test');
         $page->setH1('Main Image Format Test');
-        $page->setHost('localhost.dev');
-        $page->setLocale('en');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
         $page->setMainContent('Content');
         $page->setPublishedAt(new DateTime());
         $page->setCustomProperty('mainImageFormat', 1); // Integer value for "none"
@@ -1295,7 +1295,7 @@ MD;
         $this->em->persist($page);
         $this->em->flush();
 
-        $pageId = $page->getId();
+        $pageId = $page->id;
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);

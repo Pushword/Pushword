@@ -132,13 +132,13 @@ final class RedirectionImporter
         if (null === $page) {
             $page = new Page();
             $page->setSlug($slug);
-            $page->setHost($host);
+            $page->host = $host;
             $this->em->persist($page);
         }
 
         // Auto-detect locale from slug prefix
         $locale = $this->detectLocaleFromSlug($slug);
-        $page->setLocale($locale);
+        $page->locale = $locale;
 
         // Set redirection content
         $mainContent = 'Location: '.$target;

@@ -129,7 +129,7 @@ class NewMessageMailNotifier
                         '%authorEmail%' => $message->getAuthorEmail(),
                     ])
                     ."\n".$this->translator->trans('adminConversationNotificationFrom', [
-                        '%host%' => $message->getHost(),
+                        '%host%' => $message->host,
                         '%referring%' => $message->getReferring(),
                     ])
                 );

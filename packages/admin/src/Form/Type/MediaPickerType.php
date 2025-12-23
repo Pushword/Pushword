@@ -155,7 +155,7 @@ final class MediaPickerType extends AbstractType
         $ratioLabel = $media->getRatioLabel();
 
         return [
-            'data-pw-media-picker-selected-id' => (string) $media->getId(),
+            'data-pw-media-picker-selected-id' => (string) $media->id,
             'data-pw-media-picker-selected-name' => $label,
             'data-pw-media-picker-selected-filename' => $media->getFileName(),
             'data-pw-media-picker-selected-thumb' => $this->imageManager->getBrowserPath($media, 'md'),

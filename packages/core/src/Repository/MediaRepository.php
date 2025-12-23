@@ -208,7 +208,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         $duplicates = $this->findBy(['hash' => $media->getHash()]);
 
         foreach ($duplicates as $duplicate) {
-            if ($media->getId() !== $duplicate->getId()) {
+            if ($media->id !== $duplicate->id) {
                 return $duplicate;
             }
         }

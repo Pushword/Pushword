@@ -36,7 +36,7 @@ class PageCheatSheetController extends AbstractController
         }
 
         return $this->redirect($this->adminUrlGenerator->generate('admin_cheatsheet_edit', [
-            'id' => $page->getId(),
+            'id' => $page->id,
         ]));
     }
 }

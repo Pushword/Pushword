@@ -47,7 +47,7 @@ final readonly class AdminFormEventSuscriber implements EventSubscriberInterface
             return;
         }
 
-        if (false === $this->apps->get($page->getHost())->get('advanced_main_image')) {
+        if (false === $this->apps->get($page->host)->get('advanced_main_image')) {
             return;
         }
 

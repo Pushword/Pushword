@@ -35,17 +35,17 @@ class ControllerTest extends AbstractAdminTestClass
     {
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-        $page = new Page()
-            ->setH1('Test editorJsPage')
-            ->setSlug('test')
-            ->setHost('admin-block-editor.test')
-            ->setLocale('en')
-            ->setMainContent(file_get_contents(__DIR__.'/content/content.json'));
+        $page = new Page();
+        $page->setH1('Test editorJsPage');
+        $page->setSlug('test');
+        $page->host = 'admin-block-editor.test';
+        $page->locale = 'en';
+        $page->setMainContent(file_get_contents(__DIR__.'/content/content.json'));
 
         $em->persist($page);
         $em->flush();
 
-        return $page->getId();
+        return $page->id;
     }
 
     public function testPageController(): void

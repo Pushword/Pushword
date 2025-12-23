@@ -47,13 +47,13 @@ class HostField extends AbstractField
         $hosts = $this->getHosts();
 
         if (1 === \count($hosts)) {
-            $this->admin->getSubject()->setHost($this->formFieldManager->apps->get()->getMainHost());
+            $this->admin->getSubject()->host = $this->formFieldManager->apps->get()->getMainHost();
 
             return null;
         }
 
-        if ('' === $this->admin->getSubject()->getHost()) {
-            $this->admin->getSubject()->setHost($this->getDefaultHost());
+        if ('' === $this->admin->getSubject()->host) {
+            $this->admin->getSubject()->host = $this->getDefaultHost();
         }
 
         return ChoiceField::new('host', 'adminPageHostLabel')

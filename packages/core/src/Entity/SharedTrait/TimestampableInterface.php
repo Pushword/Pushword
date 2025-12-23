@@ -2,21 +2,15 @@
 
 namespace Pushword\Core\Entity\SharedTrait;
 
-use DateTime;
-use DateTimeImmutable;
 use DateTimeInterface;
 
 interface TimestampableInterface
 {
-    public function setCreatedAt(DateTime|DateTimeImmutable $createdAt): self;
+    public DateTimeInterface $createdAt { get; set; }
 
-    public function getCreatedAt(bool $safe = true): ?DateTimeInterface;
+    public DateTimeInterface $updatedAt { get; set; }
 
-    public function safegetCreatedAt(): DateTimeInterface;
+    public function getCreatedAtNullable(): ?DateTimeInterface;
 
-    public function setUpdatedAt(DateTime|DateTimeImmutable $updatedAt): self;
-
-    public function getUpdatedAt(bool $safe = true): ?DateTimeInterface;
-
-    public function safegetUpdatedAt(): DateTimeInterface;
+    public function getUpdatedAtNullable(): ?DateTimeInterface;
 }

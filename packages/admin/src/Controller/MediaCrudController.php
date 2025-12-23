@@ -246,7 +246,7 @@ class MediaCrudController extends AbstractAdminCrudController
             ->setAction(Action::INDEX)
             ->set('view', 'mosaic')
             ->set('pwMediaPicker', '1')
-            ->set('pwMediaPickerSelect', (string) $entity->getId());
+            ->set('pwMediaPickerSelect', (string) $entity->id);
 
         $fieldId = $request->query->get('pwMediaPickerFieldId');
         if (\is_string($fieldId) && '' !== $fieldId) {

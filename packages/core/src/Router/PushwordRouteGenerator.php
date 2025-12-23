@@ -38,13 +38,14 @@ final class PushwordRouteGenerator
         $homepage = new Page()->setSlug('');
 
         if (null !== $page) {
-            if ($page->getLocale() !== $this->apps->get()->getLocale()) {
-                $homepage->setSlug($page->getLocale());
+            if ($page->locale !== $this->apps->get()->getLocale()) {
+                $homepage->setSlug($page->locale);
             }
 
-            $homepage->setHost($page->getHost());
+            $homepage->host = $page->host;
         } else {
-            $homepage->setLocale($this->apps->get()->getLocale())->setHost($this->apps->get()->getMainHost());
+            $homepage->locale = $this->apps->get()->getLocale();
+            $homepage->host = $this->apps->get()->getMainHost();
         }
 
         return $this->generate($homepage, $canonical);
@@ -72,12 +73,12 @@ final class PushwordRouteGenerator
         if (! $canonical) {
             if ($forceUseCustomPath || $this->mayUseCustomPath($host)) {
                 return $this->router->generate(self::CUSTOM_HOST_PATH, [
-                    'host' => $host ?? $this->apps->safegetCurrentPage()->getHost(),
+                    'host' => $host ?? $this->apps->safegetCurrentPage()->host,
                     'slug' => $slug,
                 ]);
             }
 
-            if (null !== $page && ! $this->apps->sameHost($page->getHost())
+            if (null !== $page && ! $this->apps->sameHost($page->host)
                 || null !== $host && ! $this->apps->sameHost($host)) {
                 // maybe we force canonical - useful for views
                 $canonical = true;
@@ -85,7 +86,7 @@ final class PushwordRouteGenerator
         }
 
         if ($canonical && (null !== $page || null !== $host)) {
-            $baseUrl = $this->apps->get(null !== $page ? $page->getHost() : $host)->getStr('baseUrl', '');
+            $baseUrl = $this->apps->get(null !== $page ? $page->host : $host)->getStr('baseUrl', '');
         } else {
             $baseUrl = '';
         }
@@ -114,7 +115,7 @@ final class PushwordRouteGenerator
             return false;
         }
 
-        if ('' === ($host ?? $this->apps->getCurrentPage()?->getHost())) {
+        if ('' === ($host ?? $this->apps->getCurrentPage()?->host)) {
             return false;
         }
 

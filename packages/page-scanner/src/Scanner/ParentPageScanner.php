@@ -28,19 +28,19 @@ final class ParentPageScanner extends AbstractScanner
             return;
         }
 
-        if ('' === $parent->getHost()) {
+        if ('' === $parent->host) {
             return;
         }
 
-        if ('' === $Page->getHost()) {
+        if ('' === $Page->host) {
             return;
         }
 
-        if ($Page->getHost() === $parent->getHost()) {
+        if ($Page->host === $parent->host) {
             return;
         }
 
         $this->addError($this->trans('page_scanDifferentHost')
-            .' : <code>'.$parent->getHost().'</code> vs <code>'.$Page->getHost().'</code>');
+            .' : <code>'.$parent->host.'</code> vs <code>'.$Page->host.'</code>');
     }
 }

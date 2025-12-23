@@ -111,7 +111,7 @@ final class ConversationFormController extends AbstractController
      */
     private function getPossibleOrigins(Request $request): array
     {
-        // $host = $request->getHost();
+        // $host = $request->host;
         $app = $this->apps->get();
 
         if ([] !== $this->possibleOrigins) {

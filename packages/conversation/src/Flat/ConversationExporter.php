@@ -158,7 +158,7 @@ final class ConversationExporter
     private function getColumnValue(Message $message, string $column): float|int|string|null
     {
         return match ($column) {
-            'id' => (string) ($message->getId() ?? ''),
+            'id' => (string) ($message->id ?? ''),
             'type' => $message::class,
             'authorIp' => (string) ($message->getAuthorIpRaw() ?: ''),
             'tags' => implode('|', $message->getTagList()),
@@ -182,8 +182,8 @@ final class ConversationExporter
     {
         return match ($column) {
             'publishedAt' => ConversationCsvHelper::formatDate($message->getPublishedAt()),
-            'createdAt' => ConversationCsvHelper::formatDate($message->safegetCreatedAt()),
-            'updatedAt' => ConversationCsvHelper::formatDate($message->safegetUpdatedAt()),
+            'createdAt' => ConversationCsvHelper::formatDate($message->createdAt),
+            'updatedAt' => ConversationCsvHelper::formatDate($message->updatedAt),
             default => null,
         };
     }

@@ -69,13 +69,13 @@ class EntityFilterTest extends KernelTestCase
 
     private function getPage(?string $content = null): Page
     {
-        $page = new Page()
-            ->setH1('Demo Page - Kitchen Sink  Markdown + Twig')
-            ->setSlug('kitchen-sink')
-            ->setLocale('en')
-            ->setCreatedAt(new DateTime('1 day ago'))
-            ->setUpdatedAt(new DateTime('1 day ago'))
-            ->setMainContent($content ?? file_get_contents(__DIR__.'/../../../skeleton/src/DataFixtures/WelcomePage.md'));
+        $page = new Page();
+        $page->setH1('Demo Page - Kitchen Sink  Markdown + Twig');
+        $page->setSlug('kitchen-sink');
+        $page->locale = 'en';
+        $page->createdAt = new DateTime('1 day ago');
+        $page->updatedAt = new DateTime('1 day ago');
+        $page->setMainContent($content ?? file_get_contents(__DIR__.'/../../../skeleton/src/DataFixtures/WelcomePage.md'));
         $page->setCustomProperty('toc', true);
 
         return $page;

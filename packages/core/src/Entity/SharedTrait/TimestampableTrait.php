@@ -6,68 +6,50 @@ use DateTime;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ReflectionProperty;
 
 trait TimestampableTrait
 {
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    protected ?DateTimeInterface $createdAt = null; // @phpstan-ignore-line
+    public ?DateTimeInterface $createdAt = null { // @phpstan-ignore-line
+        get => $this->createdAt ?? new DateTime();
+        set => $this->createdAt = $value;
+    }
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    protected ?DateTimeInterface $updatedAt = null; // @phpstan-ignore-line
-
-    public function setCreatedAt(DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
+    public ?DateTimeInterface $updatedAt = null { // @phpstan-ignore-line
+        get => $this->updatedAt ?? new DateTime();
+        set => $this->updatedAt = $value;
     }
 
-    public function getCreatedAt(bool $safe = true): ?DateTimeInterface
+    /**
+     * Check if createdAt backing store is null (bypasses property hook).
+     * Uses ReflectionProperty to access raw backing store value.
+     */
+    public function getCreatedAtNullable(): ?DateTimeInterface
     {
-        if ($safe) {
-            return $this->safegetCreatedAt();
-        }
+        $reflection = new ReflectionProperty($this, 'createdAt');
 
-        return $this->createdAt;
+        return $reflection->getRawValue($this); // @phpstan-ignore return.type
     }
 
-    public function safegetCreatedAt(): DateTimeInterface
+    /**
+     * Check if updatedAt backing store is null (bypasses property hook).
+     * Uses ReflectionProperty to access raw backing store value.
+     */
+    public function getUpdatedAtNullable(): ?DateTimeInterface
     {
-        if (null === $this->createdAt) {
-            return new DateTime();
-        }
+        $reflection = new ReflectionProperty($this, 'updatedAt');
 
-        return $this->createdAt;
+        return $reflection->getRawValue($this); // @phpstan-ignore return.type
     }
 
-    public function setUpdatedAt(DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
-    public function safegetUpdatedAt(): DateTimeInterface
-    {
-        if (null === $this->updatedAt) {
-            return new DateTime();
-        }
-
-        return $this->updatedAt;
-    }
-
-    public function getUpdatedAt(bool $safe = true): ?DateTimeInterface
-    {
-        if ($safe) {
-            return $this->safegetUpdatedAt();
-        }
-
-        return $this->updatedAt;
-    }
-
+    #[ORM\PrePersist]
     public function initTimestampableProperties(): void
     {
-        $this->updatedAt ??= new DateTime();
-        $this->createdAt ??= new DateTime();
+        // Use reflection-based nullable getters to check actual backing store,
+        // since property hooks return default DateTime on get even when backing store is null
+        $this->updatedAt = $this->getUpdatedAtNullable() ?? new DateTime();
+        $this->createdAt = $this->getCreatedAtNullable() ?? new DateTime();
     }
 }

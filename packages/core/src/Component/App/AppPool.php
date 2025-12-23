@@ -67,7 +67,7 @@ final class AppPool
 
         if ($host instanceof Page) {
             $this->currentPage = $host;
-            $host = $host->getHost();
+            $host = $host->host;
         }
 
         $app = $this->get($host);

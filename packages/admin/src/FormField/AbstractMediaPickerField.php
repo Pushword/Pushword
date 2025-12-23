@@ -35,7 +35,7 @@ abstract class AbstractMediaPickerField extends AbstractField
             'data-pw-media-picker-empty-label' => $this->translate('adminMediaPickerEmpty'),
         ];
 
-        if ($selected instanceof Media && null !== $selected->getId()) {
+        if ($selected instanceof Media && null !== $selected->id) {
             return array_merge($attr, $this->formatSelectedMediaAttributes($selected));
         }
 
@@ -113,7 +113,7 @@ abstract class AbstractMediaPickerField extends AbstractField
         $ratioLabel = $media->getRatioLabel();
 
         return [
-            'data-pw-media-picker-selected-id' => (string) $media->getId(),
+            'data-pw-media-picker-selected-id' => (string) $media->id,
             'data-pw-media-picker-selected-name' => $label,
             'data-pw-media-picker-selected-filename' => $media->getFileName(),
             'data-pw-media-picker-selected-thumb' => $this->formFieldManager->imageManager->getBrowserPath($media, 'md'),

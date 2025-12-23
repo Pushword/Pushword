@@ -18,12 +18,12 @@ class Extended implements FilterInterface
             return $propertyValue;
         }
 
-        $extendedPage = $page->getExtendedPage();
+        $extendedPage = $page->extendedPage;
         if (! $extendedPage instanceof Page) {
             return $propertyValue;
         }
 
-        $stackKey = ($page->getId() ?? spl_object_id($page)).':'.$property;
+        $stackKey = ($page->id ?? spl_object_id($page)).':'.$property;
 
         if (isset($this->resolutionStack[$stackKey])) {
             return $propertyValue;

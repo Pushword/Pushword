@@ -116,7 +116,7 @@ class UserCrudController extends AbstractAdminCrudController
         return $generator
             ->setController(static::class)
             ->setAction(Action::EDIT)
-            ->setEntityId($user->getId())
+            ->setEntityId($user->id)
             ->generateUrl();
     }
 

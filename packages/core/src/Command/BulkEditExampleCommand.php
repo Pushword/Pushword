@@ -47,7 +47,7 @@ final readonly class BulkEditExampleCommand
     private function updateSrcDataLive(OutputInterface $output, Page $page): void
     {
         if (str_contains($page->getMainContent(), 'src-data-live')) {
-            $output->writeln($page->getHost().'/'.$page->getSlug().' : update src-data-live');
+            $output->writeln($page->host.'/'.$page->getSlug().' : update src-data-live');
             $page->setMainContent(str_replace('src-data-live', 'data-src-live', $page->getMainContent()));
         }
     }

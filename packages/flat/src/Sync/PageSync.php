@@ -187,7 +187,7 @@ final class PageSync
 
         $lastEditDateTime = new DateTime()->setTimestamp(filemtime($filePath));
 
-        return $lastEditDateTime > $page->getUpdatedAt();
+        return $lastEditDateTime > $page->updatedAt;
     }
 
     /**

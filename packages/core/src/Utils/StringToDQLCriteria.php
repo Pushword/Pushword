@@ -53,7 +53,7 @@ class StringToDQLCriteria
 
             $this->where[] = [
                 ['mainContent', 'LIKE', '%'.$search.'%'],
-                ['id', '<', ($this->currentPage?->getId() ?? 0) + 3],
+                ['id', '<', ($this->currentPage?->id ?? 0) + 3], // @phpstan-ignore nullsafe.neverNull
             ];
 
             return;
@@ -101,33 +101,33 @@ class StringToDQLCriteria
             $currentPage = $this->currentPage;
             if (null !== $currentPage && ($parentPage = $currentPage->getParentPage()) !== null) {
                 $this->where[] = [
-                    ['parentPage', '=', $parentPage->getId() ?? 0],
-                    ['id', '<', ($currentPage->getId() ?? 0) + 3],
+                    ['parentPage', '=', $parentPage->id ?? 0],
+                    ['id', '<', ($currentPage->id ?? 0) + 3],
                 ];
 
                 return true;
             }
 
-            $this->where[] = ['id', '<', ($currentPage?->getId() ?? 0) + 3];
+            $this->where[] = ['id', '<', ($currentPage?->id ?? 0) + 3]; // @phpstan-ignore nullsafe.neverNull
 
             return true;
         }
 
         if ('children' === $searchLowerCased) {
-            $this->where[] = ['parentPage', '=', $this->currentPage?->getId() ?? 0];
+            $this->where[] = ['parentPage', '=', $this->currentPage?->id ?? 0]; // @phpstan-ignore nullsafe.neverNull
 
             return true;
         }
 
         if (\in_array($searchLowerCased, ['parent_children', 'sisters'], true)) {
-            $this->where[] = ['parentPage', '=', $this->currentPage?->getParentPage()?->getId() ?? 0];
+            $this->where[] = ['parentPage', '=', $this->currentPage?->getParentPage()?->id ?? 0]; // @phpstan-ignore nullsafe.neverNull
 
             return true;
         }
 
         if (\in_array($searchLowerCased, ['children_children', 'grandchildren'], true)) {
             $childrenPage = ($this->currentPage?->getChildrenPages() ?? new ArrayCollection([]))
-                ->map(static fn ($page): int => $page->getId() ?? 0)->toArray();
+                ->map(static fn ($page): int => $page->id ?? 0)->toArray();
 
             $this->where[] = ['parentPage', 'IN', $childrenPage];
 

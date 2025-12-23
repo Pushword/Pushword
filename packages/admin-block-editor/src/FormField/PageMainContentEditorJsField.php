@@ -21,7 +21,7 @@ class PageMainContentEditorJsField extends AbstractField
             'label' => ' ',
             'help_html' => true,
             'help' => 'adminPageMainContentHelp',
-            'attr' => ['page_id' => $page->getId(), 'page_host' => $page->getHost()],
+            'attr' => ['page_id' => $page->id, 'page_host' => $page->host],
         ]);
     }
 }

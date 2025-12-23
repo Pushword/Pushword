@@ -88,8 +88,8 @@ final class PageController extends AbstractPushwordController
         }
 
         // TODO: move it to event (onRequest + onPageLoad)
-        $request->setLocale($page->getLocale());
-        $this->translator->setLocale($page->getLocale());
+        $request->setLocale($page->locale);
+        $this->translator->setLocale($page->locale);
 
         return $this->showPage($page);
     }
@@ -162,14 +162,14 @@ final class PageController extends AbstractPushwordController
             return null;
         }
 
-        if ('' === $page->getLocale()) { // avoid bc break
-            $page->setLocale($this->apps->getApp()->getLocale());
+        if ('' === $page->locale) { // avoid bc break
+            $page->locale = $this->apps->getApp()->getLocale();
         }
 
-        $this->translator->setLocale($page->getLocale());
+        $this->translator->setLocale($page->locale);
 
         // Check if page is public
-        if ($page->getCreatedAt() > new DateTime() && ! $this->isGranted('ROLE_EDITOR')) {
+        if ($page->createdAt > new DateTime() && ! $this->isGranted('ROLE_EDITOR')) {
             return null;
         }
 

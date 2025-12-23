@@ -114,7 +114,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     public function create(string $host): Page
     {
         $page = new Page();
-        $page->setHost($host);
+        $page->host = $host;
 
         return $page;
     }
@@ -281,7 +281,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $orx->add($queryBuilder->expr()->like('p.mainContent', ':fileNamePattern'));
 
         $query = $queryBuilder->where($orx)
-            ->setParameter('idMedia', $media->getId())
+            ->setParameter('idMedia', $media->id)
             ->setParameter('fileNamePattern', '%'.$escapedFileName.'%');
 
         return $query->getQuery()->getResult();

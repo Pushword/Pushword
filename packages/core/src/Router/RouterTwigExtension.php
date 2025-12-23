@@ -21,7 +21,7 @@ final readonly class RouterTwigExtension
         }
 
         if ($slug instanceof Page) {
-            $host = $slug->getHost();
+            $host = $slug->host;
         }
 
         $arg2 = $args[1] ?? null;

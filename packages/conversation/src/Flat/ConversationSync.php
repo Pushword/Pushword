@@ -45,8 +45,8 @@ final readonly class ConversationSync
             return true;
         }
 
-        $lastUpdatedAt = $lastMessage->safegetUpdatedAt();
+        $lastUpdatedAt = $lastMessage->updatedAt;
 
-        return filemtime($csvPath) > $lastUpdatedAt->getTimestamp();
+        return filemtime($csvPath) > $lastUpdatedAt->getTimestamp(); // @phpstan-ignore method.nonObject (property hook guarantees non-null)
     }
 }

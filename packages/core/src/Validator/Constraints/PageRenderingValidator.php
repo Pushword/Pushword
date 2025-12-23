@@ -32,12 +32,12 @@ class PageRenderingValidator extends ConstraintValidator
         }
 
         // First time, right to failed :D
-        if (null === $value->getId()) {
+        if (null === $value->id) {
             return;
         }
 
         try {
-            $this->pageController->setHost($value->getHost());
+            $this->pageController->setHost($value->host);
             $this->pageController->showPage($value);
         } catch (Exception $exception) {
             $this->context->buildViolation($constraint->message)

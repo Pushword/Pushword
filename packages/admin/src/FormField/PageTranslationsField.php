@@ -15,7 +15,7 @@ class PageTranslationsField extends AbstractField
     private function configureQueryBuilder(QueryBuilder $qb, Page $page): QueryBuilder
     {
         // TODO change isSaved by a js function wich retrieve value from input[name$="[locale]"]
-        $isSaved = null !== $page->getId();
+        $isSaved = null !== $page->id;
 
         if (! $isSaved) {
             return $qb;
@@ -26,8 +26,8 @@ class PageTranslationsField extends AbstractField
         $qb
             ->andWhere(sprintf('%s.id != :currentPageId', $alias))
             ->andWhere(sprintf('%s.locale != :currentPageLocale', $alias))
-            ->setParameter('currentPageId', (int) $page->getId())
-            ->setParameter('currentPageLocale', $page->getLocale());
+            ->setParameter('currentPageId', (int) $page->id)
+            ->setParameter('currentPageLocale', $page->locale);
 
         return $qb;
     }
@@ -44,7 +44,7 @@ class PageTranslationsField extends AbstractField
             ->setFormTypeOption('multiple', true)
             ->setFormTypeOption('required', false)
             ->setFormTypeOption('by_reference', false)
-            ->setFormTypeOption('choice_label', static fn (Page $entity): string => $entity->getLocale().' ('.$entity->getSlug().')')
+            ->setFormTypeOption('choice_label', static fn (Page $entity): string => $entity->locale.' ('.$entity->getSlug().')')
             ->setQueryBuilder(fn (QueryBuilder $qb): QueryBuilder => $this->configureQueryBuilder($qb, $page));
     }
 }

@@ -17,11 +17,11 @@ class PageParentPageField extends AbstractField
         $alias = $qb->getRootAliases()[0] ?? 'entity';
 
         $qb->andWhere(sprintf('%s.id != :currentPageId', $alias))
-            ->setParameter('currentPageId', (int) $page->getId());
+            ->setParameter('currentPageId', (int) $page->id);
 
-        if ('' !== $page->getHost()) { // HostField must be call before
+        if ('' !== $page->host) { // HostField must be call before
             $qb->andWhere(sprintf('%s.host = :host', $alias))
-                ->setParameter('host', $page->getHost());
+                ->setParameter('host', $page->host);
         }
 
         return $qb;

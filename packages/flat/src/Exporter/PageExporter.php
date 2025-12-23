@@ -100,7 +100,7 @@ final class PageExporter
                 continue; // Redirections go to redirection.csv
             }
 
-            $locale = '' !== $page->getLocale() ? $page->getLocale() : $defaultLocale;
+            $locale = '' !== $page->locale ? $page->locale : $defaultLocale;
 
             if ($this->isPublished($page)) {
                 $publishedByLocale[$locale][] = $page;
@@ -205,11 +205,11 @@ final class PageExporter
         $h1 = $page->getH1();
 
         $row = [
-            'id' => null !== $page->getId() ? (string) $page->getId() : '',
+            'id' => null !== $page->id ? (string) $page->id : '',
             'slug' => $page->getSlug(),
             'h1' => '' !== $h1 ? $h1 : $page->getTitle(),
             'publishedAt' => null !== $page->getPublishedAt() ? $page->getPublishedAt()->format('Y-m-d H:i') : '',
-            'locale' => $page->getLocale(),
+            'locale' => $page->locale,
             'parentPage' => null !== $page->getParentPage() ? $page->getParentPage()->getSlug() : '',
             'tags' => trim($page->getTags()),
         ];
@@ -232,7 +232,7 @@ final class PageExporter
         if (
             false === $force
             && file_exists($exportFilePath)
-            && filemtime($exportFilePath) >= $page->safegetUpdatedAt()->getTimestamp()
+            && filemtime($exportFilePath) >= $page->updatedAt->getTimestamp() // @phpstan-ignore method.nonObject
         ) {
             ++$this->skippedCount;
 
@@ -268,7 +268,7 @@ final class PageExporter
         $this->filesystem->dumpFile($exportFilePath, $content);
 
         // Sync file timestamp with page updatedAt to prevent import/export cycles
-        touch($exportFilePath, $page->safegetUpdatedAt()->getTimestamp());
+        touch($exportFilePath, $page->updatedAt->getTimestamp()); // @phpstan-ignore method.nonObject
     }
 
     /**
