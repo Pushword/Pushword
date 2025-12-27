@@ -6,7 +6,7 @@ use JsonException;
 
 final class MediaCsvHelper
 {
-    public const array BASE_COLUMNS = ['id', 'fileName', 'alt'];
+    public const array BASE_COLUMNS = ['id', 'fileName', 'alt', 'tags'];
 
     /** @var string[] Columns exported but not imported (auto-calculated from media file) */
     public const array DIMENSION_COLUMNS = ['width', 'height', 'ratio'];

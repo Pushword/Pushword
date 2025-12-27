@@ -1,7 +1,7 @@
 ---
 title: 'Standard Admin for Pushword : Admin User Interface'
 h1: Admin
-id: 31
+id: 25
 publishedAt: '2025-12-21 21:55'
 parentPage: extensions
 toc: true

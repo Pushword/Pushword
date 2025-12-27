@@ -93,7 +93,7 @@ pushword:
       - bundles/pushwordcore/tailwind.css
     javascripts:
       - bundles/pushwordcore/page.js
-  # See /component/entity-filter for full documentation
+  # See https://pushword.piedweb.com/component/entity-filter for full documentation
   filters:
     # Defaults:
     main_content: twig,date,email,htmlObfuscateLink,phoneNumber,punctuation,markdown,mainContentSplitter,extended

@@ -154,6 +154,7 @@ final class MediaExporter
             'id' => null !== $media->id ? (string) $media->id : '',
             'fileName' => $media->getFileName(),
             'alt' => $media->getAlt(true),
+            'tags' => trim($media->getTags()),
             'width' => null !== $media->getWidth() ? (string) $media->getWidth() : '',
             'height' => null !== $media->getHeight() ? (string) $media->getHeight() : '',
             'ratio' => null !== $media->getRatio() ? (string) $media->getRatio() : '',

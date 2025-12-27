@@ -1,7 +1,7 @@
 ---
 title: 'Insert SVG/Icon in your content - Pushword CMS'
 h1: SVG
-id: 54
+id: 47
 publishedAt: '2025-12-21 21:55'
 parentPage: extensions
 toc: true

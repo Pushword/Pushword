@@ -273,6 +273,12 @@ class MediaImporter extends AbstractImporter
             $result['alt'] = trim($altValue);
         }
 
+        // Extract tags
+        $tagsValue = $data['tags'] ?? null;
+        if (\is_string($tagsValue) && '' !== trim($tagsValue)) {
+            $result['tags'] = trim($tagsValue);
+        }
+
         // Extract localized alts into 'alts' as YAML
         $alts = $this->extractLocalizedAlts($data);
         if ([] !== $alts) {
