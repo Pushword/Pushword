@@ -1,10 +1,11 @@
 {# @var review \Pushword\Conversation\Entity\Review #}
 
-
+{% set currentLocale = page.locale|default(app.request.locale) %}
 {% set anonymous = 'conversationReviewAnonymous'|trans %}
 {% set reviewAuthor = review.authorName|default(anonymous) %}
 
-{% set reviewBody = review.content %}
+{% set reviewTitle = review.getTranslatedTitle(currentLocale) %}
+{% set reviewBody = review.getTranslatedContent(currentLocale) %}
 {% set reviewMonth = review.createdAt|format_datetime(pattern='MMMM') %}
 {% set reviewBodyHtml = reviewBody|markdown %}
 
@@ -12,8 +13,8 @@
 {% block review %}
 <blockquote class="{{ reviewWrapperClass|default('text-lg mb-12') }}">
   <div class="font-bold not-italic mb-3">
-    {% if review.title %}
-      <strong>{{ review.title }}</strong>
+    {% if reviewTitle %}
+      <strong>{{ reviewTitle }}</strong>
     {% endif %}
     {% block editLink %}
     {% if is_granted('ROLE_EDITOR') and review.id and class_exists('\\Pushword\\Admin\\PushwordAdminBundle') %}

@@ -34,10 +34,10 @@ final readonly class FlatFileSync
         $this->dispatchEvent($host);
     }
 
-    public function export(?string $host = null, ?string $exportDir = null, bool $force = false): void
+    public function export(?string $host = null, ?string $exportDir = null, bool $force = false, bool $skipId = false): void
     {
         $this->mediaSync->export($host, $force, $exportDir);
-        $this->pageSync->export($host, $force, $exportDir);
+        $this->pageSync->export($host, $force, $exportDir, $skipId);
 
         $this->dispatchEvent($host);
     }

@@ -98,3 +98,60 @@ php bin/console pw:message:flat [host] [--force=sync]
 # Import an external CSV without touching local files
 php bin/console pw:message:import path/to/conversation.csv [--host=example.com]
 ```
+
+## Review Translation
+
+Automatically translate reviews to multiple languages using DeepL or Google Cloud Translation APIs.
+
+### Configuration
+
+Add your API keys in the pushword configuration:
+
+```yaml
+# config/packages/pushword.yaml
+conversation:
+  translation_deepl_api_key: '%env(DEEPL_API_KEY)%'
+  translation_google_api_key: '%env(GOOGLE_API_KEY)%'
+  translation_deepl_use_free_api: true  # Use DeepL free API endpoint
+  translation_deepl_monthly_limit: 450000  # Monthly char limit (0 = unlimited)
+  translation_google_monthly_limit: 450000
+```
+
+DeepL is used as the primary service (higher priority). If DeepL's monthly limit is exceeded or unavailable, Google Cloud Translation is used as fallback.
+
+### Translate reviews
+
+```bash
+# Translate all reviews to French
+php bin/console pw:conversation:translate-reviews --locale=fr
+
+# Translate to multiple locales
+php bin/console pw:conversation:translate-reviews --locale=fr,de,es
+
+# Filter by host
+php bin/console pw:conversation:translate-reviews --locale=fr --host=example.com
+
+# Force re-translation of existing translations
+php bin/console pw:conversation:translate-reviews --locale=fr --force
+
+# Preview without making changes
+php bin/console pw:conversation:translate-reviews --locale=fr --dry-run
+```
+
+The command automatically detects the source language of each review. If a review has no locale set, the translation API will detect it and save it for future use.
+
+### Display translated reviews
+
+Translations are automatically displayed based on the current page locale. The `review.html.twig` template uses `page.locale` (or `app.request.locale` as fallback) to show the appropriate translation.
+
+If no translation exists for the requested locale, the original content is displayed.
+
+### Monthly usage tracking
+
+Character usage is tracked per service per month in the `translation_usage` database table. When a service exceeds its configured limit, the system automatically falls back to the next available service.
+
+To check current usage:
+
+```bash
+php bin/console dbal:run-sql "SELECT * FROM translation_usage"
+```

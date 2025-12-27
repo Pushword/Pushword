@@ -21,12 +21,16 @@ adminConversationTagsPlaceholder: "Tags (séparés par des espaces)"
 adminConversationWeightHelp: "Les valeurs les plus basses apparaissent en premier"
 adminConversationWeightLabel: Poids
 adminReviewEdit: "Éditer l'avis"
+adminReviewLocaleHelp: "Langue originale de cet avis"
+adminReviewLocaleLabel: Langue
 adminReviewMediasHelp: "Ajoutez une ou plusieurs images illustrant l'avis"
 adminReviewMediasLabel: Médias
 adminReviewRatingHelp: "Choisissez une note de 1 (décevant) à 5 (excellent)"
 adminReviewRatingLabel: Note
 adminReviewTitleHelp: "Courte accroche décrivant l'avis"
 adminReviewTitleLabel: Titre
+adminReviewTranslationsHelp: "Traductions générées par IA"
+adminReviewTranslationsLabel: Traductions
 conversationContentPlaceholder: Message
 conversationEmailInvalid: "Adresse email invalide"
 conversationEmailOrPhonePlaceholder: "Email ou Téléphone"

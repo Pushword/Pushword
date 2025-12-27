@@ -1,3 +1,8 @@
+conversation:
+  translation_deepl_api_key: '%env(default::DEEPL_API_KEY)%'
+  translation_google_api_key: '%env(default::GOOGLE_API_KEY)%'
+  translation_deepl_use_free_api: true
+
 pushword:
   apps:
     - hosts:

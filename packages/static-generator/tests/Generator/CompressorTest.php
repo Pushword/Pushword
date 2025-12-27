@@ -44,16 +44,7 @@ class CompressorTest extends TestCase
         // Créer un fichier de test
         $testFile = $this->tempDir.'/test.txt';
         $this->filesystem->dumpFile($testFile, 'Test content');
-
-        // Find an algorithm that is not available on this system
-        $unavailableAlgorithm = null;
-        foreach (CompressionAlgorithm::cases() as $algorithm) {
-            if (! \in_array($algorithm, $compressor->availableCompressors, true)) {
-                $unavailableAlgorithm = $algorithm;
-
-                break;
-            }
-        }
+        $unavailableAlgorithm = array_find(CompressionAlgorithm::cases(), fn ($algorithm): bool => ! \in_array($algorithm, $compressor->availableCompressors, true));
 
         if (null === $unavailableAlgorithm) {
             self::markTestSkipped('Tous les compresseurs sont disponibles sur ce système');

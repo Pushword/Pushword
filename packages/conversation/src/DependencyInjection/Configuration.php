@@ -10,6 +10,12 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
+    // DeepL free tier: 500,000 chars/month
+    public const int DEFAULT_DEEPL_MONTHLY_LIMIT = 450_000;
+
+    // Google Cloud Translation: 500,000 chars/month free
+    public const int DEFAULT_GOOGLE_MONTHLY_LIMIT = 450_000;
+
     /**
      * @var string[]
      */
@@ -23,6 +29,11 @@ class Configuration implements ConfigurationInterface
         'conversation_form_ms_message',
         'conversation_form_newsletter',
         'possible_origins',
+        'translation_deepl_api_key',
+        'translation_google_api_key',
+        'translation_deepl_use_free_api',
+        'translation_deepl_monthly_limit',
+        'translation_google_monthly_limit',
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder
@@ -63,6 +74,26 @@ class Configuration implements ConfigurationInterface
 
                     ->scalarNode('possible_origins')->defaultNull()->end()
                     ->booleanNode('review_enabled')->defaultTrue()->end()
+                    ->scalarNode('translation_deepl_api_key')
+                        ->defaultNull()
+                        ->info('DeepL API key for translation service')
+                    ->end()
+                    ->scalarNode('translation_google_api_key')
+                        ->defaultNull()
+                        ->info('Google Cloud Translation API key')
+                    ->end()
+                    ->booleanNode('translation_deepl_use_free_api')
+                        ->defaultTrue()
+                        ->info('Use DeepL free API endpoint')
+                    ->end()
+                    ->integerNode('translation_deepl_monthly_limit')
+                        ->defaultValue(self::DEFAULT_DEEPL_MONTHLY_LIMIT)
+                        ->info('Monthly character limit for DeepL (0 = unlimited)')
+                    ->end()
+                    ->integerNode('translation_google_monthly_limit')
+                        ->defaultValue(self::DEFAULT_GOOGLE_MONTHLY_LIMIT)
+                        ->info('Monthly character limit for Google Cloud Translation (0 = unlimited)')
+                    ->end()
                 ->end()
         ;
 

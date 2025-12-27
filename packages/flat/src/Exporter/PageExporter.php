@@ -51,7 +51,7 @@ final class PageExporter
             : ['id', 'slug', 'h1', 'publishedAt', 'locale', 'parentPage', 'tags'];
     }
 
-    public function exportPages(bool $force = false): void
+    public function exportPages(bool $force = false, bool $skipId = false): void
     {
         $this->exportedCount = 0;
         $this->skippedCount = 0;
@@ -63,10 +63,10 @@ final class PageExporter
                 continue; // Redirections go to redirection.csv, not .md files
             }
 
-            $this->exportPage($page, $force);
+            $this->exportPage($page, $force, $skipId);
         }
 
-        $this->exportIndex($pages);
+        $this->exportIndex($pages, $skipId);
     }
 
     /**
@@ -82,7 +82,7 @@ final class PageExporter
     /**
      * @param Page[] $pages
      */
-    private function exportIndex(array $pages): void
+    private function exportIndex(array $pages, bool $skipId = false): void
     {
         if ([] === $pages) {
             return;
@@ -112,13 +112,13 @@ final class PageExporter
         // Export published pages to index.csv
         foreach ($publishedByLocale as $locale => $localePages) {
             $filename = $this->getIndexFilename($locale, $defaultLocale, self::INDEX_FILE);
-            $this->exportIndexForLocale($localePages, $filename);
+            $this->exportIndexForLocale($localePages, $filename, $skipId);
         }
 
         // Export draft pages to iDraft.csv
         foreach ($draftsByLocale as $locale => $localePages) {
             $filename = $this->getIndexFilename($locale, $defaultLocale, self::DRAFT_INDEX_FILE);
-            $this->exportIndexForLocale($localePages, $filename);
+            $this->exportIndexForLocale($localePages, $filename, $skipId);
         }
     }
 
@@ -148,15 +148,16 @@ final class PageExporter
     /**
      * @param Page[] $pages
      */
-    private function exportIndexForLocale(array $pages, string $filename): void
+    private function exportIndexForLocale(array $pages, string $filename, bool $skipId = false): void
     {
         $customColumns = $this->collectCustomColumns($pages);
-        $header = array_merge($this->pageIndexColumns, $customColumns);
+        $indexColumns = $skipId ? array_filter($this->pageIndexColumns, static fn ($col) => 'id' !== $col) : $this->pageIndexColumns;
+        $header = array_merge($indexColumns, $customColumns);
 
         /** @var array<int, array<string, string|null>> $rows */
         $rows = [];
         foreach ($pages as $page) {
-            $row = $this->buildCsvRow($page, $customColumns);
+            $row = $this->buildCsvRow($page, $customColumns, $skipId);
 
             $orderedRow = [];
             foreach ($header as $column) {
@@ -200,12 +201,11 @@ final class PageExporter
      *
      * @return array<string, string|null>
      */
-    private function buildCsvRow(Page $page, array $customColumns): array
+    private function buildCsvRow(Page $page, array $customColumns, bool $skipId = false): array
     {
         $h1 = $page->getH1();
 
         $row = [
-            'id' => null !== $page->id ? (string) $page->id : '',
             'slug' => $page->getSlug(),
             'h1' => '' !== $h1 ? $h1 : $page->getTitle(),
             'publishedAt' => null !== $page->getPublishedAt() ? $page->getPublishedAt()->format('Y-m-d H:i') : '',
@@ -213,6 +213,10 @@ final class PageExporter
             'parentPage' => null !== $page->getParentPage() ? $page->getParentPage()->getSlug() : '',
             'tags' => trim($page->getTags()),
         ];
+
+        if (! $skipId) {
+            $row = ['id' => null !== $page->id ? (string) $page->id : ''] + $row;
+        }
 
         // custom properties
         // /** @var array<string, mixed> $customProperties */
@@ -226,7 +230,7 @@ final class PageExporter
         return $row;
     }
 
-    private function exportPage(Page $page, bool $force = false): void
+    private function exportPage(Page $page, bool $force = false, bool $skipId = false): void
     {
         $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
         if (
@@ -241,7 +245,8 @@ final class PageExporter
 
         ++$this->exportedCount;
 
-        $properties = array_unique([...['title', 'h1', 'slug', 'id'], ...Entity::getProperties($page)]);
+        $baseProperties = $skipId ? ['title', 'h1', 'slug'] : ['title', 'h1', 'slug', 'id'];
+        $properties = array_unique([...$baseProperties, ...Entity::getProperties($page)]);
 
         $data = [];
         foreach ($properties as $property) {

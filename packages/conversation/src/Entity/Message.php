@@ -65,6 +65,9 @@ class Message implements Stringable, Taggable, IdInterface
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     protected ?DateTimeInterface $publishedAt = null;
 
+    #[ORM\Column(type: Types::STRING, length: 5, nullable: true)]
+    public ?string $locale = null;
+
     public function __construct()
     {
         $this->initTimestampableProperties();

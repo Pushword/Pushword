@@ -41,6 +41,7 @@ Plan.md
 /docs~
 **/public/bundles
 **/skeleton/public/media
+**/skeleton/.env.local.php
 **/skeleton/content
 **/skeleton/config/reference.php
 **/skeleton/static/

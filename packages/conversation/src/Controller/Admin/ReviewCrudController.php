@@ -75,10 +75,37 @@ final class ReviewCrudController extends ConversationCrudController
         $fields = [];
         $fields[] = $this->getTitleField();
         $fields[] = $this->getRatingFormField();
+        $fields[] = $this->getLocaleField();
         $fields = array_merge($fields, parent::getMainFields());
         $fields[] = $this->getMediaPickerField();
 
         return $fields;
+    }
+
+    private function getLocaleField(): ChoiceField
+    {
+        return ChoiceField::new('locale', 'adminReviewLocaleLabel')
+            ->setChoices($this->getLocaleChoices())
+            ->renderAsNativeWidget()
+            ->setFormTypeOption('required', false)
+            ->setHelp('adminReviewLocaleHelp');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getLocaleChoices(): array
+    {
+        $choices = ['' => ''];
+        foreach ($this->apps->getApps() as $app) {
+            foreach ($app->getLocales() as $locale) {
+                $choices[$locale] = $locale;
+            }
+        }
+
+        ksort($choices);
+
+        return $choices;
     }
 
     private function getMediaPickerField(): CollectionField

@@ -21,12 +21,16 @@ adminConversationTagsPlaceholder: 'Tags (separated by spaces)'
 adminConversationWeightHelp: 'Lower values appear first'
 adminConversationWeightLabel: Weight
 adminReviewEdit: 'Edit review'
+adminReviewLocaleHelp: 'Original language of this review'
+adminReviewLocaleLabel: Locale
 adminReviewMediasHelp: 'Attach one or several images illustrating the review'
 adminReviewMediasLabel: Media
 adminReviewRatingHelp: 'Select a score between 1 (poor) and 5 (excellent)'
 adminReviewRatingLabel: Rating
 adminReviewTitleHelp: 'Short headline describing the review'
 adminReviewTitleLabel: Title
+adminReviewTranslationsHelp: 'AI-generated translations'
+adminReviewTranslationsLabel: Translations
 conversationContentPlaceholder: Message
 conversationEmailInvalid: 'Invalid email address'
 conversationEmailOrPhonePlaceholder: 'Email or Phone'

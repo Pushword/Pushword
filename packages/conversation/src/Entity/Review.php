@@ -58,4 +58,112 @@ class Review extends Message
 
         return $this;
     }
+
+    /**
+     * Get all translations as array.
+     *
+     * @return array<string, array{title?: string, content?: string}>
+     */
+    public function getTranslations(): array
+    {
+        $translations = $this->getCustomProperty('translations');
+
+        /** @var array<string, array{title?: string, content?: string}> */
+        return \is_array($translations) ? $translations : [];
+    }
+
+    /**
+     * Set translation for a specific locale.
+     */
+    public function setTranslation(string $locale, ?string $title, ?string $content): self
+    {
+        $translations = $this->getTranslations();
+        $translations[$locale] = array_filter([
+            'title' => $title,
+            'content' => $content,
+        ], static fn (?string $v): bool => null !== $v && '' !== $v);
+
+        if ([] === $translations[$locale]) {
+            unset($translations[$locale]);
+        }
+
+        if ([] === $translations) {
+            $this->removeCustomProperty('translations');
+        } else {
+            $this->setCustomProperty('translations', $translations);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get translation for a specific locale.
+     *
+     * @return array{title?: string, content?: string}|null
+     */
+    public function getTranslation(string $locale): ?array
+    {
+        return $this->getTranslations()[$locale] ?? null;
+    }
+
+    /**
+     * Check if translation exists for locale.
+     */
+    public function hasTranslation(string $locale): bool
+    {
+        return isset($this->getTranslations()[$locale]);
+    }
+
+    /**
+     * Get translated title (with fallback to original).
+     */
+    public function getTranslatedTitle(string $locale): string
+    {
+        $translation = $this->getTranslation($locale);
+
+        return $translation['title'] ?? $this->getTitle();
+    }
+
+    /**
+     * Get translated content (with fallback to original).
+     */
+    public function getTranslatedContent(string $locale): string
+    {
+        $translation = $this->getTranslation($locale);
+
+        return $translation['content'] ?? $this->getContent();
+    }
+
+    /**
+     * Remove translation for a specific locale.
+     */
+    public function removeTranslation(string $locale): self
+    {
+        $translations = $this->getTranslations();
+        unset($translations[$locale]);
+
+        if ([] === $translations) {
+            $this->removeCustomProperty('translations');
+        } else {
+            $this->setCustomProperty('translations', $translations);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get all available locales including original.
+     *
+     * @return string[]
+     */
+    public function getAvailableLocales(): array
+    {
+        $locales = array_keys($this->getTranslations());
+        $originalLocale = $this->locale;
+        if (null !== $originalLocale && '' !== $originalLocale && ! \in_array($originalLocale, $locales, true)) {
+            array_unshift($locales, $originalLocale);
+        }
+
+        return $locales;
+    }
 }

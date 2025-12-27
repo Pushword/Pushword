@@ -7,7 +7,12 @@ use Symfony\Component\HttpFoundation\Request;
 
 require_once __DIR__.'/../../../vendor/autoload.php';
 
-new Dotenv()->loadEnv(__DIR__.'/../.env');
+if (is_file(__DIR__.'/../.env.local.php')) {
+    $_ENV = [...$_ENV, ...require __DIR__.'/../.env.local.php'];
+    $_SERVER = [...$_SERVER, ...$_ENV];
+} else {
+    (new Dotenv())->loadEnv(__DIR__.'/../.env');
+}
 
 $_SERVER['APP_ENV'] = $_ENV['APP_ENV'] ??= 'dev';
 $_SERVER['APP_DEBUG'] = $_ENV['APP_DEBUG'] ??= '1';

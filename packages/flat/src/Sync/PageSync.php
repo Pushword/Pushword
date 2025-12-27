@@ -82,14 +82,14 @@ final class PageSync
         $this->pageExporter->exportPages(force: true);
     }
 
-    public function export(?string $host = null, bool $force = false, ?string $exportDir = null): void
+    public function export(?string $host = null, bool $force = false, ?string $exportDir = null, bool $skipId = false): void
     {
         $app = $this->resolveApp($host);
         $targetDir = $exportDir ?? $this->contentDirFinder->get($app->getMainHost());
 
         // Export pages (.md files + index.csv + iDraft.csv)
         $this->pageExporter->exportDir = $targetDir;
-        $this->pageExporter->exportPages($force);
+        $this->pageExporter->exportPages($force, $skipId);
 
         // Export redirections (redirection.csv)
         $this->redirectionExporter->exportDir = $targetDir;

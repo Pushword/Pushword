@@ -27,10 +27,12 @@ final readonly class FlatFileExportCommand
         ?string $exportDir,
         #[Option(name: 'force', shortcut: 'f')]
         bool $force = false,
+        #[Option(name: 'skip-id', description: 'Skip adding IDs to markdown files and CSV indexes')]
+        bool $skipId = false,
     ): int {
         $output->writeln('Export will start in few seconds...');
 
-        $this->flatFileSync->export($host, $exportDir, $force);
+        $this->flatFileSync->export($host, $exportDir, $force, $skipId);
 
         $output->writeln('Export completed.');
 
