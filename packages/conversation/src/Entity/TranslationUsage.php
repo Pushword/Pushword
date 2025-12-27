@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Entity;
 
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -26,17 +27,17 @@ class TranslationUsage
     public int $characterCount = 0;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    public \DateTimeImmutable $updatedAt;
+    public DateTimeImmutable $updatedAt;
 
     public function __construct()
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable();
     }
 
     public function addCharacters(int $count): self
     {
         $this->characterCount += $count;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable();
 
         return $this;
     }

@@ -151,7 +151,7 @@ final class PageExporter
     private function exportIndexForLocale(array $pages, string $filename, bool $skipId = false): void
     {
         $customColumns = $this->collectCustomColumns($pages);
-        $indexColumns = $skipId ? array_filter($this->pageIndexColumns, static fn ($col) => 'id' !== $col) : $this->pageIndexColumns;
+        $indexColumns = $skipId ? array_filter($this->pageIndexColumns, static fn ($col): bool => 'id' !== $col) : $this->pageIndexColumns;
         $header = array_merge($indexColumns, $customColumns);
 
         /** @var array<int, array<string, string|null>> $rows */
@@ -215,7 +215,7 @@ final class PageExporter
         ];
 
         if (! $skipId) {
-            $row = ['id' => null !== $page->id ? (string) $page->id : ''] + $row;
+            return ['id' => null !== $page->id ? (string) $page->id : ''] + $row;
         }
 
         // custom properties

@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Translation;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Conversation\Entity\TranslationUsage;
 
@@ -24,6 +25,7 @@ final class TranslationUsageTracker
     {
         $usage = $this->getOrCreateUsage($service);
         $usage->addCharacters($characterCount);
+
         $this->entityManager->persist($usage);
         $this->entityManager->flush();
     }
@@ -48,7 +50,7 @@ final class TranslationUsageTracker
 
     private function getOrCreateUsage(string $service): TranslationUsage
     {
-        $currentMonth = (new \DateTimeImmutable())->format('Y-m');
+        $currentMonth = new DateTimeImmutable()->format('Y-m');
         $cacheKey = $service.'_'.$currentMonth;
 
         if (isset($this->cache[$cacheKey])) {

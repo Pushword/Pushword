@@ -1,7 +1,7 @@
 ---
 title: 'How to manage assets CSS / Javascript in Pushword CMS ?'
 h1: 'Managing Assets (css/js)'
-id: 39
+id: 44
 publishedAt: '2025-12-21 21:55'
 parentPage: themes
 toc: true

@@ -11,7 +11,7 @@ if (is_file(__DIR__.'/../.env.local.php')) {
     $_ENV = [...$_ENV, ...require __DIR__.'/../.env.local.php'];
     $_SERVER = [...$_SERVER, ...$_ENV];
 } else {
-    (new Dotenv())->loadEnv(__DIR__.'/../.env');
+    new Dotenv()->loadEnv(__DIR__.'/../.env');
 }
 
 $_SERVER['APP_ENV'] = $_ENV['APP_ENV'] ??= 'dev';

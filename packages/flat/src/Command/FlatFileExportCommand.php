@@ -27,7 +27,7 @@ final readonly class FlatFileExportCommand
         ?string $exportDir,
         #[Option(name: 'force', shortcut: 'f')]
         bool $force = false,
-        #[Option(name: 'skip-id', description: 'Skip adding IDs to markdown files and CSV indexes')]
+        #[Option(description: 'Skip adding IDs to markdown files and CSV indexes', name: 'skip-id')]
         bool $skipId = false,
     ): int {
         $output->writeln('Export will start in few seconds...');

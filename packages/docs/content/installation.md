@@ -1,7 +1,7 @@
 ---
 title: 'Install Pushword in a few seconds (automatic installer)'
 h1: Installation
-id: 37
+id: 42
 publishedAt: '2025-12-21 21:55'
 parentPage: homepage
 toc: true

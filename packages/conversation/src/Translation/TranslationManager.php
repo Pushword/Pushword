@@ -190,10 +190,12 @@ final class TranslationManager
 
         foreach ($this->translators as $priorityTranslators) {
             foreach ($priorityTranslators as $translator) {
-                if (! $translator->isAvailable() || $translator->isRateLimited()) {
+                if (! $translator->isAvailable()) {
                     continue;
                 }
-
+                if ($translator->isRateLimited()) {
+                    continue;
+                }
                 $monthlyLimit = $this->monthlyLimits[$translator->getName()] ?? 0;
                 if ($this->usageTracker->isWithinLimit($translator->getName(), $monthlyLimit)) {
                     return true;

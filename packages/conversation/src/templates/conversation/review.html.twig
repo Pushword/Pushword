@@ -1,6 +1,6 @@
 {# @var review \Pushword\Conversation\Entity\Review #}
 
-{% set currentLocale = page.locale|default(app.request.locale) %}
+{% set currentLocale = page is defined and page ? page.locale : (app.request.locale|default('en')) %}
 {% set anonymous = 'conversationReviewAnonymous'|trans %}
 {% set reviewAuthor = review.authorName|default(anonymous) %}
 
