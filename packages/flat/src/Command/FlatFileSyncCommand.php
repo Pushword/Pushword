@@ -159,9 +159,11 @@ final readonly class FlatFileSyncCommand
                 if ('sync' === $name) {
                     continue;
                 }
+
                 if ('__section__' === $name) {
                     continue;
                 }
+
                 // Only include our custom timing events
                 if (! \in_array($name, ['media.sync', 'page.sync'], true)) {
                     continue;

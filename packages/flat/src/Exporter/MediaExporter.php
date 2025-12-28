@@ -43,9 +43,6 @@ final class MediaExporter
             return;
         }
 
-        $totalMedias = \count($medias);
-        $this->output?->writeln(\sprintf('Exporting %d media files...', $totalMedias));
-
         $altLocaleColumns = $this->collectAltLocaleColumns($medias);
         $customColumns = $this->collectCustomColumns($medias);
         $header = array_merge(
@@ -58,10 +55,7 @@ final class MediaExporter
 
         /** @var array<int, array<string, string|null>> $rows */
         $rows = [];
-        $currentMedia = 0;
         foreach ($medias as $media) {
-            ++$currentMedia;
-            $this->output?->writeln(\sprintf('[%d/%d] Exporting %s', $currentMedia, $totalMedias, $media->getFileName()));
             $this->copyMediaFile($media);
             $row = $this->buildRow($media, $altLocaleColumns, $customColumns);
 
@@ -87,6 +81,7 @@ final class MediaExporter
         }
 
         $this->exportedCount = \count($medias);
+        $this->output?->writeln(\sprintf('Exported %d media to index.csv', $this->exportedCount));
         file_put_contents($csvFilePath, $newContent);
     }
 

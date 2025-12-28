@@ -6,6 +6,7 @@ use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
+use Override;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
@@ -171,7 +172,7 @@ class MediaImporter extends AbstractImporter
         }
     }
 
-    #[\Override]
+    #[Override]
     public function import(string $filePath, DateTimeInterface $lastEditDateTime): bool
     {
         // Skip index.csv file itself

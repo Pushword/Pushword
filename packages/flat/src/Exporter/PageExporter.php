@@ -69,17 +69,13 @@ final class PageExporter
 
         // Filter out redirections for export
         $exportablePages = array_filter($pages, static fn (Page $page): bool => ! $page->hasRedirection());
-        $totalPages = \count($exportablePages);
 
-        if ($totalPages > 0) {
-            $this->output?->writeln(\sprintf('Exporting %d pages...', $totalPages));
-        }
-
-        $currentPage = 0;
         foreach ($exportablePages as $page) {
-            ++$currentPage;
-            $this->output?->writeln(\sprintf('[%d/%d] Exporting %s.md', $currentPage, $totalPages, $page->getSlug()));
-            $this->exportPage($page, $force, $skipId);
+            $exported = $this->exportPage($page, $force, $skipId);
+
+            if ($exported) {
+                $this->output?->writeln(\sprintf('Exported %s.md', $page->getSlug()));
+            }
         }
 
         $this->exportIndex($pages, $skipId);
@@ -271,7 +267,7 @@ final class PageExporter
         return $row;
     }
 
-    private function exportPage(Page $page, bool $force = false, bool $skipId = false): void
+    private function exportPage(Page $page, bool $force = false, bool $skipId = false): bool
     {
         $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
 
@@ -307,7 +303,7 @@ final class PageExporter
             if ($newContent === $existingContent) {
                 ++$this->skippedCount;
 
-                return;
+                return false;
             }
         }
 
@@ -319,7 +315,7 @@ final class PageExporter
         ) {
             ++$this->skippedCount;
 
-            return;
+            return false;
         }
 
         ++$this->exportedCount;
@@ -327,6 +323,8 @@ final class PageExporter
 
         // Sync file timestamp with page updatedAt to prevent import/export cycles
         touch($exportFilePath, $page->updatedAt->getTimestamp()); // @phpstan-ignore method.nonObject
+
+        return true;
     }
 
     /**

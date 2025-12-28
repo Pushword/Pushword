@@ -87,25 +87,20 @@ final class MediaSync
         $this->deleteMissingMedia();
         $this->mediaImporter->finishImport();
 
-        // 4. Collect all media files first for progress display
+        // 4. Collect all media files
         $files = $this->collectMediaFiles($this->mediaDir);
         $localFiles = file_exists($localMediaDir) ? $this->collectMediaFiles($localMediaDir) : [];
         $allFiles = [...$files, ...$localFiles];
-        $totalFiles = \count($allFiles);
 
-        if ($totalFiles > 0) {
-            $this->output?->writeln(\sprintf('Importing %d media files...', $totalFiles));
-        }
-
-        // 5. Import/update media files with progress
-        $currentFile = 0;
+        // 5. Import/update media files (only show actually imported files)
         foreach ($allFiles as $path) {
-            ++$currentFile;
-            $fileName = basename($path);
-            $this->output?->writeln(\sprintf('[%d/%d] Importing %s', $currentFile, $totalFiles, $fileName));
-
             $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
-            $this->mediaImporter->import($path, $lastEditDateTime);
+            $imported = $this->mediaImporter->import($path, $lastEditDateTime);
+
+            if ($imported) {
+                $fileName = basename($path);
+                $this->output?->writeln(\sprintf('Imported %s', $fileName));
+            }
         }
 
         $this->mediaImporter->finishImport();
