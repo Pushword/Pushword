@@ -69,8 +69,9 @@ final readonly class StaticCommand
             $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
             $this->stopWatch->start('generate');
 
-            // Set tee output for progress reporting
+            // Set tee output and stopwatch for progress reporting
             $this->staticAppGenerator->setOutput($teeOutput);
+            $this->staticAppGenerator->setStopwatch($this->stopWatch);
 
             if (null === $host) {
                 $this->staticAppGenerator->generate(null, $incremental);
@@ -89,8 +90,12 @@ final readonly class StaticCommand
                 $msg = $host.'/'.$page.' generated with success.';
             }
 
-            $duration = $this->stopWatch->stop('generate')->getDuration();
+            $event = $this->stopWatch->stop('generate');
+            $duration = $event->getDuration();
             $this->printStatus($teeOutput, $msg.' ('.$duration.'ms).');
+
+            // Print timing breakdown
+            $this->printTimingBreakdown($teeOutput);
 
             $status = [] !== $this->staticAppGenerator->getErrors() ? 'error' : 'completed';
             $this->outputStorage->setStatus(self::PROCESS_TYPE, $status);
@@ -113,5 +118,42 @@ final readonly class StaticCommand
         }
 
         $output->writeln('<info>'.$successMessage.'</info>');
+    }
+
+    private function printTimingBreakdown(OutputInterface $output): void
+    {
+        $sections = $this->stopWatch->getSections();
+        $timings = [];
+
+        foreach ($sections as $section) {
+            foreach ($section->getEvents() as $name => $event) {
+                // Skip our main event and internal Symfony events
+                if ('generate' === $name) {
+                    continue;
+                }
+                if ('__section__' === $name) {
+                    continue;
+                }
+                // Only include our custom timing events
+                if (! \in_array($name, ['kernel.handle', 'html.compress', 'file.write', 'generatePage'], true)) {
+                    continue;
+                }
+
+                $timings[$name] = ($timings[$name] ?? 0) + $event->getDuration();
+            }
+        }
+
+        if ([] === $timings) {
+            return;
+        }
+
+        arsort($timings);
+
+        $output->writeln('');
+        $output->writeln('<comment>⏱ Timing breakdown:</comment>');
+
+        foreach ($timings as $name => $duration) {
+            $output->writeln(\sprintf('  %s: %dms', $name, $duration));
+        }
     }
 }

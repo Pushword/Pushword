@@ -2,7 +2,7 @@
 <div id="scanner-output-content"
      {% if status == 'running' %}
        hx-get="{{ path('admin_page_scanner_output') }}"
-       hx-trigger="load delay:1500ms"
+       hx-trigger="load delay:500ms"
        hx-swap="outerHTML"
        hx-target="#scanner-output-content"
      {% endif %}>

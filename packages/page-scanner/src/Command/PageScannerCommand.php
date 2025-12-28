@@ -16,6 +16,7 @@ use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 #[AsCommand(
     name: 'pw:page-scan',
@@ -48,7 +49,10 @@ final class PageScannerCommand
      */
     protected function scanAll(string $host): array
     {
+        $this->stopwatch?->start('preload.caches');
         $this->scanner->preloadCaches($host);
+        $this->stopwatch?->stop('preload.caches');
+
         $pages = $this->pageRepo->getPublishedPages($host);
         $pagesCount = \count($pages);
 
@@ -61,7 +65,6 @@ final class PageScannerCommand
         $currentPage = 0;
 
         foreach ($pages as $page) {
-            sleep(2);
             ++$currentPage;
             $pageSlug = $page->getSlug() ?: 'index';
             $pageHost = $page->host ?? '';
@@ -74,7 +77,17 @@ final class PageScannerCommand
                 $pageSlug,
             ));
 
+            $this->stopwatch?->start('scanPage');
             $scan = $this->scanner->scan($page);
+            $event = $this->stopwatch?->stop('scanPage');
+
+            if (null !== $event && $event->getDuration() > 500) {
+                $this->output?->writeln(\sprintf(
+                    '    <comment>⏱ %dms (slow)</comment>',
+                    $event->getDuration(),
+                ));
+            }
+
             if (true !== $scan) {
                 $pageId = (int) $page->id;
                 $errors[$pageId] = $scan;
@@ -101,7 +114,9 @@ final class PageScannerCommand
             $urlCount = \count($externalUrls);
             if ($urlCount > 0) {
                 $this->output?->writeln(\sprintf('Checking %d external URLs in parallel...', $urlCount));
+                $this->stopwatch?->start('external.urls');
                 $urlResults = $this->parallelUrlChecker->checkUrls($externalUrls);
+                $this->stopwatch?->stop('external.urls');
                 $this->scanner->linkedDocsScanner->setExternalUrlResults($urlResults);
             }
         }
@@ -127,6 +142,8 @@ final class PageScannerCommand
     private ?OutputInterface $output = null;
 
     private bool $skipExternal = false;
+
+    private ?Stopwatch $stopwatch = null;
 
     private function mustIgnoreError(string $route, string $message): bool
     {
@@ -184,15 +201,66 @@ final class PageScannerCommand
 
         try {
             $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
+
+            $this->stopwatch = new Stopwatch();
+            $this->stopwatch->start('scan');
+
             $errors = $this->scanAll($host ?? '');
             $this->filesystem->dumpFile(PageScannerController::fileCache(), serialize($errors));
-            $teeOutput->writeln('done...');
+
+            $event = $this->stopwatch->stop('scan');
+            $teeOutput->writeln(\sprintf('done... (%dms)', $event->getDuration()));
+
+            // Print timing breakdown
+            $this->printTimingBreakdown($teeOutput);
+
             $this->outputStorage->setStatus(self::PROCESS_TYPE, 'completed');
 
             return Command::SUCCESS;
         } finally {
             // Clean up PID file
             $this->processManager->unregisterProcess($pidFile);
+        }
+    }
+
+    private function printTimingBreakdown(OutputInterface $output): void
+    {
+        if (null === $this->stopwatch) {
+            return;
+        }
+
+        $sections = $this->stopwatch->getSections();
+        $timings = [];
+
+        foreach ($sections as $section) {
+            foreach ($section->getEvents() as $name => $event) {
+                // Skip our main event and internal Symfony events
+                if ('scan' === $name) {
+                    continue;
+                }
+                if ('__section__' === $name) {
+                    continue;
+                }
+                // Only include our custom timing events
+                if (! \in_array($name, ['preload.caches', 'external.urls', 'scanPage'], true)) {
+                    continue;
+                }
+
+                $timings[$name] = ($timings[$name] ?? 0) + $event->getDuration();
+            }
+        }
+
+        if ([] === $timings) {
+            return;
+        }
+
+        arsort($timings);
+
+        $output->writeln('');
+        $output->writeln('<comment>⏱ Timing breakdown:</comment>');
+
+        foreach ($timings as $name => $duration) {
+            $output->writeln(\sprintf('  %s: %dms', $name, $duration));
         }
     }
 }

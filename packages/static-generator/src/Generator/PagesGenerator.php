@@ -52,15 +52,26 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                 continue;
             }
 
+            $slug = $page->getSlug() ?: 'index';
             $this->staticAppGenerator->writeln(\sprintf(
                 '[%d/%d] Generating %s/%s',
                 $currentPage,
                 $totalPages,
                 $hostName,
-                $page->getSlug() ?: 'index',
+                $slug,
             ));
 
+            $stopwatch = $this->staticAppGenerator->getStopwatch();
+            $stopwatch?->start('generatePage'); // 'page:'.$slug
             $this->generatePage($page);
+            $event = $stopwatch?->stop('generatePage'); // 'page:'.$slug
+
+            if (null !== $event && $event->getDuration() > 500) {
+                $this->staticAppGenerator->writeln(\sprintf(
+                    '    <comment>⏱ %dms (slow)</comment>',
+                    $event->getDuration(),
+                ));
+            }
 
             // Update state for this page
             $stateManager->setPageState($hostName, $page->getSlug(), $this->toImmutable($page->updatedAt)); // @phpstan-ignore argument.type

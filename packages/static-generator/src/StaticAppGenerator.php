@@ -12,6 +12,7 @@ use Pushword\StaticGenerator\Generator\RedirectionManager;
 use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  * Generate 1 App.
@@ -27,6 +28,8 @@ final class StaticAppGenerator
 
     private ?OutputInterface $output = null;
 
+    private ?Stopwatch $stopwatch = null;
+
     public function __construct(
         private readonly AppPool $apps,
         private readonly GeneratorBag $generatorBag,
@@ -39,6 +42,16 @@ final class StaticAppGenerator
     public function setOutput(OutputInterface $output): void
     {
         $this->output = $output;
+    }
+
+    public function setStopwatch(Stopwatch $stopwatch): void
+    {
+        $this->stopwatch = $stopwatch;
+    }
+
+    public function getStopwatch(): ?Stopwatch
+    {
+        return $this->stopwatch;
     }
 
     public function writeln(string $message): void

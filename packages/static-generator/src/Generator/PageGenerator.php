@@ -34,7 +34,6 @@ class PageGenerator extends AbstractGenerator
 
     public function generatePage(Page $page): void
     {
-        sleep(2);
         if ($page->hasRedirection()) {
             $this->redirectionManager->addPage($page);
 
@@ -81,10 +80,14 @@ class PageGenerator extends AbstractGenerator
 
     protected function saveAsStatic(string $liveUri, string $destination, ?Page $page = null): void
     {
+        $stopwatch = $this->staticAppGenerator->getStopwatch();
+
         $request = Request::create($liveUri);
         // $request->headers->set('host', $this->app->getMainHost());
 
+        $stopwatch?->start('kernel.handle');
         $response = static::getKernel()->handle($request);
+        $stopwatch?->stop('kernel.handle');
 
         if ($response->isRedirect()) {
             $location = $response->headers->get('location');
@@ -119,10 +122,14 @@ class PageGenerator extends AbstractGenerator
                 $this->extractPager($page, $content);
             }
 
+            $stopwatch?->start('html.compress');
             $content = $this->compress($content);
+            $stopwatch?->stop('html.compress');
         }
 
+        $stopwatch?->start('file.write');
         $this->filesystem->dumpFile($destination, $content);
+        $stopwatch?->stop('file.write');
 
         // Generate compressed sidecars for static content
         if ($this->responseIsHtml($response) || str_contains($destination, '.xml')) {
