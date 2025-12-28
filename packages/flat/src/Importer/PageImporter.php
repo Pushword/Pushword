@@ -84,8 +84,8 @@ final class PageImporter extends AbstractImporter
           || str_ends_with($filePath, 'medias.csv')
           || str_ends_with($filePath, 'conversation.csv')
           || str_ends_with($filePath, 'redirection.csv')
-          || 1 === preg_match('/^index(\.[a-z]{2})?\.csv$/', $filename)
-          || 1 === preg_match('/^iDraft(\.[a-z]{2})?\.csv$/', $filename)
+          || 1 === preg_match('/^index(\.[a-z]{2}(-[a-zA-Z]{2,})?)?\.csv$/', $filename)
+          || 1 === preg_match('/^iDraft(\.[a-z]{2}(-[a-zA-Z]{2,})?)?\.csv$/', $filename)
         ) {
             return null;
         }

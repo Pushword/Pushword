@@ -1372,4 +1372,105 @@ YAML;
         $this->em->flush();
         @unlink($mdFilePath);
     }
+
+    /**
+     * Test 25: Locale with region code (e.g., fr-CA) is imported correctly from frontmatter.
+     */
+    public function testLocaleWithRegionCodeImport(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create directory for fr-CA locale
+        $localeDir = $contentDir.'/fr-ca';
+        if (! is_dir($localeDir)) {
+            mkdir($localeDir, 0o755, true);
+        }
+
+        // Create a .md file with fr-CA locale in frontmatter
+        $mdFilePath = $localeDir.'/locale-region-test.md';
+        $mdContent = <<<'YAML'
+---
+h1: Test Locale Régional
+locale: fr-CA
+---
+
+Contenu en français canadien.
+YAML;
+        file_put_contents($mdFilePath, $mdContent);
+        touch($mdFilePath, time() + 10);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify page was imported with correct locale
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'fr-ca/locale-region-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page should be imported');
+        self::assertSame('fr-CA', $importedPage->locale, 'Locale with region code should be preserved');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        @unlink($mdFilePath);
+        @rmdir($localeDir);
+    }
+
+    /**
+     * Test 26: Locale export/import round trip preserves region code.
+     */
+    public function testLocaleWithRegionCodeRoundTrip(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a page with fr-CA locale
+        $page = new Page();
+        $page->setSlug('fr-ca/round-trip-test');
+        $page->setH1('Test Round Trip');
+        $page->host = 'localhost.dev';
+        $page->locale = 'fr-CA';
+        $page->setMainContent('Contenu test');
+        $page->setPublishedAt(new DateTime());
+
+        $this->em->persist($page);
+        $this->em->flush();
+
+        $pageId = $page->id;
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Verify the .md file contains correct locale
+        $mdFilePath = $contentDir.'/fr-ca/round-trip-test.md';
+        self::assertFileExists($mdFilePath);
+        $mdContent = file_get_contents($mdFilePath);
+        self::assertStringContainsString('locale: fr-CA', $mdContent, 'Locale should be exported with region code');
+
+        // Verify index.fr-CA.csv exists
+        self::assertFileExists($contentDir.'/index.fr-CA.csv', 'Locale-specific index file should be created');
+
+        // Clear and remove the page
+        $this->em->clear();
+        $pageToRemove = $this->em->find(Page::class, $pageId);
+        self::assertNotNull($pageToRemove);
+        $this->em->remove($pageToRemove);
+        $this->em->flush();
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify page was recreated with correct locale
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'fr-ca/round-trip-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page should be recreated');
+        self::assertSame('fr-CA', $importedPage->locale, 'Locale with region code should be preserved after round trip');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        @unlink($mdFilePath);
+    }
 }

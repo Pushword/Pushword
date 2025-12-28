@@ -164,6 +164,26 @@ class AppFixtures extends Fixture
 
         $manager->persist($homepageFr);
 
+        // Canadian French page to test locale with region code (fr-CA)
+        $homepageFrCa = new Page();
+        $homepageFrCa->setH1('Bienvenue sur Pushword !');
+        $homepageFrCa->setSlug('fr-ca/homepage');
+        $homepageFrCa->setMainImage($media['Demo 3']);
+        $homepageFrCa->locale = 'fr-CA';
+        $homepageFrCa->createdAt = new DateTime('2 days ago');
+        $homepageFrCa->updatedAt = new DateTime('2 days ago');
+        $homepageFrCa->setMainContent('Ceci est la page d\'accueil en français canadien.');
+
+        if ('localhost.dev' === $this->apps->getMainHost()) {
+            $homepageFrCa->host = 'localhost.dev';
+        }
+
+        $manager->persist($homepageFrCa);
+
+        // Set up translations between homepage variants
+        $homepage->addTranslation($homepageFr);
+        $homepage->addTranslation($homepageFrCa);
+
         $manager->flush();
 
         if ('localhost.dev' === $this->apps->getMainHost()) {

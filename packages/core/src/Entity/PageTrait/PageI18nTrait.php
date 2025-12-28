@@ -16,6 +16,13 @@ trait PageI18nTrait
     #[ORM\Column(type: Types::STRING, length: 5)]
     public string $locale = '';
 
+    public function setLocale(string $locale): self
+    {
+        $this->locale = $locale;
+
+        return $this;
+    }
+
     /**
      * @var Collection<int, Page>
      */

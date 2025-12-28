@@ -6,7 +6,7 @@ publishedAt: '2025-12-21 21:55'
 parentPage: homepage
 prose: ' '
 raw: true
-main_content_filters: 'twig'
+main_content_filters: twig
 ---
 
 <div class="flex flex-wrap max-w-5xl">

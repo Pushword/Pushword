@@ -5,6 +5,7 @@ namespace Pushword\Flat\Exporter;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
+use Exception;
 use League\Csv\Writer;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
@@ -169,9 +170,34 @@ final class PageExporter
 
         $csvFilePath = $this->exportDir.'/'.$filename;
 
-        $writer = Writer::from($csvFilePath, 'w+');
+        // Generate new CSV content to compare
+        $newContent = $this->generateCsvContent($header, $rows);
+
+        // Compare with existing content - skip if unchanged
+        $existingContent = file_exists($csvFilePath) ? file_get_contents($csvFilePath) : '';
+        if ($newContent === $existingContent) {
+            return;
+        }
+
+        file_put_contents($csvFilePath, $newContent);
+    }
+
+    /**
+     * @param string[]                               $header
+     * @param array<int, array<string, string|null>> $rows
+     */
+    private function generateCsvContent(array $header, array $rows): string
+    {
+        $stream = fopen('php://temp', 'r+');
+        if (false === $stream) {
+            throw new Exception('Failed to open temp stream');
+        }
+
+        $writer = Writer::from($stream);
         $writer->insertOne($header);
         $writer->insertAll($rows);
+
+        return $writer->toString();
     }
 
     /**
@@ -233,18 +259,8 @@ final class PageExporter
     private function exportPage(Page $page, bool $force = false, bool $skipId = false): void
     {
         $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
-        if (
-            false === $force
-            && file_exists($exportFilePath)
-            && filemtime($exportFilePath) >= $page->updatedAt->getTimestamp() // @phpstan-ignore method.nonObject
-        ) {
-            ++$this->skippedCount;
 
-            return;
-        }
-
-        ++$this->exportedCount;
-
+        // Build content first to enable content comparison
         $baseProperties = $skipId ? ['title', 'h1', 'slug'] : ['title', 'h1', 'slug', 'id'];
         $properties = array_unique([...$baseProperties, ...Entity::getProperties($page)]);
 
@@ -268,9 +284,31 @@ final class PageExporter
         }
 
         $metaData = Yaml::dump($data, indent: 2);
-        $content = '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent();
+        $newContent = '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent();
 
-        $this->filesystem->dumpFile($exportFilePath, $content);
+        // Skip if content unchanged (smart update to avoid unnecessary file writes)
+        if (file_exists($exportFilePath)) {
+            $existingContent = file_get_contents($exportFilePath);
+            if ($newContent === $existingContent) {
+                ++$this->skippedCount;
+
+                return;
+            }
+        }
+
+        // Skip if file is newer and not forced (timestamp-based skip)
+        if (
+            false === $force
+            && file_exists($exportFilePath)
+            && filemtime($exportFilePath) >= $page->updatedAt->getTimestamp() // @phpstan-ignore method.nonObject
+        ) {
+            ++$this->skippedCount;
+
+            return;
+        }
+
+        ++$this->exportedCount;
+        $this->filesystem->dumpFile($exportFilePath, $newContent);
 
         // Sync file timestamp with page updatedAt to prevent import/export cycles
         touch($exportFilePath, $page->updatedAt->getTimestamp()); // @phpstan-ignore method.nonObject

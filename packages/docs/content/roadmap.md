@@ -26,6 +26,22 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - refactor bin/console pw:flat:sync like pw:static and page-scan for performance and better output
 
+- [AdminBlockEditor] finish copy/pasting -
+
+```
+I get :
+
+### Simple ImageDemo 3 Select Upload### Gallery
+
+I expect :
+
+### Simple Image
+
+![Demo 3](/media/md/3.jpg)
+
+### Gallery
+```
+
 - [AdminBlockEditor] Manage pasting html (from google sheets/words/etc) -> convert to markdown and then do as usual
 
 - [i18n] move en.md to en/index.md when en/ exists in flat
@@ -140,3 +156,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (extension or core ?)
 
 - **eCommerce** bridge with sylius or odoo ?!
+
+```
+
+```
