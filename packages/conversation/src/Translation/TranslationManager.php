@@ -193,9 +193,11 @@ final class TranslationManager
                 if (! $translator->isAvailable()) {
                     continue;
                 }
+
                 if ($translator->isRateLimited()) {
                     continue;
                 }
+
                 $monthlyLimit = $this->monthlyLimits[$translator->getName()] ?? 0;
                 if ($this->usageTracker->isWithinLimit($translator->getName(), $monthlyLimit)) {
                     return true;

@@ -27,7 +27,7 @@ Pushword is a modular CMS built as a collection of Symfony bundles. This is a mo
 
 ### Coding Standards & Tooling
 
-- Use **PHPUnit** for unit and functional testing via `composer test` or `composer test-filter ...` (never use directly `vendor/bin/phpunit`)
+- Use **PHPUnit** for unit and functional testing via `composer test` or `composer test-filter ExampleTest` (never use directly `vendor/bin/phpunit`)
 - Use php-cs-fixer`composer rector` to ensure consistent code style
 - Use **PHPStan** `composer stan` for static analysis
 - Use **CI** `composer test` to run all tests and checks automatically
@@ -102,33 +102,33 @@ Use the `dev-browser` skill for automated UI checks and browser testing. This sk
 Example usage for checking the admin interface:
 
 ```typescript
-import { connect, waitForPageLoad } from "@/client.js";
+import { connect, waitForPageLoad } from '@/client.js'
 
-const client = await connect();
-const page = await client.page("pushword-admin");
-await page.setViewportSize({ width: 1280, height: 800 });
+const client = await connect()
+const page = await client.page('pushword-admin')
+await page.setViewportSize({ width: 1280, height: 800 })
 
 // Navigate to admin
-await page.goto("https://127.0.0.1:8000/admin");
-await waitForPageLoad(page);
+await page.goto('https://127.0.0.1:8000/admin')
+await waitForPageLoad(page)
 
 // Login
-await page.fill('input[name="_username"]', 'admin@example.tld');
-await page.fill('input[name="_password"]', 'p@ssword');
-await page.click('button[type="submit"]');
-await waitForPageLoad(page);
+await page.fill('input[name="_username"]', 'admin@example.tld')
+await page.fill('input[name="_password"]', 'p@ssword')
+await page.click('button[type="submit"]')
+await waitForPageLoad(page)
 
 // Take screenshot for verification
-await page.screenshot({ path: "tmp/admin-dashboard.png" });
+await page.screenshot({ path: 'tmp/admin-dashboard.png' })
 
-await client.disconnect();
+await client.disconnect()
 ```
 
 Use `getAISnapshot()` to discover page elements and `selectSnapshotRef()` to interact with them when you don't know the exact selectors.
 
 ## Quality Gates
 
-- Run linters `composer stan|rector` and tests `composer test-filter ...` or `composer test` and fix warnings; never leave broken builds.
+- Run linters `composer stan|rector` and tests `composer test-filter ExampleTest` or `composer test` and fix warnings; never leave broken builds.
 - you must avoid to skip tests by using `self::markTestSkipped('...')` or `@group skip` in tests ➜ fix them !
 - Clear cache after each modification `composer console cache:clear`
 - Write comment and documentation in english only.

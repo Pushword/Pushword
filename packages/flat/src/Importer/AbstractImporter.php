@@ -75,7 +75,7 @@ abstract class AbstractImporter
         }
 
         if (\is_array($data)) {
-            return array_map([$this, 'sanitizeUtf8'], $data);
+            return array_map($this->sanitizeUtf8(...), $data);
         }
 
         return $data;

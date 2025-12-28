@@ -123,12 +123,14 @@ adminPageWeightHelp: "Allows sorting pages. Higher values appear first."
 adminPageWeightLabel: Weight
 adminPageTwitterCardHelp: '<a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>Learn more</a>'
 adminPageTwitterCardLabel: "Twitter Card"
+adminStaticAlreadyRunning: "Static generation is already in progress."
 adminStaticErrors: "Errors detected"
 adminStaticGenerating: Generating...
 adminStaticHost: Host
 adminStaticOutput: "Command output"
 adminStaticPleaseWait: "Please wait, generation is in progress. This page will refresh automatically."
 adminStaticStartedAt: "Started at"
+adminStaticStarting: "Starting generation..."
 adminStaticUpdated: "Site updated successfully."
 adminUserCreatedAtLabel: "Registration date"
 adminUserDateOfBirthLabel: "Date of birth"

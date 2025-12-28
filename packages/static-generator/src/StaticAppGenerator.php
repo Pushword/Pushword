@@ -10,6 +10,7 @@ use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
 use RuntimeException;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -24,6 +25,8 @@ final class StaticAppGenerator
 
     private bool $incremental = false;
 
+    private ?OutputInterface $output = null;
+
     public function __construct(
         private readonly AppPool $apps,
         private readonly GeneratorBag $generatorBag,
@@ -31,6 +34,16 @@ final class StaticAppGenerator
         private readonly LoggerInterface $logger,
         private readonly GenerationStateManager $stateManager,
     ) {
+    }
+
+    public function setOutput(OutputInterface $output): void
+    {
+        $this->output = $output;
+    }
+
+    public function writeln(string $message): void
+    {
+        $this->output?->writeln($message);
     }
 
     /**

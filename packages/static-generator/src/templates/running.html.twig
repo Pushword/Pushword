@@ -9,17 +9,22 @@
 {% endblock %}
 
 {% block main %}
-    <meta http-equiv="refresh" content="3">
-    <div class="alert alert-info" role="alert">
-        <div class="d-flex align-items-center mb-2">
-            <i class="fa fa-circle-notch fa-spin me-2"></i>
-            <strong>{{ 'adminStaticPleaseWait'|trans }}</strong>
-        </div>
+    <div class="mb-3">
         {% if startTime %}
-            <p class="mb-1"><small>{{ 'adminStaticStartedAt'|trans }}: {{ startTime|date('d/m/Y à H:i:s') }}</small></p>
+            <p class="text-muted mb-1"><small>{{ 'adminStaticStartedAt'|trans }}: {{ startTime|date('d/m/Y à H:i:s') }}</small></p>
         {% endif %}
         {% if host %}
-            <p class="mb-0"><strong>{{ 'adminStaticHost'|trans }}:</strong> {{ host }}</p>
+            <p class="text-muted mb-0"><small><strong>{{ 'adminStaticHost'|trans }}:</strong> {{ host }}</small></p>
         {% endif %}
+    </div>
+
+    <div id="static-output-container"
+         hx-get="{{ path('admin_static_generator_output', {host: host|default('')}) }}"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="d-flex align-items-center">
+            <i class="fa fa-circle-notch fa-spin me-2"></i>
+            <span>{{ 'adminStaticStarting'|trans }}</span>
+        </div>
     </div>
 {% endblock %}

@@ -32,13 +32,33 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         // Track current slugs for cleanup
         $currentSlugs = [];
 
+        $totalPages = \count($pages);
+        $currentPage = 0;
+
         foreach ($pages as $page) {
+            ++$currentPage;
             $currentSlugs[] = $page->getSlug();
 
             // In incremental mode, skip pages that haven't changed
             if ($this->incremental && ! $this->needsRegeneration($page, $hostName)) {
+                $this->staticAppGenerator->writeln(\sprintf(
+                    '[%d/%d] <comment>Skipped</comment> %s/%s (unchanged)',
+                    $currentPage,
+                    $totalPages,
+                    $hostName,
+                    $page->getSlug() ?: 'index',
+                ));
+
                 continue;
             }
+
+            $this->staticAppGenerator->writeln(\sprintf(
+                '[%d/%d] Generating %s/%s',
+                $currentPage,
+                $totalPages,
+                $hostName,
+                $page->getSlug() ?: 'index',
+            ));
 
             $this->generatePage($page);
 

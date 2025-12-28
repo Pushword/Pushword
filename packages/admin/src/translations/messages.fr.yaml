@@ -124,12 +124,14 @@ adminPageUpdatedAtLabel: 'Mise à jour le'
 adminPageWeightHelp: "Permet d'ordonner les pages. Les valeurs les plus hautes apparaissent en premier."
 adminPageWeightLabel: Poids
 adminPaginationPerPage: 'Par page'
+adminStaticAlreadyRunning: 'La génération statique est déjà en cours.'
 adminStaticErrors: 'Erreurs détectées'
 adminStaticGenerating: 'Génération en cours...'
 adminStaticHost: Hôte
 adminStaticOutput: 'Sortie de la commande'
 adminStaticPleaseWait: 'Veuillez patienter, la génération est en cours. Cette page se rafraîchira automatiquement.'
 adminStaticStartedAt: 'Démarré à'
+adminStaticStarting: 'Démarrage de la génération...'
 adminStaticUpdated: 'Site actualisé avec succès.'
 adminUserCreatedAtLabel: "Date d'enregistrement"
 adminUserDateOfBirthLabel: 'Date de naissance'

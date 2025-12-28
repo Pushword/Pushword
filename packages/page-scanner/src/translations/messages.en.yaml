@@ -16,5 +16,12 @@ page_scannerSiteScan: 'Site scan'
 page_scannerTableAction: Action
 page_scannerTableErrors: Errors
 page_scannerTablePage: Page
+page_scannerAlreadyRunning: 'A page scan is already in progress.'
+page_scannerRefresh: Refresh
+page_scannerScanComplete: 'Scan completed!'
+page_scannerScanning: 'Scanning...'
+page_scannerStartedAt: 'Started at'
+page_scannerStarting: 'Starting scan...'
 page_scannerTitle: 'Content verification'
 page_scannerView: View
+page_scannerViewResults: 'View results'

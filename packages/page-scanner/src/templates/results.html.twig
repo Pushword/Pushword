@@ -27,15 +27,15 @@
                     </div>
                     <meta http-equiv="refresh" content="2">
                 {% else %}
-                    <div class="alert alert-warning" role="alert">
+                    <div class="alert alert-info" role="alert">
                         {{ 'page_scannerScanResult'|trans({'%date%': lastEdit|date('d/m/Y à H:i')}) }}
                         {{ newRun
                             ? (' (' ~ 'page_scannerNewScanInProgress'|trans ~ '<meta http-equiv="refresh" content="4">)')|raw
-                            : (' (<a href="' ~ path('admin_page_scanner', {force: 1}) ~ '">' ~ 'page_scannerForceNewScan'|trans ~ '</a>)')|raw
+                            : ''
                         }}
                     </div>
 
-                    <div class="table-responsive">
+                    <div class="table-responsive mt-3">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>

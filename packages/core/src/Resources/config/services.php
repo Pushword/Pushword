@@ -25,6 +25,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autowire()
         ->autoconfigure()
         ->bind('$projectDir', '%kernel.project_dir%')
+        ->bind('$varDir', '%kernel.project_dir%/var')
         ->bind('$filterSets', '%pw.image_filter_sets%')
         ->bind('$publicMediaDir', '%pw.public_media_dir%')
         ->bind('$mediaDir', '%pw.media_dir%')
