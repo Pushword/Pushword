@@ -11,6 +11,8 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Pushword\Core\Twig\MediaExtension;
+use SensioLabs\AnsiConverter\AnsiToHtmlConverter;
+use SensioLabs\AnsiConverter\Bridge\Twig\AnsiExtension;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -74,7 +76,11 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(PushwordCoreBundle::class);
     $services->set(StringLoaderExtension::class);
     $services->set(TwigExtension::class);
-    // $services->set(IntlExtension::class);
+
+    // ANSI to HTML converter for console output
+    $services->set(AnsiToHtmlConverter::class);
+    $services->set(AnsiExtension::class)
+        ->args([service(AnsiToHtmlConverter::class)]);
 
     // Media Storage (Flysystem)
     $services->set(MediaStorageAdapter::class)

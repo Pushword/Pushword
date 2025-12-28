@@ -122,6 +122,76 @@ class VersionController extends AbstractController
         return $this->redirect($this->adminUrlGenerator->generate('admin_page_edit', ['id' => $id]));
     }
 
+    #[AdminRoute(path: '/version/{id}/compare/{versionLeft}/{versionRight}', name: 'version_compare')]
+    #[Route(path: '/{id}/compare/{versionLeft}/{versionRight}', name: 'pushword_version_compare', methods: ['GET'], priority: -20)]
+    #[IsGranted('ROLE_PUSHWORD_ADMIN')]
+    public function compareVersion(string $id, string $versionLeft, string $versionRight = 'current'): Response
+    {
+        $page = $this->doctrine->getRepository(Page::class)->findOneBy(['id' => $id]);
+
+        if (! $page instanceof Page) {
+            throw new Exception('Page not found `'.$id.'`');
+        }
+
+        $allVersions = $this->versionner->getPageVersions($page);
+
+        // Left side (historical version to compare)
+        $leftPage = new Page();
+        $this->versionner->populate($leftPage, $versionLeft, (int) $page->id);
+
+        // Right side (current page or another version)
+        if ('current' === $versionRight) {
+            $rightPage = $page;
+        } else {
+            $rightPage = new Page();
+            $this->versionner->populate($rightPage, $versionRight, (int) $page->id);
+        }
+
+        return $this->renderAdmin('@PushwordVersion/compare.html.twig', [
+            'page' => $page,
+            'leftPage' => $leftPage,
+            'rightPage' => $rightPage,
+            'versionLeft' => $versionLeft,
+            'versionRight' => $versionRight,
+            'allVersions' => $allVersions,
+        ]);
+    }
+
+    #[Route(path: '/{id}/save-compare', name: 'pushword_version_save_compare', methods: ['POST'], priority: 10)]
+    #[IsGranted('ROLE_PUSHWORD_ADMIN')]
+    public function saveCompare(Request $request, int $id): RedirectResponse
+    {
+        $page = $this->doctrine->getRepository(Page::class)->findOneBy(['id' => $id]);
+
+        if (! $page instanceof Page) {
+            throw new Exception('Page not found `'.$id.'`');
+        }
+
+        $mainContent = $request->request->get('mainContent', '');
+        $page->setMainContent(\is_string($mainContent) ? $mainContent : '');
+
+        $h1 = $request->request->get('h1');
+        if (\is_string($h1) && '' !== $h1) {
+            $page->setH1($h1);
+        }
+
+        $title = $request->request->get('title');
+        if (\is_string($title) && '' !== $title) {
+            $page->setTitle($title);
+        }
+
+        $slug = $request->request->get('slug');
+        if (\is_string($slug) && '' !== $slug) {
+            $page->setSlug($slug);
+        }
+
+        $this->doctrine->getManager()->flush();
+
+        $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('versionSaveSuccess'));
+
+        return $this->redirect($this->adminUrlGenerator->generate('admin_page_edit', ['id' => $id]));
+    }
+
     /**
      * @param array<string, mixed> $parameters
      */

@@ -64,15 +64,18 @@ class AppFixtures extends Fixture
 
         $manager->flush();
 
+        // Store the final content for version history
+        $finalContent = (string) file_get_contents(__DIR__.'/WelcomePage.md');
+
+        // VERSION 1: Create homepage with minimal initial content
         $homepage = new Page();
-        $homepage->setH1('Welcome to Pushword !');
-        $homepage->setSlug('homepage');
+        $homepage->setH1('Welcome to Pushword');
+        $homepage->setSlug('homepage1');
         $homepage->setMainImage($media['Demo 2']);
         $homepage->locale = 'en';
         $homepage->createdAt = new DateTime('2 days ago');
         $homepage->updatedAt = new DateTime('2 days ago');
-        $homepage->setMainContent((string) file_get_contents(__DIR__.'/WelcomePage.md'));
-
+        $homepage->setMainContent("# Welcome\n\nThis is the initial version of the homepage.");
         $homepage->setCustomProperty('mainImageFormat', 1);
 
         if ('localhost.dev' === $this->apps->getMainHost()) {
@@ -80,6 +83,23 @@ class AppFixtures extends Fixture
         }
 
         $manager->persist($homepage);
+        $manager->flush();
+
+        // VERSION 2: Add more content
+        $homepage->setSlug('homepage2');
+        $homepage->setMainImage($media['Demo 1']);
+        $homepage->setMainContent("# Welcome to Pushword\n\nThis is version 2 with more content.\n\n## Features\n- Fast\n- Flexible");
+        $homepage->updatedAt = new DateTime('1 day ago');
+
+        $manager->flush();
+
+        // VERSION 3 (final): Set the real homepage content
+        $homepage->setH1('Welcome to Pushword !');
+        $homepage->setSlug('homepage');
+        $homepage->setMainImage($media['Demo 2']);
+        $homepage->setMainContent($finalContent);
+        $homepage->updatedAt = new DateTime('now');
+
         $manager->flush();
 
         $ksPage = new Page();

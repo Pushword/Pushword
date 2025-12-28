@@ -31,9 +31,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] Generate a map of the media
   - [ ] In new, create default AGENTS.md (inspired from altimood)
 
-- [Version]
-  - [ ] diffchecker based on Monaco
-
 - [Core] fix glightbox or rollback to fslightbox
   - [ ] video in lightbox
   - [ ] simple image self linked (the pb is more a missing code after migrating to markdown block)

@@ -36,7 +36,7 @@
   {% if output is defined and output is not empty %}
     <div class="card">
       <div class="card-body p-0">
-        <pre id="console-output" class="mb-0 bg-dark text-white p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>{{ output }}</code></pre>
+        <pre id="console-output" class="mb-0 bg-black text-white p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>{{ output|ansi_to_html }}</code></pre>
       </div>
     </div>
     {% if status == 'running' %}

@@ -15,7 +15,7 @@ final class SharedOutputInterface extends Output
         private readonly ProcessOutputStorage $storage,
         private readonly string $processType,
         int $verbosity = self::VERBOSITY_NORMAL,
-        bool $decorated = false,
+        bool $decorated = true,
         ?OutputFormatterInterface $formatter = null,
     ) {
         parent::__construct($verbosity, $decorated, $formatter);
@@ -23,8 +23,6 @@ final class SharedOutputInterface extends Output
 
     protected function doWrite(string $message, bool $newline): void
     {
-        // Strip ANSI escape codes for clean storage
-        $cleanMessage = preg_replace('/\033\[[0-9;]*m/', '', $message) ?? $message;
-        $this->storage->write($this->processType, $cleanMessage.($newline ? "\n" : ''));
+        $this->storage->write($this->processType, $message.($newline ? "\n" : ''));
     }
 }

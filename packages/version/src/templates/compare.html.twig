@@ -1,0 +1,198 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block title %}{{ page.slug }} › {{ 'versionCompare'|trans }}{% endblock %}
+
+{% block head_javascript %}
+  {{ parent() }}
+  <script src="/bundles/pushwordadmin/monaco/app.js"></script>
+{% endblock %}
+
+{% block page_actions %}
+  <a class="btn btn-outline-secondary" href="{{ path('admin_version_list', {id: page.id}) }}">
+    <i class="fa fa-arrow-left me-1" aria-hidden="true" aria-label="{{ 'versionBackToList'|trans }}"></i>
+  </a>
+  <a class="btn btn-warning" href="{{ path('admin_version_load', {id: page.id, version: versionLeft}) }}">
+    <i class="fa fa-undo me-1" aria-hidden="true"></i> {{ 'versionRestoreFull'|trans }}
+  </a>
+  <button type="button" class="btn btn-primary" id="save-changes-btn">
+    <i class="fa fa-save me-1" aria-hidden="true"></i> {{ 'versionSaveChanges'|trans }}
+  </button>
+{% endblock %}
+
+{% block content_title %}
+  <div style="line-height: 1;">
+    {{ 'versionCompare'|trans }}<br>
+    <span style="font-size:14px"> › <a href="{{ path('admin_page_edit', {id: page.id}) }}" class="link-primary ">{{ page.slug }}</a></span>
+  </div>
+{% endblock %}
+
+{% block main %}
+{% set leftH1 = leftPage.h1|default('') %}
+{% set rightH1 = rightPage.h1|default('') %}
+{% set leftTitle = leftPage.title|default('') %}
+{% set rightTitle = rightPage.title|default('') %}
+{% set leftSlug = leftPage.slug|default('') %}
+{% set rightSlug = rightPage.slug|default('') %}
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div></div>
+    <div class="d-flex align-items-center gap-2">
+      <select id="version-left-select" class="form-select form-select-sm" style="width: auto;">
+        {% for version in allVersions %}
+          <option value="{{ version }}" {{ version == versionLeft ? 'selected' : '' }}>{{ version|slice(0, 13) }}</option>
+        {% endfor %}
+      </select>
+      <span class="text-muted">vs</span>
+      <select id="version-right-select" class="form-select form-select-sm" style="width: auto;">
+        <option value="current" {{ versionRight == 'current' ? 'selected' : '' }}>{{ 'versionCurrent'|trans }}</option>
+        {% for version in allVersions %}
+          <option value="{{ version }}" {{ version == versionRight ? 'selected' : '' }}>{{ version|slice(0, 13) }}</option>
+        {% endfor %}
+      </select>
+      <button type="button" class="btn btn-sm btn-outline-primary" id="compare-versions-btn">
+        <i class="fa fa-code-compare" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    {# H1 Comparison #}
+    <div class="row mb-3">
+      <div class="col-12">
+        <label class="form-label fw-bold">H1 {% if leftH1 != rightH1 %}<span class="badge bg-warning text-dark">{{ 'versionChanged'|trans }}</span>{% endif %}</label>
+      </div>
+      <div class="col-6">
+        <textarea class="form-control bg-light" rows="2" readonly>{{ leftH1 }}</textarea>
+      </div>
+      <div class="col-6">
+        <textarea class="form-control" rows="2" id="field-h1">{{ rightH1 }}</textarea>
+      </div>
+    </div>
+
+    {# Other fields - only show if different #}
+    {% if leftTitle != rightTitle %}
+    <div class="row mb-3">
+      <div class="col-12">
+        <label class="form-label fw-bold">Title <span class="badge bg-warning text-dark">{{ 'versionChanged'|trans }}</span></label>
+      </div>
+      <div class="col-6">
+        <input type="text" class="form-control bg-light" value="{{ leftTitle }}" readonly>
+      </div>
+      <div class="col-6">
+        <input type="text" class="form-control" id="field-title" value="{{ rightTitle }}">
+      </div>
+    </div>
+    {% endif %}
+
+    {% if leftSlug != rightSlug %}
+    <div class="row mb-3">
+      <div class="col-12">
+        <label class="form-label fw-bold">Slug <span class="badge bg-warning text-dark">{{ 'versionChanged'|trans }}</span></label>
+      </div>
+      <div class="col-6">
+        <input type="text" class="form-control bg-light" value="{{ leftSlug }}" readonly>
+      </div>
+      <div class="col-6">
+        <input type="text" class="form-control" id="field-slug" value="{{ rightSlug }}">
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{# Main Content Diff #}
+<div class="card shadow-sm">
+  <div class="card-header">
+    <label class="form-label fw-bold mb-0">{{ 'versionMainContent'|trans }}</label>
+  </div>
+  <div class="card-body p-0">
+    <div id="diff-container" style="height: 500px; width: 100%;"></div>
+  </div>
+</div>
+
+<form id="save-form" method="POST" action="{{ path('pushword_version_save_compare', {id: page.id}) }}">
+  <input type="hidden" name="_token" value="{{ csrf_token('version_save') }}">
+  <textarea name="mainContent" id="mainContent-hidden" style="display: none;"></textarea>
+  <input type="hidden" name="h1" id="h1-hidden">
+  <input type="hidden" name="title" id="title-hidden">
+  <input type="hidden" name="slug" id="slug-hidden">
+  </form>
+{% endblock %}
+
+{% block body_javascript %}
+{{ parent() }}
+<script>
+(function() {
+  const leftContent = {{ leftPage.mainContent|default('')|json_encode|raw }};
+  const rightContent = {{ rightPage.mainContent|default('')|json_encode|raw }};
+  const pageId = {{ page.id|json_encode|raw }};
+
+  let diffEditor = null;
+
+  function initDiffEditor() {
+    if (typeof window.monaco === 'undefined') {
+      setTimeout(initDiffEditor, 100);
+      return;
+    }
+
+    const container = document.getElementById('diff-container');
+
+    const originalModel = monaco.editor.createModel(leftContent, 'markdown');
+    const modifiedModel = monaco.editor.createModel(rightContent, 'markdown');
+
+    const settings = window.monacoHelper ? { ...window.monacoHelper.defaultSettings } : {};
+
+    diffEditor = monaco.editor.createDiffEditor(container, {
+      ...settings,
+      readOnly: false,
+      renderSideBySide: true,
+      enableSplitViewResizing: true,
+      originalEditable: false,
+      lineNumbers: 'on',
+      minimap: { enabled: false },
+    });
+
+    diffEditor.setModel({
+      original: originalModel,
+      modified: modifiedModel,
+    });
+
+    window.addEventListener('resize', () => {
+      diffEditor.layout();
+    });
+  }
+
+  // Version selector
+  document.getElementById('compare-versions-btn').addEventListener('click', function() {
+    const leftVersion = document.getElementById('version-left-select').value;
+    const rightVersion = document.getElementById('version-right-select').value;
+    window.location.href = '/admin/version/' + pageId + '/compare/' + leftVersion + '/' + rightVersion;
+  });
+
+  document.getElementById('save-changes-btn').addEventListener('click', function() {
+    if (!diffEditor) return;
+
+    // Collect all field values
+    document.getElementById('mainContent-hidden').value = diffEditor.getModifiedEditor().getValue();
+
+    const h1Field = document.getElementById('field-h1');
+    if (h1Field) document.getElementById('h1-hidden').value = h1Field.value;
+
+    const titleField = document.getElementById('field-title');
+    if (titleField) document.getElementById('title-hidden').value = titleField.value;
+
+    const slugField = document.getElementById('field-slug');
+    if (slugField) document.getElementById('slug-hidden').value = slugField.value;
+
+    document.getElementById('save-form').submit();
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDiffEditor);
+  } else {
+    initDiffEditor();
+  }
+})();
+</script>
+{% endblock %}

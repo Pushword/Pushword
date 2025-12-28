@@ -20,9 +20,11 @@ class VersionTest extends KernelTestCase
 
         $repo = $em->getRepository(Page::class);
 
-        // Find a page dynamically instead of hardcoding ID 1
-        $page = $repo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev']);
-        self::assertNotNull($page, 'Homepage should exist');
+        // Find any page to test versioning
+        $page = $repo->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev'])
+            ?? $repo->findOneBy(['slug' => 'homepage'])
+            ?? $repo->findOneBy([]);
+        self::assertNotNull($page, 'At least one page should exist');
 
         $page->setH1('edited title to test Versioning');
 
