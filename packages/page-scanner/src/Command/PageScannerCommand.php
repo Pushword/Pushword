@@ -300,11 +300,17 @@ final class PageScannerCommand
 
         arsort($timings);
 
-        $output->writeln('');
-        $output->writeln('<comment>⏱ Timing breakdown:</comment>');
-
+        $parts = [];
         foreach ($timings as $name => $duration) {
-            $output->writeln(\sprintf('  %s: %dms', $name, $duration));
+            $shortName = match ($name) {
+                'preload.caches' => 'preload',
+                'external.urls' => 'external',
+                'scanPage' => 'scan',
+                default => $name,
+            };
+            $parts[] = \sprintf('%s: %dms', $shortName, $duration);
         }
+
+        $output->writeln('<comment>⏱ '.implode(' | ', $parts).'</comment>');
     }
 }

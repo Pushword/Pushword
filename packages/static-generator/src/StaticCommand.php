@@ -151,11 +151,18 @@ final readonly class StaticCommand
 
         arsort($timings);
 
-        $output->writeln('');
-        $output->writeln('<comment>⏱ Timing breakdown:</comment>');
-
+        $parts = [];
         foreach ($timings as $name => $duration) {
-            $output->writeln(\sprintf('  %s: %dms', $name, $duration));
+            $shortName = match ($name) {
+                'kernel.handle' => 'render',
+                'html.compress' => 'compress',
+                'file.write' => 'write',
+                'generatePage' => 'page',
+                default => $name,
+            };
+            $parts[] = \sprintf('%s: %dms', $shortName, $duration);
         }
+
+        $output->writeln('<comment>⏱ '.implode(' | ', $parts).'</comment>');
     }
 }

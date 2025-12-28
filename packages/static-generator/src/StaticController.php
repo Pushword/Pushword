@@ -72,23 +72,6 @@ class StaticController extends AbstractController
             ]);
         }
 
-        // Check if we should display results (status exists and not running)
-        $status = $this->outputStorage->getStatus(self::PROCESS_TYPE);
-        if (null !== $status && 'running' !== $status) {
-            $outputData = $this->outputStorage->read(self::PROCESS_TYPE);
-            $output = $outputData['content'];
-            $errors = $this->parseErrors($output);
-
-            // Clean up storage
-            $this->outputStorage->clear(self::PROCESS_TYPE);
-
-            return $this->renderAdmin('@PushwordStatic/results.html.twig', [
-                'errors' => $errors,
-                'output' => $output,
-                'host' => $host,
-            ]);
-        }
-
         // Start new process
         try {
             // Initialize output storage before starting background process
