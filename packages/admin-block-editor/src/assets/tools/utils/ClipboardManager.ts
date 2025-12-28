@@ -61,28 +61,54 @@ export default class ClipboardManager {
     private handleCopy(event: ClipboardEvent): void {
         console.log('[ClipboardManager] handleCopy triggered')
         const target = event.target as Element
+        console.log('[ClipboardManager] Target element:', target?.tagName, target?.className, target?.id)
 
-        // Try to find editor holder
+        // Try to find editor holder - check multiple selectors
         let editorHolder = target?.closest('[id^="editorjs_"]')
+        console.log('[ClipboardManager] Holder from target.closest:', editorHolder?.id)
+
         if (!editorHolder) {
             const selection = window.getSelection()
             const anchorNode = selection?.anchorNode
+            console.log('[ClipboardManager] Selection anchorNode:', anchorNode?.nodeName, (anchorNode as Element)?.className)
             const anchorElement = anchorNode?.nodeType === Node.TEXT_NODE
                 ? anchorNode.parentElement
                 : anchorNode as Element
+            console.log('[ClipboardManager] Anchor element:', anchorElement?.tagName, anchorElement?.className)
             editorHolder = anchorElement?.closest('[id^="editorjs_"]') || null
+            console.log('[ClipboardManager] Holder from anchor.closest:', editorHolder?.id)
         }
+
+        // Also try finding by .codex-editor class
         if (!editorHolder) {
+            const codexEditor = target?.closest('.codex-editor')
+            if (codexEditor) {
+                editorHolder = codexEditor.closest('[id^="editorjs_"]') || codexEditor.parentElement?.closest('[id^="editorjs_"]') || null
+                console.log('[ClipboardManager] Holder from codex-editor:', editorHolder?.id)
+            }
+        }
+
+        // Try document.querySelector as last resort
+        if (!editorHolder) {
+            editorHolder = document.querySelector('[id^="editorjs_"]')
+            console.log('[ClipboardManager] Holder from document.querySelector:', editorHolder?.id)
+        }
+
+        if (!editorHolder) {
+            console.log('[ClipboardManager] No editor holder found, skipping')
             return
         }
+        console.log('[ClipboardManager] Editor holder found:', editorHolder.id)
 
         // Skip if inside Monaco editor or Raw block
         if (target?.closest('.monaco-editor') || target?.closest('[data-editor]')) {
+            console.log('[ClipboardManager] Inside Monaco/Raw, skipping')
             return
         }
 
         // Check for EditorJS block selection first (multi-block selection)
         const selectedBlocks = editorHolder.querySelectorAll('.ce-block--selected')
+        console.log('[ClipboardManager] Selected blocks count:', selectedBlocks.length)
         if (selectedBlocks.length > 0) {
             this.handleBlockSelection(event, selectedBlocks)
             return
@@ -91,11 +117,13 @@ export default class ClipboardManager {
         // Fall back to text selection
         const selection = window.getSelection()
         if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+            console.log('[ClipboardManager] No text selection, skipping')
             return
         }
 
         // Check if selection spans multiple blocks
         const blocksInSelection = this.getBlocksInSelection(selection, editorHolder)
+        console.log('[ClipboardManager] Blocks in text selection:', blocksInSelection.length)
         if (blocksInSelection.length > 1) {
             // Multi-block text selection - extract each block synchronously
             const markdownParts: string[] = []
@@ -113,6 +141,7 @@ export default class ClipboardManager {
                 const markdown = markdownParts.join('\n\n')
                 const html = htmlParts.join('<br><br>')
 
+                console.log('[ClipboardManager] Multi-block markdown output:', markdown)
                 event.preventDefault()
                 event.stopImmediatePropagation()
                 if (event.clipboardData) {
@@ -128,7 +157,9 @@ export default class ClipboardManager {
         if (blocksInSelection.length === 1) {
             const block = blocksInSelection[0]
             const result = this.extractBlockContent(block)
+            console.log('[ClipboardManager] Single block result:', result)
             if (result && result.markdown) {
+                console.log('[ClipboardManager] Single block markdown output:', result.markdown)
                 event.preventDefault()
                 event.stopImmediatePropagation()
                 if (event.clipboardData) {
@@ -141,10 +172,12 @@ export default class ClipboardManager {
         }
 
         // Fallback: inline selection - use simple markdown conversion
+        console.log('[ClipboardManager] Using inline selection fallback')
         let range: Range
         try {
             range = selection.getRangeAt(0)
         } catch {
+            console.log('[ClipboardManager] Failed to get range')
             return
         }
 
@@ -155,9 +188,12 @@ export default class ClipboardManager {
         container.querySelectorAll('[contenteditable="false"], .ce-header-level-wrapper, select').forEach(el => el.remove())
 
         const html = container.innerHTML
+        console.log('[ClipboardManager] Inline HTML:', html)
         const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(html).replace(/  +/g, ' ').trim()
+        console.log('[ClipboardManager] Inline markdown output:', markdown)
 
         if (!markdown) {
+            console.log('[ClipboardManager] Empty markdown, skipping')
             return
         }
 
@@ -166,6 +202,7 @@ export default class ClipboardManager {
         if (event.clipboardData) {
             event.clipboardData.setData('text/plain', markdown)
             event.clipboardData.setData('text/html', html)
+            console.log('[ClipboardManager] Set clipboard data')
         }
         this.writeToClipboard(markdown, html)
     }
@@ -175,11 +212,13 @@ export default class ClipboardManager {
      * Synchronously extracts and converts content to markdown
      */
     private handleBlockSelection(event: ClipboardEvent, selectedBlocks: NodeListOf<Element>): void {
+        console.log('[ClipboardManager] handleBlockSelection with', selectedBlocks.length, 'blocks')
         const markdownParts: string[] = []
         const htmlParts: string[] = []
 
-        selectedBlocks.forEach((block) => {
+        selectedBlocks.forEach((block, index) => {
             const result = this.extractBlockContent(block)
+            console.log('[ClipboardManager] Block', index, 'result:', result)
             if (result) {
                 markdownParts.push(result.markdown)
                 htmlParts.push(result.html)
@@ -187,11 +226,14 @@ export default class ClipboardManager {
         })
 
         if (markdownParts.length === 0) {
+            console.log('[ClipboardManager] No markdown parts extracted')
             return
         }
 
         const markdown = markdownParts.join('\n\n')
         const html = htmlParts.join('<br><br>')
+
+        console.log('[ClipboardManager] Block selection markdown output:', markdown)
 
         // Prevent default and stop immediate propagation to prevent any other handlers
         event.preventDefault()
@@ -200,6 +242,7 @@ export default class ClipboardManager {
         if (event.clipboardData) {
             event.clipboardData.setData('text/plain', markdown)
             event.clipboardData.setData('text/html', html)
+            console.log('[ClipboardManager] Set clipboard data for block selection')
         }
 
         // Also use async clipboard API as backup
