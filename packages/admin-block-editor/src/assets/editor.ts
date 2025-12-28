@@ -27,6 +27,7 @@ import Gallery from './tools/Gallery/Gallery'
 import AlignementTune from './tools/AlignementTune/AlignementTune'
 import HyperlinkTune from './tools/HyperlinkTune/HyperlinkTune'
 import PasteLink from './tools/Hyperlink/PasteLink'
+import ClipboardManager from './tools/utils/ClipboardManager'
 import Raw from './tools/Raw/Raw'
 import CodeBlock from './tools/CodeBlock/CodeBlock'
 import { EditorModeManager } from './EditorModeManager'
@@ -136,8 +137,12 @@ export class editorJs {
 
     const editor = new EditorJS(
       Object.assign(config, {
-        onReady: () =>
-          new DragDrop(editor) && new Undo({ editor }) && new PasteLink({ editor }),
+        onReady: () => {
+          new DragDrop(editor)
+          new Undo({ editor })
+          new PasteLink({ editor })
+          new ClipboardManager({ editor })
+        },
       }),
     )
 

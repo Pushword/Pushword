@@ -1,7 +1,7 @@
 ---
 title: 'Where Pushword is going ? Roadmap, TODO and Ideas'
 h1: Roadmap
-id: 49
+id: 37
 publishedAt: '2025-12-23 05:48'
 parentPage: contribute
 toc: true
@@ -21,6 +21,12 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
+
+- [flat] sync is not working since i add "id update" and index.csv update (only importing, never exporting) + it make crash vs code (probably because touching every file, it must not touch a file if it has nothing to update)
+
+- refactor bin/console pw:flat:sync like pw:static and page-scan for performance and better output
+
+- [i18n] move en.md to en/index.md when en/ exists in flat
 
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
   ➜ done, but need test
@@ -43,8 +49,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
 
 - [Flat] Implémenter un sync auto depuis [Admin] et un file watcher (bin/console content:watch) pour l'autre sens // l'implémentation rapide c'est un cron sur bin/console flat:sync
-
-- [AdminBlockEditor] selecting a block alone like gallery : copy / paste is not working ➜ all the copy paste is done in markdown (pasting must import markdown)
 
 - [Admin] / [Version] Autosave with unsaved state : envoyer un event toutes les secondes si le contenu a été modifié, celui-ci créé une nouvelle version du contenu en précisant que c'est une sauvegarde automatique, si la précédente sauvegarde est une sauvegarde automatique et qu'elle date de moins d'une heure, alors on ne garde qu'une version dans le versionner (la dernière)
 

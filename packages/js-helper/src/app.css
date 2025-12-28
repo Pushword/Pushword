@@ -15,6 +15,7 @@ Tailwind content sources for all packages
 @source "./../../../../vendor/pushword/**/templates/";
 @source "./../../**/templates/";
 @source "./../../**/src/templates/";
+@source "./../../**/content/**/*.md";
 @source "./../../conversation/src/templates/";
 @source "./../../../../templates";
 @source "./../../../../var/TailwindGeneratorCache/*";

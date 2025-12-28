@@ -1,7 +1,7 @@
 ---
 title: 'Static Website Generator with Pushword CMS'
 h1: 'Static Generator'
-id: 36
+id: 24
 publishedAt: '2025-12-21 21:55'
 parentPage: extensions
 toc: true

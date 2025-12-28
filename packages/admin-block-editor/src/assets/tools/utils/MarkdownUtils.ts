@@ -341,13 +341,17 @@ export class MarkdownUtils {
 
     return html
       .replace(/<(b|strong|em|i|a[^>]*)> /gi, ' <$1>')
-      .replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, '<$1> ')
-      .replace(/<b>(.*?)<\/b>/gi, '**$1**')
-      .replace(/<i>(.*?)<\/i>/gi, '_$1_')
-      .replace(/<code( class="inline-code")?>(.*?)<\/code>/gi, '`$2`')
-      .replace(/<s( class="cdx-strikethrough")?>(.*?)<\/s>/gi, '~~$2~~')
-      .replace(/ class="cdx-marker"/gi, '')
-      .replace(/<a\s+([^>]+)>(.*?)<\/a>/gi, (_match, attrString, text) =>
+      .replace(/ <\/(b|strong|em|i|a[^>]*)>/gi, '</$1> ')
+      .replace(/<(b|strong)(?: [^>]*)?>(.+?)<\/(b|strong)>/gi, '**$2**')
+      .replace(/<(i|em)(?: [^>]*)?>(.+?)<\/(i|em)>/gi, '_$2_')
+      .replace(/<code(?: [^>]*)?>(.+?)<\/code>/gi, '`$1`')
+      .replace(/<s(?: [^>]*)?>(.+?)<\/s>/gi, '~~$1~~')
+      .replace(/<sup(?: [^>]*)?>(.+?)<\/sup>/gi, '^$1^')
+      .replace(/<sub(?: [^>]*)?>(.+?)<\/sub>/gi, '~$1~')
+      .replace(/<u(?: [^>]*)?>(.+?)<\/u>/gi, '<u>$1</u>')
+      .replace(/<small(?: [^>]*)?>(.+?)<\/small>/gi, '<small>$1</small>')
+      .replace(/<mark(?: [^>]*)?>(.+?)<\/mark>/gi, '<mark>$1</mark>')
+      .replace(/<a\s+([^>]+)>(.+?)<\/a>/gi, (_match, attrString, text) =>
         MarkdownUtils.convertAnchorToMarkdown(attrString, text),
       )
       .replace(/<br\s*\/?>/gi, '\n') // Convert <br> to newlines

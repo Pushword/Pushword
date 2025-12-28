@@ -11,7 +11,7 @@
 %}
 
 <div id="{{ inlineTarget }}" class="pw-page-inline d-flex flex-column">
-  <div class="d-flex flex-row align-items-center">
+  <div class="d-flex flex-row align-items-center" style="padding-bottom:4px">
 
     <div style="flex: 1;">
       {% if page.isPublished == 0 %}
@@ -22,17 +22,18 @@
 
 
       <a
-        href="{{ page(page ) }}" target="_blank"
-        class="me-2 align-items-center"
-        style="text-decoration: none; color:#333; font-weight:400; font-size:90%">
-        <i class="fa fa-external-link me-1" style="opacity:0.5;"></i>
-        {{ page.host ? page.host ~ ' › ' : '' }}{{ page.slug }}</a>
-      <br>
-      <a
         href="{{ editUrl }}"
         class="py-2"
         style="display: inline-block; text-decoration: none; font-size:110%;font-weight:600">
         {{ page.h1 is empty ? page.title : page.h1|striptags }}
+      </a>
+      <br>
+      <a
+        href="{{ page(page ) }}"
+        class="me-2 align-items-center"
+        style="text-decoration: none; color:#333; font-weight:400; font-size:90%">
+        <i class="fa fa-external-link" style="opacity:0.4; color:#94a3b8; font-size:70%; padding-right:3px"></i>
+        {{ page.host ? page.host ~ ' › ' : '' }}{{ page.slug }}
       </a>
     </div>
 
@@ -43,7 +44,7 @@
     <input
       type="text"
       class="grow px-1 pw-inline-tags-input"
-      style="min-width: 50px; border: none; background: transparent; outline: none; font-size: inherit; color: inherit;"
+      style="min-width: 50px; border: none; background: transparent; outline: none; font-size: inherit; color: inherit;padding-left: 7px !important;"
       value="{{ page.tags|default('')|trim }}"
       placeholder="{{ 'adminPageTagsPlaceholder'|trans }}"
       hx-post="{{ inlineAction }}"

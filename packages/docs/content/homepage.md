@@ -1,242 +1,231 @@
 ---
-title: 'Pushword - CMS to build rapidly Websites (powered by Symfony)'
-h1: '<span class="block mt-6 leading-relaxed">Build <em class="font-light">Content First</em> websites rapidly <br> <span class="text-primary dark:text-white">Manage and maintain it as quickly</span></span>'
-id: 41
+title: 'Pushword - The Modern CMS for Developers (ready for AI era)'
+h1: 'Finally, a CMS that gets out of your way'
+id: 29
 publishedAt: '2025-12-21 21:55'
 name: Pushword
 template: /page/homepage.html.twig
-prose: 'max-w-screen-sm prose-sm md:prose-lg mx-auto p-3 prose dark:prose-light'
+prose: ''
+twig: 1
+raw: 1
 ---
 
-<div class="flex flex-row max-w-screen-lg mx-auto mb-6">
-  <div class="p-3 pr-6 -mt-3">
+<div class="max-w-6xl mx-auto px-4">
 
-**Pushword** is a **page-oriented CMS** built on the rock-solid **PHP ecosystem**.
-
-With Pushword, you can **rapidly create, manage, and maintain stunning websites**—and with **AI tools** like _Cursor_, _Claude_, or _Copilot_, taking your content to the next level has never been easier.
-
-**Bonus:** managing **multi-sites**, **internationalization**, and **page versioning** is effortless.
-
-**Curious?** This very website runs on _Pushword_ using flat-file management.
-
-Prefer a **block editor** with a sleek admin dashboard? Just **install an extension**—most are officially maintained to avoid the compatibility headaches common with _WordPress plugins_.
-
-Check out [how to install Pushword easily](/installation) and start customizing it to your needs today!
-
-Or look at the **detailled features** ↓
-
-</div>
-<div class="hidden p-3 -mt-3 prose-sm rounded-xs shadow-lg bg-gray-50 dark:bg-gray-900 lg:block" style="width:400px;margin-right:-50px; margin-left:50px">
-
-### Install
-
-<pre><code class="text-sm shell" style="overflow-x: hidden;">composer create-project pushword/new my-project</code></pre>
-
-That's it ! Launch a PHP Server (`cd my-project && php -S 127.0.0.1:8004 -t public/`).
-
-Maybe you will want to change [default configuration](/configuration) or add some [extensions](/extensions).
-
-### Download
-
-If you are not composer friendly, you can download the classic version.
-
-<p class="text-center">{{ link(svg('download', {'class': 'w-6 h-6 inline-block mr-2 dark:fill-white'}) ~ ' Pushword-Classic-1.0.0.zip', '#', {'class': 'font-bold'}) }}
-<br><small>{{ svg('exclamation-triangle', {'class': 'w-3 h-3 inline-block mr-1 dark:fill-white'}) }} not yet available</small></p>
-
-Unzip it on a classic Apache/PHP server and play.
-
-</div>
+<!-- HERO -->
+<div class="text-center py-12 pb-8">
+  <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-4">
+    Finally, a CMS that<br>
+    <span class="bg-gradient-to-r from-sky-500 to-emerald-500 bg-clip-text text-transparent">gets out of your way</span>
+  </h1>
+  <p class="text-xl text-gray-500 max-w-xl mx-auto mb-10 leading-relaxed">
+    Modern PHP. Flat-file flexibility. Ready for AI era.<br>
+    <strong class="text-gray-900 dark:text-white">No plugin headache.</strong>
+  </p>
+  <div class="flex flex-wrap gap-4 justify-center mb-4">
+    <a href="/installation" class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-sky-500 to-sky-600 text-white rounded-xl font-semibold text-lg shadow-lg shadow-sky-500/40 hover:shadow-xl hover:shadow-sky-500/50 hover:-translate-y-0.5 transition-all duration-200">Get Started Free →</a>
+    <a href="https://github.com/Pushword/Pushword" class="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white rounded-xl font-semibold text-lg shadow-lg hover:bg-gray-800 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">{{ svg('github', {'class': 'w-5 h-5'}) }} Star on GitHub</a>
+  </div>
+  <p class="text-sm text-gray-400">MIT License • 100% Open Source • Forever free</p>
 </div>
 
-<div class="absolute hidden transform -right-14 w-96 -top-10 2xl:block 2xl:w-60 rotate-12" style="height:150vh">
-  <div class="w-full h-full bg-repeat text-primary-100 heropattern-bubbles-gray-200">
+<!-- SCREENSHOT -->
+<div class="relative mx-auto mb-16 max-w-4xl">
+  <div class="absolute inset-0 bg-gradient-to-r from-sky-500 via-violet-500 to-pink-500 rounded-2xl opacity-50 blur-2xl -m-1"></div>
+  <div class="relative bg-white rounded-2xl p-2 shadow-2xl">
+    <img src="/media/admin-blockeditor.png" alt="Pushword block editor" class="w-full rounded-xl">
   </div>
 </div>
 
-<!-- next: show a preview there -->
+<p class="text-center text-lg text-gray-500 max-w-2xl mx-auto mb-20">
+  Powering documentation sites, marketing pages, and content-driven apps for business owner and developers who value <strong class="text-gray-900 dark:text-white">clean code</strong> and <strong class="text-gray-900 dark:text-white">modern maintainability</strong>.
+</p>
 
-<div class="p-3 relative mb-6 shadow-xs bg-gray-50 dark:bg-gray-800 from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-  <div class="max-w-screen-sm mx-auto">
-    <h2 class="pt-12 pb-6 text-4xl">Features<br><small class="text-lg">Create content and publish it on the web smoothly</small></h2>
+<!-- FEATURES -->
+<div class="mb-20">
+  <h2 class="text-center text-4xl font-extrabold mb-2 text-gray-900 dark:text-white">Why developers choose Pushword</h2>
+  <p class="text-center text-gray-500 mb-12 text-lg">The features you need, without the complexity you don't.</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <div class="bg-emerald-700 rounded-2xl p-8 text-white shadow-lg shadow-emerald-700/40 hover:shadow-xl hover:shadow-emerald-700/50 hover:-translate-y-1 transition-all duration-200 cursor-default">
+      <div class="text-4xl mb-4">🤖</div>
+      <h3 class="text-xl font-bold mb-3">AI-Native Editing</h3>
+      <p class="opacity-90 leading-relaxed">Flat-file mode means <em>Cursor</em>, <em>Claude</em>, and <em>Copilot</em> work directly with your content. No middleware, no API layers.</p>
+    </div>
+
+    <div class="bg-sky-700 rounded-2xl p-8 text-white shadow-lg shadow-sky-700/40 hover:shadow-xl hover:shadow-sky-700/50 hover:-translate-y-1 transition-all duration-200 cursor-default">
+      <div class="text-4xl mb-4">⚡</div>
+      <h3 class="text-xl font-bold mb-3">Cutting-Edge Stack</h3>
+      <p class="opacity-90 leading-relaxed">PHP 8.4, Symfony 8, Doctrine 3, Tailwind 4. Modern features, strict typing, PHPStan enforced.</p>
+    </div>
+
+    <div class="bg-sky-600 rounded-2xl p-8 text-white shadow-lg shadow-sky-600/40 hover:shadow-xl hover:shadow-sky-600/50 hover:-translate-y-1 transition-all duration-200 cursor-default">
+      <div class="text-4xl mb-4">🎯</div>
+      <h3 class="text-xl font-bold mb-3">SEO-First Design</h3>
+      <p class="opacity-90 leading-relaxed">Built by an SEO consultant. Meta, schema, dead links, internal linking, OpenGraph — all built-in.</p>
+    </div>
+
+    <div class="bg-amber-600 rounded-2xl p-8 text-white shadow-lg shadow-amber-600/40 hover:shadow-xl hover:shadow-amber-600/50 hover:-translate-y-1 transition-all duration-200 cursor-default">
+      <div class="text-4xl mb-4">🌍</div>
+      <h3 class="text-xl font-bold mb-3">Multi-site & i18n Native</h3>
+      <p class="opacity-90 leading-relaxed">No WPML. No plugins. Multiple sites and languages built into the core.</p>
+    </div>
+
+    <div class="bg-orange-600 rounded-2xl p-8 text-white shadow-lg shadow-orange-600/40 hover:shadow-xl hover:shadow-orange-600/50 hover:-translate-y-1 transition-all duration-200 cursor-default">
+      <div class="text-4xl mb-4">🚀</div>
+      <h3 class="text-xl font-bold mb-3">Deploy Anywhere</h3>
+      <p class="opacity-90 leading-relaxed">Static generation built-in. GitHub Pages, Netlify, Vercel, or any PHP host.</p>
+    </div>
+
+    <div class="bg-emerald-600 rounded-2xl p-8 text-white shadow-lg shadow-emerald-600/40 hover:shadow-xl hover:shadow-emerald-600/50 hover:-translate-y-1 transition-all duration-200 cursor-default">
+      <div class="text-4xl mb-4">📜</div>
+      <h3 class="text-xl font-bold mb-3">Page Versioning</h3>
+      <p class="opacity-90 leading-relaxed">Track changes, compare versions side-by-side, restore with confidence. Full history.</p>
+    </div>
+
   </div>
+</div>
 
-<div class="grid max-w-screen-sm md:max-w-screen-2xl grid-cols-2 gap-4 mx-auto md:px-12 md:grid-cols-4 xl:grid-cols-6  ">
-  <div class="col-span-2">
-    <!-- Edit -->
-    <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
-      <h2 class="flex mb-6 text-xl font-medium">
-        <div class="shrink-0">
-          <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-green-500 rounded-full">{{
-            svg('tools') }}</div>
-        </div>
-        <div class="ml-3 text-green-500">
-          Easy to install<br>
-          <small>Run it in a few seconds</small>
-        </div>
-      </h2>
-      <div>
+<!-- WORKFLOWS -->
+<div class="mb-20">
+  <h2 class="text-center text-4xl font-extrabold mb-2 text-gray-900 dark:text-white">Two ways to create content</h2>
+  <p class="text-center text-gray-500 mb-12 text-lg">Pick the workflow that fits your team.</p>
 
-Pushword runs on a standard, up-to-date **PHP environment** (with Composer). Have it on your machine or a cheap shared host? You can get started in moments.
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-[Learn more about requirements and installation](/installation).
-
-By default, it works **out of the box** - clean, simple, and efficient. But don't be fooled: Pushword lets you create **amazing custom sites** when you want.
-
-<p class="text-sm font-light text-center text-green-500"><strong style="color: rgba(16, 185, 129, var(--tw-text-opacity));">PHP 8</strong> // Symfony 7</p>
+    <div class="bg-gray-900 rounded-3xl p-8 text-white">
+      <span class="inline-block bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">FOR DEVELOPERS</span>
+      <h3 class="text-2xl font-bold mb-5">Flat-File Mode</h3>
+      <ul class="space-y-3 mb-6">
+        <li class="flex items-center gap-3"><span class="text-green-400">✓</span> Git-native version control</li>
+        <li class="flex items-center gap-3"><span class="text-green-400">✓</span> AI tools work directly on files</li>
+        <li class="flex items-center gap-3"><span class="text-green-400">✓</span> Use VSCode, Cursor, Vim, Obsidian</li>
+        <li class="flex items-center gap-3"><span class="text-green-400">✓</span> Markdown + YAML frontmatter</li>
+      </ul>
+      <div class="bg-gray-800 rounded-xl p-5 font-mono text-sm">
+        <div class="text-gray-500">---</div>
+        <div><span class="text-sky-300">title:</span> <span class="text-cyan-200">'My Article'</span></div>
+        <div><span class="text-sky-300">publishedAt:</span> <span class="text-cyan-200">'2025-01-15'</span></div>
+        <div class="text-gray-500">---</div>
+        <div class="text-gray-400 mt-2">Your content here...</div>
       </div>
     </div>
-    <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
-      <h2 class="flex mb-6 text-xl font-medium">
-        <div class="shrink-0">
-          <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-indigo-500 rounded-full">
-            {{ svg('wave-square') }}</div>
-        </div>
-        <div class="ml-3 text-indigo-500">Extendable<br><small>Look ! It's a symfony application under the hood</small>
-        </div>
-      </h2>
-      <div>
 
-Need **multiple sites**, **multiple languages** (i18n), or **multiple domains**? No need to touch the core. From a simple blog to a complex content network, Pushword handles it all **without extensions**.
-
-Want a **blog** or a **documentation website**? Just install Pushword and start building.
-
-Need more features? Check out the {{ svg('puzzle-piece') }} [extensions](/extensions).
-
-Can't find the one you need? Pushword is built as a Symfony bundle so you can extend it yourself or hire an expert to make your ideas a reality.
-
-</div>
+    <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-3xl p-8">
+      <span class="inline-block bg-orange-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">FOR CONTENT EDITORS</span>
+      <h3 class="text-2xl font-bold mb-5 text-gray-900 dark:text-white">Admin Dashboard</h3>
+      <ul class="space-y-3 mb-6 text-gray-600 dark:text-gray-300">
+        <li class="flex items-center gap-3"><span class="text-green-500">✓</span> Notion-like block editor</li>
+        <li class="flex items-center gap-3"><span class="text-green-500">✓</span> Drag & drop media (auto WebP/AVIF)</li>
+        <li class="flex items-center gap-3"><span class="text-green-500">✓</span> Page versioning with diff view</li>
+        <li class="flex items-center gap-3"><span class="text-green-500">✓</span> Multi-site management</li>
+      </ul>
+      <img src="/media/admin-pagelist.png" alt="Pushword admin" class="w-full rounded-xl shadow-lg">
     </div>
 
   </div>
-  <div class="col-span-2">
-    <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
-      <h2 class="flex mb-6 text-xl font-medium">
-        <div class="shrink-0">
-          <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-blue-500 rounded-full">
-            {{ svg('feather-alt') }}
-          </div>
-        </div>
-        <div class="ml-3 text-blue-500">Just Write with (or without) <strong>AI</strong><br><small>Are you more Flat-file CMS or Full Featured Admin <em>Notion-Like</em>
-            ?</small></div>
-      </h2>
-      <div>
-
-Flat-file CMS or full-featured Notion-like admin? Pushword offers both:
-
-- **Simple, efficient Admin**: If you’re coming from WordPress, you’ll feel right at home. Includes a **[Notion-like block editor](/extension/admin-block-editor)**.
-- **Powerful flat-file CMS**: Edit your content or templates anywhere - _Nextcloud Note_, _VSCode_, _Obsidian_, _Git-compatible workflows_…
-
-**Boost your writing with AI without being locked in**: Pushword (_flat file_) works with AI tools like _Cursor_, _Claude_, or _Copilot_, but you're free to choose any provider or switch later.
-
-Generate content, get smart suggestions, and streamline editing **without being tied to a single AI service**.
-
 </div>
-    </div>
-    <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
-      <h2 class="flex mb-6 text-xl font-medium">
-        <div class="shrink-0">
-          <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-red-500 rounded-full">
-            {{ svg('paint-roller') }}
-          </div>
-        </div>
-        <div class="ml-3 text-red-500">Be unique : theme it quickly<br><small>Do you know Tailwind CSS and Twig ?</small>
-        </div>
-      </h2>
-      <div>
 
-Customize the default theme rapidly.
-
-Want a completely custom theme? Go ahead—Pushword gives you the freedom to **design your site your way**.
-
-See how easy it is by exploring this [documentation website's assets and templates](https://github.com/Pushword/Pushword/tree/main/packages/docs).
-
+<!-- COMPARISON CTA -->
+<div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-12 text-center mb-20">
+  <h2 class="text-3xl font-bold mb-4 text-white">How does Pushword compare?</h2>
+  <p class="text-gray-400 mb-8 text-lg max-w-xl mx-auto">
+    See how Pushword stacks up against WordPress, Statamic, and Sulu across features, performance, and DX.
+  </p>
+  <a href="/cms-comparison" class="inline-block px-8 py-4 bg-white text-gray-900 rounded-xl font-semibold text-lg hover:bg-gray-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">Read the Full Comparison →</a>
 </div>
-</div>
+
+<!-- BUILT WITH PUSHWORD -->
+<div class="mb-20">
+  <h2 class="text-center text-4xl font-extrabold mb-2 text-gray-900 dark:text-white">Built with Pushword</h2>
+  <p class="text-center text-gray-500 mb-12 text-lg">Real sites, real performance.</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <a href="https://piedvert.com" class="block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+      <img src="/media/piedvert.png" alt="piedvert.com" class="w-full">
+      <div class="p-4 text-center">
+        <span class="font-semibold text-gray-900 dark:text-white">piedvert.com</span>
+      </div>
+    </a>
+
+    <a href="https://altimood.com" class="block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+      <img src="/media/altimood.png" alt="altimood.com" class="w-full">
+      <div class="p-4 text-center">
+        <span class="font-semibold text-gray-900 dark:text-white">altimood.com</span>
+      </div>
+    </a>
+
+    <a href="https://piedweb.com" class="block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+      <img src="/media/piedweb.png" alt="piedweb.com" class="w-full">
+      <div class="p-4 text-center">
+        <span class="font-semibold text-gray-900 dark:text-white">piedweb.com</span>
+      </div>
+    </a>
 
   </div>
-  <div class="flex flex-col items-start col-span-2 xl:flex-col md:col-span-4 xl:col-span-2 md:flex-row xl:col-start-auto md:space-x-3 xl:space-x-0">
-    <div class="px-3 py-6 mb-6 rounded-lg dark:bg-gray-900 bg-white shadow dark:text-gray-50">
-      <h2 class="flex mb-6 text-xl font-medium">
-        <div class="shrink-0">
-          <div class="flex items-center justify-center w-10 h-10 mt-2 text-white bg-pink-500 rounded-full">
-            {{ svg('star') }}
-          </div>
-        </div>
-        <div class="ml-3 text-pink-500">Searchable website<br><small>Want to be found on google ?</small>
-        </div>
-      </h2>
-      <div>
-
-Pushword was **crafted by an SEO/GEO and developer consultant**. Being on the AI suggestion or on the first page matters!
-
-Pushword manages titles, H1s, schema, meta tags, nice URLs, and more.
-
-Discover advanced SEO tools:
-
-- **Health checker** (dead link detection)
-- **Internal link suggestions**
-- And much more
-
-Worried about speed for Google Discover? If default performance isn't enough, you'll love the {{ svg('bolt') }} [Static Website Generator](/extension/static-generator).
-
 </div>
+
+<!-- HOW MUCH DOES IT COST -->
+<div class="mb-20">
+  <h2 class="text-center text-4xl font-extrabold mb-2 text-gray-900 dark:text-white">How much does it cost?</h2>
+  <p class="text-center text-gray-500 mb-12 text-lg">Spoiler: nothing. Forever.<br>Just sharing the stack that lets us ship high-quality websites faster.</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+
+    <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-3xl p-8 text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
+      <div class="text-5xl mb-2">🆓</div>
+      <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Free Forever</h3>
+      <div class="text-4xl font-extrabold text-sky-500 mb-4">$0</div>
+      <ul class="text-left text-gray-600 dark:text-gray-300 space-y-2">
+        <li class="py-2 border-b border-gray-100 dark:border-gray-700">✓ All features included</li>
+        <li class="py-2 border-b border-gray-100 dark:border-gray-700">✓ Unlimited sites</li>
+        <li class="py-2 border-b border-gray-100 dark:border-gray-700">✓ No user limits</li>
+        <li class="py-2 border-b border-gray-100 dark:border-gray-700">✓ Commercial use allowed</li>
+        <li class="py-2">✓ MIT License</li>
+      </ul>
     </div>
-    <div class="px-3 py-6 mb-6 rounded-lg md:-mt-24 xl:mt-0 dark:bg-gray-900 bg-white shadow dark:text-gray-50">
-      <h2 class="flex mb-6 text-xl font-medium">
-        <div class="shrink-0">
-          <div class="flex items-center justify-center w-10 h-10 pt-1 mt-2 text-white bg-purple-500 rounded-full">
-            {{ svg('gem') }}
-          </div>
-        </div>
-        <div class="ml-3 text-purple-500">Design to last<br><small>Do you rebuild your website every year?</small>
-        </div>
-      </h2>
-      <div>
 
-Pushword is built to **last**.
-
-- **High-quality, open-source code**
-- **Well-tested and maintainable**
-- **Symfony best practices and static analysis** ensure smooth refactoring and new features
-
-Pushword isn't just a CMS—it's a **long-term solution for your website**.
-
-</div>
+    <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-3xl p-8 text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
+      <div class="text-5xl mb-2">💛</div>
+      <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Support the Project</h3>
+      <div class="text-xl font-semibold text-yellow-600 dark:text-yellow-400 mb-4">Optional</div>
+      <ul class="text-left text-gray-600 dark:text-gray-300 space-y-2 mb-6">
+        <li class="py-2 border-b border-yellow-200 dark:border-yellow-800/50">⭐ Star on GitHub</li>
+        <li class="py-2 border-b border-yellow-200 dark:border-yellow-800/50">📣 Share with others</li>
+        <li class="py-2 border-b border-yellow-200 dark:border-yellow-800/50">🐛 Report bugs</li>
+        <li class="py-2">🤝 Contribute code</li>
+      </ul>
+      <a href="https://github.com/Pushword/Pushword" class="inline-block px-6 py-3 bg-yellow-600 text-white rounded-xl font-semibold hover:bg-yellow-500 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">Star on GitHub</a>
     </div>
-  </div>
 
-</div>
-</div>
-
-<div class="max-w-screen-sm p-3 mx-auto">
-
-<h2 class="text-2xl pt-9">
-  <small>Thanks to open source package and their contributors</small><br>
-  Pushword CMS is built on top of
-</h2>
-
-<ul class="flex flex-row my-6 space-x-6 list-none">
-  <li class="text-center"><a href="https://symfony.com"><img src="/media/symfony.svg" alt="Symfony PHP Framework" class="h-16"><small>Symfony</small></a></li>
-  <li class="text-center"><a href="https://tailwindcss.com"><img src="/media/tailwind.svg" alt="Tailwind CSS" class="w-16 h-16 mx-auto rounded-full"><small>Tailwind CSS</small></a></li>
-  <li class="text-center"><a href="https://codex.so/editor"><img src="/media/editorjs.svg" alt="Editor.js" class="h-16"><small>Editor.js</a></small></li>
-  <li class="text-center"><a href="https://sonata-project.org"><img src="/media/sonata.svg" alt="Editor.js" class="w-16 h-16 mx-auto bg-gray-300 rounded-full"><small>Sonata</small></a></li>
-</ul>
-
-<div class="pt-3 pb-12 prose dark:prose-light">
-
-And a few more amazon open source ({{ link('dependencies', 'https://github.com/Pushword/Pushword/blob/main/composer.json') }}).
-
-</div>
-
-</div>
-
-<div class="shadow-xs bg-gray-50 -mb-14 dark:bg-gray-800">
-  <div class="max-w-screen-sm p-3 py-12 mx-auto prose-sm prose md:prose-lg dark:prose-light">
-    <h2 class="font-bold">Next</h2>
-
-Time to [read the docs](/installation) or have a look to the {{ link(svg('github') ~ ' source code', 'https://github.com/Pushword/pushword') }}.
-
-And follow {{ link('@Robind4', 'https://twitter.com/Robind4') }} on twitter or {{ link('github', 'https://github.com/Pushword/pushword') }} to be notified about updates.
+    <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 text-center text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
+      <div class="text-5xl mb-2">🚀</div>
+      <h3 class="text-xl font-bold mb-2">Need Help?</h3>
+      <div class="text-xl font-semibold text-gray-400 mb-4">Custom development</div>
+      <ul class="text-left text-gray-400 space-y-2 mb-6">
+        <li class="py-2 border-b border-gray-700">🛠 Custom extensions</li>
+        <li class="py-2 border-b border-gray-700">🎨 Theme development</li>
+        <li class="py-2 border-b border-gray-700">📦 Migration assistance</li>
+        <li class="py-2">💬 Priority support</li>
+      </ul>
+      <a href="https://piedweb.com" class="inline-block px-6 py-3 bg-white text-gray-900 rounded-xl font-semibold hover:bg-gray-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">Contact PiedWeb</a>
+    </div>
 
   </div>
+</div>
+
+<!-- FINAL CTA -->
+<div class="bg-gradient-to-r from-sky-500 to-emerald-500 rounded-3xl p-12 text-center mb-12">
+  <h2 class="text-4xl font-bold mb-6 text-white">Ready to build something great?</h2>
+  <div class="bg-black/20 rounded-xl p-5 max-w-xl mx-auto mb-8">
+    <code class="text-white text-lg">composer create-project pushword/new my-project</code>
+  </div>
+  <div class="flex flex-wrap gap-4 justify-center">
+    <a href="/installation" class="inline-block px-8 py-4 bg-white text-sky-500 rounded-xl font-semibold text-lg hover:bg-gray-100 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200">Start Building</a>
+    <a href="/configuration" class="inline-block px-8 py-4 bg-white/20 text-white rounded-xl font-semibold text-lg border-2 border-white/30 hover:bg-white/30 hover:-translate-y-0.5 transition-all duration-200">Read the Docs</a>
+  </div>
+</div>
+
 </div>

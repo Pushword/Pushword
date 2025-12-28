@@ -1,9 +1,9 @@
 ---
 h1: search.json
-id: 50
+id: 38
 publishedAt: '2025-12-21 21:55'
 template: none
-main_content_filters: 'twig,mainContentToBody'
+main_content_filters: 'twig'
 headers:
   - [Content-type, application/json]
 ---

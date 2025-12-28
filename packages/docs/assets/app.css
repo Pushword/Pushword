@@ -1,4 +1,8 @@
 @import 'tailwindcss' source('../..');
+@source "../content/*.md";
+@source "../content/**/*.md";
+@source "../templates/*.twig";
+@source "../templates/**/*.twig";
 
 /* Tailwind v4 CSS-first configuration for docs */
 @theme {
@@ -11,10 +15,6 @@
 
   /* Custom colors */
   --color-primary: var(--primary);
-
-  /* Custom screens for color scheme */
-  --breakpoint-light: (prefers-color-scheme: light);
-  --breakpoint-dark: (prefers-color-scheme: dark);
 }
 
 /* Enhanced typography for docs */
@@ -47,6 +47,10 @@
 .prose span[data-rot]:hover:not(.not-prose span[data-rot]:hover),
 .prose .link:hover:not(.not-prose .link:hover) {
   opacity: 0.75;
+}
+.prose table {
+  display: block;
+  overflow-x: auto;
 }
 
 /* Light theme typography */

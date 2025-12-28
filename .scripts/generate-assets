@@ -90,5 +90,14 @@ then
     cd ../../
 fi
 
+if [ "$TYPE" = "docs" ] || [ "$TYPE" = "" ] || [ "$TYPE" = "all" ]
+then
+    echo "--- packages/docs ---"
+    cd packages/docs/assets
+    installDependencies
+    buildAssets
+    cd ../../../
+fi
+
 cd packages/skeleton
 php bin/console --symlink --relative  'assets:install'

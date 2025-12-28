@@ -26,7 +26,7 @@
 .ce-header-container h6 {
   flex: 1;
   margin: 0;
-  padding: 3px 0 3px !important;
+  padding: 3px 0 3px 45px !important; /* Left padding for absolutely positioned select */
 }
 
 .ce-header-container h2 {
@@ -49,23 +49,54 @@
   font-size: 16px; /* Tailwind base (1rem) */
 }
 
-.ce-header-container select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background: none;
+/* Level selector wrapper - positioned absolutely to avoid copy issues */
+.ce-header-level-wrapper {
+  position: absolute;
+  left: 0;
+  top: 61%;
+  transform: translateY(-50%);
+  z-index: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+/* Label shows the current heading level - use ::before to avoid text in DOM */
+.ce-header-level-label {
+  display: block;
   background-color: white;
-  padding-right: 1rem;
   border: 1px solid #ccc;
-  padding: 3px;
+  padding: 3px 8px;
   font-size: 14px;
   border-radius: 4px;
   color: #ccc;
+  pointer-events: none;
+  /* Hide actual text content from copy */
+  font-size: 0;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.ce-header-container select:focus {
+/* Display level via pseudo-element (not copyable) */
+.ce-header-level-label::before {
+  content: attr(data-level);
+  font-size: 14px;
+}
+
+/* Select overlays the label, opacity 0 but still interactive */
+.ce-header-level-wrapper select {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ce-header-level-wrapper:hover .ce-header-level-label,
+.ce-header-level-wrapper:focus-within .ce-header-level-label {
   color: #707684;
-  outline: none;
   border-color: #66afe9;
   box-shadow:
     inset 0 1px 1px rgba(0, 0, 0, 0.075),

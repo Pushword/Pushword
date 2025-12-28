@@ -117,7 +117,7 @@
     <input
       type="text"
       class="grow px-1 pw-inline-tags-input"
-      style="min-width: 50px; border: none; background: transparent; outline: none; font-size: inherit; color: inherit;"
+      style="min-width: 50px; border: none; background: transparent; outline: none; font-size: inherit; color: inherit; padding-left: 7px !important;"
       value="{{ message.tags|default('')|trim }}"
       placeholder="{{ 'adminConversationInlinePlaceholderTags'|trans }}"
       hx-post="{{ inlineAction }}"

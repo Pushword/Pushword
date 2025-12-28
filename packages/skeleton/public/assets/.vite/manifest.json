@@ -3,6 +3,7 @@
     "file": "tw.css",
     "src": "app.css",
     "isEntry": true,
+    "name": "tw",
     "names": [
       "tw.css"
     ]

@@ -1,9 +1,62 @@
-<footer class="w-full text-sm border-t shadow-inner text-gray-200 border-yellow-50 dark:border-gray-700 bg-gray-800 dark:bg-gray-900">
-    <div class="max-w-screen-md p-3 py-10 mx-auto text-center ">
+<footer class="w-full" style="background: linear-gradient(to bottom, #111827, #030712);">
+  <div class="max-w-screen-xl mx-auto px-6 py-16">
 
-        {% block extra_footer %}
-            <a href="{{ homepage(page) }}" class="block mb-3 text-2xl text-white hover:opacity-75">{{ app_name }}</a>
-            Crafted by <a href="https://piedweb.com" class="text-white hover:opacity-75">Pied Web</a> | Source code on {{ link(svg('github') ~ ' github', 'https://github.com/pushword/pushword', {class: 'text-white hover:opacity-75'}) }}
-        {% endblock %}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+
+      <div class="md:col-span-1">
+        <a href="{{ homepage(page) }}" class="inline-block mb-4">
+          <span class="text-3xl font-extrabold text-white">{{ app_name }}</span>
+        </a>
+        <p class="text-gray-400 leading-relaxed mb-6">The modern CMS for developers who ship fast.</p>
+        <div class="flex gap-4">
+          <a href="https://github.com/Pushword/Pushword" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-sky-500 hover:text-white transition-all" title="GitHub">
+            {{ svg('github', {class: 'w-5 h-5'}) }}
+          </a>
+          <a href="https://twitter.com/Robind4" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-sky-500 hover:text-white transition-all" title="Twitter">
+            {{ svg('twitter', {class: 'w-5 h-5'}) }}
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold text-lg mb-5">Documentation</h4>
+        <ul class="space-y-3">
+          <li><a href="/installation" class="text-gray-400 hover:text-white transition-colors">Installation</a></li>
+          <li><a href="/configuration" class="text-gray-400 hover:text-white transition-colors">Configuration</a></li>
+          <li><a href="/extensions" class="text-gray-400 hover:text-white transition-colors">Extensions</a></li>
+          <li><a href="/cms-comparison" class="text-gray-400 hover:text-white transition-colors">CMS Comparison</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold text-lg mb-5">Community</h4>
+        <ul class="space-y-3">
+          <li><a href="https://github.com/Pushword/Pushword" class="text-gray-400 hover:text-white transition-colors">GitHub Repository</a></li>
+          <li><a href="https://github.com/Pushword/Pushword/issues" class="text-gray-400 hover:text-white transition-colors">Issues & Support</a></li>
+          <li><a href="/contribute" class="text-gray-400 hover:text-white transition-colors">Contribute</a></li>
+          <li><a href="/roadmap" class="text-gray-400 hover:text-white transition-colors">Roadmap</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold text-lg mb-5">About</h4>
+        <ul class="space-y-3">
+          <li><a href="https://piedweb.com" class="text-gray-400 hover:text-white transition-colors">Made by PiedWeb</a></li>
+          <li><a href="https://twitter.com/Robind4" class="text-gray-400 hover:text-white transition-colors">@Robind4</a></li>
+          <li><a href="/pro" class="text-gray-400 hover:text-white transition-colors">Pro Support</a></li>
+        </ul>
+      </div>
+
     </div>
+
+    <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="text-gray-500 text-sm">
+        MIT License &bull; 100% Open Source &bull; Forever Free
+      </p>
+      <p class="text-gray-600 text-sm">
+        Made with <span class="text-red-500">&#9829;</span> for developers who ship
+      </p>
+    </div>
+
+  </div>
 </footer>

@@ -6,7 +6,7 @@ import { resolve } from 'path'
 import { existsSync } from 'fs'
 import tailwindcss from '@tailwindcss/vite'
 import viteCopyPlugin from 'vite-plugin-static-copy'
-import { compression, defineAlgorithm } from 'vite-plugin-compression2'
+import { compression } from 'vite-plugin-compression2'
 
 const filesToCopy = [
   {

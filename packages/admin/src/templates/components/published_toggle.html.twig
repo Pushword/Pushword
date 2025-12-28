@@ -34,7 +34,7 @@
             >
         </label>
         <small class="text-muted mb-0">
-            {{ publishedAt ? publishedAt|date('Y-m-d H:i') : '—' }}
+            {{ publishedAt ? publishedAt|format_date('short') : '—' }}
         </small>
     </div>
 {% endif %}

@@ -299,7 +299,8 @@ class PageCrudController extends AbstractAdminCrudController
             ->setTemplatePath('@pwAdmin/page/pageListTitleField.html.twig')
             ->setSortable(false);
         yield DateTimeField::new('updatedAt', 'adminPageUpdatedAtLabel')
-            ->setSortable(true);
+            ->setSortable(true)
+            ->setFormat('short');
     }
 
     /**

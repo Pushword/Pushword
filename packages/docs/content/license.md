@@ -1,7 +1,7 @@
 ---
 title: 'Pushword CMS License and contributors'
 h1: 'License and contributors'
-id: 43
+id: 31
 publishedAt: '2025-12-21 21:55'
 parentPage: installation
 toc: true

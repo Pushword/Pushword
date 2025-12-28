@@ -139,6 +139,12 @@ export default class Header {
       this._element.parentNode.replaceChild(newHeader, this._element)
       this._element = newHeader
       this._levelSelect = this._element.querySelector('.ce-header-level-select')
+
+      // Update the level label
+      const levelLabel = this._element.querySelector('.ce-header-level-label') as HTMLElement
+      if (levelLabel) {
+        levelLabel.dataset.level = `H${this._data.level}`
+      }
     }
 
     if (data.text !== undefined) {
@@ -167,16 +173,29 @@ export default class Header {
     const container = document.createElement('div')
     container.classList.add('ce-header-container')
 
-    // Create select dropdown for level selection
+    // Create a wrapper for the level selector (outside text flow)
+    const levelWrapper = document.createElement('div')
+    levelWrapper.classList.add('ce-header-level-wrapper')
+    levelWrapper.contentEditable = 'false'
+
+    // Create label element to display current level (uses data attribute to avoid copy issues)
+    const levelLabel = document.createElement('span')
+    levelLabel.classList.add('ce-header-level-label')
+    levelLabel.dataset.level = `H${this._data.level}`
+
+    // Create select dropdown for level selection (hidden, no text content)
     const levelSelect = document.createElement('select')
     levelSelect.classList.add('ce-header-level-select')
     levelSelect.contentEditable = 'false'
     levelSelect.title = 'Select heading level'
+    levelSelect.setAttribute('aria-label', 'Heading level')
 
     this.levels.forEach((level) => {
       const option = document.createElement('option')
       option.value = level.number.toString()
-      option.textContent = `H${level.number}`
+      // Empty text content - value is in the value attribute only
+      option.textContent = ''
+      option.setAttribute('aria-label', `H${level.number}`)
       option.selected = level.number === this._data.level
       levelSelect.appendChild(option)
     })
@@ -185,10 +204,14 @@ export default class Header {
       e.preventDefault()
       e.stopPropagation()
       const newLevel = parseInt((e.target as HTMLSelectElement).value)
+      levelLabel.dataset.level = `H${newLevel}`
       this.setLevel(newLevel)
     })
 
     this._levelSelect = levelSelect
+
+    levelWrapper.appendChild(levelLabel)
+    levelWrapper.appendChild(levelSelect)
 
     const tag = document.createElement(this.currentLevel.tag) as HTMLHeadingElement
     tag.innerHTML = this._data.text || ''
@@ -196,7 +219,7 @@ export default class Header {
     tag.contentEditable = 'true'
     tag.dataset.placeholder = this.api.i18n.t('')
 
-    container.appendChild(levelSelect)
+    container.appendChild(levelWrapper)
     container.appendChild(tag)
 
     return container

@@ -1,7 +1,7 @@
 ---
 title: 'Manage your Pushword CMS with command'
 h1: Command
-id: 22
+id: 10
 publishedAt: '2025-12-21 21:55'
 parentPage: homepage
 toc: true
