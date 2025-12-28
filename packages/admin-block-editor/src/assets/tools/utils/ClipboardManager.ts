@@ -311,6 +311,89 @@ export default class ClipboardManager {
             return null
         }
 
+        // Image block
+        const imageContainer = block.querySelector('.image-tool__image')
+        if (imageContainer) {
+            const img = imageContainer.querySelector('img') as HTMLImageElement
+            const captionEl = block.querySelector('.image-tool__caption')
+            if (img && img.src) {
+                const caption = captionEl?.textContent?.trim() || ''
+                const src = img.src
+                return {
+                    markdown: `![${caption}](${src})`,
+                    html: `<img src="${src}" alt="${caption}">`,
+                }
+            }
+            return null
+        }
+
+        // Gallery block
+        const galleryContainer = block.querySelector('.cdxcarousel')
+        if (galleryContainer) {
+            const items: { media: string; caption: string }[] = []
+            galleryContainer.querySelectorAll('.cdxcarousel-item').forEach(item => {
+                const img = item.querySelector('img') as HTMLImageElement
+                const captionEl = item.querySelector('.cdxcarousel-item-caption, [data-placeholder]')
+                if (img && img.src) {
+                    // Extract media name from URL (last part of path)
+                    const src = img.src
+                    const mediaMatch = src.match(/\/media\/[^/]+\/([^/]+)$/) || src.match(/\/([^/]+)$/)
+                    const media = mediaMatch ? mediaMatch[1] : src
+                    const caption = captionEl?.textContent?.trim() || ''
+                    items.push({ media, caption })
+                }
+            })
+            if (items.length > 0) {
+                const imagesObject: Record<string, string> = {}
+                items.forEach(item => {
+                    imagesObject[item.media] = item.caption
+                })
+                const markdown = `{{ gallery(${JSON.stringify(imagesObject)}) }}`
+                return { markdown, html: markdown }
+            }
+            return null
+        }
+
+        // Attaches block
+        const attachesContainer = block.querySelector('.cdx-attaches')
+        if (attachesContainer) {
+            const link = attachesContainer.querySelector('a') as HTMLAnchorElement
+            const titleEl = attachesContainer.querySelector('.cdx-attaches__title')
+            const sizeEl = attachesContainer.querySelector('.cdx-attaches__size')
+            if (link && link.href) {
+                const title = titleEl?.textContent?.trim() || ''
+                const size = sizeEl?.textContent?.trim() || '0'
+                const markdown = `{{ attaches('${title}', '${link.href}', '${size}') }}`
+                return { markdown, html: markdown }
+            }
+            return null
+        }
+
+        // Embed block (YouTube, Vimeo, etc.)
+        const embedContainer = block.querySelector('.embed-tool')
+        if (embedContainer) {
+            const iframe = embedContainer.querySelector('iframe') as HTMLIFrameElement
+            const captionEl = embedContainer.querySelector('.embed-tool__caption')
+            if (iframe && iframe.src) {
+                const caption = captionEl?.textContent?.trim() || ''
+                // Try to extract original URL from embed URL
+                let url = iframe.src
+                // YouTube embed to watch URL
+                const ytMatch = url.match(/youtube\.com\/embed\/([^?]+)/)
+                if (ytMatch) {
+                    url = `https://www.youtube.com/watch?v=${ytMatch[1]}`
+                }
+                // Vimeo embed to regular URL
+                const vimeoMatch = url.match(/player\.vimeo\.com\/video\/([^?]+)/)
+                if (vimeoMatch) {
+                    url = `https://vimeo.com/${vimeoMatch[1]}`
+                }
+                const markdown = caption ? `{{ embed('${url}', '${caption}') }}` : `{{ embed('${url}') }}`
+                return { markdown, html: markdown }
+            }
+            return null
+        }
+
         // Fallback: get text content
         const content = block.querySelector('.ce-block__content')
         if (content) {

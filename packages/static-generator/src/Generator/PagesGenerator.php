@@ -62,9 +62,11 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
             ));
 
             $stopwatch = $this->staticAppGenerator->getStopwatch();
-            $stopwatch?->start('generatePage'); // 'page:'.$slug
+            $stopwatch?->start('generatePage');
+            $stopwatch?->start('page:'.$slug);
             $this->generatePage($page);
-            $event = $stopwatch?->stop('generatePage'); // 'page:'.$slug
+            $event = $stopwatch?->stop('page:'.$slug);
+            $stopwatch?->stop('generatePage');
 
             if (null !== $event && $event->getDuration() > 500) {
                 $this->staticAppGenerator->writeln(\sprintf(
