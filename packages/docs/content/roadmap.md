@@ -26,6 +26,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - refactor bin/console pw:flat:sync like pw:static and page-scan for performance and better output
 
+- [AdminBlockEditor] Manage pasting html (from google sheets/words/etc) -> convert to markdown and then do as usual
+
 - [i18n] move en.md to en/index.md when en/ exists in flat
 
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
