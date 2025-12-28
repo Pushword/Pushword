@@ -52,6 +52,7 @@
     "villfa/invert-color": "^0.5",
     "league/commonmark": "^2.7",
     "league/flysystem-bundle": "^3.6",
+    "sensiolabs/ansi-to-html": "^2.0",
     "twig/extra-bundle": "^3",
     "symfony/ux-twig-component": "^2"
   },
