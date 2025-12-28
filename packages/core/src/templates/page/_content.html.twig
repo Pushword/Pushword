@@ -6,8 +6,7 @@
     </script>
     {% endblock %}
 
-{# TODO: fix bug, if pw(page).ma... is not called before we really need it, it don't work #}
-<!--{{ pw(page).mainContent.chapeau|raw }}-->
+{% set mainContent = mainContentSplit(page) %}
 <div class="{{ content_container_class|default('prose mx-auto py-12 px-3 md:px-0') }}">
 
     {% block content_header %}
@@ -17,7 +16,7 @@
         {% endblock %}
 
         {% block description %}
-            {{ pw(page).mainContent.chapeau is defined ? pw(page).mainContent.chapeau|raw : '' }}
+            {{ mainContent.chapeau|raw }}
         {% endblock %}
 
         {% block main_image %}
@@ -35,21 +34,21 @@
     {% block main_content %}
         {% if page.toc is not null or page.tocTitle is not null %}
             {% block toc %}
-                {% set content = pw(page).mainContent.content %}
-                {{ pw(page).mainContent.intro|raw }}
+                {% set content = mainContent.content %}
+                {{ mainContent.intro|raw }}
                 // if content contains '<!-- toc -->'
                 {% if '<!-- toc -->' in content%}
                     {% set content = content|replace({
-                        '<!-- toc -->': pw(page).mainContent.toc
+                        '<!-- toc -->': mainContent.toc
                     }) %}
                 {% else %}
                     <h3>{{ page.tocTitle|default('Nav') }}</h3>
-                    {{ pw(page).mainContent.toc|raw }}
+                    {{ mainContent.toc|raw }}
                 {% endif %}
                 {{ content|raw }}
                 {% endblock %}
         {% else %}
-            {{ pw(page).mainContent.body|raw }}
+            {{ mainContent.body|raw }}
         {% endif %}
     {% endblock %}
 
@@ -59,8 +58,8 @@
 </div>
 
 {% block content_part %}
-    {% if pw(page).mainContent.contentParts %}
-        {% for contentPart in pw(page).mainContent.contentParts %}
+    {% if mainContent.contentParts %}
+        {% for contentPart in mainContent.contentParts %}
         <div class="{{ cycle([page_delimiter_cycle|default('bg-gray-200'), ''], loop.index0) }}">
             <div class="{{ content_container_class|default('prose mx-auto py-12 px-3') }}">
             {{ contentPart|raw }}

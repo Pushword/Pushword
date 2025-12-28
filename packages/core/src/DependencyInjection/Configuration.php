@@ -7,7 +7,6 @@ use Pushword\Core\Component\EntityFilter\Filter\ElseH1;
 use Pushword\Core\Component\EntityFilter\Filter\Extended;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlLinkMultisite;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
-use Pushword\Core\Component\EntityFilter\Filter\MainContentSplitter;
 use Pushword\Core\Component\EntityFilter\Filter\Markdown;
 use Pushword\Core\Component\EntityFilter\Filter\Name;
 use Pushword\Core\Component\EntityFilter\Filter\ShowMore;
@@ -58,7 +57,6 @@ final class Configuration implements ConfigurationInterface
             Markdown::class,
             HtmlLinkMultisite::class,
             HtmlObfuscateLink::class,
-            MainContentSplitter::class,
             Extended::class,
         ],
         'name' => [

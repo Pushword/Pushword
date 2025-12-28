@@ -238,9 +238,11 @@ final class PageScannerCommand
                 if ('scan' === $name) {
                     continue;
                 }
+
                 if ('__section__' === $name) {
                     continue;
                 }
+
                 // Only include our custom timing events
                 if (! \in_array($name, ['preload.caches', 'external.urls', 'scanPage'], true)) {
                     continue;

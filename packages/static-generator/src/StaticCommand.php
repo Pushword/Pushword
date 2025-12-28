@@ -131,9 +131,11 @@ final readonly class StaticCommand
                 if ('generate' === $name) {
                     continue;
                 }
+
                 if ('__section__' === $name) {
                     continue;
                 }
+
                 // Only include our custom timing events
                 if (! \in_array($name, ['kernel.handle', 'html.compress', 'file.write', 'generatePage'], true)) {
                     continue;

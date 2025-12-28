@@ -6,7 +6,6 @@ use Exception;
 use LogicException;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Component\EntityFilter\ValueObject\SplitContent;
 use Pushword\Core\Entity\Page;
 
 use function Safe\preg_match;
@@ -14,7 +13,7 @@ use function Safe\preg_match;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
- * @method SplitContent getMainContent()
+ * @method string getMainContent()
  */
 final class Manager
 {

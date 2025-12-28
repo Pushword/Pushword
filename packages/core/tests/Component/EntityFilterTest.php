@@ -5,11 +5,11 @@ namespace Pushword\Core\Tests\Component;
 use DateTime;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
-use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Twig\ContentExtension;
 
 use function Safe\file_get_contents;
 
@@ -20,12 +20,15 @@ class EntityFilterTest extends KernelTestCase
 {
     public function testIt(): void
     {
-        $manager = $this->getManagerPool()->getManager($this->getPage());
+        $page = $this->getPage();
+        $manager = $this->getManagerPool()->getManager($page);
 
-        self::assertSame($this->getPage()->getH1(), $manager->title()); // @phpstan-ignore-line
-        self::assertSame($this->getPage()->getH1(), $manager->getTitle()); // @phpstan-ignore-line
-        self::assertSame('', $manager->getMainContent()->getChapeau());
-        self::assertSame('<p>', substr(trim($manager->getMainContent()->getBody()), 0, 3));
+        self::assertSame($page->getH1(), $manager->title()); // @phpstan-ignore-line
+        self::assertSame($page->getH1(), $manager->getTitle()); // @phpstan-ignore-line
+
+        $splitContent = $this->getContentExtension()->mainContentSplit($page);
+        self::assertSame('', $splitContent->getChapeau());
+        self::assertSame('<p>', substr(trim($splitContent->getBody()), 0, 3));
     }
 
     public function testObfuscateLink(): void
@@ -55,16 +58,22 @@ class EntityFilterTest extends KernelTestCase
         return self::getContainer()->get(ManagerPool::class);
     }
 
+    private function getContentExtension(): ContentExtension
+    {
+        self::bootKernel();
+
+        return self::getContainer()->get(ContentExtension::class);
+    }
+
     public function testToc(): void
     {
         $page = $this->getPage($this->getContentReadyForToc());
 
-        /** @var Manager */
-        $manager = $this->getManagerPool()->getManager($page);
+        $splitContent = $this->getContentExtension()->mainContentSplit($page);
 
-        self::assertSame('<p>my intro...</p>', trim($manager->getMainContent()->getIntro()));
+        self::assertSame('<p>my intro...</p>', trim($splitContent->getIntro()));
         $toCheck = '<h2 id="first-title">First Title</h2>';
-        self::assertSame($toCheck, substr(trim($manager->getMainContent()->getContent()), 0, \strlen($toCheck)));
+        self::assertSame($toCheck, substr(trim($splitContent->getContent()), 0, \strlen($toCheck)));
     }
 
     private function getPage(?string $content = null): Page

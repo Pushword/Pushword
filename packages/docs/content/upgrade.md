@@ -11,6 +11,45 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc248
+
+### MainContentSplitter replaced by Twig function
+
+The `MainContentSplitter` filter has been removed from the default configuration. The `pw(page).mainContent` now returns a **string** (processed HTML) instead of a `SplitContent` object.
+
+**If you use custom templates** that access `pw(page).mainContent.chapeau`, `pw(page).mainContent.body`, etc., you need to update them:
+
+**Before:**
+
+```twig
+{{ pw(page).mainContent.chapeau|raw }}
+{{ pw(page).mainContent.body|raw }}
+{{ pw(page).mainContent.toc|raw }}
+{% for part in pw(page).mainContent.contentParts %}
+    {{ part|raw }}
+{% endfor %}
+```
+
+**After:**
+
+```twig
+{% set mainContent = mainContentSplit(page) %}
+{{ mainContent.chapeau|raw }}
+{{ mainContent.body|raw }}
+{{ mainContent.toc|raw }}
+{% for part in mainContent.contentParts %}
+    {{ part|raw }}
+{% endfor %}
+```
+
+**For simple templates** that just need the full content without splitting:
+
+```twig
+{{ pw(page).mainContent|raw }}
+```
+
+The new `mainContentSplit(page)` function caches results by page ID, so you can call it multiple times without performance penalty.
+
 ## To 1.0.0-rc247
 
 0. Upgrade to Symfony 8

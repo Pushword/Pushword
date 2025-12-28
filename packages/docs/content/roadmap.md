@@ -22,19 +22,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
-composer test-filter "Pushword\\\\StaticGenerator\\\\Tests"
-
-- performance improvement for Page Scanner - run console with profiling
-- performance improvement for Static Generator - run console with profiling
-
-- Neutral: Value objects add slight overhead but improve immutability
-  Deprecated Value Object in favor of twig function :
-  removing MainContentSplitter from default configuration
-  in favor of something like
-  {% set mainContentParts = mainContentSplit(pw(page).mainContent) %}
-  And usage
-  {{ mainContentParts.chapeau|raw }}
-  Think about performance to avoid the need to do for the same content multiple time the call
+- [x] Replaced MainContentSplitter value object with `mainContentSplit(page)` Twig function
+  - Caches result by page ID for performance
+  - Usage: `{% set mainContent = mainContentSplit(page) %}` then `{{ mainContent.chapeau|raw }}`
 
 - [AdminBlockEditor] Minor UI improvement - Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
 
@@ -48,7 +38,6 @@ composer test-filter "Pushword\\\\StaticGenerator\\\\Tests"
   - [ ] In new, create default AGENTS.md (inspired from altimood)
 
 - [Version]
-  - [ ] change versionner to rely on flat and create .example-file.md~version-200020210 instead of serialized json, add a command to clear version
   - [ ] diffchecker based on Monaco
 
 - [Core] fix glightbox or rollback to fslightbox
