@@ -63,51 +63,66 @@ final class PageScannerCommand
         $errors = [];
         $errorNbr = 0;
         $currentPage = 0;
+        $lastLineWasError = false;
 
         foreach ($pages as $page) {
             ++$currentPage;
             $pageSlug = $page->getSlug() ?: 'index';
             $pageHost = $page->host ?? '';
 
-            $this->output?->writeln(\sprintf(
-                '[%d/%d] Scanning %s/%s',
-                $currentPage,
-                $pagesCount,
-                $pageHost,
-                $pageSlug,
-            ));
+            // Progress indicator: overwrite line unless previous was an error
+            if ($lastLineWasError) {
+                $this->output?->write(\sprintf('Scanning... [%d/%d]', $currentPage, $pagesCount));
+            } else {
+                $this->output?->write(\sprintf("\rScanning... [%d/%d]", $currentPage, $pagesCount));
+            }
+
+            $lastLineWasError = false;
 
             $this->stopwatch?->start('scanPage');
             $this->stopwatch?->start('scan:'.$page->getSlug());
             $scan = $this->scanner->scan($page);
-            $event =  $this->stopwatch?->stop('scan:'.$page->getSlug());
+            $event = $this->stopwatch?->stop('scan:'.$page->getSlug());
             $this->stopwatch?->stop('scanPage');
 
-            if (null !== $event && $event->getDuration() > 500) {
-                $this->output?->writeln(\sprintf(
-                    '    <comment>⏱ %dms (slow)</comment>',
-                    $event->getDuration(),
-                ));
+            if (null !== $event && $event->getDuration() > 500 && null !== $this->output && $this->output->isVerbose()) {
+                $this->output->writeln("\n".\sprintf('<comment>⏱ %s/%s: %dms (slow)</comment>', $pageHost, $pageSlug, $event->getDuration()));
+                $lastLineWasError = true;
             }
 
             if (true !== $scan) {
                 $pageId = (int) $page->id;
                 $errors[$pageId] = $scan;
+
+                $hasVisibleErrors = false;
                 foreach ($scan as $s) {
                     $route = $s['page']['host'].'/'.$s['page']['slug'];
                     if (! $this->mustIgnoreError($route, $s['message'])) {
-                        $this->output?->writeln('  ➜ '.str_replace(['<code>', '</code>'], '`', $s['message']));
+                        if (! $hasVisibleErrors) {
+                            $this->output?->writeln("\n".$pageHost.'/'.$pageSlug);
+                            $hasVisibleErrors = true;
+                        }
+
+                        $this->output?->writeln('  <error>➜ '.$this->formatErrorForCli($s['message']).'</error>');
                     }
+                }
+
+                if ($hasVisibleErrors) {
+                    $lastLineWasError = true;
                 }
 
                 $errorNbr += \count($errors[$pageId]);
             }
 
             if ($errorNbr > 500) {
-                $this->output?->writeln('Too many errors (>500), stopping scan...');
+                $this->output?->writeln("\n".'Too many errors (>500), stopping scan...');
 
                 break;
             }
+        }
+
+        if (! $lastLineWasError) {
+            $this->output?->writeln('');
         }
 
         // Parallel external URL validation
@@ -129,7 +144,7 @@ final class PageScannerCommand
             foreach ($pageErrors as $error) {
                 $route = $error['page']['host'].'/'.$error['page']['slug'];
                 if (! $this->mustIgnoreError($route, $error['message'])) {
-                    $this->output?->writeln($route.' ➜ '.str_replace(['<code>', '</code>'], '`', $error['message']));
+                    $this->output?->writeln($route.' <error>➜ '.$this->formatErrorForCli($error['message']).'</error>');
                 }
             }
 
@@ -146,6 +161,31 @@ final class PageScannerCommand
     private bool $skipExternal = false;
 
     private ?Stopwatch $stopwatch = null;
+
+    private function formatErrorForCli(string $message): string
+    {
+        // Replace HTML formatting with CLI-friendly equivalents
+        $message = str_replace(['<code>', '</code>'], '`', $message);
+        $message = str_replace('<br>', ' ', $message);
+
+        // Extract content from textarea (error excerpts)
+        if (1 === preg_match('/<textarea[^>]*>([^<]*)<\/textarea>/i', $message, $matches)) {
+            $excerpt = trim($matches[1]);
+            $message = (string) preg_replace('/<textarea[^>]*>[^<]*<\/textarea>/i', '', $message);
+            $message = trim($message);
+            if ('' !== $excerpt) {
+                $message .= ' → `'.$excerpt.'`';
+            }
+        }
+
+        // Remove any remaining HTML tags
+        $message = strip_tags($message);
+
+        // Clean up multiple spaces
+        $message = (string) preg_replace('/\s+/', ' ', $message);
+
+        return trim($message);
+    }
 
     private function mustIgnoreError(string $route, string $message): bool
     {
