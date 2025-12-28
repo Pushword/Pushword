@@ -17,9 +17,14 @@ use Pushword\Flat\Importer\RedirectionImporter;
 use function Safe\filemtime;
 use function Safe\scandir;
 
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Stopwatch\Stopwatch;
+
 final class PageSync
 {
     private int $deletedCount = 0;
+
+    private ?OutputInterface $output = null;
 
     public function __construct(
         private readonly AppPool $apps,
@@ -32,6 +37,17 @@ final class PageSync
         private readonly EntityManagerInterface $entityManager,
         private readonly ?LoggerInterface $logger = null,
     ) {
+    }
+
+    public function setOutput(?OutputInterface $output): void
+    {
+        $this->output = $output;
+        $this->pageExporter->setOutput($output);
+    }
+
+    public function setStopwatch(?Stopwatch $stopwatch): void
+    {
+        // Stopwatch passed for interface consistency but not used in PageSync
     }
 
     public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null): void
@@ -61,15 +77,72 @@ final class PageSync
         // 2. Reset page importer
         $this->pageImporter->resetImport();
 
-        // 3. Import all .md files
-        $this->importDirectory($contentDir);
+        // 3. Collect all .md files first for progress display
+        $files = $this->collectMarkdownFiles($contentDir);
+        $totalFiles = \count($files);
+
+        if ($totalFiles > 0) {
+            $this->output?->writeln(\sprintf('Importing %d pages...', $totalFiles));
+        }
+
+        // 4. Import all .md files with progress
+        $currentFile = 0;
+        foreach ($files as $path) {
+            ++$currentFile;
+            $relativePath = str_replace($contentDir.'/', '', $path);
+            $this->output?->writeln(\sprintf('[%d/%d] Importing %s', $currentFile, $totalFiles, $relativePath));
+
+            $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
+            $this->pageImporter->import($path, $lastEditDateTime);
+        }
+
         $this->pageImporter->finishImport();
 
-        // 4. Delete pages that no longer have .md files (excluding redirections from CSV)
+        // 5. Delete pages that no longer have .md files (excluding redirections from CSV)
         $this->deleteMissingPages($app->getMainHost());
 
-        // 5. Regenerate index.csv to reflect the current database state
+        // 6. Regenerate index.csv to reflect the current database state
         $this->regenerateIndex($contentDir);
+    }
+
+    /**
+     * Collect all markdown files recursively from a directory.
+     *
+     * @return string[]
+     */
+    private function collectMarkdownFiles(string $dir): array
+    {
+        if (! file_exists($dir)) {
+            return [];
+        }
+
+        $files = [];
+
+        /** @var string[] $entries */
+        $entries = scandir($dir);
+        foreach ($entries as $entry) {
+            if (\in_array($entry, ['.', '..'], true)) {
+                continue;
+            }
+
+            // Skip backup files (ending with ~)
+            if (str_ends_with($entry, '~')) {
+                continue;
+            }
+
+            $path = $dir.'/'.$entry;
+            if (is_dir($path)) {
+                $files = [...$files, ...$this->collectMarkdownFiles($path)];
+
+                continue;
+            }
+
+            if (str_ends_with($path, '.md')) {
+                $files[] = $path;
+            }
+        }
+
+        return $files;
     }
 
     /**
@@ -103,36 +176,6 @@ final class PageSync
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
 
         return $this->hasNewerFiles($contentDir, $app->getMainHost());
-    }
-
-    private function importDirectory(string $dir): void
-    {
-        if (! file_exists($dir)) {
-            return;
-        }
-
-        /** @var string[] $files */
-        $files = scandir($dir);
-        foreach ($files as $file) {
-            if (\in_array($file, ['.', '..'], true)) {
-                continue;
-            }
-
-            // Skip backup files (ending with ~)
-            if (str_ends_with($file, '~')) {
-                continue;
-            }
-
-            $path = $dir.'/'.$file;
-            if (is_dir($path)) {
-                $this->importDirectory($path);
-
-                continue;
-            }
-
-            $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
-            $this->pageImporter->import($path, $lastEditDateTime);
-        }
     }
 
     private function hasNewerFiles(string $dir, string $host): bool
@@ -219,6 +262,7 @@ final class PageSync
             }
 
             $this->logger?->info('Deleting page `'.$page->getSlug().'`');
+            $this->output?->writeln(\sprintf('<comment>Deleting page %s</comment>', $page->getSlug()));
             ++$this->deletedCount;
             $this->entityManager->remove($page);
         }
