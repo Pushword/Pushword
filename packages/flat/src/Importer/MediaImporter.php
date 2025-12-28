@@ -171,26 +171,25 @@ class MediaImporter extends AbstractImporter
         }
     }
 
-    public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
+    #[\Override]
+    public function import(string $filePath, DateTimeInterface $lastEditDateTime): bool
     {
         // Skip index.csv file itself
         if (str_ends_with($filePath, MediaExporter::INDEX_FILE)) {
-            return;
+            return false;
         }
 
         // Skip legacy sidecar files (backward compatibility during transition)
         $isMetaDataFile = str_ends_with($filePath, '.json') || str_ends_with($filePath, '.yaml');
         if ($isMetaDataFile && file_exists(substr($filePath, 0, -5))) {
-            return;
+            return false;
         }
 
         if ($this->isImage($filePath)) {
-            $this->importImage($filePath, $lastEditDateTime);
-
-            return;
+            return $this->importImage($filePath, $lastEditDateTime);
         }
 
-        $this->importMedia($filePath, $lastEditDateTime);
+        return $this->importMedia($filePath, $lastEditDateTime);
     }
 
     private function isImage(string $filePath): bool
@@ -209,7 +208,7 @@ class MediaImporter extends AbstractImporter
         return false !== @getimagesize($filePath);
     }
 
-    public function importMedia(string $filePath, DateTimeInterface $dateTime): void
+    public function importMedia(string $filePath, DateTimeInterface $dateTime): bool
     {
         $fileName = $this->getFilename($filePath);
         $media = $this->getMediaFromIndex($fileName);
@@ -217,7 +216,7 @@ class MediaImporter extends AbstractImporter
         if (! $this->newMedia && $media->updatedAt >= $dateTime) {
             ++$this->skippedCount;
 
-            return; // no update needed
+            return false; // no update needed
         }
 
         $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');
@@ -239,6 +238,8 @@ class MediaImporter extends AbstractImporter
         $data = $this->getData($filePath);
 
         $this->setData($media, $data);
+
+        return true;
     }
 
     /**

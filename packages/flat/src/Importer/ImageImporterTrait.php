@@ -20,7 +20,7 @@ trait ImageImporterTrait
 
     abstract protected function getMedia(string $media): Media;
 
-    public function importImage(string $filePath, DateTimeInterface $dateTime): void
+    public function importImage(string $filePath, DateTimeInterface $dateTime): bool
     {
         $fileName = $this->getFilename($filePath);
         $media = $this->getMedia($fileName);
@@ -28,7 +28,7 @@ trait ImageImporterTrait
         if (false === $this->newMedia && $media->updatedAt >= $dateTime) {
             ++$this->skippedCount;
 
-            return; // no update needed
+            return false; // no update needed
         }
 
         $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');
@@ -37,6 +37,8 @@ trait ImageImporterTrait
         $filePath = $this->copyToMediaDir($filePath);
 
         $this->importImageMediaData($media, $filePath);
+
+        return true;
     }
 
     /**

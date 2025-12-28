@@ -119,11 +119,12 @@ final class PageImporter extends AbstractImporter
         return $slug;
     }
 
-    public function import(string $filePath, DateTimeInterface $lastEditDateTime): void
+    #[Override]
+    public function import(string $filePath, DateTimeInterface $lastEditDateTime): bool
     {
         $document = $this->getDocumentFromFile($filePath);
         if (null === $document) {
-            return;
+            return false;
         }
 
         $slug = $this->getSlug($filePath, $document);
@@ -134,11 +135,11 @@ final class PageImporter extends AbstractImporter
         $data = $document->matter();
         $data = \is_array($data) ? $data : throw new Exception();
         /** @var array<string, mixed> $data */
+        $previousImportedCount = $this->importedCount;
         $this->pageList[$slug] = $this->editPage($slug, $data, $document->body(), $lastEditDateTime);
 
-        // next lines permit to debug
-        // dump($slug);
-        // $this->em->flush();
+        // Return true if this file was actually imported (not skipped)
+        return $this->importedCount > $previousImportedCount;
     }
 
     /**

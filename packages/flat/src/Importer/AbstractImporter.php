@@ -18,7 +18,10 @@ abstract class AbstractImporter
     {
     }
 
-    abstract public function import(string $filePath, DateTimeInterface $lastEditDateTime): void;
+    /**
+     * @return bool true if the file was actually imported, false if skipped
+     */
+    abstract public function import(string $filePath, DateTimeInterface $lastEditDateTime): bool;
 
     public function finishImport(): void
     {
