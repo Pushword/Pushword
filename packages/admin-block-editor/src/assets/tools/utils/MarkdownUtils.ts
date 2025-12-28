@@ -334,10 +334,16 @@ export class MarkdownUtils {
     return text
   }
 
-  static convertInlineHtmlToMarkdown(html: string): string {
-    html = MarkdownUtils.fixer(html)
+  static convertInlineHtmlToMarkdown(html: string, applyTypographyFixes = true): string {
+    if (applyTypographyFixes) {
+      html = MarkdownUtils.fixer(html)
+    }
     // Decode HTML entities first (including numeric ones like &#10140;)
     html = he.decode(html)
+    // Convert non-breaking spaces to regular spaces (unless typography fixes are wanted)
+    if (!applyTypographyFixes) {
+      html = html.replace(/\u00A0/g, ' ')
+    }
 
     return html
       .replace(/<(b|strong|em|i|a[^>]*)> /gi, ' <$1>')

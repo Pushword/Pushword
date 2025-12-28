@@ -1,7 +1,7 @@
 ---
 title: 'Page HERO and custom field in admin to manage main image format'
 h1: 'Advanced Main Image'
-id: 19
+id: 28
 publishedAt: '2025-12-21 21:55'
 parentPage: extensions
 toc: true

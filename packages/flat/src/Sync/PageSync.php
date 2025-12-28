@@ -79,21 +79,16 @@ final class PageSync
 
         // 3. Collect all .md files first for progress display
         $files = $this->collectMarkdownFiles($contentDir);
-        $totalFiles = \count($files);
 
-        if ($totalFiles > 0) {
-            $this->output?->writeln(\sprintf('Importing %d pages...', $totalFiles));
-        }
-
-        // 4. Import all .md files with progress
-        $currentFile = 0;
+        // 4. Import all .md files with progress (only show actually imported files)
         foreach ($files as $path) {
-            ++$currentFile;
-            $relativePath = str_replace($contentDir.'/', '', $path);
-            $this->output?->writeln(\sprintf('[%d/%d] Importing %s', $currentFile, $totalFiles, $relativePath));
-
             $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
-            $this->pageImporter->import($path, $lastEditDateTime);
+            $imported = $this->pageImporter->import($path, $lastEditDateTime);
+
+            if ($imported) {
+                $relativePath = str_replace($contentDir.'/', '', $path);
+                $this->output?->writeln(\sprintf('Imported %s', $relativePath));
+            }
         }
 
         $this->pageImporter->finishImport();

@@ -3,6 +3,9 @@
 # Locally link js-helper
 # cd packages/js-helper; yarn link; cd ../core; yarn link @pushword/js-helper; cd ../../
 
+# Remove id lines from docs content (they are auto-generated)
+find packages/docs/content -name "*.md" -exec sed -i '/^id: [0-9]*$/d' {} \;
+
 cd packages/skeleton
 rm var/app.db|| true
 rm -rf media|| true

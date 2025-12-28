@@ -171,7 +171,7 @@ export default class ClipboardManager {
         container.querySelectorAll('[contenteditable="false"], .ce-header-level-wrapper, select').forEach(el => el.remove())
 
         const html = container.innerHTML
-        const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(html).replace(/  +/g, ' ').trim()
+        const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(html, false).replace(/  +/g, ' ').trim()
 
         if (!markdown) {
             return
@@ -230,7 +230,7 @@ export default class ClipboardManager {
         const paragraph = block.querySelector('.ce-paragraph')
         if (paragraph) {
             const html = paragraph.innerHTML
-            const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(html).trim()
+            const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(html, false).trim()
             return markdown ? { markdown, html } : null
         }
 
@@ -238,7 +238,7 @@ export default class ClipboardManager {
         const header = block.querySelector('.ce-header')
         if (header) {
             const level = parseInt(header.tagName.substring(1)) || 2
-            const text = MarkdownUtils.convertInlineHtmlToMarkdown(header.innerHTML).trim()
+            const text = MarkdownUtils.convertInlineHtmlToMarkdown(header.innerHTML, false).trim()
             if (text) {
                 return {
                     markdown: '#'.repeat(level) + ' ' + text,
@@ -260,7 +260,7 @@ export default class ClipboardManager {
             const items: string[] = []
             const htmlItems: string[] = []
             list.querySelectorAll('.cdx-list__item').forEach(item => {
-                const text = MarkdownUtils.convertInlineHtmlToMarkdown(item.innerHTML).trim()
+                const text = MarkdownUtils.convertInlineHtmlToMarkdown(item.innerHTML, false).trim()
                 if (text) {
                     items.push('- ' + text)
                     htmlItems.push('<li>' + item.innerHTML + '</li>')
@@ -277,7 +277,7 @@ export default class ClipboardManager {
         if (quote) {
             const textEl = quote.querySelector('.cdx-quote__text')
             if (textEl) {
-                const text = MarkdownUtils.convertInlineHtmlToMarkdown(textEl.innerHTML).trim()
+                const text = MarkdownUtils.convertInlineHtmlToMarkdown(textEl.innerHTML, false).trim()
                 if (text) {
                     return {
                         markdown: '> ' + text,
@@ -288,10 +288,33 @@ export default class ClipboardManager {
             return null
         }
 
-        // Code block
+        // CodeBlock (Monaco editor with language selector)
+        const monacoWrapper = block.querySelector('.monaco-codeblock-wrapper')
+        if (monacoWrapper) {
+            const languageSelect = monacoWrapper.querySelector('select') as HTMLSelectElement
+            const language = languageSelect?.value || ''
+            // Monaco editor stores content in hidden elements or we need to get from view-lines
+            const monacoLines = monacoWrapper.querySelectorAll('.view-line')
+            let code = ''
+            if (monacoLines.length > 0) {
+                code = Array.from(monacoLines).map(line => line.textContent || '').join('\n')
+            }
+            // Replace non-breaking spaces with regular spaces
+            code = code.replace(/\u00A0/g, ' ')
+            if (code.trim()) {
+                return {
+                    markdown: '```' + language + '\n' + code + '\n```',
+                    html: '<pre><code class="language-' + language + '">' + code + '</code></pre>',
+                }
+            }
+            return null
+        }
+
+        // Code block (simple textarea-based)
         const code = block.querySelector('.ce-code__textarea, .cdx-code')
         if (code) {
-            const text = code.textContent || ''
+            let text = code.textContent || ''
+            text = text.replace(/\u00A0/g, ' ')
             if (text.trim()) {
                 return {
                     markdown: '```\n' + text + '\n```',
@@ -301,10 +324,27 @@ export default class ClipboardManager {
             return null
         }
 
-        // Raw HTML block
-        const raw = block.querySelector('[data-editor]')
+        // Raw HTML block (Monaco editor)
+        const rawMonaco = block.querySelector('.editorjs-monaco-wrapper')
+        if (rawMonaco) {
+            const monacoLines = rawMonaco.querySelectorAll('.view-line')
+            let text = ''
+            if (monacoLines.length > 0) {
+                text = Array.from(monacoLines).map(line => line.textContent || '').join('\n')
+            }
+            // Replace non-breaking spaces with regular spaces
+            text = text.replace(/\u00A0/g, ' ')
+            if (text.trim()) {
+                return { markdown: text.trim(), html: text.trim() }
+            }
+            return null
+        }
+
+        // Raw HTML block (textarea-based fallback)
+        const raw = block.querySelector('[data-editor], textarea')
         if (raw) {
-            const text = raw.textContent || ''
+            let text = (raw as HTMLTextAreaElement).value || raw.textContent || ''
+            text = text.replace(/\u00A0/g, ' ')
             if (text.trim()) {
                 return { markdown: text.trim(), html: text.trim() }
             }
@@ -328,21 +368,24 @@ export default class ClipboardManager {
         }
 
         // Gallery block
-        const galleryContainer = block.querySelector('.cdxcarousel')
-        if (galleryContainer) {
+        const galleryWrapper = block.querySelector('.cdxcarousel-wrapper')
+        if (galleryWrapper) {
             const items: { media: string; caption: string }[] = []
-            galleryContainer.querySelectorAll('.cdxcarousel-item').forEach(item => {
-                const img = item.querySelector('img') as HTMLImageElement
-                const captionEl = item.querySelector('.cdxcarousel-item-caption, [data-placeholder]')
-                if (img && img.src) {
-                    // Extract media name from URL (last part of path)
-                    const src = img.src
-                    const mediaMatch = src.match(/\/media\/[^/]+\/([^/]+)$/) || src.match(/\/([^/]+)$/)
-                    const media = mediaMatch ? mediaMatch[1] : src
-                    const caption = captionEl?.textContent?.trim() || ''
-                    items.push({ media, caption })
-                }
-            })
+            const galleryList = galleryWrapper.querySelector('.cdxcarousel-list')
+            if (galleryList) {
+                galleryList.querySelectorAll('.cdxcarousel-item').forEach(item => {
+                    const img = item.querySelector('img') as HTMLImageElement
+                    const captionEl = item.querySelector('.image-tool__caption')
+                    if (img && img.src && !item.classList.contains('cdxcarousel-item--empty')) {
+                        // Extract media name from URL (last part of path)
+                        const src = img.src
+                        const mediaMatch = src.match(/\/media\/[^/]+\/([^/]+)$/) || src.match(/\/([^/]+)$/)
+                        const media = mediaMatch ? mediaMatch[1] : src
+                        const caption = captionEl?.textContent?.trim() || ''
+                        items.push({ media, caption })
+                    }
+                })
+            }
             if (items.length > 0) {
                 const imagesObject: Record<string, string> = {}
                 items.forEach(item => {
@@ -369,26 +412,22 @@ export default class ClipboardManager {
             return null
         }
 
-        // Embed block (YouTube, Vimeo, etc.)
-        const embedContainer = block.querySelector('.embed-tool')
+        // Embed/Video block
+        const embedContainer = block.querySelector('.cdx-embed')
         if (embedContainer) {
-            const iframe = embedContainer.querySelector('iframe') as HTMLIFrameElement
-            const captionEl = embedContainer.querySelector('.embed-tool__caption')
-            if (iframe && iframe.src) {
-                const caption = captionEl?.textContent?.trim() || ''
-                // Try to extract original URL from embed URL
-                let url = iframe.src
-                // YouTube embed to watch URL
-                const ytMatch = url.match(/youtube\.com\/embed\/([^?]+)/)
-                if (ytMatch) {
-                    url = `https://www.youtube.com/watch?v=${ytMatch[1]}`
-                }
-                // Vimeo embed to regular URL
-                const vimeoMatch = url.match(/player\.vimeo\.com\/video\/([^?]+)/)
-                if (vimeoMatch) {
-                    url = `https://vimeo.com/${vimeoMatch[1]}`
-                }
-                const markdown = caption ? `{{ embed('${url}', '${caption}') }}` : `{{ embed('${url}') }}`
+            const urlInput = block.querySelector('.cdx-input-labeled-embed-service-url') as HTMLElement
+            const captionEl = block.querySelector('.image-tool__caption') as HTMLElement
+            const img = block.querySelector('img') as HTMLImageElement
+            const serviceUrl = urlInput?.textContent?.trim() || ''
+            const caption = captionEl?.textContent?.trim() || ''
+            // Extract media name from image src
+            let media = ''
+            if (img && img.src) {
+                const mediaMatch = img.src.match(/\/media\/[^/]+\/([^/]+)$/) || img.src.match(/\/([^/]+)$/)
+                media = mediaMatch ? mediaMatch[1] : ''
+            }
+            if (serviceUrl) {
+                const markdown = `{{ video('${serviceUrl}', '${media}', '${caption}') }}`
                 return { markdown, html: markdown }
             }
             return null

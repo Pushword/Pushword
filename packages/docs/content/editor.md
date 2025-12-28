@@ -1,9 +1,9 @@
 ---
 title: 'Editor Hidden Super Power - Cheatsheet Pushword'
 h1: 'Editor Hidden Super Power<br><small>and Markdown Cheatsheet</small>'
-id: 15
+id: 24
 publishedAt: '2025-12-21 21:55'
-parentPage: homepage
+parentPage: search.json
 prose: ' '
 raw: true
 main_content_filters: twig

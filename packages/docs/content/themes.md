@@ -1,9 +1,8 @@
 ---
 title: 'Find your custom theme for a Pushword CMS'
 h1: Themes
-id: 43
+id: 50
 publishedAt: '2025-12-21 21:55'
-parentPage: homepage
 name: Theme
 ---
 

@@ -1,9 +1,11 @@
 ---
+title: 'Pushword - The Modern CMS for Developers (ready for AI era)'
 h1: search.json
 id: 38
 publishedAt: '2025-12-21 21:55'
+name: Pushword
 template: none
-main_content_filters: 'twig'
+main_content_filters: twig
 headers:
   - [Content-type, application/json]
 ---

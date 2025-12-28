@@ -1,9 +1,9 @@
 ---
 title: 'Entity Filter - Transform Page properties with filters'
 h1: 'Entity Filter'
-id: 11
+id: 20
 publishedAt: '2025-12-21 21:55'
-parentPage: homepage
+parentPage: search.json
 name: 'Entity Filter'
 filter_twig: 0
 ---

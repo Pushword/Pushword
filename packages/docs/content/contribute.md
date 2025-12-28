@@ -1,9 +1,9 @@
 ---
 title: 'Contribute to Pushword : Documention, Core or Extension'
 h1: Contribute
-id: 13
+id: 22
 publishedAt: '2025-12-21 21:55'
-parentPage: homepage
+parentPage: search.json
 toc: true
 ---
 
