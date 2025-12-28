@@ -2,6 +2,10 @@
 
 namespace Pushword\Flat\Command;
 
+use Pushword\Core\Service\BackgroundProcessManager;
+use Pushword\Core\Service\ProcessOutputStorage;
+use Pushword\Core\Service\SharedOutputInterface;
+use Pushword\Core\Service\TeeOutput;
 use Pushword\Flat\FlatFileSync;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -10,6 +14,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 #[AsCommand(
     name: 'pw:flat:sync',
@@ -17,8 +22,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 final readonly class FlatFileSyncCommand
 {
+    private const string PROCESS_TYPE = 'flat-sync';
+
+    private const string COMMAND_PATTERN = 'pw:flat:sync';
+
     public function __construct(
         private FlatFileSync $flatFileSync,
+        private Stopwatch $stopWatch,
+        private BackgroundProcessManager $processManager,
+        private ProcessOutputStorage $outputStorage,
     ) {
     }
 
@@ -30,14 +42,59 @@ final readonly class FlatFileSyncCommand
         #[Option(name: 'force', shortcut: 'f')]
         bool $force = false,
     ): int {
-        $this->flatFileSync->sync($host, $force);
+        // Check if same process type is already running (via PID file)
+        $pidFile = $this->processManager->getPidFilePath(self::PROCESS_TYPE);
+        $this->processManager->cleanupStaleProcess($pidFile);
+        $processInfo = $this->processManager->getProcessInfo($pidFile);
 
-        $this->displaySummary(new SymfonyStyle($input, $output));
+        if ($processInfo['isRunning']) {
+            $output->writeln('<error>Flat sync is already running (PID: '.$processInfo['pid'].').</error>');
 
-        return Command::SUCCESS;
+            return Command::FAILURE;
+        }
+
+        // Register this process and setup shared output
+        $this->processManager->registerProcess($pidFile, self::COMMAND_PATTERN);
+
+        // Only clear storage if not already initialized by web controller
+        $currentStatus = $this->outputStorage->getStatus(self::PROCESS_TYPE);
+        if ('running' !== $currentStatus) {
+            $this->outputStorage->clear(self::PROCESS_TYPE);
+            $this->outputStorage->setStatus(self::PROCESS_TYPE, 'running');
+        }
+
+        // Create tee output to write to both console and shared storage
+        $sharedOutput = new SharedOutputInterface($this->outputStorage, self::PROCESS_TYPE);
+        $teeOutput = new TeeOutput([$output, $sharedOutput]);
+
+        try {
+            $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
+            $this->stopWatch->start('sync');
+
+            // Set tee output and stopwatch for progress reporting
+            $this->flatFileSync->setOutput($teeOutput);
+            $this->flatFileSync->setStopwatch($this->stopWatch);
+
+            $this->flatFileSync->sync($host, $force);
+
+            $event = $this->stopWatch->stop('sync');
+            $duration = $event->getDuration();
+
+            $this->displaySummary(new SymfonyStyle($input, $teeOutput), $duration);
+
+            // Print timing breakdown
+            $this->printTimingBreakdown($teeOutput);
+
+            $this->outputStorage->setStatus(self::PROCESS_TYPE, 'completed');
+
+            return Command::SUCCESS;
+        } finally {
+            // Clean up PID file
+            $this->processManager->unregisterProcess($pidFile);
+        }
     }
 
-    private function displaySummary(SymfonyStyle $io): void
+    private function displaySummary(SymfonyStyle $io, float $duration): void
     {
         $mediaImported = $this->flatFileSync->mediaSync->getImportedCount();
         $pageImported = $this->flatFileSync->pageSync->getImportedCount();
@@ -51,12 +108,13 @@ final readonly class FlatFileSyncCommand
         $isExportMode = $mediaExported > 0 || $pageExported > 0;
 
         if (! $isImportMode && ! $isExportMode) {
-            $io->success('Sync completed (export mode - no changes detected)');
+            $io->success(\sprintf('Sync completed (export mode - no changes detected). (%dms)', $duration));
 
             return;
         }
 
         if ($isImportMode) {
+            $io->success(\sprintf('Sync completed (import mode). (%dms)', $duration));
             $io->table(['Type', 'Imported', 'Skipped', 'Deleted'], [
                 [
                     'Media',
@@ -75,6 +133,7 @@ final readonly class FlatFileSyncCommand
             return;
         }
 
+        $io->success(\sprintf('Sync completed (export mode). (%dms)', $duration));
         $io->table(['Type', 'Exported', 'Skipped'], [
             [
                 'Media',
@@ -87,5 +146,47 @@ final readonly class FlatFileSyncCommand
                 $this->flatFileSync->pageSync->getExportSkippedCount(),
             ],
         ]);
+    }
+
+    private function printTimingBreakdown(OutputInterface $output): void
+    {
+        $sections = $this->stopWatch->getSections();
+        $timings = [];
+
+        foreach ($sections as $section) {
+            foreach ($section->getEvents() as $name => $event) {
+                // Skip our main event and internal Symfony events
+                if ('sync' === $name) {
+                    continue;
+                }
+                if ('__section__' === $name) {
+                    continue;
+                }
+                // Only include our custom timing events
+                if (! \in_array($name, ['media.sync', 'page.sync'], true)) {
+                    continue;
+                }
+
+                $timings[$name] = ($timings[$name] ?? 0) + $event->getDuration();
+            }
+        }
+
+        if ([] === $timings) {
+            return;
+        }
+
+        arsort($timings);
+
+        $parts = [];
+        foreach ($timings as $name => $duration) {
+            $shortName = match ($name) {
+                'media.sync' => 'media',
+                'page.sync' => 'pages', // @phpstan-ignore match.alwaysTrue
+                default => $name,
+            };
+            $parts[] = \sprintf('%s: %dms', $shortName, $duration);
+        }
+
+        $output->writeln('<comment>⏱ '.implode(' | ', $parts).'</comment>');
     }
 }

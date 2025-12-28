@@ -16,11 +16,16 @@ use Pushword\Flat\Importer\MediaImporter;
 use function Safe\filemtime;
 use function Safe\scandir;
 
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 final class MediaSync
 {
     private int $deletedCount = 0;
+
+    private ?OutputInterface $output = null;
+
+    private ?Stopwatch $stopwatch = null;
 
     public function __construct(
         private readonly AppPool $apps,
@@ -30,9 +35,19 @@ final class MediaSync
         private readonly MediaRepository $mediaRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly string $mediaDir,
-        private readonly ?Stopwatch $stopwatch = null,
         private readonly ?LoggerInterface $logger = null,
     ) {
+    }
+
+    public function setOutput(?OutputInterface $output): void
+    {
+        $this->output = $output;
+        $this->mediaExporter->setOutput($output);
+    }
+
+    public function setStopwatch(?Stopwatch $stopwatch): void
+    {
+        $this->stopwatch = $stopwatch;
     }
 
     public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null): void
@@ -56,9 +71,6 @@ final class MediaSync
         // 1. Parse CSV indexes
         $this->mediaImporter->resetIndex();
         $this->mediaImporter->loadIndex($this->mediaDir);
-        // if (file_exists($localMediaDir)) {
-        //     $this->mediaImporter->loadIndex($localMediaDir);
-        // }
 
         // 2. Validate files exist and prepare renames
         if ($this->mediaImporter->hasIndexData()) {
@@ -75,15 +87,73 @@ final class MediaSync
         $this->deleteMissingMedia();
         $this->mediaImporter->finishImport();
 
-        // 4. Import/update media files (including new files not in CSV)
-        $this->importDirectory($this->mediaDir);
+        // 4. Collect all media files first for progress display
+        $files = $this->collectMediaFiles($this->mediaDir);
+        $localFiles = file_exists($localMediaDir) ? $this->collectMediaFiles($localMediaDir) : [];
+        $allFiles = [...$files, ...$localFiles];
+        $totalFiles = \count($allFiles);
+
+        if ($totalFiles > 0) {
+            $this->output?->writeln(\sprintf('Importing %d media files...', $totalFiles));
+        }
+
+        // 5. Import/update media files with progress
+        $currentFile = 0;
+        foreach ($allFiles as $path) {
+            ++$currentFile;
+            $fileName = basename($path);
+            $this->output?->writeln(\sprintf('[%d/%d] Importing %s', $currentFile, $totalFiles, $fileName));
+
+            $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
+            $this->mediaImporter->import($path, $lastEditDateTime);
+        }
+
         $this->mediaImporter->finishImport();
 
-        $this->importDirectory($localMediaDir);
-        $this->mediaImporter->finishImport();
-
-        // 5. Regenerate index.csv to reflect the current database state
+        // 6. Regenerate index.csv to reflect the current database state
         $this->regenerateIndex();
+    }
+
+    /**
+     * Collect all media files recursively from a directory.
+     *
+     * @return string[]
+     */
+    private function collectMediaFiles(string $dir): array
+    {
+        if (! file_exists($dir)) {
+            return [];
+        }
+
+        $files = [];
+
+        /** @var string[] $entries */
+        $entries = scandir($dir);
+        foreach ($entries as $entry) {
+            if (\in_array($entry, ['.', '..'], true)) {
+                continue;
+            }
+
+            if ($this->isLockOrTempFile($entry)) {
+                continue;
+            }
+
+            // Skip index.csv
+            if (MediaExporter::INDEX_FILE === $entry) {
+                continue;
+            }
+
+            $path = $dir.'/'.$entry;
+            if (is_dir($path)) {
+                $files = [...$files, ...$this->collectMediaFiles($path)];
+
+                continue;
+            }
+
+            $files[] = $path;
+        }
+
+        return $files;
     }
 
     /**
@@ -111,35 +181,6 @@ final class MediaSync
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
 
         return array_any($this->getDirectoriesToScan($contentDir), fn (string $directory): bool => $this->hasNewerFiles($directory));
-    }
-
-    private function importDirectory(string $dir): void
-    {
-        if (! file_exists($dir)) {
-            return;
-        }
-
-        /** @var string[] $files */
-        $files = scandir($dir);
-        foreach ($files as $file) {
-            if (\in_array($file, ['.', '..'], true)) {
-                continue;
-            }
-
-            if ($this->isLockOrTempFile($file)) {
-                continue;
-            }
-
-            $path = $dir.'/'.$file;
-            if (is_dir($path)) {
-                $this->importDirectory($path);
-
-                continue;
-            }
-
-            $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
-            $this->mediaImporter->import($path, $lastEditDateTime);
-        }
     }
 
     /**
@@ -272,6 +313,7 @@ final class MediaSync
             $mediaId = $media->id;
             if (null !== $mediaId && ! \in_array($mediaId, $importedIds, true)) {
                 $this->logger?->info('Deleting media `'.$media->getFileName().'`');
+                $this->output?->writeln(\sprintf('<comment>Deleting media %s</comment>', $media->getFileName()));
                 ++$this->deletedCount;
                 $this->entityManager->remove($media);
             }

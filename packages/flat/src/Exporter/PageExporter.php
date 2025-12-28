@@ -14,6 +14,7 @@ use Pushword\Core\Utils\Entity;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Stringable;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
@@ -36,6 +37,8 @@ final class PageExporter
 
     private int $skippedCount = 0;
 
+    private ?OutputInterface $output = null;
+
     /**
      * @param string[] $pageIndexColumns
      */
@@ -52,6 +55,11 @@ final class PageExporter
             : ['id', 'slug', 'h1', 'publishedAt', 'locale', 'parentPage', 'tags'];
     }
 
+    public function setOutput(?OutputInterface $output): void
+    {
+        $this->output = $output;
+    }
+
     public function exportPages(bool $force = false, bool $skipId = false): void
     {
         $this->exportedCount = 0;
@@ -59,11 +67,18 @@ final class PageExporter
 
         $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
 
-        foreach ($pages as $page) {
-            if ($page->hasRedirection()) {
-                continue; // Redirections go to redirection.csv, not .md files
-            }
+        // Filter out redirections for export
+        $exportablePages = array_filter($pages, static fn (Page $page): bool => ! $page->hasRedirection());
+        $totalPages = \count($exportablePages);
 
+        if ($totalPages > 0) {
+            $this->output?->writeln(\sprintf('Exporting %d pages...', $totalPages));
+        }
+
+        $currentPage = 0;
+        foreach ($exportablePages as $page) {
+            ++$currentPage;
+            $this->output?->writeln(\sprintf('[%d/%d] Exporting %s.md', $currentPage, $totalPages, $page->getSlug()));
             $this->exportPage($page, $force, $skipId);
         }
 
