@@ -22,12 +22,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
-- [x] Replaced MainContentSplitter value object with `mainContentSplit(page)` Twig function
-  - Caches result by page ID for performance
-  - Usage: `{% set mainContent = mainContentSplit(page) %}` then `{{ mainContent.chapeau|raw }}`
-
-- [AdminBlockEditor] Minor UI improvement - Dans GoogleDocs, les h3, h4, h5... apparaissent en fonction des niveaux utilisés dans le doc (par de h3 si pas de h2)
-
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
   ➜ done, but need test
 
@@ -50,8 +44,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 ### One day maybe
 
 - best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
-
-- Rewrite tests to permit to run `./vendor/bin/paratest -p 8`
 
 - [Flat] Implémenter un sync auto depuis [Admin] et un file watcher (bin/console content:watch) pour l'autre sens // l'implémentation rapide c'est un cron sur bin/console flat:sync
 

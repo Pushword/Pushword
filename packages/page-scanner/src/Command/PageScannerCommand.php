@@ -78,8 +78,10 @@ final class PageScannerCommand
             ));
 
             $this->stopwatch?->start('scanPage');
+            $this->stopwatch?->start('scan:'.$page->getSlug());
             $scan = $this->scanner->scan($page);
-            $event = $this->stopwatch?->stop('scanPage');
+            $event =  $this->stopwatch?->stop('scan:'.$page->getSlug());
+            $this->stopwatch?->stop('scanPage');
 
             if (null !== $event && $event->getDuration() > 500) {
                 $this->output?->writeln(\sprintf(

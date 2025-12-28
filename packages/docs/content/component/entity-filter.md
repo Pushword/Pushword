@@ -18,8 +18,13 @@ Filters can be used from **PHP** via `Pushword\Core\Component\EntityFilter\Manag
 {# Render markdown in title #}
 {{ pw(page).title|raw }}
 
-{# Get processed main content #}
-{{ pw(page).mainContent }}
+{# Get processed main content (returns string) #}
+{{ pw(page).mainContent|raw }}
+
+{# Split content into parts (chapeau, intro, toc, etc.) #}
+{% set mainContent = mainContentSplit(page) %}
+{{ mainContent.chapeau|raw }}
+{{ mainContent.body|raw }}
 ```
 
 For a title like `Page **title**`, this will render `Page <strong>Title</strong>` if the markdown filter is configured for `title` in `pushword.filters`.
@@ -34,7 +39,7 @@ pushword:
     filters:
         title: [twig, markdown]
         h1: [twig, elseH1]
-        mainContent: [twig, markdown, mainContentSplitter]
+        mainContent: [twig, markdown]
 ```
 
 ## Disabling Filters Per Page
@@ -52,12 +57,36 @@ Available filters are located in #[core/Component/EntityFilter/Filter](https://g
 | `extended` | Inherits value from extended page if empty |
 | `htmlLinkMultisite` | Resolves internal links for multisite setups |
 | `htmlObfuscateLink` | Obfuscates external links |
-| `mainContentSplitter` | Splits content into chapeau, intro, and parts |
-| `mainContentToBody` | Wraps content in a ContentBody value object |
 | `markdown` | Converts markdown to HTML |
 | `name` | Extracts first line as name |
 | `showMore` | Handles show-more content sections |
 | `twig` | Renders Twig expressions in content |
+
+## Content Splitting with mainContentSplit()
+
+For templates that need to split content into parts (chapeau, intro, toc, etc.), use the `mainContentSplit(page)` Twig function:
+
+```twig
+{% set mainContent = mainContentSplit(page) %}
+
+{{ mainContent.chapeau|raw }}      {# Content before first <!--break--> #}
+{{ mainContent.intro|raw }}        {# Content before first heading (if TOC enabled) #}
+{{ mainContent.content|raw }}      {# Main content #}
+{{ mainContent.body|raw }}         {# Full body (intro + content) #}
+{{ mainContent.toc|raw }}          {# Generated table of contents #}
+
+{% for part in mainContent.contentParts %}
+    {{ part|raw }}                 {# Content parts split by <!--break--> #}
+{% endfor %}
+```
+
+The function caches results by page ID, so multiple calls in the same template have no performance penalty.
+
+For simple templates that just need the full content without splitting:
+
+```twig
+{{ pw(page).mainContent|raw }}
+```
 
 ## Creating a Custom Filter
 
@@ -118,34 +147,6 @@ The `apply` method receives:
 | `$page` | `Page` | The page entity being filtered |
 | `$manager` | `Manager` | The filter manager (for chaining filters) |
 | `$property` | `string` | The property name being filtered |
-
-## Value Objects
-
-Some filters return value objects instead of strings for complex data:
-
-### SplitContent
-
-Returned by `mainContentSplitter`, provides structured access to content parts:
-
-```twig
-{% set content = pw(page).mainContent %}
-
-{{ content.chapeau }}     {# Content before first <!--break--> #}
-{{ content.intro }}       {# Content before first heading (if TOC enabled) #}
-{{ content.content }}     {# Main content #}
-{{ content.body }}        {# Full body (intro + content) #}
-{{ content.contentParts }} {# Array of content parts split by <!--break--> #}
-{{ content.toc }}         {# Generated table of contents #}
-```
-
-### ContentBody
-
-Returned by `mainContentToBody`, wraps content with a `getBody()` method:
-
-```twig
-{% set body = pw(page).body %}
-{{ body.body }}
-```
 
 ## Events
 
