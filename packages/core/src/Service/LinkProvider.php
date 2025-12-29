@@ -163,10 +163,16 @@ final readonly class LinkProvider
     public function renderPhoneNumber(string $number, string $class = ''): string
     {
         $template = $this->apps->get()->getView('/component/phone_number.html.twig');
+        $locale = $this->apps->getCurrentPage()?->locale ?? $this->apps->get()->getLocale();
+
+        // For French locale, replace +33 with 0; otherwise keep international format
+        $numberReadable = 'fr' === $locale
+            ? preg_replace('#^\+\d{2} ?#', '0', $number) ?? throw new Exception()
+            : $number;
 
         return trim($this->twig->render($template, [
             'number' => str_replace([' ', '&nbsp;', '.'], '', $number),
-            'number_readable' => str_replace(' ', '&nbsp;', preg_replace('#^\+\d{2} ?#', '0', $number) ?? throw new Exception()),
+            'number_readable' => str_replace(' ', '&nbsp;', $numberReadable),
             'class' => $class,
         ]));
     }
