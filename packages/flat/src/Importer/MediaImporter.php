@@ -240,6 +240,9 @@ class MediaImporter extends AbstractImporter
 
         $this->setData($media, $data);
 
+        // Sync updatedAt with file mtime to prevent re-importing unchanged files
+        $media->updatedAt = $dateTime;
+
         return true;
     }
 
