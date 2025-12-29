@@ -157,8 +157,7 @@ final readonly class StaticCommand
                 'kernel.handle' => 'render',
                 'html.compress' => 'compress',
                 'file.write' => 'write',
-                'generatePage' => 'page',
-                default => $name,
+                default => 'page',
             };
             $parts[] = \sprintf('%s: %dms', $shortName, $duration);
         }

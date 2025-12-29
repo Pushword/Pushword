@@ -61,7 +61,7 @@ final class PageSync
         $this->export($host, $forceExport, $exportDir);
     }
 
-    public function import(?string $host = null): void
+    public function import(?string $host = null, bool $skipId = false): void
     {
         $this->deletedCount = 0;
         $app = $this->resolveApp($host);
@@ -97,7 +97,7 @@ final class PageSync
         $this->deleteMissingPages($app->getMainHost());
 
         // 6. Regenerate index.csv to reflect the current database state
-        $this->regenerateIndex($contentDir);
+        $this->regenerateIndex($contentDir, $skipId);
     }
 
     /**
@@ -145,10 +145,10 @@ final class PageSync
      * This writes back auto-generated IDs to markdown files that were imported without IDs.
      * Files are only written if their content actually changed (smart update).
      */
-    private function regenerateIndex(string $contentDir): void
+    private function regenerateIndex(string $contentDir, bool $skipId = false): void
     {
         $this->pageExporter->exportDir = $contentDir;
-        $this->pageExporter->exportPages();
+        $this->pageExporter->exportPages(skipId: $skipId);
     }
 
     public function export(?string $host = null, bool $force = false, ?string $exportDir = null, bool $skipId = false): void

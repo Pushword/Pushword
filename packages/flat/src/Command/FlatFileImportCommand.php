@@ -28,6 +28,8 @@ final class FlatFileImportCommand
         OutputInterface $output,
         #[Option(name: 'force', shortcut: 'f')]
         string $force = 'all',
+        #[Option(description: 'Skip adding IDs to markdown files and CSV indexes after import', name: 'skip-id')]
+        bool $skipId = false,
     ): int {
         $io = new SymfonyStyle($input, $output);
 
@@ -39,13 +41,13 @@ final class FlatFileImportCommand
         $output->writeln('Import will start in few seconds...');
 
         if ('all' === $force) {
-            $this->flatFileSync->import($host);
+            $this->flatFileSync->import($host, $skipId);
         } elseif ('media' === $force) {
             $output->writeln('-- only media');
             $this->flatFileSync->mediaSync->import($host);
         } elseif ('page' === $force) {
             $output->writeln('-- only page');
-            $this->flatFileSync->pageSync->import($host);
+            $this->flatFileSync->pageSync->import($host, $skipId);
         }
 
         // Display warnings for missing media files

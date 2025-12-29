@@ -7,7 +7,6 @@ use Pushword\Core\Entity\Page;
 use Pushword\Version\Versionner;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
@@ -25,7 +24,7 @@ class ControllerTest extends AbstractAdminTestClass
         $pageId = $page->id;
         self::assertGreaterThan(0, $pageId, 'Page ID should be a positive integer');
 
-        /** @var RouterInterface $router */
+        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
         $router = self::getContainer()->get('router');
 
         // Test list page - using non-admin route (admin route requires EasyAdmin dashboard context)
@@ -51,6 +50,6 @@ class ControllerTest extends AbstractAdminTestClass
         // Test reset - this works without EasyAdmin context (redirects)
         $resetUrl = $router->generate('pushword_version_reset', ['id' => $pageId]);
         $client->request(Request::METHOD_GET, $resetUrl);
-        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent()); // @phpstan-ignore-line
+        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }
 }

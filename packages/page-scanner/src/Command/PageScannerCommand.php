@@ -305,8 +305,7 @@ final class PageScannerCommand
             $shortName = match ($name) {
                 'preload.caches' => 'preload',
                 'external.urls' => 'external',
-                'scanPage' => 'scan',
-                default => $name,
+                default => 'scan',
             };
             $parts[] = \sprintf('%s: %dms', $shortName, $duration);
         }

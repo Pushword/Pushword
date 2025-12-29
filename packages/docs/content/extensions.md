@@ -1,6 +1,7 @@
 ---
 title: Extensions
 h1: 'Find your missing feature with a Pushword Extension'
+id: 28
 publishedAt: '2025-12-21 21:55'
 parentPage: search.json
 name: Extensions

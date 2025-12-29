@@ -272,8 +272,24 @@ final class PageExporter
         $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
 
         // Build content first to enable content comparison
+        // When skipId is true, we don't force 'id' into base properties, but we preserve it if it already exists in the file
         $baseProperties = $skipId ? ['title', 'h1', 'slug'] : ['title', 'h1', 'slug', 'id'];
-        $properties = array_unique([...$baseProperties, ...Entity::getProperties($page)]);
+        $entityProperties = Entity::getProperties($page);
+
+        // If skipId, check if the existing file already has an ID - if so, keep 'id' in properties
+        if ($skipId && file_exists($exportFilePath)) {
+            $existingContent = file_get_contents($exportFilePath);
+            if (false !== $existingContent && 1 === preg_match('/^id:\s*\d+/m', $existingContent)) {
+                $baseProperties[] = 'id';
+            } else {
+                $entityProperties = array_filter($entityProperties, static fn (string $prop): bool => 'id' !== $prop);
+            }
+        } elseif ($skipId) {
+            // New file with skipId - don't add id
+            $entityProperties = array_filter($entityProperties, static fn (string $prop): bool => 'id' !== $prop);
+        }
+
+        $properties = array_unique([...$baseProperties, ...$entityProperties]);
 
         $data = [];
         foreach ($properties as $property) {

@@ -48,14 +48,14 @@ final class FlatFileSync
         $this->dispatchEvent($host);
     }
 
-    public function import(?string $host = null): void
+    public function import(?string $host = null, bool $skipId = false): void
     {
         $this->stopwatch?->start('media.sync');
         $this->mediaSync->import($host);
         $this->stopwatch?->stop('media.sync');
 
         $this->stopwatch?->start('page.sync');
-        $this->pageSync->import($host);
+        $this->pageSync->import($host, $skipId);
         $this->stopwatch?->stop('page.sync');
 
         $this->dispatchEvent($host);

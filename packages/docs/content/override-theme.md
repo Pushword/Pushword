@@ -1,6 +1,7 @@
 ---
 title: 'How to override default theme with Pushword CMS ? '
 h1: 'Customize the current theme'
+id: 34
 publishedAt: '2025-12-21 21:55'
 parentPage: themes
 toc: true
