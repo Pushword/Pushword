@@ -1,7 +1,6 @@
 ---
 title: 'Media Storage Configuration'
 h1: Storage
-id: 48
 publishedAt: '2025-12-21 21:55'
 parentPage: configuration
 toc: true

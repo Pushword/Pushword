@@ -1,7 +1,6 @@
 ---
 title: 'Where Pushword is going ? Roadmap, TODO and Ideas'
 h1: Roadmap
-id: 46
 publishedAt: '2025-12-23 05:48'
 parentPage: contribute
 toc: true
@@ -21,26 +20,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
-
-- [flat] sync is not working since i add "id update" and index.csv update (only importing, never exporting) + it make crash vs code (probably because touching every file, it must not touch a file if it has nothing to update)
-
-- refactor bin/console pw:flat:sync like pw:static and page-scan for performance and better output
-
-- [AdminBlockEditor] finish copy/pasting -
-
-```
-I get :
-
-### Simple ImageDemo 3 Select Upload### Gallery
-
-I expect :
-
-### Simple Image
-
-![Demo 3](/media/md/3.jpg)
-
-### Gallery
-```
 
 - [AdminBlockEditor] Manage pasting html (from google sheets/words/etc) -> convert to markdown and then do as usual
 

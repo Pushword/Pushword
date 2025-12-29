@@ -5,6 +5,7 @@ import { ToolInterface } from '../Abstract/ToolInterface'
 
 interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
     constructable?: ToolInterface
+    name: string
 }
 
 /**
@@ -14,7 +15,7 @@ interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
  */
 export default class ClipboardManager {
     private editor: EditorJS
-    private _editorjsTools: ToolInterface[] | null = null
+    private _editorjsTools: BlockToolAdapterWithConstructable[] | null = null
 
     constructor({ editor }: { editor: EditorJS }) {
         this.editor = editor
@@ -24,7 +25,7 @@ export default class ClipboardManager {
     /**
      * Lazy-load editor tools when needed
      */
-    private get editorjsTools(): ToolInterface[] {
+    private get editorjsTools(): BlockToolAdapterWithConstructable[] {
         if (this._editorjsTools === null) {
             // @ts-ignore - accessing internal API
             this._editorjsTools = (this.editor as API).tools?.getBlockTools() || []
@@ -380,7 +381,7 @@ export default class ClipboardManager {
                         // Extract media name from URL (last part of path)
                         const src = img.src
                         const mediaMatch = src.match(/\/media\/[^/]+\/([^/]+)$/) || src.match(/\/([^/]+)$/)
-                        const media = mediaMatch ? mediaMatch[1] : src
+                        const media = mediaMatch?.[1] ?? src
                         const caption = captionEl?.textContent?.trim() || ''
                         items.push({ media, caption })
                     }
@@ -424,7 +425,7 @@ export default class ClipboardManager {
             let media = ''
             if (img && img.src) {
                 const mediaMatch = img.src.match(/\/media\/[^/]+\/([^/]+)$/) || img.src.match(/\/([^/]+)$/)
-                media = mediaMatch ? mediaMatch[1] : ''
+                media = mediaMatch?.[1] ?? ''
             }
             if (serviceUrl) {
                 const markdown = `{{ video('${serviceUrl}', '${media}', '${caption}') }}`
@@ -493,7 +494,7 @@ export default class ClipboardManager {
     }
 
     /**
-     * Handle paste events - detect markdown and convert to blocks
+     * Handle paste events - detect markdown/HTML and convert to blocks
      */
     private handlePaste(event: ClipboardEvent): void {
         // Check if we're in an EditorJS block
@@ -510,21 +511,32 @@ export default class ClipboardManager {
 
         // Skip if inside Monaco editor, Raw block, or CardList contenteditable
         if (element?.closest('.monaco-editor') ||
-            element?.closest('[data-editor]') ||
+            element?.closest('.editorjs-monaco-wrapper') ||
             element?.closest('.cdx-card-list')) return
 
-        // Get clipboard text
-        const text = event.clipboardData?.getData('text/plain') || ''
-        if (!text) return
+        // Get clipboard content
+        const plainText = event.clipboardData?.getData('text/plain') || ''
+        const htmlText = event.clipboardData?.getData('text/html') || ''
 
         // Let PasteLink handle URL paste over selected text
         const selectedText = selection?.toString() || ''
-        if (selectedText && (this.isValidURL(text) || this.isValidRelativeURI(text))) {
+        if (selectedText && (this.isValidURL(plainText) || this.isValidRelativeURI(plainText))) {
             return // PasteLink will handle this
         }
 
+        // Try to convert HTML to markdown if it looks like rich text (Google Docs, Word, etc.)
+        let textToProcess = plainText
+        if (htmlText && this.isRichTextHtml(htmlText)) {
+            const convertedMarkdown = this.convertHtmlToMarkdown(htmlText)
+            if (convertedMarkdown) {
+                textToProcess = convertedMarkdown
+            }
+        }
+
+        if (!textToProcess) return
+
         // Check if text contains markdown patterns
-        if (!this.detectMarkdownPatterns(text)) {
+        if (!this.detectMarkdownPatterns(textToProcess)) {
             return // Let default paste handle plain text
         }
 
@@ -532,7 +544,227 @@ export default class ClipboardManager {
         event.preventDefault()
         event.stopPropagation()
 
-        this.insertMarkdownAsBlocks(text)
+        this.insertMarkdownAsBlocks(textToProcess)
+    }
+
+    /**
+     * Check if HTML looks like it came from a rich text source (Google Docs, Word, Sheets, etc.)
+     */
+    private isRichTextHtml(html: string): boolean {
+        // Detect Google Docs
+        if (html.includes('docs-internal-guid') || html.includes('google-docs')) return true
+        // Detect Microsoft Word/Office
+        if (html.includes('urn:schemas-microsoft-com:office') || html.includes('mso-')) return true
+        // Detect Google Sheets
+        if (html.includes('google-sheets-html-origin')) return true
+        // Detect LibreOffice
+        if (html.includes('LibreOffice')) return true
+        // Detect general rich text with formatting tags
+        if (/<(b|strong|i|em|u|s|h[1-6]|ul|ol|li|table|tr|td|th|blockquote|pre|code)[^>]*>/i.test(html)) return true
+        return false
+    }
+
+    /**
+     * Convert HTML from rich text sources to markdown
+     */
+    private convertHtmlToMarkdown(html: string): string {
+        // Create a temporary container to parse HTML
+        const container = document.createElement('div')
+        container.innerHTML = html
+
+        // Remove Google Docs specific wrapper elements
+        container.querySelectorAll('[id^="docs-internal-guid"]').forEach(el => {
+            el.replaceWith(...Array.from(el.childNodes))
+        })
+
+        // Remove style tags and scripts
+        container.querySelectorAll('style, script, meta, link').forEach(el => el.remove())
+
+        // Process the HTML and convert to markdown
+        return this.processNodeToMarkdown(container)
+    }
+
+    /**
+     * Recursively process DOM nodes and convert to markdown
+     */
+    private processNodeToMarkdown(node: Node): string {
+        const parts: string[] = []
+
+        node.childNodes.forEach(child => {
+            if (child.nodeType === Node.TEXT_NODE) {
+                const text = child.textContent || ''
+                // Replace non-breaking spaces
+                parts.push(text.replace(/\u00A0/g, ' '))
+            } else if (child.nodeType === Node.ELEMENT_NODE) {
+                const el = child as HTMLElement
+                const tagName = el.tagName.toLowerCase()
+                const innerContent = this.processNodeToMarkdown(el)
+
+                switch (tagName) {
+                    case 'h1':
+                        parts.push('\n\n# ' + innerContent.trim() + '\n\n')
+                        break
+                    case 'h2':
+                        parts.push('\n\n## ' + innerContent.trim() + '\n\n')
+                        break
+                    case 'h3':
+                        parts.push('\n\n### ' + innerContent.trim() + '\n\n')
+                        break
+                    case 'h4':
+                        parts.push('\n\n#### ' + innerContent.trim() + '\n\n')
+                        break
+                    case 'h5':
+                        parts.push('\n\n##### ' + innerContent.trim() + '\n\n')
+                        break
+                    case 'h6':
+                        parts.push('\n\n###### ' + innerContent.trim() + '\n\n')
+                        break
+                    case 'p':
+                    case 'div':
+                        parts.push('\n\n' + innerContent.trim() + '\n\n')
+                        break
+                    case 'br':
+                        parts.push('\n')
+                        break
+                    case 'b':
+                    case 'strong':
+                        if (innerContent.trim()) {
+                            parts.push('**' + innerContent.trim() + '**')
+                        }
+                        break
+                    case 'i':
+                    case 'em':
+                        if (innerContent.trim()) {
+                            parts.push('_' + innerContent.trim() + '_')
+                        }
+                        break
+                    case 'u':
+                        if (innerContent.trim()) {
+                            parts.push('<u>' + innerContent.trim() + '</u>')
+                        }
+                        break
+                    case 's':
+                    case 'strike':
+                    case 'del':
+                        if (innerContent.trim()) {
+                            parts.push('~~' + innerContent.trim() + '~~')
+                        }
+                        break
+                    case 'code':
+                        if (innerContent.trim()) {
+                            parts.push('`' + innerContent.trim() + '`')
+                        }
+                        break
+                    case 'pre':
+                        parts.push('\n\n```\n' + innerContent.trim() + '\n```\n\n')
+                        break
+                    case 'blockquote':
+                        const quotedLines = innerContent.trim().split('\n').map(line => '> ' + line).join('\n')
+                        parts.push('\n\n' + quotedLines + '\n\n')
+                        break
+                    case 'a':
+                        const href = el.getAttribute('href') || ''
+                        if (href && innerContent.trim()) {
+                            parts.push('[' + innerContent.trim() + '](' + href + ')')
+                        } else {
+                            parts.push(innerContent)
+                        }
+                        break
+                    case 'img':
+                        const src = el.getAttribute('src') || ''
+                        const alt = el.getAttribute('alt') || ''
+                        if (src) {
+                            parts.push('![' + alt + '](' + src + ')')
+                        }
+                        break
+                    case 'ul':
+                        const ulItems = Array.from(el.querySelectorAll(':scope > li')).map(li => {
+                            return '- ' + this.processNodeToMarkdown(li).trim()
+                        }).join('\n')
+                        parts.push('\n\n' + ulItems + '\n\n')
+                        break
+                    case 'ol':
+                        const olItems = Array.from(el.querySelectorAll(':scope > li')).map((li, idx) => {
+                            return (idx + 1) + '. ' + this.processNodeToMarkdown(li).trim()
+                        }).join('\n')
+                        parts.push('\n\n' + olItems + '\n\n')
+                        break
+                    case 'li':
+                        // Li is handled by ul/ol
+                        parts.push(innerContent)
+                        break
+                    case 'table':
+                        parts.push('\n\n' + this.convertTableToMarkdown(el) + '\n\n')
+                        break
+                    case 'hr':
+                        parts.push('\n\n---\n\n')
+                        break
+                    case 'span':
+                        // Check for inline styles
+                        const style = el.getAttribute('style') || ''
+                        let content = innerContent
+                        if (style.includes('font-weight') && (style.includes('bold') || style.includes('700'))) {
+                            content = '**' + content.trim() + '**'
+                        }
+                        if (style.includes('font-style') && style.includes('italic')) {
+                            content = '_' + content.trim() + '_'
+                        }
+                        if (style.includes('text-decoration') && style.includes('underline')) {
+                            content = '<u>' + content.trim() + '</u>'
+                        }
+                        if (style.includes('text-decoration') && style.includes('line-through')) {
+                            content = '~~' + content.trim() + '~~'
+                        }
+                        parts.push(content)
+                        break
+                    default:
+                        parts.push(innerContent)
+                }
+            }
+        })
+
+        return parts.join('')
+            .replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines
+            .replace(/\u00A0/g, ' ')     // Replace any remaining non-breaking spaces
+    }
+
+    /**
+     * Convert HTML table to markdown table
+     */
+    private convertTableToMarkdown(table: HTMLElement): string {
+        const rows: string[][] = []
+
+        table.querySelectorAll('tr').forEach(tr => {
+            const cells: string[] = []
+            tr.querySelectorAll('th, td').forEach(cell => {
+                cells.push(this.processNodeToMarkdown(cell).trim().replace(/\|/g, '\\|'))
+            })
+            if (cells.length > 0) {
+                rows.push(cells)
+            }
+        })
+
+        if (rows.length === 0) return ''
+
+        const maxCols = Math.max(...rows.map(r => r.length))
+
+        // Normalize all rows to have the same number of columns
+        rows.forEach(row => {
+            while (row.length < maxCols) {
+                row.push('')
+            }
+        })
+
+        const lines: string[] = []
+        rows.forEach((row, idx) => {
+            lines.push('| ' + row.join(' | ') + ' |')
+            // Add separator after first row (header)
+            if (idx === 0) {
+                lines.push('| ' + row.map(() => '---').join(' | ') + ' |')
+            }
+        })
+
+        return lines.join('\n')
     }
 
     /**
@@ -596,7 +828,7 @@ export default class ClipboardManager {
         for (const tool of this.editorjsTools) {
             if (['paragraph', 'raw', 'stub'].includes(tool.name)) continue
 
-            const toolClass = (tool as BlockToolAdapterWithConstructable).constructable
+            const toolClass = tool.constructable
             if (!toolClass) continue
 
             if (this.importBlockWithTool(block, toolClass, api)) return

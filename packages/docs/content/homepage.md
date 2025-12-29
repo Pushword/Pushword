@@ -1,7 +1,6 @@
 ---
 title: 'Pushword - The Modern CMS for Developers (ready for AI era)'
 h1: 'Finally, a CMS that gets out of your way'
-id: 29
 publishedAt: '2025-12-21 21:55'
 name: Pushword
 template: /page/homepage.html.twig

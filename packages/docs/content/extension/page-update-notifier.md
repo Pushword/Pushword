@@ -1,7 +1,6 @@
 ---
 title: 'Be notify when a page is edited on your Pushword CMS'
 h1: 'Page Update Notifier'
-id: 32
 publishedAt: '2025-12-21 21:55'
 parentPage: extensions
 toc: true

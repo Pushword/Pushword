@@ -1,7 +1,6 @@
 ---
 title: 'CMS Comparison - Pushword vs WordPress, Statamic, Sulu'
 h1: 'Choosing the Right CMS: Pushword vs WordPress, Statamic & Sulu'
-id: 9
 publishedAt: '2025-12-28 17:25'
 ---
 

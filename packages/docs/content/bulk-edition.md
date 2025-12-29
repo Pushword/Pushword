@@ -1,7 +1,6 @@
 ---
 title: 'How to perform bulk editing of content with Pushword'
 h1: 'Edit content in batches'
-id: 17
 publishedAt: '2025-12-21 21:55'
 parentPage: search.json
 toc: true

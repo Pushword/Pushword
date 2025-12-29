@@ -1,7 +1,6 @@
 ---
 title: 'Entity Filter - Transform Page properties with filters'
 h1: 'Entity Filter'
-id: 20
 publishedAt: '2025-12-21 21:55'
 parentPage: search.json
 name: 'Entity Filter'
