@@ -15,15 +15,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - finish upgrade to Symfony 8 /PHP 8.5
   - [ ] https://github.com/symfony/panther/pull/678
         `packages/admin/tests/Frontend/AdminJSTest.php~`
-  - [ ] https://github.com/nunomaduro/termwind/pull/205
-  - [ ] https://github.com/nunomaduro/collision/pull/340
   - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
-
-- [AdminBlockEditor] Manage pasting html (from google sheets/words/etc) -> convert to markdown and then do as usual
-
-- [i18n] move en.md to en/index.md when en/ exists in flat
 
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)
   ➜ done, but need test
