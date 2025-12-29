@@ -294,6 +294,12 @@ final class PageImporter extends AbstractImporter
     {
         foreach ($this->toAddAtTheEnd as $slug => $data) {
             $page = $this->getPage($slug);
+            if (null === $page) {
+                $this->logger->warning('Page `{slug}` not found when processing deferred properties', ['slug' => $slug]);
+
+                continue;
+            }
+
             foreach ($data as $property => $value) {
                 $object = $this->getObjectRequiredProperty($property);
 
