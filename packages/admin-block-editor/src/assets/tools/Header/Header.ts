@@ -193,11 +193,13 @@ export default class Header {
     this.levels.forEach((level) => {
       const option = document.createElement('option')
       option.value = level.number.toString()
-      // Empty text content - value is in the value attribute only
-      option.textContent = ''
-      option.setAttribute('aria-label', `H${level.number}`)
+      option.textContent = `H${level.number}`
       option.selected = level.number === this._data.level
       levelSelect.appendChild(option)
+    })
+
+    levelSelect.addEventListener('mousedown', (e) => {
+      e.stopPropagation()
     })
 
     levelSelect.addEventListener('change', (e) => {
