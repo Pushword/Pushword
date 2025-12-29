@@ -133,8 +133,9 @@ final readonly class TranslateReviewsCommand
                 if (ReviewTranslationService::SKIPPED === $status) {
                     $io->writeln(\sprintf('    -> %s: <comment>skipped</comment>', $targetLocale));
                     ++$skippedCount;
-                } elseif (ReviewTranslationService::FAILED === $status) {
-                    $io->writeln(\sprintf('    -> %s: <error>FAILED</error>', $targetLocale));
+                } elseif (str_starts_with($status, ReviewTranslationService::FAILED)) {
+                    $errorDetail = substr($status, \strlen(ReviewTranslationService::FAILED) + 2) ?: '';
+                    $io->writeln(\sprintf('    -> %s: <error>FAILED</error>%s', $targetLocale, '' !== $errorDetail ? ' ('.$errorDetail.')' : ''));
                     ++$errorCount;
                 } else {
                     $io->writeln(\sprintf('    -> %s: <info>OK</info> (%s)', $targetLocale, $status));
