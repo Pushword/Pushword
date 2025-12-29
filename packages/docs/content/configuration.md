@@ -1,7 +1,6 @@
 ---
 title: 'Configure a fresh install of Pushword'
 h1: Configuration
-id: 12
 publishedAt: '2025-12-21 21:55'
 parentPage: installation
 toc: true

@@ -1,7 +1,6 @@
 ---
 title: 'Where Pushword is going ? Roadmap, TODO and Ideas'
 h1: Roadmap
-id: 37
 publishedAt: '2025-12-23 05:48'
 parentPage: contribute
 toc: true

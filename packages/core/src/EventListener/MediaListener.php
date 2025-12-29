@@ -176,10 +176,15 @@ final readonly class MediaListener
             // Generate only quick thumb for fast response, full cache in background
             $this->imageManager->generateQuickThumb($media);
             $this->imageManager->runBackgroundCacheGeneration($media->getFileName());
+        }
 
-            // Calculate hash using storage adapter
+        // Recalculate hash if it was reset or file content changed
+        if ($preUpdateEventArgs->hasChangedField('hash')) {
             $localPath = $this->mediaStorage->getLocalPath($media->getFileName());
-            $media->setHash(sha1_file($localPath, true));
+            $newHash = sha1_file($localPath, true);
+            $media->setHash($newHash);
+            // Must use setNewValue for Doctrine to pick up the change in preUpdate
+            $preUpdateEventArgs->setNewValue('hash', $newHash);
         }
     }
 

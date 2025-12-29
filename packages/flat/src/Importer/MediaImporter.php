@@ -214,7 +214,8 @@ class MediaImporter extends AbstractImporter
         $fileName = $this->getFilename($filePath);
         $media = $this->getMediaFromIndex($fileName);
 
-        if (! $this->newMedia && $media->updatedAt >= $dateTime) {
+        // Use hash comparison to detect real content changes
+        if (! $this->newMedia && ! $this->hasFileContentChanged($filePath, $media)) {
             ++$this->skippedCount;
 
             return false; // no update needed
@@ -229,7 +230,8 @@ class MediaImporter extends AbstractImporter
             ->setProjectDir($this->projectDir)
             ->setStoreIn(\dirname($filePath))
             ->setSize(filesize($filePath))
-            ->setMimeType($this->getMimeTypeFromFile($filePath));
+            ->setMimeType($this->getMimeTypeFromFile($filePath))
+            ->resetHash(); // Reset hash so it gets recalculated
 
         // Update fileName if it changed (for existing media found by id)
         if ($media->getFileName() !== $fileName) {
@@ -244,6 +246,19 @@ class MediaImporter extends AbstractImporter
         $media->updatedAt = $dateTime;
 
         return true;
+    }
+
+    private function hasFileContentChanged(string $filePath, Media $media): bool
+    {
+        $fileHash = sha1_file($filePath, true);
+        $dbHash = $media->getHash();
+
+        // Handle binary hash from database (may be a resource or string)
+        if (\is_resource($dbHash)) {
+            $dbHash = stream_get_contents($dbHash);
+        }
+
+        return $fileHash !== $dbHash;
     }
 
     /**

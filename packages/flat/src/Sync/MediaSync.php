@@ -235,9 +235,16 @@ final class MediaSync
             return true;
         }
 
-        $lastEditDateTime = new DateTime()->setTimestamp(filemtime($filePath));
+        // Use hash comparison instead of mtime to detect real content changes
+        $fileHash = sha1_file($filePath, true);
+        $dbHash = $media->getHash();
 
-        return $lastEditDateTime > $media->updatedAt;
+        // Handle binary hash from database (may be a resource or string)
+        if (\is_resource($dbHash)) {
+            $dbHash = stream_get_contents($dbHash);
+        }
+
+        return $fileHash !== $dbHash;
     }
 
     private function extractMediaName(string $filePath): string

@@ -20,12 +20,15 @@ trait ImageImporterTrait
 
     abstract protected function getMedia(string $media): Media;
 
+    abstract private function hasFileContentChanged(string $filePath, Media $media): bool;
+
     public function importImage(string $filePath, DateTimeInterface $dateTime): bool
     {
         $fileName = $this->getFilename($filePath);
         $media = $this->getMedia($fileName);
 
-        if (false === $this->newMedia && $media->updatedAt >= $dateTime) {
+        // Use hash comparison to detect real content changes
+        if (false === $this->newMedia && ! $this->hasFileContentChanged($filePath, $media)) {
             ++$this->skippedCount;
 
             return false; // no update needed
@@ -84,7 +87,8 @@ trait ImageImporterTrait
                 ->setStoreIn(\dirname($filePath))
                 ->setMimeType($imgSize['mime'])
                 ->setSize(filesize($filePath))
-                ->setDimensions([$imgSize[0], $imgSize[1]]);
+                ->setDimensions([$imgSize[0], $imgSize[1]])
+                ->resetHash(); // Reset hash so it gets recalculated
 
         $data = $this->getImageData($filePath); // , $imgSize['mime']);
 
