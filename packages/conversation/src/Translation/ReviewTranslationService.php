@@ -66,6 +66,7 @@ final readonly class ReviewTranslationService
                     : '';
 
                 $review->setTranslation($targetLocale, $translatedTitle, $translatedContent);
+                $review->updatedAt = new \DateTime();
                 $results[$targetLocale] = $this->translationManager->getLastUsedTranslatorName();
             } catch (TranslationException $e) {
                 $results[$targetLocale] = self::FAILED.': '.$e->getMessage();
