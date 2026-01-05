@@ -70,6 +70,16 @@ final class PageExporter
         // Filter out redirections for export
         $exportablePages = array_filter($pages, static fn (Page $page): bool => ! $page->hasRedirection());
 
+        // Delete .md files for pages that have become redirections
+        $redirectionPages = array_filter($pages, static fn (Page $page): bool => $page->hasRedirection());
+        foreach ($redirectionPages as $page) {
+            $mdFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
+            if (file_exists($mdFilePath)) {
+                $this->filesystem->remove($mdFilePath);
+                $this->output?->writeln(\sprintf('Deleted %s.md (now a redirection)', $page->getSlug()));
+            }
+        }
+
         foreach ($exportablePages as $page) {
             $exported = $this->exportPage($page, $force, $skipId);
 

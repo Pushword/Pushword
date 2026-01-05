@@ -133,4 +133,25 @@ final class PageRedirectionExportTest extends KernelTestCase
         // Regular pages should have .md files
         self::assertFileExists($contentDir.'/homepage.md');
     }
+
+    public function testMdFileDeletedWhenPageBecomesRedirection(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a fake .md file for the redirection page (simulating it was previously a regular page)
+        $redirectionMdFile = $contentDir.'/pushword.md';
+        file_put_contents($redirectionMdFile, "---\ntitle: Old Page\n---\n\nOld content");
+
+        self::assertFileExists($redirectionMdFile);
+
+        /** @var PageExporter $exporter */
+        $exporter = self::getContainer()->get(PageExporter::class);
+        $exporter->exportDir = $contentDir;
+        $exporter->exportPages(true);
+
+        // The .md file should be deleted because the page is now a redirection
+        self::assertFileDoesNotExist($redirectionMdFile, 'MD file should be deleted when page becomes a redirection');
+    }
 }
