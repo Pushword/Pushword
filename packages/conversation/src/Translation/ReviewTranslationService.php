@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Translation;
 
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Conversation\Entity\Review;
 
@@ -66,7 +67,7 @@ final readonly class ReviewTranslationService
                     : '';
 
                 $review->setTranslation($targetLocale, $translatedTitle, $translatedContent);
-                $review->updatedAt = new \DateTime();
+                $review->updatedAt = new DateTime();
                 $results[$targetLocale] = $this->translationManager->getLastUsedTranslatorName();
             } catch (TranslationException $e) {
                 $results[$targetLocale] = self::FAILED.': '.$e->getMessage();

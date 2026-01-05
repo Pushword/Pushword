@@ -88,7 +88,8 @@ class MessageRepository extends ServiceEntityRepository
             $this->addFilteringByTagsConditions($queryBuilder, $tags);
         }
 
-        $queryBuilder->orderBy('m.weight DESC,m.createdAt', 'DESC');
+        $queryBuilder->orderBy('m.weight', 'DESC')
+            ->addOrderBy('m.createdAt', 'DESC');
 
         if (0 !== $limit) {
             $queryBuilder->setMaxResults($limit);
