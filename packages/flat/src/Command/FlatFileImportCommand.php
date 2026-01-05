@@ -40,6 +40,8 @@ final class FlatFileImportCommand
 
         $output->writeln('Import will start in few seconds...');
 
+        $this->flatFileSync->setOutput($output);
+
         if ('all' === $force) {
             $this->flatFileSync->import($host, $skipId);
         } elseif ('media' === $force) {

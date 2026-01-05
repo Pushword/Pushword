@@ -15,15 +15,50 @@
     "peacock.color": "#78350f",
     "files.exclude": {
         "./docs": true,
+        "./docs~": true,
         "**/dist": true,
         "**/Resources/public": true,
         "**/skeleton/var": true
     },
     "search.exclude": {
         "./docs": true,
+        "./docs~": true,
         "**/dist": true,
         "**/Resources/public": true,
         "**/skeleton/var": true
+    },
+    "intelephense.files.exclude": [
+        "**/docs~*/**",
+        "**/docs~*",
+        "**/static/**",
+        "**/var/**",
+        "**/*.db",
+        "**/*.db-journal",
+        "**/dist/**",
+        "**/media/**",
+        "**/Resources/public/**"
+    ],
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/docs~*/**": true,
+        "**/docs~*": true,
+        "**/vendor/**": true,
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/dist/**": true,
+        "**/build/**": true,
+        "**/var/**": true,
+        "**/tmp/**": true,
+        "**/coverage/**": true,
+        "**/.phpunit.cache/**": true,
+        "**/*.min.*": true,
+        "**/*.db": true,
+        "**/*.db-wal": true,
+        "**/*.db-shm": true,
+        "**/*.db-journal": true,
+        "**/static/**": true,
+        "**/media/**": true,
+        "**/Resources/public/**": true
     },
     "git.ignoreLimitWarning": true
 }

@@ -32,6 +32,7 @@ final readonly class FlatFileExportCommand
     ): int {
         $output->writeln('Export will start in few seconds...');
 
+        $this->flatFileSync->setOutput($output);
         $this->flatFileSync->export($host, $exportDir, $force, $skipId);
 
         $output->writeln('Export completed.');
