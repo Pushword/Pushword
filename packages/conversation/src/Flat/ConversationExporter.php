@@ -51,9 +51,19 @@ final class ConversationExporter
 
         $this->ensureDirectoryExists(\dirname($csvPath));
 
-        $writer = Writer::from($csvPath, 'w+');
+        $tempPath = $csvPath.'.tmp';
+        $writer = Writer::from($tempPath, 'w+');
         $writer->insertOne($header);
         $writer->insertAll($rows);
+
+        // Only replace if content changed (compare hashes)
+        if (file_exists($csvPath) && md5_file($csvPath) === md5_file($tempPath)) {
+            unlink($tempPath);
+
+            return;
+        }
+
+        rename($tempPath, $csvPath);
     }
 
     /**
