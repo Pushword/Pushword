@@ -229,6 +229,7 @@ CSV;
         // Import modified file - should be imported (hash differs)
         $importer->resetIndex();
         $importer->loadIndex($mediaDir);
+
         $imported = $importer->importMedia($pdfPath, new DateTime());
         self::assertTrue($imported, 'Modified file should be imported');
         self::assertSame(1, $importer->getImportedCount());
@@ -281,6 +282,7 @@ CSV;
         // First sync - should skip (hash matches)
         $importer->resetIndex();
         $importer->loadIndex($mediaDir);
+
         $imported1 = $importer->importMedia($docPath, new DateTime());
         self::assertFalse($imported1, 'First sync should skip unchanged file');
         self::assertSame(1, $importer->getSkippedCount(), 'First sync skipped count');
@@ -288,6 +290,7 @@ CSV;
         // Second sync - should still skip
         $importer->resetIndex();
         $importer->loadIndex($mediaDir);
+
         $imported2 = $importer->importMedia($docPath, new DateTime());
         self::assertFalse($imported2, 'Second sync should also skip unchanged file');
         self::assertSame(1, $importer->getSkippedCount(), 'Second sync skipped count');
@@ -295,6 +298,7 @@ CSV;
         // Third sync - should still skip
         $importer->resetIndex();
         $importer->loadIndex($mediaDir);
+
         $imported3 = $importer->importMedia($docPath, new DateTime());
         self::assertFalse($imported3, 'Third sync should also skip unchanged file');
         self::assertSame(1, $importer->getSkippedCount(), 'Third sync skipped count');

@@ -126,4 +126,42 @@ final class ReviewTranslationTest extends TestCase
         // Fallback for content
         self::assertSame('Original content', $review->getTranslatedContent('fr'));
     }
+
+    public function testLocaleFallbackToBaseLocale(): void
+    {
+        $review = new Review();
+        $review->locale = 'en';
+        $review->setTitle('Original title');
+        $review->setContent('Original content');
+        $review->setTranslation('fr', 'Titre français', 'Contenu français');
+
+        // fr-CA should fallback to fr
+        self::assertTrue($review->hasTranslation('fr-CA'));
+        self::assertSame('Titre français', $review->getTranslatedTitle('fr-CA'));
+        self::assertSame('Contenu français', $review->getTranslatedContent('fr-CA'));
+
+        // fr-FR should also fallback to fr
+        self::assertTrue($review->hasTranslation('fr-FR'));
+        self::assertSame('Titre français', $review->getTranslatedTitle('fr-FR'));
+
+        // en-US without en translation should fallback to original
+        self::assertFalse($review->hasTranslation('en-US'));
+        self::assertSame('Original title', $review->getTranslatedTitle('en-US'));
+    }
+
+    public function testExactLocaleMatchTakesPrecedence(): void
+    {
+        $review = new Review();
+        $review->locale = 'en';
+        $review->setTitle('Original title');
+        $review->setTranslation('fr', 'Titre français', 'Contenu français');
+        $review->setTranslation('fr-CA', 'Titre québécois', 'Contenu québécois');
+
+        // Exact match should take precedence
+        self::assertSame('Titre québécois', $review->getTranslatedTitle('fr-CA'));
+        self::assertSame('Contenu québécois', $review->getTranslatedContent('fr-CA'));
+
+        // fr should still return fr translation
+        self::assertSame('Titre français', $review->getTranslatedTitle('fr'));
+    }
 }

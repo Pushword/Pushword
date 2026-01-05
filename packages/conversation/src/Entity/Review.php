@@ -97,21 +97,36 @@ class Review extends Message
     }
 
     /**
-     * Get translation for a specific locale.
+     * Get translation for a specific locale with fallback.
+     *
+     * If locale is "fr-CA" and not found, tries "fr" before returning null.
      *
      * @return array{title?: string, content?: string}|null
      */
     public function getTranslation(string $locale): ?array
     {
-        return $this->getTranslations()[$locale] ?? null;
+        $translations = $this->getTranslations();
+
+        if (isset($translations[$locale])) {
+            return $translations[$locale];
+        }
+
+        if (str_contains($locale, '-')) {
+            $baseLocale = explode('-', $locale)[0];
+            if (isset($translations[$baseLocale])) {
+                return $translations[$baseLocale];
+            }
+        }
+
+        return null;
     }
 
     /**
-     * Check if translation exists for locale.
+     * Check if translation exists for locale (including fallback to base locale).
      */
     public function hasTranslation(string $locale): bool
     {
-        return isset($this->getTranslations()[$locale]);
+        return null !== $this->getTranslation($locale);
     }
 
     /**

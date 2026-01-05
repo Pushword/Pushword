@@ -5,6 +5,7 @@ namespace Pushword\Version\Tests;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
 use Pushword\Version\Versionner;
+use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -24,7 +25,7 @@ class ControllerTest extends AbstractAdminTestClass
         $pageId = $page->id;
         self::assertGreaterThan(0, $pageId, 'Page ID should be a positive integer');
 
-        /** @var \Symfony\Bundle\FrameworkBundle\Routing\Router $router */
+        /** @var Router $router */
         $router = self::getContainer()->get('router');
 
         // Test list page - using non-admin route (admin route requires EasyAdmin dashboard context)
