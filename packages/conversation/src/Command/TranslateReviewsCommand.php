@@ -39,6 +39,8 @@ final readonly class TranslateReviewsCommand
         bool $force = false,
         #[Option(description: 'Show what would be translated without making changes', name: 'dry-run')]
         bool $dryRun = false,
+        #[Option(description: 'Delay in seconds between API requests (rate limiting)', name: 'delay', shortcut: 'd')]
+        int $delay = 1,
     ): int {
         $io = new SymfonyStyle($input, $output);
 
@@ -144,6 +146,10 @@ final readonly class TranslateReviewsCommand
             }
 
             $this->translationService->persist($review);
+
+            if ($delay > 0) {
+                sleep($delay);
+            }
         }
 
         if (! $dryRun) {
