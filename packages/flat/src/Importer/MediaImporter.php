@@ -387,18 +387,22 @@ class MediaImporter extends AbstractImporter
     private function copyToMediaDir(string $filePath): string
     {
         $fileName = $this->getFilename($filePath);
+        $localPath = $this->mediaStorage->getLocalPath($fileName);
 
-        if ('' !== $this->mediaDir) {
-            // Copy from local flat file to media storage
+        // Skip copy if source and destination are the same file (already in media dir)
+        // Otherwise writeStream would truncate the file before reading, corrupting it
+        if ('' !== $this->mediaDir && realpath($filePath) !== realpath($localPath)) {
             $stream = fopen($filePath, 'r');
             if (false !== $stream) {
                 $this->mediaStorage->writeStream($fileName, $stream);
                 fclose($stream);
             }
+
+            // Clear PHP's stat cache to ensure getimagesize() sees the freshly written file
+            clearstatcache(true, $localPath);
         }
 
-        // Return the local path for further processing (storeIn, size, mimeType)
-        return $this->mediaStorage->getLocalPath($fileName);
+        return $localPath;
     }
 
     /**
