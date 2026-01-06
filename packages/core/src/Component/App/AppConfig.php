@@ -92,6 +92,7 @@ final class AppConfig
             'app_base_url' => $this->getBaseUrl(),
             'app_name' => $this->name,
             'app_color' => $this->getCustomProperty('color'),
+            'app' => $this,
         ];
     }
 

@@ -1,6 +1,7 @@
 ---
 title: 'Create a Pushword Extension the easy way'
 h1: 'Create an extension'
+id: 28
 publishedAt: '2025-12-21 21:55'
 parentPage: extensions
 ---
