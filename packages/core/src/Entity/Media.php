@@ -609,6 +609,13 @@ class Media implements IdInterface, Taggable, Stringable
         return $this;
     }
 
+    public function addAlt(string $locale, string $alt): void
+    {
+        $alts = $this->getAltsParsed();
+        $alts[$locale] = $alt;
+        $this->alts = Yaml::dump($alts);
+    }
+
     public function getAltByLocale(string $locale): string
     {
         $alts = $this->getAltsParsed();
