@@ -74,6 +74,12 @@ final class FlatFileSync
         $this->dispatchEvent($host);
     }
 
+    /** @return string[] */
+    public function getHosts(): array
+    {
+        return $this->apps->getHosts();
+    }
+
     private function dispatchEvent(?string $host): void
     {
         $app = null !== $host

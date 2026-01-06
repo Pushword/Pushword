@@ -75,7 +75,14 @@ final readonly class FlatFileSyncCommand
             $this->flatFileSync->setOutput($teeOutput);
             $this->flatFileSync->setStopwatch($this->stopWatch);
 
-            $this->flatFileSync->sync($host, $force);
+            if (null !== $host) {
+                $this->flatFileSync->sync($host, $force);
+            } else {
+                foreach ($this->flatFileSync->getHosts() as $appHost) {
+                    $teeOutput->writeln(\sprintf('<info>Syncing %s...</info>', $appHost));
+                    $this->flatFileSync->sync($appHost, $force);
+                }
+            }
 
             $event = $this->stopWatch->stop('sync');
             $duration = $event->getDuration();
