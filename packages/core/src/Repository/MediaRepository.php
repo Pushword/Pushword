@@ -36,6 +36,11 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     /** @var array<string, Media> */
     private array $mediasByFileNameCache = [];
 
+    public function resetMediasByFileNameCache(): void
+    {
+        $this->mediasByFileNameCache = [];
+    }
+
     public function loadMedias(): void
     {
         if ([] !== $this->mediasByFileNameCache) {
@@ -46,8 +51,17 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         foreach ($medias as $media) {
             $this->mediasByFileNameCache[$media->getFileName()] = $media;
         }
+
+        foreach ($medias as $media) {
+            foreach ($media->getFileNameHistory() as $name) {
+                $this->mediasByFileNameCache[$name] ??= $media;
+            }
+        }
     }
 
+    /**
+     * On create/update, cache must be invalided with MediaRepository::resetMediasByFileNameCache();.
+     */
     public function findOneByFileName(string $fileName): ?Media
     {
         if ([] === $this->mediasByFileNameCache) {
