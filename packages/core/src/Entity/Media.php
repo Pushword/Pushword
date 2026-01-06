@@ -609,7 +609,7 @@ class Media implements IdInterface, Taggable, Stringable
         return $this;
     }
 
-    public function editLocalizedAt(string $locale, string $alt): void
+    public function editLocalizedAlt(string $locale, string $alt): void
     {
         $alts = $this->getAltsParsed();
         $alts[$locale] = $alt;
