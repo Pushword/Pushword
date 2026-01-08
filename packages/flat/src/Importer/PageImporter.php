@@ -11,6 +11,7 @@ use Override;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
@@ -44,6 +45,9 @@ final class PageImporter extends AbstractImporter
 
     #[Required]
     public PageRepository $pageRepo;
+
+    #[Required]
+    public MediaRepository $mediaRepo;
 
     #[Required]
     public LoggerInterface $logger;
@@ -318,7 +322,7 @@ final class PageImporter extends AbstractImporter
                     }
 
                     $mediaName = preg_replace('@^/?media/(default)?/@', '', $value) ?? throw new Exception();
-                    $media = $this->getMedia($mediaName);
+                    $media = $this->mediaRepo->findOneByFileName($mediaName);
                     if (! $media instanceof Media) {
                         throw new Exception('Media `'.$value.'` ('.$mediaName.') not found in `'.$slug.'`.');
                     }
@@ -446,11 +450,6 @@ final class PageImporter extends AbstractImporter
         $properties = $this->getObjectRequiredProperties();
 
         return $properties[$key];
-    }
-
-    private function getMedia(string $media): ?Media
-    {
-        return $this->em->getRepository(Media::class)->findOneBy(['fileName' => $media]);
     }
 
     private function getPage(mixed $criteria): ?Page
