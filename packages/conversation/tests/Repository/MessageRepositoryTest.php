@@ -90,7 +90,7 @@ final class MessageRepositoryTest extends KernelTestCase
 
     public function testGetPublishedReviewsByTagOrdersByCreatedAtWhenSameWeight(): void
     {
-        // Create reviews with same weight but different creation dates
+        // Create reviews with same weight but different creation dates (both with content)
         $review1 = $this->createTestReview('Older review', 5);
         $review2 = $this->createTestReview('Newer review', 5);
 
@@ -124,6 +124,45 @@ final class MessageRepositoryTest extends KernelTestCase
         // Assert ordering: newer first (createdAt DESC)
         self::assertSame('Newer review', $testReviews[0]->getContent());
         self::assertSame('Older review', $testReviews[1]->getContent());
+    }
+
+    public function testGetPublishedReviewsByTagPrioritizesReviewsWithContent(): void
+    {
+        // Create reviews with same weight: one with content, one without
+        $reviewWithContent = $this->createTestReview('Review with text content', 5);
+        $reviewWithoutContent = $this->createTestReview('', 5);
+
+        $this->entityManager->persist($reviewWithContent);
+        $this->entityManager->persist($reviewWithoutContent);
+        $this->entityManager->flush();
+
+        // Set same createdAt to ensure content is the deciding factor
+        $reviewWithContent->createdAt = new DateTime('2024-01-01');
+        $reviewWithoutContent->createdAt = new DateTime('2024-06-01'); // newer but no content
+        $this->entityManager->flush();
+
+        $this->trackCreatedMessage($reviewWithContent);
+        $this->trackCreatedMessage($reviewWithoutContent);
+
+        // Clear the entity manager to force fresh query
+        $this->entityManager->clear();
+
+        // Get published reviews
+        $reviews = $this->messageRepository->getPublishedReviewsByTag([]);
+
+        // Filter to only our test reviews (by weight 5)
+        $testReviews = array_filter(
+            $reviews,
+            static fn (mixed $r): bool => $r instanceof Review && 5 === $r->getWeight()
+                && ('' === $r->getContent() || 'Review with text content' === $r->getContent())
+        );
+        $testReviews = array_values($testReviews);
+
+        self::assertCount(2, $testReviews);
+
+        // Assert ordering: review with content first, even though the empty one is newer
+        self::assertSame('Review with text content', $testReviews[0]->getContent());
+        self::assertSame('', $testReviews[1]->getContent());
     }
 
     private function createTestReview(string $content, int $weight): Review

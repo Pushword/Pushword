@@ -89,6 +89,7 @@ class MessageRepository extends ServiceEntityRepository
         }
 
         $queryBuilder->orderBy('m.weight', 'DESC')
+            ->addOrderBy("CASE WHEN m.content IS NOT NULL AND m.content != '' THEN 0 ELSE 1 END", 'ASC')
             ->addOrderBy('m.createdAt', 'DESC');
 
         if (0 !== $limit) {
