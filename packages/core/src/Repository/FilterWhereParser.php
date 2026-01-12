@@ -54,7 +54,7 @@ class FilterWhereParser
     {
         $compose = \in_array('OR', $where, true) ? $this->queryBuilder->expr()->orX() : $this->queryBuilder->expr()->andX();
         foreach ($where as $singleWhere) {
-            if ('OR' === $singleWhere) {
+            if (\in_array($singleWhere, ['OR', 'AND'], true)) {
                 continue;
             }
 

@@ -35,5 +35,13 @@ class StringToDQLCriteriaTest extends KernelTestCase
         }
 
         self::assertTrue($parameterFound ?? false);
+
+        // Test AND operator (was throwing "malformated where params" exception)
+        $where = new StringToDQLCriteria('blog AND europe AND hiking', null)->retrieve();
+        self::assertSame([['tags', 'LIKE', '%"blog"%'], 'AND', ['tags', 'LIKE', '%"europe"%'], 'AND', ['tags', 'LIKE', '%"hiking"%']], $where);
+        $query = $pageRepo->getPublishedPageQueryBuilder(where: $where)->getQuery();
+        $sql = $query->getSQL();
+        self::assertIsString($sql);
+        self::assertStringContainsString('p0_.tags LIKE ?', $sql);
     }
 }
