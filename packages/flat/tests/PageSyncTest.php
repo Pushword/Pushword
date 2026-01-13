@@ -1306,8 +1306,8 @@ MD;
 
         $mdContent = file_get_contents($mdFilePath);
 
-        // Should be exported as 'none', not 1
-        self::assertStringContainsString('mainImageFormat: none', $mdContent, 'mainImageFormat should be exported as text label');
+        // Should be exported as translated label '∅', not 1
+        self::assertStringContainsString('mainImageFormat: ∅', $mdContent, 'mainImageFormat should be exported as translated label');
         self::assertStringNotContainsString('mainImageFormat: 1', $mdContent, 'mainImageFormat should NOT be exported as integer');
 
         // Clear and remove the page
