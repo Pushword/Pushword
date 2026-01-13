@@ -11,6 +11,10 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc333
+
+See [Template Change](/upgrade-template-change)
+
 ## To 1.0.0-rc294
 
 ### MainContentSplitter replaced by Twig function

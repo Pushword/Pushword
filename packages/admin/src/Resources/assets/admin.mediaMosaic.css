@@ -9,7 +9,7 @@
 .media-mosaic {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .media-mosaic__card {
@@ -117,20 +117,21 @@
 
 .media-mosaic__meta {
   margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.media-mosaic__meta li {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.125rem 0.5rem;
   font-size: 0.85rem;
-  color: #475569;
 }
 
-.media-mosaic__meta span {
+.media-mosaic__meta dt {
   color: #94a3b8;
-  margin-right: 0.5rem;
+}
+
+.media-mosaic__meta dd {
+  margin: 0;
+  color: #475569;
+  font-weight: 600;
+  text-align: right;
 }
 
 .media-mosaic__tags {

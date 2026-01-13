@@ -91,30 +91,20 @@
                 {{ media.fileName }}
               </h3>
 
-              <ul class="media-mosaic__meta list-unstyled">
-                <li>
-                  <span>{{ 'adminMediaAltLabel'|trans }}</span>
-                  <strong>{{ media.alt }}</strong>
-                </li>
-                <li>
-                  <span>{{ 'adminMediaFiletypeLabel'|trans }}</span>
-                  <strong>{{ media.mimeType ?? '—' }}</strong>
-                </li>
-                <li>
-                  <span>{{ 'adminMediaSizeLabel'|trans }}</span>
-                  <strong>{{ readableSize }}</strong>
-                </li>
+              <dl class="media-mosaic__meta">
+                <dt>{{ 'adminMediaAltLabel'|trans }}</dt>
+                <dd>{{ media.alt }}</dd>
+                <dt>{{ 'adminMediaFiletypeLabel'|trans }}</dt>
+                <dd>{{ media.mimeType ?? '—' }}</dd>
+                <dt>{{ 'adminMediaSizeLabel'|trans }}</dt>
+                <dd>{{ readableSize }}</dd>
                 {% if media.width and media.height %}
-                  <li>
-                    <span>{{ 'adminMediaDimensionsLabel'|trans }}</span>
-                    <strong>{{ media.width }}×{{ media.height }}</strong>
-                  </li>
+                  <dt>{{ 'adminMediaDimensionsLabel'|trans }}</dt>
+                  <dd>{{ media.width }}×{{ media.height }}</dd>
                 {% endif %}
-                <li>
-                  <span>{{ 'adminPageUpdatedAtLabel'|trans }}</span>
-                  <strong>{{ media.updatedAt ? media.updatedAt|format_datetime : '—' }}</strong>
-                </li>
-              </ul>
+                <dt>{{ 'adminPageUpdatedAtLabel'|trans }}</dt>
+                <dd>{{ media.updatedAt ? media.updatedAt|format_datetime : '—' }}</dd>
+              </dl>
 
               {% if media.tagList is not empty %}
                 <div class="media-mosaic__tags">

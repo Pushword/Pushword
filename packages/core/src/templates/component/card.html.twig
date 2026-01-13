@@ -31,7 +31,6 @@
 {% set description = description ?? null %}
 {% set buttonLink = buttonLink ?? null %}
 {% set imageAlt = imageAlt ?? null %}
-{% set imageAlt = imageAlt ?? null %}
 {% set link = link ?? null %}
 
 {% set isClickable = link is defined and (buttonLink is not defined or buttonLink == link) ? true : false %}
@@ -40,12 +39,12 @@
 <article
   class="overflow-hidden rounded-lg shadow-xl transition-all duration-75 ease-in-out hover:shadow {{ isClickable ? 'clickable cursor-pointer' : '' }}">
   {% if image %}
-    {{ helper.thumb(
-      image,
-      page,
-      'thumb',
-      {class: 'block w-full h-auto m-0'}|merge(imageAlt ? {alt: imageAlt} : {}))
-    }}
+      {{ helper.thumb(
+        image,
+        page,
+        'thumb',
+        {class: 'block w-full h-auto m-0'}|merge(imageAlt ? {alt: imageAlt} : {}))
+      }}
   {% endif %}
   {% block card_date %}
   {#<span class="block p-2 text-sm text-white bg-primary">

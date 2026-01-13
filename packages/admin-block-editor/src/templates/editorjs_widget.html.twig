@@ -1,12 +1,16 @@
 {% block editorjs_widget %}
 
-<div style="padding-top:8px; text-align:right; padding-right: 4px;">
-    <a href="#" onclick="toggleEditor()" style="color:#4b5563">{{ svg('code', {style: 'width:12px', fill: 'currentColor'}) }}</a>
-    <a href="#" onclick="toggleEditor('markdown')" style="color:#4b5563; display:inline-block; margin-left: 10px;" title="Ctrl + U">{{ svg('markdown', {style: 'width:12px', fill: 'currentColor'}) }}</a>
+<div style="padding-top:8px; text-align:right; padding-right:4px;">
+    <a href="#" onclick="toggleEditor(); return false;" style="color:#6b7280">
+        {{ svg('code', {style: 'width:12px; fill:currentColor'}) }}
+    </a>
+    <a href="#" onclick="toggleEditor('markdown'); return false;" style="color:#6b7280; margin-left:10px;" title="Ctrl + U">
+        {{ svg('markdown', {style: 'width:12px; fill:currentColor'}) }}
+    </a>
 </div>
-<div style="padding: 10px 10px 0px;">
+<div style="padding:10px 10px 0;">
     {% set editor_id = 'editorjs_' ~ id %}
-    <textarea style="display: none;" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
+    <textarea style="display:none" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
     <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
 </div>
 <script>

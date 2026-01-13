@@ -24,15 +24,15 @@
         .setEntityId(review.id)
       %}
       <a href="{{ editUrl }}"
-         class="inline-block rounded p-1 text-gray-300  hover:bg-gray-300 hover:text-gray-900 float-right"
+         class="inline-block rounded p-1 text-gray-300 hover:bg-gray-300 hover:text-gray-900 float-right"
          title="{% trans %}adminReviewEdit{% endtrans %}">
-        {{ svg('edit', {class: 'fill-current', style: 'width:14px'}) }}
+        {{ svg('edit', {class: 'fill-current w-3.5'}) }}
         <span class="sr-only">{% trans %}adminReviewEdit{% endtrans %}</span>
       </a>
     {% endif %}
     {% endblock %}
   </div>
-  <div class=" mt-3 not-italic text-sm prose">
+  <div class="mt-3 not-italic text-sm prose">
 
     {% if review.rating %}
       {% set ratingValue = review.rating %}

@@ -85,24 +85,21 @@
       ? helper.thumb(image, null, default_filter, image_otherAttributes)
       : image_inline.renderImage(image, image_otherAttributes.class|default(null))
   %}
-  {% if image_container is same as('') %}{% else %}<div class="{{ image_container|default('mx-auto max-w-[330px]') }}">{% endif %}
+  {% set wrapInContainer = image_container is not same as('') %}
 
+  {% if wrapInContainer %}<div class="{{ image_container|default('mx-auto max-w-[330px]') }}">{% endif %}
   {% if link is same as true %}
     {{ link(image_html,
       image|image('default'),
       linkAttr ?? {
-      'class': 'glightbox',
-      'data-gallery': gallery_id,
-      'data-dwl': image|image('default', 'webp')
-    }) }}
+        'class': 'glightbox',
+        'data-gallery': gallery_id,
+        'data-dwl': image|image('default', 'webp')
+      }) }}
   {% elseif link is not same as false %}
-    {{ link(image_html,
-      link,
-      linkAttr ?? {},
-      linkObfuscate
-    ) }}
+    {{ link(image_html, link, linkAttr ?? {}, linkObfuscate) }}
   {% else %}
     {{ image_html }}
   {% endif %}
-   {% if image_container is same as('') %}{% else %}</div>{% endif %}
+  {% if wrapInContainer %}</div>{% endif %}
 {% endmacro %}

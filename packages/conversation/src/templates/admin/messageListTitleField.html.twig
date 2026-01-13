@@ -51,7 +51,7 @@
   <div class="text-muted small d-flex flex-wrap gap1">
     {% if isReview %}
       <span class="d-flex align-items-center gap-1 me-3">
-        <i class="fa fa-star text-warning"></i>
+        <i class="fa fa-star text-warning" aria-hidden="true"></i>
         <span
           class="fw-semibold px-1"
           contenteditable="true"
@@ -70,7 +70,7 @@
     {% endif %}
 
     <span class="d-flex align-items-center gap-1 me-3">
-      <i class="fa fa-user"></i>
+      <i class="fa fa-user" aria-hidden="true"></i>
       <span
         class="px-1"
         contenteditable="true"
@@ -87,28 +87,26 @@
     <span>·</span>
 
     <span class="d-flex align-items-center gap-1 me-3">
-      <i class="fa fa-envelope"></i>
+      <i class="fa fa-envelope" aria-hidden="true"></i>
       <span
-        class="px-1"
+        class="px-1 text-decoration-underline"
         contenteditable="true"
         hx-post="{{ inlineAction }}"
         hx-trigger="blur"
         hx-target="#{{ inlineTarget }}"
         hx-swap="outerHTML"
         hx-vals='js:{field: "authorEmail", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
-        class="text-decoration-underline"
       >
         {{ message.authorEmail ?: '' }}
       </span>
     </span>
 
-    <span class="flex-grow-1"></span>
-
     <a
-      class="btn btn-sm btn-default px-2"
+      class="btn btn-sm btn-default px-2 ms-auto"
       href="{{ editUrl }}"
     >
-      <i class="fa fa-edit"></i>
+      <i class="fa fa-edit" aria-hidden="true"></i>
+      <span class="sr-only">Edit</span>
     </a>
   </div>
 

@@ -11,11 +11,13 @@
 {% block body %}
 <link rel="stylesheet" href="/bundles/pushwordcore/style.css">
 
-<div class="max-w-3xl p-3 mx-auto">
+<main class="max-w-3xl p-3 mx-auto">
 
-<div class="prose"><h1 class="mb-5"><small>{{ 'md_csPageH1'|trans }}</small> <br>{{ 'md_csPageSubtitle'|trans }}</h1></div>
+<header class="prose">
+  <h1 class="mb-5"><small>{{ 'md_csPageH1'|trans }}</small> <br>{{ 'md_csPageSubtitle'|trans }}</h1>
+</header>
 
-<div class="p-3 mb-5 prose">
+<nav class="p-3 mb-5 prose" aria-label="{{ 'md_csPageH1'|trans }}">
 {% apply markdown %}
 
 {% block cheatsheet_toc %}
@@ -36,13 +38,14 @@
 - [{{ 'md_csOthers'|trans }}](#others)
 {% endblock %}
 {% endapply %}
-</div>
+</nav>
 
 {% block cheatsheet_content %}
-<h2 id="title" class="mb-4 text-3xl font-bold">{{ 'md_csTitle'|trans }}</h2>
+<section id="title" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csTitle'|trans }}</h2>
 
-<div class="relative mb-8 overflow-hidden">
-    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+<figure class="relative mb-8 overflow-hidden">
+  <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 ## Title 2 (h2)
 
@@ -54,8 +57,8 @@
 
 #### Title 6 (h6)
 {% endapply %}
-    </div>
-<pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
+  </div>
+  <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 ## Title 2 (h2)
 
 ### Title 3 (h3)
@@ -66,53 +69,48 @@
 
 #### Title 6 (h6)
 </code></pre>
-</div>
+</figure>
+</section>
 
-<!-- -->
+<section id="chapeau" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csChapeau'|trans }}</h2>
+<p class="mb-4 prose dark:prose-light">{{ 'md_csChapeauDescription'|trans }}</p>
 
-<h2 id="chapeau" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csChapeau'|trans }}</h2>
-
-<div class="mb-4 prose dark:prose-light">
-    <p>{{ 'md_csChapeauDescription'|trans }}</p>
-</div>
-
-<div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
+<pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
 Ce paragraphe est un chapeau.
 
 {{ '&lt;!--break--&gt;' }}
 
 Ceci est le reste de mon contenu...
  </code></pre>
-</div>
+</section>
 
-<!-- -->
+<section id="style" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csEmphasis'|trans }}</h2>
 
-<h2 id="style" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csEmphasis'|trans }}</h2>
-
-<div class="relative mb-8 overflow-hidden">
-    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+<figure class="relative mb-8 overflow-hidden">
+  <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 - Italique : *astérisques* ou _underscores_
 - Gras  : **astérisques** ou __underscores__.
 - Gras et Italique : **astérisques et _underscore_**.
 - Fluo             : <mark>fluuuuooo</mark>
 {% endapply %}
-    </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
+  </div>
+  <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 - Italique         : *astérisques* ou _underscores_
 - Gras             : **astérisques** ou __underscores__.
 - Gras et Italique : **astérisques et _ sous-scores _**.
 - Fluo             : &lt;mark&gt;fluuuuooo&lt;/mark&gt;
 </code></pre>
-</div>
+</figure>
+</section>
 
-<!-- -->
+<section id="link" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csLink'|trans }}</h2>
 
-<h2 id="link" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csLink'|trans }}</h2>
-
-<div class="relative mb-8 overflow-hidden">
-    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+<figure class="relative mb-8 overflow-hidden">
+  <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 [{{ 'md_csLinkHomepage'|trans }}](/)
 
@@ -120,48 +118,48 @@ Ceci est le reste de mon contenu...
 
 {{ link('md_csLinkBotHidden'|trans, 'https://example.tld/') }}
 {% endapply %}
-    </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
+  </div>
+  <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 [{{ 'md_csLinkHomepage'|trans }}](/)
 
 [{{ 'md_csLinkOtherSite'|trans }}](https://piedweb.com/)
 
 {{ "{{ link('" ~ ('md_csLinkBotHidden'|trans) ~ "', 'https://example.tld/') }}" }}
 </code></pre>
-</div>
+</figure>
+</section>
 
-<!-- -->
+<section id="mail" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csLinkToMail'|trans }}</h2>
 
-<h2 id="mail" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csLinkToMail'|trans }}</h2>
-
-<div class="relative mb-8 overflow-hidden">
-    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+<figure class="relative mb-8 overflow-hidden">
+  <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 {{ mail('contact@example.tld') }}
 {% endapply %}
-    </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{{ "{{ mail('contact@example.tld') }}"|escapeTwig }}</code></pre>
-</div>
+  </div>
+  <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{{ "{{ mail('contact@example.tld') }}"|escapeTwig }}</code></pre>
+</figure>
+</section>
 
-<!-- -->
+<section id="tel" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csLinkToPhone'|trans }}</h2>
 
-<h2 id="tel" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csLinkToPhone'|trans }}</h2>
-
-<div class="relative mb-8 overflow-hidden">
-    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+<figure class="relative mb-8 overflow-hidden">
+  <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 {{ tel('+33 7 00 00 00 00 00 00 00') }}
 {% endapply %}
-    </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{{ "{{ tel('+33 7 00 00 00 00 00 00 00') }}"|escapeTwig }}</code></pre>
-</div>
+  </div>
+  <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>{{ "{{ tel('+33 7 00 00 00 00 00 00 00') }}"|escapeTwig }}</code></pre>
+</figure>
+</section>
 
-<!-- -->
+<section id="lists" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csLists'|trans }}</h2>
 
-<h2 id="lists" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csLists'|trans }}</h2>
-
-<div class="relative mb-8 overflow-hidden">
-    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+<figure class="relative mb-8 overflow-hidden">
+  <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 1. premier élément d'une liste ordonnée
 2. second
@@ -175,8 +173,8 @@ Ceci est le reste de mon contenu...
     1. sous-liste ordonnée
 + Ou un plus
 {% endapply %}
-    </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
+  </div>
+  <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 1. premier élément d'une liste ordonnée
 2. second
     * sous-liste
@@ -189,13 +187,14 @@ Ceci est le reste de mon contenu...
     1. sous-liste ordonnée
 + Ou un plus
 </code></pre>
-</div>
-<!-- -->
+</figure>
+</section>
 
-<h2 id="p" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csParagraph'|trans }}</h2>
+<section id="p" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csParagraph'|trans }}</h2>
 
-<div class="relative mb-8 overflow-hidden">
-    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+<figure class="relative mb-8 overflow-hidden">
+  <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 Sauter deux lignes.
 
@@ -207,8 +206,8 @@ n'a aucune incidence.
 Pour ajouter un saut de ligne<br>
 deux espace sont nécessaires.
 {% endapply %}
-    </div>
-<pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
+  </div>
+  <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 Sauter deux lignes.
 
 Permet de créer deux paragraphes.
@@ -218,30 +217,29 @@ n'a aucune incidence.
 
 Pour ajouter un saut de ligne⋅⋅
 deux espace sont nécessaires.</code></pre>
-</div>
+</figure>
+</section>
 
-<!-- -->
+<section id="quote" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csQuote'|trans }}</h2>
 
-<h2 id="quote" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csQuote'|trans }}</h2>
-
-<div class="relative mb-8 overflow-hidden">
-    <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
+<figure class="relative mb-8 overflow-hidden">
+  <div class="p-3 overflow-hidden prose rounded-t-xl bg-yellow-50 dark:prose-light max-w-none">
 {% apply markdown %}
 > Mon bloc de contenu cité
 > sur plusieurs lignes
 {% endapply %}
-    </div>
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
+  </div>
+  <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-b-xl"><code>
 > Mon bloc de contenu cité
 </code></pre>
-</div>
+</figure>
+</section>
 
-<!-- -->
+<section id="img" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csImage'|trans }}</h2>
 
-<h2 id="img" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csImage'|trans }}</h2>
-
-<div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
+<pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
 ![image's description](/media/default/mon-image.jpg)
 ![image's description](https://images.unsplash.com/photo-1473448912268-2022ce9509d8?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1625&q=80)
 
@@ -257,35 +255,30 @@ deux espace sont nécessaires.</code></pre>
 {% set linkObfuscate = false %}
 {{ gallery({'/media/default/mon-image.jpg': ['image alt', linkAttr, linkObfuscate]}) }}" }}
 </code></pre>
-</div>
+</section>
 
-<!-- -->
+<section id="video" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csVideo'|trans }}</h2>
 
-<h2 id="video" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csVideo'|trans }}</h2>
-
-<div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
+<pre class="p-3 mb-4 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
 {{ '{{' }} video('youtube.com/watch?v=ExEmPle-001', '/media/default/exemple.jpg', 'mon texte descriptif en 3 mots') }} {{ '}}' }}
 </code></pre>
-</div>
-<div class="prose dark:prose-light">
+<ul class="prose dark:prose-light list-disc pl-5">
 {% apply markdown %}
 - le premier élément correspond à l'URL de votre vidéo (youtube ou autre)
 - le second à l'image d'aperçu
 - le troisième
 - une quatrième valeur peut être ajouter `url` : permet de forcer l'affichage de la vidéo en plein écran
 {% endapply %}
-</div>
+</ul>
+</section>
 
-<!-- -->
+<section id="pageslist" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csPageList'|trans }}</h2>
 
-<h2 id="pageslist" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csPageList'|trans }}</h2>
-
-<div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
+<pre class="p-3 mb-4 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
 {{ "{{ pages_list('exampleTag')|unprose"|escapeTwig }}
 </code></pre>
-</div>
 <div class="prose dark:prose-light">
 {% apply markdown %}
 Discover more on {{ link('Advanced Pages Listing', 'https://pushword.piedweb.com/pages-list', false) }}.
@@ -296,30 +289,20 @@ Discover more on {{ link('Advanced Pages Listing', 'https://pushword.piedweb.com
 - `host` default current host, if set to '', will be set to current host
 {% endapply %}
 </div>
+</section>
 
-<h2 id="redirect" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csRedirection'|trans }}</h2>
+<section id="redirect" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csRedirection'|trans }}</h2>
+<p class="prose dark:prose-light mb-4">Votre contenu doit contenir uniquement :</p>
 
-<div class="prose dark:prose-light">
-<p>Votre contenu doit contenir uniquement :</p></div>
+<pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>Location: http://example.eg/</code></pre>
+</section>
 
-<div class="relative mb-8 overflow-hidden">
+<section id="showmore" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">Show More</h2>
+<p class="prose dark:prose-light mb-4">Collapse long content blocks with expand/collapse functionality.</p>
+
 <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
-Location: http://example.eg/
-</code></pre>
-</div>
-
-<!-- -->
-
-<h2 id="showmore" class="mt-16 mb-4 text-3xl font-bold">Show More</h2>
-
-<div class="prose dark:prose-light mb-4">
-{% apply markdown %}
-Collapse long content blocks with expand/collapse functionality.
-{% endapply %}
-</div>
-
-<div class="relative mb-8 overflow-hidden">
-    <pre class="p-3 overflow-x-auto text-sm text-white bg-gray-800 rounded-xl"><code>
 {{ "{{ startShowMore() }}"|escapeTwig }}
 
 Your long content here (only first 250px height will be visible base on your templete file `/component/show_more.html.twig`)...
@@ -336,11 +319,10 @@ Your long content here (only first 250px height will be visible base on your tem
 ...
 {{ "{{ endShowMore() }}"|escapeTwig }}
 </code></pre>
-</div>
+</section>
 
-<!-- -->
-
-<h2 id="others" class="mt-16 mb-4 text-3xl font-bold">{{ 'md_csOthers'|trans }}</h2>
+<section id="others" class="mb-12">
+<h2 class="mb-4 text-3xl font-bold">{{ 'md_csOthers'|trans }}</h2>
 
 <div class="prose dark:prose-light">
 {% apply markdown %}
@@ -359,8 +341,9 @@ Your long content here (only first 250px height will be visible base on your tem
 - Tout autre *Autres Paramètres* peut êgalement être appelé directement dans la page `{{ '{{ page.customParam }}' }}`
 {% endapply %}
 </div>
+</section>
 
 {% endblock %}
 
-</div>
+</main>
 {% endblock %}
