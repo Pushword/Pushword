@@ -1,124 +1,50 @@
 {#
-    Media    image
-      or
-    string   image_src       ...
-    string   image_alt       image.altLocalized(page is defined ? page.locale : '')
+  Renders an inline image with optional wrapper and link.
 
-    bool     image_link      default: false
-    bool     image_link_attr default: {}
-    bool     image_link_obf  default: true
-    array    image_attr
-    string   image_wrapper   default: 'p' if image_wrapper_class is setted
-    string   image_wrapper_class  default: 'w-full h-auto' if image_wrapper is setted
-    string   picture_attr        default: 'style="margin:0"'
+  Media    image
+    or
+  string   image_src       ...
+  string   image_alt       image.altLocalized(page is defined ? page.locale : '')
 
-     xs: #576px
-     sm: #768px
-     md: #992px
-     lg: #1200px
-     xl: #1200px+
+  bool     image_link      default: false
+  array    image_link_attr default: {}
+  bool     image_link_obf  default: true
+  array    image_attr
+  string   image_class
+  string   image_wrapper       default: 'p' if image_wrapper_class is set
+  string   image_wrapper_class default: 'w-full h-auto' if image_wrapper is set
+  array    picture_attr        default: {style: 'margin:0'}
+  bool     lazy                default: true
 #}
 
-{% if image is defined and isInstanceOfMedia(image) %}
-    {% set image_src = image.fileName %}
-    {% set image_alt = image_alt ?? image.altLocalized(page is defined ? page.locale : '') %}
-{% else  %}
-    {% set image_src = image_src ?? imageSrc ?? image %}
-    {% set image = media_from_string(
-      image_src,
-      image_alt ?? imageAlt ?? ''
-    ) %}
-{% endif %}
+{% set image = media_from_string(image ?? image_src ?? imageSrc, image_alt ?? imageAlt ?? '') %}
+{% set image_src = image.fileName %}
+{% set image_alt = image_alt ?? image.getAltLocalized(page.locale ?? '') %}
 
+{% set imageHasWrapper = image_wrapper_class is defined or image_wrapper is defined %}
 {% block inline_image %}
-    {% if image_src is defined %}
-     {% if image_wrapper_class is defined or image_wrapper is defined %}
-      <{{ image_wrapper|default('p') }} {% if image_wrapper_class is defined %}class="{{ image_wrapper_class }}"{% endif %}>
-     {% endif %}
+  {% if imageHasWrapper %}
+    <{{ image_wrapper|default('p') }}{% if image_wrapper_class is defined %} class="{{ image_wrapper_class }}"{% endif %}>
+  {% endif %}
 
+  {% set image_html = include('@PushwordCore/component/image.html.twig', {
+    image: image,
+    image_class: image_class ?? null,
+    image_attr: image_attr ?? null,
+    image_alt: image_alt,
+    lazy: lazy ?? true,
+    picture_attr: picture_attr ?? null
+  }, with_context = false) %}
 
-     {% set image_html = _self.renderImage(
-        image, image_class ?? null,
-        image_attr ?? null,
-        image_alt ?? null,
-        lazy ?? true,
-        picture_attr ?? null
-      ) %}
+  {% if image_link ?? false %}
+    {% set absolute_image_link = (image_link is same as true) ? image|image('default') : image_link %}
+    {% set image_link_attr = image_link_attr ?? {class: 'glightbox', 'data-dwl': image|image('xl')} %}
+    {{ link(image_html, absolute_image_link, image_link_attr, image_link_obf ?? true) }}
+  {% else %}
+    {{ image_html|raw }}
+  {% endif %}
 
-    {% set image_link = image_link ?? false %}
-    {% if image_link is same as false %}
-      {{ image_html }}
-     {% else %}
-      {% set absolute_image_link = (image_link is same as true) ? image|image('default') : image_link %}
-      {% set modern_format = preferred_modern_format('default') %}
-      {% set image_link_attr = image_link is not defined
-            ? {
-              'class': 'glightbox',
-              'data-dwl': image|image('xl')
-            } : (image_link_attr ?? {}) %}
-      {% set image_link_obf = image_link_obf ?? true %}
-
-      {{ link(
-         image_html,
-         absolute_image_link,
-         image_link_attr,
-         image_link_obf
-      ) }}
-     {% endif %}
-
-     {% if image_wrapper_class is defined or image_wrapper is defined %}
-      </{{ image_wrapper|default('p') }}>
-     {% endif %}
-    {% endif %}
+  {% if imageHasWrapper %}
+    </{{ image_wrapper|default('p') }}>
+  {% endif %}
 {% endblock %}
-
-{% macro renderImage(
-  image,
-  image_class = null,
-  image_attr = null,
-  image_alt = null,
-  lazy = true,
-  picture_attr = null
-) %}
-{% if image.width is null %}
-    {% set dimensions = image_dimensions(image) %}
-    {% set width = dimensions[0] %}
-    {% set height = dimensions[1] %}
-{% else %}
-    {% set width = image.width %}
-    {% set height = image.height %}
-{% endif %}
-
-{% set modern_format = preferred_modern_format('xs') %}
-<picture{% if picture_attr %} {{ attr(picture_attr) }}{% else %} style="margin:0"{% endif %}>
-{% if modern_format %}
-    <source type="image/{{ modern_format }}"
-     srcset="{{ image|image('xs', modern_format) ~ ' 576w'
-      ~ ',' ~ image|image('sm', modern_format) ~ ' 768w'
-      ~ ',' ~ image|image('md', modern_format) ~ ' 992w'
-      ~ ',' ~ image|image('lg', modern_format) ~ ' 1200w'
-      ~ ',' ~ image|image('xl', modern_format) ~ ' 1600w' }}"
-      sizes="(max-width: 576px) 576px,
-               (max-width: 768px) 768px,
-               (max-width: 992px) 992px,
-               (max-width: 1200px) 1200px,
-               1600px">
-{% endif %}
-    <img {{ mergeAttr({srcset: image|image('xs') ~ ' 576w'
-        ~ ',' ~ image|image('sm') ~ ' 768w'
-        ~ ',' ~ image|image('md') ~ ' 992w'
-        ~ ',' ~ image|image('lg') ~ ' 1200w'
-        ~ ',' ~ image|image('xl') ~ ' 1600w',
-      sizes:'(max-width: 576px) 576px,'
-        ~ '(max-width: 768px) 768px,'
-        ~ '(max-width: 992px) 992px,'
-        ~ '(max-width: 1200px) 1200px,'
-        ~ '1600px',
-     src: image|image('default'),
-     class: image_class ?? 'w-full h-auto mb-4',
-     width: width,
-     height: height,
-     alt: image_alt|default(image.alt ?? image.fileName)
-    }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }}>
-</picture>
-{% endmacro %}

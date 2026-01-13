@@ -1,0 +1,59 @@
+{#
+  Renders a responsive <picture> element with srcset.
+
+  Media    image         Required. Media object to render.
+  string   mode          'responsive' (all breakpoints) or filter name (e.g. 'thumb', 'xs'). Default: 'responsive'
+  string   image_class   default: 'w-full h-auto mb-4'
+  array    image_attr    default: {}
+  string   image_alt     default: image.alt
+  bool     lazy          default: true
+  array    picture_attr  default: {style: 'margin:0'}
+  Page     page          Optional. Used to get locale for alt text.
+#}
+
+{% macro build_srcset(image, breakpoints, format) %}
+  {%- for name, width in breakpoints -%}
+    {{ image|image(name, format) }} {{ width }}w{{ not loop.last ? ',' }}
+  {%- endfor -%}
+{% endmacro %}
+
+{% set mode = mode ?? 'responsive' %}
+{% set picture_attr = picture_attr ?? {style: 'margin:0'} %}
+{% set lazy = lazy ?? true %}
+
+{% if mode == 'responsive' %}
+  {% set breakpoints = {xs: 576, sm: 768, md: 992, lg: 1200, xl: 1600} %}
+  {% set width = image.width ?? image_dimensions(image)[0] %}
+  {% set height = image.height ?? image_dimensions(image)[1] %}
+  {% set alt = image_alt|default(image.alt ?? image.fileName) %}
+{% else %}
+  {% set breakpoints = {(mode): 576} %}
+  {% set width = mode == 'thumb' ? 1000 : image.width %}
+  {% set height = mode == 'thumb' ? 1000 : image.height %}
+  {% set alt = image_alt|default(image.getAltLocalized(page.locale ?? '')) %}
+{% endif %}
+
+{% set sizes_parts = [] %}
+{% for name, w in breakpoints %}
+  {% set sizes_parts = sizes_parts|merge(['(max-width: ' ~ w ~ 'px) ' ~ w ~ 'px']) %}
+{% endfor %}
+{% set sizes_string = sizes_parts|slice(0, -1)|join(',') ~ (sizes_parts|length > 1 ? ',' : '') ~ breakpoints|last ~ 'px' %}
+
+{% set modern_format = preferred_modern_format(breakpoints|keys|first) %}
+
+<picture {{ attr(picture_attr) }}>
+{% if modern_format %}
+  <source type="image/{{ modern_format }}"
+    srcset="{{ _self.build_srcset(image, breakpoints, modern_format) }}"
+    sizes="{{ sizes_string }}">
+{% endif %}
+  <img {{ mergeAttr({
+    srcset: _self.build_srcset(image, breakpoints, null),
+    sizes: sizes_string,
+    src: image|image('default'),
+    class: image_class ?? 'w-full h-auto mb-4',
+    width: width,
+    height: height,
+    alt: alt
+  }, image_attr ?? {}, lazy ? {loading: 'lazy'} : {}) }}>
+</picture>
