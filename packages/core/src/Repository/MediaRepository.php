@@ -272,6 +272,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         return $exp->orX(
             $exp->like($alias.'.fileName', $likeFilterValue),
+            $exp->like($alias.'.fileNameHistory', $likeFilterValue),
             $exp->like($alias.'.alt', $likeFilterValue),
             $exp->like($alias.'.altSearch', $likeNormalizedFilterValue),
             $exp->like($alias.'.alts', $likeFilterValue),
