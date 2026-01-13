@@ -66,12 +66,11 @@
     {{ reviewBodyHtml|raw }}
   </div>
   {% if review.mediaList is not empty %}
-    <div class="overflow-x-hidden md:overflow-x-auto w-full mt-4">
-      {% include view('/component/images_gallery.html.twig') with {
-        images: review.mediaList,
-        isReview: true
-      } %}
-    </div>
+    {% include view('/component/images_gallery.html.twig') with {
+      images: review.mediaList,
+      isReview: true,
+      gallery_container_class: 'overflow-x-hidden md:overflow-x-auto w-full mt-4'
+    } %}
   {% endif %}
 </blockquote>
 {% endblock %}
