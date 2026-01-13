@@ -36,7 +36,7 @@
             {% block toc %}
                 {% set content = mainContent.content %}
                 {{ mainContent.intro|raw }}
-                // if content contains '<!-- toc -->'
+                {# if content contains '<!-- toc -->' #}
                 {% if '<!-- toc -->' in content%}
                     {% set content = content|replace({
                         '<!-- toc -->': mainContent.toc

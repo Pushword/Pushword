@@ -1,5 +1,3 @@
-{% import view('/component/image_helper.html.twig') as helper %}
-
 {#
   @var Page|string|null   page
   @var Media|string|null  image
@@ -39,12 +37,13 @@
 <article
   class="overflow-hidden rounded-lg shadow-xl transition-all duration-75 ease-in-out hover:shadow {{ isClickable ? 'clickable cursor-pointer' : '' }}">
   {% if image %}
-      {{ helper.thumb(
-        image,
-        page,
-        'thumb',
-        {class: 'block w-full h-auto m-0'}|merge(imageAlt ? {alt: imageAlt} : {}))
-      }}
+    {{ include('@PushwordCore/component/image.html.twig', {
+      image: media_from_string(image),
+      mode: 'thumb',
+      page: page,
+      image_class: 'block w-full h-auto m-0',
+      image_alt: imageAlt
+    }, with_context = false) }}
   {% endif %}
   {% block card_date %}
   {#<span class="block p-2 text-sm text-white bg-primary">

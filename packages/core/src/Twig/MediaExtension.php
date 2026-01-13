@@ -86,14 +86,28 @@ class MediaExtension
     }
 
     /**
-     * Convert the source path (often /media/default/... or just ...) in a Media Object
-     * /!\ No search in db.
+     * Convert the source path (often /media/default/... or just ...) in a Media Object.
+     * Handles inverted format: if $src looks like a caption and $name looks like a filename, swap them.
+     * Also handles Media object passed as either argument.
      */
     #[AsTwigFunction('media_from_string')]
-    public function transformStringToMedia(Media|string $src, string $name = ''): Media
+    public function transformStringToMedia(Media|string|int $src, Media|string $name = ''): Media
     {
+        // Handle Media object passed as either argument
         if ($src instanceof Media) {
             return $src;
+        }
+
+        if ($name instanceof Media) {
+            return $name;
+        }
+
+        $src = (string) $src;
+
+        // Handle inverted format: {'caption': 'image.jpg'} -> swap if $name looks like a filename
+        if ('' !== $name && 1 === preg_match('/^[a-zA-Z0-9_-]+\.(jpg|jpeg|png|gif|webp|avif)$/i', $name)
+            && 0 === preg_match('/^[a-zA-Z0-9_-]+\.(jpg|jpeg|png|gif|webp|avif)$/i', $src)) {
+            [$src, $name] = [$name, $src];
         }
 
         $src = $this->normalizeMediaPath($src);
@@ -102,7 +116,7 @@ class MediaExtension
             $media = $this->findMediaByFileName($src) ??
             throw new Exception("Internal - Can't handle the value submitted `".$src.'`.');
 
-            if ('' !== $name) { // to check if useful
+            if ('' !== $name) {
                 $media->setAlt($name, true);
             }
 
