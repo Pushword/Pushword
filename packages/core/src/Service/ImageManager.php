@@ -534,6 +534,12 @@ final class ImageManager
         ?string $extension = null,
         bool $checkFileExists = false,
     ): string {
+        // SVG files are vector images - serve original file directly (no rasterization)
+        $mediaFileName = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
+        if (str_ends_with(strtolower($mediaFileName), '.svg')) {
+            return '/'.$this->publicMediaDir.'/'.$mediaFileName;
+        }
+
         // If extension is explicitly provided, use it
         if (null !== $extension) {
             return $this->getFilterPath($media, $filterName, $extension, true);
@@ -543,8 +549,6 @@ final class ImageManager
         /** @var string[] $formats */
         $formats = $this->filterSets[$filterName]['formats'] ?? ['webp', 'original'];
 
-        // Get the original file extension to check if source is already avif
-        $mediaFileName = $media instanceof Media ? $media->getFileName() : Filepath::filename($media);
         $originalExt = strtolower(pathinfo($mediaFileName, \PATHINFO_EXTENSION));
 
         // Try avif first if configured

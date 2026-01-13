@@ -1,7 +1,6 @@
 ---
 title: 'List Pages as a pro with Pushword CMS'
 h1: 'Create Page List<br> <small>Advanced filtering</small>'
-id: 48
 publishedAt: '2025-12-21 21:55'
 parentPage: editor
 toc: true

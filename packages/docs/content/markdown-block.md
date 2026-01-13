@@ -1,7 +1,6 @@
 ---
 title: 'Markdown Block : Markdown adapted for WYSIWYG block editor'
 h1: 'Markdown Block'
-id: 46
 publishedAt: '2025-12-21 21:55'
 parentPage: search.json
 toc: true

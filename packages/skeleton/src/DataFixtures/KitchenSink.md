@@ -34,7 +34,7 @@ See **bold** _italic_ `inline code` #[link](/kitchen-sink-block{target="_blank"}
 
 ## Advanced gallery
 
-{{ gallery({'piedweb-logo.png': ['pied web logo', 'https://piedweb.com', {}, false], '1.jpg': '', '2.jpg': '', '3.jpg': ''}, clickable=false) }}
+{{ gallery({'logo.svg': ['SVG Logo', 'https://piedweb.com', {}, false], '1.jpg': '', '2.jpg': '', '3.jpg': ''}, clickable=false) }}
 
 ## Video
 
