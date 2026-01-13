@@ -8,7 +8,7 @@
 
         {% block error %}
             {% if not conversation.vars.valid %}
-            <div class="w-full mt-3 bg-red text-red">
+            <div class="w-full mt-3 bg-red-100 text-red-700 p-3 rounded" role="alert">
                 {{ form_errors(conversation) }}
             </div>
             {% endif %}
@@ -16,22 +16,18 @@
 
         {% block content %}
             {% if conversation.content is defined %}
-            <div class="flex flex-wrap mb-3">
-                <div class="mb-4 w-full step">
+            <div class="mb-4 w-full">
                 {{ form_row(conversation.content, {
-
-                label_attr: {class: 'sr-only'},
-                row_attr: {class: ' '},
-                attr: {
-                    placeholder: 'conversationContentPlaceholder'|trans,
-                    onfocus: "this.placeholder = ''",
-                    onblur: "this.placeholder = '{{ 'conversationContentPlaceholder'|trans|e('js') }}'",
-                    rows: 8,
-                    class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary'
-                }
+                    label_attr: {class: 'sr-only'},
+                    attr: {
+                        placeholder: 'conversationContentPlaceholder'|trans,
+                        onfocus: "this.placeholder = ''",
+                        onblur: "this.placeholder = '{{ 'conversationContentPlaceholder'|trans|e('js') }}'",
+                        rows: 8,
+                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary'
+                    }
                 }) }}
                 {{ form_errors(conversation.content) }}
-                </div>
             </div>
             {% endif %}
         {% endblock %}
