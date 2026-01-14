@@ -87,6 +87,16 @@ class MediaImporter extends AbstractImporter
         foreach ($records as $row) {
             $fileName = $row['fileName'] ?? '';
             if ('' !== $fileName) {
+                if (isset($this->indexData[$fileName])) {
+                    $this->logger?->warning('Duplicate fileName "{fileName}" in index.csv - keeping first occurrence (id: {firstId}), skipping duplicate (id: {duplicateId})', [
+                        'fileName' => $fileName,
+                        'firstId' => $this->indexData[$fileName]['id'] ?? 'none',
+                        'duplicateId' => $row['id'] ?? 'none',
+                    ]);
+
+                    continue;
+                }
+
                 $this->indexData[$fileName] = $row;
 
                 // Track IDs for deletion detection
