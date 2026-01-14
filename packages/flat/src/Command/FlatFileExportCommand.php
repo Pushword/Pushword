@@ -29,11 +29,13 @@ final readonly class FlatFileExportCommand
         bool $force = false,
         #[Option(description: 'Skip adding IDs to markdown files and CSV indexes', name: 'skip-id')]
         bool $skipId = false,
+        #[Option(description: 'Export only media, skip pages', name: 'media-only', shortcut: 'm')]
+        bool $mediaOnly = false,
     ): int {
         $output->writeln('Export will start in few seconds...');
 
         $this->flatFileSync->setOutput($output);
-        $this->flatFileSync->export($host, $exportDir, $force, $skipId);
+        $this->flatFileSync->export($host, $exportDir, $force, $skipId, $mediaOnly);
 
         $output->writeln('Export completed.');
 

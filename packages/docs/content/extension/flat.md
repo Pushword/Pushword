@@ -37,7 +37,7 @@ php bin/console pw:flat:sync [host]
 php bin/console pw:flat:import [host]
 
 # exports database content to flat files
-php bin/console pw:flat:export [host] [exportDir] [--force]
+php bin/console pw:flat:export [host] [exportDir] [--force] [--media-only]
 ```
 
 Where:
@@ -45,6 +45,7 @@ Where:
 - `host` is facultative (uses default app if not provided)
 - `exportDir` (for export only) is facultative (uses `flat_content_dir` by default)
 - `--force` (for export only) forces overwriting even if files are newer than DB
+- `--media-only` or `-m` exports only media, skipping pages
 
 ## Generate AI index
 

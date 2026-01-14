@@ -61,15 +61,17 @@ final class FlatFileSync
         $this->dispatchEvent($host);
     }
 
-    public function export(?string $host = null, ?string $exportDir = null, bool $force = false, bool $skipId = false): void
+    public function export(?string $host = null, ?string $exportDir = null, bool $force = false, bool $skipId = false, bool $mediaOnly = false): void
     {
         $this->stopwatch?->start('media.sync');
         $this->mediaSync->export($host, $force, $exportDir);
         $this->stopwatch?->stop('media.sync');
 
-        $this->stopwatch?->start('page.sync');
-        $this->pageSync->export($host, $force, $exportDir, $skipId);
-        $this->stopwatch?->stop('page.sync');
+        if (! $mediaOnly) {
+            $this->stopwatch?->start('page.sync');
+            $this->pageSync->export($host, $force, $exportDir, $skipId);
+            $this->stopwatch?->stop('page.sync');
+        }
 
         $this->dispatchEvent($host);
     }
