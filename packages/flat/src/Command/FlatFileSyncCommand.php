@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\Command;
 
 use Pushword\Core\Service\BackgroundProcessManager;
@@ -41,6 +43,8 @@ final readonly class FlatFileSyncCommand
         ?string $host,
         #[Option(name: 'force', shortcut: 'f')]
         bool $force = false,
+        #[Option(description: 'Entity type to sync (page, media, conversation, all)', name: 'entity')]
+        string $entity = 'all',
     ): int {
         // Check if same process type is already running (via PID file)
         $pidFile = $this->processManager->getPidFilePath(self::PROCESS_TYPE);
@@ -76,11 +80,11 @@ final readonly class FlatFileSyncCommand
             $this->flatFileSync->setStopwatch($this->stopWatch);
 
             if (null !== $host) {
-                $this->flatFileSync->sync($host, $force);
+                $this->flatFileSync->sync($host, $force, null, $entity);
             } else {
                 foreach ($this->flatFileSync->getHosts() as $appHost) {
                     $teeOutput->writeln(\sprintf('<info>Syncing %s...</info>', $appHost));
-                    $this->flatFileSync->sync($appHost, $force);
+                    $this->flatFileSync->sync($appHost, $force, null, $entity);
                 }
             }
 
@@ -160,23 +164,13 @@ final readonly class FlatFileSyncCommand
         $sections = $this->stopWatch->getSections();
         $timings = [];
 
+        $allowedEvents = ['media.sync', 'page.sync', 'conversation.sync'];
+
         foreach ($sections as $section) {
             foreach ($section->getEvents() as $name => $event) {
-                // Skip our main event and internal Symfony events
-                if ('sync' === $name) {
-                    continue;
+                if (\in_array($name, $allowedEvents, true)) {
+                    $timings[$name] = ($timings[$name] ?? 0) + $event->getDuration();
                 }
-
-                if ('__section__' === $name) {
-                    continue;
-                }
-
-                // Only include our custom timing events
-                if (! \in_array($name, ['media.sync', 'page.sync'], true)) {
-                    continue;
-                }
-
-                $timings[$name] = ($timings[$name] ?? 0) + $event->getDuration();
             }
         }
 
@@ -190,7 +184,8 @@ final readonly class FlatFileSyncCommand
         foreach ($timings as $name => $duration) {
             $shortName = match ($name) {
                 'media.sync' => 'media',
-                'page.sync' => 'pages', // @phpstan-ignore match.alwaysTrue
+                'page.sync' => 'pages',
+                'conversation.sync' => 'conversation', // @phpstan-ignore match.alwaysTrue
                 default => $name,
             };
             $parts[] = \sprintf('%s: %dms', $shortName, $duration);

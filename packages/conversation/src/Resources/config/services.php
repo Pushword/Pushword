@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use Pushword\Conversation\Flat\ConversationSync;
 use Pushword\Core\PushwordCoreBundle;
+use Pushword\Flat\Sync\ConversationSyncInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -19,4 +21,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ]);
 
     $services->load('Pushword\Conversation\Flat\\', __DIR__.'/../../../src/Flat/');
+
+    // Register ConversationSync as the implementation of ConversationSyncInterface
+    $services->alias(ConversationSyncInterface::class, ConversationSync::class);
+    $services->alias('pushword.flat.conversation_sync', ConversationSync::class);
 };

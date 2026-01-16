@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -21,6 +23,26 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->scalarNode('flat_content_dir')
               ->defaultValue('%kernel.project_dir%/content/_host_')
+            ->end()
+            ->integerNode('change_detection_cache_ttl')
+              ->defaultValue(300)
+              ->info('Cache TTL in seconds for change detection (default: 5 minutes)')
+            ->end()
+            ->booleanNode('auto_export_enabled')
+              ->defaultTrue()
+              ->info('Enable automatic export after admin modifications')
+            ->end()
+            ->booleanNode('use_background_export')
+              ->defaultTrue()
+              ->info('Run export in background process')
+            ->end()
+            ->integerNode('lock_ttl')
+              ->defaultValue(1800)
+              ->info('Default lock TTL in seconds (default: 30 minutes)')
+            ->end()
+            ->booleanNode('auto_lock_on_flat_changes')
+              ->defaultTrue()
+              ->info('Automatically lock when flat files are modified')
             ->end()
         ->end();
 

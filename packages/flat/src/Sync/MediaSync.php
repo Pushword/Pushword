@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\Sync;
 
 use DateTime;
@@ -34,6 +36,7 @@ final class MediaSync
         private readonly MediaExporter $mediaExporter,
         private readonly MediaRepository $mediaRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly SyncStateManager $stateManager,
         private readonly string $mediaDir,
         private readonly ?LoggerInterface $logger = null,
     ) {
@@ -107,6 +110,9 @@ final class MediaSync
 
         // 6. Regenerate index.csv to reflect the current database state
         $this->regenerateIndex();
+
+        // 7. Record import in sync state
+        $this->stateManager->recordImport('media', $app->getMainHost());
     }
 
     /**
@@ -168,6 +174,9 @@ final class MediaSync
             $this->mediaExporter->exportDir = $targetDir;
             $this->mediaExporter->exportMedias();
         });
+
+        // Record export in sync state
+        $this->stateManager->recordExport('media', $app->getMainHost());
     }
 
     public function mustImport(?string $host = null): bool
@@ -273,17 +282,7 @@ final class MediaSync
      */
     private function isLockOrTempFile(string $fileName): bool
     {
-        // LibreOffice lock files: .~lock.filename#
-        if (str_starts_with($fileName, '.~lock.') && str_ends_with($fileName, '#')) {
-            return true;
-        }
-
-        // Microsoft Office temp files: ~$filename
-        if (str_starts_with($fileName, '~$')) {
-            return true;
-        }
-
-        // Generic temp files starting with .~ or ~
+        // Temp files starting with .~ (includes LibreOffice .~lock.filename#) or ~ (includes MS Office ~$filename)
         return str_starts_with($fileName, '.~') || str_starts_with($fileName, '~');
     }
 

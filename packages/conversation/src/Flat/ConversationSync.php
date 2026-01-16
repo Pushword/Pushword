@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Conversation\Flat;
 
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Flat\FlatFileContentDirFinder;
+use Pushword\Flat\Sync\ConversationSyncInterface;
 
 use function Safe\filemtime;
 
-final readonly class ConversationSync
+final readonly class ConversationSync implements ConversationSyncInterface
 {
     public function __construct(
         private AppPool $apps,
@@ -20,11 +23,21 @@ final readonly class ConversationSync
     public function sync(?string $host = null, bool $forceExport = false): void
     {
         if (! $forceExport && $this->mustImport($host)) {
-            $this->importer->import($host);
+            $this->import($host);
 
             return;
         }
 
+        $this->export($host);
+    }
+
+    public function import(?string $host = null): void
+    {
+        $this->importer->import($host);
+    }
+
+    public function export(?string $host = null): void
+    {
         $this->exporter->export($host);
     }
 

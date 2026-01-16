@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\Sync;
 
 use DateTime;
@@ -35,6 +37,8 @@ final class PageSync
         private readonly RedirectionImporter $redirectionImporter,
         private readonly PageRepository $pageRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly SyncStateManager $stateManager,
+        private readonly ConflictResolver $conflictResolver,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -43,6 +47,7 @@ final class PageSync
     {
         $this->output = $output;
         $this->pageExporter->setOutput($output);
+        $this->conflictResolver->setOutput($output);
     }
 
     public function setStopwatch(?Stopwatch $stopwatch): void
@@ -98,6 +103,9 @@ final class PageSync
 
         // 6. Regenerate index.csv to reflect the current database state
         $this->regenerateIndex($contentDir, $skipId);
+
+        // 7. Record import in sync state
+        $this->stateManager->recordImport('page', $app->getMainHost());
     }
 
     /**
@@ -163,6 +171,9 @@ final class PageSync
         // Export redirections (redirection.csv)
         $this->redirectionExporter->exportDir = $targetDir;
         $this->redirectionExporter->exportRedirections();
+
+        // Record export in sync state
+        $this->stateManager->recordExport('page', $app->getMainHost());
     }
 
     public function mustImport(?string $host = null): bool
@@ -225,6 +236,23 @@ final class PageSync
         }
 
         $lastEditDateTime = new DateTime()->setTimestamp(filemtime($filePath));
+
+        // Check for conflicts using the last sync time
+        $lastSyncTime = $this->stateManager->getLastSyncTime('page', $host);
+        if ($lastSyncTime > 0) {
+            $lastSyncAt = new DateTime('@'.$lastSyncTime);
+            $conflict = $this->conflictResolver->resolvePageConflict(
+                $page,
+                $filePath,
+                $lastEditDateTime,
+                $lastSyncAt,
+            );
+
+            if ($conflict['hasConflict']) {
+                // If there's a conflict, flat wins means we should import
+                return 'flat' === $conflict['winner'];
+            }
+        }
 
         return $lastEditDateTime > $page->updatedAt;
     }

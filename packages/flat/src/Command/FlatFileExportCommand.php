@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\Command;
 
 use Pushword\Flat\FlatFileSync;
@@ -29,13 +31,13 @@ final readonly class FlatFileExportCommand
         bool $force = false,
         #[Option(description: 'Skip adding IDs to markdown files and CSV indexes', name: 'skip-id')]
         bool $skipId = false,
-        #[Option(description: 'Export only media, skip pages', name: 'media-only', shortcut: 'm')]
-        bool $mediaOnly = false,
+        #[Option(description: 'Entity type to export (page, media, conversation, all)', name: 'entity')]
+        string $entity = 'all',
     ): int {
         $output->writeln('Export will start in few seconds...');
 
         $this->flatFileSync->setOutput($output);
-        $this->flatFileSync->export($host, $exportDir, $force, $skipId, $mediaOnly);
+        $this->flatFileSync->export($host, $exportDir, $force, $skipId, $entity);
 
         $output->writeln('Export completed.');
 
