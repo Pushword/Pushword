@@ -14,9 +14,11 @@
     <server name="APP_ENV" value="test" force="true" />
     <server name="KERNEL_CLASS" value="App\Kernel" />
     <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak" />
-    <env name="PANTHER_WEB_SERVER_DIR" value="packages/skeleton/public" />
-    <env name="PANTHER_CHROME_BINARY" value="/usr/bin/chromium-browser" />
-    <env name="PANTHER_CHROME_DRIVER_BINARY" value="/usr/bin/chromedriver" />
+    <server name="PANTHER_WEB_SERVER_DIR" value="packages/skeleton/public" />
+    <server name="PANTHER_BROWSER" value="chrome" />
+    <server name="PANTHER_CHROME_BINARY" value="/usr/bin/google-chrome" />
+    <server name="PANTHER_NO_SANDBOX" value="1" />
+    <server name="PANTHER_CHROME_ARGUMENTS" value="--headless --disable-gpu --disable-dev-shm-usage --no-sandbox --user-data-dir=/tmp/panther-chrome" />
     <!-- <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/> -->
   </php>
   <testsuites>
@@ -25,6 +27,13 @@
       <exclude>packages/new/tests/</exclude>
     </testsuite>
   </testsuites>
+  <!--
+  <groups>
+    <exclude>
+      <group>panther</group>
+    </exclude>
+  </groups>
+  -->
   <extensions>
     <bootstrap class="Symfony\Component\Panther\ServerExtension" />
   </extensions>
