@@ -229,7 +229,7 @@ class MediaCrudController extends AbstractAdminCrudController
         return $choices;
     }
 
-    #[Override]
+    #[Override] // @phpstan-ignore missingType.generics
     protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
     {
         $request = $context->getRequest();

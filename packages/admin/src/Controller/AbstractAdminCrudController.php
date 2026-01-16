@@ -141,7 +141,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
         return \in_array(strtolower($value), ['1', 'true', 'on'], true);
     }
 
-    #[Override]
+    #[Override] // @phpstan-ignore missingType.generics
     protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
     {
         $response = parent::getRedirectResponseAfterSave($context, $action);

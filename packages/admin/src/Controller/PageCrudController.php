@@ -198,7 +198,7 @@ class PageCrudController extends AbstractAdminCrudController
         return \is_string($action) ? $action : '';
     }
 
-    #[Override]
+    #[Override] // @phpstan-ignore missingType.generics
     protected function getRedirectResponseAfterSave(
         AdminContext $context,
         string $action
@@ -223,7 +223,7 @@ class PageCrudController extends AbstractAdminCrudController
         );
     }
 
-    private function redirectToPage(AdminContext $context): ?RedirectResponse
+    private function redirectToPage(AdminContext $context): ?RedirectResponse // @phpstan-ignore missingType.generics
     {
         $page = $context->getEntity()->getInstance();
         if (! $page instanceof Page) {

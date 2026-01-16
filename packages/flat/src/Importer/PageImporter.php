@@ -237,6 +237,12 @@ final class PageImporter extends AbstractImporter
                 continue;
             }
 
+            if ('locale' === $camelKey) {
+                $page->locale = \is_scalar($value) ? (string) $value : '';
+
+                continue;
+            }
+
             $setter = 'set'.ucfirst($camelKey);
             if (method_exists($page, $setter)) {
                 if ('publishedAt' === $camelKey) {

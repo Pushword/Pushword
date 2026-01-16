@@ -227,6 +227,10 @@ final class AppPool
      */
     public function getLocale(): string
     {
-        return $this->currentPage?->getLocale() ?? $this->get()->getLocale();
+        $currentPageLocale = null !== $this->currentPage ? $this->currentPage->locale : '';
+
+        return '' !== $currentPageLocale
+          ? $currentPageLocale
+          : $this->get()->getLocale();
     }
 }
