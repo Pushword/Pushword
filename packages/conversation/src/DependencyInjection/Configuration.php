@@ -34,6 +34,7 @@ class Configuration implements ConfigurationInterface
         'translation_deepl_use_free_api',
         'translation_deepl_monthly_limit',
         'translation_google_monthly_limit',
+        'flat_conversation_global',
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder
@@ -93,6 +94,10 @@ class Configuration implements ConfigurationInterface
                     ->integerNode('translation_google_monthly_limit')
                         ->defaultValue(self::DEFAULT_GOOGLE_MONTHLY_LIMIT)
                         ->info('Monthly character limit for Google Cloud Translation (0 = unlimited)')
+                    ->end()
+                    ->booleanNode('flat_conversation_global')
+                        ->defaultTrue()
+                        ->info('If true, export all conversations to a single content/conversation.csv file. If false, export per host to content/{host}/conversation.csv')
                     ->end()
                 ->end()
         ;

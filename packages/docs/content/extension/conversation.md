@@ -82,12 +82,27 @@ Add a new class in bundle config `pushword_conversation.conversation_form.myNewT
 ## Flat sync integration
 
 When the [Flat extension](/extension/flat) is enabled, every `pw:flat:sync` run also synchronizes
-conversation messages with a CSV file stored at `content/<host>/conversation.csv`.
+conversation messages with a CSV file.
 
 - **Export** : each message is written with its core fields (content, author, tags, dates, …) and one column per custom property.
 - **Import** : editing the CSV lets you re-import messages, including any custom properties (arrays are encoded as JSON in their dedicated column).
 
 This allows you to backup or edit conversations alongside pages and medias without needing a database access.
+
+### Storage mode
+
+By default, all conversations are stored in a single global file at `content/conversation.csv`, regardless of host. This simplifies management, especially for single-site installations or when conversations don't need to be separated by host.
+
+You can switch to per-host storage if needed:
+
+```yaml
+# config/packages/pushword.yaml
+conversation:
+  flat_conversation_global: true   # (default) Single file: content/conversation.csv
+  # flat_conversation_global: false  # Per-host files: content/<host>/conversation.csv
+```
+
+The `host` column in the CSV preserves the host information in both modes, allowing filtering or migration between modes.
 
 ### CLI helpers
 

@@ -23,7 +23,11 @@ final class ConversationExporter
     {
         $app = $this->resolveApp($host);
         $csvPath = $this->buildCsvPath($app);
-        $messages = $this->getMessages($app->getMainHost());
+
+        // In global mode, export all messages from all hosts
+        $messages = $this->isGlobalMode()
+            ? $this->getAllMessages()
+            : $this->getMessages($app->getMainHost());
 
         if ([] === $messages) {
             return;
@@ -72,6 +76,14 @@ final class ConversationExporter
     private function getMessages(string $host): array
     {
         return $this->getMessageRepository()->findByHost($host);
+    }
+
+    /**
+     * @return Message[]
+     */
+    private function getAllMessages(): array
+    {
+        return $this->getMessageRepository()->findAll();
     }
 
     /**

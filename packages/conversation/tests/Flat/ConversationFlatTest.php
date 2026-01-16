@@ -78,9 +78,9 @@ final class ConversationFlatTest extends KernelTestCase
             $this->messageRepository,
         );
 
-        // Détermine le chemin du CSV
-        $app = $appPool->switchCurrentApp($this->testHost)->get();
-        $this->csvPath = $contentDirFinder->get($app->getMainHost()).'/conversation.csv';
+        // Détermine le chemin du CSV (mode global par défaut)
+        $appPool->switchCurrentApp($this->testHost);
+        $this->csvPath = $contentDirFinder->getBaseDir().'/conversation.csv';
     }
 
     #[Override]
@@ -582,6 +582,107 @@ final class ConversationFlatTest extends KernelTestCase
         $this->createdMediaFileNames[] = $fileName;
 
         return $media;
+    }
+
+    /**
+     * Test per-host mode (flat_conversation_global: false).
+     * Since configuration is read at boot, we test by manually creating
+     * the per-host CSV and verifying import works from that location.
+     */
+    public function testPerHostModeExportImport(): void
+    {
+        $appPool = self::getContainer()->get(AppPool::class);
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+
+        // Get the per-host path (what would be used with flat_conversation_global: false)
+        $app = $appPool->switchCurrentApp($this->testHost)->get();
+        $perHostCsvPath = $contentDirFinder->get($app->getMainHost()).'/conversation.csv';
+
+        // Verify this is different from global path
+        $globalCsvPath = $contentDirFinder->getBaseDir().'/conversation.csv';
+        self::assertNotSame($globalCsvPath, $perHostCsvPath, 'Per-host and global paths should be different');
+
+        // Verify per-host path contains the host
+        self::assertStringContainsString($this->testHost, $perHostCsvPath);
+
+        // Create a message
+        $message = $this->createTestMessage('Per-host test message', 'perhost@example.com', 'PerHost User');
+        $this->entityManager->persist($message);
+        $this->entityManager->flush();
+
+        if (null !== $message->id) {
+            $this->createdMessageIds[] = $message->id;
+        }
+
+        // Manually create CSV in per-host location (simulating per-host export)
+        $this->ensureDirectoryExists(\dirname($perHostCsvPath));
+        $csvContent = "id,type,host,content,authorEmail,authorName,referring,publishedAt,createdAt,updatedAt,tags,mediaList,authorIp,locale,weight\n";
+        $csvContent .= \sprintf(
+            '%d,%s,%s,"%s",%s,%s,%s,,,,,,,,%d',
+            $message->id,
+            Message::class,
+            $this->testHost,
+            'Imported from per-host CSV',
+            'imported@example.com',
+            'Imported User',
+            '/per-host-test',
+            0,
+        );
+        file_put_contents($perHostCsvPath, $csvContent);
+        $this->temporaryCsvPaths[] = $perHostCsvPath;
+
+        // Delete the original message
+        $this->entityManager->remove($message);
+        $this->entityManager->flush();
+        $this->createdMessageIds = [];
+
+        // Import using importExternal with the per-host path
+        $this->importer->importExternal($perHostCsvPath);
+
+        // Verify the message was imported
+        $importedMessage = $this->messageRepository->findOneBy([
+            'host' => $this->testHost,
+            'content' => 'Imported from per-host CSV',
+        ]);
+
+        self::assertInstanceOf(Message::class, $importedMessage);
+        self::assertSame('imported@example.com', $importedMessage->getAuthorEmail());
+        self::assertSame('Imported User', $importedMessage->getAuthorName());
+
+        if (null !== $importedMessage->id) {
+            $this->createdMessageIds[] = $importedMessage->id;
+        }
+    }
+
+    /**
+     * Test that global and per-host paths are correctly computed.
+     */
+    public function testPathComputation(): void
+    {
+        $appPool = self::getContainer()->get(AppPool::class);
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+
+        $app = $appPool->switchCurrentApp($this->testHost)->get();
+
+        // Global path should be content/conversation.csv
+        $globalPath = $contentDirFinder->getBaseDir().'/conversation.csv';
+        self::assertStringEndsWith('/content/conversation.csv', $globalPath);
+
+        // Per-host path should be content/{host}/conversation.csv
+        $perHostPath = $contentDirFinder->get($app->getMainHost()).'/conversation.csv';
+        self::assertStringEndsWith('/content/'.$this->testHost.'/conversation.csv', $perHostPath);
+
+        // They should be different
+        self::assertNotSame($globalPath, $perHostPath);
+    }
+
+    private function ensureDirectoryExists(string $directory): void
+    {
+        if (is_dir($directory)) {
+            return;
+        }
+
+        mkdir($directory, 0755, true);
     }
 
     /**

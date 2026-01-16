@@ -55,8 +55,16 @@ final class ConversationImporter
         );
     }
 
-    public function getLastUpdatedMessage(string $host): ?Message
+    /**
+     * Get the last updated message, optionally filtered by host.
+     * If host is null, returns the last updated message across all hosts.
+     */
+    public function getLastUpdatedMessage(?string $host): ?Message
     {
+        if (null === $host) {
+            return $this->getMessageRepository()->findOneBy([], ['updatedAt' => 'DESC']);
+        }
+
         return $this->getMessageRepository()->findOneBy(['host' => $host], ['updatedAt' => 'DESC']);
     }
 

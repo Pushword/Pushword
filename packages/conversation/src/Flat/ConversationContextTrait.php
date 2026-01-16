@@ -36,8 +36,19 @@ trait ConversationContextTrait
             : $this->apps->get();
     }
 
-    private function buildCsvPath(AppConfig $app): string
+    private function isGlobalMode(): bool
     {
+        return (bool) $this->apps->get()->get('flat_conversation_global');
+    }
+
+    private function buildCsvPath(?AppConfig $app = null): string
+    {
+        if ($this->isGlobalMode()) {
+            return $this->contentDirFinder->getBaseDir().'/conversation.csv';
+        }
+
+        $app ??= $this->apps->get();
+
         return $this->contentDirFinder->get($app->getMainHost()).'/conversation.csv';
     }
 
