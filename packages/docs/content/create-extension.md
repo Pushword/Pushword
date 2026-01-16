@@ -2,7 +2,6 @@
 title: 'Create a Pushword Extension the easy way'
 h1: 'Create an extension'
 publishedAt: '2025-12-21 21:55'
-parentPage: extensions
 ---
 
 Each extension is built as a [symfony bundle](https://symfony.com/doc/current/bundles.html).

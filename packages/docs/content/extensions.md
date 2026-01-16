@@ -2,7 +2,6 @@
 title: Extensions
 h1: 'Find your missing feature with a Pushword Extension'
 publishedAt: '2025-12-21 21:55'
-parentPage: search.json
 name: Extensions
 todo: 'Faire un script pour générer automatiquement un tableau avec le titre, la description, officially maintained (X/V), le nombre de Stars'
 ---

@@ -1,8 +1,8 @@
 ---
-title: Template Changes
-h1: Template Changes (DOM Simplification)
+title: 'Template Changes'
+h1: 'Template Changes (DOM Simplification)'
+publishedAt: '2026-01-16 14:40'
 toc: true
-parent: upgrade
 ---
 
 This document lists all template modifications for DOM simplification, semantic HTML improvements, and accessibility enhancements.

@@ -2,7 +2,7 @@
 title: 'Configure the Admin Menu'
 h1: 'Configure the Admin Menu'
 publishedAt: '2025-12-21 21:55'
-parentPage: extension/admin
+name: Pushword
 toc: true
 ---
 

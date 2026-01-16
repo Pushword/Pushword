@@ -2,7 +2,6 @@
 title: 'Page Versioning for Pushword CMS'
 h1: Version
 publishedAt: '2025-12-21 21:55'
-parentPage: extensions
 toc: true
 ---
 

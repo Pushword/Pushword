@@ -634,6 +634,7 @@ final class ConversationFlatTest extends KernelTestCase
         // Delete the original message
         $this->entityManager->remove($message);
         $this->entityManager->flush();
+
         $this->createdMessageIds = [];
 
         // Import using importExternal with the per-host path

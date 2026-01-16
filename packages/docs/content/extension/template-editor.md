@@ -2,7 +2,6 @@
 title: 'Template Editor with Pushword CMS'
 h1: 'Template Editor'
 publishedAt: '2025-12-21 21:55'
-parentPage: extensions
 toc: true
 ---
 

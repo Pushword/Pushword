@@ -2,7 +2,6 @@
 title: 'Pushword Flat File CMS - Markdown and Twig Ready'
 h1: Flat
 publishedAt: '2025-12-21 21:55'
-parentPage: extensions
 toc: true
 ---
 
@@ -16,40 +15,105 @@ composer require pushword/flat-file
 
 ## Configure (if needed)
 
-Globally under `pushword_static_generator` (in `config/packages`).
+Globally under `pushword_flat` (in `config/packages`).
 
-Or for _multi-sites_ in `config/package/pushword.yaml`.
+Or for _multi-sites_ in `config/packages/pushword.yaml`.
 
 ```yaml
-...:
-  flat_content_dir: content #default value
+pushword_flat:
+  flat_content_dir: content # default value
+
+  # Change detection cache TTL in seconds (default: 300 = 5 minutes)
+  change_detection_cache_ttl: 300
+
+  # Auto-export to flat files after admin modifications (default: true)
+  auto_export_enabled: true
+
+  # Use background process for deferred export (default: true)
+  use_background_export: true
+
+  # Editorial lock TTL in seconds (default: 1800 = 30 minutes)
+  lock_ttl: 1800
+
+  # Auto-lock when flat files are modified (default: true)
+  auto_lock_on_flat_changes: true
 ```
 
 ## Usage
 
 ### Sync with DB (import / export)
 
-```
-# Sync : automatically detects whether to import (files newer than DB) or export (DB newer or no files).
+```bash
+# Sync: automatically detects whether to import (files newer than DB) or export (DB newer or no files)
 php bin/console pw:flat:sync [host]
 
-# imports flat files into the database
+# Import flat files into the database
 php bin/console pw:flat:import [host]
 
-# exports database content to flat files
-php bin/console pw:flat:export [host] [exportDir] [--force] [--media-only]
+# Export database content to flat files
+php bin/console pw:flat:export [host] [exportDir] [--force] [--entity=TYPE]
 ```
 
 Where:
 
-- `host` is facultative (uses default app if not provided)
-- `exportDir` (for export only) is facultative (uses `flat_content_dir` by default)
+- `host` is optional (uses default app if not provided)
+- `exportDir` (for export only) is optional (uses `flat_content_dir` by default)
 - `--force` (for export only) forces overwriting even if files are newer than DB
-- `--media-only` or `-m` exports only media, skipping pages
+- `--entity=TYPE` filters sync to specific entity type: `page`, `media`, `conversation`, or `all` (default)
+
+**Examples:**
+
+```bash
+# Sync only pages
+php bin/console pw:flat:sync --entity=page
+
+# Export only media
+php bin/console pw:flat:export --entity=media --force
+
+# Import only conversations
+php bin/console pw:flat:import --entity=conversation
+```
+
+### Editorial Lock System
+
+The lock system prevents concurrent modifications between flat files and admin interface, inspired by LibreOffice's locking mechanism.
+
+```bash
+# Acquire a lock (shows warning in admin)
+php bin/console pw:flat:lock [host] [--ttl=1800] [--reason="Editing flat files"]
+
+# Release the lock
+php bin/console pw:flat:unlock [host]
+```
+
+**How it works:**
+
+- **Auto-lock**: When flat files are modified, an automatic lock is acquired (configurable)
+- **Manual lock**: Use `pw:flat:lock` for explicit control during extended editing sessions
+- **TTL**: Locks expire after 30 minutes by default (configurable)
+- **Admin warning**: When locked, admin users see a warning message but can still edit (risk of conflict)
+
+### Conflict Resolution
+
+When both flat files and database are modified since the last sync, a conflict occurs. The system uses a **"most recent wins"** strategy:
+
+- The newer version (by timestamp) is kept
+- The losing version is backed up as `filename~conflict-{id}.md`
+- Conflicts are logged and displayed in admin
+
+```bash
+# List and clear conflict backup files
+php bin/console pw:flat:conflicts:clear [host] [--dry-run]
+```
+
+**Conflict backup files:**
+
+- Markdown: `page~conflict-abc123.md` (contains the losing version with a comment header)
+- CSV: `index.conflicts.csv` (appends conflict details for media/conversation)
 
 ## Generate AI index
 
-```
+```bash
 php bin/console pw:ai-index [host] [exportDir]
 ```
 
@@ -57,8 +121,8 @@ Generate two CSV files (`pages.csv` and `medias.csv`) with metadata useful for A
 
 Where:
 
-- `host` is facultative (uses default app if not provided)
-- `exportDir` is facultative (uses `flat_content_dir` by default)
+- `host` is optional (uses default app if not provided)
+- `exportDir` is optional (uses `flat_content_dir` by default)
 
 ### `pages.csv`
 
