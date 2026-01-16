@@ -101,28 +101,32 @@ final class StaticAppGenerator
     private function generateHost(string $host): void
     {
         $app = $this->apps->switchCurrentApp($host)->get();
-        $staticDir = $app->getStr('static_dir');
+        $originalStaticDir = $app->getStr('static_dir');
         $filesystem = new Filesystem();
 
         // In incremental mode, work directly in the static dir
         // In full mode, use a temporary directory for atomic swap
-        if ($this->incremental && $this->stateManager->hasState($host) && file_exists($staticDir)) {
+        if ($this->incremental && $this->stateManager->hasState($host) && file_exists($originalStaticDir)) {
             // Incremental mode: update in place
             $this->logger->info('Incremental generation for '.$host);
             $this->runGenerators($app);
         } else {
             // Full generation: use temp dir + atomic swap
-            $app->staticDir = $staticDir.'~'; // @phpstan-ignore-line
+            $tempDir = $originalStaticDir.'~';
+            $app->staticDir = $tempDir; // @phpstan-ignore-line
 
-            $filesystem->remove($staticDir.'~');
-            $filesystem->mkdir($staticDir.'~');
+            $filesystem->remove($tempDir);
+            $filesystem->mkdir($tempDir);
 
             $this->runGenerators($app);
 
+            // Restore original staticDir before atomic swap
+            $app->staticDir = $originalStaticDir; // @phpstan-ignore-line
+
             if (! $this->abortGeneration) {
-                $filesystem->remove($staticDir);
-                $filesystem->rename($staticDir.'~', $staticDir);
-                $filesystem->remove($staticDir.'~');
+                $filesystem->remove($originalStaticDir);
+                $filesystem->rename($tempDir, $originalStaticDir);
+                $filesystem->remove($tempDir);
             }
         }
 

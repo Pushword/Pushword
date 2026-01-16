@@ -82,7 +82,7 @@ class Configuration implements ConfigurationInterface
     /**
      * @var string[]
      */
-    final public const array DEFAULT_COPY = ['assets', 'bundles', 'media'];
+    final public const array DEFAULT_COPY = ['assets', 'bundles'];
 
     public function getConfigTreeBuilder(): TreeBuilder
     {

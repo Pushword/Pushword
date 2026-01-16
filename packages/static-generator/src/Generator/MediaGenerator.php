@@ -24,6 +24,14 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
 
     private function targetExists(string $targetPath): bool
     {
+        // Check for broken symlinks: is_link() returns true but file_exists() returns false
+        if (is_link($targetPath) && ! file_exists($targetPath)) {
+            // Remove broken symlink so we can replace it with a real file
+            @unlink($targetPath);
+
+            return false;
+        }
+
         return is_link($targetPath) || file_exists($targetPath);
     }
 
