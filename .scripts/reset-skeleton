@@ -10,6 +10,7 @@ cd packages/skeleton
 rm var/app.db|| true
 rm -rf media|| true
 rm -rf static|| true
+rm -f config/users.yaml|| true
 rm -rf /tmp/com.github.pushword.pushword/tests/var/dev/log/version|| true
 cp -r media~ media
 
@@ -28,4 +29,5 @@ php bin/console pw:image:cache -q &
 echo "Installing assets..."
 php bin/console assets:install --symlink --relative -q &
 
-php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN
+php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN Admin
+php bin/console pw:flat:user-sync

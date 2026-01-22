@@ -10,8 +10,13 @@ use Symfony\Component\Console\Question\Question;
 
 trait AskIfNotSettedTrait
 {
-    private function getOrAskIfNotSetted(InputInterface $input, OutputInterface $output, string $argument, string $default = ''): string
-    {
+    private function getOrAskIfNotSetted(
+        InputInterface $input,
+        OutputInterface $output,
+        string $argument,
+        ?string $default = '',
+        bool $allowEmpty = false,
+    ): string {
         $helper = new QuestionHelper();
         /** @var bool|float|int|string|null */
         $argumentValue = $input->getArgument($argument);
@@ -20,7 +25,8 @@ trait AskIfNotSettedTrait
             return (string) $argumentValue;
         }
 
-        $question = new Question($argument.('' !== $default ? ' (default: '.$default.')' : '').':', $default);
+        $defaultDisplay = null !== $default && '' !== $default ? ' (default: '.$default.')' : '';
+        $question = new Question($argument.$defaultDisplay.':', $default);
         if ('password' === $argument) {
             $question->setHidden(true);
         }
@@ -28,16 +34,16 @@ trait AskIfNotSettedTrait
         /** @var bool|float|int|resource|string|null */
         $argumentValue = $helper->ask($input, $output, $question);
 
-        if (null === $argumentValue) {
+        if ((null === $argumentValue || '' === $argumentValue) && ! $allowEmpty) {
             $output->writeln('<error>'.$argument.' is required.</error>');
 
-            return $this->getOrAskIfNotSetted($input, $output, $argument, $default);
+            return $this->getOrAskIfNotSetted($input, $output, $argument, $default, $allowEmpty);
         }
 
-        if (! \is_scalar($argumentValue)) {
+        if (null !== $argumentValue && ! \is_scalar($argumentValue)) {
             throw new Exception();
         }
 
-        return (string) $argumentValue;
+        return (string) ($argumentValue ?? '');
     }
 }

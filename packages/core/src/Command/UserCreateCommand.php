@@ -20,10 +20,11 @@ final readonly class UserCreateCommand
     {
     }
 
-    protected function createUser(string $email, string $password, string $role): User
+    protected function createUser(string $email, string $password, string $role, ?string $username = null): User
     {
         $user = new User();
         $user->email = $email;
+        $user->username = $username;
         $user->setPassword($this->passwordEncoder->hashPassword($user, $password));
         $user->setRoles([$role]);
 
@@ -38,16 +39,24 @@ final readonly class UserCreateCommand
         return $user;
     }
 
-    public function __invoke(#[Argument(name: 'email')]
-        ?string $email, #[Argument(name: 'password')]
-        ?string $password, #[Argument(name: 'role')]
-        ?string $role, InputInterface $input, OutputInterface $output): int
-    {
+    public function __invoke(
+        #[Argument(name: 'email')]
+        ?string $email,
+        #[Argument(name: 'password')]
+        ?string $password,
+        #[Argument(name: 'role')]
+        ?string $role,
+        #[Argument(name: 'username')]
+        ?string $username,
+        InputInterface $input,
+        OutputInterface $output,
+    ): int {
         $email = $this->getOrAskIfNotSetted($input, $output, 'email');
         $password = $this->getOrAskIfNotSetted($input, $output, 'password');
         $role = $this->getOrAskIfNotSetted($input, $output, 'role', 'ROLE_SUPER_ADMIN');
+        $username = $this->getOrAskIfNotSetted($input, $output, 'username', null, allowEmpty: true);
 
-        $user = $this->createUser($email, $password, $role);
+        $user = $this->createUser($email, $password, $role, $username ?: null);
 
         $output->writeln('<info>User `'.$email.'` created with success.</info>');
 
