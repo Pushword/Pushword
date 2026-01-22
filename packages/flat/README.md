@@ -37,99 +37,104 @@ The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/li
 
 ```mermaid
 flowchart TD
-    Start([Commande: pw:flat:sync]) --> Check{PageSync & MediaSync}
+    Start([pw:flat:sync]) --> LockCheck{Webhook Lock?}
+    LockCheck -->|Oui| Blocked[Sync bloquée]
+    LockCheck -->|Non| MediaCheck{MediaSync}
 
-    Check -->|Fichiers plus récents que DB| Import[IMPORT: Fichiers → Base de données]
-    Check -->|DB plus récente ou pas de fichiers| Export[EXPORT: Base de données → Fichiers]
+    MediaCheck -->|Fichiers plus récents| MediaImport[IMPORT Médias]
+    MediaCheck -->|DB plus récente| MediaExport[EXPORT Médias]
 
-    %% BRANCHE IMPORT
-    Import --> ImportMedia1[1. Import médias depuis mediaDir]
-    ImportMedia1 --> ImportMedia1Finish[finishImport médias]
-    ImportMedia1Finish --> ImportMedia2[2. Import médias depuis contentDir/media]
-    ImportMedia2 --> ImportMedia2Finish[finishImport médias]
-    ImportMedia2Finish --> ImportPages[3. Import pages depuis contentDir]
-    ImportPages --> ImportPagesFinish[finishImport pages]
+    MediaImport --> MI1[1. Parser index.csv]
+    MI1 --> MI2[2. Valider fichiers + préparer renommages]
+    MI2 --> MI3[3. Supprimer médias absents du CSV]
+    MI3 --> MI4[4. Importer fichiers mediaDir + contentDir/media]
+    MI4 --> MI5[5. Régénérer index.csv]
+    MI5 --> PageCheck
 
-    ImportPagesFinish --> ImportProcess[Pour chaque fichier .md]
-    ImportProcess --> ImportCheck{Page existe en DB?}
-    ImportCheck -->|Non| ImportCreate[Créer nouvelle Page]
-    ImportCheck -->|Oui| ImportCompare{Fichier plus récent?}
-    ImportCompare -->|Oui| ImportUpdate[Mettre à jour Page]
-    ImportCompare -->|Non| ImportSkip[Ignorer]
-    ImportCreate --> ImportFlush[Flush DB]
-    ImportUpdate --> ImportFlush
-    ImportSkip --> ImportFlush
-    ImportFlush --> ImportLinks[Convertir liens markdown relatifs en slugs]
-    ImportLinks --> ImportRelations[Traiter relations parentPage, mainImage, etc.]
-    ImportRelations --> ImportEnd[Import terminé]
+    MediaExport --> ME1[Écrire index.csv + copier fichiers]
+    ME1 --> PageCheck
 
-    %% BRANCHE EXPORT
-    Export --> ExportPages[1. Exporter toutes les pages]
-    ExportPages --> ExportPageLoop[Pour chaque Page en DB]
-    ExportPageLoop --> ExportPageCheck{Fichier existe et plus récent?}
-    ExportPageCheck -->|Oui et pas --force| ExportPageSkip[Ignorer]
-    ExportPageCheck -->|Non ou --force| ExportPageWrite[Écrire .md avec front matter YAML]
-    ExportPageSkip --> ExportMedias
-    ExportPageWrite --> ExportMedias[2. Exporter tous les médias]
+    PageCheck{PageSync} -->|Fichiers plus récents| PageImport[IMPORT Pages]
+    PageCheck -->|DB plus récente| PageExport[EXPORT Pages]
 
-    ExportMedias --> ExportMediaLoop[Pour chaque Media en DB]
-    ExportMediaLoop --> ExportMediaYaml[Écrire .yaml avec métadonnées]
-    ExportMediaYaml --> ExportMediaCopy{CopyMedia configuré?}
-    ExportMediaCopy -->|Oui| ExportMediaCopyFile[Copier fichier média]
-    ExportMediaCopy -->|Non| ExportEnd
-    ExportMediaCopyFile --> ExportEnd[Export terminé]
+    PageImport --> PI1[1. Importer redirection.csv]
+    PI1 --> PI2[2. Importer fichiers .md]
+    PI2 --> PI3[3. finishImport - relations]
+    PI3 --> PI4[4. Supprimer pages orphelines]
+    PI4 --> PI5[5. Régénérer index.csv]
+    PI5 --> ConvCheck
 
-    ImportEnd --> End([Fin])
-    ExportEnd --> End
+    PageExport --> PE1[Écrire .md + index.csv + redirection.csv]
+    PE1 --> ConvCheck
+
+    ConvCheck{ConversationSync?} -->|Activé| ConvSync[Sync Conversations]
+    ConvCheck -->|Non| UserCheck
+    ConvSync --> UserCheck
+
+    UserCheck{UserSync?} -->|Activé| UserSync[Sync users.yaml ↔ DB]
+    UserCheck -->|Non| End
+    UserSync --> End([Fin])
+
+    Blocked --> EndBlocked([Échec])
 
     style Start fill:#e1f5ff
-    style Import fill:#fff4e1
-    style Export fill:#e1ffe1
-    style ImportEnd fill:#d4edda
-    style ExportEnd fill:#d4edda
+    style MediaImport fill:#fff4e1
+    style PageImport fill:#fff4e1
+    style MediaExport fill:#e1ffe1
+    style PageExport fill:#e1ffe1
     style End fill:#e1f5ff
+    style Blocked fill:#ffcccc
+    style EndBlocked fill:#ffcccc
 ```
 
 ## Détails du processus
 
+### Webhook Lock
+
+Avant toute synchronisation, le système vérifie si un **webhook lock** est actif.
+Ce verrou est utilisé pendant les workflows d'édition externe (ex: CI/CD) pour éviter les conflits.
+
 ### Décision Import/Export
 
-`PageSync` et `MediaSync` déterminent la direction pour chaque ressource :
+`PageSync` et `MediaSync` déterminent indépendamment la direction :
 
-- `PageSync` scanne récursivement le répertoire de contenu
-- Pour chaque fichier `.md`, compare `filemtime()` avec `Page->getUpdatedAt()`
-- Si un fichier est plus récent que sa page en DB → **IMPORT** pour les pages, sinon **EXPORT**
-- `MediaSync` parcourt les répertoires `mediaDir` & `content/<host>/media`
-- Pour chaque média ou fichier de métadonnées, compare `filemtime()` avec `Media->getUpdatedAt()`
-- Si un fichier est plus récent que le média en DB → **IMPORT** pour les médias, sinon **EXPORT**
+- **MediaSync** : Compare le hash SHA1 des fichiers avec `Media->getHash()` en DB
+- **PageSync** : Compare `filemtime()` avec `Page->getUpdatedAt()`, avec gestion des conflits via `ConflictResolver`
 
-### Import (Fichiers → DB)
+### Import Médias (Fichiers → DB)
 
-1. **Import médias globaux** (`mediaDir`)
-   - Parcourt récursivement le répertoire
-   - Pour chaque fichier : vérifie si plus récent que `Media->getUpdatedAt()`
-   - Met à jour ou crée l'entité `Media`
-   - Lit les métadonnées depuis `.yaml` ou `.json` (deprecated) si présents
+1. **Parser `index.csv`** - Charge les métadonnées (id, fileName, name, alt, projectDir)
+2. **Valider fichiers** - Vérifie l'existence des fichiers référencés
+3. **Préparer renommages** - Détecte les fichiers renommés via leur ID
+4. **Supprimer médias orphelins** - Supprime les médias en DB absents du CSV
+5. **Importer fichiers** - Depuis `mediaDir` et `contentDir/media`
+6. **Régénérer `index.csv`** - Reflète l'état final de la DB
 
-2. **Import médias locaux** (`contentDir/media`)
-   - Même processus pour les médias spécifiques au contenu
+### Import Pages (Fichiers → DB)
 
-3. **Import pages** (`contentDir`)
-   - Parse chaque fichier `.md` avec front matter YAML
-   - Extrait le slug (depuis front matter ou nom de fichier)
-   - Met à jour ou crée l'entité `Page`
-   - Convertit les liens markdown relatifs en slugs absolus
-   - Traite les relations (parentPage, mainImage, translations, etc.)
+1. **Importer `redirection.csv`** - Charge les redirections
+2. **Importer fichiers `.md`** - Parse le front matter YAML + contenu markdown
+3. **finishImport** - Résout les relations (parentPage, mainImage, translations)
+4. **Supprimer pages orphelines** - Pages en DB sans fichier `.md` ni entrée redirection
+5. **Régénérer `index.csv`** - Avec les IDs auto-générés
 
 ### Export (DB → Fichiers)
 
-1. **Export pages**
-   - Pour chaque `Page` en DB :
-     - Vérifie si le fichier `.md` existe et est plus récent (sauf avec `--force`)
-     - Génère le front matter YAML avec toutes les propriétés
-     - Écrit le fichier `{slug}.md`
+**Pages** :
+- Écrit `{slug}.md` avec front matter YAML
+- Génère `index.csv` (métadonnées) et `redirection.csv`
 
-2. **Export médias**
-   - Pour chaque `Media` en DB :
-     - Écrit un fichier `.yaml` avec les métadonnées
-     - Si `copyMedia` est configuré, copie également le fichier média
+**Médias** :
+- Écrit `index.csv` avec les métadonnées
+- Copie les fichiers si `copyMedia` est configuré
+
+### UserSync (optionnel)
+
+Synchronisation bidirectionnelle entre `config/users.yaml` et la DB :
+- Exporte les utilisateurs DB manquants vers le YAML
+- Importe/met à jour les utilisateurs depuis le YAML
+- Les mots de passe restent uniquement en DB
+
+### ConversationSync (optionnel)
+
+Interface pour synchroniser les conversations (implémenté par le package conversation)
