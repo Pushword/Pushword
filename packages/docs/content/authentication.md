@@ -81,6 +81,23 @@ Tokens are:
 
 Enable social login with Google and/or Microsoft accounts.
 
+### Installation
+
+Install the required OAuth packages:
+
+```bash
+composer require knpuniversity/oauth2-client-bundle league/oauth2-google thenetworg/oauth2-azure
+```
+
+Then register the bundle in `config/bundles.php`:
+
+```php
+return [
+    // ... other bundles
+    KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle::class => ['all' => true],
+];
+```
+
 ### Requirements
 
 Only users **already defined** in `users.yaml` (or created in admin) can login via OAuth. If the OAuth email doesn't match an existing user, login is refused.

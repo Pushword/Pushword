@@ -32,15 +32,24 @@ trait ExtensionTrait
         $yamlLoader = new YamlFileLoader($container, new FileLocator($configFolder));
         $yamlFinder = Finder::create()->files()->name('*.yaml')->in($configFolder);
         foreach ($yamlFinder as $file) {
-            $yamlLoader->load($file->getFilename());
+            if ($this->shouldLoadExtensionConfig($file->getBasename('.yaml'), $container)) {
+                $yamlLoader->load($file->getFilename());
+            }
         }
 
         // Load PHP files (new format - takes precedence)
         $phpLoader = new PhpFileLoader($container, new FileLocator($configFolder));
         $phpFinder = Finder::create()->files()->name('*.php')->in($configFolder);
         foreach ($phpFinder as $file) {
-            $phpLoader->load($file->getFilename());
+            if ($this->shouldLoadExtensionConfig($file->getBasename('.php'), $container)) {
+                $phpLoader->load($file->getFilename());
+            }
         }
+    }
+
+    private function shouldLoadExtensionConfig(string $extensionAlias, ContainerBuilder $container): bool
+    {
+        return $container->hasExtension($extensionAlias);
     }
 
     // Used in PushwordAdminExtension
