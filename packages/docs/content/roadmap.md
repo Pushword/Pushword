@@ -12,8 +12,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 ### In progress
 
 - finish upgrade to Symfony 8 /PHP 8.5
-  - [ ] https://github.com/symfony/panther/pull/678
-        `packages/admin/tests/Frontend/AdminJSTest.php~`
   - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821

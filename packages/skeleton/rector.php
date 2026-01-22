@@ -4,7 +4,6 @@ declare(strict_types=1);
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
-use Rector\Symfony\Set\SymfonySetList;
 
 $paths = [
     __DIR__.'/src',
@@ -36,11 +35,9 @@ return RectorConfig::configure()
     )
     ->withAttributesSets(
         symfony: true,
-        doctrine: true
+        doctrine: true,
+        phpunit: true,
     )
-    ->withSets([
-        SymfonySetList::SYMFONY_73,
-    ])
     ->withSkip([
         NullToStrictStringFuncCallArgRector::class,
         FlipTypeControlToUseExclusiveTypeRector::class,
