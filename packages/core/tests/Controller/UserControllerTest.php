@@ -2,7 +2,7 @@
 
 namespace Pushword\Core\Tests\Controller;
 
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityManager;
 use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\UserRepository;
@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class UserControllerTest extends WebTestCase
 {
-    private ?KernelBrowser $client = null;
+    private KernelBrowser $client;
 
     protected function setUp(): void
     {
@@ -181,7 +181,7 @@ class UserControllerTest extends WebTestCase
             return $existingUser;
         }
 
-        /** @var EntityManagerInterface $em */
+        /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.entity_manager');
 
         $user = new User();
@@ -200,7 +200,7 @@ class UserControllerTest extends WebTestCase
 
     private function createLoginToken(User $user, string $plainToken, string $type): LoginToken
     {
-        /** @var EntityManagerInterface $em */
+        /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.entity_manager');
 
         $token = new LoginToken($user, $type);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Tests\Service;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use Pushword\Flat\Entity\AdminNotification;
@@ -27,8 +28,8 @@ final class AdminNotificationServiceTest extends KernelTestCase
     {
         self::bootKernel();
 
+        /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        self::assertInstanceOf(EntityManagerInterface::class, $em);
         $this->em = $em;
 
         /** @var AdminNotificationRepository $repository */

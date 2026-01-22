@@ -60,7 +60,7 @@ class PageOpenGraphImageGenerator
     {
         return ($browserPath ? '' : $this->publicDir).'/'.$this->publicMediaDir.'/og/'
             .str_replace('/', '_', $this->getPage()->getSlug()).'-'
-            .substr(sha1(($this->getPage()->id ?? '').$this->apps->get()->getHosts()[0]), 0, 6).'.png';
+            .substr(sha1((string) ($this->getPage()->id ?? '').$this->apps->get()->getHosts()[0]), 0, 6).'.png';
     }
 
     public function generatePreviewImage(): void
@@ -69,7 +69,7 @@ class PageOpenGraphImageGenerator
             return;
         }
 
-        if (true !== $this->apps->get()->get('generated_og_image')) {
+        if (! (bool) $this->apps->get()->get('generated_og_image')) {
             return;
         }
 

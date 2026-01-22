@@ -11,8 +11,8 @@ use Pushword\Flat\Service\FlatChangeDetector;
 use Pushword\Flat\Service\FlatLockManager;
 use Pushword\Flat\Sync\SyncStateManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Cache\Adapter\TraceableAdapter;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Contracts\Cache\CacheInterface;
 
 final class FlatChangeDetectorTest extends KernelTestCase
 {
@@ -49,14 +49,14 @@ final class FlatChangeDetectorTest extends KernelTestCase
         int $cacheTtl = 300,
         bool $autoLockOnChanges = true,
     ): FlatChangeDetector {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
         $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
-        self::assertInstanceOf(FlatFileContentDirFinder::class, $contentDirFinder);
 
+        /** @var TraceableAdapter $cache */
         $cache = self::getContainer()->get('cache.app');
-        self::assertInstanceOf(CacheInterface::class, $cache);
 
+        /** @var AppPool $apps */
         $apps = self::getContainer()->get(AppPool::class);
-        self::assertInstanceOf(AppPool::class, $apps);
 
         return new FlatChangeDetector(
             $contentDirFinder,
@@ -74,21 +74,22 @@ final class FlatChangeDetectorTest extends KernelTestCase
         $detector = $this->createDetector();
         $result = $detector->checkForChanges(null);
 
-        self::assertIsBool($result['hasChanges']);
-        self::assertIsArray($result['entityTypes']);
-        self::assertTrue(\array_key_exists('newestFile', $result));
-        self::assertTrue(\array_key_exists('newestMtime', $result));
+        // Verify structure by accessing expected keys
+        $hasChanges = $result['hasChanges'];
+        $entityTypes = $result['entityTypes'];
+        self::assertFalse($hasChanges);
+        self::assertEmpty($entityTypes);
     }
 
     public function testForceCheckInvalidatesCacheAndReturnsResult(): void
     {
         $detector = $this->createDetector();
 
-        $result1 = $detector->checkForChanges(null);
+        $detector->checkForChanges(null);
+
         $result2 = $detector->forceCheck(null);
 
-        self::assertIsBool($result1['hasChanges']);
-        self::assertIsBool($result2['hasChanges']);
+        self::assertFalse($result2['hasChanges']);
     }
 
     public function testInvalidateCacheDoesNotThrow(): void
@@ -98,7 +99,7 @@ final class FlatChangeDetectorTest extends KernelTestCase
         $detector->invalidateCache('test.host.com');
 
         $result = $detector->checkForChanges('test.host.com');
-        self::assertIsBool($result['hasChanges']);
+        self::assertFalse($result['hasChanges']);
     }
 
     public function testCheckWithDifferentHostsProducesDifferentCacheKeys(): void
@@ -108,8 +109,7 @@ final class FlatChangeDetectorTest extends KernelTestCase
         $result1 = $detector->checkForChanges('host-a.com');
         $result2 = $detector->checkForChanges('host-b.com');
 
-        self::assertIsBool($result1['hasChanges']);
-        self::assertIsBool($result2['hasChanges']);
+        self::assertSame($result1['hasChanges'], $result2['hasChanges']);
     }
 
     public function testAutoLockOnChangesConfig(): void
@@ -120,8 +120,7 @@ final class FlatChangeDetectorTest extends KernelTestCase
         $result1 = $detectorWithLock->checkForChanges(null);
         $result2 = $detectorWithoutLock->checkForChanges(null);
 
-        self::assertIsBool($result1['hasChanges']);
-        self::assertIsBool($result2['hasChanges']);
+        self::assertSame($result1['hasChanges'], $result2['hasChanges']);
     }
 
     public function testNullHostIsHandled(): void
@@ -130,7 +129,7 @@ final class FlatChangeDetectorTest extends KernelTestCase
 
         $result = $detector->checkForChanges(null);
 
-        self::assertIsBool($result['hasChanges']);
+        self::assertFalse($result['hasChanges']);
     }
 
     public function testSpecialCharactersInHostAreNormalized(): void
@@ -139,7 +138,7 @@ final class FlatChangeDetectorTest extends KernelTestCase
 
         $result = $detector->checkForChanges('test.example.com');
 
-        self::assertIsBool($result['hasChanges']);
+        self::assertFalse($result['hasChanges']);
     }
 
     public function testEmptyHostIsHandled(): void
@@ -148,6 +147,6 @@ final class FlatChangeDetectorTest extends KernelTestCase
 
         $result = $detector->checkForChanges('');
 
-        self::assertIsBool($result['hasChanges']);
+        self::assertFalse($result['hasChanges']);
     }
 }

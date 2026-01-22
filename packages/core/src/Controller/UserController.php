@@ -232,7 +232,7 @@ final class UserController extends AbstractController
         /** @var ClientRegistry $clientRegistry */
         $clientRegistry = $this->container->get('knpu.oauth2.registry');
 
-        return $clientRegistry->getClient('google')->redirect(['email', 'profile']);
+        return $clientRegistry->getClient('google')->redirect(['email', 'profile'], []);
     }
 
     #[Route('/login/oauth/google/check', name: 'pushword_oauth_google_check')]
@@ -252,7 +252,7 @@ final class UserController extends AbstractController
         /** @var ClientRegistry $clientRegistry */
         $clientRegistry = $this->container->get('knpu.oauth2.registry');
 
-        return $clientRegistry->getClient('microsoft')->redirect(['openid', 'email', 'profile']);
+        return $clientRegistry->getClient('microsoft')->redirect(['openid', 'email', 'profile'], []);
     }
 
     #[Route('/login/oauth/microsoft/check', name: 'pushword_oauth_microsoft_check')]

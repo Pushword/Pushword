@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Tests\Controller;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use Pushword\Core\Entity\User;
@@ -29,12 +30,12 @@ final class FlatLockApiControllerTest extends WebTestCase
     {
         $this->client = self::createClient();
 
+        /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
 
+        /** @var FlatLockManager $lockManager */
         $lockManager = self::getContainer()->get(FlatLockManager::class);
-        \assert($lockManager instanceof FlatLockManager);
         $this->lockManager = $lockManager;
 
         // Create test user with API token
@@ -86,7 +87,7 @@ final class FlatLockApiControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_POST, '/api/flat/lock', [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
-        ], json_encode([
+        ], (string) json_encode([
             'host' => 'test.example.com',
             'reason' => 'Test lock',
             'ttl' => 3600,
@@ -94,10 +95,14 @@ final class FlatLockApiControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+        $response = json_decode($content, true);
+        self::assertIsArray($response);
         self::assertTrue($response['success']);
         self::assertSame('Lock acquired', $response['message']);
         self::assertArrayHasKey('lockInfo', $response);
+        self::assertIsArray($response['lockInfo']);
         self::assertTrue($response['lockInfo']['locked']);
     }
 
@@ -110,11 +115,14 @@ final class FlatLockApiControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_POST, '/api/flat/lock', [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
-        ], json_encode(['host' => 'test.example.com']));
+        ], (string) json_encode(['host' => 'test.example.com']));
 
         self::assertResponseStatusCodeSame(409);
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+        /** @var array{success: bool, message: string} $response */
+        $response = json_decode($content, true);
         self::assertFalse($response['success']);
         self::assertSame('Lock already held', $response['message']);
     }
@@ -123,7 +131,7 @@ final class FlatLockApiControllerTest extends WebTestCase
     {
         $this->client->request(Request::METHOD_POST, '/api/flat/unlock', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode(['host' => 'test.example.com']));
+        ], (string) json_encode(['host' => 'test.example.com']));
 
         self::assertResponseStatusCodeSame(401);
     }
@@ -136,11 +144,14 @@ final class FlatLockApiControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_POST, '/api/flat/unlock', [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
-        ], json_encode(['host' => 'test.example.com']));
+        ], (string) json_encode(['host' => 'test.example.com']));
 
         self::assertResponseIsSuccessful();
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+        /** @var array{success: bool, message: string} $response */
+        $response = json_decode($content, true);
         self::assertTrue($response['success']);
         self::assertSame('Lock released', $response['message']);
         self::assertFalse($this->lockManager->isLocked('test.example.com'));
@@ -155,11 +166,14 @@ final class FlatLockApiControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_POST, '/api/flat/unlock', [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
-        ], json_encode(['host' => 'test.example.com']));
+        ], (string) json_encode(['host' => 'test.example.com']));
 
         self::assertResponseStatusCodeSame(403);
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+        /** @var array{success: bool, message: string} $response */
+        $response = json_decode($content, true);
         self::assertFalse($response['success']);
         self::assertStringContainsString('Cannot unlock non-webhook lock', $response['message']);
     }
@@ -179,7 +193,10 @@ final class FlatLockApiControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+        /** @var array{locked: bool, isWebhookLock: bool} $response */
+        $response = json_decode($content, true);
         self::assertFalse($response['locked']);
         self::assertFalse($response['isWebhookLock']);
     }
@@ -195,7 +212,10 @@ final class FlatLockApiControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+        $response = json_decode($content, true);
+        self::assertIsArray($response);
         self::assertTrue($response['locked']);
         self::assertTrue($response['isWebhookLock']);
         self::assertGreaterThan(0, $response['remainingSeconds']);
@@ -207,13 +227,16 @@ final class FlatLockApiControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_POST, '/api/flat/lock', [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
-        ], json_encode([
+        ], (string) json_encode([
             'reason' => 'Global lock',
         ]));
 
         self::assertResponseIsSuccessful();
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+        /** @var array{success: bool} $response */
+        $response = json_decode($content, true);
         self::assertTrue($response['success']);
 
         // Verify global lock is in effect
@@ -227,14 +250,17 @@ final class FlatLockApiControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_POST, '/api/flat/lock', [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
-        ], json_encode([
+        ], (string) json_encode([
             'host' => 'test.example.com',
             'ttl' => $customTtl,
         ]));
 
         self::assertResponseIsSuccessful();
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+        /** @var array{lockInfo: array{ttl: int}} $response */
+        $response = json_decode($content, true);
         self::assertSame($customTtl, $response['lockInfo']['ttl']);
     }
 }

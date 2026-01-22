@@ -21,7 +21,7 @@ final readonly class EmailEnvelope
 
     public function isValid(): bool
     {
-        if ('' === $this->from || ! filter_var($this->from, \FILTER_VALIDATE_EMAIL)) {
+        if ('' === $this->from || false === filter_var($this->from, \FILTER_VALIDATE_EMAIL)) {
             return false;
         }
 
@@ -29,7 +29,7 @@ final readonly class EmailEnvelope
             return false;
         }
 
-        return array_all($this->to, fn ($email) => filter_var($email, \FILTER_VALIDATE_EMAIL));
+        return array_all($this->to, fn (string $email): bool => false !== filter_var($email, \FILTER_VALIDATE_EMAIL));
     }
 
     public function getFirstRecipient(): string

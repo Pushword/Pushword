@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Tests\Service;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use Pushword\Core\Entity\User;
@@ -24,12 +25,12 @@ final class FlatApiTokenValidatorTest extends KernelTestCase
     {
         self::bootKernel();
 
+        /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
 
+        /** @var FlatApiTokenValidator $validator */
         $validator = self::getContainer()->get(FlatApiTokenValidator::class);
-        \assert($validator instanceof FlatApiTokenValidator);
         $this->validator = $validator;
     }
 

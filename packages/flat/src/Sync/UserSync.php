@@ -89,6 +89,7 @@ final class UserSync
         }
 
         if ($yamlModified) {
+            /** @var array<array{email: string, roles?: string[], locale?: string, username?: string|null}> $users */
             $this->writeUsersYaml($configPath, $users);
         }
 
