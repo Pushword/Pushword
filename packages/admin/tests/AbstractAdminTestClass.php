@@ -37,6 +37,11 @@ abstract class AbstractAdminTestClass extends PantherTestCase
             $options['webServerDir'] = $publicDir;
         }
 
+        // Use Chrome instead of Firefox
+        if (! isset($options['browser'])) {
+            $options['browser'] = static::CHROME;
+        }
+
         return parent::createPantherClient($options, $kernelOptions, $managerOptions);
     }
 
