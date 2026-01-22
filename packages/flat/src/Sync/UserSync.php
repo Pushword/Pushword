@@ -22,6 +22,8 @@ final class UserSync
 
     private int $skippedCount = 0;
 
+    private int $exportedCount = 0;
+
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $em,
@@ -41,6 +43,7 @@ final class UserSync
         $this->importedCount = 0;
         $this->updatedCount = 0;
         $this->skippedCount = 0;
+        $this->exportedCount = 0;
 
         $configPath = $this->projectDir.'/config/users.yaml';
         if (! file_exists($configPath)) {
@@ -59,12 +62,37 @@ final class UserSync
         $users = $config['users'] ?? [];
 
         if (! \is_array($users)) {
-            $this->logger?->warning('Invalid users.yaml format');
-            $this->output?->writeln('<error>Invalid users.yaml format</error>');
-
-            return;
+            $users = [];
         }
 
+        // First, export DB users to YAML (add missing ones)
+        $yamlEmails = array_column($users, 'email');
+        $dbUsers = $this->userRepository->findAll();
+        $yamlModified = false;
+
+        foreach ($dbUsers as $dbUser) {
+            if (! \in_array($dbUser->email, $yamlEmails, true)) {
+                $userData = [
+                    'email' => $dbUser->email,
+                    'roles' => array_values(array_diff($dbUser->getRoles(), [User::ROLE_DEFAULT])),
+                    'locale' => $dbUser->locale ?? 'en',
+                ];
+                if (null !== $dbUser->username && '' !== $dbUser->username) {
+                    $userData['username'] = $dbUser->username;
+                }
+
+                $users[] = $userData;
+                $yamlModified = true;
+                ++$this->exportedCount;
+                $this->output?->writeln('Exported to YAML: '.$dbUser->email);
+            }
+        }
+
+        if ($yamlModified) {
+            $this->writeUsersYaml($configPath, $users);
+        }
+
+        // Then, import from YAML to DB (update existing ones)
         foreach ($users as $userData) {
             if (! \is_array($userData) || ! isset($userData['email']) || ! \is_string($userData['email'])) {
                 $this->logger?->warning('Skipping user entry without valid email');
@@ -86,7 +114,8 @@ final class UserSync
         $this->em->flush();
 
         $this->output?->writeln(\sprintf(
-            '<info>Users: %d imported, %d updated, %d skipped</info>',
+            '<info>Users: %d exported to YAML, %d imported to DB, %d updated, %d skipped</info>',
+            $this->exportedCount,
             $this->importedCount,
             $this->updatedCount,
             $this->skippedCount
@@ -120,9 +149,12 @@ final class UserSync
     {
         $changed = false;
 
-        // Update roles if different
-        $newRoles = $userData['roles'] ?? [User::ROLE_DEFAULT];
-        if ($user->getRoles() !== $newRoles) {
+        // Update roles if different (normalize by removing ROLE_USER for comparison)
+        $newRoles = array_values(array_diff($userData['roles'] ?? [], [User::ROLE_DEFAULT]));
+        $currentRoles = array_values(array_diff($user->getRoles(), [User::ROLE_DEFAULT]));
+        sort($newRoles);
+        sort($currentRoles);
+        if ($currentRoles !== $newRoles) {
             $user->setRoles($newRoles);
             $changed = true;
         }
@@ -167,6 +199,11 @@ final class UserSync
         return $this->skippedCount;
     }
 
+    public function getExportedCount(): int
+    {
+        return $this->exportedCount;
+    }
+
     private function createDefaultUsersYaml(string $configPath): void
     {
         $defaultContent = <<<'YAML'
@@ -179,13 +216,31 @@ final class UserSync
 #       locale: en
 #       username: Admin
 
-users:
-  # - email: admin@example.tld
-  #   roles: [ROLE_SUPER_ADMIN]
-  #   locale: en
-  #   username: Admin
+users: []
 YAML;
 
         file_put_contents($configPath, $defaultContent);
+    }
+
+    /**
+     * @param array<array{email: string, roles?: string[], locale?: string, username?: string|null}> $users
+     */
+    private function writeUsersYaml(string $configPath, array $users): void
+    {
+        $header = <<<'YAML'
+# Users configuration for flat-file sync
+# Users defined here will be synced to the database (passwords stay in DB only)
+# Format:
+#   users:
+#     - email: admin@example.tld
+#       roles: [ROLE_SUPER_ADMIN]
+#       locale: en
+#       username: Admin
+
+
+YAML;
+
+        $content = $header.Yaml::dump(['users' => $users], 3, 2, Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE);
+        file_put_contents($configPath, $content);
     }
 }

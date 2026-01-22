@@ -13,7 +13,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'pushword:flat:user-sync',
-    description: 'Sync users from config/users.yaml to database',
+    description: 'Sync users between config/users.yaml and database (bidirectional)',
 )]
 final class FlatUserSyncCommand extends Command
 {
@@ -31,8 +31,9 @@ final class FlatUserSyncCommand extends Command
         $this->userSync->import();
 
         $io->table(
-            ['Created', 'Updated', 'Skipped'],
+            ['Exported to YAML', 'Imported to DB', 'Updated', 'Skipped'],
             [[
+                $this->userSync->getExportedCount(),
                 $this->userSync->getImportedCount(),
                 $this->userSync->getUpdatedCount(),
                 $this->userSync->getSkippedCount(),
