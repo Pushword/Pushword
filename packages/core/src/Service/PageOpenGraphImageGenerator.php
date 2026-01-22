@@ -65,6 +65,14 @@ class PageOpenGraphImageGenerator
 
     public function generatePreviewImage(): void
     {
+        if (null !== $this->getPage()->getMainImage()) {
+            return;
+        }
+
+        if (true !== $this->apps->get()->get('generated_og_image')) {
+            return;
+        }
+
         $image = $this->getImagine()->create(
             new Box($this->imageWidth, $this->imageHeight),
         );
