@@ -11,7 +11,31 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
-## To 1.0.0-rc333
+## To 1.0.0-rc334
+
+### Unified Notification Email Service
+
+The email notification system has been unified with a new `NotificationEmailSender` service. If you extended or customized email sending in your code:
+
+**Configuration Changes:**
+
+Two new global config keys have been added that serve as defaults for all notification services:
+
+```yaml
+pushword:
+    notification_email_from: 'noreply@example.com'
+    notification_email_to: 'admin@example.com'
+```
+
+These global defaults are used when package-specific keys (`conversation_notification_email_from`, `page_update_notification_from`, etc.) are not set.
+
+**Code Changes (only if you extended these services):**
+
+- `MagicLinkMailer` now uses `NotificationEmailSender` instead of `MailerInterface`
+- `NewMessageMailNotifier` now uses `NotificationEmailSender` instead of `MailerInterface`
+- `PageUpdateNotifier` now uses `NotificationEmailSender` instead of `MailerInterface` + `Twig`
+
+## To 1.0.0-rc333
 
 See [Template Change](/upgrade-template-change)
 
