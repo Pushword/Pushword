@@ -43,7 +43,7 @@ users:
 
 ```bash
 # Sync users from config/users.yaml to database
-php bin/console pushword:flat:user-sync
+php bin/console pw:flat:user-sync
 
 # Or use the global flat sync (includes users if configured)
 php bin/console pw:flat:sync
@@ -191,7 +191,7 @@ symfony server:start
 The OAuth email doesn't match any user in the database. Add the user to `config/users.yaml` and run:
 
 ```bash
-php bin/console pushword:flat:user-sync
+php bin/console pw:flat:user-sync
 ```
 
 ### "Could not retrieve email from OAuth provider"

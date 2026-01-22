@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
-    name: 'pushword:flat:user-sync',
+    name: 'pw:flat:user-sync',
     description: 'Sync users between config/users.yaml and database (bidirectional)',
 )]
 final class FlatUserSyncCommand extends Command
