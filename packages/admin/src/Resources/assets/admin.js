@@ -32,6 +32,9 @@ import { copyElementText } from './admin.domUtils'
 // Modules de sauvegarde
 import { initCtrlSAutoSave } from './admin.ctrlSAutoSave'
 
+// Modules de verrouillage d'édition
+import { autoInitEditLock } from './admin.editLock'
+
 // Modules de tags
 import { suggestTags } from './admin.tagsField'
 
@@ -78,6 +81,9 @@ window.addEventListener('load', function () {
 
   // Sauvegarde automatique
   initCtrlSAutoSave()
+
+  // Verrouillage d'édition
+  autoInitEditLock()
 
   // document.body.addEventListener('htmx:afterSwap', function () {
   //   suggestTags()

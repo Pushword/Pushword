@@ -5,6 +5,7 @@ declare(strict_types=1);
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Provider\AdminContextProvider;
 use Pushword\Admin\Controller\AdminMenu;
+use Pushword\Admin\Service\PageEditLockManager;
 use Pushword\Core\PushwordCoreBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -24,6 +25,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(AdminMenu::class)
         ->autowire()
         ->autoconfigure();
+
+    // PageEditLockManager configuration
+    $services->set(PageEditLockManager::class)
+        ->arg('$varDir', '%kernel.project_dir%/var');
 
     $services->alias(AdminContextProviderInterface::class, AdminContextProvider::class);
 };

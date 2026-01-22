@@ -1,8 +1,18 @@
 {% extends '@EasyAdmin/crud/edit.html.twig' %}
 
+{% block main %}
+    {% if entity.instance.id is defined and entity.instance.id %}
+        {% include '@pwAdmin/components/edit_lock_banner.html.twig' %}
+    {% endif %}
+    {{ parent() }}
+{% endblock %}
+
 {% block edit_form %}
     {% set autosave_event = 'pw-ctrl-s-event' %}
-    {% set autosave_attrs = edit_form.vars.attr|merge({
+    {% set edit_lock_attrs = entity.instance.id is defined and entity.instance.id ? {
+        'data-pw-edit-lock-page-id': entity.instance.id
+    } : {} %}
+    {% set autosave_attrs = edit_form.vars.attr|merge(edit_lock_attrs)|merge({
         'data-pw-ctrl-s-form': '1',
         'data-pw-ctrl-s-event': autosave_event,
         'data-pw-ctrl-s-indicator': '.action-saveAndContinue .action-label',
@@ -15,4 +25,15 @@
     {{ form_start(edit_form, { attr: autosave_attrs }) }}
         {{ form_widget(edit_form) }}
     {{ form_end(edit_form) }}
+{% endblock %}
+
+{% block body_javascript %}
+    {{ parent() }}
+    <script>
+        window.pwEditLockTranslations = {
+            warning: "{{ 'adminPageEditLockWarning'|trans|e('js') }}",
+            warningSameUser: "{{ 'adminPageEditLockWarningSameUser'|trans|e('js') }}",
+            refreshButton: "{{ 'adminPageEditLockRefresh'|trans|e('js') }}"
+        };
+    </script>
 {% endblock %}

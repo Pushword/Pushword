@@ -60,6 +60,9 @@ adminPageCustomPropertiesLabel: "Other parameters"
 adminPageEditMessageHelp: "Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em>"
 adminPageEditMessageHelpVersionned: 'Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">See hitory</a>'
 adminPageEditMessageLabel: "Reason of modification"
+adminPageEditLockRefresh: "Refresh page"
+adminPageEditLockWarning: "%user% is currently editing this page. Your changes may be overwritten."
+adminPageEditLockWarningSameUser: "You are editing this page in another tab or browser."
 adminPageErrorGenerationFailed: "An error occurred while generating the page."
 adminPageErrorGenerationFailedWithDetails: 'An error occurred while generating the page: <code>%error%</code><br><textarea style="margin-top:4px; width:100%;" data-editor="twig" readonly>%excerpt%</textarea>'
 adminPageExtraLabel: Extra

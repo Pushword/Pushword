@@ -59,6 +59,9 @@ adminPageCustomPropertiesLabel: 'Autres paramètres'
 adminPageEditMessageHelp: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>'
 adminPageEditMessageHelpVersionned: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">Voir l''historique</a>'
 adminPageEditMessageLabel: "Motif d'édition"
+adminPageEditLockRefresh: "Actualiser la page"
+adminPageEditLockWarning: "%user% est en train de modifier cette page. Vos modifications pourraient être écrasées."
+adminPageEditLockWarningSameUser: "Vous modifiez cette page dans un autre onglet ou navigateur."
 adminPageErrorGenerationFailed: 'Une erreur est survenue lors de la génération de la page.'
 adminPageErrorGenerationFailedWithDetails: 'Une erreur est survenue lors de la génération de la page : <code>%error%</code><br><textarea style="margin-top:4px; width:100%;" data-editor="twig" readonly>%excerpt%</textarea>'
 adminPageExtraLabel: Extra
