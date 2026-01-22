@@ -1,5 +1,6 @@
 <?php
 
+use KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle;
 use Pushword\Admin\Controller\MediaCrudController;
 use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Core\Security\LoginFormAuthenticator;
@@ -7,6 +8,12 @@ use Pushword\Core\Security\OAuthAuthenticator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
+    // Build authenticators list - only include OAuth if the bundle is installed
+    $authenticators = [LoginFormAuthenticator::class];
+    if (class_exists(KnpUOAuth2ClientBundle::class)) {
+        $authenticators[] = OAuthAuthenticator::class;
+    }
+
     $containerConfigurator->extension('security', [
         'password_hashers' => [
             '%pw.entity_user%' => [
@@ -50,10 +57,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                 'http_basic' => [
                     'realm' => 'Secured Area',
                 ],
-                'custom_authenticators' => [
-                    LoginFormAuthenticator::class,
-                    OAuthAuthenticator::class,
-                ],
+                'custom_authenticators' => $authenticators,
                 'entry_point' => LoginFormAuthenticator::class,
                 'logout' => [
                     'path' => 'pushword_logout',

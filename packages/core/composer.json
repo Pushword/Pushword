@@ -81,6 +81,10 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "suggest": {
+    "knpuniversity/oauth2-client-bundle": "For OAuth authentication (Google, Microsoft, GitHub, etc.)",
+    "league/oauth2-google": "For Google OAuth authentication",
+    "thenetworg/oauth2-azure": "For Microsoft/Azure OAuth authentication",
+    "league/oauth2-github": "For GitHub OAuth authentication",
     "pushword/admin": "Create, edit, delete Page, Media, User with an interface built on top of Easy Admin",
     "pushword/conversation": "Extend your Pushword website with **comments**, a **contact** form or just an **user input**.",
     "pushword/flat": " Transform Pushword in a FlatFile CMS.",

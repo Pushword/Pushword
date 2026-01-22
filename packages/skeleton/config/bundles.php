@@ -32,8 +32,7 @@ use Vich\UploaderBundle\VichUploaderBundle;
 /**
  * Used for test.
  */
-return [
-    KnpUOAuth2ClientBundle::class => ['all' => true],
+$bundles = [
     PushwordCoreBundle::class => ['all' => true],
     PushwordAdminBundle::class => ['all' => true],
     PushwordPageUpdateNotifierBundle::class => ['all' => true],
@@ -76,3 +75,10 @@ return [
     // Symfony\WebpackEncoreBundle\WebpackEncoreBundle::class => ['all' => true],
     // Pushword\Conversation\PushwordConversation::class => ['all' => true],
 ];
+
+// Conditionally register OAuth bundle if installed
+if (class_exists(KnpUOAuth2ClientBundle::class)) {
+    $bundles[KnpUOAuth2ClientBundle::class] = ['all' => true];
+}
+
+return $bundles;

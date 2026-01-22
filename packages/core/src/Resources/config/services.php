@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+
+use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use PiedWeb\RenderAttributes\TwigExtension;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
@@ -12,6 +14,7 @@ use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Pushword\Core\Twig\MediaExtension;
+use Pushword\Core\Twig\OAuthExtension;
 use SensioLabs\AnsiConverter\AnsiToHtmlConverter;
 use SensioLabs\AnsiConverter\Bridge\Twig\AnsiExtension;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -96,4 +99,14 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(NotificationEmailSender::class)
         ->arg('$mailer', service(MailerInterface::class)->nullOnInvalid())
         ->public();
+
+    // OAuth Extension - only register if KnpU OAuth2 Client Bundle is installed
+    if (class_exists(ClientRegistry::class)) {
+        $services->set(OAuthExtension::class)
+            ->arg('$clientRegistry', service(ClientRegistry::class)->nullOnInvalid());
+    } else {
+        // Register with null values when OAuth is not available
+        $services->set(OAuthExtension::class)
+            ->arg('$clientRegistry', null);
+    }
 };

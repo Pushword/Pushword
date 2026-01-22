@@ -6,7 +6,7 @@ namespace Pushword\Core\Security;
 
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use KnpU\OAuth2ClientBundle\Security\Authenticator\OAuth2Authenticator;
-use League\OAuth2\Client\Provider\GoogleUser;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use Pushword\Core\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,8 +17,10 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
-use TheNetworg\OAuth2\Client\Provider\AzureResourceOwner;
 
+/**
+ * Generic OAuth authenticator that works with any provider configured in knpu_oauth2_client.
+ */
 final class OAuthAuthenticator extends OAuth2Authenticator
 {
     public function __construct(
@@ -30,29 +32,22 @@ final class OAuthAuthenticator extends OAuth2Authenticator
 
     public function supports(Request $request): bool
     {
-        return \in_array($request->attributes->get('_route'), [
-            'pushword_oauth_google_check',
-            'pushword_oauth_microsoft_check',
-        ], true);
+        return 'pushword_oauth_check' === $request->attributes->get('_route');
     }
 
     public function authenticate(Request $request): SelfValidatingPassport
     {
-        $route = $request->attributes->get('_route');
-        $clientName = 'pushword_oauth_google_check' === $route ? 'google' : 'microsoft';
+        /** @var string $provider */
+        $provider = $request->attributes->get('provider');
 
-        $client = $this->clientRegistry->getClient($clientName);
+        $client = $this->clientRegistry->getClient($provider);
         $accessToken = $this->fetchAccessToken($client);
 
         return new SelfValidatingPassport(
             new UserBadge($accessToken->getToken(), function () use ($accessToken, $client): object {
                 $oauthUser = $client->fetchUserFromToken($accessToken);
 
-                $email = match (true) {
-                    $oauthUser instanceof GoogleUser => $oauthUser->getEmail(),
-                    $oauthUser instanceof AzureResourceOwner => $oauthUser->claim('email') ?? $oauthUser->claim('preferred_username'),
-                    default => throw new CustomUserMessageAuthenticationException('oauthUnsupportedProvider'),
-                };
+                $email = $this->extractEmail($oauthUser);
 
                 if (null === $email || '' === $email) {
                     throw new CustomUserMessageAuthenticationException('oauthNoEmail');
@@ -66,8 +61,33 @@ final class OAuthAuthenticator extends OAuth2Authenticator
 
                 return $user;
             }),
-            [new RememberMeBadge()]
+            [new RememberMeBadge()],
         );
+    }
+
+    private function extractEmail(ResourceOwnerInterface $oauthUser): ?string
+    {
+        // Try getEmail() method (Google, GitHub, Facebook, etc.)
+        if (method_exists($oauthUser, 'getEmail')) {
+            /** @var mixed $email */
+            $email = $oauthUser->getEmail();
+
+            return \is_string($email) ? $email : null;
+        }
+
+        // Try claim() method (Azure/Microsoft)
+        if (method_exists($oauthUser, 'claim')) {
+            /** @var mixed $email */
+            $email = $oauthUser->claim('email') ?? $oauthUser->claim('preferred_username');
+
+            return \is_string($email) ? $email : null;
+        }
+
+        // Fallback: try to get from array representation
+        $data = $oauthUser->toArray();
+        $email = $data['email'] ?? $data['mail'] ?? null;
+
+        return \is_string($email) ? $email : null;
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): RedirectResponse

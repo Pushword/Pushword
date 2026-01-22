@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -32,24 +34,6 @@ final class UserController extends AbstractController
     ) {
     }
 
-    public function isOAuthEnabled(): bool
-    {
-        $googleEnabled = '' !== ($_ENV['OAUTH_GOOGLE_CLIENT_ID'] ?? '');
-        $microsoftEnabled = '' !== ($_ENV['OAUTH_MICROSOFT_CLIENT_ID'] ?? '');
-
-        return $googleEnabled || $microsoftEnabled;
-    }
-
-    public function isGoogleOAuthEnabled(): bool
-    {
-        return '' !== ($_ENV['OAUTH_GOOGLE_CLIENT_ID'] ?? '');
-    }
-
-    public function isMicrosoftOAuthEnabled(): bool
-    {
-        return '' !== ($_ENV['OAUTH_MICROSOFT_CLIENT_ID'] ?? '');
-    }
-
     #[Route('/login', name: 'pushword_login')]
     public function login(Request $request): Response
     {
@@ -67,8 +51,6 @@ final class UserController extends AbstractController
                 'last_username' => $lastUsername,
                 'error' => $authenticationException,
                 'step' => 'password',
-                'oauth_google' => $this->isGoogleOAuthEnabled(),
-                'oauth_microsoft' => $this->isMicrosoftOAuthEnabled(),
             ]);
         }
 
@@ -83,8 +65,6 @@ final class UserController extends AbstractController
             'last_username' => $lastUsername,
             'error' => $authenticationException,
             'step' => 'email',
-            'oauth_google' => $this->isGoogleOAuthEnabled(),
-            'oauth_microsoft' => $this->isMicrosoftOAuthEnabled(),
         ]);
     }
 
@@ -222,41 +202,22 @@ final class UserController extends AbstractController
         ]);
     }
 
-    #[Route('/login/oauth/google', name: 'pushword_oauth_google_start')]
-    public function googleOAuthStart(): Response
+    #[Route('/login/oauth/{provider}', name: 'pushword_oauth_start')]
+    public function oauthStart(string $provider): Response
     {
-        if (! $this->isGoogleOAuthEnabled()) {
+        if (! class_exists(ClientRegistry::class)) {
             return $this->redirectToRoute('pushword_login');
         }
 
         /** @var ClientRegistry $clientRegistry */
         $clientRegistry = $this->container->get('knpu.oauth2.registry');
 
-        return $clientRegistry->getClient('google')->redirect(['email', 'profile'], []);
+        // Default scopes - providers may override via their config
+        return $clientRegistry->getClient($provider)->redirect(['email'], []);
     }
 
-    #[Route('/login/oauth/google/check', name: 'pushword_oauth_google_check')]
-    public function googleOAuthCheck(): RedirectResponse
-    {
-        // This is handled by OAuthAuthenticator
-        return $this->redirectToRoute('pushword_admin');
-    }
-
-    #[Route('/login/oauth/microsoft', name: 'pushword_oauth_microsoft_start')]
-    public function microsoftOAuthStart(): Response
-    {
-        if (! $this->isMicrosoftOAuthEnabled()) {
-            return $this->redirectToRoute('pushword_login');
-        }
-
-        /** @var ClientRegistry $clientRegistry */
-        $clientRegistry = $this->container->get('knpu.oauth2.registry');
-
-        return $clientRegistry->getClient('microsoft')->redirect(['openid', 'email', 'profile'], []);
-    }
-
-    #[Route('/login/oauth/microsoft/check', name: 'pushword_oauth_microsoft_check')]
-    public function microsoftOAuthCheck(): RedirectResponse
+    #[Route('/login/oauth/{provider}/check', name: 'pushword_oauth_check')]
+    public function oauthCheck(string $provider): RedirectResponse
     {
         // This is handled by OAuthAuthenticator
         return $this->redirectToRoute('pushword_admin');
