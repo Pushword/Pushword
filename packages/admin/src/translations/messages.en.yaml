@@ -140,6 +140,7 @@ adminUserDateOfBirthLabel: "Date of birth"
 adminUserEmailLabel: "Email address"
 adminUserEnabledLabel: "Account enabled"
 adminUserFirstnameLabel: "First name"
+adminUserLabelApi: API Access
 adminUserLabelId: Identifiers
 adminUserLabelProfile: Profile
 adminUserLabelSecurity: Security
@@ -154,6 +155,14 @@ adminUserRoleLabel: Role
 adminUserRoleSuperAdmin: "Super Administrator"
 adminUserRoleUser: User
 adminUserUsernameLabel: Username
+adminUserApiTokenLabel: API Token
+adminUserApiTokenHelp: "<small>Token for webhook API authentication. Use <code>Authorization: Bearer {token}</code> header.</small>"
+adminUserApiTokenGenerate: Generate Token
+adminUserApiTokenRegenerate: Regenerate
+adminUserApiTokenRevoke: Revoke
+adminUserApiTokenPlaceholder: No token generated
+adminUserApiTokenRegenerateConfirm: Regenerate token? The old token will stop working.
+adminUserApiTokenRevokeConfirm: Revoke the API token?
 datetimeMediumFormat: 'Y-m-d \a\t H:m'
 md_csChapeau: Chapeau
 md_csChapeauDescription: "Le chapeau est le paragraphe introductif placé sous le titre."

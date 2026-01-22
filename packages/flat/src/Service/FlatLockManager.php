@@ -12,6 +12,11 @@ use function Safe\json_encode;
 /**
  * Manages editorial locks to prevent concurrent flat/admin modifications.
  * Inspired by LibreOffice's locking mechanism.
+ *
+ * Lock types:
+ * - manual: CLI command lock (pw:flat:lock)
+ * - flat-auto: Automatic lock on flat file changes
+ * - webhook: External lock via API for CI/CD workflows
  */
 final readonly class FlatLockManager
 {
@@ -19,9 +24,12 @@ final readonly class FlatLockManager
 
     public const string LOCK_TYPE_AUTO = 'flat-auto';
 
+    public const string LOCK_TYPE_WEBHOOK = 'webhook';
+
     public function __construct(
         private string $varDir,
         private int $defaultTtl = 1800, // 30 minutes
+        private int $webhookDefaultTtl = 3600, // 1 hour for webhook locks
     ) {
     }
 
@@ -49,7 +57,7 @@ final readonly class FlatLockManager
     /**
      * Get information about the current lock.
      *
-     * @return array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string}|null
+     * @return array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string, lockedByUser?: string}|null
      */
     public function getLockInfo(?string $host = null): ?array
     {
@@ -61,7 +69,7 @@ final readonly class FlatLockManager
 
         $content = file_get_contents($filePath);
 
-        /** @var array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string} */
+        /** @var array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string, lockedByUser?: string} */
         return json_decode($content, true);
     }
 
@@ -72,13 +80,19 @@ final readonly class FlatLockManager
      */
     public function acquireLock(?string $host = null, string $reason = 'manual', ?int $ttl = null): bool
     {
+        $lockType = match ($reason) {
+            self::LOCK_TYPE_MANUAL => self::LOCK_TYPE_MANUAL,
+            self::LOCK_TYPE_WEBHOOK => self::LOCK_TYPE_WEBHOOK,
+            default => self::LOCK_TYPE_AUTO,
+        };
+
         $existingLock = $this->getLockInfo($host);
 
-        // If there's an existing manual lock that hasn't expired, don't allow override
+        // If there's an existing manual or webhook lock that hasn't expired, don't allow override by auto
         if (null !== $existingLock
             && ! $this->hasExpired($existingLock)
-            && self::LOCK_TYPE_MANUAL === $existingLock['lockedBy']
-            && self::LOCK_TYPE_MANUAL !== $reason
+            && \in_array($existingLock['lockedBy'], [self::LOCK_TYPE_MANUAL, self::LOCK_TYPE_WEBHOOK], true)
+            && self::LOCK_TYPE_AUTO === $lockType
         ) {
             return false;
         }
@@ -86,9 +100,44 @@ final readonly class FlatLockManager
         $lockData = [
             'locked' => true,
             'lockedAt' => time(),
-            'lockedBy' => self::LOCK_TYPE_MANUAL === $reason ? self::LOCK_TYPE_MANUAL : self::LOCK_TYPE_AUTO,
-            'ttl' => $ttl ?? $this->defaultTtl,
+            'lockedBy' => $lockType,
+            'ttl' => $ttl ?? (self::LOCK_TYPE_WEBHOOK === $lockType ? $this->webhookDefaultTtl : $this->defaultTtl),
             'reason' => $reason,
+        ];
+
+        $this->saveLock($lockData, $host);
+
+        return true;
+    }
+
+    /**
+     * Acquire a webhook lock with user information.
+     *
+     * @return bool True if lock was acquired
+     */
+    public function acquireWebhookLock(
+        ?string $host = null,
+        string $reason = 'Webhook lock',
+        ?int $ttl = null,
+        ?string $userEmail = null,
+    ): bool {
+        $existingLock = $this->getLockInfo($host);
+
+        // Cannot override an existing non-expired webhook lock
+        if (null !== $existingLock
+            && ! $this->hasExpired($existingLock)
+            && self::LOCK_TYPE_WEBHOOK === $existingLock['lockedBy']
+        ) {
+            return false;
+        }
+
+        $lockData = [
+            'locked' => true,
+            'lockedAt' => time(),
+            'lockedBy' => self::LOCK_TYPE_WEBHOOK,
+            'ttl' => $ttl ?? $this->webhookDefaultTtl,
+            'reason' => $reason,
+            'lockedByUser' => $userEmail,
         ];
 
         $this->saveLock($lockData, $host);
@@ -140,6 +189,21 @@ final readonly class FlatLockManager
     }
 
     /**
+     * Check if the lock type is a webhook lock.
+     * Webhook locks block both admin editing and sync operations.
+     */
+    public function isWebhookLocked(?string $host = null): bool
+    {
+        if (! $this->isLocked($host)) {
+            return false;
+        }
+
+        $lockInfo = $this->getLockInfo($host);
+
+        return null !== $lockInfo && self::LOCK_TYPE_WEBHOOK === $lockInfo['lockedBy'];
+    }
+
+    /**
      * Get remaining lock time in seconds.
      */
     public function getRemainingTime(?string $host = null): int
@@ -157,7 +221,7 @@ final readonly class FlatLockManager
     }
 
     /**
-     * @param array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string} $lockInfo
+     * @param array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string, lockedByUser?: string} $lockInfo
      */
     private function hasExpired(array $lockInfo): bool
     {
@@ -167,7 +231,7 @@ final readonly class FlatLockManager
     }
 
     /**
-     * @param array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string} $lockData
+     * @param array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string, lockedByUser?: string|null} $lockData
      */
     private function saveLock(array $lockData, ?string $host): void
     {

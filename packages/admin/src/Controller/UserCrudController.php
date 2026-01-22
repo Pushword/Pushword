@@ -32,7 +32,8 @@ class UserCrudController extends AbstractAdminCrudController
         return $crud
             ->setEntityLabelInSingular('adminLabelUser')
             ->setEntityLabelInPlural('adminLabelUsers')
-            ->setDefaultSort(['createdAt' => 'DESC']);
+            ->setDefaultSort(['createdAt' => 'DESC'])
+            ->addFormTheme('@pwAdmin/form/api_token_theme.html.twig');
     }
 
     #[Override]

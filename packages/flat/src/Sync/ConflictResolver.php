@@ -8,6 +8,7 @@ use DateTimeInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
+use Pushword\Flat\Service\AdminNotificationService;
 
 use function Safe\file_get_contents;
 use function Safe\file_put_contents;
@@ -22,10 +23,18 @@ final class ConflictResolver
 {
     private ?OutputInterface $output = null;
 
+    private ?string $currentHost = null;
+
     public function __construct(
         private readonly FlatFileContentDirFinder $contentDirFinder,
         private readonly SyncStateManager $stateManager,
+        private readonly ?AdminNotificationService $notificationService = null,
     ) {
+    }
+
+    public function setCurrentHost(?string $host): void
+    {
+        $this->currentHost = $host;
     }
 
     public function setOutput(?OutputInterface $output): void
@@ -266,12 +275,8 @@ final class ConflictResolver
         ?string $backupFile,
         ?string $field = null,
     ): void {
-        if (null === $this->output) {
-            return;
-        }
-
         $message = \sprintf(
-            '<comment>Conflict detected on %s #%s%s - Winner: %s%s</comment>',
+            'Conflict detected on %s #%s%s - Winner: %s%s',
             $entityType,
             $entityId,
             null !== $field ? ' ('.$field.')' : '',
@@ -279,6 +284,17 @@ final class ConflictResolver
             null !== $backupFile ? ' - Backup: '.basename($backupFile) : '',
         );
 
-        $this->output->writeln($message);
+        if (null !== $this->output) {
+            $this->output->writeln('<comment>'.$message.'</comment>');
+        }
+
+        // Create admin notification with email alert
+        $this->notificationService?->notifyConflict([
+            'entityType' => $entityType,
+            'entityId' => $entityId,
+            'winner' => $winner,
+            'backupFile' => $backupFile,
+            'field' => $field,
+        ], $this->currentHost);
     }
 }

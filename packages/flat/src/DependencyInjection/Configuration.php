@@ -44,6 +44,19 @@ class Configuration implements ConfigurationInterface
               ->defaultTrue()
               ->info('Automatically lock when flat files are modified')
             ->end()
+            ->integerNode('webhook_lock_default_ttl')
+              ->defaultValue(3600)
+              ->info('Default TTL for webhook locks in seconds (default: 1 hour)')
+            ->end()
+            ->arrayNode('notification_email_recipients')
+              ->scalarPrototype()->end()
+              ->defaultValue([])
+              ->info('Email addresses to receive conflict and error notifications')
+            ->end()
+            ->scalarNode('notification_email_from')
+              ->defaultNull()
+              ->info('Sender email address for notifications')
+            ->end()
         ->end();
 
         return $treeBuilder;

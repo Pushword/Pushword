@@ -61,6 +61,32 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     #[ORM\Column(type: Types::STRING, nullable: true)]
     private ?string $password = null;
 
+    /**
+     * API token for webhook authentication (flat sync lock/unlock).
+     */
+    #[ORM\Column(type: Types::STRING, length: 64, unique: true, nullable: true)]
+    public ?string $apiToken = null;
+
+    /**
+     * Generate a new API token (64 hex characters = 32 bytes).
+     */
+    public function generateApiToken(): self
+    {
+        $this->apiToken = bin2hex(random_bytes(32));
+
+        return $this;
+    }
+
+    /**
+     * Revoke the current API token.
+     */
+    public function revokeApiToken(): self
+    {
+        $this->apiToken = null;
+
+        return $this;
+    }
+
     public function __toString(): string
     {
         return $this->email;

@@ -20,15 +20,22 @@ final readonly class UserCreateCommand
     {
     }
 
-    protected function createUser(string $email, string $password, string $role): void
+    protected function createUser(string $email, string $password, string $role): User
     {
         $user = new User();
         $user->email = $email;
         $user->setPassword($this->passwordEncoder->hashPassword($user, $password));
         $user->setRoles([$role]);
 
+        // Auto-generate API token for super admins
+        if (User::ROLE_SUPER_ADMIN === $role) {
+            $user->generateApiToken();
+        }
+
         $this->em->persist($user);
         $this->em->flush();
+
+        return $user;
     }
 
     public function __invoke(#[Argument(name: 'email')]
@@ -40,9 +47,13 @@ final readonly class UserCreateCommand
         $password = $this->getOrAskIfNotSetted($input, $output, 'password');
         $role = $this->getOrAskIfNotSetted($input, $output, 'role', 'ROLE_SUPER_ADMIN');
 
-        $this->createUser($email, $password, $role);
+        $user = $this->createUser($email, $password, $role);
 
         $output->writeln('<info>User `'.$email.'` created with success.</info>');
+
+        if (null !== $user->apiToken) {
+            $output->writeln('<info>API Token: '.$user->apiToken.'</info>');
+        }
 
         return Command::SUCCESS;
     }

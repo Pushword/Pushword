@@ -1,3 +1,6 @@
+pushword_flat:
+    resource: "@PushwordFlatBundle/FlatRoutes.yaml"
+
 pushword_version:
     resource: "@PushwordVersionBundle/VersionRoutes.yaml"
 

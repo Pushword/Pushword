@@ -92,7 +92,7 @@ class AdminJSTest extends AbstractAdminTestClass
 
         $client->request('GET', '/login');
 
-        // Attend le formulaire de login
+        // Step 1: Enter email
         try {
             $client->waitFor('input[name="email"]', self::TIMEOUT_LONG);
         } catch (Exception) {
@@ -100,8 +100,17 @@ class AdminJSTest extends AbstractAdminTestClass
             $client->waitFor('input[name="email"]', self::TIMEOUT_LONG);
         }
 
-        // Remplit et soumet le formulaire
         $client->findElement(WebDriverBy::name('email'))->sendKeys('admin@example.tld');
+        $client->findElement(WebDriverBy::cssSelector('button[type="submit"]'))->click();
+
+        // Step 2: Wait for password step and enter password
+        try {
+            $client->waitFor('input[name="password"]', self::TIMEOUT_LONG);
+        } catch (Exception) {
+            $client->wait(self::WAIT_MEDIUM);
+            $client->waitFor('input[name="password"]', self::TIMEOUT_LONG);
+        }
+
         $client->findElement(WebDriverBy::name('password'))->sendKeys('mySecr3tpAssword');
         $client->findElement(WebDriverBy::cssSelector('button[type="submit"]'))->click();
 

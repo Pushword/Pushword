@@ -9,6 +9,7 @@ use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Service\SharedOutputInterface;
 use Pushword\Core\Service\TeeOutput;
 use Pushword\Flat\FlatFileSync;
+use Pushword\Flat\Service\FlatLockManager;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -33,6 +34,7 @@ final readonly class FlatFileSyncCommand
         private Stopwatch $stopWatch,
         private BackgroundProcessManager $processManager,
         private ProcessOutputStorage $outputStorage,
+        private FlatLockManager $lockManager,
     ) {
     }
 
@@ -46,6 +48,22 @@ final readonly class FlatFileSyncCommand
         #[Option(description: 'Entity type to sync (page, media, conversation, all)', name: 'entity')]
         string $entity = 'all',
     ): int {
+        // Check for webhook lock - blocks sync during external editing workflow
+        if ($this->lockManager->isWebhookLocked($host)) {
+            $lockInfo = $this->lockManager->getLockInfo($host);
+            $remainingTime = $this->lockManager->getRemainingTime($host);
+            $output->writeln('<error>Sync blocked: webhook lock active.</error>');
+            $output->writeln(\sprintf(
+                '<comment>Locked by: %s | Reason: %s | Remaining: %ds</comment>',
+                $lockInfo['lockedByUser'] ?? 'unknown',
+                $lockInfo['reason'] ?? 'N/A',
+                $remainingTime,
+            ));
+            $output->writeln('<info>CI/CD should retry after lock is released.</info>');
+
+            return Command::FAILURE;
+        }
+
         // Check if same process type is already running (via PID file)
         $pidFile = $this->processManager->getPidFilePath(self::PROCESS_TYPE);
         $this->processManager->cleanupStaleProcess($pidFile);

@@ -1,6 +1,7 @@
 {% extends '@EasyAdmin/crud/edit.html.twig' %}
 
 {% block main %}
+    {% include '@pwFlat/components/webhook_lock_banner.html.twig' ignore missing %}
     {% if entity.instance.id is defined and entity.instance.id %}
         {% include '@pwAdmin/components/edit_lock_banner.html.twig' %}
     {% endif %}

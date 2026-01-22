@@ -23,6 +23,7 @@ use Pushword\Admin\FormField\PageSlugField;
 use Pushword\Admin\FormField\PageTitleField;
 use Pushword\Admin\FormField\PageTranslationsField;
 use Pushword\Admin\FormField\TagsField;
+use Pushword\Admin\FormField\UserApiTokenField;
 use Pushword\Admin\FormField\UserEmailField;
 use Pushword\Admin\FormField\UserLocaleField;
 use Pushword\Admin\FormField\UserPasswordField;
@@ -46,7 +47,10 @@ class Configuration implements ConfigurationInterface
      */
     final public const array DEFAULT_ADMIN_USER_FORM_FIELDS = [
         [UserEmailField::class, UserUsernameField::class, UserPasswordField::class, CreatedAtField::class],
-        ['adminUserLabelSecurity' => [UserRolesField::class, UserLocaleField::class]],
+        [
+            'adminUserLabelSecurity' => [UserRolesField::class, UserLocaleField::class],
+            'adminUserLabelApi' => [UserApiTokenField::class],
+        ],
     ];
 
     final public const array DEFAULT_ADMIN_REDIRECTION_FORM_FIELDS = [
