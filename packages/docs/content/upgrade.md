@@ -11,7 +11,7 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
-## To 1.0.0-rc334
+## To 1.0.0-rc341
 
 ### Unified Notification Email Service
 
@@ -23,8 +23,8 @@ Two new global config keys have been added that serve as defaults for all notifi
 
 ```yaml
 pushword:
-    notification_email_from: 'noreply@example.com'
-    notification_email_to: 'admin@example.com'
+  notification_email_from: 'noreply@example.com'
+  notification_email_to: 'admin@example.com'
 ```
 
 These global defaults are used when package-specific keys (`conversation_notification_email_from`, `page_update_notification_from`, etc.) are not set.
