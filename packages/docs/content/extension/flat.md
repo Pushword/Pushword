@@ -10,7 +10,7 @@ Transform Pushword in a FlatFile CMS.
 ## Install
 
 ```
-composer require pushword/flat-file
+composer require pushword/flat
 ```
 
 ## Configure (if needed)

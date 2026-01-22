@@ -1,5 +1,5 @@
 {
-  "name": "pushword/flat-file",
+  "name": "pushword/flat",
   "type": "symfony-bundle",
   "description": "Transform Pushword in a FlatFile CMS.",
   "keywords": [],

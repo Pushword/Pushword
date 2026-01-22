@@ -7,7 +7,7 @@
   "license": "MIT",
   "require": {
     "pushword/core": "*",
-    "pushword/flat-file": "*"
+    "pushword/flat": "*"
   },
   "autoload": {
     "psr-4": {
