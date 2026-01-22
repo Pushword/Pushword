@@ -16,13 +16,23 @@ trait AskIfNotSettedTrait
         string $argument,
         ?string $default = '',
         bool $allowEmpty = false,
+        ?string $currentValue = null,
     ): string {
+        if (null !== $currentValue && '' !== $currentValue) {
+            return $currentValue;
+        }
+
         $helper = new QuestionHelper();
         /** @var bool|float|int|string|null */
         $argumentValue = $input->getArgument($argument);
 
-        if (null !== $argumentValue) {
+        if (null !== $argumentValue && '' !== $argumentValue) {
             return (string) $argumentValue;
+        }
+
+        // If empty is allowed and no value provided, return the default
+        if ($allowEmpty) {
+            return $default ?? '';
         }
 
         $defaultDisplay = null !== $default && '' !== $default ? ' (default: '.$default.')' : '';
@@ -34,16 +44,16 @@ trait AskIfNotSettedTrait
         /** @var bool|float|int|resource|string|null */
         $argumentValue = $helper->ask($input, $output, $question);
 
-        if ((null === $argumentValue || '' === $argumentValue) && ! $allowEmpty) {
+        if (null === $argumentValue || '' === $argumentValue) {
             $output->writeln('<error>'.$argument.' is required.</error>');
 
-            return $this->getOrAskIfNotSetted($input, $output, $argument, $default, $allowEmpty);
+            return $this->getOrAskIfNotSetted($input, $output, $argument, $default, $allowEmpty, $currentValue);
         }
 
-        if (null !== $argumentValue && ! \is_scalar($argumentValue)) {
+        if (! \is_scalar($argumentValue)) {
             throw new Exception();
         }
 
-        return (string) ($argumentValue ?? '');
+        return (string) $argumentValue;
     }
 }

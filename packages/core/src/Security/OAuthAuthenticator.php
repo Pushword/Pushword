@@ -69,7 +69,6 @@ final class OAuthAuthenticator extends OAuth2Authenticator
     {
         // Try getEmail() method (Google, GitHub, Facebook, etc.)
         if (method_exists($oauthUser, 'getEmail')) {
-            /** @var mixed $email */
             $email = $oauthUser->getEmail();
 
             return \is_string($email) ? $email : null;
@@ -77,7 +76,6 @@ final class OAuthAuthenticator extends OAuth2Authenticator
 
         // Try claim() method (Azure/Microsoft)
         if (method_exists($oauthUser, 'claim')) {
-            /** @var mixed $email */
             $email = $oauthUser->claim('email') ?? $oauthUser->claim('preferred_username');
 
             return \is_string($email) ? $email : null;

@@ -32,6 +32,26 @@ final class FlatChangeDetectorTest extends KernelTestCase
 
         $this->lockManager = new FlatLockManager($this->tempDir, 60, 3600);
         $this->stateManager = new SyncStateManager($this->tempDir);
+
+        // Initialize sync state with a future timestamp so no files appear as changed
+        $this->initializeSyncState();
+    }
+
+    private function initializeSyncState(): void
+    {
+        // Write state files with a timestamp far in the future to ensure no files are detected as changed
+        $stateDir = $this->tempDir.'/flat-sync';
+        if (! is_dir($stateDir)) {
+            mkdir($stateDir, 0755, true);
+        }
+        $futureTime = time() + 3600;
+        $state = json_encode(['lastSyncAt' => $futureTime]);
+
+        // Cover all hosts used in tests (normalized: dots become underscores)
+        $hosts = ['default', 'localhost_dev', 'test_host_com', 'host-a_com', 'host-b_com', 'test_example_com'];
+        foreach ($hosts as $host) {
+            file_put_contents($stateDir.'/'.$host.'.json', $state);
+        }
     }
 
     #[Override]

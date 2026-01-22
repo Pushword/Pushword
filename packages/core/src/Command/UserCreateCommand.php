@@ -51,10 +51,10 @@ final readonly class UserCreateCommand
         InputInterface $input,
         OutputInterface $output,
     ): int {
-        $email = $this->getOrAskIfNotSetted($input, $output, 'email');
-        $password = $this->getOrAskIfNotSetted($input, $output, 'password');
-        $role = $this->getOrAskIfNotSetted($input, $output, 'role', 'ROLE_SUPER_ADMIN');
-        $username = $this->getOrAskIfNotSetted($input, $output, 'username', null, allowEmpty: true);
+        $email = $this->getOrAskIfNotSetted($input, $output, 'email', currentValue: $email);
+        $password = $this->getOrAskIfNotSetted($input, $output, 'password', currentValue: $password);
+        $role = $this->getOrAskIfNotSetted($input, $output, 'role', 'ROLE_SUPER_ADMIN', currentValue: $role);
+        $username = $this->getOrAskIfNotSetted($input, $output, 'username', null, allowEmpty: true, currentValue: $username);
 
         $user = $this->createUser($email, $password, $role, $username ?: null);
 

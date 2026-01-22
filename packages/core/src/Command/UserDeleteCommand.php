@@ -27,7 +27,7 @@ final readonly class UserDeleteCommand
         InputInterface $input,
         OutputInterface $output
     ): int {
-        $email = $this->getOrAskIfNotSetted($input, $output, 'email');
+        $email = $this->getOrAskIfNotSetted($input, $output, 'email', currentValue: $email);
 
         $user = $this->userRepo->findOneBy(['email' => $email]);
         if (null === $user) {

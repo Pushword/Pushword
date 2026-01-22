@@ -16,3 +16,4 @@ users:
     email: admin@example.tld
     roles: [ROLE_SUPER_ADMIN]
     locale: en
+    username: Admin
