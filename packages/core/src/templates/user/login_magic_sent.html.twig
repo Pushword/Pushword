@@ -1,0 +1,15 @@
+{% extends view('/user/layout.html.twig') %}
+
+{% block title %}{{ 'magicLinkSentTitle'|trans }}{% endblock %}
+
+{% block main_content %}
+<div class="mt-8 text-center space-y-4">
+    <div class="p-5 bg-green-100 text-green-800 rounded">
+        {{ 'magicLinkSentMessage'|trans({'%email%': email}) }}
+    </div>
+    <p class="text-gray-600">{{ 'magicLinkCheckSpam'|trans }}</p>
+    <a href="{{ path('pushword_login') }}" class="inline-block text-primary hover:underline">
+        {{ 'backToLogin'|trans }}
+    </a>
+</div>
+{% endblock %}

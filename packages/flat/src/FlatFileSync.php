@@ -9,6 +9,7 @@ use Pushword\Flat\Event\FlatSyncCompletedEvent;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 use Pushword\Flat\Sync\MediaSync;
 use Pushword\Flat\Sync\PageSync;
+use Pushword\Flat\Sync\UserSync;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -23,6 +24,7 @@ final class FlatFileSync
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly AppPool $apps,
         private readonly ?ConversationSyncInterface $conversationSync = null,
+        private readonly ?UserSync $userSync = null,
     ) {
     }
 
@@ -30,6 +32,7 @@ final class FlatFileSync
     {
         $this->mediaSync->setOutput($output);
         $this->pageSync->setOutput($output);
+        $this->userSync?->setOutput($output);
     }
 
     public function setStopwatch(Stopwatch $stopwatch): void
@@ -59,6 +62,12 @@ final class FlatFileSync
             $this->stopwatch?->stop('conversation.sync');
         }
 
+        if (\in_array($entity, ['user', 'all'], true) && null !== $this->userSync) {
+            $this->stopwatch?->start('user.sync');
+            $this->userSync->import();
+            $this->stopwatch?->stop('user.sync');
+        }
+
         $this->dispatchEvent($host);
     }
 
@@ -80,6 +89,12 @@ final class FlatFileSync
             $this->stopwatch?->start('conversation.sync');
             $this->conversationSync->import($host);
             $this->stopwatch?->stop('conversation.sync');
+        }
+
+        if (\in_array($entity, ['user', 'all'], true) && null !== $this->userSync) {
+            $this->stopwatch?->start('user.sync');
+            $this->userSync->import();
+            $this->stopwatch?->stop('user.sync');
         }
 
         $this->dispatchEvent($host);

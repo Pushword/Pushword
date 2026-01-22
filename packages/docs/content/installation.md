@@ -70,6 +70,7 @@ composer req pushword/conversation
 
 ## Next
 
+- Configure [authentication](/authentication) (OAuth with Google/Microsoft, magic links, user management)
 - Configure the [colors and display](/themes) (also see [automatic tailwind run after page update](/manage-assets)).
 - Supercharge Pushword with [extensions](/extensions) or **custom development**
 

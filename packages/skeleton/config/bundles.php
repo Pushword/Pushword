@@ -4,6 +4,7 @@ use BabDev\PagerfantaBundle\BabDevPagerfantaBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle;
 use EasyCorp\Bundle\EasyAdminBundle\EasyAdminBundle;
+use KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle;
 use League\FlysystemBundle\FlysystemBundle;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle;
@@ -32,6 +33,7 @@ use Vich\UploaderBundle\VichUploaderBundle;
  * Used for test.
  */
 return [
+    KnpUOAuth2ClientBundle::class => ['all' => true],
     PushwordCoreBundle::class => ['all' => true],
     PushwordAdminBundle::class => ['all' => true],
     PushwordPageUpdateNotifierBundle::class => ['all' => true],

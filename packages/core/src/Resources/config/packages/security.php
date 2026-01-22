@@ -3,6 +3,7 @@
 use Pushword\Admin\Controller\MediaCrudController;
 use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Core\Security\LoginFormAuthenticator;
+use Pushword\Core\Security\OAuthAuthenticator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -49,7 +50,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                 'http_basic' => [
                     'realm' => 'Secured Area',
                 ],
-                'custom_authenticator' => LoginFormAuthenticator::class,
+                'custom_authenticators' => [
+                    LoginFormAuthenticator::class,
+                    OAuthAuthenticator::class,
+                ],
                 'entry_point' => LoginFormAuthenticator::class,
                 'logout' => [
                     'path' => 'pushword_logout',

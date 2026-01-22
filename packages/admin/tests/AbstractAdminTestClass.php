@@ -51,11 +51,18 @@ abstract class AbstractAdminTestClass extends PantherTestCase
 
         self::createUser();
 
+        // Step 1: Enter email
         $crawler = $client->request(Request::METHOD_GET, '/login');
         $form = $crawler->filter('[method=post]')->form();
         $form['email'] = 'admin@example.tld';
+        $client->submit($form);
+
+        // Step 2: Enter password
+        $crawler = $client->followRedirect();
+        $form = $crawler->filter('[method=post]')->form();
+        $form['email'] = 'admin@example.tld';
         $form['password'] = 'mySecr3tpAssword';
-        $crawler = $client->submit($form);
+        $client->submit($form);
 
         return $client;
     }
