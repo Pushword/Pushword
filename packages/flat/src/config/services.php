@@ -17,7 +17,6 @@ use Pushword\Flat\Sync\ConflictResolver;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 use Pushword\Flat\Sync\SyncStateManager;
 use Pushword\Flat\Twig\FlatLockExtension;
-use Symfony\Component\Mailer\MailerInterface;
 
 return static function (ContainerConfigurator $container): void {
     $services = $container->services()
@@ -83,8 +82,8 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$conversationSync', service(ConversationSyncInterface::class)->nullOnInvalid());
 
     // AdminNotificationService - for persistent notifications and email alerts
+    // Uses NotificationEmailSender (autowired), with flat-specific config passed via DI
     $services->set(AdminNotificationService::class)
-        ->arg('$mailer', service(MailerInterface::class)->nullOnInvalid())
         ->arg('$emailRecipients', '%pw.pushword_flat.notification_email_recipients%')
         ->arg('$emailFrom', '%pw.pushword_flat.notification_email_from%');
 

@@ -6,28 +6,34 @@ namespace Pushword\Flat\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Pushword\Core\Service\Email\EmailEnvelope;
+use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Flat\Entity\AdminNotification;
 use Pushword\Flat\Repository\AdminNotificationRepository;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
-use Throwable;
-use Twig\Environment;
 
 /**
  * Service for managing admin notifications and sending email alerts.
  */
 final readonly class AdminNotificationService
 {
+    private EmailEnvelope $envelope;
+
+    /**
+     * @param string[] $emailRecipients
+     */
     public function __construct(
         private EntityManagerInterface $em,
         private AdminNotificationRepository $repository,
-        private ?MailerInterface $mailer,
-        private ?Environment $twig,
+        private NotificationEmailSender $emailSender,
         private ?LoggerInterface $logger,
-        /** @var string[] */
-        private array $emailRecipients = [],
-        private ?string $emailFrom = null,
+        array $emailRecipients = [],
+        ?string $emailFrom = null,
     ) {
+        // Build envelope from flat-specific config (passed via DI)
+        $this->envelope = new EmailEnvelope(
+            $emailFrom ?? '',
+            $emailRecipients,
+        );
     }
 
     /**
@@ -159,48 +165,31 @@ final readonly class AdminNotificationService
 
     private function sendEmailNotification(AdminNotification $notification): void
     {
-        if (null === $this->mailer || [] === $this->emailRecipients || null === $this->emailFrom) {
-            $this->logger?->debug('[AdminNotificationService] Email not configured, skipping notification email');
+        if (! $this->emailSender->canSend($this->envelope)) {
+            $this->logger?->debug('[AdminNotificationService] Email not configured, skipping');
 
             return;
         }
 
-        try {
-            $subject = \sprintf('[Pushword] %s Alert', ucfirst($notification->type));
-            $body = $this->renderEmailBody($notification);
+        $subject = \sprintf('[Pushword] %s Alert', ucfirst($notification->type));
 
-            $email = new Email()
-                ->from($this->emailFrom)
-                ->to(...$this->emailRecipients)
-                ->subject($subject)
-                ->html($body);
+        $sent = $this->emailSender->sendWithRenderedHtml(
+            $this->envelope,
+            $subject,
+            '@pwFlat/email/admin_notification.html.twig',
+            ['notification' => $notification],
+            $this->renderFallbackBody($notification),
+        );
 
-            $this->mailer->send($email);
-
+        if ($sent) {
             $this->logger?->info('[AdminNotificationService] Email notification sent', [
                 'type' => $notification->type,
-                'recipients' => $this->emailRecipients,
-            ]);
-        } catch (Throwable $throwable) {
-            $this->logger?->error('[AdminNotificationService] Failed to send email', [
-                'error' => $throwable->getMessage(),
             ]);
         }
     }
 
-    private function renderEmailBody(AdminNotification $notification): string
+    private function renderFallbackBody(AdminNotification $notification): string
     {
-        if (null !== $this->twig) {
-            try {
-                return $this->twig->render('@pwFlat/email/admin_notification.html.twig', [
-                    'notification' => $notification,
-                ]);
-            } catch (Throwable) {
-                // Fall back to simple HTML if template is not available
-            }
-        }
-
-        // Simple fallback HTML
         return \sprintf(
             '<html><body><h2>%s Alert</h2><p>%s</p><p><small>Host: %s | Date: %s</small></p></body></html>',
             ucfirst($notification->type),

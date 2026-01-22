@@ -10,6 +10,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\PageUpdateNotifier\NotificationStatus;
 use Pushword\PageUpdateNotifier\PageUpdateNotifier;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -29,14 +30,19 @@ class PageUpdateNotifierTest extends KernelTestCase
         $translator = self::getContainer()->get('translator');
         $twig = self::getContainer()->get('twig');
         $mailer = new Mailer($this->getTransporter());
+        $emailSender = new NotificationEmailSender(
+            $mailer,
+            $apps,
+            $twig,
+            null,
+        );
 
         return new PageUpdateNotifier(
-            $mailer,
+            $emailSender,
             $apps,
             sys_get_temp_dir(),
             $entityManager,
             $translator,
-            $twig,
         );
     }
 

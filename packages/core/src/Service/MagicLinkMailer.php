@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -7,15 +9,14 @@ use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\LoginTokenRepository;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\Mailer\MailerInterface;
+use Pushword\Core\Service\Email\NotificationEmailSender;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class MagicLinkMailer
 {
     public function __construct(
-        private MailerInterface $mailer,
+        private NotificationEmailSender $emailSender,
         private EntityManagerInterface $em,
         private LoginTokenRepository $tokenRepo,
         private UrlGeneratorInterface $urlGenerator,
@@ -50,32 +51,32 @@ final readonly class MagicLinkMailer
         $loginUrl = $this->urlGenerator->generate(
             'pushword_login_magic',
             ['token' => $loginUrlToken],
-            UrlGeneratorInterface::ABSOLUTE_URL
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
         $setPasswordUrl = $this->urlGenerator->generate(
             'pushword_login_set_password',
             ['token' => $setPasswordUrlToken],
-            UrlGeneratorInterface::ABSOLUTE_URL
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
         $appName = $this->apps->get()->getStr('name') ?: $this->apps->get()->getMainHost();
-        $emailFrom = $this->apps->get()->getStr('conversation_notification_email_from')
-            ?: 'noreply@'.$this->apps->get()->getMainHost();
 
-        $email = new TemplatedEmail()
-            ->from($emailFrom)
-            ->to($user->email)
-            ->subject($this->translator->trans('magicLinkEmailSubject', ['%appName%' => $appName]))
-            ->htmlTemplate('@Pushword/user/email/magic_link.html.twig')
-            ->context([
+        $envelope = $this->emailSender->resolveEnvelope(
+            toConfigKey: [$user->email],
+        );
+
+        $this->emailSender->sendTemplated(
+            $envelope,
+            $this->translator->trans('magicLinkEmailSubject', ['%appName%' => $appName]),
+            '@Pushword/user/email/magic_link.html.twig',
+            [
                 'user' => $user,
                 'loginUrl' => $loginUrl,
                 'setPasswordUrl' => $setPasswordUrl,
                 'appName' => $appName,
                 'expiresInMinutes' => LoginToken::TTL_SECONDS / 60,
-            ]);
-
-        $this->mailer->send($email);
+            ],
+        );
     }
 }

@@ -40,6 +40,8 @@ final class Configuration implements ConfigurationInterface
         'assets',
         'custom_properties',
         'svg_dir',
+        'notification_email_from',
+        'notification_email_to',
     ];
 
     /**
@@ -216,6 +218,16 @@ final class Configuration implements ConfigurationInterface
                 '%vendor_dir%/fortawesome/font-awesome/svgs/brands',
                 '%kernel.project_dir%/public/bundles/pushwordcore',
             ])->cannotBeEmpty()->end()
+
+            // Email notification defaults
+            ->scalarNode('notification_email_from')
+                ->defaultNull()
+                ->info('Global default sender email for all notification services. Package-specific keys override this.')
+                ->end()
+            ->variableNode('notification_email_to')
+                ->defaultNull()
+                ->info('Global default recipient email(s) for notifications. Can be string or array. Package-specific keys override this.')
+                ->end()
 
         ->end();
 

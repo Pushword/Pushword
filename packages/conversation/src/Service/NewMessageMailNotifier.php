@@ -9,12 +9,12 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Service\Email\EmailEnvelope;
+use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Core\Utils\LastTime;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -23,9 +23,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => Message::class, 'event' => 'postUpdate'])]
 class NewMessageMailNotifier
 {
-    private readonly string $emailTo;
-
-    private readonly string $emailFrom;
+    private readonly EmailEnvelope $envelope;
 
     private readonly string $appName;
 
@@ -34,7 +32,7 @@ class NewMessageMailNotifier
     private readonly string $host;
 
     public function __construct(
-        private readonly MailerInterface $mailer,
+        private readonly NotificationEmailSender $emailSender,
         private readonly AppPool $apps,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
@@ -45,8 +43,10 @@ class NewMessageMailNotifier
         private readonly CacheInterface $cache,
         private readonly ImportContext $importContext,
     ) {
-        $this->emailTo = $this->apps->get()->getStr('conversation_notification_email_to');
-        $this->emailFrom = $this->apps->get()->getStr('conversation_notification_email_from');
+        $this->envelope = $this->emailSender->resolveEnvelope(
+            'conversation_notification_email_from',
+            'conversation_notification_email_to',
+        );
         $this->interval = $this->apps->get()->getStr('conversation_notification_interval');
         $this->appName = $this->apps->get()->getStr('name');
         $this->host = $this->apps->get()->getMainHost();
@@ -102,8 +102,8 @@ class NewMessageMailNotifier
 
     public function sendMessage(Message $message): void
     {
-        if ('' === $this->emailTo || '' === $this->emailFrom) {
-            $this->logger->info('Not sending conversation notification : missing `conversation_notification_email_from` or `conversation_notification_email_to`.');
+        if (! $this->emailSender->canSend($this->envelope)) {
+            $this->logger->info('Not sending conversation notification: email not configured');
 
             return;
         }
@@ -116,25 +116,20 @@ class NewMessageMailNotifier
         $this->cache->get($cacheKey, function (ItemInterface $item) use ($message, $authorEmail, $subject): bool {
             $item->expiresAfter(600); // 10 minutes
 
-            $templatedEmail = new TemplatedEmail()
-                ->subject($subject)
-                ->from($this->emailFrom)
-                ->to($this->emailTo)
-                ->replyTo($authorEmail)
-                ->text(
-                    htmlspecialchars_decode($message->getContent())
-                    ."\n\n---\n"
-                    .$this->translator->trans('adminConversationNotificationSentBy', [
-                        '%authorName%' => $message->getAuthorName() ?? '...',
-                        '%authorEmail%' => $message->getAuthorEmail(),
-                    ])
-                    ."\n".$this->translator->trans('adminConversationNotificationFrom', [
-                        '%host%' => $message->host,
-                        '%referring%' => $message->getReferring(),
-                    ])
-                );
+            $envelopeWithReply = $this->envelope->withReplyTo($authorEmail);
 
-            $this->mailer->send($templatedEmail);
+            $textBody = htmlspecialchars_decode($message->getContent())
+                ."\n\n---\n"
+                .$this->translator->trans('adminConversationNotificationSentBy', [
+                    '%authorName%' => $message->getAuthorName() ?? '...',
+                    '%authorEmail%' => $message->getAuthorEmail(),
+                ])
+                ."\n".$this->translator->trans('adminConversationNotificationFrom', [
+                    '%host%' => $message->host,
+                    '%referring%' => $message->getReferring(),
+                ]);
+
+            $this->emailSender->send($envelopeWithReply, $subject, nl2br($textBody), $textBody);
 
             return true;
         });
@@ -142,15 +137,15 @@ class NewMessageMailNotifier
 
     public function send(): void
     {
-        if ('' === $this->emailTo) {
-            $this->logger->info('Not sending conversation notification : `conversation_notification_email_to` is not configured.');
+        if (! $this->emailSender->canSend($this->envelope)) {
+            $this->logger->info('Not sending conversation notification: email not configured');
 
             return;
         }
 
         $lastTime = new LastTime($this->projectDir.'/var/lastNewMessageNotification');
         if ($lastTime->wasRunSince(new DateInterval($this->interval))) {
-            $this->logger->info('Not sending conversation notification : a previous notification was send not a long time ago ('.$this->interval.', see `conversation_notification_interval`).');
+            $this->logger->info('Not sending conversation notification: a previous notification was sent recently ('.$this->interval.', see `conversation_notification_interval`).');
 
             return;
         }
@@ -159,27 +154,28 @@ class NewMessageMailNotifier
 
         $messages = $this->getMessagesPostedSince($since);
         if ([] === $messages) {
-            $this->logger->info('Not sending conversation notification : nothing to notify.');
+            $this->logger->info('Not sending conversation notification: nothing to notify.');
 
             return;
         }
 
-        $templatedEmail = new TemplatedEmail()
-            ->subject(
-                $this->translator->trans(
-                    \count($messages) > 1 ? 'adminConversationNotificationTitlePlural' : 'adminConversationNotificationTitleSingular',
-                    ['%appName%' => $this->appName]
-                )
-            )
-            ->from($this->emailFrom)
-            ->to($this->emailTo)
-            ->htmlTemplate('@PushwordConversation/conversation/notification.html.twig')
-            ->context([
+        $subject = $this->translator->trans(
+            \count($messages) > 1 ? 'adminConversationNotificationTitlePlural' : 'adminConversationNotificationTitleSingular',
+            ['%appName%' => $this->appName],
+        );
+
+        $sent = $this->emailSender->sendTemplated(
+            $this->envelope,
+            $subject,
+            '@PushwordConversation/conversation/notification.html.twig',
+            [
                 'appName' => $this->appName,
                 'messages' => $messages,
-            ]);
+            ],
+        );
 
-        $lastTime->set();
-        $this->mailer->send($templatedEmail);
+        if ($sent) {
+            $lastTime->set();
+        }
     }
 }

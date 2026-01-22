@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\PageUpdateNotifier;
 
 use DateInterval;
@@ -11,20 +13,17 @@ use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\Email\EmailEnvelope;
+use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Core\Utils\LastTime;
 
 use function Safe\mkdir;
 
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Twig\Environment as Twig;
 
 class PageUpdateNotifier
 {
-    private string $emailTo = '';
-
-    private string $emailFrom = '';
+    private EmailEnvelope $envelope;
 
     private string $appName = '';
 
@@ -33,12 +32,11 @@ class PageUpdateNotifier
     private AppConfig $app;
 
     public function __construct(
-        private readonly MailerInterface $mailer,
+        private readonly NotificationEmailSender $emailSender,
         private readonly AppPool $apps,
         private readonly string $varDir,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
-        private readonly Twig $twig,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -81,8 +79,11 @@ class PageUpdateNotifier
     protected function init(Page $page): void
     {
         $this->app = $this->apps->get($page->host);
-        $this->emailFrom = $this->app->getStr('page_update_notification_from');
-        $this->emailTo = $this->app->getStr('page_update_notification_to');
+        $this->envelope = $this->emailSender->resolveEnvelope(
+            'page_update_notification_from',
+            'page_update_notification_to',
+            $page->host,
+        );
         $this->interval = $this->app->getStr('page_update_notification_interval');
         $this->appName = $this->app->getStr('name');
     }
@@ -91,16 +92,12 @@ class PageUpdateNotifier
     {
         $this->init($page);
 
-        if ('' === $this->emailTo) {
-            throw new Exception('`page_update_notification_from` must be set to use this extension.', NotificationStatus::ErrorNoEmail->value);
-        }
-
-        if ('' === $this->emailFrom) {
-            throw new Exception('`page_update_notification_to` must be set to use this extension.', NotificationStatus::ErrorNoEmail->value);
+        if (! $this->emailSender->canSend($this->envelope)) {
+            throw new Exception('`page_update_notification_from` and `page_update_notification_to` (or global defaults) must be set.', NotificationStatus::ErrorNoEmail->value);
         }
 
         if ('' === $this->interval) {
-            throw new Exception('`page_update_notification_interval` must be set to use this extension.', NotificationStatus::ErrorNoInterval->value);
+            throw new Exception('`page_update_notification_interval` must be set.', NotificationStatus::ErrorNoInterval->value);
         }
     }
 
@@ -116,7 +113,7 @@ class PageUpdateNotifier
 
     public function getCacheFilePath(): string
     {
-        return $this->getCacheDir().'/lastPageUpdateNotification'; // .md5($this->app->getMainHost())
+        return $this->getCacheDir().'/lastPageUpdateNotification';
     }
 
     public function run(Page $page): NotificationStatus|string
@@ -136,31 +133,28 @@ class PageUpdateNotifier
         }
 
         $pages = $this->getPageUpdatedSince($lastTime30min);
-        // dd($pages);
         if ([] === $pages) {
             $this->logger?->info('[PageUpdateNotifier] Nothing to notify');
 
             return NotificationStatus::NothingToNotify;
         }
 
-        $message = new Email()
-            ->subject(
-                $this->translator->trans('adminPageUpdateNotificationTitle', ['%appName%' => $this->appName])
-            )
-            ->from($this->emailFrom)
-            ->to($this->emailTo)
-            ->html(
-                $this->twig->render(
-                    '@pwPageUpdateNotification/pageUpdateMailNotification.html.twig',
-                    ['appName' => $this->appName,                'pages' => $pages]
-                )
-            );
+        $subject = $this->translator->trans('adminPageUpdateNotificationTitle', ['%appName%' => $this->appName]);
 
-        $lastTime->set();
-        $this->mailer->send($message);
+        $sent = $this->emailSender->sendWithRenderedHtml(
+            $this->envelope,
+            $subject,
+            '@pwPageUpdateNotification/pageUpdateMailNotification.html.twig',
+            ['appName' => $this->appName, 'pages' => $pages],
+        );
 
-        $this->logger?->info('[PageUpdateNotifier] Notification sent for '.\count($pages).' page(s)');
+        if ($sent) {
+            $lastTime->set();
+            $this->logger?->info('[PageUpdateNotifier] Notification sent for '.\count($pages).' page(s)');
 
-        return 'Notification sent';
+            return 'Notification sent';
+        }
+
+        return NotificationStatus::ErrorNoEmail;
     }
 }

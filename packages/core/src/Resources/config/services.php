@@ -8,6 +8,7 @@ use Pushword\Core\Component\EntityFilter\FilterRegistry;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Pushword\Core\Twig\MediaExtension;
@@ -18,6 +19,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
 
+use Symfony\Component\Mailer\MailerInterface;
 use Twig\Extension\StringLoaderExtension;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -89,4 +91,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             '$mediaDir' => '%pw.media_dir%',
             '$isLocal' => true,
         ]);
+
+    // Notification Email Sender - unified service for all notification emails
+    $services->set(NotificationEmailSender::class)
+        ->arg('$mailer', service(MailerInterface::class)->nullOnInvalid())
+        ->public();
 };
