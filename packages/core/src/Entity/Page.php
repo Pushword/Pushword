@@ -35,6 +35,7 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 #[UniqueEntity(fields: ['host', 'slug'], message: 'pageSlugAlreadyUsed', errorPath: 'slug')]
 #[ORM\Entity(repositoryClass: PageRepository::class)]
 #[ORM\Table(name: 'page')]
+#[ORM\UniqueConstraint(name: 'unique_slug_host', columns: ['slug', 'host'])]
 class Page implements IdInterface, Taggable, Stringable, Weightable
 {
     use IdTrait;

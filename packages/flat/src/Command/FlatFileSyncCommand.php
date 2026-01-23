@@ -56,6 +56,9 @@ final readonly class FlatFileSyncCommand
         #[Option(description: 'Disable automatic database backup before import', name: 'no-backup')]
         bool $noBackup = false,
     ): int {
+        // Normalize entity to lowercase to avoid case-sensitivity issues
+        $entity = strtolower($entity);
+
         // Check for webhook lock - blocks sync during external editing workflow
         if ($this->lockManager->isWebhookLocked($host)) {
             $lockInfo = $this->lockManager->getLockInfo($host);

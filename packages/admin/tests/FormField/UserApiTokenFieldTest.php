@@ -23,8 +23,8 @@ final class UserApiTokenFieldTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->formFieldManager = $this->createStub(AdminFormFieldManager::class);
-        $this->admin = $this->createStub(AdminInterface::class);
+        $this->formFieldManager = self::createStub(AdminFormFieldManager::class);
+        $this->admin = self::createStub(AdminInterface::class);
     }
 
     private function createField(): UserApiTokenField

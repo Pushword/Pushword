@@ -35,7 +35,7 @@ final class ApiTokenTypeTest extends TestCase
         $view = new FormView();
         $view->vars['attr'] = [];
 
-        $form = $this->createStub(FormInterface::class);
+        $form = self::createStub(FormInterface::class);
 
         $options = [
             'placeholder' => 'Enter token...',
@@ -61,7 +61,7 @@ final class ApiTokenTypeTest extends TestCase
             'data-custom' => 'value',
         ];
 
-        $form = $this->createStub(FormInterface::class);
+        $form = self::createStub(FormInterface::class);
 
         $options = [
             'placeholder' => '',

@@ -115,6 +115,16 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
     {
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
+        // Remove existing page with same slug/host if exists
+        $existingPage = $em->getRepository(Page::class)->findOneBy([
+            'slug' => 'kitchen-sink',
+            'host' => 'admin-block-editor.test',
+        ]);
+        if (null !== $existingPage) {
+            $em->remove($existingPage);
+            $em->flush();
+        }
+
         $jsonContent = file_get_contents(__DIR__.'/content/KitchenSink.json');
 
         $page = new Page();
