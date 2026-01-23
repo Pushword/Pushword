@@ -1,6 +1,7 @@
 # Markdown Cheatsheet
 #---
 'Page List': 'Liste des pages'
+admin.planified: Planifié
 adminAction: Action
 adminDetails: Details
 adminDraft: Brouillon
@@ -99,6 +100,7 @@ adminPageRedirectionFrom: De
 adminPageRedirectionTo: Vers
 adminPageRelatedPageLabel: 'Pages Associées'
 adminPageRevisions: Révisions
+adminSchedule: Planifier
 adminPageSearchExcreptHelp: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) - <span id="descWidth"></span></small>'
 adminPageSearchExcreptLabel: 'Courte Description'
 adminPageSearchLabel: Search
@@ -186,4 +188,6 @@ md_csParagraph: 'Paragraphe et saut de ligne'
 md_csQuote: Citation
 md_csRedirection: Redirection
 md_csTitle: 'Titre et sous-titre'
+mainContent: 'Contenu principal'
 md_csVideo: Vidéo
+skipToMainContent: 'Aller au contenu principal'

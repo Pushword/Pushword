@@ -1,5 +1,5 @@
 <div class="pw-draft-toggle d-flex align-items-center gap-2">
-  <label class="form-check form-switch mb-0">
+  <label class="form-check form-switch mb-0" id="pw-draft-toggle-wrapper">
     <input
       type="checkbox"
       class="form-check-input"
@@ -10,6 +10,9 @@
   <small class="text-muted mb-0" id="pw-draft-toggle-status">
     —
   </small>
+  <button type="button" class="btn btn-sm btn-outline-secondary px-1" id="pw-schedule-btn" title="{{ 'adminSchedule'|trans }}">
+    <i class="fa fa-clock"></i>
+  </button>
 </div>
 
 <script>
@@ -17,8 +20,10 @@
   'use strict';
 
   const toggleSwitch = document.getElementById('pw-draft-toggle-switch');
+  const toggleWrapper = document.getElementById('pw-draft-toggle-wrapper');
   const targetInputSelector = toggleSwitch?.getAttribute('data-target-input');
   const targetInput = targetInputSelector ? document.getElementById(targetInputSelector) : null;
+  const scheduleBtn = document.getElementById('pw-schedule-btn');
 
   if (!toggleSwitch || !targetInput) {
     return;
@@ -39,47 +44,56 @@
   }
 
   /**
-   * Update toggle state based on input value
+   * Update toggle color class based on scheduled vs published
    */
+  function updateToggleColor() {
+    if (!toggleWrapper) return;
+
+    toggleWrapper.classList.remove('pw-published-online', 'pw-scheduled');
+
+    if (!toggleSwitch.checked) return;
+
+    const date = new Date(targetInput.value);
+    const now = new Date();
+    if (date > now) {
+      toggleWrapper.classList.add('pw-scheduled');
+    } else {
+      toggleWrapper.classList.add('pw-published-online');
+    }
+  }
+
   function updateToggleState() {
-    const hasValue = targetInput.value && targetInput.value.trim() !== '';
+    const hasValue = targetInput.value.trim() !== '';
     toggleSwitch.checked = hasValue;
 
     if (statusText) {
-      if (hasValue) {
-        try {
-          const date = new Date(targetInput.value);
-          statusText.textContent = date.toLocaleString('fr-FR', {
+      statusText.textContent = hasValue
+        ? new Date(targetInput.value).toLocaleString('fr-FR', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit'
-          });
-        } catch (e) {
-          statusText.textContent = targetInput.value;
-        }
-      } else {
-        statusText.textContent = '—';
-      }
+          })
+        : '—';
     }
+
+    updateToggleColor();
   }
 
-  /**
-   * Handle toggle change
-   */
   function handleToggleChange() {
-    if (toggleSwitch.checked) {
-      // Set to now
-      const now = new Date();
-      targetInput.value = formatDateTimeLocal(now);
-    } else {
-      // Clear value
-      targetInput.value = '';
-    }
+    targetInput.value = toggleSwitch.checked ? formatDateTimeLocal(new Date()) : '';
     updateToggleState();
+    targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+  }
 
-    // Trigger change event on target input for form validation
+  function handleScheduleClick() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
+    targetInput.value = formatDateTimeLocal(tomorrow);
+    updateToggleState();
+    targetInput.focus();
     targetInput.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
@@ -88,6 +102,11 @@
 
   // Listen to toggle changes
   toggleSwitch.addEventListener('change', handleToggleChange);
+
+  // Listen to schedule button
+  if (scheduleBtn) {
+    scheduleBtn.addEventListener('click', handleScheduleClick);
+  }
 
   // Listen to target input changes (in case user manually changes the datetime)
   targetInput.addEventListener('change', updateToggleState);

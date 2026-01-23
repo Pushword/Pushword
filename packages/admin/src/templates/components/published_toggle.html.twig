@@ -8,6 +8,14 @@
 {% else %}
     {% set publishedAt = value ?? field.value ?? entityInstance.publishedAt %}
     {% set isPublished = publishedAt is not null %}
+    {% set isScheduled = isPublished and publishedAt > date() %}
+    {% if isScheduled %}
+        {% set toggleClass = 'pw-scheduled' %}
+    {% elseif isPublished %}
+        {% set toggleClass = 'pw-published-online' %}
+    {% else %}
+        {% set toggleClass = '' %}
+    {% endif %}
     {% set entityId = entityInstance.id %}
     {% if entityInstance.slug is defined and entityInstance.slug is not null and entityInstance.slug != '' %}
         {% set entityType = 'page' %}
@@ -20,7 +28,7 @@
     {% set tokenId = entityType ~ '_toggle_published_' ~ entityId %}
     {% set token = csrf_token(tokenId) %}
 
-    <div id="{{ target }}" class="pw-published d-flex align-items-center gap-2">
+    <div id="{{ target }}" class="pw-published d-flex align-items-center gap-2 {{ toggleClass }}">
         <label class="form-check form-switch mb-0">
             <input
                 type="checkbox"

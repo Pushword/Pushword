@@ -1,6 +1,7 @@
 # Markdown Cheatsheet
 #---
 "Page List": "Page List"
+admin.planified: Scheduled
 adminAction: Action
 adminDetails: Details
 adminDraft: Draft
@@ -100,6 +101,7 @@ adminPageRedirectionFrom: From
 adminPageRedirectionTo: To
 adminPageRelatedPageLabel: "Associated Pages"
 adminPageRevisions: Revisions
+adminSchedule: Schedule
 adminPageSearchExcreptHelp: '<small>Visible from search engine results pages (meta description) - <span id="descWidth"></span></small>'
 adminPageSearchExcreptLabel: "Short Description"
 adminPageSearchLabel: Search
@@ -185,4 +187,6 @@ md_csParagraph: Paragraph
 md_csQuote: Quote
 md_csRedirection: Redirection
 md_csTitle: "Title and subtitle"
+mainContent: "Main content"
 md_csVideo: Video
+skipToMainContent: "Skip to main content"

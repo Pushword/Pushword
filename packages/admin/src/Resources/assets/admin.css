@@ -29,6 +29,10 @@
   --button-primary-hover-bg: linear-gradient(180deg, var(--sky-600), var(--sky-700));
   --button-primary-active-bg: linear-gradient(180deg, var(--sky-500), var(--sky-400));
   --resize-handler-hover-bg: var(--sky-600);
+  /* Accessibility: Focus styles */
+  --focus-ring-color: var(--sky-600);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
 }
 
 .btn-outline-secondary,
@@ -80,7 +84,7 @@
   overflow-y: auto;
   position: absolute;
   background-color: #fff;
-  border: 1px solid #e8e8eb;
+  border: 1px solid #9ca3af; /* gray-400 for WCAG AA contrast */
   width: 100%;
   z-index: 3;
   border-radius: 3px;
@@ -91,7 +95,7 @@
     padding: 5px;
     overflow: hidden;
     white-space: nowrap;
-    border-bottom: 1px solid #e8e8eb;
+    border-bottom: 1px solid #d1d5db; /* gray-300 */
   }
   div:last-child {
     border-bottom: 0;
@@ -99,11 +103,13 @@
 
   div.select {
     /* keydown, keyup */
-    background-color: rgba(34, 186, 255, 0.08);
+    background-color: #dbeafe; /* blue-100 for better visibility */
+    outline: 2px solid var(--focus-ring-color, #0284c7);
+    outline-offset: -2px;
   }
   div.over {
     /* mouse over */
-    background-color: #eff2f5;
+    background-color: #f3f4f6; /* gray-100 */
   }
 }
 
@@ -145,6 +151,107 @@ body.pw-inline-window .content {
 
 body.pw-inline-window .wrapper {
   --sidebar-max-width: 0;
+}
+
+/* Published toggle colors */
+.pw-published-online .form-check-input:checked {
+  background-color: #22c55e;
+  border-color: #16a34a;
+}
+.pw-scheduled .form-check-input:checked {
+  background-color: #f59e0b;
+  border-color: #d97706;
+}
+
+/* ============================================
+   Accessibility: Focus Management (WCAG 2.4.7)
+   ============================================ */
+
+/* Global focus-visible styles for all interactive elements */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[role="option"]:focus-visible,
+[tabindex]:focus-visible:not([tabindex="-1"]) {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Remove default outline to prevent double outlines */
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================
+   Accessibility: Reduced Motion (WCAG 2.3.3)
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   Accessibility: Color Contrast Fixes
+   ============================================ */
+
+/* Fix placeholder contrast (WCAG 1.4.3 - min 4.5:1) */
+::placeholder {
+  color: #6b7280; /* gray-500 - passes AA on white */
+  opacity: 1;
+}
+
+/* ============================================
+   Accessibility: Screen Reader Utilities
+   ============================================ */
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================
+   Accessibility: Skip Link (WCAG 2.4.1)
+   ============================================ */
+
+.pw-skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: 8px 16px;
+  z-index: 10000;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 0 0 4px 0;
+}
+
+.pw-skip-link:focus {
+  top: 0;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* purgecss end ignore */
