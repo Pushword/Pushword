@@ -13,6 +13,31 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 ## To 1.0.0-rcXXX
 
+### Media Entity Methods Moved to Utility Class (Breaking)
+
+The following protected methods have been removed from the `Media` entity and moved to a new `MediaFileName` utility class:
+
+- `extractExtension()`
+- `slugifyPreservingExtension()`
+
+**If you have a custom Media subclass** that calls or overrides these methods:
+
+**Before:**
+
+```php
+$extension = $this->extractExtension($filename);
+$slugified = $this->slugifyPreservingExtension($filename, $extension);
+```
+
+**After:**
+
+```php
+use Pushword\Core\Utils\MediaFileName;
+
+$extension = MediaFileName::extractExtension($filename);
+$slugified = MediaFileName::slugifyPreservingExtension($filename, $extension);
+```
+
 ### Dimensions Value Object (Breaking)
 
 `Media::getDimensions()` and the `image_dimensions()` Twig function now return a `Dimensions` object instead of an array.

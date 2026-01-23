@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Entity;
 
-use Cocur\Slugify\Slugify;
 use DateTime;
 use Deprecated;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -20,6 +19,7 @@ use Pushword\Core\Entity\SharedTrait\TagsTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Utils\Filepath;
+use Pushword\Core\Utils\MediaFileName;
 use Pushword\Core\Utils\SafeMediaMimeType;
 use Pushword\Core\Utils\SearchNormalizer;
 
@@ -107,52 +107,6 @@ class Media implements IdInterface, Taggable, Stringable
         return $this;
     }
 
-    protected function extractExtension(string $string): string
-    {
-        if (! str_contains($string, '.')) {
-            return '';
-        }
-
-        if (0 === preg_match('#.*(\.[^.\s]{3,4})$#', $string)) {
-            return '';
-        }
-
-        return preg_replace('/.*(\\.[^.\\s]{3,4})$/', '$1', $string) ?? throw new Exception();
-    }
-
-    private function extractExtensionFromFile(): string
-    {
-        $mediaFile = $this->getMediaFile();
-
-        if (null === $mediaFile) {
-            throw new Exception();
-        }
-
-        $extension = $mediaFile->guessExtension(); // From MimeType
-
-        if (null === $extension || '' === $extension) {
-            $extension = $this->extractExtension($this->getMediaFileName());
-        } else {
-            $extension = '.'.$extension;
-        }
-
-        return $this->fixExtension($extension);
-    }
-
-    /**
-     * Because for some format, the mime type extension is not the best.
-     */
-    private function fixExtension(string $extension): string
-    {
-        // Todo : when using guessExtension, it's using safe mymetype and returning gpx as txt
-
-        if ('.gpx' !== $this->extractExtension($this->getMediaFileName())) {
-            return $extension;
-        }
-
-        return '.gpx';
-    }
-
     #[Assert\Callback]
     public function validate(ExecutionContextInterface $executionContext): void
     {
@@ -195,9 +149,7 @@ class Media implements IdInterface, Taggable, Stringable
     public function getMediaFileName(): string
     {
         if (! $this->mediaFile instanceof File) {
-            dump(debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS));
-
-            throw new Exception('MediaFile is not setted');
+            throw new Exception('MediaFile is not set');
         }
 
         if ($this->mediaFile instanceof UploadedFile) {
@@ -388,7 +340,7 @@ class Media implements IdInterface, Taggable, Stringable
             return $this->changeSlug((string) $slug);
         }
 
-        $this->slug = $this->slugify((string) $slug);
+        $this->slug = MediaFileName::slugify((string) $slug);
 
         return $this;
     }
@@ -420,10 +372,10 @@ class Media implements IdInterface, Taggable, Stringable
             return $this->setSlugForNewMedia($slug);
         }
 
-        $this->slug = $this->slugify($slug);
+        $this->slug = MediaFileName::slugify($slug);
 
         if ('' !== $this->getFileName()) {
-            $this->setFileName($this->slug.$this->extractExtension($this->getFileName()));
+            $this->setFileName($this->slug.MediaFileName::extractExtension($this->getFileName()));
         }
 
         return $this;
@@ -435,13 +387,13 @@ class Media implements IdInterface, Taggable, Stringable
      */
     private function setSlugForNewMedia(string $filename): self
     {
-        if (null === $this->getMediaFile()) {
-            // throw new Exception('debug... thinking setSlug was only used by Vich ???');
+        $mediaFile = $this->getMediaFile();
+        if (null === $mediaFile) {
             return $this;
         }
 
         $filenameSlugified = $this->getMediaFromFilename($filename);
-        $extension = $this->extractExtensionFromFile();
+        $extension = MediaFileName::extractExtensionFromFile($mediaFile, $this->getMediaFileName());
         $this->setFileName($filenameSlugified);
         $this->slug = substr($filenameSlugified, 0, \strlen($filenameSlugified) - \strlen($extension));
 
@@ -450,44 +402,19 @@ class Media implements IdInterface, Taggable, Stringable
 
     public function getMediaFromFilename(string $filename = ''): string
     {
+        $mediaFile = $this->getMediaFile();
+        if (null === $mediaFile) {
+            $filename = '' !== $filename ? $filename : $this->getFileName();
+            if ('' === $filename) {
+                throw new Exception('No filename available');
+            }
+
+            return MediaFileName::normalizeFromString($filename);
+        }
+
         $filename = '' !== $filename ? $filename : $this->getMediaFileName();
-        if ('' === $filename) {
-            throw new Exception('debug... '); // dd($this->mediaFile);
-        }
 
-        $extension = $this->extractExtensionFromFile();
-
-        $filename = $filename;
-
-        return $this->slugifyPreservingExtension($filename, $extension);
-    }
-
-    private function slugify(string $text): string
-    {
-        // early return if text has only char from A to Z, a to z, 0 to 9, ., - _
-        if (1 === \Safe\preg_match('/^[a-z0-9\-_]+$/', $text)) {
-            return $text;
-        }
-
-        $slug = str_replace(['®', '™'], ' ', $text);
-
-        $slugifier = new Slugify(['regexp' => '/([^A-Za-z0-9\.]|-)+/']);
-
-        $slug = str_replace(['©', '&copy;', '&#169;', '&#xA9;'], '©', $slug);
-        $slug = explode('©', $slug, 2);
-        $slug = $slugifier->slugify($slug[0])
-            .(isset($slug[1]) ? '_'.$slugifier->slugify(str_replace('©', '', $slug[1])) : '');
-
-        return $slug;
-    }
-
-    protected function slugifyPreservingExtension(string $string, string $extension = ''): string
-    {
-        $extension = '' === $extension ? $this->extractExtension($string) : $extension;
-        $string = str_ends_with($string, $extension) ? substr($string, 0, \strlen($string) - \strlen($extension)) : $string;
-        $stringSlugify = $this->slugify($string);
-
-        return $stringSlugify.$extension;
+        return MediaFileName::normalize($mediaFile, $filename);
     }
 
     public function getSlug(): string
