@@ -12,6 +12,7 @@ users:
     email: contact@piedweb.com
     roles: []
     locale: en
+    username: 'John Doe'
   -
     email: admin@example.tld
     roles: [ROLE_SUPER_ADMIN]

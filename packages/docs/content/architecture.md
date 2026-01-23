@@ -2,7 +2,6 @@
 title: 'Puswhord Code Architecture and preparing a development environment'
 h1: 'The Code Architecture'
 publishedAt: '2025-12-21 21:55'
-parentPage: contribute
 toc: true
 ---
 

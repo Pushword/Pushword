@@ -37,6 +37,7 @@ class AppFixtures extends Fixture
     {
         $user = new User();
         $user->email = 'contact@piedweb.com';
+        $user->username = 'John Doe';
         $user->setRoles([User::ROLE_DEFAULT]);
 
         $manager->persist($user);
