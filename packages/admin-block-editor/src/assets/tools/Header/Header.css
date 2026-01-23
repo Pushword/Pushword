@@ -102,3 +102,15 @@
     inset 0 1px 1px rgba(0, 0, 0, 0.075),
     0 0 8px rgba(102, 175, 233, 0.6);
 }
+
+/* WCAG 2.1 AA: Visible focus indicator for keyboard navigation */
+.ce-header-level-wrapper select:focus-visible + .ce-header-level-label {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}
+
+/* WCAG 2.1 AA: Visible focus for header text */
+.ce-header:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}

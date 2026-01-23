@@ -4,6 +4,12 @@
 
 {% block body_class %}pw-legacy-admin bg-gray-50 min-h-screen{{ isInlineWindow ? ' pw-inline-window' : '' }}{% endblock %}
 
+{# WCAG 2.1 AA: Skip link for keyboard navigation (WCAG 2.4.1) #}
+{% block wrapper_wrapper %}
+    <a href="#main-content" class="pw-skip-link">{{ 'skipToMainContent'|trans }}</a>
+    {{ parent() }}
+{% endblock %}
+
 {% block head_stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="{{ versionedAsset('bundles/pushwordadmin/admin.css') }}">
@@ -38,11 +44,13 @@
     {% block actions %}{% endblock %}
 {% endblock %}
 
+{# WCAG 2.1 AA: Main landmark with proper ARIA (WCAG 1.3.1) #}
 {% block main %}
-    <div class="max-w-screen-xl mx-auto px-4 w-full">
+    <div id="main-content" class="max-w-screen-xl mx-auto px-4 w-full" role="main" aria-label="{{ 'mainContent'|trans }}">
+        {# WCAG 2.1 AA: Flash messages with status role for screen readers #}
         {% for label, messages in app.flashes %}
             {% for message in messages %}
-                <div class="mb-4 rounded-md border px-4 py-3 text-sm {{ label }}">
+                <div role="status" aria-live="polite" class="mb-4 rounded-md border px-4 py-3 text-sm {{ label }}">
                     {{ message|raw }}
                 </div>
             {% endfor %}

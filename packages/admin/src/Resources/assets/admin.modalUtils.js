@@ -1,9 +1,78 @@
 /**
  * Shared modal utility module.
  * Provides common modal functionality for media picker and inline popup.
+ * Includes WCAG 2.1 AA accessibility features: focus trap, ARIA roles.
  */
 
 const debug = (...args) => console.debug('[ModalUtils]', ...args)
+
+/** @type {HTMLElement|null} Element that had focus before modal opened */
+let previouslyFocusedElement = null
+
+/** @type {Function|null} Cleanup function for focus trap */
+let focusTrapCleanup = null
+
+/**
+ * Creates a focus trap within a modal element (WCAG 2.4.3).
+ * Traps Tab key within the modal to prevent focus from escaping.
+ *
+ * @param {HTMLElement} modal - The modal element
+ * @returns {Function} Cleanup function to remove the focus trap
+ */
+function createFocusTrap(modal) {
+  const focusableSelectors = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+    'iframe',
+  ].join(', ')
+
+  function handleKeydown(e) {
+    if (e.key !== 'Tab') return
+
+    const focusableElements = modal.querySelectorAll(focusableSelectors)
+    if (focusableElements.length === 0) return
+
+    const firstFocusable = focusableElements[0]
+    const lastFocusable = focusableElements[focusableElements.length - 1]
+
+    if (e.shiftKey) {
+      if (document.activeElement === firstFocusable || document.activeElement === modal) {
+        e.preventDefault()
+        lastFocusable.focus()
+      }
+    } else {
+      if (document.activeElement === lastFocusable) {
+        e.preventDefault()
+        firstFocusable.focus()
+      }
+    }
+  }
+
+  modal.addEventListener('keydown', handleKeydown)
+  return () => modal.removeEventListener('keydown', handleKeydown)
+}
+
+/**
+ * Sets initial focus to the first focusable element in the modal.
+ *
+ * @param {HTMLElement} modal - The modal element
+ */
+function setInitialFocus(modal) {
+  const closeButton = modal.querySelector('.btn-close')
+  const iframe = modal.querySelector('iframe')
+
+  if (closeButton) {
+    closeButton.focus()
+  } else if (iframe) {
+    iframe.focus()
+  } else {
+    modal.focus()
+  }
+}
 
 /**
  * @typedef {Object} ModalConfig
@@ -36,10 +105,21 @@ export function ensureModal(config) {
     modal.className = `modal fade pw-admin-modal ${modalClass}`.trim()
     modal.tabIndex = -1
 
+    // WCAG 2.1 AA: Add ARIA attributes for modal accessibility
+    modal.setAttribute('role', 'dialog')
+    modal.setAttribute('aria-modal', 'true')
+
+    const titleId = `${id}-title`
+    if (title) {
+      modal.setAttribute('aria-labelledby', titleId)
+    } else {
+      modal.setAttribute('aria-label', 'Modal dialog')
+    }
+
     const headerHtml = hasHeader
       ? `
         <div class="modal-header">
-          <h5 class="modal-title">${title}</h5>
+          <h5 class="modal-title" id="${titleId}">${title}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
       `
@@ -82,6 +162,9 @@ export function openModal(config, url, options = {}) {
     return false
   }
 
+  // WCAG 2.1 AA: Store currently focused element for restoration
+  previouslyFocusedElement = document.activeElement
+
   iframe.src = url
   debug('Opening modal with URL', url)
 
@@ -92,10 +175,33 @@ export function openModal(config, url, options = {}) {
   if (modalInstance) {
     modalInstance.show()
 
+    // WCAG 2.1 AA: Set up focus trap when modal is shown
+    modal.addEventListener(
+      'shown.bs.modal',
+      () => {
+        focusTrapCleanup = createFocusTrap(modal)
+        setInitialFocus(modal)
+      },
+      { once: true },
+    )
+
     modal.addEventListener(
       'hidden.bs.modal',
       () => {
         iframe.src = ''
+
+        // WCAG 2.1 AA: Clean up focus trap
+        if (focusTrapCleanup) {
+          focusTrapCleanup()
+          focusTrapCleanup = null
+        }
+
+        // WCAG 2.1 AA: Restore focus to triggering element
+        if (previouslyFocusedElement && previouslyFocusedElement.focus) {
+          previouslyFocusedElement.focus()
+          previouslyFocusedElement = null
+        }
+
         if (typeof options.onHide === 'function') {
           options.onHide()
         }

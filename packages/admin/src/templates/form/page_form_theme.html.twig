@@ -1,5 +1,32 @@
 {% extends '@EasyAdmin/crud/form_theme.html.twig' %}
 
+{# WCAG 2.1 AA: Enhanced form_widget to add ARIA attributes for error states (WCAG 3.3.1, 4.1.2) #}
+{% block form_widget_simple %}
+    {% set hasErrors = errors|length > 0 %}
+    {% set errorId = id ~ '_errors' %}
+
+    {% if hasErrors %}
+        {% set attr = attr|merge({
+            'aria-invalid': 'true',
+            'aria-describedby': (attr['aria-describedby'] is defined ? attr['aria-describedby'] ~ ' ' : '') ~ errorId
+        }) %}
+    {% endif %}
+
+    {{ parent() }}
+{% endblock %}
+
+{# WCAG 2.1 AA: Enhanced form_errors with proper ARIA role for announcements #}
+{% block form_errors %}
+    {% if errors|length > 0 %}
+        {% set errorClass = attr.errorClass is defined ? attr.errorClass : 'invalid-feedback d-block' %}
+        <div id="{{ form.vars.id }}_errors" class="{{ errorClass }}" role="alert" aria-live="assertive">
+            {% for error in errors %}
+                <span class="form-error-message">{{ error.message }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+
 {% block ea_form_fieldset_open_row %}
     {% set fieldset_has_header = form.vars.label or ea_icon or ea_help %}
     {% set css_class = ea_css_class ?? '' %}

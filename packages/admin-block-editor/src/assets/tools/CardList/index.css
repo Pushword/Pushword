@@ -47,8 +47,14 @@
   outline: none;
 }
 
+/* WCAG 2.1 AA: Visible focus indicator for keyboard navigation */
+.cardlist-slug-input:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}
+
 .cardlist-slug-input::placeholder {
-  color: #aaa;
+  color: #6b7280; /* gray-500 - WCAG AA contrast */
 }
 
 .cardlist-slug-input.cardlist-slug-invalid {
@@ -78,6 +84,13 @@
 }
 
 .cardlist-item-btn:hover {
+  background-color: #f0f0f0;
+}
+
+/* WCAG 2.1 AA: Visible focus for action buttons */
+.cardlist-item-btn:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
   background-color: #f0f0f0;
 }
 

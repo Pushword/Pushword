@@ -100,4 +100,41 @@ div[data-item-name='convert-to'] {
 }
 /** // **/
 
+/* ============================================
+   Accessibility: Focus Management (WCAG 2.4.7)
+   ============================================ */
+
+/* Focus styles for editor tools and buttons */
+.ce-toolbar__plus:focus-visible,
+.ce-toolbar__settings-btn:focus-visible,
+.ce-popover-item:focus-visible,
+.ce-inline-tool:focus-visible,
+.ce-conversion-tool:focus-visible,
+.cdx-button:focus-visible,
+.cdx-input:focus-visible,
+.ce-block:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}
+
+/* Focus within blocks for contenteditable elements */
+.ce-block--focused .ce-block__content {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Accessibility: Reduced Motion (WCAG 2.3.3)
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .ce-block,
+  .ce-toolbar,
+  .ce-popover,
+  .ce-inline-toolbar {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 /* purgecss end ignore */

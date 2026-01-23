@@ -19,7 +19,7 @@
   left: 5px;
   top: 27%;
   z-index: 2;
-  color: #e8e8eb;
+  color: #9ca3af; /* WCAG AA: gray-400 for adequate contrast */
   font-size: 2em;
 }
 
@@ -31,5 +31,5 @@
   border-bottom: 1px solid #f3f4f6;
 }
 .tagsFieldWrapper input.form-control::placeholder {
-  color: #e8e8eb;
+  color: #6b7280; /* WCAG AA: gray-500 for adequate contrast */
 }

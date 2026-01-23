@@ -45,6 +45,9 @@ Suggest.Local.prototype = {
 
     if (arguments[3]) this.setOptions(arguments[3])
 
+    // WCAG 2.1 AA: Setup ARIA combobox pattern (WCAG 4.1.2)
+    this._setupAriaAttributes()
+
     // reg event
     this._addEvent(this.input, 'focus', this._bind(this.checkLoop))
     this._addEvent(this.input, 'blur', this._bind(this.inputBlur))
@@ -54,6 +57,39 @@ Suggest.Local.prototype = {
 
     // init
     this.clearSuggestArea()
+  },
+
+  // WCAG 2.1 AA: Setup ARIA attributes for combobox pattern
+  _setupAriaAttributes: function () {
+    // Generate unique ID for suggest area if not present
+    if (!this.suggestArea.id) {
+      this.suggestArea.id = 'suggest-listbox-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9)
+    }
+
+    // Setup input as combobox
+    this.input.setAttribute('role', 'combobox')
+    this.input.setAttribute('aria-autocomplete', 'list')
+    this.input.setAttribute('aria-expanded', 'false')
+    this.input.setAttribute('aria-haspopup', 'listbox')
+    this.input.setAttribute('aria-owns', this.suggestArea.id)
+
+    // Setup suggest area as listbox
+    this.suggestArea.setAttribute('role', 'listbox')
+  },
+
+  // WCAG 2.1 AA: Announce results to screen readers
+  _announceResults: function (count) {
+    let liveRegion = document.getElementById('suggest-live-region')
+    if (!liveRegion) {
+      liveRegion = document.createElement('div')
+      liveRegion.id = 'suggest-live-region'
+      liveRegion.setAttribute('aria-live', 'polite')
+      liveRegion.setAttribute('aria-atomic', 'true')
+      liveRegion.className = 'sr-only'
+      document.body.appendChild(liveRegion)
+    }
+    liveRegion.textContent =
+      count === 0 ? 'No suggestions available' : count + ' suggestion' + (count > 1 ? 's' : '') + ' available'
   },
 
   // options
@@ -160,6 +196,10 @@ Suggest.Local.prototype = {
     this.suggestList = null
     this.suggestIndexList = null
     this.activePosition = null
+
+    // WCAG 2.1 AA: Update ARIA expanded state
+    this.input.setAttribute('aria-expanded', 'false')
+    this.input.removeAttribute('aria-activedescendant')
   },
 
   createSuggestArea: function (resultList) {
@@ -169,6 +209,11 @@ Suggest.Local.prototype = {
     for (var i = 0, length = resultList.length; i < length; i++) {
       var element = document.createElement(this.listTagName)
       element.innerHTML = resultList[i]
+
+      // WCAG 2.1 AA: Add ARIA option role and unique ID
+      element.setAttribute('role', 'option')
+      element.id = this.suggestArea.id + '-option-' + i
+
       this.suggestArea.appendChild(element)
 
       this._addEvent(element, 'click', this._bindEvent(this.listClick, i))
@@ -180,6 +225,10 @@ Suggest.Local.prototype = {
 
     this.suggestArea.style.display = ''
     this.suggestArea.scrollTop = 0
+
+    // WCAG 2.1 AA: Update ARIA expanded state and announce results
+    this.input.setAttribute('aria-expanded', 'true')
+    this._announceResults(resultList.length)
   },
 
   getInputValue: function () {
@@ -301,6 +350,9 @@ Suggest.Local.prototype = {
 
     this.setInputText(this.candidateList[this.suggestIndexList[index]])
 
+    // WCAG 2.1 AA: Update aria-activedescendant to track current selection
+    this.input.setAttribute('aria-activedescendant', this.suggestList[index].id)
+
     this.oldText = this.getInputText()
     this.input.focus()
   },
@@ -339,6 +391,9 @@ Suggest.Local.prototype = {
   setStyleActive: function (element) {
     element.className = this.classSelect
 
+    // WCAG 2.1 AA: Mark as selected for assistive technologies
+    element.setAttribute('aria-selected', 'true')
+
     // auto scroll
     var offset = element.offsetTop
     var offsetWithHeight = offset + element.clientHeight
@@ -352,6 +407,9 @@ Suggest.Local.prototype = {
 
   setStyleUnactive: function (element) {
     element.className = ''
+
+    // WCAG 2.1 AA: Remove selected state
+    element.removeAttribute('aria-selected')
   },
 
   setStyleMouseOver: function (element) {
