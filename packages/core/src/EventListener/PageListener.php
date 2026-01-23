@@ -65,29 +65,17 @@ final readonly class PageListener
             return;
         }
 
-        //  Remove this when fix bug, only to avoid psalm shouting
-        return;
-
-        /*
-        HUGE BUG: une fois la page mise à jour avec ce code, impossible d'afficher la page d'édition
-        de Admin sans être déconnecté
-
-        if (null === $page->getCreatedBy()) {
-            $page->setCreatedBy($user);
+        if (! $user instanceof \Pushword\Core\Entity\User) {
+            return;
         }
 
-        if ($page->getEditedBy()->id !== $user->id) {
-            $page->setEditedBy($user);
+        if (null === $page->createdBy) {
+            $page->createdBy = $user;
         }
-        /**/
 
-        // $this->entityManager->flush();
-        // $pageHasEditor = (new PageHasEditor())->setPage($page)->setEditor($user)->setEditedAt(new \DateTime());
-        // $this->entityManager->persist($pageHasEditor);
-        // $this->entityManager->flush();
-
-        // $page->addPageHasEditor($pageHasEditor);
-        // $this->entityManager->flush();
+        if ($page->editedBy?->id !== $user->id) {
+            $page->editedBy = $user;
+        }
     }
 
     public function setIdAsSlugIfNotDefined(Page $page): void
