@@ -345,7 +345,13 @@ final class PageImporter extends AbstractImporter
                     $mediaName = preg_replace('@^/?media/(default)?/@', '', $value) ?? throw new Exception();
                     $media = $this->mediaRepo->findOneByFileName($mediaName);
                     if (! $media instanceof Media) {
-                        throw new Exception('Media `'.$value.'` ('.$mediaName.') not found in `'.$slug.'`.');
+                        $this->logger->warning('Media `{value}` ({mediaName}) not found in `{slug)}`, skipping', [
+                            'value' => $value,
+                            'mediaName' => $mediaName,
+                            'slug' => $slug,
+                        ]);
+
+                        continue;
                     }
 
                     $page->$setter($media); // @phpstan-ignore-line
