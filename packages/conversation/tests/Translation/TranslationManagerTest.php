@@ -12,7 +12,7 @@ final class TranslationManagerTest extends TestCase
 {
     public function testTranslateWithAvailableTranslator(): void
     {
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('isAvailable')->willReturn(true);
         $translator->method('isRateLimited')->willReturn(false);
         $translator->method('translate')->willReturn('Translated text');
@@ -26,12 +26,12 @@ final class TranslationManagerTest extends TestCase
 
     public function testFallbackToSecondTranslator(): void
     {
-        $primary = $this->createMock(TranslatorInterface::class);
+        $primary = $this->createStub(TranslatorInterface::class);
         $primary->method('isAvailable')->willReturn(true);
         $primary->method('isRateLimited')->willReturn(true);
         $primary->method('getName')->willReturn('Primary');
 
-        $fallback = $this->createMock(TranslatorInterface::class);
+        $fallback = $this->createStub(TranslatorInterface::class);
         $fallback->method('isAvailable')->willReturn(true);
         $fallback->method('isRateLimited')->willReturn(false);
         $fallback->method('translate')->willReturn('Fallback translation');
@@ -67,7 +67,7 @@ final class TranslationManagerTest extends TestCase
 
     public function testNoAvailableTranslatorThrows(): void
     {
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('isAvailable')->willReturn(false);
 
         $manager = $this->createTranslationManagerWithTranslator($translator, 100);
@@ -79,7 +79,7 @@ final class TranslationManagerTest extends TestCase
 
     public function testHasAvailableTranslatorReturnsTrueWhenAvailable(): void
     {
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('isAvailable')->willReturn(true);
         $translator->method('isRateLimited')->willReturn(false);
 
@@ -90,7 +90,7 @@ final class TranslationManagerTest extends TestCase
 
     public function testHasAvailableTranslatorReturnsFalseWhenNoneAvailable(): void
     {
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('isAvailable')->willReturn(false);
 
         $manager = $this->createTranslationManagerWithTranslator($translator, 100);
@@ -100,7 +100,7 @@ final class TranslationManagerTest extends TestCase
 
     public function testHasAvailableTranslatorReturnsFalseWhenAllRateLimited(): void
     {
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('isAvailable')->willReturn(true);
         $translator->method('isRateLimited')->willReturn(true);
 
@@ -111,7 +111,7 @@ final class TranslationManagerTest extends TestCase
 
     public function testTranslationExceptionFallsBackToNextTranslator(): void
     {
-        $primary = $this->createMock(TranslatorInterface::class);
+        $primary = $this->createStub(TranslatorInterface::class);
         $primary->method('isAvailable')->willReturn(true);
         $primary->method('isRateLimited')->willReturn(false);
         $primary->method('getName')->willReturn('Primary');
@@ -119,7 +119,7 @@ final class TranslationManagerTest extends TestCase
             TranslationException::apiError('Primary', 'API Error')
         );
 
-        $fallback = $this->createMock(TranslatorInterface::class);
+        $fallback = $this->createStub(TranslatorInterface::class);
         $fallback->method('isAvailable')->willReturn(true);
         $fallback->method('isRateLimited')->willReturn(false);
         $fallback->method('translate')->willReturn('Fallback translation');

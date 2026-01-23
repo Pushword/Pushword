@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Admin\Tests\FormField;
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\AdminInterface;
@@ -15,16 +15,16 @@ use Pushword\Core\Entity\User;
 
 final class UserApiTokenFieldTest extends TestCase
 {
-    /** @var AdminFormFieldManager&MockObject */
-    private MockObject $formFieldManager;
+    /** @var AdminFormFieldManager&Stub */
+    private Stub $formFieldManager;
 
-    /** @var AdminInterface<User>&MockObject */
-    private MockObject $admin;
+    /** @var AdminInterface<User>&Stub */
+    private Stub $admin;
 
     protected function setUp(): void
     {
-        $this->formFieldManager = $this->createMock(AdminFormFieldManager::class);
-        $this->admin = $this->createMock(AdminInterface::class);
+        $this->formFieldManager = $this->createStub(AdminFormFieldManager::class);
+        $this->admin = $this->createStub(AdminInterface::class);
     }
 
     private function createField(): UserApiTokenField

@@ -64,3 +64,5 @@ packages/skeleton/media/
 **/skeleton/media/**
 
 !.gitkeep
+# Demo data (regenerated on reset)
+packages/docs/content/conversation.csv

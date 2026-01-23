@@ -125,7 +125,7 @@ final readonly class FlatFileSyncCommand
             $event = $this->stopWatch->stop('sync');
             $duration = $event->getDuration();
 
-            $this->displaySummary(new SymfonyStyle($input, $teeOutput), $duration);
+            $this->displaySummary(new SymfonyStyle($input, $teeOutput), $duration, $mode);
 
             // Print timing breakdown
             $this->printTimingBreakdown($teeOutput);
@@ -148,7 +148,7 @@ final readonly class FlatFileSyncCommand
         };
     }
 
-    private function displaySummary(SymfonyStyle $io, float $duration): void
+    private function displaySummary(SymfonyStyle $io, float $duration, string $mode): void
     {
         $mediaSync = $this->flatFileSync->mediaSync;
         $pageSync = $this->flatFileSync->pageSync;
@@ -161,7 +161,7 @@ final readonly class FlatFileSyncCommand
         $isExportMode = $mediaSync->getExportedCount() > 0 || $pageSync->getExportedCount() > 0;
 
         if (! $isImportMode && ! $isExportMode) {
-            $io->success(\sprintf('Sync completed (export mode - no changes detected). (%dms)', $duration));
+            $io->success(\sprintf('Sync completed (%s mode - no changes detected). (%dms)', $mode, $duration));
 
             return;
         }
