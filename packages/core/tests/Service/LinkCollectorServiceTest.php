@@ -79,4 +79,26 @@ class LinkCollectorServiceTest extends TestCase
         self::assertCount(1, $slugs);
         self::assertTrue($service->isSlugRegistered('my-page'));
     }
+
+    public function testRegisterAll(): void
+    {
+        $service = new LinkCollectorService();
+        $page1 = new Page()->setSlug('page-1');
+        $page2 = new Page()->setSlug('page-2');
+
+        $service->registerAll([$page1, $page2]);
+
+        self::assertTrue($service->isSlugRegistered('page-1'));
+        self::assertTrue($service->isSlugRegistered('page-2'));
+    }
+
+    public function testIsRegistered(): void
+    {
+        $service = new LinkCollectorService();
+        $page = new Page()->setSlug('test-page');
+
+        self::assertFalse($service->isRegistered($page));
+        $service->register($page);
+        self::assertTrue($service->isRegistered($page));
+    }
 }

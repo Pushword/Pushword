@@ -19,6 +19,21 @@ final class LinkCollectorService
         $this->registeredSlugs[$page->getSlug()] = true;
     }
 
+    /**
+     * @param Page[] $pages
+     */
+    public function registerAll(array $pages): void
+    {
+        foreach ($pages as $page) {
+            $this->registeredSlugs[$page->getSlug()] = true;
+        }
+    }
+
+    public function isRegistered(Page $page): bool
+    {
+        return isset($this->registeredSlugs[$page->getSlug()]);
+    }
+
     public function isSlugRegistered(string $slug): bool
     {
         return isset($this->registeredSlugs[$slug]);
