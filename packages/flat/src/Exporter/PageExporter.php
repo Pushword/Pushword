@@ -308,7 +308,10 @@ final class PageExporter
 
         // Unpack custom properties at top level and apply converters
         foreach ($page->getCustomProperties() as $key => $value) {
-            $data[$key] = $this->converterRegistry->toFlatValue($key, $value);
+            $converted = $this->converterRegistry->toFlatValue($key, $value);
+            if (null !== $converted) {
+                $data[$key] = $converted;
+            }
         }
 
         $metaData = Yaml::dump($data, indent: 2);
