@@ -27,6 +27,8 @@ class FlatCommandTest extends KernelTestCase
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('Sync completed', $output);
+        self::assertStringContainsString('import mode', $output);
+        self::assertStringNotContainsString('export mode', $output);
 
         // Test export mode
         $commandTester->execute([
@@ -38,5 +40,6 @@ class FlatCommandTest extends KernelTestCase
 
         $exportOutput = $commandTester->getDisplay();
         self::assertStringContainsString('Sync completed', $exportOutput);
+        self::assertStringContainsString('export mode', $exportOutput);
     }
 }

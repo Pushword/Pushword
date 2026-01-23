@@ -156,34 +156,39 @@ final readonly class FlatFileSyncCommand
         $mediaSync = $this->flatFileSync->mediaSync;
         $pageSync = $this->flatFileSync->pageSync;
 
-        $isImportMode = $mediaSync->getImportedCount() > 0
+        $hasImportOps = $mediaSync->getImportedCount() > 0
             || $pageSync->getImportedCount() > 0
             || $mediaSync->getDeletedCount() > 0
             || $pageSync->getDeletedCount() > 0;
 
-        $isExportMode = $mediaSync->getExportedCount() > 0 || $pageSync->getExportedCount() > 0;
+        $hasExportOps = $mediaSync->getExportedCount() > 0 || $pageSync->getExportedCount() > 0;
 
-        if (! $isImportMode && ! $isExportMode) {
-            $io->success(\sprintf('Sync completed (%s mode - no changes detected). (%dms)', $mode, $duration));
+        // Use requested mode unless it's 'auto', then detect from operations
+        $displayMode = 'auto' === $mode
+            ? ($hasImportOps ? 'import' : ($hasExportOps ? 'export' : 'auto'))
+            : $mode;
+
+        if (! $hasImportOps && ! $hasExportOps) {
+            $io->success(\sprintf('Sync completed (%s mode - no changes detected). (%dms)', $displayMode, $duration));
 
             return;
         }
 
-        if ($isImportMode) {
-            $io->success(\sprintf('Sync completed (import mode). (%dms)', $duration));
+        $io->success(\sprintf('Sync completed (%s mode). (%dms)', $displayMode, $duration));
+
+        if ($hasImportOps) {
             $io->table(['Type', 'Imported', 'Skipped', 'Deleted'], [
                 ['Media', $mediaSync->getImportedCount(), $mediaSync->getSkippedCount(), $mediaSync->getDeletedCount()],
                 ['Pages', $pageSync->getImportedCount(), $pageSync->getSkippedCount(), $pageSync->getDeletedCount()],
             ]);
-
-            return;
         }
 
-        $io->success(\sprintf('Sync completed (export mode). (%dms)', $duration));
-        $io->table(['Type', 'Exported', 'Skipped'], [
-            ['Media', $mediaSync->getExportedCount(), 0],
-            ['Pages', $pageSync->getExportedCount(), $pageSync->getExportSkippedCount()],
-        ]);
+        if ($hasExportOps) {
+            $io->table(['Type', 'Exported', 'Skipped'], [
+                ['Media', $mediaSync->getExportedCount(), 0],
+                ['Pages', $pageSync->getExportedCount(), $pageSync->getExportSkippedCount()],
+            ]);
+        }
     }
 
     private function printTimingBreakdown(OutputInterface $output): void
