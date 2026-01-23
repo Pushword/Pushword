@@ -58,14 +58,24 @@ Where:
 
 - `host` is optional (uses default app if not provided)
 - `exportDir` (for export only) is optional (uses `flat_content_dir` by default)
-- `--force` (for export only) forces overwriting even if files are newer than DB
+- `--force` or `-f` forces overwriting even if files are newer than DB
 - `--entity=TYPE` filters sync to specific entity type: `page`, `media`, `conversation`, or `all` (default)
+- `--mode=MODE` or `-m MODE` (sync only) forces sync direction: `auto` (default, auto-detect), `import` (flat to db), `export` (db to flat)
 
 **Examples:**
 
 ```bash
 # Sync only pages
 php bin/console pw:flat:sync --entity=page
+
+# Force import mode (flat files → database), bypassing auto-detection
+php bin/console pw:flat:sync --mode=import
+
+# Force export mode (database → flat files)
+php bin/console pw:flat:sync -m export
+
+# Combine options: force import only for pages on a specific host
+php bin/console pw:flat:sync example.tld --mode=import --entity=page
 
 # Export only media
 php bin/console pw:flat:export --entity=media --force
@@ -167,9 +177,7 @@ content/media/default/illustation.jpg.yaml
 #### `kitchen-sink.md` may contain :
 
 ```yaml
-
 ---
-
 h1: 'Welcome in Kitchen Sink'
 locale: fr
 translations:
@@ -186,7 +194,6 @@ title: 'Kitchen Sink - best google restult'
 #updated_at: 'now'
 
 ---
-
 My Page content Yeah !
 ```
 
@@ -212,22 +219,14 @@ The `translations` property handles the bidirectional many-to-many relationship 
 
 ```yaml
 # In fr/about.md - adds en/about as translation
-
 ---
-
 translations:
   - en/about
-
 ---
-
 # In en/about.md - no translations key, existing links preserved
-
 ---
-
 h1: About Us
-
 ---
-
 ```
 
 With this setup, both pages will be linked as translations of each other after sync.

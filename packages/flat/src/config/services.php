@@ -2,6 +2,7 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Pushword\Conversation\Flat\ConversationSync;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\Admin\FlatSyncNotifier;
 use Pushword\Flat\Controller\Admin\NotificationCrudController;
@@ -17,6 +18,7 @@ use Pushword\Flat\Sync\ConflictResolver;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 use Pushword\Flat\Sync\SyncStateManager;
 use Pushword\Flat\Twig\FlatLockExtension;
+use ReflectionClass;
 
 return static function (ContainerConfigurator $container): void {
     $services = $container->services()
@@ -96,4 +98,14 @@ return static function (ContainerConfigurator $container): void {
         ->autowire()
         ->autoconfigure()
         ->tag('controller.service_arguments');
+
+    // Register Conversation Flat services when conversation bundle is installed
+    // This must be done here (in flat bundle) to ensure FlatFileContentDirFinder is already registered
+    if (class_exists(ConversationSync::class)) {
+        $conversationFlatDir = \dirname((string) (new ReflectionClass(ConversationSync::class))->getFileName());
+        $services->load('Pushword\Conversation\Flat\\', $conversationFlatDir.'/');
+
+        $services->alias(ConversationSyncInterface::class, ConversationSync::class);
+        $services->alias('pushword.flat.conversation_sync', ConversationSync::class);
+    }
 };

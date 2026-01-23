@@ -47,6 +47,8 @@ final readonly class FlatFileSyncCommand
         bool $force = false,
         #[Option(description: 'Entity type to sync (page, media, conversation, all)', name: 'entity')]
         string $entity = 'all',
+        #[Option(description: 'Sync mode: auto (detect), import (flat to db), export (db to flat)', name: 'mode', shortcut: 'm')]
+        string $mode = 'auto',
     ): int {
         // Check for webhook lock - blocks sync during external editing workflow
         if ($this->lockManager->isWebhookLocked($host)) {
@@ -98,11 +100,11 @@ final readonly class FlatFileSyncCommand
             $this->flatFileSync->setStopwatch($this->stopWatch);
 
             if (null !== $host) {
-                $this->flatFileSync->sync($host, $force, null, $entity);
+                $this->syncHost($host, $force, $entity, $mode, $teeOutput);
             } else {
                 foreach ($this->flatFileSync->getHosts() as $appHost) {
                     $teeOutput->writeln(\sprintf('<info>Syncing %s...</info>', $appHost));
-                    $this->flatFileSync->sync($appHost, $force, null, $entity);
+                    $this->syncHost($appHost, $force, $entity, $mode, $teeOutput);
                 }
             }
 
@@ -121,6 +123,15 @@ final readonly class FlatFileSyncCommand
             // Clean up PID file
             $this->processManager->unregisterProcess($pidFile);
         }
+    }
+
+    private function syncHost(string $host, bool $force, string $entity, string $mode, OutputInterface $output): void
+    {
+        match ($mode) {
+            'import' => $this->flatFileSync->import($host, entity: $entity),
+            'export' => $this->flatFileSync->export($host, force: $force, entity: $entity),
+            default => $this->flatFileSync->sync($host, $force, null, $entity),
+        };
     }
 
     private function displaySummary(SymfonyStyle $io, float $duration): void
