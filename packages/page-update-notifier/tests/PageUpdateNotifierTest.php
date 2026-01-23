@@ -4,6 +4,7 @@ namespace Pushword\PageUpdateNotifier\Tests;
 
 use DateTime;
 use DateTimeInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use Error;
 use Nette\Utils\FileSystem;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -93,6 +94,8 @@ class PageUpdateNotifierTest extends KernelTestCase
 
         $em->flush();
 
+        $this->removePageIfExists($em, 'page-updater', 'localhost.dev');
+
         FileSystem::delete($notifier->getCacheDir());
         self::assertSame(NotificationStatus::NothingToNotify, $notifier->run($this->getPage()));
 
@@ -105,19 +108,16 @@ class PageUpdateNotifierTest extends KernelTestCase
 
         // Restore original pages for other tests
         foreach ($savedPagesData as $pageData) {
+            $this->removePageIfExists($em, $pageData['slug'], 'localhost.dev');
+
             $restoredPage = new Page();
             $restoredPage->setSlug($pageData['slug']);
             $restoredPage->setH1($pageData['h1']);
             $restoredPage->setMainContent($pageData['mainContent']);
             $restoredPage->locale = $pageData['locale'];
             $restoredPage->host = 'localhost.dev';
-            if (null !== $pageData['createdAt']) {
-                $restoredPage->createdAt = $pageData['createdAt'];
-            }
-
-            if (null !== $pageData['updatedAt']) {
-                $restoredPage->updatedAt = $pageData['updatedAt'];
-            }
+            $restoredPage->createdAt = $pageData['createdAt'];
+            $restoredPage->updatedAt = $pageData['updatedAt'];
 
             if (null !== $pageData['publishedAt']) {
                 $restoredPage->setPublishedAt($pageData['publishedAt']);
@@ -127,6 +127,18 @@ class PageUpdateNotifierTest extends KernelTestCase
         }
 
         $em->flush();
+    }
+
+    private function removePageIfExists(EntityManagerInterface $em, string $slug, string $host): void
+    {
+        $existingPage = $em->getRepository(Page::class)->findOneBy([
+            'slug' => $slug,
+            'host' => $host,
+        ]);
+        if (null !== $existingPage) {
+            $em->remove($existingPage);
+            $em->flush();
+        }
     }
 
     /**

@@ -113,11 +113,22 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
 
     private function createKitchenSinkPage(): int
     {
+        $jsonContent = file_get_contents(__DIR__.'/content/KitchenSink.json');
+
+        return $this->createTestPage('kitchen-sink', 'Demo Page - Kitchen Sink Block', $jsonContent);
+    }
+
+    private function createMarkdownTestPage(): int
+    {
+        return $this->createTestPage('test-markdown', 'Test Markdown Page', '# Test\n\nThis is markdown content.');
+    }
+
+    private function createTestPage(string $slug, string $h1, string $content): int
+    {
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-        // Remove existing page with same slug/host if exists
         $existingPage = $em->getRepository(Page::class)->findOneBy([
-            'slug' => 'kitchen-sink',
+            'slug' => $slug,
             'host' => 'admin-block-editor.test',
         ]);
         if (null !== $existingPage) {
@@ -125,31 +136,12 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
             $em->flush();
         }
 
-        $jsonContent = file_get_contents(__DIR__.'/content/KitchenSink.json');
-
         $page = new Page();
-        $page->setH1('Demo Page - Kitchen Sink Block');
-        $page->setSlug('kitchen-sink');
+        $page->setH1($h1);
+        $page->setSlug($slug);
         $page->host = 'admin-block-editor.test';
         $page->locale = 'en';
-        $page->setMainContent($jsonContent);
-
-        $em->persist($page);
-        $em->flush();
-
-        return (int) $page->id;
-    }
-
-    private function createMarkdownTestPage(): int
-    {
-        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-
-        $page = new Page();
-        $page->setH1('Test Markdown Page');
-        $page->setSlug('test-markdown');
-        $page->host = 'admin-block-editor.test';
-        $page->locale = 'en';
-        $page->setMainContent('# Test\n\nThis is markdown content.');
+        $page->setMainContent($content);
 
         $em->persist($page);
         $em->flush();

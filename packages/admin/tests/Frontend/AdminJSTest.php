@@ -374,6 +374,20 @@ class AdminJSTest extends AbstractAdminTestClass
         $client = $this->createPantherClientWithLogin();
         $this->navigateToPageEdit($client);
 
+        // Wait for admin.js to be fully loaded (poll until function is available)
+        $maxAttempts = 10;
+        $jsLoaded = false;
+        for ($i = 0; $i < $maxAttempts; ++$i) {
+            $jsLoaded = (bool) $client->executeScript('return typeof window.copyElementText === "function"');
+            if ($jsLoaded) {
+                break;
+            }
+
+            $client->wait(self::WAIT_SHORT);
+        }
+
+        self::assertTrue($jsLoaded, 'Admin JavaScript function copyElementText should be available');
+
         // Crée un élément de test
         $client->executeScript('
             const testEl = document.createElement("div");
