@@ -10,6 +10,22 @@ Shell Script to install Puswhord in a minut.
 [![Type Coverage](https://shepherd.dev/github/pushword/pushword/coverage.svg)](https://shepherd.dev/github/pushword/pushword)
 [![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.svg?style=flat)](https://packagist.org/packages/pushword/core)
 
+## How It Works
+
+This package provides two mechanisms:
+
+1. **Interactive Setup** (`src/installer`): A bash script that runs once during `composer create-project` to set up a new Pushword project (database, admin user, routes, assets).
+
+2. **Automatic Package Setup** (`PostInstall::runPostUpdate`): Automatically executes each package's `install.php` when you add new Pushword packages via `composer require`.
+
+After initial setup, `pushword/installer` remains installed to support future package installations. Only the interactive bash script reference is removed from `post-install-cmd`.
+
+## Manual Installation
+
+If you prefer not to use automatic installation, you can:
+1. Remove `pushword/installer` from your dependencies
+2. Manually follow the steps in each package's `install.php` file
+
 ## Documentation
 
 Visit [pushword.piedweb.com](https://pushword.piedweb.com/installation)

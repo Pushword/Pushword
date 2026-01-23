@@ -16,10 +16,8 @@ composer require pushword/version
 Add Routes
 
 ```yaml
-admin:
+pushword_version:
   resource: '@PushwordVersionBundle/VersionRoutes.yaml'
-# or do it in 1 command line
-# $ sed -i '1s/^/version:\n    resource: "@PushwordVersionBundle\/VersionRoutes.yaml"\n/' config/routes.yaml
 ```
 
 ## Usage

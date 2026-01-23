@@ -55,7 +55,21 @@ rm package.json
 rm -rf assets
 cp -r vendor/pushword/skeleton/assets assets
 
-composer remove pushword/installer pushword/skeleton -q
+# Remove only the bash installer script from post-install-cmd (keep other scripts for future package installs)
+php -r "
+\$json = json_decode(file_get_contents('composer.json'), true);
+\$json['scripts']['post-install-cmd'] = array_values(array_filter(
+    \$json['scripts']['post-install-cmd'] ?? [],
+    fn(\$s) => !str_contains(\$s, 'vendor/pushword/installer/src/installer')
+));
+if (empty(\$json['scripts']['post-install-cmd'])) {
+    unset(\$json['scripts']['post-install-cmd']);
+}
+file_put_contents('composer.json', json_encode(\$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . \"\n\");
+"
+
+# Only remove skeleton (installer must stay for future package installs)
+composer remove pushword/skeleton -q
 
 # Launch Server and Play
 read -p "Launch Server and play? [Y/n] " -n 1 -r

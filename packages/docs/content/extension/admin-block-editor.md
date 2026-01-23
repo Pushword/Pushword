@@ -38,7 +38,7 @@ admin_block_editor: true
 
 You want to add a custom block ? This is the path to follow :
 
-1. Create a new [editor.js plugin](https://editorjs.io/the-first-plugin). There are a few examples in #[admin-block-editor-tools](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor-tools)
+1. Create a new [editor.js plugin](https://editorjs.io/the-first-plugin). There are a few examples in #[admin-block-editor/src/assets/tools](https://github.com/Pushword/Pushword/tree/main/packages/admin-block-editor/src/assets/tools)
 
 2. [Override](https://symfony.com/doc/current/bundles/override.html) [@PushwordAdminBlockEditor/editorjs_widget.html.twig](https://github.com/Pushword/Pushword/blob/main/packages/admin-block-editor/src/templates/editorjs_widget.html.twig) to add your custom plugin
 

@@ -6,24 +6,23 @@ parentPage: themes
 toc: true
 ---
 
-The default installer copy/paste a skeleton for a website stylized with tailwindcss.
+The default installer copy/paste a skeleton for a website stylized with Tailwind CSS.
 
-To update it, just go in `./assets` and edit `app.js`, `app.css`, directly the [tailwind configuration](https://tailwindcss.com/docs/configuration) or the `webpack.config.js`.
+To update it, just edit `app.js`, `app.css`, directly the [tailwind configuration](https://tailwindcss.com/docs/configuration) or the `vite.config.js`.
 
-Then run wepback :
+Then run the build:
 
-```
-cd assets
-
-yarn && yarn encore dev
-## OR yarn encore production
+```bash
+npm install && npm run build
+# OR for development with hot reload:
+npm run dev
 ```
 
 If you want to change the default location for assets, just edit `./config/packages/pushword.yaml` and configure `apps.0.assets` (#[eg](https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages/pushword.yaml#L31))
 
 ## Automatic Tailwind Update on page update
 
-If you use tailwind class inside a page content, by default the command `yarn encore production` is runned when you update a page.
+If you use Tailwind classes inside page content, by default the command `npm run build` is run when you update a page.
 
 May be sure this option is working by checking `var/log/lastTailwindGeneration`.
 

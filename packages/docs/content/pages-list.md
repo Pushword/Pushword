@@ -15,7 +15,7 @@ You can do advanced filtering toward the twig `pages_list` like in the [admin-bl
 | `sisters`                        | filter sister pages (case insensitive)                                                                          |
 | `parent_children`                | alias for `sisters` (**deprecated**)                                                                            |
 | `related`                        | if there is a parent page, filter results with sister pages with a _pageId_ inferior to _currentPageId_ + **3** |
-| `comment:`_exampleValue_         | filter rpages containing in _mainContent_ `<!--exampleValue-->` (**deprecated**, prefer tags)                   |
+| `comment:`_exampleValue_         | filter pages containing in _mainContent_ `<!--exampleValue-->` (**deprecated**, prefer tags)                    |
 | `related:comment:`_exampleValue_ | same as `related` but instead of _sister pages_, it's pages containing the comment                              |
 | `title:`_exampleValue_           | filter pages containing in title (**seo title** or **h1**) the _exampleValue_                                   |
 | `content:`_exampleValue_         | same than `title` + searching in _mainContent_ too                                                              |

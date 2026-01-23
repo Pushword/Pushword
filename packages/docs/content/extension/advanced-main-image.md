@@ -10,7 +10,7 @@ Supercharge the Pushword Admin with a new admin form field to customize the main
 ## Install
 
 ```shell
-composer require pushword/advanced-main-imaged
+composer require pushword/advanced-main-image
 ```
 
 ## Configuration
@@ -29,5 +29,5 @@ When mainImageFormat is set to **default** (0) or **none** (1), it's ever manage
 
 When mainImageFormat is greater than 1, it's managed by new template files added by this extension :
 
--   `page/page_hero.html.twig`.
--   `page/_content_hero_.html.twig`.
+-   `page/page_hero.html.twig`
+-   `page/_content_hero.html.twig`

@@ -75,7 +75,7 @@ or `'@PushwordConversation/conversation/'.$type.$referring.'Step'.$step.'.html.t
 
 ## Create a new form
 
-Per default, there is 3 form types : `newsletter`, `message` and `multiStepMessage`.
+Per default, there are 4 form types: `newsletter`, `message`, `ms_message` and `multistep_message`.
 
 Add a new class in bundle config `pushword_conversation.conversation_form.myNewType: myNewFormClass` or at the app level config `pushword.apps[...].conversation_form: [...]`
 
@@ -107,8 +107,8 @@ The `host` column in the CSV preserves the host information in both modes, allow
 ### CLI helpers
 
 ```bash
-# Auto-detect import vs export (or force with --force=import|export|sync)
-php bin/console pw:message:flat [host] [--force=sync]
+# Auto-detect import vs export (or force with -f import|export|sync)
+php bin/console pw:message:flat [host] [-f sync]
 
 # Import an external CSV without touching local files
 php bin/console pw:message:import path/to/conversation.csv [--host=example.com]

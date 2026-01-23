@@ -236,8 +236,8 @@ php bin/console pw:flat:conflicts:clear
 Configure email notifications for conflicts and errors:
 
 ```yaml
-# config/packages/pushword.yaml
-pushword_flat:
+# config/packages/flat.yaml
+flat:
   notification_email_recipients:
     - admin@example.com
     - devops@example.com
@@ -256,7 +256,7 @@ Access via Admin > Notifications to:
 ## Configuration Reference
 
 ```yaml
-pushword_flat:
+flat:
   # Existing options
   flat_content_dir: '%kernel.project_dir%/content/_host_'
   change_detection_cache_ttl: 300
@@ -281,5 +281,5 @@ php bin/console pw:flat:lock [host] --reason="Manual lock" --ttl=3600
 php bin/console pw:flat:unlock [host]
 
 # Clear conflicts
-php bin/console pw:flat:conflicts:clear [host] --dry-run
+php bin/console pw:flat:conflicts:clear [host] --dry
 ```

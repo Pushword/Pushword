@@ -58,7 +58,7 @@ This is only for [contribution](/contribute), if you are searching to developp a
 3. Install dependencies and initialize default app
 
 ```shell
-composer update && composer reset
+composer update && composer reset-skeleton
 ```
 
 ### Useful commands

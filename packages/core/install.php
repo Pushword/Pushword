@@ -103,6 +103,6 @@ public/assets
 public/media
 public/sw.js
 static/
-!/var/app.db
+!/var/installer/
 ###< pushword ###
 ', PostInstall::INSERT_AT_END);

@@ -15,12 +15,12 @@ composer require pushword/flat
 
 ## Configure (if needed)
 
-Globally under `pushword_flat` (in `config/packages`).
+Globally under `flat:` (in `config/packages/flat.yaml`).
 
-Or for _multi-sites_ in `config/packages/pushword.yaml`.
+Or for _multi-sites_ in `config/packages/pushword.yaml` under the app configuration.
 
 ```yaml
-pushword_flat:
+flat:
   flat_content_dir: content # default value
 
   # Change detection cache TTL in seconds (default: 300 = 5 minutes)
@@ -109,7 +109,7 @@ When both flat files and database are modified since the last sync, a conflict o
 
 ```bash
 # List and clear conflict backup files
-php bin/console pw:flat:conflicts:clear [host] [--dry-run]
+php bin/console pw:flat:conflicts:clear [host] [--dry]
 ```
 
 **Conflict backup files:**

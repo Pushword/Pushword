@@ -13,6 +13,26 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 ## To 1.0.0-rcXXX
 
+### Installer Package Changes
+
+The `pushword/installer` package is no longer removed after initial project setup. It now stays as a dependency to support automatic setup when adding new Pushword packages via `composer require`.
+
+**If you have orphaned scripts in your `composer.json`** referencing `Pushword\Installer` classes that cause errors:
+
+1. Either re-add `pushword/installer` to your dependencies:
+   ```bash
+   composer require pushword/installer
+   ```
+
+2. Or remove the orphaned scripts from `composer.json`:
+   ```json
+   "scripts": {
+       "post-install-cmd": ["@auto-scripts"],
+       "post-update-cmd": ["@auto-scripts"]
+   }
+   ```
+   And remove `post-autoload-dump` if it only contains `Pushword\Installer\PostAutoloadDump::runPostAutoload`.
+
 ### Conversation Route Change (Breaking)
 
 The conversation form route has changed from path-based to query-based parameters for `host` and `locale`.
@@ -208,7 +228,7 @@ php bin/console pw:json-to-markdown --dry-run
 3. Run the command to convert the data
 
 ```
-php bin/console pw:json-to-markdown --force
+php bin/console pw:json-to-markdown
 # by host
 php bin/console pw:json-to-markdown --host=example.com
 # or by page id

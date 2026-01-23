@@ -35,5 +35,5 @@ _You can use twig syntax inside markdown inline code or markdown code block, it 
 This is a paragraph.
 
 {#mainGallery}
-{{ gallery({'piedweb-logo.png': '', '1.jpg': '', '2.jpg': '', '3.jpg': ''}) }}
+{{ gallery(['piedweb-logo.png', '1.jpg', '2.jpg', '3.jpg']) }}
 ```

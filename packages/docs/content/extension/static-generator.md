@@ -18,14 +18,23 @@ you may have a look inside `vendor/pushword/admin/install.php`.
 
 ## Configure
 
-Add in your current `config/package/pushword.yaml` for an App or globally under `pushword_static_generator:`
+Add in your current `config/packages/pushword.yaml` for an App or globally under `static_generator:` in `config/packages/static_generator.yaml`.
 
 ```yaml
+# In pushword.yaml under your app config:
 pushword:
-  # ...
-  static_generators: apache|github|frankenphp|[..., classNameGenerator, ...]
+  apps:
+    - host: example.tld
+      static_generators: [Pushword\StaticGenerator\Generator\PagesGenerator, ...]
+      static_symlink: true
+      static_dir: '%kernel.project_dir%/static/%main_host%'
+      static_copy: ['assets', 'bundles'] # files/folders from public/ to copy
+
+# Or globally in config/packages/static_generator.yaml:
+static_generator:
+  static_generators: apache # shortcuts: apache, github, frankenphp
   static_symlink: true
-  static_dir: '' #default /static/%mainHost.tld%/
+  static_dir: '%kernel.project_dir%/static/%main_host%'
 ```
 
 _The default generators are compatible with Apache/Litespeed and FrankenPHP/Caddy (generating .htaccess and Caddyfile)._
