@@ -5,6 +5,7 @@ namespace Pushword\Core\Entity\MediaTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use InvertColor\Color;
+use Pushword\Core\Entity\Dimensions;
 use Pushword\Core\Utils\ImageRatioLabeler;
 
 trait ImageTrait
@@ -62,20 +63,13 @@ trait ImageTrait
         return $this->ratioLabel;
     }
 
-    /**
-     * @return int[]|null
-     */
-    public function getDimensions(): ?array
+    public function getDimensions(): ?Dimensions
     {
-        if (null === $this->height) {
+        if (null === $this->height || null === $this->width) {
             return null;
         }
 
-        if (null === $this->width) {
-            return null;
-        }
-
-        return [$this->width, $this->height];
+        return new Dimensions($this->width, $this->height);
     }
 
     public function getRatio(): ?float

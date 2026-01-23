@@ -13,6 +13,38 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 ## To 1.0.0-rcXXX
 
+### Dimensions Value Object (Breaking)
+
+`Media::getDimensions()` and the `image_dimensions()` Twig function now return a `Dimensions` object instead of an array.
+
+**PHP Code Changes:**
+
+```php
+// Before
+$dimensions = $media->getDimensions();
+$width = $dimensions[0];
+$height = $dimensions[1];
+
+// After
+$dimensions = $media->getDimensions();
+$width = $dimensions->width;
+$height = $dimensions->height;
+// Or use toArray() for backward compatibility:
+$arr = $dimensions->toArray(); // [width, height]
+```
+
+**Twig Template Changes:**
+
+```twig
+{# Before #}
+{% set width = image_dimensions(image)[0] %}
+{% set height = image_dimensions(image)[1] %}
+
+{# After #}
+{% set width = image_dimensions(image).width %}
+{% set height = image_dimensions(image).height %}
+```
+
 ### Installer Package Changes
 
 The `pushword/installer` package is no longer removed after initial project setup. It now stays as a dependency to support automatic setup when adding new Pushword packages via `composer require`.

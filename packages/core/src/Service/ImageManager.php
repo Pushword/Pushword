@@ -10,6 +10,7 @@ use Intervention\Image\Encoders\AutoEncoder;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager as InteventionImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
+use Pushword\Core\Entity\Dimensions;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Utils\Filepath;
 use Pushword\Core\Utils\ImageOptimizer\OptimizerChainFactory;
@@ -587,11 +588,8 @@ final class ImageManager
         return $this->getFilterPath($media, $filterName, null, true);
     }
 
-    /**
-     * @return int[] index 0 contains width, index 1 height
-     */
     #[AsTwigFunction('image_dimensions')]
-    public function getDimensions(Media|string $media): array
+    public function getDimensions(Media|string $media): Dimensions
     {
         $path = $this->getFilterPath($media, 'xs');
 
@@ -600,7 +598,7 @@ final class ImageManager
             throw new Exception('`'.$path.'` not found');
         }
 
-        return [$size[0], $size[1]];
+        return new Dimensions($size[0], $size[1]);
     }
 
     /**

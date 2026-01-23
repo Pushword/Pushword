@@ -31,8 +31,8 @@
 
   {% if mode == 'responsive' %}
     {% set breakpoints = {xs: 576, sm: 768, md: 992, lg: 1200, xl: 1600} %}
-    {% set width = image.width ?? image_dimensions(image)[0] %}
-    {% set height = image.height ?? image_dimensions(image)[1] %}
+    {% set width = image.width ?? image_dimensions(image).width %}
+    {% set height = image.height ?? image_dimensions(image).height %}
     {% set alt = image_alt|default(image.alt ?? image.fileName) %}
   {% else %}
     {% set breakpoints = {(mode): 576} %}

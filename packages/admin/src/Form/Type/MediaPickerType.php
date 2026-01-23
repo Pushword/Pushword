@@ -149,9 +149,9 @@ final class MediaPickerType extends AbstractType
     {
         $label = $media->getAlt() ?: $media->getFileName();
         $dimensions = $media->getDimensions();
-        $meta = null === $dimensions ? '' : sprintf('%dx%d', $dimensions[0], $dimensions[1]);
-        $width = null === $dimensions ? null : (string) $dimensions[0];
-        $height = null === $dimensions ? null : (string) $dimensions[1];
+        $meta = null === $dimensions ? '' : sprintf('%dx%d', $dimensions->width, $dimensions->height);
+        $width = null === $dimensions ? null : (string) $dimensions->width;
+        $height = null === $dimensions ? null : (string) $dimensions->height;
         $ratioLabel = $media->getRatioLabel();
 
         return [
