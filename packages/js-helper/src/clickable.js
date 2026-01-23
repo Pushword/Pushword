@@ -1,21 +1,35 @@
 import { uncloakLinks } from './helpers'
 
 /**
- * transform an element containing a link (a href) in a clickable element
+ * transform an element containing a link (a href) or button in a clickable element
  *
  * @param {Object}  element
  */
 export async function clickable(element) {
-  if (!element.querySelector('a') && !element.querySelector('span[data-rot]')) return false
-  if (element.querySelector('span[data-rot]')) await uncloakLinks('data-rot', false)
-  var link = element.querySelectorAll('a')[0]
-  if (window.location.pathname.replace(/^\//, '') == link.pathname.replace(/^\//, '') && window.location.hostname == link.hostname) {
-    if (typeof smoothScroll === 'function') {
-      smoothScroll(link)
+  var link = element.querySelector('a')
+
+  if (!link && element.querySelector('span[data-rot]')) {
+    await uncloakLinks('data-rot', false)
+    link = element.querySelector('a')
+  }
+
+  if (link) {
+    if (window.location.pathname.replace(/^\//, '') == link.pathname.replace(/^\//, '') && window.location.hostname == link.hostname) {
+      if (typeof smoothScroll === 'function') {
+        smoothScroll(link)
+      }
+      return false
     }
+    window.location = link.getAttribute('href') === null ? '' : link.getAttribute('href')
     return false
   }
-  window.location = link.getAttribute('href') === null ? '' : link.getAttribute('href')
+
+  var button = element.querySelector('button')
+  if (button) {
+    button.click()
+    return false
+  }
+
   return false
 }
 
