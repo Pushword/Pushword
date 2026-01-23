@@ -1473,4 +1473,59 @@ YAML;
         $this->em->flush();
         @unlink($mdFilePath);
     }
+
+    /**
+     * Test 27: Duplicate IDs in markdown files are detected and ignored.
+     */
+    public function testDuplicateIdsAreDetectedAndIgnored(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create first markdown file with id: 999999
+        $md1FilePath = $contentDir.'/duplicate-id-test-1.md';
+        $md1Content = <<<'YAML'
+---
+id: 999999
+h1: First Page With Duplicate ID
+---
+
+First page content.
+YAML;
+        file_put_contents($md1FilePath, $md1Content);
+        touch($md1FilePath, time() + 10);
+
+        // Create second markdown file with same id: 999999
+        $md2FilePath = $contentDir.'/duplicate-id-test-2.md';
+        $md2Content = <<<'YAML'
+---
+id: 999999
+h1: Second Page With Duplicate ID
+---
+
+Second page content.
+YAML;
+        file_put_contents($md2FilePath, $md2Content);
+        touch($md2FilePath, time() + 10);
+
+        // Import - should warn about duplicate ID and ignore it for the second file
+        $this->pageSync->import('localhost.dev');
+
+        // Verify both pages exist in DB with different database IDs
+        $this->em->clear();
+        $page1 = $this->pageRepo->findOneBy(['slug' => 'duplicate-id-test-1', 'host' => 'localhost.dev']);
+        $page2 = $this->pageRepo->findOneBy(['slug' => 'duplicate-id-test-2', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($page1, 'First page should be imported');
+        self::assertNotNull($page2, 'Second page should be imported');
+        self::assertNotSame($page1->id, $page2->id, 'Pages should have different database IDs');
+
+        // Cleanup
+        $this->em->remove($page1);
+        $this->em->remove($page2);
+        $this->em->flush();
+        @unlink($md1FilePath);
+        @unlink($md2FilePath);
+    }
 }

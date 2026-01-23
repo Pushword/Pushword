@@ -70,6 +70,9 @@ final class PageImporter extends AbstractImporter
     /** @var array<string, true> translation pairs that were explicitly added (format: "slugA|slugB") */
     private array $addedTranslationPairs = [];
 
+    /** @var array<int, string> Map of ID => relative file path that claimed it (for duplicate detection) */
+    private array $idToFileMap = [];
+
     private function getContentDir(): string
     {
         $host = $this->apps->get()->getMainHost();
@@ -140,7 +143,7 @@ final class PageImporter extends AbstractImporter
         $data = \is_array($data) ? $data : throw new Exception();
         /** @var array<string, mixed> $data */
         $previousImportedCount = $this->importedCount;
-        $this->pageList[$slug] = $this->editPage($slug, $data, $document->body(), $lastEditDateTime);
+        $this->pageList[$slug] = $this->editPage($slug, $data, $document->body(), $lastEditDateTime, $relativeFilePath);
 
         // Return true if this file was actually imported (not skipped)
         return $this->importedCount > $previousImportedCount;
@@ -206,10 +209,22 @@ final class PageImporter extends AbstractImporter
         string $slug,
         array $data,
         string $content,
-        DateTime|DateTimeImmutable|DateTimeInterface $lastEditDateTime
+        DateTime|DateTimeImmutable|DateTimeInterface $lastEditDateTime,
+        string $relativeFilePath = '',
     ): Page {
-        if (isset($data['id'])) {
-            $page = $this->pageRepo->find($data['id']);
+        if (isset($data['id']) && is_numeric($data['id'])) {
+            $id = (int) $data['id'];
+
+            if (isset($this->idToFileMap[$id])) {
+                $this->logger->warning(
+                    'Duplicate ID {id} in {file}, already used by {original} - ID ignored',
+                    ['id' => $id, 'file' => $relativeFilePath, 'original' => $this->idToFileMap[$id]]
+                );
+            } else {
+                $this->idToFileMap[$id] = $relativeFilePath;
+                $page = $this->pageRepo->find($id);
+            }
+
             unset($data['id']);
         }
 
@@ -515,6 +530,7 @@ final class PageImporter extends AbstractImporter
         $this->slugs = [];
         $this->pageList = [];
         $this->addedTranslationPairs = [];
+        $this->idToFileMap = [];
         $this->importedCount = 0;
         $this->skippedCount = 0;
     }
