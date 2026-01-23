@@ -145,7 +145,7 @@ final readonly class FlatFileSyncCommand
     private function syncHost(string $host, bool $force, string $entity, string $mode, bool $skipId): void
     {
         match ($mode) {
-            'import' => $this->flatFileSync->import($host, $skipId, $entity),
+            'import' => $this->flatFileSync->import($host, $skipId, $entity, $force),
             'export' => $this->flatFileSync->export($host, force: $force, skipId: $skipId, entity: $entity),
             default => $this->flatFileSync->sync($host, $force, null, $entity, $skipId),
         };

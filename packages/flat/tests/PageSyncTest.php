@@ -1528,4 +1528,60 @@ YAML;
         @unlink($md1FilePath);
         @unlink($md2FilePath);
     }
+
+    /**
+     * Test: Force import resets (deletes) all host pages before importing.
+     */
+    public function testForceImportResetsHostPagesBeforeImport(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create an existing page in DB that has NO corresponding .md file
+        $existingPage = new Page();
+        $existingPage->setSlug('force-reset-test-existing');
+        $existingPage->setH1('Existing Page To Be Reset');
+        $existingPage->host = 'localhost.dev';
+        $existingPage->locale = 'en';
+
+        $this->em->persist($existingPage);
+        $this->em->flush();
+
+        // Verify it exists
+        $this->em->clear();
+
+        $existingPageCheck = $this->pageRepo->findOneBy(['slug' => 'force-reset-test-existing', 'host' => 'localhost.dev']);
+        self::assertNotNull($existingPageCheck, 'Existing page should exist before force import');
+
+        // Create a content file for a NEW page only
+        $newPagePath = $contentDir.'/force-reset-test-new.md';
+        $newPageContent = <<<'YAML'
+---
+h1: New Page After Reset
+locale: en
+---
+
+New page content.
+YAML;
+        file_put_contents($newPagePath, $newPageContent);
+        touch($newPagePath, time() + 10);
+
+        // Run import with force=true
+        $this->pageSync->import('localhost.dev', skipId: true, force: true);
+
+        // Assert: existing page was deleted (reset), new page was imported
+        $this->em->clear();
+
+        $existingPageAfter = $this->pageRepo->findOneBy(['slug' => 'force-reset-test-existing', 'host' => 'localhost.dev']);
+        self::assertNull($existingPageAfter, 'Existing page should be deleted on force import');
+
+        $newPage = $this->pageRepo->findOneBy(['slug' => 'force-reset-test-new', 'host' => 'localhost.dev']);
+        self::assertNotNull($newPage, 'New page should be imported after force reset');
+
+        // Cleanup
+        $this->em->remove($newPage);
+        $this->em->flush();
+        @unlink($newPagePath);
+    }
 }

@@ -71,7 +71,7 @@ final class FlatFileSync
         $this->dispatchEvent($host);
     }
 
-    public function import(?string $host = null, bool $skipId = false, string $entity = 'all'): void
+    public function import(?string $host = null, bool $skipId = false, string $entity = 'all', bool $force = false): void
     {
         if (\in_array($entity, ['media', 'all'], true)) {
             $this->stopwatch?->start('media.sync');
@@ -81,7 +81,7 @@ final class FlatFileSync
 
         if (\in_array($entity, ['page', 'all'], true)) {
             $this->stopwatch?->start('page.sync');
-            $this->pageSync->import($host, $skipId);
+            $this->pageSync->import($host, $skipId, $force);
             $this->stopwatch?->stop('page.sync');
         }
 

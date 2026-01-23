@@ -66,10 +66,15 @@ final class PageSync
         $this->export($host, $forceExport, $exportDir, $skipId);
     }
 
-    public function import(?string $host = null, bool $skipId = false): void
+    public function import(?string $host = null, bool $skipId = false, bool $force = false): void
     {
         $this->deletedCount = 0;
         $app = $this->resolveApp($host);
+
+        if ($force) {
+            $this->resetHostPages($app->getMainHost());
+        }
+
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
 
         // 1. Import redirections from redirection.csv
@@ -255,6 +260,28 @@ final class PageSync
         }
 
         return $lastEditDateTime > $page->updatedAt;
+    }
+
+    /**
+     * Delete all pages for the host (used for force import reset).
+     */
+    private function resetHostPages(string $host): void
+    {
+        $pages = $this->pageRepository->findByHost($host);
+        $count = \count($pages);
+
+        if (0 === $count) {
+            return;
+        }
+
+        $this->output?->writeln(\sprintf('<comment>Resetting %d pages for host %s...</comment>', $count, $host));
+
+        foreach ($pages as $page) {
+            $this->entityManager->remove($page);
+            ++$this->deletedCount;
+        }
+
+        $this->entityManager->flush();
     }
 
     /**
