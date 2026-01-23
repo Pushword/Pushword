@@ -1,6 +1,7 @@
 ---
 title: 'List Pages as a pro with Pushword CMS'
 h1: 'Create Page List<br> <small>Advanced filtering</small>'
+id: 43
 publishedAt: '2025-12-21 21:55'
 toc: true
 ---
@@ -34,3 +35,19 @@ Examples :
 - ✔ `parent_children AND related AND page:custom-slug` (this one will output only 1 result)
 - ✗ `parent_children AND related OR page:custom-slug` (this one will output only 1 result)
 - ✗ `(parent_children AND related) OR page:custom-slug` (this one will output only 1 result)
+
+## Exclude Already Linked Pages
+
+When your page content contains links to other pages, you can exclude those pages from your listings to avoid duplicates. Add the `excludeAlreadyLinked: true` parameter:
+
+```twig
+{{ pages_list('taxonomy:travel', 6, excludeAlreadyLinked: true) }}
+```
+
+Or use the `exclude_linked()` function with `pages()`:
+
+```twig
+{% set uniquePages = exclude_linked(pages(host, 'taxonomy:travel')) %}
+```
+
+See the [Link Collector documentation](/link-collector) for detailed usage, examples, and the full API reference.

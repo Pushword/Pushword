@@ -15,6 +15,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Utils\StringToDQLCriteria;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -27,6 +28,7 @@ final class PageExtension
         private readonly AppPool $apps,
         public Twig $twig,
         private readonly RouteGeneratorFactoryInterface $routeGeneratorFactory,
+        private readonly LinkCollectorService $linkCollector,
     ) {
     }
 
@@ -209,6 +211,7 @@ final class PageExtension
         // next properties are not documented, do not use outside pushword packages
         array|string $host = '',
         ?Page $currentPage = null,
+        bool $excludeAlreadyLinked = false,
     ): string {
         $currentPage ??= $this->apps->getCurrentPage();
 
@@ -261,13 +264,22 @@ final class PageExtension
                 $pages = \array_slice($pages, 0, $limit);
             }
 
+            if ($excludeAlreadyLinked) {
+                $pages = $this->linkCollector->excludeRegistered($pages);
+            }
+
             $pagerfanta = new Pagerfanta(new ArrayAdapter($pages))
                 ->setMaxNbPages($maxPages)
                 ->setMaxPerPage($max)
                 ->setCurrentPage($this->getCurrentPagerNumber());
             $pages = $pagerfanta->getCurrentPageResults();
         } else {
+            /** @var Page[] */
             $pages = $queryBuilder->getQuery()->getResult();
+
+            if ($excludeAlreadyLinked) {
+                $pages = $this->linkCollector->excludeRegistered($pages);
+            }
         }
 
         $template = $this->apps->get()->getView($view);

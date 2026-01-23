@@ -7,6 +7,7 @@ use Pushword\Core\Component\EntityFilter\Filter\ElseH1;
 use Pushword\Core\Component\EntityFilter\Filter\Extended;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlLinkMultisite;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
+use Pushword\Core\Component\EntityFilter\Filter\LinkCollector;
 use Pushword\Core\Component\EntityFilter\Filter\Markdown;
 use Pushword\Core\Component\EntityFilter\Filter\Name;
 use Pushword\Core\Component\EntityFilter\Filter\ShowMore;
@@ -56,6 +57,7 @@ final class Configuration implements ConfigurationInterface
         // date,email,phoneNumber ➜ managed by markdown extension in main_content
         'main_content' => [
             ShowMore::class,
+            LinkCollector::class,
             Markdown::class,
             HtmlLinkMultisite::class,
             HtmlObfuscateLink::class,

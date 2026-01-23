@@ -6,6 +6,7 @@ use Cocur\Slugify\Slugify;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Utils\FilesizeFormatter;
 use Pushword\Core\Utils\HtmlBeautifer;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -20,6 +21,7 @@ final class AppExtension
         private AppPool $apps,
         public Twig $twig,
         private Security $security,
+        private LinkCollectorService $linkCollector,
     ) {
     }
 
@@ -207,5 +209,38 @@ final class AppExtension
     {
         // Force token loading by getting the user
         return $this->security->getUser();
+    }
+
+    /**
+     * Get all slugs that were linked in the current page content.
+     *
+     * @return string[]
+     */
+    #[AsTwigFunction('linked_slugs')]
+    public function getLinkedSlugs(): array
+    {
+        return array_keys($this->linkCollector->getRegisteredSlugs());
+    }
+
+    /**
+     * Check if a specific slug was linked in the current page content.
+     */
+    #[AsTwigFunction('is_slug_linked')]
+    public function isSlugLinked(string $slug): bool
+    {
+        return $this->linkCollector->isSlugRegistered($slug);
+    }
+
+    /**
+     * Filter out pages that were already linked in the current page content.
+     *
+     * @param Page[] $pages
+     *
+     * @return Page[]
+     */
+    #[AsTwigFunction('exclude_linked')]
+    public function excludeLinked(array $pages): array
+    {
+        return $this->linkCollector->excludeRegistered($pages);
     }
 }
