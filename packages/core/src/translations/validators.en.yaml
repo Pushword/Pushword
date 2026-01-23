@@ -1,0 +1,6 @@
+pageCustomPropertiesMalformed: 'The extra properties must be in YAML format.'
+pagePageRendering: "An error occurred in your content... impossible to generate the page."
+pageSlugAlreadyUsed: 'A page already uses this URL identifier'
+userEmailAlreadyUsed: 'An account is already associated with this email address.'
+userEmailInvalid: "The email address is invalid."
+userPasswordShort: 'The password is too short (7 characters min.).'

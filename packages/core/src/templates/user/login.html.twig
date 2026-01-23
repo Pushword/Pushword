@@ -1,0 +1,92 @@
+{% extends view('/user/layout.html.twig') %}
+
+{% block title %}{{ 'securityLoginTitle'|trans }}{% endblock %}
+
+{% block main_content %}
+{% if app.user %}
+  <p class="mb-3">
+    {{ 'securityLoginLoggedInAs'|trans({'%username%': app.user.username}) }}, <a href="{{ path('pushword_logout') }}">{{ 'securityLogout'|trans }}</a>
+  </p>
+{% endif %}
+
+{% for message in app.flashes('error') %}
+  <p role="alert" class="p-5 mb-4 text-red-500 bg-red-200">{{ message|trans }}</p>
+{% endfor %}
+
+{% if error %}
+  <p role="alert" class="p-5 mb-4 text-red-500 bg-red-200">{{ error.messageKey|trans(error.messageData) }}</p>
+{% endif %}
+
+{% if step|default('email') == 'email' %}
+<form method="post" action="{{ path('pushword_login_check_email') }}" class="mt-8 space-y-6">
+  <label for="inputEmail" class="sr-only">{{ 'securityLoginEmail'|trans }}</label>
+  <input type="email" id="inputEmail" name="email" value="{{ last_username }}" required autofocus
+         class="block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md shadow-xs sm:text-sm focus:outline-hidden focus:ring-primary focus:border-primary"
+         placeholder="{{ 'securityLoginEmail'|trans }}">
+
+  <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+  <button type="submit" class="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md bg-primary group hover:opacity-75 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+      <svg class="w-5 h-5 text-primary group-hover:text-primary" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+      </svg>
+    </span>
+    {{ 'securityLoginContinue'|trans }}
+  </button>
+</form>
+
+{% if oauth_providers|default([])|length > 0 %}
+<div class="relative mt-6" role="separator">
+  <div class="absolute inset-0 flex items-center" aria-hidden="true">
+    <hr class="w-full border-gray-300">
+  </div>
+  <p class="relative flex justify-center text-sm">
+    <span class="px-2 bg-white text-gray-500">{{ 'oauthOrContinueWith'|trans }}</span>
+  </p>
+</div>
+
+<nav class="mt-6 grid grid-cols-{{ oauth_providers|length > 1 ? oauth_providers|length : 1 }} gap-3" aria-label="{{ 'oauthOrContinueWith'|trans }}">
+  {% for provider in oauth_providers %}
+  <a href="{{ path('pushword_oauth_start', {provider: provider.name}) }}" class="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+    {{ provider.label }}
+  </a>
+  {% endfor %}
+</nav>
+{% endif %}
+
+{% else %}
+<form method="post" class="mt-8 space-y-6">
+  <fieldset class="-space-y-px rounded-md shadow-xs">
+    <legend class="sr-only">{{ 'securityLoginTitle'|trans }}</legend>
+    <label for="inputEmail" class="sr-only">{{ 'securityLoginEmail'|trans }}</label>
+    <input type="email" id="inputEmail" name="email" value="{{ last_username }}" readonly
+           class="block w-full px-3 py-2 text-gray-900 bg-gray-100 placeholder-gray-500 border border-gray-300 rounded-t-md sm:text-sm focus:outline-hidden focus:ring-primary focus:border-primary focus:z-10">
+
+    <label for="inputPassword" class="sr-only">{{ 'securityLoginPassword'|trans }}</label>
+    <input type="password" id="inputPassword" name="password" required autofocus
+           class="block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-b-md sm:text-sm focus:outline-hidden focus:ring-primary focus:border-primary focus:z-10"
+           placeholder="{{ 'securityLoginPassword'|trans }}">
+  </fieldset>
+
+  <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+  <div class="flex items-center justify-between">
+    <label class="flex items-center gap-2 text-sm text-gray-900">
+      <input type="checkbox" name="_remember_me" value="on" class="w-4 h-4 border-gray-300 rounded text-primary focus:ring-primary" checked>
+      {{ 'securityLoginRememberMe'|trans }}
+    </label>
+    <a href="{{ path('pushword_login') }}" class="text-sm text-primary hover:underline">{{ 'securityLoginChangeEmail'|trans }}</a>
+  </div>
+
+  <button type="submit" class="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md bg-primary group hover:opacity-75 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+      <svg class="w-5 h-5 text-primary group-hover:text-primary" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+      </svg>
+    </span>
+    {{ 'securityLoginLabelButton'|trans }}
+  </button>
+</form>
+{% endif %}
+{% endblock %}

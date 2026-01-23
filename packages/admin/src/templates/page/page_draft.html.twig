@@ -1,0 +1,96 @@
+<div class="pw-draft-toggle d-flex align-items-center gap-2">
+  <label class="form-check form-switch mb-0">
+    <input
+      type="checkbox"
+      class="form-check-input"
+      id="pw-draft-toggle-switch"
+      data-target-input="Page_publishedAt"
+    >
+  </label>
+  <small class="text-muted mb-0" id="pw-draft-toggle-status">
+    —
+  </small>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const toggleSwitch = document.getElementById('pw-draft-toggle-switch');
+  const targetInputSelector = toggleSwitch?.getAttribute('data-target-input');
+  const targetInput = targetInputSelector ? document.getElementById(targetInputSelector) : null;
+
+  if (!toggleSwitch || !targetInput) {
+    return;
+  }
+
+  const statusText = document.getElementById('pw-draft-toggle-status');
+
+  /**
+   * Format a Date object to datetime-local format (YYYY-MM-DDTHH:mm)
+   */
+  function formatDateTimeLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  /**
+   * Update toggle state based on input value
+   */
+  function updateToggleState() {
+    const hasValue = targetInput.value && targetInput.value.trim() !== '';
+    toggleSwitch.checked = hasValue;
+
+    if (statusText) {
+      if (hasValue) {
+        try {
+          const date = new Date(targetInput.value);
+          statusText.textContent = date.toLocaleString('fr-FR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        } catch (e) {
+          statusText.textContent = targetInput.value;
+        }
+      } else {
+        statusText.textContent = '—';
+      }
+    }
+  }
+
+  /**
+   * Handle toggle change
+   */
+  function handleToggleChange() {
+    if (toggleSwitch.checked) {
+      // Set to now
+      const now = new Date();
+      targetInput.value = formatDateTimeLocal(now);
+    } else {
+      // Clear value
+      targetInput.value = '';
+    }
+    updateToggleState();
+
+    // Trigger change event on target input for form validation
+    targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  // Initialize toggle state
+  updateToggleState();
+
+  // Listen to toggle changes
+  toggleSwitch.addEventListener('change', handleToggleChange);
+
+  // Listen to target input changes (in case user manually changes the datetime)
+  targetInput.addEventListener('change', updateToggleState);
+  targetInput.addEventListener('input', updateToggleState);
+})();
+</script>

@@ -1,0 +1,53 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% set isInlineWindow = app.request.query.get('pwInline') is not null %}
+
+{% block body_class %}pw-legacy-admin bg-gray-50 min-h-screen{{ isInlineWindow ? ' pw-inline-window' : '' }}{% endblock %}
+
+{% block head_stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ versionedAsset('bundles/pushwordadmin/admin.css') }}">
+    {% block stylesheets %}{% endblock %}
+{% endblock %}
+
+{% block body_javascript %}
+    {{ parent() }}
+    <script src="/bundles/pushwordadmin/monaco/app.js"></script>
+    <script src="{{ versionedAsset('/bundles/pushwordadmin/admin.js') }}"></script>
+    {% if isInlineWindow %}
+        <script>
+            window.addEventListener('load', function () {
+                const params = new URLSearchParams(window.location.search)
+                if (params.has('pwInlineSaved')) {
+                    window.parent.postMessage(
+                        { type: 'pw-inline-close', refresh: true },
+                        window.location.origin,
+                    )
+                }
+            })
+        </script>
+    {% endif %}
+    {% block javascripts %}{% endblock %}
+{% endblock %}
+
+{% block content_title %}
+    {% block title %}{{ 'adminLabelTools'|trans }}{% endblock %}
+{% endblock %}
+
+{% block page_actions %}
+    {% block actions %}{% endblock %}
+{% endblock %}
+
+{% block main %}
+    <div class="max-w-screen-xl mx-auto px-4 w-full">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="mb-4 rounded-md border px-4 py-3 text-sm {{ label }}">
+                    {{ message|raw }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {% block body %}{% endblock %}
+    </div>
+{% endblock %}

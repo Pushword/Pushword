@@ -1,0 +1,109 @@
+{% extends '@Pushword/page/_content.html.twig' %}
+
+{% set container = 'p-3 ' ~ (page.prose ? page.prose : 'prose dark:prose-light') ~ ' max-w-3xl' %}
+
+{% block toc %}{% endblock %}
+
+{% block content %}
+{% set mainContent = mainContentSplit(page) %}
+
+    {% if page.raw is not null %}
+            {{ mainContent.body|raw }}
+    {% elseif page.toc is not null %}
+    {% block h1 %} {% endblock %}
+    <div class="flex flex-wrap max-w-5xl">
+
+        <div class="order-2 w-full overflow-hidden lg:order-1 lg:w-4/5">
+            <div class="p-3 prose dark:prose-light max-w-none">
+                <h1>{{ pw(page).h1|raw }}</h1>
+                {{ mainContent.intro|raw }}
+            </div>
+        </div>
+
+        {% if mainContent.toc is not empty %}
+        <div class="order-3 w-full overflow-hidden lg:order-2 lg:w-1/5">
+            <div class="max-w-screen-sm p-3 pt-4 m-2 rounded lg:border-l lg:border-gray-200 lg:max-w-xs lg:absolute">
+                <h3 class="block px-1 mb-3 text-sm font-semibold tracking-wide text-gray-900 uppercase dark:text-gray-100 lg:mb-3 lg:text-xs">Contents</h3>
+                <div class="px-1 -ml-6 prose-sm dark:prose-light max-w-none">
+                    {{ mainContent.toc|raw }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="order-4 w-full overflow-hidden lg:w-4/5">
+            <div class="{{ container }} ">
+                {{ mainContent.content|raw }}
+            </div>
+        </div>
+
+    </div>
+    {% else %}
+            <div class="{{ page.slug == 'homepage' ? 'prose-lg max-w-none' : 'max-w-3xl p-3' }} prose dark:prose-light">
+                <h1 class="max-w-screen-lg mx-auto p-3">{{ pw(page).h1|raw }}</h1>
+                {{ mainContent.chapeau|raw }}
+                {{ mainContent.body|raw }}
+            </div>
+    {% endif %}
+
+    {#
+    {% if page.slug != 'homepage' %}
+        <div class="p-5 pt-5 mx-3 text-yellow-800 border-l-4 border-yellow-500 bg-yellow-50">
+            {{ svg('exclamation-triangle') }} ...
+        </div>
+    {% endif %} #}
+
+    {% if page.slug != 'homepage' %}
+    <div class="flex max-w-3xl mx-3 mt-5">
+
+        {{ _self.previous(nav, page) }}
+
+        {{ _self.next(nav, page) }}
+    </div>
+    {% endif %}
+
+    {% if page.slug != 'homepage' %}
+        <div class="max-w-3xl mx-3 mt-10 text-sm font-light text-center text-gray-500">
+            {{ link(svg('edit', {class: 'fill-current w-3 inline-block -mt-1'}) ~ '<span class="hidden ml-2 lg:inline-block">Edit via github</span>', 'https://github.com/Pushword/Pushword/edit/main/packages/docs/content/' ~ page.slug ~ '.md', {class: 'hover:text-gray-900 dark:hover:text-gray-100'}) }}
+        </div>
+    {% endif %}
+
+    <div class="pb-10"></div>
+
+{% endblock %}
+
+{% macro next(nav, page) %}
+    {% set next_is_the_one = false %}
+    {% for n in nav %}
+
+        {% if next_is_the_one and n.2 is not defined %}
+            <a class="flex ml-auto text-right text-gray-500 hover:text-gray-900 dark:hover:text-gray-100" href="{{ n.1 == '#' ? '#' : page(n.1) }}">
+                {{ n.0 }} <span aria-hidden="true" class="ml-2">→</span>
+            </a>
+            {% set next_is_the_one = false %}
+        {% endif %}
+
+        {% if n.2 is not defined and n.1 == page.realSlug %}
+            {% set next_is_the_one = true %}
+        {% endif %}
+    {% endfor %}
+
+{% endmacro %}
+
+{% macro previous(nav, page) %}
+
+    {% set previous = null %}
+
+    {% for n in nav %}
+        {% if n.2 is not defined and n.1 == page.realSlug and previous is not null %}
+            <a class="flex mr-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100" href="{{ previous.1 == '#' ? '#' : page(previous.1) }}">
+                <span aria-hidden="true" class="mr-2">←</span> {{ previous.0 }}
+            </a>
+        {% endif %}
+
+        {% if n.2 is not defined %}
+            {% set previous = n %}
+        {% endif %}
+    {% endfor %}
+
+{% endmacro %}

@@ -1,0 +1,4 @@
+page_scanner:
+  resource: "@PushwordPageScannerBundle/Controller/"
+  type: attribute
+  prefix: /admin/page

@@ -1,0 +1,6 @@
+twig:
+    paths:
+        "%pw.package_dir%/advanced-main-image/src/../src/templates": "Pushword"
+        "%pw.package_dir%/advanced-main-image/src/../src/../src/templates": "PushwordAdvancedMainImage"
+# this was moved in post install since 1.0.0-rc80 because something breaks the order
+# this usage is deprecated now, better use @PushwordAdvancedMainImage/...

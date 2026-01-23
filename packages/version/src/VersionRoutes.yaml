@@ -1,0 +1,4 @@
+pushword_version:
+  resource: "@PushwordVersionBundle/VersionController.php"
+  type: attribute
+  prefix: /admin/version

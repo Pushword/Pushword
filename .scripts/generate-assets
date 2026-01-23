@@ -1,0 +1,103 @@
+#!/bin/bash -e
+
+TYPE="$1"
+DEV="$2"
+
+function installDependencies {
+    yarn link @pushword/js-helper || true;
+    if [ "$DEV" = "watch" ];
+    then
+        yarn;
+    else
+        yarn && yarn upgrade;
+    fi
+}
+
+function buildAssets {
+    if [ "$DEV" = "watch" ]
+    then
+        yarn watch &
+    else
+        yarn build
+    fi
+}
+
+echo "Generate Assets for $1"
+
+if [ "$DEV" = "watch" ]
+then
+    echo 'Watch mode activate'
+fi
+echo '------------------'
+
+cd packages/js-helper;
+yarn link  > /dev/null 2>&1 || echo "yarn link failed, but continuing..."
+if [ "$DEV" = "watch" ];
+then
+    yarn;
+else
+    yarn && yarn upgrade;
+fi
+cd ../../;
+
+#####################
+## ADMIN BLOCK EDITOR
+#####################
+
+if [ "$TYPE" = "admin-block-editor" ] || [ "$TYPE" = "editor" ] || [ "$TYPE" = "" ] || [ "$TYPE" = "all" ]
+then
+    echo "--- packages/admin-block-editor ---"
+    cd packages/admin-block-editor
+    installDependencies
+    buildAssets
+    cd ../../
+fi
+
+
+########
+## ADMIN
+########
+
+if [ "$TYPE" = "admin" ] || [ "$TYPE" = "" ] || [ "$TYPE" = "all" ]
+then
+    echo "--- packages/admin ---"
+    cd packages/admin
+    installDependencies
+    cd ../../
+    php ./packages/admin/src/Resources/assets/easymde-hack
+    cd packages/admin
+    buildAssets
+    cd ../../
+    sed -i "s/\?v[0-9]/?v$(date '+%s%3N')/" packages/admin/src/templates/layout.html.twig
+
+    echo "--- packages/admin-monaco-editor ---"
+    cd packages/admin-monaco-editor
+    installDependencies
+    buildAssets
+    cd ../../
+fi
+
+########
+## CORE
+########
+
+if [ "$TYPE" = "core" ] || [ "$TYPE" = "" ] || [ "$TYPE" = "all" ]
+then
+    echo "--- packages/core ---"
+    cd packages/core
+    installDependencies
+    buildAssets
+    cd ../../
+fi
+
+if [ "$TYPE" = "docs" ] || [ "$TYPE" = "" ] || [ "$TYPE" = "all" ]
+then
+    echo "--- packages/docs ---"
+    cd packages/docs/assets
+    installDependencies
+    buildAssets
+    cd ../../../
+fi
+
+cd packages/skeleton
+php bin/console --symlink --relative  'assets:install'

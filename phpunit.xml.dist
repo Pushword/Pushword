@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- https://phpunit.de/manual/current/en/appendixes.configuration.html -->
+<phpunit
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.0/phpunit.xsd"
+  colors="true"
+  stopOnFailure="false"
+  bootstrap="packages/core/tests/bootstrap.php"
+  cacheDirectory=".phpunit.cache"
+  beStrictAboutOutputDuringTests="false"
+  displayDetailsOnTestsThatTriggerWarnings="true"
+  testdox="true">
+  <php>
+    <server name="APP_ENV" value="test" force="true" />
+    <server name="KERNEL_CLASS" value="App\Kernel" />
+    <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak" />
+    <server name="PANTHER_WEB_SERVER_DIR" value="packages/skeleton/public" />
+    <server name="PANTHER_BROWSER" value="chrome" />
+    <server name="PANTHER_CHROME_BINARY" value="/usr/bin/google-chrome" />
+    <server name="PANTHER_NO_SANDBOX" value="1" />
+    <server name="PANTHER_CHROME_ARGUMENTS" value="--headless --disable-gpu --disable-dev-shm-usage --no-sandbox --user-data-dir=/tmp/panther-chrome" />
+    <!-- <env name="SYMFONY_DEPRECATIONS_HELPER" value="max[self]=0"/> -->
+  </php>
+  <testsuites>
+    <testsuite name="all">
+      <directory>packages/*/tests/</directory>
+      <exclude>packages/new/tests/</exclude>
+    </testsuite>
+  </testsuites>
+  <!--
+  <groups>
+    <exclude>
+      <group>panther</group>
+    </exclude>
+  </groups>
+  -->
+  <extensions>
+    <bootstrap class="Symfony\Component\Panther\ServerExtension" />
+  </extensions>
+  <source>
+    <include>
+      <directory>packages/*/src/</directory>
+    </include>
+    <exclude>
+      <!-- those simple array are tested by bootstrap.php -->
+      <directory>packages/*/*/config/packages/</directory>
+      <!-- no need to test skeleton -->
+      <directory>packages/skeleton/src/</directory>
+      <file>packages/core/src/Service/WebPConverter.php</file>
+      <directory>packages/*/src/Entity/</directory>
+      <directory>packages/installer/src/</directory>
+    </exclude>
+  </source>
+</phpunit>

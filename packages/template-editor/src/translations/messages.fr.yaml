@@ -1,0 +1,4 @@
+adminLabelTheme: 'Éditeur de code'
+template_editorCreationDisabled: 'La création (et donc la suppression) est désactivée.'
+template_editorDeleteLabel: Supprimer
+template_editorElementDeleted: 'Élément supprimé.'

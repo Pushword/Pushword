@@ -1,0 +1,7 @@
+textarea.autosize {
+  min-height: 34px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  resize: none;
+  padding-bottom: 0;
+}

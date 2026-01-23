@@ -1,0 +1,50 @@
+{#
+  Renders an inline image with optional wrapper and link.
+
+  Media    image
+    or
+  string   image_src       ...
+  string   image_alt       image.altLocalized(page is defined ? page.locale : '')
+
+  bool     image_link      default: false
+  array    image_link_attr default: {}
+  bool     image_link_obf  default: true
+  array    image_attr
+  string   image_class
+  string   image_wrapper       default: 'p' if image_wrapper_class is set
+  string   image_wrapper_class default: 'w-full h-auto' if image_wrapper is set
+  array    picture_attr        default: {style: 'margin:0'}
+  bool     lazy                default: true
+#}
+
+{% set image = media_from_string(image ?? image_src ?? imageSrc, image_alt ?? imageAlt ?? '') %}
+{% set image_src = image.fileName %}
+{% set image_alt = image_alt ?? image.getAltLocalized(page.locale ?? '') %}
+
+{% set imageHasWrapper = image_wrapper_class is defined or image_wrapper is defined %}
+{% block inline_image %}
+  {% if imageHasWrapper %}
+    <{{ image_wrapper|default('p') }}{% if image_wrapper_class is defined %} class="{{ image_wrapper_class }}"{% endif %}>
+  {% endif %}
+
+  {% set image_html = include('@PushwordCore/component/image.html.twig', {
+    image: image,
+    image_class: image_class ?? null,
+    image_attr: image_attr ?? null,
+    image_alt: image_alt,
+    lazy: lazy ?? true,
+    picture_attr: picture_attr ?? null
+  }, with_context = false) %}
+
+  {% if image_link ?? false %}
+    {% set absolute_image_link = (image_link is same as true) ? image|image('default') : image_link %}
+    {% set image_link_attr = image_link_attr ?? {class: 'glightbox', 'data-dwl': image|image('xl')} %}
+    {{ link(image_html, absolute_image_link, image_link_attr, image_link_obf ?? true) }}
+  {% else %}
+    {{ image_html|raw }}
+  {% endif %}
+
+  {% if imageHasWrapper %}
+    </{{ image_wrapper|default('p') }}>
+  {% endif %}
+{% endblock %}

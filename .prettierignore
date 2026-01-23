@@ -1,0 +1,4 @@
+**/dist/
+**/public/
+packages/skeleton/src/DataFixtures/KitchenSink.md
+packages/admin-block-editor/tests/content/KitchenSink.md

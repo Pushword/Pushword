@@ -1,0 +1,188 @@
+# Markdown Cheatsheet
+#---
+"Page List": "Page List"
+adminAction: Action
+adminDetails: Details
+adminDraft: Draft
+adminEdit: Edit
+adminEdition: Edition
+adminElementDeleted: "Element deleted."
+adminLabelCheatsheet: Cheatsheet
+adminLabelCheckContent: "Check content"
+adminLabelContent: Pages
+adminLabelConversation: Conversation
+adminLabelList: List
+adminLabelManage: Publish
+adminLabelMedia: Media
+adminLabelMedias: Medias
+adminLabelPage: Page
+adminLabelParams: Settings
+adminLabelRedirection: Redirection
+adminLabelReview: Reviews
+adminLabelTools: Tools
+adminLabelUpdate: Refresh
+adminLabelUser: User
+adminLabelUsers: Users
+adminMediaAltHelp: "Alternative text, used for web page accessibility (visually impaired).<br><small>Choose one or more words describing your file. Feel free to use keywords to easily find your image (e.g. Massif des Ecrins - Glacier de la Meije).</small>"
+adminMediaAltLabel: Name
+adminMediaAltsHelp: "Format <code>Language: translated name</code> (e.g. <code>en: my image description</code>).<br>One translation per line."
+adminMediaAltsLabel: Translation
+adminMediaCreatedAtLabel: "Upload date"
+adminMediaDimensionsIntFilterLabel: "Width/height (px)"
+adminMediaDimensionsLabel: Dimensions
+adminMediaFiletypeLabel: Filetype
+adminMediaMainColorLabel: "Main Color"
+adminMediaMediaFileLabel: File
+adminMediaPreviewDominantColor: "Dominant color"
+adminMediaPreviewJson: JSON
+adminMediaPreviewLabel: Preview
+adminMediaPreviewMarkdown: Markdown
+adminMediaPreviewPath: Path
+adminMediaRelatedLabel: "Related pages"
+adminMediaSizeLabel: "File size"
+adminMediaTagsLabel: Tags
+adminMediaViewLabel: "View mode"
+adminMediaViewMosaic: Mosaic
+adminMediaViewSelectAll: "Select all"
+adminMediaViewTable: List
+adminMediaMosaicEmpty: "No media matches your search."
+adminMediaPickerChoose: Choose
+adminMediaPickerEmpty: "No image selected"
+adminMediaPickerRemove: Remove
+adminMediaPickerTitle: "Media library"
+adminMediaPickerUpload: Upload
+adminPaginationRatioLabelLabel: Ratio
+adminPaginationPerPage: "Per page"
+adminPageAuthorLabel: Author
+adminPageCreatedAtLabel: "Created At"
+adminPageCustomPropertiesHelp: "In <em>YAML</em> format."
+adminPageCustomPropertiesLabel: "Other parameters"
+adminPageEditMessageHelp: "Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em>"
+adminPageEditMessageHelpVersionned: 'Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">See hitory</a>'
+adminPageEditMessageLabel: "Reason of modification"
+adminPageEditLockRefresh: "Refresh page"
+adminPageEditLockWarning: "%user% is currently editing this page. Your changes may be overwritten."
+adminPageEditLockWarningSameUser: "You are editing this page in another tab or browser."
+adminPageErrorGenerationFailed: "An error occurred while generating the page."
+adminPageErrorGenerationFailedWithDetails: 'An error occurred while generating the page: <code>%error%</code><br><textarea style="margin-top:4px; width:100%;" data-editor="twig" readonly>%excerpt%</textarea>'
+adminPageExtraLabel: Extra
+adminPageFaqLabel: "Associated Questions"
+adminPageGalleryLabel: "Image gallery"
+adminPageH1Help: "<small>The <em>H1</em> is visible on your pages while the <code>Title</code> of your document will be displayed in the browser bar and in search engines.</small>"
+adminPageH1Label: Title
+adminPageHostLabel: Domain
+adminPageImagesLabel: Images
+adminPageLocaleHelp: "<small>In the format described by RFC 5646 (e.g. <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>"
+adminPageLocaleLabel: Language
+adminPageMainContentHelp: ""
+adminPageMainContentLabel: "Page body"
+adminPageMainImageLabel: "Header image"
+adminPageMarkdownHelp: 'Applies text enrichment via Markdown syntax to the entire content.<br>Otherwise use directly <code>{% filter markdown %}my text{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>Learn more</a>.'
+adminPageMarkdownLabel: "Markdown formatting"
+adminPageMetaRobotsChoiceNoIndex: "Disallow indexing"
+adminPageMetaRobotsLabel: "Search engines"
+adminPageNameHelp: "Allows to identify the page, used in the breadcrumb."
+adminPageNameLabel: "Short name"
+adminPageOgDescriptionHelp: "By default, the <code>search</code> description otherwise an excerpt"
+adminPageOgDescriptionLabel: Description
+adminPageOgImageHelp: "By default, the main image of the page"
+adminPageOgImageLabel: Image
+adminPageOgLabel: "Open Graph Card"
+adminPageOgTitleHelp: "By default, the page title otherwise the title."
+adminPageOgTitleLabel: Title
+adminPageParamsLabel: Settings
+adminPageParentPageLabel: "Parent Page"
+adminPagePermanlienLabel: Permalink
+adminPagePublishedAtDraft: Draft
+adminPagePublishedAtLabel: "Published at"
+adminPagePublishedAtOnline: Online
+adminPageRedirectionFrom: From
+adminPageRedirectionTo: To
+adminPageRelatedPageLabel: "Associated Pages"
+adminPageRevisions: Revisions
+adminPageSearchExcreptHelp: '<small>Visible from search engine results pages (meta description) - <span id="descWidth"></span></small>'
+adminPageSearchExcreptLabel: "Short Description"
+adminPageSearchLabel: Search
+adminPageSlugHelp: " "
+adminPageSlugLabel: "URL identifier"
+adminPageStateLabel: State
+adminPageSubTitleLabel: Subtitle
+adminPageTagsLabel: "TagOne, TagTwo, ..."
+adminPageTagsPlaceholder: "Add tags..."
+adminPageTagsSearchLabel: Tags
+adminPageTemplateLabel: "Theme engine (optional)"
+adminPageTitleHelp: '<small>Title visible in search engines - <span id="titleWidth"></span></small>'
+adminPageTitleLabel: Title
+adminPageTitleSearchLabel: Title
+adminPageTranslationsHelp: "Use the URL to find the page (e.g. en/my-other)."
+adminPageTranslationsLabel: Translations
+adminPageTwitterCreatorHelp: "<code>@Username</code>, default value if set in the App."
+adminPageTwitterCreatorLabel: "Twitter Creator"
+adminPageTwitterSiteHelp: "<code>@Username</code>, default value if set in the App."
+adminPageTwitterSiteLabel: "Twitter Site"
+adminPageUpdateNotificationTitle: "[%appName%] Editing in progress"
+adminPageUpdatedAtLabel: "Updated on"
+adminPageWeightHelp: "Allows sorting pages. Higher values appear first."
+adminPageWeightLabel: Weight
+adminPageTwitterCardHelp: '<a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>Learn more</a>'
+adminPageTwitterCardLabel: "Twitter Card"
+adminStaticAlreadyRunning: "Static generation is already in progress."
+adminStaticErrors: "Errors detected"
+adminStaticGenerating: Generating...
+adminStaticHost: Host
+adminStaticOutput: "Command output"
+adminStaticPleaseWait: "Please wait, generation is in progress. This page will refresh automatically."
+adminStaticStartedAt: "Started at"
+adminStaticStarting: "Starting generation..."
+adminStaticUpdated: "Site updated successfully."
+adminUserCreatedAtLabel: "Registration date"
+adminUserDateOfBirthLabel: "Date of birth"
+adminUserEmailLabel: "Email address"
+adminUserEnabledLabel: "Account enabled"
+adminUserFirstnameLabel: "First name"
+adminUserLabelApi: API Access
+adminUserLabelId: Identifiers
+adminUserLabelProfile: Profile
+adminUserLabelSecurity: Security
+adminUserLastnameLabel: Name
+adminUserLocaleHelp: "<small>Language preference for the admin interface (ex: <code>fr</code>, <code>en</code>, <code>en-US</code>...)</small>"
+adminUserLocaleLabel: Language
+adminUserPasswordLabel: Password
+adminUserPhoneLabel: Phone
+adminUserRoleAdmin: Administrator
+adminUserRoleEditor: Editor
+adminUserRoleLabel: Role
+adminUserRoleSuperAdmin: "Super Administrator"
+adminUserRoleUser: User
+adminUserUsernameLabel: Username
+adminUserApiTokenLabel: API Token
+adminUserApiTokenHelp: "<small>Token for webhook API authentication. Use <code>Authorization: Bearer {token}</code> header.</small>"
+adminUserApiTokenGenerate: Generate Token
+adminUserApiTokenRegenerate: Regenerate
+adminUserApiTokenRevoke: Revoke
+adminUserApiTokenPlaceholder: No token generated
+adminUserApiTokenRegenerateConfirm: Regenerate token? The old token will stop working.
+adminUserApiTokenRevokeConfirm: Revoke the API token?
+datetimeMediumFormat: 'Y-m-d \a\t H:m'
+md_csChapeau: Chapeau
+md_csChapeauDescription: "Le chapeau est le paragraphe introductif placé sous le titre."
+md_csChildrenList: "List children pages (blog/news/...)"
+md_csEmphasis: Emphasis
+md_csImage: "Image and gallery"
+md_csLink: Link
+md_csLinkBotHidden: "Lien Invisible pour les robots"
+md_csLinkHomepage: "Lien vers la page d'accueil"
+md_csLinkOtherSite: "Lien vers un autre site"
+md_csLinkToFragment: "Link to fragment"
+md_csLinkToMail: "Link to mail"
+md_csLinkToPhone: "Vers un n° de téléphone"
+md_csLists: Lists
+md_csOthers: Others
+md_csPageH1: "Editor Hidden Super Power"
+md_csPageList: "List pages"
+md_csPageSubtitle: "and Markdown Cheatsheet"
+md_csParagraph: Paragraph
+md_csQuote: Quote
+md_csRedirection: Redirection
+md_csTitle: "Title and subtitle"
+md_csVideo: Video

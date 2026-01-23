@@ -1,0 +1,94 @@
+#!/bin/bash -e
+
+# Add sequential test mode to avoid VSCodium file watcher
+# It runs tests package-by-package with fixtures loaded only once, reducing rapid file changes that trigger Electron file watcher  segfaults.
+
+function restoreDataAndComposerDependencies {
+    echo 'restore data and dependencies...'
+    bash ./.scripts/data-restore
+    composer update
+}
+
+function restoreData {
+    echo 'restore data...'
+    bash ./.scripts/data-restore
+    # Kill any lingering Chrome/Chromedriver processes from Panther tests
+    pkill -f chromedriver 2>/dev/null || true
+    pkill -f 'chrome.*headless' 2>/dev/null || true
+}
+
+trap restoreData EXIT
+sh ./.scripts/data-preserve
+
+# Install nodejs dependencies
+[ -d "node_modules" ] || yarn
+
+# Package test directories in execution order
+PACKAGES=(
+    "admin"
+    "admin-block-editor"
+    "conversation"
+    "core"
+    "flat"
+    "page-scanner"
+    "page-update-notifier"
+    "static-generator"
+    "template-editor"
+    "version"
+)
+
+FILTER_ARG=""
+if [ "$1" = "--filter" ] && [ -n "$2" ]; then
+    FILTER_ARG="--filter $2"
+elif [ "$1" != "full" ] && [ "$1" != "sequential" ] && [ -n "$1" ]; then
+    FILTER_ARG="--filter $1"
+fi
+
+if [ "$1" = "full" ]; then
+    trap restoreDataAndComposerDependencies EXIT
+    composer update --prefer-lowest
+    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --debug --no-cache-result $FILTER_ARG
+    composer validate-monorepo
+elif [ "$1" = "sequential" ]; then
+    # Run tests package by package to avoid file watcher overload
+    # Fixtures are loaded only once at the start
+    echo "Running tests sequentially by package..."
+
+    FIRST=true
+    FAILED=false
+
+    for pkg in "${PACKAGES[@]}"; do
+        TEST_DIR="packages/$pkg/tests"
+        if [ -d "$TEST_DIR" ] && [ "$(ls -A $TEST_DIR/*.php 2>/dev/null | grep -v bootstrap | head -1)" ]; then
+            echo ""
+            echo "=== Testing $pkg ==="
+
+            # Convert package name to namespace (e.g., admin-block-editor -> AdminBlockEditor)
+            NAMESPACE=$(echo "$pkg" | sed -r 's/(^|-)(\w)/\U\2/g')
+
+            if [ "$FIRST" = true ]; then
+                # First package: load fixtures
+                vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --testsuite all --filter "Pushword\\\\${NAMESPACE}\\\\Tests" || FAILED=true
+                FIRST=false
+            else
+                # Subsequent packages: skip fixtures
+                SKIP_FIXTURES=1 vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --testsuite all --filter "Pushword\\\\${NAMESPACE}\\\\Tests" || FAILED=true
+            fi
+
+            if [ "$FAILED" = true ]; then
+                echo "Tests failed for $pkg"
+                exit 1
+            fi
+        fi
+    done
+
+    echo ""
+    echo "All packages tested successfully!"
+    composer validate-monorepo
+else
+    vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure $FILTER_ARG
+    # Only run validate-monorepo if no filter was applied
+    if [ -z "$FILTER_ARG" ]; then
+        composer validate-monorepo
+    fi
+fi

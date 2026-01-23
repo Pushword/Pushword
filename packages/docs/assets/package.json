@@ -1,0 +1,14 @@
+{
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host",
+    "watch": "vite build --watch",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@pushword/js-helper": "file:../../js-helper",
+    "highlight.js": "^10.6.0",
+    "simple-jekyll-search": "^1.9.1"
+  }
+}

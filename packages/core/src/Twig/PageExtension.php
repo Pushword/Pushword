@@ -1,0 +1,331 @@
+<?php
+
+namespace Pushword\Core\Twig;
+
+use DateTime;
+use InvalidArgumentException;
+use LogicException;
+use Pagerfanta\Adapter\ArrayAdapter;
+use Pagerfanta\Pagerfanta;
+use Pagerfanta\PagerfantaInterface;
+use Pagerfanta\RouteGenerator\RouteGeneratorFactoryInterface;
+use Pagerfanta\Twig\View\TwigView;
+use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Entity\Media;
+use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Utils\StringToDQLCriteria;
+use Twig\Attribute\AsTwigFunction;
+use Twig\Environment as Twig;
+
+final class PageExtension
+{
+    public function __construct(
+        private readonly PageRepository $pageRepo,
+        public PushwordRouteGenerator $router,
+        private readonly AppPool $apps,
+        public Twig $twig,
+        private readonly RouteGeneratorFactoryInterface $routeGeneratorFactory,
+    ) {
+    }
+
+    #[AsTwigFunction('pageContainsBlock')]
+    public function pageContainsBlock(Page $page, string $blockId): bool
+    {
+        $mainContent = $page->getMainContent();
+
+        if (str_contains($mainContent, '{#'.$blockId.'')) {
+            return true;
+        }
+
+        if (str_contains($mainContent, 'id="'.$blockId.'"')) {
+            return true;
+        }
+
+        return str_contains($mainContent, 'id='.$blockId.'');
+    }
+
+    #[AsTwigFunction('breadcrumb_list_position')]
+    public function getBreadcrumbListPosition(Page $page): int
+    {
+        if (null !== ($parentPage = $page->getParentPage())) {
+            return $this->getBreadcrumbListPosition($parentPage) + 1;
+        }
+
+        return 1;
+    }
+
+    /**
+     * @param string|string[]|null $host
+     *
+     * @return string[]
+     */
+    #[AsTwigFunction('page_uri_list')]
+    public function getPageUriList(string|array|null $host = null): array
+    {
+        $host ??= $this->apps->getCurrentPage()?->host;
+        $host ??= $this->apps->getMainHost() ?? [];
+
+        return $this->pageRepo->getPageUriList($host);
+    }
+
+    /**
+     * @param string|string[]|null               $host
+     * @param array<(string|int), string>|string $order
+     * @param array<mixed>|string                $where
+     * @param int|array<(string|int), int>       $max
+     *
+     * @return Page[]
+     */
+    #[AsTwigFunction('pages')]
+    public function getPublishedPages($host = null, array|string $where = [], array|string $order = 'weight,publishedAt', array|int $max = 0, bool $withRedirection = false): array
+    {
+        $currentPage = $this->apps->getCurrentPage();
+        $where = [\is_array($where) ? $where : new StringToDQLCriteria($where, $currentPage)->retrieve()];
+        $where[] = ['id',  '<>', $currentPage?->id ?? 0]; // @phpstan-ignore nullsafe.neverNull
+
+        $order = '' === $order ? 'publishedAt,weight' : $order;
+        $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
+            : ['key' => $order[0], 'direction' => $order[1]];
+
+        return $this->pageRepo->getPublishedPages($host ?? $this->apps->getMainHost() ?? [], $where, $order, $this->getLimit($max), $withRedirection);
+    }
+
+    /**
+     * @param string|string[]|null $host
+     */
+    #[AsTwigFunction('p')]
+    #[AsTwigFunction('loadPageEntity')]
+    public function getPublishedPage(string $slug, $host = null): ?Page
+    {
+        $pages = $this->pageRepo->getPublishedPages(
+            $host ?? $this->apps->getMainHost() ?? [],
+            [['key' => 'slug', 'operator' => '=', 'value' => $slug]],
+            [],
+            1,
+            false
+        );
+
+        return $pages[0] ?? null;
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function getPagerRouteParams(): array
+    {
+        $params = [];
+        if (null !== $this->apps->getCurrentPage()) {
+            $params['slug'] = $this->apps->getCurrentPage()->getSlug();
+            $params['host'] = $this->apps->getCurrentPage()->host;
+        }
+
+        if (null !== ($slug = $this->apps->getCurrentSlug())) {
+            $params['slug'] = rtrim($slug, '/');
+        }
+
+        return $params;
+    }
+
+    private function getPagerRouteName(): string
+    {
+        $route = $this->apps->getCurrentRoute() ?? 'pushword_page';
+        $route .= '' === ($this->apps->getCurrentSlug() ?? '') ? '_homepage' : '';
+
+        return $route.'_pager';
+    }
+
+    /**
+     * @param string|string[] $host
+     *
+     * @return string[]
+     */
+    private function getHost(array|string $host, ?Page $currentPage = null): array
+    {
+        if ('' !== $host) {
+            return is_string($host) ? [$host] : $host;
+        }
+
+        if (null !== $currentPage) {
+            return [$currentPage->host];
+        }
+
+        return [$this->apps->get()->getMainHost(), ''];
+    }
+
+    /**
+     * @param array<array{
+     *      page: Page,
+     *      image: Media|string,
+     *      imageAlt: ?string,
+     *      title: ?string,
+     *      link: ?string,
+     *      obfuscateLink: ?bool,
+     *      date: DateTime|string|null,
+     *      title_tag: ?string,
+     *      buttonLink: ?string,
+     *      buttonLinkLabel: ?string,
+     *      description: ?string,
+     * }> $items items to render
+     */
+    #[AsTwigFunction('card_list', needsEnvironment: false, isSafe: ['html'])]
+    public function renderCardList(
+        array $items,
+        string $wrapperClass = '',
+        string $id = '',
+    ): string {
+        return $this->twig->render(
+            $this->apps->get()->getView('/component/cardList.html.twig'),
+            [
+                'items' => $items,
+                'wrapperClass' => $wrapperClass,
+                'id' => $id,
+                'isCardList' => true,
+            ]
+        );
+    }
+
+    /**
+     * @param string|array<mixed>                $search
+     * @param string|array<(string|int), string> $order
+     * @param int|array<(string|int)>            $max         if max is int => max result,
+     *                                                        if max is array => paginate where 0
+     *                                                        => item per page and 1 (fac) maxPage
+     *                                                        array is a legacy alias for maxPages
+     * @param Page|null                          $currentPage DO NOT USE OUTSIDE PUSHWORD PACKAGES
+     * @param string|string[]                    $host        DO NOT USE OUTSIDE PUSHWORD PACKAGES
+     */
+    #[AsTwigFunction('pages_list', needsEnvironment: false, isSafe: ['html'])]
+    public function renderPagesList(
+        array|string $search = '',
+        int|array|string $max = 0,
+        array|string $order = 'publishedAt,weight',
+        string $view = '',
+        int|string $maxPages = 0,
+        string $wrapperClass = '',
+        string $id = '',
+
+        // next properties are not documented, do not use outside pushword packages
+        array|string $host = '',
+        ?Page $currentPage = null,
+    ): string {
+        $currentPage ??= $this->apps->getCurrentPage();
+
+        // normalize args
+        $maxPages = (int) $maxPages;
+        if (is_array($max)) {
+            if (0 !== $maxPages) {
+                throw new LogicException('maxPages is not supported when max is an array');
+            }
+
+            $maxPages = (int) ($max[1] ?? 0);
+            $max = (int) ($max[0] ?? 0);
+        }
+
+        $max = (int) $max;
+        if ($max < 1) {
+            throw new LogicException();
+        }
+
+        // end normalize args
+
+        $view = 'card' === $view ? '/component/pages_list_card.html.twig'
+            : (\in_array($view, ['', 'list'], true) ? '/component/pages_list.html.twig'
+                : $view);
+
+        $search = \is_array($search) ? $search : new StringToDQLCriteria($search, $currentPage)->retrieve();
+
+        $order = str_replace('priority', 'weight', $order); // bc
+        $order = '' === $order ? 'publishedAt,weight' : $order;
+        $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
+            : ['key' => $order[0], 'direction' => $order[1]];
+
+        $host = $this->getHost($host, $currentPage);
+        $queryBuilder = $this->pageRepo->getPublishedPageQueryBuilder(
+            $host,
+            $search,
+            $order,
+            $max,
+        );
+
+        if (null !== $currentPage) {
+            $queryBuilder->andWhere('p.id <> '.($currentPage->id ?? 0));
+        }
+
+        if ($maxPages > 1) {
+            /** @var Page[] */
+            $pages = $queryBuilder->getQuery()->getResult();
+            $limit = $this->getLimit($max);
+            if (0 !== $limit) {
+                $pages = \array_slice($pages, 0, $limit);
+            }
+
+            $pagerfanta = new Pagerfanta(new ArrayAdapter($pages))
+                ->setMaxNbPages($maxPages)
+                ->setMaxPerPage($max)
+                ->setCurrentPage($this->getCurrentPagerNumber());
+            $pages = $pagerfanta->getCurrentPageResults();
+        } else {
+            $pages = $queryBuilder->getQuery()->getResult();
+        }
+
+        $template = $this->apps->get()->getView($view);
+
+        $rendered = $this->twig->render($template, [
+            'pager_route' => $this->getPagerRouteName(),
+            'pager_route_params' => $this->getPagerRouteParams(),
+            'pages' => $pages,
+            'pager' => $pagerfanta ?? null,
+            'id' => $id,
+            'wrapperClass' => $wrapperClass,
+        ]);
+
+        // $rendered = preg_replace('/\n+/', '\n', $rendered);
+        // $rendered = trim($rendered);
+
+        return $rendered;
+    }
+
+    /**
+     * @param array<string, mixed>       $options
+     * @param PagerfantaInterface<mixed> $pagerfanta
+     *
+     * @throws InvalidArgumentException if the $viewName argument is an invalid type
+     */
+    #[AsTwigFunction('pager', needsEnvironment: false, isSafe: ['html'])]
+    public function renderPager(
+        PagerfantaInterface $pagerfanta,
+        array $options = [],
+        string $template = '/component/pager.html.twig'
+    ): string {
+        $pagerFantaTwigView = new TwigView($this->twig, $this->apps->get()->getView($template));
+
+        return $pagerFantaTwigView
+            ->render($pagerfanta, $this->routeGeneratorFactory->create($options), $options)
+            .($pagerfanta->hasNextPage() ? '<!-- pager:'.$pagerfanta->getNextPage().' -->' : '');
+    }
+
+    /**
+     * @param int|array<(string|int), int> $max
+     */
+    private function getLimit(array|int $max): int
+    {
+        return \is_int($max) ? $max : (isset($max[1]) ? $max[1] * $max[0] : 0);
+    }
+
+    private function getCurrentPagerNumber(): int
+    {
+        return $this->apps->getCurrentPager();
+    }
+
+    #[AsTwigFunction('isInstanceOfPage')]
+    public function isInstanceOfPage(mixed $value): bool
+    {
+        if (! \is_object($value)) {
+            return false;
+        }
+
+        return $value instanceof Page;
+    }
+}

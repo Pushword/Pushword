@@ -1,0 +1,35 @@
+{
+  "name": "pushword/static-generator",
+  "type": "symfony-bundle",
+  "description": "Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/static-generator",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*"
+  },
+  "suggest": {
+    "ext-zstd": "For zstd compression support",
+    "brotli": "System binary for brotli compression (apt install brotli)",
+    "gzip": "System binary for gzip compression"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\StaticGenerator\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

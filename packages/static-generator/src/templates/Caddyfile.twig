@@ -1,0 +1,115 @@
+(performance_{{ domain_snake }}) {
+	encode zstd br gzip
+
+	file_server {
+		precompressed zstd br gzip
+	}
+}
+
+(cache_{{ domain_snake }}) {
+	# Assets: 1 year
+	@assets path *.ico *.pdf *.flv *.jpg *.jpeg *.png *.gif *.webp *.avif *.svg *.eot *.ttf *.woff *.woff2 *.js *.css
+	header @assets Cache-Control "max-age=31536000, public"
+
+	# Default: 1 hour
+	header Cache-Control "max-age=3600, public"
+}
+
+(security_{{ domain_snake }}) {
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	@dotfiles path_regexp /\..*
+	respond @dotfiles 403
+}
+
+
+
+{% block route %}http://{{ domain }} {
+	redir https://{host}{uri} permanent
+}
+
+{{ domain }}{% endblock %} {
+    {% block before_rules %}{% endblock %}
+
+	root * {{ staticDir }}
+
+	import performance_{{ domain_snake }}
+	import cache_{{ domain_snake }}
+	import security_{{ domain_snake }}
+
+    file_server
+
+	# Redirects
+	redir /index.{html,php,aspx,cfm} / 301
+
+
+	{% if redirections is not empty %}
+	# Page Redirections
+    {{ redirections|raw }}
+	{% endif %}
+
+
+	# Old media redirect
+	@old_media path_regexp ^/media/(small_thumb|thumb|height_300|xs|sm|md|lg|xl|default)/media(.*)$
+	redir @old_media /media/{re.1}{re.2} 301
+
+	# HTML extension handling
+	@has_slash path_regexp ^/(.+)/$
+	redir @has_slash /{re.1} 301
+
+	@no_ext {
+		path_regexp ^/([a-zA-Z0-9\-_/\.]+)$
+		file {
+			try_files {path}.html
+		}
+	}
+	rewrite @no_ext {path}.html
+
+	# Permit to redirect slug.html to slug
+	@html_ext path_regexp ^(.+)\.html$
+	redir @html_ext {re.1} 301
+
+{% if image_fallback_order is defined and (image_fallback_order.webp_fallback|length > 0 or image_fallback_order.avif_fallback|length > 0) %}
+	# Image Format Fallback (webp/avif to available format)
+{% if image_fallback_order.webp_fallback|length > 0 %}
+	# WebP fallback: if .webp doesn't exist, try {{ image_fallback_order.webp_fallback|join(', ') }}
+	@webp_fallback {
+		path_regexp webp ^/media/(.+)\.webp$
+		not file {path}
+	}
+	rewrite @webp_fallback /media/{re.webp.1}{% if 'avif' in image_fallback_order.webp_fallback %}.avif{% elseif 'original' in image_fallback_order.webp_fallback %}{http.request.uri.path_regexp.1}{% endif %}
+
+{% endif %}
+{% if image_fallback_order.avif_fallback|length > 0 %}
+	# AVIF fallback: if .avif doesn't exist, try {{ image_fallback_order.avif_fallback|join(', ') }}
+	@avif_fallback {
+		path_regexp avif ^/media/(.+)\.avif$
+		not file {path}
+	}
+	rewrite @avif_fallback /media/{re.avif.1}{% if 'webp' in image_fallback_order.avif_fallback %}.webp{% elseif 'original' in image_fallback_order.avif_fallback %}{http.request.uri.path_regexp.1}{% endif %}
+
+{% endif %}
+{% endif %}
+
+	# Error pages
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+
+    {% block after_rules %}{% endblock %}
+
+}
+
+{% block redirect_www %}
+# Redirect www subfolder to domain.tld
+# The htaccess version has more scenarios
+www.{{ domain }} {
+    redir https://{{ domain }}{uri} 301
+}
+{% endblock %}

@@ -1,0 +1,7 @@
+pushword_flat_api:
+    resource: '../src/Controller/FlatLockApiController.php'
+    type: attribute
+
+pushword_flat_admin_notifications:
+    resource: '../src/Controller/Admin/NotificationCrudController.php'
+    type: attribute

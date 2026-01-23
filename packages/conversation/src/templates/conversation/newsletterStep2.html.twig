@@ -1,0 +1,31 @@
+{% extends '@PushwordConversation/conversation/conversation.html.twig' %}
+
+{% block before %}
+<div class="w-full max-w-md">
+    <div class="flex items-center py-2 border-b {{ conversation.vars.valid ? 'border-primary' : 'border-red-500' }}">
+{% endblock %}
+
+{% block error %}{% endblock %}
+
+{% block authorName %}
+    {% form_theme conversation 'form_div_layout.html.twig' %}
+        {{ form_widget(conversation.authorName, {
+            attr: {
+                placeholder: 'conversationNamePlaceholder'|trans,
+                onfocus: "this.placeholder = ''",
+                onblur: "this.placeholder = '" ~ 'conversationNamePlaceholder'|trans ~ "'",
+                required: 'text',
+                type: 'text',
+                class: authorNameInputClass ?? 'appearance-none bg-transparent border-none focus:ring-transparent focus:border-transparent focus:shadow-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-hidden'
+            }
+        }) }}
+{% endblock %}
+
+{% block submit %}
+        <button class="shrink-0 px-2 py-1 link-btn">{{ submitLabel|default('conversationRegisterLabel'|trans) }}</button>
+{% endblock %}
+
+{% block after %}
+    </div>
+</div>
+{% endblock %}

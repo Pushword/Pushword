@@ -1,0 +1,42 @@
+{# Wrapper div that will be swapped on each poll #}
+<div id="scanner-output-content"
+     {% if status == 'running' %}
+       hx-get="{{ path('admin_page_scanner_output') }}"
+       hx-trigger="load delay:500ms"
+       hx-swap="outerHTML"
+       hx-target="#scanner-output-content"
+     {% endif %}>
+
+  {# Status indicator #}
+  {% if status == 'running' %}
+    <div class="d-flex align-items-center mb-3" id="status-indicator">
+      <i class="fa fa-circle-notch fa-spin me-2"></i>
+      <strong>{{ 'page_scannerScanning'|trans }}</strong>
+    </div>
+  {% else %}
+    <div class="alert alert-success mb-3" id="status-indicator">
+      <i class="fa fa-check-circle me-2"></i>
+      {{ 'page_scannerScanComplete'|trans }}<br>
+      <a href="{{ path('admin_page_scanner') }}" class="ms-2">{{ 'page_scannerViewResults'|trans }} ➜</a>
+      <meta http-equiv="refresh" content="2; {{ path('admin_page_scanner') }}">
+    </div>
+  {% endif %}
+
+  {# Console output - always show full output #}
+  {% if output is defined and output is not empty %}
+    <div class="card">
+      <div class="card-body p-0">
+        <pre id="console-output" class="mb-0 bg-black text-white p-3 rounded" style="max-height: 500px; overflow-y: auto;"><code>{{ output|ansi_to_html }}</code></pre>
+      </div>
+    </div>
+    {% if status == 'running' %}
+      <script>
+        (function() {
+          var el = document.getElementById('console-output');
+          if (el) el.scrollTop = el.scrollHeight;
+        })();
+      </script>
+    {% endif %}
+  {% endif %}
+
+</div>

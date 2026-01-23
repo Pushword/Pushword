@@ -1,0 +1,246 @@
+{% block editorjs_widget %}
+
+<div style="padding-top:8px; text-align:right; padding-right:4px;">
+    <a href="#" onclick="toggleEditor(); return false;" style="color:#6b7280">
+        {{ svg('code', {style: 'width:12px; fill:currentColor'}) }}
+    </a>
+    <a href="#" onclick="toggleEditor('markdown'); return false;" style="color:#6b7280; margin-left:10px;" title="Ctrl + U">
+        {{ svg('markdown', {style: 'width:12px; fill:currentColor'}) }}
+    </a>
+</div>
+<div style="padding:10px 10px 0;">
+    {% set editor_id = 'editorjs_' ~ id %}
+    <textarea style="display:none" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
+    <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
+</div>
+<script>
+// Attendre que l'éditeur soit initialisé pour créer les fonctions de toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const editorId = '{{ editor_id }}';
+
+    // Fonctions de toggle utilisant la classe EditorModeManager
+    window.toggleEditor = function(type = 'editorjs') {
+        /** @type {editorJsHelper import('../../assets/editorJsHelper.ts').editorJsHelper} */
+        const editorJsHelper = window.editorJsHelper;
+
+        const modeManager = editorJsHelper.modeManagers[editorId];
+        if (!modeManager)
+        return;
+
+        // editorJsHelper.toggleEditorJs(editorId);
+        // return;
+
+        type === 'editorjs' ? modeManager.toggleEditor() : modeManager.toggleMarkdownEditor();
+    };
+
+    window.onkeyup = function(event) {
+        if (event.ctrlKey && event.which === 85) { // 85 = touche U
+            event.preventDefault();
+            window.toggleEditor('markdown');
+        }
+    };
+});
+</script>
+
+<script>
+// used in PagesList.ts
+window.pagesUriList = {{ page_uri_list(attr.page_host|default(''))|json_encode|raw }};
+
+{% block editorjs_config %}
+var editorjsConfig = {
+    name: "default",
+    initialBlock: "paragraph",
+    placeholder: "...",
+    tools: {
+        header: {
+            name: "header",
+            className: "Header",
+            inlineToolbar: ['bold', 'italic', 'inline-code', 'marker', 'link', 'Strikethrough', 'small'],
+            tunes: ['textAlign', 'anchor', 'class',],
+            config: {
+                placeholder: "...",
+                levels: [2, 3, 4],
+                defaultLevel: 2,
+            },
+        },
+        list: {
+            name: "list",
+            className: "List",
+            inlineToolbar: true,
+            tunes: ['anchor'],
+        },
+        image: {
+            name: "image",
+            className: "Image",
+            tunes: ['linkTune'],
+            config: {
+                endpoints: {
+                    byFile: "/admin/media/block",
+                    byUrl: "/admin/media/block",
+                },
+                onSelectFile: window.editorJsHelper.onSelectImage,
+                onUploadFile: window.editorJsHelper.onUploadImage,
+            },
+            conversion: false,
+        },
+        gallery: {
+            name: "gallery",
+            className: "Gallery",
+            tunes: ['clickableTune'],
+            config: {
+                endpoints: {
+                    byFile: "/admin/media/block",
+                    byUrl: "/admin/media/block",
+                },
+                onSelectFile: window.editorJsHelper.onSelectImage,
+                onUploadFile: window.editorJsHelper.onUploadImage,
+            }
+        },
+        embed: {
+            name: "embed",
+            className: "Embed",
+            config: {
+                onSelectFile: window.editorJsHelper.onSelectImage,
+                onUploadFile: window.editorJsHelper.onUploadImage,
+            },
+        },
+        delimiter: {
+            name: "delimiter",
+            className: "Delimiter",
+        },
+        quote: {
+            name: "quote",
+            className: "Quote",
+            tunes: ['anchor'],
+            inlineToolbar: true,
+            config: {
+                quotePlaceholder: "...",
+                captionPlaceholder: "...",
+            },
+        },
+        table: {
+            name: "table",
+            className: "Table",
+        },
+        attaches: {
+            name: "attaches",
+            className: "Attaches",
+            tunes: ['anchor'],
+            config: {
+                onSelectFile: window.editorJsHelper.onSelectFile,
+                onUploadFile: window.editorJsHelper.onUploadFile,
+            },
+        },
+        pages_list: {
+            name: "pages_list",
+            className: "PagesList",
+            config: {
+                preview: "/admin/page/block/{{ attr.page_id }}",
+            },
+            tunes: ['anchor', 'class']
+        },
+        card_list: {
+            name: "card_list",
+            className: "CardList",
+            inlineToolbar: true,
+            tunes: ['anchor', 'class']
+        },
+        codeBlock: {
+            name: "codeBlock",
+            className: "CodeBlock",
+            tunes: ['anchor'],
+        },
+        paragraph: {
+            name: "paragraph",
+            className: "Paragraph",
+            tunes: ['anchor', 'class', 'textAlign'],
+        },
+        raw: {
+            name: "raw",
+            className: "Raw",
+            config: {
+                placeholder: "<div>...</div>",
+                defaultHeight: "50"
+            },
+        },
+
+        /** Inline Tool */
+
+        "inline-code": {
+            name: "inline-code",
+            className: "InlineCode",
+        },
+        marker: {
+            name: "marker",
+            className: "Marker",
+        },
+        bold: {
+            name: "bold",
+            className: "Bold",
+        },
+        italic: {
+            name: "italic",
+            className: "Italic",
+        },
+        small: {
+            name: "small",
+            className: "Small",
+        },
+        link: {
+            name: "link",
+            className: "Hyperlink",
+            config: {
+                availableRels: ['nofollow', 'noopener', 'alternate', 'obfuscate'],
+            }
+        },
+        underline: {
+            name: "underline",
+            className: "Underline",
+        },
+        Strikethrough: {
+            name: "Strikethrough",
+            className: "Strikethrough",
+        },
+
+        /** Tune */
+        linkTune: {
+            className: "HyperlinkTune",
+        },
+        clickableTune: {
+            className: "ClickableTune",
+        },
+        anchor: {
+            className: "AnchorTune",
+        },
+        class: {
+            className: "ClassTune",
+        },
+        textAlign: {
+            className: "AlignementTune",
+        }
+        {% block editorjs_block_to_add_new_plugin %}{% endblock %}
+    },
+    data: {}, //JSON.parse("{{ (value ? value : '{}')|raw|e('js') }}"),
+    logLevel: "ERROR",
+    holder: "{{ editor_id }}",
+};
+{% endblock %}
+
+window.pageMainContent = "{{ value|default("{}")|raw|e('js') }}"
+    </script>
+
+<script>
+(function disableBackWithKeyboard(global) {
+    global.onload = function () {
+        document.body.onkeydown = function (e) {
+            var elm = e.target.nodeName.toLowerCase();
+            if (e.which === 8 && (elm !== 'input' && elm  !== 'textarea' && !e.target.hasAttribute('contenteditable'))) {
+                e.preventDefault();
+            }
+            e.stopPropagation();
+        };
+    };
+})(window);
+</script>
+
+{% endblock %}

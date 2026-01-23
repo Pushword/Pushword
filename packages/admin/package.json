@@ -1,0 +1,18 @@
+{
+  "devDependencies": {
+    "@pushword/js-helper": "file:../js-helper",
+    "sass-embedded": "^1.93.3"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "watch": "vite build --watch",
+    "build": "NODE_ENV=production vite build"
+  },
+  "dependencies": {
+    "browser-image-compression": "^2.0.2",
+    "htmx.org": "^1.9.12",
+    "suggest.js": "https://github.com/onozaty/suggest.js"
+  }
+}

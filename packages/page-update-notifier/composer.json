@@ -1,0 +1,30 @@
+{
+  "name": "pushword/page-update-notifier",
+  "type": "symfony-bundle",
+  "description": "",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\PageUpdateNotifier\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

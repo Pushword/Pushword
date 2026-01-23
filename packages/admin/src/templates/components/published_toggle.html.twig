@@ -1,0 +1,40 @@
+{# Generic template for publishedAt toggle switch
+   Works with both Page and Message entities
+   @var entity \Pushword\Core\Entity\Page|\Pushword\Conversation\Entity\Message
+#}
+{% set entityInstance = entity.instance ?? null %}
+{% if entityInstance is null or entityInstance.id is null %}
+    <span class="text-muted">—</span>
+{% else %}
+    {% set publishedAt = value ?? field.value ?? entityInstance.publishedAt %}
+    {% set isPublished = publishedAt is not null %}
+    {% set entityId = entityInstance.id %}
+    {% if entityInstance.slug is defined and entityInstance.slug is not null and entityInstance.slug != '' %}
+        {% set entityType = 'page' %}
+    {% else %}
+        {% set entityType = 'conversation' %}
+    {% endif %}
+    {% set target = 'pw-published-' ~ entityType ~ '-' ~ entityId %}
+    {% set routeName = entityType == 'page' ? 'pushword_page_toggle_publish' : 'pushword_conversation_toggle_publish' %}
+    {% set action = url(routeName, {id: entityId}) %}
+    {% set tokenId = entityType ~ '_toggle_published_' ~ entityId %}
+    {% set token = csrf_token(tokenId) %}
+
+    <div id="{{ target }}" class="pw-published d-flex align-items-center gap-2">
+        <label class="form-check form-switch mb-0">
+            <input
+                type="checkbox"
+                class="form-check-input"
+                hx-post="{{ action }}"
+                hx-trigger="change"
+                hx-target="#{{ target }}"
+                hx-swap="outerHTML"
+                hx-vals='js:{published: event.target.checked ? 1 : 0, _token: "{{ token|e('js') }}"}'
+                {{ isPublished ? 'checked' : '' }}
+            >
+        </label>
+        <small class="text-muted mb-0">
+            {{ publishedAt ? publishedAt|format_date('short') : '—' }}
+        </small>
+    </div>
+{% endif %}

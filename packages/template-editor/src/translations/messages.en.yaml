@@ -1,0 +1,4 @@
+adminLabelTheme: 'Code Editor'
+template_editorCreationDisabled: 'Creation (and deletion) are disabled.'
+template_editorDeleteLabel: Delete
+template_editorElementDeleted: 'Element deleted.'

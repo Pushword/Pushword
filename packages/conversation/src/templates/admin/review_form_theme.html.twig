@@ -1,0 +1,111 @@
+{% extends '@EasyAdmin/crud/form_theme.html.twig' %}
+
+{% block choice_widget_expanded %}
+    {% if attr['data-rating-widget'] is defined %}
+        {% if app.request and not app.request.attributes.get('_pw_review_rating_assets_loaded') %}
+            {% do app.request.attributes.set('_pw_review_rating_assets_loaded', true) %}
+            <style>
+                .pw-rating-field-row {
+                    margin-bottom: 1.25rem;
+                }
+
+                .pw-review-rating {
+                    display: inline-flex;
+                    flex-direction: row-reverse;
+                    gap: .35rem;
+                }
+
+                .pw-review-rating input[type='radio'] {
+                    position: absolute;
+                    opacity: 0;
+                    width: 1px;
+                    height: 1px;
+                }
+
+                .pw-review-rating label {
+                    font-size: 2rem;
+                    line-height: 1;
+                    color: var(--bs-secondary, #6c757d);
+                    cursor: pointer;
+                    transition: transform .15s ease, color .15s ease;
+                }
+
+                .pw-review-rating label:hover,
+                .pw-review-rating label:hover ~ label,
+                .pw-review-rating input[type='radio']:focus + label,
+                .pw-review-rating input[type='radio']:checked + label,
+                .pw-review-rating input[type='radio']:checked + label ~ label {
+                    color: var(--bs-warning, #ffc107);
+                }
+
+                .pw-review-rating input[type='radio']:focus + label {
+                    outline: 2px solid var(--bs-primary, #0d6efd);
+                    outline-offset: 4px;
+                    border-radius: 4px;
+                }
+
+                .pw-review-rating__value {
+                    font-size: .95rem;
+                    margin-left: .75rem;
+                    color: var(--bs-secondary-color, #495057);
+                    font-weight: 600;
+                }
+
+                .pw-review-rating__sr {
+                    position: absolute;
+                    width: 1px;
+                    height: 1px;
+                    padding: 0;
+                    overflow: hidden;
+                    clip: rect(0, 0, 0, 0);
+                    white-space: nowrap;
+                    border: 0;
+                }
+            </style>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.querySelectorAll('[data-pw-review-rating]').forEach(widget => {
+                        const inputs = widget.querySelectorAll('input[type="radio"]');
+                        const output = widget.nextElementSibling?.classList.contains('pw-review-rating__value')
+                            ? widget.nextElementSibling
+                            : null;
+
+                        const update = (value) => {
+                            if (output) {
+                                output.textContent = value ? `${value}/5` : '';
+                            }
+                        };
+
+                        inputs.forEach(input => {
+                            input.addEventListener('change', () => update(input.value));
+                        });
+
+                        const prechecked = widget.querySelector('input:checked');
+                        update(prechecked ? prechecked.value : '');
+                    });
+                });
+            </script>
+        {% endif %}
+
+        <div class="pw-review-rating" data-pw-review-rating role="radiogroup">
+            {% for child in form|reverse %}
+                <input
+                    type="radio"
+                    id="{{ child.vars.id }}"
+                    name="{{ child.vars.full_name }}"
+                    value="{{ child.vars.value }}"
+                    {% if child.vars.checked %}checked="checked"{% endif %}
+                    {% if child.vars.disabled %}disabled="disabled"{% endif %}
+                    {% if child.vars.required %}required="required"{% endif %}
+                >
+                <label for="{{ child.vars.id }}" title="{{ child.vars.label|striptags }}">
+                    <span aria-hidden="true">★</span>
+                    <span class="pw-review-rating__sr">{{ child.vars.label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        <output class="pw-review-rating__value" aria-live="polite"></output>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

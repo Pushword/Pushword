@@ -1,0 +1,3 @@
+pushword_core:
+    resource: "@PushwordCoreBundle/Controller/"
+    type: attribute

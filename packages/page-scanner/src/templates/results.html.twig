@@ -1,0 +1,81 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ 'page_scannerTitle'|trans }}{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-outline-primary" href="{{ path('admin_page_scanner', {force: 1}) }}">
+        <i class="fa fa-sync-alt me-2" aria-hidden="true"></i>{{ 'page_scannerForceScan'|trans }}
+    </a>
+{% endblock %}
+
+{% block main %}
+    {% if message is defined %}
+        <div class="alert alert-success" role="alert">
+            {{ message|trans }}
+        </div>
+    {% else %}
+        <div class="card border-{{ errorsByPages is empty ? 'success' : 'warning' }}">
+            <div class="card-header fw-semibold">{{ 'page_scannerSiteScan'|trans }}</div>
+            <div class="card-body">
+                {% if errorsByPages is empty and lastEdit != 0 %}
+                    <div class="alert alert-success mb-3" role="alert">
+                        <i class="fa fa-check me-2"></i>{{ 'page_scannerScanInProgressNoErrors'|trans }}
+                    </div>
+                {% elseif lastEdit == 0 %}
+                    <div class="alert alert-info mb-0" role="alert">
+                        <i class="fa fa-spinner fa-spin me-2"></i>{{ 'page_scannerScanInProgress'|trans }}
+                    </div>
+                    <meta http-equiv="refresh" content="2">
+                {% else %}
+                    <div class="alert alert-info" role="alert">
+                        {{ 'page_scannerScanResult'|trans({'%date%': lastEdit|date('d/m/Y à H:i')}) }}
+                        {{ newRun
+                            ? (' (' ~ 'page_scannerNewScanInProgress'|trans ~ '<meta http-equiv="refresh" content="4">)')|raw
+                            : ''
+                        }}
+                    </div>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">{{ 'page_scannerTablePage'|trans }}</th>
+                                    <th scope="col">{{ 'page_scannerTableErrors'|trans }}</th>
+                                    <th scope="col" class="text-end">{{ 'page_scannerTableAction'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for errorsBypage in errorsByPages %}
+                                {% set object = errorsBypage.0.page %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ path('admin_page_edit', {id: object.id}) }}" class="text-decoration-none">
+                                            {% if object.metaRobots != '' %}
+                                                <span class="badge bg-secondary me-2" title="{{ object.metaRobots }}"><i class="fa fa-eye-slash"></i></span>
+                                            {% endif %}
+                                            <div class="small text-muted">{{ object.host ? object.host ~ ' › ' : '' }}{{ object.slug }}</div>
+                                            <div class="fw-semibold text-dark">{{ object.h1|raw }}</div>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <ul class="mb-0 ps-3">
+                                            {% for error in errorsBypage %}
+                                                <li>{{ error.message|raw }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ path('admin_page_show', {id: object.id}) }}" target="_blank" class="btn btn-sm btn-outline-secondary px-2">
+                                            <i class="fa fa-eye me-1" aria-hidden="true"></i> {{ 'page_scannerView'|trans }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

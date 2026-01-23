@@ -1,0 +1,30 @@
+{
+  "name": "pushword/page-scanner",
+  "type": "symfony-bundle",
+  "description": "Find dead links, 404, 301 and more (command line or admin).",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/page-scanner",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\PageScanner\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

@@ -1,0 +1,44 @@
+.monaco-editor .margin {
+  display: none !important;
+}
+.monaco-editor .decorationsOverviewRuler {
+  display: none !important;
+}
+
+.monaco-editor {
+  z-index: 1;
+  --vscode-editor-background: #f3f4f6 !important;
+  --vscode-focusBorder: #f3f4f6 !important;
+}
+
+.monaco-codeblock-wrapper .monaco-editor {
+  z-index: 1;
+  --vscode-editor-background: #fffbeb !important;
+  --vscode-focusBorder: #fffbeb !important;
+}
+.monaco-codeblock-wrapper {
+  background-color: #fffbeb !important;
+}
+
+.editorjs-monaco-wrapper {
+  margin: 0.6em 0;
+  padding: 0.4em 0;
+  background-color: #f3f4f6;
+  border-radius: 5px;
+}
+
+.monaco-editor .overflow-guard {
+  z-index: 1;
+}
+
+.my-content-that-overlays-editor {
+  z-index: 2;
+}
+
+.monaco-editor .overflowingContentWidget {
+  z-index: 3;
+}
+
+.ce-toolbar--opened {
+  z-index: 4;
+}

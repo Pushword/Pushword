@@ -1,0 +1,35 @@
+.tagsFieldWrapperMedia::before {
+  display: none;
+}
+.tagsFieldWrapperMedia {
+  margin-top: 0 !important;
+  margin-bottom: 20px !important;
+}
+
+.tagsFieldWrapper {
+  margin-left: 0px !important;
+  position: relative;
+  width: 100%;
+  margin-top: -30px;
+  font-style: italic;
+}
+.tagsFieldWrapper::before {
+  content: '#';
+  position: absolute;
+  left: 5px;
+  top: 27%;
+  z-index: 2;
+  color: #e8e8eb;
+  font-size: 2em;
+}
+
+.tagsFieldWrapper input.form-control {
+  padding-left: 35px; /*  width of the hashtag icon */
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border: 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.tagsFieldWrapper input.form-control::placeholder {
+  color: #e8e8eb;
+}

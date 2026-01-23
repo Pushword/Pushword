@@ -1,0 +1,94 @@
+{% form_theme conversation 'tailwind_2_layout.html.twig' %}
+
+{# spinner : <span class="border-top: transparent;" class="inline-block w-5 h-5 border-4 border-gray-50 border-solid rounded-full animate-spin"></span> border-gray-800 #}
+<div class="w-full mt-4 live-form">
+{{ form_start(conversation) }}
+
+        {% block before %}        {% endblock %}
+
+        {% block error %}
+            {% if not conversation.vars.valid %}
+            <div class="w-full mt-3 bg-red-100 text-red-700 p-3 rounded" role="alert">
+                {{ form_errors(conversation) }}
+            </div>
+            {% endif %}
+        {% endblock %}
+
+        {% block content %}
+            {% if conversation.content is defined %}
+            <div class="mb-4 w-full">
+                {{ form_row(conversation.content, {
+                    label_attr: {class: 'sr-only'},
+                    attr: {
+                        placeholder: 'conversationContentPlaceholder'|trans,
+                        onfocus: "this.placeholder = ''",
+                        onblur: "this.placeholder = '{{ 'conversationContentPlaceholder'|trans|e('js') }}'",
+                        rows: 8,
+                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary'
+                    }
+                }) }}
+                {{ form_errors(conversation.content) }}
+            </div>
+            {% endif %}
+        {% endblock %}
+
+        {% block authorName %}
+            {% if conversation.authorName is defined %}
+            <div class="flex flex-wrap mb-3">
+                <div class="md:w-3/4">
+                    {{ form_row(conversation.authorName, {
+                    label_attr: {class: 'sr-only'},
+                    row_attr: {class: ' '},
+                    attr: {
+                        placeholder: 'conversationNamePlaceholder'|trans,
+                        onfocus: "this.placeholder = ''",
+                        onblur: "this.placeholder = '" ~ 'conversationNamePlaceholder'|trans ~ "'",
+                        required: 'text',
+                        type: 'text',
+                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary'
+                    }
+                }) }}
+                {{ form_errors(conversation.authorName) }}
+                </div>
+            </div>
+            {% endif %}
+        {% endblock %}
+
+        {% block authorEmail %}
+            {% if conversation.authorEmail is defined %}
+            <div class="flex flex-wrap mb-3">
+                <div class="md:w-3/4">
+                    {{ form_row(conversation.authorEmail, {
+                    label_attr: {class: 'sr-only', style: 'display:none'},
+                    row_attr: {class: ' '},
+                    attr: {
+                        placeholder: 'conversationEmailPlaceholder'|trans,
+                        onfocus: "this.placeholder = ''",
+                        onblur: "this.placeholder = '" ~ 'conversationEmailPlaceholder'|trans ~ "'",
+                        required: 'text',
+                        pattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{1,63}$',
+                        type: 'email',
+                        class: 'bg-white border-2 border-gray-100 w-full py-2 px-4 text-gray-900 focus:outline-hidden focus:border-primary focus:ring-primary'
+                    }
+                }) }}
+                {{ form_errors(conversation.authorEmail) }}
+                </div>
+            </div>
+            {% endif %}
+        {% endblock %}
+
+        {% block submit %}
+        <div class="flex flex-wrap ">
+            <div class="mb-3 lg:w-full">
+            {# inline-block px-3 py-1 mt-2 font-normal leading-normal text-center text-white no-underline whitespace-no-wrap align-middle border rounded select-none bg-primary hover:bg-primary/75 letter-spacing #}
+                <button class="link-btn">
+                    {{ submitLabel|default('conversationSubmitLabel'|trans) }}
+                </button>
+            </div>
+        </div>
+        {% endblock %}
+
+        {% block after %}        {% endblock %}
+
+    {{ form_end(conversation) }}
+</div>

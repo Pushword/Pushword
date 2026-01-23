@@ -1,0 +1,106 @@
+.link-options-wrapper {
+  outline: none;
+  border: 0;
+  border-radius: 0 0 4px 4px;
+  margin: 0;
+  font-size: 13px;
+  padding: 10px;
+  width: 100%;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  font-weight: 500;
+  border-top: 1px solid rgba(201, 201, 204, 0.48);
+}
+
+.ninja {
+  text-decoration: none !important;
+  color: inherit !important;
+  border-bottom: 1px dotted #333;
+}
+
+.link-btn {
+  padding: 6px 12px;
+  margin-bottom: 0;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: #fff;
+  background-color: #3c8dbc;
+  border-color: #367fa9;
+  outline: none;
+  text-decoration: none !important;
+}
+
+.link-btn:hover {
+  color: #fff !important;
+}
+
+.editor-switch {
+  padding-left: 4px;
+  padding-right: 10px;
+  margin-bottom: 10px;
+  margin-top: 5px;
+}
+
+.editor-switch > input[type='checkbox'] {
+  display: none;
+}
+
+.editor-switch label {
+  font-weight: normal;
+}
+.editor-switch > .label-default {
+  cursor: pointer;
+  height: 0px;
+  position: relative;
+  width: 30px;
+}
+
+.editor-switch > .label-default::before {
+  background: rgb(0, 0, 0);
+  box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  content: '';
+  height: 12px;
+  margin-top: -5px;
+  position: absolute;
+  opacity: 0.3;
+  transition: all 0.4s ease-in-out;
+  width: 20px;
+}
+.editor-switch > .label-default::after {
+  background: rgb(255, 255, 255);
+  border-radius: 16px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+  content: '';
+  height: 16px;
+  left: -4px;
+  position: absolute;
+  top: -7px;
+  transition: all 0.3s ease-in-out;
+  width: 16px;
+}
+.editor-switch > input[type='checkbox']:checked + .label-default::before {
+  background: inherit;
+  opacity: 0.5;
+}
+.editor-switch > input[type='checkbox']:checked + .label-default::after {
+  background: inherit;
+  left: 10px;
+}
+
+.plugin-option-input {
+  border: 1px solid rgba(201, 201, 204, 0.48);
+  box-shadow: inset 0 1px 2px 0 rgb(35 44 72 / 6%);
+  border-radius: 5px;
+  padding: 5px 8px;
+  margin-bottom: 10px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.ce-popover__container {
+  min-width: 235px !important;
+}

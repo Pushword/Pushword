@@ -1,0 +1,25 @@
+{# @var id string #}
+{# @var pages Page[] #}
+{# @var pager Pagerfanta #}
+{# @var pager_route string #}
+{# @var pager_route_params array<string, string> #}
+
+{% block list %}
+    {% if pages is not empty %}
+        <ul{{ blockWrapperId(id ?? '') }}>
+            {% for page in pages %}
+                <li>
+                    <a href="{{ page(page) }}">
+                        {{ pw(page).h1|raw }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p{{ blockWrapperId(id ?? '') }}>...</p>
+    {% endif %}
+
+    {% if pager is defined and pager is not null %}
+        {{ pager(pager, {omitFirstPage: true, pageParameter: '[pager]', routeName: pager_route, routeParams: pager_route_params}) }}
+    {% endif %}
+{% endblock %}

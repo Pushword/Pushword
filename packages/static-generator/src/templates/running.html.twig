@@ -1,0 +1,30 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ 'adminStaticGenerating'|trans }}{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-outline-secondary" href="{{ path('admin_static_generator') }}">
+        <i class="fa fa-sync-alt me-2" aria-hidden="true"></i>{{ 'adminLabelUpdate'|trans }}
+    </a>
+{% endblock %}
+
+{% block main %}
+    <div class="mb-3">
+        {% if startTime %}
+            <p class="text-muted mb-1"><small>{{ 'adminStaticStartedAt'|trans }}: {{ startTime|date('d/m/Y à H:i:s') }}</small></p>
+        {% endif %}
+        {% if host %}
+            <p class="text-muted mb-0"><small><strong>{{ 'adminStaticHost'|trans }}:</strong> {{ host }}</small></p>
+        {% endif %}
+    </div>
+
+    <div id="static-output-container"
+         hx-get="{{ path('admin_static_generator_output', {host: host|default('')}) }}"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="d-flex align-items-center">
+            <i class="fa fa-circle-notch fa-spin me-2"></i>
+            <span>{{ 'adminStaticStarting'|trans }}</span>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,3 @@
+twig:
+    paths:
+        "%pw.package_dir%/flat/src/templates": "pwFlat"

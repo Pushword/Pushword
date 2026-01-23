@@ -1,0 +1,36 @@
+<div class="row">
+    <div class="col-md-6" style="margin-bottom: 15px;">
+        <a href="{{ media|image('default') }}" target="_blank" rel="noopener noreferrer" style="display: block; position:relative">
+            <span class="mosaic-box-label label label-default" style="position: absolute; left: 10px; right: unset">{{ media.ratioLabel }}</span>
+            <img src="{{ media|image('md', checkFileExists: true) }}?{{ random() }}"
+                 alt="{{ media.alt|e }}"
+                 class="img-responsive img-thumbnail"
+                 style="max-width: 100%; height: auto;">
+        </a>
+    </div>
+    <div class="col-md-6">
+        <div style="margin-bottom: 15px;">
+            <strong>{{ 'adminMediaPreviewPath'|trans }}</strong>
+            <code style="display: block; margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;">{{ media.fileName }}</code>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <strong>{{ 'adminMediaPreviewMarkdown'|trans }}</strong>
+            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>![{{ media.alt|replace({'[': '', ']': ''}) }}]({{ media.fileName }})</code></pre>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <strong>{{ 'adminMediaPreviewJson'|trans }}</strong>
+            <pre style="margin-top: 5px; padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;"><code>{
+  "{{ media.fileName }}": "{{ media.alt|replace({'"': '\\"',}) }}"
+}</code></pre>
+        </div>
+
+        {% if media.getMainColor %}
+        <div style="margin-bottom: 15px;">
+            <strong>{{ 'adminMediaPreviewDominantColor'|trans }}</strong>
+            <pre style="margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: {{ media.getMainColor }}; color: {{ media.mainColorOpposite }};">{{ media.getMainColor }}</pre>
+        </div>
+        {% endif %}
+    </div>
+</div>

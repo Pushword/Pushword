@@ -1,0 +1,5 @@
+controllers:
+  resource:
+    path: ./../../../Controller
+    namespace: Pushword\Conversation\Controller
+  type: attribute

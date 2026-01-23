@@ -1,0 +1,13 @@
+{# permit retrocompatibility with a feature previous v1 wich is deprecated ! Prefer override base.html.twig ➜ favicon block #}
+
+<link rel="apple-touch-icon" sizes="180x180" href="{{ asset(favicon_path ~ 'apple-touch-icon.png') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset(favicon_path ~ 'favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ asset(favicon_path ~ 'favicon-16x16.png') }}">
+<link rel="manifest" href="{{ asset(favicon_path ~ 'site.webmanifest') }}">
+<link rel="mask-icon" href="{{ asset(favicon_path ~ 'safari-pinned-tab.svg') }}" color="#000000">
+<link rel="shortcut icon" href="{{ asset(favicon_path ~ 'favicon.ico') }}">
+<meta name="apple-mobile-web-app-title" content="{{ apps.get().get('name') }}') }}">
+<meta name="application-name" content="{{ apps.get().get('name') }}">
+<meta name="msapplication-TileColor" content="{{ app_color ?? '#fff' }}">
+<meta name="msapplication-config" content="{{ asset(favicon_path ~ 'browserconfig.xml') }}">
+<meta name="theme-color" content="{{ app_color ?? '#fff' }}">

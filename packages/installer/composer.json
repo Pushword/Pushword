@@ -1,0 +1,34 @@
+{
+  "name": "pushword/installer",
+  "description": "",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*",
+    "symfony/filesystem": "^7.3 || ^8.0"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Installer\\": "src"
+    }
+  },
+  "require-dev": {
+    "composer/composer": "*",
+    "phpunit/phpunit": "*"
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

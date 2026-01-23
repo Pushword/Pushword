@@ -1,0 +1,131 @@
+{# @var message \Pushword\Conversation\Entity\Message #}
+{% set message = entity.instance %}
+
+{% set isReview = message.rating is defined and message.rating %}
+{% set review = isReview ? message : null %}
+
+{% set inlineTarget = 'pw-message-inline-' ~ message.id %}
+{% set inlineAction = url('pushword_conversation_inline_update', {id: message.id}) %}
+{% set inlineToken = csrf_token('conversation_inline_' ~ message.id) %}
+
+{% set editUrl = ea_url()
+  .setController(isReview
+    ? 'Pushword\\Conversation\\Controller\\Admin\\ReviewCrudController'
+    : 'Pushword\\Conversation\\Controller\\Admin\\ConversationCrudController')
+  .setAction('edit')
+  .setEntityId(message.id)
+%}{#.set('pwInline', 1)#}
+
+
+<div id="{{ inlineTarget }}" class="pw-message-inline d-flex flex-column">
+  {% if isReview %}
+    <div
+      class="fw-semibold text-truncate p-1"
+      style="display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;"
+      contenteditable="true"
+      hx-post="{{ inlineAction }}"
+      hx-trigger="blur"
+      hx-target="#{{ inlineTarget }}"
+      hx-swap="outerHTML"
+      hx-vals='js:{field: "title", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+      data-placeholder="{{ 'adminConversationInlinePlaceholderTitle'|trans }}"
+    >
+      {{ review.title ?: '—' }}
+    </div>
+  {% endif %}
+
+  <div
+    class="pw-inline-content text-muted p-1"
+    style="-webkit-line-clamp:3; display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;"
+    contenteditable="true"
+    hx-post="{{ inlineAction }}"
+    hx-trigger="blur"
+    hx-target="#{{ inlineTarget }}"
+    hx-swap="outerHTML"
+    hx-vals='js:{field: "content", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+    data-placeholder="{{ 'adminConversationInlinePlaceholderContent'|trans }}"
+  >
+    {{ message.content|striptags|trim ?: '—' }}
+  </div>
+
+  <div class="text-muted small d-flex flex-wrap gap1">
+    {% if isReview %}
+      <span class="d-flex align-items-center gap-1 me-3">
+        <i class="fa fa-star text-warning" aria-hidden="true"></i>
+        <span
+          class="fw-semibold px-1"
+          contenteditable="true"
+          hx-post="{{ inlineAction }}"
+          hx-trigger="blur"
+          hx-target="#{{ inlineTarget }}"
+          hx-swap="outerHTML"
+          hx-vals='js:{field: "rating", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+        >
+          {{ review.rating ?? 1 }}
+        </span>
+        /5
+      </span>
+
+      <span>·</span>
+    {% endif %}
+
+    <span class="d-flex align-items-center gap-1 me-3">
+      <i class="fa fa-user" aria-hidden="true"></i>
+      <span
+        class="px-1"
+        contenteditable="true"
+        hx-post="{{ inlineAction }}"
+        hx-trigger="blur"
+        hx-target="#{{ inlineTarget }}"
+        hx-swap="outerHTML"
+        hx-vals='js:{field: "authorName", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+      >
+        {{ message.authorName ?: '' }}
+      </span>
+    </span>
+
+    <span>·</span>
+
+    <span class="d-flex align-items-center gap-1 me-3">
+      <i class="fa fa-envelope" aria-hidden="true"></i>
+      <span
+        class="px-1 text-decoration-underline"
+        contenteditable="true"
+        hx-post="{{ inlineAction }}"
+        hx-trigger="blur"
+        hx-target="#{{ inlineTarget }}"
+        hx-swap="outerHTML"
+        hx-vals='js:{field: "authorEmail", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+      >
+        {{ message.authorEmail ?: '' }}
+      </span>
+    </span>
+
+    <a
+      class="btn btn-sm btn-default px-2 ms-auto"
+      href="{{ editUrl }}"
+    >
+      <i class="fa fa-edit" aria-hidden="true"></i>
+      <span class="sr-only">Edit</span>
+    </a>
+  </div>
+
+  <div class="d-flex flex-wrap align-items-center text-muted small pw-inline-tags-wrapper">
+    <span>#</span>
+    <input
+      type="text"
+      class="grow px-1 pw-inline-tags-input"
+      style="min-width: 50px; border: none; background: transparent; outline: none; font-size: inherit; color: inherit; padding-left: 7px !important;"
+      value="{{ message.tags|default('')|trim }}"
+      placeholder="{{ 'adminConversationInlinePlaceholderTags'|trans }}"
+      hx-post="{{ inlineAction }}"
+      hx-trigger="blur changed"
+      hx-target="#{{ inlineTarget }}"
+      hx-swap="outerHTML"
+      hx-vals='js:{field: "tags", value: event.target.value.trim(), _token: "{{ inlineToken|e('js') }}"}'
+      data-tags="{{ pw_conversation_all_tags_json() }}"
+    >
+    <div class="textSuggester" style="display:none;"></div>
+  </div>
+
+</div>

@@ -1,0 +1,31 @@
+reviews:
+  - title: "Excellent experience with Kitchen Sink"
+    content: "I really enjoyed using the Kitchen Sink feature. It provides a comprehensive set of components that make development much easier. The documentation is clear and the examples are helpful."
+    authorName: "Alice Johnson"
+    authorEmail: "alice.johnson@example.com"
+    rating: 5
+    publishedAt: "3 days ago"
+  - title: "Great tool for prototyping"
+    content: "Kitchen Sink has been invaluable for quickly prototyping new features. The variety of components available saves a lot of development time. Highly recommended!"
+    authorName: "Bob Smith"
+    authorEmail: "bob.smith@example.com"
+    rating: 4
+    publishedAt: "5 days ago"
+  - title: "Very useful collection"
+    content: "This is a fantastic collection of components. I use it regularly in my projects. The code quality is excellent and everything is well organized."
+    authorName: "Carol Williams"
+    authorEmail: "carol.williams@example.com"
+    rating: 5
+    publishedAt: "1 week ago"
+  - title: "Good but could be improved"
+    content: "Kitchen Sink is a solid foundation, but I think some components could use more customization options. Overall, it's a good starting point for projects."
+    authorName: "David Brown"
+    authorEmail: "david.brown@example.com"
+    rating: 3
+    publishedAt: "2 weeks ago"
+  - title: "Perfect for beginners"
+    content: "As someone new to the framework, Kitchen Sink has been a lifesaver. The examples are clear and easy to follow. It helped me understand best practices quickly."
+    authorName: "Emma Davis"
+    authorEmail: "emma.davis@example.com"
+    rating: 5
+    publishedAt: "10 days ago"

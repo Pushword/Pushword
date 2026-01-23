@@ -1,0 +1,42 @@
+# Generated via
+# $ php bin/console config:dump-reference pushword
+
+pushword:
+  # dir:                  '%kernel.project_dir%/public'
+  # public_dir:           '%kernel.project_dir%/public'
+  # public_media_dir:     'media'
+  # media_dir:            '%kernel.project_dir%/media'
+  # app_fallback_properties:
+  #     - hosts
+  #     - public_dir
+  #     - locale
+  #     - locales
+  #     - name
+  #     - base_url
+  #     - template
+  #     - template_dir
+  #     - custom_properties
+  # locale:               '%kernel.default_locale%'
+
+  # # eg: fr|en
+  # locales:              '%kernel.default_locale%''
+  # name:                 Pushword
+  # host:                 localhost
+  # hosts:
+  #     - %pw.host%
+  # base_url:             'https://%pw.host%'
+  # template:             '@Pushword'
+  # template_dir:         '%kernel.project_dir%/templates'
+  # page_can_override_filters: true
+  # filters:
+  #     main_content: twig,date,email,phoneNumber,twigVideo,punctuation,markdown
+  #     name:         twig,date,name
+  #     string:       twig,date,email,phoneNumber
+  # custom_properties:
+  #     assets:
+  #         stylesheets:
+  #             - bundles/pushwordcore/tailwind.min.css
+  #         javascripts:
+  #             - bundles/pushwordcore/page.min.js
+  # apps:
+  #     -

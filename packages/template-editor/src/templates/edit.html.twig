@@ -1,0 +1,51 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+{% form_theme form 'bootstrap_5_layout.html.twig' %}
+
+{% block head_stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('bundles/pushwordadmin/admin.css') }}">
+    <link rel="stylesheet" href="{{ asset('bundles/pushwordadminblockeditor/style.css') }}">
+{% endblock %}
+
+{% block body_javascript %}
+    {{ parent() }}
+    <script src="/bundles/pushwordadmin/monaco/app.js"></script>
+    <script src="{{ asset('/bundles/pushwordadmin/admin.js') }}"></script>
+    <script src="{{ asset('/bundles/pushwordadminblockeditor/admin-block-editor.js') }}"></script>
+{% endblock %}
+
+{% block content_title %}
+    {% if element.path %}
+        Éditer {{ element.path }}
+    {% else %}
+        Créer un nouveau template
+    {% endif %}
+{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-outline-secondary" href="{{ path('admin_template_editor_list') }}">
+        <i class="fa fa-arrow-left me-2" aria-hidden="true"></i> Retour à la liste
+    </a>
+{% endblock %}
+
+{% block main %}
+    <div class="max-w-screen-xl mx-auto px-4 w-full">
+        {{ form_start(form) }}
+        <div class="card">
+            <div class="card-body">
+                {{ form_widget(form) }}
+            </div>
+            <div class="card-footer d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-save me-2" aria-hidden="true"></i> {{ element.path ? 'Mettre à jour' : 'Créer' }}
+                </button>
+                {% if element.path %}
+                    <a class="btn btn-outline-danger" href="{{ path('admin_template_editor_delete', {encodedPath: element.encodedPath}) }}">
+                        <i class="fa fa-minus-circle me-2" aria-hidden="true"></i> Supprimer
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

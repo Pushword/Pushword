@@ -1,0 +1,103 @@
+/* purgecss start ignore */
+
+/* heading anchor size */
+.ce-header::after {
+  font-size: 1rem;
+  padding-top: 2rem;
+}
+
+a[rel='obfuscate']:not(.link-btn),
+a[rel='encrypt']:not(.link-btn) {
+  color: #059669;
+}
+
+@media screen and (min-width: 1200px) {
+  .ce-block__content,
+  .ce-toolbar__content {
+    margin-left: 60px;
+  }
+}
+
+/** editorjs quote ui inspired by https://github.com/editor-js/quote/pull/23 */
+
+.cdx-quote {
+  border-left: 0;
+}
+
+.cdx-quote .cdx-input[data-placeholder]::before {
+  position: absolute !important;
+}
+
+.cdx-quote__text {
+  min-height: unset !important;
+  margin-bottom: 10px;
+  border: none;
+  border-left: 1px solid #517b9f;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.cdx-quote__caption {
+  border: none;
+  border-left: 1px solid #517b9f;
+  box-shadow: none;
+  border-radius: 0;
+  color: #3e58fb;
+  border-top: 1px solid #00000017;
+}
+
+/* Disable convertTo */
+
+div[data-item-name='convert-to'] {
+  display: none !important;
+}
+
+.ce-popover-item-separator {
+  display: none !important;
+}
+
+/** Agressive customization **/
+
+.ce-popover__items:has([data-item-name='move-up']) {
+  display: flex;
+  flex-wrap: wrap;
+
+  .ce-popover-item__title {
+    display: none;
+  }
+}
+
+.ce-popover__items:not(:has([data-item-name='move-up'])) {
+  overflow-x: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.ce-popover--inline .ce-popover__items {
+  display: flex;
+  flex-wrap: unset !important;
+}
+
+.ce-popover__items:not(:has([data-item-name='move-up'])) .ce-popover-item-html {
+  grid-column: span 2;
+}
+
+.ce-popover-item-html {
+  width: 100%;
+}
+.ce-popover__search {
+  display: none;
+}
+.ce-popover--inline .ce-popover__search {
+  display: unset !important;
+  height: 0;
+  opacity: 0;
+}
+
+.codex-editor path {
+  stroke: revert-layer !important;
+}
+/** // **/
+
+/* purgecss end ignore */

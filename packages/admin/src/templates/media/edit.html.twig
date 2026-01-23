@@ -1,0 +1,29 @@
+{% extends '@EasyAdmin/crud/edit.html.twig' %}
+
+{% block main %}
+
+  {{ parent() }}
+
+
+  {% set mediaPreviewHtml = media_preview_html ?? null %}
+  {% set mediaRelatedPagesHtml = media_related_pages_html ?? null %}
+
+  {% if mediaPreviewHtml %}
+    <section class="card shadow-sm col-12 mb-4" style="background: var(--sidebar-bg);">
+      <div class="card-body">
+        {{ mediaPreviewHtml|raw }}
+      </div>
+    </section>
+
+    {% if mediaRelatedPagesHtml %}
+    <section class="card shadow-sm col-12 mb-4" style="background: var(--sidebar-bg);">
+      <div class="card-body">
+        <h4 class="content-title mt-2 mb-3">
+          {{ 'adminMediaRelatedLabel'|trans }}
+        </h4>
+        {{ mediaRelatedPagesHtml|raw }}
+      </div>
+    </section>
+    {% endif %}
+  {% endif %}
+{% endblock %}

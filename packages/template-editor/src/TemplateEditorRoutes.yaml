@@ -1,0 +1,4 @@
+pushword_template_editor:
+  resource: "@PushwordTemplateEditorBundle/ElementAdmin.php"
+  type: attribute
+  prefix: /admin/template

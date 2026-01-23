@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "@pushword/js-helper": "file:../js-helper"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "base": "/build/",
+  "entryPoints": {
+    "app": {
+      "css": [],
+      "dynamic": [],
+      "js": [
+        "/build/app.js"
+      ],
+      "legacy": false,
+      "preload": []
+    },
+    "alpine": {
+      "css": [],
+      "dynamic": [],
+      "js": [
+        "/build/alpine.js"
+      ],
+      "legacy": false,
+      "preload": []
+    },
+    "style": {
+      "css": [
+        "/build/style.css"
+      ],
+      "dynamic": [],
+      "js": [],
+      "legacy": false,
+      "preload": []
+    }
+  },
+  "legacy": false,
+  "metadatas": {},
+  "version": [
+    "8.2.3",
+    8,
+    2,
+    3
+  ],
+  "viteServer": null
+}

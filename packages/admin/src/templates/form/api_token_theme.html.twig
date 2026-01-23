@@ -1,0 +1,103 @@
+{# API Token form theme with generate/revoke buttons #}
+
+{% block api_token_widget %}
+  {% set field_id = form.vars.id %}
+  {% set initial_token = form.vars.value|default('') %}
+
+  <style>
+    #{{ field_id }}_container .btn { height: 30px; margin-top: -0.5px; }
+  </style>
+  <div class="input-group flex-nowrap" id="{{ field_id }}_container">
+    <input type="text"
+           name="{{ form.vars.full_name }}"
+           id="{{ field_id }}"
+           value="{{ initial_token }}"
+           readonly
+           class="form-control font-monospace bg-light"
+           placeholder="{{ 'adminUserApiTokenPlaceholder'|trans|default('No token generated') }}"
+    />
+    {# Generate button - shown when no token #}
+    <button type="button"
+            class="btn btn-primary"
+            style="
+              border-bottom-right-radius: 4px;
+              border-top-right-radius: 4px;"
+            id="{{ field_id }}_generate"
+            style="{{ initial_token ? 'display:none' : '' }}"
+            title="{{ 'adminUserApiTokenGenerate'|trans }}">
+      <i class="fa fa-key"></i>
+    </button>
+    {# Action buttons - shown when token exists #}
+    <button type="button"
+            class="btn btn-secondary"
+            id="{{ field_id }}_copy"
+            style="{{ initial_token ? '' : 'display:none' }}"
+            title="{{ 'Copy'|trans }}">
+      <i class="fa fa-copy"></i>
+    </button>
+    <button type="button"
+            class="btn btn-warning"
+            id="{{ field_id }}_regenerate"
+            style="{{ initial_token ? '' : 'display:none' }}"
+            title="{{ 'adminUserApiTokenRegenerate'|trans }}">
+      <i class="fa fa-refresh"></i>
+    </button>
+    <button type="button"
+            class="btn btn-danger"
+            id="{{ field_id }}_revoke"
+            style="{{ initial_token ? '' : 'display:none' }}"
+            title="{{ 'adminUserApiTokenRevoke'|trans }}">
+      <i class="fa fa-times"></i>
+    </button>
+  </div>
+
+  <script>
+  (function() {
+    const fieldId = '{{ field_id|e('js') }}';
+    const input = document.getElementById(fieldId);
+    const generateBtn = document.getElementById(fieldId + '_generate');
+    const copyBtn = document.getElementById(fieldId + '_copy');
+    const regenerateBtn = document.getElementById(fieldId + '_regenerate');
+    const revokeBtn = document.getElementById(fieldId + '_revoke');
+
+    function generateToken() {
+      const bytes = crypto.getRandomValues(new Uint8Array(32));
+      return [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function updateButtons() {
+      const hasToken = input.value.trim() !== '';
+      generateBtn.style.display = hasToken ? 'none' : '';
+      copyBtn.style.display = hasToken ? '' : 'none';
+      regenerateBtn.style.display = hasToken ? '' : 'none';
+      revokeBtn.style.display = hasToken ? '' : 'none';
+    }
+
+    generateBtn.addEventListener('click', function() {
+      input.value = generateToken();
+      updateButtons();
+    });
+
+    copyBtn.addEventListener('click', function() {
+      navigator.clipboard.writeText(input.value);
+      const icon = this.querySelector('i');
+      icon.classList.replace('fa-copy', 'fa-check');
+      setTimeout(() => icon.classList.replace('fa-check', 'fa-copy'), 1500);
+    });
+
+    regenerateBtn.addEventListener('click', function() {
+      if (confirm('{{ 'adminUserApiTokenRegenerateConfirm'|trans|default('Regenerate token? The old token will stop working.')|e('js') }}')) {
+        input.value = generateToken();
+        updateButtons();
+      }
+    });
+
+    revokeBtn.addEventListener('click', function() {
+      if (confirm('{{ 'adminUserApiTokenRevokeConfirm'|trans|default('Revoke the API token?')|e('js') }}')) {
+        input.value = '';
+        updateButtons();
+      }
+    });
+  })();
+  </script>
+{% endblock %}

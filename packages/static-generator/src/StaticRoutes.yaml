@@ -1,0 +1,4 @@
+static_generator:
+  resource: "@PushwordStaticGeneratorBundle/StaticController.php"
+  type: attribute
+  prefix: /admin/static

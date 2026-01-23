@@ -1,0 +1,30 @@
+{# Webhook lock banner - displayed when content is locked via external workflow #}
+{% set host = app.request.query.get('host', app.request.host) %}
+{% set lockInfo = flat_lock_info(host) %}
+{% if lockInfo and lockInfo.lockedBy == 'webhook' %}
+<div id="pw-webhook-lock-banner"
+     style="position: sticky; top: 0; z-index: 1000; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-bottom: 2px solid #dc2626; padding: 12px 20px; margin-bottom: 16px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);"
+     role="alert">
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #dc2626; border-radius: 50%; flex-shrink: 0;">
+      <svg style="width: 18px; height: 18px; color: white;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <div style="flex-grow: 1;">
+      <div style="font-size: 14px; font-weight: 600; color: #991b1b;">
+        {{ 'flatWebhookLockTitle'|trans }}
+      </div>
+      <div style="font-size: 13px; color: #b91c1c; margin-top: 2px;">
+        {{ 'flatWebhookLockMessage'|trans({
+          '%reason%': lockInfo.reason|default('External workflow in progress'),
+          '%user%': lockInfo.lockedByUser|default('external system')
+        }) }}
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #991b1b; background: rgba(255,255,255,0.5); padding: 4px 8px; border-radius: 4px;">
+      {{ 'flatWebhookLockViewOnly'|trans }}
+    </div>
+  </div>
+</div>
+{% endif %}

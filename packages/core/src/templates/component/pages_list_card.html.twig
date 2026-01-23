@@ -1,0 +1,12 @@
+
+{%- if pages is not empty -%}
+  {% include view('/component/cardList.html.twig') with { items: pages } %}
+{%- else -%}
+  <p>...<!-- empty list --></p>
+{%- endif -%}
+{%- if pager is defined
+      and pager is not null
+      and (pager.currentPage != 1 or pager.hasNextPage)
+-%}
+  <div class="mb-5">{{ pager(pager, {omitFirstPage: true, pageParameter: '[pager]', routeName: pager_route, routeParams: pager_route_params}) }}</div>
+{%- endif -%}

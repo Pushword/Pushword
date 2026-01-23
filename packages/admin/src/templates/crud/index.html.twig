@@ -1,0 +1,14 @@
+{% extends '@EasyAdmin/crud/index.html.twig' %}
+
+{% block main %}
+  <div class="d-flex justify-content-end mb-2">
+    {% if pageSizeOptions is defined %}
+      {{ include('@pwAdmin/components/page_size_selector.html.twig', {
+        pageSizeOptions: pageSizeOptions,
+        currentPageSize: currentPageSize
+      }) }}
+    {% endif %}
+  </div>
+
+  {{ parent() }}
+{% endblock %}

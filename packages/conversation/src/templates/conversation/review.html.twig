@@ -1,0 +1,93 @@
+{# @var review \Pushword\Conversation\Entity\Review #}
+
+{% set currentLocale = page is defined and page ? page.locale : (app.request.locale|default('en')) %}
+{% set anonymous = 'conversationReviewAnonymous'|trans %}
+{% set reviewAuthor = review.authorName|default(anonymous) %}
+
+{% set reviewTitle = review.getTranslatedTitle(currentLocale) %}
+{% set reviewBody = review.getTranslatedContent(currentLocale) %}
+{% set reviewMonth = review.createdAt|format_datetime(pattern='MMMM') %}
+{% set reviewBodyHtml = reviewBody|markdown %}
+
+
+{% block review %}
+<blockquote class="{{ reviewWrapperClass|default('text-lg mb-12') }}">
+  <div class="font-bold not-italic mb-3">
+    {% if reviewTitle %}
+      <strong>{{ reviewTitle }}</strong>
+    {% endif %}
+    {% block editLink %}
+    {% if is_granted('ROLE_EDITOR') and review.id and class_exists('\\Pushword\\Admin\\PushwordAdminBundle') %}
+      {% set editUrl = ea_url()
+        .setController('Pushword\\Conversation\\Controller\\Admin\\ReviewCrudController')
+        .setAction('edit')
+        .setEntityId(review.id)
+      %}
+      <a href="{{ editUrl }}"
+         class="inline-block rounded p-1 text-gray-300 hover:bg-gray-300 hover:text-gray-900 float-right"
+         title="{% trans %}adminReviewEdit{% endtrans %}">
+        {{ svg('edit', {class: 'fill-current w-3.5'}) }}
+        <span class="sr-only">{% trans %}adminReviewEdit{% endtrans %}</span>
+      </a>
+    {% endif %}
+    {% endblock %}
+  </div>
+  <div class="mt-3 not-italic text-sm prose">
+
+    {% if review.rating %}
+      {% set ratingValue = review.rating %}
+      {% set ratingValue = ratingValue > 5 ? 5 : ratingValue %}
+      {% set ratingValue = ratingValue < 1 ? 1 : ratingValue %}
+      <span class="text-yellow-500" aria-label="{{ ratingValue }}/5">
+        {% for i in 1..5 %}
+          {% if i <= ratingValue %}
+            ★
+          {% else %}
+            ☆
+          {% endif %}
+        {% endfor %}
+      </span>
+      &nbsp;&nbsp;
+    {% endif %}
+
+    <span class="inline-block">
+      {% block reviewedBy %}
+        {% trans %}conversationReviewCommentSentBy{% endtrans %} {{ reviewAuthor }}
+
+        {{ 'conversationReviewIn'|trans }} <span>{{ reviewMonth }}</span>
+        {% set source = review.getCustomProperty('source') %}
+        {% if source %}
+          {{ 'conversationReviewOn'|trans }} <span>{{ _self.renderSource(source) }}</span>
+        {% endif %}
+      {% endblock %}
+    </span>
+  </div>
+  <div class="italic prose-lg mt-3">
+    {{ reviewBodyHtml|raw }}
+  </div>
+  {% if review.mediaList is not empty %}
+    {% include view('/component/images_gallery.html.twig') with {
+      images: review.mediaList,
+      isReview: true,
+      gallery_container_class: 'overflow-x-hidden md:overflow-x-auto w-full mt-4'
+    } %}
+  {% endif %}
+</blockquote>
+{% endblock %}
+
+{% macro renderSource(source) %}
+  {% set sourceName =
+  'tripa' in source? 'TripAdvisor' :
+  'google' in source ? 'Google' :
+  'maps.app.goo.gl' in source ? 'Google' :
+  'facebook' in source ? 'Facebook' :
+  'linkedin' in source ? 'LinkedIn' :
+  'twitter' in source ? 'Twitter' :
+  'instagram' in source ? 'Instagram' :
+  'youtube' in source ? 'YouTube' :
+  'pinterest' in source ? 'Pinterest' :
+  'tiktok' in source ? 'TikTok'
+    : 'direct' %}
+
+  {{ link(sourceName, source) }}
+{% endmacro %}

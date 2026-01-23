@@ -1,0 +1,62 @@
+/* Tailwind v4 CSS-first configuration */
+@theme {
+  /* Custom minHeight values */
+  --min-height-screen-1-4: 25vh;
+  --min-height-screen-3-4: 75vh;
+  --min-height-screen-1-3: 33vh;
+  --min-height-screen-2-3: 66vh;
+  --min-height-screen-1-2: 50vh;
+
+  /* Custom colors */
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+}
+
+/* Custom variants for first-letter */
+@variant first-letter (&:first-letter);
+
+/* Custom variants for first-child */
+@variant first-child (&:first-child);
+
+/* Custom utilities - Bleed plugin replacement */
+@utility bleed {
+  width: 100vw;
+  margin-inline-start: 50%;
+  margin-inline-end: unset;
+  transform: translateX(-50%);
+  max-width: none;
+}
+
+@utility bleed-disable {
+  width: inherit;
+  margin-inline-start: inherit;
+  margin-inline-end: inherit;
+  transform: default;
+}
+
+/* Custom utilities - Justify safe center */
+@utility justify-safe-center {
+  justify-content: safe center;
+}
+
+/* Typography customization */
+.prose a:not(.not-prose a),
+.prose span[data-rot]:not(.not-prose span[data-rot]),
+.prose .link:not(.not-prose .link) {
+  text-decoration: none;
+  color: var(--primary);
+  font-weight: 500;
+  border-bottom: 1px solid;
+}
+.prose a:hover:not(.not-prose a:hover),
+.prose span[data-rot]:hover:not(.not-prose span[data-rot]:hover),
+.prose .link:hover:not(.not-prose .link:hover) {
+  opacity: 0.75;
+}
+
+.img-stretched {
+  @apply w-screen relative left-1/2 right-1/2 mr-[-50vw] ml-[-50vw];
+}
+.img-background {
+  @apply px-6 sm:px-12 py-1 text-center bg-gray-200 rounded;
+}

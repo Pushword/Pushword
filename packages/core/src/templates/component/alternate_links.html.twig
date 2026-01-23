@@ -1,0 +1,11 @@
+{% if page.translations.count > 0 %}
+<ul>
+    {% for translation in page.translations %}
+        <li>
+            <a href="{{ page(translation.realSlug) }}" title="{{ translation.title }} — {{ translation.locale|trans }}" lang="{{ translation.locale }}" hreflang="{{ translation.locale }}">
+                {{ translation.locale|trans }}
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+{% endif %}

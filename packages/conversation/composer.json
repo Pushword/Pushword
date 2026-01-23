@@ -1,0 +1,31 @@
+{
+  "name": "pushword/conversation",
+  "type": "symfony-bundle",
+  "description": "Extend your Pushword website with **comments**, a **contact** form or just an **user input**.",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/conversation",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*",
+    "pushword/flat": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Conversation\\": "src"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin D.",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com/"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

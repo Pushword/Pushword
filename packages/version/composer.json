@@ -1,0 +1,31 @@
+{
+  "name": "pushword/version",
+  "type": "symfony-bundle",
+  "description": "Versioning pages with Pushword CMS.",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/version",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*",
+    "symfony/serializer": "^8.0"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Version\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

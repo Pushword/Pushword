@@ -1,0 +1,32 @@
+{
+  "name": "pushword/flat",
+  "type": "symfony-bundle",
+  "description": "Transform Pushword in a FlatFile CMS.",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/flat",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*",
+    "league/csv": "^9.0",
+    "spatie/yaml-front-matter": "^2.0"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Flat\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

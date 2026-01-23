@@ -1,0 +1,30 @@
+# OAuth providers configuration
+# Uncomment and configure the providers you want to use
+# See documentation: https://pushword.piedweb.com/authentication
+#
+# Required packages:
+#   composer require knpuniversity/oauth2-client-bundle
+#   composer require league/oauth2-google        # For Google
+#   composer require thenetworg/oauth2-azure     # For Microsoft
+#   composer require league/oauth2-github        # For GitHub
+
+knpu_oauth2_client:
+    clients:
+        google:
+            type: google
+            client_id: '%env(default::OAUTH_GOOGLE_CLIENT_ID)%'
+            client_secret: '%env(default::OAUTH_GOOGLE_CLIENT_SECRET)%'
+            redirect_route: pushword_oauth_check
+            redirect_params: { provider: google }
+            access_type: online
+            hosted_domain: '%env(default::OAUTH_GOOGLE_HOSTED_DOMAIN)%'
+        microsoft:
+            type: azure
+            client_id: '%env(default::OAUTH_MICROSOFT_CLIENT_ID)%'
+            client_secret: '%env(default::OAUTH_MICROSOFT_CLIENT_SECRET)%'
+            redirect_route: pushword_oauth_check
+            redirect_params: { provider: microsoft }
+            tenant: '%env(default:oauth_microsoft_tenant_default:OAUTH_MICROSOFT_TENANT)%'
+
+parameters:
+    oauth_microsoft_tenant_default: common

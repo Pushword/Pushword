@@ -1,0 +1,11 @@
+<?php
+
+namespace Pushword\Admin\Utils;
+
+class Thumb
+{
+    // Document/file icon SVG (64x64px, gray color) for non-image media files
+    public const PLACEHOLDER_DATA_URI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0IiBmaWxsPSJub25lIj48cGF0aCBmaWxsPSIjOTRhM2I4IiBkPSJNMTYgOGgyMmwxMiAxMnYzNmMwIDIuMi0xLjggNC00IDRIMTZjLTIuMiAwLTQtMS44LTQtNFYxMmMwLTIuMiAxLjgtNCA0LTR6Ii8+PHBhdGggZmlsbD0iI2NiZDVlMSIgZD0iTTM4IDh2MTJoMTJMMzggOHoiLz48cmVjdCBmaWxsPSIjZTJlOGYwIiB4PSIyMCIgeT0iMzAiIHdpZHRoPSIyNCIgaGVpZ2h0PSIzIiByeD0iMS41Ii8+PHJlY3QgZmlsbD0iI2UyZThmMCIgeD0iMjAiIHk9IjM4IiB3aWR0aD0iMjQiIGhlaWdodD0iMyIgcng9IjEuNSIvPjxyZWN0IGZpbGw9IiNlMmU4ZjAiIHg9IjIwIiB5PSI0NiIgd2lkdGg9IjE2IiBoZWlnaHQ9IjMiIHJ4PSIxLjUiLz48L3N2Zz4=';
+
+    public static string $thumb = self::PLACEHOLDER_DATA_URI;
+}

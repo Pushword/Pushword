@@ -1,0 +1,100 @@
+{
+  "name": "pushword/new",
+  "type": "project",
+  "license": "MIT",
+  "description": "Install a new Pushword instance with ease.",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "php": ">=8.4",
+    "ext-ctype": "*",
+    "ext-iconv": "*",
+    "symfony/flex": "^2.9"
+  },
+  "flex-require": {
+    "symfony/console": "^7.3 || ^8.0",
+    "symfony/dotenv": "*",
+    "symfony/framework-bundle": "^8.0",
+    "symfony/runtime": "*",
+    "symfony/yaml": "^8.0",
+    "pushword/core": "^1.0.0-rc84",
+    "pushword/installer": "^1.0.0-rc84",
+    "pushword/skeleton": "^1.0.0-rc84",
+    "pushword/admin": "^1.0.0-rc84",
+    "pushword/admin-block-editor": "^1.0.0-rc84",
+    "pushword/page-scanner": "^1.0.0-rc84",
+    "pushword/static-generator": "^1.0.0-rc84",
+    "pushword/template-editor": "^1.0.0-rc84"
+  },
+  "require-dev": {
+    "symfony/profiler-pack": "*",
+    "symfony/filesystem": "^7.3 || ^8.0",
+    "phpstan/phpstan": "*",
+    "phpstan/phpstan-doctrine": "*",
+    "phpstan/phpstan-phpunit": "*",
+    "phpstan/phpstan-strict-rules": "*",
+    "phpstan/phpstan-symfony": "*",
+    "friendsofphp/php-cs-fixer": "*",
+    "phpunit/phpunit": "*"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": {
+      "*": "dist"
+    },
+    "sort-packages": true,
+    "allow-plugins": {
+      "symfony/flex": true,
+      "symfony/runtime": true
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "App\\Tests\\": "tests/"
+    }
+  },
+  "replace": {
+    "symfony/polyfill-ctype": "*",
+    "symfony/polyfill-iconv": "*",
+    "symfony/polyfill-php72": "*"
+  },
+  "scripts": {
+    "dev": "symfony server:start -d",
+    "auto-scripts": [],
+    "post-install-cmd": [
+      "bash ./vendor/pushword/installer/src/installer",
+      "@auto-scripts"
+    ],
+    "post-update-cmd": [
+      "Pushword\\Installer\\PostInstall::runPostUpdate",
+      "@auto-scripts"
+    ],
+    "post-autoload-dump": [
+      "Pushword\\Installer\\PostAutoloadDump::runPostAutoload"
+    ],
+    "stan": "vendor/bin/phpstan",
+    "format": "vendor/bin/php-cs-fixer fix",
+    "rector": "vendor/bin/rector process && composer format"
+  },
+  "conflict": {
+    "symfony/symfony": "*"
+  },
+  "extra": {
+    "symfony": {
+      "allow-contrib": true,
+      "require": "^7 || ^8"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ]
+}

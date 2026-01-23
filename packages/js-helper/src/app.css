@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+@import 'tailwindcss-animated';
+@plugin '@tailwindcss/typography';
+@import './tailwind.prose.scss';
+@import './utility.css'; /* node_modules/@pushword/js-helper/src/utility.css */
+/* @plugin "@tailwindcss/forms"; */
+
+@import './../node_modules/glightbox/dist/css/glightbox.css';
+
+/*
+Tailwind content sources for all packages
+-----------------------------------------
+*/
+
+@source "./../../../../vendor/pushword/**/templates/";
+@source "./../../**/templates/";
+@source "./../../**/src/templates/";
+@source "./../../**/content/**/*.md";
+@source "./../../conversation/src/templates/";
+@source "./../../../../templates";
+@source "./../../../../var/TailwindGeneratorCache/*";
+@source "./../../../../vendor/pushword/core/src/Twig/**.php";
+@source "./../../core/src/Twig/**.php";
+@source "./../../../../vendor/pushword/admin/src/templates/markdown_cheatsheet.html.twig";
+@source "./../../admin/src/templates/markdown_cheatsheet.html.twig";
+
+[x-cloak] {
+  display: none !important;
+}

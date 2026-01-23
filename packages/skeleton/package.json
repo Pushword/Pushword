@@ -1,0 +1,13 @@
+{
+  "devDependencies": {
+    "vite": "^7.1.9",
+    "vite-plugin-symfony": "^8.2.2",
+    "@pushword/js-helper": "^0.0"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch"
+  }
+}

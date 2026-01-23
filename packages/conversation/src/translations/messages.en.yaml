@@ -1,0 +1,52 @@
+adminConversationAuthorEmailLabel: Email
+adminConversationAuthorIpLabel: IP
+adminConversationAuthorIpRawLabel: 'IP Raw'
+adminConversationAuthorNameLabel: Name
+adminConversationContentLabel: Content
+adminConversationCreatedAtLabel: 'Posted on'
+adminConversationInlineOpenPopup: 'Open in a popup'
+adminConversationInlinePlaceholderContent: Content…
+adminConversationInlinePlaceholderTags: 'Tags (separated by spaces)'
+adminConversationInlinePlaceholderTitle: Title…
+adminConversationLabelAuthor: Author
+adminConversationLabelConversation: Conversation
+adminConversationLabelPublishedAt: 'Published on'
+adminConversationNotificationFrom: 'From https://%host%/ › form[%referring%]'
+adminConversationNotificationSentBy: 'Sent by %authorName% - %authorEmail%'
+adminConversationNotificationTitlePlural: '[%appName%] : New messages'
+adminConversationNotificationTitleSingular: '[%appName%] : New message'
+adminConversationReferringLabel: Referring
+adminConversationTagsLabel: Tags
+adminConversationTagsPlaceholder: 'Tags (separated by spaces)'
+adminConversationWeightHelp: 'Lower values appear first'
+adminConversationWeightLabel: Weight
+adminReviewEdit: 'Edit review'
+adminReviewLocaleHelp: 'Original language of this review'
+adminReviewLocaleLabel: Locale
+adminReviewMediasHelp: 'Attach one or several images illustrating the review'
+adminReviewMediasLabel: Media
+adminReviewRatingHelp: 'Select a score between 1 (poor) and 5 (excellent)'
+adminReviewRatingLabel: Rating
+adminReviewTitleHelp: 'Short headline describing the review'
+adminReviewTitleLabel: Title
+adminReviewTranslationsHelp: 'AI-generated translations'
+adminReviewTranslationsLabel: Translations
+conversationContentPlaceholder: Message
+conversationEmailInvalid: 'Invalid email address'
+conversationEmailOrPhonePlaceholder: 'Email or Phone'
+conversationEmailPlaceholder: Email
+conversationInputNotset: unknown
+conversationNamePlaceholder: Name
+conversationPhoneNumberInvalid: 'Phone number in unknown format'
+conversationRegisterLabel: Register
+conversationReviewAnonymous: Anonymous
+conversationReviewCommentSentBy: 'Comment sent by'
+conversationReviewIn: 'in'
+conversationReviewOn: 'on'
+conversationReviewEmpty: 'No reviews have been published yet.'
+conversationReviewSeeLess: 'See less'
+conversationReviewSeeMore: 'See more'
+conversationSendSuccess: 'Thank you!'
+conversationSubmitLabel: Submit
+conversationSuscribeToNewsletter: 'Newsletter subscription'
+conversationTitle: Conversation

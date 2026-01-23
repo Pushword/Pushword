@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #2563eb;">{{ 'magicLinkEmailTitle'|trans({'%appName%': appName}) }}</h1>
+
+        <p>{{ 'magicLinkEmailGreeting'|trans({'%username%': user.username}) }}</p>
+
+        <p>{{ 'magicLinkEmailIntro'|trans }}</p>
+
+        <div style="margin: 30px 0;">
+            <a href="{{ loginUrl }}"
+               style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin-right: 10px;">
+                {{ 'magicLinkLoginButton'|trans }}
+            </a>
+        </div>
+
+        <p>{{ 'magicLinkEmailOr'|trans }}</p>
+
+        <div style="margin: 30px 0;">
+            <a href="{{ setPasswordUrl }}"
+               style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 5px;">
+                {{ 'magicLinkSetPasswordButton'|trans }}
+            </a>
+        </div>
+
+        <p style="color: #666; font-size: 14px;">
+            {{ 'magicLinkEmailExpires'|trans({'%minutes%': expiresInMinutes}) }}
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+        <p style="color: #999; font-size: 12px;">
+            {{ 'magicLinkEmailFooter'|trans }}
+        </p>
+    </div>
+</body>
+</html>

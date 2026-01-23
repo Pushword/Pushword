@@ -1,0 +1,83 @@
+<?php
+
+use KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle;
+use Pushword\Admin\Controller\MediaCrudController;
+use Pushword\Admin\Controller\PageCrudController;
+use Pushword\Core\Security\LoginFormAuthenticator;
+use Pushword\Core\Security\OAuthAuthenticator;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+return static function (ContainerConfigurator $containerConfigurator): void {
+    // Build authenticators list - only include OAuth if the bundle is installed
+    $authenticators = [LoginFormAuthenticator::class];
+    if (class_exists(KnpUOAuth2ClientBundle::class)) {
+        $authenticators[] = OAuthAuthenticator::class;
+    }
+
+    $containerConfigurator->extension('security', [
+        'password_hashers' => [
+            '%pw.entity_user%' => [
+                'algorithm' => 'auto',
+            ],
+        ],
+        'role_hierarchy' => [
+            'ROLE_EDITOR' => [
+                0 => 'ROLE_USER',
+                1 => 'ROLE_'.strtoupper(PageCrudController::class).'_ALL',
+                2 => 'ROLE_'.strtoupper(MediaCrudController::class).'_ALL',
+            ],
+            'ROLE_ADMIN' => [
+                0 => 'ROLE_EDITOR',
+                1 => 'ROLE_PUSHWORD_ADMIN',
+                2 => 'ROLE_PUSHWORD_ADMIN_THEME',
+            ],
+            'ROLE_SUPER_ADMIN' => [
+                0 => 'ROLE_ADMIN',
+                1 => 'ROLE_ALLOWED_TO_SWITCH',
+            ],
+        ],
+        'access_decision_manager' => [
+            'strategy' => 'unanimous',
+        ],
+        'providers' => [
+            'pushword_user_provider' => [
+                'entity' => [
+                    'class' => '%pw.entity_user%',
+                    'property' => 'email',
+                ],
+            ],
+        ],
+        'firewalls' => [
+            'dev' => [
+                'pattern' => '^/(_(profiler|wdt)|css|images|js)/',
+                'security' => false,
+            ],
+            'main' => [
+                'lazy' => true,
+                'http_basic' => [
+                    'realm' => 'Secured Area',
+                ],
+                'custom_authenticators' => $authenticators,
+                'entry_point' => LoginFormAuthenticator::class,
+                'logout' => [
+                    'path' => 'pushword_logout',
+                ],
+                'remember_me' => [
+                    'lifetime' => 31_536_000,
+                    'always_remember_me' => true,
+                    'secret' => '%kernel.secret%',
+                ],
+            ],
+        ],
+        'access_control' => [
+            [
+                'path' => '^/login',
+                'roles' => 'PUBLIC_ACCESS',
+            ],
+            [
+                'path' => '^/admin',
+                'roles' => 'ROLE_EDITOR',
+            ],
+        ],
+    ]);
+};

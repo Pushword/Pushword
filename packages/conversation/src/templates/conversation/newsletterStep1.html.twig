@@ -1,0 +1,32 @@
+{% extends '@PushwordConversation/conversation/conversation.html.twig' %}
+
+{% block before %}
+<div class="w-full max-w-md">
+    <div class="flex items-center py-2 border-b {{ conversation.vars.valid ? 'border-primary' : 'border-red-500' }}">
+{% endblock %}
+
+{% block error %}{% endblock %}
+
+{% block authorEmail %}
+    {% form_theme conversation 'form_div_layout.html.twig' %}
+        {{ form_widget(conversation.authorEmail, {
+            attr: {
+                placeholder: 'conversationEmailPlaceholder'|trans,
+                onfocus: "this.placeholder = ''",
+                onblur: "this.placeholder = '" ~ 'conversationEmailPlaceholder'|trans ~ "'",
+                required: 'text',
+                pattern: '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{1,63}$',
+                type: 'email',
+                class: authorEmailInputClass ??'appearance-none bg-transparent border-none focus:ring-transparent focus:border-transparent focus:shadow-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-hidden'
+            }
+        }) }}
+{% endblock %}
+
+{% block submit %}
+    <button class="shrink-0 px-2 py-1 link-btn">{{ submitLabel|default('conversationRegisterLabel'|trans) }}</button>
+{% endblock %}
+
+{% block after %}
+    </div>
+</div>
+{% endblock %}

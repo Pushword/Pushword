@@ -1,0 +1,32 @@
+.cdx-anchor-tune-wrapper {
+  display: flex;
+  background: #f8f8f8;
+  border: 1px solid rgba(226, 226, 229, 0.2);
+  border-radius: 6px;
+  padding: 2px;
+  margin: 2px 0;
+}
+
+.cdx-anchor-tune-icon {
+  width: 14px;
+  height: 20px;
+  padding-top: 5px;
+  margin-left: 3px;
+  margin-right: 3px;
+  display: flex;
+}
+
+.cdx-anchor-tune-icon svg {
+  vertical-align: inherit;
+}
+
+.cdx-anchor-tune-input {
+  background-color: transparent;
+  border: 0;
+  height: 26px;
+  width: 100%;
+  max-width: calc(100% - 14px);
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+}

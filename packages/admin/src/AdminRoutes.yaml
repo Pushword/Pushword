@@ -1,0 +1,9 @@
+controllers:
+  resource:
+    path: ./Controller
+    namespace: Pushword\Admin\Controller
+  type: attribute
+
+easyadmin_routes:
+  resource: .
+  type: easyadmin.routes

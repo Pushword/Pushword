@@ -1,0 +1,65 @@
+{#
+  @var array images - key is path, value can be: string (alt), array [alt, link, linkAttr, obf], or Media object
+  @var bool clickable - default true
+  @var string image_filter - default 'thumb'
+  @var int pos - position to disable lazy loading on first image (default 100)
+  @var string gallery_class, gallery_li_opener
+  @var string image_container, array image_otherAttributes
+#}
+
+{% set gallery_id = gallery_id ?? page.uniqueGalleryId ?? random(10, 1000) %}
+{% set grid_cols = grid_cols ?? (images|length < 5 ? images|length : (images|length is odd ? 3 : 4)) %}
+{% set default_gallery_class = default_gallery_class ?? 'my-3 grid sm:grid-cols-' ~ grid_cols ~ ' gap-1 md:gap-3 list-none unprose max-w-screen-2xl mx-auto' %}
+{# sm:grid-cols-2 sm:grid-cols-3 sm:grid-cols-4 #}
+
+<ul class="{{ gallery_class|default(default_gallery_class) }}">
+  {% for media, mediaData in images %}
+    {{ gallery_li_opener|default('<li>')|raw }}
+
+    {# Normalize input: extract current_media, imageClickable, linkAttr, linkObfuscate #}
+    {% set imageClickable = imageClickable ?? clickable ?? true %}
+    {% set linkAttr = null %}
+    {% set linkObfuscate = true %}
+
+    {% if mediaData is iterable and not isInstanceOfMedia(mediaData) %}
+      {% set linkObfuscate = mediaData[3] ?? true %}
+      {% set linkAttr = mediaData[2] ?? null %}
+      {% set imageClickable = mediaData[1] ?? imageClickable %}
+      {% set current_media = media_from_string(media, mediaData[0]) %}
+    {% else %}
+      {# Media object, string alt, or inverted format - media_from_string handles all #}
+      {% set current_media = media_from_string(media, mediaData) %}
+    {% endif %}
+
+    {# Render image with proper lazy loading #}
+    {% set lazy = not (loop.first and (pos ?? 100) < 3) %}
+    {% set img = include('@PushwordCore/component/image.html.twig', {
+      image: current_media,
+      mode: image_filter|default('thumb'),
+      image_class: (image_otherAttributes ?? {}).class ?? null,
+      image_alt: current_media.alt,
+      image_attr: (image_otherAttributes ?? {})|filter((v, k) => k != 'class'),
+      lazy: lazy
+    }, with_context = false) %}
+
+    {# Optional container wrapper #}
+    {% set wrapInContainer = image_container is defined and image_container is not same as '' %}
+    {% if wrapInContainer %}<div class="{{ image_container|default('mx-auto max-w-[330px]') }}">{% endif %}
+
+    {# Link wrapping #}
+    {% if imageClickable is same as true %}
+      {{ link(img, current_media|image('default'), linkAttr ?? {
+      class: 'glightbox',
+      'data-gallery': gallery_id,
+      'data-dwl': current_media|image('default', 'webp')
+      }) }}
+    {% elseif imageClickable %}
+      {{ link(img, imageClickable, linkAttr ?? {}, linkObfuscate) }}
+    {% else %}
+      {{ img }}
+    {% endif %}
+
+    {% if wrapInContainer %}</div>{% endif %}
+    </li>
+  {% endfor %}
+</ul>
