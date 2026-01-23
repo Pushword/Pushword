@@ -1,0 +1,105 @@
+#!/bin/bash -e
+
+# Archive current git history and reset main to a single commit
+# This preserves all commits in the 'archive' branch while keeping main clean
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}=== Git History Archive ===${NC}"
+
+# Ensure we're in the repo root
+cd "$(git rev-parse --show-toplevel)"
+
+# Check for clean working directory
+if [ -n "$(git status --porcelain)" ]; then
+    echo -e "${RED}Error: Working directory is not clean. Commit or stash changes first.${NC}"
+    exit 1
+fi
+
+# Ensure we're on main
+CURRENT_BRANCH=$(git branch --show-current)
+if [ "$CURRENT_BRANCH" != "main" ]; then
+    echo -e "${RED}Error: Must be on main branch (currently on: $CURRENT_BRANCH)${NC}"
+    exit 1
+fi
+
+# Check archive branch exists
+if ! git show-ref --verify --quiet refs/heads/archive; then
+    echo -e "${RED}Error: 'archive' branch does not exist${NC}"
+    exit 1
+fi
+
+# Get current commit count
+COMMIT_COUNT=$(git rev-list --count main)
+echo "Current main branch has $COMMIT_COUNT commits"
+
+# Get latest tag for version bump
+LATEST_TAG=$(git tag -l '1.0.0-rc*' | sort -V | tail -1)
+if [ -z "$LATEST_TAG" ]; then
+    echo -e "${RED}Error: No 1.0.0-rc* tag found${NC}"
+    exit 1
+fi
+CURRENT_RC=$(echo "$LATEST_TAG" | sed 's/1.0.0-rc//')
+NEXT_RC=$((CURRENT_RC + 1))
+NEW_TAG="1.0.0-rc$NEXT_RC"
+
+echo "Latest tag: $LATEST_TAG"
+echo "New tag will be: $NEW_TAG"
+echo ""
+
+# Confirmation
+echo -e "${YELLOW}This will:${NC}"
+echo "  1. Merge main into archive branch (preserving history)"
+echo "  2. Reset main to a single 'Initial commit'"
+echo "  3. Force push main to origin"
+echo "  4. Create and push tag $NEW_TAG"
+echo ""
+read -p "Continue? (y/N) " -n 1 -r
+echo ""
+
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Aborted."
+    exit 1
+fi
+
+echo ""
+echo -e "${GREEN}Step 1: Merging main into archive...${NC}"
+git checkout archive
+git merge main -m "Archive: merge main history"
+git push origin archive
+
+echo ""
+echo -e "${GREEN}Step 2: Creating fresh main branch...${NC}"
+git checkout --orphan fresh-main
+git add -A
+git commit -m "Initial commit"
+
+echo ""
+echo -e "${GREEN}Step 3: Replacing main branch...${NC}"
+git branch -D main
+git branch -m main
+
+echo ""
+echo -e "${GREEN}Step 4: Force pushing new main...${NC}"
+git push -f origin main
+
+echo ""
+echo -e "${GREEN}Step 5: Creating new tag $NEW_TAG...${NC}"
+git tag "$NEW_TAG"
+git push origin "$NEW_TAG"
+
+echo ""
+echo -e "${GREEN}Step 6: Cleaning up...${NC}"
+git gc --prune=now
+
+echo ""
+echo -e "${GREEN}=== Done ===${NC}"
+echo "main branch now has 1 commit"
+echo "Full history preserved in archive branch"
+echo "New tag: $NEW_TAG"
