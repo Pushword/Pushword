@@ -34,9 +34,12 @@ class AppExtension
             throw new Exception('A page must be defined...');
         }
 
-        return $this->router->generate('pushword_conversation', [
+        $baseUrl = $this->router->generate('pushword_conversation', [
             'type' => $type,
             'referring' => $type.'-'.$page->getRealSlug(),
+        ]);
+
+        return $baseUrl.'?'.http_build_query([
             'host' => $page->host,
             'locale' => $page->locale,
         ]);

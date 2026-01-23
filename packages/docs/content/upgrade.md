@@ -11,6 +11,18 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rcXXX
+
+### Conversation Route Change (Breaking)
+
+The conversation form route has changed from path-based to query-based parameters for `host` and `locale`.
+
+**Before:** `/conversation/{type}/{referring}/{host}/{locale}`
+
+**After:** `/conversation/{type}/{referring}?host=...&locale=...`
+
+If you have custom templates or JavaScript that generates conversation URLs manually, update them to use query parameters instead of path segments.
+
 ## To 1.0.0-rc341
 
 ### Unified Notification Email Service

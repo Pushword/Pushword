@@ -36,6 +36,36 @@ class ConversationFormControllerTest extends WebTestCase
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }
 
+    public function testNewsletterFormWithQueryParams(): void
+    {
+        $client = static::createClient();
+
+        $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
+        $crawler = $client->request(
+            Request::METHOD_GET,
+            '/conversation/newsletter/test?locale=fr&host=localhost.dev',
+            [],
+            [],
+            $server,
+        );
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+    }
+
+    public function testConversationWithSlashInReferring(): void
+    {
+        $client = static::createClient();
+
+        $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
+        $crawler = $client->request(
+            Request::METHOD_GET,
+            '/conversation/newsletter/some/path/with/slashes?locale=en&host=localhost.dev',
+            [],
+            [],
+            $server,
+        );
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+    }
+
     public function getController(): ConversationFormController
     {
         return static::getContainer()->get(ConversationFormController::class);

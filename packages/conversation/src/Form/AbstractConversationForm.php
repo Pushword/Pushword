@@ -89,14 +89,20 @@ abstract class AbstractConversationForm implements ConversationFormInterface
 
         $form = $this->formFactory->createBuilder(FormType::class, $this->message, ['csrf_protection' => false]); // ['csrf_protection' => false]
 
-        $form->setAction($this->router->generate('pushword_conversation', [
+        $baseUrl = $this->router->generate('pushword_conversation', [
             'type' => $this->getType(),
             'referring' => $this->getReferring(),
+        ], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        $currentPage = $this->apps->getCurrentPage();
+        $queryParams = http_build_query([
             'host' => $this->app->getMainHost(),
-            'locale' => $this->request->getLocale(),
+            'locale' => null !== $currentPage ? $currentPage->locale : $this->app->getLocale(),
             'id' => $this->getId(),
             'step' => $this->getStep(),
-        ], UrlGeneratorInterface::ABSOLUTE_URL));
+        ]);
+
+        $form->setAction($baseUrl.'?'.$queryParams);
 
         return $form;
     }
