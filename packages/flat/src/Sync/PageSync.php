@@ -55,15 +55,15 @@ final class PageSync
         // Stopwatch passed for interface consistency but not used in PageSync
     }
 
-    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null): void
+    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null, bool $skipId = false): void
     {
         if (! $forceExport && $this->mustImport($host)) {
-            $this->import($host);
+            $this->import($host, $skipId);
 
             return;
         }
 
-        $this->export($host, $forceExport, $exportDir);
+        $this->export($host, $forceExport, $exportDir, $skipId);
     }
 
     public function import(?string $host = null, bool $skipId = false): void

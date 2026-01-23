@@ -44,44 +44,40 @@ pushword_flat:
 ### Sync with DB (import / export)
 
 ```bash
-# Sync: automatically detects whether to import (files newer than DB) or export (DB newer or no files)
-php bin/console pw:flat:sync [host]
-
-# Import flat files into the database
-php bin/console pw:flat:import [host]
-
-# Export database content to flat files
-php bin/console pw:flat:export [host] [exportDir] [--force] [--entity=TYPE]
+php bin/console pw:flat:sync [host] [options]
 ```
 
-Where:
+**Options:**
 
-- `host` is optional (uses default app if not provided)
-- `exportDir` (for export only) is optional (uses `flat_content_dir` by default)
-- `--force` or `-f` forces overwriting even if files are newer than DB
-- `--entity=TYPE` filters sync to specific entity type: `page`, `media`, `conversation`, or `all` (default)
-- `--mode=MODE` or `-m MODE` (sync only) forces sync direction: `auto` (default, auto-detect), `import` (flat to db), `export` (db to flat)
+| Option | Description |
+|--------|-------------|
+| `host` | Optional host to sync (uses default app if not provided) |
+| `--mode`, `-m` | Sync direction: `auto` (default), `import`, `export` |
+| `--entity` | Entity type: `page`, `media`, `conversation`, `all` (default) |
+| `--force`, `-f` | Force overwrite even if files are newer than DB |
+| `--skip-id` | Skip adding IDs to markdown files and CSV indexes |
+| `--no-backup` | Disable automatic database backup before import |
 
 **Examples:**
 
 ```bash
-# Sync only pages
-php bin/console pw:flat:sync --entity=page
+# Auto-detect: imports if flat files are newer, exports if DB is newer
+php bin/console pw:flat:sync
 
-# Force import mode (flat files → database), bypassing auto-detection
+# Force import (flat files → database)
 php bin/console pw:flat:sync --mode=import
 
-# Force export mode (database → flat files)
+# Force export (database → flat files)
 php bin/console pw:flat:sync -m export
 
-# Combine options: force import only for pages on a specific host
+# Sync only pages on a specific host
 php bin/console pw:flat:sync example.tld --mode=import --entity=page
 
-# Export only media
-php bin/console pw:flat:export --entity=media --force
+# Export without adding IDs to files
+php bin/console pw:flat:sync --mode=export --skip-id
 
-# Import only conversations
-php bin/console pw:flat:import --entity=conversation
+# Import without creating a database backup
+php bin/console pw:flat:sync --mode=import --no-backup
 ```
 
 ### Editorial Lock System
@@ -177,7 +173,9 @@ content/media/default/illustation.jpg.yaml
 #### `kitchen-sink.md` may contain :
 
 ```yaml
+
 ---
+
 h1: 'Welcome in Kitchen Sink'
 locale: fr
 translations:
@@ -194,6 +192,7 @@ title: 'Kitchen Sink - best google restult'
 #updated_at: 'now'
 
 ---
+
 My Page content Yeah !
 ```
 
@@ -219,14 +218,22 @@ The `translations` property handles the bidirectional many-to-many relationship 
 
 ```yaml
 # In fr/about.md - adds en/about as translation
+
 ---
+
 translations:
   - en/about
+
 ---
+
 # In en/about.md - no translations key, existing links preserved
+
 ---
+
 h1: About Us
+
 ---
+
 ```
 
 With this setup, both pages will be linked as translations of each other after sync.
@@ -255,7 +262,7 @@ When importing media via flat files, server-side optimizations are skipped. The 
 
 ```bash
 # 1. First, import flat files to database (registers media)
-php bin/console pw:flat:import
+php bin/console pw:flat:sync --mode=import
 
 # 2. Then generate image cache (responsive variants + WebP)
 php bin/console pw:image:cache
@@ -270,7 +277,7 @@ php bin/console pw:pdf:optimize
 **One-liner:**
 
 ```bash
-php bin/console pw:flat:import && php bin/console pw:image:cache && php bin/console pw:pdf:optimize
+php bin/console pw:flat:sync -m import && php bin/console pw:image:cache && php bin/console pw:pdf:optimize
 ```
 
 ### Pre-import image resizing

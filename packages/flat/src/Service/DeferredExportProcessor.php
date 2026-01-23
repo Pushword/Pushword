@@ -109,7 +109,7 @@ final class DeferredExportProcessor
 
         try {
             $pidFile = $this->processManager->getPidFilePath('flat-deferred-export');
-            $this->processManager->startBackgroundProcess($pidFile, $commandParts, 'pw:flat:export');
+            $this->processManager->startBackgroundProcess($pidFile, $commandParts, 'pw:flat:sync');
         } catch (RuntimeException) {
             // If the process is already running, just skip - it will handle all pending exports
         }
@@ -142,7 +142,7 @@ final class DeferredExportProcessor
     private function buildExportCommandParts(string $entity, ?string $host): array
     {
         $consolePath = $this->projectDir.'/bin/console';
-        $parts = ['php', $consolePath, 'pw:flat:export'];
+        $parts = ['php', $consolePath, 'pw:flat:sync', '--mode=export'];
 
         if (null !== $host) {
             $parts[] = $host;

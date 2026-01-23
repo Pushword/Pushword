@@ -42,7 +42,7 @@ final class FlatFileSync
         $this->pageSync->setStopwatch($stopwatch);
     }
 
-    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null, string $entity = 'all'): void
+    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null, string $entity = 'all', bool $skipId = false): void
     {
         if (\in_array($entity, ['media', 'all'], true)) {
             $this->stopwatch?->start('media.sync');
@@ -52,7 +52,7 @@ final class FlatFileSync
 
         if (\in_array($entity, ['page', 'all'], true)) {
             $this->stopwatch?->start('page.sync');
-            $this->pageSync->sync($host, $forceExport, $exportDir);
+            $this->pageSync->sync($host, $forceExport, $exportDir, $skipId);
             $this->stopwatch?->stop('page.sync');
         }
 

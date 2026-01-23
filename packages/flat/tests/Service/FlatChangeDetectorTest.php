@@ -44,6 +44,7 @@ final class FlatChangeDetectorTest extends KernelTestCase
         if (! is_dir($stateDir)) {
             mkdir($stateDir, 0755, true);
         }
+
         $futureTime = time() + 3600;
         $state = json_encode(['lastSyncAt' => $futureTime]);
 

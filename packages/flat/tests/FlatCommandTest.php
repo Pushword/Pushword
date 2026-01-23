@@ -10,32 +10,31 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class FlatCommandTest extends KernelTestCase
 {
-    public function testImport(): void
+    public function testSync(): void
     {
         $kernel = static::createKernel();
         $application = new Application($kernel);
 
-        $command = $application->find('pw:flat:import');
-        $commandTester = new CommandTester($command);
-        $commandTester->execute(['host' => 'pushword.piedweb.com']);
-
-        // the output of the command in the console
-        $output = $commandTester->getDisplay();
-        self::assertStringContainsString('Imported', $output);
-
-        $exportDir = $kernel->getCacheDir().'/test-exporter';
-
-        $command = $application->find('pw:flat:export');
+        // Test import mode
+        $command = $application->find('pw:flat:sync');
         $commandTester = new CommandTester($command);
         $commandTester->execute([
             'host' => 'pushword.piedweb.com',
-            'exportDir' => $exportDir,
+            '--mode' => 'import',
+            '--no-backup' => true,
+        ]);
+
+        $output = $commandTester->getDisplay();
+        self::assertStringContainsString('Sync completed', $output);
+
+        // Test export mode
+        $commandTester->execute([
+            'host' => 'pushword.piedweb.com',
+            '--mode' => 'export',
+            '--force' => true,
         ]);
 
         $exportOutput = $commandTester->getDisplay();
-        self::assertStringContainsString('Export completed', $exportOutput);
-        self::assertStringContainsString('Results stored in '.$exportDir, $exportOutput);
-        self::assertFileExists($exportDir.'/homepage.md');
-        self::assertFileExists($exportDir.'/installation.md');
+        self::assertStringContainsString('Sync completed', $exportOutput);
     }
 }

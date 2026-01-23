@@ -102,7 +102,7 @@ return static function (ContainerConfigurator $container): void {
     // Register Conversation Flat services when conversation bundle is installed
     // This must be done here (in flat bundle) to ensure FlatFileContentDirFinder is already registered
     if (class_exists(ConversationSync::class)) {
-        $conversationFlatDir = \dirname((string) (new ReflectionClass(ConversationSync::class))->getFileName());
+        $conversationFlatDir = \dirname((string) new ReflectionClass(ConversationSync::class)->getFileName());
         $services->load('Pushword\Conversation\Flat\\', $conversationFlatDir.'/');
 
         $services->alias(ConversationSyncInterface::class, ConversationSync::class);

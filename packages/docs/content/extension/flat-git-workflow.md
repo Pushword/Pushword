@@ -1,6 +1,7 @@
 ---
-h1: Git-Integrated Content Workflow
-title: Flat Git Workflow - Pushword CMS
+title: 'Flat Git Workflow - Pushword CMS'
+h1: 'Git-Integrated Content Workflow'
+publishedAt: '2026-01-23 08:07'
 toc: true
 ---
 

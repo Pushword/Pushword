@@ -17,6 +17,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 #[AsCommand(
@@ -35,6 +36,7 @@ final readonly class FlatFileSyncCommand
         private BackgroundProcessManager $processManager,
         private ProcessOutputStorage $outputStorage,
         private FlatLockManager $lockManager,
+        private Filesystem $filesystem,
     ) {
     }
 
@@ -49,6 +51,10 @@ final readonly class FlatFileSyncCommand
         string $entity = 'all',
         #[Option(description: 'Sync mode: auto (detect), import (flat to db), export (db to flat)', name: 'mode', shortcut: 'm')]
         string $mode = 'auto',
+        #[Option(description: 'Skip adding IDs to markdown files and CSV indexes', name: 'skip-id')]
+        bool $skipId = false,
+        #[Option(description: 'Disable automatic database backup before import', name: 'no-backup')]
+        bool $noBackup = false,
     ): int {
         // Check for webhook lock - blocks sync during external editing workflow
         if ($this->lockManager->isWebhookLocked($host)) {
@@ -99,12 +105,20 @@ final readonly class FlatFileSyncCommand
             $this->flatFileSync->setOutput($teeOutput);
             $this->flatFileSync->setStopwatch($this->stopWatch);
 
+            // Backup database before import (unless disabled)
+            $willImport = 'import' === $mode || 'auto' === $mode;
+            if ($willImport && ! $noBackup && $this->filesystem->exists('var/app.db')) {
+                $backupFileName = 'var/app.db~'.date('YmdHis');
+                $this->filesystem->copy('var/app.db', $backupFileName);
+                $teeOutput->writeln(\sprintf('<comment>Database backup created: %s</comment>', $backupFileName));
+            }
+
             if (null !== $host) {
-                $this->syncHost($host, $force, $entity, $mode, $teeOutput);
+                $this->syncHost($host, $force, $entity, $mode, $skipId);
             } else {
                 foreach ($this->flatFileSync->getHosts() as $appHost) {
                     $teeOutput->writeln(\sprintf('<info>Syncing %s...</info>', $appHost));
-                    $this->syncHost($appHost, $force, $entity, $mode, $teeOutput);
+                    $this->syncHost($appHost, $force, $entity, $mode, $skipId);
                 }
             }
 
@@ -125,27 +139,26 @@ final readonly class FlatFileSyncCommand
         }
     }
 
-    private function syncHost(string $host, bool $force, string $entity, string $mode, OutputInterface $output): void
+    private function syncHost(string $host, bool $force, string $entity, string $mode, bool $skipId): void
     {
         match ($mode) {
-            'import' => $this->flatFileSync->import($host, entity: $entity),
-            'export' => $this->flatFileSync->export($host, force: $force, entity: $entity),
-            default => $this->flatFileSync->sync($host, $force, null, $entity),
+            'import' => $this->flatFileSync->import($host, $skipId, $entity),
+            'export' => $this->flatFileSync->export($host, force: $force, skipId: $skipId, entity: $entity),
+            default => $this->flatFileSync->sync($host, $force, null, $entity, $skipId),
         };
     }
 
     private function displaySummary(SymfonyStyle $io, float $duration): void
     {
-        $mediaImported = $this->flatFileSync->mediaSync->getImportedCount();
-        $pageImported = $this->flatFileSync->pageSync->getImportedCount();
-        $mediaExported = $this->flatFileSync->mediaSync->getExportedCount();
-        $pageExported = $this->flatFileSync->pageSync->getExportedCount();
+        $mediaSync = $this->flatFileSync->mediaSync;
+        $pageSync = $this->flatFileSync->pageSync;
 
-        $isImportMode = $mediaImported > 0 || $pageImported > 0
-            || $this->flatFileSync->mediaSync->getDeletedCount() > 0
-            || $this->flatFileSync->pageSync->getDeletedCount() > 0;
+        $isImportMode = $mediaSync->getImportedCount() > 0
+            || $pageSync->getImportedCount() > 0
+            || $mediaSync->getDeletedCount() > 0
+            || $pageSync->getDeletedCount() > 0;
 
-        $isExportMode = $mediaExported > 0 || $pageExported > 0;
+        $isExportMode = $mediaSync->getExportedCount() > 0 || $pageSync->getExportedCount() > 0;
 
         if (! $isImportMode && ! $isExportMode) {
             $io->success(\sprintf('Sync completed (export mode - no changes detected). (%dms)', $duration));
@@ -156,18 +169,8 @@ final readonly class FlatFileSyncCommand
         if ($isImportMode) {
             $io->success(\sprintf('Sync completed (import mode). (%dms)', $duration));
             $io->table(['Type', 'Imported', 'Skipped', 'Deleted'], [
-                [
-                    'Media',
-                    $this->flatFileSync->mediaSync->getImportedCount(),
-                    $this->flatFileSync->mediaSync->getSkippedCount(),
-                    $this->flatFileSync->mediaSync->getDeletedCount(),
-                ],
-                [
-                    'Pages',
-                    $this->flatFileSync->pageSync->getImportedCount(),
-                    $this->flatFileSync->pageSync->getSkippedCount(),
-                    $this->flatFileSync->pageSync->getDeletedCount(),
-                ],
+                ['Media', $mediaSync->getImportedCount(), $mediaSync->getSkippedCount(), $mediaSync->getDeletedCount()],
+                ['Pages', $pageSync->getImportedCount(), $pageSync->getSkippedCount(), $pageSync->getDeletedCount()],
             ]);
 
             return;
@@ -175,16 +178,8 @@ final readonly class FlatFileSyncCommand
 
         $io->success(\sprintf('Sync completed (export mode). (%dms)', $duration));
         $io->table(['Type', 'Exported', 'Skipped'], [
-            [
-                'Media',
-                $mediaExported,
-                0,
-            ],
-            [
-                'Pages',
-                $pageExported,
-                $this->flatFileSync->pageSync->getExportSkippedCount(),
-            ],
+            ['Media', $mediaSync->getExportedCount(), 0],
+            ['Pages', $pageSync->getExportedCount(), $pageSync->getExportSkippedCount()],
         ]);
     }
 
