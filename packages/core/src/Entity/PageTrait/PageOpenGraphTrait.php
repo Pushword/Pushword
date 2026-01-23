@@ -79,7 +79,7 @@ trait PageOpenGraphTrait
 
     public function getTwitterCreator(): ?string
     {
-        return $this->hasCustomProperty('twitterCreator') ? (string) $this->getCustomPropertyScalar('twitterSite') : null;
+        return $this->hasCustomProperty('twitterCreator') ? (string) $this->getCustomPropertyScalar('twitterCreator') : null;
     }
 
     public function setTwitterCreator(?string $twitterCreator): self
