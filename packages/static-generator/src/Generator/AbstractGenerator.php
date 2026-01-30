@@ -121,26 +121,10 @@ abstract class AbstractGenerator implements GeneratorInterface
     protected function getImageFallbackOrder(): array
     {
         $filterSets = $this->params->get('pw.image_filter_sets');
-
-        $hasOriginal = false;
-
-        foreach ($filterSets as $filter) {
-            /** @var string[] $formats */
-            $formats = $filter['formats'];
-
-            if (\in_array('original', $formats, true)) {
-                $hasOriginal = true;
-            }
-        }
-
-        // If webp is requested but doesn't exist: try original
-        $webpFallback = [];
-        if ($hasOriginal) {
-            $webpFallback[] = 'original';
-        }
+        $allFormats = array_merge(...array_column($filterSets, 'formats'));
 
         return [
-            'webp_fallback' => $webpFallback,
+            'webp_fallback' => \in_array('original', $allFormats, true) ? ['original'] : [],
         ];
     }
 }

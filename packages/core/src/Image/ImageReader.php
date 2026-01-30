@@ -20,14 +20,12 @@ final readonly class ImageReader
         private MediaStorageAdapter $mediaStorage,
         private string $imageDriver = 'auto',
     ) {
-        $driver = 'auto' === $this->imageDriver
+        $this->resolvedDriver = 'auto' === $this->imageDriver
             ? (\extension_loaded('imagick') ? 'imagick' : 'gd')
             : $this->imageDriver;
 
-        $this->resolvedDriver = $driver;
-        $this->interventionManager = 'imagick' === $driver
-            ? new InterventionImageManager(new ImagickDriver())
-            : new InterventionImageManager(new GdDriver());
+        $driver = 'imagick' === $this->resolvedDriver ? new ImagickDriver() : new GdDriver();
+        $this->interventionManager = new InterventionImageManager($driver);
     }
 
     public function read(Media|string $media): ImageInterface

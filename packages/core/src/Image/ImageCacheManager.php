@@ -122,22 +122,14 @@ final class ImageCacheManager
 
         $fileName = $media->getFileName();
         $publicPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$fileName;
-        $relativePath = '../../media/'.$fileName;
 
-        if (is_link($publicPath)) {
+        if (is_link($publicPath) || file_exists($publicPath)) {
             return;
         }
 
-        if (file_exists($publicPath)) {
-            return;
-        }
+        $this->createFilterDir($this->publicDir.'/'.$this->publicMediaDir);
 
-        $publicMediaPath = $this->publicDir.'/'.$this->publicMediaDir;
-        if (! file_exists($publicMediaPath)) {
-            new Filesystem()->mkdir($publicMediaPath);
-        }
-
-        @symlink($relativePath, $publicPath);
+        @symlink('../../media/'.$fileName, $publicPath);
     }
 
     public function isFilterCacheFresh(Media $media, string $filterName): bool

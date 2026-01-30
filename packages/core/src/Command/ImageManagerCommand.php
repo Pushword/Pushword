@@ -57,7 +57,7 @@ final readonly class ImageManagerCommand
             $skipped = 0;
 
             foreach ($medias as $media) {
-                if ($this->thumbnailGenerator->isImage($media)) {
+                if ($media->isImage()) {
                     $progressBar->setMessage($media->getPath());
 
                     try {

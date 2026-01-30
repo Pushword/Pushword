@@ -96,7 +96,7 @@ final readonly class MediaListener
     {
         $media = $this->getMediaFromEvent($event);
 
-        if ($this->thumbnailGenerator->isImage($media)) {
+        if ($media->isImage()) {
             $this->imageCacheManager->remove($media);
 
             // Generate quick thumb for fast upload experience

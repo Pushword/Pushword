@@ -42,13 +42,13 @@ final readonly class ExternalImageImporter
         $media = new Media();
         $media
             ->setProjectDir($this->projectDir)
-                ->setStoreIn($this->mediaDir)
-                ->setMimeType($imgSize['mime'])
-                ->setSize(filesize($imageLocalImport))
-                ->setDimensions([$imgSize[0], $imgSize[1]])
-                ->setFileName($fileName)
-                ->setSlug(Filepath::removeExtension($fileName))
-                ->setAlt(str_replace(["\n", '"'], ' ', $name));
+            ->setStoreIn($this->mediaDir)
+            ->setMimeType($imgSize['mime'])
+            ->setSize(filesize($imageLocalImport))
+            ->setDimensions([$imgSize[0], $imgSize[1]])
+            ->setFileName($fileName)
+            ->setSlug(Filepath::removeExtension($fileName))
+            ->setAlt(str_replace(["\n", '"'], ' ', $name));
 
         $this->finishImportExternalByCopyingLocally($media, $imageLocalImport);
         $this->renamer->reset();
@@ -102,12 +102,12 @@ final readonly class ExternalImageImporter
     {
         if ($this->mediaStorage->fileExists($media->getFileName())) {
             $existingLocalPath = $this->mediaStorage->getLocalPath($media->getFileName());
-            if (sha1_file($existingLocalPath) !== sha1_file($imageLocalImport)) {
-                $this->renamer->rename($media);
-                $this->finishImportExternalByCopyingLocally($media, $imageLocalImport);
-
+            if (sha1_file($existingLocalPath) === sha1_file($imageLocalImport)) {
                 return;
             }
+
+            $this->renamer->rename($media);
+            $this->finishImportExternalByCopyingLocally($media, $imageLocalImport);
 
             return;
         }

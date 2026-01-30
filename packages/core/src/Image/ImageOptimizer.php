@@ -29,25 +29,30 @@ final readonly class ImageOptimizer
         /** @var string[] $formats */
         $formats = $this->imageCacheManager->getFilterSets()[$filterName]['formats'] ?? ['original', 'webp'];
 
-        $needsGeneration = false;
-        if (\in_array('original', $formats, true) && ! file_exists($this->imageCacheManager->getFilterPath($media, $filterName))) {
-            $needsGeneration = true;
+        $formatExtensions = [];
+        foreach ($formats as $format) {
+            $extension = 'original' === $format ? null : $format;
+            $formatExtensions[$format] = $extension;
         }
 
-        if (\in_array('webp', $formats, true) && ! file_exists($this->imageCacheManager->getFilterPath($media, $filterName, 'webp'))) {
-            $needsGeneration = true;
+        $needsGeneration = false;
+        foreach ($formatExtensions as $extension) {
+            if (! file_exists($this->imageCacheManager->getFilterPath($media, $filterName, $extension))) {
+                $needsGeneration = true;
+
+                break;
+            }
         }
 
         if ($needsGeneration) {
             $this->thumbnailGenerator->generateFilteredCache($media, $filterName);
         }
 
-        if (\in_array('original', $formats, true) && file_exists($this->imageCacheManager->getFilterPath($media, $filterName))) {
-            $this->optimizer->optimize($this->imageCacheManager->getFilterPath($media, $filterName));
-        }
-
-        if (\in_array('webp', $formats, true) && file_exists($this->imageCacheManager->getFilterPath($media, $filterName, 'webp'))) {
-            $this->optimizer->optimize($this->imageCacheManager->getFilterPath($media, $filterName, 'webp'));
+        foreach ($formatExtensions as $extension) {
+            $path = $this->imageCacheManager->getFilterPath($media, $filterName, $extension);
+            if (file_exists($path)) {
+                $this->optimizer->optimize($path);
+            }
         }
     }
 }

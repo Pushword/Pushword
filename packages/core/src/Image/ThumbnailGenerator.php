@@ -23,11 +23,6 @@ final class ThumbnailGenerator
     ) {
     }
 
-    public function isImage(Media $media): bool
-    {
-        return $media->isImage();
-    }
-
     /**
      * @return bool True if cache was generated, false if skipped (already fresh)
      */
