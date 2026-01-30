@@ -40,7 +40,7 @@ PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?ser
 // and define an APP_SECRET
 PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.sha1(md5(uniqid())).chr(10));
 PostInstall::mirror('vendor/pushword/skeleton/media~', 'media');
-exec('php bin/console doctrine:schema:create -q');
+exec('php bin/console doctrine:schema:update --force -q');
 exec('php bin/console doctrine:fixtures:load -q &');
 exec('php bin/console pw:image:cache -q &');
 
