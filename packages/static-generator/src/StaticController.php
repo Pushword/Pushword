@@ -7,6 +7,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInter
 use Exception;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -194,9 +195,11 @@ class StaticController extends AbstractController
     private function renderAdmin(string $view, array $parameters = []): Response
     {
         $context = $this->adminContextProvider->getContext();
-        if (null !== $context) {
-            $parameters['ea'] = $context;
+        if (null === $context) {
+            throw new RuntimeException('EasyAdmin context is not available for this request.');
         }
+
+        $parameters['ea'] = $context;
 
         return $this->render($view, $parameters);
     }
