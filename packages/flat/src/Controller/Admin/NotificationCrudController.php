@@ -28,6 +28,12 @@ use Symfony\Component\Translation\TranslatableMessage;
  */
 final class NotificationCrudController extends AbstractCrudController
 {
+    private const array TYPE_CHOICES = [
+        'flatNotificationTypeConflict' => AdminNotification::TYPE_CONFLICT,
+        'flatNotificationTypeSyncError' => AdminNotification::TYPE_SYNC_ERROR,
+        'flatNotificationTypeLockInfo' => AdminNotification::TYPE_LOCK_INFO,
+    ];
+
     public static function getEntityFqcn(): string
     {
         return AdminNotification::class;
@@ -58,11 +64,7 @@ final class NotificationCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            ->add(ChoiceFilter::new('type')->setChoices([
-                'flatNotificationTypeConflict' => AdminNotification::TYPE_CONFLICT,
-                'flatNotificationTypeSyncError' => AdminNotification::TYPE_SYNC_ERROR,
-                'flatNotificationTypeLockInfo' => AdminNotification::TYPE_LOCK_INFO,
-            ]))
+            ->add(ChoiceFilter::new('type')->setChoices(self::TYPE_CHOICES))
             ->add(BooleanFilter::new('isRead'));
     }
 
@@ -70,11 +72,7 @@ final class NotificationCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         yield ChoiceField::new('type')
-            ->setChoices([
-                'flatNotificationTypeConflict' => AdminNotification::TYPE_CONFLICT,
-                'flatNotificationTypeSyncError' => AdminNotification::TYPE_SYNC_ERROR,
-                'flatNotificationTypeLockInfo' => AdminNotification::TYPE_LOCK_INFO,
-            ])
+            ->setChoices(self::TYPE_CHOICES)
             ->renderAsBadges([
                 AdminNotification::TYPE_CONFLICT => 'danger',
                 AdminNotification::TYPE_SYNC_ERROR => 'warning',

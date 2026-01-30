@@ -32,12 +32,12 @@ adminReviewTitleLabel: Titre
 adminReviewTranslationsHelp: "Traductions générées par IA"
 adminReviewTranslationsLabel: Traductions
 conversationContentPlaceholder: Message
-conversationMessageBy: 'par '
-conversationMessagePostedOn: 'Message posté le'
 conversationEmailInvalid: "Adresse email invalide"
 conversationEmailOrPhonePlaceholder: "Email ou Téléphone"
 conversationEmailPlaceholder: Email
 conversationInputNotset: inconnu
+conversationMessageBy: 'par '
+conversationMessagePostedOn: 'Message posté le'
 conversationNamePlaceholder: "Prénom Nom"
 conversationPhoneNumberInvalid: "Numéro de téléphone au format inconnu"
 conversationRegisterLabel: "S'inscrire"
