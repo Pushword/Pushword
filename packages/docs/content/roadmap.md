@@ -29,6 +29,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [New] When release v1, remove version from composer.json (restore 1.0.0-rc[0-9]+ to \*)
 
+- [ ] Refactor the "background processes" to rely on user option (background process or messenger) -> permit to big website to have a better handling of heavy load and for small business to have something working out of the box without configuring a Messenger - must add the related docs
+
 ### One day maybe
 
 - best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
