@@ -43,10 +43,10 @@ PostInstall::mirror('vendor/pushword/skeleton/media~', 'media');
 $freshInstall = ! file_exists('var/app.db');
 exec('php bin/console doctrine:schema:update --force -q');
 if ($freshInstall) {
-    exec('php bin/console doctrine:fixtures:load --no-interaction -q &');
+    exec('php bin/console doctrine:fixtures:load --no-interaction -q');
 }
 
-exec('php bin/console pw:image:cache -q &');
+exec('php bin/console pw:image:cache -q');
 
 // Add an admin user
 // exec('php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN');

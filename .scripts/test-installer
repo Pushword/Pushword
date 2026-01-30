@@ -1,0 +1,89 @@
+#!/bin/bash -e
+
+# Test the Pushword installer using local packages (path repositories)
+# instead of Packagist, to verify the latest code works correctly.
+
+QUIET=false
+if [ "$1" = "--quiet" ]; then
+    QUIET=true
+fi
+
+MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+TEMP_DIR="/tmp/pushword-installer-test-$$"
+
+if [ "$QUIET" = false ]; then
+    echo "=== Pushword Installer Test ==="
+    echo "Monorepo: $MONOREPO_DIR"
+    echo "Temp dir: $TEMP_DIR"
+fi
+
+trap "rm -rf $TEMP_DIR" EXIT
+
+# 1. Copy packages/new/ as the project base
+cp -r "$MONOREPO_DIR/packages/new" "$TEMP_DIR"
+
+# 2. Modify composer.json:
+#    - Add path repositories for all local pushword packages
+#    - Change pushword/* versions in flex-require to "@dev"
+#    - Remove interactive bash installer from post-install-cmd
+php -r '
+    $monorepoDir = $argv[1];
+    $tempDir = $argv[2];
+    $json = json_decode(file_get_contents($tempDir."/composer.json"), true);
+
+    // Add path repositories for all pushword packages
+    $repos = [];
+    foreach (scandir($monorepoDir."/packages") as $pkg) {
+        if (in_array($pkg, [".", "..", "new", "docs", "js-helper"])) continue;
+        $pkgDir = $monorepoDir."/packages/".$pkg;
+        if (!is_dir($pkgDir) || !file_exists($pkgDir."/composer.json")) continue;
+        $repos[] = ["type" => "path", "url" => $pkgDir, "options" => ["symlink" => true]];
+    }
+    $json["repositories"] = $repos;
+
+    // Change pushword versions in flex-require to @dev
+    foreach ($json["flex-require"] ?? [] as $name => &$version) {
+        if (str_starts_with($name, "pushword/")) $version = "@dev";
+    }
+    unset($version);
+
+    // Remove interactive bash installer from post-install-cmd
+    if (isset($json["scripts"]["post-install-cmd"])) {
+        $json["scripts"]["post-install-cmd"] = array_values(array_filter(
+            $json["scripts"]["post-install-cmd"],
+            fn($s) => !str_contains($s, "vendor/pushword/installer/src/installer")
+        ));
+        if (empty($json["scripts"]["post-install-cmd"])) {
+            unset($json["scripts"]["post-install-cmd"]);
+        }
+    }
+
+    file_put_contents($tempDir."/composer.json",
+        json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+' "$MONOREPO_DIR" "$TEMP_DIR"
+
+# 3. Run composer update (Flex resolves flex-require + applies recipes,
+#    then post-update-cmd triggers PostInstall::runPostUpdate -> install.php)
+cd "$TEMP_DIR"
+if [ "$QUIET" = true ]; then
+    COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction > /dev/null 2>&1
+else
+    COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction
+fi
+
+# 4. Copy enhanced test files and run PHPUnit
+cp "$MONOREPO_DIR/packages/new/tests/AppTest.php" "$TEMP_DIR/tests/AppTest.php"
+cp "$MONOREPO_DIR/packages/new/tests/bootstrap.php" "$TEMP_DIR/tests/bootstrap.php"
+cp "$MONOREPO_DIR/packages/new/phpunit.xml.dist" "$TEMP_DIR/phpunit.xml.dist"
+
+if [ "$QUIET" = true ]; then
+    echo ""
+    echo "## Test installer"
+    echo ""
+fi
+vendor/bin/phpunit --testdox --no-progress --colors=always
+
+if [ "$QUIET" = false ]; then
+    echo ""
+    echo "=== Installer test passed ==="
+fi

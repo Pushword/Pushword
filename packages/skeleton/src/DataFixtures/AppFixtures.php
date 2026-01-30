@@ -120,21 +120,20 @@ class AppFixtures extends Fixture
 
         $manager->persist($ksPage);
 
-        $ksPage = new Page();
-        $ksPage->setH1('Demo Page - Kitchen Sink Block');
-        $ksPage->setSlug('kitchen-sink');
-        $ksPage->setMainImage($media['Demo 1']);
-        $ksPage->locale = 'en';
-        $ksPage->setParentPage($homepage);
-        $ksPage->createdAt = new DateTime('1 day ago');
-        $ksPage->updatedAt = new DateTime('1 day ago');
-        $ksPage->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.md'));
+        if (\in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
+            $ksBlockPage = new Page();
+            $ksBlockPage->setH1('Demo Page - Kitchen Sink Block');
+            $ksBlockPage->setSlug('kitchen-sink');
+            $ksBlockPage->setMainImage($media['Demo 1']);
+            $ksBlockPage->locale = 'en';
+            $ksBlockPage->setParentPage($homepage);
+            $ksBlockPage->createdAt = new DateTime('1 day ago');
+            $ksBlockPage->updatedAt = new DateTime('1 day ago');
+            $ksBlockPage->setMainContent((string) file_get_contents(__DIR__.'/KitchenSink.md'));
+            $ksBlockPage->host = 'admin-block-editor.test';
 
-        if (in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
-            $ksPage->host = 'admin-block-editor.test';
+            $manager->persist($ksBlockPage);
         }
-
-        $manager->persist($ksPage);
 
         $redirectionPage = new Page();
         $redirectionPage->setH1('Redirection');

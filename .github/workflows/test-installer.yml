@@ -1,25 +1,37 @@
 name: Test installer
+
 on:
+  push:
+    paths:
+      - 'packages/core/install.php'
+      - 'packages/*/install.php'
+      - 'packages/installer/**'
+      - 'packages/new/**'
+      - '.scripts/test-installer'
+      - '.github/workflows/test-installer.yml'
+  pull_request:
+    paths:
+      - 'packages/core/install.php'
+      - 'packages/*/install.php'
+      - 'packages/installer/**'
+      - 'packages/new/**'
   repository_dispatch:
     types: [after-split-monorepo]
 
 jobs:
   test:
-    defaults:
-      run:
-        working-directory: packages/new
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest] # windows-latest
+        os: [ubuntu-latest]
         php: [8.4, 8.5]
 
-    name: P${{ matrix.php }} - ${{ matrix.os }}
+    name: Installer P${{ matrix.php }} - ${{ matrix.os }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -27,15 +39,11 @@ jobs:
           php-version: ${{ matrix.php }}
           tools: pecl
           extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo, xdebug
-          #coverage: none
 
       - name: Setup problem matchers
         run: |
           echo "::add-matcher::${{ runner.tool_cache }}/php.json"
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
-      - name: Test installer
-        run: composer update --no-interaction
-
-      - name: Execute tests
-        run: vendor/bin/phpunit
+      - name: Run installer test
+        run: ./.scripts/test-installer

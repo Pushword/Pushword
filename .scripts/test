@@ -49,6 +49,7 @@ if [ "$1" = "full" ]; then
     composer update --prefer-lowest
     XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --debug --no-cache-result $FILTER_ARG
     composer validate-monorepo
+    ./.scripts/test-installer --quiet
 elif [ "$1" = "sequential" ]; then
     # Run tests package by package to avoid file watcher overload
     # Fixtures are loaded only once at the start
@@ -87,8 +88,9 @@ elif [ "$1" = "sequential" ]; then
     composer validate-monorepo
 else
     vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure $FILTER_ARG
-    # Only run validate-monorepo if no filter was applied
+    # Only run validate-monorepo and installer test if no filter was applied
     if [ -z "$FILTER_ARG" ]; then
         composer validate-monorepo
+        ./.scripts/test-installer --quiet
     fi
 fi
