@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Pushword - The Modern CMS for Developers (ready for AI era)</title>
+        <link>https://pushword.piedweb.com/</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/feed.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Upgrade Guide]]></title>
+                    <link>https://pushword.piedweb.com/upgrade</link>
+                    <guid>https://pushword.piedweb.com/upgrade</guid>
+                    <pubDate>Fri, 30 Jan 2026 13:24:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[test content]]></title>
+                    <link>https://pushword.piedweb.com/test-content</link>
+                    <guid>https://pushword.piedweb.com/test-content</guid>
+                    <pubDate>Fri, 23 Jan 2026 10:53:33 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[test linked Page]]></title>
+                    <link>https://pushword.piedweb.com/test-link</link>
+                    <guid>https://pushword.piedweb.com/test-link</guid>
+                    <pubDate>Fri, 23 Jan 2026 10:53:33 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Git-Integrated Content Workflow]]></title>
+                    <link>https://pushword.piedweb.com/extension/flat-git-workflow</link>
+                    <guid>https://pushword.piedweb.com/extension/flat-git-workflow</guid>
+                    <pubDate>Fri, 23 Jan 2026 08:07:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Link Collector Prevent duplicate page links]]></title>
+                    <link>https://pushword.piedweb.com/link-collector</link>
+                    <guid>https://pushword.piedweb.com/link-collector</guid>
+                    <pubDate>Fri, 23 Jan 2026 00:00:00 +0000</pubDate>
+                </item>
+                            
+    </channel>
+</rss>
