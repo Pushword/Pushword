@@ -96,7 +96,7 @@
     "symfony/profiler-pack": "*",
     "symfony/stopwatch": "^8.0",
     "symplify/config-transformer": "*",
-    "symplify/monorepo-builder": "*",
+    "monorepo-php/monorepo": "*",
     "tomasvotruba/unused-public": "^2.0",
     "vincentlanglet/twig-cs-fixer": "*"
   },
