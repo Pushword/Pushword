@@ -116,7 +116,7 @@ abstract class AbstractMediaPickerField extends AbstractField
             'data-pw-media-picker-selected-id' => (string) $media->id,
             'data-pw-media-picker-selected-name' => $label,
             'data-pw-media-picker-selected-filename' => $media->getFileName(),
-            'data-pw-media-picker-selected-thumb' => $this->formFieldManager->imageManager->getBrowserPath($media, 'md'),
+            'data-pw-media-picker-selected-thumb' => $this->formFieldManager->imageCacheManager->getBrowserPath($media, 'md'),
             'data-pw-media-picker-selected-meta' => $meta,
             'data-pw-media-picker-selected-width' => $width ?? '',
             'data-pw-media-picker-selected-height' => $height ?? '',

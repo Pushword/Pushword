@@ -30,7 +30,7 @@ trait ImageTrait
     public function isImage(): bool
     {
         return str_contains((string) $this->getMimeType(), 'image/')
-            && \in_array(strtolower(str_replace('image/', '', (string) $this->getMimeType())), ['jpg', 'jpeg', 'png', 'gif', 'avif', 'webp'], true);
+            && \in_array(strtolower(str_replace('image/', '', (string) $this->getMimeType())), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true);
     }
 
     /**

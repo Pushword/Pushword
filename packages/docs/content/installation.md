@@ -16,7 +16,6 @@ _Facultative_ :
 - **Node** (>= 24 - only tested with v24, see [nvm to easily install a node version up to date](https://github.com/nvm-sh/nvm))
 - **yarn** - [how to install yarn](https://classic.yarnpkg.com/lang/en/docs/install/#debian-stable) or _pnpm_, _npm_
   **Node** and **Yarn** are not required if you have your custom logic to manage assets.
-- **avifenc** (`libavif-bin` package on Debian/Ubuntu) - see [AVIF Encoding Requirements](/configuration#avif-encoding-requirements)
 - **imagick**
 - **brotli**
 

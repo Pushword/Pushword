@@ -5,7 +5,12 @@ namespace Pushword\Core\Tests\Controller;
 use Exception;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Image\ExternalImageImporter;
+use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ImageEncoder;
+use Pushword\Core\Image\ImageReader;
+use Pushword\Core\Image\ThumbnailGenerator;
+use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -48,12 +53,12 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
     {
         self::bootKernel();
 
-        $mediaEntity = $this->getImageManager()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
+        $mediaEntity = $this->getImporter()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
         // $em->persist($mediaEntity);
         self::assertFileExists($this->mediaDir.'/1-2.jpg');
 
         // If import twice, return the existing one and not create a new copy
-        $mediaEntity = $this->getImageManager()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
+        $mediaEntity = $this->getImporter()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
         self::assertFileDoesNotExist($this->mediaDir.'/1-3.jpg');
         self::assertSame($mediaEntity->getFileName(), '1-2.jpg');
         unlink(__DIR__.'/../../../skeleton/media/1-2.jpg');
@@ -126,18 +131,24 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
     // 2. Quand je remplace un media, le media garde le même chemin d'accès
     // 3. Quand je modifie un nom, seul le nom est modifié
 
-    private ?ImageManager $imageManager = null;
+    private ?ExternalImageImporter $importer = null;
 
-    private function getImageManager(): ImageManager
+    private function getImporter(): ExternalImageImporter
     {
-        if (null !== $this->imageManager) {
-            return $this->imageManager;
+        if (null !== $this->importer) {
+            return $this->importer;
         }
 
         /** @var MediaStorageAdapter $mediaStorage */
         $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
+        $imageReader = new ImageReader($mediaStorage);
+        $imageEncoder = new ImageEncoder();
+        $imageCacheManager = new ImageCacheManager([], $this->publicDir, $this->publicMediaDir, $mediaStorage);
+        /** @var BackgroundProcessManager $backgroundProcessManager */
+        $backgroundProcessManager = self::getContainer()->get(BackgroundProcessManager::class);
+        $thumbnailGenerator = new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundProcessManager, $mediaStorage);
 
-        return $this->imageManager = new ImageManager([], $this->publicDir, $this->projectDir, $this->publicMediaDir, $this->mediaDir, $mediaStorage);
+        return $this->importer = new ExternalImageImporter($mediaStorage, $thumbnailGenerator, $this->mediaDir, $this->projectDir);
     }
 
     private function requestMediaCreateForm(KernelBrowser $client): Crawler

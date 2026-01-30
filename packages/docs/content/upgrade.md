@@ -184,7 +184,7 @@ import { initShowMore } from '@pushword/js-helper/src/ShowMore.js'
 initShowMore()
 ```
 
-2. Run `php bin/console pw:image:cache` to generate the new avif images.
+2. Run `php bin/console pw:image:cache` to regenerate cached images.
 
 ## To 1.0.0-rc80
 

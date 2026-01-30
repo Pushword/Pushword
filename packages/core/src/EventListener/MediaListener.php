@@ -7,8 +7,9 @@ use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Exception;
 use LogicException;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Repository\MediaRepository;
-use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\PdfOptimizer;
 use Pushword\Core\Utils\FlashBag;
@@ -39,7 +40,8 @@ final readonly class MediaListener
         private string $projectDir,
         private EntityManagerInterface $em,
         private MediaStorageAdapter $mediaStorage,
-        private ImageManager $imageManager,
+        private ThumbnailGenerator $thumbnailGenerator,
+        private ImageCacheManager $imageCacheManager,
         private PdfOptimizer $pdfOptimizer,
         private RequestStack $requestStack,
         private RouterInterface $router,
@@ -94,20 +96,20 @@ final readonly class MediaListener
     {
         $media = $this->getMediaFromEvent($event);
 
-        if ($this->imageManager->isImage($media)) {
-            $this->imageManager->remove($media);
+        if ($this->thumbnailGenerator->isImage($media)) {
+            $this->imageCacheManager->remove($media);
 
-            // Generate only quick thumb (no AVIF) for fast upload experience
-            $this->imageManager->generateQuickThumb($media);
+            // Generate quick thumb for fast upload experience
+            $this->thumbnailGenerator->generateQuickThumb($media);
 
-            // Run full cache generation in background (including AVIF)
-            $this->imageManager->runBackgroundCacheGeneration($media->getFileName());
+            // Run full cache generation in background
+            $this->thumbnailGenerator->runBackgroundCacheGeneration($media->getFileName());
 
             return;
         }
 
         // For non-images, create symlink from public/media to media for direct access
-        $this->imageManager->ensurePublicSymlink($media);
+        $this->imageCacheManager->ensurePublicSymlink($media);
 
         if ('application/pdf' === $media->getMimeType()) {
             // Run PDF optimization in background (compress + linearize)
@@ -170,12 +172,12 @@ final readonly class MediaListener
                 $media->getFileNameBeforeUpdate(),
                 $media->getFileName()
             );
-            $this->imageManager->remove($media->getFileNameBeforeUpdate());
+            $this->imageCacheManager->remove($media->getFileNameBeforeUpdate());
             $media->setFileNameBeforeUpdate('');
 
             // Generate only quick thumb for fast response, full cache in background
-            $this->imageManager->generateQuickThumb($media);
-            $this->imageManager->runBackgroundCacheGeneration($media->getFileName());
+            $this->thumbnailGenerator->generateQuickThumb($media);
+            $this->thumbnailGenerator->runBackgroundCacheGeneration($media->getFileName());
         }
 
         // Recalculate hash if it was reset or file content changed
@@ -198,7 +200,7 @@ final readonly class MediaListener
             $this->mediaStorage->delete($media->getFileName());
         }
 
-        $this->imageManager->remove($media);
+        $this->imageCacheManager->remove($media);
     }
 
     private function setNameIfEmpty(Media $media): void

@@ -3,8 +3,9 @@
 namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Repository\MediaRepository;
-use Pushword\Core\Service\ImageManager;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -21,7 +22,8 @@ final readonly class ImageManagerCommand
     public function __construct(
         private MediaRepository $mediaRepository,
         private EntityManagerInterface $entityManager,
-        private ImageManager $imageManager,
+        private ThumbnailGenerator $thumbnailGenerator,
+        private ImageCacheManager $imageCacheManager,
         private LockFactory $lockFactory,
     ) {
     }
@@ -55,11 +57,11 @@ final readonly class ImageManagerCommand
             $skipped = 0;
 
             foreach ($medias as $media) {
-                if ($this->imageManager->isImage($media)) {
+                if ($this->thumbnailGenerator->isImage($media)) {
                     $progressBar->setMessage($media->getPath());
 
                     try {
-                        $generated = $this->imageManager->generateCache($media, $force);
+                        $generated = $this->thumbnailGenerator->generateCache($media, $force);
                         if (! $generated) {
                             ++$skipped;
                         }
@@ -68,7 +70,7 @@ final readonly class ImageManagerCommand
                     }
                 } else {
                     // For non-images, create symlink from public/media to media
-                    $this->imageManager->ensurePublicSymlink($media);
+                    $this->imageCacheManager->ensurePublicSymlink($media);
                 }
 
                 $progressBar->advance();

@@ -9,9 +9,9 @@ use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
-use Pushword\Core\Service\ImageManager;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface;
@@ -27,7 +27,7 @@ class AdminFormFieldManager
         public readonly EntityManagerInterface $em,
         public readonly RouterInterface $router,
         public readonly Environment $twig,
-        public readonly ImageManager $imageManager,
+        public readonly ImageCacheManager $imageCacheManager,
         // TokenStorageInterface $securityTokenStorage,
         Security $security,
         public readonly EventDispatcherInterface $eventDispatcher,

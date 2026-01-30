@@ -6,7 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use LogicException;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Utils\Entity;
 
 use function Safe\file_get_contents;
@@ -32,7 +32,7 @@ final class MediaBlockController extends AbstractController
         private readonly EntityManagerInterface $em,
         #[Autowire('%pw.public_media_dir%')]
         private readonly string $publicMediaDir,
-        private readonly ImageManager $imageManager,
+        private readonly ImageCacheManager $imageCacheManager,
     ) {
     }
 
@@ -60,7 +60,7 @@ final class MediaBlockController extends AbstractController
             }
         }
 
-        $url = $this->imageManager->isImage($media) ? $this->imageManager->getBrowserPath($media->getFileName())
+        $url = $media->isImage() ? $this->imageCacheManager->getBrowserPath($media->getFileName())
             : '/'.$publicMediaDir.'/'.$media->getFileName();
 
         return new Response(json_encode([

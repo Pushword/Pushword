@@ -7,7 +7,7 @@ use Override;
 use Pushword\Admin\Controller\MediaCrudController;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Service\ImageManager;
+use Pushword\Core\Image\ImageCacheManager;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormInterface;
@@ -25,7 +25,7 @@ final class MediaPickerType extends AbstractType
     public function __construct(
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly TranslatorInterface $translator,
-        private readonly ImageManager $imageManager,
+        private readonly ImageCacheManager $imageCacheManager,
     ) {
     }
 
@@ -158,7 +158,7 @@ final class MediaPickerType extends AbstractType
             'data-pw-media-picker-selected-id' => (string) $media->id,
             'data-pw-media-picker-selected-name' => $label,
             'data-pw-media-picker-selected-filename' => $media->getFileName(),
-            'data-pw-media-picker-selected-thumb' => $this->imageManager->getBrowserPath($media, 'md'),
+            'data-pw-media-picker-selected-thumb' => $this->imageCacheManager->getBrowserPath($media, 'md'),
             'data-pw-media-picker-selected-meta' => $meta,
             'data-pw-media-picker-selected-width' => $width ?? '',
             'data-pw-media-picker-selected-height' => $height ?? '',

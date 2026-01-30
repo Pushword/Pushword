@@ -116,7 +116,7 @@ raw: 1
       <h3 class="text-2xl font-bold mb-5 text-gray-900 dark:text-white">Admin Dashboard</h3>
       <ul class="space-y-3 mb-6 text-gray-600 dark:text-gray-300">
         <li class="flex items-center gap-3"><span class="text-green-500">✓</span> Notion-like block editor</li>
-        <li class="flex items-center gap-3"><span class="text-green-500">✓</span> Drag & drop media (auto WebP/AVIF)</li>
+        <li class="flex items-center gap-3"><span class="text-green-500">✓</span> Drag & drop media (auto WebP)</li>
         <li class="flex items-center gap-3"><span class="text-green-500">✓</span> Page versioning with diff view</li>
         <li class="flex items-center gap-3"><span class="text-green-500">✓</span> Multi-site management</li>
       </ul>

@@ -18,9 +18,9 @@ use Pushword\Admin\Filter\MediaDimensionIntFilter;
 use Pushword\Admin\Filter\MediaSearchFilter;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
-use Pushword\Core\Service\ImageManager;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /** @extends AbstractAdminCrudController<Media> */
@@ -29,7 +29,7 @@ class MediaCrudController extends AbstractAdminCrudController
     public const string MESSAGE_PREFIX = 'admin.media';
 
     public function __construct(
-        private readonly ImageManager $imageManager,
+        private readonly ImageCacheManager $imageCacheManager,
         private readonly MediaRepository $mediaRepo,
         private readonly PageRepository $pageRepository,
         private readonly AdminUrlGenerator $adminUrlGenerator,
@@ -171,11 +171,11 @@ class MediaCrudController extends AbstractAdminCrudController
             return Thumb::$thumb;
         }
 
-        if (! $this->imageManager->isImage($media)) {
+        if (! $media->isImage()) {
             return Thumb::$thumb;
         }
 
-        return $this->imageManager->getBrowserPath($media, 'md');
+        return $this->imageCacheManager->getBrowserPath($media, 'md');
     }
 
     /**
@@ -188,7 +188,7 @@ class MediaCrudController extends AbstractAdminCrudController
 
     private function renderMediaPreview(Media $media): string
     {
-        $template = $this->imageManager->isImage($media)
+        $template = $media->isImage()
             ? '@pwAdmin/media/media_show.preview_image.html.twig'
             : '@pwAdmin/media/media_show.preview.html.twig';
 

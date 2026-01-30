@@ -27,7 +27,6 @@ class MediaFileNameTest extends TestCase
             'standard jpeg' => ['file.jpeg', '.jpeg'],
             'four char extension' => ['track.gpx', '.gpx'],
             'webp extension' => ['image.webp', '.webp'],
-            'avif extension' => ['image.avif', '.avif'],
             'no extension' => ['filename', ''],
             'no dot' => ['filenamewithoutext', ''],
             'extension too long' => ['file.toolong', ''],

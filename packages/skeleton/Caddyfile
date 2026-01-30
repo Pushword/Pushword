@@ -13,7 +13,7 @@
 
 (cache) {
 	# Images & fonts: 1 year
-	@static path *.ico *.jpg *.jpeg *.png *.gif *.webp *.avif *.svg *.woff *.woff2 *.ttf *.eot
+	@static path *.ico *.jpg *.jpeg *.png *.gif *.webp *.svg *.woff *.woff2 *.ttf *.eot
 	header @static Cache-Control "max-age=31536000, public"
 
 	# JS & CSS: 1 week

@@ -52,7 +52,7 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 | **Multi-site**          | Native                         | Multisite network        | Pro addon     | Native (Webspaces)  |
 | **i18n / Multilingual** | Native                         | Plugins (WPML, Polylang) | Native        | Native              |
 | **Page Versioning**     | Extension                      | Revisions (basic)        | Revisions     | Native              |
-| **Media Management**    | Auto-optimization (WebP, AVIF) | Basic + plugins          | Asset manager | Media bundles       |
+| **Media Management**    | Auto-optimization (WebP)       | Basic + plugins          | Asset manager | Media bundles       |
 | **Custom Fields**       | Custom properties              | ACF / Meta Box           | Fieldsets     | Content types       |
 | **Git Integration**     | Full support (flat-file)       | Requires workarounds     | Full support  | Developer-dependent |
 | **AI Editing**          | Direct file access (no layer)  | Via API only             | Flat-file     | Via API only        |
@@ -85,7 +85,7 @@ For projects with 3+ languages, native support reduces plugin overhead and impro
 | ----------------------- | ------------------------------- | ---------------------------- | ----------------------------------- | ------------------------ |
 | **Static Generation**   | Built-in                        | Plugins (WP2Static, etc.)    | Native                              | Manual implementation    |
 | **SEO Tools**           | Built-in (meta, schema, robots) | Plugins (Yoast, RankMath)    | SEO Pro addon                       | Custom/bundles           |
-| **Image Optimization**  | Auto WebP/AVIF conversion       | Plugins (Smush, Imagify)     | Transform API                       | Manual                   |
+| **Image Optimization**  | Auto WebP conversion            | Plugins (Smush, Imagify)     | Transform API                       | Manual                   |
 | **HTTP Caching**        | Symfony HTTP Cache              | Plugins (WP Super Cache)     | Static caching                      | Symfony Cache            |
 | **Core Performance**    | Lightweight (flat-file)         | Heavy with plugins           | Fast (30–50% faster than WordPress) | Moderate (Symfony-based) |
 | **Dead Link Detection** | Page Scanner extension          | Plugins (plugins unreliable) | Manual                              | Manual                   |

@@ -8,7 +8,7 @@ class Filepath
     {
         $pos = strrpos($filepath, '.');
 
-        // Include extensions up to 5 chars (e.g., .avif, .webp, .jpeg)
+        // Include extensions up to 5 chars (e.g., .webp, .jpeg)
         return false !== $pos && (\strlen($filepath) - $pos) <= 5 ? substr($filepath, 0, $pos) : $filepath;
     }
 

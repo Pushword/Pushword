@@ -2,8 +2,8 @@
 
 namespace Pushword\Core\Command;
 
+use Pushword\Core\Image\ImageOptimizer;
 use Pushword\Core\Repository\MediaRepository;
-use Pushword\Core\Service\ImageManager;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -17,7 +17,7 @@ final readonly class ImageOptimizerCommand
 {
     public function __construct(
         private MediaRepository $mediaRepository,
-        private ImageManager $imageManager,
+        private ImageOptimizer $imageOptimizer,
     ) {
     }
 
@@ -37,11 +37,11 @@ final readonly class ImageOptimizerCommand
 
         $errors = [];
         foreach ($medias as $media) {
-            if ($this->imageManager->isImage($media)) {
+            if ($media->isImage()) {
                 $progressBar->setMessage($media->getPath());
 
                 try {
-                    $this->imageManager->optimize($media);
+                    $this->imageOptimizer->optimize($media);
                 } catch (Throwable $exception) {
                     $errors[] = $media->getFileName().': '.$exception->getMessage();
                 }

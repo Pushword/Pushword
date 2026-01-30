@@ -18,7 +18,7 @@ const COMPRESSION_OPTIONS = {
 }
 
 // File types that should be scaled down
-const COMPRESSIBLE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
+const COMPRESSIBLE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 /**
  * Check if a file should be compressed

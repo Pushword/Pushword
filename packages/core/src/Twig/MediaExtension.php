@@ -5,8 +5,8 @@ namespace Pushword\Core\Twig;
 use Exception;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Image\ExternalImageImporter;
 use Pushword\Core\Repository\MediaRepository;
-use Pushword\Core\Service\ImageManager;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 
 use function Safe\preg_match;
@@ -19,7 +19,7 @@ class MediaExtension
 {
     public function __construct(
         public Twig $twig,
-        private readonly ImageManager $imageManager,
+        private readonly ExternalImageImporter $externalImageImporter,
         private readonly MediaRepository $mediaRepository,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
         #[Autowire('%pw.public_media_dir%')]
@@ -105,8 +105,8 @@ class MediaExtension
         $src = (string) $src;
 
         // Handle inverted format: {'caption': 'image.jpg'} -> swap if $name looks like a filename
-        if ('' !== $name && 1 === preg_match('/^[a-zA-Z0-9_-]+\.(jpg|jpeg|png|gif|webp|avif)$/i', $name)
-            && 0 === preg_match('/^[a-zA-Z0-9_-]+\.(jpg|jpeg|png|gif|webp|avif)$/i', $src)) {
+        if ('' !== $name && 1 === preg_match('/^[a-zA-Z0-9_-]+\.(jpg|jpeg|png|gif|webp)$/i', $name)
+            && 0 === preg_match('/^[a-zA-Z0-9_-]+\.(jpg|jpeg|png|gif|webp)$/i', $src)) {
             [$src, $name] = [$name, $src];
         }
 
@@ -123,15 +123,15 @@ class MediaExtension
             return $media;
         }
 
-        if (false !== $this->imageManager->cacheExternalImage($src)) {
-            return $this->imageManager->importExternal($src, $name);
+        if (false !== $this->externalImageImporter->cacheExternalImage($src)) {
+            return $this->externalImageImporter->importExternal($src, $name);
         }
 
         throw new Exception("Can't handle the value submitted (".$src.')');
     }
 
     /**
-     * Find media by filename, handling modern format extensions (.webp, .avif).
+     * Find media by filename, handling modern format extensions (.webp).
      * When browser paths use optimized formats, the original file may have a different extension.
      */
     private function findMediaByFileName(string $fileName): ?Media
@@ -142,11 +142,11 @@ class MediaExtension
             return $media;
         }
 
-        // If extension is webp/avif, try finding with common image extensions
+        // If extension is webp, try finding with common image extensions
         $extension = strtolower(pathinfo($fileName, \PATHINFO_EXTENSION));
-        if (\in_array($extension, ['webp', 'avif'], true)) {
+        if ('webp' === $extension) {
             $baseName = pathinfo($fileName, \PATHINFO_FILENAME);
-            foreach (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'] as $ext) {
+            foreach (['jpg', 'jpeg', 'png', 'gif', 'webp'] as $ext) {
                 $media = $this->mediaRepository->findOneByFileName($baseName.'.'.$ext);
                 if (null !== $media) {
                     return $media;
