@@ -186,32 +186,20 @@ final readonly class MenuItemsSubscriber implements EventSubscriberInterface
 
 ### Page Scanner bundle
 
+Uses `AbstractRouteMenuItemSubscriber` for simple route-based menu items:
+
 ```php
 <?php
 
 namespace Pushword\PageScanner\EventSubscriber;
 
-use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
-use Pushword\Admin\Menu\AdminMenuItemsEvent;
-use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Pushword\Admin\Menu\AbstractRouteMenuItemSubscriber;
 
-#[AutoconfigureTag('kernel.event_subscriber')]
-final readonly class MenuItemsSubscriber implements EventSubscriberInterface
+final readonly class AdminMenuItemSubscriber extends AbstractRouteMenuItemSubscriber
 {
-    public static function getSubscribedEvents(): array
+    public function __construct()
     {
-        return [
-            AdminMenuItemsEvent::NAME => 'onMenuItems',
-        ];
-    }
-
-    public function onMenuItems(AdminMenuItemsEvent $event): void
-    {
-        $event->addMenuItem(
-            MenuItem::linkToRoute('admin.label.check_content', 'fa fa-check-circle', 'admin_page_scanner'),
-            400
-        );
+        parent::__construct('adminLabelCheckContent', 'fa fa-check-circle', 'admin_page_scanner', 400);
     }
 }
 ```
