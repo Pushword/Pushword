@@ -11,12 +11,6 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### In progress
 
-- [ ] Break Up ImageManager God Object
-- [Pushword CMS - Refactoring Plan](../../../../../.claude/plans/whimsical-knitting-rain.md)
-
-- finish upgrade to Symfony 8 /PHP 8.5
-  - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
-
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
 - [flat] import media tags from lightroom/darktable keywords (exif data ?)

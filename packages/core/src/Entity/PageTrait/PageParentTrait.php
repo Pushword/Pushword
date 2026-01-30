@@ -11,7 +11,7 @@ use Pushword\Core\Entity\Page;
 trait PageParentTrait
 {
     #[ORM\ManyToOne(targetEntity: Page::class, inversedBy: 'childrenPages')]
-    protected ?Page $parentPage = null;  // @phpstan-ignore-line
+    protected ?Page $parentPage = null;
 
     /**
      * @var Collection<int, Page>

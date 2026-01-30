@@ -33,7 +33,6 @@ final class PageBlockController extends AbstractController
         $content = $request->toArray();
 
         $request->attributes->set('_route', 'pushword_page'); // 'custom_host_pushword_page'
-        // TODO: sanitize
 
         if (0 !== $id) {
             $currentPage = $this->em->getRepository(Page::class)->findOneBy(['id' => $id]);

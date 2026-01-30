@@ -1,8 +1,9 @@
 ---
-title: Upgrade a Pushword installation | Changelog
-h1: Upgrade Guide
+title: 'Upgrade a Pushword installation | Changelog'
+h1: 'Upgrade Guide'
+publishedAt: '2026-01-30 13:24'
+parentPage: installation
 toc: true
-parent: installation
 ---
 
 Smooth way is to use [composer](https://getcomposer.org), a dependency manager for PHP.
