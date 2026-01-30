@@ -16,11 +16,7 @@ final class RegexHelper
             return preg_quote($var, '/');
         }
 
-        /** @var callable */
-        $callable = ['RegexHelper', 'prepareForRegex'];
-
-        /** @var string[] */
-        $var = array_map($callable, $var);
+        $var = array_map(self::prepareForRegex(...), $var);
 
         return '('.implode('|', $var).')';
     }
