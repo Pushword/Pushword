@@ -12,10 +12,6 @@ use Exception;
 use Pushword\Core\Entity\Page;
 // use Doctrine\ORM\Event\LifecycleEventArgs;
 use Pushword\Core\Utils\Entity;
-
-use function Safe\file_get_contents;
-use function Safe\scandir;
-
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -100,7 +96,7 @@ class Versionner
     {
         $versionFile = $this->getVersionFile($page, $version);
 
-        return file_get_contents($versionFile);
+        return $this->fileSystem->readFile($versionFile);
     }
 
     public function reset(int|Page $pageId): void
@@ -114,7 +110,7 @@ class Versionner
     public function getPageVersions(int|Page $page): array
     {
         $dir = $this->getVersionDir($page);
-        if (! file_exists($dir)) {
+        if (! $this->fileSystem->exists($dir)) {
             return [];
         }
 

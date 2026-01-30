@@ -24,7 +24,6 @@ final class DeferredExportProcessorTest extends KernelTestCase
     {
         self::bootKernel();
 
-        /** @var BackgroundTaskDispatcherInterface $dispatcher */
         $dispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
         $this->backgroundTaskDispatcher = $dispatcher;
 

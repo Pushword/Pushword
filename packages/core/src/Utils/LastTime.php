@@ -6,10 +6,7 @@ use DateInterval;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
-
-use function Safe\file_put_contents;
-use function Safe\filemtime;
-use function Safe\touch;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Usage
@@ -17,8 +14,11 @@ use function Safe\touch;
  */
 class LastTime
 {
+    private readonly Filesystem $filesystem;
+
     public function __construct(protected string $filePath)
     {
+        $this->filesystem = new Filesystem();
     }
 
     public function wasRunSince(DateInterval $dateInterval): bool
@@ -36,7 +36,7 @@ class LastTime
      */
     public function get(?string $default = null): ?DateTimeInterface
     {
-        if (! file_exists($this->filePath)) {
+        if (! $this->filesystem->exists($this->filePath)) {
             return null === $default ? null : new DateTime($default);
         }
 
@@ -50,15 +50,15 @@ class LastTime
 
     public function setWasRun(string $datetime = 'now', bool $setIfNotExist = true): void
     {
-        if (! file_exists($this->filePath)) {
+        if (! $this->filesystem->exists($this->filePath)) {
             if (! $setIfNotExist) {
                 return;
             }
 
-            file_put_contents($this->filePath, '');
+            $this->filesystem->dumpFile($this->filePath, '');
         }
 
-        touch($this->filePath, new DateTime($datetime)->getTimestamp());
+        $this->filesystem->touch($this->filePath, new DateTime($datetime)->getTimestamp());
     }
 
     /**

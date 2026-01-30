@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Service;
 
-use function Safe\file_get_contents;
-use function Safe\file_put_contents;
 use function Safe\json_decode;
 use function Safe\json_encode;
+
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Manages editorial locks to prevent concurrent flat/admin modifications.
@@ -30,6 +30,7 @@ final readonly class FlatLockManager
         private string $varDir,
         private int $defaultTtl = 1800, // 30 minutes
         private int $webhookDefaultTtl = 3600, // 1 hour for webhook locks
+        private Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -63,11 +64,11 @@ final readonly class FlatLockManager
     {
         $filePath = $this->getLockFilePath($host);
 
-        if (! file_exists($filePath)) {
+        if (! $this->filesystem->exists($filePath)) {
             return null;
         }
 
-        $content = file_get_contents($filePath);
+        $content = $this->filesystem->readFile($filePath);
 
         /** @var array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string, lockedByUser?: string} */
         return json_decode($content, true);
@@ -150,11 +151,7 @@ final readonly class FlatLockManager
      */
     public function releaseLock(?string $host = null): void
     {
-        $filePath = $this->getLockFilePath($host);
-
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
+        $this->filesystem->remove($this->getLockFilePath($host));
     }
 
     /**
@@ -237,7 +234,7 @@ final readonly class FlatLockManager
     {
         $this->ensureDirectory();
         $filePath = $this->getLockFilePath($host);
-        file_put_contents($filePath, json_encode($lockData, \JSON_PRETTY_PRINT));
+        $this->filesystem->dumpFile($filePath, json_encode($lockData, \JSON_PRETTY_PRINT));
     }
 
     private function getLockFilePath(?string $host): string
@@ -258,9 +255,6 @@ final readonly class FlatLockManager
 
     private function ensureDirectory(): void
     {
-        $dir = $this->varDir.'/flat-sync';
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
+        $this->filesystem->mkdir($this->varDir.'/flat-sync');
     }
 }

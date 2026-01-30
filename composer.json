@@ -51,6 +51,7 @@
     "symfony/framework-bundle": "^8.0",
     "symfony/lock": "^8.0",
     "symfony/mailer": "^8.0",
+    "symfony/messenger": "^8.0",
     "symfony/monolog-bundle": "^3.7 || ^4.0",
     "symfony/process": "^7.3 || ^8.0",
     "symfony/routing": "^8.0",

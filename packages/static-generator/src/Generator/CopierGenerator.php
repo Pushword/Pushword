@@ -26,7 +26,7 @@ class CopierGenerator extends AbstractGenerator
 
         // permits to add a favicons to the root dir without extra config if the favicons is in the assets folder
         // else configure  in in static_copy
-        if ($issetFavicon || file_exists($this->getStaticDir().'/favicon.ico')) {
+        if ($issetFavicon || $this->filesystem->exists($this->getStaticDir().'/favicon.ico')) {
             return;
         }
 
@@ -35,7 +35,7 @@ class CopierGenerator extends AbstractGenerator
             'assets/favicons/favicon.ico',
         ];
         foreach ($commonFaviconsSpotList as $faviconSpot) {
-            if (file_exists($this->publicDir.'/'.$faviconSpot)) {
+            if ($this->filesystem->exists($this->publicDir.'/'.$faviconSpot)) {
                 $this->copyOrSymlink($faviconSpot, $symlink, 'favicon.ico');
             }
         }
@@ -55,7 +55,7 @@ class CopierGenerator extends AbstractGenerator
         $from = $this->publicDir.'/'.$entry;
         $to = $this->getStaticDir().'/'.($to ?? $entry);
 
-        if (! file_exists($from)) {
+        if (! $this->filesystem->exists($from)) {
             return;
         }
 

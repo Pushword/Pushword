@@ -8,6 +8,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 final class MediaExporter
 {
@@ -25,6 +26,7 @@ final class MediaExporter
         private readonly MediaRepository $mediaRepo,
         private readonly string $mediaDir,
         private readonly MediaStorageAdapter $mediaStorage,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -69,20 +71,20 @@ final class MediaExporter
         }
 
         $csvFilePath = $this->getCsvFilePath();
-        $this->ensureDirectoryExists(\dirname($csvFilePath));
+        $this->filesystem->mkdir(\dirname($csvFilePath));
 
         // Generate new CSV content
         $newContent = $this->generateCsvContent($header, $rows);
 
         // Compare with existing content
-        $existingContent = file_exists($csvFilePath) ? file_get_contents($csvFilePath) : '';
+        $existingContent = $this->filesystem->exists($csvFilePath) ? $this->filesystem->readFile($csvFilePath) : '';
         if ($newContent === $existingContent) {
             return; // No changes, skip export
         }
 
         $this->exportedCount = \count($medias);
         $this->output?->writeln(\sprintf('Exported %d media to index.csv', $this->exportedCount));
-        file_put_contents($csvFilePath, $newContent);
+        $this->filesystem->dumpFile($csvFilePath, $newContent);
     }
 
     /**
@@ -200,11 +202,11 @@ final class MediaExporter
         }
 
         $destination = $this->exportDir.'/'.$this->copyMedia.'/'.$media->getFileName();
-        $this->ensureDirectoryExists(\dirname($destination));
+        $this->filesystem->mkdir(\dirname($destination));
 
         // Read from storage and write to local export directory
         $stream = $this->mediaStorage->readStream($media->getFileName());
-        file_put_contents($destination, $stream);
+        $this->filesystem->dumpFile($destination, $stream);
         fclose($stream);
     }
 
@@ -215,15 +217,6 @@ final class MediaExporter
         }
 
         return $this->mediaDir.'/'.self::INDEX_FILE;
-    }
-
-    private function ensureDirectoryExists(string $directory): void
-    {
-        if (is_dir($directory)) {
-            return;
-        }
-
-        mkdir($directory, 0755, true);
     }
 
     public function getExportedCount(): int

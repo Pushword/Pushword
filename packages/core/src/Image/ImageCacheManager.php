@@ -21,6 +21,7 @@ final class ImageCacheManager
         private readonly string $publicDir,
         private readonly string $publicMediaDir,
         private readonly MediaStorageAdapter $mediaStorage,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -53,14 +54,14 @@ final class ImageCacheManager
 
         if (\in_array('webp', $formats, true)) {
             $webpPath = $this->getFilterPath($media, $filterName, 'webp');
-            if (! $checkFileExists || file_exists($webpPath)) {
+            if (! $checkFileExists || $this->filesystem->exists($webpPath)) {
                 return $this->getFilterPath($media, $filterName, 'webp', true);
             }
         }
 
         if (\in_array('original', $formats, true)) {
             $originalPath = $this->getFilterPath($media, $filterName);
-            if (! $checkFileExists || file_exists($originalPath)) {
+            if (! $checkFileExists || $this->filesystem->exists($originalPath)) {
                 return $this->getFilterPath($media, $filterName, null, true);
             }
         }
@@ -103,14 +104,10 @@ final class ImageCacheManager
 
         foreach (array_keys($this->filterSets) as $filterName) {
             $path = $this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName.'/'.$mediaFileName;
-            if (file_exists($path)) {
-                @unlink($path);
-            }
+            $this->filesystem->remove($path);
 
             $webpPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName.'/'.$mediaBase.'.webp';
-            if (file_exists($webpPath)) {
-                @unlink($webpPath);
-            }
+            $this->filesystem->remove($webpPath);
         }
     }
 
@@ -123,19 +120,19 @@ final class ImageCacheManager
         $fileName = $media->getFileName();
         $publicPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$fileName;
 
-        if (is_link($publicPath) || file_exists($publicPath)) {
+        if (is_link($publicPath) || $this->filesystem->exists($publicPath)) {
             return;
         }
 
         $this->createFilterDir($this->publicDir.'/'.$this->publicMediaDir);
 
-        @symlink('../../media/'.$fileName, $publicPath);
+        $this->filesystem->symlink('../../media/'.$fileName, $publicPath);
     }
 
     public function isFilterCacheFresh(Media $media, string $filterName): bool
     {
         $sourcePath = $this->mediaStorage->getLocalPath($media->getFileName());
-        if (! file_exists($sourcePath)) {
+        if (! $this->filesystem->exists($sourcePath)) {
             return false;
         }
 
@@ -152,7 +149,7 @@ final class ImageCacheManager
                 ? $this->getFilterPath($media, $filterName)
                 : $this->getFilterPath($media, $filterName, $format);
 
-            if (! file_exists($cachePath)) {
+            if (! $this->filesystem->exists($cachePath)) {
                 return false;
             }
 
@@ -188,8 +185,6 @@ final class ImageCacheManager
 
     public function createFilterDir(string $path): void
     {
-        if (! file_exists($path)) {
-            new Filesystem()->mkdir($path);
-        }
+        $this->filesystem->mkdir($path);
     }
 }

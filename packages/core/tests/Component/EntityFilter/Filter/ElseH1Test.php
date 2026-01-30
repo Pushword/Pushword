@@ -12,7 +12,7 @@ class ElseH1Test extends TestCase
 {
     private function createManagerStub(): Manager
     {
-        return (new ReflectionClass(Manager::class))->newInstanceWithoutConstructor();
+        return new ReflectionClass(Manager::class)->newInstanceWithoutConstructor();
     }
 
     public function testNonEmptyValuePassthrough(): void

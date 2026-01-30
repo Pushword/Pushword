@@ -9,8 +9,7 @@ use League\Flysystem\UnableToDeleteFile;
 use League\Flysystem\UnableToMoveFile;
 use League\Flysystem\UnableToReadFile;
 use League\Flysystem\UnableToWriteFile;
-
-use function Safe\file_put_contents;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Adapter service wrapping Flysystem for media storage operations.
@@ -23,6 +22,7 @@ final readonly class MediaStorageAdapter
         private FilesystemOperator $storage,
         private string $mediaDir,
         private bool $isLocal = true,
+        private Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -178,8 +178,8 @@ final readonly class MediaStorageAdapter
         // Download to temp for remote storage
         $tempPath = sys_get_temp_dir().'/'.sha1($path).'_'.basename($path);
 
-        if (! file_exists($tempPath)) {
-            file_put_contents($tempPath, $this->storage->read($path));
+        if (! $this->filesystem->exists($tempPath)) {
+            $this->filesystem->dumpFile($tempPath, $this->storage->read($path));
         }
 
         return $tempPath;

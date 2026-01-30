@@ -3,11 +3,9 @@
 namespace Pushword\Core\Utils\ImageOptimizer;
 
 use Override;
-
-use function Safe\file_put_contents;
-
 use Spatie\ImageOptimizer\Image;
 use Spatie\ImageOptimizer\Optimizers\BaseOptimizer;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 class Mozjpeg extends BaseOptimizer
@@ -33,7 +31,7 @@ class Mozjpeg extends BaseOptimizer
             ->run();
 
         if (0 === $status) {
-            file_put_contents($this->imagePath, $process->getOutput());  // @phpstan-ignore-line
+            new Filesystem()->dumpFile($this->imagePath, $process->getOutput());  // @phpstan-ignore-line
         }
 
         return 'echo ""';

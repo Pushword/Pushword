@@ -3,6 +3,7 @@
 namespace App\Tests;
 
 use PHPUnit\Framework\TestCase;
+use SQLite3;
 
 /**
  * Verifies that the Pushword installer correctly sets up a new project.
@@ -30,7 +31,7 @@ class AppTest extends TestCase
 
     public function testDatabaseHasData(): void
     {
-        $db = new \SQLite3(self::$projectDir.'/var/app.db');
+        $db = new SQLite3(self::$projectDir.'/var/app.db');
 
         $pageCount = $db->querySingle('SELECT COUNT(*) FROM page');
         self::assertGreaterThan(0, $pageCount, 'Page table should have at least one row');

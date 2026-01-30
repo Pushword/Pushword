@@ -7,8 +7,7 @@ namespace Pushword\Conversation\Flat;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\ConversationSyncInterface;
-
-use function Safe\filemtime;
+use Symfony\Component\Filesystem\Filesystem;
 
 final readonly class ConversationSync implements ConversationSyncInterface
 {
@@ -17,6 +16,7 @@ final readonly class ConversationSync implements ConversationSyncInterface
         private FlatFileContentDirFinder $contentDirFinder,
         public ConversationImporter $importer,
         public ConversationExporter $exporter,
+        private Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -53,7 +53,7 @@ final readonly class ConversationSync implements ConversationSyncInterface
             ? $this->contentDirFinder->getBaseDir().'/conversation.csv'
             : $this->contentDirFinder->get($app->getMainHost()).'/conversation.csv';
 
-        if (! file_exists($csvPath)) {
+        if (! $this->filesystem->exists($csvPath)) {
             return false;
         }
 

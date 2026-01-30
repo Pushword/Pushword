@@ -74,7 +74,7 @@ final class PageExporter
         $redirectionPages = array_filter($pages, static fn (Page $page): bool => $page->hasRedirection());
         foreach ($redirectionPages as $page) {
             $mdFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
-            if (file_exists($mdFilePath)) {
+            if ($this->filesystem->exists($mdFilePath)) {
                 $this->filesystem->remove($mdFilePath);
                 $this->output?->writeln(\sprintf('Deleted %s.md (now a redirection)', $page->getSlug()));
             }
@@ -195,12 +195,12 @@ final class PageExporter
         $newContent = $this->generateCsvContent($header, $rows);
 
         // Compare with existing content - skip if unchanged
-        $existingContent = file_exists($csvFilePath) ? file_get_contents($csvFilePath) : '';
+        $existingContent = $this->filesystem->exists($csvFilePath) ? $this->filesystem->readFile($csvFilePath) : '';
         if ($newContent === $existingContent) {
             return;
         }
 
-        file_put_contents($csvFilePath, $newContent);
+        $this->filesystem->dumpFile($csvFilePath, $newContent);
     }
 
     /**
@@ -318,8 +318,8 @@ final class PageExporter
         $newContent = '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent();
 
         // Skip if content unchanged (smart update to avoid unnecessary file writes)
-        if (file_exists($exportFilePath)) {
-            $existingContent = file_get_contents($exportFilePath);
+        if ($this->filesystem->exists($exportFilePath)) {
+            $existingContent = $this->filesystem->readFile($exportFilePath);
             if ($newContent === $existingContent) {
                 ++$this->skippedCount;
 
@@ -330,7 +330,7 @@ final class PageExporter
         // Skip if file is newer and not forced (timestamp-based skip)
         if (
             false === $force
-            && file_exists($exportFilePath)
+            && $this->filesystem->exists($exportFilePath)
             && filemtime($exportFilePath) >= $page->updatedAt->getTimestamp() // @phpstan-ignore method.nonObject
         ) {
             ++$this->skippedCount;
@@ -342,7 +342,7 @@ final class PageExporter
         $this->filesystem->dumpFile($exportFilePath, $newContent);
 
         // Sync file timestamp with page updatedAt to prevent import/export cycles
-        touch($exportFilePath, $page->updatedAt->getTimestamp()); // @phpstan-ignore method.nonObject
+        $this->filesystem->touch($exportFilePath, $page->updatedAt->getTimestamp()); // @phpstan-ignore method.nonObject
 
         return true;
     }

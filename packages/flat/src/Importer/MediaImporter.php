@@ -14,9 +14,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaCsvHelper;
 use Pushword\Flat\Exporter\MediaExporter;
 use RuntimeException;
-
-use function Safe\filesize;
-
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -57,6 +55,7 @@ class MediaImporter extends AbstractImporter
         public string $projectDir,
         private readonly MediaStorageAdapter $mediaStorage,
         private readonly ?LoggerInterface $logger = null,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
         parent::__construct($em, $apps);
     }
@@ -120,7 +119,7 @@ class MediaImporter extends AbstractImporter
      */
     private function createReader(string $csvPath): ?Reader
     {
-        if (! file_exists($csvPath)) {
+        if (! $this->filesystem->exists($csvPath)) {
             return null;
         }
 
@@ -192,7 +191,7 @@ class MediaImporter extends AbstractImporter
 
         // Skip legacy sidecar files (backward compatibility during transition)
         $isMetaDataFile = str_ends_with($filePath, '.json') || str_ends_with($filePath, '.yaml');
-        if ($isMetaDataFile && file_exists(substr($filePath, 0, -5))) {
+        if ($isMetaDataFile && $this->filesystem->exists(substr($filePath, 0, -5))) {
             return false;
         }
 
@@ -239,7 +238,7 @@ class MediaImporter extends AbstractImporter
         $media
             ->setProjectDir($this->projectDir)
             ->setStoreIn(\dirname($filePath))
-            ->setSize(filesize($filePath))
+            ->setSize((int) filesize($filePath))
             ->setMimeType($this->getMimeTypeFromFile($filePath))
             ->resetHash(); // Reset hash so it gets recalculated
 
@@ -549,7 +548,7 @@ class MediaImporter extends AbstractImporter
 
             // Check flat directory first (source for import)
             $filePath = $dir.'/'.$fileName;
-            if (file_exists($filePath)) {
+            if ($this->filesystem->exists($filePath)) {
                 continue;
             }
 
@@ -564,7 +563,7 @@ class MediaImporter extends AbstractImporter
                 $media->setProjectDir($this->projectDir);
                 $oldFileName = $media->getFileName();
                 // Check if old file exists in flat dir or storage
-                if (file_exists($dir.'/'.$oldFileName)) {
+                if ($this->filesystem->exists($dir.'/'.$oldFileName)) {
                     // File exists with old name, will be renamed
                     continue;
                 }

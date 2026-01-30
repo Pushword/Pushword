@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Sync;
 
-use function Safe\file_get_contents;
-use function Safe\file_put_contents;
 use function Safe\json_decode;
 use function Safe\json_encode;
+
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Manages sync state tracking for flat file synchronization.
@@ -19,6 +19,7 @@ final readonly class SyncStateManager
 
     public function __construct(
         private string $varDir,
+        private Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -117,10 +118,7 @@ final readonly class SyncStateManager
      */
     public function clearConflicts(?string $host = null): void
     {
-        $filePath = $this->getConflictsFilePath($host);
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
+        $this->filesystem->remove($this->getConflictsFilePath($host));
     }
 
     /**
@@ -128,10 +126,7 @@ final readonly class SyncStateManager
      */
     public function resetState(?string $host = null): void
     {
-        $filePath = $this->getStateFilePath($host);
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
+        $this->filesystem->remove($this->getStateFilePath($host));
     }
 
     private function recordSync(string $entityType, string $direction, ?string $host): void
@@ -153,11 +148,11 @@ final readonly class SyncStateManager
     {
         $filePath = $this->getStateFilePath($host);
 
-        if (! file_exists($filePath)) {
+        if (! $this->filesystem->exists($filePath)) {
             return [];
         }
 
-        $content = file_get_contents($filePath);
+        $content = $this->filesystem->readFile($filePath);
 
         /** @var array<string, mixed> */
         return json_decode($content, true);
@@ -170,7 +165,7 @@ final readonly class SyncStateManager
     {
         $this->ensureDirectory();
         $filePath = $this->getStateFilePath($host);
-        file_put_contents($filePath, json_encode($state, \JSON_PRETTY_PRINT));
+        $this->filesystem->dumpFile($filePath, json_encode($state, \JSON_PRETTY_PRINT));
     }
 
     /**
@@ -180,11 +175,11 @@ final readonly class SyncStateManager
     {
         $filePath = $this->getConflictsFilePath($host);
 
-        if (! file_exists($filePath)) {
+        if (! $this->filesystem->exists($filePath)) {
             return [];
         }
 
-        $content = file_get_contents($filePath);
+        $content = $this->filesystem->readFile($filePath);
 
         /** @var array<int, array<string, mixed>> */
         return json_decode($content, true);
@@ -197,7 +192,7 @@ final readonly class SyncStateManager
     {
         $this->ensureDirectory();
         $filePath = $this->getConflictsFilePath($host);
-        file_put_contents($filePath, json_encode($conflicts, \JSON_PRETTY_PRINT));
+        $this->filesystem->dumpFile($filePath, json_encode($conflicts, \JSON_PRETTY_PRINT));
     }
 
     private function getStateFilePath(?string $host): string
@@ -226,9 +221,6 @@ final readonly class SyncStateManager
 
     private function ensureDirectory(): void
     {
-        $dir = $this->varDir.'/flat-sync';
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
+        $this->filesystem->mkdir($this->varDir.'/flat-sync');
     }
 }

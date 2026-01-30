@@ -8,9 +8,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Utils\Filepath;
 use Pushword\Core\Utils\MediaRenamer;
-
-use function Safe\file_put_contents;
-use function Safe\filesize;
+use Symfony\Component\Filesystem\Filesystem;
 
 final readonly class ExternalImageImporter
 {
@@ -21,6 +19,7 @@ final readonly class ExternalImageImporter
         private ThumbnailGenerator $thumbnailGenerator,
         private string $mediaDir,
         private string $projectDir,
+        private Filesystem $filesystem = new Filesystem(),
     ) {
         $this->renamer = new MediaRenamer();
     }
@@ -44,7 +43,7 @@ final readonly class ExternalImageImporter
             ->setProjectDir($this->projectDir)
             ->setStoreIn($this->mediaDir)
             ->setMimeType($imgSize['mime'])
-            ->setSize(filesize($imageLocalImport))
+            ->setSize((int) filesize($imageLocalImport))
             ->setDimensions([$imgSize[0], $imgSize[1]])
             ->setFileName($fileName)
             ->setSlug(Filepath::removeExtension($fileName))
@@ -62,7 +61,7 @@ final readonly class ExternalImageImporter
     public function cacheExternalImage(string $src): false|string
     {
         $filePath = sys_get_temp_dir().'/'.sha1($src);
-        if (file_exists($filePath)) {
+        if ($this->filesystem->exists($filePath)) {
             return $filePath;
         }
 
@@ -84,7 +83,7 @@ final readonly class ExternalImageImporter
             return false;
         }
 
-        file_put_contents($filePath, $content);
+        $this->filesystem->dumpFile($filePath, $content);
 
         return $filePath;
     }

@@ -9,8 +9,6 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Utils\Entity;
 
-use function Safe\file_get_contents;
-use function Safe\file_put_contents;
 use function Safe\json_decode;
 use function Safe\json_encode;
 use function Safe\mime_content_type;
@@ -18,6 +16,7 @@ use function Safe\preg_match;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,6 +32,7 @@ final class MediaBlockController extends AbstractController
         #[Autowire('%pw.public_media_dir%')]
         private readonly string $publicMediaDir,
         private readonly ImageCacheManager $imageCacheManager,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -138,13 +138,14 @@ final class MediaBlockController extends AbstractController
 
         /** @var array<int, string> $matches */
         $fileContent = file_get_contents($url);
+        if (false === $fileContent) {
+            throw new LogicException('Could not download file from URL: '.$url);
+        }
 
         $originalName = $matches[1];
         $filename = md5($originalName);
         $filePath = sys_get_temp_dir().'/'.$filename;
-        if (0 === file_put_contents($filePath, $fileContent)) {
-            throw new LogicException('Storing in tmp folder failed');
-        }
+        $this->filesystem->dumpFile($filePath, $fileContent);
 
         $mimeType = mime_content_type($filePath);
 

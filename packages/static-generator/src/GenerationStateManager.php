@@ -39,18 +39,13 @@ final class GenerationStateManager
         $this->loaded = true;
         $path = $this->getStateFilePath();
 
-        if (! file_exists($path)) {
+        if (! $this->filesystem->exists($path)) {
             $this->state = [];
 
             return;
         }
 
-        $content = file_get_contents($path);
-        if (false === $content) {
-            $this->state = [];
-
-            return;
-        }
+        $content = $this->filesystem->readFile($path);
 
         /** @var array<string, array{lastGeneration: string, pages: array<string, array{generatedAt: string, pageUpdatedAt: string}>}>|null $decoded */
         $decoded = json_decode($content, true);

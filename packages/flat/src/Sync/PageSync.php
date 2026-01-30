@@ -15,10 +15,6 @@ use Pushword\Flat\Exporter\RedirectionExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Importer\PageImporter;
 use Pushword\Flat\Importer\RedirectionImporter;
-
-use function Safe\filemtime;
-use function Safe\scandir;
-
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 
@@ -92,7 +88,7 @@ final class PageSync
 
         // 4. Import all .md files with progress (only show actually imported files)
         foreach ($files as $path) {
-            $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
+            $lastEditDateTime = new DateTime()->setTimestamp((int) filemtime($path));
             $imported = $this->pageImporter->import($path, $lastEditDateTime);
 
             if ($imported) {
@@ -240,7 +236,7 @@ final class PageSync
             return true;
         }
 
-        $lastEditDateTime = new DateTime()->setTimestamp(filemtime($filePath));
+        $lastEditDateTime = new DateTime()->setTimestamp((int) filemtime($filePath));
 
         // Check for conflicts using the last sync time
         $lastSyncTime = $this->stateManager->getLastSyncTime('page', $host);

@@ -12,14 +12,18 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 #[AsCommand(name: 'pw:json-to-markdown', description: 'Convert EditorJS JSON content to Markdown for all pages.')]
 final readonly class ConvertJsonToMarkdownCommand
 {
-    public function __construct(private PageRepository $pageRepo, private EntityManagerInterface $em)
-    {
+    public function __construct(
+        private PageRepository $pageRepo,
+        private EntityManagerInterface $em,
+        private Filesystem $filesystem = new Filesystem(),
+    ) {
     }
 
     public function __invoke(
@@ -162,7 +166,7 @@ final readonly class ConvertJsonToMarkdownCommand
         // Chemin vers le script Node.js (relatif à ce fichier)
         $scriptPath = \dirname(__DIR__).'/Command/convert-json-to-markdown-built/convert-json-to-markdown.mjs';
 
-        if (! file_exists($scriptPath)) {
+        if (! $this->filesystem->exists($scriptPath)) {
             throw new RuntimeException(\sprintf("Le script de conversion n'existe pas : %s", $scriptPath));
         }
 
@@ -182,9 +186,7 @@ final readonly class ConvertJsonToMarkdownCommand
             throw new RuntimeException(\sprintf('Erreur lors de la conversion JSON vers Markdown : %s', $processFailedException->getMessage()), 0, $processFailedException);
         } finally {
             // Nettoyer le fichier temporaire
-            if (file_exists($localStoragePath)) {
-                @unlink($localStoragePath);
-            }
+            $this->filesystem->remove($localStoragePath);
         }
     }
 }

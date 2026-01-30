@@ -2,21 +2,22 @@
 
 namespace Pushword\Core\Command;
 
-use function Safe\file_put_contents;
-
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
 #[AsCommand(name: 'pw:new', description: 'Add a new website into your config file (config/packages/pushword.yaml).')]
 final readonly class NewCommand
 {
-    public function __construct(private string $projectDir)
-    {
+    public function __construct(
+        private string $projectDir,
+        private Filesystem $filesystem = new Filesystem(),
+    ) {
     }
 
     public function __invoke(InputInterface $input, OutputInterface $output): int
@@ -34,7 +35,7 @@ final readonly class NewCommand
 
         $config = $this->initConfig($configFile, ['hosts' => [$mainDomain], 'locale' => $locale, 'locales' => $locales]);
 
-        file_put_contents($configFile, Yaml::dump($config, 4));
+        $this->filesystem->dumpFile($configFile, Yaml::dump($config, 4));
 
         $output->writeln('<info>Config updated with success. Want more set more configuration options ? Open `config/packages/pushword.yaml`</info>');
 
@@ -48,8 +49,8 @@ final readonly class NewCommand
      */
     private function initConfig(string $configFile, array $newHost): array
     {
-        $config = ($contentConfigFile = file_get_contents($configFile)) !== false
-            ? Yaml::parse($contentConfigFile) : [];
+        $config = $this->filesystem->exists($configFile)
+            ? Yaml::parse($this->filesystem->readFile($configFile)) : [];
 
         if (! \is_array($config)) {
             $config = [];

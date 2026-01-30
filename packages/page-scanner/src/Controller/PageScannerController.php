@@ -11,10 +11,6 @@ use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Utils\LastTime;
-
-use function Safe\file_get_contents;
-use function Safe\filemtime;
-
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
@@ -96,7 +92,7 @@ final class PageScannerController extends AbstractController
         // Check for existing results
         if ($this->filesystem->exists($fileCache)) {
             /** @var array<int, array<int, array{page: array{host: string, slug: string}, message: string}>> */
-            $errors = unserialize(file_get_contents($fileCache));
+            $errors = unserialize($this->filesystem->readFile($fileCache));
             $lastEdit = filemtime($fileCache);
         } else {
             $lastEdit = 0;

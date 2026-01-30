@@ -9,9 +9,6 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
 use Pushword\StaticGenerator\StaticAppGenerator;
-
-use function Safe\copy;
-
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpKernel\KernelInterface;
@@ -83,11 +80,8 @@ abstract class AbstractGenerator implements GeneratorInterface
 
     protected function copy(string $file): void
     {
-        if (file_exists($file)) {
-            copy(
-                str_replace($this->params->get('kernel.project_dir').'/', '../', $this->publicDir.'/'.$file),
-                $this->getStaticDir().'/'.$file
-            );
+        if ($this->filesystem->exists($file)) {
+            $this->filesystem->copy($this->publicDir.'/'.$file, $this->getStaticDir().'/'.$file);
         }
     }
 

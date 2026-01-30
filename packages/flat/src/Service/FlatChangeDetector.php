@@ -7,10 +7,7 @@ namespace Pushword\Flat\Service;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\SyncStateManager;
-
-use function Safe\filemtime;
-use function Safe\scandir;
-
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
@@ -28,6 +25,7 @@ final readonly class FlatChangeDetector
         private SiteRegistry $apps,
         private int $cacheTtl = 300, // 5 minutes default
         private bool $autoLockOnChanges = true,
+        private Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -109,9 +107,9 @@ final readonly class FlatChangeDetector
 
         // Check for conversation changes
         $conversationFile = $contentDir.'/conversation.csv';
-        if (file_exists($conversationFile)) {
+        if ($this->filesystem->exists($conversationFile)) {
             $mtime = filemtime($conversationFile);
-            if ($mtime > $lastSyncTime) {
+            if (false !== $mtime && $mtime > $lastSyncTime) {
                 $changedEntityTypes[] = 'conversation';
                 $newest = $this->updateNewest($newest, $conversationFile, $mtime);
             }
@@ -175,7 +173,7 @@ final readonly class FlatChangeDetector
 
         $this->scanDirectory($dir, $pattern, $exclude, static function (string $filePath) use ($lastSyncTime, &$hasChanges, &$newestFile, &$newestMtime): void {
             $mtime = filemtime($filePath);
-            if ($mtime > $lastSyncTime) {
+            if (false !== $mtime && $mtime > $lastSyncTime) {
                 $hasChanges = true;
                 if (null === $newestMtime || $mtime > $newestMtime) {
                     $newestFile = $filePath;

@@ -32,7 +32,6 @@ class ExternalImageImporterTest extends KernelTestCase
         $imageEncoder = new ImageEncoder();
         $imageCacheManager = new ImageCacheManager([], $this->publicDir, $this->publicMediaDir, $mediaStorage);
 
-        /** @var BackgroundTaskDispatcherInterface $backgroundTaskDispatcher */
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
         $thumbnailGenerator = new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
 

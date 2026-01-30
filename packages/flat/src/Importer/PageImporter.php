@@ -16,11 +16,9 @@ use Pushword\Core\Repository\PageRepository;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
 use Pushword\Flat\FlatFileContentDirFinder;
-
-use function Safe\file_get_contents;
-
 use Spatie\YamlFrontMatter\Document;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Service\Attribute\Required;
 
 /**
@@ -54,6 +52,10 @@ final class PageImporter extends AbstractImporter
 
     #[Required]
     public PropertyConverterRegistry $converterRegistry;
+
+    private Filesystem $filesystem {
+        get => $this->filesystem ??= new Filesystem();
+    }
 
     private bool $newPage = false;
 
@@ -97,10 +99,7 @@ final class PageImporter extends AbstractImporter
             return null;
         }
 
-        $content = file_get_contents($filePath);
-        $document = YamlFrontMatter::parse($content);
-
-        return $document;
+        return YamlFrontMatter::parse($this->filesystem->readFile($filePath));
     }
 
     /**

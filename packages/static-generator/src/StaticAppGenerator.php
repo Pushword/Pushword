@@ -106,7 +106,7 @@ final class StaticAppGenerator
 
         // In incremental mode, work directly in the static dir
         // In full mode, use a temporary directory for atomic swap
-        if ($this->incremental && $this->stateManager->hasState($host) && file_exists($originalStaticDir)) {
+        if ($this->incremental && $this->stateManager->hasState($host) && $filesystem->exists($originalStaticDir)) {
             // Incremental mode: update in place
             $this->logger->info('Incremental generation for '.$host);
             $this->runGenerators($app);

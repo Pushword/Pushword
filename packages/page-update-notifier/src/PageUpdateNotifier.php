@@ -16,9 +16,7 @@ use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\LastTime;
-
-use function Safe\mkdir;
-
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class PageUpdateNotifier
@@ -38,6 +36,7 @@ class PageUpdateNotifier
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
         private readonly ?LoggerInterface $logger = null,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -104,9 +103,7 @@ class PageUpdateNotifier
     public function getCacheDir(): string
     {
         $dir = $this->varDir.'/PageUpdateNotifier';
-        if (! is_dir($dir)) {
-            mkdir($dir);
-        }
+        $this->filesystem->mkdir($dir);
 
         return $dir;
     }

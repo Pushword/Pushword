@@ -9,6 +9,7 @@ use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Service\ImportContext;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Throwable;
@@ -29,6 +30,7 @@ final class ConversationImporter
         private readonly DenormalizerInterface $denormalizer,
         private readonly MediaRepository $mediaRepository,
         private readonly ImportContext $importContext,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -444,7 +446,7 @@ final class ConversationImporter
      */
     private function createReader(string $csvPath): ?Reader
     {
-        if (! file_exists($csvPath)) {
+        if (! $this->filesystem->exists($csvPath)) {
             return null;
         }
 

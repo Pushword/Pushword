@@ -59,6 +59,7 @@ class LastTimeTest extends TestCase
         $lastTime = new LastTime($this->tmpFile);
 
         $lastTime->setWasRun();
+
         $result = $lastTime->get();
         self::assertNotNull($result);
     }

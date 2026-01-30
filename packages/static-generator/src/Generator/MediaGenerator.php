@@ -25,14 +25,14 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
     private function targetExists(string $targetPath): bool
     {
         // Check for broken symlinks: is_link() returns true but file_exists() returns false
-        if (is_link($targetPath) && ! file_exists($targetPath)) {
+        if (is_link($targetPath) && ! $this->filesystem->exists($targetPath)) {
             // Remove broken symlink so we can replace it with a real file
-            @unlink($targetPath);
+            $this->filesystem->remove($targetPath);
 
             return false;
         }
 
-        return is_link($targetPath) || file_exists($targetPath);
+        return is_link($targetPath) || $this->filesystem->exists($targetPath);
     }
 
     /**
@@ -40,12 +40,12 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
      */
     private function isSourceNewer(string $sourcePath, string $targetPath): bool
     {
-        if (! file_exists($targetPath) && ! is_link($targetPath)) {
+        if (! $this->filesystem->exists($targetPath) && ! is_link($targetPath)) {
             return true;
         }
 
-        $sourceMtime = @filemtime($sourcePath);
-        $targetMtime = @filemtime($targetPath);
+        $sourceMtime = filemtime($sourcePath);
+        $targetMtime = filemtime($targetPath);
 
         if (false === $sourceMtime || false === $targetMtime) {
             return true;
@@ -79,7 +79,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
             return;
         }
 
-        if (! file_exists($staticMediaDir)) {
+        if (! $this->filesystem->exists($staticMediaDir)) {
             $this->filesystem->mkdir($staticMediaDir);
         }
 
@@ -93,7 +93,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
 
         // Copy image cache from public/media (thumbnails, webp versions, etc.)
         $publicMediaCacheDir = $this->publicDir.'/'.$publicMediaDir;
-        if (file_exists($publicMediaCacheDir)) {
+        if ($this->filesystem->exists($publicMediaCacheDir)) {
             $this->copyImageCache($publicMediaCacheDir, $staticMediaDir, $symlink);
         }
     }
@@ -139,7 +139,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
             // Handle symlinks to original files (public/media/1.jpg -> ../../media/1.jpg)
             if (is_link($sourcePath)) {
                 // Skip broken symlinks
-                if (! file_exists($sourcePath)) {
+                if (! $this->filesystem->exists($sourcePath)) {
                     continue;
                 }
 
@@ -151,7 +151,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
                     // Recreate the symlink with same target
                     $linkTarget = readlink($sourcePath);
                     if (false !== $linkTarget) {
-                        @symlink($linkTarget, $targetPath);
+                        $this->filesystem->symlink($linkTarget, $targetPath);
                     }
                 } else {
                     // Copy the actual file content (resolve symlink)
@@ -180,7 +180,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
             $targetPath = $targetDir.'/'.$entry;
 
             if (is_dir($sourcePath) && ! is_link($sourcePath)) {
-                if (! file_exists($targetPath)) {
+                if (! $this->filesystem->exists($targetPath)) {
                     $this->filesystem->mkdir($targetPath);
                 }
 
@@ -314,7 +314,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
 
             // Write all files
             foreach ($streams as $target => $stream) {
-                file_put_contents($target, $stream);
+                $this->filesystem->dumpFile($target, $stream);
                 fclose($stream);
             }
         }

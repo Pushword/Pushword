@@ -26,7 +26,6 @@ class ThumbnailGeneratorTest extends KernelTestCase
         $imageEncoder = new ImageEncoder();
         $imageCacheManager = new ImageCacheManager($filterSets, $this->publicDir, $this->publicMediaDir, $mediaStorage);
 
-        /** @var BackgroundTaskDispatcherInterface $backgroundTaskDispatcher */
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
 
         return new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);

@@ -4,9 +4,7 @@ namespace Pushword\TemplateEditor;
 
 use Exception;
 use LogicException;
-
-use function Safe\file_get_contents;
-use function Safe\realpath;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Entity.
@@ -17,12 +15,19 @@ final class Element
 
     private ?string $unlink = null;
 
+    private readonly Filesystem $filesystem;
+
     public function __construct(
         private string $templateDir,
         private ?string $path = null,
         private readonly bool $disableMoving = false
     ) {
+        $this->filesystem = new Filesystem();
+
         $realPathTemplateDir = realpath($templateDir);
+        if (false === $realPathTemplateDir) {
+            throw new LogicException(\sprintf('Template directory does not exist: %s', $templateDir));
+        }
 
         $this->templateDir = $realPathTemplateDir;
 
@@ -39,11 +44,11 @@ final class Element
             return '';
         }
 
-        if (! file_exists($this->getTemplateDir().$this->getPath())) {
+        if (! $this->filesystem->exists($this->getTemplateDir().$this->getPath())) {
             return '';
         }
 
-        return file_get_contents($this->getTemplateDir().$this->getPath());
+        return $this->filesystem->readFile($this->getTemplateDir().$this->getPath());
     }
 
     private function getTemplateDir(): string
@@ -89,12 +94,12 @@ final class Element
         }
 
         if ($this->path !== $path) {
-            if (file_exists($this->getTemplateDir().$path)) { // check if we don't erase an other file
+            if ($this->filesystem->exists($this->getTemplateDir().$path)) { // check if we don't erase an other file
                 throw new Exception('file ever exist'); // todo move it to assert to avoid error 500..
             }
 
             // we will delete if we rename it
-            if (file_exists($this->getTemplateDir().$this->path)) {
+            if ($this->filesystem->exists($this->getTemplateDir().$this->path)) {
                 $this->unlink = $this->getTemplateDir().$this->path;
             }
 
@@ -119,15 +124,19 @@ final class Element
     public function storeElement(): bool
     {
         if (null !== $this->unlink) { // for rename
-            unlink($this->unlink);
+            $this->filesystem->remove($this->unlink);
         }
 
-        return false !== file_put_contents($this->getTemplateDir().$this->getPath(), $this->code);
+        $this->filesystem->dumpFile($this->getTemplateDir().$this->getPath(), $this->code);
+
+        return true;
     }
 
     public function deleteElement(): bool
     {
-        return unlink($this->getTemplateDir().$this->getPath());
+        $this->filesystem->remove($this->getTemplateDir().$this->getPath());
+
+        return true;
     }
 
     public function movingIsDisabled(): bool

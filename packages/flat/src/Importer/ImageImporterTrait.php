@@ -7,9 +7,6 @@ use DateTimeInterface;
 use Pushword\Core\Entity\Media;
 use RuntimeException;
 
-use function Safe\filesize;
-use function Safe\getimagesize;
-
 /**
  * Permit to find error in image or link.
  */
@@ -62,9 +59,10 @@ trait ImageImporterTrait
 
         // $exifData = @exif_read_data($filePath);
         // if getData === []
+        $info = [];
         getimagesize($filePath, $info);
 
-        if (isset($info['APP13']) && is_string($info['APP13'])) {
+        if (\is_array($info) && isset($info['APP13']) && \is_string($info['APP13'])) {
             $iptc = iptcparse($info['APP13']);
             if (isset($iptc['2#025'])) {
                 $data['tags'] = implode(' ', $iptc['2#025']);
@@ -78,15 +76,15 @@ trait ImageImporterTrait
     {
         $imgSize = getimagesize($filePath);
 
-        if (null === $imgSize) {
-            throw new RuntimeException('Image size is null');
+        if (false === $imgSize) {
+            throw new RuntimeException('Image size could not be determined');
         }
 
         $media
                 ->setProjectDir($this->projectDir)
                 ->setStoreIn(\dirname($filePath))
                 ->setMimeType($imgSize['mime'])
-                ->setSize(filesize($filePath))
+                ->setSize((int) filesize($filePath))
                 ->setDimensions([$imgSize[0], $imgSize[1]])
                 ->resetHash(); // Reset hash so it gets recalculated
 

@@ -9,11 +9,8 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Service\AdminNotificationService;
-
-use function Safe\file_get_contents;
-use function Safe\file_put_contents;
-
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Resolves conflicts between flat files and database during sync.
@@ -29,6 +26,7 @@ final class ConflictResolver
         private readonly FlatFileContentDirFinder $contentDirFinder,
         private readonly SyncStateManager $stateManager,
         private readonly ?AdminNotificationService $notificationService = null,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -146,11 +144,11 @@ final class ConflictResolver
      */
     private function createMarkdownBackup(string $filePath, string $losingSource): ?string
     {
-        if (! file_exists($filePath)) {
+        if (! $this->filesystem->exists($filePath)) {
             return null;
         }
 
-        $content = file_get_contents($filePath);
+        $content = $this->filesystem->readFile($filePath);
         $pathInfo = pathinfo($filePath);
         $dirname = $pathInfo['dirname'] ?? '.';
         $extension = $pathInfo['extension'] ?? 'md';
@@ -164,7 +162,7 @@ final class ConflictResolver
             date('Y-m-d H:i:s'),
         );
 
-        file_put_contents($backupFile, $header.$content);
+        $this->filesystem->dumpFile($backupFile, $header.$content);
 
         return $backupFile;
     }
@@ -180,7 +178,7 @@ final class ConflictResolver
         $dirname = $pathInfo['dirname'] ?? '.';
         $conflictsFile = $dirname.'/'.$pathInfo['filename'].'.conflicts.csv';
 
-        $isNew = ! file_exists($conflictsFile);
+        $isNew = ! $this->filesystem->exists($conflictsFile);
 
         $fp = fopen($conflictsFile, 'a');
         if (false === $fp) {
@@ -260,7 +258,8 @@ final class ConflictResolver
         $deleted = [];
 
         foreach ($conflicts as $file) {
-            if (file_exists($file) && unlink($file)) {
+            if ($this->filesystem->exists($file)) {
+                $this->filesystem->remove($file);
                 $deleted[] = $file;
             }
         }

@@ -29,7 +29,7 @@ class ErrorPageGenerator extends AbstractGenerator
     {
         $filepath = $this->getStaticDir().(null !== $locale ? '/'.$locale : '').'/'.$uri;
 
-        if (file_exists($filepath)) {
+        if ($this->filesystem->exists($filepath)) {
             return;
         }
 

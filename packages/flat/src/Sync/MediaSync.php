@@ -14,10 +14,6 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Importer\MediaImporter;
-
-use function Safe\filemtime;
-use function Safe\scandir;
-
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 
@@ -97,7 +93,7 @@ final class MediaSync
 
         // 5. Import/update media files (only show actually imported files)
         foreach ($allFiles as $path) {
-            $lastEditDateTime = new DateTime()->setTimestamp(filemtime($path));
+            $lastEditDateTime = new DateTime()->setTimestamp((int) filemtime($path));
             $imported = $this->mediaImporter->import($path, $lastEditDateTime);
 
             if ($imported) {

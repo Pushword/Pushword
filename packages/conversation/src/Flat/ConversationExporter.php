@@ -10,12 +10,14 @@ use League\Csv\Writer;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Utils\Entity;
 use Stringable;
+use Symfony\Component\Filesystem\Filesystem;
 
 final class ConversationExporter
 {
     use ConversationContextTrait;
 
     public function __construct(
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -53,7 +55,7 @@ final class ConversationExporter
             $rows[] = $orderedRow;
         }
 
-        $this->ensureDirectoryExists(\dirname($csvPath));
+        $this->filesystem->mkdir(\dirname($csvPath));
 
         $tempPath = $csvPath.'.tmp';
         $writer = Writer::from($tempPath, 'w+');
@@ -61,13 +63,13 @@ final class ConversationExporter
         $writer->insertAll($rows);
 
         // Only replace if content changed (compare hashes)
-        if (file_exists($csvPath) && md5_file($csvPath) === md5_file($tempPath)) {
-            unlink($tempPath);
+        if ($this->filesystem->exists($csvPath) && md5_file($csvPath) === md5_file($tempPath)) {
+            $this->filesystem->remove($tempPath);
 
             return;
         }
 
-        rename($tempPath, $csvPath);
+        $this->filesystem->rename($tempPath, $csvPath, true);
     }
 
     /**
@@ -250,14 +252,5 @@ final class ConversationExporter
         }
 
         return null;
-    }
-
-    private function ensureDirectoryExists(string $directory): void
-    {
-        if (is_dir($directory)) {
-            return;
-        }
-
-        mkdir($directory, 0755, true);
     }
 }
