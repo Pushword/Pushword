@@ -2,6 +2,9 @@
 
 namespace Pushword\Core\Entity\PageTrait;
 
+use Pushword\Core\Entity\ValueObject\OpenGraphData;
+use Pushword\Core\Entity\ValueObject\TwitterCardData;
+
 /**
  * OgTitle
  * OgDescription
@@ -90,4 +93,22 @@ trait PageOpenGraphTrait
     }
 
     // ------------
+
+    public function getOpenGraphData(): OpenGraphData
+    {
+        return new OpenGraphData(
+            title: $this->getOgTitle(),
+            description: $this->getOgDescription(),
+            image: $this->getOgImage(),
+        );
+    }
+
+    public function getTwitterCardData(): TwitterCardData
+    {
+        return new TwitterCardData(
+            card: $this->getTwitterCard(),
+            site: $this->getTwitterSite(),
+            creator: $this->getTwitterCreator(),
+        );
+    }
 }
