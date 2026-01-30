@@ -39,23 +39,16 @@ class CompressorTest extends TestCase
 
     public function testCompressWithUnavailableAlgorithmDoesNothing(): void
     {
-        $compressor = new Compressor();
+        // Create a compressor that only knows about Gzip, then compress with Brotli
+        $compressor = new Compressor([CompressionAlgorithm::Gzip]);
 
-        // Créer un fichier de test
         $testFile = $this->tempDir.'/test.txt';
         $this->filesystem->dumpFile($testFile, 'Test content');
-        $unavailableAlgorithm = array_find(CompressionAlgorithm::cases(), static fn ($algorithm): bool => ! \in_array($algorithm, $compressor->availableCompressors, true));
 
-        if (null === $unavailableAlgorithm) {
-            self::markTestSkipped('Tous les compresseurs sont disponibles sur ce système');
-        }
-
-        // Compressing with an unavailable algorithm should do nothing
-        $compressor->compress($testFile, $unavailableAlgorithm);
+        $compressor->compress($testFile, CompressionAlgorithm::Brotli);
         $compressor->waitForCompressionToFinish();
 
-        // No compressed file should be created
-        self::assertFileDoesNotExist($testFile.$unavailableAlgorithm->getExtension());
+        self::assertFileDoesNotExist($testFile.CompressionAlgorithm::Brotli->getExtension());
         self::assertFileExists($testFile);
     }
 

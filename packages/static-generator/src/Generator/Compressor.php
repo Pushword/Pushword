@@ -15,16 +15,24 @@ class Compressor
 
     private readonly int $maxConcurrentProcesses;
 
-    public function __construct()
+    /**
+     * @param array<CompressionAlgorithm>|null $availableCompressors
+     */
+    public function __construct(?array $availableCompressors = null)
     {
-        $availableCompressors = [];
-        foreach (CompressionAlgorithm::cases() as $algorithm) {
-            if ($this->isAlgorithmInstalled($algorithm)) {
-                $availableCompressors[] = $algorithm;
+        if (null !== $availableCompressors) {
+            $this->availableCompressors = $availableCompressors;
+        } else {
+            $detected = [];
+            foreach (CompressionAlgorithm::cases() as $algorithm) {
+                if ($this->isAlgorithmInstalled($algorithm)) {
+                    $detected[] = $algorithm;
+                }
             }
+
+            $this->availableCompressors = $detected;
         }
 
-        $this->availableCompressors = $availableCompressors;
         $this->maxConcurrentProcesses = (int) (shell_exec('nproc') ?: 10);
     }
 
