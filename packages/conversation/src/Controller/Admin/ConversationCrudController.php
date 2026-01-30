@@ -252,10 +252,10 @@ class ConversationCrudController extends AbstractAdminCrudController
 
         return match ($field) {
             'content' => $this->updateContent($message, $value),
-            'authorName' => $this->updateNullableString(fn (?string $val): Message => $message->setAuthorName($val), $trimmed),
-            'authorEmail' => $this->updateNullableString(fn (?string $val): Message => $message->setAuthorEmail($val), $trimmed),
-            'referring' => $this->updateNullableString(fn (?string $val): Message => $message->setReferring($val), $trimmed),
-            'host' => $this->updateNullableString(function (?string $val) use ($message): Message {
+            'authorName' => $this->updateNullableString(static fn (?string $val): Message => $message->setAuthorName($val), $trimmed),
+            'authorEmail' => $this->updateNullableString(static fn (?string $val): Message => $message->setAuthorEmail($val), $trimmed),
+            'referring' => $this->updateNullableString(static fn (?string $val): Message => $message->setReferring($val), $trimmed),
+            'host' => $this->updateNullableString(static function (?string $val) use ($message): Message {
                 $message->host = $val;
 
                 return $message;

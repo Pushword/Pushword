@@ -114,7 +114,7 @@ class MarkdownUtilsTest extends TestCase
         $page->setMainContent("# Mon titre\n\nUn paragraphe.");
 
         $output = [];
-        $callback = function (string $message) use (&$output): void {
+        $callback = static function (string $message) use (&$output): void {
             $output[] = $message;
         };
 

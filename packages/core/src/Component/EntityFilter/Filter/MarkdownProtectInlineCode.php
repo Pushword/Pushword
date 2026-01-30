@@ -15,7 +15,7 @@ final class MarkdownProtectInlineCode
         $inlineCodes = [];
         $text = preg_replace_callback(
             '/(`+)([^\n]*?)\1/', // normally inline code permits new line
-            function (array $matches) use (&$inlineCodes, &$i): string {
+            static function (array $matches) use (&$inlineCodes, &$i): string {
                 $placeholder = '___INLINE_CODE_PLACEHOLDER_'.($i++).'___';
                 $inlineCodes[$placeholder] = $matches[0];
 

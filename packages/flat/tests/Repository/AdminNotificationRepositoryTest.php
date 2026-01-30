@@ -192,7 +192,7 @@ final class AdminNotificationRepositoryTest extends KernelTestCase
         self::assertContains($conflict1, $result);
         self::assertContains($conflict2, $result);
 
-        $resultIds = array_map(fn (AdminNotification $n): ?int => $n->id, $result);
+        $resultIds = array_map(static fn (AdminNotification $n): ?int => $n->id, $result);
         self::assertNotContains($syncError->id, $resultIds);
     }
 
@@ -214,7 +214,7 @@ final class AdminNotificationRepositoryTest extends KernelTestCase
 
         self::assertContains($hostAConflict, $result);
 
-        $resultIds = array_map(fn (AdminNotification $n): ?int => $n->id, $result);
+        $resultIds = array_map(static fn (AdminNotification $n): ?int => $n->id, $result);
         self::assertNotContains($hostBConflict->id, $resultIds);
     }
 
@@ -288,7 +288,7 @@ final class AdminNotificationRepositoryTest extends KernelTestCase
 
         $result = $this->repository->findUnread($uniqueHost);
 
-        $resultIds = array_map(fn (AdminNotification $n): ?int => $n->id, $result);
+        $resultIds = array_map(static fn (AdminNotification $n): ?int => $n->id, $result);
 
         $firstPos = array_search($first->id, $resultIds, true);
         $secondPos = array_search($second->id, $resultIds, true);

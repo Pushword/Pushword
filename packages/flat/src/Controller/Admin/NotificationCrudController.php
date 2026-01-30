@@ -40,7 +40,7 @@ final class NotificationCrudController extends AbstractCrudController
             ->setEntityLabelInPlural('Notifications')
             ->setDefaultSort(['createdAt' => 'DESC'])
             ->setPageTitle(Crud::PAGE_INDEX, 'Admin Notifications')
-            ->setPageTitle(Crud::PAGE_DETAIL, fn (AdminNotification $n): string => \sprintf('Notification #%d', $n->id))
+            ->setPageTitle(Crud::PAGE_DETAIL, static fn (AdminNotification $n): string => \sprintf('Notification #%d', $n->id))
             ->showEntityActionsInlined();
     }
 

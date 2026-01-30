@@ -1,7 +1,7 @@
 ---
 title: 'Avoid Duplicate Links in Page Listings'
 h1: 'Link Collector<br> <small>Prevent duplicate page links</small>'
-publishedAt: '2026-01-23'
+publishedAt: '2026-01-23 00:00'
 toc: true
 ---
 

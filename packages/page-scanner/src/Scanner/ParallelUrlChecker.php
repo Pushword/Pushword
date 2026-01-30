@@ -41,7 +41,7 @@ final class ParallelUrlChecker
             $cacheKey = 'url_'.hash('xxh3', $url);
 
             /** @var true|string|null $cached */
-            $cached = $this->externalUrlCache->get($cacheKey, fn (): null => null);
+            $cached = $this->externalUrlCache->get($cacheKey, static fn (): null => null);
 
             if (null !== $cached) {
                 $this->results[$url] = $cached;

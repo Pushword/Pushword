@@ -11,6 +11,11 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ### In progress
 
+-  [ ] [/code-simplifier] for MediaDebugCommand.php + commit + push
+-  [ ] [Comprehensive E2E Tests for Admin Media Picker](../../../../../.claude/plans/crispy-greeting-rivest.md)
+- [ ] Break Up ImageManager God Object
+  - [Pushword CMS - Refactoring Plan](../../../../../.claude/plans/whimsical-knitting-rain.md)
+
 - finish upgrade to Symfony 8 /PHP 8.5
   - [ ] restore twigstan - https://github.com/twigstan/twigstan/issues/277
 

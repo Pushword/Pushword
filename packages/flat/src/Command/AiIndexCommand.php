@@ -52,8 +52,8 @@ final class AiIndexCommand
     ): int {
         $this->pages = $this->pageRepository->findAll();
         $this->medias = $this->mediaRepository->findAll();
-        $this->mediaList = array_map(fn (Media $media): string => $media->getFileName(), $this->medias);
-        $this->pageSlugList = array_map(fn (Page $page): string => $page->getSlug(), $this->pages);
+        $this->mediaList = array_map(static fn (Media $media): string => $media->getFileName(), $this->medias);
+        $this->pageSlugList = array_map(static fn (Page $page): string => $page->getSlug(), $this->pages);
         $host ??= '';
 
         $app = $this->apps->switchCurrentApp($host)->get();

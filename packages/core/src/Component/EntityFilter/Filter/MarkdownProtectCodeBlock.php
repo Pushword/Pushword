@@ -15,7 +15,7 @@ final class MarkdownProtectCodeBlock
         $codeBlocks = [];
         $text = preg_replace_callback(
             '/^```(.*?)```(\n\n|$)/ms',
-            function (array $matches) use (&$codeBlocks, &$i): string {
+            static function (array $matches) use (&$codeBlocks, &$i): string {
                 $placeholder = '___CODE_BLOCK_PLACEHOLDER_'.($i++).'___';
                 $codeBlocks[$placeholder] = trim($matches[0]);
 

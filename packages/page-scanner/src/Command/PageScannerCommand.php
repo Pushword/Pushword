@@ -47,7 +47,7 @@ final class PageScannerCommand
     /**
      * @return array<int, mixed[]>
      */
-    protected function scanAll(string $host): array
+    private function scanAll(string $host): array
     {
         $this->stopwatch?->start('preload.caches');
         $this->scanner->preloadCaches($host);

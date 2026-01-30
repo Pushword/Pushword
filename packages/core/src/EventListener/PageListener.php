@@ -6,6 +6,7 @@ use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Events;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\User;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Service\TailwindGenerator;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -65,7 +66,7 @@ final readonly class PageListener
             return;
         }
 
-        if (! $user instanceof \Pushword\Core\Entity\User) {
+        if (! $user instanceof User) {
             return;
         }
 

@@ -153,7 +153,7 @@ class MediaImporter extends AbstractImporter
         }
 
         // Filter empty columns
-        return array_values(array_filter($header, fn (string $col): bool => '' !== trim($col)));
+        return array_values(array_filter($header, static fn (string $col): bool => '' !== trim($col)));
     }
 
     /**

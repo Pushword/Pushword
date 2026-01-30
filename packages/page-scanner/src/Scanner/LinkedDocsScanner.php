@@ -323,7 +323,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function mustIgnore(string $url): bool
     {
-        return array_any($this->toIgnore, fn ($toIgnore): bool => fnmatch($toIgnore, $url));
+        return array_any($this->toIgnore, static fn ($toIgnore): bool => fnmatch($toIgnore, $url));
     }
 
     private function checkLinkedDoc(string $url, bool $checkRedirection = true): void

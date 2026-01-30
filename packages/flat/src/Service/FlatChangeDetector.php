@@ -173,7 +173,7 @@ final readonly class FlatChangeDetector
         $newestMtime = null;
         $hasChanges = false;
 
-        $this->scanDirectory($dir, $pattern, $exclude, function (string $filePath) use ($lastSyncTime, &$hasChanges, &$newestFile, &$newestMtime): void {
+        $this->scanDirectory($dir, $pattern, $exclude, static function (string $filePath) use ($lastSyncTime, &$hasChanges, &$newestFile, &$newestMtime): void {
             $mtime = filemtime($filePath);
             if ($mtime > $lastSyncTime) {
                 $hasChanges = true;
@@ -241,7 +241,7 @@ final readonly class FlatChangeDetector
      */
     private function matchesExcludePattern(string $filename, array $patterns): bool
     {
-        return array_any($patterns, fn ($pattern): bool => fnmatch($pattern, $filename));
+        return array_any($patterns, static fn ($pattern): bool => fnmatch($pattern, $filename));
     }
 
     private function isTempOrLockFile(string $filename): bool

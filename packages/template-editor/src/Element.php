@@ -33,7 +33,7 @@ final class Element
         $this->code = $this->retrieveCode();
     }
 
-    protected function retrieveCode(): string
+    private function retrieveCode(): string
     {
         if (null === $this->path) {
             return '';
@@ -46,7 +46,7 @@ final class Element
         return file_get_contents($this->getTemplateDir().$this->getPath());
     }
 
-    protected function getTemplateDir(): string
+    private function getTemplateDir(): string
     {
         return $this->templateDir;
     }

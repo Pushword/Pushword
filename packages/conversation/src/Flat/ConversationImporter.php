@@ -171,7 +171,7 @@ final class ConversationImporter
 
         $fileNames = array_filter(
             array_map(trim(...), explode(',', $mediaListValue)),
-            fn (string $fileName): bool => '' !== $fileName,
+            static fn (string $fileName): bool => '' !== $fileName,
         );
 
         if ([] === $fileNames) {
@@ -214,7 +214,7 @@ final class ConversationImporter
      */
     private function isEmptyRow(array $row): bool
     {
-        return array_all($row, fn ($value): bool => ! (null !== $value && '' !== trim($value)));
+        return array_all($row, static fn ($value): bool => ! (null !== $value && '' !== trim($value)));
     }
 
     /**
@@ -477,7 +477,7 @@ final class ConversationImporter
         }
 
         // Filtre les colonnes vides
-        return array_values(array_filter($header, fn (string $col): bool => '' !== trim($col)));
+        return array_values(array_filter($header, static fn (string $col): bool => '' !== trim($col)));
     }
 
     /**

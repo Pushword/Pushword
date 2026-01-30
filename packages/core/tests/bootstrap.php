@@ -17,7 +17,7 @@ if (! file_exists($file)) {
 $autoload = require $file;
 
 // Suppress fsockopen warnings from Panther checking if server is already running
-set_error_handler(function ($errno, $errstr, $errfile, $errline): bool {
+set_error_handler(static function ($errno, $errstr, $errfile, $errline): bool {
     // Suppress fsockopen connection refused warnings from Panther
     if (\E_WARNING === $errno && str_contains($errstr, 'fsockopen()') && str_contains($errstr, 'Connection refused')) {
         return true; // Suppress this warning

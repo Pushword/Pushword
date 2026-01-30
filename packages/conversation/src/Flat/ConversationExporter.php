@@ -116,7 +116,7 @@ final class ConversationExporter
         // Extrait 'id' s'il existe pour le mettre en premier
         $hasId = in_array('id', $allColumns, true);
         if ($hasId) {
-            $allColumns = array_values(array_filter($allColumns, fn (string $col): bool => 'id' !== $col));
+            $allColumns = array_values(array_filter($allColumns, static fn (string $col): bool => 'id' !== $col));
         }
 
         // Trie le reste des colonnes

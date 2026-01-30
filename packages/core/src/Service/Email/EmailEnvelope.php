@@ -29,7 +29,7 @@ final readonly class EmailEnvelope
             return false;
         }
 
-        return array_all($this->to, fn (string $email): bool => false !== filter_var($email, \FILTER_VALIDATE_EMAIL));
+        return array_all($this->to, static fn (string $email): bool => false !== filter_var($email, \FILTER_VALIDATE_EMAIL));
     }
 
     public function getFirstRecipient(): string

@@ -54,7 +54,7 @@ class AdminMenuTest extends KernelTestCase
                 self::isInstanceOf(AdminMenuItemsEvent::class),
                 AdminMenuItemsEvent::NAME
             )
-            ->willReturnCallback(fn (AdminMenuItemsEvent $event): AdminMenuItemsEvent =>
+            ->willReturnCallback(static fn (AdminMenuItemsEvent $event): AdminMenuItemsEvent =>
                 // Simulate event dispatch without modification
                 $event);
 
@@ -73,7 +73,7 @@ class AdminMenuTest extends KernelTestCase
                 self::isInstanceOf(AdminMenuItemsEvent::class),
                 AdminMenuItemsEvent::NAME
             )
-            ->willReturnCallback(function (AdminMenuItemsEvent $event): AdminMenuItemsEvent {
+            ->willReturnCallback(static function (AdminMenuItemsEvent $event): AdminMenuItemsEvent {
                 // Verify event contains initial items
                 $items = $event->getItems();
                 self::assertNotEmpty($items);
@@ -98,7 +98,7 @@ class AdminMenuTest extends KernelTestCase
         $this->eventDispatcher
             ->expects(self::once())
             ->method('dispatch')
-            ->willReturnCallback(function (AdminMenuItemsEvent $event): AdminMenuItemsEvent {
+            ->willReturnCallback(static function (AdminMenuItemsEvent $event): AdminMenuItemsEvent {
                 // Add items with different weights
                 $event->setItems([
                     ['weight' => 100, 'item' => MenuItem::linkToRoute('Low', 'fa fa-low', 'low_route')],
@@ -124,7 +124,7 @@ class AdminMenuTest extends KernelTestCase
         $this->eventDispatcher
             ->expects(self::once())
             ->method('dispatch')
-            ->willReturnCallback(function (AdminMenuItemsEvent $event): AdminMenuItemsEvent {
+            ->willReturnCallback(static function (AdminMenuItemsEvent $event): AdminMenuItemsEvent {
                 // Get existing items
                 $items = $event->getItems();
 
@@ -148,7 +148,7 @@ class AdminMenuTest extends KernelTestCase
         $this->eventDispatcher
             ->expects(self::once())
             ->method('dispatch')
-            ->willReturnCallback(function (AdminMenuItemsEvent $event): AdminMenuItemsEvent {
+            ->willReturnCallback(static function (AdminMenuItemsEvent $event): AdminMenuItemsEvent {
                 $items = $event->getItems();
 
                 // Verify default items are present
