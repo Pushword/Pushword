@@ -1,6 +1,6 @@
 <?php
 
-namespace Pushword\AdvancedMainImage\EventSuscriber;
+namespace Pushword\AdvancedMainImage\EventSubscriber;
 
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityPersistedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityUpdatedEvent;
@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * @template T of object
  */
-final readonly class AdminFormEventSuscriber implements EventSubscriberInterface
+final readonly class AdminFormEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private SiteRegistry $apps,
