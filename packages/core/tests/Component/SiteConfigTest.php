@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Component;
 
 use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Template\TemplateResolver;
@@ -155,6 +156,139 @@ class SiteConfigTest extends TestCase
         $site->setTemplateResolver($this->createTemplateResolver());
 
         return $site;
+    }
+
+    public function testGetResolvesViaGetterMethod(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertSame('Test App', $site->get('name'));
+    }
+
+    public function testGetResolvesSnakeCaseKey(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertSame('https://localhost.dev', $site->get('base_url'));
+    }
+
+    public function testGetResolvesCustomProperty(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+        $site->setCustomProperty('my_custom_key', 'custom_value');
+
+        self::assertSame('custom_value', $site->get('my_custom_key'));
+    }
+
+    public function testGetReturnsNullForUnknownKey(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertNull($site->get('nonexistent_key'));
+    }
+
+    public function testHasReturnsTrueForExistingKey(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertTrue($site->has('name'));
+    }
+
+    public function testHasReturnsFalseForMissingKey(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertFalse($site->has('nonexistent'));
+    }
+
+    public function testGetStrReturnsString(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertSame('Test App', $site->getStr('name'));
+    }
+
+    public function testGetStrReturnsDefaultWhenMissing(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertSame('fallback', $site->getStr('missing_key', 'fallback'));
+    }
+
+    public function testGetStrThrowsOnNonScalar(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+        $site->setCustomProperty('arr', ['not', 'scalar']);
+
+        $this->expectException(LogicException::class);
+        $site->getStr('arr');
+    }
+
+    public function testGetArrayReturnsArray(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+        $site->setCustomProperty('list', ['a', 'b']);
+
+        self::assertSame(['a', 'b'], $site->getArray('list'));
+    }
+
+    public function testGetArrayReturnsDefaultWhenMissing(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertSame(['default'], $site->getArray('missing', ['default']));
+    }
+
+    public function testGetArrayThrowsOnNonArray(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+        $site->setCustomProperty('scalar', 'not_array');
+
+        $this->expectException(LogicException::class);
+        $site->getArray('scalar');
+    }
+
+    public function testGetBooleanReturnsBool(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+        $site->setCustomProperty('flag', false);
+
+        self::assertFalse($site->getBoolean('flag'));
+    }
+
+    public function testGetBooleanReturnsDefaultWhenMissing(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        self::assertTrue($site->getBoolean('missing', true));
+    }
+
+    public function testGetBooleanThrowsOnNonBool(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+        $site->setCustomProperty('my_flag', 'not_bool');
+
+        $this->expectException(LogicException::class);
+        $site->getBoolean('my_flag');
+    }
+
+    public function testConstructorProcessesCustomPropertiesKey(): void
+    {
+        $params = new ParameterBag(['kernel.project_dir' => $this->tempDir]);
+
+        $site = new SiteConfig($params, [
+            'hosts' => ['localhost'],
+            'base_url' => 'https://localhost',
+            'name' => 'Site',
+            'locale' => 'en',
+            'locales' => ['en'],
+            'template' => '@Pushword',
+            'entity_can_override_filters' => false,
+            'custom_properties' => ['color' => 'blue', 'extra' => 42],
+        ], false);
+
+        self::assertSame('blue', $site->getCustomProperty('color'));
+        self::assertSame(42, $site->getCustomProperty('extra'));
     }
 
     private function createTemplateResolver(): TemplateResolver

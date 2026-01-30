@@ -28,6 +28,10 @@ class PageRedirectionTest extends TestCase
         yield 'custom HTTP code 302' => ['Location:https://example.com 302', 'https://example.com', 302];
         yield 'relative path' => ['Location:/other-page', '/other-page', 301];
         yield 'relative path with code' => ['Location:/other-page 307', '/other-page', 307];
+        yield 'code 199 matches regex' => ['Location:https://example.com 199', 'https://example.com', 199];
+        yield 'code 500' => ['Location:https://example.com 500', 'https://example.com', 500];
+        yield 'URL with query string' => ['Location:https://example.com/path?foo=bar', 'https://example.com/path?foo=bar', 301];
+        yield 'URL with fragment' => ['Location:https://example.com/path#section', 'https://example.com/path#section', 301];
     }
 
     #[DataProvider('provideNonRedirections')]
@@ -44,6 +48,8 @@ class PageRedirectionTest extends TestCase
         yield 'regular content' => ['This is a normal page content'];
         yield 'empty string' => [''];
         yield 'URL with spaces in path' => ['Location:invalid path with spaces'];
+        yield 'lowercase location prefix' => ['location:https://example.com'];
+        yield 'only whitespace after Location:' => ['Location:   '];
     }
 
     public function testConstructor(): void
