@@ -2,11 +2,11 @@
 
 namespace Pushword\Core\Tests\Image;
 
+use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Image\ThumbnailGenerator;
-use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -26,10 +26,10 @@ class ThumbnailGeneratorTest extends KernelTestCase
         $imageEncoder = new ImageEncoder();
         $imageCacheManager = new ImageCacheManager($filterSets, $this->publicDir, $this->publicMediaDir, $mediaStorage);
 
-        /** @var BackgroundProcessManager $backgroundProcessManager */
-        $backgroundProcessManager = self::getContainer()->get(BackgroundProcessManager::class);
+        /** @var BackgroundTaskDispatcherInterface $backgroundTaskDispatcher */
+        $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
 
-        return new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundProcessManager, $mediaStorage);
+        return new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
     }
 
     /**

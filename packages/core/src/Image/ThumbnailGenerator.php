@@ -5,10 +5,9 @@ namespace Pushword\Core\Image;
 use Exception;
 use Intervention\Image\Image;
 use Intervention\Image\Interfaces\ImageInterface;
+use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\MediaStorageAdapter;
-use RuntimeException;
 
 final class ThumbnailGenerator
 {
@@ -18,7 +17,7 @@ final class ThumbnailGenerator
         private readonly ImageReader $imageReader,
         private readonly ImageEncoder $imageEncoder,
         private readonly ImageCacheManager $imageCacheManager,
-        private readonly BackgroundProcessManager $backgroundProcessManager,
+        private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
         private readonly MediaStorageAdapter $mediaStorage,
     ) {
     }
@@ -124,17 +123,11 @@ final class ThumbnailGenerator
 
     public function runBackgroundCacheGeneration(string $fileName): void
     {
-        $pidFile = $this->backgroundProcessManager->getPidFilePath('image-cache-'.md5($fileName));
-
-        try {
-            $this->backgroundProcessManager->startBackgroundProcess(
-                $pidFile,
-                ['php', 'bin/console', 'pw:image:cache', $fileName],
-                'pw:image:cache',
-            );
-        } catch (RuntimeException) {
-            // Already running, skip
-        }
+        $this->backgroundTaskDispatcher->dispatch(
+            'image-cache-'.md5($fileName),
+            ['php', 'bin/console', 'pw:image:cache', $fileName],
+            'pw:image:cache',
+        );
     }
 
     public function getLastThumb(): ?ImageInterface
@@ -144,17 +137,11 @@ final class ThumbnailGenerator
 
     private function runBackgroundOptimization(string $fileName): void
     {
-        $pidFile = $this->backgroundProcessManager->getPidFilePath('image-optimize-'.md5($fileName));
-
-        try {
-            $this->backgroundProcessManager->startBackgroundProcess(
-                $pidFile,
-                ['php', 'bin/console', 'pw:image:optimize', $fileName],
-                'pw:image:optimize',
-            );
-        } catch (RuntimeException) {
-            // Already running, skip
-        }
+        $this->backgroundTaskDispatcher->dispatch(
+            'image-optimize-'.md5($fileName),
+            ['php', 'bin/console', 'pw:image:optimize', $fileName],
+            'pw:image:optimize',
+        );
     }
 
     private function copyOriginalToFilter(Media $media, string $filterName): void

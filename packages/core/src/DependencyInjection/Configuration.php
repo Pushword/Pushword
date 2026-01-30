@@ -199,6 +199,13 @@ final class Configuration implements ConfigurationInterface
             ->booleanNode('tailwind_generator')->defaultTrue()->end()
             ->scalarNode('path_to_bin')->defaultValue('')->end()
 
+            // Background task handling
+            ->enumNode('background_task_handler')
+                ->values(['process', 'messenger'])
+                ->defaultValue('process')
+                ->info('Background task execution mode: process (nohup+PID, default) or messenger (Symfony Messenger)')
+                ->end()
+
             // PDF optimization
             ->enumNode('pdf_preset')
                 ->values(['screen', 'ebook', 'printer', 'prepress'])

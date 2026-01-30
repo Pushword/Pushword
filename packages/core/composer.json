@@ -81,6 +81,7 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "suggest": {
+    "symfony/messenger": "For Messenger-based background task dispatching (alternative to nohup+PID process mode)",
     "knpuniversity/oauth2-client-bundle": "For OAuth authentication (Google, Microsoft, GitHub, etc.)",
     "league/oauth2-google": "For Google OAuth authentication",
     "thenetworg/oauth2-azure": "For Microsoft/Azure OAuth authentication",

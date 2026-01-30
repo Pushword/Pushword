@@ -4,13 +4,13 @@ namespace Pushword\Core\Tests\Controller;
 
 use Exception;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
+use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ExternalImageImporter;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Image\ThumbnailGenerator;
-use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -144,9 +144,9 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         $imageReader = new ImageReader($mediaStorage);
         $imageEncoder = new ImageEncoder();
         $imageCacheManager = new ImageCacheManager([], $this->publicDir, $this->publicMediaDir, $mediaStorage);
-        /** @var BackgroundProcessManager $backgroundProcessManager */
-        $backgroundProcessManager = self::getContainer()->get(BackgroundProcessManager::class);
-        $thumbnailGenerator = new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundProcessManager, $mediaStorage);
+        /** @var BackgroundTaskDispatcherInterface $backgroundTaskDispatcher */
+        $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
+        $thumbnailGenerator = new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
 
         return $this->importer = new ExternalImageImporter($mediaStorage, $thumbnailGenerator, $this->mediaDir, $this->projectDir);
     }

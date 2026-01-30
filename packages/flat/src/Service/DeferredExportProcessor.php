@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Service;
 
+use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Service\BackgroundProcessManager;
-use RuntimeException;
 
 /**
  * Handles deferred export of entities after admin modifications.
@@ -21,7 +20,7 @@ final class DeferredExportProcessor
     private bool $shutdownRegistered = false;
 
     public function __construct(
-        private readonly BackgroundProcessManager $processManager,
+        private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
         private readonly string $projectDir,
         private readonly bool $useBackgroundProcess = true,
         private readonly bool $autoExportEnabled = true,
@@ -107,12 +106,7 @@ final class DeferredExportProcessor
 
         $commandParts = $this->buildExportCommandParts($entityArg, $host);
 
-        try {
-            $pidFile = $this->processManager->getPidFilePath('flat-deferred-export');
-            $this->processManager->startBackgroundProcess($pidFile, $commandParts, 'pw:flat:sync');
-        } catch (RuntimeException) {
-            // If the process is already running, just skip - it will handle all pending exports
-        }
+        $this->backgroundTaskDispatcher->dispatch('flat-deferred-export', $commandParts, 'pw:flat:sync');
     }
 
     /**

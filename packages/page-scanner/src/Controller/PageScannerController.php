@@ -7,6 +7,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
 use LogicException;
+use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Utils\LastTime;
@@ -37,6 +38,7 @@ final class PageScannerController extends AbstractController
         private readonly Filesystem $filesystem,
         string $varDir,
         private readonly string $pageScanInterval,
+        private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
         private readonly BackgroundProcessManager $processManager,
         private readonly ProcessOutputStorage $outputStorage,
         private readonly array $errorsToIgnore = [],
@@ -108,8 +110,8 @@ final class PageScannerController extends AbstractController
             $this->outputStorage->clear(self::PROCESS_TYPE);
             $this->outputStorage->setStatus(self::PROCESS_TYPE, 'running');
 
-            $this->processManager->startBackgroundProcess(
-                $pidFile,
+            $this->backgroundTaskDispatcher->dispatch(
+                self::PROCESS_TYPE,
                 ['php', 'bin/console', 'pw:page-scan'],
                 self::COMMAND_PATTERN,
             );

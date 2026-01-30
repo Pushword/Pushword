@@ -5,6 +5,7 @@ namespace Pushword\StaticGenerator;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
+use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
 use RuntimeException;
@@ -24,6 +25,7 @@ class StaticController extends AbstractController
     private const string COMMAND_PATTERN = 'pw:static';
 
     public function __construct(
+        private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
         private readonly BackgroundProcessManager $processManager,
         private readonly ProcessOutputStorage $outputStorage,
     ) {
@@ -83,8 +85,8 @@ class StaticController extends AbstractController
                 $commandParts[] = $host;
             }
 
-            $this->processManager->startBackgroundProcess(
-                $pidFile,
+            $this->backgroundTaskDispatcher->dispatch(
+                self::PROCESS_TYPE,
                 $commandParts,
                 self::COMMAND_PATTERN,
             );

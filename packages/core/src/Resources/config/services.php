@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use PiedWeb\RenderAttributes\TwigExtension;
+use Pushword\Core\BackgroundTask\MessengerBackgroundTaskDispatcher;
+use Pushword\Core\BackgroundTask\RunCommandHandler;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
 use Pushword\Core\Content\ContentPipelineFactory;
@@ -25,6 +27,7 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
 
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Twig\Extension\StringLoaderExtension;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -108,6 +111,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(NotificationEmailSender::class)
         ->arg('$mailer', service(MailerInterface::class)->nullOnInvalid())
         ->public();
+
+    // Background task dispatchers - Messenger mode (only when symfony/messenger is installed)
+    if (interface_exists(MessageBusInterface::class)) {
+        $services->set(MessengerBackgroundTaskDispatcher::class);
+        $services->set(RunCommandHandler::class);
+    }
 
     // OAuth Extension - only register if KnpU OAuth2 Client Bundle is installed
     if (class_exists(ClientRegistry::class)) {

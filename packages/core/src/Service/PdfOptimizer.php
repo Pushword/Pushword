@@ -3,6 +3,7 @@
 namespace Pushword\Core\Service;
 
 use Psr\Log\LoggerInterface;
+use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
@@ -15,7 +16,7 @@ final class PdfOptimizer
 
     public function __construct(
         private readonly MediaStorageAdapter $mediaStorage,
-        private readonly string $projectDir,
+        private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
         private readonly LoggerInterface $logger,
         private readonly string $pdfPreset = 'ebook',
         private readonly bool $pdfLinearize = true,
@@ -223,15 +224,11 @@ final class PdfOptimizer
      */
     public function runBackgroundOptimization(string $fileName): void
     {
-        $process = new Process([
-            'php',
-            'bin/console',
+        $this->backgroundTaskDispatcher->dispatch(
+            'pdf-optimize-'.md5($fileName),
+            ['php', 'bin/console', 'pw:pdf:optimize', $fileName],
             'pw:pdf:optimize',
-            $fileName,
-        ]);
-        $process->setWorkingDirectory($this->projectDir);
-        $process->disableOutput();
-        $process->start();
+        );
     }
 
     private function formatBytes(int $bytes): string

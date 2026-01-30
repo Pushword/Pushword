@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Pushword\Flat\Tests\Service;
 
 use Override;
+use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Flat\Service\DeferredExportProcessor;
 use ReflectionClass;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -15,7 +15,7 @@ use Symfony\Component\Filesystem\Filesystem;
 
 final class DeferredExportProcessorTest extends KernelTestCase
 {
-    private BackgroundProcessManager $processManager;
+    private BackgroundTaskDispatcherInterface $backgroundTaskDispatcher;
 
     private string $tempDir;
 
@@ -24,9 +24,9 @@ final class DeferredExportProcessorTest extends KernelTestCase
     {
         self::bootKernel();
 
-        /** @var BackgroundProcessManager $pm */
-        $pm = self::getContainer()->get(BackgroundProcessManager::class);
-        $this->processManager = $pm;
+        /** @var BackgroundTaskDispatcherInterface $dispatcher */
+        $dispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
+        $this->backgroundTaskDispatcher = $dispatcher;
 
         $this->tempDir = sys_get_temp_dir().'/deferred-export-test-'.uniqid();
         mkdir($this->tempDir, 0755, true);
@@ -48,7 +48,7 @@ final class DeferredExportProcessorTest extends KernelTestCase
         bool $autoExportEnabled = true,
     ): DeferredExportProcessor {
         return new DeferredExportProcessor(
-            $this->processManager,
+            $this->backgroundTaskDispatcher,
             $this->tempDir,
             $useBackgroundProcess,
             $autoExportEnabled,
