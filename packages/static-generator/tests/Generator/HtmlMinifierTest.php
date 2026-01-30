@@ -29,7 +29,7 @@ class HtmlMinifierTest extends TestCase
 
     public function testRemoveExtraWhiteSpaceCompressesWhitespace(): void
     {
-        $html = "<!DOCTYPE html><html><body><p>text    with    spaces</p></body></html>";
+        $html = '<!DOCTYPE html><html><body><p>text    with    spaces</p></body></html>';
 
         $result = HtmlMinifier::removeExtraWhiteSpace($html);
 
@@ -47,7 +47,7 @@ class HtmlMinifierTest extends TestCase
 
     public function testRemoveExtraWhiteSpacePreservesCodeTags(): void
     {
-        $html = "<!DOCTYPE html><html><body><code>  code  content  </code></body></html>";
+        $html = '<!DOCTYPE html><html><body><code>  code  content  </code></body></html>';
 
         $result = HtmlMinifier::removeExtraWhiteSpace($html);
 

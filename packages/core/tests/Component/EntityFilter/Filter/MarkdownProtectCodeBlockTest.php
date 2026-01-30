@@ -14,7 +14,7 @@ class MarkdownProtectCodeBlockTest extends TestCase
 
         $protected = $filter->protect($original);
 
-        self::assertStringNotContainsString("```php", $protected);
+        self::assertStringNotContainsString('```php', $protected);
         self::assertStringContainsString('___CODE_BLOCK_PLACEHOLDER_', $protected);
 
         $restored = $filter->restore([$protected]);
