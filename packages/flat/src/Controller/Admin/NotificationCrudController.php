@@ -18,6 +18,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use Override;
 use Pushword\Flat\Entity\AdminNotification;
+use Symfony\Component\Translation\TranslatableMessage;
 
 /**
  * Admin CRUD controller for viewing and managing notifications.
@@ -36,11 +37,11 @@ final class NotificationCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInSingular('Notification')
-            ->setEntityLabelInPlural('Notifications')
+            ->setEntityLabelInSingular('flatNotificationSingular')
+            ->setEntityLabelInPlural('flatNotificationPlural')
             ->setDefaultSort(['createdAt' => 'DESC'])
-            ->setPageTitle(Crud::PAGE_INDEX, 'Admin Notifications')
-            ->setPageTitle(Crud::PAGE_DETAIL, static fn (AdminNotification $n): string => \sprintf('Notification #%d', $n->id))
+            ->setPageTitle(Crud::PAGE_INDEX, 'flatNotificationIndexTitle')
+            ->setPageTitle(Crud::PAGE_DETAIL, static fn (AdminNotification $n): TranslatableMessage => new TranslatableMessage('flatNotificationDetailTitle', ['%id%' => $n->id]))
             ->showEntityActionsInlined();
     }
 
@@ -58,9 +59,9 @@ final class NotificationCrudController extends AbstractCrudController
     {
         return $filters
             ->add(ChoiceFilter::new('type')->setChoices([
-                'Conflict' => AdminNotification::TYPE_CONFLICT,
-                'Sync Error' => AdminNotification::TYPE_SYNC_ERROR,
-                'Lock Info' => AdminNotification::TYPE_LOCK_INFO,
+                'flatNotificationTypeConflict' => AdminNotification::TYPE_CONFLICT,
+                'flatNotificationTypeSyncError' => AdminNotification::TYPE_SYNC_ERROR,
+                'flatNotificationTypeLockInfo' => AdminNotification::TYPE_LOCK_INFO,
             ]))
             ->add(BooleanFilter::new('isRead'));
     }
@@ -70,9 +71,9 @@ final class NotificationCrudController extends AbstractCrudController
     {
         yield ChoiceField::new('type')
             ->setChoices([
-                'Conflict' => AdminNotification::TYPE_CONFLICT,
-                'Sync Error' => AdminNotification::TYPE_SYNC_ERROR,
-                'Lock Info' => AdminNotification::TYPE_LOCK_INFO,
+                'flatNotificationTypeConflict' => AdminNotification::TYPE_CONFLICT,
+                'flatNotificationTypeSyncError' => AdminNotification::TYPE_SYNC_ERROR,
+                'flatNotificationTypeLockInfo' => AdminNotification::TYPE_LOCK_INFO,
             ])
             ->renderAsBadges([
                 AdminNotification::TYPE_CONFLICT => 'danger',
@@ -85,14 +86,14 @@ final class NotificationCrudController extends AbstractCrudController
             ->hideOnForm();
 
         yield TextField::new('host')
-            ->setLabel('Host');
+            ->setLabel('flatNotificationHostLabel');
 
         yield BooleanField::new('isRead')
-            ->setLabel('Read')
+            ->setLabel('flatNotificationReadLabel')
             ->renderAsSwitch(false);
 
         yield DateTimeField::new('createdAt')
-            ->setLabel('Date')
+            ->setLabel('flatNotificationDateLabel')
             ->setFormat('yyyy-MM-dd HH:mm');
     }
 }

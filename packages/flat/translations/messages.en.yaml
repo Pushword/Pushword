@@ -1,4 +1,14 @@
 flatConflictDetected: "Conflict detected on %entity%. Backup file created: %backup%"
+flatNotificationDateLabel: Date
+flatNotificationDetailTitle: "Notification #%id%"
+flatNotificationHostLabel: Host
+flatNotificationIndexTitle: "Admin Notifications"
+flatNotificationPlural: Notifications
+flatNotificationReadLabel: Read
+flatNotificationSingular: Notification
+flatNotificationTypeConflict: Conflict
+flatNotificationTypeLockInfo: "Lock Info"
+flatNotificationTypeSyncError: "Sync Error"
 flatFilesModifiedNotification: "Flat files have been modified. Synchronization recommended."
 flatLockAcquired: "Flat lock activated."
 flatLockReleased: "Flat lock released."

@@ -32,6 +32,8 @@ adminReviewTitleLabel: Title
 adminReviewTranslationsHelp: 'AI-generated translations'
 adminReviewTranslationsLabel: Translations
 conversationContentPlaceholder: Message
+conversationMessageBy: 'by '
+conversationMessagePostedOn: 'Message posted on'
 conversationEmailInvalid: 'Invalid email address'
 conversationEmailOrPhonePlaceholder: 'Email or Phone'
 conversationEmailPlaceholder: Email

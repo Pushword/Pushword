@@ -125,6 +125,8 @@ adminPageTwitterSiteHelp: "<code>@Username</code>, valeur par défaut si régler
 
 adminPageTwitterSiteLabel: 'Twitter Site'
 adminPageUpdateNotificationTitle: '[%appName%] Edition en cours'
+adminPageUpdateNotificationEdit: Editer
+adminPageUpdateNotificationUpdatedOn: "Page mise à jour le"
 adminPageUpdatedAtLabel: 'Mise à jour le'
 adminPageWeightHelp: "Permet d'ordonner les pages. Les valeurs les plus hautes apparaissent en premier."
 adminPageWeightLabel: Poids
@@ -138,6 +140,7 @@ adminStaticPleaseWait: 'Veuillez patienter, la génération est en cours. Cette 
 adminStaticStartedAt: 'Démarré à'
 adminStaticStarting: 'Démarrage de la génération...'
 adminStaticUpdated: 'Site actualisé avec succès.'
+adminUserCityLabel: Ville
 adminUserCreatedAtLabel: "Date d'enregistrement"
 adminUserDateOfBirthLabel: 'Date de naissance'
 adminUserEmailLabel: 'Adresse mail'

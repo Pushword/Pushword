@@ -1,4 +1,5 @@
 en: English
+cardButtonDefaultLabel: Book
 errorDescription: '<a href="/" class="btn btn-secondary">Back</a>'
 errorServerSay: 'The server indicates'
 errorTitle: 'Oops! An error...'

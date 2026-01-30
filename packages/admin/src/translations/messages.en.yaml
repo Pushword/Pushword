@@ -123,6 +123,8 @@ adminPageTwitterCreatorLabel: "Twitter Creator"
 adminPageTwitterSiteHelp: "<code>@Username</code>, default value if set in the App."
 adminPageTwitterSiteLabel: "Twitter Site"
 adminPageUpdateNotificationTitle: "[%appName%] Editing in progress"
+adminPageUpdateNotificationEdit: Edit
+adminPageUpdateNotificationUpdatedOn: "Page updated on"
 adminPageUpdatedAtLabel: "Updated on"
 adminPageWeightHelp: "Allows sorting pages. Higher values appear first."
 adminPageWeightLabel: Weight
@@ -137,6 +139,7 @@ adminStaticPleaseWait: "Please wait, generation is in progress. This page will r
 adminStaticStartedAt: "Started at"
 adminStaticStarting: "Starting generation..."
 adminStaticUpdated: "Site updated successfully."
+adminUserCityLabel: City
 adminUserCreatedAtLabel: "Registration date"
 adminUserDateOfBirthLabel: "Date of birth"
 adminUserEmailLabel: "Email address"
@@ -167,17 +170,17 @@ adminUserApiTokenRegenerateConfirm: Regenerate token? The old token will stop wo
 adminUserApiTokenRevokeConfirm: Revoke the API token?
 datetimeMediumFormat: 'Y-m-d \a\t H:m'
 md_csChapeau: Chapeau
-md_csChapeauDescription: "Le chapeau est le paragraphe introductif placé sous le titre."
+md_csChapeauDescription: "The chapeau is the introductory paragraph placed below the title."
 md_csChildrenList: "List children pages (blog/news/...)"
 md_csEmphasis: Emphasis
 md_csImage: "Image and gallery"
 md_csLink: Link
-md_csLinkBotHidden: "Lien Invisible pour les robots"
-md_csLinkHomepage: "Lien vers la page d'accueil"
-md_csLinkOtherSite: "Lien vers un autre site"
+md_csLinkBotHidden: "Link hidden from bots"
+md_csLinkHomepage: "Link to the homepage"
+md_csLinkOtherSite: "Link to another site"
 md_csLinkToFragment: "Link to fragment"
 md_csLinkToMail: "Link to mail"
-md_csLinkToPhone: "Vers un n° de téléphone"
+md_csLinkToPhone: "Link to a phone number"
 md_csLists: Lists
 md_csOthers: Others
 md_csPageH1: "Editor Hidden Super Power"

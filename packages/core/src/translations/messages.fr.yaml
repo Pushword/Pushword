@@ -1,11 +1,12 @@
 en: English
+cardButtonDefaultLabel: Réserver
 errorDescription: '<a href="/" class="btn btn-secondary">Retour</a>'
 errorServerSay: "Le serveur indique"
 errorTitle: "Oops! Une erreur..."
 feedAlternateTitle: Flux
 feedDescription: "Dernière page publiée."
 fr: Français
-mediaDuplicateWarning: 'It looks like file was ever added on the disk : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" href="%deleteMediaUrl%">Delete</a>'
+mediaDuplicateWarning: 'Ce fichier semble déjà présent sur le disque : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Supprimer ce doublon</a>'
 mediaNameWasChanged: "Le nom a été changé du fait d'un média similaire."
 navigationToggle: "Afficher/Cacher le menu"
 powered_by: "Propulsé par"

@@ -1,4 +1,14 @@
 flatConflictDetected: "Conflit détecté sur %entity%. Fichier de sauvegarde créé : %backup%"
+flatNotificationDateLabel: Date
+flatNotificationDetailTitle: "Notification n°%id%"
+flatNotificationHostLabel: Hôte
+flatNotificationIndexTitle: "Notifications d'administration"
+flatNotificationPlural: Notifications
+flatNotificationReadLabel: Lu
+flatNotificationSingular: Notification
+flatNotificationTypeConflict: Conflit
+flatNotificationTypeLockInfo: "Info de verrouillage"
+flatNotificationTypeSyncError: "Erreur de synchronisation"
 flatFilesModifiedNotification: "Des fichiers flat ont été modifiés. Synchronisation recommandée."
 flatLockAcquired: "Lock flat activé."
 flatLockReleased: "Lock flat libéré."

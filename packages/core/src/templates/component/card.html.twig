@@ -63,7 +63,7 @@
       {{ description|markdown }}
     {% endif %}
     {% if buttonLink %}
-      <p class="mt-6!">{{ link(buttonLinkLabel|default('Réserver'), buttonLink, {'class': 'link-btn'}) }}</p>
+      <p class="mt-6!">{{ link(buttonLinkLabel|default('cardButtonDefaultLabel'|trans), buttonLink, {'class': 'link-btn'}) }}</p>
     {% endif %}
   </div>
   {% endif %}
