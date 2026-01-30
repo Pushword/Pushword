@@ -7,9 +7,9 @@ use DateTimeImmutable;
 use Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Generator\CNAMEGenerator;
 use Pushword\StaticGenerator\Generator\CopierGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
@@ -172,7 +172,7 @@ class StaticGeneratorTest extends KernelTestCase
         $projectDir = self::getContainer()->getParameter('kernel.project_dir');
 
         return $this->staticAppGenerator = new StaticAppGenerator(
-            self::getContainer()->get(AppPool::class),
+            self::getContainer()->get(SiteRegistry::class),
             $generatorBag,
             $generatorBag->get(RedirectionManager::class), // @phpstan-ignore-line
             $logger,

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Admin;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Service\FlatChangeDetector;
 use Pushword\Flat\Service\FlatLockManager;
 use Pushword\Flat\Sync\ConflictResolver;
@@ -24,7 +24,7 @@ final readonly class FlatSyncNotifier
         private ConflictResolver $conflictResolver,
         private TranslatorInterface $translator,
         private RequestStack $requestStack,
-        private AppPool $apps,
+        private SiteRegistry $apps,
     ) {
     }
 

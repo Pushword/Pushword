@@ -10,11 +10,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use LogicException;
 use Psr\Log\LoggerInterface;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\Email\EmailEnvelope;
 use Pushword\Core\Service\Email\NotificationEmailSender;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\LastTime;
 
 use function Safe\mkdir;
@@ -29,11 +29,11 @@ class PageUpdateNotifier
 
     private string $interval = '';
 
-    private AppConfig $app;
+    private SiteConfig $app;
 
     public function __construct(
         private readonly NotificationEmailSender $emailSender,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly string $varDir,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,

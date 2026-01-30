@@ -1,5 +1,5 @@
 {% set page = object %}
-{% do apps.switchCurrentApp(page.host) %}
+{% do apps.switchSite(page.host) %}
 <html style="scroll-behavior:auto">
     <body style="scroll-behavior:auto">
 {{ block('css', view('/base.html.twig')) }}

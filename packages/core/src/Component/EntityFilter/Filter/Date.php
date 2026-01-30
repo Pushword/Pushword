@@ -4,10 +4,10 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Exception;
 use IntlDateFormatter;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_replace;
 
@@ -18,7 +18,7 @@ class Date implements FilterInterface
     private array $formatterCache = [];
 
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
     ) {
     }
 

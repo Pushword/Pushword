@@ -2,8 +2,9 @@
 
 namespace Pushword\Core\Controller;
 
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\RequestContext;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -15,11 +16,12 @@ use Twig\Environment as Twig;
 final class SitemapController extends AbstractPushwordController
 {
     public function __construct(
-        AppPool $apps,
+        SiteRegistry $apps,
+        RequestContext $requestContext,
         Twig $twig,
         private readonly PageRepository $pageRepository,
     ) {
-        parent::__construct($apps, $twig);
+        parent::__construct($apps, $requestContext, $twig);
     }
 
     #[Route('/{_locale}sitemap.{_format}', name: 'pushword_page_sitemap', requirements: ['_locale' => RoutePatterns::LOCALE, '_format' => 'xml|txt'], methods: ['GET', 'HEAD'], priority: -10)]

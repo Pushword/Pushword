@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Command;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Sync\ConflictResolver;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -20,7 +20,7 @@ final readonly class FlatConflictsClearCommand
 {
     public function __construct(
         private ConflictResolver $conflictResolver,
-        private AppPool $apps,
+        private SiteRegistry $apps,
     ) {
     }
 

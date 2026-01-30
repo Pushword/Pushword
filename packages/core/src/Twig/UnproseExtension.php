@@ -2,14 +2,14 @@
 
 namespace Pushword\Core\Twig;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Environment as Twig;
 
 final class UnproseExtension
 {
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         public Twig $twig,
     ) {
     }

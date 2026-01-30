@@ -12,8 +12,8 @@ use Imagine\Image\Palette\Color\ColorInterface;
 use Imagine\Image\Palette\RGB;
 use Imagine\Image\Point;
 use Imagine\Imagick\Imagine;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Filesystem\Filesystem;
 use Twig\Environment as Twig;
 
@@ -30,7 +30,7 @@ class PageOpenGraphImageGenerator
     public ?Page $page = null;
 
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly Twig $twig,
         private readonly Filesystem $filesystem,
         private readonly string $publicDir,

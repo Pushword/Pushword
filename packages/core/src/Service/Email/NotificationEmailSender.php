@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pushword\Core\Service\Email;
 
 use Psr\Log\LoggerInterface;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
@@ -25,7 +25,7 @@ final readonly class NotificationEmailSender
 {
     public function __construct(
         private ?MailerInterface $mailer,
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private ?Environment $twig,
         private ?LoggerInterface $logger,
     ) {
@@ -192,7 +192,7 @@ final readonly class NotificationEmailSender
         return true;
     }
 
-    private function resolveFromAddress(AppConfig $app, ?string $configKey): string
+    private function resolveFromAddress(SiteConfig $app, ?string $configKey): string
     {
         // 1. Try package-specific key
         if (null !== $configKey) {
@@ -217,7 +217,7 @@ final readonly class NotificationEmailSender
      *
      * @return string[]
      */
-    private function resolveToAddresses(AppConfig $app, string|array|null $configKey): array
+    private function resolveToAddresses(SiteConfig $app, string|array|null $configKey): array
     {
         // Handle array of addresses directly (for direct recipients like user email)
         if (\is_array($configKey)) {

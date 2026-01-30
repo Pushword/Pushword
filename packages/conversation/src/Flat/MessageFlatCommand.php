@@ -2,7 +2,7 @@
 
 namespace Pushword\Conversation\Flat;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final readonly class MessageFlatCommand
 {
     public function __construct(
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private ConversationSync $sync,
     ) {
     }

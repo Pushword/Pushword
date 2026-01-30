@@ -48,7 +48,7 @@ return RectorConfig::configure()
     ->withSkip([
         'packages/core/src/Twig/AppExtension.php',
         'packages/skeleton/src/Kernel.php',
-        'packages/core/src/Component/App/AppConfig.php',
+        'packages/core/src/Site/SiteConfig.php',
         NullToStrictStringFuncCallArgRector::class,
         FlipTypeControlToUseExclusiveTypeRector::class,
         // @see https://github.com/rectorphp/rector/issues/9519

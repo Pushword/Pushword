@@ -2,7 +2,7 @@
 
 namespace Pushword\Conversation\Flat;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -12,7 +12,7 @@ use Symfony\Component\Console\Command\Command;
 final readonly class MessageImportCommand
 {
     public function __construct(
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private ConversationSync $sync,
     ) {
     }
@@ -24,7 +24,7 @@ final readonly class MessageImportCommand
         ?string $host = null,
     ): int {
         if (null !== $host) {
-            $this->apps->switchCurrentApp($host);
+            $this->apps->switchSite($host);
         }
 
         $this->sync->importer->importExternal($csvPath);

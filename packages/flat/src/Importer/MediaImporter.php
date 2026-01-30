@@ -8,9 +8,9 @@ use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
 use Override;
 use Psr\Log\LoggerInterface;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\MediaStorageAdapter;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaCsvHelper;
 use Pushword\Flat\Exporter\MediaExporter;
 use RuntimeException;
@@ -52,7 +52,7 @@ class MediaImporter extends AbstractImporter
 
     public function __construct(
         protected EntityManagerInterface $em,
-        protected AppPool $apps,
+        protected SiteRegistry $apps,
         public string $mediaDir,
         public string $projectDir,
         private readonly MediaStorageAdapter $mediaStorage,

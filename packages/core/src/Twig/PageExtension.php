@@ -10,12 +10,12 @@ use Pagerfanta\Pagerfanta;
 use Pagerfanta\PagerfantaInterface;
 use Pagerfanta\RouteGenerator\RouteGeneratorFactoryInterface;
 use Pagerfanta\Twig\View\TwigView;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkCollectorService;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\StringToDQLCriteria;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -25,7 +25,7 @@ final class PageExtension
     public function __construct(
         private readonly PageRepository $pageRepo,
         public PushwordRouteGenerator $router,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         public Twig $twig,
         private readonly RouteGeneratorFactoryInterface $routeGeneratorFactory,
         private readonly LinkCollectorService $linkCollector,

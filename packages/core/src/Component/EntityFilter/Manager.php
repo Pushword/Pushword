@@ -4,9 +4,9 @@ namespace Pushword\Core\Component\EntityFilter;
 
 use Exception;
 use LogicException;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_match;
 
@@ -17,9 +17,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  */
 final class Manager
 {
-    private readonly AppConfig $app;
+    private readonly SiteConfig $app;
 
-    private readonly AppPool $apps;
+    private readonly SiteRegistry $apps;
 
     /** @var array<string, mixed> */
     private array $propertyCache = [];

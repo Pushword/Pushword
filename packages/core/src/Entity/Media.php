@@ -3,15 +3,14 @@
 namespace Pushword\Core\Entity;
 
 use DateTime;
-use Deprecated;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
 use LogicException;
-use Pushword\Core\Entity\MediaTrait\ImageTrait;
-use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
+use Pushword\Core\Entity\Embeddable\ImageData;
+use Pushword\Core\Entity\SharedTrait\ExtensiblePropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
 use Pushword\Core\Entity\SharedTrait\Taggable;
@@ -33,10 +32,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Yaml\Yaml;
 use Vich\UploaderBundle\Mapping\Attribute as Vich;
 
-/**
- * #UniqueEntity({"media"}, message="Media name is ever taken by another media.")
- * #UniqueEntity({"name"}, message="Name is ever taken by another media..").
- */
 #[Vich\Uploadable]
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
@@ -44,19 +39,21 @@ use Vich\UploaderBundle\Mapping\Attribute as Vich;
 #[ORM\Table(name: 'media')]
 class Media implements IdInterface, Taggable, Stringable
 {
-    use CustomPropertiesTrait;
+    use ExtensiblePropertiesTrait;
 
     use IdTrait;
-
-    use ImageTrait;
 
     use TagsTrait;
 
     use TimestampableTrait;
 
+    #[ORM\Embedded(class: ImageData::class, columnPrefix: false)]
+    public ImageData $imageData;
+
     public function __construct()
     {
         $this->mainImagePages = new ArrayCollection();
+        $this->imageData = new ImageData();
         $this->initTimestampableProperties();
     }
 
@@ -66,19 +63,11 @@ class Media implements IdInterface, Taggable, Stringable
     protected string $projectDir = '';
 
     #[ORM\Column(name: 'media', type: Types::STRING, length: 255)]
-    protected string $fileName = ''; // eg : my-file.jpg
+    protected string $fileName = '';
 
-    /**
-     * NOTE : this is used only for media renaming.
-     */
     protected string $fileNameBeforeUpdate = '';
 
-    /**
-     * History of previous file names (JSON array).
-     * Used to track filename changes and prevent reuse of old filenames.
-     *
-     * @var string[]
-     */
+    /** @var string[] */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     protected array $fileNameHistory = [];
 
@@ -88,17 +77,12 @@ class Media implements IdInterface, Taggable, Stringable
     #[ORM\Column(type: Types::INTEGER)]
     protected int $size = 0;
 
-    /**
-     * @var UploadedFile|File|null
-     */
     #[Vich\UploadableField(mapping: 'media_media', fileNameProperty: 'slug', size: 'size', mimeType: 'mimeType', dimensions: 'dimensions')]
-    protected $mediaFile;
+    protected UploadedFile|File|null $mediaFile = null;
 
-    /**
-     * @var Collection<int, Page>
-     */
+    /** @var Collection<int, Page> */
     #[ORM\OneToMany(targetEntity: Page::class, mappedBy: 'mainImage')]
-    protected ?Collection $mainImagePages; // @phpstan-ignore-line TODO drop Page
+    protected ?Collection $mainImagePages; // @phpstan-ignore-line
 
     public function setProjectDir(string $projectDir): self
     {
@@ -125,8 +109,7 @@ class Media implements IdInterface, Taggable, Stringable
         }
 
         $executionContext
-            ->buildViolation("Attention ! Vous essayez de remplacer un fichier d'un type ("
-                .$mediaFileMimeType.") par un fichier d'une autre type (".$mediaFileMimeType.')')
+            ->buildViolation('mediaTypeMismatch')
             ->atPath('fileName')
             ->addViolation()
         ;
@@ -235,7 +218,6 @@ class Media implements IdInterface, Taggable, Stringable
             return null;
         }
 
-        // Normalize image/jpg to image/jpeg (standard MIME type)
         if ('image/jpg' === $mimeType) {
             return 'image/jpeg';
         }
@@ -255,9 +237,7 @@ class Media implements IdInterface, Taggable, Stringable
         return $this;
     }
 
-    /**
-     * @return Collection<int, Page>
-     */
+    /** @return Collection<int, Page> */
     public function getMainImagePages(): Collection
     {
         return $this->mainImagePages ?? throw new Exception();
@@ -273,17 +253,11 @@ class Media implements IdInterface, Taggable, Stringable
         }
     }
 
-    /**
-     * this is used only for media renaming.
-     */
     public function getFileNameBeforeUpdate(): string
     {
         return $this->fileNameBeforeUpdate;
     }
 
-    /**
-     * this is used only for media renaming.
-     */
     public function setFileNameBeforeUpdate(string $fileNameBeforeUpdate): self
     {
         if ('' === $this->fileNameBeforeUpdate || '' === $fileNameBeforeUpdate) {
@@ -293,17 +267,13 @@ class Media implements IdInterface, Taggable, Stringable
         return $this;
     }
 
-    /**
-     * @return string[]
-     */
+    /** @return string[] */
     public function getFileNameHistory(): array
     {
         return $this->fileNameHistory;
     }
 
-    /**
-     * @param string[] $fileNameHistory
-     */
+    /** @param string[] $fileNameHistory */
     public function setFileNameHistory(array $fileNameHistory): self
     {
         $this->fileNameHistory = $fileNameHistory;
@@ -311,9 +281,6 @@ class Media implements IdInterface, Taggable, Stringable
         return $this;
     }
 
-    /**
-     * Add a filename to history (if not already present).
-     */
     public function addFileNameToHistory(string $fileName): self
     {
         if ('' !== $fileName && ! \in_array($fileName, $this->fileNameHistory, true)) {
@@ -323,15 +290,70 @@ class Media implements IdInterface, Taggable, Stringable
         return $this;
     }
 
-    /**
-     * Check if a filename is in this media's history.
-     */
     public function hasFileNameInHistory(string $fileName): bool
     {
         return \in_array($fileName, $this->fileNameHistory, true);
     }
 
-    /**************** Slug ***************/
+    // --- Image delegation to ImageData embeddable ---
+
+    public function isImage(): bool
+    {
+        return null !== $this->getMimeType() && $this->imageData->isImage($this->getMimeType());
+    }
+
+    /** @param array<int>|null $dimensions */
+    public function setDimensions(?array $dimensions): self
+    {
+        $this->imageData->setDimensions($dimensions);
+
+        return $this;
+    }
+
+    public function getDimensions(): ?Dimensions
+    {
+        return $this->imageData->getDimensions();
+    }
+
+    public function getRatio(): ?float
+    {
+        return $this->imageData->ratio;
+    }
+
+    public function getRatioLabel(): ?string
+    {
+        return $this->imageData->ratioLabel;
+    }
+
+    public function getWidth(): ?int
+    {
+        return $this->imageData->width;
+    }
+
+    public function getHeight(): ?int
+    {
+        return $this->imageData->height;
+    }
+
+    public function getMainColor(): ?string
+    {
+        return $this->imageData->mainColor;
+    }
+
+    public function getMainColorOpposite(): ?string
+    {
+        return $this->imageData->getMainColorOpposite();
+    }
+
+    public function setMainColor(?string $mainColor): self
+    {
+        $this->imageData->mainColor = $mainColor;
+
+        return $this;
+    }
+
+    // --- Slug ---
+
     protected string $slug = '';
 
     public function setSlug(?string $slug): self
@@ -350,9 +372,6 @@ class Media implements IdInterface, Taggable, Stringable
         return $this->getSlug();
     }
 
-    /**
-     * Used by the admin interface.
-     */
     public function setSlugForce(?string $slug): self
     {
         if ('' === $this->alt && null !== $slug) {
@@ -381,10 +400,6 @@ class Media implements IdInterface, Taggable, Stringable
         return $this;
     }
 
-    /**
-     * Used by VichUploader.
-     * Permit to setFileName from filename.
-     */
     private function setSlugForNewMedia(string $filename): self
     {
         $mediaFile = $this->getMediaFile();
@@ -432,8 +447,10 @@ class Media implements IdInterface, Taggable, Stringable
         return $this->slug;
     }
 
+    // --- Alt text ---
+
     #[ORM\Column(name: 'name', type: Types::STRING, length: 100, unique: true)]
-    protected string $alt = ''; // used for alt text
+    protected string $alt = '';
 
     #[ORM\Column(name: 'name_search', type: Types::STRING, length: 100, options: ['default' => ''])]
     protected string $altSearch = '';
@@ -445,8 +462,6 @@ class Media implements IdInterface, Taggable, Stringable
     {
         return $this->fileName;
     }
-
-    private string $softAlt = '';
 
     public function setAlt(?string $alt, bool $soft = false): self
     {
@@ -461,6 +476,8 @@ class Media implements IdInterface, Taggable, Stringable
 
         return $this;
     }
+
+    private string $softAlt = '';
 
     private function updateAltSearch(): void
     {
@@ -497,9 +514,7 @@ class Media implements IdInterface, Taggable, Stringable
             : $this->alt;
     }
 
-    /**
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     public function getAltsParsed(): array
     {
         $this->alts = (string) $this->alts;
@@ -550,9 +565,9 @@ class Media implements IdInterface, Taggable, Stringable
         return $alts[$locale] ?? $this->getAlt();
     }
 
-    /**
-     * @var string|resource|null
-     */
+    // --- Hash ---
+
+    /** @var string|resource|null */
     #[ORM\Column(type: Types::BINARY, length: 20, options: ['default' => ''])]
     protected $hash;
 
@@ -592,19 +607,4 @@ class Media implements IdInterface, Taggable, Stringable
 
         return $this;
     }
-
-    /**************** Backward Compatibility (Deprecated) ***************/
-    #[Deprecated(message: 'Use getFileName() instead', since: '1.0')]
-    public function getMedia(): string
-    {
-        return $this->getFileName();
-    }
-
-    #[Deprecated(message: 'Use getAlt() instead', since: '1.0')]
-    public function getName(bool $onlyName = false): string
-    {
-        return $this->getAlt($onlyName);
-    }
-
-    public bool $disableRemoveFile = false;
 }

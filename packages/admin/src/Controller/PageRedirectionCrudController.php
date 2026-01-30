@@ -93,7 +93,7 @@ class PageRedirectionCrudController extends PageCrudController
             return '';
         }
 
-        $target = $page->getRedirection();
+        $target = $page->getRedirectionUrl();
         $truncated = mb_strlen($target) > 40 ? mb_substr($target, 0, 40).'...' : $target;
 
         return sprintf(

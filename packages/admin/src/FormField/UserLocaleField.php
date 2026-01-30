@@ -27,7 +27,7 @@ class UserLocaleField extends AbstractField
     private function getLocaleChoices(): array
     {
         $choices = [];
-        foreach ($this->formFieldManager->apps->getApps() as $app) {
+        foreach ($this->formFieldManager->apps->getAll() as $app) {
             foreach ($app->getLocales() as $locale) {
                 $choices[$locale] = $locale;
             }

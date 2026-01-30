@@ -8,7 +8,7 @@ use Pushword\Conversation\Translation\TranslationException;
 use Pushword\Conversation\Translation\TranslatorInterface;
 
 /**
- * Testable version of TranslationManager that doesn't require AppPool.
+ * Testable version of TranslationManager that doesn't require SiteRegistry.
  */
 final class TestableTranslationManager
 {

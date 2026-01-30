@@ -20,7 +20,7 @@ class HostField extends AbstractField
             $host = $request->query->get('host');
 
             if (\is_string($host)) {
-                $this->formFieldManager->apps->switchCurrentApp($host); // todo move it before fields initializations
+                $this->formFieldManager->apps->switchSite($host); // todo move it before fields initializations
 
                 return $host;
             }

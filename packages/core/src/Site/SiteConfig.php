@@ -1,19 +1,14 @@
 <?php
 
-namespace Pushword\Core\Component\App;
+namespace Pushword\Core\Site;
 
+use Pushword\Core\Template\TemplateResolver;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Contracts\Cache\CacheInterface;
-use Twig\Environment as Twig;
 
-#[\AllowDynamicProperties]
-final class AppConfig
+final class SiteConfig
 {
     /** @var string[] */
-    private array $hosts = [];
-
-    /** @var array<(string|int), mixed> */
-    private array $customProperties = [];
+    private array $hosts;
 
     private string $locale;
 
@@ -24,10 +19,6 @@ final class AppConfig
 
     private string $name;
 
-    /**
-     * Defined in packages/core/src/DependencyInjection/Configuration.php / pushword.{yaml|php}
-     * Default value : @Pushword.
-     */
     private string $template;
 
     /** @var array<string, string> */
@@ -35,36 +26,40 @@ final class AppConfig
 
     private bool $entityCanOverrideFilters;
 
-    /** @var array{}|array{
-     *   javascripts: ?string[],
-     *   stylesheets: ?string[],
-     *   vite_stylesheets: ?string[],
-     *   vite_javascripts: ?string[]
-     * } */
+    /** @var array<string, mixed> */
     private array $assets = [];
 
-    private Twig $twig;
+    /** @var array<(string|int), mixed> */
+    private array $customProperties = [];
 
-    private CacheInterface $cache;
+    private ?TemplateResolver $templateResolver = null;
 
-    /**
-     * First app locale is a bit weird ?
-     * It's assuming when defaultLocale is not set, it's the first app locale wich is the default locale.
-     */
     public string $firstAppLocale = 'fr';
 
     /** @param array<string, mixed> $properties */
     public function __construct(
         private readonly ParameterBagInterface $params,
         array $properties,
-        private readonly bool $isDefaultHost,
+        private readonly bool $isDefaultSite,
     ) {
-        foreach ($properties as $prop => $value) {
-            $this->setCustomProperty($prop, $value);
+        // Process custom_properties first (merge into the internal map)
+        if (isset($properties['custom_properties']) && \is_array($properties['custom_properties'])) {
+            foreach ($properties['custom_properties'] as $cpKey => $cpValue) {
+                $this->customProperties[(string) $cpKey] = $cpValue;
+            }
+        }
 
-            // TODO: solve why when i remove this, falt_import_dir disappear
-            $prop = static::normalizePropertyName($prop);
-            $this->$prop = $value; // @phpstan-ignore-line
+        foreach ($properties as $prop => $value) {
+            if ('custom_properties' === $prop) {
+                continue; // Already processed above
+            }
+
+            $this->customProperties[$prop] = $value;
+
+            $camelCase = static::normalizePropertyName($prop);
+            if (property_exists($this, $camelCase)) {
+                $this->$camelCase = $value; // @phpstan-ignore-line
+            }
         }
     }
 
@@ -75,17 +70,12 @@ final class AppConfig
         return lcfirst($string);
     }
 
-    public function setTwig(Twig $twig): void
+    public function setTemplateResolver(TemplateResolver $templateResolver): void
     {
-        $this->twig = $twig;
+        $this->templateResolver = $templateResolver;
     }
 
-    public function setCache(CacheInterface $cache): void
-    {
-        $this->cache = $cache;
-    }
-
-    /** @return array{app_base_url: string, app_name: string, app_color: mixed} */
+    /** @return array{app_base_url: string, app_name: string, app_color: mixed, pwApp: self} */
     public function getParamsForRendering(): array
     {
         return [
@@ -96,13 +86,10 @@ final class AppConfig
         ];
     }
 
-    /**
-     * Todo : change for getHost ?!
-     */
     public function getMainHost(): string
     {
         if ([] === $this->hosts) {
-            throw new \LogicException('No hosts defined for this app');
+            throw new \LogicException('No hosts defined for this site');
         }
 
         return $this->hosts[0];
@@ -151,19 +138,13 @@ final class AppConfig
         return $returnValue;
     }
 
-    /**
-     * @return string[]
-     */
+    /** @return string[] */
     public function getStringList(string $key): array
     {
-        $value = $this->getArray($key);
-
-        $toReturn = [];
-        foreach ($value as $v) {
-            $toReturn[] = \is_string($v) ? $v : throw new \Exception();
-        }
-
-        return $toReturn;
+        return array_map(
+            static fn (mixed $v): string => \is_string($v) ? $v : throw new \InvalidArgumentException('`'.$key.'` contains non-string values'),
+            $this->getArray($key),
+        );
     }
 
     public function getBoolean(string $key, bool $default = true): bool
@@ -187,7 +168,7 @@ final class AppConfig
             return $this->$method(); // @phpstan-ignore-line
         }
 
-        if (isset($this->$camelCaseKey)) { // @phpstan-ignore-line
+        if (property_exists($this, $camelCaseKey) && isset($this->$camelCaseKey)) { // @phpstan-ignore-line
             return $this->$camelCaseKey; // @phpstan-ignore-line
         }
 
@@ -236,125 +217,51 @@ final class AppConfig
     /** @return string[] */
     public function getJavascripts(): array
     {
+        /** @var string[] */
         return $this->assets['javascripts'] ?? [];
     }
 
     /** @return string[] */
     public function getViteStylesheets(): array
     {
+        /** @var string[] */
         return $this->assets['vite_stylesheets'] ?? [];
     }
 
     /** @return string[] */
     public function getViteJavascripts(): array
     {
+        /** @var string[] */
         return $this->assets['vite_javascripts'] ?? [];
     }
 
     /** @return string[] */
     public function getStylesheets(): array
     {
+        /** @var string[] */
         return $this->assets['stylesheets'] ?? [];
     }
 
     public function getView(?string $path = null, string $fallback = '@Pushword'): string
     {
-        $cacheKey = 'pushword.view.'.md5($this->getMainHost().'|'.$path.'|'.$fallback);
+        if (null === $this->templateResolver) {
+            throw new \LogicException('TemplateResolver not set. Call setTemplateResolver() first.');
+        }
 
-        return $this->cache->get($cacheKey, function () use ($path, $fallback): string {
-            return $this->resolveView($path, $fallback);
-        });
+        return $this->templateResolver->resolve($this, $path, $fallback);
     }
 
-    private function resolveView(?string $path, string $fallback): string
+    public function isDefaultSite(): bool
     {
-        if (null === $path) {
-            return $this->template.'/page/page.html.twig';
-        }
-
-        if ($this->isFullPath($path)) { // permits to get a component from a dedicated extension eg @pwEgTheme/page...
-            return $path;
-        }
-
-        if ('none' === $path) { // alias
-            $path = '/page/raw.twig';
-        }
-
-        $overrided = $this->getOverridedView($path);
-        if (null !== $overrided) {
-            return $overrided;
-        }
-
-        $name = $this->template.$path;
-
-        // check if twig template exist
-        try {
-            $this->twig->load($name);
-
-            return $name; // @phpstan-ignore-line
-        } finally {
-            return $fallback.$path; // @phpstan-ignore-line
-        }
+        return $this->isDefaultSite;
     }
 
-    private function getOverridedView(string $name): ?string
-    {
-        if (str_starts_with($name, '@')) {
-            $namePart = explode('/', $name, 2);
-            if (! isset($namePart[1])) {
-                throw new \Exception('Invalid view name: '.$name);
-            }
-            $name = $namePart[1];
-        }
-
-        $name = ('/' === $name[0] ? '' : '/').$name;
-
-        $templateDir = $this->getStr('template_dir');
-
-        $templateOverridedForHost = $templateDir.'/'.$this->getMainHost().$name;
-        if (file_exists($templateOverridedForHost)) {
-            return '/'.$this->getMainHost().$name;
-        }
-
-        $templateOverrided = $templateDir.'/'.ltrim($this->getTemplate(), '@').$name;
-        if (file_exists($templateOverrided)) {
-            return '/'.ltrim($this->getTemplate(), '@').$name;
-        }
-
-        $puswhordOverrided = $templateDir.'/pushword'.$name;
-        if (file_exists($puswhordOverrided)) {
-            return '/pushword'.$name;
-        }
-
-        $globalOverride = $templateDir.$name;
-        if (file_exists($globalOverride)) {
-            return $name;
-        }
-
-        return null;
-    }
-
-    private function isFullPath(string $path): bool
-    {
-        return str_starts_with($path, '@') && str_contains($path, '/');
-    }
-
-    public function isDefaultHost(): bool
-    {
-        return $this->isDefaultHost;
-    }
-
-    /**
-     * @return string[]|string
-     */
+    /** @return string[]|string */
     public function getHostForDoctrineSearch(): array|string
     {
-        return $this->isDefaultHost ? ['', $this->getMainHost()] : $this->getMainHost();
+        return $this->isDefaultSite ? ['', $this->getMainHost()] : $this->getMainHost();
     }
 
-    /**
-     * Get the value of locale.
-     */
     public function getLocale(): string
     {
         return $this->locale;
@@ -364,16 +271,12 @@ final class AppConfig
     {
         $defaultLocale = $this->getCustomProperty('defaultLocale') ?? $this->firstAppLocale;
 
-        assert(is_string($defaultLocale));
+        assert(\is_string($defaultLocale));
 
         return $defaultLocale;
     }
 
-    /**
-     * Get the value of locales.
-     *
-     * @return string[]
-     */
+    /** @return string[] */
     public function getLocales(): array
     {
         if (\is_string($this->locales)) {
@@ -383,9 +286,6 @@ final class AppConfig
         return $this->locales ?? throw new \Exception();
     }
 
-    /**
-     * Get the value of name.
-     */
     public function getName(): string
     {
         return $this->name;

@@ -3,10 +3,10 @@
 namespace Pushword\Core\Twig;
 
 use Cocur\Slugify\Slugify;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkCollectorService;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\FilesizeFormatter;
 use Pushword\Core\Utils\HtmlBeautifer;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -18,7 +18,7 @@ final class AppExtension
 {
     public function __construct(
         public PushwordRouteGenerator $router,
-        private AppPool $apps,
+        private SiteRegistry $apps,
         public Twig $twig,
         private Security $security,
         private LinkCollectorService $linkCollector,

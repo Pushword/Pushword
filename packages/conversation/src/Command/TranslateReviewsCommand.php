@@ -6,7 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Translation\ReviewTranslationService;
 use Pushword\Conversation\Translation\TranslationManager;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
@@ -21,7 +21,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final readonly class TranslateReviewsCommand
 {
     public function __construct(
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private EntityManagerInterface $entityManager,
         private ReviewTranslationService $translationService,
         private TranslationManager $translationManager,
@@ -45,7 +45,7 @@ final readonly class TranslateReviewsCommand
         $io = new SymfonyStyle($input, $output);
 
         $host ??= $this->apps->getMainHost();
-        $this->apps->switchCurrentApp((string) $host);
+        $this->apps->switchSite((string) $host);
 
         if (! $this->translationManager->hasAvailableTranslator()) {
             if ($this->translationManager->hasConfiguredTranslator() && $this->translationManager->isMonthlyLimitExceeded()) {

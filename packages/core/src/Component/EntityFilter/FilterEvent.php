@@ -2,23 +2,14 @@
 
 namespace Pushword\Core\Component\EntityFilter;
 
+use Pushword\Core\Event\PushwordEvents;
 use Symfony\Contracts\EventDispatcher\Event;
 
-/**
- * The order.placed event is dispatched each time an order is created
- * in the system.
- */
 final class FilterEvent extends Event
 {
-    /**
-     * @var string
-     */
-    public const string NAME_BEFORE = 'pushword.entity_filter.before_filtering';
+    public const string NAME_BEFORE = PushwordEvents::FILTER_BEFORE;
 
-    /**
-     * @var string
-     */
-    public const string NAME_AFTER = 'pushword.entity_filter.after_filtering';
+    public const string NAME_AFTER = PushwordEvents::FILTER_AFTER;
 
     public function __construct(
         private readonly Manager $manager,

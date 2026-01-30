@@ -2,7 +2,8 @@
 
 namespace Pushword\Core\EventListener;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\RequestContext;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -12,7 +13,8 @@ use Symfony\Component\HttpKernel\KernelEvents;
 final readonly class RequestContextListener
 {
     public function __construct(
-        private AppPool $apps,
+        private SiteRegistry $siteRegistry,
+        private RequestContext $requestContext,
     ) {
     }
 
@@ -25,15 +27,15 @@ final readonly class RequestContextListener
         $request = $event->getRequest();
         $effectiveHost = $this->determineEffectiveHost($request);
 
-        $this->apps->setRequestContext(
+        $this->requestContext->setRequestContext(
             host: $effectiveHost,
             route: $request->attributes->getString('_route', ''),
             slug: $request->attributes->getString('slug', ''),
-            pager: $request->attributes->getInt('pager', 1)
+            pager: $request->attributes->getInt('pager', 1),
         );
 
         if ('' !== $effectiveHost) {
-            $this->apps->switchCurrentApp($effectiveHost);
+            $this->requestContext->switchSite($effectiveHost);
         }
     }
 
@@ -43,21 +45,18 @@ final readonly class RequestContextListener
         $routeHostAttr = $request->attributes->get('host');
         $routeHost = \is_string($routeHostAttr) ? $routeHostAttr : '';
 
-        // Find the main host key for the HTTP host
-        $knownHttpHost = $this->apps->findHost($httpHost);
+        $knownHttpHost = $this->siteRegistry->findHost($httpHost);
 
-        // If HTTP host is default or unknown, route {host} takes priority
         $httpHostIsDefaultOrUnknown = '' === $knownHttpHost
-            || $this->apps->isDefaultHost($knownHttpHost);
+            || $this->siteRegistry->isDefaultHost($knownHttpHost);
 
         if ($httpHostIsDefaultOrUnknown && '' !== $routeHost) {
-            $knownRouteHost = $this->apps->findHost($routeHost);
+            $knownRouteHost = $this->siteRegistry->findHost($routeHost);
             if ('' !== $knownRouteHost) {
                 return $knownRouteHost;
             }
         }
 
-        // Otherwise use HTTP host (if known) or fall back to HTTP host string
         return '' !== $knownHttpHost ? $knownHttpHost : $httpHost;
     }
 }

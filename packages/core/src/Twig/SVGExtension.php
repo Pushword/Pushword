@@ -4,7 +4,7 @@ namespace Pushword\Core\Twig;
 
 use Exception;
 use PiedWeb\RenderAttributes\Attribute;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\FontAwesome5To6 as SvgFontAwesome5To6;
 
 use function Safe\mime_content_type;
@@ -13,7 +13,7 @@ use Twig\Attribute\AsTwigFunction;
 
 class SVGExtension
 {
-    public function __construct(private readonly AppPool $apps)
+    public function __construct(private readonly SiteRegistry $apps)
     {
     }
 

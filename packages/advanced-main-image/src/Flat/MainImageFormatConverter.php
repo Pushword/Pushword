@@ -3,7 +3,7 @@
 namespace Pushword\AdvancedMainImage\Flat;
 
 use Pushword\AdvancedMainImage\DependencyInjection\Configuration;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Converter\FlatPropertyConverterInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -13,7 +13,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final readonly class MainImageFormatConverter implements FlatPropertyConverterInterface
 {
     public function __construct(
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private TranslatorInterface $translator,
     ) {
     }

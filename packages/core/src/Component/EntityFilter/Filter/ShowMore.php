@@ -2,10 +2,10 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Twig\Environment;
 
 #[AsFilter]
@@ -13,7 +13,7 @@ class ShowMore implements FilterInterface
 {
     public function __construct(
         private readonly Environment $twig,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
     ) {
     }
 

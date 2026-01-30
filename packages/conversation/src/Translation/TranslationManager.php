@@ -4,7 +4,7 @@ namespace Pushword\Conversation\Translation;
 
 use Psr\Log\LoggerInterface;
 use Pushword\Conversation\DependencyInjection\Configuration;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class TranslationManager
@@ -21,7 +21,7 @@ final class TranslationManager
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly TranslationUsageTracker $usageTracker,
         private readonly ?LoggerInterface $logger = null,
     ) {

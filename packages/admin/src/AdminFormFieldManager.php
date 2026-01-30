@@ -7,11 +7,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Admin\FormField\Event as FormEvent;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface;
@@ -23,7 +23,7 @@ class AdminFormFieldManager
     public ?User $user;
 
     public function __construct(
-        public readonly AppPool $apps,
+        public readonly SiteRegistry $apps,
         public readonly EntityManagerInterface $em,
         public readonly RouterInterface $router,
         public readonly Environment $twig,

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Twig;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\SVGExtension;
 use Pushword\Core\Utils\FontAwesome5To6;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -19,7 +19,7 @@ class SVGExtensionTest extends KernelTestCase
     public function testTwigExtension(): void
     {
         self::bootKernel();
-        $twig = new SVGExtension(self::getContainer()->get(AppPool::class));
+        $twig = new SVGExtension(self::getContainer()->get(SiteRegistry::class));
         self::assertStringStartsWith('<svg', $twig->getSvg('facebook'));
     }
 }

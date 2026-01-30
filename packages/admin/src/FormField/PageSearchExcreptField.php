@@ -13,7 +13,7 @@ class PageSearchExcreptField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
-        return $this->buildEasyAdminField('searchExcrept', TextareaType::class, [
+        return $this->buildEasyAdminField('searchExcerpt', TextareaType::class, [
             'required' => false,
             'label' => 'adminPageSearchExcreptLabel',
             'help_html' => true,

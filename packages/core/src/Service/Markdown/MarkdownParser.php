@@ -9,9 +9,9 @@ use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\Extension\TaskList\TaskListExtension;
 use League\CommonMark\MarkdownConverter;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
+use Pushword\Core\Site\SiteRegistry;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Environment as TwigEnvironment;
 
@@ -22,7 +22,7 @@ class MarkdownParser
     public function __construct(
         LinkProvider $linkProvider,
         TwigEnvironment $twig,
-        AppPool $apps
+        SiteRegistry $apps
     ) {
         $config = [];
 

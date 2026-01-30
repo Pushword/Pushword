@@ -361,7 +361,7 @@ class PageCrudController extends AbstractAdminCrudController
     private function getLocaleChoices(): array
     {
         $choices = [];
-        foreach ($this->apps->getApps() as $app) {
+        foreach ($this->apps->getAll() as $app) {
             foreach ($app->getLocales() as $locale) {
                 $choices[$locale] = $locale;
             }

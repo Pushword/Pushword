@@ -6,8 +6,8 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Exception;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Repository\MessageRepository;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -49,7 +49,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
 
     protected Message $message;
 
-    protected AppConfig $app;
+    protected SiteConfig $app;
 
     public function __construct(
         protected Request $request,
@@ -59,7 +59,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         protected Twig $twig,
         protected Router $router,
         protected TranslatorInterface $translator,
-        protected AppPool $apps,
+        protected SiteRegistry $apps,
         protected MessageRepository $messageRepo,
     ) {
         $this->app = $this->apps->get();

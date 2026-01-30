@@ -2,8 +2,8 @@
 
 namespace Pushword\Core\Router;
 
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
 use Twig\Attribute\AsTwigFunction;
 
@@ -23,7 +23,7 @@ final class PushwordRouteGenerator
 
     public function __construct(
         private readonly SfRouterInterface $router,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
     ) {
     }
 
@@ -73,7 +73,7 @@ final class PushwordRouteGenerator
         if (! $canonical) {
             if ($forceUseCustomPath || $this->mayUseCustomPath($host)) {
                 return $this->router->generate(self::CUSTOM_HOST_PATH, [
-                    'host' => $host ?? $this->apps->safegetCurrentPage()->host,
+                    'host' => $host ?? $this->apps->requirePage()->host,
                     'slug' => $slug,
                 ]);
             }

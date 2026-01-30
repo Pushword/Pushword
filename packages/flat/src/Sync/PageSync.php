@@ -7,9 +7,9 @@ namespace Pushword\Flat\Sync;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\PageExporter;
 use Pushword\Flat\Exporter\RedirectionExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
@@ -29,7 +29,7 @@ final class PageSync
     private ?OutputInterface $output = null;
 
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly FlatFileContentDirFinder $contentDirFinder,
         private readonly PageImporter $pageImporter,
         private readonly PageExporter $pageExporter,
@@ -320,10 +320,10 @@ final class PageSync
         $this->entityManager->flush();
     }
 
-    private function resolveApp(?string $host): AppConfig
+    private function resolveApp(?string $host): SiteConfig
     {
         return null !== $host
-            ? $this->apps->switchCurrentApp($host)->get()
+            ? $this->apps->switchSite($host)->get()
             : $this->apps->get();
     }
 

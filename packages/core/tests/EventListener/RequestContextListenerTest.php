@@ -2,8 +2,9 @@
 
 namespace Pushword\Core\Tests\EventListener;
 
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\EventListener\RequestContextListener;
+use Pushword\Core\Site\RequestContext;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -11,15 +12,16 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 final class RequestContextListenerTest extends KernelTestCase
 {
-    private AppPool $appPool;
+    private SiteRegistry $appPool;
 
     private RequestContextListener $listener;
 
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->appPool = self::getContainer()->get(AppPool::class);
-        $this->listener = new RequestContextListener($this->appPool);
+        $this->appPool = self::getContainer()->get(SiteRegistry::class);
+        $requestContext = self::getContainer()->get(RequestContext::class);
+        $this->listener = new RequestContextListener($this->appPool, $requestContext);
     }
 
     public function testDefaultHostWithNoRouteHost(): void

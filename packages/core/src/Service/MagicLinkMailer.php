@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Pushword\Core\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\LoginTokenRepository;
 use Pushword\Core\Service\Email\NotificationEmailSender;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -21,7 +21,7 @@ final readonly class MagicLinkMailer
         private LoginTokenRepository $tokenRepo,
         private UrlGeneratorInterface $urlGenerator,
         private TranslatorInterface $translator,
-        private AppPool $apps,
+        private SiteRegistry $apps,
     ) {
     }
 

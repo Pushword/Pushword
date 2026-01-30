@@ -2,7 +2,7 @@
 
 namespace Pushword\Core\Twig;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 use Twig\TemplateWrapper;
@@ -15,7 +15,7 @@ class ShowMore
 
     public function __construct(
         public Twig $twig,
-        public AppPool $apps,
+        public SiteRegistry $apps,
     ) {
     }
 

@@ -3,12 +3,12 @@
 namespace Pushword\Core\Tests\Component;
 
 use DateTime;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\ContentExtension;
 
 use function Safe\file_get_contents;
@@ -33,7 +33,7 @@ class EntityFilterTest extends KernelTestCase
 
     public function testObfuscateLink(): void
     {
-        $apps = self::getContainer()->get(AppPool::class);
+        $apps = self::getContainer()->get(SiteRegistry::class);
         $twig = self::getContainer()->get('twig');
         $router = self::getContainer()->get(PushwordRouteGenerator::class);
         $security = self::getContainer()->get(Security::class);

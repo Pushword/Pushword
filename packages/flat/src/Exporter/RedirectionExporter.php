@@ -3,9 +3,9 @@
 namespace Pushword\Flat\Exporter;
 
 use League\Csv\Writer;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
 
 final class RedirectionExporter
 {
@@ -16,7 +16,7 @@ final class RedirectionExporter
     public string $exportDir = '';
 
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly PageRepository $pageRepo,
     ) {
     }
@@ -54,7 +54,7 @@ final class RedirectionExporter
         return [
             'id' => null !== $page->id ? (string) $page->id : '',
             'slug' => $page->getSlug(),
-            'target' => $page->getRedirection(),
+            'target' => $page->getRedirectionUrl(),
             'code' => (string) $page->getRedirectionCode(),
         ];
     }

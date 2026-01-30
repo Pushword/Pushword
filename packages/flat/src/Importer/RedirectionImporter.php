@@ -6,9 +6,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
 use Psr\Log\LoggerInterface;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\RedirectionExporter;
 
 /**
@@ -27,7 +27,7 @@ final class RedirectionImporter
 
     public function __construct(
         private readonly EntityManagerInterface $em,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly PageRepository $pageRepo,
         private readonly ?LoggerInterface $logger = null,
     ) {

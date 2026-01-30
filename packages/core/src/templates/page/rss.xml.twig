@@ -4,7 +4,7 @@
         {% block header %}
         <title>{{ pw(page).title|default(app_name) }}</title>
         <link>{{ base ~ page(page.realSlug|default('')) }}</link>
-        <description><![CDATA[{% block description %}{{ page.searchExcrept|default('') }}{% endblock %}]]></description>
+        <description><![CDATA[{% block description %}{{ page.searchExcerpt|default('') }}{% endblock %}]]></description>
         <atom:link
             href="{{ base }}/{{ feedUri|default((page.slug == 'homepage' ? 'index' : page.realSlug) ~ '.xml') }}"
             rel="self"

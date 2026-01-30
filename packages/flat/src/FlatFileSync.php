@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Event\FlatSyncCompletedEvent;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 use Pushword\Flat\Sync\MediaSync;
@@ -22,7 +22,7 @@ final class FlatFileSync
         public readonly PageSync $pageSync,
         public readonly MediaSync $mediaSync,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly ?ConversationSyncInterface $conversationSync = null,
         private readonly ?UserSync $userSync = null,
     ) {
@@ -132,7 +132,7 @@ final class FlatFileSync
     private function dispatchEvent(?string $host): void
     {
         $app = null !== $host
-            ? $this->apps->switchCurrentApp($host)->get()
+            ? $this->apps->switchSite($host)->get()
             : $this->apps->get();
 
         $this->eventDispatcher->dispatch(new FlatSyncCompletedEvent($app->getMainHost()));

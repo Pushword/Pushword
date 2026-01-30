@@ -12,9 +12,9 @@ use Override;
 use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\AdminInterface;
 use Pushword\Admin\FormField\AbstractField;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -45,11 +45,11 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
 
     protected AdminFormFieldManager $adminFormFieldManager;
 
-    protected AppPool $apps;
+    protected SiteRegistry $apps;
 
     #[Required]
     public function injectBaseServices(
-        AppPool $apps,
+        SiteRegistry $apps,
         EntityManagerInterface $entityManager,
         RequestStack $requestStack,
         TranslatorInterface $translator,
@@ -88,7 +88,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
     {
         $hostFromFilter = $this->getHostFromFilter();
         if (null !== $hostFromFilter) {
-            $this->apps->switchCurrentApp($hostFromFilter);
+            $this->apps->switchSite($hostFromFilter);
 
             return;
         }
@@ -97,7 +97,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
             return;
         }
 
-        $this->apps->switchCurrentApp($page->host);
+        $this->apps->switchSite($page->host);
     }
 
     public function getEntityManager(): EntityManagerInterface

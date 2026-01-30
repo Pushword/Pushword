@@ -2,10 +2,10 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\GenerateLivePathForTrait;
 use Pushword\Core\Utils\KernelTrait;
 use Pushword\StaticGenerator\StaticAppGenerator;
@@ -28,7 +28,7 @@ abstract class AbstractGenerator implements GeneratorInterface
 
     protected string $publicDir;
 
-    protected AppConfig $app;
+    protected SiteConfig $app;
 
     protected StaticAppGenerator $staticAppGenerator;
 
@@ -39,7 +39,7 @@ abstract class AbstractGenerator implements GeneratorInterface
         protected TranslatorInterface $translator,
         protected PushwordRouteGenerator $router,
         KernelInterface $kernel,
-        protected AppPool $apps,
+        protected SiteRegistry $apps,
     ) {
         $this->filesystem = new Filesystem();
         $this->router->setUseCustomHostPath(false);
@@ -59,7 +59,7 @@ abstract class AbstractGenerator implements GeneratorInterface
 
     protected function init(?string $host = null): void
     {
-        $this->app = null !== $host ? $this->apps->switchCurrentApp($host)->get() : $this->apps->get();
+        $this->app = null !== $host ? $this->apps->switchSite($host)->get() : $this->apps->get();
     }
 
     /**

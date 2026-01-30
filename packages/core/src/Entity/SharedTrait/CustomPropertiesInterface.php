@@ -4,21 +4,20 @@ namespace Pushword\Core\Entity\SharedTrait;
 
 interface CustomPropertiesInterface
 {
-    /**
-     * @param array<mixed> $customProperties
-     */
+    /** @param array<mixed> $customProperties */
     public function setCustomProperties(array $customProperties): self;
 
-    /**
-     * @return array<mixed>
-     */
+    /** @return array<mixed> */
     public function getCustomProperties(): array;
 
-    public function getStandAloneCustomProperties(): string;
+    public function getUnmanagedPropertiesAsYaml(): string;
 
-    public function setStandAloneCustomProperties(?string $standStandAloneCustomProperties, bool $merge = false): self;
+    public function setUnmanagedPropertiesFromYaml(?string $yaml, bool $merge = false): self;
 
-    public function isStandAloneCustomProperty(string $name): bool;
+    public function isManagedProperty(string $name): bool;
+
+    /** @return string[] */
+    public function getManagedPropertyKeys(): array;
 
     public function setCustomProperty(string $name, mixed $value): void;
 

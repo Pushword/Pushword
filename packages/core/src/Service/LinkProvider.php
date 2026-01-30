@@ -4,10 +4,10 @@ namespace Pushword\Core\Service;
 
 use Cocur\Slugify\Slugify;
 use Exception;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -16,13 +16,13 @@ final readonly class LinkProvider
 {
     public function __construct(
         private PushwordRouteGenerator $router,
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private Twig $twig,
         private Security $security
     ) {
     }
 
-    private function getApp(): AppConfig
+    private function getApp(): SiteConfig
     {
         return $this->apps->get();
     }

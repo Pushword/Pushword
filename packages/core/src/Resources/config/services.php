@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use PiedWeb\RenderAttributes\TwigExtension;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
+use Pushword\Core\Content\ContentPipelineFactory;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\VichUploadPropertyNamer;
+use Pushword\Core\Site\RequestContext;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\Core\Twig\OAuthExtension;
 use SensioLabs\AnsiConverter\AnsiToHtmlConverter;
@@ -65,10 +67,17 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(PushwordRouteGenerator::class)
         ->public();
 
-    $services->set(AppPool::class)
+    $services->set(SiteRegistry::class)
+        ->public()
+        ->call('setRequestContext', [service(RequestContext::class)]);
+
+    $services->set(RequestContext::class)
         ->public();
 
     $services->set(MediaRepository::class)
+        ->public();
+
+    $services->set(ContentPipelineFactory::class)
         ->public();
 
     $services->set(MediaExtension::class)

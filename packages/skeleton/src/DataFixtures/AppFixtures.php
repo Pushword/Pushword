@@ -7,10 +7,10 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -19,7 +19,7 @@ class AppFixtures extends Fixture
 {
     private ParameterBagInterface $params;
 
-    private AppPool $apps;
+    private SiteRegistry $apps;
 
     #[Required]
     public function setParameterBag(ParameterBagInterface $params): void
@@ -28,7 +28,7 @@ class AppFixtures extends Fixture
     }
 
     #[Required]
-    public function setApps(AppPool $apps): void
+    public function setApps(SiteRegistry $apps): void
     {
         $this->apps = $apps;
     }

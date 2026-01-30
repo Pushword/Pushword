@@ -11,7 +11,114 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
-## To 1.0.0-rcXXX
+## To 1.0.0-rc372
+
+### Migration Steps
+
+1. Run `composer update`
+2. Run `php bin/console doctrine:schema:update --force` (adds new `template` column to `page` table)
+3. Run `php bin/console pw:migrate` (migrates data from JSON `customProperties` to new columns, fixes typos)
+4. Clear cache: `php bin/console cache:clear`
+5. Update custom code per the breaking changes below
+
+### Entity Changes
+
+#### Page
+
+- **Template column promoted**: `template` is now a real database column (`nullable string`), no longer stored in `customProperties` JSON. Getter/setter unchanged: `getTemplate()` / `setTemplate()`.
+- **searchExcerpt typo fixed**: `getSearchExcrept()` removed. Use `getSearchExcerpt()`. In Twig: `page.searchExcrept` becomes `page.searchExcerpt`.
+- **Traits inlined**: `PageEditorTrait`, `PageExtendedTrait`, `PageMainImageTrait`, `PageOpenGraphTrait`, `PageSearchTrait`, `PageRedirectionTrait` are removed. Their properties and methods are inlined directly into `Page`.
+- **PHP 8.4 property hooks**: Simple properties (`$h1`, `$slug`, `$title`, `$metaRobots`, `$name`, `$editMessage`) now use property hooks. Getter/setter methods are retained for caller compatibility.
+- **Redirection API changed**: `getRedirection()` now returns `?PageRedirection` value object (or `null`). Use `hasRedirection()`, `getRedirectionUrl()`, `getRedirectionCode()` instead of accessing the old string-based redirection.
+- **OG/Twitter getters explicit**: `getOgTitle()`, `setOgTitle()`, `getOgDescription()`, etc. are explicit methods (no longer resolved via `__call`). They still store data in `customProperties` JSON.
+- **`__call` minimal**: Only proxies `getCustomProperty()` for Twig ergonomics (`page.someKey`). No method-existence cache, no complex resolution.
+
+#### Media
+
+- **Image data as embeddable**: `ImageTrait` replaced by `ImageData` Doctrine embeddable (`#[ORM\Embedded(class: ImageData::class, columnPrefix: false)]`). DQL queries must use `m.imageData.width`, `m.imageData.height`, `m.imageData.ratioLabel` etc.
+- **Removed deprecated methods**: `getMedia()` and `getName()` removed. Use `getFileName()` and `getAlt()`.
+- **`$disableRemoveFile` removed**: The public flag on Media is gone.
+
+#### User
+
+- `CustomPropertiesTrait` replaced by `ExtensiblePropertiesTrait` (same JSON column, cleaner API).
+- `getSalt()` removed (not needed with bcrypt).
+
+#### SharedTrait: ExtensiblePropertiesTrait
+
+Replaces `CustomPropertiesTrait`:
+
+| Old API                                       | New API                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------- |
+| `$standAloneCustomProperties`                 | `getUnmanagedPropertiesAsYaml()` / `setUnmanagedPropertiesAsYaml()` |
+| `$registeredCustomPropertyFields`             | `registerManagedPropertyKey()` / `getManagedPropertyKeys()`         |
+| Method-existence cache (`$methodExistsCache`) | Removed                                                             |
+| `CustomPropertiesException`                   | `InvalidArgumentException`                                          |
+
+Core API unchanged: `getCustomProperty()`, `setCustomProperty()`, `hasCustomProperty()`, `removeCustomProperty()`, `getCustomPropertyScalar()`, `getCustomPropertyList()`.
+
+### Architecture Changes
+
+#### Site Configuration
+
+| Old                                     | New                                                                     |
+| --------------------------------------- | ----------------------------------------------------------------------- |
+| `Pushword\Core\Component\App\AppConfig` | `Pushword\Core\Site\SiteConfig`                                         |
+| `Pushword\Core\Component\App\AppPool`   | `Pushword\Core\Site\SiteRegistry` + `Pushword\Core\Site\RequestContext` |
+
+- `SiteRegistry`: Pure registry for site configurations. Methods: `get()`, `getDefault()`, `findByHost()`, `getHosts()`, `getAll()`, `isKnownHost()`.
+- `RequestContext`: Request-scoped state. Methods: `switchSite()`, `setCurrentPage()`, `getCurrentPage()`, `requirePage()`, `getCurrentSite()`, `getLocale()`.
+- `SiteRegistry` also delegates to `RequestContext` for convenience: `switchSite()`, `setCurrentPage()`, `getCurrentPage()`, `getMainHost()`, `getLocale()`, etc.
+
+#### Template Resolution
+
+| Old                                                | New                                               |
+| -------------------------------------------------- | ------------------------------------------------- |
+| `AppConfig::getView()` (with Twig+Cache on config) | `TemplateResolver::resolve()` (dedicated service) |
+
+- `SiteConfig::getView()` still works (delegates to `TemplateResolver`).
+- `TemplateResolver` is a standalone service (`Pushword\Core\Template\TemplateResolver`) injected via DI.
+
+#### Page Resolution
+
+| Old                                                              | New                    |
+| ---------------------------------------------------------------- | ---------------------- |
+| Duplicated `findPage()` in `PageController` and `FeedController` | `PageResolver` service |
+
+- `PageResolver::findPageOr404()`: Shared page lookup logic (slug normalization, pager extraction, permission checks).
+- `PageResolver::normalizeSlug()`: Static method for slug normalization.
+
+#### Content Pipeline
+
+| Old                                                | New                                            |
+| -------------------------------------------------- | ---------------------------------------------- |
+| `Pushword\Core\Component\EntityFilter\Manager`     | `Pushword\Core\Content\ContentPipeline`        |
+| `Pushword\Core\Component\EntityFilter\ManagerPool` | `Pushword\Core\Content\ContentPipelineFactory` |
+
+- `ContentPipeline` adds explicit typed getters: `getMainContent()`, `getTitle()`, `getName()`.
+- `ContentPipelineFactory::get(Page)` creates pipelines (replaces `ManagerPool::getManager()`).
+- The `pw()` Twig function is now on `ContentPipelineFactory` (moved from `ManagerPool`).
+- **Legacy Manager/ManagerPool still exist** for backward compatibility with existing filters. Filters still receive `Manager` in their `apply()` signature.
+
+#### Events
+
+- `PushwordEvents` catalog class created at `Pushword\Core\Event\PushwordEvents` with centralized constants: `FILTER_BEFORE`, `FILTER_AFTER`, `ADMIN_MENU`, `ADMIN_LOAD_FIELD`.
+- Existing event classes (`FilterEvent`, `AdminMenuItemsEvent`, `FormField\Event`) now reference `PushwordEvents` constants.
+
+### Admin Changes
+
+- `standAloneCustomProperties` form field binding changed to `unmanagedPropertiesAsYaml`.
+- `searchExcrept` form field binding changed to `searchExcerpt`.
+
+### Twig Template Changes
+
+| Old                  | New                  |
+| -------------------- | -------------------- |
+| `page.searchExcrept` | `page.searchExcerpt` |
+
+Other Twig access patterns unchanged: `page.ogTitle`, `page.h1`, `page.slug`, `page.someCustomKey` all work as before.
+
+## To 1.0.0-rc371
 
 ### Media Entity Methods Moved to Utility Class (Breaking)
 
@@ -77,6 +184,7 @@ The `pushword/installer` package is no longer removed after initial project setu
 **If you have orphaned scripts in your `composer.json`** referencing `Pushword\Installer` classes that cause errors:
 
 1. Either re-add `pushword/installer` to your dependencies:
+
    ```bash
    composer require pushword/installer
    ```

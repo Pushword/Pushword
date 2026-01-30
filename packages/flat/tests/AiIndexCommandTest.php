@@ -7,9 +7,9 @@ namespace Pushword\Flat\Tests;
 use DateTime;
 use Doctrine\ORM\EntityManager;
 use Override;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -78,14 +78,14 @@ class AiIndexCommandTest extends KernelTestCase
     /**
      * @param string[] $tags
      */
-    private function createTestPage(string $slug, string $content = '', ?Page $parentPage = null, array $tags = [], ?string $searchExcrept = null): Page
+    private function createTestPage(string $slug, string $content = '', ?Page $parentPage = null, array $tags = [], ?string $searchExcerpt = null): Page
     {
         self::bootKernel();
 
         /** @var EntityManager */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        /** @var AppPool */
-        $apps = self::getContainer()->get(AppPool::class);
+        /** @var SiteRegistry */
+        $apps = self::getContainer()->get(SiteRegistry::class);
 
         $page = new Page();
         $page->setSlug($slug);
@@ -105,8 +105,8 @@ class AiIndexCommandTest extends KernelTestCase
             $page->setTags($tags);
         }
 
-        if (null !== $searchExcrept) {
-            $page->setSearchExcrept($searchExcrept);
+        if (null !== $searchExcerpt) {
+            $page->setSearchExcerpt($searchExcerpt);
         }
 
         $em->persist($page);

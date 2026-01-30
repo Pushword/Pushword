@@ -6,7 +6,7 @@ use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Pushword\Conversation\Repository\MessageRepository;
-use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
+use Pushword\Core\Entity\SharedTrait\ExtensiblePropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\HostTrait;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
@@ -40,7 +40,7 @@ class Message implements Stringable, Taggable, IdInterface
 
     use MediaListTrait;
 
-    use CustomPropertiesTrait;
+    use ExtensiblePropertiesTrait;
 
     #[ORM\Column(type: Types::STRING, length: 180, nullable: true)]
     protected ?string $authorName = '';

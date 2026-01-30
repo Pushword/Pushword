@@ -137,7 +137,7 @@ final class PageSyncTest extends KernelTestCase
         $newRedirection = $this->pageRepo->findOneBy(['slug' => 'new-redirect-test', 'host' => 'localhost.dev']);
         self::assertNotNull($newRedirection, 'New redirection should be created');
         self::assertTrue($newRedirection->hasRedirection(), 'Page should be a redirection');
-        self::assertSame('https://example.com', $newRedirection->getRedirection());
+        self::assertSame('https://example.com', $newRedirection->getRedirectionUrl());
         self::assertSame(302, $newRedirection->getRedirectionCode());
 
         // Cleanup
@@ -157,7 +157,7 @@ final class PageSyncTest extends KernelTestCase
         // Get current redirection
         $redirectionPage = $this->pageRepo->findOneBy(['slug' => 'pushword', 'host' => 'localhost.dev']);
         self::assertNotNull($redirectionPage);
-        $originalTarget = $redirectionPage->getRedirection();
+        $originalTarget = $redirectionPage->getRedirectionUrl();
         $pageId = $redirectionPage->id;
 
         // Export
@@ -175,7 +175,7 @@ final class PageSyncTest extends KernelTestCase
         $this->em->clear();
         $updatedPage = $this->pageRepo->findOneBy(['slug' => 'pushword', 'host' => 'localhost.dev']);
         self::assertNotNull($updatedPage);
-        self::assertSame('https://new-target.com', $updatedPage->getRedirection());
+        self::assertSame('https://new-target.com', $updatedPage->getRedirectionUrl());
         self::assertSame(302, $updatedPage->getRedirectionCode());
 
         // Restore original

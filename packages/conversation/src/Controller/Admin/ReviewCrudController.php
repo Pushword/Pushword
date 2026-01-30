@@ -97,7 +97,7 @@ final class ReviewCrudController extends ConversationCrudController
     private function getLocaleChoices(): array
     {
         $choices = ['' => ''];
-        foreach ($this->apps->getApps() as $app) {
+        foreach ($this->apps->getAll() as $app) {
             foreach ($app->getLocales() as $locale) {
                 $choices[$locale] = $locale;
             }
@@ -196,6 +196,6 @@ final class ReviewCrudController extends ConversationCrudController
             return;
         }
 
-        $message->registerCustomPropertyField('rating');
+        $message->registerManagedPropertyKey('rating');
     }
 }

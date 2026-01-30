@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Flat\Tests\Service;
 
 use Override;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Service\FlatChangeDetector;
 use Pushword\Flat\Service\FlatLockManager;
@@ -76,8 +76,8 @@ final class FlatChangeDetectorTest extends KernelTestCase
         /** @var TraceableAdapter $cache */
         $cache = self::getContainer()->get('cache.app');
 
-        /** @var AppPool $apps */
-        $apps = self::getContainer()->get(AppPool::class);
+        /** @var SiteRegistry $apps */
+        $apps = self::getContainer()->get(SiteRegistry::class);
 
         return new FlatChangeDetector(
             $contentDirFinder,

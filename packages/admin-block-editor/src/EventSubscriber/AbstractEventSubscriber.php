@@ -4,15 +4,15 @@ namespace Pushword\AdminBlockEditor\EventSubscriber;
 
 use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Admin\FormField\Event as FormEvent;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 
 abstract class AbstractEventSubscriber implements EventSubscriberInterface
 {
     #[Required]
-    public AppPool $apps;
+    public SiteRegistry $apps;
 
     public function __construct(public bool $editorBlockForNewPage)
     {

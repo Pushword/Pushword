@@ -7,7 +7,7 @@ use League\CommonMark\Node\Inline\Text;
 use League\CommonMark\Parser\Inline\InlineParserInterface;
 use League\CommonMark\Parser\Inline\InlineParserMatch;
 use League\CommonMark\Parser\InlineParserContext;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\date as safeDate;
 
@@ -18,7 +18,7 @@ use function Safe\date as safeDate;
 final readonly class DateShortcodeParser implements InlineParserInterface
 {
     public function __construct(
-        private AppPool $apps
+        private SiteRegistry $apps
     ) {
     }
 

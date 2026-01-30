@@ -9,10 +9,10 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -22,7 +22,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 final readonly class AdminMenu
 {
     public function __construct(
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private AdminContextProviderInterface $adminContextProvider,
         private RequestStack $requestStack,
         private EventDispatcherInterface $eventDispatcher,

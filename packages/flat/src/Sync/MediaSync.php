@@ -7,10 +7,10 @@ namespace Pushword\Flat\Sync;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Importer\MediaImporter;
@@ -30,7 +30,7 @@ final class MediaSync
     private ?Stopwatch $stopwatch = null;
 
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly FlatFileContentDirFinder $contentDirFinder,
         private readonly MediaImporter $mediaImporter,
         private readonly MediaExporter $mediaExporter,
@@ -323,10 +323,10 @@ final class MediaSync
         $this->entityManager->flush();
     }
 
-    private function resolveApp(?string $host): AppConfig
+    private function resolveApp(?string $host): SiteConfig
     {
         return null !== $host
-            ? $this->apps->switchCurrentApp($host)->get()
+            ? $this->apps->switchSite($host)->get()
             : $this->apps->get();
     }
 

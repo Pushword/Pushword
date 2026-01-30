@@ -9,7 +9,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use Pushword\Admin\Controller\AdminMenu;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,7 +21,7 @@ class AdminMenuTest extends KernelTestCase
 
     private EventDispatcherInterface&MockObject $eventDispatcher;
 
-    private AppPool $appPool;
+    private SiteRegistry $appPool;
 
     private AdminContextProviderInterface&Stub $adminContextProvider;
 
@@ -31,8 +31,8 @@ class AdminMenuTest extends KernelTestCase
     {
         self::bootKernel();
         $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        // AppPool is final, get real instance from container
-        $this->appPool = self::getContainer()->get(AppPool::class);
+        // SiteRegistry is final, get real instance from container
+        $this->appPool = self::getContainer()->get(SiteRegistry::class);
         $this->adminContextProvider = self::createStub(AdminContextProviderInterface::class);
         $this->requestStack = new RequestStack();
         $this->requestStack->push(new Request());

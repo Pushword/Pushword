@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Flat;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 
@@ -13,7 +13,7 @@ use function Safe\filemtime;
 final readonly class ConversationSync implements ConversationSyncInterface
 {
     public function __construct(
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private FlatFileContentDirFinder $contentDirFinder,
         public ConversationImporter $importer,
         public ConversationExporter $exporter,
@@ -44,7 +44,7 @@ final readonly class ConversationSync implements ConversationSyncInterface
     public function mustImport(?string $host = null): bool
     {
         $app = null !== $host
-            ? $this->apps->switchCurrentApp($host)->get()
+            ? $this->apps->switchSite($host)->get()
             : $this->apps->get();
 
         $isGlobalMode = (bool) $app->get('flat_conversation_global');

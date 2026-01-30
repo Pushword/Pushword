@@ -25,7 +25,7 @@ class RedirectionManager extends AbstractGenerator
     {
         $this->redirections[] = [
             $this->router->generate($page->getRealSlug()),
-            $page->getRedirection(),
+            $page->getRedirectionUrl(),
             $page->getRedirectionCode(),
         ];
     }

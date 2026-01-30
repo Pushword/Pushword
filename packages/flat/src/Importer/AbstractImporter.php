@@ -5,7 +5,7 @@ namespace Pushword\Flat\Importer;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 
 /**
  * Permit to find error in image or link.
@@ -14,7 +14,7 @@ use Pushword\Core\Component\App\AppPool;
  */
 abstract class AbstractImporter
 {
-    public function __construct(protected EntityManagerInterface $em, protected AppPool $apps)
+    public function __construct(protected EntityManagerInterface $em, protected SiteRegistry $apps)
     {
     }
 

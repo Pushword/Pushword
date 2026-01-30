@@ -9,8 +9,8 @@ use League\CommonMark\Node\NodeIterator;
 use League\CommonMark\Node\StringContainerInterface;
 use League\CommonMark\Renderer\ChildNodeRendererInterface;
 use League\CommonMark\Renderer\NodeRendererInterface;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Service\Markdown\Extension\Util\RawHtml;
+use Pushword\Core\Site\SiteRegistry;
 use Twig\Environment;
 
 /**
@@ -21,7 +21,7 @@ final readonly class ImageRenderer implements NodeRendererInterface
 {
     public function __construct(
         private Environment $twig,
-        private AppPool $apps
+        private SiteRegistry $apps
     ) {
     }
 

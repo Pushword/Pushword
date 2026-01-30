@@ -9,9 +9,9 @@ use Error;
 use Nette\Utils\FileSystem;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\Email\NotificationEmailSender;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\PageUpdateNotifier\NotificationStatus;
 use Pushword\PageUpdateNotifier\PageUpdateNotifier;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -47,9 +47,9 @@ class PageUpdateNotifierTest extends KernelTestCase
         );
     }
 
-    protected function getApps(): AppPool
+    protected function getApps(): SiteRegistry
     {
-        return self::getContainer()->get(AppPool::class);
+        return self::getContainer()->get(SiteRegistry::class);
     }
 
     protected function getPage(): Page

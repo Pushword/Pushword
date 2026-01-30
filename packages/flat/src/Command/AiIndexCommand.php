@@ -3,11 +3,11 @@
 namespace Pushword\Flat\Command;
 
 use League\Csv\Writer as CsvWriter;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -38,7 +38,7 @@ final class AiIndexCommand
         private readonly PageRepository $pageRepository,
         private readonly MediaRepository $mediaRepository,
         private readonly FlatFileContentDirFinder $contentDirFinder,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly string $projectDir,
     ) {
     }
@@ -56,7 +56,7 @@ final class AiIndexCommand
         $this->pageSlugList = array_map(static fn (Page $page): string => $page->getSlug(), $this->pages);
         $host ??= '';
 
-        $app = $this->apps->switchCurrentApp($host)->get();
+        $app = $this->apps->switchSite($host)->get();
         $host = $app->getMainHost();
 
         $this->exportDir = '' !== $exportDir ? $exportDir
@@ -154,10 +154,10 @@ final class AiIndexCommand
 
             $rows[] = [
                 $page->getSlug(),
-                $page->getTitle() ?? $page->getH1(),
+                '' !== $page->getTitle() ? $page->getTitle() : $page->getH1(),
                 $page->getCreatedAtNullable()?->format('Y-m-d H:i:s') ?? '',
                 $page->getTags(),
-                $page->getSearchExcrept() ?? '',
+                $page->getSearchExcerpt() ?? '',
                 implode(', ', $mediaUsed),
                 $page->getParentPage()?->getSlug() ?? '',
                 implode(', ', $pageLinked),

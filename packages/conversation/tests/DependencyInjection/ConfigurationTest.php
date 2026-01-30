@@ -6,7 +6,7 @@ namespace Pushword\Conversation\Tests\DependencyInjection;
 
 use Pushword\Conversation\DependencyInjection\PushwordConversationExtension;
 use Pushword\Conversation\PushwordConversationBundle;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Twig\Environment as Twig;
 use Twig\Loader\FilesystemLoader;
@@ -17,7 +17,7 @@ class ConfigurationTest extends KernelTestCase
     {
         self::bootKernel();
 
-        self::assertSame('P1D', self::getContainer()->get(AppPool::class)->get()->get('conversation_notification_interval'));
+        self::assertSame('P1D', self::getContainer()->get(SiteRegistry::class)->get()->get('conversation_notification_interval'));
 
         $bundle = new PushwordConversationBundle();
         /** @var PushwordConversationExtension $extension */

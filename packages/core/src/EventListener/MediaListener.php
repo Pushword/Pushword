@@ -192,10 +192,6 @@ final readonly class MediaListener
 
     public function preRemove(Media $media): void
     {
-        if ($media->disableRemoveFile) {
-            return;
-        }
-
         if ($this->mediaStorage->fileExists($media->getFileName())) {
             $this->mediaStorage->delete($media->getFileName());
         }

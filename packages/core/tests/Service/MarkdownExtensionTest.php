@@ -2,11 +2,11 @@
 
 namespace Pushword\Core\Tests\Service;
 
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
 use Pushword\Core\Service\Markdown\MarkdownParser;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 
@@ -22,7 +22,7 @@ class MarkdownExtensionTest extends KernelTestCase
 
         $linkProvider = new LinkProvider(
             self::getContainer()->get(PushwordRouteGenerator::class),
-            self::getContainer()->get(AppPool::class),
+            self::getContainer()->get(SiteRegistry::class),
             self::getContainer()->get('twig'),
             self::getContainer()->get(Security::class)
         );
@@ -30,7 +30,7 @@ class MarkdownExtensionTest extends KernelTestCase
         $this->markdownParser = new MarkdownParser(
             $linkProvider,
             self::getContainer()->get('twig'),
-            self::getContainer()->get(AppPool::class)
+            self::getContainer()->get(SiteRegistry::class)
         );
 
         return $this->markdownParser;

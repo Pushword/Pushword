@@ -45,6 +45,7 @@ exec('php bin/console doctrine:schema:update --force -q');
 if ($freshInstall) {
     exec('php bin/console doctrine:fixtures:load --no-interaction -q &');
 }
+
 exec('php bin/console pw:image:cache -q &');
 
 // Add an admin user

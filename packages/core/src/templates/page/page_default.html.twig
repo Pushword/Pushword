@@ -9,8 +9,8 @@
 {% block title %}{{ pw(page).title|striptags }}{% endblock %}
 
 {% block robots %}
-  {% if page.searchExcrept is defined and page.searchExcrept is not null %}
-    <meta name="description" content="{{ page.searchExcrept|escape }}">
+  {% if page.searchExcerpt is defined and page.searchExcerpt is not null %}
+    <meta name="description" content="{{ page.searchExcerpt|escape }}">
   {% endif %}
   {% if page.metaRobots %}
     <meta name="robots" content="{{ page.metaRobots }}">
@@ -44,8 +44,8 @@
 
   <meta name="og:title" content="{{ page.ogTitle|default(pw(page).title)|striptags }}">
   <meta name="og:url" content="{{ page(page, true) }}">
-  {% if page.searchExcrept or page.ogDescription %}
-    <meta name="og:description" content="{{ page.ogDescription|default(page.searchExcrept)|striptags }}">
+  {% if page.searchExcerpt or page.ogDescription %}
+    <meta name="og:description" content="{{ page.ogDescription|default(page.searchExcerpt)|striptags }}">
   {% endif %}
   {% if page.mainImage is not null %}
     <meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ (page.mainImage)|image('default') }}">

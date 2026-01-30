@@ -2,8 +2,8 @@
 
 namespace Pushword\Core\Tests\Component;
 
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class RouterTest extends KernelTestCase
@@ -14,7 +14,7 @@ class RouterTest extends KernelTestCase
 
         $router = new PushwordRouteGenerator(
             self::getContainer()->get('router'),
-            self::getContainer()->get(AppPool::class),
+            self::getContainer()->get(SiteRegistry::class),
         );
 
         self::assertSame('/', $router->generatePathForHomePage());

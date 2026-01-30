@@ -4,6 +4,7 @@ namespace Pushword\Admin\FormField;
 
 use Pushword\Admin\AdminFormFieldManager;
 use Pushword\Admin\AdminInterface;
+use Pushword\Core\Event\PushwordEvents;
 use Symfony\Contracts\EventDispatcher\Event as SfEvent;
 
 /**
@@ -11,8 +12,7 @@ use Symfony\Contracts\EventDispatcher\Event as SfEvent;
  */
 class Event extends SfEvent
 {
-    /** @var string */
-    final public const string NAME = 'pushword.admin.load_field';
+    final public const string NAME = PushwordEvents::ADMIN_LOAD_FIELD;
 
     /**
      * @param AdminInterface<T>                                                                                                                                                                                                                      $admin

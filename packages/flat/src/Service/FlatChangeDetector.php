@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Service;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\SyncStateManager;
 
@@ -25,7 +25,7 @@ final readonly class FlatChangeDetector
         private SyncStateManager $stateManager,
         private FlatLockManager $lockManager,
         private CacheInterface $cache,
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private int $cacheTtl = 300, // 5 minutes default
         private bool $autoLockOnChanges = true,
     ) {

@@ -8,8 +8,8 @@ use Pushword\Admin\FormField\Event as FormEvent;
 use Pushword\Admin\FormField\PageMainImageField;
 use Pushword\Admin\Utils\FormFieldReplacer;
 use Pushword\AdvancedMainImage\PageAdvancedMainImageFormField;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 final readonly class AdminFormEventSuscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private AppPool $apps,
+        private SiteRegistry $apps,
         public RequestStack $requestStack,
     ) {
     }

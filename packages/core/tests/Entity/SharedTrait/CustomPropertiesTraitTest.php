@@ -23,12 +23,12 @@ class CustomPropertiesTraitTest extends TestCase
         ];
     }
 
-    protected static function standStandAloneCustomProperties(string $firstValue = 'test'): string
+    protected static function unmanagedPropertiesYaml(string $firstValue = 'test', string $secondValue = 'test 2'): string
     {
-        return Yaml::dump(['newCustomPropertyNotIndexed' => $firstValue]);
+        return Yaml::dump(['newCustomPropertyNotIndexed' => $firstValue, 'customProperties' => $secondValue]);
     }
 
-    public function testStandAloneCustomProperties(): void
+    public function testUnmanagedProperties(): void
     {
         $customProperties = new Page();
 
@@ -37,27 +37,25 @@ class CustomPropertiesTraitTest extends TestCase
         $customProperties->setCustomProperties(static::customPorperties());
 
         self::assertSame($customProperties->getCustomProperties(), static::customPorperties());
-        self::assertSame($customProperties->getStandAloneCustomProperties(), static::standStandAloneCustomProperties());
+        self::assertSame($customProperties->getUnmanagedPropertiesAsYaml(), static::unmanagedPropertiesYaml());
 
-        $customProperties->setStandAloneCustomProperties(static::standStandAloneCustomProperties('test 1234'), true);
+        $customProperties->setUnmanagedPropertiesFromYaml(static::unmanagedPropertiesYaml('test 1234'), true);
         self::assertSame(static::customPorperties('test 1234'), $customProperties->getCustomProperties());
-
-        self::assertFalse($customProperties->isStandAloneCustomProperty('customProperties'));
 
         $customProperties->removeCustomProperty('newCustomPropertyNotIndexed');
         self::assertArrayNotHasKey('newCustomPropertyNotIndexed', $customProperties->getCustomProperties());
     }
 
-    public function testRegisteredCustomPropertyFieldIsHidden(): void
+    public function testManagedPropertyKeyIsHidden(): void
     {
         $customProperties = new Page();
         $customProperties->setCustomProperties(['handledExternally' => 'foo']);
 
-        self::assertStringContainsString('handledExternally', $customProperties->getStandAloneCustomProperties());
+        self::assertStringContainsString('handledExternally', $customProperties->getUnmanagedPropertiesAsYaml());
 
-        $customProperties->registerCustomPropertyField('handledExternally');
+        $customProperties->registerManagedPropertyKey('handledExternally');
 
-        self::assertSame('', $customProperties->getStandAloneCustomProperties());
+        self::assertSame('', $customProperties->getUnmanagedPropertiesAsYaml());
     }
 
     protected function getExceptionContextInterface(): MockObject

@@ -3,6 +3,7 @@
 namespace Pushword\Admin\Menu;
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
+use Pushword\Core\Event\PushwordEvents;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
@@ -10,7 +11,7 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class AdminMenuItemsEvent extends Event
 {
-    public const NAME = 'pushword.admin.menu_items';
+    public const string NAME = PushwordEvents::ADMIN_MENU;
 
     /**
      * @var array<int, array{weight: int, item: MenuItemInterface}>

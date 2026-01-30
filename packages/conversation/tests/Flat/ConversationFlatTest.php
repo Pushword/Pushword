@@ -14,9 +14,9 @@ use Pushword\Conversation\Flat\ConversationExporter;
 use Pushword\Conversation\Flat\ConversationImporter;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Conversation\Service\ImportContext;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
@@ -55,7 +55,7 @@ final class ConversationFlatTest extends KernelTestCase
         $this->messageRepository = self::getContainer()->get(MessageRepository::class);
         $this->mediaRepository = self::getContainer()->get(MediaRepository::class);
 
-        $appPool = self::getContainer()->get(AppPool::class);
+        $appPool = self::getContainer()->get(SiteRegistry::class);
         $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
 
         $this->exporter = new ConversationExporter();
@@ -79,7 +79,7 @@ final class ConversationFlatTest extends KernelTestCase
         );
 
         // Détermine le chemin du CSV (mode global par défaut)
-        $appPool->switchCurrentApp($this->testHost);
+        $appPool->switchSite($this->testHost);
         $this->csvPath = $contentDirFinder->getBaseDir().'/conversation.csv';
     }
 
@@ -591,11 +591,11 @@ final class ConversationFlatTest extends KernelTestCase
      */
     public function testPerHostModeExportImport(): void
     {
-        $appPool = self::getContainer()->get(AppPool::class);
+        $appPool = self::getContainer()->get(SiteRegistry::class);
         $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
 
         // Get the per-host path (what would be used with flat_conversation_global: false)
-        $app = $appPool->switchCurrentApp($this->testHost)->get();
+        $app = $appPool->switchSite($this->testHost)->get();
         $perHostCsvPath = $contentDirFinder->get($app->getMainHost()).'/conversation.csv';
 
         // Verify this is different from global path
@@ -660,10 +660,10 @@ final class ConversationFlatTest extends KernelTestCase
      */
     public function testPathComputation(): void
     {
-        $appPool = self::getContainer()->get(AppPool::class);
+        $appPool = self::getContainer()->get(SiteRegistry::class);
         $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
 
-        $app = $appPool->switchCurrentApp($this->testHost)->get();
+        $app = $appPool->switchSite($this->testHost)->get();
 
         // Global path should be content/conversation.csv
         $globalPath = $contentDirFinder->getBaseDir().'/conversation.csv';

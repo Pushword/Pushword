@@ -3,12 +3,12 @@
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Exception;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_match_all;
 
@@ -25,7 +25,7 @@ final readonly class HtmlLinkMultisite implements FilterInterface
 
     public function __construct(
         private PushwordRouteGenerator $router,
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private PageRepository $pageRepository,
     ) {
     }

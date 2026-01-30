@@ -28,7 +28,7 @@ class PageAdvancedMainImageFormField extends PageMainImageField
 
         /** @var Page $subject */
         $subject = $this->admin->getSubject();
-        $subject->registerCustomPropertyField('mainImageFormat');
+        $subject->registerManagedPropertyKey('mainImageFormat');
 
         $fields[] = ChoiceField::new('mainImageFormat', 'adminPageMainImageFormatLabel')
             ->onlyOnForms()

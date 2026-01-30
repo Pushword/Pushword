@@ -5,7 +5,6 @@ namespace Pushword\Core\Service\Markdown\Extension;
 use League\CommonMark\Environment\EnvironmentBuilderInterface;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Image;
 use League\CommonMark\Extension\ExtensionInterface;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedEmail;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
@@ -18,6 +17,7 @@ use Pushword\Core\Service\Markdown\Extension\Renderer\ImageRenderer;
 use Pushword\Core\Service\Markdown\Extension\Renderer\ObfuscatedEmailRenderer;
 use Pushword\Core\Service\Markdown\Extension\Renderer\ObfuscatedLinkRenderer;
 use Pushword\Core\Service\Markdown\Extension\Renderer\PhoneNumberRenderer;
+use Pushword\Core\Site\SiteRegistry;
 use Twig\Environment;
 
 /**
@@ -29,7 +29,7 @@ final readonly class PushwordExtension implements ExtensionInterface
     public function __construct(
         private LinkProvider $linkProvider,
         private Environment $twig,
-        private AppPool $apps,
+        private SiteRegistry $apps,
     ) {
     }
 

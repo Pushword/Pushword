@@ -8,9 +8,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Pushword\Conversation\Entity\Message;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Service\Email\EmailEnvelope;
 use Pushword\Core\Service\Email\NotificationEmailSender;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\LastTime;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -33,7 +33,7 @@ class NewMessageMailNotifier
 
     public function __construct(
         private readonly NotificationEmailSender $emailSender,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
         private readonly EntityManagerInterface $em,

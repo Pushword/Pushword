@@ -4,8 +4,8 @@ namespace Pushword\StaticGenerator;
 
 use LogicException;
 use Psr\Log\LoggerInterface;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
@@ -31,7 +31,7 @@ final class StaticAppGenerator
     private ?Stopwatch $stopwatch = null;
 
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly GeneratorBag $generatorBag,
         private readonly RedirectionManager $redirectionManager,
         private readonly LoggerInterface $logger,
@@ -84,7 +84,7 @@ final class StaticAppGenerator
 
     public function generatePage(string $host, string $page): void
     {
-        $this->apps->switchCurrentApp($host)->get();
+        $this->apps->switchSite($host)->get();
 
         $this->logger->info('Generating '.$host.'/'.$page);
         /** @var PagesGenerator $pagesGenerator */
@@ -100,7 +100,7 @@ final class StaticAppGenerator
      */
     private function generateHost(string $host): void
     {
-        $app = $this->apps->switchCurrentApp($host)->get();
+        $app = $this->apps->switchSite($host)->get();
         $originalStaticDir = $app->getStr('static_dir');
         $filesystem = new Filesystem();
 
@@ -139,7 +139,7 @@ final class StaticAppGenerator
         $this->abortGeneration = false;
     }
 
-    private function runGenerators(AppConfig $app): void
+    private function runGenerators(SiteConfig $app): void
     {
         foreach ($app->get('static_generators') as $generator) { // @phpstan-ignore-line
             if (! \is_string($generator)) {

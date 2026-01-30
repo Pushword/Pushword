@@ -11,7 +11,7 @@ use Pushword\Admin\Menu\AdminMenuItemsEvent;
 use Pushword\Conversation\Controller\Admin\ConversationCrudController;
 use Pushword\Conversation\Controller\Admin\ReviewCrudController;
 use Pushword\Conversation\Entity\Message;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -20,7 +20,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private AppPool $apps,
+        private SiteRegistry $apps,
         private AdminContextProviderInterface $adminContextProvider,
         #[Autowire(param: 'pw.conversation.review_enabled')]
         private bool $reviewEnabled,

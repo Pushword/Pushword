@@ -2,8 +2,8 @@
 
 namespace Pushword\Core\Twig;
 
-use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Component\EntityFilter\ValueObject\SplitContent;
+use Pushword\Core\Content\ContentPipelineFactory;
 use Pushword\Core\Entity\Page;
 use Twig\Attribute\AsTwigFunction;
 
@@ -13,7 +13,7 @@ final class ContentExtension
     private array $cache = [];
 
     public function __construct(
-        private readonly ManagerPool $managerPool,
+        private readonly ContentPipelineFactory $pipelineFactory,
     ) {
     }
 
@@ -26,10 +26,7 @@ final class ContentExtension
             return $this->cache[$id];
         }
 
-        // Get processed main content (with markdown, links, etc. applied)
-        $manager = $this->managerPool->getManager($page);
-        /** @var string $processedContent */
-        $processedContent = $manager->getMainContent();
+        $processedContent = $this->pipelineFactory->get($page)->getMainContent();
 
         $this->cache[$id] = new SplitContent($processedContent, $page);
 

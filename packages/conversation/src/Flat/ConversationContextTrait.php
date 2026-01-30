@@ -5,14 +5,14 @@ namespace Pushword\Conversation\Flat;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Repository\MessageRepository;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Symfony\Contracts\Service\Attribute\Required;
 
 trait ConversationContextTrait
 {
-    private AppPool $apps;
+    private SiteRegistry $apps;
 
     private FlatFileContentDirFinder $contentDirFinder;
 
@@ -20,7 +20,7 @@ trait ConversationContextTrait
 
     #[Required]
     public function initConversationContext(
-        AppPool $apps,
+        SiteRegistry $apps,
         FlatFileContentDirFinder $contentDirFinder,
         MessageRepository $messageRepository,
     ): void {
@@ -29,10 +29,10 @@ trait ConversationContextTrait
         $this->messageRepository = $messageRepository;
     }
 
-    private function resolveApp(?string $host): AppConfig
+    private function resolveApp(?string $host): SiteConfig
     {
         return null !== $host
-            ? $this->apps->switchCurrentApp($host)->get()
+            ? $this->apps->switchSite($host)->get()
             : $this->apps->get();
     }
 
@@ -41,7 +41,7 @@ trait ConversationContextTrait
         return (bool) $this->apps->get()->get('flat_conversation_global');
     }
 
-    private function buildCsvPath(?AppConfig $app = null): string
+    private function buildCsvPath(?SiteConfig $app = null): string
     {
         if ($this->isGlobalMode()) {
             return $this->contentDirFinder->getBaseDir().'/conversation.csv';

@@ -191,7 +191,7 @@ final class LinkedDocsScanner extends AbstractScanner
         $this->linksCheckedCounter = 0;
 
         if ($this->page->hasRedirection()) {
-            $this->checkLinkedDoc($this->page->getRedirection(), false);
+            $this->checkLinkedDoc($this->page->getRedirectionUrl(), false);
 
             return;
         }

@@ -3,15 +3,14 @@
 namespace Pushword\Core\Component\EntityFilter;
 
 use Exception;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Twig\Attribute\AsTwigFunction;
 
 final class ManagerPool
 {
     public function __construct(
-        public AppPool $apps,
+        public SiteRegistry $apps,
         public EventDispatcherInterface $eventDispatcher,
         private readonly FilterRegistry $filterRegistry,
     ) {
@@ -41,7 +40,6 @@ final class ManagerPool
     /**
      * @return mixed|Manager
      */
-    #[AsTwigFunction('pw')]
     public function getProperty(Page $page, string $property = ''): mixed
     {
         $manager = $this->getManager($page);

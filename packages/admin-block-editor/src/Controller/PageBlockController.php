@@ -4,8 +4,8 @@ namespace Pushword\AdminBlockEditor\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\json_encode;
 
@@ -22,7 +22,7 @@ final class PageBlockController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Twig $twig,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
     ) {
     }
 
@@ -41,7 +41,7 @@ final class PageBlockController extends AbstractController
                 throw new Exception('Page not found');
             }
 
-            $this->apps->switchCurrentApp($currentPage);
+            $this->apps->switchSite($currentPage);
         }
 
         $htmlContent = $this->twig->render(

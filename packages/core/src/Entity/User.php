@@ -7,7 +7,7 @@ use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
-use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
+use Pushword\Core\Entity\SharedTrait\ExtensiblePropertiesTrait;
 use Pushword\Core\Repository\UserRepository;
 use Stringable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -22,13 +22,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'user')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringable
 {
-    use CustomPropertiesTrait;
+    use ExtensiblePropertiesTrait;
 
-    /** @var string */
-    public const ROLE_DEFAULT = 'ROLE_USER';
+    public const string ROLE_DEFAULT = 'ROLE_USER';
 
-    /** @var string */
-    public const ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN';
+    public const string ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN';
 
     #[ORM\Id, ORM\Column(type: Types::INTEGER), ORM\GeneratedValue(strategy: 'AUTO')]
     public private(set) ?int $id = null;
@@ -46,30 +44,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
     #[ORM\Column(type: Types::STRING, length: 5, options: ['default' => 'en'])]
     public string $locale = 'en';
 
-    /**
-     * Loaded From BaseUser.
-     */
     #[Assert\Length(min: 7, max: 100, minMessage: 'userPasswordShort')]
     private ?string $plainPassword = null;
 
-    /**
-     * @var string[]
-     */
+    /** @var string[] */
     #[ORM\Column(type: Types::JSON)]
     private array $roles = [];
 
     #[ORM\Column(type: Types::STRING, nullable: true)]
     private ?string $password = null;
 
-    /**
-     * API token for webhook authentication (flat sync lock/unlock).
-     */
     #[ORM\Column(type: Types::STRING, length: 64, unique: true, nullable: true)]
     public ?string $apiToken = null;
 
-    /**
-     * Generate a new API token (64 hex characters = 32 bytes).
-     */
     public function generateApiToken(): self
     {
         $this->apiToken = bin2hex(random_bytes(32));
@@ -77,9 +64,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return $this;
     }
 
-    /**
-     * Revoke the current API token.
-     */
     public function revokeApiToken(): self
     {
         $this->apiToken = null;
@@ -110,21 +94,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return $this->plainPassword ?? '';
     }
 
-    /**
-     * @return string[] The user roles
-     */
+    /** @return string[] */
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
         $roles[] = self::ROLE_DEFAULT;
 
         return array_unique($roles);
     }
 
-    /**
-     * @param string[] $roles
-     */
+    /** @param string[] $roles */
     public function setRoles(array $roles): self
     {
         $this->roles = $roles;
@@ -155,12 +134,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return $this;
     }
 
-    public function getSalt(): string
-    {
-        // not needed when using the "bcrypt" algorithm in security.yaml
-        return '';
-    }
-
     #[ORM\PrePersist]
     public function updatedTimestamps(): self
     {
@@ -169,9 +142,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Stringa
         return $this;
     }
 
-    /**
-     * Get the value of username (fallback to email if not set).
-     */
     public function getUsername(): string
     {
         return $this->username ?? $this->email;

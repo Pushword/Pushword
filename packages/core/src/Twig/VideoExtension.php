@@ -2,7 +2,7 @@
 
 namespace Pushword\Core\Twig;
 
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
@@ -10,7 +10,7 @@ final readonly class VideoExtension
 {
     public function __construct(
         private Twig $twig,
-        private AppPool $apps,
+        private SiteRegistry $apps,
     ) {
     }
 

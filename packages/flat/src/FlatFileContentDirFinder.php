@@ -3,7 +3,7 @@
 namespace Pushword\Flat;
 
 use Exception;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Filesystem\Path;
 
 /**
@@ -17,7 +17,7 @@ final class FlatFileContentDirFinder
     private array $contentDir = [];
 
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly string $projectDir
     ) {
     }

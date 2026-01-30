@@ -4,9 +4,9 @@ namespace Pushword\Conversation\Twig;
 
 use Exception;
 use Pushword\Conversation\Repository\MessageRepository;
-use Pushword\Core\Component\App\AppConfig;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteConfig;
+use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\json_encode;
 
@@ -16,10 +16,10 @@ use Twig\Environment as Twig;
 
 class AppExtension
 {
-    private readonly AppConfig $app;
+    private readonly SiteConfig $app;
 
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly RouterInterface $router,
         private readonly MessageRepository $messageRepo
     ) {

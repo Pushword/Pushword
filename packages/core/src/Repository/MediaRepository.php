@@ -142,17 +142,17 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             ->getArrayResult();
 
         $ratioLabelsResults = $this->createQueryBuilder('m')
-            ->select('DISTINCT m.ratioLabel AS ratioLabel')
-            ->orderBy('m.ratioLabel', 'ASC')
+            ->select('DISTINCT m.imageData.ratioLabel AS ratioLabel')
+            ->orderBy('m.imageData.ratioLabel', 'ASC')
             ->getQuery()
             ->getArrayResult();
 
         $dimensionsResults = $this->createQueryBuilder('m')
-            ->select('DISTINCT m.width AS width, m.height AS height')
-            ->where('m.width IS NOT NULL')
-            ->andWhere('m.height IS NOT NULL')
-            ->orderBy('m.width', 'ASC')
-            ->addOrderBy('m.height', 'ASC')
+            ->select('DISTINCT m.imageData.width AS width, m.imageData.height AS height')
+            ->where('m.imageData.width IS NOT NULL')
+            ->andWhere('m.imageData.height IS NOT NULL')
+            ->orderBy('m.imageData.width', 'ASC')
+            ->addOrderBy('m.imageData.height', 'ASC')
             ->getQuery()
             ->getArrayResult();
 

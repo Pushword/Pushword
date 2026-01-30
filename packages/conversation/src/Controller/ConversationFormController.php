@@ -8,7 +8,7 @@ use Exception;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Form\ConversationFormInterface;
 use Pushword\Conversation\Repository\MessageRepository;
-use Pushword\Core\Component\App\AppPool;
+use Pushword\Core\Site\SiteRegistry;
 use ReflectionClass;
 
 use function Safe\json_encode;
@@ -36,7 +36,7 @@ final class ConversationFormController extends AbstractController
 
     public function __construct(
         private readonly TranslatorInterface $translator,
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly Twig $twig,
         private readonly FormFactoryInterface $formFactory,
         private readonly TokenStorageInterface $tokenStorage,
@@ -163,7 +163,7 @@ final class ConversationFormController extends AbstractController
     public function show(Request $request, string $type): Response
     {
         $host = $request->query->getString('host') ?: $request->getHost();
-        $this->apps->switchCurrentApp($host);
+        $this->apps->switchSite($host);
 
         $locale = $request->query->getString('locale') ?: $this->apps->get()->getLocale();
         $request->setLocale($locale);

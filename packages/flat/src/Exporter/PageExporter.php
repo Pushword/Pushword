@@ -7,9 +7,9 @@ use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
 use Exception;
 use League\Csv\Writer;
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\Entity;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
@@ -43,7 +43,7 @@ final class PageExporter
      * @param string[] $pageIndexColumns
      */
     public function __construct(
-        private readonly AppPool $apps,
+        private readonly SiteRegistry $apps,
         private readonly PageRepository $pageRepo,
         private readonly PropertyConverterRegistry $converterRegistry,
         array $pageIndexColumns = [],

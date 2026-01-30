@@ -2,8 +2,8 @@
 
 namespace Pushword\AdminBlockEditor\Twig;
 
-use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Site\SiteRegistry;
 use stdClass;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
@@ -11,7 +11,7 @@ use Twig\Attribute\AsTwigFunction;
 class AppExtension
 {
     public function __construct(
-        private readonly AppPool $appPool,
+        private readonly SiteRegistry $appPool,
         private readonly PushwordRouteGenerator $router
     ) {
     }

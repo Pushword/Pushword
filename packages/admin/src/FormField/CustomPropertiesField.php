@@ -14,7 +14,7 @@ class CustomPropertiesField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
-        return $this->buildEasyAdminField('standAloneCustomProperties', TextareaType::class, [
+        return $this->buildEasyAdminField('unmanagedPropertiesAsYaml', TextareaType::class, [
             'required' => false,
             'attr' => [
                 'style' => 'width:100%; height:100px;min-height:15vh;font-size:10px',
