@@ -71,7 +71,9 @@ class PostInstall
         $count = 0;
         $content = str_replace($search, $replace, $content, $count);
         if (1 !== $count) {
-            throw new Exception('Error on replacing `'.$search.'` by `'.$replace.'`');
+            echo '⚠ Warning: Could not replace `'.$search.'` by `'.$replace.'` in '.$file.\chr(10);
+
+            return;
         }
 
         file_put_contents($file, $content);
