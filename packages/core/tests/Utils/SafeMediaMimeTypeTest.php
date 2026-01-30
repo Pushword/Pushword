@@ -7,11 +7,9 @@ use Pushword\Core\Utils\SafeMediaMimeType;
 
 class SafeMediaMimeTypeTest extends TestCase
 {
-    public function testGetReturnsNonEmptyArray(): void
+    public function testGetReturnsConstantKeys(): void
     {
-        $result = SafeMediaMimeType::get();
-
-        self::assertNotEmpty($result);
+        self::assertSame(array_keys(SafeMediaMimeType::GET), SafeMediaMimeType::get());
     }
 
     public function testGetContainsExpectedMimeTypes(): void
@@ -21,12 +19,5 @@ class SafeMediaMimeTypeTest extends TestCase
         self::assertContains('image/svg+xml', $result);
         self::assertContains('application/gpx+xml', $result);
         self::assertContains('application/gpx', $result);
-    }
-
-    public function testGetReturnsOnlyKeys(): void
-    {
-        $result = SafeMediaMimeType::get();
-
-        self::assertSame(array_keys(SafeMediaMimeType::GET), $result);
     }
 }

@@ -56,24 +56,9 @@ class EditorJsHelperTest extends TestCase
         yield 'empty string' => [''];
         yield 'no blocks keyword' => ['{"data":"value"}'];
         yield 'blocks not array' => ['{"blocks":"notarray"}'];
-    }
-
-    public function testDecodeThrowsOnBlockWithoutType(): void
-    {
-        $this->expectException(Exception::class);
-        EditorJsHelper::decode('{"blocks":[{"data":"value"}]}');
-    }
-
-    public function testDecodeThrowsOnInvalidTunes(): void
-    {
-        $this->expectException(Exception::class);
-        EditorJsHelper::decode('{"blocks":[{"type":"p","tunes":"invalid"}]}');
-    }
-
-    public function testDecodeThrowsOnInvalidText(): void
-    {
-        $this->expectException(Exception::class);
-        EditorJsHelper::decode('{"blocks":[{"type":"p","text":123}]}');
+        yield 'block without type' => ['{"blocks":[{"data":"value"}]}'];
+        yield 'invalid tunes type' => ['{"blocks":[{"type":"p","tunes":"invalid"}]}'];
+        yield 'invalid text type' => ['{"blocks":[{"type":"p","text":123}]}'];
     }
 
     public function testTryToDecodeReturnsObjectOnValidJson(): void

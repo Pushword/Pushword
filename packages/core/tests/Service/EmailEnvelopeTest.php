@@ -4,51 +4,34 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Service;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Service\Email\EmailEnvelope;
 
 class EmailEnvelopeTest extends TestCase
 {
-    public function testIsValidWithValidData(): void
+    /**
+     * @param string[] $to
+     */
+    #[DataProvider('provideIsValid')]
+    public function testIsValid(bool $expected, string $from, array $to): void
     {
-        $envelope = new EmailEnvelope('from@example.com', ['to@example.com']);
+        $envelope = new EmailEnvelope($from, $to);
 
-        self::assertTrue($envelope->isValid());
+        self::assertSame($expected, $envelope->isValid());
     }
 
-    public function testIsValidWithEmptyFrom(): void
+    /**
+     * @return iterable<string, array{bool, string, string[]}>
+     */
+    public static function provideIsValid(): iterable
     {
-        $envelope = new EmailEnvelope('', ['to@example.com']);
-
-        self::assertFalse($envelope->isValid());
-    }
-
-    public function testIsValidWithInvalidFrom(): void
-    {
-        $envelope = new EmailEnvelope('not-an-email', ['to@example.com']);
-
-        self::assertFalse($envelope->isValid());
-    }
-
-    public function testIsValidWithEmptyRecipients(): void
-    {
-        $envelope = new EmailEnvelope('from@example.com', []);
-
-        self::assertFalse($envelope->isValid());
-    }
-
-    public function testIsValidWithInvalidRecipient(): void
-    {
-        $envelope = new EmailEnvelope('from@example.com', ['invalid']);
-
-        self::assertFalse($envelope->isValid());
-    }
-
-    public function testIsValidWithMultipleRecipients(): void
-    {
-        $envelope = new EmailEnvelope('from@example.com', ['a@example.com', 'b@example.com']);
-
-        self::assertTrue($envelope->isValid());
+        yield 'valid single recipient' => [true, 'from@example.com', ['to@example.com']];
+        yield 'valid multiple recipients' => [true, 'from@example.com', ['a@example.com', 'b@example.com']];
+        yield 'empty from' => [false, '', ['to@example.com']];
+        yield 'invalid from' => [false, 'not-an-email', ['to@example.com']];
+        yield 'empty recipients' => [false, 'from@example.com', []];
+        yield 'invalid recipient' => [false, 'from@example.com', ['invalid']];
     }
 
     public function testGetFirstRecipient(): void

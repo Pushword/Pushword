@@ -2,9 +2,6 @@
 
 namespace Pushword\PageScanner\Scanner;
 
-/**
- * Permit to find error in image or link.
- */
 final class RegexHelper
 {
     /**
