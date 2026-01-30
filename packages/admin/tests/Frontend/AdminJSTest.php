@@ -351,7 +351,7 @@ class AdminJSTest extends AbstractAdminTestClass
         $this->navigateToPageEdit($client);
         $this->ensureMediaPickerReady($client);
 
-        $client->findElement(WebDriverBy::cssSelector(self::SELECTOR_MEDIA_PICKER_CHOOSE))->click();
+        $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_CHOOSE);
 
         $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::TIMEOUT_MEDIUM);
         $client->wait(self::WAIT_MEDIUM);
@@ -387,7 +387,7 @@ class AdminJSTest extends AbstractAdminTestClass
         $this->navigateToPageEdit($client);
         $selectId = $this->ensureMediaPickerReady($client);
 
-        $client->findElement(WebDriverBy::cssSelector(self::SELECTOR_MEDIA_PICKER_CHOOSE))->click();
+        $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_CHOOSE);
         $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::TIMEOUT_MEDIUM);
         $client->wait(self::WAIT_MEDIUM);
 
@@ -414,26 +414,39 @@ class AdminJSTest extends AbstractAdminTestClass
         $result = $client->executeScript('
             const select = document.getElementById(arguments[0]);
             const wrapper = select?.closest(".pw-media-picker");
-            const modal = document.querySelector(arguments[1]);
             return {
                 selectedId: select?.dataset.pwMediaPickerSelectedId || "",
                 selectedName: select?.dataset.pwMediaPickerSelectedName || "",
                 selectValue: select?.value || "",
                 isEmpty: wrapper?.classList.contains("pw-media-picker--empty") ?? true,
-                thumbStyle: wrapper?.querySelector(".pw-media-picker__thumb-inner")?.style.backgroundImage || "",
-                modalHidden: !modal || getComputedStyle(modal).display === "none"
+                thumbStyle: wrapper?.querySelector(".pw-media-picker__thumb-inner")?.style.backgroundImage || ""
             };
-        ', [$selectId, self::SELECTOR_MEDIA_PICKER_MODAL]);
+        ', [$selectId]);
 
         self::assertIsArray($result);
 
-        /** @var array{selectedId: string, selectedName: string, selectValue: string, isEmpty: bool, thumbStyle: string, modalHidden: bool} $result */
+        /** @var array{selectedId: string, selectedName: string, selectValue: string, isEmpty: bool, thumbStyle: string} $result */
         self::assertSame('999', $result['selectedId'], 'Selected media ID should be set');
         self::assertSame('test-image.jpg', $result['selectedName'], 'Selected media name should be set');
         self::assertSame('999', $result['selectValue'], 'Select value should match media ID');
         self::assertFalse($result['isEmpty'], 'Picker should not have empty class after selection');
         self::assertNotEmpty($result['thumbStyle'], 'Thumbnail should have a background image');
-        self::assertTrue($result['modalHidden'], 'Modal should close after selection');
+
+        // Poll for modal close (Bootstrap fade animation is async)
+        $modalClosed = false;
+        for ($i = 0; $i < 10; ++$i) {
+            $modalClosed = (bool) $client->executeScript(
+                'const m = document.querySelector(arguments[0]); return !m || getComputedStyle(m).display === "none"',
+                [self::SELECTOR_MEDIA_PICKER_MODAL]
+            );
+            if ($modalClosed) {
+                break;
+            }
+
+            $client->wait(self::WAIT_SHORT);
+        }
+
+        self::assertTrue($modalClosed, 'Modal should close after selection');
     }
 
     /**
@@ -468,7 +481,7 @@ class AdminJSTest extends AbstractAdminTestClass
         );
         self::assertTrue($hasSelection, 'Media should be selected before remove test');
 
-        $client->findElement(WebDriverBy::cssSelector(self::SELECTOR_MEDIA_PICKER_REMOVE))->click();
+        $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_REMOVE);
         $client->wait(self::WAIT_SHORT);
 
         $result = $client->executeScript('
@@ -502,7 +515,7 @@ class AdminJSTest extends AbstractAdminTestClass
             self::markTestSkipped('No upload button found');
         }
 
-        $client->findElement(WebDriverBy::cssSelector(self::SELECTOR_MEDIA_PICKER_UPLOAD))->click();
+        $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_UPLOAD);
 
         $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::TIMEOUT_MEDIUM);
         $client->wait(self::WAIT_MEDIUM);
