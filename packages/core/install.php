@@ -40,8 +40,11 @@ PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?ser
 // and define an APP_SECRET
 PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.sha1(md5(uniqid())).chr(10));
 PostInstall::mirror('vendor/pushword/skeleton/media~', 'media');
+$freshInstall = ! file_exists('var/app.db');
 exec('php bin/console doctrine:schema:update --force -q');
-exec('php bin/console doctrine:fixtures:load --no-interaction -q &');
+if ($freshInstall) {
+    exec('php bin/console doctrine:fixtures:load --no-interaction -q &');
+}
 exec('php bin/console pw:image:cache -q &');
 
 // Add an admin user
