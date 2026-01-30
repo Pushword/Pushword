@@ -37,7 +37,7 @@ php -r '
         if (in_array($pkg, [".", "..", "new", "docs", "js-helper"])) continue;
         $pkgDir = $monorepoDir."/packages/".$pkg;
         if (!is_dir($pkgDir) || !file_exists($pkgDir."/composer.json")) continue;
-        $repos[] = ["type" => "path", "url" => $pkgDir, "options" => ["symlink" => true]];
+        $repos[] = ["type" => "path", "url" => $pkgDir, "options" => ["symlink" => false]];
     }
     $json["repositories"] = $repos;
 
