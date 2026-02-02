@@ -31,6 +31,8 @@ final readonly class NormalizeFileNameCommand
         OutputInterface $output,
         #[Option(description: 'Preview changes without applying them', name: 'dry-run')]
         bool $dryRun = false,
+        #[Option(description: 'Delete DB entries when file is missing from disk', name: 'delete-missing')]
+        bool $deleteMissing = false,
     ): int {
         $io = new SymfonyStyle($input, $output);
         $medias = $this->mediaRepository->findAll();
@@ -67,6 +69,7 @@ final readonly class NormalizeFileNameCommand
         $progressBar->start();
 
         $errors = [];
+        $deleted = [];
 
         foreach ($toNormalize as $item) {
             $oldFileName = $item['old'];
@@ -91,12 +94,35 @@ final readonly class NormalizeFileNameCommand
                     $this->imageCacheManager->ensurePublicSymlink($media);
                 }
             } catch (Throwable $e) {
-                $errors[] = $oldFileName.': '.$e->getMessage();
+                $message = $e->getMessage();
 
                 try {
                     $this->managerRegistry->resetManager();
                 } catch (Throwable) {
                 }
+
+                if ($deleteMissing && str_contains($message, 'file not found on disk')) {
+                    try {
+                        $em = $this->managerRegistry->getManager();
+                        $media = $em->find(Media::class, $item['id']);
+
+                        if ($media instanceof Media) {
+                            $em->remove($media);
+                            $em->flush();
+                            $deleted[] = $oldFileName;
+                            $progressBar->advance();
+
+                            continue;
+                        }
+                    } catch (Throwable) {
+                        try {
+                            $this->managerRegistry->resetManager();
+                        } catch (Throwable) {
+                        }
+                    }
+                }
+
+                $errors[] = $oldFileName.': '.$message;
             }
 
             $progressBar->advance();
@@ -107,12 +133,17 @@ final readonly class NormalizeFileNameCommand
 
         $output->writeln('');
 
+        if ([] !== $deleted) {
+            $io->note(\sprintf('Deleted %d media entry(ies) with missing files:', \count($deleted)));
+            $io->listing($deleted);
+        }
+
         if ([] !== $errors) {
             $io->warning('Some files failed to normalize:');
             $io->listing($errors);
         }
 
-        $io->success(\sprintf('Normalized %d media filename(s).', \count($toNormalize) - \count($errors)));
+        $io->success(\sprintf('Normalized %d media filename(s).', \count($toNormalize) - \count($errors) - \count($deleted)));
 
         return Command::SUCCESS;
     }
