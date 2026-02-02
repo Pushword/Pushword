@@ -46,6 +46,18 @@ if (false !== $testToken && '' !== $testToken) {
 $segment = '' !== $runId ? '/'.$runId : '';
 $testBaseDir = sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment;
 
+// Export env vars used by the compiled container (pushword.php test config uses %env(...)%)
+$envVars = [
+    'PUSHWORD_TEST_MEDIA_DIR' => '' !== $runId ? $testBaseDir.'/media' : $monoRepoBase.'/packages/skeleton/media',
+    'PUSHWORD_TEST_DATABASE_URL' => 'sqlite:///'.$testBaseDir.'/test.db',
+    'PUSHWORD_TEST_FLAT_CONTENT_DIR' => '' !== $runId ? $testBaseDir.'/content/_host_' : $monoRepoBase.'/packages/skeleton/content/_host_',
+];
+foreach ($envVars as $key => $value) {
+    putenv($key.'='.$value);
+    $_ENV[$key] = $value;
+    $_SERVER[$key] = $value;
+}
+
 // Ensure each worker has its own lock directory and chrome data dir
 if ('' !== $runId) {
     $lockDsn = 'flock://'.$testBaseDir.'/locks';
@@ -108,7 +120,6 @@ $dbCacheHash = (static function () use ($monoRepoBase): string {
 })();
 
 $fs->remove($testBaseDir.'/var/dev/cache');
-$fs->remove($testBaseDir.'/var/test/cache');
 $fs->remove($testBaseDir.'/var/dev/log');
 $fs->remove($testBaseDir.'/var/test/log');
 

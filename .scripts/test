@@ -112,6 +112,11 @@ else
         MONOREPO_PID=$!
     fi
 
+    # Pre-warm Symfony container cache so workers don't each compile it
+    step "Warming container cache"
+    PUSHWORD_TEST_MEDIA_DIR=/dev/null PUSHWORD_TEST_DATABASE_URL=sqlite:///dev/null PUSHWORD_TEST_FLAT_CONTENT_DIR=/dev/null \
+        XDEBUG_MODE=off php -dxdebug.mode=off packages/skeleton/bin/console cache:warmup --env=test --quiet 2>/dev/null || true
+
     PHPUNIT_EXIT=0
     if [ -z "$FILTER_ARG" ] && [ $NO_PARALLEL -eq 0 ]; then
         step "Running PHPUnit (parallel)"

@@ -35,6 +35,12 @@ final class PageSyncTest extends KernelTestCase
 
     private PageSync $pageSync;
 
+    /** @var string[] Files created during the test that should be cleaned up */
+    private array $createdFiles = [];
+
+    /** @var string[] Directories created during the test that should be cleaned up */
+    private array $createdDirs = [];
+
     #[Override]
     protected function setUp(): void
     {
@@ -42,6 +48,8 @@ final class PageSyncTest extends KernelTestCase
         $this->filesystem = new Filesystem();
         $this->testContentDir = self::getContainer()->getParameter('kernel.cache_dir').'/test-sync-content';
         $this->filesystem->mkdir($this->testContentDir);
+        $this->createdFiles = [];
+        $this->createdDirs = [];
 
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
@@ -57,8 +65,26 @@ final class PageSyncTest extends KernelTestCase
     #[Override]
     protected function tearDown(): void
     {
+        foreach ($this->createdFiles as $file) {
+            @unlink($file);
+        }
+
+        foreach (array_reverse($this->createdDirs) as $dir) {
+            @rmdir($dir);
+        }
+
         $this->filesystem->remove($this->testContentDir);
         parent::tearDown();
+    }
+
+    private function trackFile(string $path): void
+    {
+        $this->createdFiles[] = $path;
+    }
+
+    private function trackDir(string $path): void
+    {
+        $this->createdDirs[] = $path;
     }
 
     /**
@@ -261,7 +287,7 @@ MD;
         self::assertNull($backupPage2, 'Backup file should not create page with raw filename');
 
         // Cleanup
-        @unlink($contentDir.'/backup-test.md~');
+        $this->trackFile($contentDir.'/backup-test.md~');
     }
 
     /**
@@ -340,7 +366,7 @@ MD;
         // Cleanup
         $this->em->remove($draftPage);
         $this->em->flush();
-        @unlink($contentDir.'/draft-page-test.md');
+        $this->trackFile($contentDir.'/draft-page-test.md');
     }
 
     /**
@@ -553,7 +579,7 @@ MD;
         // Cleanup
         $this->em->remove($importedPage);
         $this->em->flush();
-        @unlink($mdFilePath);
+        $this->trackFile($mdFilePath);
     }
 
     /**
@@ -610,7 +636,7 @@ MD;
         // Cleanup
         $this->em->remove($importedPage);
         $this->em->flush();
-        @unlink($mdFilePath);
+        $this->trackFile($mdFilePath);
     }
 
     /**
@@ -652,7 +678,7 @@ MD;
         // Cleanup
         $this->em->remove($page);
         $this->em->flush();
-        @unlink($mdFilePath);
+        $this->trackFile($mdFilePath);
     }
 
     /**
@@ -739,8 +765,8 @@ MD;
         $this->em->remove($importedEnPage);
         $this->em->remove($importedFrPage);
         $this->em->flush();
-        @unlink($enMdFilePath);
-        @unlink($frMdFilePath);
+        $this->trackFile($enMdFilePath);
+        $this->trackFile($frMdFilePath);
     }
 
     /**
@@ -838,9 +864,9 @@ MD;
         $this->em->remove($importedFrPage);
         $this->em->remove($importedDePage);
         $this->em->flush();
-        @unlink($contentDir.'/trans-removal-en.md');
-        @unlink($contentDir.'/trans-removal-fr.md');
-        @unlink($contentDir.'/trans-removal-de.md');
+        $this->trackFile($contentDir.'/trans-removal-en.md');
+        $this->trackFile($contentDir.'/trans-removal-fr.md');
+        $this->trackFile($contentDir.'/trans-removal-de.md');
     }
 
     /**
@@ -914,8 +940,8 @@ MD;
         $this->em->remove($importedEnPage);
         $this->em->remove($importedFrPage);
         $this->em->flush();
-        @unlink($enMdFilePath);
-        @unlink($frMdFilePath);
+        $this->trackFile($enMdFilePath);
+        $this->trackFile($frMdFilePath);
     }
 
     /**
@@ -990,8 +1016,8 @@ MD;
         $this->em->remove($importedAPage);
         $this->em->remove($importedBPage);
         $this->em->flush();
-        @unlink($aMdFilePath);
-        @unlink($bMdFilePath);
+        $this->trackFile($aMdFilePath);
+        $this->trackFile($bMdFilePath);
     }
 
     /**
@@ -1064,8 +1090,8 @@ MD;
         $this->em->remove($importedEnPage);
         $this->em->remove($importedFrPage);
         $this->em->flush();
-        @unlink($enMdFilePath);
-        @unlink($frMdFilePath);
+        $this->trackFile($enMdFilePath);
+        $this->trackFile($frMdFilePath);
     }
 
     /**
@@ -1135,8 +1161,8 @@ MD;
         $this->em->remove($importedEnPage);
         $this->em->remove($importedFrPage);
         $this->em->flush();
-        @unlink($enMdFilePath);
-        @unlink($frMdFilePath);
+        $this->trackFile($enMdFilePath);
+        $this->trackFile($frMdFilePath);
     }
 
     /**
@@ -1204,8 +1230,8 @@ MD;
         $this->em->remove($importedEnPage);
         $this->em->remove($importedFrPage);
         $this->em->flush();
-        @unlink($enMdFilePath);
-        @unlink($frMdFilePath);
+        $this->trackFile($enMdFilePath);
+        $this->trackFile($frMdFilePath);
     }
 
     /**
@@ -1272,7 +1298,7 @@ MD;
         // Cleanup
         $this->em->remove($importedPage);
         $this->em->flush();
-        @unlink($mdFilePath);
+        $this->trackFile($mdFilePath);
     }
 
     /**
@@ -1333,7 +1359,7 @@ MD;
         // Cleanup
         $this->em->remove($importedPage);
         $this->em->flush();
-        @unlink($mdFilePath);
+        $this->trackFile($mdFilePath);
     }
 
     /**
@@ -1372,7 +1398,7 @@ YAML;
         // Cleanup
         $this->em->remove($importedPage);
         $this->em->flush();
-        @unlink($mdFilePath);
+        $this->trackFile($mdFilePath);
     }
 
     /**
@@ -1415,8 +1441,8 @@ YAML;
         // Cleanup
         $this->em->remove($importedPage);
         $this->em->flush();
-        @unlink($mdFilePath);
-        @rmdir($localeDir);
+        $this->trackFile($mdFilePath);
+        $this->trackDir($localeDir);
     }
 
     /**
@@ -1473,7 +1499,7 @@ YAML;
         // Cleanup
         $this->em->remove($importedPage);
         $this->em->flush();
-        @unlink($mdFilePath);
+        $this->trackFile($mdFilePath);
     }
 
     /**
@@ -1527,8 +1553,8 @@ YAML;
         $this->em->remove($page1);
         $this->em->remove($page2);
         $this->em->flush();
-        @unlink($md1FilePath);
-        @unlink($md2FilePath);
+        $this->trackFile($md1FilePath);
+        $this->trackFile($md2FilePath);
     }
 
     /**
@@ -1584,6 +1610,6 @@ YAML;
         // Cleanup
         $this->em->remove($newPage);
         $this->em->flush();
-        @unlink($newPagePath);
+        $this->trackFile($newPagePath);
     }
 }

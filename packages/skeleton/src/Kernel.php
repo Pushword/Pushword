@@ -22,6 +22,11 @@ class Kernel extends BaseKernel
 
     public function getCacheDir(): string
     {
+        // Use a persistent shared cache dir so the compiled container is reused across test workers
+        if ('test' === $this->environment) {
+            return sys_get_temp_dir().'/com.github.pushword.pushword/container-cache/'.$this->environment;
+        }
+
         return $this->getTestBaseDir().'/cache';
     }
 

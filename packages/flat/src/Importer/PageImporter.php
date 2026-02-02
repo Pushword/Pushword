@@ -75,6 +75,9 @@ final class PageImporter extends AbstractImporter
     /** @var array<int, string> Map of ID => relative file path that claimed it (for duplicate detection) */
     private array $idToFileMap = [];
 
+    /** @var array<string, Page> slug => Page index for O(1) lookups */
+    private array $slugIndex = [];
+
     private function getContentDir(): string
     {
         $host = $this->apps->get()->getMainHost();
@@ -489,10 +492,15 @@ final class PageImporter extends AbstractImporter
             throw new Exception();
         }
 
-        $pages = array_filter($this->getPages(), static fn (Page $page): bool => $page->getSlug() === $criteria);
-        $pages = array_values($pages);
+        // Check freshly imported pages first (not yet flushed to DB)
+        if (isset($this->pageList[$criteria])) {
+            return $this->pageList[$criteria];
+        }
 
-        return $pages[0] ?? null;
+        // Then check slug index (O(1) lookup from DB-loaded pages)
+        $this->getPages(); // ensure slugIndex is populated
+
+        return $this->slugIndex[$criteria] ?? null;
     }
 
     /**
@@ -504,7 +512,25 @@ final class PageImporter extends AbstractImporter
             return $this->pages;
         }
 
-        return $this->pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
+        $this->pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
+
+        $this->slugIndex = [];
+        foreach ($this->pages as $page) {
+            $this->slugIndex[$page->getSlug()] = $page;
+        }
+
+        return $this->pages;
+    }
+
+    /**
+     * Get the loaded pages from the last getPages() call.
+     * Returns null if pages haven't been loaded yet.
+     *
+     * @return Page[]|null
+     */
+    public function getLoadedPages(): ?array
+    {
+        return $this->pages;
     }
 
     /**
@@ -531,6 +557,7 @@ final class PageImporter extends AbstractImporter
     public function resetImport(): void
     {
         $this->pages = null;
+        $this->slugIndex = [];
         $this->toAddAtTheEnd = [];
         $this->slugs = [];
         $this->pageList = [];

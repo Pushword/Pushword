@@ -39,6 +39,9 @@ final class PageExporter
 
     private ?OutputInterface $output = null;
 
+    /** @var string[]|null Cached entity properties (same for all Page instances) */
+    private ?array $cachedEntityProperties = null;
+
     /**
      * @param string[] $pageIndexColumns
      */
@@ -67,6 +70,53 @@ final class PageExporter
 
         $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
 
+        $this->exportPagesArray($pages, $force, $skipId);
+    }
+
+    /**
+     * Export only pages matching the given slugs (used after import to write back auto-generated IDs).
+     *
+     * @param string[] $slugs
+     * @param Page[]   $pages Pre-loaded pages to avoid extra DB query; if empty, loads from DB
+     */
+    public function exportPagesSubset(array $slugs, bool $skipId = false, array $pages = []): void
+    {
+        $this->exportedCount = 0;
+        $this->skippedCount = 0;
+
+        if ([] === $pages) {
+            $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
+        }
+
+        if ([] === $slugs) {
+            $this->exportIndex($pages, $skipId);
+
+            return;
+        }
+
+        $slugSet = array_flip($slugs);
+        $subset = array_filter($pages, static fn (Page $page): bool => isset($slugSet[$page->getSlug()]));
+
+        foreach ($subset as $page) {
+            if ($page->hasRedirection()) {
+                continue;
+            }
+
+            $exported = $this->exportPage($page, false, $skipId);
+
+            if ($exported) {
+                $this->output?->writeln(\sprintf('Exported %s.md', $page->getSlug()));
+            }
+        }
+
+        $this->exportIndex($pages, $skipId);
+    }
+
+    /**
+     * @param Page[] $pages
+     */
+    private function exportPagesArray(array $pages, bool $force, bool $skipId): void
+    {
         // Filter out redirections for export
         $exportablePages = array_filter($pages, static fn (Page $page): bool => ! $page->hasRedirection());
 
@@ -94,10 +144,15 @@ final class PageExporter
     /**
      * Export only index.csv files without re-exporting .md files.
      * Useful after import to ensure indexes reflect current database state.
+     *
+     * @param Page[] $pages Pre-loaded pages to avoid extra DB query; if empty, loads from DB
      */
-    public function exportIndexOnly(): void
+    public function exportIndexOnly(array $pages = []): void
     {
-        $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
+        if ([] === $pages) {
+            $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
+        }
+
         $this->exportIndex($pages);
     }
 
@@ -283,7 +338,7 @@ final class PageExporter
 
         // Build content first to enable content comparison
         $baseProperties = $skipId ? ['title', 'h1', 'slug'] : ['title', 'h1', 'slug', 'id'];
-        $entityProperties = Entity::getProperties($page);
+        $entityProperties = $this->cachedEntityProperties ??= Entity::getProperties($page);
 
         // When skipId is true, remove 'id' from entity properties
         if ($skipId) {

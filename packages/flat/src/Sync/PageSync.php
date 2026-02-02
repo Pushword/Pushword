@@ -7,6 +7,7 @@ namespace Pushword\Flat\Sync;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
@@ -99,11 +100,14 @@ final class PageSync
 
         $this->pageImporter->finishImport();
 
+        // Reuse pages loaded by finishImport() to avoid extra findByHost queries
+        $allPages = $this->pageImporter->getLoadedPages() ?? $this->pageRepository->findByHost($app->getMainHost());
+
         // 5. Delete pages that no longer have .md files (excluding redirections from CSV)
-        $this->deleteMissingPages($app->getMainHost());
+        $this->deleteMissingPages($allPages);
 
         // 6. Regenerate index.csv to reflect the current database state
-        $this->regenerateIndex($contentDir, $skipId);
+        $this->regenerateIndex($contentDir, $skipId, $allPages);
 
         // 7. Record import in sync state
         $this->stateManager->recordImport('page', $app->getMainHost());
@@ -150,14 +154,16 @@ final class PageSync
     }
 
     /**
-     * Regenerate index.csv and markdown files after import to ensure they reflect current database state.
-     * This writes back auto-generated IDs to markdown files that were imported without IDs.
-     * Files are only written if their content actually changed (smart update).
+     * Write back auto-generated IDs to imported markdown files and regenerate index CSV.
+     * Only re-exports pages that were actually imported (not the full dataset).
+     *
+     * @param Page[] $allPages Pre-loaded pages from the import cycle
      */
-    private function regenerateIndex(string $contentDir, bool $skipId = false): void
+    private function regenerateIndex(string $contentDir, bool $skipId, array $allPages): void
     {
         $this->pageExporter->exportDir = $contentDir;
-        $this->pageExporter->exportPages(skipId: $skipId);
+        $importedSlugs = $this->pageImporter->getImportedSlugs();
+        $this->pageExporter->exportPagesSubset($importedSlugs, $skipId, $allPages);
     }
 
     public function export(?string $host = null, bool $force = false, ?string $exportDir = null, bool $skipId = false): void
@@ -282,33 +288,34 @@ final class PageSync
 
     /**
      * Delete pages that exist in DB but have no corresponding .md file or redirection.csv entry.
+     *
+     * @param Page[] $allPages Pre-loaded pages for this host
      */
-    private function deleteMissingPages(string $host): void
+    private function deleteMissingPages(array $allPages): void
     {
         // Only delete if we imported at least one page
         if (! $this->pageImporter->hasImportedPages() && ! $this->redirectionImporter->hasIndexData()) {
             return;
         }
 
-        $importedSlugs = $this->pageImporter->getImportedSlugs();
-        $redirectionSlugs = $this->redirectionImporter->getImportedSlugs();
-
-        // Find all pages for this host
-        $allPages = $this->pageRepository->findByHost($host);
+        $importedSlugSet = array_flip($this->pageImporter->getImportedSlugs());
+        $redirectionSlugSet = array_flip($this->redirectionImporter->getImportedSlugs());
 
         foreach ($allPages as $page) {
+            $slug = $page->getSlug();
+
             // Skip if page was imported from .md file
-            if (\in_array($page->getSlug(), $importedSlugs, true)) {
+            if (isset($importedSlugSet[$slug])) {
                 continue;
             }
 
             // Skip if page is a redirection imported from redirection.csv
-            if (\in_array($page->getSlug(), $redirectionSlugs, true)) {
+            if (isset($redirectionSlugSet[$slug])) {
                 continue;
             }
 
-            $this->logger?->info('Deleting page `'.$page->getSlug().'`');
-            $this->output?->writeln(\sprintf('<comment>Deleting page %s</comment>', $page->getSlug()));
+            $this->logger?->info('Deleting page `'.$slug.'`');
+            $this->output?->writeln(\sprintf('<comment>Deleting page %s</comment>', $slug));
             ++$this->deletedCount;
             $this->entityManager->remove($page);
         }

@@ -3,19 +3,14 @@
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $container): void {
-    $runId = $_ENV['TEST_RUN_ID'] ?? $_SERVER['TEST_RUN_ID'] ?? '';
-    if ('' === $runId) {
-        return;
-    }
-
-    $testBaseDir = sys_get_temp_dir().'/com.github.pushword.pushword/tests/'.$runId;
-
+    // Use env vars so the compiled container is cacheable across workers.
+    // Each worker sets these env vars in bootstrap.php to point to its own directories.
     $container->extension('pushword', [
-        'media_dir' => $testBaseDir.'/media',
-        'database_url' => 'sqlite:///'.$testBaseDir.'/test.db',
+        'media_dir' => '%env(PUSHWORD_TEST_MEDIA_DIR)%',
+        'database_url' => '%env(PUSHWORD_TEST_DATABASE_URL)%',
     ]);
 
     $container->extension('pushword_flat', [
-        'flat_content_dir' => $testBaseDir.'/content/_host_',
+        'flat_content_dir' => '%env(PUSHWORD_TEST_FLAT_CONTENT_DIR)%',
     ]);
 };
