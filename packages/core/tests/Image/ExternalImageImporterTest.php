@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\Image;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Image\ExternalImageImporter;
 use Pushword\Core\Image\ImageCacheManager;
@@ -12,6 +13,7 @@ use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 class ExternalImageImporterTest extends KernelTestCase
 {
     use PathTrait;

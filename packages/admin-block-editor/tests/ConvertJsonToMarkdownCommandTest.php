@@ -2,6 +2,7 @@
 
 namespace Pushword\AdminBlockEditor\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 
 use function Safe\file_get_contents;
@@ -10,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
+#[Group('integration')]
 final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
 {
     public function testConvertJsonToMarkdown(): void

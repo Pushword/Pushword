@@ -7,11 +7,13 @@ namespace Pushword\Conversation\Tests\Repository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Repository\MessageRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
 
+#[Group('integration')]
 final class MessageRepositoryTest extends KernelTestCase
 {
     private EntityManagerInterface $entityManager;

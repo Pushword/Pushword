@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Pushword\Flat\Tests;
 
 use Doctrine\ORM\EntityManager;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileSync;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
+#[Group('integration')]
 final class FlatSyncTest extends KernelTestCase
 {
     public function testImportReplacesMarkdownLinks(): void

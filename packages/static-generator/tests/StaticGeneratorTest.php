@@ -5,6 +5,7 @@ namespace Pushword\StaticGenerator;
 use DateTime;
 use DateTimeImmutable;
 use Exception;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
@@ -27,6 +28,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
+#[Group('integration')]
 class StaticGeneratorTest extends KernelTestCase
 {
     private ?StaticAppGenerator $staticAppGenerator = null;
@@ -92,10 +94,10 @@ class StaticGeneratorTest extends KernelTestCase
         // Get modification time of index.html
         $indexFile = $staticDir.'/index.html';
         self::assertFileExists($indexFile);
+        // Set file mtime ahead so any regeneration produces a different (current-time) mtime
+        touch($indexFile, time() + 2);
+        clearstatcache();
         $originalMtime = filemtime($indexFile);
-
-        // Wait a bit to ensure different mtime
-        sleep(1);
 
         // Second generation with incremental flag
         $commandTester->execute(['localhost.dev', '--incremental' => true]);

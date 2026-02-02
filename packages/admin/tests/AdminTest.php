@@ -2,9 +2,11 @@
 
 namespace Pushword\Admin\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+#[Group('integration')]
 class AdminTest extends AbstractAdminTestClass
 {
     public function testLogin(): void

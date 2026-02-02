@@ -3,10 +3,12 @@
 namespace Pushword\PageScanner;
 
 use DateTime;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\PageScanner\Scanner\PageScannerService;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 class PageScannerTest extends KernelTestCase
 {
     public function testIt(): void

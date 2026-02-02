@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Flat\Tests\Service;
 
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Service\FlatChangeDetector;
@@ -14,6 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\TraceableAdapter;
 use Symfony\Component\Filesystem\Filesystem;
 
+#[Group('integration')]
 final class FlatChangeDetectorTest extends KernelTestCase
 {
     private string $tempDir;

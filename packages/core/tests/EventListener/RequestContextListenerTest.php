@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\EventListener;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\EventListener\RequestContextListener;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
@@ -10,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
+#[Group('integration')]
 final class RequestContextListenerTest extends KernelTestCase
 {
     private SiteRegistry $appPool;

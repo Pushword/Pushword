@@ -8,6 +8,7 @@ use DateTime;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\PageSync;
@@ -20,6 +21,7 @@ use Symfony\Component\Filesystem\Filesystem;
 /**
  * Tests for PageSync covering redirection sync, page deletion, and edge cases.
  */
+#[Group('integration')]
 final class PageSyncTest extends KernelTestCase
 {
     private Filesystem $filesystem;

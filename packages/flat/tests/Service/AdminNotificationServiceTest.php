@@ -7,11 +7,13 @@ namespace Pushword\Flat\Tests\Service;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Flat\Entity\AdminNotification;
 use Pushword\Flat\Repository\AdminNotificationRepository;
 use Pushword\Flat\Service\AdminNotificationService;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 final class AdminNotificationServiceTest extends KernelTestCase
 {
     private EntityManagerInterface $em;

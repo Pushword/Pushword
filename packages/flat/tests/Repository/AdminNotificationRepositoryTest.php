@@ -8,10 +8,12 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Flat\Entity\AdminNotification;
 use Pushword\Flat\Repository\AdminNotificationRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 final class AdminNotificationRepositoryTest extends KernelTestCase
 {
     private EntityManagerInterface $em;

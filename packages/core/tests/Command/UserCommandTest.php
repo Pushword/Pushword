@@ -2,10 +2,12 @@
 
 namespace Pushword\Core\Tests\Command;
 
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
+#[Group('integration')]
 class UserCommandTest extends KernelTestCase
 {
     public function testExecute(): void

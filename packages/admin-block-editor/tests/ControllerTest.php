@@ -2,6 +2,7 @@
 
 namespace Pushword\AdminBlockEditor\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
 
@@ -12,6 +13,7 @@ use function Safe\json_encode;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+#[Group('integration')]
 class ControllerTest extends AbstractAdminTestClass
 {
     public function testBasics(): void

@@ -2,10 +2,12 @@
 
 namespace Pushword\Core\Tests\Component;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 class RouterTest extends KernelTestCase
 {
     public function testRouter(): void

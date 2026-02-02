@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Controller;
 
 use Doctrine\ORM\EntityManager;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\UserRepository;
@@ -10,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 
+#[Group('integration')]
 class UserControllerTest extends WebTestCase
 {
     private KernelBrowser $client;

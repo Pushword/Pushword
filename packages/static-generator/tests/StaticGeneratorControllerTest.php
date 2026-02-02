@@ -3,12 +3,14 @@
 namespace Pushword\StaticGenerator\Tests;
 
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 
+#[Group('integration')]
 class StaticGeneratorControllerTest extends AbstractAdminTestClass
 {
     #[Override]
@@ -30,7 +32,7 @@ class StaticGeneratorControllerTest extends AbstractAdminTestClass
                 break;
             }
 
-            sleep(1);
+            usleep(100000); // 100ms - poll frequently instead of sleeping 1s
             ++$waited;
         }
 

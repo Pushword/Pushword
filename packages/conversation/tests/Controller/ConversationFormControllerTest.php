@@ -2,11 +2,13 @@
 
 namespace Pushword\Conversation\Tests\Controller;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Controller\ConversationFormController;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+#[Group('integration')]
 class ConversationFormControllerTest extends WebTestCase
 {
     public function testNewsletterForm(): void

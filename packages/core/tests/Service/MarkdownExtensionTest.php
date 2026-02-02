@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\Service;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
@@ -10,6 +11,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 
+#[Group('integration')]
 class MarkdownExtensionTest extends KernelTestCase
 {
     private ?MarkdownParser $markdownParser = null;

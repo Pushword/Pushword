@@ -7,6 +7,7 @@ namespace Pushword\Flat\Tests;
 use DateTime;
 use Doctrine\ORM\EntityManager;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Flat\Exporter\MediaExporter;
 use Pushword\Flat\Importer\MediaImporter;
@@ -17,6 +18,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
+#[Group('integration')]
 final class MediaExportImportTest extends KernelTestCase
 {
     private Filesystem $filesystem;

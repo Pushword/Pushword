@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Controller;
 
 use Exception;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
@@ -18,6 +19,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+#[Group('integration')]
 class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // KernelTestCase
 {
     use PathTrait;

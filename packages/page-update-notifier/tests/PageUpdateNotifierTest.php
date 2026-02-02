@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Error;
 use Nette\Utils\FileSystem;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use Pushword\Core\Entity\Page;
@@ -20,6 +21,7 @@ use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 
+#[Group('integration')]
 class PageUpdateNotifierTest extends KernelTestCase
 {
     protected function getNotifier(): PageUpdateNotifier

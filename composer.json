@@ -146,6 +146,7 @@
     "test": "./.scripts/test $*",
     "test-live": "PANTHER_NO_HEADLESS=1 PANTHER_NO_SANDBOX=1 composer test $*",
     "test-filter": "./.scripts/test --filter $*",
+    "test-unit": "XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --exclude-group integration --exclude-group panther",
     "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
     "rector": "vendor/bin/rector process && composer format",
     "format": "PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix rector.php && PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix",

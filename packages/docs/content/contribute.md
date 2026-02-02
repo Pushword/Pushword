@@ -56,9 +56,6 @@ composer stan
 
 ```
 composer test
-
-# and to test with --prefer-lowest
-composer test full
 ```
 
 ### Other Requirements
@@ -67,7 +64,7 @@ This attention would be nice :
 
 - **Add tests**
 
-- **Document any change in behaviour** - Make sure the [documentation](../packages/docs/content/) are kept up-to-date.
+- **Document any change in behaviour** - Make sure the [documentation](https://github.com/Pushword/Pushword/tree/main/packages/docs/content) are kept up-to-date.
 
 - **Consider our release cycle** - We try to follow [SemVer v2.0.0](https://semver.org/). Randomly breaking public APIs is not an option.
 

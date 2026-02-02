@@ -2,12 +2,14 @@
 
 namespace Pushword\Core\Tests\Command;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Lock\LockFactory;
 
+#[Group('integration')]
 class MediaCacheGeneratorCommandTest extends KernelTestCase
 {
     use PathTrait;

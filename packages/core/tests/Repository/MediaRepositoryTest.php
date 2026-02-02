@@ -2,10 +2,12 @@
 
 namespace Pushword\Core\Tests\Controller;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 class MediaRepositoryTest extends KernelTestCase
 {
     public function testFindDuplicate(): void

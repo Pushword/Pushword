@@ -7,6 +7,7 @@ namespace Pushword\Flat\Tests;
 use DateTime;
 use Doctrine\ORM\EntityManager;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
@@ -16,6 +17,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 use Throwable;
 
+#[Group('integration')]
 class AiIndexCommandTest extends KernelTestCase
 {
     private string $exportDir;

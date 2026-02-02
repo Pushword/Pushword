@@ -7,6 +7,7 @@ namespace Pushword\Conversation\Tests\Flat;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Conversation\Flat\ConversationCsvHelper;
@@ -21,6 +22,7 @@ use Pushword\Flat\FlatFileContentDirFinder;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
 
+#[Group('integration')]
 final class ConversationFlatTest extends KernelTestCase
 {
     private EntityManagerInterface $entityManager;

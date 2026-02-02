@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Tests\DependencyInjection;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\DependencyInjection\PushwordConversationExtension;
 use Pushword\Conversation\PushwordConversationBundle;
 use Pushword\Core\Site\SiteRegistry;
@@ -11,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Twig\Environment as Twig;
 use Twig\Loader\FilesystemLoader;
 
+#[Group('integration')]
 class ConfigurationTest extends KernelTestCase
 {
     public function testConf(): void

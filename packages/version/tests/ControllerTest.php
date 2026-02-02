@@ -2,6 +2,7 @@
 
 namespace Pushword\Version\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
 use Pushword\Version\Versionner;
@@ -10,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
+#[Group('integration')]
 class ControllerTest extends AbstractAdminTestClass
 {
     public function testLogin(): void
@@ -24,12 +26,18 @@ class ControllerTest extends AbstractAdminTestClass
         $pageId = $page->id;
         self::assertGreaterThan(0, $pageId, 'Page ID should be a positive integer');
 
+        // Update the page to trigger version creation via the Doctrine postUpdate listener
+        $page->setTitle($page->getTitle().' (version test)');
+        $em->flush();
+
         /** @var Router $router */
         $router = self::getContainer()->get('router');
 
+        /** @var string $logDir */
+        $logDir = self::getContainer()->getParameter('kernel.logs_dir');
         $versionner = new Versionner(
-            self::bootKernel()->getLogDir(),
-            self::getContainer()->get('doctrine.orm.default_entity_manager'),
+            $logDir,
+            $em,
             new Serializer([], ['json' => new JsonEncoder()])
         );
 

@@ -7,11 +7,13 @@ namespace Pushword\Flat\Tests\Service;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
 use Pushword\Flat\Service\FlatApiTokenValidator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 
+#[Group('integration')]
 final class FlatApiTokenValidatorTest extends KernelTestCase
 {
     private EntityManagerInterface $em;

@@ -4,10 +4,12 @@ namespace Pushword\Core\Tests\Service;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query\Parameter;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Utils\StringToDQLCriteria;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 class StringToDQLCriteriaTest extends KernelTestCase
 {
     public function testIt(): void

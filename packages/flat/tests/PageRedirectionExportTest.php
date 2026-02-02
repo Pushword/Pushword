@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Pushword\Flat\Tests;
 
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Flat\Exporter\PageExporter;
 use Pushword\Flat\Exporter\RedirectionExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
+#[Group('integration')]
 final class PageRedirectionExportTest extends KernelTestCase
 {
     private Filesystem $filesystem;

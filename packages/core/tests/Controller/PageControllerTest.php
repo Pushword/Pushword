@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\Controller;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Controller\FeedController;
 use Pushword\Core\Controller\PageController;
 use Pushword\Core\Controller\RobotsTxtController;
@@ -11,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+#[Group('integration')]
 class PageControllerTest extends KernelTestCase
 {
     public function testShowHomepage(): void

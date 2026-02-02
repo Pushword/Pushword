@@ -2,9 +2,11 @@
 
 namespace Pushword\conversation\Tests\Admin;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Symfony\Component\HttpFoundation\Request;
 
+#[Group('integration')]
 class ConversationAdminTest extends AbstractAdminTestClass
 {
     public function testAdmin(): void

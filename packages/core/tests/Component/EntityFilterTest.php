@@ -3,6 +3,7 @@
 namespace Pushword\Core\Tests\Component;
 
 use DateTime;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
@@ -16,6 +17,7 @@ use function Safe\file_get_contents;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 
+#[Group('integration')]
 class EntityFilterTest extends KernelTestCase
 {
     public function testIt(): void

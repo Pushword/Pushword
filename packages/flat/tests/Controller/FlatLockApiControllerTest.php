@@ -7,12 +7,14 @@ namespace Pushword\Flat\Tests\Controller;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
 use Pushword\Flat\Service\FlatLockManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 
+#[Group('integration')]
 final class FlatLockApiControllerTest extends WebTestCase
 {
     private KernelBrowser $client;

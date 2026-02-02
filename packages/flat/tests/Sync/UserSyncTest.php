@@ -6,11 +6,13 @@ namespace Pushword\Flat\Tests\Sync;
 
 use Doctrine\ORM\EntityManager;
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\UserRepository;
 use Pushword\Flat\Sync\UserSync;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 final class UserSyncTest extends KernelTestCase
 {
     private string $configDir;

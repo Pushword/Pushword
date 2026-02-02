@@ -1,13 +1,26 @@
 #!/bin/bash -e
 
+START_TIME=$(date +%s)
+
 export TEST_RUN_ID="${TEST_RUN_ID:-$$}"
 export PANTHER_CHROME_ARGUMENTS="--headless --disable-gpu --disable-dev-shm-usage --no-sandbox --user-data-dir=/tmp/panther-chrome-${TEST_RUN_ID}"
 export LOCK_DSN="flock:///tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}/locks"
+
+function print_elapsed {
+    local end_time=$(date +%s)
+    local elapsed=$((end_time - START_TIME))
+    local minutes=$((elapsed / 60))
+    local seconds=$((elapsed % 60))
+    echo ""
+    echo -e "\033[1;32m✓ Total time: ${minutes}m ${seconds}s\033[0m"
+}
 
 function cleanup {
     pkill -f chromedriver 2>/dev/null || true
     pkill -f 'chrome.*headless' 2>/dev/null || true
     rm -rf "/tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}"
+    # Clean up paratest worker dirs (e.g. ${TEST_RUN_ID}-w1, ${TEST_RUN_ID}-w2, ...)
+    rm -rf /tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}-w*
     rm -rf "/tmp/panther-chrome-${TEST_RUN_ID}"
     rm -rf ".phpunit.cache-${TEST_RUN_ID}"
 }
@@ -28,9 +41,16 @@ trap cleanup EXIT
 [ -d "node_modules" ] || yarn
 
 FILTER_ARG=""
+NO_PARALLEL=0
+for arg in "$@"; do
+    if [ "$arg" = "--no-parallel" ]; then
+        NO_PARALLEL=1
+    fi
+done
+
 if [ "$1" = "--filter" ] && [ -n "$2" ]; then
     FILTER_ARG="--filter $2"
-elif [ "$1" != "full" ] && [ -n "$1" ]; then
+elif [ "$1" != "full" ] && [ "$1" != "--no-parallel" ] && [ -n "$1" ]; then
     FILTER_ARG="--filter $1"
 fi
 
@@ -42,6 +62,11 @@ if [ "$1" = "full" ]; then
     ./.scripts/test-installer --quiet > "$INSTALLER_LOG" 2>&1 &
     INSTALLER_PID=$!
 
+    step "Starting monorepo validation in background"
+    MONOREPO_LOG=$(mktemp)
+    composer validate-monorepo > "$MONOREPO_LOG" 2>&1 &
+    MONOREPO_PID=$!
+
     step "composer update --prefer-lowest"
     composer update --prefer-lowest
 
@@ -49,8 +74,16 @@ if [ "$1" = "full" ]; then
     PHPUNIT_EXIT=0
     XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --debug --no-cache-result $FILTER_ARG || PHPUNIT_EXIT=$?
 
-    step "Validating monorepo"
-    composer validate-monorepo || PHPUNIT_EXIT=$?
+    step "Waiting for monorepo validation"
+    MONOREPO_EXIT=0
+    wait $MONOREPO_PID || MONOREPO_EXIT=$?
+    cat "$MONOREPO_LOG"
+    rm -f "$MONOREPO_LOG"
+
+    if [ $MONOREPO_EXIT -ne 0 ]; then
+        echo "validate-monorepo FAILED (exit $MONOREPO_EXIT)"
+        PHPUNIT_EXIT=$MONOREPO_EXIT
+    fi
 
     step "Waiting for test-installer"
     INSTALLER_EXIT=0
@@ -60,9 +93,11 @@ if [ "$1" = "full" ]; then
 
     if [ $INSTALLER_EXIT -ne 0 ]; then
         echo "test-installer FAILED (exit $INSTALLER_EXIT)"
+        print_elapsed
         exit 1
     fi
 
+    print_elapsed
     exit $PHPUNIT_EXIT
 else
     if [ -z "$FILTER_ARG" ]; then
@@ -70,15 +105,33 @@ else
         INSTALLER_LOG=$(mktemp)
         ./.scripts/test-installer --quiet > "$INSTALLER_LOG" 2>&1 &
         INSTALLER_PID=$!
+
+        step "Starting monorepo validation in background"
+        MONOREPO_LOG=$(mktemp)
+        composer validate-monorepo > "$MONOREPO_LOG" 2>&1 &
+        MONOREPO_PID=$!
     fi
 
-    step "Running PHPUnit"
     PHPUNIT_EXIT=0
-    vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --cache-directory=.phpunit.cache-${TEST_RUN_ID} $FILTER_ARG || PHPUNIT_EXIT=$?
+    if [ -z "$FILTER_ARG" ] && [ $NO_PARALLEL -eq 0 ]; then
+        step "Running PHPUnit (parallel)"
+        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=auto --testdox --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} || PHPUNIT_EXIT=$?
+    else
+        step "Running PHPUnit"
+        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --cache-directory=.phpunit.cache-${TEST_RUN_ID} $FILTER_ARG || PHPUNIT_EXIT=$?
+    fi
 
     if [ -z "$FILTER_ARG" ]; then
-        step "Validating monorepo"
-        composer validate-monorepo || PHPUNIT_EXIT=$?
+        step "Waiting for monorepo validation"
+        MONOREPO_EXIT=0
+        wait $MONOREPO_PID || MONOREPO_EXIT=$?
+        cat "$MONOREPO_LOG"
+        rm -f "$MONOREPO_LOG"
+
+        if [ $MONOREPO_EXIT -ne 0 ]; then
+            echo "validate-monorepo FAILED (exit $MONOREPO_EXIT)"
+            PHPUNIT_EXIT=$MONOREPO_EXIT
+        fi
 
         step "Waiting for test-installer"
         INSTALLER_EXIT=0
@@ -91,5 +144,6 @@ else
         fi
     fi
 
+    print_elapsed
     exit $PHPUNIT_EXIT
 fi

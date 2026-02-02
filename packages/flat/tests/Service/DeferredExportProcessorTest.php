@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Flat\Tests\Service;
 
 use Override;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -13,6 +14,7 @@ use ReflectionClass;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
+#[Group('integration')]
 final class DeferredExportProcessorTest extends KernelTestCase
 {
     private BackgroundTaskDispatcherInterface $backgroundTaskDispatcher;

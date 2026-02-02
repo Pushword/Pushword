@@ -59,8 +59,12 @@ final class FlatLockManagerTest extends TestCase
         $manager->acquireLock($host, 'manual', 1);
         self::assertTrue($manager->isLocked($host));
 
-        // Wait for TTL to expire
-        sleep(2);
+        // Backdate the lock to simulate TTL expiry instead of sleeping
+        $lockFile = $this->tempDir.'/flat-sync/test_example_com_lock.json';
+        /** @var array{locked: bool, lockedAt: int, lockedBy: string, ttl: int, reason: string} $lockData */
+        $lockData = json_decode((string) file_get_contents($lockFile), true);
+        $lockData['lockedAt'] = time() - 10;
+        file_put_contents($lockFile, json_encode($lockData, \JSON_PRETTY_PRINT));
 
         self::assertFalse($manager->isLocked($host));
     }

@@ -3,6 +3,7 @@
 namespace Pushword\PageScanner;
 
 use DateTime;
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\PageScanner\Scanner\LinkedDocsScanner;
 
@@ -10,6 +11,7 @@ use function Safe\file_get_contents;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 class LinkedDocsScannerTest extends KernelTestCase
 {
     public function testLinkedDocsScanner(): void

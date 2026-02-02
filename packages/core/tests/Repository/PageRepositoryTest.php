@@ -2,9 +2,11 @@
 
 namespace Pushword\Core\Tests\Controller;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 class PageRepositoryTest extends KernelTestCase
 {
     public function testPageRepo(): void

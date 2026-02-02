@@ -2,10 +2,12 @@
 
 namespace Pushword\Core\Tests\Controller;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Controller\MediaController;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 class MediaControllerTest extends KernelTestCase
 {
     use PathTrait;

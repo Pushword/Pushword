@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Pushword\Version\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Version\Versionner;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
+#[Group('integration')]
 class VersionTest extends KernelTestCase
 {
     public function testIt(): void

@@ -2,8 +2,10 @@
 
 namespace Pushword\TemplateEditor;
 
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[Group('integration')]
 class ElementTest extends KernelTestCase
 {
     public function testIt(): void
