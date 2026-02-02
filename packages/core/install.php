@@ -41,18 +41,15 @@ PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?ser
 PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.sha1(md5(uniqid())).chr(10));
 PostInstall::mirror('vendor/pushword/skeleton/media~', 'media');
 $freshInstall = ! file_exists('var/app.db');
-exec('php bin/console doctrine:schema:update --force -q');
+$commands = 'php bin/console doctrine:schema:update --force -q';
 if ($freshInstall) {
-    exec('php bin/console doctrine:fixtures:load --no-interaction -q');
+    $commands .= ' && php bin/console doctrine:fixtures:load --no-interaction -q';
 }
-
-exec('php bin/console pw:image:cache -q');
-
-// Add an admin user
-// exec('php bin/console pw:user:create admin@example.tld p@ssword ROLE_SUPER_ADMIN');
+$commands .= ' && php bin/console pw:image:cache -q';
 
 echo '~~ Symlinking assets'.chr(10);
-exec('php bin/console assets:install --symlink --relative -q');
+$commands .= ' && php bin/console assets:install --symlink --relative -q';
+exec($commands);
 PostInstall::dumpFile('public/build/manifest.json', '{}');
 
 echo '~~ Copy assets file in ./assets'.chr(10);
@@ -79,13 +76,17 @@ PostInstall::copy('vendor/pushword/skeleton/bin/object-test.php', 'bin/object-te
 // À tester si appeler composer depuis composer ne fout pas le bordel
 exec('composer config --no-plugins allow-plugins.phpstan/extension-installer true');
 exec('composer config --no-plugins scripts.stan "vendor/bin/phpstan"');
-exec('composer require --dev phpstan/extension-installer:* phpstan/phpstan:* phpstan/phpstan-doctrine:* phpstan/phpstan-phpunit:* phpstan/phpstan-strict-rules:* phpstan/phpstan-symfony:*');
+if (! file_exists('vendor/phpstan/phpstan/phpstan.phar')) {
+    exec('composer require --dev phpstan/extension-installer:* phpstan/phpstan:* phpstan/phpstan-doctrine:* phpstan/phpstan-phpunit:* phpstan/phpstan-strict-rules:* phpstan/phpstan-symfony:*');
+}
 
 // Install php-cs-fixer
 // -------------------
 PostInstall::copy('vendor/pushword/skeleton/.php-cs-fixer.dist.php~', '.php-cs-fixer.dist.php');
 exec('composer config --no-plugins scripts.format "vendor/bin/php-cs-fixer fix"');
-exec('composer require --no-plugins  --dev friendsofphp/php-cs-fixer:*');
+if (! file_exists('vendor/friendsofphp/php-cs-fixer/php-cs-fixer')) {
+    exec('composer require --no-plugins  --dev friendsofphp/php-cs-fixer:*');
+}
 
 // Install RECTOR
 // -------------------

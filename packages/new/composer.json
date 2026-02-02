@@ -29,6 +29,7 @@
   "require-dev": {
     "symfony/profiler-pack": "*",
     "symfony/filesystem": "^7.3 || ^8.0",
+    "phpstan/extension-installer": "*",
     "phpstan/phpstan": "*",
     "phpstan/phpstan-doctrine": "*",
     "phpstan/phpstan-phpunit": "*",
@@ -44,6 +45,7 @@
     },
     "sort-packages": true,
     "allow-plugins": {
+      "phpstan/extension-installer": true,
       "symfony/flex": true,
       "symfony/runtime": true
     }
