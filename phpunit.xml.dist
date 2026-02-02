@@ -25,6 +25,7 @@
     <testsuite name="all">
       <directory>packages/*/tests/</directory>
       <exclude>packages/new/tests/</exclude>
+      <exclude>packages/admin/tests/Frontend/AbstractPantherAdminTest.php</exclude>
     </testsuite>
   </testsuites>
   <!--

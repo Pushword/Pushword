@@ -37,6 +37,8 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
 
     private static bool $isLoggedIn = false;
 
+    private static int $chromeDriverPort = 9515;
+
     private static ?float $timeoutMultiplier = null;
 
     private static function timeoutMultiplier(): float
@@ -99,13 +101,16 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
             $_SERVER['PANTHER_WEB_SERVER_PORT'] = (string) $port;
         }
 
+        // Assign unique ChromeDriver port per class so parallel workers don't conflict
+        self::$chromeDriverPort = 9515 + (abs(crc32(static::class)) % 100);
+
         // Clean up stale processes only when NOT running in parallel
         // (paratest sets TEST_TOKEN; pkill would kill other workers' chromedriver)
         $testToken = getenv('TEST_TOKEN');
         if (false === $testToken || '' === $testToken) {
             $port = $_SERVER['PANTHER_WEB_SERVER_PORT'];
             exec('lsof -ti:'.$port.' 2>/dev/null | xargs -r kill -9 2>/dev/null');
-            exec('pkill -9 -f chromedriver 2>/dev/null');
+            exec('lsof -ti:'.self::$chromeDriverPort.' 2>/dev/null | xargs -r kill -9 2>/dev/null');
             usleep(500000);
         }
 
@@ -152,7 +157,7 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
             return self::$loggedInClient;
         }
 
-        $client = static::createPantherClient();
+        $client = static::createPantherClient([], [], ['port' => self::$chromeDriverPort]);
         self::$loggedInClient = $client;
 
         self::createUser();
