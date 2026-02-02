@@ -7,7 +7,6 @@ use InvalidArgumentException;
 use LogicException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
-use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Utils\Entity;
 
 use function Safe\json_decode;
@@ -76,9 +75,7 @@ final class MediaBlockController extends AbstractController
     {
         $fileName = urldecode($fileName);
 
-        /** @var MediaRepository $mediaRepository */
-        $mediaRepository = $this->em->getRepository(Media::class);
-        $media = $mediaRepository->findOneByFileNameOrHistory($fileName);
+        $media = $this->em->getRepository(Media::class)->findOneByFileNameOrHistory($fileName);
 
         if (null === $media) {
             throw $this->createNotFoundException();

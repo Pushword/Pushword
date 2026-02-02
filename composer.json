@@ -78,7 +78,6 @@
     "composer/composer": "*",
     "dbrekelmans/bdi": "^1.4",
     "friendsofphp/php-cs-fixer": "*",
-    "phpstan/extension-installer": "*",
     "phpstan/phpstan": "*",
     "phpstan/phpstan-doctrine": "*",
     "phpstan/phpstan-phpunit": "*",
@@ -163,7 +162,6 @@
   "config": {
     "sort-packages": true,
     "allow-plugins": {
-      "phpstan/extension-installer": true,
       "symfony/runtime": true
     }
   },

@@ -14,7 +14,7 @@ trait PathTrait
 
     private function getMediaDir(): string
     {
-        $runId = $_ENV['TEST_RUN_ID'] ?? $_SERVER['TEST_RUN_ID'] ?? '';
+        $runId = \is_string($_ENV['TEST_RUN_ID'] ?? null) ? $_ENV['TEST_RUN_ID'] : (\is_string($_SERVER['TEST_RUN_ID'] ?? null) ? $_SERVER['TEST_RUN_ID'] : '');
         if ('' !== $runId) {
             return sys_get_temp_dir().'/com.github.pushword.pushword/tests/'.$runId.'/media';
         }

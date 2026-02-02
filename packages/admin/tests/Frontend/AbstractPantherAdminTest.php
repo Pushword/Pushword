@@ -47,7 +47,7 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
             $envValue = $_SERVER['PANTHER_TIMEOUT_MULTIPLIER']
                 ?? $_ENV['PANTHER_TIMEOUT_MULTIPLIER']
                 ?? getenv('PANTHER_TIMEOUT_MULTIPLIER');
-            self::$timeoutMultiplier = false !== $envValue && '' !== $envValue ? (float) $envValue : 1.0;
+            self::$timeoutMultiplier = \is_string($envValue) && '' !== $envValue ? (float) $envValue : 1.0;
         }
 
         return self::$timeoutMultiplier;
@@ -97,9 +97,11 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
 
         // Assign unique web server port per class so parallel workers don't conflict
         if (! isset($_SERVER['PANTHER_WEB_SERVER_PORT'])) {
-            $port = 9080 + (abs(crc32(static::class)) % 100);
-            $_SERVER['PANTHER_WEB_SERVER_PORT'] = (string) $port;
+            $_SERVER['PANTHER_WEB_SERVER_PORT'] = (string) (9080 + (abs(crc32(static::class)) % 100));
         }
+
+        /** @var string $webServerPort */
+        $webServerPort = $_SERVER['PANTHER_WEB_SERVER_PORT'];
 
         // Assign unique ChromeDriver port per class so parallel workers don't conflict
         self::$chromeDriverPort = 9515 + (abs(crc32(static::class)) % 100);
@@ -108,8 +110,7 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
         // (paratest sets TEST_TOKEN; pkill would kill other workers' chromedriver)
         $testToken = getenv('TEST_TOKEN');
         if (false === $testToken || '' === $testToken) {
-            $port = $_SERVER['PANTHER_WEB_SERVER_PORT'];
-            exec('lsof -ti:'.$port.' 2>/dev/null | xargs -r kill -9 2>/dev/null');
+            exec('lsof -ti:'.$webServerPort.' 2>/dev/null | xargs -r kill -9 2>/dev/null');
             exec('lsof -ti:'.self::$chromeDriverPort.' 2>/dev/null | xargs -r kill -9 2>/dev/null');
             usleep(500000);
         }

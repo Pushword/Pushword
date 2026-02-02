@@ -133,6 +133,7 @@ class ControllerTest extends AbstractAdminTestClass
         $client->request(Request::METHOD_GET, '/admin/media/resolve/Old%20Name%20With%20Spaces.jpg');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
 
+        /** @var array{fileName: string} $responseData */
         $responseData = json_decode((string) $client->getResponse()->getContent(), true);
         self::assertSame('test-resolve.jpg', $responseData['fileName']);
 
@@ -140,6 +141,7 @@ class ControllerTest extends AbstractAdminTestClass
         $client->request(Request::METHOD_GET, '/admin/media/resolve/test-resolve.jpg');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
 
+        /** @var array{fileName: string} $responseData */
         $responseData = json_decode((string) $client->getResponse()->getContent(), true);
         self::assertSame('test-resolve.jpg', $responseData['fileName']);
 

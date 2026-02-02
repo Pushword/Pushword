@@ -13,6 +13,7 @@ class PostAutoloadDump extends PostInstall
 
     public static function runPostAutoload(Event $event): void
     {
+        /** @var string $vendorDir */
         $vendorDir = $event->getComposer()->getConfig()->get('vendor-dir');
         require $vendorDir.'/autoload.php';
 
