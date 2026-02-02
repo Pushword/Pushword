@@ -6,6 +6,7 @@ use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Lock\LockFactory;
 
 class MediaCacheGeneratorCommandTest extends KernelTestCase
 {
@@ -19,8 +20,15 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
 
     public function testExecute(): void
     {
-        $kernel = static::createKernel();
+        $kernel = static::bootKernel();
         $application = new Application($kernel);
+
+        // Wait for any background pw:image:cache process to release its lock
+        /** @var LockFactory $lockFactory */
+        $lockFactory = static::getContainer()->get('lock.factory');
+        $lock = $lockFactory->createLock('pw:image:cache');
+        $lock->acquire(blocking: true);
+        $lock->release();
 
         $command = $application->find('pw:image:cache');
         $commandTester = new CommandTester($command);
