@@ -2,7 +2,8 @@
 
 namespace Pushword\Core\Command;
 
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Utils\MediaFileName;
@@ -20,7 +21,7 @@ final readonly class NormalizeFileNameCommand
 {
     public function __construct(
         private MediaRepository $mediaRepository,
-        private EntityManagerInterface $em,
+        private ManagerRegistry $managerRegistry,
         private ImageCacheManager $imageCacheManager,
     ) {
     }
@@ -40,7 +41,7 @@ final readonly class NormalizeFileNameCommand
             $normalizedFileName = MediaFileName::normalizeFromString($currentFileName);
 
             if ($currentFileName !== $normalizedFileName) {
-                $toNormalize[] = ['media' => $media, 'old' => $currentFileName, 'new' => $normalizedFileName];
+                $toNormalize[] = ['id' => $media->id, 'old' => $currentFileName, 'new' => $normalizedFileName];
             }
         }
 
@@ -68,14 +69,23 @@ final readonly class NormalizeFileNameCommand
         $errors = [];
 
         foreach ($toNormalize as $item) {
-            $media = $item['media'];
             $oldFileName = $item['old'];
             $newFileName = $item['new'];
             $progressBar->setMessage($oldFileName.' → '.$newFileName);
 
             try {
+                $em = $this->managerRegistry->getManager();
+                $media = $em->find(Media::class, $item['id']);
+
+                if (! $media instanceof Media) {
+                    $errors[] = $oldFileName.': media entity not found';
+                    $progressBar->advance();
+
+                    continue;
+                }
+
                 $media->setFileName($newFileName);
-                $this->em->flush();
+                $em->flush();
 
                 if (! $media->isImage()) {
                     $this->imageCacheManager->ensurePublicSymlink($media);
@@ -84,7 +94,7 @@ final readonly class NormalizeFileNameCommand
                 $errors[] = $oldFileName.': '.$e->getMessage();
 
                 try {
-                    $this->em->refresh($media);
+                    $this->managerRegistry->resetManager();
                 } catch (Throwable) {
                 }
             }
