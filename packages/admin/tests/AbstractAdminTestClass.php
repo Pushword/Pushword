@@ -19,7 +19,7 @@ abstract class AbstractAdminTestClass extends PantherTestCase
     protected ?KernelBrowser $client = null;
 
     /**
-     * Surcharge pour utiliser le chemin absolu du répertoire public.
+     * Override to use the absolute path of the public directory.
      *
      * @param array<string, mixed> $options
      * @param array<string, mixed> $kernelOptions

@@ -16,18 +16,12 @@ class ExternalImageImporterTest extends KernelTestCase
 {
     use PathTrait;
 
-    private function createMediaStorageAdapter(): MediaStorageAdapter
-    {
-        self::bootKernel();
-
-        /** @var MediaStorageAdapter */
-        return self::getContainer()->get(MediaStorageAdapter::class);
-    }
-
     private function createImporter(): ExternalImageImporter
     {
         self::bootKernel();
-        $mediaStorage = $this->createMediaStorageAdapter();
+
+        /** @var MediaStorageAdapter $mediaStorage */
+        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
         $imageReader = new ImageReader($mediaStorage);
         $imageEncoder = new ImageEncoder();
         $imageCacheManager = new ImageCacheManager([], $this->publicDir, $this->publicMediaDir, $mediaStorage);

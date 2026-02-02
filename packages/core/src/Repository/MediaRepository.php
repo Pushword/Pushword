@@ -100,26 +100,10 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     public function isFileNameUsed(string $fileName, ?int $excludeId = null): ?Media
     {
-        // Check current filenames
         $qb = $this->createQueryBuilder('m')
-            ->where('m.fileName = :fileName')
-            ->setParameter('fileName', $fileName);
-
-        if (null !== $excludeId) {
-            $qb->andWhere('m.id != :excludeId')
-                ->setParameter('excludeId', $excludeId);
-        }
-
-        /** @var Media|null $result */
-        $result = $qb->setMaxResults(1)->getQuery()->getOneOrNullResult();
-        if (null !== $result) {
-            return $result;
-        }
-
-        // Check historical filenames
-        $qb = $this->createQueryBuilder('m')
-            ->where('m.fileNameHistory LIKE :fileName')
-            ->setParameter('fileName', '%"'.$fileName.'"%');
+            ->where('m.fileName = :currentName OR m.fileNameHistory LIKE :historyName')
+            ->setParameter('currentName', $fileName)
+            ->setParameter('historyName', '%"'.$fileName.'"%');
 
         if (null !== $excludeId) {
             $qb->andWhere('m.id != :excludeId')
@@ -178,34 +162,30 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         );
 
         $dimensions = array_values(
-            array_unique(
-                array_map(
-                    static function (mixed $dimensionRow): ?string {
-                        if (! \is_array($dimensionRow)) {
-                            return null;
-                        }
-
-                        $width = $dimensionRow['width'] ?? null;
-                        $height = $dimensionRow['height'] ?? null;
-
-                        if (! \is_int($width) && ! (is_string($width) && ctype_digit($width))) {
-                            return null;
-                        }
-
-                        if (! \is_int($height) && ! (is_string($height) && ctype_digit($height))) {
-                            return null;
-                        }
-
-                        return sprintf('%d×%d', (int) $width, (int) $height);
-                    },
-                    $dimensionsResults,
-                ),
-            ),
-        );
-
-        $dimensions = array_values(
             array_filter(
-                $dimensions,
+                array_unique(
+                    array_map(
+                        static function (mixed $dimensionRow): ?string {
+                            if (! \is_array($dimensionRow)) {
+                                return null;
+                            }
+
+                            $width = $dimensionRow['width'] ?? null;
+                            $height = $dimensionRow['height'] ?? null;
+
+                            if (! \is_int($width) && ! (is_string($width) && ctype_digit($width))) {
+                                return null;
+                            }
+
+                            if (! \is_int($height) && ! (is_string($height) && ctype_digit($height))) {
+                                return null;
+                            }
+
+                            return sprintf('%d×%d', (int) $width, (int) $height);
+                        },
+                        $dimensionsResults,
+                    ),
+                ),
                 \is_string(...),
             ),
         );

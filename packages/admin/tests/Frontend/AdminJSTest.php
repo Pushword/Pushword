@@ -13,15 +13,15 @@ use Symfony\Component\Panther\Client;
 use Throwable;
 
 /**
- * Tests d'intégration pour le JavaScript de l'admin
- * Utilise Symfony Panther pour tester dans un vrai navigateur.
+ * Integration tests for the admin JavaScript.
+ * Uses Symfony Panther to test in a real browser.
  *
- * IMPORTANT: Ces tests nécessitent Chrome/Chromium et peuvent être lents.
+ * IMPORTANT: These tests require Chrome/Chromium and may be slow.
  */
 #[Group('panther')]
 class AdminJSTest extends AbstractAdminTestClass
 {
-    // Configuration des timeouts (en secondes)
+    // Timeout configuration (in seconds)
     private const int TIMEOUT_SHORT = 3;
 
     private const int TIMEOUT_MEDIUM = 5;
@@ -32,8 +32,8 @@ class AdminJSTest extends AbstractAdminTestClass
 
     private const int WAIT_MEDIUM = 500;
 
-    // Sélecteurs CSS
-    private const string SELECTOR_MAIN_FIELDS = 'body'; // Sélecteur toujours présent
+    // CSS selectors
+    private const string SELECTOR_MAIN_FIELDS = 'body'; // Always-present selector
 
     private const string SELECTOR_MEDIA_PICKER = '[data-pw-media-picker]';
 
@@ -99,8 +99,8 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Crée un client Panther et effectue le login.
-     * Le client est mis en cache statiquement pour être réutilisé entre les tests.
+     * Creates a Panther client and performs login.
+     * The client is statically cached for reuse across tests.
      */
     protected function createPantherClientWithLogin(): Client
     {
@@ -138,7 +138,7 @@ class AdminJSTest extends AbstractAdminTestClass
         $client->findElement(WebDriverBy::name('password'))->sendKeys('mySecr3tpAssword');
         $client->findElement(WebDriverBy::cssSelector('button[type="submit"]'))->click();
 
-        // Attend la redirection
+        // Wait for redirect
         $client->wait(self::WAIT_MEDIUM);
 
         self::$isLoggedIn = true;
@@ -176,7 +176,7 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Navigue vers la page d'édition et attend que le DOM soit chargé.
+     * Navigates to the edit page and waits for the DOM to load.
      */
     protected function navigateToPageEdit(
         Client $client,
@@ -190,7 +190,7 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Navigue vers la page de création et attend que le DOM soit chargé.
+     * Navigates to the create page and waits for the DOM to load.
      */
     protected function navigateToPageCreate(
         Client $client,
@@ -203,7 +203,7 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Vérifie si un élément existe dans le DOM.
+     * Checks if an element exists in the DOM.
      */
     protected function elementExists(Client $client, string $selector): bool
     {
@@ -216,7 +216,23 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Attend qu'un élément existe, sinon skip le test.
+     * Polls a JS expression until it returns true or max attempts are reached.
+     */
+    protected function pollUntilTrue(Client $client, string $jsExpression, array $jsArgs = [], int $maxAttempts = 10): bool
+    {
+        for ($i = 0; $i < $maxAttempts; ++$i) {
+            if ((bool) $client->executeScript($jsExpression, $jsArgs)) {
+                return true;
+            }
+
+            $client->wait(self::WAIT_SHORT);
+        }
+
+        return false;
+    }
+
+    /**
+     * Waits for an element to exist, or skips the test.
      */
     protected function waitForElementOrSkip(
         Client $client,
@@ -247,18 +263,11 @@ class AdminJSTest extends AbstractAdminTestClass
             self::TIMEOUT_SHORT
         );
 
-        $maxAttempts = 10;
-        for ($i = 0; $i < $maxAttempts; ++$i) {
-            $isReady = (bool) $client->executeScript(
-                'return document.querySelector(arguments[0])?.dataset?.pwMediaPickerReady === "1"',
-                [self::SELECTOR_MEDIA_PICKER]
-            );
-            if ($isReady) {
-                break;
-            }
-
-            $client->wait(self::WAIT_SHORT);
-        }
+        $this->pollUntilTrue(
+            $client,
+            'return document.querySelector(arguments[0])?.dataset?.pwMediaPickerReady === "1"',
+            [self::SELECTOR_MEDIA_PICKER],
+        );
 
         $selectId = $client->executeScript(
             'return document.querySelector(arguments[0])?.id || ""',
@@ -318,14 +327,14 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Test que les modules JavaScript sont chargés correctement.
+     * Test that JavaScript modules are loaded correctly.
      */
     // public function testAdminJSModulesLoaded(): void
     // {
     //     $client = $this->createPantherClientWithLogin();
     //     $this->navigateToPageEdit($client);
     //     sleep(1);
-    //     // Vérifie que les variables globales sont définies
+    //     // Check that global variables are defined
     //     self::assertTrue(
     //         $client->executeScript('return typeof window.htmx !== "undefined"'),
     //         'HTMX should be loaded'
@@ -338,7 +347,7 @@ class AdminJSTest extends AbstractAdminTestClass
     // }
 
     /**
-     * Test du media picker.
+     * Test the media picker.
      */
     public function testMediaPicker(): void
     {
@@ -356,7 +365,7 @@ class AdminJSTest extends AbstractAdminTestClass
             self::TIMEOUT_SHORT
         );
 
-        // Vérifie que le media picker est initialisé
+        // Check that the media picker is initialized
         $isInitialized = $client->executeScript(
             'return document.querySelector(arguments[0])?.dataset?.pwMediaPickerReady === "1"',
             [self::SELECTOR_MEDIA_PICKER]
@@ -456,18 +465,11 @@ class AdminJSTest extends AbstractAdminTestClass
         self::assertNotEmpty($result['thumbStyle'], 'Thumbnail should have a background image');
 
         // Poll for modal close (Bootstrap fade animation is async)
-        $modalClosed = false;
-        for ($i = 0; $i < 10; ++$i) {
-            $modalClosed = (bool) $client->executeScript(
-                'const m = document.querySelector(arguments[0]); return !m || getComputedStyle(m).display === "none"',
-                [self::SELECTOR_MEDIA_PICKER_MODAL]
-            );
-            if ($modalClosed) {
-                break;
-            }
-
-            $client->wait(self::WAIT_SHORT);
-        }
+        $modalClosed = $this->pollUntilTrue(
+            $client,
+            'const m = document.querySelector(arguments[0]); return !m || getComputedStyle(m).display === "none"',
+            [self::SELECTOR_MEDIA_PICKER_MODAL],
+        );
 
         self::assertTrue($modalClosed, 'Modal should close after selection');
     }
@@ -562,7 +564,7 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Test de la mémorisation des panels ouverts.
+     * Test panel open state memorization.
      */
     public function testMemorizeOpenPanel(): void
     {
@@ -580,7 +582,7 @@ class AdminJSTest extends AbstractAdminTestClass
             self::markTestSkipped('No panel toggle button found');
         }
 
-        // Clique sur le panel
+        // Click on the panel
         try {
             $buttonElement = $client->findElement(
                 WebDriverBy::cssSelector(self::SELECTOR_PANEL_TOGGLE)
@@ -588,7 +590,7 @@ class AdminJSTest extends AbstractAdminTestClass
             $buttonElement->click();
             $client->wait(self::WAIT_MEDIUM);
 
-            // Vérifie que l'état est sauvegardé dans localStorage
+            // Check that the state is saved in localStorage
             $stored = $client->executeScript('return localStorage.getItem("panels")');
             self::assertNotNull($stored, 'Panel state should be stored in localStorage');
         } catch (NoSuchElementException) {
@@ -597,7 +599,7 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Test du filtre de page parente par host.
+     * Test parent page filter by host.
      */
     public function testFilterParentPageFromHost(): void
     {
@@ -608,13 +610,13 @@ class AdminJSTest extends AbstractAdminTestClass
             self::markTestSkipped('No host select found on create page');
         }
 
-        // Vérifie que window.pageHost est défini
+        // Check that window.pageHost is defined
         $pageHost = $client->executeScript('return window.pageHost || ""');
         self::assertNotEmpty($pageHost, 'pageHost should be set');
     }
 
     /**
-     * Test de l'auto-resize des textareas.
+     * Test textarea auto-resize.
      */
     public function testTextareaAutoSize(): void
     {
@@ -626,20 +628,20 @@ class AdminJSTest extends AbstractAdminTestClass
         }
 
         try {
-            // Teste le feature d'autosize en ajoutant du contenu et en déclenchant l'event
+            // Test the autosize feature by adding content and triggering the event
             $result = $client->executeScript('
                 const textarea = document.querySelector(arguments[0]);
                 if (!textarea) return { success: false, reason: "not_found" };
 
                 const initialHeight = parseInt(window.getComputedStyle(textarea).height);
 
-                // Ajoute beaucoup de lignes pour forcer un changement
+                // Add many lines to force a height change
                 textarea.value = textarea.value + "\\n".repeat(10) + "Test line\\n".repeat(10);
 
-                // Déclenche l\'événement input manuellement
+                // Manually trigger the input event
                 textarea.dispatchEvent(new Event("input", { bubbles: true }));
 
-                // Attend un peu pour le resize
+                // Wait a bit for the resize
                 return new Promise(resolve => {
                     setTimeout(() => {
                         const newHeight = parseInt(window.getComputedStyle(textarea).height);
@@ -663,7 +665,7 @@ class AdminJSTest extends AbstractAdminTestClass
             }
 
             if (! isset($result['changed']) || ! $result['changed']) {
-                // Le autosize peut ne pas être actif sur cette page
+                // Autosize may not be active on this page
                 self::markTestSkipped('Textarea autosize feature not active on this page');
             }
 
@@ -678,7 +680,7 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Test de la fonction copyElementText.
+     * Test the copyElementText function.
      */
     public function testCopyElementText(): void
     {
@@ -686,20 +688,11 @@ class AdminJSTest extends AbstractAdminTestClass
         $this->navigateToPageEdit($client);
 
         // Wait for admin.js to be fully loaded (poll until function is available)
-        $maxAttempts = 10;
-        $jsLoaded = false;
-        for ($i = 0; $i < $maxAttempts; ++$i) {
-            $jsLoaded = (bool) $client->executeScript('return typeof window.copyElementText === "function"');
-            if ($jsLoaded) {
-                break;
-            }
-
-            $client->wait(self::WAIT_SHORT);
-        }
+        $jsLoaded = $this->pollUntilTrue($client, 'return typeof window.copyElementText === "function"');
 
         self::assertTrue($jsLoaded, 'Admin JavaScript function copyElementText should be available');
 
-        // Crée un élément de test
+        // Create a test element
         $client->executeScript('
             const testEl = document.createElement("div");
             testEl.id = "test-copy";
@@ -707,7 +700,7 @@ class AdminJSTest extends AbstractAdminTestClass
             document.body.appendChild(testEl);
         ');
 
-        // Teste la fonction
+        // Test the function
         $result = $client->executeScript('
             const el = document.getElementById("test-copy");
             window.copyElementText(el);
@@ -718,7 +711,7 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Test de l'affichage de la largeur du titre en pixels.
+     * Test title pixel width display.
      */
     public function testShowTitlePixelWidth(): void
     {
@@ -734,18 +727,18 @@ class AdminJSTest extends AbstractAdminTestClass
                 WebDriverBy::cssSelector(self::SELECTOR_TITLE_INPUT)
             );
 
-            // Change la valeur
+            // Change the value
             $titleInput->clear();
             $titleInput->sendKeys('Test Title for Width Measurement');
 
             $client->wait(self::WAIT_SHORT);
 
-            // Vérifie que le compteur a été mis à jour
+            // Check that the counter has been updated
             $widthValue = $client->executeScript(
                 'return document.getElementById("titleWidth")?.innerText || "";'
             );
 
-            // On s'attend à voir la longueur
+            // We expect to see the width
             self::assertNotEmpty($widthValue, 'Title width should be displayed');
         } catch (NoSuchElementException) {
             self::markTestSkipped('Title input not accessible');
@@ -753,14 +746,14 @@ class AdminJSTest extends AbstractAdminTestClass
     }
 
     /**
-     * Test de la récupération du host et de la locale.
+     * Test retrieving the host and locale.
      */
     public function testRetrievePageState(): void
     {
         $client = $this->createPantherClientWithLogin();
         $this->navigateToPageEdit($client);
 
-        // Vérifie que window.pageHost et window.pageLocale sont définis
+        // Check that window.pageHost and window.pageLocale are defined
         $stateExists = $client->executeScript('
             return {
                 hasHost: typeof window.pageHost !== "undefined",
@@ -773,12 +766,12 @@ class AdminJSTest extends AbstractAdminTestClass
         }
 
         /** @var array{hasHost: bool, hasLocale: bool} $stateExists */
-        // Au moins un des deux devrait être défini, sinon on skip
+        // At least one of the two should be defined, otherwise skip
         if (! $stateExists['hasHost'] && ! $stateExists['hasLocale']) {
             self::markTestSkipped('Page state variables (pageHost/pageLocale) not defined on this page');
         }
 
-        // Au moins un est défini, le test réussit
+        // At least one is defined, the test passes
         self::assertTrue(
             $stateExists['hasHost'] || $stateExists['hasLocale'],
             'At least one of pageHost or pageLocale should be defined'

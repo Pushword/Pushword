@@ -65,7 +65,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         self::assertFileDoesNotExist($this->getMediaDir().'/1-2.jpg');
     }
 
-    // 1. Si une nouvelle image se renomme bien dans le cas d'une image existante avec le même nom (pas d'écrasement)
+    // 1. A new image is properly renamed when another image with the same name already exists (no overwrite)
     public function testRenameNewMediaIfAnotherMediaHasSameName(): void
     {
         $files = [
@@ -127,9 +127,9 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
     }
 
     // Todo
-    // 1. Quand je modifie un slug, le fichier est bien modifié
-    // 2. Quand je remplace un media, le media garde le même chemin d'accès
-    // 3. Quand je modifie un nom, seul le nom est modifié
+    // 1. When I change a slug, the file is properly renamed
+    // 2. When I replace a media, it keeps the same file path
+    // 3. When I change a name, only the name is modified
 
     private ?ExternalImageImporter $importer = null;
 

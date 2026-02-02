@@ -36,21 +36,21 @@ $runId = getenv('TEST_RUN_ID') ?: '';
 $segment = '' !== $runId ? '/'.$runId : '';
 $testBaseDir = sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment;
 
-@$fs->remove($testBaseDir.'/var/dev/cache');
-@$fs->remove($testBaseDir.'/var/test/cache');
-@$fs->remove($testBaseDir.'/var/dev/log');
-@$fs->remove($testBaseDir.'/var/test/log');
+$fs->remove($testBaseDir.'/var/dev/cache');
+$fs->remove($testBaseDir.'/var/test/cache');
+$fs->remove($testBaseDir.'/var/dev/log');
+$fs->remove($testBaseDir.'/var/test/log');
 
 // Media isolation: mirror backup into the run-specific tmp dir (or skeleton/media if no run ID)
 $mediaDir = '' !== $runId
     ? $testBaseDir.'/media'
     : $monoRepoBase.'/packages/skeleton/media';
-@$fs->remove($mediaDir);
+$fs->remove($mediaDir);
 $fs->mirror($monoRepoBase.'/packages/skeleton/media~', $mediaDir);
 
 // Content isolation: ensure clean content directory in tmp
 if ('' !== $runId) {
-    @$fs->remove($testBaseDir.'/content');
+    $fs->remove($testBaseDir.'/content');
     $fs->mkdir($testBaseDir.'/content');
 }
 
