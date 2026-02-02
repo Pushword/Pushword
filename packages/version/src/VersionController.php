@@ -6,7 +6,6 @@ use Doctrine\Persistence\ManagerRegistry;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
-use LogicException;
 use Pushword\Admin\Service\AdminUrlGeneratorAlias;
 use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,7 +15,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
-use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -65,7 +63,6 @@ class VersionController extends AbstractController
     }
 
     #[AdminRoute(path: '/version/{id}/reset', name: 'version_reset')]
-    #[Route(path: '/{id}/reset', name: 'pushword_version_reset', methods: ['GET'], priority: -20)]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function resetVersioning(Request $request, int $id): RedirectResponse
     {
@@ -88,7 +85,6 @@ class VersionController extends AbstractController
     }
 
     #[AdminRoute(path: '/version/{id}/list', name: 'version_list')]
-    #[Route(path: '/{id}/list', name: 'pushword_version_list', methods: ['GET'], priority: -20)]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function listVersion(string $id): Response
     {
@@ -113,7 +109,6 @@ class VersionController extends AbstractController
     }
 
     #[AdminRoute(path: '/version/{id}/{version}', name: 'version_load')]
-    #[Route(path: '/{id}/{version}', name: 'pushword_version_load', methods: ['GET'], priority: -20)]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function loadVersion(string $id, string $version): RedirectResponse
     {
@@ -123,7 +118,6 @@ class VersionController extends AbstractController
     }
 
     #[AdminRoute(path: '/version/{id}/compare/{versionLeft}/{versionRight}', name: 'version_compare')]
-    #[Route(path: '/{id}/compare/{versionLeft}/{versionRight}', name: 'pushword_version_compare', methods: ['GET'], priority: -20)]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function compareVersion(string $id, string $versionLeft, string $versionRight = 'current'): Response
     {
@@ -157,7 +151,7 @@ class VersionController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/{id}/save-compare', name: 'pushword_version_save_compare', methods: ['POST'], priority: 10)]
+    #[AdminRoute(path: '/version/{id}/save-compare', name: 'version_save_compare', options: ['methods' => ['POST']])]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function saveCompare(Request $request, int $id): RedirectResponse
     {
@@ -197,16 +191,7 @@ class VersionController extends AbstractController
      */
     private function renderAdmin(string $view, array $parameters = []): Response
     {
-        if (! isset($this->adminContextProvider)) {
-            throw new LogicException('Admin context provider must be injected before rendering.');
-        }
-
-        $context = $this->adminContextProvider->getContext();
-        if (null === $context) {
-            throw new LogicException('EasyAdmin context is not available. Please use the admin routes to access this page.');
-        }
-
-        $parameters['ea'] = $context;
+        $parameters['ea'] = $this->adminContextProvider->getContext();
 
         return $this->render($view, $parameters);
     }

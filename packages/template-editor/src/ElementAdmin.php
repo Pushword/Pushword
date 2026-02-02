@@ -5,7 +5,6 @@ namespace Pushword\TemplateEditor;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
-use LogicException;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -19,7 +18,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -108,9 +106,7 @@ final class ElementAdmin extends AbstractController
     }
 
     #[AdminRoute(path: '/template/create', name: 'template_editor_create')]
-    #[Route(path: '/template/create', name: 'pushword_template_editor_create', methods: ['GET', 'POST'], priority: 1)]
     #[AdminRoute(path: '/template/edit/{encodedPath}', name: 'template_editor_edit')]
-    #[Route(path: '/template/edit/{encodedPath}', name: 'pushword_template_editor_edit', methods: ['GET', 'POST'])]
     public function editElement(?string $encodedPath = null, ?Request $request = null): Response
     {
         $element = $this->getElement($encodedPath);
@@ -163,7 +159,6 @@ final class ElementAdmin extends AbstractController
     }
 
     #[AdminRoute(path: '/delete/{encodedPath}', name: 'template_editor_delete')]
-    #[Route(path: '/delete/{encodedPath}', name: 'pushword_template_editor_delete', methods: ['GET', 'POST'])]
     public function deleteElement(string $encodedPath, Request $request): Response
     {
         if ($this->disableCreation) {
@@ -202,12 +197,7 @@ final class ElementAdmin extends AbstractController
      */
     private function renderAdmin(string $view, array $parameters = []): Response
     {
-        $context = $this->adminContextProvider->getContext();
-        if (null === $context) {
-            throw new LogicException('EasyAdmin context is not available. Please use the admin routes (admin_template_editor_*) to access this page.');
-        }
-
-        $parameters['ea'] = $context;
+        $parameters['ea'] = $this->adminContextProvider->getContext();
 
         return $this->render($view, $parameters);
     }

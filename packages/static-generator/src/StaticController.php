@@ -11,9 +11,7 @@ use Pushword\Core\Service\ProcessOutputStorage;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -39,18 +37,11 @@ class StaticController extends AbstractController
         $this->adminContextProvider = $adminContextProvider;
     }
 
-    #[Route(path: '/~static', name: 'old_piedweb_static_generate', methods: ['GET'], priority: 1)]
-    public function redirectOldStaticRoute(): RedirectResponse
-    {
-        return $this->redirectToRoute('piedweb_static_generate', [], Response::HTTP_MOVED_PERMANENTLY);
-    }
-
     #[AdminRoute(
         path: '/static/{host}',
         name: 'static_generator',
         options: ['defaults' => ['host' => null]]
     )]
-    #[Route(path: '/{host}', name: 'piedweb_static_generate', defaults: ['host' => null], methods: ['GET'], priority: -1)]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function generateStatic(?string $host = null): Response
     {
@@ -196,12 +187,7 @@ class StaticController extends AbstractController
      */
     private function renderAdmin(string $view, array $parameters = []): Response
     {
-        $context = $this->adminContextProvider->getContext();
-        if (null === $context) {
-            throw new RuntimeException('EasyAdmin context is not available for this request.');
-        }
-
-        $parameters['ea'] = $context;
+        $parameters['ea'] = $this->adminContextProvider->getContext();
 
         return $this->render($view, $parameters);
     }

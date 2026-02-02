@@ -3,7 +3,7 @@
 {% block title %}{{ page.slug }} › {{ 'versionVersions'|trans }}{% endblock %}
 
 {% block actions %}
-    <a class="btn btn-danger" href="{{ path('pushword_version_reset', {id: page.id}) }}">
+    <a class="btn btn-danger" href="{{ path('admin_version_reset', {id: page.id}) }}">
         <i class="fa fa-trash" aria-hidden="true"></i> {{ 'versionReset'|trans }}
     </a>
 {% endblock %}
@@ -45,7 +45,7 @@
                         <a href="{{ path('admin_version_compare', {id: page.id, versionLeft: version, versionRight: 'current'}) }}" class="btn btn-outline-primary btn-sm px-2 me-1" title="{{ 'versionCompare'|trans }}">
                             <i class="fa fa-code-compare" aria-hidden="true"></i> {{ 'versionCompare'|trans }}
                         </a>
-                        <a href="{{ path('pushword_version_load', {id: page.id, version: version}) }}" class="btn btn-outline-secondary btn-sm px-2">
+                        <a href="{{ path('admin_version_load', {id: page.id, version: version}) }}" class="btn btn-outline-secondary btn-sm px-2">
                             <i class="fa fa-edit me-2" aria-hidden="true"></i> {{ 'versionSwitch'|trans }}
                         </a>
                     </td>

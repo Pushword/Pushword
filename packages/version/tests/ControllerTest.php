@@ -7,7 +7,6 @@ use Pushword\Core\Entity\Page;
 use Pushword\Version\Versionner;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
@@ -28,11 +27,6 @@ class ControllerTest extends AbstractAdminTestClass
         /** @var Router $router */
         $router = self::getContainer()->get('router');
 
-        // Test list page - using non-admin route (admin route requires EasyAdmin dashboard context)
-        $listUrl = $router->generate('pushword_version_list', ['id' => $pageId]);
-        $client->request(Request::METHOD_GET, $listUrl);
-        // This may return 500 if EasyAdmin context is not available, so we skip assertions on admin-only pages
-
         $versionner = new Versionner(
             self::bootKernel()->getLogDir(),
             self::getContainer()->get('doctrine.orm.default_entity_manager'),
@@ -43,14 +37,17 @@ class ControllerTest extends AbstractAdminTestClass
         self::assertNotEmpty($pageVersions, 'Page should have at least one version');
         $version = $pageVersions[0];
 
-        // Test load version - this works without EasyAdmin context (redirects)
-        $loadUrl = $router->generate('pushword_version_load', ['id' => $pageId, 'version' => $version]);
-        $client->request(Request::METHOD_GET, $loadUrl);
-        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        // Test admin routes (these require EasyAdmin context via admin dashboard)
+        $listUrl = $router->generate('admin_version_list', ['id' => $pageId]);
+        $client->request(Request::METHOD_GET, $listUrl);
+        self::assertSame(200, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
-        // Test reset - this works without EasyAdmin context (redirects)
-        $resetUrl = $router->generate('pushword_version_reset', ['id' => $pageId]);
+        $loadUrl = $router->generate('admin_version_load', ['id' => $pageId, 'version' => $version]);
+        $client->request(Request::METHOD_GET, $loadUrl);
+        self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+
+        $resetUrl = $router->generate('admin_version_reset', ['id' => $pageId]);
         $client->request(Request::METHOD_GET, $resetUrl);
-        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }
 }

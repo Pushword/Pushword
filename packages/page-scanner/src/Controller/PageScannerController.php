@@ -6,7 +6,6 @@ use DateInterval;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
-use LogicException;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
@@ -14,7 +13,6 @@ use Pushword\Core\Utils\LastTime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -69,7 +67,6 @@ final class PageScannerController extends AbstractController
         name: 'page_scanner',
         options: ['defaults' => ['force' => 0]]
     )]
-    #[Route(path: '/scan/{force}', name: 'pushword_page_scanner', defaults: ['force' => 0], methods: ['GET'])]
     public function scan(int $force = 0): Response
     {
         $force = (bool) $force;
@@ -207,12 +204,7 @@ final class PageScannerController extends AbstractController
      */
     private function renderAdmin(string $view, array $parameters = []): Response
     {
-        $context = $this->adminContextProvider->getContext();
-        if (null === $context) {
-            throw new LogicException('EasyAdmin context is not available for this request.');
-        }
-
-        $parameters['ea'] = $context;
+        $parameters['ea'] = $this->adminContextProvider->getContext();
 
         return $this->render($view, $parameters);
     }

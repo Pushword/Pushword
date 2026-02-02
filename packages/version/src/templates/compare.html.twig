@@ -111,7 +111,7 @@
   </div>
 </div>
 
-<form id="save-form" method="POST" action="{{ path('pushword_version_save_compare', {id: page.id}) }}">
+<form id="save-form" method="POST" action="{{ path('admin_version_save_compare', {id: page.id}) }}">
   <input type="hidden" name="_token" value="{{ csrf_token('version_save') }}">
   <textarea name="mainContent" id="mainContent-hidden" style="display: none;"></textarea>
   <input type="hidden" name="h1" id="h1-hidden">
