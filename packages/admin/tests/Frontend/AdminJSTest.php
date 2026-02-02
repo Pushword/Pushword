@@ -3,7 +3,7 @@
 namespace Pushword\Admin\Tests\Frontend;
 
 use Exception;
-use Facebook\WebDriver\Exception\NoSuchElementException;
+use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\WebDriverBy;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
@@ -21,19 +21,8 @@ use Throwable;
 #[Group('panther')]
 class AdminJSTest extends AbstractAdminTestClass
 {
-    // Timeout configuration (in seconds)
-    private const int TIMEOUT_SHORT = 3;
-
-    private const int TIMEOUT_MEDIUM = 5;
-
-    private const int TIMEOUT_LONG = 10;
-
-    private const int WAIT_SHORT = 200;
-
-    private const int WAIT_MEDIUM = 500;
-
     // CSS selectors
-    private const string SELECTOR_MAIN_FIELDS = 'body'; // Always-present selector
+    private const string SELECTOR_MAIN_FIELDS = 'body';
 
     private const string SELECTOR_MEDIA_PICKER = '[data-pw-media-picker]';
 
@@ -57,6 +46,18 @@ class AdminJSTest extends AbstractAdminTestClass
 
     private const string SELECTOR_MEDIA_PICKER_IFRAME = '.pw-admin-popup-iframe';
 
+    // Base timeout values (in seconds) before multiplier
+    private const int BASE_TIMEOUT_SHORT = 3;
+
+    private const int BASE_TIMEOUT_MEDIUM = 5;
+
+    private const int BASE_TIMEOUT_LONG = 10;
+
+    // Base wait values (in milliseconds) before multiplier
+    private const int BASE_WAIT_SHORT = 200;
+
+    private const int BASE_WAIT_MEDIUM = 500;
+
     /**
      * Static cached client - shared across all tests for performance.
      * Login is performed once and reused.
@@ -64,6 +65,50 @@ class AdminJSTest extends AbstractAdminTestClass
     private static ?Client $loggedInClient = null;
 
     private static bool $isLoggedIn = false;
+
+    private static ?float $timeoutMultiplier = null;
+
+    private static function timeoutMultiplier(): float
+    {
+        if (null === self::$timeoutMultiplier) {
+            $envValue = $_SERVER['PANTHER_TIMEOUT_MULTIPLIER']
+                ?? $_ENV['PANTHER_TIMEOUT_MULTIPLIER']
+                ?? getenv('PANTHER_TIMEOUT_MULTIPLIER');
+            self::$timeoutMultiplier = false !== $envValue && '' !== $envValue ? (float) $envValue : 1.0;
+        }
+
+        return self::$timeoutMultiplier;
+    }
+
+    protected static function timeoutShort(): int
+    {
+        return (int) ceil(self::BASE_TIMEOUT_SHORT * self::timeoutMultiplier());
+    }
+
+    protected static function timeoutMedium(): int
+    {
+        return (int) ceil(self::BASE_TIMEOUT_MEDIUM * self::timeoutMultiplier());
+    }
+
+    protected static function timeoutLong(): int
+    {
+        return (int) ceil(self::BASE_TIMEOUT_LONG * self::timeoutMultiplier());
+    }
+
+    protected static function waitShort(): int
+    {
+        return (int) ceil(self::BASE_WAIT_SHORT * self::timeoutMultiplier());
+    }
+
+    protected static function waitMedium(): int
+    {
+        return (int) ceil(self::BASE_WAIT_MEDIUM * self::timeoutMultiplier());
+    }
+
+    protected function sleepMs(int $milliseconds): void
+    {
+        usleep($milliseconds * 1000);
+    }
 
     #[Override]
     public static function setUpBeforeClass(): void
@@ -78,7 +123,8 @@ class AdminJSTest extends AbstractAdminTestClass
         }
 
         // Clean up any stale processes from previous test runs
-        exec('lsof -ti:9080 2>/dev/null | xargs -r kill -9 2>/dev/null');
+        $port = $_SERVER['PANTHER_WEB_SERVER_PORT'] ?? '9080';
+        exec('lsof -ti:'.$port.' 2>/dev/null | xargs -r kill -9 2>/dev/null');
         exec('pkill -9 -f chromedriver 2>/dev/null');
         usleep(500000);
 
@@ -96,6 +142,22 @@ class AdminJSTest extends AbstractAdminTestClass
         });
 
         parent::setUpBeforeClass();
+    }
+
+    #[Override]
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Dismiss any lingering modals from previous tests
+        if (null !== self::$loggedInClient && self::$isLoggedIn) {
+            try {
+                self::$loggedInClient->executeScript(
+                    'document.querySelectorAll(".modal.show").forEach(m => { bootstrap?.Modal?.getInstance(m)?.hide(); });'
+                );
+            } catch (Throwable) {
+            }
+        }
     }
 
     /**
@@ -116,30 +178,23 @@ class AdminJSTest extends AbstractAdminTestClass
 
         $client->request('GET', '/login');
 
+        // Let the page start loading
+        $this->sleepMs(self::waitShort());
+
         // Step 1: Enter email
-        try {
-            $client->waitFor('input[name="email"]', self::TIMEOUT_LONG);
-        } catch (Exception) {
-            $client->wait(self::WAIT_MEDIUM);
-            $client->waitFor('input[name="email"]', self::TIMEOUT_LONG);
-        }
+        $client->waitFor('input[name="email"]', self::timeoutLong());
 
         $client->findElement(WebDriverBy::name('email'))->sendKeys('admin@example.tld');
         $client->findElement(WebDriverBy::cssSelector('button[type="submit"]'))->click();
 
         // Step 2: Wait for password step and enter password
-        try {
-            $client->waitFor('input[name="password"]', self::TIMEOUT_LONG);
-        } catch (Exception) {
-            $client->wait(self::WAIT_MEDIUM);
-            $client->waitFor('input[name="password"]', self::TIMEOUT_LONG);
-        }
+        $client->waitFor('input[name="password"]', self::timeoutLong());
 
         $client->findElement(WebDriverBy::name('password'))->sendKeys('mySecr3tpAssword');
         $client->findElement(WebDriverBy::cssSelector('button[type="submit"]'))->click();
 
         // Wait for redirect
-        $client->wait(self::WAIT_MEDIUM);
+        $this->sleepMs(self::waitMedium());
 
         self::$isLoggedIn = true;
 
@@ -182,11 +237,11 @@ class AdminJSTest extends AbstractAdminTestClass
         Client $client,
         int $pageId = 1,
         string $waitSelector = self::SELECTOR_MAIN_FIELDS,
-        int $timeout = self::TIMEOUT_MEDIUM
+        ?int $timeout = null,
     ): Crawler {
         $client->request('GET', $this->generateAdminUrl('admin_page_edit', ['id' => $pageId]));
 
-        return $client->waitFor($waitSelector, $timeout);
+        return $client->waitFor($waitSelector, $timeout ?? self::timeoutMedium());
     }
 
     /**
@@ -195,59 +250,40 @@ class AdminJSTest extends AbstractAdminTestClass
     protected function navigateToPageCreate(
         Client $client,
         string $waitSelector = 'body',
-        int $timeout = self::TIMEOUT_MEDIUM
+        ?int $timeout = null,
     ): Crawler {
         $client->request('GET', $this->generateAdminUrl('admin_page_create'));
 
-        return $client->waitFor($waitSelector, $timeout);
+        return $client->waitFor($waitSelector, $timeout ?? self::timeoutMedium());
     }
 
     /**
-     * Checks if an element exists in the DOM.
+     * Polls a JS expression until it returns true, using WebDriverWait.
+     *
+     * @param string[]|int[] $jsArgs
      */
-    protected function elementExists(Client $client, string $selector): bool
+    protected function pollUntilTrue(Client $client, string $jsExpression, array $jsArgs = [], int $timeoutSeconds = 0): bool
     {
-        $result = $client->executeScript(
-            'return document.querySelector(arguments[0]) !== null;',
-            [$selector]
-        );
-
-        return (bool) $result;
-    }
-
-    /**
-     * Polls a JS expression until it returns true or max attempts are reached.
-     */
-    protected function pollUntilTrue(Client $client, string $jsExpression, array $jsArgs = [], int $maxAttempts = 10): bool
-    {
-        for ($i = 0; $i < $maxAttempts; ++$i) {
-            if ((bool) $client->executeScript($jsExpression, $jsArgs)) {
-                return true;
-            }
-
-            $client->wait(self::WAIT_SHORT);
-        }
-
-        return false;
-    }
-
-    /**
-     * Waits for an element to exist, or skips the test.
-     */
-    protected function waitForElementOrSkip(
-        Client $client,
-        string $selector,
-        string $skipMessage,
-        int $timeout = self::TIMEOUT_SHORT
-    ): void {
-        if (! $this->elementExists($client, $selector)) {
-            self::markTestSkipped($skipMessage);
-        }
-
         try {
-            $client->waitFor($selector, $timeout);
+            $client->wait($timeoutSeconds ?: self::timeoutMedium(), 250)->until(
+                static fn (): bool => (bool) $client->executeScript($jsExpression, $jsArgs),
+            );
+
+            return true;
+        } catch (TimeoutException) {
+            return false;
+        }
+    }
+
+    /**
+     * Waits for an element to appear, or fails the test with a message.
+     */
+    protected function waitForElement(Client $client, string $selector, string $failureMessage, int $timeout = 0): void
+    {
+        try {
+            $client->waitFor($selector, $timeout ?: self::timeoutMedium());
         } catch (Exception) {
-            self::markTestSkipped($skipMessage);
+            self::fail($failureMessage.' (selector: '.$selector.')');
         }
     }
 
@@ -256,11 +292,11 @@ class AdminJSTest extends AbstractAdminTestClass
      */
     protected function ensureMediaPickerReady(Client $client): string
     {
-        $this->waitForElementOrSkip(
+        $this->waitForElement(
             $client,
             self::SELECTOR_MEDIA_PICKER,
             'No media picker found on this page',
-            self::TIMEOUT_SHORT
+            self::timeoutShort(),
         );
 
         $this->pollUntilTrue(
@@ -274,9 +310,8 @@ class AdminJSTest extends AbstractAdminTestClass
             [self::SELECTOR_MEDIA_PICKER]
         );
 
-        if (! \is_string($selectId) || '' === $selectId) {
-            self::markTestSkipped('Media picker select element has no ID');
-        }
+        self::assertIsString($selectId);
+        self::assertNotEmpty($selectId, 'Media picker select element must have an ID');
 
         // Expand parent accordion panel if collapsed so buttons become interactable
         $client->executeScript('
@@ -288,14 +323,21 @@ class AdminJSTest extends AbstractAdminTestClass
                 if (toggle) toggle.click();
             }
         ', [self::SELECTOR_MEDIA_PICKER]);
-        $client->wait(self::WAIT_MEDIUM);
+
+        // Wait for accordion expansion to complete
+        $this->pollUntilTrue(
+            $client,
+            'const p = document.querySelector(arguments[0])?.closest(".pw-settings-accordion"); return !p || !p.classList.contains("pw-settings-collapsed")',
+            [self::SELECTOR_MEDIA_PICKER],
+            self::timeoutShort(),
+        );
 
         // Scroll the picker into view
         $client->executeScript(
             'document.querySelector(arguments[0])?.scrollIntoView({block: "center", behavior: "instant"})',
             [self::SELECTOR_MEDIA_PICKER]
         );
-        $client->wait(self::WAIT_SHORT);
+        $this->sleepMs(self::waitShort());
 
         return $selectId;
     }
@@ -323,28 +365,8 @@ class AdminJSTest extends AbstractAdminTestClass
              if (m && window.bootstrap) window.bootstrap.Modal.getInstance(m)?.hide();',
             [self::SELECTOR_MEDIA_PICKER_MODAL]
         );
-        $client->wait(self::WAIT_MEDIUM);
+        $this->sleepMs(self::waitMedium());
     }
-
-    /**
-     * Test that JavaScript modules are loaded correctly.
-     */
-    // public function testAdminJSModulesLoaded(): void
-    // {
-    //     $client = $this->createPantherClientWithLogin();
-    //     $this->navigateToPageEdit($client);
-    //     sleep(1);
-    //     // Check that global variables are defined
-    //     self::assertTrue(
-    //         $client->executeScript('return typeof window.htmx !== "undefined"'),
-    //         'HTMX should be loaded'
-    //     );
-
-    //     self::assertTrue(
-    //         $client->executeScript('return typeof window.copyElementText === "function"'),
-    //         'copyElementText should be available'
-    //     );
-    // }
 
     /**
      * Test the media picker.
@@ -354,21 +376,13 @@ class AdminJSTest extends AbstractAdminTestClass
         $client = $this->createPantherClientWithLogin();
         $this->navigateToPageEdit($client);
 
-        if (! $this->elementExists($client, self::SELECTOR_MEDIA_PICKER)) {
-            self::markTestSkipped('No media picker found on this page');
-        }
+        $this->waitForElement($client, self::SELECTOR_MEDIA_PICKER, 'No media picker found on this page');
 
-        $this->waitForElementOrSkip(
+        // Wait for initialization via polling
+        $isInitialized = $this->pollUntilTrue(
             $client,
-            self::SELECTOR_MEDIA_PICKER,
-            'Media picker not initialized',
-            self::TIMEOUT_SHORT
-        );
-
-        // Check that the media picker is initialized
-        $isInitialized = $client->executeScript(
             'return document.querySelector(arguments[0])?.dataset?.pwMediaPickerReady === "1"',
-            [self::SELECTOR_MEDIA_PICKER]
+            [self::SELECTOR_MEDIA_PICKER],
         );
 
         self::assertTrue($isInitialized, 'Media picker should be initialized');
@@ -385,8 +399,15 @@ class AdminJSTest extends AbstractAdminTestClass
 
         $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_CHOOSE);
 
-        $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::TIMEOUT_MEDIUM);
-        $client->wait(self::WAIT_MEDIUM);
+        $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::timeoutMedium());
+
+        // Wait for modal to be fully visible (Bootstrap fade animation)
+        $this->pollUntilTrue(
+            $client,
+            'const m = document.querySelector(arguments[0]); return m && m.classList.contains("show") && getComputedStyle(m).display !== "none"',
+            [self::SELECTOR_MEDIA_PICKER_MODAL],
+            self::timeoutShort(),
+        );
 
         $result = $client->executeScript('
             const modal = document.querySelector(arguments[0]);
@@ -420,8 +441,15 @@ class AdminJSTest extends AbstractAdminTestClass
         $selectId = $this->ensureMediaPickerReady($client);
 
         $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_CHOOSE);
-        $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::TIMEOUT_MEDIUM);
-        $client->wait(self::WAIT_MEDIUM);
+        $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::timeoutMedium());
+
+        // Wait for modal to be fully visible before sending postMessage
+        $this->pollUntilTrue(
+            $client,
+            'const m = document.querySelector(arguments[0]); return m && m.classList.contains("show") && getComputedStyle(m).display !== "none"',
+            [self::SELECTOR_MEDIA_PICKER_MODAL],
+            self::timeoutShort(),
+        );
 
         $client->executeScript('
             window.postMessage({
@@ -441,7 +469,14 @@ class AdminJSTest extends AbstractAdminTestClass
             }, window.location.origin);
         ', [$selectId]);
 
-        $client->wait(self::WAIT_MEDIUM);
+        // Wait for postMessage to be processed
+        $postMessageProcessed = $this->pollUntilTrue(
+            $client,
+            'return document.getElementById(arguments[0])?.dataset?.pwMediaPickerSelectedId === "999"',
+            [$selectId],
+        );
+
+        self::assertTrue($postMessageProcessed, 'postMessage should update the selected media ID');
 
         $result = $client->executeScript('
             const select = document.getElementById(arguments[0]);
@@ -498,7 +533,7 @@ class AdminJSTest extends AbstractAdminTestClass
             select.value = "999";
             select.dispatchEvent(new Event("change", { bubbles: true }));
         ', [$selectId]);
-        $client->wait(self::WAIT_SHORT);
+        $this->sleepMs(self::waitShort());
 
         $hasSelection = (bool) $client->executeScript(
             'return Boolean(document.getElementById(arguments[0])?.dataset?.pwMediaPickerSelectedId)',
@@ -507,7 +542,7 @@ class AdminJSTest extends AbstractAdminTestClass
         self::assertTrue($hasSelection, 'Media should be selected before remove test');
 
         $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_REMOVE);
-        $client->wait(self::WAIT_SHORT);
+        $this->sleepMs(self::waitShort());
 
         $result = $client->executeScript('
             const select = document.getElementById(arguments[0]);
@@ -536,14 +571,19 @@ class AdminJSTest extends AbstractAdminTestClass
         $this->navigateToPageEdit($client);
         $this->ensureMediaPickerReady($client);
 
-        if (! $this->elementExists($client, self::SELECTOR_MEDIA_PICKER_UPLOAD)) {
-            self::markTestSkipped('No upload button found');
-        }
+        $this->waitForElement($client, self::SELECTOR_MEDIA_PICKER_UPLOAD, 'No upload button found');
 
         $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_UPLOAD);
 
-        $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::TIMEOUT_MEDIUM);
-        $client->wait(self::WAIT_MEDIUM);
+        $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::timeoutMedium());
+
+        // Wait for modal to be fully visible
+        $this->pollUntilTrue(
+            $client,
+            'const m = document.querySelector(arguments[0]); return m && m.classList.contains("show") && getComputedStyle(m).display !== "none"',
+            [self::SELECTOR_MEDIA_PICKER_MODAL],
+            self::timeoutShort(),
+        );
 
         $result = $client->executeScript('
             const modal = document.querySelector(arguments[0]);
@@ -571,31 +611,22 @@ class AdminJSTest extends AbstractAdminTestClass
         $client = $this->createPantherClientWithLogin();
         $this->navigateToPageEdit($client);
 
-        if (! $this->elementExists($client, self::SELECTOR_PANELS)) {
-            self::markTestSkipped('No panels found on this page');
-        }
+        $this->waitForElement($client, self::SELECTOR_PANELS, 'No panels found on this page');
+        $this->waitForElement($client, self::SELECTOR_PANEL_TOGGLE, 'No panel toggle button found');
 
-        $crawler = $client->getCrawler();
-        $panelButton = $crawler->filter(self::SELECTOR_PANEL_TOGGLE)->first();
+        $buttonElement = $client->findElement(
+            WebDriverBy::cssSelector(self::SELECTOR_PANEL_TOGGLE)
+        );
+        $buttonElement->click();
+        $this->sleepMs(self::waitMedium());
 
-        if (0 === $panelButton->count()) {
-            self::markTestSkipped('No panel toggle button found');
-        }
+        // Poll for localStorage to be updated
+        $stored = $this->pollUntilTrue(
+            $client,
+            'return localStorage.getItem("panels") !== null',
+        );
 
-        // Click on the panel
-        try {
-            $buttonElement = $client->findElement(
-                WebDriverBy::cssSelector(self::SELECTOR_PANEL_TOGGLE)
-            );
-            $buttonElement->click();
-            $client->wait(self::WAIT_MEDIUM);
-
-            // Check that the state is saved in localStorage
-            $stored = $client->executeScript('return localStorage.getItem("panels")');
-            self::assertNotNull($stored, 'Panel state should be stored in localStorage');
-        } catch (NoSuchElementException) {
-            self::markTestSkipped('Panel button not clickable');
-        }
+        self::assertTrue($stored, 'Panel state should be stored in localStorage');
     }
 
     /**
@@ -606,9 +637,7 @@ class AdminJSTest extends AbstractAdminTestClass
         $client = $this->createPantherClientWithLogin();
         $this->navigateToPageCreate($client);
 
-        if (! $this->elementExists($client, self::SELECTOR_HOST_SELECT)) {
-            self::markTestSkipped('No host select found on create page');
-        }
+        $this->waitForElement($client, self::SELECTOR_HOST_SELECT, 'No host select found on create page');
 
         // Check that window.pageHost is defined
         $pageHost = $client->executeScript('return window.pageHost || ""');
@@ -623,60 +652,48 @@ class AdminJSTest extends AbstractAdminTestClass
         $client = $this->createPantherClientWithLogin();
         $this->navigateToPageEdit($client);
 
-        if (! $this->elementExists($client, self::SELECTOR_AUTOSIZE_TEXTAREA)) {
-            self::markTestSkipped('No autosize textarea found on this page');
-        }
+        $this->waitForElement($client, self::SELECTOR_AUTOSIZE_TEXTAREA, 'No autosize textarea found on this page');
 
-        try {
-            // Test the autosize feature by adding content and triggering the event
-            $result = $client->executeScript('
-                const textarea = document.querySelector(arguments[0]);
-                if (!textarea) return { success: false, reason: "not_found" };
+        // Wait for autosize initialization (style.height is set)
+        $autosizeInitialized = $this->pollUntilTrue(
+            $client,
+            'const ta = document.querySelector(arguments[0]); return ta && ta.style.height !== ""',
+            [self::SELECTOR_AUTOSIZE_TEXTAREA],
+        );
 
-                const initialHeight = parseInt(window.getComputedStyle(textarea).height);
+        self::assertTrue($autosizeInitialized, 'Autosize should initialize and set style.height');
 
-                // Add many lines to force a height change
-                textarea.value = textarea.value + "\\n".repeat(10) + "Test line\\n".repeat(10);
+        // Read initial height
+        $initialHeight = $client->executeScript(
+            'return parseInt(window.getComputedStyle(document.querySelector(arguments[0])).height)',
+            [self::SELECTOR_AUTOSIZE_TEXTAREA]
+        );
 
-                // Manually trigger the input event
-                textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        self::assertIsInt($initialHeight);
+        self::assertGreaterThan(0, $initialHeight, 'Textarea should have a positive initial height');
 
-                // Wait a bit for the resize
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        const newHeight = parseInt(window.getComputedStyle(textarea).height);
-                        resolve({
-                            success: true,
-                            initialHeight: initialHeight,
-                            newHeight: newHeight,
-                            changed: newHeight > initialHeight
-                        });
-                    }, 300);
-                });
-            ', [self::SELECTOR_AUTOSIZE_TEXTAREA]);
+        // Add content and dispatch input event
+        $client->executeScript('
+            const textarea = document.querySelector(arguments[0]);
+            textarea.value = textarea.value + "\\n".repeat(10) + "Test line\\n".repeat(10);
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        ', [self::SELECTOR_AUTOSIZE_TEXTAREA]);
 
-            if (! is_array($result)) {
-                self::markTestSkipped('Autosize test returned invalid result');
-            }
+        // Poll until height increases
+        $heightIncreased = $this->pollUntilTrue(
+            $client,
+            'return parseInt(window.getComputedStyle(document.querySelector(arguments[0])).height) > arguments[1]',
+            [self::SELECTOR_AUTOSIZE_TEXTAREA, $initialHeight],
+        );
 
-            /** @var array{success: bool, initialHeight?: int, newHeight?: int, changed?: bool} $result */
-            if (! $result['success']) {
-                self::markTestSkipped('Autosize textarea not found or not working');
-            }
+        self::assertTrue($heightIncreased, 'Textarea height should increase after adding content');
 
-            if (! isset($result['changed']) || ! $result['changed']) {
-                // Autosize may not be active on this page
-                self::markTestSkipped('Textarea autosize feature not active on this page');
-            }
+        $newHeight = $client->executeScript(
+            'return parseInt(window.getComputedStyle(document.querySelector(arguments[0])).height)',
+            [self::SELECTOR_AUTOSIZE_TEXTAREA]
+        );
 
-            self::assertGreaterThan(
-                $result['initialHeight'] ?? 0,
-                $result['newHeight'] ?? 0,
-                'Textarea height should increase after adding content'
-            );
-        } catch (Exception $exception) {
-            self::markTestSkipped('Autosize test failed: '.$exception->getMessage());
-        }
+        self::assertGreaterThan($initialHeight, $newHeight, 'New height should be greater than initial height');
     }
 
     /**
@@ -718,31 +735,25 @@ class AdminJSTest extends AbstractAdminTestClass
         $client = $this->createPantherClientWithLogin();
         $this->navigateToPageEdit($client);
 
-        if (! $this->elementExists($client, self::SELECTOR_TITLE_INPUT)) {
-            self::markTestSkipped('No title measurement field found on this page');
-        }
+        $this->waitForElement($client, self::SELECTOR_TITLE_INPUT, 'No title measurement field found on this page');
 
-        try {
-            $titleInput = $client->findElement(
-                WebDriverBy::cssSelector(self::SELECTOR_TITLE_INPUT)
-            );
+        $titleInput = $client->findElement(
+            WebDriverBy::cssSelector(self::SELECTOR_TITLE_INPUT)
+        );
 
-            // Change the value
-            $titleInput->clear();
-            $titleInput->sendKeys('Test Title for Width Measurement');
+        // Change the value
+        $titleInput->clear();
+        $titleInput->sendKeys('Test Title for Width Measurement');
 
-            $client->wait(self::WAIT_SHORT);
+        $this->sleepMs(self::waitShort());
 
-            // Check that the counter has been updated
-            $widthValue = $client->executeScript(
-                'return document.getElementById("titleWidth")?.innerText || "";'
-            );
+        // Check that the counter has been updated
+        $widthValue = $client->executeScript(
+            'return document.getElementById("titleWidth")?.innerText || "";'
+        );
 
-            // We expect to see the width
-            self::assertNotEmpty($widthValue, 'Title width should be displayed');
-        } catch (NoSuchElementException) {
-            self::markTestSkipped('Title input not accessible');
-        }
+        // We expect to see the width
+        self::assertNotEmpty($widthValue, 'Title width should be displayed');
     }
 
     /**
@@ -753,7 +764,14 @@ class AdminJSTest extends AbstractAdminTestClass
         $client = $this->createPantherClientWithLogin();
         $this->navigateToPageEdit($client);
 
-        // Check that window.pageHost and window.pageLocale are defined
+        // Wait for JS initialization to set pageHost/pageLocale
+        $stateReady = $this->pollUntilTrue(
+            $client,
+            'return typeof window.pageHost !== "undefined" || typeof window.pageLocale !== "undefined"',
+        );
+
+        self::assertTrue($stateReady, 'At least one of pageHost or pageLocale should be defined');
+
         $stateExists = $client->executeScript('
             return {
                 hasHost: typeof window.pageHost !== "undefined",
@@ -761,17 +779,9 @@ class AdminJSTest extends AbstractAdminTestClass
             };
         ');
 
-        if (! is_array($stateExists)) {
-            self::markTestSkipped('Page state test returned invalid result');
-        }
+        self::assertIsArray($stateExists);
 
         /** @var array{hasHost: bool, hasLocale: bool} $stateExists */
-        // At least one of the two should be defined, otherwise skip
-        if (! $stateExists['hasHost'] && ! $stateExists['hasLocale']) {
-            self::markTestSkipped('Page state variables (pageHost/pageLocale) not defined on this page');
-        }
-
-        // At least one is defined, the test passes
         self::assertTrue(
             $stateExists['hasHost'] || $stateExists['hasLocale'],
             'At least one of pageHost or pageLocale should be defined'

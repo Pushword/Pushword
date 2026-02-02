@@ -53,6 +53,7 @@ abstract class AbstractAdminTestClass extends PantherTestCase
             'APP_ENV' => $_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? 'test',
             'APP_DEBUG' => $_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? '1',
             'TEST_RUN_ID' => $_SERVER['TEST_RUN_ID'] ?? $_ENV['TEST_RUN_ID'] ?? getenv('TEST_RUN_ID') ?: '',
+            'PANTHER_TIMEOUT_MULTIPLIER' => $_SERVER['PANTHER_TIMEOUT_MULTIPLIER'] ?? $_ENV['PANTHER_TIMEOUT_MULTIPLIER'] ?? getenv('PANTHER_TIMEOUT_MULTIPLIER') ?: '',
         ]);
 
         return parent::createPantherClient($options, $kernelOptions, $managerOptions);

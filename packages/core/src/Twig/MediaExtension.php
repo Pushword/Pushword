@@ -67,6 +67,8 @@ class MediaExtension
 
     private function normalizeMediaPath(string $src): string
     {
+        $src = urldecode($src);
+
         if (1 === preg_match('/^[0-9a-z-]+$/', $src)) {
             return $src.'.jpg';
         }
