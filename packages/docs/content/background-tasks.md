@@ -64,3 +64,23 @@ php bin/console messenger:consume async
 ```
 
 The HTMX-based admin polling UI works identically in both modes since existing commands handle their own PID registration and output writing.
+
+## Locking Behavior
+
+Commands like `pw:image:cache` use a global flock to prevent concurrent execution. When a second instance is triggered while the first is still running, the behavior depends on the execution mode:
+
+### Process Mode
+
+The second process **silently skips** and exits with code 0. This means work can be lost: if two different images are uploaded at the same time, only the first triggers cache generation. The second is discarded because the lock is global (not per-file).
+
+### Messenger Mode (recommended for production)
+
+With Messenger, tasks are queued and processed sequentially by the worker. Even if two uploads happen simultaneously, both cache generation tasks are dispatched to the message bus. The worker processes them one at a time, so **no work is lost**.
+
+This is the main reason to prefer Messenger mode in production: it guarantees every dispatched task is eventually executed, whereas process mode can silently drop tasks under concurrent load.
+
+```yaml
+# config/packages/pushword.yaml
+pushword:
+    background_task_handler: messenger
+```
