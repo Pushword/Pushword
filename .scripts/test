@@ -89,6 +89,46 @@ function step {
     echo -e "\033[1;34m→ $1\033[0m"
 }
 
+function start_background_tasks {
+    step "Starting test-installer in background"
+    INSTALLER_LOG=$(mktemp)
+    INSTALLER_START=$(date +%s)
+    ./.scripts/test-installer --quiet > "$INSTALLER_LOG" 2>&1 &
+    INSTALLER_PID=$!
+
+    step "Starting monorepo validation in background"
+    MONOREPO_LOG=$(mktemp)
+    MONOREPO_START=$(date +%s)
+    composer validate-monorepo > "$MONOREPO_LOG" 2>&1 &
+    MONOREPO_PID=$!
+}
+
+function wait_for_background_tasks {
+    step "Waiting for monorepo validation"
+    MONOREPO_EXIT=0
+    wait $MONOREPO_PID || MONOREPO_EXIT=$?
+    record_step "Monorepo validation" $(( $(date +%s) - MONOREPO_START ))
+    cat "$MONOREPO_LOG"
+    rm -f "$MONOREPO_LOG"
+
+    if [ $MONOREPO_EXIT -ne 0 ]; then
+        echo "validate-monorepo FAILED (exit $MONOREPO_EXIT)"
+        PHPUNIT_EXIT=$MONOREPO_EXIT
+    fi
+
+    step "Waiting for test-installer"
+    INSTALLER_EXIT=0
+    wait $INSTALLER_PID || INSTALLER_EXIT=$?
+    record_step "Test-installer" $(( $(date +%s) - INSTALLER_START ))
+    cat "$INSTALLER_LOG"
+    rm -f "$INSTALLER_LOG"
+
+    if [ $INSTALLER_EXIT -ne 0 ]; then
+        echo "test-installer FAILED (exit $INSTALLER_EXIT)"
+        return 1
+    fi
+}
+
 trap cleanup EXIT
 
 # Install nodejs dependencies
@@ -111,17 +151,7 @@ fi
 if [ "$1" = "full" ]; then
     trap cleanupAndComposerUpdate EXIT
 
-    step "Starting test-installer in background"
-    INSTALLER_LOG=$(mktemp)
-    INSTALLER_START=$(date +%s)
-    ./.scripts/test-installer --quiet > "$INSTALLER_LOG" 2>&1 &
-    INSTALLER_PID=$!
-
-    step "Starting monorepo validation in background"
-    MONOREPO_LOG=$(mktemp)
-    MONOREPO_START=$(date +%s)
-    composer validate-monorepo > "$MONOREPO_LOG" 2>&1 &
-    MONOREPO_PID=$!
+    start_background_tasks
 
     step "composer update --prefer-lowest"
     composer update --prefer-lowest
@@ -132,27 +162,7 @@ if [ "$1" = "full" ]; then
     XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --no-progress --colors=always --stop-on-failure --debug --no-cache-result --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
     record_step "PHPUnit (prefer-lowest)" $(( $(date +%s) - PHPUNIT_START ))
 
-    step "Waiting for monorepo validation"
-    MONOREPO_EXIT=0
-    wait $MONOREPO_PID || MONOREPO_EXIT=$?
-    record_step "Monorepo validation" $(( $(date +%s) - MONOREPO_START ))
-    cat "$MONOREPO_LOG"
-    rm -f "$MONOREPO_LOG"
-
-    if [ $MONOREPO_EXIT -ne 0 ]; then
-        echo "validate-monorepo FAILED (exit $MONOREPO_EXIT)"
-        PHPUNIT_EXIT=$MONOREPO_EXIT
-    fi
-
-    step "Waiting for test-installer"
-    INSTALLER_EXIT=0
-    wait $INSTALLER_PID || INSTALLER_EXIT=$?
-    record_step "Test-installer" $(( $(date +%s) - INSTALLER_START ))
-    cat "$INSTALLER_LOG"
-    rm -f "$INSTALLER_LOG"
-
-    if [ $INSTALLER_EXIT -ne 0 ]; then
-        echo "test-installer FAILED (exit $INSTALLER_EXIT)"
+    if ! wait_for_background_tasks; then
         print_summary
         exit 1
     fi
@@ -161,17 +171,7 @@ if [ "$1" = "full" ]; then
     exit $PHPUNIT_EXIT
 else
     if [ -z "$FILTER_ARG" ]; then
-        step "Starting test-installer in background"
-        INSTALLER_LOG=$(mktemp)
-        INSTALLER_START=$(date +%s)
-        ./.scripts/test-installer --quiet > "$INSTALLER_LOG" 2>&1 &
-        INSTALLER_PID=$!
-
-        step "Starting monorepo validation in background"
-        MONOREPO_LOG=$(mktemp)
-        MONOREPO_START=$(date +%s)
-        composer validate-monorepo > "$MONOREPO_LOG" 2>&1 &
-        MONOREPO_PID=$!
+        start_background_tasks
     fi
 
     # Pre-warm Symfony container cache so workers don't each compile it
@@ -197,28 +197,7 @@ else
     fi
 
     if [ -z "$FILTER_ARG" ]; then
-        step "Waiting for monorepo validation"
-        MONOREPO_EXIT=0
-        wait $MONOREPO_PID || MONOREPO_EXIT=$?
-        record_step "Monorepo validation" $(( $(date +%s) - MONOREPO_START ))
-        cat "$MONOREPO_LOG"
-        rm -f "$MONOREPO_LOG"
-
-        if [ $MONOREPO_EXIT -ne 0 ]; then
-            echo "validate-monorepo FAILED (exit $MONOREPO_EXIT)"
-            PHPUNIT_EXIT=$MONOREPO_EXIT
-        fi
-
-        step "Waiting for test-installer"
-        INSTALLER_EXIT=0
-        wait $INSTALLER_PID || INSTALLER_EXIT=$?
-        record_step "Test-installer" $(( $(date +%s) - INSTALLER_START ))
-        cat "$INSTALLER_LOG"
-        rm -f "$INSTALLER_LOG"
-
-        if [ $INSTALLER_EXIT -ne 0 ]; then
-            echo "test-installer FAILED (exit $INSTALLER_EXIT)"
-        fi
+        wait_for_background_tasks || true
     fi
 
     print_summary

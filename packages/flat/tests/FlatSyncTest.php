@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Flat\Tests;
 
 use Doctrine\ORM\EntityManager;
+use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
@@ -26,6 +27,7 @@ final class FlatSyncTest extends KernelTestCase
         $this->contentDir = $contentDirFinder->get('localhost.dev');
     }
 
+    #[Override]
     protected function tearDown(): void
     {
         $this->cleanFixtures();
@@ -71,17 +73,19 @@ final class FlatSyncTest extends KernelTestCase
 
     private function cleanFixtures(): void
     {
-        @unlink($this->contentDir.'/test-content.md');
-        @unlink($this->contentDir.'/test-link.md');
-        @unlink($this->contentDir.'/media/logo-test.png');
-        @unlink($this->contentDir.'/media/index.csv');
-        @unlink($this->getMediaDir().'/logo-test.png');
-        @unlink($this->getMediaDir().'/index.csv');
+        new Filesystem()->remove([
+            $this->contentDir.'/test-content.md',
+            $this->contentDir.'/test-link.md',
+            $this->contentDir.'/media/logo-test.png',
+            $this->contentDir.'/media/index.csv',
+            $this->getMediaDir().'/logo-test.png',
+            $this->getMediaDir().'/index.csv',
+        ]);
     }
 
     private function cleanGlobalIndexBeforeTest(): void
     {
-        @unlink($this->getMediaDir().'/index.csv');
+        new Filesystem()->remove($this->getMediaDir().'/index.csv');
     }
 
     private function getMediaDir(): string

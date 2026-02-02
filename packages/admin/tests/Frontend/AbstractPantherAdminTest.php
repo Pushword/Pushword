@@ -53,29 +53,34 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
         return self::$timeoutMultiplier;
     }
 
+    protected static function scaledValue(int $base): int
+    {
+        return (int) ceil($base * self::timeoutMultiplier());
+    }
+
     protected static function timeoutShort(): int
     {
-        return (int) ceil(self::BASE_TIMEOUT_SHORT * self::timeoutMultiplier());
+        return self::scaledValue(self::BASE_TIMEOUT_SHORT);
     }
 
     protected static function timeoutMedium(): int
     {
-        return (int) ceil(self::BASE_TIMEOUT_MEDIUM * self::timeoutMultiplier());
+        return self::scaledValue(self::BASE_TIMEOUT_MEDIUM);
     }
 
     protected static function timeoutLong(): int
     {
-        return (int) ceil(self::BASE_TIMEOUT_LONG * self::timeoutMultiplier());
+        return self::scaledValue(self::BASE_TIMEOUT_LONG);
     }
 
     protected static function waitShort(): int
     {
-        return (int) ceil(self::BASE_WAIT_SHORT * self::timeoutMultiplier());
+        return self::scaledValue(self::BASE_WAIT_SHORT);
     }
 
     protected static function waitMedium(): int
     {
-        return (int) ceil(self::BASE_WAIT_MEDIUM * self::timeoutMultiplier());
+        return self::scaledValue(self::BASE_WAIT_MEDIUM);
     }
 
     protected function sleepMs(int $milliseconds): void

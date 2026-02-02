@@ -17,63 +17,15 @@ if (! file_exists($file)) {
 
 $autoload = require $file;
 
-// Suppress fsockopen warnings from Panther checking if server is already running
-set_error_handler(static function ($errno, $errstr, $errfile, $errline): bool {
-    // Suppress fsockopen connection refused warnings from Panther
-    if (\E_WARNING === $errno && str_contains($errstr, 'fsockopen()') && str_contains($errstr, 'Connection refused')) {
-        return true; // Suppress this warning
-    }
-
-    // Let other errors pass through
-    return false;
-}, \E_WARNING);
-// ----------------------------------
-
-new Dotenv()->loadEnv(__DIR__.'/.env');
-
-// Some reset here
-$fs = new Filesystem();
-$runId = getenv('TEST_RUN_ID') ?: '';
-// Paratest sets TEST_TOKEN per worker — append it for isolation
-$testToken = getenv('TEST_TOKEN');
-if (false !== $testToken && '' !== $testToken) {
-    $runId = ('' !== $runId ? $runId.'-' : '').'w'.$testToken;
-    putenv('TEST_RUN_ID='.$runId);
-    $_ENV['TEST_RUN_ID'] = $runId;
-    $_SERVER['TEST_RUN_ID'] = $runId;
-}
-
-$segment = '' !== $runId ? '/'.$runId : '';
-$testBaseDir = sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment;
-
-// Export env vars used by the compiled container (pushword.php test config uses %env(...)%)
-$envVars = [
-    'PUSHWORD_TEST_MEDIA_DIR' => '' !== $runId ? $testBaseDir.'/media' : $monoRepoBase.'/packages/skeleton/media',
-    'PUSHWORD_TEST_DATABASE_URL' => 'sqlite:///'.$testBaseDir.'/test.db',
-    'PUSHWORD_TEST_FLAT_CONTENT_DIR' => '' !== $runId ? $testBaseDir.'/content/_host_' : $monoRepoBase.'/packages/skeleton/content/_host_',
-];
-foreach ($envVars as $key => $value) {
+function setTestEnv(string $key, string $value): void
+{
     putenv($key.'='.$value);
     $_ENV[$key] = $value;
     $_SERVER[$key] = $value;
 }
 
-// Ensure each worker has its own lock directory and chrome data dir
-if ('' !== $runId) {
-    $lockDsn = 'flock://'.$testBaseDir.'/locks';
-    putenv('LOCK_DSN='.$lockDsn);
-    $_ENV['LOCK_DSN'] = $lockDsn;
-    $_SERVER['LOCK_DSN'] = $lockDsn;
-
-    $chromeArgs = '--headless --disable-gpu --disable-dev-shm-usage --no-sandbox --user-data-dir=/tmp/panther-chrome-'.$runId;
-    putenv('PANTHER_CHROME_ARGUMENTS='.$chromeArgs);
-    $_ENV['PANTHER_CHROME_ARGUMENTS'] = $chromeArgs;
-    $_SERVER['PANTHER_CHROME_ARGUMENTS'] = $chromeArgs;
-}
-
-// Compute DB cache hash before wiping anything
-$dbCacheDir = sys_get_temp_dir().'/com.github.pushword.pushword/test-db-cache';
-$dbCacheHash = (static function () use ($monoRepoBase): string {
+function computeDbCacheHash(string $monoRepoBase): string
+{
     $hashFiles = [];
 
     // Entity directories that affect DB schema
@@ -117,7 +69,54 @@ $dbCacheHash = (static function () use ($monoRepoBase): string {
     }
 
     return hash_final($ctx);
-})();
+}
+
+// Suppress fsockopen warnings from Panther checking if server is already running
+set_error_handler(static function ($errno, $errstr, $errfile, $errline): bool {
+    // Suppress fsockopen connection refused warnings from Panther
+    if (\E_WARNING === $errno && str_contains($errstr, 'fsockopen()') && str_contains($errstr, 'Connection refused')) {
+        return true; // Suppress this warning
+    }
+
+    // Let other errors pass through
+    return false;
+}, \E_WARNING);
+// ----------------------------------
+
+new Dotenv()->loadEnv(__DIR__.'/.env');
+
+// Some reset here
+$fs = new Filesystem();
+$runId = getenv('TEST_RUN_ID') ?: '';
+// Paratest sets TEST_TOKEN per worker — append it for isolation
+$testToken = getenv('TEST_TOKEN');
+if (false !== $testToken && '' !== $testToken) {
+    $runId = ('' !== $runId ? $runId.'-' : '').'w'.$testToken;
+    setTestEnv('TEST_RUN_ID', $runId);
+}
+
+$segment = '' !== $runId ? '/'.$runId : '';
+$testBaseDir = sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment;
+
+// Export env vars used by the compiled container (pushword.php test config uses %env(...)%)
+$envVars = [
+    'PUSHWORD_TEST_MEDIA_DIR' => '' !== $runId ? $testBaseDir.'/media' : $monoRepoBase.'/packages/skeleton/media',
+    'PUSHWORD_TEST_DATABASE_URL' => 'sqlite:///'.$testBaseDir.'/test.db',
+    'PUSHWORD_TEST_FLAT_CONTENT_DIR' => '' !== $runId ? $testBaseDir.'/content/_host_' : $monoRepoBase.'/packages/skeleton/content/_host_',
+];
+foreach ($envVars as $key => $value) {
+    setTestEnv($key, $value);
+}
+
+// Ensure each worker has its own lock directory and chrome data dir
+if ('' !== $runId) {
+    setTestEnv('LOCK_DSN', 'flock://'.$testBaseDir.'/locks');
+    setTestEnv('PANTHER_CHROME_ARGUMENTS', '--headless --disable-gpu --disable-dev-shm-usage --no-sandbox --user-data-dir=/tmp/panther-chrome-'.$runId);
+}
+
+// Compute DB cache hash before wiping anything
+$dbCacheDir = sys_get_temp_dir().'/com.github.pushword.pushword/test-db-cache';
+$dbCacheHash = computeDbCacheHash($monoRepoBase);
 
 $fs->remove($testBaseDir.'/var/dev/cache');
 $fs->remove($testBaseDir.'/var/dev/log');
@@ -154,27 +153,17 @@ if (! $cacheHit) {
     $application = new Application($kernel);
     $application->setAutoExit(false);
 
-    $input = new ArrayInput(['command' => 'doctrine:database:drop', '--no-interaction' => true, '--force' => true]);
-    $application->run($input, new ConsoleOutput());
+    $runCommand = static function (string $command, array $args = []) use ($application): void {
+        $application->run(new ArrayInput(['command' => $command] + $args), new ConsoleOutput());
+    };
 
-    $input = new ArrayInput(['command' => 'doctrine:database:create', '--no-interaction' => true, '--quiet' => true]);
-    $application->run($input, new ConsoleOutput());
+    $runCommand('doctrine:database:drop', ['--no-interaction' => true, '--force' => true]);
+    $runCommand('doctrine:database:create', ['--no-interaction' => true, '--quiet' => true]);
+    $runCommand('doctrine:schema:create', ['--quiet' => true]);
+    $runCommand('doctrine:fixtures:load', ['--no-interaction' => true, '--append' => false]);
+    $runCommand('pw:user:create', ['email' => 'admin@example.tld', 'password' => 'mySecr3tpAssword', 'role' => 'ROLE_SUPER_ADMIN']);
 
-    $input = new ArrayInput(['command' => 'doctrine:schema:create', '--quiet' => true]);
-    $application->run($input, new ConsoleOutput());
-
-    $input = new ArrayInput(['command' => 'doctrine:fixtures:load', '--no-interaction' => true, '--append' => false]);
-    $application->run($input, new ConsoleOutput());
-
-    $input = new ArrayInput([
-        'command' => 'pw:user:create',
-        'email' => 'admin@example.tld',
-        'password' => 'mySecr3tpAssword',
-        'role' => 'ROLE_SUPER_ADMIN',
-    ]);
-    $application->run($input, new ConsoleOutput());
-
-    unset($input, $application);
+    unset($runCommand, $application);
 
     // Save pristine DB to cache
     if (file_exists($dbTargetPath)) {
