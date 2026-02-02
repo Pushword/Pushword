@@ -42,6 +42,19 @@ abstract class AbstractAdminTestClass extends PantherTestCase
             $options['browser'] = static::CHROME;
         }
 
+        // Pass critical env vars to the web server process.
+        // PHPUnit's <server> directive only sets $_SERVER, not $_ENV/putenv,
+        // so Panther's Process won't inherit them automatically.
+        if (! isset($options['env'])) {
+            $options['env'] = [];
+        }
+
+        $options['env'] += array_filter([
+            'APP_ENV' => $_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? 'test',
+            'APP_DEBUG' => $_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? '1',
+            'TEST_RUN_ID' => $_SERVER['TEST_RUN_ID'] ?? $_ENV['TEST_RUN_ID'] ?? getenv('TEST_RUN_ID') ?: '',
+        ]);
+
         return parent::createPantherClient($options, $kernelOptions, $managerOptions);
     }
 

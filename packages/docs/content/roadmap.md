@@ -12,7 +12,29 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 ### In progress
 
 - [ ] whimsical-hugging-peacock.md
+- [ ] fix https://pushword.piedweb.com/contribute (composer docs) - and links towas contributing instead of contribute - the page is missing in packages/docs/content, check in git history
 - [ ]
+
+```
+on a fresh installation,
+It get :
+EasyAdmin context is not available for this request.
+
+Only for homepage (loaded from fixtures) - http://127.0.0.1:8065
+You can check fresh installation /home/robin/localhost/ADP/app
+``
+
+
+- [Core] fix glightbox or rollback to fslightbox
+  - [ ] video in lightbox
+  - [ ] simple image self linked (the pb is more a missing code after migrating to markdown block)
+  - [ ] convertImageLinkToWebPLink() is not working anymore
+
+- [New] When release v1, remove version from composer.json (restore 1.0.0-rc[0-9]+ to \*)
+
+
+### On our way
+
 
 - check the rerender fix in admin-block editor https://github.com/codex-team/editor.js/issues/2821
 
@@ -25,20 +47,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
   - [x] Generate a map of the media
   - [ ] In new, create default AGENTS.md (inspired from altimood)
 
-- [Core] fix glightbox or rollback to fslightbox
-  - [ ] video in lightbox
-  - [ ] simple image self linked (the pb is more a missing code after migrating to markdown block)
-  - [ ] convertImageLinkToWebPLink() is not working anymore
-
-- [New] When release v1, remove version from composer.json (restore 1.0.0-rc[0-9]+ to \*)
-
-- [ ] Refactor the "background processes" to rely on user option (background process or messenger) -> permit to big website to have a better handling of heavy load and for small business to have something working out of the box without configuring a Messenger - must add the related docs
-
-### One day maybe
-
 - best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
 
-- [Flat] Implémenter un sync auto depuis [Admin] et un file watcher (bin/console content:watch) pour l'autre sens // l'implémentation rapide c'est un cron sur bin/console flat:sync
 
 - [Admin] / [Version] Autosave with unsaved state : envoyer un event toutes les secondes si le contenu a été modifié, celui-ci créé une nouvelle version du contenu en précisant que c'est une sauvegarde automatique, si la précédente sauvegarde est une sauvegarde automatique et qu'elle date de moins d'une heure, alors on ne garde qu'une version dans le versionner (la dernière)
 
@@ -128,6 +138,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (extension or core ?)
 
 - **eCommerce** bridge with sylius or odoo ?!
+
+```
 
 ```
 

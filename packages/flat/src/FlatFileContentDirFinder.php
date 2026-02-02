@@ -18,7 +18,6 @@ final class FlatFileContentDirFinder
 
     public function __construct(
         private readonly SiteRegistry $apps,
-        private readonly string $projectDir
     ) {
     }
 
@@ -41,11 +40,7 @@ final class FlatFileContentDirFinder
         $this->contentDir[$host] = $flatContentDir;
 
         if (! file_exists($flatContentDir)) {
-            if (str_starts_with($flatContentDir, $this->projectDir)) {
-                mkdir($flatContentDir, 0755, true);
-            } else {
-                throw new Exception('Content dir `'.$dir.'` not found.');
-            }
+            mkdir($flatContentDir, 0o755, true);
         }
 
         return $flatContentDir;
@@ -83,11 +78,7 @@ final class FlatFileContentDirFinder
         $baseDir = Path::canonicalize($baseDir);
 
         if (! file_exists($baseDir)) {
-            if (str_starts_with($baseDir, $this->projectDir)) {
-                mkdir($baseDir, 0755, true);
-            } else {
-                throw new Exception('Content base dir `'.$baseDir.'` not found.');
-            }
+            mkdir($baseDir, 0o755, true);
         }
 
         return $baseDir;

@@ -24,12 +24,18 @@ class Kernel extends BaseKernel
 
     public function getCacheDir(): string
     {
-        return sys_get_temp_dir().'/com.github.pushword.pushword/tests/var/'.$this->environment.'/cache';
+        $runId = $_ENV['TEST_RUN_ID'] ?? $_SERVER['TEST_RUN_ID'] ?? '';
+        $segment = '' !== $runId ? '/'.$runId : '';
+
+        return sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment.'/var/'.$this->environment.'/cache';
     }
 
     public function getLogDir(): string
     {
-        return sys_get_temp_dir().'/com.github.pushword.pushword/tests/var/'.$this->environment.'/log';
+        $runId = $_ENV['TEST_RUN_ID'] ?? $_SERVER['TEST_RUN_ID'] ?? '';
+        $segment = '' !== $runId ? '/'.$runId : '';
+
+        return sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment.'/var/'.$this->environment.'/log';
     }
 
     protected function configureContainer(ContainerConfigurator $container): void

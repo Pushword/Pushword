@@ -40,7 +40,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         $media->setFileName('piedweb.png');
 
         $em->flush();
-        self::assertSame(file_exists($this->mediaDir.'/piedweb.png'), true);
+        self::assertSame(file_exists($this->getMediaDir().'/piedweb.png'), true);
 
         $media->setFileName('piedweb-logo.png');
         $em->flush();
@@ -55,14 +55,14 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
 
         $mediaEntity = $this->getImporter()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
         // $em->persist($mediaEntity);
-        self::assertFileExists($this->mediaDir.'/1-2.jpg');
+        self::assertFileExists($this->getMediaDir().'/1-2.jpg');
 
         // If import twice, return the existing one and not create a new copy
         $mediaEntity = $this->getImporter()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
-        self::assertFileDoesNotExist($this->mediaDir.'/1-3.jpg');
+        self::assertFileDoesNotExist($this->getMediaDir().'/1-3.jpg');
         self::assertSame($mediaEntity->getFileName(), '1-2.jpg');
-        unlink(__DIR__.'/../../../skeleton/media/1-2.jpg');
-        self::assertFileDoesNotExist($this->mediaDir.'/1-2.jpg');
+        unlink($this->getMediaDir().'/1-2.jpg');
+        self::assertFileDoesNotExist($this->getMediaDir().'/1-2.jpg');
     }
 
     // 1. Si une nouvelle image se renomme bien dans le cas d'une image existante avec le même nom (pas d'écrasement)
@@ -85,7 +85,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
             ]);
             $client->submit($form);
             self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
-            self::assertFileExists($this->mediaDir.'/2-2.jpg');
+            self::assertFileExists($this->getMediaDir().'/2-2.jpg');
 
             $crawler = $this->requestMediaCreateForm($client);
             $fileInput = $crawler->filter('[type="file"]');
@@ -97,7 +97,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
 
             $client->submit($form);
             self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
-            self::assertFileExists($this->mediaDir.'/1-2.jpg');
+            self::assertFileExists($this->getMediaDir().'/1-2.jpg');
 
             $crawler = $this->requestMediaCreateForm($client);
             $fileInput = $crawler->filter('[type="file"]');
@@ -109,7 +109,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
 
             $client->submit($form);
             self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
-            self::assertFileExists($this->mediaDir.'/1-3.jpg');
+            self::assertFileExists($this->getMediaDir().'/1-3.jpg');
 
             $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
@@ -121,8 +121,8 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
             }
 
             $em->flush();
-            self::assertFileDoesNotExist($this->mediaDir.'/1-4.jpg');
-            self::assertFileDoesNotExist($this->mediaDir.'/1-3.jpg');
+            self::assertFileDoesNotExist($this->getMediaDir().'/1-4.jpg');
+            self::assertFileDoesNotExist($this->getMediaDir().'/1-3.jpg');
         }
     }
 
@@ -147,7 +147,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
         $thumbnailGenerator = new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
 
-        return $this->importer = new ExternalImageImporter($mediaStorage, $thumbnailGenerator, $this->mediaDir, $this->projectDir);
+        return $this->importer = new ExternalImageImporter($mediaStorage, $thumbnailGenerator, $this->getMediaDir(), $this->projectDir);
     }
 
     private function requestMediaCreateForm(KernelBrowser $client): Crawler

@@ -12,16 +12,23 @@ trait PathTrait
 
     private string $publicMediaDir = 'media';
 
-    private string $mediaDir = __DIR__.'/../../skeleton/media';
+    private function getMediaDir(): string
+    {
+        $runId = $_ENV['TEST_RUN_ID'] ?? $_SERVER['TEST_RUN_ID'] ?? '';
+        if ('' !== $runId) {
+            return sys_get_temp_dir().'/com.github.pushword.pushword/tests/'.$runId.'/media';
+        }
+
+        return __DIR__.'/../../skeleton/media';
+    }
 
     protected function ensureMediaFileExists(string $fileName = 'piedweb-logo.png'): void
     {
-        $mediaFile = $this->mediaDir.'/'.$fileName;
+        $mediaDir = $this->getMediaDir();
         $backupFile = $this->projectDir.'/media~/'.$fileName;
 
-        if (! file_exists($mediaFile) && file_exists($backupFile)) {
-            $fs = new Filesystem();
-            $fs->copy($backupFile, $mediaFile);
+        if (! file_exists($mediaDir.'/'.$fileName) && file_exists($backupFile)) {
+            new Filesystem()->copy($backupFile, $mediaDir.'/'.$fileName);
         }
     }
 }

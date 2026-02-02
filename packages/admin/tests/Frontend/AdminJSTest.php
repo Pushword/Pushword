@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Panther\Client;
+use Throwable;
 
 /**
  * Tests d'intégration pour le JavaScript de l'admin
@@ -81,6 +82,19 @@ class AdminJSTest extends AbstractAdminTestClass
         exec('pkill -9 -f chromedriver 2>/dev/null');
         usleep(500000);
 
+        // Safety net: ensure the Panther client is quit before PHP shuts down,
+        // preventing __destruct from hitting a dead chromedriver.
+        register_shutdown_function(static function (): void {
+            if (null !== self::$loggedInClient) {
+                try {
+                    self::$loggedInClient->quit();
+                } catch (Throwable) {
+                }
+
+                self::$loggedInClient = null;
+            }
+        });
+
         parent::setUpBeforeClass();
     }
 
@@ -142,11 +156,20 @@ class AdminJSTest extends AbstractAdminTestClass
     #[Override]
     public static function tearDownAfterClass(): void
     {
-        // Reset static state
+        // Explicitly quit the client before releasing the reference.
+        // This clears the internal WebDriver so __destruct won't attempt
+        // a DELETE to an already-stopped chromedriver.
+        if (null !== self::$loggedInClient) {
+            try {
+                self::$loggedInClient->quit();
+            } catch (Throwable) {
+                // ChromeDriver may already be stopped
+            }
+        }
+
         self::$loggedInClient = null;
         self::$isLoggedIn = false;
 
-        // Ensure all Panther resources (webserver, chromedriver) are properly cleaned up
         static::stopWebServer();
 
         parent::tearDownAfterClass();

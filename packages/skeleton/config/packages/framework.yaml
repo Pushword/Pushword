@@ -32,7 +32,7 @@ when@prod:
 when@test:
   framework:
     test: true
-    lock: "flock"
+    lock: "%env(LOCK_DSN)%"
     mailer:
       dsn: "null://null"
     session:

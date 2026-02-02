@@ -13,7 +13,9 @@ class ConfigurationTest extends KernelTestCase
     {
         self::bootKernel();
 
-        self::assertSame(self::getContainer()->getParameter('kernel.project_dir').'/content/_host_', self::getContainer()->get(SiteRegistry::class)->get()->get('flat_content_dir'));
+        $flatContentDir = self::getContainer()->get(SiteRegistry::class)->get()->get('flat_content_dir');
+        self::assertIsString($flatContentDir);
+        self::assertStringEndsWith('/content/_host_', $flatContentDir);
 
         self::assertSame(self::getContainer()->getParameter('kernel.project_dir').'/../docs/content', self::getContainer()->get(SiteRegistry::class)->get('pushword.piedweb.com')->get('flat_content_dir'));
     }

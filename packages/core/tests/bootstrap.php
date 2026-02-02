@@ -30,22 +30,29 @@ set_error_handler(static function ($errno, $errstr, $errfile, $errline): bool {
 
 new Dotenv()->loadEnv(__DIR__.'/.env');
 
-// Skip fixtures loading if SKIP_FIXTURES env var is set (for sequential package testing)
-if (false !== getenv('SKIP_FIXTURES')) {
-    return;
-}
-
 // Some reset here
 $fs = new Filesystem();
-$fs->remove('/tmp/com.github.pushword.pushword/tests/var/dev/cache');
-@$fs->remove('/tmp/com.github.pushword.pushword/tests/var/test/cache');
-@$fs->remove('/tmp/com.github.pushword.pushword/tests/var/dev/log');
-@$fs->remove('/tmp/com.github.pushword.pushword/tests/var/test/log');
-@$fs->remove($monoRepoBase.'/packages/skeleton/var/app.db');
-@$fs->remove($monoRepoBase.'/packages/skeleton/var/page-scan');
-@$fs->remove($monoRepoBase.'/packages/skeleton/var/PageUpdateNotifier');
-@$fs->remove($monoRepoBase.'/packages/skeleton/media');
-@$fs->mirror($monoRepoBase.'/packages/skeleton/media~', $monoRepoBase.'/packages/skeleton/media');
+$runId = getenv('TEST_RUN_ID') ?: '';
+$segment = '' !== $runId ? '/'.$runId : '';
+$testBaseDir = sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment;
+
+@$fs->remove($testBaseDir.'/var/dev/cache');
+@$fs->remove($testBaseDir.'/var/test/cache');
+@$fs->remove($testBaseDir.'/var/dev/log');
+@$fs->remove($testBaseDir.'/var/test/log');
+
+// Media isolation: mirror backup into the run-specific tmp dir (or skeleton/media if no run ID)
+$mediaDir = '' !== $runId
+    ? $testBaseDir.'/media'
+    : $monoRepoBase.'/packages/skeleton/media';
+@$fs->remove($mediaDir);
+$fs->mirror($monoRepoBase.'/packages/skeleton/media~', $mediaDir);
+
+// Content isolation: ensure clean content directory in tmp
+if ('' !== $runId) {
+    @$fs->remove($testBaseDir.'/content');
+    $fs->mkdir($testBaseDir.'/content');
+}
 
 $kernel = new Kernel('test', true);
 $kernel->boot();
@@ -62,6 +69,14 @@ $input = new ArrayInput(['command' => 'doctrine:schema:create', '--quiet' => tru
 $application->run($input, new ConsoleOutput());
 
 $input = new ArrayInput(['command' => 'doctrine:fixtures:load', '--no-interaction' => true, '--append' => false]);
+$application->run($input, new ConsoleOutput());
+
+$input = new ArrayInput([
+    'command' => 'pw:user:create',
+    'email' => 'admin@example.tld',
+    'password' => 'mySecr3tpAssword',
+    'role' => 'ROLE_SUPER_ADMIN',
+]);
 $application->run($input, new ConsoleOutput());
 
 unset($input, $application);
