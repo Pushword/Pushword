@@ -66,12 +66,6 @@ export class MediaUtils {
   }
 
   /**
-   * Construit l'URL complète depuis un objet de données
-   * @param dataItem - Objet de données qui peut contenir media, fileName, url, ou être une string
-   * @param basePath - Chemin de base pour les médias
-   * @returns URL complète
-   */
-  /**
    * Resolves a media name via the server-side fileNameHistory fallback.
    * Returns the current fileName if found, or null.
    */

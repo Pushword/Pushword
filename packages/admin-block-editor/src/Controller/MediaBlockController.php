@@ -71,6 +71,22 @@ final class MediaBlockController extends AbstractController
         ]));
     }
 
+    #[Route('/admin/media/resolve/{fileName}', name: 'admin_media_resolve', requirements: ['fileName' => '.+'], methods: ['GET'])]
+    public function resolve(string $fileName): JsonResponse
+    {
+        $fileName = urldecode($fileName);
+
+        /** @var MediaRepository $mediaRepository */
+        $mediaRepository = $this->em->getRepository(Media::class);
+        $media = $mediaRepository->findOneByFileNameOrHistory($fileName);
+
+        if (null === $media) {
+            throw $this->createNotFoundException();
+        }
+
+        return new JsonResponse(['fileName' => $media->getFileName()]);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -152,22 +168,6 @@ final class MediaBlockController extends AbstractController
         $mimeType = mime_content_type($filePath);
 
         return new UploadedFile($filePath, $originalName, $mimeType, null, true);
-    }
-
-    #[Route('/admin/media/resolve/{fileName}', name: 'admin_media_resolve', requirements: ['fileName' => '.+'], methods: ['GET'])]
-    public function resolve(string $fileName): JsonResponse
-    {
-        $fileName = urldecode($fileName);
-
-        /** @var MediaRepository $mediaRepository */
-        $mediaRepository = $this->em->getRepository(Media::class);
-        $media = $mediaRepository->findOneByFileNameOrHistory($fileName);
-
-        if (null === $media) {
-            throw $this->createNotFoundException();
-        }
-
-        return new JsonResponse(['fileName' => $media->getFileName()]);
     }
 
     private function getMediaFileFromId(string $id): Media
