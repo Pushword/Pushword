@@ -14,6 +14,12 @@ use Symfony\Component\Filesystem\Filesystem;
 #[Group('integration')]
 final class FlatSyncTest extends KernelTestCase
 {
+    protected function tearDown(): void
+    {
+        $this->cleanFixtures();
+        parent::tearDown();
+    }
+
     public function testImportReplacesMarkdownLinks(): void
     {
         self::bootKernel();
@@ -30,8 +36,6 @@ final class FlatSyncTest extends KernelTestCase
 
         self::assertInstanceOf(Page::class, $page);
         self::assertStringContainsString('](/test-content)', $page->getMainContent());
-
-        $this->cleanFixtures();
     }
 
     private function prepareFixtures(): void

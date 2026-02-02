@@ -129,7 +129,7 @@ if [ "$1" = "full" ]; then
     step "Running PHPUnit (prefer-lowest)"
     PHPUNIT_EXIT=0
     PHPUNIT_START=$(date +%s)
-    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --debug --no-cache-result --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
+    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --no-progress --colors=always --stop-on-failure --debug --no-cache-result --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
     record_step "PHPUnit (prefer-lowest)" $(( $(date +%s) - PHPUNIT_START ))
 
     step "Waiting for monorepo validation"
@@ -187,12 +187,12 @@ else
     if [ -z "$FILTER_ARG" ] && [ $NO_PARALLEL -eq 0 ]; then
         step "Running PHPUnit (parallel)"
         PHPUNIT_START=$(date +%s)
-        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=auto --testdox --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" || PHPUNIT_EXIT=$?
+        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=auto --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" || PHPUNIT_EXIT=$?
         record_step "PHPUnit (parallel)" $(( $(date +%s) - PHPUNIT_START ))
     else
         step "Running PHPUnit"
         PHPUNIT_START=$(date +%s)
-        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
+        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --no-progress --colors=always --stop-on-failure --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
         record_step "PHPUnit" $(( $(date +%s) - PHPUNIT_START ))
     fi
 
