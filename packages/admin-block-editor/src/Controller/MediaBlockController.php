@@ -7,6 +7,7 @@ use InvalidArgumentException;
 use LogicException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Utils\Entity;
 
 use function Safe\json_decode;
@@ -19,6 +20,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -150,6 +152,22 @@ final class MediaBlockController extends AbstractController
         $mimeType = mime_content_type($filePath);
 
         return new UploadedFile($filePath, $originalName, $mimeType, null, true);
+    }
+
+    #[Route('/admin/media/resolve/{fileName}', name: 'admin_media_resolve', requirements: ['fileName' => '.+'], methods: ['GET'])]
+    public function resolve(string $fileName): JsonResponse
+    {
+        $fileName = urldecode($fileName);
+
+        /** @var MediaRepository $mediaRepository */
+        $mediaRepository = $this->em->getRepository(Media::class);
+        $media = $mediaRepository->findOneByFileNameOrHistory($fileName);
+
+        if (null === $media) {
+            throw $this->createNotFoundException();
+        }
+
+        return new JsonResponse(['fileName' => $media->getFileName()]);
     }
 
     private function getMediaFileFromId(string $id): Media

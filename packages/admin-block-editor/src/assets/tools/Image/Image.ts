@@ -101,9 +101,16 @@ export default class Image extends AbstractMediaTool {
     const img = make.element('img', 'image-tool__image-picture') as HTMLImageElement
     img.src = MediaUtils.buildFullUrl(this.media)
 
-    // Attendre que l'image soit chargée pour passer en état FILLED
     img.addEventListener('load', () => {
       this.hidePreloader(STATUS.FILLED)
+    })
+
+    img.addEventListener('error', async () => {
+      const resolved = await MediaUtils.resolveMediaName(this.media)
+      if (resolved && resolved !== this.media) {
+        this.data.media = resolved
+        img.src = MediaUtils.buildFullUrl(resolved)
+      }
     })
 
     this.nodes.imageEl = img

@@ -269,6 +269,16 @@ export default class Gallery extends AbstractMediaTool {
     const image = document.createElement('img')
     image.src = url
 
+    image.addEventListener('error', async () => {
+      const mediaName = MediaUtils.extractMediaName(image.src)
+      const resolved = await MediaUtils.resolveMediaName(mediaName)
+      if (resolved && resolved !== mediaName) {
+        const newUrl = MediaUtils.buildFullUrl(resolved)
+        image.src = newUrl
+        item.style.setProperty('--bg-image-url', `url('${newUrl}')`)
+      }
+    })
+
     const caption = make.element('div', ['image-tool__caption', this.api.styles.input], {
       contentEditable: true,
     })
