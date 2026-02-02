@@ -4,7 +4,6 @@ namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Image\ImageCacheManager;
-use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Utils\MediaFileName;
@@ -25,7 +24,6 @@ final readonly class NormalizeFileNameCommand
         private EntityManagerInterface $em,
         private MediaStorageAdapter $mediaStorage,
         private ImageCacheManager $imageCacheManager,
-        private ThumbnailGenerator $thumbnailGenerator,
     ) {
     }
 
@@ -78,26 +76,26 @@ final readonly class NormalizeFileNameCommand
             $progressBar->setMessage($oldFileName.' → '.$newFileName);
 
             try {
-                if ($this->mediaStorage->fileExists($oldFileName)) {
-                    $this->mediaStorage->move($oldFileName, $newFileName);
+                if (! $this->mediaStorage->fileExists($oldFileName)) {
+                    $errors[] = $oldFileName.': file not found on disk';
+                    $progressBar->advance();
+
+                    continue;
                 }
 
-                $this->imageCacheManager->remove($oldFileName);
                 $media->setFileName($newFileName);
+                $this->em->flush();
 
-                if ($media->isImage()) {
-                    $this->thumbnailGenerator->runBackgroundCacheGeneration($newFileName);
-                } else {
+                if (! $media->isImage()) {
                     $this->imageCacheManager->ensurePublicSymlink($media);
                 }
             } catch (Throwable $e) {
                 $errors[] = $oldFileName.': '.$e->getMessage();
+                $this->em->refresh($media);
             }
 
             $progressBar->advance();
         }
-
-        $this->em->flush();
 
         $progressBar->setMessage('Done');
         $progressBar->finish();
