@@ -163,35 +163,44 @@ else
     if [ -z "$FILTER_ARG" ]; then
         step "Starting test-installer in background"
         INSTALLER_LOG=$(mktemp)
+        INSTALLER_START=$(date +%s)
         ./.scripts/test-installer --quiet > "$INSTALLER_LOG" 2>&1 &
         INSTALLER_PID=$!
 
         step "Starting monorepo validation in background"
         MONOREPO_LOG=$(mktemp)
+        MONOREPO_START=$(date +%s)
         composer validate-monorepo > "$MONOREPO_LOG" 2>&1 &
         MONOREPO_PID=$!
     fi
 
     # Pre-warm Symfony container cache so workers don't each compile it
     step "Warming container cache"
+    WARMUP_START=$(date +%s)
     WARMUP_DIR=$(mktemp -d)
     PUSHWORD_TEST_MEDIA_DIR="$WARMUP_DIR/media" PUSHWORD_TEST_DATABASE_URL="sqlite:///$WARMUP_DIR/warmup.db" PUSHWORD_TEST_FLAT_CONTENT_DIR="$WARMUP_DIR/content" \
         XDEBUG_MODE=off php -dxdebug.mode=off packages/skeleton/bin/console cache:warmup --env=test --quiet 2>/dev/null || true
     rm -rf "$WARMUP_DIR"
+    record_step "Container warmup" $(( $(date +%s) - WARMUP_START ))
 
     PHPUNIT_EXIT=0
     if [ -z "$FILTER_ARG" ] && [ $NO_PARALLEL -eq 0 ]; then
         step "Running PHPUnit (parallel)"
-        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=auto --testdox --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} || PHPUNIT_EXIT=$?
+        PHPUNIT_START=$(date +%s)
+        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=auto --testdox --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" || PHPUNIT_EXIT=$?
+        record_step "PHPUnit (parallel)" $(( $(date +%s) - PHPUNIT_START ))
     else
         step "Running PHPUnit"
-        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --cache-directory=.phpunit.cache-${TEST_RUN_ID} $FILTER_ARG || PHPUNIT_EXIT=$?
+        PHPUNIT_START=$(date +%s)
+        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
+        record_step "PHPUnit" $(( $(date +%s) - PHPUNIT_START ))
     fi
 
     if [ -z "$FILTER_ARG" ]; then
         step "Waiting for monorepo validation"
         MONOREPO_EXIT=0
         wait $MONOREPO_PID || MONOREPO_EXIT=$?
+        record_step "Monorepo validation" $(( $(date +%s) - MONOREPO_START ))
         cat "$MONOREPO_LOG"
         rm -f "$MONOREPO_LOG"
 
@@ -203,6 +212,7 @@ else
         step "Waiting for test-installer"
         INSTALLER_EXIT=0
         wait $INSTALLER_PID || INSTALLER_EXIT=$?
+        record_step "Test-installer" $(( $(date +%s) - INSTALLER_START ))
         cat "$INSTALLER_LOG"
         rm -f "$INSTALLER_LOG"
 
@@ -211,6 +221,6 @@ else
         fi
     fi
 
-    print_elapsed
+    print_summary
     exit $PHPUNIT_EXIT
 fi
