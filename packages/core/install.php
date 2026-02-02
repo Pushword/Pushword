@@ -45,6 +45,7 @@ $commands = 'php bin/console doctrine:schema:update --force -q';
 if ($freshInstall) {
     $commands .= ' && php bin/console doctrine:fixtures:load --no-interaction -q';
 }
+
 $commands .= ' && php bin/console pw:image:cache -q';
 
 echo '~~ Symlinking assets'.chr(10);
