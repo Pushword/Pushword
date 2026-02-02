@@ -11,6 +11,7 @@ use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Service\MediaConflictResolver;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\PdfOptimizer;
+use Pushword\Core\Utils\MediaFileName;
 
 use function Safe\sha1_file;
 
@@ -57,10 +58,17 @@ final readonly class MediaStorageListener
             }
 
             if (! $sourceExists && ! $destExists) {
-                throw new Exception('Cannot rename '.$oldFileName.': file not found on disk');
-            }
-
-            if ($sourceExists) {
+                // A previous run may have renamed the source to its normalized form
+                // but crashed before the DB was updated. The conflict resolver may now
+                // pick a different dest (e.g. with a -2 suffix for an alt conflict),
+                // so check the normalized source name too.
+                $normalizedOldFileName = MediaFileName::normalizeFromString($oldFileName);
+                if ($normalizedOldFileName !== $oldFileName && $this->mediaStorage->fileExists($normalizedOldFileName)) {
+                    $this->mediaStorage->move($normalizedOldFileName, $newFileName);
+                } else {
+                    throw new Exception('Cannot rename '.$oldFileName.': file not found on disk');
+                }
+            } elseif ($sourceExists) {
                 $this->mediaStorage->move($oldFileName, $newFileName);
             }
 
