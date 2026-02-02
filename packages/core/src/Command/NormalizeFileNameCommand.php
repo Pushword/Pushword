@@ -5,7 +5,6 @@ namespace Pushword\Core\Command;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
-use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Utils\MediaFileName;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -22,7 +21,6 @@ final readonly class NormalizeFileNameCommand
     public function __construct(
         private MediaRepository $mediaRepository,
         private EntityManagerInterface $em,
-        private MediaStorageAdapter $mediaStorage,
         private ImageCacheManager $imageCacheManager,
     ) {
     }
@@ -76,13 +74,6 @@ final readonly class NormalizeFileNameCommand
             $progressBar->setMessage($oldFileName.' → '.$newFileName);
 
             try {
-                if (! $this->mediaStorage->fileExists($oldFileName)) {
-                    $errors[] = $oldFileName.': file not found on disk';
-                    $progressBar->advance();
-
-                    continue;
-                }
-
                 $media->setFileName($newFileName);
                 $this->em->flush();
 
@@ -91,7 +82,11 @@ final readonly class NormalizeFileNameCommand
                 }
             } catch (Throwable $e) {
                 $errors[] = $oldFileName.': '.$e->getMessage();
-                $this->em->refresh($media);
+
+                try {
+                    $this->em->refresh($media);
+                } catch (Throwable) {
+                }
             }
 
             $progressBar->advance();

@@ -43,25 +43,35 @@ final readonly class MediaStorageListener
         if ($preUpdateEventArgs->hasChangedField('fileName')) {
             $this->conflictResolver->resolveConflicts($media);
 
-            if ($this->mediaStorage->fileExists($media->getFileName())) {
-                $media->setFileName($media->getFileNameBeforeUpdate());
-
-                throw new Exception('Impossible to rename '.$media->getFileNameBeforeUpdate().' in '.$media->getFileName().'. File ever exist');
-            }
-
             if ('' === $media->getFileNameBeforeUpdate()) {
                 throw new LogicException();
             }
 
-            $this->mediaStorage->move(
-                $media->getFileNameBeforeUpdate(),
-                $media->getFileName()
-            );
-            $this->imageCacheManager->remove($media->getFileNameBeforeUpdate());
+            $oldFileName = $media->getFileNameBeforeUpdate();
+            $newFileName = $media->getFileName();
+            $sourceExists = $this->mediaStorage->fileExists($oldFileName);
+            $destExists = $this->mediaStorage->fileExists($newFileName);
+
+            if ($destExists && $sourceExists) {
+                throw new Exception('Impossible to rename '.$oldFileName.' to '.$newFileName.'. File already exists');
+            }
+
+            if (! $sourceExists && ! $destExists) {
+                throw new Exception('Cannot rename '.$oldFileName.': file not found on disk');
+            }
+
+            if ($sourceExists) {
+                $this->mediaStorage->move($oldFileName, $newFileName);
+            }
+
+            // !$sourceExists && $destExists: file was already renamed on disk
+            // by a previous run that crashed before updating the DB — skip move
+
+            $this->imageCacheManager->remove($oldFileName);
             $media->setFileNameBeforeUpdate('');
 
             $this->thumbnailGenerator->generateQuickThumb($media);
-            $this->thumbnailGenerator->runBackgroundCacheGeneration($media->getFileName());
+            $this->thumbnailGenerator->runBackgroundCacheGeneration($newFileName);
         }
 
         if ($preUpdateEventArgs->hasChangedField('hash')) {
