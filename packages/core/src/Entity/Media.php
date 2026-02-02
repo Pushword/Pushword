@@ -153,6 +153,8 @@ class Media implements IdInterface, Taggable, Stringable
             return $this;
         }
 
+        $fileName = MediaFileName::normalizeFromString($fileName);
+
         if ('' !== $this->fileName && $this->fileName !== $fileName) {
             $this->setFileNameBeforeUpdate($this->fileName);
             $this->addFileNameToHistory($this->fileName);
