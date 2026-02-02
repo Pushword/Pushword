@@ -1,3 +1,3 @@
 # Contributing
 
-Visit [pushword.piedweb.com/contributing](https://pushword.piedweb.com/contributing)
+Visit [pushword.piedweb.com/contribute](https://pushword.piedweb.com/contribute)
