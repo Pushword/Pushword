@@ -6,13 +6,66 @@ export TEST_RUN_ID="${TEST_RUN_ID:-$$}"
 export PANTHER_CHROME_ARGUMENTS="--headless --disable-gpu --disable-dev-shm-usage --no-sandbox --user-data-dir=/tmp/panther-chrome-${TEST_RUN_ID}"
 export LOCK_DSN="flock:///tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}/locks"
 
-function print_elapsed {
+JUNIT_XML="/tmp/pushword-test-${TEST_RUN_ID}.xml"
+
+# Per-step timing arrays
+declare -a STEP_NAMES=()
+declare -a STEP_DURATIONS=()
+
+function record_step {
+    STEP_NAMES+=("$1")
+    STEP_DURATIONS+=("$2")
+}
+
+function format_duration {
+    local secs=$1
+    if [ "$secs" -ge 60 ]; then
+        printf "%dm %ds" $((secs / 60)) $((secs % 60))
+    else
+        printf "%ds" "$secs"
+    fi
+}
+
+function print_slowest_tests {
+    [ -f "$JUNIT_XML" ] || return 0
+    local output
+    output=$(php -r '
+$xml = @simplexml_load_file($argv[1]);
+if (!$xml) exit;
+$tests = [];
+foreach ($xml->xpath("//testcase[@time]") as $tc) {
+    $tests[] = [
+        "time"  => (float)$tc["time"],
+        "class" => (string)$tc["class"],
+        "name"  => (string)$tc["name"],
+    ];
+}
+usort($tests, fn($a, $b) => $b["time"] <=> $a["time"]);
+$tests = array_slice($tests, 0, 10);
+if (!$tests) exit;
+echo "\n";
+echo "\033[1m── Slowest tests ───────────────────\033[0m\n";
+foreach ($tests as $t) {
+    $short = preg_replace("/^.*\\\\/", "", $t["class"]);
+    printf("  \033[33m%5.2fs\033[0m  %s::%s\n", $t["time"], $short, $t["name"]);
+}
+' "$JUNIT_XML" 2>/dev/null) || true
+    [ -n "$output" ] && echo "$output"
+}
+
+function print_summary {
+    print_slowest_tests
+
     local end_time=$(date +%s)
-    local elapsed=$((end_time - START_TIME))
-    local minutes=$((elapsed / 60))
-    local seconds=$((elapsed % 60))
+    local total=$((end_time - START_TIME))
+
     echo ""
-    echo -e "\033[1;32m✓ Total time: ${minutes}m ${seconds}s\033[0m"
+    echo -e "\033[1m── Summary ─────────────────────────\033[0m"
+    for i in "${!STEP_NAMES[@]}"; do
+        printf "  %-24s %s\n" "${STEP_NAMES[$i]}:" "$(format_duration "${STEP_DURATIONS[$i]}")"
+    done
+    echo -e "  ──────────────────────────────────"
+    echo -e "  \033[1;32m✓ Total time:            $(format_duration $total)\033[0m"
 }
 
 function cleanup {
@@ -23,6 +76,7 @@ function cleanup {
     rm -rf /tmp/com.github.pushword.pushword/tests/${TEST_RUN_ID}-w*
     rm -rf "/tmp/panther-chrome-${TEST_RUN_ID}"
     rm -rf ".phpunit.cache-${TEST_RUN_ID}"
+    rm -f "$JUNIT_XML"
 }
 
 function cleanupAndComposerUpdate {
@@ -59,11 +113,13 @@ if [ "$1" = "full" ]; then
 
     step "Starting test-installer in background"
     INSTALLER_LOG=$(mktemp)
+    INSTALLER_START=$(date +%s)
     ./.scripts/test-installer --quiet > "$INSTALLER_LOG" 2>&1 &
     INSTALLER_PID=$!
 
     step "Starting monorepo validation in background"
     MONOREPO_LOG=$(mktemp)
+    MONOREPO_START=$(date +%s)
     composer validate-monorepo > "$MONOREPO_LOG" 2>&1 &
     MONOREPO_PID=$!
 
@@ -72,11 +128,14 @@ if [ "$1" = "full" ]; then
 
     step "Running PHPUnit (prefer-lowest)"
     PHPUNIT_EXIT=0
-    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --debug --no-cache-result $FILTER_ARG || PHPUNIT_EXIT=$?
+    PHPUNIT_START=$(date +%s)
+    XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --testdox --no-progress --colors=always --stop-on-failure --debug --no-cache-result --log-junit="$JUNIT_XML" $FILTER_ARG || PHPUNIT_EXIT=$?
+    record_step "PHPUnit (prefer-lowest)" $(( $(date +%s) - PHPUNIT_START ))
 
     step "Waiting for monorepo validation"
     MONOREPO_EXIT=0
     wait $MONOREPO_PID || MONOREPO_EXIT=$?
+    record_step "Monorepo validation" $(( $(date +%s) - MONOREPO_START ))
     cat "$MONOREPO_LOG"
     rm -f "$MONOREPO_LOG"
 
@@ -88,16 +147,17 @@ if [ "$1" = "full" ]; then
     step "Waiting for test-installer"
     INSTALLER_EXIT=0
     wait $INSTALLER_PID || INSTALLER_EXIT=$?
+    record_step "Test-installer" $(( $(date +%s) - INSTALLER_START ))
     cat "$INSTALLER_LOG"
     rm -f "$INSTALLER_LOG"
 
     if [ $INSTALLER_EXIT -ne 0 ]; then
         echo "test-installer FAILED (exit $INSTALLER_EXIT)"
-        print_elapsed
+        print_summary
         exit 1
     fi
 
-    print_elapsed
+    print_summary
     exit $PHPUNIT_EXIT
 else
     if [ -z "$FILTER_ARG" ]; then
@@ -114,8 +174,10 @@ else
 
     # Pre-warm Symfony container cache so workers don't each compile it
     step "Warming container cache"
-    PUSHWORD_TEST_MEDIA_DIR=/dev/null PUSHWORD_TEST_DATABASE_URL=sqlite:///dev/null PUSHWORD_TEST_FLAT_CONTENT_DIR=/dev/null \
+    WARMUP_DIR=$(mktemp -d)
+    PUSHWORD_TEST_MEDIA_DIR="$WARMUP_DIR/media" PUSHWORD_TEST_DATABASE_URL="sqlite:///$WARMUP_DIR/warmup.db" PUSHWORD_TEST_FLAT_CONTENT_DIR="$WARMUP_DIR/content" \
         XDEBUG_MODE=off php -dxdebug.mode=off packages/skeleton/bin/console cache:warmup --env=test --quiet 2>/dev/null || true
+    rm -rf "$WARMUP_DIR"
 
     PHPUNIT_EXIT=0
     if [ -z "$FILTER_ARG" ] && [ $NO_PARALLEL -eq 0 ]; then

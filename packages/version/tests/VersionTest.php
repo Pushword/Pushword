@@ -18,7 +18,8 @@ class VersionTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
 
         $repo = $em->getRepository(Page::class);
 
@@ -34,9 +35,11 @@ class VersionTest extends KernelTestCase
         $page->setH1('edited title to test Versioning the second time');
         $em->flush();
 
+        /** @var string $logDir */
+        $logDir = $container->getParameter('kernel.logs_dir');
         $versionner = new Versionner(
-            self::bootKernel()->getLogDir(),
-            self::getContainer()->get('doctrine.orm.default_entity_manager'),
+            $logDir,
+            $em,
             new Serializer([], ['json' => new JsonEncoder()])
         );
 
