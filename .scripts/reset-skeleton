@@ -5,6 +5,7 @@
 
 cd packages/skeleton
 rm var/app.db|| true
+rm -rf var/sessions|| true
 rm -rf media|| true
 rm -rf static|| true
 rm -f config/users.yaml|| true

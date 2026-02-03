@@ -34,6 +34,7 @@ oauthUserNotFound: 'No account found with this email. Please contact an administ
 passwordsMustMatch: 'Passwords must match.'
 securityLoginChangeEmail: 'Change email'
 securityLoginContinue: 'Continue'
+securityLoginCsrfError: 'Your session has expired. Please try again.'
 securityLoginEmail: Email
 securityLoginEmailNotFound: 'Your email could not be found.'
 securityLoginLabelButton: 'Log in'

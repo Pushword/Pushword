@@ -75,6 +75,8 @@ final class UserController extends AbstractController
         $csrfToken = $request->request->getString('_csrf_token');
 
         if (! $this->isCsrfTokenValid('authenticate', $csrfToken)) {
+            $this->addFlash('error', 'securityLoginCsrfError');
+
             return $this->redirectToRoute('pushword_login');
         }
 

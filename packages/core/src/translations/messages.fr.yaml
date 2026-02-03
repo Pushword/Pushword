@@ -34,6 +34,7 @@ oauthUserNotFound: "Aucun compte trouvé avec cet email. Veuillez contacter un a
 passwordsMustMatch: "Les mots de passe doivent correspondre."
 securityLoginChangeEmail: "Changer d'email"
 securityLoginContinue: "Continuer"
+securityLoginCsrfError: "Votre session a expiré. Veuillez réessayer."
 securityLoginEmail: Email
 securityLoginEmailNotFound: "Votre email n'a pu être trouvé."
 securityLoginLabelButton: "Se connecter"
