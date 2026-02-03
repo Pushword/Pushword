@@ -69,7 +69,7 @@ final class PageImporter extends AbstractImporter
     /** @var array<string, Page> where key is the slug */
     private array $pageList = [];
 
-    /** @var array<string, true> translation pairs that were explicitly added (format: "slugA|slugB") */
+    /** @var array<string, true> translation pairs that were explicitly added (format: "refA|refB") */
     private array $addedTranslationPairs = [];
 
     /** @var array<int, string> Map of ID => relative file path that claimed it (for duplicate detection) */
@@ -391,34 +391,41 @@ final class PageImporter extends AbstractImporter
      * Addition takes precedence: if page A adds B, the link is created even if B.md doesn't list A.
      * Removal only happens if no other page added the translation during this import cycle.
      *
-     * @param string[] $newTranslationSlugs
+     * Supports cross-host references using the format "host/slug" (e.g. "other.dev/my-article").
+     * The part before the first "/" is checked against registered hosts to distinguish from nested slugs.
+     *
+     * @param string[] $newTranslationRefs
      */
-    private function syncTranslations(Page $page, array $newTranslationSlugs): void
+    private function syncTranslations(Page $page, array $newTranslationRefs): void
     {
         $currentTranslations = $page->getTranslations()->toArray();
-        $currentSlugs = array_map(static fn (Page $p): string => $p->getSlug(), $currentTranslations);
+        $currentRefs = array_map($this->buildTranslationRef(...), $currentTranslations);
         $pageSlug = $page->getSlug();
 
-        $toAdd = array_diff($newTranslationSlugs, $currentSlugs);
-        $toRemove = array_diff($currentSlugs, $newTranslationSlugs);
+        $toAdd = array_diff($newTranslationRefs, $currentRefs);
+        $toRemove = array_diff($currentRefs, $newTranslationRefs);
 
         // First, add new translations and mark them
-        foreach ($toAdd as $slug) {
-            $translationPage = $this->getPage($slug);
-            if ($translationPage instanceof Page) {
-                $page->addTranslation($translationPage);
-                $this->markTranslationAsAdded($pageSlug, $slug);
-            }
-        }
+        foreach ($toAdd as $ref) {
+            $translationPage = $this->resolveTranslationRef($ref);
+            if (! $translationPage instanceof Page) {
+                $this->logger->warning('Translation `{ref}` not found for page `{slug}`', ['ref' => $ref, 'slug' => $pageSlug]);
 
-        // Then, remove translations only if they weren't added by another page
-        foreach ($toRemove as $slug) {
-            // Don't remove a translation that was explicitly added earlier in this import
-            if ($this->wasTranslationAdded($pageSlug, $slug)) {
                 continue;
             }
 
-            $translationPage = $this->getPage($slug);
+            $page->addTranslation($translationPage);
+            $this->markTranslationAsAdded($pageSlug, $ref);
+        }
+
+        // Then, remove translations only if they weren't added by another page
+        foreach ($toRemove as $ref) {
+            // Don't remove a translation that was explicitly added earlier in this import
+            if ($this->wasTranslationAdded($pageSlug, $ref)) {
+                continue;
+            }
+
+            $translationPage = $this->resolveTranslationRef($ref);
             if ($translationPage instanceof Page) {
                 $page->removeTranslation($translationPage);
             }
@@ -426,21 +433,53 @@ final class PageImporter extends AbstractImporter
     }
 
     /**
+     * Resolve a translation reference that may be a simple slug or a cross-host "host/slug" reference.
+     */
+    private function resolveTranslationRef(string $ref): ?Page
+    {
+        $slashPos = strpos($ref, '/');
+        if (false !== $slashPos) {
+            $possibleHost = substr($ref, 0, $slashPos);
+            if ($this->apps->isKnownHost($possibleHost)) {
+                $slug = substr($ref, $slashPos + 1);
+
+                return $this->pageRepo->findOneBy(['slug' => $slug, 'host' => $possibleHost]);
+            }
+        }
+
+        return $this->getPage($ref);
+    }
+
+    /**
+     * Build a translation reference string for a page.
+     * Returns "host/slug" for cross-host pages, or just "slug" for same-host pages.
+     */
+    private function buildTranslationRef(Page $page): string
+    {
+        $currentHost = $this->apps->get()->getMainHost();
+        if ($page->host !== $currentHost) {
+            return $page->host.'/'.$page->getSlug();
+        }
+
+        return $page->getSlug();
+    }
+
+    /**
      * Mark a translation pair as explicitly added during this import cycle.
      */
-    private function markTranslationAsAdded(string $slugA, string $slugB): void
+    private function markTranslationAsAdded(string $refA, string $refB): void
     {
         // Store both directions to catch the pair regardless of order
-        $this->addedTranslationPairs[$slugA.'|'.$slugB] = true;
-        $this->addedTranslationPairs[$slugB.'|'.$slugA] = true;
+        $this->addedTranslationPairs[$refA.'|'.$refB] = true;
+        $this->addedTranslationPairs[$refB.'|'.$refA] = true;
     }
 
     /**
      * Check if a translation pair was explicitly added during this import cycle.
      */
-    private function wasTranslationAdded(string $slugA, string $slugB): bool
+    private function wasTranslationAdded(string $refA, string $refB): bool
     {
-        return isset($this->addedTranslationPairs[$slugA.'|'.$slugB]);
+        return isset($this->addedTranslationPairs[$refA.'|'.$refB]);
     }
 
     #[Override]

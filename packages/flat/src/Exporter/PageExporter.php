@@ -429,10 +429,13 @@ final class PageExporter
                 return null;
             }
 
+            $currentHost = $this->apps->get()->getMainHost();
             $slugs = [];
             foreach ($value as $item) {
                 if ($item instanceof Page) {
-                    $slugs[] = $item->getSlug();
+                    $slugs[] = $item->host !== $currentHost
+                        ? $item->host.'/'.$item->getSlug()
+                        : $item->getSlug();
                 }
             }
 

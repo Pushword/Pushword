@@ -1558,6 +1558,380 @@ YAML;
     }
 
     /**
+     * Test 28: Cross-host translations are exported with host/slug format.
+     */
+    public function testCrossHostTranslationExport(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a page on localhost.dev
+        $enPage = new Page();
+        $enPage->setSlug('cross-host-en');
+        $enPage->setH1('English Page');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
+        $enPage->setMainContent('English content');
+        $enPage->setPublishedAt(new DateTime());
+
+        // Create a page on pushword.piedweb.com
+        $frPage = new Page();
+        $frPage->setSlug('cross-host-fr');
+        $frPage->setH1('Page française');
+        $frPage->host = 'pushword.piedweb.com';
+        $frPage->locale = 'fr';
+        $frPage->setMainContent('Contenu français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->flush();
+
+        // Link as translations
+        $enPage->addTranslation($frPage);
+        $this->em->flush();
+
+        // Export localhost.dev
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Verify the .md file uses host/slug format for the cross-host translation
+        $enMdFilePath = $contentDir.'/cross-host-en.md';
+        self::assertFileExists($enMdFilePath);
+
+        $enMdContent = file_get_contents($enMdFilePath);
+        self::assertStringContainsString('translations:', $enMdContent);
+        self::assertStringContainsString('pushword.piedweb.com/cross-host-fr', $enMdContent, 'Cross-host translation should use host/slug format');
+
+        // Cleanup
+        $enPage->removeTranslation($frPage);
+        $this->em->remove($enPage);
+        $this->em->remove($frPage);
+        $this->em->flush();
+        $this->trackFile($enMdFilePath);
+    }
+
+    /**
+     * Test 29: Cross-host translations are imported from host/slug format in flat files.
+     */
+    public function testCrossHostTranslationImport(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a page on the OTHER host first (it must exist for the reference to resolve)
+        $frPage = new Page();
+        $frPage->setSlug('cross-import-fr');
+        $frPage->setH1('Page française');
+        $frPage->host = 'pushword.piedweb.com';
+        $frPage->locale = 'fr';
+        $frPage->setMainContent('Contenu français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($frPage);
+        $this->em->flush();
+
+        // Create a .md file on localhost.dev that references the other host
+        $enMdFilePath = $contentDir.'/cross-import-en.md';
+        $enMdContent = <<<'YAML'
+---
+h1: English Page
+locale: en
+translations:
+  - pushword.piedweb.com/cross-import-fr
+---
+
+English content
+YAML;
+        file_put_contents($enMdFilePath, $enMdContent);
+        touch($enMdFilePath, time() + 10);
+
+        // Import localhost.dev
+        $this->pageSync->import('localhost.dev');
+
+        // Verify the cross-host translation link was created
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'cross-import-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'cross-import-fr', 'host' => 'pushword.piedweb.com']);
+
+        self::assertNotNull($importedEnPage, 'EN page should be imported');
+        self::assertNotNull($importedFrPage, 'FR page on other host should still exist');
+        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have 1 translation');
+        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'EN should link to FR on other host');
+        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage), 'FR should link back to EN (bidirectional)');
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedFrPage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->flush();
+        $this->trackFile($enMdFilePath);
+    }
+
+    /**
+     * Test 30: Cross-host translation round-trip (export then import preserves cross-host links).
+     */
+    public function testCrossHostTranslationRoundTrip(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create pages on different hosts and link them
+        $enPage = new Page();
+        $enPage->setSlug('cross-rt-en');
+        $enPage->setH1('English');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
+        $enPage->setMainContent('English');
+        $enPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('cross-rt-fr');
+        $frPage->setH1('Français');
+        $frPage->host = 'pushword.piedweb.com';
+        $frPage->locale = 'fr';
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->flush();
+
+        $enPage->addTranslation($frPage);
+        $this->em->flush();
+
+        $enPageId = $enPage->id;
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Clear and remove the EN page (keep FR on other host)
+        $this->em->clear();
+        $enPageToRemove = $this->em->find(Page::class, $enPageId);
+        self::assertNotNull($enPageToRemove);
+        foreach ($enPageToRemove->getTranslations()->toArray() as $t) {
+            $enPageToRemove->removeTranslation($t);
+        }
+
+        $this->em->remove($enPageToRemove);
+        $this->em->flush();
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify the cross-host link was recreated
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'cross-rt-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'cross-rt-fr', 'host' => 'pushword.piedweb.com']);
+
+        self::assertNotNull($importedEnPage, 'EN page should be recreated');
+        self::assertNotNull($importedFrPage, 'FR page should still exist on other host');
+        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have 1 translation after round-trip');
+        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'Cross-host link should survive round-trip');
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedFrPage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->flush();
+        $this->trackFile($contentDir.'/cross-rt-en.md');
+    }
+
+    /**
+     * Test 31: Nested slugs (e.g. blog/my-article) are not mistaken for cross-host references.
+     */
+    public function testNestedSlugNotConfusedWithCrossHost(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create both .md files so both pages survive import
+        $blogDir = $contentDir.'/blog';
+        if (! is_dir($blogDir)) {
+            mkdir($blogDir, 0o755, true);
+        }
+
+        $nestedMdFilePath = $blogDir.'/nested-article.md';
+        $nestedMdContent = <<<'YAML'
+---
+h1: Nested Article
+locale: fr
+---
+
+Contenu
+YAML;
+        file_put_contents($nestedMdFilePath, $nestedMdContent);
+        touch($nestedMdFilePath, time() + 10);
+
+        $enMdFilePath = $contentDir.'/nested-slug-test.md';
+        $enMdContent = <<<'YAML'
+---
+h1: English Page
+locale: en
+translations:
+  - blog/nested-article
+---
+
+English content
+YAML;
+        file_put_contents($enMdFilePath, $enMdContent);
+        touch($enMdFilePath, time() + 10);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify the translation resolved to the same-host nested slug (not a cross-host lookup)
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'nested-slug-test', 'host' => 'localhost.dev']);
+        $importedNestedPage = $this->pageRepo->findOneBy(['slug' => 'blog/nested-article', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedEnPage, 'EN page should be imported');
+        self::assertNotNull($importedNestedPage, 'Nested slug page should exist');
+        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have 1 translation');
+        self::assertTrue($importedEnPage->getTranslations()->contains($importedNestedPage), 'Translation should resolve to same-host nested slug');
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedNestedPage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedNestedPage);
+        $this->em->flush();
+        $this->trackFile($enMdFilePath);
+        $this->trackFile($nestedMdFilePath);
+        $this->trackDir($blogDir);
+    }
+
+    /**
+     * Test 32: Same-host translations work when both pages are created in the same import cycle.
+     */
+    public function testSameHostTranslationBothPagesCreatedDuringImport(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Neither page exists in DB — both created from .md files in the same import
+        $enMdFilePath = $contentDir.'/same-import-en.md';
+        $enMdContent = <<<'YAML'
+---
+h1: English Page
+locale: en
+translations:
+  - same-import-fr
+---
+
+English content
+YAML;
+        file_put_contents($enMdFilePath, $enMdContent);
+        touch($enMdFilePath, time() + 10);
+
+        $frMdFilePath = $contentDir.'/same-import-fr.md';
+        $frMdContent = <<<'YAML'
+---
+h1: Page française
+locale: fr
+translations:
+  - same-import-en
+---
+
+Contenu français
+YAML;
+        file_put_contents($frMdFilePath, $frMdContent);
+        touch($frMdFilePath, time() + 10);
+
+        // Import — both pages created in the same cycle
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'same-import-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'same-import-fr', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedEnPage, 'EN page should be created');
+        self::assertNotNull($importedFrPage, 'FR page should be created');
+        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have FR as translation');
+        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage));
+        self::assertTrue($importedFrPage->getTranslations()->contains($importedEnPage), 'FR should have EN (bidirectional)');
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedFrPage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->flush();
+        $this->trackFile($enMdFilePath);
+        $this->trackFile($frMdFilePath);
+    }
+
+    /**
+     * Test 33: Cross-host translation works when the target page doesn't exist in DB yet
+     * but is created during a subsequent import of the other host.
+     * After importing both hosts, a second import of the first host should resolve the link.
+     */
+    public function testCrossHostTranslationTargetCreatedLater(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $localhostContentDir = $contentDirFinder->get('localhost.dev');
+        $piedwebContentDir = $contentDirFinder->get('pushword.piedweb.com');
+
+        // Create .md on localhost.dev referencing a page on pushword.piedweb.com that doesn't exist yet
+        $enMdFilePath = $localhostContentDir.'/cross-later-en.md';
+        $enMdContent = <<<'YAML'
+---
+h1: English Page
+locale: en
+translations:
+  - pushword.piedweb.com/cross-later-fr
+---
+
+English content
+YAML;
+        file_put_contents($enMdFilePath, $enMdContent);
+        touch($enMdFilePath, time() + 10);
+
+        // Create .md on pushword.piedweb.com
+        $frMdFilePath = $piedwebContentDir.'/cross-later-fr.md';
+        $frMdContent = <<<'YAML'
+---
+h1: Page française
+locale: fr
+---
+
+Contenu français
+YAML;
+        file_put_contents($frMdFilePath, $frMdContent);
+        touch($frMdFilePath, time() + 10);
+
+        // First import: localhost.dev — target on other host doesn't exist yet
+        $this->pageSync->import('localhost.dev');
+
+        // Second import: pushword.piedweb.com — creates the target page
+        $this->pageSync->import('pushword.piedweb.com');
+
+        // Third import: localhost.dev again — should now resolve the cross-host reference
+        touch($enMdFilePath, time() + 20);
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $importedEnPage = $this->pageRepo->findOneBy(['slug' => 'cross-later-en', 'host' => 'localhost.dev']);
+        $importedFrPage = $this->pageRepo->findOneBy(['slug' => 'cross-later-fr', 'host' => 'pushword.piedweb.com']);
+
+        self::assertNotNull($importedEnPage, 'EN page should exist');
+        self::assertNotNull($importedFrPage, 'FR page on other host should exist');
+        self::assertCount(1, $importedEnPage->getTranslations(), 'EN should have FR as translation after re-import');
+        self::assertTrue($importedEnPage->getTranslations()->contains($importedFrPage), 'Cross-host link should be established');
+
+        // Cleanup
+        $importedEnPage->removeTranslation($importedFrPage);
+        $this->em->remove($importedEnPage);
+        $this->em->remove($importedFrPage);
+        $this->em->flush();
+        $this->trackFile($enMdFilePath);
+        $this->trackFile($frMdFilePath);
+    }
+
+    /**
      * Test: Force import resets (deletes) all host pages before importing.
      */
     public function testForceImportResetsHostPagesBeforeImport(): void
