@@ -40,7 +40,8 @@ export async function clickable(element) {
  */
 export function allClickable(selector) {
   document.querySelectorAll(selector).forEach(function (item) {
-    item.addEventListener('click', function () {
+    item.addEventListener('click', function (event) {
+      if (event.ctrlKey || event.metaKey) return
       clickable(item)
     })
   })
