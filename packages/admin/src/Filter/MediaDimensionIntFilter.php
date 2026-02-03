@@ -47,8 +47,8 @@ final class MediaDimensionIntFilter implements FilterInterface
             $queryBuilder
                 ->andWhere(
                     $queryBuilder->expr()->orX(
-                        sprintf('%s.width BETWEEN :%s AND :%s', $alias, $parameterName, $parameter2Name),
-                        sprintf('%s.height BETWEEN :%s AND :%s', $alias, $parameterName, $parameter2Name),
+                        sprintf('%s.imageData.width BETWEEN :%s AND :%s', $alias, $parameterName, $parameter2Name),
+                        sprintf('%s.imageData.height BETWEEN :%s AND :%s', $alias, $parameterName, $parameter2Name),
                     ),
                 )
                 ->setParameter($parameterName, $value)
@@ -60,8 +60,8 @@ final class MediaDimensionIntFilter implements FilterInterface
         $queryBuilder
             ->andWhere(
                 $queryBuilder->expr()->orX(
-                    sprintf('%s.width %s :%s', $alias, $comparison, $parameterName),
-                    sprintf('%s.height %s :%s', $alias, $comparison, $parameterName),
+                    sprintf('%s.imageData.width %s :%s', $alias, $comparison, $parameterName),
+                    sprintf('%s.imageData.height %s :%s', $alias, $comparison, $parameterName),
                 ),
             )
             ->setParameter($parameterName, $value);

@@ -74,7 +74,7 @@ final class MediaDimensionsFilter implements FilterInterface
         foreach ($constraints as $index => $constraint) {
             $widthParameter = sprintf('%s_width_%d', $filterDataDto->getParameterName(), $index);
             $heightParameter = sprintf('%s_height_%d', $filterDataDto->getParameterName(), $index);
-            $expr->add(sprintf('(%1$s.width = :%2$s AND %1$s.height = :%3$s)', $alias, $widthParameter, $heightParameter));
+            $expr->add(sprintf('(%1$s.imageData.width = :%2$s AND %1$s.imageData.height = :%3$s)', $alias, $widthParameter, $heightParameter));
 
             $queryBuilder
                 ->setParameter($widthParameter, $constraint['width'])
