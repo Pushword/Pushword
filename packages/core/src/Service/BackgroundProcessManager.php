@@ -134,6 +134,23 @@ final readonly class BackgroundProcessManager
     }
 
     /**
+     * Remove PID files for processes that are no longer running.
+     */
+    public function cleanupAllStalePidFiles(): void
+    {
+        $pattern = $this->varDir.'/*.pid';
+        $pidFiles = glob($pattern);
+
+        if (false === $pidFiles) {
+            return;
+        }
+
+        foreach ($pidFiles as $pidFile) {
+            $this->cleanupStaleProcess($pidFile);
+        }
+    }
+
+    /**
      * Start a background process with same-type lock.
      *
      * @param string[] $commandParts
@@ -145,8 +162,8 @@ final readonly class BackgroundProcessManager
         array $commandParts,
         string $commandPattern,
     ): int {
-        // Check if same process type is already running
-        $this->cleanupStaleProcess($pidFile);
+        // Clean up all stale PID files from completed processes
+        $this->cleanupAllStalePidFiles();
         $processInfo = $this->getProcessInfo($pidFile);
 
         if ($processInfo['isRunning']) {
