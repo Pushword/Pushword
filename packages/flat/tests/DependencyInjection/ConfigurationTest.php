@@ -19,6 +19,9 @@ class ConfigurationTest extends KernelTestCase
         self::assertIsString($flatContentDir);
         self::assertStringEndsWith('/content/_host_', $flatContentDir);
 
-        self::assertSame(self::getContainer()->getParameter('kernel.project_dir').'/../docs/content', self::getContainer()->get(SiteRegistry::class)->get('pushword.piedweb.com')->get('flat_content_dir'));
+        $piedwebContentDir = self::getContainer()->get(SiteRegistry::class)->get('pushword.piedweb.com')->get('flat_content_dir');
+        self::assertIsString($piedwebContentDir);
+        // In test env, piedweb uses the same test env var (with _host_ placeholder) as the default host
+        self::assertStringEndsWith('/content/_host_', $piedwebContentDir);
     }
 }

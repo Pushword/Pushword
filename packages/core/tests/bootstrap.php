@@ -135,6 +135,11 @@ if ('' !== $runId) {
     $fs->mkdir($testBaseDir.'/content');
 }
 
+// Mirror pushword.piedweb.com docs content so flat sync tests exercise real pages
+$piedwebContentDir = ('' !== $runId ? $testBaseDir.'/content' : $monoRepoBase.'/packages/skeleton/content').'/pushword.piedweb.com';
+$fs->remove($piedwebContentDir);
+$fs->mirror($monoRepoBase.'/packages/docs/content', $piedwebContentDir);
+
 $cachedDbFile = $dbCacheDir.'/'.$dbCacheHash.'.sqlite';
 $dbTargetPath = $testBaseDir.'/test.db';
 $cacheHit = file_exists($cachedDbFile);

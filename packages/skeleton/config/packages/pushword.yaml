@@ -18,7 +18,7 @@ pushword:
     - hosts:
         - pushword.piedweb.com
       base_url: "https://pushword.piedweb.com"
-      flat_content_dir: "%kernel.project_dir%/../docs/content"
+      flat_content_dir: "%pw.piedweb.flat_content_dir%"
       static_dir: "%kernel.project_dir%/../../docs"
       name: Pushword
       favicon_path: "/assets/"

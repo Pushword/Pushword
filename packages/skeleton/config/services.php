@@ -9,6 +9,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $parameters->set('locale', 'en');
 
+    $parameters->set('pw.piedweb.flat_content_dir', '%kernel.project_dir%/../docs/content');
+
     $parameters->set('database', '%env(resolve:DATABASE_URL)%');
 
     $parameters->set('secret', 'myS3cretKey');
