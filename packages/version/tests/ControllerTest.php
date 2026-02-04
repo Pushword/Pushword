@@ -18,13 +18,14 @@ class ControllerTest extends AbstractAdminTestClass
     {
         $client = $this->loginUser();
 
-        // Find a page dynamically instead of hardcoding ID 1
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        $page = $em->getRepository(Page::class)->findOneBy(['slug' => 'homepage', 'host' => 'localhost.dev']);
-        self::assertNotNull($page, 'Homepage should exist');
+        $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev'])
+            ?? $em->getRepository(Page::class)->findOneBy([]);
+        self::assertNotNull($page, 'At least one page should exist');
+
         /** @var int $pageId */
         $pageId = $page->id;
-        self::assertGreaterThan(0, $pageId, 'Page ID should be a positive integer');
+        self::assertGreaterThan(0, $pageId);
 
         // Update the page to trigger version creation via the Doctrine postUpdate listener
         $page->setTitle($page->getTitle().' (version test)');

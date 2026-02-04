@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\Image;
 
+use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Image\ImageCacheManager;
@@ -11,11 +12,26 @@ use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
 class ThumbnailGeneratorTest extends KernelTestCase
 {
     use PathTrait;
+
+    private string $tmpPublicDir;
+
+    protected function setUp(): void
+    {
+        $this->tmpPublicDir = sys_get_temp_dir().'/pushword-thumb-test-'.getmypid();
+        new Filesystem()->mkdir($this->tmpPublicDir);
+    }
+
+    #[Override]
+    protected function tearDown(): void
+    {
+        new Filesystem()->remove($this->tmpPublicDir);
+    }
 
     /**
      * @param array<string, array<string, mixed>> $filterSets
@@ -26,7 +42,7 @@ class ThumbnailGeneratorTest extends KernelTestCase
         $mediaStorage = $this->createMediaStorageAdapter();
         $imageReader = new ImageReader($mediaStorage);
         $imageEncoder = new ImageEncoder();
-        $imageCacheManager = new ImageCacheManager($filterSets, $this->publicDir, $this->publicMediaDir, $mediaStorage);
+        $imageCacheManager = new ImageCacheManager($filterSets, $this->tmpPublicDir, $this->publicMediaDir, $mediaStorage);
 
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
 
@@ -38,7 +54,7 @@ class ThumbnailGeneratorTest extends KernelTestCase
      */
     private function createCacheManager(array $filterSets = []): ImageCacheManager
     {
-        return new ImageCacheManager($filterSets, $this->publicDir, $this->publicMediaDir, $this->createMediaStorageAdapter());
+        return new ImageCacheManager($filterSets, $this->tmpPublicDir, $this->publicMediaDir, $this->createMediaStorageAdapter());
     }
 
     private function createMediaStorageAdapter(): MediaStorageAdapter
@@ -56,9 +72,9 @@ class ThumbnailGeneratorTest extends KernelTestCase
         $generator = $this->createGenerator($filters);
         $generator->generateFilteredCache($image, $filters);
 
-        self::assertFileExists($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
+        self::assertFileExists($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
 
-        $imgSize = getimagesize($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
+        $imgSize = getimagesize($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
         self::assertIsArray($imgSize);
         self::assertSame(1, $imgSize[0]);
         self::assertSame(1, $imgSize[1]);
@@ -71,13 +87,13 @@ class ThumbnailGeneratorTest extends KernelTestCase
         $generator = $this->createGenerator($filters);
         $generator->generateFilteredCache($image, $filters);
 
-        $imgSize = getimagesize($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
+        $imgSize = getimagesize($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
         self::assertIsArray($imgSize);
         self::assertSame(1600, $imgSize[0]);
 
         $cacheManager = $this->createCacheManager($filters);
         $cacheManager->remove($image);
-        self::assertFileDoesNotExist($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
+        self::assertFileDoesNotExist($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
     }
 
     public function testFilterCacheWithFormats(): void
@@ -87,13 +103,13 @@ class ThumbnailGeneratorTest extends KernelTestCase
         $generator = $this->createGenerator($filters);
         $generator->generateFilteredCache($image, $filters);
 
-        self::assertFileExists($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
-        self::assertFileExists($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.webp');
+        self::assertFileExists($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
+        self::assertFileExists($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.webp');
 
         $cacheManager = $this->createCacheManager($filters);
         $cacheManager->remove($image);
 
-        self::assertFileDoesNotExist($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
-        self::assertFileDoesNotExist($this->publicDir.'/'.$this->publicMediaDir.'/xl/blank.webp');
+        self::assertFileDoesNotExist($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
+        self::assertFileDoesNotExist($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.webp');
     }
 }
