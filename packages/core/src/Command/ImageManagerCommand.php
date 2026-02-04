@@ -83,6 +83,7 @@ final readonly class ImageManagerCommand
 
         $errors = [];
         $skipped = 0;
+        $processed = 0;
 
         foreach ($medias as $media) {
             if ($media->isImage()) {
@@ -101,6 +102,10 @@ final readonly class ImageManagerCommand
             }
 
             $progressBar->advance();
+
+            if (0 === ++$processed % 50) {
+                $this->entityManager->flush();
+            }
         }
 
         $this->entityManager->flush();

@@ -31,21 +31,75 @@ final class ThumbnailGenerator
             return false;
         }
 
-        $image = $this->imageReader->read($media);
-        $this->updateMainColor($media, $image);
-        $media->setDimensions([$image->width(), $image->height()]);
+        $sourceDimensions = $this->imageCacheManager->getSourceDimensions($media);
 
-        $generated = false;
+        $filtersToProcess = [];
+        $filtersToSymlink = [];
+
         foreach (array_keys($this->imageCacheManager->getFilterSets()) as $filterName) {
             if (! $force && $this->imageCacheManager->isFilterCacheFresh($media, $filterName)) {
                 continue;
             }
 
-            $lastImg = $this->generateFilteredCache($media, $filterName, $image);
-            $generated = true;
-            if ('thumb' === $filterName) {
-                $this->lastThumb = $lastImg;
+            if ('default' !== $filterName
+                && null !== $sourceDimensions
+                && $this->imageCacheManager->shouldSkipFilter($filterName, $sourceDimensions[0], $sourceDimensions[1])) {
+                $filtersToSymlink[] = $filterName;
+
+                continue;
             }
+
+            $filtersToProcess[] = $filterName;
+        }
+
+        if ([] === $filtersToProcess && [] === $filtersToSymlink) {
+            return false;
+        }
+
+        // Sort filters: largest target width first, non-width filters at the end
+        usort($filtersToProcess, function (string $a, string $b): int {
+            if ('default' === $a) {
+                return -1;
+            }
+
+            if ('default' === $b) {
+                return 1;
+            }
+
+            $widthA = $this->imageCacheManager->getFilterTargetWidth($a) ?? 0;
+            $widthB = $this->imageCacheManager->getFilterTargetWidth($b) ?? 0;
+
+            return $widthB <=> $widthA;
+        });
+
+        $image = $this->readAndUpdateMetadata($media);
+        $generated = false;
+
+        if ([] !== $filtersToProcess) {
+            $currentImage = $image;
+
+            foreach ($filtersToProcess as $filterName) {
+                $workImage = clone $currentImage;
+                $resultImage = $this->generateFilteredCache($media, $filterName, $workImage, skipClone: true);
+                $generated = true;
+
+                if ('thumb' === $filterName) {
+                    $this->lastThumb = $resultImage;
+                }
+
+                // Progressive downsizing: use result as base for next smaller filter
+                if (null !== $this->imageCacheManager->getFilterTargetWidth($filterName)) {
+                    unset($currentImage);
+                    $currentImage = $resultImage;
+                }
+            }
+
+            unset($currentImage);
+        }
+
+        foreach ($filtersToSymlink as $filterName) {
+            $this->imageCacheManager->symlinkFilterToDefault($media, $filterName);
+            $generated = true;
         }
 
         if ($generated) {
@@ -62,6 +116,7 @@ final class ThumbnailGenerator
         Media|string $media,
         array|string $filter,
         ?ImageInterface $originalImage = null,
+        bool $skipClone = false,
     ): ImageInterface {
         if (\is_array($filter)) {
             $filterName = array_keys($filter)[0];
@@ -71,8 +126,11 @@ final class ThumbnailGenerator
             $filterName = $filter;
         }
 
-        $image = null === $originalImage ? $this->imageReader->read($media)
-            : ('default' === $filterName ? $originalImage : clone $originalImage);
+        $image = match (true) {
+            null === $originalImage => $this->imageReader->read($media),
+            $skipClone => $originalImage,
+            default => 'default' === $filterName ? $originalImage : clone $originalImage,
+        };
 
         foreach ($filters[$filterName]['filters'] as $filter => $parameters) { // @phpstan-ignore-line
             $parameters = \is_array($parameters) ? $parameters : [$parameters];
@@ -111,11 +169,7 @@ final class ThumbnailGenerator
         $this->copyOriginalToFilter($media, 'md');
 
         try {
-            $image = $this->imageReader->read($media);
-            $this->updateMainColor($media, $image);
-            $media->setDimensions([$image->width(), $image->height()]);
-
-            return $image;
+            return $this->readAndUpdateMetadata($media);
         } catch (Exception) {
             return null;
         }
@@ -154,6 +208,15 @@ final class ThumbnailGenerator
         if (file_exists($sourcePath)) {
             copy($sourcePath, $destPath);
         }
+    }
+
+    private function readAndUpdateMetadata(Media $media): ImageInterface
+    {
+        $image = $this->imageReader->read($media);
+        $this->updateMainColor($media, $image);
+        $media->setDimensions([$image->width(), $image->height()]);
+
+        return $image;
     }
 
     private function updateMainColor(Media $media, ?ImageInterface $image = null): void

@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\Image;
 
+use Intervention\Image\Drivers\Vips\Driver;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Service\MediaStorageAdapter;
@@ -25,9 +26,13 @@ class ImageReaderTest extends KernelTestCase
     {
         $mediaStorage = $this->createMediaStorageAdapter();
 
-        // Test auto driver (should pick imagick if available, else gd)
+        // Test auto driver (prefers vips > imagick > gd)
         $reader = new ImageReader($mediaStorage, 'auto');
-        $expectedDriver = \extension_loaded('imagick') ? 'imagick' : 'gd';
+        $expectedDriver = match (true) {
+            \extension_loaded('ffi') && class_exists(Driver::class) => 'vips',
+            \extension_loaded('imagick') => 'imagick',
+            default => 'gd',
+        };
         self::assertSame($expectedDriver, $reader->getResolvedDriver());
 
         // Test explicit gd driver
@@ -39,5 +44,21 @@ class ImageReaderTest extends KernelTestCase
             $reader = new ImageReader($mediaStorage, 'imagick');
             self::assertSame('imagick', $reader->getResolvedDriver());
         }
+
+        // Test explicit vips driver (if available)
+        if (\extension_loaded('ffi') && class_exists(Driver::class)) {
+            $reader = new ImageReader($mediaStorage, 'vips');
+            self::assertSame('vips', $reader->getResolvedDriver());
+        }
+    }
+
+    public function testReadImage(): void
+    {
+        $mediaStorage = $this->createMediaStorageAdapter();
+        $reader = new ImageReader($mediaStorage);
+
+        $image = $reader->read(__DIR__.'/../Service/blank.jpg');
+        self::assertSame(1, $image->width());
+        self::assertSame(1, $image->height());
     }
 }

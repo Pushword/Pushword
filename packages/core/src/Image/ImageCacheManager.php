@@ -187,4 +187,96 @@ final class ImageCacheManager
     {
         $this->filesystem->mkdir($path);
     }
+
+    /**
+     * @return array{0: int, 1: int}|null
+     */
+    public function getSourceDimensions(Media $media): ?array
+    {
+        $sourcePath = $this->mediaStorage->getLocalPath($media->getFileName());
+        if (! $this->filesystem->exists($sourcePath)) {
+            return null;
+        }
+
+        $size = @getimagesize($sourcePath);
+
+        return false !== $size ? [$size[0], $size[1]] : null;
+    }
+
+    /**
+     * Returns true when the filter's resize would be a no-op (source already smaller than target).
+     */
+    public function shouldSkipFilter(string $filterName, int $sourceWidth, int $sourceHeight): bool
+    {
+        $filterConfig = $this->filterSets[$filterName] ?? null;
+        if (null === $filterConfig) {
+            return false;
+        }
+
+        /** @var array<string, mixed> $filters */
+        $filters = $filterConfig['filters'] ?? [];
+
+        foreach ($filters as $method => $parameters) {
+            $parameters = \is_array($parameters) ? $parameters : [$parameters];
+
+            if ('scaleDown' === $method) {
+                $targetWidth = $parameters[0] ?? null;
+                $targetHeight = $parameters[1] ?? null;
+
+                return (null === $targetWidth || $targetWidth >= $sourceWidth)
+                    && (null === $targetHeight || $targetHeight >= $sourceHeight);
+            }
+
+            if ('coverDown' === $method) {
+                $targetWidth = $parameters[0] ?? null;
+                $targetHeight = $parameters[1] ?? null;
+
+                return null !== $targetWidth && null !== $targetHeight
+                    && $targetWidth >= $sourceWidth && $targetHeight >= $sourceHeight;
+            }
+        }
+
+        return false;
+    }
+
+    public function getFilterTargetWidth(string $filterName): ?int
+    {
+        $filterConfig = $this->filterSets[$filterName] ?? null;
+        if (null === $filterConfig) {
+            return null;
+        }
+
+        /** @var array<string, mixed> $filters */
+        $filters = $filterConfig['filters'] ?? [];
+
+        foreach ($filters as $method => $parameters) {
+            $parameters = \is_array($parameters) ? $parameters : [$parameters];
+
+            if (\in_array($method, ['scaleDown', 'coverDown'], true)
+                && isset($parameters[0])
+                && \is_int($parameters[0])) {
+                return $parameters[0];
+            }
+        }
+
+        return null;
+    }
+
+    public function symlinkFilterToDefault(Media $media, string $filterName): void
+    {
+        /** @var string[] $formats */
+        $formats = $this->filterSets[$filterName]['formats'] ?? ['original', 'webp'];
+
+        $filterDir = $this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName;
+        $this->createFilterDir($filterDir);
+
+        foreach ($formats as $format) {
+            $extension = 'original' === $format ? null : $format;
+            $cachePath = $this->getFilterPath($media, $filterName, $extension);
+            $defaultRelative = '../default/'.basename($this->getFilterPath($media, 'default', $extension));
+
+            $this->filesystem->remove($cachePath);
+            $this->filesystem->symlink($defaultRelative, $cachePath);
+        }
+    }
 }

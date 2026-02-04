@@ -16,7 +16,7 @@ _Facultative_ :
 - **Node** (>= 24 - only tested with v24, see [nvm to easily install a node version up to date](https://github.com/nvm-sh/nvm))
 - **yarn** - [how to install yarn](https://classic.yarnpkg.com/lang/en/docs/install/#debian-stable) or _pnpm_, _npm_
   **Node** and **Yarn** are not required if you have your custom logic to manage assets.
-- **imagick**
+- **libvips** (recommended) or **imagick** — see [Image Processing](#image-processing) below
 - **brotli**
 
 ## Automatic installer via composer
@@ -66,6 +66,42 @@ composer req pushword/advanced-main-image
 composer req pushword/conversation
 
 ```
+
+## Image Processing
+
+Pushword auto-detects the best available image driver in this order: **VIPS** > **Imagick** > **GD**.
+
+### VIPS (recommended)
+
+[libvips](https://www.libvips.org/) is ~4x faster and uses ~10x less memory than Imagick. It is the recommended driver for production.
+
+```shell
+# Install libvips system library
+sudo apt install libvips-dev  # Debian/Ubuntu
+# or: brew install vips        # macOS
+
+# Install the PHP driver
+composer require intervention/image-driver-vips
+```
+
+Requires the PHP **FFI** extension (`php-ffi`).
+
+You can force a specific driver in `config/packages/pushword.yaml`:
+
+```yaml
+pushword:
+    image_driver: vips  # auto (default), vips, imagick, gd
+```
+
+### Imagick
+
+```shell
+sudo apt install php-imagick  # Debian/Ubuntu
+```
+
+### GD
+
+GD is the fallback driver, bundled with PHP (`php-gd`). No extra installation needed.
 
 ## Next
 
