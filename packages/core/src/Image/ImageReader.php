@@ -10,6 +10,7 @@ use Intervention\Image\Interfaces\DriverInterface;
 use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\MediaStorageAdapter;
+use Throwable;
 
 final readonly class ImageReader
 {
@@ -21,18 +22,38 @@ final readonly class ImageReader
         private MediaStorageAdapter $mediaStorage,
         private string $imageDriver = 'auto',
     ) {
-        $this->resolvedDriver = 'auto' !== $this->imageDriver
-            ? $this->imageDriver
-            : match (true) {
-                $this->isVipsAvailable() => 'vips',
-                \extension_loaded('imagick') => 'imagick',
-                default => 'gd',
-            };
-
-        $this->interventionManager = new InterventionImageManager($this->createDriver($this->resolvedDriver));
+        [$this->resolvedDriver, $driver] = $this->resolveDriver();
+        $this->interventionManager = new InterventionImageManager($driver, decodeAnimation: false);
     }
 
-    private function isVipsAvailable(): bool
+    /**
+     * @return array{string, DriverInterface}
+     */
+    private function resolveDriver(): array
+    {
+        if ('auto' !== $this->imageDriver) {
+            return [$this->imageDriver, $this->createDriver($this->imageDriver)];
+        }
+
+        if ($this->isVipsClassAvailable()) {
+            try {
+                $driver = new \Intervention\Image\Drivers\Vips\Driver();
+                $driver->checkHealth();
+
+                return ['vips', $driver];
+            } catch (Throwable) {
+                // vips not usable (e.g. ffi.enable=preload in web context), fall through
+            }
+        }
+
+        if (\extension_loaded('imagick')) {
+            return ['imagick', new ImagickDriver()];
+        }
+
+        return ['gd', new GdDriver()];
+    }
+
+    private function isVipsClassAvailable(): bool
     {
         return \extension_loaded('ffi')
             && class_exists(\Intervention\Image\Drivers\Vips\Driver::class);
@@ -40,7 +61,7 @@ final readonly class ImageReader
 
     private function createDriver(string $name): DriverInterface
     {
-        if ('vips' === $name && $this->isVipsAvailable()) {
+        if ('vips' === $name && $this->isVipsClassAvailable()) {
             return new \Intervention\Image\Drivers\Vips\Driver();
         }
 
