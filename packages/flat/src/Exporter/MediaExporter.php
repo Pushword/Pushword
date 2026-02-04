@@ -24,7 +24,6 @@ final class MediaExporter
 
     public function __construct(
         private readonly MediaRepository $mediaRepo,
-        private readonly string $mediaDir,
         private readonly MediaStorageAdapter $mediaStorage,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
@@ -70,21 +69,29 @@ final class MediaExporter
             $rows[] = $orderedRow;
         }
 
-        $csvFilePath = $this->getCsvFilePath();
-        $this->filesystem->mkdir(\dirname($csvFilePath));
-
         // Generate new CSV content
         $newContent = $this->generateCsvContent($header, $rows);
 
-        // Compare with existing content
-        $existingContent = $this->filesystem->exists($csvFilePath) ? $this->filesystem->readFile($csvFilePath) : '';
-        if ($newContent === $existingContent) {
-            return; // No changes, skip export
+        if ($this->isExportMode()) {
+            $csvFilePath = $this->exportDir.'/'.$this->copyMedia.'/'.self::INDEX_FILE;
+            $this->filesystem->mkdir(\dirname($csvFilePath));
+            $existingContent = $this->filesystem->exists($csvFilePath) ? $this->filesystem->readFile($csvFilePath) : '';
+            if ($newContent === $existingContent) {
+                return;
+            }
+
+            $this->filesystem->dumpFile($csvFilePath, $newContent);
+        } else {
+            $existingContent = $this->mediaStorage->fileExists(self::INDEX_FILE) ? $this->mediaStorage->read(self::INDEX_FILE) : '';
+            if ($newContent === $existingContent) {
+                return;
+            }
+
+            $this->mediaStorage->write(self::INDEX_FILE, $newContent);
         }
 
         $this->exportedCount = \count($medias);
         $this->output?->writeln(\sprintf('Exported %d media to index.csv', $this->exportedCount));
-        $this->filesystem->dumpFile($csvFilePath, $newContent);
     }
 
     /**
@@ -210,13 +217,9 @@ final class MediaExporter
         fclose($stream);
     }
 
-    private function getCsvFilePath(): string
+    private function isExportMode(): bool
     {
-        if ('' !== $this->copyMedia && '0' !== $this->copyMedia) {
-            return $this->exportDir.'/'.$this->copyMedia.'/'.self::INDEX_FILE;
-        }
-
-        return $this->mediaDir.'/'.self::INDEX_FILE;
+        return '' !== $this->copyMedia && '0' !== $this->copyMedia;
     }
 
     public function getExportedCount(): int
