@@ -20,30 +20,87 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
         $this->ensureMediaFileExists();
     }
 
-    public function testExecute(): void
+    public function testSequentialExecution(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '1']);
+
+        self::assertStringContainsString('100%', $commandTester->getDisplay());
+    }
+
+    public function testSingleMediaExecution(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['media' => 'piedweb-logo.png']);
+
+        self::assertStringContainsString('100%', $commandTester->getDisplay());
+    }
+
+    public function testParallelExecution(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '2']);
+
+        self::assertStringContainsString('100%', $commandTester->getDisplay());
+        self::assertStringContainsString('parallel worker(s)', $commandTester->getDisplay());
+    }
+
+    public function testForceRegeneration(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['media' => 'piedweb-logo.png', '--force' => true]);
+
+        $output = $commandTester->getDisplay();
+        self::assertStringContainsString('100%', $output);
+        self::assertStringNotContainsString('skipped', $output);
+    }
+
+    public function testNoLockSkipsLockAcquisition(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $commandTester->execute(['media' => 'piedweb-logo.png', '--no-lock' => true]);
+
+        self::assertStringContainsString('100%', $commandTester->getDisplay());
+    }
+
+    public function testSkipsAlreadyCachedImages(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        // First run generates cache
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '1']);
+
+        // Second run should skip
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '1']);
+
+        self::assertStringContainsString('skipped', $commandTester->getDisplay());
+    }
+
+    private function createCommandTester(): CommandTester
     {
         $kernel = static::bootKernel();
         $application = new Application($kernel);
 
-        // Wait for any background pw:image:cache process to release its lock
+        return new CommandTester($application->find('pw:image:cache'));
+    }
+
+    private function waitForLockRelease(): void
+    {
         /** @var LockFactory $lockFactory */
         $lockFactory = static::getContainer()->get('lock.factory');
         $lock = $lockFactory->createLock('pw:image:cache');
         $lock->acquire(blocking: true);
         $lock->release();
-
-        $command = $application->find('pw:image:cache');
-        $commandTester = new CommandTester($command);
-        $commandTester->execute([]);
-
-        // the output of the command in the console
-        $output = $commandTester->getDisplay();
-        self::assertTrue(str_contains($output, '100%'));
-
-        $commandTester->execute(['media' => 'piedweb-logo.png']);
-
-        // the output of the command in the console
-        $output = $commandTester->getDisplay();
-        self::assertTrue(str_contains($output, '100%'));
     }
 }
