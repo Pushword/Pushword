@@ -5,6 +5,7 @@ namespace Pushword\Core\Image;
 use Exception;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use Intervention\Image\Drivers\Vips\Core as VipsCore;
 use Intervention\Image\ImageManager as InterventionImageManager;
 use Intervention\Image\Interfaces\DriverInterface;
 use Intervention\Image\Interfaces\ImageInterface;
@@ -40,9 +41,15 @@ final readonly class ImageReader
                 $driver = new \Intervention\Image\Drivers\Vips\Driver();
                 $driver->checkHealth();
 
+                // Verify multi-format encoding works (ensureInMemory uses VipsArea gtype)
+                $mgr = new InterventionImageManager($driver, decodeAnimation: false);
+                $encoded = $mgr->create(1, 1)->encodeByExtension('jpg');
+                $testImage = $mgr->read($encoded->toString());
+                VipsCore::ensureInMemory($testImage->core());
+
                 return ['vips', $driver];
             } catch (Throwable) {
-                // vips not usable (e.g. ffi.enable=preload in web context), fall through
+                // vips not usable (e.g. ffi.enable=preload, broken gtype), fall through
             }
         }
 

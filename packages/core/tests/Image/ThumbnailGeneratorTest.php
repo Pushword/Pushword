@@ -31,6 +31,7 @@ class ThumbnailGeneratorTest extends KernelTestCase
     protected function tearDown(): void
     {
         new Filesystem()->remove($this->tmpPublicDir);
+        parent::tearDown();
     }
 
     /**

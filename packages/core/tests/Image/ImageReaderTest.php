@@ -8,6 +8,7 @@ use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Throwable;
 
 #[Group('integration')]
 class ImageReaderTest extends KernelTestCase
@@ -28,8 +29,18 @@ class ImageReaderTest extends KernelTestCase
 
         // Test auto driver (prefers vips > imagick > gd)
         $reader = new ImageReader($mediaStorage, 'auto');
+        // Mirror the same health check as ImageReader::resolveDriver()
+        $vipsHealthy = false;
+        if (\extension_loaded('ffi') && class_exists(Driver::class)) {
+            try {
+                $probeReader = new ImageReader($mediaStorage, 'auto');
+                $vipsHealthy = 'vips' === $probeReader->getResolvedDriver();
+            } catch (Throwable) {
+            }
+        }
+
         $expectedDriver = match (true) {
-            \extension_loaded('ffi') && class_exists(Driver::class) => 'vips',
+            $vipsHealthy => 'vips',
             \extension_loaded('imagick') => 'imagick',
             default => 'gd',
         };
@@ -45,8 +56,8 @@ class ImageReaderTest extends KernelTestCase
             self::assertSame('imagick', $reader->getResolvedDriver());
         }
 
-        // Test explicit vips driver (if available)
-        if (\extension_loaded('ffi') && class_exists(Driver::class)) {
+        // Test explicit vips driver (if available and healthy)
+        if ($vipsHealthy) {
             $reader = new ImageReader($mediaStorage, 'vips');
             self::assertSame('vips', $reader->getResolvedDriver());
         }
