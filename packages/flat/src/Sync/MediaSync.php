@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaExporter;
@@ -33,6 +34,7 @@ final class MediaSync
         private readonly MediaRepository $mediaRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly SyncStateManager $stateManager,
+        private readonly MediaStorageAdapter $mediaStorage,
         private readonly string $mediaDir,
         private readonly ?LoggerInterface $logger = null,
     ) {
@@ -67,9 +69,9 @@ final class MediaSync
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
         $localMediaDir = $contentDir.'/media';
 
-        // 1. Parse CSV indexes
+        // 1. Parse CSV index from storage (works for both local and remote)
         $this->mediaImporter->resetIndex();
-        $this->mediaImporter->loadIndex($this->mediaDir);
+        $this->mediaImporter->loadIndexFromStorage();
 
         // 2. Validate files exist and prepare renames
         if ($this->mediaImporter->hasIndexData()) {
@@ -86,19 +88,25 @@ final class MediaSync
         $this->deleteMissingMedia();
         $this->mediaImporter->finishImport();
 
-        // 4. Collect all media files
-        $files = $this->collectMediaFiles($this->mediaDir);
-        $localFiles = file_exists($localMediaDir) ? $this->collectMediaFiles($localMediaDir) : [];
-        $allFiles = [...$files, ...$localFiles];
+        // 4. Import storage files via Flysystem (works for both local and remote)
+        foreach ($this->collectStorageMediaFiles() as $fileName) {
+            $lastModified = $this->mediaStorage->lastModified($fileName);
+            $lastEditDateTime = new DateTime()->setTimestamp($lastModified);
+            $imported = $this->mediaImporter->importFromStorage($fileName, $lastEditDateTime);
 
-        // 5. Import/update media files (only show actually imported files)
-        foreach ($allFiles as $path) {
+            if ($imported) {
+                $this->output?->writeln(\sprintf('Imported %s', basename($fileName)));
+            }
+        }
+
+        // 5. Import local content dir files (flat content directory)
+        $localFiles = file_exists($localMediaDir) ? $this->collectMediaFiles($localMediaDir) : [];
+        foreach ($localFiles as $path) {
             $lastEditDateTime = new DateTime()->setTimestamp((int) filemtime($path));
             $imported = $this->mediaImporter->import($path, $lastEditDateTime);
 
             if ($imported) {
-                $fileName = basename($path);
-                $this->output?->writeln(\sprintf('Imported %s', $fileName));
+                $this->output?->writeln(\sprintf('Imported %s', basename($path)));
             }
         }
 
@@ -154,6 +162,35 @@ final class MediaSync
     }
 
     /**
+     * Collect media files from Flysystem storage (works for both local and remote).
+     *
+     * @return string[] Storage-relative file paths
+     */
+    private function collectStorageMediaFiles(): array
+    {
+        $files = [];
+        foreach ($this->mediaStorage->listContents('', true) as $item) {
+            if (! $item->isFile()) {
+                continue;
+            }
+
+            $path = $item->path();
+
+            if (MediaExporter::INDEX_FILE === $path) {
+                continue;
+            }
+
+            if ($this->isLockOrTempFile(basename($path))) {
+                continue;
+            }
+
+            $files[] = $path;
+        }
+
+        return $files;
+    }
+
+    /**
      * Regenerate index.csv after import to ensure it reflects current database state.
      */
     private function regenerateIndex(): void
@@ -188,14 +225,25 @@ final class MediaSync
      */
     private function getDirectoriesToScan(string $contentDir): array
     {
-        return array_values(array_filter([
-            $this->mediaDir,
-            $contentDir.'/media',
-        ], file_exists(...)));
+        $dirs = [];
+
+        if (file_exists($this->mediaDir) || ! $this->mediaStorage->isLocal()) {
+            $dirs[] = $this->mediaDir;
+        }
+
+        if (file_exists($contentDir.'/media')) {
+            $dirs[] = $contentDir.'/media';
+        }
+
+        return $dirs;
     }
 
     private function hasNewerFiles(string $dir): bool
     {
+        if ($dir === $this->mediaDir && ! $this->mediaStorage->isLocal()) {
+            return $this->hasNewerStorageFiles();
+        }
+
         if (! file_exists($dir)) {
             return false;
         }
@@ -226,6 +274,49 @@ final class MediaSync
         }
 
         return false;
+    }
+
+    private function hasNewerStorageFiles(): bool
+    {
+        foreach ($this->mediaStorage->listContents('', true) as $item) {
+            if (! $item->isFile()) {
+                continue;
+            }
+
+            $path = $item->path();
+
+            if (MediaExporter::INDEX_FILE === $path) {
+                continue;
+            }
+
+            if ($this->isLockOrTempFile(basename($path))) {
+                continue;
+            }
+
+            if ($this->isStorageFileNewer($path)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isStorageFileNewer(string $storagePath): bool
+    {
+        $media = $this->mediaRepository->findOneBy(['fileName' => $storagePath]);
+        if (! $media instanceof Media) {
+            return true;
+        }
+
+        $localPath = $this->mediaStorage->getLocalPath($storagePath);
+        $fileHash = sha1_file($localPath, true);
+        $dbHash = $media->getHash();
+
+        if (\is_resource($dbHash)) {
+            $dbHash = stream_get_contents($dbHash);
+        }
+
+        return $fileHash !== $dbHash;
     }
 
     private function isFileNewer(string $filePath): bool

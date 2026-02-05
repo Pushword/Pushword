@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManager;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Flat\Exporter\MediaExporter;
 use Pushword\Flat\Importer\MediaImporter;
 
@@ -311,6 +312,58 @@ CSV;
         $em->flush();
         @unlink($docPath);
         @unlink($mediaDir.'/index.csv');
+    }
+
+    public function testLoadIndexFromStorageReadsFromFlysystem(): void
+    {
+        /** @var EntityManager $em */
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        /** @var string $projectDir */
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+
+        /** @var string $mediaDir */
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+
+        /** @var MediaStorageAdapter $mediaStorage */
+        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
+
+        // Write index.csv to storage via Flysystem
+        $csvContent = "fileName,alt,alt_fr\ntest-storage.png,\"Storage Test\",\"Test FR\"\n";
+        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+
+        // Create the image file in storage
+        $this->createTestImage($mediaDir.'/test-storage.png');
+
+        /** @var MediaImporter $importer */
+        $importer = self::getContainer()->get(MediaImporter::class);
+        $importer->resetIndex();
+        $importer->loadIndexFromStorage();
+
+        self::assertTrue($importer->hasIndexData(), 'Index should be loaded from storage');
+
+        // Import the file using importFromStorage
+        $lastModified = $mediaStorage->lastModified('test-storage.png');
+        $lastEdit = new DateTime()->setTimestamp($lastModified);
+        $imported = $importer->importFromStorage('test-storage.png', $lastEdit);
+        $importer->finishImport();
+
+        self::assertTrue($imported, 'File should be imported from storage');
+
+        // Verify media was created with correct data
+        $media = $em->getRepository(Media::class)->findOneBy(['fileName' => 'test-storage.png']);
+        self::assertInstanceOf(Media::class, $media);
+        self::assertSame('Storage Test', $media->getAlt());
+
+        $alts = $media->getAltsParsed();
+        self::assertArrayHasKey('fr', $alts);
+        self::assertSame('Test FR', $alts['fr']);
+
+        // Cleanup
+        $em->remove($media);
+        $em->flush();
+        @unlink($mediaDir.'/test-storage.png');
+        $mediaStorage->delete(MediaExporter::INDEX_FILE);
     }
 
     private function createTestImage(string $path): void

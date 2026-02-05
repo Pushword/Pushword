@@ -63,7 +63,7 @@ class MediaImporter extends AbstractImporter
     private bool $newMedia = false;
 
     /**
-     * Load the index.csv file from a directory.
+     * Load the index.csv file from a local directory path.
      */
     public function loadIndex(string $dir): void
     {
@@ -74,6 +74,40 @@ class MediaImporter extends AbstractImporter
             return;
         }
 
+        $this->processReader($reader);
+    }
+
+    /**
+     * Load the index.csv file from Flysystem storage.
+     */
+    public function loadIndexFromStorage(): void
+    {
+        if (! $this->mediaStorage->fileExists(MediaExporter::INDEX_FILE)) {
+            return;
+        }
+
+        $csvContent = $this->mediaStorage->read(MediaExporter::INDEX_FILE);
+
+        try {
+            $reader = Reader::fromString($csvContent);
+        } catch (CsvException) {
+            return;
+        }
+
+        try {
+            $reader->setHeaderOffset(0);
+        } catch (CsvException) {
+            return;
+        }
+
+        $this->processReader($reader);
+    }
+
+    /**
+     * @param Reader<array<string, string|null>> $reader
+     */
+    private function processReader(Reader $reader): void
+    {
         $header = $this->prepareHeader($reader);
         if ([] === $header) {
             return;
@@ -200,6 +234,112 @@ class MediaImporter extends AbstractImporter
         }
 
         return $this->importMedia($filePath, $lastEditDateTime);
+    }
+
+    /**
+     * Import a file that already exists in Flysystem storage.
+     * Unlike import(), this skips copyToMediaDir() since the file is already in storage.
+     */
+    public function importFromStorage(string $fileName, DateTimeInterface $lastEditDateTime): bool
+    {
+        if (MediaExporter::INDEX_FILE === $fileName) {
+            return false;
+        }
+
+        // Skip legacy sidecar files
+        $isMetaDataFile = str_ends_with($fileName, '.json') || str_ends_with($fileName, '.yaml');
+        if ($isMetaDataFile && $this->mediaStorage->fileExists(substr($fileName, 0, -5))) {
+            return false;
+        }
+
+        $localPath = $this->mediaStorage->getLocalPath($fileName);
+
+        if ($this->isImage($localPath)) {
+            return $this->importImageFromStorage($fileName, $localPath, $lastEditDateTime);
+        }
+
+        return $this->importMediaFromStorage($fileName, $localPath, $lastEditDateTime);
+    }
+
+    private function importMediaFromStorage(string $fileName, string $localPath, DateTimeInterface $dateTime): bool
+    {
+        $media = $this->getMediaFromIndex($fileName);
+
+        if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media)) {
+            ++$this->skippedCount;
+
+            return false;
+        }
+
+        $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');
+        ++$this->importedCount;
+
+        $media
+            ->setProjectDir($this->projectDir)
+            ->setStoreIn($this->mediaStorage->getMediaDir())
+            ->setSize((int) filesize($localPath))
+            ->setMimeType($this->getMimeTypeFromFile($localPath))
+            ->resetHash();
+
+        if ($media->getFileName() !== $fileName) {
+            $media->setFileName($fileName);
+        }
+
+        $data = $this->getDataForFileName($fileName);
+
+        $this->setData($media, $data);
+
+        $media->updatedAt = $dateTime;
+
+        return true;
+    }
+
+    private function importImageFromStorage(string $fileName, string $localPath, DateTimeInterface $dateTime): bool
+    {
+        $media = $this->getMedia($fileName);
+
+        if (false === $this->newMedia && ! $this->hasFileContentChanged($localPath, $media)) {
+            ++$this->skippedCount;
+
+            return false;
+        }
+
+        $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');
+        ++$this->importedCount;
+
+        $imgSize = getimagesize($localPath);
+
+        if (false === $imgSize) {
+            throw new RuntimeException('Image size could not be determined');
+        }
+
+        $media
+            ->setProjectDir($this->projectDir)
+            ->setStoreIn($this->mediaStorage->getMediaDir())
+            ->setMimeType($imgSize['mime'])
+            ->setSize((int) filesize($localPath))
+            ->setDimensions([$imgSize[0], $imgSize[1]])
+            ->resetHash();
+
+        $data = $this->getDataForFileName($fileName);
+
+        $this->setData($media, $data);
+
+        return true;
+    }
+
+    /**
+     * Get data from index.csv for a given fileName (not a file path).
+     *
+     * @return array<string|int, mixed>
+     */
+    private function getDataForFileName(string $fileName): array
+    {
+        if (! isset($this->indexData[$fileName])) {
+            return [];
+        }
+
+        return $this->parseIndexData($this->indexData[$fileName]);
     }
 
     private function isImage(string $filePath): bool
