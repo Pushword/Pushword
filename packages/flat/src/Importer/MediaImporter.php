@@ -265,6 +265,11 @@ class MediaImporter extends AbstractImporter
     {
         $media = $this->getMediaFromIndex($fileName);
 
+        return $this->doImportMedia($media, $fileName, $localPath, $this->mediaStorage->getMediaDir(), $dateTime);
+    }
+
+    private function doImportMedia(Media $media, string $fileName, string $localPath, string $storeIn, DateTimeInterface $dateTime): bool
+    {
         if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media)) {
             ++$this->skippedCount;
 
@@ -276,7 +281,7 @@ class MediaImporter extends AbstractImporter
 
         $media
             ->setProjectDir($this->projectDir)
-            ->setStoreIn($this->mediaStorage->getMediaDir())
+            ->setStoreIn($storeIn)
             ->setSize((int) filesize($localPath))
             ->setMimeType($this->getMimeTypeFromFile($localPath))
             ->resetHash();
@@ -286,9 +291,7 @@ class MediaImporter extends AbstractImporter
         }
 
         $data = $this->getDataForFileName($fileName);
-
         $this->setData($media, $data);
-
         $media->updatedAt = $dateTime;
 
         return true;
@@ -307,23 +310,7 @@ class MediaImporter extends AbstractImporter
         $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');
         ++$this->importedCount;
 
-        $imgSize = getimagesize($localPath);
-
-        if (false === $imgSize) {
-            throw new RuntimeException('Image size could not be determined');
-        }
-
-        $media
-            ->setProjectDir($this->projectDir)
-            ->setStoreIn($this->mediaStorage->getMediaDir())
-            ->setMimeType($imgSize['mime'])
-            ->setSize((int) filesize($localPath))
-            ->setDimensions([$imgSize[0], $imgSize[1]])
-            ->resetHash();
-
-        $data = $this->getDataForFileName($fileName);
-
-        $this->setData($media, $data);
+        $this->importImageMediaData($media, $localPath, $this->mediaStorage->getMediaDir(), $fileName);
 
         return true;
     }
@@ -362,39 +349,9 @@ class MediaImporter extends AbstractImporter
     {
         $fileName = $this->getFilename($filePath);
         $media = $this->getMediaFromIndex($fileName);
-
-        // Use hash comparison to detect real content changes
-        if (! $this->newMedia && ! $this->hasFileContentChanged($filePath, $media)) {
-            ++$this->skippedCount;
-
-            return false; // no update needed
-        }
-
-        $this->logger?->info('Importing media `'.$fileName.'` ('.($this->newMedia ? 'new' : $media->id).')');
-        ++$this->importedCount;
-
         $filePath = $this->copyToMediaDir($filePath);
 
-        $media
-            ->setProjectDir($this->projectDir)
-            ->setStoreIn(\dirname($filePath))
-            ->setSize((int) filesize($filePath))
-            ->setMimeType($this->getMimeTypeFromFile($filePath))
-            ->resetHash(); // Reset hash so it gets recalculated
-
-        // Update fileName if it changed (for existing media found by id)
-        if ($media->getFileName() !== $fileName) {
-            $media->setFileName($fileName);
-        }
-
-        $data = $this->getData($filePath);
-
-        $this->setData($media, $data);
-
-        // Sync updatedAt with file mtime to prevent re-importing unchanged files
-        $media->updatedAt = $dateTime;
-
-        return true;
+        return $this->doImportMedia($media, $fileName, $filePath, \dirname($filePath), $dateTime);
     }
 
     private function hasFileContentChanged(string $filePath, Media $media): bool
@@ -417,13 +374,7 @@ class MediaImporter extends AbstractImporter
      */
     private function getData(string $filePath): array
     {
-        $fileName = $this->getFilename($filePath);
-
-        if (! isset($this->indexData[$fileName])) {
-            return [];
-        }
-
-        return $this->parseIndexData($this->indexData[$fileName]);
+        return $this->getDataForFileName($this->getFilename($filePath));
     }
 
     /**

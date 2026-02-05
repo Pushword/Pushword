@@ -176,11 +176,7 @@ final class MediaSync
 
             $path = $item->path();
 
-            if (MediaExporter::INDEX_FILE === $path) {
-                continue;
-            }
-
-            if ($this->isLockOrTempFile(basename($path))) {
+            if ($this->shouldSkipStorageFile($path)) {
                 continue;
             }
 
@@ -285,11 +281,7 @@ final class MediaSync
 
             $path = $item->path();
 
-            if (MediaExporter::INDEX_FILE === $path) {
-                continue;
-            }
-
-            if ($this->isLockOrTempFile(basename($path))) {
+            if ($this->shouldSkipStorageFile($path)) {
                 continue;
             }
 
@@ -308,15 +300,7 @@ final class MediaSync
             return true;
         }
 
-        $localPath = $this->mediaStorage->getLocalPath($storagePath);
-        $fileHash = sha1_file($localPath, true);
-        $dbHash = $media->getHash();
-
-        if (\is_resource($dbHash)) {
-            $dbHash = stream_get_contents($dbHash);
-        }
-
-        return $fileHash !== $dbHash;
+        return $this->isMediaHashDifferent($media, $this->mediaStorage->getLocalPath($storagePath));
     }
 
     private function isFileNewer(string $filePath): bool
@@ -331,11 +315,14 @@ final class MediaSync
             return true;
         }
 
-        // Use hash comparison instead of mtime to detect real content changes
-        $fileHash = sha1_file($filePath, true);
+        return $this->isMediaHashDifferent($media, $filePath);
+    }
+
+    private function isMediaHashDifferent(Media $media, string $localPath): bool
+    {
+        $fileHash = sha1_file($localPath, true);
         $dbHash = $media->getHash();
 
-        // Handle binary hash from database (may be a resource or string)
         if (\is_resource($dbHash)) {
             $dbHash = stream_get_contents($dbHash);
         }
@@ -361,6 +348,11 @@ final class MediaSync
         }
 
         return $fileName;
+    }
+
+    private function shouldSkipStorageFile(string $path): bool
+    {
+        return MediaExporter::INDEX_FILE === $path || $this->isLockOrTempFile(basename($path));
     }
 
     /**

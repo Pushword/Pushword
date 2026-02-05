@@ -15,6 +15,9 @@ trait ImageImporterTrait
     /** @return mixed[] */
     abstract private function getData(string $filePath): array;
 
+    /** @return mixed[] */
+    abstract private function getDataForFileName(string $fileName): array;
+
     abstract protected function getMedia(string $media): Media;
 
     abstract private function hasFileContentChanged(string $filePath, Media $media): bool;
@@ -44,9 +47,11 @@ trait ImageImporterTrait
     /**
      * @return mixed[]
      */
-    private function getImageData(string $filePath): array
+    private function getImageData(string $filePath, ?string $fileName = null): array
     {
-        $data = $this->getData($filePath);
+        $data = null !== $fileName
+            ? $this->getDataForFileName($fileName)
+            : $this->getData($filePath);
 
         if ([] !== $data) {
             return $data;
@@ -72,7 +77,7 @@ trait ImageImporterTrait
         return $data;
     }
 
-    private function importImageMediaData(Media $media, string $filePath): void
+    private function importImageMediaData(Media $media, string $filePath, ?string $storeIn = null, ?string $fileName = null): void
     {
         $imgSize = getimagesize($filePath);
 
@@ -82,13 +87,13 @@ trait ImageImporterTrait
 
         $media
                 ->setProjectDir($this->projectDir)
-                ->setStoreIn(\dirname($filePath))
+                ->setStoreIn($storeIn ?? \dirname($filePath))
                 ->setMimeType($imgSize['mime'])
                 ->setSize((int) filesize($filePath))
                 ->setDimensions([$imgSize[0], $imgSize[1]])
-                ->resetHash(); // Reset hash so it gets recalculated
+                ->resetHash();
 
-        $data = $this->getImageData($filePath); // , $imgSize['mime']);
+        $data = $this->getImageData($filePath, $fileName);
 
         $this->setData($media, $data);
     }

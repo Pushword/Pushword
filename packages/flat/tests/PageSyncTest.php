@@ -16,7 +16,6 @@ use Pushword\Flat\Sync\PageSync;
 use function Safe\file_get_contents;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Tests for PageSync covering redirection sync, page deletion, and edge cases.
@@ -24,10 +23,6 @@ use Symfony\Component\Filesystem\Filesystem;
 #[Group('integration')]
 final class PageSyncTest extends KernelTestCase
 {
-    private Filesystem $filesystem;
-
-    private string $testContentDir;
-
     private EntityManager $em;
 
     /** @var EntityRepository<Page> */
@@ -45,9 +40,6 @@ final class PageSyncTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->filesystem = new Filesystem();
-        $this->testContentDir = self::getContainer()->getParameter('kernel.cache_dir').'/test-sync-content';
-        $this->filesystem->mkdir($this->testContentDir);
         $this->createdFiles = [];
         $this->createdDirs = [];
 
@@ -73,7 +65,6 @@ final class PageSyncTest extends KernelTestCase
             @rmdir($dir);
         }
 
-        $this->filesystem->remove($this->testContentDir);
         parent::tearDown();
     }
 
