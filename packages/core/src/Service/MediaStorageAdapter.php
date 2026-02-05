@@ -179,7 +179,11 @@ final readonly class MediaStorageAdapter
         $tempPath = sys_get_temp_dir().'/'.sha1($path).'_'.basename($path);
 
         if (! $this->filesystem->exists($tempPath)) {
-            $this->filesystem->dumpFile($tempPath, $this->storage->read($path));
+            try {
+                $this->filesystem->dumpFile($tempPath, $this->storage->read($path));
+            } catch (FilesystemException) {
+                // Return path without file, same as local storage for missing files
+            }
         }
 
         return $tempPath;
