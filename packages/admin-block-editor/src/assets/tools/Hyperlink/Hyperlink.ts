@@ -30,6 +30,7 @@ export default class Hyperlink {
   private api: API
   private availableDesign: Record<string, string> = {
     bouton: 'link-btn',
+    'bouton outline': 'link-btn-outline',
     discret: 'ninja', //text-current no-underline border-0 font-normal
   }
 
