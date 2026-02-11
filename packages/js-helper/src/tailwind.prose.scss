@@ -31,6 +31,23 @@
   color: #fff !important;
 }
 
+.link-btn-outline {
+  padding: 6px 12px;
+  margin-bottom: 0;
+  border-radius: 3px;
+  border: 1px solid var(--primary);
+  cursor: pointer;
+  color: var(--primary) !important;
+  background-color: transparent;
+  outline: none;
+  text-decoration: none !important;
+}
+
+.link-btn-outline:hover {
+  color: #fff !important;
+  background-color: var(--primary);
+}
+
 /**
  * Some smoothiness
  */
