@@ -17,6 +17,7 @@ framework:
   #csrf_protection: true
   http_method_override: false
   session:
+    name: PUSHWORD_SESSID
     handler_id: null
     cookie_secure: auto
     cookie_samesite: lax
