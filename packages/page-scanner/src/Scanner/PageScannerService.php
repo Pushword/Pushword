@@ -2,13 +2,18 @@
 
 namespace Pushword\PageScanner\Scanner;
 
+use LogicException;
 use Pushword\Core\Controller\PageController;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\Core\Utils\TwigErrorExtractor;
+use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Translation\DataCollectorTranslator;
 use Symfony\Contracts\Service\Attribute\Required;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
@@ -29,12 +34,22 @@ final class PageScannerService
     #[Required]
     public ParentPageScanner $parentPageScanner;
 
+    /** @var DataCollectorTranslator|Translator */
+    private readonly TranslatorInterface $translator;
+
     public function __construct(
         private readonly PushwordRouteGenerator $router,
         private readonly PageController $pageController,
         private readonly TwigErrorExtractor $errorExtractor,
         private readonly MediaExtension $mediaExtension,
+        private readonly RequestContext $requestContext,
+        TranslatorInterface $translator,
     ) {
+        if (! $translator instanceof DataCollectorTranslator && ! $translator instanceof Translator) {
+            throw new LogicException('Expected DataCollectorTranslator or Translator, got '.$translator::class);
+        }
+
+        $this->translator = $translator;
         $this->router->setUseCustomHostPath(false);
     }
 
@@ -74,6 +89,8 @@ final class PageScannerService
     {
         try {
             $this->pageController->setHost($page->host);
+            $this->requestContext->setCurrentPage($page);
+            $this->translator->setLocale('' !== $page->locale ? $page->locale : $this->requestContext->getCurrentSite()->getLocale());
             $response = $this->pageController->showPage($page);
 
             if ($response->isRedirect()) {
