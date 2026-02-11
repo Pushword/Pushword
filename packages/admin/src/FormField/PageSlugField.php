@@ -30,7 +30,7 @@ class PageSlugField extends AbstractField
         return '<div id="disabledLinkSlug">
                     <span class="btn btn-primary" onclick="toggleDisabled()" style="float:right; margin-top:-36px; z-index:100;position:relative"><i class="fa fa-unlock"></i></span>
                     <script>function toggleDisabled() {
-                        document.querySelector(".slug_disabled").removeAttribute("disabled");
+                        document.querySelector(".slug_disabled").removeAttribute("readonly");
                         document.querySelector(".slug_disabled").focus();
                         document.querySelector("#disabledLinkSlug").remove();
                     }</script> <small><a href="'.$liveUrl.'"><small><i class="fa fa-link"></i></small> '.u($url)->truncate(30, '…').'</a></small></div>';
@@ -45,7 +45,7 @@ class PageSlugField extends AbstractField
             'help' => $this->getSlugHelp(),
             'attr' => [
                 'class' => 'slug_disabled',
-                ('' !== $this->admin->getSubject()->getSlug() ? 'disabled' : 't') => '',
+                ('' !== $this->admin->getSubject()->getSlug() ? 'readonly' : 't') => '',
             ],
         ]);
     }
