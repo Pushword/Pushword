@@ -93,13 +93,20 @@ class ControllerTest extends AbstractAdminTestClass
         $client = $this->loginUser(
             // static::createPantherClient([            'webServerDir' => __DIR__.'/../../skeleton/public'        ])
         );
+
+        $pngFile = sys_get_temp_dir().'/test-media-block.png';
+        $img = imagecreatetruecolor(1, 1);
+        \assert(false !== $img);
+        imagepng($img, $pngFile);
+        imagedestroy($img);
+
+        $uploadedFile = new \Symfony\Component\HttpFoundation\File\UploadedFile($pngFile, 'test.png', 'image/png', null, true);
+
         $client->request(
             Request::METHOD_POST,
             '/admin/media/block',
             [],
-            [],
-            [],
-            json_encode(['url' => 'https://github.com/fluidicon.png'])
+            ['image' => $uploadedFile],
         );
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 

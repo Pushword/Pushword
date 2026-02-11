@@ -80,6 +80,7 @@
     "composer/composer": "*",
     "dbrekelmans/bdi": "^1.4",
     "friendsofphp/php-cs-fixer": "*",
+    "league/flysystem-memory": "^3.31",
     "monorepo-php/monorepo": "*",
     "phpstan/phpstan": "*",
     "phpstan/phpstan-doctrine": "*",
@@ -100,7 +101,6 @@
     "symfony/stopwatch": "^8.0",
     "symplify/config-transformer": "*",
     "tomasvotruba/unused-public": "^2.0",
-    "league/flysystem-memory": "^3.0",
     "vincentlanglet/twig-cs-fixer": "*"
   },
   "extra": {
