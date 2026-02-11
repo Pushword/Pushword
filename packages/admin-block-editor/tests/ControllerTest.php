@@ -11,6 +11,7 @@ use function Safe\file_get_contents;
 use function Safe\json_decode;
 use function Safe\json_encode;
 
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -100,7 +101,7 @@ class ControllerTest extends AbstractAdminTestClass
         imagepng($img, $pngFile);
         imagedestroy($img);
 
-        $uploadedFile = new \Symfony\Component\HttpFoundation\File\UploadedFile($pngFile, 'test.png', 'image/png', null, true);
+        $uploadedFile = new UploadedFile($pngFile, 'test.png', 'image/png', null, true);
 
         $client->request(
             Request::METHOD_POST,
