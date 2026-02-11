@@ -84,3 +84,30 @@ This is the main reason to prefer Messenger mode in production: it guarantees ev
 pushword:
     background_task_handler: messenger
 ```
+
+## Media Maintenance Commands
+
+These commands are run manually to maintain media consistency:
+
+### Normalize filenames (`pw:media:normalize-filenames`)
+
+Renames media files to URL-safe slugs. Use `--dry-run` to preview changes.
+
+```bash
+php bin/console pw:media:normalize-filenames --dry-run
+php bin/console pw:media:normalize-filenames
+```
+
+### Clean duplicates (`pw:media:clean-duplicates`)
+
+Detects media entries that share the same file content (SHA-1 hash) and merges them. For each duplicate group, the oldest entry (lowest ID) is kept as canonical. Duplicate filenames are added to the canonical entry's `fileNameHistory` so existing references keep resolving transparently.
+
+Page `mainImage` references are transferred to the canonical entry. Physical files and image cache for removed duplicates are cleaned up automatically.
+
+```bash
+# Preview which media would be merged
+php bin/console pw:media:clean-duplicates --dry-run
+
+# Merge duplicates
+php bin/console pw:media:clean-duplicates
+```

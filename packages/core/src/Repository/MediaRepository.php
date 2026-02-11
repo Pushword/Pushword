@@ -210,6 +210,30 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         return null;
     }
 
+    /** @return Media[][] each inner array is a group of duplicate medias (same hash), sorted by id */
+    public function findDuplicateGroups(): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $duplicateHashes = $conn->executeQuery(
+            'SELECT hash FROM media WHERE LENGTH(hash) > 0 GROUP BY hash HAVING COUNT(*) > 1',
+        )->fetchFirstColumn();
+
+        if ([] === $duplicateHashes) {
+            return [];
+        }
+
+        $groups = [];
+        foreach ($duplicateHashes as $hash) {
+            /** @var Media[] $medias */
+            $medias = $this->findBy(['hash' => $hash], ['id' => 'ASC']);
+            if (\count($medias) > 1) {
+                $groups[] = $medias;
+            }
+        }
+
+        return $groups;
+    }
+
     /** @return array<string> */
     public function getAllMedia(): array
     {
