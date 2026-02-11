@@ -237,6 +237,8 @@ final class PageExtension
             : (\in_array($view, ['', 'list'], true) ? '/component/pages_list.html.twig'
                 : $view);
 
+        $hasSlugFilter = \is_string($search) && (str_contains($search, 'slug:') || str_contains($search, 'page:'));
+
         $search = \is_array($search) ? $search : new StringToDQLCriteria($search, $currentPage)->retrieve();
 
         $order = str_replace('priority', 'weight', $order); // bc
@@ -251,6 +253,15 @@ final class PageExtension
             $order,
             $max,
         );
+
+        if (! $hasSlugFilter) {
+            $locale = $currentPage->locale ?? '';
+            if ('' === $locale) {
+                $locale = $this->apps->getLocale();
+            }
+
+            $this->pageRepo->andLocale($queryBuilder, $locale);
+        }
 
         if (null !== $currentPage) {
             $queryBuilder->andWhere('p.id <> '.($currentPage->id ?? 0));

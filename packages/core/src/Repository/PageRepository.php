@@ -365,7 +365,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             ->setParameter('host', $host);
     }
 
-    protected function andLocale(QueryBuilder $queryBuilder, string $locale): QueryBuilder
+    public function andLocale(QueryBuilder $queryBuilder, string $locale): QueryBuilder
     {
         if ('' === $locale) {
             return $queryBuilder;
