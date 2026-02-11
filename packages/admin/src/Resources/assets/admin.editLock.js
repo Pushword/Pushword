@@ -5,8 +5,15 @@
 
 const PING_INTERVAL_MS = 3000 // 3 seconds
 
-const generateTabId = () =>
-  crypto?.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).substring(2)
+const generateTabId = () => {
+  const key = 'pw-edit-lock-tab-id'
+  let tabId = sessionStorage.getItem(key)
+  if (!tabId) {
+    tabId = crypto?.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).substring(2)
+    sessionStorage.setItem(key, tabId)
+  }
+  return tabId
+}
 
 /**
  * Initialize the edit lock system for a page
