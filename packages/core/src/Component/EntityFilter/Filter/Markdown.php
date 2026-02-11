@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use Exception;
 use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
@@ -35,8 +36,12 @@ class Markdown implements FilterInterface
         // must take care of code block
 
         $filteredText = '';
-        foreach ($textPartList as $textPart) {
-            $filteredText .= $this->transformPart($textPart, $manager)."\n\n";
+        foreach ($textPartList as $index => $textPart) {
+            try {
+                $filteredText .= $this->transformPart($textPart, $manager)."\n\n";
+            } catch (Exception $e) {
+                throw new Exception(\sprintf('Error in markdown block #%d: "%s" — %s', $index + 1, mb_substr(trim($textPart), 0, 100), $e->getMessage()), 0, $e);
+            }
         }
 
         return $filteredText;

@@ -93,8 +93,12 @@ class MediaExtension
      * Also handles Media object passed as either argument.
      */
     #[AsTwigFunction('media_from_string')]
-    public function transformStringToMedia(Media|string|int $src, Media|string $name = ''): Media
+    public function transformStringToMedia(Media|string|int|null $src, Media|string $name = ''): Media
     {
+        if (null === $src || '' === $src) {
+            throw new Exception('media_from_string() received an empty source. Check your template includes pass a valid `image`, `image_src` or `imageSrc` variable.');
+        }
+
         // Handle Media object passed as either argument
         if ($src instanceof Media) {
             return $src;
