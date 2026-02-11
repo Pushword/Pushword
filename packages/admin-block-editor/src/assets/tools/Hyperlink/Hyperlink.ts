@@ -27,12 +27,14 @@ declare global {
 export default class Hyperlink {
   static title = 'Link'
 
-  private api: API
-  private availableDesign: Record<string, string> = {
+  private static readonly defaultDesigns: Record<string, string> = {
     bouton: 'link-btn',
     'bouton outline': 'link-btn-outline',
-    discret: 'ninja', //text-current no-underline border-0 font-normal
+    discret: 'ninja',
   }
+
+  private api: API
+  private availableDesigns: Record<string, string>
 
   private nodes: HyperlinkNodes = {
     wrapper: null,
@@ -49,8 +51,9 @@ export default class Hyperlink {
   private anchorTag: HTMLElement | null = null
   private selection: SelectionUtils
 
-  constructor({ api }: { api: API }) {
+  constructor({ api, config }: { api: API; config?: { availableDesigns?: Record<string, string> } }) {
     this.api = api
+    this.availableDesigns = config?.availableDesigns ?? Hyperlink.defaultDesigns
     this.selection = new SelectionUtils()
   }
 
@@ -89,7 +92,7 @@ export default class Hyperlink {
     make.option(this.nodes.selectDesign, '', this.api.i18n.t('Style'), {
       style: 'opacity: 0.5',
     })
-    for (const [key, value] of Object.entries(this.availableDesign)) {
+    for (const [key, value] of Object.entries(this.availableDesigns)) {
       make.option(this.nodes.selectDesign, value, key)
     }
 
