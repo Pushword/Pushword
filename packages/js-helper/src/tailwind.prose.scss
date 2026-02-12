@@ -31,6 +31,11 @@
   color: #fff !important;
 }
 
+.link-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary);
+}
+
 .link-btn-outline {
   padding: 6px 12px;
   margin-bottom: 0;
@@ -46,6 +51,11 @@
 .link-btn-outline:hover {
   color: #fff !important;
   background-color: var(--primary);
+}
+
+.link-btn-outline:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary);
 }
 
 /**

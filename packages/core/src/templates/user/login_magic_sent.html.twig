@@ -8,7 +8,7 @@
         {{ 'magicLinkSentMessage'|trans({'%email%': email}) }}
     </div>
     <p class="text-gray-600">{{ 'magicLinkCheckSpam'|trans }}</p>
-    <a href="{{ path('pushword_login') }}" class="inline-block text-primary hover:underline">
+    <a href="{{ path('pushword_login') }}" class="inline-block text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">
         {{ 'backToLogin'|trans }}
     </a>
 </div>

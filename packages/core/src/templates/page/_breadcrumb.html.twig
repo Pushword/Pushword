@@ -1,7 +1,7 @@
 
 {% if page.parentPage is defined and page.parentPage is not null %}
     {% if page.parentPage.parentPage is not null %} {# We don't generate a breadcrumb for only one parent Page #}
-        <nav aria-label="breadcrumb" class="{{ breadcrumb_class|default('max-w-3xl p-3 mx-auto text-sm font-light text-gray-700 dark:text-gray-300') }}">
+        <nav aria-label="breadcrumb" class="{{ breadcrumb_class|default('max-w-3xl p-3 mx-auto text-sm font-normal text-gray-700 dark:text-gray-300') }}">
             <ol itemscope itemtype="https://schema.org/BreadcrumbList">
                 {{ _self.breadcrumbPart(page.parentPage, true) }}
                 <!--<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" class="inline-block"> › <span itemprop="name">{{ pw(page).name|raw|striptags }}</span>
@@ -16,7 +16,7 @@
         {{ _self.breadcrumbPart(page.parentPage) }}
     {% endif %}
     <li class="inline-block line-camp-1" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-        <a itemprop="item" href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}" class="hover:underline">
+        <a itemprop="item" href="{{ (page.slug == 'homepage' ? homepage() : page(page.slug)) }}" class="hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">
             <span itemprop="name">{{ pw(page).name|raw|striptags }}</span></a>
             <meta itemprop="position" content="{{ breadcrumb_list_position(page) }}">
         {% if first != true %}<span class="pr-1">›</span>{% endif %}

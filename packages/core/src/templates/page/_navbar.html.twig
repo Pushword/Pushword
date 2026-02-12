@@ -37,7 +37,7 @@
     {{ (navbar_container is defined ? ('<div class="' ~ navbar_container|default('') ~ '">') : '')|raw }}
 
         {% block logo %}
-            <a class="{{ logo.class|default('block mr-1 font-mono text-xl font-bold text-primary hover:text-secondary p-4') }}" href="{{ logo.href|default(page('homepage')) }}"{% if logo.style is defined %} style="{{ logo.style }}"{% endif %}>{{ logo.alt|default(app_name)|raw }}</a>
+            <a class="{{ logo.class|default('block mr-1 font-mono text-xl font-bold text-primary hover:text-secondary p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded') }}" href="{{ logo.href|default(page('homepage')) }}"{% if logo.style is defined %} style="{{ logo.style }}"{% endif %}>{{ logo.alt|default(app_name)|raw }}</a>
         {% endblock %}
 
         {% block toggle_button %}
@@ -54,7 +54,7 @@
 
         {% block nav_list %}
             {% if navbar_items is defined and navbar_items is not empty %}
-                <nav id="navbar-links" class="{{ navbar_nav_class|raw }}">
+                <nav id="navbar-links" aria-label="{{ 'mainNavigation'|trans }}" class="{{ navbar_nav_class|raw }}">
                     {% for anchor, item in navbar_items %}
 
                         {# some navbar normalization #}
@@ -69,7 +69,7 @@
                                 {{ (item.anchor ?? anchor)|raw }}
                             </span>
                         {% else %}
-                          {% set itemAttr = ({class: navbar_nav_item_class ?? 'text-gray-800 hover:text-primary'})|merge(item is iterable ? (item.attr ?? item|filter((v, k) => k != 'anchor' and k != 'obfuscate' and k != 'encrypt')) : {href: item}) %}
+                          {% set itemAttr = ({class: navbar_nav_item_class ?? 'text-gray-800 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded'})|merge(item is iterable ? (item.attr ?? item|filter((v, k) => k != 'anchor' and k != 'obfuscate' and k != 'encrypt')) : {href: item}) %}
                           {{ link(item.anchor ?? anchor, itemAttr, item.obfuscate ?? item.encrypt ?? false) }}
                         {% endif %}
                     {% endfor %}

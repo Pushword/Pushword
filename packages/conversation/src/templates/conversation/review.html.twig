@@ -24,7 +24,7 @@
         .setEntityId(review.id)
       %}
       <a href="{{ editUrl }}"
-         class="inline-block rounded p-1 text-gray-300 hover:bg-gray-300 hover:text-gray-900 float-right"
+         class="inline-block rounded p-1 text-gray-300 hover:bg-gray-300 hover:text-gray-900 float-right focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
          title="{% trans %}adminReviewEdit{% endtrans %}">
         {{ svg('edit', {class: 'fill-current w-3.5'}) }}
         <span class="sr-only">{% trans %}adminReviewEdit{% endtrans %}</span>

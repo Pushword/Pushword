@@ -122,7 +122,7 @@ class UserControllerTest extends WebTestCase
         $this->client->submit($form);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('.bg-red-200');
+        self::assertSelectorExists('.bg-red-50');
     }
 
     public function testSetPasswordWithTooShortPassword(): void
@@ -141,7 +141,7 @@ class UserControllerTest extends WebTestCase
         $this->client->submit($form);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('.bg-red-200');
+        self::assertSelectorExists('.bg-red-50');
     }
 
     public function testSetPasswordSuccessfully(): void

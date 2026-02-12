@@ -47,9 +47,9 @@
         .setEntityId(review.id)
       %}
       <a href="{{ editUrl }}"
-         class="inline-block rounded p-1 text-gray-300  hover:bg-gray-300 hover:text-gray-900 float-right"
+         class="inline-block rounded p-1 text-gray-300 hover:bg-gray-300 hover:text-gray-900 float-right focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
          title="{% trans %}adminReviewEdit{% endtrans %}">
-        {{ svg('edit', {class: 'fill-current', style: 'width:14px'}) }}
+        {{ svg('edit', {class: 'fill-current w-3.5'}) }}
         <span class="sr-only">{% trans %}adminReviewEdit{% endtrans %}</span>
       </a>
     {% endif %}
@@ -92,10 +92,10 @@
   <button
     type="button"
     @click="expanded = !expanded"
-    class="w-full text-center italic mt-3 text-sm text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+    class="w-full text-center italic mt-3 text-sm text-gray-500 hover:text-gray-700 transition-colors motion-reduce:transition-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
     x-show="isTruncated"
   >
-    <span x-show="!expanded">
+    <span x-show="!expanded" x-cloak>
       {% trans %}conversationReviewSeeMore{% endtrans %} <span class="inline-block">▼</span>
     </span>
     <span x-show="expanded" x-cloak>

@@ -1,7 +1,7 @@
 {% block before %}
 <div class="show-more {{ showMoreExtraClass|default('') }}">
   <input type="checkbox" id="{{ id }}" class="hidden show-hide-input">
-  <div class="overflow-hidden transition-all delay-75 duration-300" data-acinb="max-h-[250px]" id="csm_{{ id }}">
+  <div class="overflow-hidden transition-all delay-75 duration-300 motion-reduce:transition-none" data-acinb="max-h-64" id="csm_{{ id }}">
 {% endblock %}
 
 {% block after %}
@@ -14,7 +14,7 @@
     </div>
   </div>
   <div
-    class="show-more-btn transition-all delay-75 duration-300 text-center pt-[80px] -mt-[100px] h-[100px] bg-linear-to-b from-transparent {{ showMoreBackground|default('via-white to-white') }} relative z-10 mb-14 hidden cursor-pointer"
+    class="show-more-btn transition-all delay-75 duration-300 motion-reduce:transition-none text-center pt-20 -mt-24 h-24 bg-linear-to-b from-transparent {{ showMoreBackground|default('via-white to-white') }} relative z-10 mb-14 hidden cursor-pointer"
     data-acinb="block"
     onclick="window.ShowMore.open(this)">
     {# ↧ #}

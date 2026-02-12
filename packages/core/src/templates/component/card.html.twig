@@ -35,7 +35,7 @@
 
 {% block card %}
 <article
-  class="overflow-hidden rounded-lg shadow-xl transition-all duration-75 ease-in-out hover:shadow {{ isClickable ? 'clickable cursor-pointer' : '' }}">
+  class="overflow-hidden rounded-lg shadow transition-all duration-75 ease-in-out motion-reduce:transition-none hover:shadow-md {{ isClickable ? 'clickable cursor-pointer' : '' }}">
   {% if image %}
     {{ include('@PushwordCore/component/image.html.twig', {
       image: media_from_string(image),

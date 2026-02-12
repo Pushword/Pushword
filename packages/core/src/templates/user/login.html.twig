@@ -5,16 +5,22 @@
 {% block main_content %}
 {% if app.user %}
   <p class="mb-3">
-    {{ 'securityLoginLoggedInAs'|trans({'%username%': app.user.username}) }}, <a href="{{ path('pushword_logout') }}">{{ 'securityLogout'|trans }}</a>
+    {{ 'securityLoginLoggedInAs'|trans({'%username%': app.user.username}) }}, <a href="{{ path('pushword_logout') }}" class="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">{{ 'securityLogout'|trans }}</a>
   </p>
 {% endif %}
 
 {% for message in app.flashes('error') %}
-  <p role="alert" class="p-5 mb-4 text-red-500 bg-red-200">{{ message|trans }}</p>
+  <div role="alert" id="login-error" class="flex items-center gap-3 p-5 mb-4 text-red-800 bg-red-50 rounded">
+    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/></svg>
+    <span>{{ message|trans }}</span>
+  </div>
 {% endfor %}
 
 {% if error %}
-  <p role="alert" class="p-5 mb-4 text-red-500 bg-red-200">{{ error.messageKey|trans(error.messageData) }}</p>
+  <div role="alert" id="login-error" class="flex items-center gap-3 p-5 mb-4 text-red-800 bg-red-50 rounded">
+    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/></svg>
+    <span>{{ error.messageKey|trans(error.messageData) }}</span>
+  </div>
 {% endif %}
 
 {% if step|default('email') == 'email' %}
@@ -22,7 +28,8 @@
   <label for="inputEmail" class="sr-only">{{ 'securityLoginEmail'|trans }}</label>
   <input type="email" id="inputEmail" name="email" value="{{ last_username }}" required autofocus
          class="block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md shadow-xs sm:text-sm focus:outline-hidden focus:ring-primary focus:border-primary"
-         placeholder="{{ 'securityLoginEmail'|trans }}">
+         placeholder="{{ 'securityLoginEmail'|trans }}"
+         {% if error or app.flashes('error')|length > 0 %}aria-describedby="login-error" aria-invalid="true"{% endif %}>
 
   <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
@@ -76,7 +83,7 @@
       <input type="checkbox" name="_remember_me" value="on" class="w-4 h-4 border-gray-300 rounded text-primary focus:ring-primary" checked>
       {{ 'securityLoginRememberMe'|trans }}
     </label>
-    <a href="{{ path('pushword_login') }}" class="text-sm text-primary hover:underline">{{ 'securityLoginChangeEmail'|trans }}</a>
+    <a href="{{ path('pushword_login') }}" class="text-sm text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">{{ 'securityLoginChangeEmail'|trans }}</a>
   </div>
 
   <button type="submit" class="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md bg-primary group hover:opacity-75 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">

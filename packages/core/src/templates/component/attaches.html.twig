@@ -10,9 +10,9 @@
     </div>
     <div class="grow pt-3" style="flex-grow: 1">
         <div class="font-bold">{{ title|raw }}</div>
-        <div class="font-light">{{ filesize(size) }}{{ 'bytes_abbreviation'|trans }}</div>
+        <div class="text-sm text-gray-500">{{ filesize(size) }}{{ 'bytes_abbreviation'|trans }}</div>
     </div>
 
-    {{ link(svg('download', {class: 'w-10 fill-current'}), url, {class: 'd-block text-gray-600 p-3', download: url}) }}
+    {{ link(svg('download', {class: 'w-10 fill-current'}), url, {class: 'block text-gray-600 p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded', download: url}) }}
 </div>
 {% endapply %}
