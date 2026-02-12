@@ -235,7 +235,9 @@ final class UserSyncTest extends KernelTestCase
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.entity_manager');
 
-        $user = new User();
+        /** @var class-string<User> $userClass */
+        $userClass = self::getContainer()->getParameter('pw.entity_user');
+        $user = new $userClass();
         $user->email = $email;
         $user->locale = $locale;
         $user->setRoles($roles);

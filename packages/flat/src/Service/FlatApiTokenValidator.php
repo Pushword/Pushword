@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Service;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 final readonly class FlatApiTokenValidator
 {
     public function __construct(
-        private EntityManagerInterface $em,
+        private UserRepository $userRepository,
     ) {
     }
 
@@ -28,7 +28,7 @@ final readonly class FlatApiTokenValidator
             return null;
         }
 
-        return $this->em->getRepository(User::class)->findOneBy(['apiToken' => $token]);
+        return $this->userRepository->findOneBy(['apiToken' => $token]);
     }
 
     /**

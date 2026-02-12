@@ -9,9 +9,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
+use Pushword\Core\Entity\EntityClassRegistry;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Entity\User;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -58,7 +58,7 @@ final readonly class AdminMenu
 
         yield [
             'weight' => 700,
-            'item' => MenuItem::linkToCrud('adminLabelUsers', 'fas fa-users', User::class),
+            'item' => MenuItem::linkToCrud('adminLabelUsers', 'fas fa-users', EntityClassRegistry::getUserClass()),
         ];
 
         yield [

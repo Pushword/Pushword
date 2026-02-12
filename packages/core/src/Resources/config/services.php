@@ -11,6 +11,7 @@ use Pushword\Core\Component\EntityFilter\FilterRegistry;
 use Pushword\Core\Content\ContentPipelineFactory;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Repository\UserRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\Email\NotificationEmailSender;
 use Pushword\Core\Service\MediaStorageAdapter;
@@ -78,6 +79,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->public();
 
     $services->set(MediaRepository::class)
+        ->public();
+
+    $services->set(UserRepository::class)
+        ->arg('$entityClass', '%pw.entity_user%')
         ->public();
 
     $services->set(ContentPipelineFactory::class)

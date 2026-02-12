@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use LogicException;
 use Override;
+use Pushword\Core\Entity\EntityClassRegistry;
 use Pushword\Core\Entity\User;
 
 /** @extends AbstractAdminCrudController<User> */
@@ -23,7 +24,7 @@ class UserCrudController extends AbstractAdminCrudController
 
     public static function getEntityFqcn(): string
     {
-        return User::class;
+        return EntityClassRegistry::getUserClass();
     }
 
     #[Override]
@@ -52,7 +53,7 @@ class UserCrudController extends AbstractAdminCrudController
     private function getFormFieldsDefinition(): iterable
     {
         $instance = $this->getContext()?->getEntity()?->getInstance();
-        $this->setSubject($instance instanceof User ? $instance : new User());
+        $this->setSubject($instance instanceof User ? $instance : new (EntityClassRegistry::getUserClass())());
         $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
 
         $fields = array_replace(

@@ -4,6 +4,7 @@ conversation:
   translation_deepl_use_free_api: true
 
 pushword:
+  entity_user: App\Entity\User
   apps:
     - hosts:
         - localhost.dev

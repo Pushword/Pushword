@@ -42,7 +42,9 @@ final class FlatLockApiControllerTest extends WebTestCase
 
         // Create test user with API token
         $this->testToken = bin2hex(random_bytes(32));
-        $this->testUser = new User();
+        /** @var class-string<User> $userClass */
+        $userClass = self::getContainer()->getParameter('pw.entity_user');
+        $this->testUser = new $userClass();
         $this->testUser->email = 'api-test-'.uniqid().'@example.com';
         $this->testUser->setPassword('hashed-password');
         $this->testUser->apiToken = $this->testToken;

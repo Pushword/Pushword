@@ -19,7 +19,8 @@ class UserRepository extends ServiceEntityRepository implements ObjectRepository
 {
     public function __construct(
         ManagerRegistry $registry,
+        string $entityClass = User::class,
     ) {
-        parent::__construct($registry, User::class);
+        parent::__construct($registry, $entityClass);
     }
 }

@@ -140,7 +140,9 @@ final class FlatApiTokenValidatorTest extends KernelTestCase
 
     private function createUserWithToken(string $token): User
     {
-        $user = new User();
+        /** @var class-string<User> $userClass */
+        $userClass = self::getContainer()->getParameter('pw.entity_user');
+        $user = new $userClass();
         $user->email = 'test-api-'.uniqid().'@example.com';
         $user->setPassword('hashed-password');
         $user->apiToken = $token;

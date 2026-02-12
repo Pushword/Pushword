@@ -24,11 +24,14 @@ final class UserSync
 
     private int $exportedCount = 0;
 
+    /** @param class-string<User> $userClass */
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $em,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
+        #[Autowire('%pw.entity_user%')]
+        private readonly string $userClass = User::class,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -128,7 +131,7 @@ final class UserSync
      */
     private function createUser(array $userData): void
     {
-        $user = new User();
+        $user = new ($this->userClass)();
         $user->email = $userData['email'];
         $user->setRoles($userData['roles'] ?? [User::ROLE_DEFAULT]);
         $user->locale = $userData['locale'] ?? 'en';

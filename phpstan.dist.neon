@@ -52,3 +52,5 @@ parameters:
     ignoreErrors:
         - '#Short ternary operator is not allowed#'
         # Symfony 7.4+ TreeBuilder generics are not well supported by PHPStan
+        # Expected with resolve_target_entities remapping core User to App\Entity\User
+        - '#type mapping mismatch.*Pushword\\Core\\Entity\\User.*App\\Entity\\User#'

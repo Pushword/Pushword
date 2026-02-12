@@ -9,6 +9,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(name: 'pw:user:create', description: 'Create a new user')]
@@ -16,13 +17,18 @@ final readonly class UserCreateCommand
 {
     use AskIfNotSettedTrait;
 
-    public function __construct(private EntityManagerInterface $em, private UserPasswordHasherInterface $passwordEncoder)
-    {
+    /** @param class-string<User> $userClass */
+    public function __construct(
+        private EntityManagerInterface $em,
+        private UserPasswordHasherInterface $passwordEncoder,
+        #[Autowire('%pw.entity_user%')]
+        private string $userClass = User::class,
+    ) {
     }
 
     protected function createUser(string $email, string $password, string $role, ?string $username = null): User
     {
-        $user = new User();
+        $user = new ($this->userClass)();
         $user->email = $email;
         $user->username = $username;
         $user->setPassword($this->passwordEncoder->hashPassword($user, $password));

@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\User;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -9,7 +10,6 @@ use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Entity\User;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Yaml\Yaml;
