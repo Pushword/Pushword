@@ -22,7 +22,7 @@ final class UserSync
 
     private int $skippedCount = 0;
 
-    private int $exportedCount = 0;
+    private int $deletedCount = 0;
 
     /** @param class-string<User> $userClass */
     public function __construct(
@@ -46,12 +46,13 @@ final class UserSync
         $this->importedCount = 0;
         $this->updatedCount = 0;
         $this->skippedCount = 0;
-        $this->exportedCount = 0;
+        $this->deletedCount = 0;
 
         $configPath = $this->projectDir.'/config/users.yaml';
         if (! file_exists($configPath)) {
-            $this->createDefaultUsersYaml($configPath);
-            $this->output?->writeln('<info>Created default users.yaml</info>');
+            $this->output?->writeln('<comment>No config/users.yaml found — skipping user sync</comment>');
+
+            return;
         }
 
         $config = Yaml::parseFile($configPath);
@@ -68,35 +69,9 @@ final class UserSync
             $users = [];
         }
 
-        // First, export DB users to YAML (add missing ones)
-        $yamlEmails = array_column($users, 'email');
-        $dbUsers = $this->userRepository->findAll();
-        $yamlModified = false;
-
-        foreach ($dbUsers as $dbUser) {
-            if (! \in_array($dbUser->email, $yamlEmails, true)) {
-                $userData = [
-                    'email' => $dbUser->email,
-                    'roles' => array_values(array_diff($dbUser->getRoles(), [User::ROLE_DEFAULT])),
-                    'locale' => $dbUser->locale ?? 'en',
-                ];
-                if (null !== $dbUser->username && '' !== $dbUser->username) {
-                    $userData['username'] = $dbUser->username;
-                }
-
-                $users[] = $userData;
-                $yamlModified = true;
-                ++$this->exportedCount;
-                $this->output?->writeln('Exported to YAML: '.$dbUser->email);
-            }
-        }
-
-        if ($yamlModified) {
-            /** @var array<array{email: string, roles?: string[], locale?: string, username?: string|null}> $users */
-            $this->writeUsersYaml($configPath, $users);
-        }
-
-        // Then, import from YAML to DB (update existing ones)
+        // Import from YAML to DB (create/update)
+        /** @var string[] $yamlEmails */
+        $yamlEmails = [];
         foreach ($users as $userData) {
             if (! \is_array($userData) || ! isset($userData['email']) || ! \is_string($userData['email'])) {
                 $this->logger?->warning('Skipping user entry without valid email');
@@ -106,6 +81,7 @@ final class UserSync
 
             /** @var array{email: string, roles?: string[], locale?: string, username?: string} $userData */
             $email = $userData['email'];
+            $yamlEmails[] = $email;
             $existingUser = $this->userRepository->findOneBy(['email' => $email]);
 
             if ($existingUser instanceof User) {
@@ -115,13 +91,24 @@ final class UserSync
             }
         }
 
+        // Delete DB users not in YAML
+        $dbUsers = $this->userRepository->findAll();
+        foreach ($dbUsers as $dbUser) {
+            if (! \in_array($dbUser->email, $yamlEmails, true)) {
+                $this->logger?->info('Deleted user: '.$dbUser->email);
+                $this->output?->writeln('Deleted user: '.$dbUser->email);
+                $this->em->remove($dbUser);
+                ++$this->deletedCount;
+            }
+        }
+
         $this->em->flush();
 
         $this->output?->writeln(\sprintf(
-            '<info>Users: %d exported to YAML, %d imported to DB, %d updated, %d skipped</info>',
-            $this->exportedCount,
+            '<info>Users: %d created, %d updated, %d deleted, %d skipped</info>',
             $this->importedCount,
             $this->updatedCount,
+            $this->deletedCount,
             $this->skippedCount
         ));
     }
@@ -203,48 +190,8 @@ final class UserSync
         return $this->skippedCount;
     }
 
-    public function getExportedCount(): int
+    public function getDeletedCount(): int
     {
-        return $this->exportedCount;
-    }
-
-    private function createDefaultUsersYaml(string $configPath): void
-    {
-        $defaultContent = <<<'YAML'
-# Users configuration for flat-file sync
-# Users defined here will be synced to the database (passwords stay in DB only)
-# Format:
-#   users:
-#     - email: admin@example.tld
-#       roles: [ROLE_SUPER_ADMIN]
-#       locale: en
-#       username: Admin
-
-users: []
-YAML;
-
-        file_put_contents($configPath, $defaultContent);
-    }
-
-    /**
-     * @param array<array{email: string, roles?: string[], locale?: string, username?: string|null}> $users
-     */
-    private function writeUsersYaml(string $configPath, array $users): void
-    {
-        $header = <<<'YAML'
-# Users configuration for flat-file sync
-# Users defined here will be synced to the database (passwords stay in DB only)
-# Format:
-#   users:
-#     - email: admin@example.tld
-#       roles: [ROLE_SUPER_ADMIN]
-#       locale: en
-#       username: Admin
-
-
-YAML;
-
-        $content = $header.Yaml::dump(['users' => $users], 3, 2, Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE);
-        file_put_contents($configPath, $content);
+        return $this->deletedCount;
     }
 }

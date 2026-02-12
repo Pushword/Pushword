@@ -131,6 +131,10 @@ final readonly class FlatSyncNotifier
             return null;
         }
 
+        if (! $request->hasSession()) {
+            return null;
+        }
+
         $session = $request->getSession();
         if (! $session instanceof FlashBagAwareSessionInterface) {
             return null;

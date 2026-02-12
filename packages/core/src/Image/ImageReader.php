@@ -85,10 +85,19 @@ final readonly class ImageReader
             : $media;
 
         try {
-            return $this->interventionManager->read($path);
+            $image = $this->interventionManager->read($path);
         } catch (Exception) {
             throw new Exception($this->resolvedDriver.' cannot read image `'.$path.'`');
         }
+
+        // Vips loads images in sequential mode by default which causes
+        // "out of order read" errors when applying transformations.
+        // Copy into memory to allow random access.
+        if ($image->core() instanceof VipsCore) {
+            VipsCore::ensureInMemory($image->core());
+        }
+
+        return $image;
     }
 
     public function getResolvedDriver(): string

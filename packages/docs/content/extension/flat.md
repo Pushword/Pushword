@@ -49,14 +49,14 @@ php bin/console pw:flat:sync [host] [options]
 
 **Options:**
 
-| Option | Description |
-|--------|-------------|
-| `host` | Optional host to sync (uses default app if not provided) |
-| `--mode`, `-m` | Sync direction: `auto` (default), `import`, `export` |
-| `--entity` | Entity type: `page`, `media`, `conversation`, `all` (default) |
-| `--force`, `-f` | Force overwrite even if files are newer than DB |
-| `--skip-id` | Skip adding IDs to markdown files and CSV indexes |
-| `--no-backup` | Disable automatic database backup before import |
+| Option          | Description                                                   |
+| --------------- | ------------------------------------------------------------- |
+| `host`          | Optional host to sync (uses default app if not provided)      |
+| `--mode`, `-m`  | Sync direction: `auto` (default), `import`, `export`          |
+| `--entity`      | Entity type: `page`, `media`, `conversation`, `all` (default) |
+| `--force`, `-f` | Force overwrite even if files are newer than DB               |
+| `--skip-id`     | Skip adding IDs to markdown files and CSV indexes             |
+| `--no-backup`   | Disable automatic database backup before import               |
 
 **Examples:**
 
@@ -68,7 +68,7 @@ php bin/console pw:flat:sync
 php bin/console pw:flat:sync --mode=import
 
 # Force export (database → flat files)
-php bin/console pw:flat:sync -m export
+php bin/console pw:flat:sync --mode=export
 
 # Sync only pages on a specific host
 php bin/console pw:flat:sync example.tld --mode=import --entity=page
@@ -99,6 +99,46 @@ php bin/console pw:flat:unlock [host]
 - **TTL**: Locks expire after 30 minutes by default (configurable)
 - **Admin warning**: When locked, admin users see a warning message but can still edit (risk of conflict)
 
+### Webhook Lock API
+
+For CI/CD workflows and external systems, a REST API allows managing locks programmatically. Webhook locks are stricter than manual locks: they **block admin saves entirely** (not just a warning).
+
+Authentication uses a **Bearer token** stored in the user's `apiToken` field.
+
+| Endpoint           | Method | Description            |
+| ------------------ | ------ | ---------------------- |
+| `/api/flat/lock`   | POST   | Acquire a webhook lock |
+| `/api/flat/unlock` | POST   | Release a webhook lock |
+| `/api/flat/status` | GET    | Check lock status      |
+
+**Examples:**
+
+```bash
+# Acquire a lock (default TTL: 1 hour)
+curl -X POST https://example.com/api/flat/lock \
+  -H "Authorization: Bearer {api_token}" \
+  -H "Content-Type: application/json" \
+  -d '{"host": "example.com", "reason": "Bulk update", "ttl": 7200}'
+
+# Release a lock
+curl -X POST https://example.com/api/flat/unlock \
+  -H "Authorization: Bearer {api_token}" \
+  -H "Content-Type: application/json" \
+  -d '{"host": "example.com"}'
+
+# Check status
+curl "https://example.com/api/flat/status?host=example.com" \
+  -H "Authorization: Bearer {api_token}"
+```
+
+**Key behaviors:**
+
+- Webhook locks default to **1 hour TTL** (vs 30 minutes for manual/auto locks)
+- Admin saves on locked pages throw an `AccessDeniedHttpException`
+- `pw:flat:sync` is blocked entirely when a webhook lock is active
+- Cannot override an existing non-expired webhook lock
+- Only webhook locks can be released via the API (not manual/CLI locks)
+
 ### Conflict Resolution
 
 When both flat files and database are modified since the last sync, a conflict occurs. The system uses a **"most recent wins"** strategy:
@@ -116,6 +156,144 @@ php bin/console pw:flat:conflicts:clear [host] [--dry]
 
 - Markdown: `page~conflict-abc123.md` (contains the losing version with a comment header)
 - CSV: `index.conflicts.csv` (appends conflict details for media/conversation)
+
+## Sync Behavior Reference
+
+### Execution Pipeline
+
+When `pw:flat:sync` runs, it follows this pipeline:
+
+1. **Webhook lock check** — if a webhook lock is active for the host, sync is blocked entirely
+2. **PID concurrency check** — only one sync process can run at a time (PID file in `var/`)
+3. **Database backup** — before import, `var/app.db` is copied to `var/app.db~YYYYMMDDHHMMSS` (disable with `--no-backup`)
+4. **Host resolution** — if no `host` argument, syncs ALL configured hosts sequentially
+5. **Mode dispatch** — `auto` runs freshness detection then delegates to import or export
+
+### Auto Mode Detection
+
+In `auto` mode (the default), the system decides whether to import or export:
+
+**For pages:** scans all `.md` files recursively. If any file's `mtime` is newer than its matching page's `updatedAt` in the database, or if a `.md` file has no corresponding page, it triggers **import**. Otherwise it triggers **export**.
+
+**For media:** compares SHA-1 file hashes against stored hashes in the database. If any file's hash differs from the DB, or if a file has no matching media entity, it triggers **import**. Otherwise it triggers **export**.
+
+Non-`.md` files (`.txt`, `.csv`, etc.) do NOT influence page auto-detection. Only `.md` files are considered.
+
+### Concurrency Prevention
+
+- A **PID file** is created in `var/` when sync starts
+- If another `pw:flat:sync` is already running (PID file exists and process is alive), the command exits immediately
+- **Stale PID files** (process no longer running) are automatically cleaned up
+- The PID file is removed in a `finally` block after sync completes
+
+### Page Sync
+
+#### Import (flat to database)
+
+1. **Redirections first**: `redirection.csv` is loaded and imported before pages
+2. **Markdown import**: all `.md` files are parsed (YAML frontmatter + body)
+3. **Deferred properties**: `parentPage`, `translations`, `extendedPage` are resolved after all pages exist
+4. **Deletion**: pages in DB with no matching `.md` file AND no matching `redirection.csv` row are **deleted**
+5. **Index regeneration**: `index.csv` / `iDraft.csv` are regenerated to reflect DB state
+
+**Important behaviors:**
+
+- `index.csv` is **read-only during import** — editing it has no effect; `.md` files are the source of truth
+- Backup files (`*.md~`) are **ignored** during import
+- With `--force`, ALL host pages are **deleted before importing** (fresh start)
+- `publishedAt: draft` in frontmatter maps to `null` (unpublished)
+
+#### Export (database to flat)
+
+1. Each page is exported as a `.md` file with YAML frontmatter
+2. Pages with redirections go to `redirection.csv` (their `.md` files are deleted)
+3. Published pages are listed in `index.csv`, drafts in `iDraft.csv`
+4. **Smart skip**: if exported content matches existing file content, the file is not rewritten
+5. File `mtime` is synced to `page.updatedAt` to prevent false freshness detection on next auto run
+
+### Media Sync
+
+#### Import (flat to database)
+
+1. **CSV index loaded** from storage (via Flysystem)
+2. **File validation**: checks that files referenced in CSV actually exist
+3. **Rename preparation**: if CSV has different `fileName` for an existing ID, the file is renamed in storage
+4. **Hash-based rename detection**: if a file on disk has the same SHA-1 hash as a missing media entity, the existing entity's filename is updated (no duplicate created)
+5. **Duplicate detection**: if a new file has the same SHA-1 hash as an existing media, the duplicate file is deleted and the existing entity's `fileNameHistory` is updated
+6. **Deletion**: media entities in DB whose IDs are NOT in the CSV are **deleted** (only if CSV contained IDs)
+7. **Storage import**: files from the Flysystem storage are imported (hash-based skip for unchanged)
+8. **Local dir import**: files from `{content_dir}/media/` are copied to storage then imported
+9. **Oversized image resize**: images exceeding 1980x1280 are automatically resized down (preserving aspect ratio), then background cache generation is triggered
+10. **Index regeneration**: `media/index.csv` is regenerated to reflect DB state
+
+#### Media Edge Cases
+
+- **New file in media dir, not in CSV** — imported as new media entity. CSV regenerated to include it.
+- **File deleted from disk, CSV row remains** — the missing file is removed from the index, so its ID is no longer tracked. The media entity is **deleted from DB**. Row removed from regenerated CSV.
+- **CSV row removed, file still exists** — media entity **deleted from DB**. Physical file also **deleted** via Doctrine's `preRemove` listener.
+- **File renamed on disk, CSV not updated** — hash-based detection: SHA-1 hash is compared against media with missing files. If a match is found, the existing entity's filename is updated (no duplicate created).
+- **Filename changed in CSV (same ID), file not renamed** — file is **automatically renamed** in storage via `prepareFileRenames()`.
+- **File content modified** — SHA-1 hash differs from DB — media re-imported with updated hash.
+- **Lock/temp files** (`.~lock.*`, `~$*`) — **always skipped**, never imported.
+- **New file with same hash as existing media** — duplicate detected by SHA-1 hash. The new file is **deleted**, and the existing entity's `fileNameHistory` is updated. No new entity created.
+- **Oversized image imported** — images exceeding 1980x1280 are automatically resized down (preserving aspect ratio). Background cache generation is triggered for responsive variants + WebP.
+- **Duplicate filenames in CSV** — handled gracefully, first entry wins.
+
+#### media/index.csv Format
+
+```csv
+id,fileName,alt,tags,width,height,ratio,fileNameHistory,alt_en,alt_fr
+1,image.jpg,Base alt,photo,800,600,1.33,old-image.jpg,English alt,French alt
+2,doc.pdf,A document,document,,,,,
+```
+
+- `fileNameHistory`: comma-separated previous filenames (for rename tracking)
+- `alt_*` columns: localized alt texts, auto-detected by locale suffix
+- Extra columns are stored as custom properties
+
+### User Sync
+
+User sync is **opt-in**: it only activates when `config/users.yaml` exists. If the file is missing, user sync is skipped entirely.
+
+```yaml
+users:
+  - email: admin@example.tld
+    roles: [ROLE_SUPER_ADMIN]
+    locale: en
+    username: Admin
+```
+
+- **YAML is the source of truth** — users not in YAML are deleted from the database
+- **Passwords are never synced** — they remain DB-only
+- New YAML users are created without passwords (use magic link auth)
+- Existing users are updated (roles, locale, username) but password is preserved
+- If `config/users.yaml` does not exist, no users are created, updated, or deleted
+
+### Idempotency
+
+Running sync twice in a row with no changes produces **zero operations**:
+
+- **Page import**: files whose `mtime` is older than page's `updatedAt` are skipped
+- **Page export**: files whose content matches DB content are skipped (smart diff)
+- **Media import**: files whose SHA-1 hash matches DB hash are skipped
+- **Media export**: CSV is regenerated but reflects identical data
+
+### Database Backup
+
+Before any import operation, the SQLite database is backed up:
+
+- Backup file: `var/app.db~YYYYMMDDHHMMSS`
+- Disable with `--no-backup`
+- To restore: copy the backup file back to `var/app.db`
+
+### Multi-Host Sync
+
+When running without `--host`:
+
+- ALL configured hosts are synced sequentially
+- Each host has its own content directory, lock file, and sync state
+- Pages from host A are never written to host B's content directory
+- Sync state (timestamps, conflicts) is tracked **per host**
 
 ## Generate AI index
 
@@ -155,54 +333,49 @@ Contains media metadata with the following columns:
 
 ### Write
 
-By default, the content may be organized in `content/%main_host%/` dir and image may be in `content/%main_host%/media` or in `media`
+By default, the content is organized in `content/%main_host%/` and images in `content/%main_host%/media` or in `media/`.
 
-Eg:
+Example structure:
 
 ```
-content
+content/
 content/homepage.md
-content/kitchen-skink.md
-content/other-example-kitchen-sink.md
+content/kitchen-sink.md
+content/other-page.md
 content/en/homepage.md
-content/en/kitchen-skink.md
-content/media/default/illustation.jpg
-content/media/default/illustation.jpg.yaml
+content/en/kitchen-sink.md
+content/media/illustration.jpg
 ```
 
-#### `kitchen-sink.md` may contain :
+#### `kitchen-sink.md` example:
 
 ```yaml
-
 ---
-
 h1: 'Welcome in Kitchen Sink'
 locale: fr
 translations:
-  - en/kitchen-skink
-main_image: illustration.jpg
-images:
-  - illustration.jpg
-parent:
-  - homepage
+  - en/kitchen-sink
+mainImage: illustration.jpg
+parentPage: homepage
 metaRobots: 'no-index'
 name: 'Kitchen Sink'
-title: 'Kitchen Sink - best google restult'
-#created_at: 'now' # see https://www.php.net/manual/fr/datetime.construct.php
-#updated_at: 'now'
-
+title: 'Kitchen Sink - best google result'
+tags: 'demo example'
+publishedAt: '2025-01-15 10:00'
 ---
-
 My Page content Yeah !
 ```
 
-Good to know :
+**Key points:**
 
-- **camel case** or **undescore case** work
-- link to page must use **slug**
-- **slug** is generate from file path (removing `.md`) and can be override by a property in _yaml front_
-- `homepage` 's file could be named `index.md` or `homepage.md`
-- Other properties will be added to `customProperties`
+- Both **camelCase** and **underscore_case** work for property names (`parentPage` and `parent_page` are equivalent)
+- `parent` is automatically normalized to `parentPage`
+- Links to pages must use **slug** references
+- **slug** is derived from the file path (removing `.md`) and can be overridden with a `slug` property in the frontmatter
+- `homepage` can be named `index.md` or `homepage.md`
+- `publishedAt: draft` sets the page as unpublished (`null` in DB)
+- Unknown properties are stored in `customProperties`
+- `mainImage` references a media filename (not a path)
 
 ### Translations (hreflang) Sync
 
@@ -218,76 +391,73 @@ The `translations` property handles the bidirectional many-to-many relationship 
 
 ```yaml
 # In fr/about.md - adds en/about as translation
-
 ---
-
 translations:
   - en/about
-
 ---
-
 # In en/about.md - no translations key, existing links preserved
-
 ---
-
 h1: About Us
-
 ---
-
 ```
 
 With this setup, both pages will be linked as translations of each other after sync.
 
 To remove a translation, you must explicitly set an empty array in **both** files, or remove the translation from **one** file while the other file doesn't have a translations key (letting the removal propagate).
 
-## Media Optimization
+### Common Tasks
 
-When uploading media through the admin interface, Pushword automatically:
+Here is what happens for typical editing workflows after running `pw:flat:sync --mode=import`:
 
-**For images:**
+#### Pages
 
-- Scales down to max 1980x1280 pixels (browser-side, before upload)
-- Generates responsive variants (xs, sm, md, lg, xl)
-- Converts to WebP format
-- Extracts dominant color for placeholders
+- **Create a new `.md` file** — a new page is created in the database. It appears in `index.csv` (or `iDraft.csv` if `publishedAt: draft`).
+- **Edit a `.md` file** — the page is updated in the database (the file's `mtime` must be newer than the page's `updatedAt`).
+- **Delete a `.md` file** — the page is **deleted from the database**. Its row is removed from `index.csv`.
+- **Rename a `.md` file** — the old page is deleted and a new one is created with the slug derived from the new filename. To keep the same page, use the `slug` property in frontmatter instead.
+- **Edit `index.csv`** — **nothing**. `index.csv` is read-only during import. It is regenerated after every import to reflect the database state. Edit `.md` files instead.
+- **Edit `redirection.csv`** — redirections are imported. Pages matching a redirection slug are converted to redirects.
 
-**For PDFs:**
+#### Media
 
-- Compresses with Ghostscript (downsamples images to 150dpi)
-- Linearizes with qpdf (fast first-page web streaming)
+- **Drop a new image into `media/`** — the image is imported as a new media entity. If it exceeds 1980x1280 pixels, it is automatically resized down. A new row appears in `media/index.csv` after sync.
+- **Drop a duplicate image** (same content as an existing media) — the duplicate file is **deleted**. The existing media's `fileNameHistory` is updated. No new entity is created.
+- **Replace an image** (same filename, different content) — the media entity is updated with the new file's hash, dimensions, and size.
+- **Delete an image from disk** — the media entity is **deleted from the database**. The row is removed from `media/index.csv` on next sync.
+- **Rename an image on disk** (without editing CSV) — hash-based detection matches the renamed file to the missing media entity and updates its filename. No duplicate is created.
+- **Edit `media/index.csv` — change `alt` or `tags`** — the media entity is updated with the new values.
+- **Edit `media/index.csv` — change `fileName` (same ID)** — the file is **automatically renamed** in storage to match the new name.
+- **Edit `media/index.csv` — remove a row** — the media entity is **deleted from the database** and the physical file is also deleted.
+- **Edit `media/index.csv` — add a row for an existing file** — the file is imported as a new media entity with the provided metadata. If the file does not exist on disk, the row is silently ignored and removed from the regenerated CSV.
 
-### Bulk optimization for flat file users
+#### Users
 
-When importing media via flat files, server-side optimizations are skipped. The optimization commands work on **Media entities in the database**, so you must import first:
+- **Create `config/users.yaml`** — enables user sync (opt-in). Without this file, no users are touched.
+- **Add a user to `config/users.yaml`** — a new user is created (without password — use magic link auth to set one).
+- **Change roles/locale/username in YAML** — the existing user is updated. Password is preserved.
+- **Remove a user from YAML** — the user is **deleted from the database**.
+- **Delete `config/users.yaml`** — disables user sync entirely. No users are created, updated, or deleted.
+
+## Media Optimization on Import
+
+When importing **new images**, flat import applies the same optimization pipeline as admin upload:
+
+- Scales down oversized images to max 1980x1280 pixels (server-side)
+- Generates responsive variants (xs, sm, md, lg, xl) + WebP conversion (background)
+- Extracts dominant color for placeholders (background)
+- Runs lossless compression with optipng, jpegoptim, etc. (background)
+
+**Not automatic:** PDF optimization (Ghostscript compression + qpdf linearization) is not triggered during flat import. Use the commands below.
+
+### Manual optimization commands
 
 ```bash
-# 1. First, import flat files to database (registers media)
-php bin/console pw:flat:sync --mode=import
-
-# 2. Then generate image cache (responsive variants + WebP)
+# Regenerate image cache (responsive variants + WebP) for all or updated media
 php bin/console pw:image:cache
 
-# 3. Optimize images (lossless compression with optipng, jpegoptim, etc.)
+# Optimize images (lossless compression)
 php bin/console pw:image:optimize
 
-# 4. Optimize PDFs (requires ghostscript and/or qpdf)
+# Optimize PDFs (requires ghostscript and/or qpdf)
 php bin/console pw:pdf:optimize
 ```
-
-**One-liner:**
-
-```bash
-php bin/console pw:flat:sync -m import && php bin/console pw:image:cache && php bin/console pw:pdf:optimize
-```
-
-### Pre-import image resizing
-
-Browser-side scaling (1980x1280) only happens via admin upload. For flat file imports, resize images beforehand using ImageMagick:
-
-```bash
-# Resize all images in media/ to max 1980x1280 (preserves aspect ratio, only shrinks)
-find content/media/ -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) \
-  -exec mogrify -resize '1980x1280>' {} \;
-```
-
-> **Tip:** The `>` flag means "only shrink larger images, never enlarge smaller ones".

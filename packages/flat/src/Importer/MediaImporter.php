@@ -9,6 +9,7 @@ use League\Csv\Reader;
 use Override;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaCsvHelper;
@@ -54,6 +55,7 @@ class MediaImporter extends AbstractImporter
         public string $mediaDir,
         public string $projectDir,
         private readonly MediaStorageAdapter $mediaStorage,
+        private readonly ThumbnailGenerator $thumbnailGenerator,
         private readonly ?LoggerInterface $logger = null,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
@@ -61,6 +63,8 @@ class MediaImporter extends AbstractImporter
     }
 
     private bool $newMedia = false;
+
+    private bool $duplicateSkipped = false;
 
     /**
      * Load the index.csv file from a local directory path.
@@ -270,6 +274,13 @@ class MediaImporter extends AbstractImporter
 
     private function doImportMedia(Media $media, string $fileName, string $localPath, string $storeIn, DateTimeInterface $dateTime): bool
     {
+        if ($this->duplicateSkipped) {
+            $this->duplicateSkipped = false;
+            ++$this->skippedCount;
+
+            return false;
+        }
+
         if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media)) {
             ++$this->skippedCount;
 
@@ -301,7 +312,14 @@ class MediaImporter extends AbstractImporter
     {
         $media = $this->getMedia($fileName);
 
-        if (false === $this->newMedia && ! $this->hasFileContentChanged($localPath, $media)) {
+        if ($this->duplicateSkipped) {
+            $this->duplicateSkipped = false;
+            ++$this->skippedCount;
+
+            return false;
+        }
+
+        if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media)) {
             ++$this->skippedCount;
 
             return false;
@@ -356,15 +374,20 @@ class MediaImporter extends AbstractImporter
 
     private function hasFileContentChanged(string $filePath, Media $media): bool
     {
-        $fileHash = sha1_file($filePath, true);
-        $dbHash = $media->getHash();
+        return sha1_file($filePath, true) !== $this->getMediaHash($media);
+    }
 
-        // Handle binary hash from database (may be a resource or string)
-        if (\is_resource($dbHash)) {
-            $dbHash = stream_get_contents($dbHash);
+    /**
+     * Normalize media hash from database (may be stored as resource in SQLite).
+     */
+    private function getMediaHash(Media $media): ?string
+    {
+        $hash = $media->getHash();
+        if (\is_resource($hash)) {
+            $hash = stream_get_contents($hash);
         }
 
-        return $fileHash !== $dbHash;
+        return \is_string($hash) ? $hash : null;
     }
 
     /**
@@ -525,6 +548,11 @@ class MediaImporter extends AbstractImporter
             }
         }
 
+        $match = $this->findExistingMediaByFileHash($fileName);
+        if ($match instanceof Media) {
+            return $match;
+        }
+
         // Create new media
         $this->newMedia = true;
         $mediaEntity = new Media();
@@ -541,6 +569,11 @@ class MediaImporter extends AbstractImporter
         $this->newMedia = false;
 
         if (! $mediaEntity instanceof Media) {
+            $match = $this->findExistingMediaByFileHash($media);
+            if ($match instanceof Media) {
+                return $match;
+            }
+
             $this->newMedia = true;
             $mediaEntity = new Media();
             $mediaEntity
@@ -549,6 +582,81 @@ class MediaImporter extends AbstractImporter
         }
 
         return $mediaEntity;
+    }
+
+    /**
+     * Check if a file exists in storage and try to match it to an existing media by hash.
+     */
+    private function findExistingMediaByFileHash(string $fileName): ?Media
+    {
+        if (! $this->mediaStorage->fileExists($fileName)) {
+            return null;
+        }
+
+        $localPath = $this->mediaStorage->getLocalPath($fileName);
+        if (! file_exists($localPath)) {
+            return null;
+        }
+
+        return $this->findMediaByHash($localPath, $fileName);
+    }
+
+    /**
+     * Find an existing media entity by SHA-1 hash match.
+     *
+     * First checks media in the missingFiles list (renamed files).
+     * Then checks all existing media (duplicate detection — new file is deleted, history updated).
+     */
+    private function findMediaByHash(string $filePath, string $newFileName): ?Media
+    {
+        $fileHash = sha1_file($filePath, true);
+        if (false === $fileHash) {
+            return null;
+        }
+
+        // 1. Check missing files (renamed file detection)
+        foreach ($this->missingFiles as $key => $missingFileName) {
+            $missingMedia = $this->em->getRepository(Media::class)->findOneBy(['fileName' => $missingFileName]);
+            if (! $missingMedia instanceof Media) {
+                continue;
+            }
+
+            if ($fileHash === $this->getMediaHash($missingMedia)) {
+                $this->logger?->info(\sprintf('Hash match: renamed file "%s" matches missing media "%s" (id: %s)', $newFileName, $missingFileName, $missingMedia->id));
+                $missingMedia->setFileName($newFileName);
+                unset($this->missingFiles[$key]);
+                $this->missingFiles = array_values($this->missingFiles);
+
+                return $missingMedia;
+            }
+        }
+
+        // 2. Check all existing media (duplicate detection)
+        $allMedia = $this->em->getRepository(Media::class)->findAll();
+        foreach ($allMedia as $existingMedia) {
+            if ($existingMedia->getFileName() === $newFileName) {
+                continue; // Skip self-match
+            }
+
+            if ($fileHash === $this->getMediaHash($existingMedia)) {
+                $this->logger?->info(\sprintf('Duplicate detected: "%s" has same hash as existing media "%s" (id: %s) — deleting duplicate', $newFileName, $existingMedia->getFileName(), $existingMedia->id));
+                $existingMedia->addFileNameToHistory($newFileName);
+
+                // Delete the duplicate file
+                if ($this->mediaStorage->fileExists($newFileName)) {
+                    $this->mediaStorage->delete($newFileName);
+                } elseif (file_exists($filePath)) {
+                    @unlink($filePath);
+                }
+
+                $this->newMedia = false;
+                $this->duplicateSkipped = true;
+
+                return $existingMedia;
+            }
+        }
+
+        return null;
     }
 
     public function resetIndex(): void
@@ -561,6 +669,7 @@ class MediaImporter extends AbstractImporter
         $this->missingFiles = [];
         $this->importedCount = 0;
         $this->skippedCount = 0;
+        $this->duplicateSkipped = false;
     }
 
     /**

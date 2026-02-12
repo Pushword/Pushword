@@ -11,6 +11,7 @@ use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaExporter;
@@ -883,7 +884,10 @@ CSV;
         /** @var SiteRegistry $apps */
         $apps = self::getContainer()->get(SiteRegistry::class);
 
-        return new MediaImporter($em, $apps, $mediaDir, $projectDir, $storage);
+        /** @var ThumbnailGenerator $thumbnailGenerator */
+        $thumbnailGenerator = self::getContainer()->get(ThumbnailGenerator::class);
+
+        return new MediaImporter($em, $apps, $mediaDir, $projectDir, $storage, $thumbnailGenerator);
     }
 
     private function createExporterWithStorage(MediaStorageAdapter $storage): MediaExporter

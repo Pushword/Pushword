@@ -102,7 +102,14 @@ final class PageImporter extends AbstractImporter
             return null;
         }
 
-        return YamlFrontMatter::parse($this->filesystem->readFile($filePath));
+        $content = $this->filesystem->readFile($filePath);
+
+        // Strip UTF-8 BOM if present
+        if (str_starts_with($content, "\xEF\xBB\xBF")) {
+            $content = substr($content, 3);
+        }
+
+        return YamlFrontMatter::parse($content);
     }
 
     /**

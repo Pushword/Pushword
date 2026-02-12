@@ -35,7 +35,7 @@ final class UserSyncTest extends KernelTestCase
 
     public function testImportCreatesNewUsers(): void
     {
-        $this->createUsersYaml([
+        $this->createUsersYamlWithExisting([
             ['email' => 'test-new@example.tld', 'roles' => ['ROLE_EDITOR'], 'locale' => 'fr'],
         ]);
 
@@ -60,7 +60,7 @@ final class UserSyncTest extends KernelTestCase
         $this->createTestUser('test-update@example.tld', 'en', ['ROLE_USER']);
 
         // Now sync with different data
-        $this->createUsersYaml([
+        $this->createUsersYamlWithExisting([
             ['email' => 'test-update@example.tld', 'roles' => ['ROLE_ADMIN'], 'locale' => 'de', 'username' => 'Updated'],
         ]);
 
@@ -84,22 +84,9 @@ final class UserSyncTest extends KernelTestCase
         // Create user with same data as YAML
         $this->createTestUser('test-skip@example.tld', 'en', ['ROLE_USER']);
 
-        // Include all existing DB users in YAML to avoid exports affecting counts
-        /** @var UserRepository $userRepo */
-        $userRepo = self::getContainer()->get(UserRepository::class);
-        $existingUsers = $userRepo->findAll();
-        $yamlUsers = [['email' => 'test-skip@example.tld', 'roles' => ['ROLE_USER'], 'locale' => 'en']];
-        foreach ($existingUsers as $existingUser) {
-            if ('test-skip@example.tld' !== $existingUser->email) {
-                $yamlUsers[] = [
-                    'email' => $existingUser->email,
-                    'roles' => $existingUser->getRoles(),
-                    'locale' => $existingUser->locale ?? 'en',
-                ];
-            }
-        }
-
-        $this->createUsersYaml($yamlUsers);
+        $this->createUsersYamlWithExisting([
+            ['email' => 'test-skip@example.tld', 'roles' => ['ROLE_USER'], 'locale' => 'en'],
+        ]);
 
         /** @var UserSync $userSync */
         $userSync = self::getContainer()->get(UserSync::class);
@@ -130,7 +117,7 @@ final class UserSyncTest extends KernelTestCase
         $passwordBefore = $userBefore->getPassword();
 
         // Sync with different roles
-        $this->createUsersYaml([
+        $this->createUsersYamlWithExisting([
             ['email' => 'test-password@example.tld', 'roles' => ['ROLE_ADMIN'], 'locale' => 'fr'],
         ]);
 
@@ -148,7 +135,7 @@ final class UserSyncTest extends KernelTestCase
         self::assertSame('fr', $userAfter->locale);
     }
 
-    public function testImportHandlesMissingYaml(): void
+    public function testImportSkipsWhenNoYamlExists(): void
     {
         @unlink($this->configDir.'/users.yaml');
 
@@ -156,19 +143,51 @@ final class UserSyncTest extends KernelTestCase
         $userSync = self::getContainer()->get(UserSync::class);
         $userSync->import();
 
-        // When YAML is missing, it gets created and DB users are exported to it
-        // Then those users are imported back (skipped since they already exist)
+        // When YAML is missing, user sync is skipped entirely
         self::assertSame(0, $userSync->getImportedCount());
         self::assertSame(0, $userSync->getUpdatedCount());
-        // Fixture users get exported and then skipped on import
-        self::assertGreaterThanOrEqual(0, $userSync->getSkippedCount());
-        // YAML file should now exist
-        self::assertFileExists($this->configDir.'/users.yaml');
+        self::assertSame(0, $userSync->getDeletedCount());
+        self::assertSame(0, $userSync->getSkippedCount());
+        // YAML file should NOT be created
+        self::assertFileDoesNotExist($this->configDir.'/users.yaml');
+    }
+
+    public function testImportDeletesUsersNotInYaml(): void
+    {
+        // Create a user that won't be in YAML
+        $this->createTestUser('test-delete@example.tld', 'en', ['ROLE_USER']);
+
+        // Create YAML with only existing fixture users (not the test user)
+        /** @var UserRepository $userRepo */
+        $userRepo = self::getContainer()->get(UserRepository::class);
+        $existingUsers = $userRepo->findAll();
+
+        $yamlUsers = [];
+        foreach ($existingUsers as $existingUser) {
+            if ('test-delete@example.tld' !== $existingUser->email) {
+                $yamlUsers[] = [
+                    'email' => $existingUser->email,
+                    'roles' => $existingUser->getRoles(),
+                    'locale' => $existingUser->locale ?? 'en',
+                ];
+            }
+        }
+
+        $this->createUsersYaml($yamlUsers);
+
+        /** @var UserSync $userSync */
+        $userSync = self::getContainer()->get(UserSync::class);
+        $userSync->import();
+
+        self::assertSame(1, $userSync->getDeletedCount());
+
+        $deletedUser = $userRepo->findOneBy(['email' => 'test-delete@example.tld']);
+        self::assertNull($deletedUser, 'User not in YAML should be deleted from DB');
     }
 
     public function testImportSkipsInvalidEntries(): void
     {
-        $this->createUsersYaml([
+        $this->createUsersYamlWithExisting([
             ['email' => 'valid@example.tld', 'roles' => ['ROLE_USER']],
             ['roles' => ['ROLE_USER']], // Missing email
             'invalid', // Not an array
@@ -184,6 +203,39 @@ final class UserSyncTest extends KernelTestCase
         $userRepo = self::getContainer()->get(UserRepository::class);
         $user = $userRepo->findOneBy(['email' => 'valid@example.tld']);
         self::assertInstanceOf(User::class, $user);
+    }
+
+    /**
+     * Creates users.yaml including both the provided test users AND all existing DB users,
+     * to prevent deletion of fixture users during import.
+     *
+     * @param array<mixed> $testUsers
+     */
+    private function createUsersYamlWithExisting(array $testUsers): void
+    {
+        /** @var UserRepository $userRepo */
+        $userRepo = self::getContainer()->get(UserRepository::class);
+        $existingUsers = $userRepo->findAll();
+
+        $testEmails = [];
+        foreach ($testUsers as $u) {
+            if (\is_array($u) && isset($u['email']) && \is_string($u['email'])) {
+                $testEmails[] = $u['email'];
+            }
+        }
+
+        $allUsers = $testUsers;
+        foreach ($existingUsers as $existingUser) {
+            if (! \in_array($existingUser->email, $testEmails, true)) {
+                $allUsers[] = [
+                    'email' => $existingUser->email,
+                    'roles' => $existingUser->getRoles(),
+                    'locale' => $existingUser->locale ?? 'en',
+                ];
+            }
+        }
+
+        $this->createUsersYaml($allUsers);
     }
 
     /**
@@ -260,6 +312,7 @@ final class UserSyncTest extends KernelTestCase
             'test-update@example.tld',
             'test-skip@example.tld',
             'test-password@example.tld',
+            'test-delete@example.tld',
             'valid@example.tld',
         ];
 

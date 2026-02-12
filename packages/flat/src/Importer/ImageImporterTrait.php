@@ -4,6 +4,7 @@ namespace Pushword\Flat\Importer;
 
 // use iBudasov\Iptc\Manager as Iptc;
 use DateTimeInterface;
+use Intervention\Image\Encoders\AutoEncoder;
 use Pushword\Core\Entity\Media;
 use RuntimeException;
 
@@ -22,13 +23,24 @@ trait ImageImporterTrait
 
     abstract private function hasFileContentChanged(string $filePath, Media $media): bool;
 
+    private const int MAX_IMAGE_WIDTH = 1980;
+
+    private const int MAX_IMAGE_HEIGHT = 1280;
+
     public function importImage(string $filePath, DateTimeInterface $dateTime): bool
     {
         $fileName = $this->getFilename($filePath);
         $media = $this->getMedia($fileName);
 
+        if ($this->duplicateSkipped) {
+            $this->duplicateSkipped = false;
+            ++$this->skippedCount;
+
+            return false;
+        }
+
         // Use hash comparison to detect real content changes
-        if (false === $this->newMedia && ! $this->hasFileContentChanged($filePath, $media)) {
+        if (! $this->newMedia && ! $this->hasFileContentChanged($filePath, $media)) {
             ++$this->skippedCount;
 
             return false; // no update needed
@@ -85,6 +97,17 @@ trait ImageImporterTrait
             throw new RuntimeException('Image size could not be determined');
         }
 
+        // Resize oversized images (matches admin upload pipeline behavior)
+        if ($imgSize[0] > self::MAX_IMAGE_WIDTH || $imgSize[1] > self::MAX_IMAGE_HEIGHT) {
+            $this->resizeOversizedImage($filePath, $imgSize[0], $imgSize[1]);
+            $imgSize = getimagesize($filePath);
+            if (false === $imgSize) {
+                throw new RuntimeException('Image size could not be determined after resize');
+            }
+        }
+
+        $resolvedFileName = $fileName ?? $media->getFileName();
+
         $media
                 ->setProjectDir($this->projectDir)
                 ->setStoreIn($storeIn ?? \dirname($filePath))
@@ -96,5 +119,21 @@ trait ImageImporterTrait
         $data = $this->getImageData($filePath, $fileName);
 
         $this->setData($media, $data);
+
+        // Trigger background cache generation for responsive variants + WebP
+        if ($this->newMedia) {
+            $this->thumbnailGenerator->runBackgroundCacheGeneration($resolvedFileName);
+        }
+    }
+
+    private function resizeOversizedImage(string $filePath, int $width, int $height): void
+    {
+        $this->logger?->info(\sprintf('Resizing oversized image %s (%dx%d → max %dx%d)', basename($filePath), $width, $height, self::MAX_IMAGE_WIDTH, self::MAX_IMAGE_HEIGHT));
+
+        $image = $this->thumbnailGenerator->getImageReader()->read($filePath);
+        $image = $image->scaleDown(self::MAX_IMAGE_WIDTH, self::MAX_IMAGE_HEIGHT);
+        $image->encode(new AutoEncoder(quality: 90))->save($filePath);
+
+        clearstatcache(true, $filePath);
     }
 }

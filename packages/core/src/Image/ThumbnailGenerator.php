@@ -3,7 +3,6 @@
 namespace Pushword\Core\Image;
 
 use Exception;
-use Intervention\Image\Drivers\Vips\Core;
 use Intervention\Image\Image;
 use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
@@ -21,6 +20,11 @@ final class ThumbnailGenerator
         private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
         private readonly MediaStorageAdapter $mediaStorage,
     ) {
+    }
+
+    public function getImageReader(): ImageReader
+    {
+        return $this->imageReader;
     }
 
     /**
@@ -143,10 +147,6 @@ final class ThumbnailGenerator
         $formats = $filters[$filterName]['formats'] ?? ['original', 'webp']; // @phpstan-ignore-line
 
         $this->imageCacheManager->createFilterDir(\dirname($this->imageCacheManager->getFilterPath($media, $filterName)));
-
-        if (\count($formats) > 1 && $image->core() instanceof Core) {
-            Core::ensureInMemory($image->core());
-        }
 
         if (\in_array('original', $formats, true)) {
             $outputPath = $this->imageCacheManager->getFilterPath($media, $filterName);
