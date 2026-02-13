@@ -2,12 +2,10 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\User;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use Pushword\Conversation\Entity\Message;
-use Pushword\Conversation\Entity\Review;
+use Pushword\Core\Entity\EntityClassRegistry;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
@@ -35,10 +33,11 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        $user = new User();
+        $userClass = EntityClassRegistry::getUserClass();
+        $user = new $userClass();
         $user->email = 'contact@piedweb.com';
         $user->username = 'John Doe';
-        $user->setRoles([User::ROLE_DEFAULT]);
+        $user->setRoles([$userClass::ROLE_DEFAULT]);
 
         $manager->persist($user);
 
@@ -187,8 +186,8 @@ class AppFixtures extends Fixture
 
         $manager->flush();
 
-        if ('localhost.dev' === $this->apps->getMainHost()) {
-            $message = new Message();
+        if ('localhost.dev' === $this->apps->getMainHost() && class_exists(\Pushword\Conversation\Entity\Message::class)) {
+            $message = new \Pushword\Conversation\Entity\Message();
             $message->setContent('This is a default conversation message for localhost.dev. You can use this to test the conversation features.');
             $message->setAuthorName('Demo User');
             $message->setAuthorEmail('demo@localhost.dev');
@@ -202,7 +201,7 @@ class AppFixtures extends Fixture
             $reviewsData = Yaml::parseFile(__DIR__.'/reviews.yaml');
 
             foreach ($reviewsData['reviews'] as $reviewData) {
-                $review = new Review();
+                $review = new \Pushword\Conversation\Entity\Review();
                 $review->setTitle($reviewData['title']);
                 $review->setContent($reviewData['content']);
                 $review->setAuthorName($reviewData['authorName']);
