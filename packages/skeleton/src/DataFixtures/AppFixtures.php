@@ -5,6 +5,8 @@ namespace App\DataFixtures;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Entity\Review;
 use Pushword\Core\Entity\EntityClassRegistry;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -186,8 +188,8 @@ class AppFixtures extends Fixture
 
         $manager->flush();
 
-        if ('localhost.dev' === $this->apps->getMainHost() && class_exists(\Pushword\Conversation\Entity\Message::class)) {
-            $message = new \Pushword\Conversation\Entity\Message();
+        if ('localhost.dev' === $this->apps->getMainHost() && class_exists(Message::class)) {
+            $message = new Message();
             $message->setContent('This is a default conversation message for localhost.dev. You can use this to test the conversation features.');
             $message->setAuthorName('Demo User');
             $message->setAuthorEmail('demo@localhost.dev');
@@ -201,7 +203,7 @@ class AppFixtures extends Fixture
             $reviewsData = Yaml::parseFile(__DIR__.'/reviews.yaml');
 
             foreach ($reviewsData['reviews'] as $reviewData) {
-                $review = new \Pushword\Conversation\Entity\Review();
+                $review = new Review();
                 $review->setTitle($reviewData['title']);
                 $review->setContent($reviewData['content']);
                 $review->setAuthorName($reviewData['authorName']);
