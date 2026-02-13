@@ -149,7 +149,7 @@ final class PageImporter extends AbstractImporter
         $this->slugs[$relativeFilePath] = $slug;
 
         $data = $document->matter();
-        $data = \is_array($data) ? $data : throw new Exception();
+        $data = \is_array($data) ? $data : throw new Exception(\sprintf('Failed to parse front matter in "%s": expected array, got %s', $filePath, get_debug_type($data)));
         /** @var array<string, mixed> $data */
         $previousImportedCount = $this->importedCount;
         $this->pageList[$slug] = $this->editPage($slug, $data, $document->body(), $lastEditDateTime, $relativeFilePath);
@@ -163,7 +163,7 @@ final class PageImporter extends AbstractImporter
      */
     private function filePathToSlug(string $filePath): string
     {
-        $slug = preg_replace('/\.md$/i', '', str_replace($this->getContentDir().'/', '', $filePath)) ?? throw new Exception();
+        $slug = preg_replace('/\.md$/i', '', str_replace($this->getContentDir().'/', '', $filePath)) ?? throw new Exception(\sprintf('Failed to extract slug from file path "%s"', $filePath));
 
         if ('index' === $slug) {
             $slug = 'homepage';
@@ -348,10 +348,10 @@ final class PageImporter extends AbstractImporter
                 if (Media::class === $object) {
                     $setter = 'set'.ucfirst($property);
                     if (! \is_string($value)) {
-                        throw new LogicException();
+                        throw new LogicException(\sprintf('Expected string value for media property "%s", got %s', $property, get_debug_type($value)));
                     }
 
-                    $mediaName = preg_replace('@^/?media/(default)?/@', '', $value) ?? throw new Exception();
+                    $mediaName = preg_replace('@^/?media/(default)?/@', '', $value) ?? throw new Exception(\sprintf('Failed to extract media name from "%s" for property "%s"', $value, $property));
                     $media = $this->mediaRepo->findOneByFileName($mediaName);
                     if (! $media instanceof Media) {
                         $this->logger->warning('Media `{value}` ({mediaName}) not found in `{slug)}`, skipping', [
@@ -535,7 +535,7 @@ final class PageImporter extends AbstractImporter
         }
 
         if (! \is_string($criteria)) {
-            throw new Exception();
+            throw new Exception(\sprintf('Expected string or array criteria for getPage(), got %s', get_debug_type($criteria)));
         }
 
         // Check freshly imported pages first (not yet flushed to DB)
