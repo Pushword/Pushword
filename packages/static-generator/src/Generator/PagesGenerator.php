@@ -62,21 +62,34 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
             ));
 
             $stopwatch = $this->staticAppGenerator->getStopwatch();
-            $stopwatch?->start('generatePage');
-            $stopwatch?->start('page:'.$slug);
-            $this->generatePage($page);
-            $event = $stopwatch?->stop('page:'.$slug);
-            $stopwatch?->stop('generatePage');
 
-            if (null !== $event && $event->getDuration() > 500) {
-                $this->staticAppGenerator->writeln(\sprintf(
-                    '    <comment>⏱ %dms (slow)</comment>',
-                    $event->getDuration(),
-                ));
+            try {
+                $stopwatch?->start('generatePage');
+                $stopwatch?->start('page:'.$slug);
+                $this->generatePage($page);
+                $event = $stopwatch?->stop('page:'.$slug);
+                $stopwatch?->stop('generatePage');
+
+                if (null !== $event && $event->getDuration() > 500) {
+                    $this->staticAppGenerator->writeln(\sprintf(
+                        '    <comment>⏱ %dms (slow)</comment>',
+                        $event->getDuration(),
+                    ));
+                }
+
+                // Update state for this page
+                $stateManager->setPageState($hostName, $page->getSlug(), $this->toImmutable($page->updatedAt)); // @phpstan-ignore argument.type
+            } catch (\Throwable $e) {
+                if (true === $stopwatch?->isStarted('page:'.$slug)) {
+                    $stopwatch->stop('page:'.$slug);
+                }
+
+                if (true === $stopwatch?->isStarted('generatePage')) {
+                    $stopwatch->stop('generatePage');
+                }
+
+                $this->setError(\sprintf('Failed to generate %s/%s: %s', $hostName, $slug, $e->getMessage()));
             }
-
-            // Update state for this page
-            $stateManager->setPageState($hostName, $page->getSlug(), $this->toImmutable($page->updatedAt)); // @phpstan-ignore argument.type
         }
 
         // Cleanup deleted pages from state
