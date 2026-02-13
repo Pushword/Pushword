@@ -33,12 +33,20 @@ class Compressor
             $this->availableCompressors = $detected;
         }
 
-        $this->maxConcurrentProcesses = (int) (shell_exec('nproc') ?: 10);
+        $this->maxConcurrentProcesses = $this->detectCpuCount();
     }
 
     public function __destruct()
     {
         $this->waitForCompressionToFinish();
+    }
+
+    private function detectCpuCount(): int
+    {
+        $process = new Process(['nproc']);
+        $process->run();
+
+        return $process->isSuccessful() ? (int) trim($process->getOutput()) : 4;
     }
 
     private function isAlgorithmInstalled(CompressionAlgorithm $algorithm): bool
