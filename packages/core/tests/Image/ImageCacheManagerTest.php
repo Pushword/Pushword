@@ -12,6 +12,7 @@ use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
 class ImageCacheManagerTest extends KernelTestCase
@@ -135,7 +136,7 @@ class ImageCacheManagerTest extends KernelTestCase
     {
         $manager = $this->createManager(['default' => []]);
         $publicMediaPath = $this->publicDir.'/'.$this->publicMediaDir;
-        (new \Symfony\Component\Filesystem\Filesystem())->mkdir($publicMediaPath);
+        new Filesystem()->mkdir($publicMediaPath);
 
         // Create a symlink like ensurePublicSymlink does
         $symlinkPath = $publicMediaPath.'/test-remove.pdf';
