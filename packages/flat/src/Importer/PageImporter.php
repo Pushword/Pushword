@@ -338,6 +338,10 @@ final class PageImporter extends AbstractImporter
                 $object = $this->getObjectRequiredProperty($property);
 
                 if (Page::class === $object) {
+                    if (! \is_string($value)) {
+                        throw new LogicException(\sprintf('Property "%s" in page "%s" must be a slug string, got %s (%s)', $property, $slug, get_debug_type($value), var_export($value, true)));
+                    }
+
                     $setter = 'set'.ucfirst($property);
                     /** @phpstan-ignore-next-line */
                     $page->$setter($this->getPage($value));
@@ -535,7 +539,7 @@ final class PageImporter extends AbstractImporter
         }
 
         if (! \is_string($criteria)) {
-            throw new Exception(\sprintf('Expected string or array criteria for getPage(), got %s', get_debug_type($criteria)));
+            throw new Exception(\sprintf('Expected slug (string) for getPage(), got %s (%s)', get_debug_type($criteria), var_export($criteria, true)));
         }
 
         // Check freshly imported pages first (not yet flushed to DB)
