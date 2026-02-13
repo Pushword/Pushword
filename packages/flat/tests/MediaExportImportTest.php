@@ -11,6 +11,7 @@ use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
@@ -857,6 +858,55 @@ CSV;
         @unlink($mediaDir.'/test-hash-remote.txt');
     }
 
+    public function testImportMediaCreatesPublicSymlinkForNonImageFiles(): void
+    {
+        /** @var EntityManager $em */
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        /** @var string $projectDir */
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+
+        /** @var string $mediaDir */
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+
+        $publicMediaDir = $projectDir.'/public/media';
+        $this->filesystem->mkdir($publicMediaDir);
+
+        // Create a test PDF file
+        $pdfPath = $this->testMediaDir.'/test-symlink.pdf';
+        file_put_contents($pdfPath, '%PDF-1.4 symlink test content');
+
+        // Create index.csv
+        $csvContent = "fileName,alt\ntest-symlink.pdf,\"Symlink Test PDF\"\n";
+        $this->filesystem->dumpFile($this->testMediaDir.'/index.csv', $csvContent);
+
+        /** @var MediaImporter $importer */
+        $importer = self::getContainer()->get(MediaImporter::class);
+        $importer->mediaDir = $this->testMediaDir;
+        $importer->projectDir = $projectDir;
+        $importer->resetIndex();
+        $importer->loadIndex($this->testMediaDir);
+
+        $imported = $importer->importMedia($pdfPath, new DateTime());
+        $importer->finishImport();
+
+        self::assertTrue($imported, 'PDF should be imported');
+
+        // Verify symlink was created in public/media/
+        $publicPath = $publicMediaDir.'/test-symlink.pdf';
+        self::assertTrue(is_link($publicPath) || file_exists($publicPath), 'Public symlink should exist for non-image media after flat import');
+
+        // Cleanup
+        $media = $em->getRepository(Media::class)->findOneBy(['fileName' => 'test-symlink.pdf']);
+        if ($media instanceof Media) {
+            $em->remove($media);
+            $em->flush();
+        }
+
+        @unlink($publicPath);
+        @unlink($mediaDir.'/test-symlink.pdf');
+    }
+
     // --- Helper methods ---
 
     private function createTestImage(string $path): void
@@ -887,7 +937,10 @@ CSV;
         /** @var ThumbnailGenerator $thumbnailGenerator */
         $thumbnailGenerator = self::getContainer()->get(ThumbnailGenerator::class);
 
-        return new MediaImporter($em, $apps, $mediaDir, $projectDir, $storage, $thumbnailGenerator);
+        /** @var ImageCacheManager $imageCacheManager */
+        $imageCacheManager = self::getContainer()->get(ImageCacheManager::class);
+
+        return new MediaImporter($em, $apps, $mediaDir, $projectDir, $storage, $thumbnailGenerator, $imageCacheManager);
     }
 
     private function createExporterWithStorage(MediaStorageAdapter $storage): MediaExporter

@@ -109,6 +109,12 @@ final class ImageCacheManager
             $webpPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$filterName.'/'.$mediaBase.'.webp';
             $this->filesystem->remove($webpPath);
         }
+
+        // Remove root-level public symlink (used by non-image files like PDFs)
+        $rootPublicPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$mediaFileName;
+        if (is_link($rootPublicPath)) {
+            $this->filesystem->remove($rootPublicPath);
+        }
     }
 
     public function ensurePublicSymlink(Media $media): void

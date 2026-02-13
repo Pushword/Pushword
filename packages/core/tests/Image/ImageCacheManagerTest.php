@@ -131,6 +131,22 @@ class ImageCacheManagerTest extends KernelTestCase
         self::assertNull($manager->getSourceDimensions($media2));
     }
 
+    public function testRemoveDeletesRootPublicSymlink(): void
+    {
+        $manager = $this->createManager(['default' => []]);
+        $publicMediaPath = $this->publicDir.'/'.$this->publicMediaDir;
+        (new \Symfony\Component\Filesystem\Filesystem())->mkdir($publicMediaPath);
+
+        // Create a symlink like ensurePublicSymlink does
+        $symlinkPath = $publicMediaPath.'/test-remove.pdf';
+        symlink('../../media/test-remove.pdf', $symlinkPath);
+        self::assertTrue(is_link($symlinkPath));
+
+        $manager->remove('test-remove.pdf');
+
+        self::assertFalse(is_link($symlinkPath), 'Root public symlink should be removed');
+    }
+
     public function testSymlinkFilterToDefault(): void
     {
         $filters = [

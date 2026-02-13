@@ -9,6 +9,7 @@ use League\Csv\Reader;
 use Override;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
@@ -56,6 +57,7 @@ class MediaImporter extends AbstractImporter
         public string $projectDir,
         private readonly MediaStorageAdapter $mediaStorage,
         private readonly ThumbnailGenerator $thumbnailGenerator,
+        private readonly ImageCacheManager $imageCacheManager,
         private readonly ?LoggerInterface $logger = null,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
@@ -304,6 +306,10 @@ class MediaImporter extends AbstractImporter
         $data = $this->getDataForFileName($fileName);
         $this->setData($media, $data);
         $media->updatedAt = $dateTime;
+
+        if (! $media->isImage()) {
+            $this->imageCacheManager->ensurePublicSymlink($media);
+        }
 
         return true;
     }
