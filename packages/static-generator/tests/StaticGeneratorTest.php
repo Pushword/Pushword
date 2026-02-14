@@ -5,6 +5,7 @@ namespace Pushword\StaticGenerator;
 use DateTime;
 use DateTimeImmutable;
 use Exception;
+use FilesystemIterator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
@@ -19,9 +20,12 @@ use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 use function Safe\realpath;
 
+use SplFileInfo;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -253,7 +257,60 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/media');
+        $mediaDir = __DIR__.'/../../skeleton/static/localhost.dev/media';
+        self::assertFileExists($mediaDir);
+
+        // Verify media files are readable (not broken symlinks)
+        $this->assertMediaFilesAccessible($mediaDir);
+    }
+
+    public function testDownloadWithSymlink(): void
+    {
+        self::bootKernel();
+
+        $container = self::getContainer();
+        $siteRegistry = $container->get(SiteRegistry::class);
+        $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
+        $siteConfig->setCustomProperty('static_symlink', true);
+
+        try {
+            $generator = $this->getGenerator(MediaGenerator::class);
+            $generator->generate('localhost.dev');
+
+            $mediaDir = __DIR__.'/../../skeleton/static/localhost.dev/media';
+            self::assertFileExists($mediaDir);
+
+            $this->assertMediaFilesAccessible($mediaDir);
+            $this->assertSymlinksAreRelative($mediaDir);
+        } finally {
+            $siteConfig->setCustomProperty('static_symlink', false);
+            $filesystem = new Filesystem();
+            $filesystem->remove(__DIR__.'/../../skeleton/static/localhost.dev/media');
+        }
+    }
+
+    private function assertMediaFilesAccessible(string $dir): void
+    {
+        /** @var SplFileInfo $file */
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
+            $path = $file->getPathname();
+            if (is_link($path)) {
+                self::assertFileExists($path, \sprintf('Broken symlink: %s -> %s', $path, (string) readlink($path)));
+            }
+        }
+    }
+
+    private function assertSymlinksAreRelative(string $dir): void
+    {
+        /** @var SplFileInfo $file */
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
+            $path = $file->getPathname();
+            if (is_link($path)) {
+                $target = readlink($path);
+                self::assertNotFalse($target);
+                self::assertStringStartsNotWith('/', $target, \sprintf('Absolute symlink found: %s -> %s', $path, $target));
+            }
+        }
     }
 
     public function testPages(): void

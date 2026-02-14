@@ -8,6 +8,7 @@ use Override;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\StaticGenerator\IncrementalGeneratorInterface;
+use Throwable;
 
 class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterface
 {
@@ -79,7 +80,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
 
                 // Update state for this page
                 $stateManager->setPageState($hostName, $page->getSlug(), $this->toImmutable($page->updatedAt)); // @phpstan-ignore argument.type
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 if (true === $stopwatch?->isStarted('page:'.$slug)) {
                     $stopwatch->stop('page:'.$slug);
                 }
