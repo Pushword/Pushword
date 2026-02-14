@@ -22,6 +22,15 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
         $this->incremental = $incremental;
     }
 
+    private function relativeSymlink(string $sourcePath, string $targetPath): void
+    {
+        $relativePath = $this->filesystem->makePathRelative(
+            \dirname($sourcePath),
+            \dirname($targetPath),
+        );
+        $this->filesystem->symlink($relativePath.basename($sourcePath), $targetPath);
+    }
+
     private function targetExists(string $targetPath): bool
     {
         // Check for broken symlinks: is_link() returns true but file_exists() returns false
@@ -128,7 +137,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
                 }
 
                 if ($symlink) {
-                    $this->filesystem->symlink($sourcePath, $targetPath);
+                    $this->relativeSymlink($sourcePath, $targetPath);
                 } else {
                     $this->filesystem->mirror($sourcePath, $targetPath);
                 }
@@ -148,10 +157,9 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
                 }
 
                 if ($symlink) {
-                    // Recreate the symlink with same target
-                    $linkTarget = readlink($sourcePath);
-                    if (false !== $linkTarget) {
-                        $this->filesystem->symlink($linkTarget, $targetPath);
+                    $realPath = realpath($sourcePath);
+                    if (false !== $realPath) {
+                        $this->relativeSymlink($realPath, $targetPath);
                     }
                 } else {
                     // Copy the actual file content (resolve symlink)
@@ -227,7 +235,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
             }
 
             if ($symlink) {
-                $this->filesystem->symlink($sourcePath, $targetPath);
+                $this->relativeSymlink($sourcePath, $targetPath);
 
                 continue;
             }
@@ -256,7 +264,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
                     continue;
                 }
 
-                $this->filesystem->symlink($mediaDir.'/'.$fileName, $targetPath);
+                $this->relativeSymlink($mediaDir.'/'.$fileName, $targetPath);
             }
 
             return;
