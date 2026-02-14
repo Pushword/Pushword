@@ -117,6 +117,8 @@ final readonly class ImageManagerCommand
 
         $this->reportErrors($errors, $io);
 
+        $output->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+
         return 0;
     }
 
@@ -187,6 +189,8 @@ final readonly class ImageManagerCommand
 
         $progressBar->finish();
         $this->reportErrors($errors, $io);
+
+        $output->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
 
         return 0;
     }

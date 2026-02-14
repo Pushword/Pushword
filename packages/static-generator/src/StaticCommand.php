@@ -97,6 +97,8 @@ final readonly class StaticCommand
             // Print timing breakdown
             $this->printTimingBreakdown($teeOutput);
 
+            $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+
             $status = [] !== $this->staticAppGenerator->getErrors() ? 'error' : 'completed';
             $this->outputStorage->setStatus(self::PROCESS_TYPE, $status);
 

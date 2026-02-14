@@ -68,6 +68,8 @@ final class AiIndexCommand
 
         $result2 = $this->createmedias($output, $host);
 
+        $output->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+
         if (Command::SUCCESS === $result && Command::SUCCESS === $result2) {
             return Command::SUCCESS;
         }
