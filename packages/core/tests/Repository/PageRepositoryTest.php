@@ -31,4 +31,22 @@ class PageRepositoryTest extends KernelTestCase
 
         self::assertSame($pages[0]->getSlug(), 'homepage');
     }
+
+    public function testNumericSlugDoesNotFallbackToId(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        // Get an existing page to know a valid ID
+        $existingPage = $pageRepo->findOneBy(['slug' => 'homepage']);
+        self::assertNotNull($existingPage);
+        $existingId = (string) $existingPage->id;
+
+        // Requesting a numeric string that matches an existing page's ID but not any slug
+        // should return null, not the page with that ID
+        $result = $pageRepo->getPage($existingId, $existingPage->host);
+        self::assertNull($result, 'getPage() with numeric slug should not fallback to matching by ID');
+    }
 }

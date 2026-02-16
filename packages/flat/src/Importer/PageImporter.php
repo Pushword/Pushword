@@ -120,7 +120,11 @@ final class PageImporter extends AbstractImporter
         $slug = $document->matter('slug');
         $filePathSlug = $this->filePathToSlug($filePath);
 
-        if (! is_string($slug) || in_array($slug, ['', null], true)) {
+        if (is_int($slug) || is_float($slug)) {
+            $slug = (string) $slug;
+        }
+
+        if (! is_string($slug) || '' === $slug) {
             return $filePathSlug;
         }
 

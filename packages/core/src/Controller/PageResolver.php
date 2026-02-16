@@ -24,7 +24,7 @@ final readonly class PageResolver
     public function findPageOr404(Request $request, string $slug, bool $extractPager = false): ?Page
     {
         $slug = self::normalizeSlug($slug);
-        $page = $this->pageRepository->getPage($slug, $this->requestContext->getCurrentSite()->getHostForDoctrineSearch(), true);
+        $page = $this->pageRepository->getPage($slug, $this->requestContext->getCurrentSite()->getHostForDoctrineSearch());
 
         if (! $page instanceof Page && $extractPager) {
             $page = $this->extractPager($request, $slug);

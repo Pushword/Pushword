@@ -186,14 +186,10 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     /**
      * @param string|string[] $host
      */
-    public function getPage(string $slug, string|array $host, bool $checkId = true): ?Page
+    public function getPage(string $slug, string|array $host): ?Page
     {
         $queryBuilder = $this->createQueryBuilder('p')
             ->andWhere('p.slug =  :slug')->setParameter('slug', $slug);
-
-        if ((int) $slug > 0 && $checkId) {
-            $queryBuilder->orWhere('p.id =  :id')->setParameter('id', $slug);
-        }
 
         $queryBuilder = $this->andHost($queryBuilder, $host);
 

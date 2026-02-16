@@ -538,6 +538,6 @@ final class LinkedDocsScanner extends AbstractScanner
 
         // Fall back to database query
         return $this->entityManager->getRepository(Page::class)
-            ->getPage($slug, $this->page->host, true);
+            ->getPage($slug, $this->page->host);
     }
 }

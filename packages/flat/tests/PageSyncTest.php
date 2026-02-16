@@ -1962,6 +1962,111 @@ YAML;
     }
 
     /**
+     * Test: Numeric slug (e.g. 404.md) imports correctly and is not confused with a page ID.
+     */
+    public function testNumericSlugImportExportRoundTrip(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a .md file with a numeric filename (like 404.md)
+        $mdFilePath = $contentDir.'/404.md';
+        $mdContent = <<<'YAML'
+---
+h1: Page Not Found
+---
+
+The page you are looking for does not exist.
+YAML;
+        file_put_contents($mdFilePath, $mdContent);
+        touch($mdFilePath, time() + 10);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify page was imported with slug "404", not matched to any page by ID
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => '404', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page with numeric slug "404" should be imported');
+        self::assertSame('404', $importedPage->slug, 'Slug should be "404"');
+        self::assertSame('Page Not Found', $importedPage->h1);
+
+        $pageId = $importedPage->id;
+
+        // Export and verify it round-trips correctly
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        self::assertFileExists($mdFilePath, '404.md should be exported');
+        $exportedContent = file_get_contents($mdFilePath);
+        self::assertStringContainsString('Page Not Found', $exportedContent);
+
+        // Delete and re-import to verify the slug is not confused with the page ID
+        $this->em->clear();
+        $pageToRemove = $this->em->find(Page::class, $pageId);
+        self::assertNotNull($pageToRemove);
+        $this->em->remove($pageToRemove);
+        $this->em->flush();
+
+        // Re-import — the file has id in frontmatter now, but the slug should remain "404"
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $reimportedPage = $this->pageRepo->findOneBy(['slug' => '404', 'host' => 'localhost.dev']);
+        self::assertNotNull($reimportedPage, 'Page with numeric slug should be re-imported');
+        self::assertSame('404', $reimportedPage->slug);
+
+        // Cleanup
+        $this->em->remove($reimportedPage);
+        $this->em->flush();
+        $this->trackFile($mdFilePath);
+    }
+
+    /**
+     * Test: Numeric slug in YAML frontmatter (unquoted) is correctly parsed.
+     */
+    public function testNumericSlugInFrontmatter(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // YAML parses unquoted numbers as integers — the importer should handle this
+        $mdFilePath = $contentDir.'/numeric-slug-yaml.md';
+        $mdContent = <<<'YAML'
+---
+h1: Numeric Slug YAML Test
+slug: 404
+---
+
+Content
+YAML;
+        file_put_contents($mdFilePath, $mdContent);
+        touch($mdFilePath, time() + 10);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        // The slug from frontmatter (404 as int) should be cast to string "404"
+        // and match the filename-derived slug
+        $importedPage = $this->pageRepo->findOneBy(['slug' => '404', 'host' => 'localhost.dev']);
+
+        // If not found by "404", check with the filename-derived slug
+        $importedPage ??= $this->pageRepo->findOneBy(['slug' => 'numeric-slug-yaml', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedPage, 'Page should be imported');
+        // The slug should be "404" (from frontmatter, cast to string) or "numeric-slug-yaml" (from filename)
+        // With our fix, it should be "404" since we cast numeric YAML values to string
+        self::assertSame('404', $importedPage->slug, 'Numeric YAML slug should be cast to string');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        $this->trackFile($mdFilePath);
+    }
+
+    /**
      * Test: Force import resets (deletes) all host pages before importing.
      */
     public function testForceImportResetsHostPagesBeforeImport(): void
