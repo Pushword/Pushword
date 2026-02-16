@@ -16,6 +16,7 @@ use Pushword\Flat\Service\FlatChangeDetector;
 use Pushword\Flat\Service\FlatLockManager;
 use Pushword\Flat\Sync\ConflictResolver;
 use Pushword\Flat\Sync\ConversationSyncInterface;
+use Pushword\Flat\Sync\PageSync;
 use Pushword\Flat\Sync\SyncStateManager;
 use Pushword\Flat\Twig\FlatLockExtension;
 use ReflectionClass;
@@ -37,6 +38,10 @@ return static function (ContainerConfigurator $container): void {
         ->exclude([
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
         ]);
+
+    // PageSync configuration
+    $services->set(PageSync::class)
+        ->arg('$excludeFiles', '%pw.pushword_flat.exclude_files%');
 
     // SyncStateManager configuration
     $services->set(SyncStateManager::class)

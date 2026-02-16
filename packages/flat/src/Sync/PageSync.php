@@ -36,6 +36,8 @@ final class PageSync
         private readonly EntityManagerInterface $entityManager,
         private readonly SyncStateManager $stateManager,
         private readonly ConflictResolver $conflictResolver,
+        /** @var string[] */
+        private readonly array $excludeFiles = [],
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -138,6 +140,11 @@ final class PageSync
                 continue;
             }
 
+            // Skip excluded files
+            if (\in_array($entry, $this->excludeFiles, true)) {
+                continue;
+            }
+
             $path = $dir.'/'.$entry;
             if (is_dir($path)) {
                 $files = [...$files, ...$this->collectMarkdownFiles($path)];
@@ -201,6 +208,10 @@ final class PageSync
         $files = scandir($dir);
         foreach ($files as $file) {
             if (\in_array($file, ['.', '..'], true)) {
+                continue;
+            }
+
+            if (\in_array($file, $this->excludeFiles, true)) {
                 continue;
             }
 

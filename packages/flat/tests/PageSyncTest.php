@@ -1923,6 +1923,45 @@ YAML;
     }
 
     /**
+     * Test: Excluded files (CLAUDE.md, README.md) are ignored during import.
+     */
+    public function testExcludedFilesIgnored(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Export first to ensure clean state
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        // Create excluded files that should be ignored
+        $claudeMd = $contentDir.'/CLAUDE.md';
+        file_put_contents($claudeMd, "---\nh1: Claude Instructions\n---\n\nThis is not a page.");
+        $this->trackFile($claudeMd);
+
+        $readmeMd = $contentDir.'/README.md';
+        file_put_contents($readmeMd, "---\nh1: Readme File\n---\n\nThis is not a page.");
+        $this->trackFile($readmeMd);
+
+        // Import
+        $this->pageSync->import('localhost.dev');
+
+        // Verify excluded files were NOT imported as pages
+        $this->em->clear();
+        $claudePage = $this->pageRepo->findOneBy(['slug' => 'CLAUDE', 'host' => 'localhost.dev']);
+        self::assertNull($claudePage, 'CLAUDE.md should not be imported as a page');
+
+        $readmePage = $this->pageRepo->findOneBy(['slug' => 'README', 'host' => 'localhost.dev']);
+        self::assertNull($readmePage, 'README.md should not be imported as a page');
+
+        // Export and verify excluded files are preserved on disk
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        self::assertFileExists($claudeMd, 'CLAUDE.md should survive export');
+        self::assertFileExists($readmeMd, 'README.md should survive export');
+    }
+
+    /**
      * Test: Force import resets (deletes) all host pages before importing.
      */
     public function testForceImportResetsHostPagesBeforeImport(): void
