@@ -116,6 +116,11 @@ body.ea-new .content-header {
 
 .pw-settings-accordion .form-fieldset-body {
   padding: 0.75rem 15px 5px !important;
+  overflow: visible !important;
+}
+
+.pw-settings-accordion .form-fieldset-body > .row {
+  overflow: visible !important;
 }
 
 .form-column .form-fieldset-header {
