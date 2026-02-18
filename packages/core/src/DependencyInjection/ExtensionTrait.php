@@ -3,6 +3,7 @@
 namespace Pushword\Core\DependencyInjection;
 
 use LogicException;
+use ReflectionProperty;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -36,7 +37,7 @@ trait ExtensionTrait
         // Snapshot extension configs before loading bundle defaults
         /** @var array<string, int> $configCountsBefore */
         $configCountsBefore = [];
-        $refl = new \ReflectionProperty(ContainerBuilder::class, 'extensionConfigs');
+        $refl = new ReflectionProperty(ContainerBuilder::class, 'extensionConfigs');
         /** @var array<string, list<array<string, mixed>>> $extensionConfigs */
         $extensionConfigs = $refl->getValue($container);
         foreach ($extensionConfigs as $ext => $configs) {

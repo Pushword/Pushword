@@ -2,12 +2,14 @@
 
 namespace Pushword\Core\Tests\DependencyInjection;
 
+use App\Kernel;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\FlysystemBundle\DependencyInjection\Configuration;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Service\MediaStorageAdapter;
+use ReflectionProperty;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -58,8 +60,11 @@ class FlysystemConfigOverrideTest extends TestCase
             second: self::BUNDLE_LOCAL_CONFIG,
         );
 
-        self::assertSame('local', $adapter,
-            'When bundle appends after app, bundle wins (the bug scenario)');
+        self::assertSame(
+            'local',
+            $adapter,
+            'When bundle appends after app, bundle wins (the bug scenario)'
+        );
     }
 
     /**
@@ -73,8 +78,11 @@ class FlysystemConfigOverrideTest extends TestCase
             second: self::APP_SFTP_CONFIG,
         );
 
-        self::assertSame('sftp', $adapter,
-            'When bundle config is first and app config is second, app wins');
+        self::assertSame(
+            'sftp',
+            $adapter,
+            'When bundle config is first and app config is second, app wins'
+        );
     }
 
     /**
@@ -83,7 +91,7 @@ class FlysystemConfigOverrideTest extends TestCase
      */
     public function testRealKernelUsesLocalByDefault(): void
     {
-        $kernel = new \App\Kernel('test', true);
+        $kernel = new Kernel('test', true);
         $kernel->boot();
 
         /** @var ContainerInterface $testContainer */
@@ -92,11 +100,11 @@ class FlysystemConfigOverrideTest extends TestCase
         /** @var MediaStorageAdapter $storageAdapter */
         $storageAdapter = $testContainer->get(MediaStorageAdapter::class); // @phpstan-ignore symfonyContainer.privateService
 
-        $storageRefl = new \ReflectionProperty($storageAdapter, 'storage');
+        $storageRefl = new ReflectionProperty($storageAdapter, 'storage');
         /** @var Filesystem $storage */
         $storage = $storageRefl->getValue($storageAdapter);
 
-        $adapterRefl = new \ReflectionProperty($storage, 'adapter');
+        $adapterRefl = new ReflectionProperty($storage, 'adapter');
         $adapter = $adapterRefl->getValue($storage);
 
         self::assertInstanceOf(LocalFilesystemAdapter::class, $adapter);
@@ -114,7 +122,7 @@ class FlysystemConfigOverrideTest extends TestCase
     private function resolveAdapter(array $first, array $second): string
     {
         $configs = [$first, $second];
-        $processed = (new Processor())->processConfiguration(new Configuration(), $configs);
+        $processed = new Processor()->processConfiguration(new Configuration(), $configs);
 
         /** @var array{storages: array<string, array{adapter: string}>} $processed */
 
