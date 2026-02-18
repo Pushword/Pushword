@@ -23,9 +23,24 @@ trait ExtensionTrait
 
     public function prepend(ContainerBuilder $container): void
     {
+        $this->prependPackagesConfig($container);
+    }
+
+    protected function prependPackagesConfig(ContainerBuilder $container): void
+    {
         $configFolder = $this->getConfigFolder().'/packages';
         if (! file_exists($configFolder)) {
             return;
+        }
+
+        // Snapshot extension configs before loading bundle defaults
+        /** @var array<string, int> $configCountsBefore */
+        $configCountsBefore = [];
+        $refl = new \ReflectionProperty(ContainerBuilder::class, 'extensionConfigs');
+        /** @var array<string, list<array<string, mixed>>> $extensionConfigs */
+        $extensionConfigs = $refl->getValue($container);
+        foreach ($extensionConfigs as $ext => $configs) {
+            $configCountsBefore[$ext] = \count($configs);
         }
 
         // Load YAML files first (for backward compatibility)
@@ -41,6 +56,22 @@ trait ExtensionTrait
         foreach ($phpFinder as $file) {
             $phpLoader->load($file->getFilename());
         }
+
+        // File loaders append configs (via ContainerConfigurator::extension()),
+        // but prepend() should produce low-priority defaults that app configs can override.
+        // Move newly appended configs to the front so app-level configs always win.
+        /** @var array<string, list<array<string, mixed>>> $allConfigs */
+        $allConfigs = $refl->getValue($container);
+        foreach ($allConfigs as $ext => $configs) {
+            $countBefore = $configCountsBefore[$ext] ?? 0;
+            if (\count($configs) > $countBefore) {
+                $newConfigs = \array_slice($configs, $countBefore);
+                $existingConfigs = \array_slice($configs, 0, $countBefore);
+                $allConfigs[$ext] = [...$newConfigs, ...$existingConfigs];
+            }
+        }
+
+        $refl->setValue($container, $allConfigs);
     }
 
     // Used in PushwordAdminExtension

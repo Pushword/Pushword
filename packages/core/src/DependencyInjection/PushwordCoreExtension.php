@@ -6,12 +6,8 @@ use LogicException;
 use Override;
 use Pushword\Core\Entity\User;
 use Symfony\Component\Config\Definition\Processor;
-use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
-use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
-use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpKernel\DependencyInjection\ConfigurableExtension;
 
 final class PushwordCoreExtension extends ConfigurableExtension implements PrependExtensionInterface
@@ -53,21 +49,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
     #[Override]
     public function prepend(ContainerBuilder $container): void
     {
-        // Load packages config files (existing ExtensionTrait logic)
-        $configFolder = $this->configFolder.'/packages';
-        if (file_exists($configFolder)) {
-            $yamlLoader = new YamlFileLoader($container, new FileLocator($configFolder));
-            $yamlFinder = Finder::create()->files()->name('*.yaml')->in($configFolder);
-            foreach ($yamlFinder as $file) {
-                $yamlLoader->load($file->getFilename());
-            }
-
-            $phpLoader = new PhpFileLoader($container, new FileLocator($configFolder));
-            $phpFinder = Finder::create()->files()->name('*.php')->in($configFolder);
-            foreach ($phpFinder as $file) {
-                $phpLoader->load($file->getFilename());
-            }
-        }
+        $this->prependPackagesConfig($container);
 
         $this->registerResolveTargetEntities($container);
     }

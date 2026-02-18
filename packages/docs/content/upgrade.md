@@ -14,6 +14,12 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 ## To 1.0.0-rc373
 
+### App-level Flysystem config now properly overrides bundle defaults
+
+Bundle package configs loaded during `prepend()` were appended instead of prepended, causing bundle defaults (e.g. `pushword.mediaStorage: local`) to override app-level configs (e.g. SFTP in `when@dev`).
+
+If you had a custom `flysystem.yaml` with a `when@dev` SFTP override for `pushword.mediaStorage` that wasn't working, it will now take effect. No action needed — just `composer update`.
+
 ### Media CSV moved from `media/index.csv` to `content/media.csv`
 
 The media metadata CSV file has moved from the Flysystem-managed `media/` directory to the local `content/` directory. This makes it accessible regardless of your storage backend (local, SFTP, S3, etc.).
@@ -323,7 +329,7 @@ sed -i "s|@PushwordCoreBundle/Resources/config/routes/all.yaml|@PushwordCoreBund
 - [ ] Check your `config/packages` and compare it with the new one in [`vendor/pushword/skeleton/config/packages`](https://github.com/Pushword/Pushword/blob/main/packages/skeleton/config/packages) - flex add tons of config but you need to maintain them. Best practice is to remove theme and to keep `framework.yaml` (you can easily compare with the maintained one in the skeleton), `pentatrion.yaml`, `twig.yaml`, `web_profiler.yaml`, `pushword.yaml` .
 - [ ] check if flex install you a `templates/base.html.twig` file, if yes, remove it.
 
-- [ ] remove sidecar yaml or json files in media `rm media/*.{yaml,json}` (we are now using a global `content/media.csv`)
+- [ ] remove sidecar yaml or json files in media `rm media/*.{yaml,json}` (we are now using a global index.csv)
 
 ### Media entity change
 
