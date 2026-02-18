@@ -98,10 +98,23 @@ final readonly class FlatChangeDetector
         // Check for media changes (in media subdirectory)
         $mediaDir = $contentDir.'/media';
         if (is_dir($mediaDir)) {
-            $mediaChanges = $this->checkDirectoryForChanges($mediaDir, '*', $lastSyncTime, ['index.csv', '*.conflicts.csv']);
+            $mediaChanges = $this->checkDirectoryForChanges($mediaDir, '*', $lastSyncTime, ['*.conflicts.csv']);
             if ($mediaChanges['hasChanges']) {
                 $changedEntityTypes[] = 'media';
                 $newest = $this->updateNewest($newest, $mediaChanges['newestFile'], $mediaChanges['newestMtime']);
+            }
+        }
+
+        // Check for media.csv changes (in content base dir)
+        $mediaCsvPath = $this->contentDirFinder->getBaseDir().'/media.csv';
+        if ($this->filesystem->exists($mediaCsvPath)) {
+            $mtime = filemtime($mediaCsvPath);
+            if (false !== $mtime && $mtime > $lastSyncTime) {
+                if (! \in_array('media', $changedEntityTypes, true)) {
+                    $changedEntityTypes[] = 'media';
+                }
+
+                $newest = $this->updateNewest($newest, $mediaCsvPath, $mtime);
             }
         }
 

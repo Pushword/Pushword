@@ -8,11 +8,12 @@ use Doctrine\ORM\EntityManager;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Flat\Exporter\MediaExporter;
+use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Importer\MediaImporter;
 use Pushword\Flat\Sync\MediaSync;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
 final class MediaDeletionSyncTest extends KernelTestCase
@@ -40,6 +41,22 @@ final class MediaDeletionSyncTest extends KernelTestCase
         }
 
         parent::tearDown();
+    }
+
+    private function getMediaCsvPath(): string
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+
+        return $contentDirFinder->getBaseDir().'/'.MediaExporter::CSV_FILE;
+    }
+
+    private function getContentBaseDir(): string
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+
+        return $contentDirFinder->getBaseDir();
     }
 
     private function createMediaEntity(string $fileName, string $alt, string $mediaDir, string $projectDir): Media
@@ -82,13 +99,12 @@ final class MediaDeletionSyncTest extends KernelTestCase
         // Export to generate CSV with both media
         /** @var MediaExporter $exporter */
         $exporter = self::getContainer()->get(MediaExporter::class);
+        $exporter->csvDir = $this->getContentBaseDir();
         $exporter->exportMedias();
 
         // Remove media2 row from CSV (keep only media1)
         $csvContent = "id,fileName,alt,tags\n{$media1Id},del-test-1.txt,Delete Test 1,\n";
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
-        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        new Filesystem()->dumpFile($this->getMediaCsvPath(), $csvContent);
 
         // Import - should delete media2
         /** @var MediaSync $mediaSync */
@@ -121,14 +137,12 @@ final class MediaDeletionSyncTest extends KernelTestCase
         $mediaId = $media->id;
 
         // Create CSV without ID column
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
-        $mediaStorage->write(MediaExporter::INDEX_FILE, "fileName,alt\nno-id-test.txt,No ID Test\n");
+        new Filesystem()->dumpFile($this->getMediaCsvPath(), "fileName,alt\nno-id-test.txt,No ID Test\n");
 
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($this->getMediaCsvPath());
 
         // getImportedIds should be empty (no IDs in CSV)
         self::assertSame([], $importer->getImportedIds(), 'No IDs should be tracked when CSV has no ID column');
@@ -151,9 +165,7 @@ final class MediaDeletionSyncTest extends KernelTestCase
         $mediaId = $media->id;
 
         // Create CSV with header only (no data rows)
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
-        $mediaStorage->write(MediaExporter::INDEX_FILE, "id,fileName,alt,tags\n");
+        new Filesystem()->dumpFile($this->getMediaCsvPath(), "id,fileName,alt,tags\n");
 
         /** @var MediaSync $mediaSync */
         $mediaSync = self::getContainer()->get(MediaSync::class);
@@ -193,13 +205,12 @@ final class MediaDeletionSyncTest extends KernelTestCase
         // Export all
         /** @var MediaExporter $exporter */
         $exporter = self::getContainer()->get(MediaExporter::class);
+        $exporter->csvDir = $this->getContentBaseDir();
         $exporter->exportMedias();
 
         // Remove 3 of 5 from CSV (keep only 1 and 4)
         $csvContent = "id,fileName,alt,tags\n{$ids[1]},multi-del-1.txt,Multi Delete 1,\n{$ids[4]},multi-del-4.txt,Multi Delete 4,\n";
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
-        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        new Filesystem()->dumpFile($this->getMediaCsvPath(), $csvContent);
 
         /** @var MediaSync $mediaSync */
         $mediaSync = self::getContainer()->get(MediaSync::class);

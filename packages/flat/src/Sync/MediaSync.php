@@ -68,10 +68,11 @@ final class MediaSync
         $app = $this->resolveApp($host);
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
         $localMediaDir = $contentDir.'/media';
+        $csvPath = $this->getCsvPath();
 
-        // 1. Parse CSV index from storage (works for both local and remote)
+        // 1. Parse CSV index from content base dir
         $this->mediaImporter->resetIndex();
-        $this->mediaImporter->loadIndexFromStorage();
+        $this->mediaImporter->loadIndex($csvPath);
 
         // 2. Validate files exist and prepare renames
         if ($this->mediaImporter->hasIndexData()) {
@@ -112,7 +113,7 @@ final class MediaSync
 
         $this->mediaImporter->finishImport();
 
-        // 6. Regenerate index.csv to reflect the current database state
+        // 6. Regenerate media.csv to reflect the current database state
         $this->regenerateIndex();
 
         // 7. Record import in sync state
@@ -140,11 +141,6 @@ final class MediaSync
             }
 
             if ($this->isLockOrTempFile($entry)) {
-                continue;
-            }
-
-            // Skip index.csv
-            if (MediaExporter::INDEX_FILE === $entry) {
                 continue;
             }
 
@@ -187,10 +183,11 @@ final class MediaSync
     }
 
     /**
-     * Regenerate index.csv after import to ensure it reflects current database state.
+     * Regenerate media.csv after import to ensure it reflects current database state.
      */
     private function regenerateIndex(): void
     {
+        $this->mediaExporter->csvDir = $this->contentDirFinder->getBaseDir();
         $this->mediaExporter->exportMedias();
     }
 
@@ -200,6 +197,7 @@ final class MediaSync
         $targetDir = $exportDir ?? $this->contentDirFinder->get($app->getMainHost());
 
         $this->measure('media_export', function () use ($targetDir): void {
+            $this->mediaExporter->csvDir = $this->contentDirFinder->getBaseDir();
             $this->mediaExporter->exportDir = $targetDir;
             $this->mediaExporter->exportMedias();
         });
@@ -334,11 +332,6 @@ final class MediaSync
     {
         $fileName = basename($filePath);
 
-        // Skip index.csv when checking for newer files
-        if (MediaExporter::INDEX_FILE === $fileName) {
-            return '';
-        }
-
         // Legacy sidecar files support (for backward compatibility)
         if (
             str_ends_with($fileName, '.yaml')
@@ -352,7 +345,7 @@ final class MediaSync
 
     private function shouldSkipStorageFile(string $path): bool
     {
-        return MediaExporter::INDEX_FILE === $path || $this->isLockOrTempFile(basename($path));
+        return $this->isLockOrTempFile(basename($path));
     }
 
     /**
@@ -400,6 +393,11 @@ final class MediaSync
         }
 
         $this->entityManager->flush();
+    }
+
+    private function getCsvPath(): string
+    {
+        return $this->contentDirFinder->getBaseDir().'/'.MediaExporter::CSV_FILE;
     }
 
     private function resolveApp(?string $host): SiteConfig

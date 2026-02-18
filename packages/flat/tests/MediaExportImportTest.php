@@ -83,10 +83,11 @@ final class MediaExportImportTest extends KernelTestCase
 
         /** @var MediaExporter $exporter */
         $exporter = self::getContainer()->get(MediaExporter::class);
+        $exporter->csvDir = $this->testMediaDir;
         $exporter->exportMedias();
 
         // Check CSV was created with alt_* columns
-        $csvPath = $mediaDir.'/index.csv';
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
         self::assertFileExists($csvPath);
 
         $csvContent = file_get_contents($csvPath);
@@ -114,7 +115,7 @@ fileName,alt,width,height,ratio,alt_en,alt_fr
 test-import.png,"Test Import Image",,,,"","Image FR"
 CSV;
 
-        $this->filesystem->dumpFile($this->testMediaDir.'/index.csv', $csvContent);
+        $this->filesystem->dumpFile($this->testMediaDir.'/'.MediaExporter::CSV_FILE, $csvContent);
 
         // Create a dummy image file
         $this->createTestImage($this->testMediaDir.'/test-import.png');
@@ -124,7 +125,7 @@ CSV;
         $importer->mediaDir = $this->testMediaDir;
         $importer->projectDir = self::getContainer()->getParameter('kernel.project_dir');
         $importer->resetIndex();
-        $importer->loadIndex($this->testMediaDir);
+        $importer->loadIndex($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
 
         $lastEdit = new DateTime();
         $importer->import($this->testMediaDir.'/test-import.png', $lastEdit);
@@ -156,7 +157,7 @@ fileName,alt,width,height,ratio,alt_de,alt_en,alt_es,alt_fr
 test-mixed.png,"Mixed Test","","","","German Alt","","Spanish Alt",""
 CSV;
 
-        $this->filesystem->dumpFile($this->testMediaDir.'/index.csv', $csvContent);
+        $this->filesystem->dumpFile($this->testMediaDir.'/'.MediaExporter::CSV_FILE, $csvContent);
 
         // Create a dummy image file
         $this->createTestImage($this->testMediaDir.'/test-mixed.png');
@@ -166,7 +167,7 @@ CSV;
         $importer->mediaDir = $this->testMediaDir;
         $importer->projectDir = self::getContainer()->getParameter('kernel.project_dir');
         $importer->resetIndex();
-        $importer->loadIndex($this->testMediaDir);
+        $importer->loadIndex($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
 
         $lastEdit = new DateTime();
         $importer->import($this->testMediaDir.'/test-mixed.png', $lastEdit);
@@ -224,7 +225,7 @@ CSV;
 
         // Create index.csv with the media's ID so importer can find it
         $indexCsv = "id,fileName,alt\n{$media->id},test-hash.pdf,Test PDF\n";
-        file_put_contents($mediaDir.'/index.csv', $indexCsv);
+        file_put_contents($this->testMediaDir.'/'.MediaExporter::CSV_FILE, $indexCsv);
 
         // Import same file - should be skipped (hash matches)
         /** @var MediaImporter $importer */
@@ -232,7 +233,7 @@ CSV;
         $importer->mediaDir = $mediaDir;
         $importer->projectDir = $projectDir;
         $importer->resetIndex();
-        $importer->loadIndex($mediaDir);
+        $importer->loadIndex($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
 
         $imported = $importer->importMedia($pdfPath, new DateTime());
         self::assertFalse($imported, 'Same file content should be skipped');
@@ -244,7 +245,7 @@ CSV;
 
         // Import modified file - should be imported (hash differs)
         $importer->resetIndex();
-        $importer->loadIndex($mediaDir);
+        $importer->loadIndex($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
 
         $imported = $importer->importMedia($pdfPath, new DateTime());
         self::assertTrue($imported, 'Modified file should be imported');
@@ -254,7 +255,7 @@ CSV;
         $em->remove($media);
         $em->flush();
         @unlink($pdfPath);
-        @unlink($mediaDir.'/index.csv');
+        @unlink($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
     }
 
     public function testHashComparisonPreventsReimportOnSubsequentSync(): void
@@ -288,7 +289,7 @@ CSV;
 
         // Create index.csv with the media's ID
         $indexCsv = "id,fileName,alt\n{$media->id},test-no-reimport.txt,Test Doc\n";
-        file_put_contents($mediaDir.'/index.csv', $indexCsv);
+        file_put_contents($this->testMediaDir.'/'.MediaExporter::CSV_FILE, $indexCsv);
 
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
@@ -297,7 +298,7 @@ CSV;
 
         // First sync - should skip (hash matches)
         $importer->resetIndex();
-        $importer->loadIndex($mediaDir);
+        $importer->loadIndex($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
 
         $imported1 = $importer->importMedia($docPath, new DateTime());
         self::assertFalse($imported1, 'First sync should skip unchanged file');
@@ -305,7 +306,7 @@ CSV;
 
         // Second sync - should still skip
         $importer->resetIndex();
-        $importer->loadIndex($mediaDir);
+        $importer->loadIndex($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
 
         $imported2 = $importer->importMedia($docPath, new DateTime());
         self::assertFalse($imported2, 'Second sync should also skip unchanged file');
@@ -313,7 +314,7 @@ CSV;
 
         // Third sync - should still skip
         $importer->resetIndex();
-        $importer->loadIndex($mediaDir);
+        $importer->loadIndex($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
 
         $imported3 = $importer->importMedia($docPath, new DateTime());
         self::assertFalse($imported3, 'Third sync should also skip unchanged file');
@@ -324,16 +325,13 @@ CSV;
         $em->remove($media);
         $em->flush();
         @unlink($docPath);
-        @unlink($mediaDir.'/index.csv');
+        @unlink($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
     }
 
-    public function testLoadIndexFromStorageReadsFromFlysystem(): void
+    public function testLoadIndexFromLocalCsvFile(): void
     {
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-
-        /** @var string $projectDir */
-        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
 
         /** @var string $mediaDir */
         $mediaDir = self::getContainer()->getParameter('pw.media_dir');
@@ -341,9 +339,10 @@ CSV;
         /** @var MediaStorageAdapter $mediaStorage */
         $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
 
-        // Write index.csv to storage via Flysystem
+        // Write media.csv to local filesystem
         $csvContent = "fileName,alt,alt_fr\ntest-storage.png,\"Storage Test\",\"Test FR\"\n";
-        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
+        $this->filesystem->dumpFile($csvPath, $csvContent);
 
         // Create the image file in storage
         $this->createTestImage($mediaDir.'/test-storage.png');
@@ -351,9 +350,9 @@ CSV;
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($csvPath);
 
-        self::assertTrue($importer->hasIndexData(), 'Index should be loaded from storage');
+        self::assertTrue($importer->hasIndexData(), 'Index should be loaded from local CSV');
 
         // Import the file using importFromStorage
         $lastModified = $mediaStorage->lastModified('test-storage.png');
@@ -376,7 +375,6 @@ CSV;
         $em->remove($media);
         $em->flush();
         @unlink($mediaDir.'/test-storage.png');
-        $mediaStorage->delete(MediaExporter::INDEX_FILE);
     }
 
     // --- In-memory Flysystem tests ---
@@ -412,11 +410,13 @@ CSV;
         $em->flush();
 
         $exporter = $this->createExporterWithStorage($memStorage);
+        $exporter->csvDir = $this->testMediaDir;
         $exporter->exportMedias();
 
-        // Verify index.csv was written to in-memory storage
-        self::assertTrue($memStorage->fileExists(MediaExporter::INDEX_FILE));
-        $csvContent = $memStorage->read(MediaExporter::INDEX_FILE);
+        // Verify media.csv was written to local filesystem
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
+        self::assertFileExists($csvPath);
+        $csvContent = (string) file_get_contents($csvPath);
         self::assertStringContainsString('test-mem-export.png', $csvContent);
         self::assertStringContainsString('Memory Export Test', $csvContent);
 
@@ -447,13 +447,14 @@ CSV;
         $pngBytes = (string) file_get_contents($this->testMediaDir.'/test-mem-import.png');
         $memStorage->write('test-mem-import.png', $pngBytes);
 
-        // Write index.csv into in-memory storage
+        // Write media.csv to local filesystem
         $csvContent = "fileName,alt\ntest-mem-import.png,\"In-Memory Import\"\n";
-        $memStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
+        $this->filesystem->dumpFile($csvPath, $csvContent);
 
         $importer = $this->createImporterWithStorage($memStorage, $mediaDir, $projectDir);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($csvPath);
 
         self::assertTrue($importer->hasIndexData());
 
@@ -510,11 +511,13 @@ CSV;
 
         $mediaId = $media->id;
 
-        // Export to in-memory storage
+        // Export to local filesystem
         $exporter = $this->createExporterWithStorage($memStorage);
+        $exporter->csvDir = $this->testMediaDir;
         $exporter->exportMedias();
 
-        self::assertTrue($memStorage->fileExists(MediaExporter::INDEX_FILE));
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
+        self::assertFileExists($csvPath);
 
         // Remove from DB (preRemove listener deletes the file from container storage)
         $em->remove($media);
@@ -527,10 +530,10 @@ CSV;
         // Recreate file on disk (preRemove deleted it) for MediaHashListener + metadata reads
         $this->createTestImage($mediaDir.'/test-roundtrip.png');
 
-        // Import back from in-memory storage (isLocal=true, file exists on disk)
+        // Import back from local CSV
         $importer = $this->createImporterWithStorage($memStorage, $mediaDir, $projectDir);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($csvPath);
 
         self::assertTrue($importer->hasIndexData());
 
@@ -589,11 +592,12 @@ CSV;
 
         // Load index CSV with new name for the same ID
         $csvContent = "id,fileName,alt\n{$mediaId},new-name.pdf,Rename Test\n";
-        $memStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
+        $this->filesystem->dumpFile($csvPath, $csvContent);
 
         $importer = $this->createImporterWithStorage($memStorage, $mediaDir, $projectDir);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($csvPath);
 
         // Execute rename via Flysystem move()
         $importer->prepareFileRenames($this->testMediaDir);
@@ -645,11 +649,12 @@ CSV;
 
         // Index CSV renames source -> target (collision)
         $csvContent = "id,fileName,alt\n{$mediaId},target.pdf,Collision Test\n";
-        $memStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
+        $this->filesystem->dumpFile($csvPath, $csvContent);
 
         $importer = $this->createImporterWithStorage($memStorage, $mediaDir, $projectDir);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($csvPath);
 
         try {
             $this->expectException(RuntimeException::class);
@@ -707,14 +712,15 @@ CSV;
 
         // Index CSV references both files
         $csvContent = "id,fileName,alt\n{$media1->id},exists-in-storage.pdf,Exists\n{$media2->id},missing-everywhere.pdf,Missing\n";
-        $memStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
+        $this->filesystem->dumpFile($csvPath, $csvContent);
 
         // Use a non-existent flat dir so local filesystem check fails for both
         $nonExistentDir = sys_get_temp_dir().'/pushword-no-flat-'.uniqid();
 
         $importer = $this->createImporterWithStorage($memStorage, $mediaDir, $projectDir);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($csvPath);
 
         $importer->validateFilesExist($nonExistentDir);
 
@@ -759,13 +765,14 @@ CSV;
         // Place at container's mediaDir so MediaHashListener can hash it on persist()
         file_put_contents($mediaDir.'/test-stream.txt', 'Stream test content');
 
-        // Write index.csv in source dir so import can proceed
+        // Write media.csv in source dir so import can proceed
         $csvContent = "fileName,alt\ntest-stream.txt,\"Stream Test\"\n";
-        $this->filesystem->dumpFile($sourceDir.'/index.csv', $csvContent);
+        $csvPath = $sourceDir.'/'.MediaExporter::CSV_FILE;
+        $this->filesystem->dumpFile($csvPath, $csvContent);
 
         $importer = $this->createImporterWithStorage($memStorage, $sourceDir, $projectDir);
         $importer->resetIndex();
-        $importer->loadIndex($sourceDir);
+        $importer->loadIndex($csvPath);
 
         // importMedia() calls copyToMediaDir() internally which calls writeStream()
         $imported = $importer->importMedia($localFile, new DateTime());
@@ -824,11 +831,12 @@ CSV;
 
         // Index CSV with the media's ID
         $csvContent = "id,fileName,alt\n{$mediaId},test-hash-remote.txt,Hash Remote Test\n";
-        $memStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
+        $this->filesystem->dumpFile($csvPath, $csvContent);
 
         $importer = $this->createImporterWithStorage($memStorage, $mediaDir, $projectDir);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($csvPath);
 
         // Import same content - should be skipped (hash matches)
         $imported = $importer->importFromStorage('test-hash-remote.txt', new DateTime());
@@ -846,7 +854,7 @@ CSV;
 
         // Import again - should detect change via hash comparison
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($csvPath);
 
         $imported = $importer->importFromStorage('test-hash-remote.txt', new DateTime());
         self::assertTrue($imported, 'Modified content should be imported');
@@ -878,14 +886,14 @@ CSV;
 
         // Create index.csv
         $csvContent = "fileName,alt\ntest-symlink.pdf,\"Symlink Test PDF\"\n";
-        $this->filesystem->dumpFile($this->testMediaDir.'/index.csv', $csvContent);
+        $this->filesystem->dumpFile($this->testMediaDir.'/'.MediaExporter::CSV_FILE, $csvContent);
 
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
         $importer->mediaDir = $this->testMediaDir;
         $importer->projectDir = $projectDir;
         $importer->resetIndex();
-        $importer->loadIndex($this->testMediaDir);
+        $importer->loadIndex($this->testMediaDir.'/'.MediaExporter::CSV_FILE);
 
         $imported = $importer->importMedia($pdfPath, new DateTime());
         $importer->finishImport();

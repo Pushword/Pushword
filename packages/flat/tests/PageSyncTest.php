@@ -2033,14 +2033,14 @@ YAML;
 
         // YAML parses unquoted numbers as integers — the importer should handle this
         $mdFilePath = $contentDir.'/numeric-slug-yaml.md';
-        $mdContent = <<<'YAML'
----
-h1: Numeric Slug YAML Test
-slug: 404
----
-
-Content
-YAML;
+        $mdContent = <<<'YAML_WRAP'
+        ---
+        h1: Numeric Slug YAML Test
+        slug: 404
+        ---
+        
+        Content
+        YAML_WRAP;
         file_put_contents($mdFilePath, $mdContent);
         touch($mdFilePath, time() + 10);
 

@@ -10,9 +10,11 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Flat\Exporter\MediaExporter;
+use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Importer\MediaImporter;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
 final class MediaRenameRoundTripTest extends KernelTestCase
@@ -40,6 +42,14 @@ final class MediaRenameRoundTripTest extends KernelTestCase
         }
 
         parent::tearDown();
+    }
+
+    private function getMediaCsvPath(): string
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+
+        return $contentDirFinder->getBaseDir().'/'.MediaExporter::CSV_FILE;
     }
 
     public function testMediaRenameViaCsvRoundTrip(): void
@@ -70,19 +80,19 @@ final class MediaRenameRoundTripTest extends KernelTestCase
         $mediaId = $media->id;
 
         // Change fileName in CSV (same ID) → simulate user renaming in CSV
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
         $csvContent = "id,fileName,alt,tags\n{$mediaId},rename-new.txt,Rename Test,\n";
-        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        new Filesystem()->dumpFile($this->getMediaCsvPath(), $csvContent);
 
         // Import: should rename the file
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($this->getMediaCsvPath());
         $importer->prepareFileRenames($mediaDir);
 
         // Verify file was renamed in storage
+        /** @var MediaStorageAdapter $mediaStorage */
+        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
         self::assertTrue($mediaStorage->fileExists('rename-new.txt'), 'File should be renamed in storage');
         $this->tempFiles[] = $mediaDir.'/rename-new.txt';
 
@@ -126,15 +136,13 @@ final class MediaRenameRoundTripTest extends KernelTestCase
         $mediaId = $media->id;
 
         // Try to rename to existing filename
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
         $csvContent = "id,fileName,alt,tags\n{$mediaId},collision-target.txt,Collision Source,\n";
-        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        new Filesystem()->dumpFile($this->getMediaCsvPath(), $csvContent);
 
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($this->getMediaCsvPath());
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('target file already exists');
@@ -174,14 +182,16 @@ final class MediaRenameRoundTripTest extends KernelTestCase
         $mediaId = $media->id;
 
         // Export to get CSV with fileNameHistory
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+
         /** @var MediaExporter $exporter */
         $exporter = self::getContainer()->get(MediaExporter::class);
+        $exporter->csvDir = $contentDirFinder->getBaseDir();
         $exporter->exportMedias();
 
         // Read CSV and verify fileNameHistory is present
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
-        $csvContent = $mediaStorage->read(MediaExporter::INDEX_FILE);
+        $csvContent = (string) file_get_contents($this->getMediaCsvPath());
 
         self::assertStringContainsString('fileNameHistory', $csvContent);
         self::assertStringContainsString('history-original.txt', $csvContent);

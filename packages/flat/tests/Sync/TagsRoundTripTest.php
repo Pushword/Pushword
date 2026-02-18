@@ -156,12 +156,16 @@ final class TagsRoundTripTest extends KernelTestCase
         $this->em->persist($media);
         $this->em->flush();
 
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+
         /** @var MediaExporter $exporter */
         $exporter = self::getContainer()->get(MediaExporter::class);
+        $exporter->csvDir = $contentDirFinder->getBaseDir();
         $exporter->exportMedias();
 
-        // Check media index.csv
-        $csvContent = file_get_contents($mediaDir.'/'.MediaExporter::INDEX_FILE);
+        // Check media.csv
+        $csvContent = file_get_contents($contentDirFinder->getBaseDir().'/'.MediaExporter::CSV_FILE);
         self::assertIsString($csvContent);
         self::assertStringContainsString('tags', $csvContent);
         self::assertStringContainsString('document important', $csvContent);
@@ -197,8 +201,12 @@ final class TagsRoundTripTest extends KernelTestCase
         $this->em->persist($media);
         $this->em->flush();
 
+        /** @var FlatFileContentDirFinder $contentDirFinder2 */
+        $contentDirFinder2 = self::getContainer()->get(FlatFileContentDirFinder::class);
+
         /** @var MediaExporter $exporter */
         $exporter = self::getContainer()->get(MediaExporter::class);
+        $exporter->csvDir = $contentDirFinder2->getBaseDir();
         $exporter->exportMedias();
 
         $mediaId = $media->id;

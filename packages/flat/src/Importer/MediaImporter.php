@@ -14,7 +14,6 @@ use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaCsvHelper;
-use Pushword\Flat\Exporter\MediaExporter;
 use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
@@ -69,40 +68,13 @@ class MediaImporter extends AbstractImporter
     private bool $duplicateSkipped = false;
 
     /**
-     * Load the index.csv file from a local directory path.
+     * Load the media.csv file from a local directory path.
      */
-    public function loadIndex(string $dir): void
+    public function loadIndex(string $csvPath): void
     {
-        $indexPath = $dir.'/'.MediaExporter::INDEX_FILE;
-        $reader = $this->createReader($indexPath);
+        $reader = $this->createReader($csvPath);
 
         if (null === $reader) {
-            return;
-        }
-
-        $this->processReader($reader);
-    }
-
-    /**
-     * Load the index.csv file from Flysystem storage.
-     */
-    public function loadIndexFromStorage(): void
-    {
-        if (! $this->mediaStorage->fileExists(MediaExporter::INDEX_FILE)) {
-            return;
-        }
-
-        $csvContent = $this->mediaStorage->read(MediaExporter::INDEX_FILE);
-
-        try {
-            $reader = Reader::fromString($csvContent);
-        } catch (CsvException) {
-            return;
-        }
-
-        try {
-            $reader->setHeaderOffset(0);
-        } catch (CsvException) {
             return;
         }
 
@@ -127,7 +99,7 @@ class MediaImporter extends AbstractImporter
             $fileName = $row['fileName'] ?? '';
             if ('' !== $fileName) {
                 if (isset($this->indexData[$fileName])) {
-                    $this->logger?->warning('Duplicate fileName "{fileName}" in index.csv - keeping first occurrence (id: {firstId}), skipping duplicate (id: {duplicateId})', [
+                    $this->logger?->warning('Duplicate fileName "{fileName}" in media.csv - keeping first occurrence (id: {firstId}), skipping duplicate (id: {duplicateId})', [
                         'fileName' => $fileName,
                         'firstId' => $this->indexData[$fileName]['id'] ?? 'none',
                         'duplicateId' => $row['id'] ?? 'none',
@@ -224,11 +196,6 @@ class MediaImporter extends AbstractImporter
     #[Override]
     public function import(string $filePath, DateTimeInterface $lastEditDateTime): bool
     {
-        // Skip index.csv file itself
-        if (str_ends_with($filePath, MediaExporter::INDEX_FILE)) {
-            return false;
-        }
-
         // Skip legacy sidecar files (backward compatibility during transition)
         $isMetaDataFile = str_ends_with($filePath, '.json') || str_ends_with($filePath, '.yaml');
         if ($isMetaDataFile && $this->filesystem->exists(substr($filePath, 0, -5))) {
@@ -248,10 +215,6 @@ class MediaImporter extends AbstractImporter
      */
     public function importFromStorage(string $fileName, DateTimeInterface $lastEditDateTime): bool
     {
-        if (MediaExporter::INDEX_FILE === $fileName) {
-            return false;
-        }
-
         // Skip legacy sidecar files
         $isMetaDataFile = str_ends_with($fileName, '.json') || str_ends_with($fileName, '.yaml');
         if ($isMetaDataFile && $this->mediaStorage->fileExists(substr($fileName, 0, -5))) {
@@ -340,7 +303,7 @@ class MediaImporter extends AbstractImporter
     }
 
     /**
-     * Get data from index.csv for a given fileName (not a file path).
+     * Get data from media.csv for a given fileName (not a file path).
      *
      * @return array<string|int, mixed>
      */
@@ -397,7 +360,7 @@ class MediaImporter extends AbstractImporter
     }
 
     /**
-     * Get data from index.csv for this file.
+     * Get data from media.csv for this file.
      *
      * @return array<string|int, mixed>
      */

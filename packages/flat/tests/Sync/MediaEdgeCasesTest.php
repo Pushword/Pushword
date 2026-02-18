@@ -11,9 +11,11 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Flat\Exporter\MediaExporter;
+use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Importer\MediaImporter;
 use Pushword\Flat\Sync\MediaSync;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
 final class MediaEdgeCasesTest extends KernelTestCase
@@ -59,6 +61,19 @@ final class MediaEdgeCasesTest extends KernelTestCase
         return $projectDir;
     }
 
+    private function getMediaCsvPath(): string
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+
+        return $contentDirFinder->getBaseDir().'/'.MediaExporter::CSV_FILE;
+    }
+
+    private function writeMediaCsv(string $csvContent): void
+    {
+        new Filesystem()->dumpFile($this->getMediaCsvPath(), $csvContent);
+    }
+
     public function testNewFileInMediaDirWithoutCsvEntry(): void
     {
         $mediaDir = $this->getMediaDir();
@@ -69,9 +84,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->tempFiles[] = $newFile;
 
         // Create CSV without the new file
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
-        $mediaStorage->write(MediaExporter::INDEX_FILE, "id,fileName,alt,tags\n");
+        $this->writeMediaCsv("id,fileName,alt,tags\n");
 
         /** @var MediaSync $mediaSync */
         $mediaSync = self::getContainer()->get(MediaSync::class);
@@ -114,10 +127,8 @@ final class MediaEdgeCasesTest extends KernelTestCase
         file_put_contents($filePath, 'modified content that differs');
 
         // Create CSV with the media
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
         $csvContent = "id,fileName,alt,tags\n{$mediaId},edge-hash-change.txt,Hash Change Test,\n";
-        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $this->writeMediaCsv($csvContent);
 
         /** @var MediaSync $mediaSync */
         $mediaSync = self::getContainer()->get(MediaSync::class);
@@ -145,15 +156,13 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->tempFiles[] = $filePath;
 
         // Create CSV with duplicate fileName
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
         $csvContent = "id,fileName,alt,tags\n,edge-duplicate.txt,First Alt,\n,edge-duplicate.txt,Second Alt,\n";
-        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $this->writeMediaCsv($csvContent);
 
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($this->getMediaCsvPath());
 
         // Should handle gracefully — first entry wins
         self::assertTrue($importer->hasIndexData(), 'Index should have data despite duplicates');
@@ -179,17 +188,15 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->tempFiles[] = $filePath;
 
         // CSV with empty alt
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
         $csvContent = "id,fileName,alt,tags\n,edge-empty-alt.txt,,\n";
-        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $this->writeMediaCsv($csvContent);
 
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
         $importer->mediaDir = $mediaDir;
         $importer->projectDir = $this->getProjectDir();
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($this->getMediaCsvPath());
 
         $importer->import($filePath, new DateTime());
         $importer->finishImport();
@@ -213,17 +220,15 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->tempFiles[] = $filePath;
 
         // CSV with extra unknown columns
-        /** @var MediaStorageAdapter $mediaStorage */
-        $mediaStorage = self::getContainer()->get(MediaStorageAdapter::class);
         $csvContent = "id,fileName,alt,tags,customField1,customField2\n,edge-extra-cols.txt,Extra Cols Test,,value1,value2\n";
-        $mediaStorage->write(MediaExporter::INDEX_FILE, $csvContent);
+        $this->writeMediaCsv($csvContent);
 
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
         $importer->mediaDir = $mediaDir;
         $importer->projectDir = $this->getProjectDir();
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($this->getMediaCsvPath());
 
         $importer->import($filePath, new DateTime());
         $importer->finishImport();
@@ -405,6 +410,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         // Export to create CSV
         /** @var MediaExporter $exporter */
         $exporter = self::getContainer()->get(MediaExporter::class);
+        $exporter->csvDir = \dirname($this->getMediaCsvPath());
         $exporter->exportMedias();
 
         // Simulate rename on disk: delete original, create with new name
@@ -419,7 +425,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $importer->mediaDir = $mediaDir;
         $importer->projectDir = $projectDir;
         $importer->resetIndex();
-        $importer->loadIndexFromStorage();
+        $importer->loadIndex($this->getMediaCsvPath());
 
         // Validate files exist — this will flag original as missing
         $importer->validateFilesExist($mediaDir);

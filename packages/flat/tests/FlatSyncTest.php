@@ -82,7 +82,10 @@ final class FlatSyncTest extends KernelTestCase
         $filesystem->copy(__DIR__.'/content/test-content.md', $this->contentDir.'/test-content.md', true);
         $filesystem->copy(__DIR__.'/content/test-link.md', $this->contentDir.'/test-link.md', true);
         $filesystem->copy(__DIR__.'/content/media/logo-test.png', $this->contentDir.'/media/logo-test.png', true);
-        $filesystem->copy(__DIR__.'/content/media/index.csv', $this->contentDir.'/media/index.csv', true);
+
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $filesystem->copy(__DIR__.'/content/media.csv', $contentDirFinder->getBaseDir().'/media.csv', true);
     }
 
     /**
@@ -95,7 +98,6 @@ final class FlatSyncTest extends KernelTestCase
         // Remove test fixtures from media dir
         $fs->remove([
             $this->getMediaDir().'/logo-test.png',
-            $this->getMediaDir().'/index.csv',
         ]);
 
         // Remove any files created during the test in the content dir
@@ -110,7 +112,9 @@ final class FlatSyncTest extends KernelTestCase
 
     private function cleanGlobalIndexBeforeTest(): void
     {
-        new Filesystem()->remove($this->getMediaDir().'/index.csv');
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        new Filesystem()->remove($contentDirFinder->getBaseDir().'/media.csv');
     }
 
     private function getMediaDir(): string

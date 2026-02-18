@@ -12,11 +12,13 @@ use Symfony\Component\Filesystem\Filesystem;
 
 final class MediaExporter
 {
-    public const string INDEX_FILE = 'index.csv';
+    public const string CSV_FILE = 'media.csv';
 
     public string $copyMedia = '';
 
     public string $exportDir = '';
+
+    public string $csvDir = '';
 
     private int $exportedCount = 0;
 
@@ -72,26 +74,20 @@ final class MediaExporter
         // Generate new CSV content
         $newContent = $this->generateCsvContent($header, $rows);
 
-        if ($this->isExportMode()) {
-            $csvFilePath = $this->exportDir.'/'.$this->copyMedia.'/'.self::INDEX_FILE;
-            $this->filesystem->mkdir(\dirname($csvFilePath));
-            $existingContent = $this->filesystem->exists($csvFilePath) ? $this->filesystem->readFile($csvFilePath) : '';
-            if ($newContent === $existingContent) {
-                return;
-            }
+        $csvFilePath = $this->isExportMode()
+            ? $this->exportDir.'/'.$this->copyMedia.'/'.self::CSV_FILE
+            : $this->csvDir.'/'.self::CSV_FILE;
 
-            $this->filesystem->dumpFile($csvFilePath, $newContent);
-        } else {
-            $existingContent = $this->mediaStorage->fileExists(self::INDEX_FILE) ? $this->mediaStorage->read(self::INDEX_FILE) : '';
-            if ($newContent === $existingContent) {
-                return;
-            }
-
-            $this->mediaStorage->write(self::INDEX_FILE, $newContent);
+        $this->filesystem->mkdir(\dirname($csvFilePath));
+        $existingContent = $this->filesystem->exists($csvFilePath) ? $this->filesystem->readFile($csvFilePath) : '';
+        if ($newContent === $existingContent) {
+            return;
         }
 
+        $this->filesystem->dumpFile($csvFilePath, $newContent);
+
         $this->exportedCount = \count($medias);
-        $this->output?->writeln(\sprintf('Exported %d media to index.csv', $this->exportedCount));
+        $this->output?->writeln(\sprintf('Exported %d media to media.csv', $this->exportedCount));
     }
 
     /**
