@@ -230,8 +230,9 @@ final class MediaSync
 
         $app = $this->resolveApp($host);
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
+        $lastSyncTime = $this->stateManager->getLastSyncTime('media', $app->getMainHost());
 
-        return array_any($this->getDirectoriesToScan($contentDir), fn (string $directory): bool => $this->hasNewerFiles($directory));
+        return array_any($this->getDirectoriesToScan($contentDir), fn (string $directory): bool => $this->hasNewerFiles($directory, $lastSyncTime));
     }
 
     /**
@@ -252,10 +253,10 @@ final class MediaSync
         return $dirs;
     }
 
-    private function hasNewerFiles(string $dir): bool
+    private function hasNewerFiles(string $dir, int $lastSyncTime = 0): bool
     {
         if ($dir === $this->mediaDir && ! $this->mediaStorage->isLocal()) {
-            return $this->hasNewerStorageFiles();
+            return $this->hasNewerStorageFiles($lastSyncTime);
         }
 
         if (! file_exists($dir)) {
@@ -290,10 +291,11 @@ final class MediaSync
         return false;
     }
 
-    private function hasNewerStorageFiles(): bool
+    private function hasNewerStorageFiles(int $lastSyncTime): bool
     {
         $this->output?->writeln('Scanning remote storage for changes...');
         $scanned = 0;
+        $checked = 0;
 
         foreach ($this->mediaStorage->listContents('', true) as $item) {
             if (! $item->isFile()) {
@@ -311,10 +313,21 @@ final class MediaSync
                 $this->output?->writeln(\sprintf('Scanned %d files...', $scanned));
             }
 
+            // Skip files not modified since last sync (no download needed)
+            if ($lastSyncTime > 0 && $item->lastModified() <= $lastSyncTime) {
+                continue;
+            }
+
+            ++$checked;
+
             if ($this->isStorageFileNewer($path)) {
+                $this->output?->writeln(\sprintf('Scanned %d files total, %d modified since last sync', $scanned, $checked));
+
                 return true;
             }
         }
+
+        $this->output?->writeln(\sprintf('Scanned %d files total, %d modified since last sync', $scanned, $checked));
 
         return false;
     }
