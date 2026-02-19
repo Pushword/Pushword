@@ -4,6 +4,8 @@ namespace Pushword\Core\Controller;
 
 use LogicException;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
@@ -25,6 +27,8 @@ final class PageController extends AbstractPushwordController
         Twig $twig,
         private readonly PageResolver $pageResolver,
         TranslatorInterface $translator,
+        private readonly PushwordRouteGenerator $routeGenerator,
+        private readonly PageRepository $pageRepository,
     ) {
         if (! $translator instanceof DataCollectorTranslator && ! $translator instanceof Translator) {
             throw new LogicException('A symfony codebase changed make this hack impossible (cf setLocale). Get `'.$translator::class.'`');
@@ -66,7 +70,7 @@ final class PageController extends AbstractPushwordController
         }
 
         if ($page->hasRedirection()) {
-            return $this->redirect($page->getRedirectionUrl(), $page->getRedirectionCode());
+            return $this->redirect($this->resolveRedirectionUrl($page), $page->getRedirectionCode());
         }
 
         $request->setLocale($page->locale);
@@ -84,6 +88,20 @@ final class PageController extends AbstractPushwordController
         $response = new Response();
 
         return $this->render($view, $params, $response);
+    }
+
+    private function resolveRedirectionUrl(Page $page): string
+    {
+        $url = $page->getRedirectionUrl();
+
+        if (! str_starts_with($url, '/')) {
+            return $url;
+        }
+
+        $slug = ltrim($url, '/');
+        $targetPage = $this->pageRepository->getPageBySlug($slug, $page->host);
+
+        return null !== $targetPage ? $this->routeGenerator->generate($targetPage) : $url;
     }
 
     /** @noRector */
