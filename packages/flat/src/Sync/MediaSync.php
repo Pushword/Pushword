@@ -331,6 +331,7 @@ final class MediaSync
 
             if ($this->isStorageFileNewer($path)) {
                 $hasNewer = true;
+
                 break;
             }
         }

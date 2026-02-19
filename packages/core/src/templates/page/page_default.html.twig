@@ -42,17 +42,17 @@
   {#<script>const base = "{{ page('homepage') }}"</script>#}
   {# Where is `base` used ? #}
 
-  <meta name="og:title" content="{{ page.ogTitle|default(pw(page).title)|striptags }}">
-  <meta name="og:url" content="{{ page(page, true) }}">
+  <meta property="og:title" content="{{ page.ogTitle|default(pw(page).title)|striptags }}">
+  <meta property="og:url" content="{{ page(page, true) }}">
   {% if page.searchExcerpt or page.ogDescription %}
-    <meta name="og:description" content="{{ page.ogDescription|default(page.searchExcerpt)|striptags }}">
+    <meta property="og:description" content="{{ page.ogDescription|default(page.searchExcerpt)|striptags }}">
   {% endif %}
   {% if page.mainImage is not null %}
-    <meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ (page.mainImage)|image('default') }}">
+    <meta property="og:image" content="{{ apps.get().baseUrl|default('') }}{{ (page.mainImage)|image('default') }}">
   {% elseif apps.get().get('generated_og_image') is not null %}
     {% set generated_image = open_graph_image_generated_path(page) %}
     {% if generated_image is not null %}
-      <meta name="og:image" content="{{ apps.get().baseUrl|default('') }}{{ open_graph_image_generated_path(page) }}">
+      <meta property="og:image" content="{{ apps.get().baseUrl|default('') }}{{ open_graph_image_generated_path(page) }}">
       <meta name="twitter:card" content="summary_large_image">
     {% endif %}
   {% endif %}
