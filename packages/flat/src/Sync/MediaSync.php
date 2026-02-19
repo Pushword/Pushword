@@ -293,9 +293,18 @@ final class MediaSync
 
     private function hasNewerStorageFiles(int $lastSyncTime): bool
     {
-        $this->output?->writeln('Scanning remote storage for changes...');
+        $progressBar = null;
+        if (null !== $this->output) {
+            $this->output->writeln('Scanning remote storage for changes...');
+            $progressBar = new ProgressBar($this->output);
+            $progressBar->setFormat(' %current% files scanned, %message%');
+            $progressBar->setMessage('0 modified since last sync');
+            $progressBar->start();
+        }
+
         $scanned = 0;
         $checked = 0;
+        $hasNewer = false;
 
         foreach ($this->mediaStorage->listContents('', true) as $item) {
             if (! $item->isFile()) {
@@ -310,26 +319,27 @@ final class MediaSync
 
             ++$scanned;
             if (0 === $scanned % 100) {
-                $this->output?->writeln(\sprintf('Scanned %d files...', $scanned));
+                $progressBar?->setProgress($scanned);
             }
 
-            // Skip files not modified since last sync (no download needed)
             if ($lastSyncTime > 0 && $item->lastModified() <= $lastSyncTime) {
                 continue;
             }
 
             ++$checked;
+            $progressBar?->setMessage(\sprintf('%d modified since last sync', $checked));
 
             if ($this->isStorageFileNewer($path)) {
-                $this->output?->writeln(\sprintf('Scanned %d files total, %d modified since last sync', $scanned, $checked));
-
-                return true;
+                $hasNewer = true;
+                break;
             }
         }
 
-        $this->output?->writeln(\sprintf('Scanned %d files total, %d modified since last sync', $scanned, $checked));
+        $progressBar?->setProgress($scanned);
+        $progressBar?->finish();
+        $this->output?->writeln('');
 
-        return false;
+        return $hasNewer;
     }
 
     private function isStorageFileNewer(string $storagePath): bool
