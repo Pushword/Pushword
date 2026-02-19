@@ -15,6 +15,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Importer\MediaImporter;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 
@@ -90,25 +91,38 @@ final class MediaSync
         $this->mediaImporter->finishImport();
 
         // 4. Import storage files via Flysystem (works for both local and remote)
-        foreach ($this->collectStorageMediaFiles() as $fileName) {
+        $storageFiles = $this->collectStorageMediaFiles();
+        $storageProgressBar = $this->createProgressBar(\count($storageFiles));
+        $storageProgressBar?->start();
+
+        foreach ($storageFiles as $fileName) {
+            $storageProgressBar?->setMessage(basename($fileName));
             $lastModified = $this->mediaStorage->lastModified($fileName);
             $lastEditDateTime = new DateTime()->setTimestamp($lastModified);
-            $imported = $this->mediaImporter->importFromStorage($fileName, $lastEditDateTime);
+            $this->mediaImporter->importFromStorage($fileName, $lastEditDateTime);
+            $storageProgressBar?->advance();
+        }
 
-            if ($imported) {
-                $this->output?->writeln(\sprintf('Imported %s', basename($fileName)));
-            }
+        if (null !== $storageProgressBar) {
+            $storageProgressBar->finish();
+            $this->output?->writeln('');
         }
 
         // 5. Import local content dir files (flat content directory)
         $localFiles = file_exists($localMediaDir) ? $this->collectMediaFiles($localMediaDir) : [];
-        foreach ($localFiles as $path) {
-            $lastEditDateTime = new DateTime()->setTimestamp((int) filemtime($path));
-            $imported = $this->mediaImporter->import($path, $lastEditDateTime);
+        $localProgressBar = $this->createProgressBar(\count($localFiles));
+        $localProgressBar?->start();
 
-            if ($imported) {
-                $this->output?->writeln(\sprintf('Imported %s', basename($path)));
-            }
+        foreach ($localFiles as $path) {
+            $localProgressBar?->setMessage(basename($path));
+            $lastEditDateTime = new DateTime()->setTimestamp((int) filemtime($path));
+            $this->mediaImporter->import($path, $lastEditDateTime);
+            $localProgressBar?->advance();
+        }
+
+        if (null !== $localProgressBar) {
+            $localProgressBar->finish();
+            $this->output?->writeln('');
         }
 
         $this->mediaImporter->finishImport();
@@ -164,6 +178,8 @@ final class MediaSync
      */
     private function collectStorageMediaFiles(): array
     {
+        $this->output?->writeln('Collecting media files from storage...');
+
         $files = [];
         foreach ($this->mediaStorage->listContents('', true) as $item) {
             if (! $item->isFile()) {
@@ -178,6 +194,8 @@ final class MediaSync
 
             $files[] = $path;
         }
+
+        $this->output?->writeln(\sprintf('Found %d media files', \count($files)));
 
         return $files;
     }
@@ -208,6 +226,8 @@ final class MediaSync
 
     public function mustImport(?string $host = null): bool
     {
+        $this->output?->writeln('Detecting sync direction for media...');
+
         $app = $this->resolveApp($host);
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
 
@@ -272,6 +292,9 @@ final class MediaSync
 
     private function hasNewerStorageFiles(): bool
     {
+        $this->output?->writeln('Scanning remote storage for changes...');
+        $scanned = 0;
+
         foreach ($this->mediaStorage->listContents('', true) as $item) {
             if (! $item->isFile()) {
                 continue;
@@ -281,6 +304,11 @@ final class MediaSync
 
             if ($this->shouldSkipStorageFile($path)) {
                 continue;
+            }
+
+            ++$scanned;
+            if (0 === $scanned % 100) {
+                $this->output?->writeln(\sprintf('Scanned %d files...', $scanned));
             }
 
             if ($this->isStorageFileNewer($path)) {
@@ -405,6 +433,19 @@ final class MediaSync
         return null !== $host
             ? $this->apps->switchSite($host)->get()
             : $this->apps->get();
+    }
+
+    private function createProgressBar(int $count): ?ProgressBar
+    {
+        if (null === $this->output || 0 === $count) {
+            return null;
+        }
+
+        $progressBar = new ProgressBar($this->output, $count);
+        $progressBar->setMessage('');
+        $progressBar->setFormat("%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% \r\n %message%");
+
+        return $progressBar;
     }
 
     private function measure(string $name, callable $operation): float
