@@ -234,6 +234,10 @@ final class PageSync
 
     private function isFileNewer(string $filePath, string $host): bool
     {
+        if (str_ends_with($filePath, RedirectionExporter::INDEX_FILE)) {
+            return $this->isCsvFileNewer($filePath, $host);
+        }
+
         if (! str_ends_with($filePath, '.md')) {
             return false;
         }
@@ -273,6 +277,16 @@ final class PageSync
         }
 
         return $lastEditDateTime > $page->updatedAt;
+    }
+
+    private function isCsvFileNewer(string $filePath, string $host): bool
+    {
+        $lastSyncTime = $this->stateManager->getLastSyncTime('page', $host);
+        if (0 === $lastSyncTime) {
+            return true;
+        }
+
+        return filemtime($filePath) > $lastSyncTime;
     }
 
     /**

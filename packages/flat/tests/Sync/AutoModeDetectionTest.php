@@ -131,6 +131,23 @@ final class AutoModeDetectionTest extends KernelTestCase
         self::assertFalse($this->pageSync->mustImport('localhost.dev'), 'mustImport should return false — .txt files are ignored');
     }
 
+    public function testAutoModeDetectsRedirectionCsvChange(): void
+    {
+        // Full round-trip to synchronize
+        $this->pageSync->import('localhost.dev');
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+
+        // Verify in-sync state
+        self::assertFalse($this->pageSync->mustImport('localhost.dev'), 'mustImport should be false after full sync');
+
+        // Touch redirection.csv with future mtime
+        $csvPath = $this->contentDir.'/redirection.csv';
+        self::assertFileExists($csvPath);
+        touch($csvPath, time() + 200);
+
+        self::assertTrue($this->pageSync->mustImport('localhost.dev'), 'mustImport should detect redirection.csv changes');
+    }
+
     public function testMediaAutoModeDetectsNewFile(): void
     {
         /** @var string $mediaDir */
