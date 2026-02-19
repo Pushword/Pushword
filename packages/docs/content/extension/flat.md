@@ -215,7 +215,7 @@ Non-`.md` files (`.txt`, `.csv`, etc.) do NOT influence page auto-detection. Onl
 
 #### Import (flat to database)
 
-1. **CSV index loaded** from `content/media.csv` (local filesystem, not Flysystem)
+1. **CSV index loaded** from storage (via Flysystem)
 2. **File validation**: checks that files referenced in CSV actually exist
 3. **Rename preparation**: if CSV has different `fileName` for an existing ID, the file is renamed in storage
 4. **Hash-based rename detection**: if a file on disk has the same SHA-1 hash as a missing media entity, the existing entity's filename is updated (no duplicate created)
@@ -350,7 +350,9 @@ content/media/illustration.jpg
 #### `kitchen-sink.md` example:
 
 ```yaml
+
 ---
+
 h1: 'Welcome in Kitchen Sink'
 locale: fr
 translations:
@@ -364,6 +366,7 @@ tags: 'demo example'
 publishedAt: '2025-01-15 10:00'
 
 ---
+
 My Page content Yeah !
 ```
 
@@ -392,14 +395,22 @@ The `translations` property handles the bidirectional many-to-many relationship 
 
 ```yaml
 # In fr/about.md - adds en/about as translation
+
 ---
+
 translations:
   - en/about
+
 ---
+
 # In en/about.md - no translations key, existing links preserved
+
 ---
+
 h1: About Us
+
 ---
+
 ```
 
 With this setup, both pages will be linked as translations of each other after sync.
