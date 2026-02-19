@@ -118,9 +118,14 @@ final class RedirectionImporter
 
         $page = null;
 
-        // Try to find by ID first
+        // Try to find by ID first (only if it's already a redirection)
         if ('' !== $id && is_numeric($id)) {
-            $page = $this->pageRepo->find((int) $id);
+            $found = $this->pageRepo->find((int) $id);
+            if (null !== $found && $found->hasRedirection()) {
+                $page = $found;
+            } elseif (null !== $found) {
+                $this->logger?->warning('Ignoring id {id} for redirection "{slug}": page exists but is not a redirection', ['id' => $id, 'slug' => $slug]);
+            }
         }
 
         // Try to find by slug and host
