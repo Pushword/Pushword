@@ -6,6 +6,7 @@ use League\CommonMark\Node\Inline\Text;
 use League\CommonMark\Parser\Inline\InlineParserInterface;
 use League\CommonMark\Parser\Inline\InlineParserMatch;
 use League\CommonMark\Parser\InlineParserContext;
+use Pushword\Core\Component\EntityFilter\Filter\Date;
 
 /**
  * Parse les shortcodes date dans le markdown.
@@ -14,7 +15,8 @@ use League\CommonMark\Parser\InlineParserContext;
 final readonly class DateShortcodeParser implements InlineParserInterface
 {
     public function __construct(
-        private DateShortcodeResolver $resolver,
+        private Date $dateFilter,
+        private string $locale,
     ) {
     }
 
@@ -46,10 +48,8 @@ final readonly class DateShortcodeParser implements InlineParserInterface
 
         $cursor->advanceBy(1);
 
-        $format = trim($format, '\'"');
-        $format = ltrim($format, '%');
-
-        $dateString = $this->resolver->convertDateShortcode($format);
+        $shortcode = 'date('.$format.')';
+        $dateString = $this->dateFilter->convertDateShortCode($shortcode, $this->locale);
 
         $inlineContext->getContainer()->appendChild(new Text($dateString));
 

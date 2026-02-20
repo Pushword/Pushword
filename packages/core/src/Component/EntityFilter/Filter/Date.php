@@ -39,7 +39,7 @@ class Date implements FilterInterface
         );
     }
 
-    private function convertDateShortCode(string $string, ?string $locale = null): string
+    public function convertDateShortCode(string $string, ?string $locale = null): string
     {
         $locale = null !== $locale ? $this->convertLocale($locale) : 'fr_FR';
         $intlDateFormatter = $this->getFormatter($locale);

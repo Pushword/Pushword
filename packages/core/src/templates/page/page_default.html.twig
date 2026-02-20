@@ -6,7 +6,7 @@
 <html lang="{{ page.locale|default(apps.get().locale) }}" {{ mergeAttr({class: 'leading-tight text-gray-900'}, page.htmlOpenerAttr|default({})) }}>
 {% endblock %}
 
-{% block title %}{{ pw(page).title|striptags|date_shortcode }}{% endblock %}
+{% block title %}{{ pw(page).title|striptags }}{% endblock %}
 
 {% block robots %}
   {% if page.searchExcerpt is defined and page.searchExcerpt is not null %}

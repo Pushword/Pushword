@@ -9,8 +9,8 @@ use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\Extension\TaskList\TaskListExtension;
 use League\CommonMark\MarkdownConverter;
+use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Service\LinkProvider;
-use Pushword\Core\Service\Markdown\Extension\Parser\DateShortcodeResolver;
 use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
 use Pushword\Core\Site\SiteRegistry;
 use Twig\Attribute\AsTwigFilter;
@@ -37,7 +37,7 @@ class MarkdownParser
             $linkProvider,
             $twig,
             $apps,
-            new DateShortcodeResolver($apps),
+            new Date($apps),
         ));
 
         $this->converter = new MarkdownConverter($environment);

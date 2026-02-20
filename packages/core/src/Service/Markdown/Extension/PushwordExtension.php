@@ -5,12 +5,12 @@ namespace Pushword\Core\Service\Markdown\Extension;
 use League\CommonMark\Environment\EnvironmentBuilderInterface;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Image;
 use League\CommonMark\Extension\ExtensionInterface;
+use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedEmail;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
 use Pushword\Core\Service\Markdown\Extension\Node\PhoneNumber;
 use Pushword\Core\Service\Markdown\Extension\Parser\DateShortcodeParser;
-use Pushword\Core\Service\Markdown\Extension\Parser\DateShortcodeResolver;
 use Pushword\Core\Service\Markdown\Extension\Parser\EmailAutolinkParser;
 use Pushword\Core\Service\Markdown\Extension\Parser\ObfuscatedLinkParser;
 use Pushword\Core\Service\Markdown\Extension\Parser\PhoneAutolinkParser;
@@ -31,7 +31,7 @@ final readonly class PushwordExtension implements ExtensionInterface
         private LinkProvider $linkProvider,
         private Environment $twig,
         private SiteRegistry $apps,
-        private DateShortcodeResolver $dateShortcodeResolver,
+        private Date $dateFilter,
     ) {
     }
 
@@ -43,7 +43,7 @@ final readonly class PushwordExtension implements ExtensionInterface
 
         $environment->addInlineParser(new PhoneAutolinkParser(), 100);
 
-        $environment->addInlineParser(new DateShortcodeParser($this->dateShortcodeResolver), 150);
+        $environment->addInlineParser(new DateShortcodeParser($this->dateFilter, $this->apps->get()->getLocale()), 150);
 
         $environment->addRenderer(
             ObfuscatedLink::class,
