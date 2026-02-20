@@ -166,8 +166,7 @@ final class PdfOptimizer
             return false;
         }
 
-        $validPresets = ['screen', 'ebook', 'printer', 'prepress'];
-        $preset = \in_array($this->pdfPreset, $validPresets, true) ? $this->pdfPreset : 'ebook';
+        $preset = $this->pdfPreset;
 
         $process = new Process([
             $this->ghostscriptPath,
