@@ -53,9 +53,7 @@ final readonly class BackgroundProcessManager
                 return $info;
             }
 
-            $isRunning = $this->isProcessAlive($pid, $commandPattern);
-
-            $info['isRunning'] = $isRunning;
+            $info['isRunning'] = $this->isProcessAlive($pid, $commandPattern);
             $info['startTime'] = $startTime;
             $info['pid'] = $pid;
         } catch (Exception) {
