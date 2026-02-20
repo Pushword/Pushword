@@ -25,9 +25,7 @@ class MarkdownParser
         TwigEnvironment $twig,
         SiteRegistry $apps
     ) {
-        $config = [];
-
-        $environment = new Environment($config);
+        $environment = new Environment();
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new AttributesExtension());
         $environment->addExtension(new StrikethroughExtension());
