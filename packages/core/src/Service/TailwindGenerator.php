@@ -9,7 +9,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 class TailwindGenerator
 {
     public function __construct(
-        private readonly bool $tailwindGeneratorisActive, // %pw.tailwind_generator%
+        private readonly bool $tailwindGeneratorIsActive, // %pw.tailwind_generator%
         private readonly string $projectDir,
         private readonly string $pathToBin, // %pw.path_to_bin%
         private readonly KernelInterface $kernel,
@@ -18,7 +18,7 @@ class TailwindGenerator
 
     public function run(Page $page): void
     {
-        if (false === $this->tailwindGeneratorisActive) {
+        if (! $this->tailwindGeneratorIsActive) {
             return;
         }
 
