@@ -36,7 +36,7 @@ final readonly class MediaConflictResolver
 
     private function identifiersAreToken(Media $media): bool
     {
-        $sameName = $this->em->getRepository($media::class)->findOneBy(['alt' => $media->getAlt()]);
+        $sameName = $this->em->getRepository(Media::class)->findOneBy(['alt' => $media->getAlt()]);
         if (null !== $sameName && $media->id !== $sameName->id) {
             return true;
         }
