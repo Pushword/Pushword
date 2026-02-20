@@ -276,7 +276,7 @@ final class MediaSync
 
             $path = $dir.'/'.$file;
             if (is_dir($path)) {
-                if ($this->hasNewerFiles($path)) {
+                if ($this->hasNewerFiles($path, $lastSyncTime)) {
                     return true;
                 }
 
