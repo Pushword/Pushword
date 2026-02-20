@@ -6,6 +6,7 @@ use Cocur\Slugify\Slugify;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkCollectorService;
+use Pushword\Core\Service\Markdown\Extension\Parser\DateShortcodeResolver;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\FilesizeFormatter;
 use Pushword\Core\Utils\HtmlBeautifer;
@@ -22,7 +23,14 @@ final class AppExtension
         public Twig $twig,
         private Security $security,
         private LinkCollectorService $linkCollector,
+        private DateShortcodeResolver $dateShortcodeResolver,
     ) {
+    }
+
+    #[AsTwigFilter('date_shortcode')]
+    public function dateShortcode(string $text): string
+    {
+        return $this->dateShortcodeResolver->resolve($text);
     }
 
     #[AsTwigFunction('codeBlock', isSafe: ['html'], needsEnvironment: false)]

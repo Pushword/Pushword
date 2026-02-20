@@ -10,6 +10,7 @@ use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedEmail;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
 use Pushword\Core\Service\Markdown\Extension\Node\PhoneNumber;
 use Pushword\Core\Service\Markdown\Extension\Parser\DateShortcodeParser;
+use Pushword\Core\Service\Markdown\Extension\Parser\DateShortcodeResolver;
 use Pushword\Core\Service\Markdown\Extension\Parser\EmailAutolinkParser;
 use Pushword\Core\Service\Markdown\Extension\Parser\ObfuscatedLinkParser;
 use Pushword\Core\Service\Markdown\Extension\Parser\PhoneAutolinkParser;
@@ -30,6 +31,7 @@ final readonly class PushwordExtension implements ExtensionInterface
         private LinkProvider $linkProvider,
         private Environment $twig,
         private SiteRegistry $apps,
+        private DateShortcodeResolver $dateShortcodeResolver,
     ) {
     }
 
@@ -41,7 +43,7 @@ final readonly class PushwordExtension implements ExtensionInterface
 
         $environment->addInlineParser(new PhoneAutolinkParser(), 100);
 
-        $environment->addInlineParser(new DateShortcodeParser($this->apps), 150);
+        $environment->addInlineParser(new DateShortcodeParser($this->dateShortcodeResolver), 150);
 
         $environment->addRenderer(
             ObfuscatedLink::class,
