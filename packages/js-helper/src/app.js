@@ -37,5 +37,5 @@ function onPageLoaded() {
   onDomChanged()
 }
 
-document.addEventListener('DOMContentLoaded', onPageLoaded())
+document.addEventListener('DOMContentLoaded', onPageLoaded)
 document.addEventListener('DOMChanged', onDomChanged)
