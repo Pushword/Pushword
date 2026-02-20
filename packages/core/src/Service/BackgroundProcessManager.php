@@ -192,13 +192,7 @@ final readonly class BackgroundProcessManager
             throw new RuntimeException('Invalid PID received: '.$pidOutput);
         }
 
-        $pidData = [
-            'pid' => $pid,
-            'startTime' => time(),
-            'commandPattern' => $commandPattern,
-        ];
-
-        $this->filesystem->dumpFile($pidFile, json_encode($pidData, \JSON_PRETTY_PRINT));
+        $this->writePidFile($pidFile, $pid, $commandPattern);
 
         return $pid;
     }
@@ -213,8 +207,13 @@ final readonly class BackgroundProcessManager
      */
     public function registerProcess(string $pidFile, string $commandPattern): void
     {
+        $this->writePidFile($pidFile, (int) getmypid(), $commandPattern);
+    }
+
+    private function writePidFile(string $pidFile, int $pid, string $commandPattern): void
+    {
         $pidData = [
-            'pid' => getmypid(),
+            'pid' => $pid,
             'startTime' => time(),
             'commandPattern' => $commandPattern,
         ];
