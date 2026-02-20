@@ -4,6 +4,7 @@ namespace Pushword\Core\Tests\Component;
 
 use DateTime;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
@@ -90,6 +91,25 @@ class EntityFilterTest extends KernelTestCase
         $page->setCustomProperty('toc', true);
 
         return $page;
+    }
+
+    public function testDateShortcode(): void
+    {
+        $dateFilter = self::getContainer()->get(Date::class);
+
+        $result = $dateFilter->convertDateShortCode('Copyright date(Y)', 'en');
+        self::assertStringContainsString(date('Y'), $result);
+        self::assertStringNotContainsString('date(Y)', $result);
+
+        $result = $dateFilter->convertDateShortCode('No shortcode here', 'en');
+        self::assertSame('No shortcode here', $result);
+
+        $result = $dateFilter->convertDateShortCode('Season date(S) and date(W)', 'fr');
+        self::assertStringNotContainsString('date(S)', $result);
+        self::assertStringNotContainsString('date(W)', $result);
+
+        $result = $dateFilter->convertDateShortCode('Month date(M)', 'fr');
+        self::assertStringNotContainsString('date(M)', $result);
     }
 
     private function getContentReadyForToc(): string

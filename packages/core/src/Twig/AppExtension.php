@@ -3,9 +3,9 @@
 namespace Pushword\Core\Twig;
 
 use Cocur\Slugify\Slugify;
+use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Router\PushwordRouteGenerator;
-use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\FilesizeFormatter;
@@ -100,7 +100,10 @@ final class AppExtension
             $breadcrumbs[] = [
                 '@type' => 'ListItem',
                 'position' => $position,
-                'name' => $currentPage->getName() ?: $currentPage->getH1() ?: $currentPage->getTitle(),
+                'name' => $this->dateFilter->convertDateShortCode(
+                    $currentPage->getName() ?: $currentPage->getH1() ?: $currentPage->getTitle(),
+                    $this->apps->get()->getLocale(),
+                ),
                 'item' => $this->router->generate($currentPage, true),
             ];
 
