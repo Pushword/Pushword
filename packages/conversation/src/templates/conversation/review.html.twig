@@ -38,7 +38,7 @@
       {% set ratingValue = review.rating %}
       {% set ratingValue = ratingValue > 5 ? 5 : ratingValue %}
       {% set ratingValue = ratingValue < 1 ? 1 : ratingValue %}
-      <span class="text-yellow-500" aria-label="{{ ratingValue }}/5">
+      <span class="text-yellow-500" role="img" aria-label="{{ ratingValue }}/5">
         {% for i in 1..5 %}
           {% if i <= ratingValue %}
             ★
