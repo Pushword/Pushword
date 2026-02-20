@@ -244,7 +244,7 @@ export async function uncloakLinks(
   var convertLink = function (element) {
     // fix "bug" with img
     if (element.getAttribute(attribute) === null) {
-      var element = element.closest('[' + attribute + ']')
+      element = element.closest('[' + attribute + ']')
     }
     if (element === null || element.getAttribute(attribute) === null) return
     var link = document.createElement('a')
