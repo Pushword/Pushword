@@ -46,30 +46,27 @@ abstract class AbstractImporter
     }
 
     /**
-     * Nettoie récursivement les chaînes de caractères pour s'assurer qu'elles sont en UTF-8 valide.
-     * Cette fonction est utilisée pour éviter les erreurs de sérialisation JSON avec des caractères malformés.
-     * Ne nettoie que si nécessaire (si json_encode échoue).
+     * Recursively sanitize strings to ensure valid UTF-8.
+     * Prevents JSON serialization errors from malformed characters.
+     * Only sanitizes when needed (when json_encode fails).
      */
     protected function sanitizeUtf8(mixed $data): mixed
     {
-        // Teste d'abord si les données peuvent être encodées en JSON
         if (false !== json_encode($data, \JSON_UNESCAPED_UNICODE)) {
             return $data;
         }
 
-        // Si l'encodage JSON échoue, nettoie les données
         if (\is_string($data)) {
-            // Supprime les caractères UTF-8 invalides en utilisant iconv avec //IGNORE
+            // Remove invalid UTF-8 characters using iconv with //IGNORE
             $cleaned = @iconv('UTF-8', 'UTF-8//IGNORE', $data);
             if (false === $cleaned) {
-                // Si iconv échoue, supprime manuellement les octets invalides UTF-8
+                // If iconv fails, manually remove invalid UTF-8 bytes
                 $cleaned = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $data);
                 $cleaned = mb_convert_encoding($cleaned ?? '', 'UTF-8', 'UTF-8');
             }
 
-            // Vérifie à nouveau que la chaîne peut être encodée en JSON
             if (false === json_encode($cleaned, \JSON_UNESCAPED_UNICODE)) {
-                // Si l'encodage JSON échoue encore, supprime les caractères problématiques
+                // If JSON encoding still fails, strip remaining problematic characters
                 $cleaned = mb_convert_encoding($cleaned, 'UTF-8', 'UTF-8');
                 $cleaned = @iconv('UTF-8', 'UTF-8//IGNORE//TRANSLIT', $cleaned) ?: $cleaned;
             }

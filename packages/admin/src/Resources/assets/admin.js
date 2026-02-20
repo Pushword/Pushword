@@ -1,88 +1,88 @@
 import './admin.css'
 
-// HTMX pour la sauvegarde automatique Ctrl+S
+// HTMX for Ctrl+S auto-save
 import htmx from 'htmx.org'
 window.htmx = htmx
 
-// Modules d'édition
+// Editor modules
 import { easyMDEditor } from './admin.easymde-editor'
 
-// Modules de filtrage
+// Filtering modules
 import { filterParentPageFromHost } from './admin.filteringParentPage'
 import { filterImageFormField } from './admin.filterImageFormField'
 
-// Modules de compression
+// Compression modules
 import { initImageCompressor } from './admin.imageCompressor'
 
-// Modules de sélection
+// Selection modules
 import { mediaPicker } from './admin.mediaPicker'
 import { inlinePopup } from './admin.inlinePopup'
 
-// Modules de formulaire
+// Form modules
 import { textareaAutoSize, textareaWithoutNewLine } from './admin.textareaHelper'
 import { memorizeOpenPanel } from './admin.memorizeOpenPanel'
 import { showTitlePixelWidth } from './admin.formHelpers'
 
-// Modules d'état
+// State modules
 import { retrieveCurrentPageLocale, retrieveCurrentPageHost } from './admin.pageState'
 
-// Modules utilitaires
+// Utility modules
 import { copyElementText } from './admin.domUtils'
 
-// Modules de sauvegarde
+// Auto-save modules
 import { initCtrlSAutoSave } from './admin.ctrlSAutoSave'
 
-// Modules de verrouillage d'édition
+// Edit lock modules
 import { autoInitEditLock } from './admin.editLock'
 
-// Modules de tags
+// Tags modules
 import { suggestTags } from './admin.tagsField'
 
 // Polyfills
 import 'core-js/stable'
 
-// Variables globales
+// Global variables
 window.domChanging = false
 window.copyElementText = copyElementText
 
 /**
- * Initialise tous les modules de l'interface d'administration
+ * Initialize all admin interface modules
  */
 window.addEventListener('load', function () {
-  // Éditeurs
+  // Editors
   easyMDEditor()
 
-  // Helpers de formulaire
+  // Form helpers
   showTitlePixelWidth()
   showTitlePixelWidth('desc', 150)
 
-  // Gestion des panels
+  // Panel management
   memorizeOpenPanel()
 
-  // Helpers de textarea
+  // Textarea helpers
   textareaWithoutNewLine()
   textareaAutoSize()
 
-  // Filtres
+  // Filters
   filterParentPageFromHost()
   filterImageFormField()
 
-  // Compression d'image avant upload
+  // Image compression before upload
   initImageCompressor()
 
-  // Sélecteurs
+  // Selectors
   mediaPicker()
   inlinePopup()
   suggestTags()
 
-  // État de la page
+  // Page state
   retrieveCurrentPageLocale()
   retrieveCurrentPageHost()
 
-  // Sauvegarde automatique
+  // Auto-save
   initCtrlSAutoSave()
 
-  // Verrouillage d'édition
+  // Edit lock
   autoInitEditLock()
 
   // document.body.addEventListener('htmx:afterSwap', function () {

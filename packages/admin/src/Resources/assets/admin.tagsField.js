@@ -1,13 +1,13 @@
 import { Suggest } from './suggest.js'
 
 /**
- * Hook personnalisé pour les suggestions de tags de page
- * Filtre les opérateurs logiques (AND/OR) et les ajoute aux suggestions
- * @param {Suggest} Suggest - Instance du suggester
- * @param {string} inputValue - Valeur actuelle de l'input
- * @param {string} currentSearch - Recherche courante
- * @param {Array} searchResults - Résultats de recherche
- * @returns {Array} Résultats filtrés avec opérateurs logiques si nécessaire
+ * Custom hook for page tag suggestions
+ * Filters logical operators (AND/OR) and adds them to suggestions
+ * @param {Suggest} Suggest - Suggester instance
+ * @param {string} inputValue - Current input value
+ * @param {string} currentSearch - Current search
+ * @param {Array} searchResults - Search results
+ * @returns {Array} Filtered results with logical operators if needed
  */
 export function suggestSearchHookForPageTags(
   Suggest,
@@ -49,7 +49,7 @@ export function suggestSearchHookForPageTags(
 }
 
 /**
- * Initialise les champs de suggestions de tags
+ * Initialize tag suggestion fields
  */
 export function suggestTags() {
   document.querySelectorAll('[data-tags]').forEach(function (tagsInput) {
@@ -73,5 +73,5 @@ export function suggestTags() {
   })
 }
 
-// Expose la fonction globalement pour compatibilité
+// Expose function globally for compatibility
 window.suggestSearchHookForPageTags = suggestSearchHookForPageTags
