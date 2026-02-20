@@ -67,7 +67,7 @@ class Versionner
     {
         static::$version = false;
 
-        $page = $this->entityManager->getRepository(Page::class)->findOneBy(['id' => $pageId]);
+        $page = $this->entityManager->getRepository(Page::class)->find($pageId);
 
         if (! $page instanceof Page) {
             throw new Exception('Page not found `'.$pageId.'`');
