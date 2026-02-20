@@ -156,15 +156,11 @@ class PageOpenGraphImageGenerator
 
     private function getImagine(): ImagineInterface
     {
-        return $this->imagine ?? new Imagine();
+        return $this->imagine ??= new Imagine();
     }
 
     private function getRgb(): RGB
     {
-        if (null === $this->rgb) {
-            return $this->rgb = new RGB();
-        }
-
-        return $this->rgb;
+        return $this->rgb ??= new RGB();
     }
 }
