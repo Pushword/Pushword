@@ -17,7 +17,6 @@
 
 {% set page = page is defined and page ? (isInstanceOfPage(page) ? page : loadPageEntity(page)) : null %}
 {% if page %}
- {% set page = isInstanceOfPage(page) ? page : loadPageEntity(page) %}
  {% set image = image|default(page.mainImage) %}
  {% set date = date|default(page.createdAt) %}
  {% set title = title|default(pw(page).h1) %}
