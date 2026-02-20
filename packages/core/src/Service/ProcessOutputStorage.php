@@ -20,11 +20,7 @@ final readonly class ProcessOutputStorage
     {
         $filePath = $this->getOutputFilePath($processType);
 
-        if ($this->filesystem->exists($filePath)) {
-            $this->filesystem->appendToFile($filePath, $message);
-        } else {
-            $this->filesystem->dumpFile($filePath, $message);
-        }
+        $this->filesystem->appendToFile($filePath, $message);
     }
 
     /**
