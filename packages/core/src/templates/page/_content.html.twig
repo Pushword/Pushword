@@ -1,72 +1,72 @@
 {% block content %}
 
-    {% block breadcrumbJsonLd %}
-    <script type="application/ld+json">
-        {{ breadcrumbJsonLd(page) }}
-    </script>
-    {% endblock %}
+  {% block breadcrumbJsonLd %}
+  <script type="application/ld+json">
+    {{ breadcrumbJsonLd(page) }}
+  </script>
+  {% endblock %}
 
 {% set mainContent = mainContentSplit(page) %}
 <div class="{{ content_container_class|default('prose mx-auto py-12 px-3 md:px-0') }}">
 
-    {% block content_header %}
-        {% block h1 %}
-            {% set h1_class = page.h1_class|default(h1_class|default('')) %}
-            <h1{{ (h1_class ? ' class="' ~ h1_class ~ '"' : '')|raw }}>{{ pw(page).h1|raw }}</h1>
-        {% endblock %}
-
-        {% block description %}
-            {{ mainContent.chapeau|raw }}
-        {% endblock %}
-
-        {% block main_image %}
-            {% if page.mainImage is not null %}
-                {{ include(view('/component/image_inline.html.twig'), {
-                        image_src: page.mainImage|image('default'),
-                        image_alt: page.mainImage.altLocalized(page.locale, true)|default(page.getTitle(true)|striptags)|date_shortcode,
-                        image_wrapper_class: (page.mainImageFormat is same as(1) ? 'hidden' : ' '),
-                    }) }}
-                {# @var page.mainImageFormat is a custom property wich culd be managed via advanced-main-image #}
-            {% endif %}
-        {% endblock %}
+  {% block content_header %}
+    {% block h1 %}
+      {% set h1_class = page.h1_class|default(h1_class|default('')) %}
+      <h1{{ (h1_class ? ' class="' ~ h1_class ~ '"' : '')|raw }}>{{ pw(page).h1|raw }}</h1>
     {% endblock %}
 
-    {% block main_content %}
-        {% if page.toc is not null or page.tocTitle is not null %}
-            {% block toc %}
-                {% set content = mainContent.content %}
-                {{ mainContent.intro|raw }}
-                {# if content contains '<!-- toc -->' #}
-                {% if '<!-- toc -->' in content%}
-                    {% set content = content|replace({
-                        '<!-- toc -->': mainContent.toc
-                    }) %}
-                {% else %}
-                    <h3>{{ page.tocTitle|default('Nav') }}</h3>
-                    {{ mainContent.toc|raw }}
-                {% endif %}
-                {{ content|raw }}
-                {% endblock %}
+    {% block description %}
+      {{ mainContent.chapeau|raw }}
+    {% endblock %}
+
+    {% block main_image %}
+      {% if page.mainImage is not null %}
+        {{ include(view('/component/image_inline.html.twig'), {
+            image_src: page.mainImage|image('default'),
+            image_alt: page.mainImage.altLocalized(page.locale, true)|default(page.getTitle(true)|striptags)|date_shortcode,
+            image_wrapper_class: (page.mainImageFormat is same as(1) ? 'hidden' : ' '),
+          }) }}
+        {# @var page.mainImageFormat is a custom property wich culd be managed via advanced-main-image #}
+      {% endif %}
+    {% endblock %}
+  {% endblock %}
+
+  {% block main_content %}
+    {% if page.toc is not null or page.tocTitle is not null %}
+      {% block toc %}
+        {% set content = mainContent.content %}
+        {{ mainContent.intro|raw }}
+        {# if content contains '<!-- toc -->' #}
+        {% if '<!-- toc -->' in content%}
+          {% set content = content|replace({
+            '<!-- toc -->': mainContent.toc
+          }) %}
         {% else %}
-            {{ mainContent.body|raw }}
+          <h3>{{ page.tocTitle|default('Nav') }}</h3>
+          {{ mainContent.toc|raw }}
         {% endif %}
-    {% endblock %}
+        {{ content|raw }}
+      {% endblock %}
+    {% else %}
+      {{ mainContent.body|raw }}
+    {% endif %}
+  {% endblock %}
 
-    {# todo: if main.content.body finished with an opening div, remove it and remove the next div close :
-    preg_replace('#<div class="prose">\S*</div>#si', '', html) #}
+  {# todo: if main.content.body finished with an opening div, remove it and remove the next div close :
+  preg_replace('#<div class="prose">\S*</div>#si', '', html) #}
 
 </div>
 
 {% block content_part %}
-    {% if mainContent.contentParts %}
-        {% for contentPart in mainContent.contentParts %}
-        <div class="{{ cycle([page_delimiter_cycle|default('bg-gray-200'), ''], loop.index0) }}">
-            <div class="{{ content_container_class|default('prose mx-auto py-12 px-3') }}">
-            {{ contentPart|raw }}
-            </div>
-        </div>
-        {% endfor %}
-    {% endif %}
+  {% if mainContent.contentParts %}
+    {% for contentPart in mainContent.contentParts %}
+    <div class="{{ cycle([page_delimiter_cycle|default('bg-gray-200'), ''], loop.index0) }}">
+      <div class="{{ content_container_class|default('prose mx-auto py-12 px-3') }}">
+      {{ contentPart|raw }}
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
 {% endblock %}
 
 {# not-prose my-6 #}
