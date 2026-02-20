@@ -78,13 +78,13 @@ final readonly class LinkProvider
                 return $this->renderEncodedMail($anchor);
             }
 
-            $attr = [...$attr, ...['data-rot' => self::obfuscate($path)]];
+            $attr['data-rot'] = self::obfuscate($path);
             $template = $this->getApp()->getView('/component/link_js.html.twig');
 
             return trim($this->twig->render($template, ['anchor' => $anchor, 'attr' => $attr]));
         }
 
-        $attr = [...$attr, ...['href' => $path]];
+        $attr['href'] = $path;
 
         $template = $this->getApp()->getView('/component/link.html.twig');
 
