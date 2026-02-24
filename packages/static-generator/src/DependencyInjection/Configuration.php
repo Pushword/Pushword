@@ -12,7 +12,6 @@ use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PagesCompressor;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RobotsGenerator;
-use Pushword\StaticGenerator\Helper;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -105,10 +104,6 @@ class Configuration implements ConfigurationInterface
             ->scalarNode('static_dir')
                 ->defaultValue('%kernel.project_dir%/static/%main_host%')
                 ->info('If null or empty, static dir will be %kernel.project_dir%/static/%main_host%/.')
-                ->validate()
-                    ->ifTrue(static fn (string $value): bool => ! Helper::isAbsolutePath($value))
-                    ->thenInvalid('Invalid static dir path `%s`, it must be absolute (eg: /home/pushword/static/%main_host%/)')
-                ->end()
             ->end()
             ->variableNode('static_copy')
                 ->info('file or folder in your public dir to copy in static')

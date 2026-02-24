@@ -37,53 +37,86 @@ class StaticGeneratorTest extends KernelTestCase
 {
     private ?StaticAppGenerator $staticAppGenerator = null;
 
+    private ?string $isolatedStaticDir = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Use a per-process temp dir to avoid cross-worker interference
+        $this->isolatedStaticDir = sys_get_temp_dir().'/pushword-static-test-'.getmypid();
+    }
+
+    protected function tearDown(): void
+    {
+        if (null !== $this->isolatedStaticDir) {
+            (new Filesystem())->remove($this->isolatedStaticDir);
+        }
+
+        parent::tearDown();
+    }
+
+    private function overrideStaticDir(): void
+    {
+        $container = self::getContainer();
+        $siteRegistry = $container->get(SiteRegistry::class);
+        $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
+        $siteConfig->setCustomProperty('static_dir', $this->isolatedStaticDir);
+
+        // Clean up shared PID file to prevent cross-worker interference
+        $pidFile = self::getContainer()->getParameter('kernel.project_dir').'/var/static-generator.pid';
+        (new Filesystem())->remove($pidFile);
+    }
+
+    private function getStaticDir(): string
+    {
+        return $this->isolatedStaticDir ?? throw new \LogicException('isolatedStaticDir not set');
+    }
+
+    private function getStateFilePath(): string
+    {
+        return self::getContainer()->getParameter('kernel.project_dir').'/var/.static-generation-state.json';
+    }
+
     public function testStaticCommand(): void
     {
-        $kernel = static::createKernel();
-        $application = new Application($kernel);
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $application = new Application(static::$kernel); // @phpstan-ignore-line
 
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
 
-        $commandTester->execute(['localhost.dev']);
+        $commandTester->execute(['host' => 'localhost.dev']);
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
         self::assertTrue(str_contains($output, 'success'));
 
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/.htaccess');
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/.Caddyfile');
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html');
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html.zst');
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html.br');
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html.gz');
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/robots.txt');
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/favicon.ico');
-
-        $staticDir = __DIR__.'/../../skeleton/static/localhost.dev';
-        $stateFile = __DIR__.'/../../skeleton/var/.static-generation-state.json';
-        $filesystem = new Filesystem();
-        $filesystem->remove($staticDir);
-        $filesystem->remove($stateFile);
+        $staticDir = $this->getStaticDir();
+        self::assertFileExists($staticDir.'/.htaccess');
+        self::assertFileExists($staticDir.'/.Caddyfile');
+        self::assertFileExists($staticDir.'/index.html');
+        self::assertFileExists($staticDir.'/index.html.zst');
+        self::assertFileExists($staticDir.'/index.html.br');
+        self::assertFileExists($staticDir.'/index.html.gz');
+        self::assertFileExists($staticDir.'/robots.txt');
+        self::assertFileExists($staticDir.'/favicon.ico');
     }
 
     public function testIncrementalGeneration(): void
     {
-        $kernel = static::createKernel();
-        $application = new Application($kernel);
-        $filesystem = new Filesystem();
-        $staticDir = __DIR__.'/../../skeleton/static/localhost.dev';
-        $stateFile = __DIR__.'/../../skeleton/var/.static-generation-state.json';
-
-        // Clean up before test
-        $filesystem->remove($staticDir);
-        $filesystem->remove($stateFile);
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $staticDir = $this->getStaticDir();
+        $stateFile = $this->getStateFilePath();
 
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
 
         // First full generation
-        $commandTester->execute(['localhost.dev']);
+        $commandTester->execute(['host' => 'localhost.dev']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('success', $output);
@@ -104,7 +137,7 @@ class StaticGeneratorTest extends KernelTestCase
         $originalMtime = filemtime($indexFile);
 
         // Second generation with incremental flag
-        $commandTester->execute(['localhost.dev', '--incremental' => true]);
+        $commandTester->execute(['host' => 'localhost.dev', '--incremental' => true]);
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('success', $output);
         self::assertStringContainsString('incremental mode', $output);
@@ -113,55 +146,49 @@ class StaticGeneratorTest extends KernelTestCase
         clearstatcache();
         $newMtime = filemtime($indexFile);
         self::assertSame($originalMtime, $newMtime, 'File should not be regenerated in incremental mode when unchanged');
-
-        // Clean up
-        $filesystem->remove($staticDir);
-        $filesystem->remove($stateFile);
     }
 
     public function testGenerationStateManager(): void
     {
-        self::bootKernel();
-        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
-        $stateFile = $projectDir.'/var/.static-generation-state.json';
-        $filesystem = new Filesystem();
+        // Use isolated temp dir for state file
+        $tempDir = sys_get_temp_dir().'/pushword-state-test-'.getmypid();
+        (new Filesystem())->mkdir($tempDir.'/var');
+        $stateFile = $tempDir.'/var/.static-generation-state.json';
 
-        // Clean up
-        $filesystem->remove($stateFile);
+        try {
+            $stateManager = new GenerationStateManager($tempDir);
 
-        $stateManager = new GenerationStateManager($projectDir);
+            // Initially no state
+            self::assertFalse($stateManager->hasState('test.host'));
+            self::assertNull($stateManager->getLastGenerationTime('test.host'));
 
-        // Initially no state
-        self::assertFalse($stateManager->hasState('test.host'));
-        self::assertNull($stateManager->getLastGenerationTime('test.host'));
+            // Set generation time
+            $now = new DateTimeImmutable();
+            $stateManager->setLastGenerationTime('test.host', $now);
+            $stateManager->save();
 
-        // Set generation time
-        $now = new DateTimeImmutable();
-        $stateManager->setLastGenerationTime('test.host', $now);
-        $stateManager->save();
+            // Verify state file created
+            self::assertFileExists($stateFile);
 
-        // Verify state file created
-        self::assertFileExists($stateFile);
+            // Create new instance to verify persistence
+            $stateManager2 = new GenerationStateManager($tempDir);
+            self::assertTrue($stateManager2->hasState('test.host'));
+            self::assertNotNull($stateManager2->getLastGenerationTime('test.host'));
 
-        // Create new instance to verify persistence
-        $stateManager2 = new GenerationStateManager($projectDir);
-        self::assertTrue($stateManager2->hasState('test.host'));
-        self::assertNotNull($stateManager2->getLastGenerationTime('test.host'));
+            // Test page state
+            $pageUpdatedAt = new DateTimeImmutable('2024-01-15 10:00:00');
+            $stateManager2->setPageState('test.host', 'test-page', $pageUpdatedAt);
+            $stateManager2->save();
 
-        // Test page state
-        $pageUpdatedAt = new DateTimeImmutable('2024-01-15 10:00:00');
-        $stateManager2->setPageState('test.host', 'test-page', $pageUpdatedAt);
-        $stateManager2->save();
+            // Verify page doesn't need regeneration with same timestamp
+            self::assertFalse($stateManager2->needsRegeneration('test.host', 'test-page', $pageUpdatedAt));
 
-        // Verify page doesn't need regeneration with same timestamp
-        self::assertFalse($stateManager2->needsRegeneration('test.host', 'test-page', $pageUpdatedAt));
-
-        // Verify page needs regeneration with different timestamp
-        $newUpdatedAt = new DateTimeImmutable('2024-01-16 10:00:00');
-        self::assertTrue($stateManager2->needsRegeneration('test.host', 'test-page', $newUpdatedAt));
-
-        // Clean up
-        $filesystem->remove($stateFile);
+            // Verify page needs regeneration with different timestamp
+            $newUpdatedAt = new DateTimeImmutable('2024-01-16 10:00:00');
+            self::assertTrue($stateManager2->needsRegeneration('test.host', 'test-page', $newUpdatedAt));
+        } finally {
+            (new Filesystem())->remove($tempDir);
+        }
     }
 
     private function getStaticAppGenerator(): StaticAppGenerator
@@ -188,16 +215,13 @@ class StaticGeneratorTest extends KernelTestCase
 
     public function testIt(): void
     {
-        self::bootKernel();
+        $generator = $this->getStaticAppGenerator();
+        $this->overrideStaticDir();
 
-        $this->getStaticAppGenerator()->generate('localhost.dev');
+        $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev');
-
-        $staticDir = __DIR__.'/../../skeleton/static/localhost.dev';
-        $filesystem = new Filesystem();
-        $filesystem->remove($staticDir);
-        $filesystem->mkdir($staticDir);
+        $staticDir = $this->getStaticDir();
+        self::assertFileExists($staticDir);
     }
 
     private function getGenerator(string $name): GeneratorInterface
@@ -208,56 +232,61 @@ class StaticGeneratorTest extends KernelTestCase
     public function testGenerateHtaccess(): void
     {
         self::bootKernel();
+        $this->overrideStaticDir();
 
         $generator = $this->getGenerator(HtaccessGenerator::class);
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/.htaccess');
+        self::assertFileExists($this->getStaticDir().'/.htaccess');
     }
 
     public function testGenerateCNAME(): void
     {
         self::bootKernel();
+        $this->overrideStaticDir();
 
         $generator = $this->getGenerator(CNAMEGenerator::class);
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/CNAME');
+        self::assertFileExists($this->getStaticDir().'/CNAME');
     }
 
     public function testCopier(): void
     {
         self::bootKernel();
+        $this->overrideStaticDir();
 
         $generator = $this->getGenerator(CopierGenerator::class);
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/assets');
+        self::assertFileExists($this->getStaticDir().'/assets');
     }
 
     public function testError(): void
     {
         self::bootKernel();
+        $this->overrideStaticDir();
 
         $generator = $this->getGenerator(ErrorPageGenerator::class);
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/404.html');
+        self::assertFileExists($this->getStaticDir().'/404.html');
     }
 
     public function testDownload(): void
     {
         self::bootKernel();
+        $this->overrideStaticDir();
 
         $generator = $this->getGenerator(MediaGenerator::class);
 
         $generator->generate('localhost.dev');
 
-        $mediaDir = __DIR__.'/../../skeleton/static/localhost.dev/media';
+        $mediaDir = $this->getStaticDir().'/media';
         self::assertFileExists($mediaDir);
 
         // Verify media files are readable (not broken symlinks)
@@ -267,6 +296,7 @@ class StaticGeneratorTest extends KernelTestCase
     public function testDownloadWithSymlink(): void
     {
         self::bootKernel();
+        $this->overrideStaticDir();
 
         $container = self::getContainer();
         $siteRegistry = $container->get(SiteRegistry::class);
@@ -277,15 +307,13 @@ class StaticGeneratorTest extends KernelTestCase
             $generator = $this->getGenerator(MediaGenerator::class);
             $generator->generate('localhost.dev');
 
-            $mediaDir = __DIR__.'/../../skeleton/static/localhost.dev/media';
+            $mediaDir = $this->getStaticDir().'/media';
             self::assertFileExists($mediaDir);
 
             $this->assertMediaFilesAccessible($mediaDir);
             $this->assertSymlinksAreRelative($mediaDir);
         } finally {
             $siteConfig->setCustomProperty('static_symlink', false);
-            $filesystem = new Filesystem();
-            $filesystem->remove(__DIR__.'/../../skeleton/static/localhost.dev/media');
         }
     }
 
@@ -316,20 +344,18 @@ class StaticGeneratorTest extends KernelTestCase
     public function testPages(): void
     {
         self::bootKernel();
+        $this->overrideStaticDir();
 
         $generator = $this->getGenerator(PagesGenerator::class);
 
         $generator->generate('localhost.dev');
 
-        self::assertFileExists(__DIR__.'/../../skeleton/static/localhost.dev/index.html');
+        self::assertFileExists($this->getStaticDir().'/index.html');
     }
 
     public function getGeneratorBag(): GeneratorBag
     {
-        self::bootKernel();
-        $container = static::getContainer();
-
-        return $container->get(GeneratorBag::class);
+        return self::getContainer()->get(GeneratorBag::class);
     }
 
     public function getParameterBag(): MockObject
