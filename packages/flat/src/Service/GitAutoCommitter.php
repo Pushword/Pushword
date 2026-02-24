@@ -71,6 +71,15 @@ final readonly class GitAutoCommitter
             return false;
         }
 
+        $pull = new Process(['git', '-C', $gitDir, 'pull', '--rebase']);
+        $pull->run();
+
+        if (! $pull->isSuccessful()) {
+            $this->logger->warning('GitAutoCommitter: git pull --rebase failed: {error}', ['error' => $pull->getErrorOutput()]);
+
+            return true;
+        }
+
         $push = new Process(['git', '-C', $gitDir, 'push']);
         $push->run();
 
