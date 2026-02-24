@@ -24,7 +24,7 @@
 {% endif %}
 
 {% if step|default('email') == 'email' %}
-<form method="post" action="{{ path('pushword_login_check_email') }}" class="mt-8 space-y-6">
+<form method="post" action="{{ path('pushword_login_check_email') }}" class="mt-8 space-y-6" hx-boost="false">
   <label for="inputEmail" class="sr-only">{{ 'securityLoginEmail'|trans }}</label>
   <input type="email" id="inputEmail" name="email" value="{{ last_username }}" required autofocus
          class="block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md shadow-xs sm:text-sm focus:outline-hidden focus:ring-primary focus:border-primary"
