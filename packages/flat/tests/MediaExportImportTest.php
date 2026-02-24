@@ -360,7 +360,22 @@ CSV;
         $imported = $importer->importFromStorage('test-storage.png', $lastEdit);
         $importer->finishImport();
 
-        self::assertTrue($imported, 'File should be imported from storage');
+        if (! $imported) {
+            $allMedia = $em->getRepository(Media::class)->findAll();
+            $diag = 'existingMedia='.\count($allMedia);
+            foreach ($allMedia as $m) {
+                $h = $m->getHash();
+                $hs = \is_resource($h) ? 'resource('.stream_get_contents($h).')' : (\is_string($h) ? 'str('.bin2hex($h).')' : 'null');
+                $diag .= ' ['.$m->getFileName().':'.$hs.']';
+            }
+
+            $testHash = sha1_file($mediaDir.'/test-storage.png', true);
+            $diag .= ' testFileHash='.bin2hex($testHash);
+            $diag .= ' fileExists='.var_export(file_exists($mediaDir.'/test-storage.png'), true);
+            $diag .= ' skipped='.$importer->getSkippedCount();
+            $diag .= ' imported='.$importer->getImportedCount();
+            self::fail('importFromStorage returned false. '.$diag);
+        }
 
         // Verify media was created with correct data
         $media = $em->getRepository(Media::class)->findOneBy(['fileName' => 'test-storage.png']);
