@@ -77,7 +77,9 @@ final readonly class ImageManagerCommand
                 $io->info(\sprintf('Image driver: %s', $this->imageReader->getResolvedDriver()));
             }
 
-            return $this->executeSequential($medias, $force, $io, $output, $startTime);
+            $isWorker = $noLock && null !== $mediaName;
+
+            return $this->executeSequential($medias, $force, $isWorker, $io, $output, $startTime);
         } finally {
             $lock?->release();
         }
@@ -104,9 +106,9 @@ final readonly class ImageManagerCommand
     /**
      * @param Media[] $medias
      */
-    private function executeSequential(array $medias, bool $force, SymfonyStyle $io, OutputInterface $output, float $startTime): int
+    private function executeSequential(array $medias, bool $force, bool $isWorker, SymfonyStyle $io, OutputInterface $output, float $startTime): int
     {
-        $progressBar = $this->createProgressBar($output, \count($medias));
+        $progressBar = $isWorker ? null : $this->createProgressBar($output, \count($medias));
 
         $errors = [];
         $skipped = 0;
@@ -114,7 +116,7 @@ final readonly class ImageManagerCommand
 
         foreach ($medias as $media) {
             if ($media->isImage()) {
-                $progressBar->setMessage($media->getPath());
+                $progressBar?->setMessage($media->getPath());
 
                 try {
                     $generated = $this->thumbnailGenerator->generateCache($media, $force);
@@ -124,11 +126,15 @@ final readonly class ImageManagerCommand
                 } catch (Throwable $exception) {
                     $errors[] = $media->getFileName().': '.$exception->getMessage();
                 }
+
+                if ($isWorker) {
+                    $output->writeln('DONE:'.$media->getFileName());
+                }
             } else {
                 $this->imageCacheManager->ensurePublicSymlink($media);
             }
 
-            $progressBar->advance();
+            $progressBar?->advance();
 
             if (0 === ++$processed % 50) {
                 $this->entityManager->flush();
@@ -136,10 +142,12 @@ final readonly class ImageManagerCommand
         }
 
         $this->entityManager->flush();
-        $progressBar->finish();
+        $progressBar?->finish();
 
-        $this->reportSummary($io, \count($medias) - $skipped - \count($errors), $skipped, \count($errors), $startTime);
-        $this->reportErrors($errors, $io);
+        if (! $isWorker) {
+            $this->reportSummary($io, \count($medias) - $skipped - \count($errors), $skipped, \count($errors), $startTime);
+            $this->reportErrors($errors, $io);
+        }
 
         return 0;
     }
@@ -196,7 +204,7 @@ final readonly class ImageManagerCommand
 
         $progressBar = $this->createProgressBar($output, $staleCount);
 
-        /** @var array<int, array{process: Process, count: int}> $running */
+        /** @var array<int, array{process: Process, count: int, reported: int}> $running */
         $running = [];
         $errors = [];
         $chunkIndex = 0;
@@ -215,21 +223,38 @@ final readonly class ImageManagerCommand
                 $process = new Process($cmd, $this->projectDir);
                 $process->setTimeout(300);
                 $process->start();
-                $running[] = ['process' => $process, 'count' => \count($chunk)];
-                $progressBar->setMessage(\sprintf('batch %d/%d (%d images)', $chunkIndex, \count($chunks), \count($chunk)));
+                $running[] = ['process' => $process, 'count' => \count($chunk), 'reported' => 0];
             }
 
-            foreach ($running as $key => ['process' => $process, 'count' => $count]) {
-                if (! $process->isRunning()) {
-                    if (! $process->isSuccessful()) {
-                        $stderr = trim($process->getErrorOutput());
-                        $errors[] = 'batch: '.('' !== $stderr ? $stderr : 'exit code '.$process->getExitCode());
+            foreach ($running as $key => &$entry) {
+                $newOutput = $entry['process']->getIncrementalOutput();
+                if ('' !== $newOutput) {
+                    $lines = substr_count($newOutput, 'DONE:');
+                    if ($lines > 0) {
+                        $progressBar->advance($lines);
+                        $entry['reported'] += $lines;
+                        if (1 === preg_match('/DONE:(.+)/', $newOutput, $m)) {
+                            $progressBar->setMessage($m[1]);
+                        }
+                    }
+                }
+
+                if (! $entry['process']->isRunning()) {
+                    $remaining = $entry['count'] - $entry['reported'];
+                    if ($remaining > 0) {
+                        $progressBar->advance($remaining);
+                    }
+
+                    if (! $entry['process']->isSuccessful()) {
+                        $stderr = trim($entry['process']->getErrorOutput());
+                        $errors[] = 'batch: '.('' !== $stderr ? $stderr : 'exit code '.$entry['process']->getExitCode());
                     }
 
                     unset($running[$key]);
-                    $progressBar->advance($count);
                 }
             }
+
+            unset($entry);
 
             if ([] !== $running) {
                 usleep(50_000);

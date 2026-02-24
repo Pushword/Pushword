@@ -67,9 +67,10 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
     {
         $commandTester = $this->createCommandTester();
 
+        // --no-lock with media name = worker mode (emits DONE: markers, no progress bar)
         $commandTester->execute(['media' => 'piedweb-logo.png', '--no-lock' => true]);
 
-        self::assertStringContainsString('100%', $commandTester->getDisplay());
+        self::assertStringContainsString('DONE:piedweb-logo.png', $commandTester->getDisplay());
     }
 
     public function testSkipsAlreadyCachedImages(): void
