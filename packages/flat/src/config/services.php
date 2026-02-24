@@ -78,7 +78,8 @@ return static function (ContainerConfigurator $container): void {
     // DeferredExportProcessor configuration
     $services->set(DeferredExportProcessor::class)
         ->arg('$varDir', '%kernel.project_dir%/var')
-        ->arg('$autoExportEnabled', '%pw.pushword_flat.auto_export_enabled%');
+        ->arg('$autoExportEnabled', '%pw.pushword_flat.auto_export_enabled%')
+        ->arg('$debounceDelay', '%pw.pushword_flat.export_debounce_delay%');
 
     // GitAutoCommitter configuration
     $services->set(GitAutoCommitter::class)

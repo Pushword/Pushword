@@ -29,11 +29,11 @@ flat:
   # Auto-export to flat files after admin modifications (default: true)
   auto_export_enabled: true
 
-  # Use background process for deferred export (default: true)
-  use_background_export: true
-
   # Automatically git commit content changes after export (default: false)
   auto_git_commit: false
+
+  # Debounce delay in seconds before processing deferred export (default: 120)
+  export_debounce_delay: 120
 
   # Editorial lock TTL in seconds (default: 1800 = 30 minutes)
   lock_ttl: 1800
@@ -86,7 +86,7 @@ php bin/console pw:flat:sync --mode=import --no-backup
 
 ### Deferred Export & Git Auto-Commit
 
-When content is saved in admin, a Messenger message is dispatched with a 30-second delay. This naturally debounces rapid saves — multiple saves within 30 seconds are batched into a single export.
+When content is saved in admin, a Messenger message is dispatched with a configurable delay (default: 120 seconds). Each new save resets the timer, so rapid edits are batched into a single export + commit.
 
 A Symfony Messenger worker must be running to process exports:
 

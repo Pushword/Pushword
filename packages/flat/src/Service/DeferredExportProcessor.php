@@ -21,6 +21,7 @@ final class DeferredExportProcessor
         private readonly string $varDir,
         private readonly MessageBusInterface $messageBus,
         private readonly bool $autoExportEnabled = true,
+        private readonly int $debounceDelay = 120,
     ) {
     }
 
@@ -60,8 +61,7 @@ final class DeferredExportProcessor
 
         $this->writePendingFlag(array_values($entityTypes), array_values($hosts));
 
-        // Dispatch with 30s delay for natural debouncing of rapid saves
-        $this->messageBus->dispatch(new ConsumePendingExportMessage(), [new DelayStamp(30000)]);
+        $this->messageBus->dispatch(new ConsumePendingExportMessage(), [new DelayStamp($this->debounceDelay * 1000)]);
     }
 
     /** @return array<string, array{type: string, id: int|null, host: string|null, action: string}> */
@@ -80,7 +80,7 @@ final class DeferredExportProcessor
         return $this->varDir.'/flat-sync/export-pending.json';
     }
 
-    /** @return array{entityTypes: string[], hosts: string[]}|null */
+    /** @return array{entityTypes: string[], hosts: string[], dispatchAt: int}|null */
     public function readPendingFlag(): ?array
     {
         $path = $this->getPendingFlagPath();
@@ -94,7 +94,7 @@ final class DeferredExportProcessor
             return null;
         }
 
-        /** @var array{entityTypes: string[], hosts: string[]}|null $data */
+        /** @var array{entityTypes: string[], hosts: string[], dispatchAt: int}|null $data */
         $data = json_decode($content, true);
 
         return \is_array($data) ? $data : null;
@@ -132,6 +132,7 @@ final class DeferredExportProcessor
         file_put_contents($path, json_encode([
             'entityTypes' => $entityTypes,
             'hosts' => $hosts,
+            'dispatchAt' => time() + $this->debounceDelay,
         ], \JSON_THROW_ON_ERROR));
     }
 

@@ -261,7 +261,6 @@ flat:
   flat_content_dir: '%kernel.project_dir%/content/_host_'
   change_detection_cache_ttl: 300
   auto_export_enabled: true
-  use_background_export: true
   lock_ttl: 1800
   auto_lock_on_flat_changes: true
 
@@ -274,6 +273,9 @@ flat:
 
   # Auto-commit content changes to git after export (default: false)
   auto_git_commit: false
+
+  # Debounce delay in seconds before processing deferred export (default: 120)
+  export_debounce_delay: 120
 ```
 
 ## Automatic Git Commits from Admin Saves
@@ -281,7 +283,7 @@ flat:
 When `auto_git_commit` is enabled, admin saves are automatically committed and pushed to git:
 
 1. Admin saves a page or media — a pending export flag is written
-2. A Messenger message is dispatched with a 30-second delay (debouncing rapid saves)
+2. A Messenger message is dispatched with a configurable delay (each new save resets the timer)
 3. The worker exports all pending changes in a single batch
 4. Changes are committed and pushed to git automatically
 

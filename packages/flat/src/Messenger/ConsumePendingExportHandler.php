@@ -29,6 +29,11 @@ final readonly class ConsumePendingExportHandler
             return;
         }
 
+        // If dispatchAt is in the future, skip — the already-scheduled delayed message will handle it
+        if (($pending['dispatchAt'] - time()) > 0) {
+            return;
+        }
+
         $entityTypes = $pending['entityTypes'];
         $hosts = $pending['hosts'];
 
