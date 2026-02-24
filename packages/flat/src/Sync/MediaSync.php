@@ -23,6 +23,8 @@ final class MediaSync
 {
     private int $deletedCount = 0;
 
+    private bool $storageImported = false;
+
     private ?OutputInterface $output = null;
 
     private ?Stopwatch $stopwatch = null;
@@ -91,21 +93,26 @@ final class MediaSync
         $this->mediaImporter->finishImport();
 
         // 4. Import storage files via Flysystem (works for both local and remote)
-        $storageFiles = $this->collectStorageMediaFiles();
-        $storageProgressBar = $this->createProgressBar(\count($storageFiles));
-        $storageProgressBar?->start();
+        // Storage is global (not per-host), so only scan and import once across all hosts
+        if (! $this->storageImported) {
+            $storageFiles = $this->collectStorageMediaFiles();
+            $storageProgressBar = $this->createProgressBar(\count($storageFiles));
+            $storageProgressBar?->start();
 
-        foreach ($storageFiles as $fileName) {
-            $storageProgressBar?->setMessage(basename($fileName));
-            $lastModified = $this->mediaStorage->lastModified($fileName);
-            $lastEditDateTime = new DateTime()->setTimestamp($lastModified);
-            $this->mediaImporter->importFromStorage($fileName, $lastEditDateTime);
-            $storageProgressBar?->advance();
-        }
+            foreach ($storageFiles as $fileName) {
+                $storageProgressBar?->setMessage(basename($fileName));
+                $lastModified = $this->mediaStorage->lastModified($fileName);
+                $lastEditDateTime = new DateTime()->setTimestamp($lastModified);
+                $this->mediaImporter->importFromStorage($fileName, $lastEditDateTime);
+                $storageProgressBar?->advance();
+            }
 
-        if (null !== $storageProgressBar) {
-            $storageProgressBar->finish();
-            $this->output?->writeln('');
+            if (null !== $storageProgressBar) {
+                $storageProgressBar->finish();
+                $this->output?->writeln('');
+            }
+
+            $this->storageImported = true;
         }
 
         // 5. Import local content dir files (flat content directory)
