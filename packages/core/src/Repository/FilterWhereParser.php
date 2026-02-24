@@ -75,7 +75,7 @@ class FilterWhereParser
     }
 
     /**
-     * @param array{key_prefix: string, key: string, operator: string, value: string}|array{0: string, 1:string, 2: string, 4:string}|array{} $whereRow
+     * @param array{key_prefix: string, key: string, operator: string, value: string|null}|array{0: string, 1:string, 2: string|null, 4:string}|array{} $whereRow
      */
     private function retrieveExpressionFrom(array $whereRow): string
     {

@@ -26,7 +26,7 @@ class PageTranslationsField extends AbstractField
         $qb
             ->andWhere(sprintf('%s.id != :currentPageId', $alias))
             ->andWhere(sprintf('%s.locale != :currentPageLocale', $alias))
-            ->setParameter('currentPageId', (int) $page->id)
+            ->setParameter('currentPageId', $page->id)
             ->setParameter('currentPageLocale', $page->locale);
 
         return $qb;
