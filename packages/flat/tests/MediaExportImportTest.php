@@ -919,11 +919,13 @@ CSV;
 
     private function createTestImage(string $path): void
     {
-        // Create a minimal valid PNG image (1x1 pixel)
+        // Create a minimal valid PNG with unique pixel color to avoid hash collisions
         $img = imagecreatetruecolor(1, 1);
         if (false !== $img) {
+            $color = imagecolorallocate($img, random_int(0, 255), random_int(0, 255), random_int(0, 255));
+            imagesetpixel($img, 0, 0, (int) $color);
             imagepng($img, $path);
-            unset($img);
+            imagedestroy($img);
         }
     }
 
