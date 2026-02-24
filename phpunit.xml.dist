@@ -27,13 +27,11 @@
       <exclude>packages/admin/tests/Frontend/AbstractPantherAdminTest.php</exclude>
     </testsuite>
   </testsuites>
-  <!--
   <groups>
     <exclude>
-      <group>panther</group>
+      <group>benchmark</group>
     </exclude>
   </groups>
-  -->
   <extensions>
     <bootstrap class="Symfony\Component\Panther\ServerExtension" />
   </extensions>

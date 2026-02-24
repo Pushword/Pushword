@@ -62,4 +62,25 @@ class HtmlMinifierTest extends TestCase
 
         self::assertSame($html, $result);
     }
+
+    public function testCompressIsIdempotent(): void
+    {
+        $html = "<!DOCTYPE html><html><body>\n  <p>Hello   world</p>\n  <!-- comment -->\n  <pre>  keep  </pre>\n</body></html>";
+
+        $first = HtmlMinifier::compress($html);
+        $second = HtmlMinifier::compress($first);
+
+        self::assertSame($first, $second);
+    }
+
+    public function testCompressLargeHtml(): void
+    {
+        $body = str_repeat('<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>', 500);
+        $html = '<!DOCTYPE html><html><head><title>Test</title></head><body>'.$body.'</body></html>';
+
+        $result = HtmlMinifier::compress($html);
+
+        self::assertStringStartsWith('<!DOCTYPE html>', $result);
+        self::assertLessThan(\strlen($html), \strlen($result));
+    }
 }

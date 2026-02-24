@@ -91,6 +91,10 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
 
                 $this->setError(\sprintf('Failed to generate %s/%s: %s', $hostName, $slug, $e->getMessage()));
             }
+
+            if (0 === $currentPage % 50) {
+                static::getKernel()->getContainer()->get('doctrine.orm.entity_manager')->clear();
+            }
         }
 
         // Cleanup deleted pages from state

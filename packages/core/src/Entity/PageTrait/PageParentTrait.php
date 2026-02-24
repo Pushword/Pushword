@@ -16,7 +16,7 @@ trait PageParentTrait
     /**
      * @var Collection<int, Page>
      */
-    #[ORM\OneToMany(targetEntity: Page::class, mappedBy: 'parentPage')]
+    #[ORM\OneToMany(targetEntity: Page::class, mappedBy: 'parentPage', fetch: 'EXTRA_LAZY')]
     #[ORM\OrderBy(['publishedAt' => 'DESC', 'weight' => 'DESC'])]
     protected ?Collection $childrenPages;  // @phpstan-ignore-line
 

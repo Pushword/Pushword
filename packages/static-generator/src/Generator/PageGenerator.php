@@ -69,12 +69,12 @@ class PageGenerator extends AbstractGenerator
      */
     protected function generateFeedFor(Page $page): void
     {
-        $liveUri = $this->generateLivePathFor($page, 'pushword_page_feed');
-        $staticFile = preg_replace('/.html$/', '.xml', $this->generateFilePath($page)) ?? throw new Exception();
-        if (\count($page->getChildrenPages()) < 1) {
+        if (! $page->hasChildrenPages()) {
             return;
         }
 
+        $liveUri = $this->generateLivePathFor($page, 'pushword_page_feed');
+        $staticFile = preg_replace('/.html$/', '.xml', $this->generateFilePath($page)) ?? throw new Exception();
         $this->saveAsStatic($liveUri, $staticFile, $page);
     }
 
