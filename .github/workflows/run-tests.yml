@@ -41,7 +41,7 @@ jobs:
       #fail-fast: true
       matrix:
         os: [ubuntu-latest] #, windows-latest
-        php: [8.4] # , 8.5 wait for symfony/panther upgrade
+        php: [8.4, 8.5]
         node: [25, 24]
         stability: [prefer-stable]
         # exclude:
