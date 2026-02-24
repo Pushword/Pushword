@@ -215,7 +215,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     {
         $conn = $this->getEntityManager()->getConnection();
         $duplicateHashes = $conn->executeQuery(
-            'SELECT hash FROM media WHERE LENGTH(hash) > 0 GROUP BY hash HAVING COUNT(*) > 1',
+            'SELECT hash FROM media WHERE hash IS NOT NULL AND LENGTH(hash) > 0 GROUP BY hash HAVING COUNT(*) > 1',
         )->fetchFirstColumn();
 
         if ([] === $duplicateHashes) {
@@ -224,6 +224,15 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         $groups = [];
         foreach ($duplicateHashes as $hash) {
+            // Normalize resource streams to strings (PDO may return BLOBs as resources)
+            if (\is_resource($hash)) {
+                $hash = stream_get_contents($hash);
+            }
+
+            if (! \is_string($hash) || '' === $hash) {
+                continue;
+            }
+
             /** @var Media[] $medias */
             $medias = $this->findBy(['hash' => $hash], ['id' => 'ASC']);
             if (\count($medias) > 1) {

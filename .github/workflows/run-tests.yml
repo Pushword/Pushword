@@ -81,7 +81,7 @@ jobs:
       #- name: Install browsers
       #  run: vendor/bin/bdi detect drivers
       - name: Initialize
-        run: composer reset
+        run: composer reset-skeleton
 
       - name: Generate Images Cache
         run: cd packages/skeleton && php bin/console pw:image:cache

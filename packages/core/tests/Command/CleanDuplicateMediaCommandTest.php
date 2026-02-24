@@ -199,6 +199,12 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
         $original = $em->getRepository(Media::class)->findOneBy(['fileName' => 'piedweb-logo.png']);
         self::assertNotNull($original);
 
+        // Ensure original has a fresh hash (may be a resource stream from DB)
+        $original->setStoreIn($mediaDir);
+        $original->resetHash();
+        $original->setHash();
+        $em->flush();
+
         $duplicate = new Media();
         $duplicate->setProjectDir($projectDir);
         $duplicate->setStoreIn($mediaDir);

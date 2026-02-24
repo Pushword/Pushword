@@ -142,19 +142,37 @@ $fs->mirror($monoRepoBase.'/packages/docs/content', $piedwebContentDir);
 
 $cachedDbFile = $dbCacheDir.'/'.$dbCacheHash.'.sqlite';
 $dbTargetPath = $testBaseDir.'/test.db';
+$lockFile = $dbCacheDir.'/'.$dbCacheHash.'.lock';
+
+// Use file locking to prevent race conditions between ParaTest workers
+// Only the DB cache check/creation is locked; kernel boot happens outside the lock
+$fs->mkdir($dbCacheDir);
+$fs->mkdir(\dirname($dbTargetPath));
+
+$lockHandle = fopen($lockFile, 'c+');
+if (false !== $lockHandle) {
+    flock($lockHandle, \LOCK_EX);
+}
+
 $cacheHit = file_exists($cachedDbFile);
 
 if ($cacheHit) {
     // Cache hit: copy pristine DB, skip Doctrine commands
-    $fs->mkdir(\dirname($dbTargetPath));
     $fs->copy($cachedDbFile, $dbTargetPath, true);
+
+    // Release lock immediately — other workers can copy the cache in parallel
+    if (false !== $lockHandle) {
+        flock($lockHandle, \LOCK_UN);
+        fclose($lockHandle);
+        $lockHandle = false;
+    }
 }
 
 $kernel = new Kernel('test', true);
 $kernel->boot();
 
 if (! $cacheHit) {
-    // Cache miss: run Doctrine commands to build DB
+    // Cache miss: run Doctrine commands to build DB (lock still held)
     $application = new Application($kernel);
     $application->setAutoExit(false);
 
@@ -172,7 +190,12 @@ if (! $cacheHit) {
 
     // Save pristine DB to cache
     if (file_exists($dbTargetPath)) {
-        $fs->mkdir($dbCacheDir);
         $fs->copy($dbTargetPath, $cachedDbFile, true);
+    }
+
+    // Release lock after cache is written
+    if (false !== $lockHandle) {
+        flock($lockHandle, \LOCK_UN);
+        fclose($lockHandle);
     }
 }
