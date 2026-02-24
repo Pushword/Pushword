@@ -143,11 +143,14 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         /** @var \Pushword\Core\Repository\MediaRepository $repo */
         $repo = static::getKernel()->getContainer()->get(\Pushword\Core\Repository\MediaRepository::class);
         $count = \count($repo->findAll());
-        $found3 = $repo->findOneByFileName('3.jpg');
+        $staticDbUrl = static::getKernel()->getContainer()->getParameter('pw.database_url'); // @phpstan-ignore-line
+        $testDbUrl = $this->params->get('pw.database_url');
         $this->staticAppGenerator->writeln(\sprintf(
-            '<comment>DEBUG: static kernel has %d media, 3.jpg=%s</comment>',
+            '<comment>DEBUG: static=%d media, staticDB=%s, testDB=%s, match=%s</comment>',
             $count,
-            null !== $found3 ? 'found' : 'NOT FOUND',
+            $staticDbUrl,
+            $testDbUrl,
+            $staticDbUrl === $testDbUrl ? 'YES' : 'NO',
         ));
     }
 
