@@ -100,7 +100,13 @@ class PageGenerator extends AbstractGenerator
 
         if (Response::HTTP_OK !== $response->getStatusCode()) {
             if (Response::HTTP_INTERNAL_SERVER_ERROR === $response->getStatusCode()) {
-                $this->setErrorFor($liveUri, $page, 'status code '.$response->getStatusCode());
+                $body = $response->getContent();
+                $detail = '';
+                if (\is_string($body) && preg_match('#<title>\s*(.*?)\s*</title>#si', $body, $m)) {
+                    $detail = ' - '.strip_tags($m[1]);
+                }
+
+                $this->setErrorFor($liveUri, $page, 'status code '.$response->getStatusCode().$detail);
             } else {
                 $this->logWarning($liveUri, $page, 'status code '.$response->getStatusCode().' - skipping');
             }
