@@ -144,6 +144,9 @@ $cachedDbFile = $dbCacheDir.'/'.$dbCacheHash.'.sqlite';
 $dbTargetPath = $testBaseDir.'/test.db';
 $lockFile = $dbCacheDir.'/'.$dbCacheHash.'.lock';
 
+// Export cached DB path so tests can restore pristine state if needed
+setTestEnv('PUSHWORD_TEST_DB_CACHE_FILE', $cachedDbFile);
+
 // Use file locking to prevent race conditions between ParaTest workers
 // Only the DB cache check/creation is locked; kernel boot happens outside the lock
 $fs->mkdir($dbCacheDir);

@@ -138,20 +138,6 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         /** @var MediaExtension $mediaExtension */
         $mediaExtension = static::getKernel()->getContainer()->get(MediaExtension::class);
         $mediaExtension->preloadMediaCache();
-
-        // Temporary diagnostic for CI debugging
-        /** @var \Pushword\Core\Repository\MediaRepository $repo */
-        $repo = static::getKernel()->getContainer()->get(\Pushword\Core\Repository\MediaRepository::class);
-        $count = \count($repo->findAll());
-        $staticDbUrl = static::getKernel()->getContainer()->getParameter('pw.database_url'); // @phpstan-ignore-line
-        $testDbUrl = $this->params->get('pw.database_url');
-        $this->staticAppGenerator->writeln(\sprintf(
-            '<comment>DEBUG: static=%d media, staticDB=%s, testDB=%s, match=%s</comment>',
-            $count,
-            $staticDbUrl,
-            $testDbUrl,
-            $staticDbUrl === $testDbUrl ? 'YES' : 'NO',
-        ));
     }
 
     public function generatePageBySlug(string $slug, ?string $host = null): void
