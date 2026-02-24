@@ -138,6 +138,27 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         /** @var MediaExtension $mediaExtension */
         $mediaExtension = static::getKernel()->getContainer()->get(MediaExtension::class);
         $mediaExtension->preloadMediaCache();
+
+        // Diagnostic: verify media preload worked
+        /** @var \Pushword\Core\Repository\MediaRepository $repo */
+        $repo = static::getKernel()->getContainer()->get(\Pushword\Core\Repository\MediaRepository::class);
+        $allMedia = $repo->findAll();
+        $fileNames = array_map(static fn ($m) => $m->getFileName(), $allMedia);
+        $this->staticAppGenerator->writeln(\sprintf(
+            '<comment>DEBUG: preloaded %d media from static kernel: [%s]</comment>',
+            \count($allMedia),
+            implode(', ', $fileNames),
+        ));
+
+        // Also check via the test kernel's media repo
+        $testRepo = $this->getPageRepository()->getEntityManager()->getRepository(\Pushword\Core\Entity\Media::class); // @phpstan-ignore-line
+        $testMedia = $testRepo->findAll();
+        $testFileNames = array_map(static fn ($m) => $m->getFileName(), $testMedia);
+        $this->staticAppGenerator->writeln(\sprintf(
+            '<comment>DEBUG: test kernel has %d media: [%s]</comment>',
+            \count($testMedia),
+            implode(', ', $testFileNames),
+        ));
     }
 
     public function generatePageBySlug(string $slug, ?string $host = null): void
