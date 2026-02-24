@@ -99,12 +99,10 @@ class PageGenerator extends AbstractGenerator
         }
 
         if (Response::HTTP_OK !== $response->getStatusCode()) {
-            // Log error for 500 in dev mode (critical errors)
-            if (Response::HTTP_INTERNAL_SERVER_ERROR === $response->getStatusCode() && 'dev' === $this->kernel->getEnvironment()) {
+            if (Response::HTTP_INTERNAL_SERVER_ERROR === $response->getStatusCode()) {
                 $this->setErrorFor($liveUri, $page, 'status code '.$response->getStatusCode());
             } else {
-                // Log 404 errors to help debug (but don't abort generation)
-                $this->logWarning($liveUri, $page, 'Page not found ('.$response->getStatusCode().') - skipping');
+                $this->logWarning($liveUri, $page, 'status code '.$response->getStatusCode().' - skipping');
             }
 
             return;

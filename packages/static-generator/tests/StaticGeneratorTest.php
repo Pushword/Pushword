@@ -91,7 +91,8 @@ class StaticGeneratorTest extends KernelTestCase
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
-        self::assertTrue(str_contains($output, 'success'));
+        self::assertStringContainsString('success', $output, 'Static generation failed. Output: '.$output);
+        self::assertStringNotContainsString('<error>', $output, 'Static generation had errors. Output: '.$output);
 
         $staticDir = $this->getStaticDir();
         self::assertFileExists($staticDir.'/.htaccess');
