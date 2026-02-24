@@ -60,7 +60,7 @@ php bin/console pw:flat:sync [host] [options]
 | `--force`, `-f` | Force overwrite even if files are newer than DB               |
 | `--skip-id`     | Skip adding IDs to markdown files and CSV indexes             |
 | `--no-backup`   | Disable automatic database backup before import               |
-| `--consume-pending` | Consume pending export flag and run batched export (for cron) |
+| `--consume-pending` | Consume pending export flag and run batched export             |
 
 **Examples:**
 

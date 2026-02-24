@@ -59,7 +59,7 @@ final readonly class FlatFileSyncCommand
         bool $skipId = false,
         #[Option(description: 'Disable automatic database backup before import', name: 'no-backup')]
         bool $noBackup = false,
-        #[Option(description: 'Consume pending export flag (for cron usage)', name: 'consume-pending')]
+        #[Option(description: 'Consume pending export flag and run batched export', name: 'consume-pending')]
         bool $consumePending = false,
     ): int {
         if ($consumePending) {
