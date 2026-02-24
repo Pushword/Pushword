@@ -132,6 +132,27 @@ class ImageCacheManagerTest extends KernelTestCase
         self::assertNull($manager->getSourceDimensions($media2));
     }
 
+    public function testIsAllCacheFreshChecksThumbFirst(): void
+    {
+        $this->ensureMediaFileExists();
+
+        $filters = [
+            'default' => ['quality' => 90, 'filters' => ['scaleDown' => [1980, 1280]], 'formats' => ['original', 'webp']],
+            'thumb' => ['quality' => 80, 'filters' => ['coverDown' => [330, 330]], 'formats' => ['webp']],
+        ];
+
+        $manager = $this->createManager($filters);
+
+        $media = new Media();
+        $media->setFileName('piedweb-logo.png');
+
+        // Remove thumb cache to force a stale thumb
+        $manager->remove('piedweb-logo.png');
+
+        // No cache exists → should return false (thumb stale = early exit)
+        self::assertFalse($manager->isAllCacheFresh($media));
+    }
+
     public function testRemoveDeletesRootPublicSymlink(): void
     {
         $manager = $this->createManager(['default' => []]);

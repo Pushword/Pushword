@@ -5,6 +5,7 @@ namespace Pushword\Core\Command;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Image\ThumbnailGenerator;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\Console\Attribute\Argument;
@@ -28,13 +29,14 @@ final readonly class ImageManagerCommand
         private EntityManagerInterface $entityManager,
         private ThumbnailGenerator $thumbnailGenerator,
         private ImageCacheManager $imageCacheManager,
+        private ImageReader $imageReader,
         private LockFactory $lockFactory,
         private string $projectDir,
     ) {
     }
 
     public function __invoke(
-        #[Argument(description: 'Image name (eg: filename.jpg).', name: 'media')]
+        #[Argument(description: 'Image name(s), comma-separated (eg: a.jpg,b.png).', name: 'media')]
         ?string $mediaName,
         InputInterface $input,
         OutputInterface $output,
@@ -46,6 +48,7 @@ final readonly class ImageManagerCommand
         bool $noLock = false,
     ): int {
         $io = new SymfonyStyle($input, $output);
+        $startTime = microtime(true);
 
         $lock = null;
         if (! $noLock) {
@@ -59,25 +62,49 @@ final readonly class ImageManagerCommand
 
         try {
             $medias = null !== $mediaName
-                ? $this->mediaRepository->findBy(['fileName' => $mediaName])
+                ? $this->resolveMediaNames($mediaName)
                 : $this->mediaRepository->findAll();
 
             $workers = $parallel > 0 ? $parallel : $this->detectCpuCount();
 
             if (null === $mediaName && $workers > 1) {
-                return $this->executeParallel($medias, $workers, $force, $io, $output);
+                $io->info(\sprintf('Image driver: %s', $this->imageReader->getResolvedDriver()));
+
+                return $this->executeParallel($medias, $workers, $force, $io, $output, $startTime);
             }
 
-            return $this->executeSequential($medias, $force, $io, $output);
+            if (null === $mediaName) {
+                $io->info(\sprintf('Image driver: %s', $this->imageReader->getResolvedDriver()));
+            }
+
+            return $this->executeSequential($medias, $force, $io, $output, $startTime);
         } finally {
             $lock?->release();
         }
     }
 
     /**
+     * @return Media[]
+     */
+    private function resolveMediaNames(string $mediaName): array
+    {
+        $names = str_contains($mediaName, ',')
+            ? array_map(trim(...), explode(',', $mediaName))
+            : [$mediaName];
+
+        $medias = [];
+        foreach ($names as $name) {
+            $found = $this->mediaRepository->findBy(['fileName' => $name]);
+            $medias = [...$medias, ...$found];
+        }
+
+        return $medias;
+    }
+
+    /**
      * @param Media[] $medias
      */
-    private function executeSequential(array $medias, bool $force, SymfonyStyle $io, OutputInterface $output): int
+    private function executeSequential(array $medias, bool $force, SymfonyStyle $io, OutputInterface $output, float $startTime): int
     {
         $progressBar = $this->createProgressBar($output, \count($medias));
 
@@ -111,13 +138,8 @@ final readonly class ImageManagerCommand
         $this->entityManager->flush();
         $progressBar->finish();
 
-        if ($skipped > 0) {
-            $io->info(\sprintf('%d image(s) skipped (cache already fresh)', $skipped));
-        }
-
+        $this->reportSummary($io, \count($medias) - $skipped - \count($errors), $skipped, \count($errors), $startTime);
         $this->reportErrors($errors, $io);
-
-        $output->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
 
         return 0;
     }
@@ -125,7 +147,7 @@ final readonly class ImageManagerCommand
     /**
      * @param Media[] $medias
      */
-    private function executeParallel(array $medias, int $workers, bool $force, SymfonyStyle $io, OutputInterface $output): int
+    private function executeParallel(array $medias, int $workers, bool $force, SymfonyStyle $io, OutputInterface $output, float $startTime): int
     {
         $imageMedias = [];
         foreach ($medias as $media) {
@@ -143,22 +165,49 @@ final readonly class ImageManagerCommand
             return 0;
         }
 
-        $io->info(\sprintf('Processing %d image(s) with %d parallel worker(s)', $total, $workers));
+        // Pre-filter: skip images whose cache is already fresh
+        $staleMedias = $imageMedias;
+        $preSkipped = 0;
+        if (! $force) {
+            $staleMedias = [];
+            foreach ($imageMedias as $media) {
+                if ($this->imageCacheManager->isAllCacheFresh($media)) {
+                    ++$preSkipped;
+                } else {
+                    $staleMedias[] = $media;
+                }
+            }
 
-        $progressBar = $this->createProgressBar($output, $total);
+            if ($preSkipped > 0) {
+                $io->info(\sprintf('%d image(s) already cached, %d to process', $preSkipped, \count($staleMedias)));
+            }
+        }
 
-        /** @var array<string, Process> $running */
+        $staleCount = \count($staleMedias);
+        if (0 === $staleCount) {
+            $this->reportSummary($io, 0, $preSkipped, 0, $startTime);
+
+            return 0;
+        }
+
+        // Batch images per worker to amortize kernel boot cost
+        $chunks = array_chunk($staleMedias, max(1, (int) ceil($staleCount / $workers)));
+        $io->info(\sprintf('Processing %d image(s) in %d batch(es) with %d worker(s)', $staleCount, \count($chunks), $workers));
+
+        $progressBar = $this->createProgressBar($output, $staleCount);
+
+        /** @var array<int, array{process: Process, count: int}> $running */
         $running = [];
         $errors = [];
-        $index = 0;
+        $chunkIndex = 0;
 
-        while ($index < $total || [] !== $running) {
-            while ($index < $total && \count($running) < $workers) {
-                $media = $imageMedias[$index];
-                ++$index;
-                $fileName = $media->getFileName();
+        while ($chunkIndex < \count($chunks) || [] !== $running) {
+            while ($chunkIndex < \count($chunks) && \count($running) < $workers) {
+                $chunk = $chunks[$chunkIndex];
+                ++$chunkIndex;
+                $fileNames = implode(',', array_map(static fn (Media $m): string => $m->getFileName(), $chunk));
 
-                $cmd = ['php', 'bin/console', 'pw:image:cache', $fileName, '--no-lock'];
+                $cmd = ['php', 'bin/console', 'pw:image:cache', $fileNames, '--no-lock'];
                 if ($force) {
                     $cmd[] = '--force';
                 }
@@ -166,19 +215,19 @@ final readonly class ImageManagerCommand
                 $process = new Process($cmd, $this->projectDir);
                 $process->setTimeout(300);
                 $process->start();
-                $running[$fileName] = $process;
-                $progressBar->setMessage($fileName);
+                $running[] = ['process' => $process, 'count' => \count($chunk)];
+                $progressBar->setMessage(\sprintf('batch %d/%d (%d images)', $chunkIndex, \count($chunks), \count($chunk)));
             }
 
-            foreach ($running as $fileName => $process) {
+            foreach ($running as $key => ['process' => $process, 'count' => $count]) {
                 if (! $process->isRunning()) {
                     if (! $process->isSuccessful()) {
                         $stderr = trim($process->getErrorOutput());
-                        $errors[] = $fileName.': '.('' !== $stderr ? $stderr : 'exit code '.$process->getExitCode());
+                        $errors[] = 'batch: '.('' !== $stderr ? $stderr : 'exit code '.$process->getExitCode());
                     }
 
-                    unset($running[$fileName]);
-                    $progressBar->advance();
+                    unset($running[$key]);
+                    $progressBar->advance($count);
                 }
             }
 
@@ -188,9 +237,9 @@ final readonly class ImageManagerCommand
         }
 
         $progressBar->finish();
-        $this->reportErrors($errors, $io);
 
-        $output->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+        $this->reportSummary($io, $staleCount - \count($errors), $preSkipped, \count($errors), $startTime);
+        $this->reportErrors($errors, $io);
 
         return 0;
     }
@@ -212,6 +261,19 @@ final readonly class ImageManagerCommand
             $io->warning('Some images failed to process:');
             $io->listing($errors);
         }
+    }
+
+    private function reportSummary(SymfonyStyle $io, int $processed, int $skipped, int $errored, float $startTime): void
+    {
+        $elapsed = microtime(true) - $startTime;
+        $io->writeln(\sprintf(
+            '<comment>:: %d processed, %d skipped, %d errored | %.1fs | peak memory: %.1f MB</comment>',
+            $processed,
+            $skipped,
+            $errored,
+            $elapsed,
+            memory_get_peak_usage(true) / 1024 / 1024,
+        ));
     }
 
     private function detectCpuCount(): int

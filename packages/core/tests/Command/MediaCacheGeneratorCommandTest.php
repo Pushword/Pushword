@@ -45,10 +45,10 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester = $this->createCommandTester();
 
         $this->waitForLockRelease();
-        $commandTester->execute(['--parallel' => '2']);
+        $commandTester->execute(['--parallel' => '2', '--force' => true]);
 
         self::assertStringContainsString('100%', $commandTester->getDisplay());
-        self::assertStringContainsString('parallel worker(s)', $commandTester->getDisplay());
+        self::assertStringContainsString('worker(s)', $commandTester->getDisplay());
     }
 
     public function testForceRegeneration(): void
@@ -60,7 +60,7 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('100%', $output);
-        self::assertStringNotContainsString('skipped', $output);
+        self::assertStringContainsString('0 skipped', $output);
     }
 
     public function testNoLockSkipsLockAcquisition(): void
@@ -85,6 +85,56 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester->execute(['--parallel' => '1']);
 
         self::assertStringContainsString('skipped', $commandTester->getDisplay());
+    }
+
+    public function testCommaSeparatedMediaNames(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['media' => 'piedweb-logo.png,piedweb-logo.png', '--force' => true]);
+
+        $output = $commandTester->getDisplay();
+        self::assertStringContainsString('100%', $output);
+    }
+
+    public function testParallelPreFiltersAlreadyCached(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        // First run to populate cache
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '1', '--force' => true]);
+
+        // Parallel run should pre-filter and skip all
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '2']);
+
+        $output = $commandTester->getDisplay();
+        self::assertStringContainsString('already cached', $output);
+        self::assertStringContainsString('0 to process', $output);
+    }
+
+    public function testDisplaysImageDriver(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '1']);
+
+        self::assertStringContainsString('Image driver:', $commandTester->getDisplay());
+    }
+
+    public function testDisplaysStatsSummary(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '1']);
+
+        $output = $commandTester->getDisplay();
+        self::assertStringContainsString('processed', $output);
+        self::assertStringContainsString('peak memory', $output);
     }
 
     private function createCommandTester(): CommandTester

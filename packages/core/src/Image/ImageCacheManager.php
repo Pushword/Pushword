@@ -177,7 +177,15 @@ final class ImageCacheManager
 
     public function isAllCacheFresh(Media $media): bool
     {
-        return array_all(array_keys($this->filterSets), fn (string $filterName): bool => $this->isFilterCacheFresh($media, $filterName));
+        // Check thumb first: it's a single webp file (1 stat), so it's the cheapest early-exit
+        if (isset($this->filterSets['thumb']) && ! $this->isFilterCacheFresh($media, 'thumb')) {
+            return false;
+        }
+
+        return array_all(
+            array_keys($this->filterSets),
+            fn (string $filterName): bool => 'thumb' === $filterName || $this->isFilterCacheFresh($media, $filterName),
+        );
     }
 
     /**
