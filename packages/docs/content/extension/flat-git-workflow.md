@@ -271,6 +271,24 @@ flat:
   # Notification options
   notification_email_recipients: []
   notification_email_from: null
+
+  # Auto-commit content changes to git after export (default: false)
+  auto_git_commit: false
+```
+
+## Automatic Git Commits from Admin Saves
+
+When `auto_git_commit` is enabled, admin saves are automatically committed and pushed to git:
+
+1. Admin saves a page or media — a pending export flag is written
+2. A Messenger message is dispatched with a 30-second delay (debouncing rapid saves)
+3. The worker exports all pending changes in a single batch
+4. Changes are committed and pushed to git automatically
+
+A Symfony Messenger worker must be running:
+
+```bash
+php bin/console messenger:consume async -v
 ```
 
 ## Commands Reference
@@ -279,6 +297,9 @@ flat:
 # Lock/unlock via CLI
 php bin/console pw:flat:lock [host] --reason="Manual lock" --ttl=3600
 php bin/console pw:flat:unlock [host]
+
+# Manually consume pending exports
+php bin/console pw:flat:sync --consume-pending
 
 # Clear conflicts
 php bin/console pw:flat:conflicts:clear [host] --dry

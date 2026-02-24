@@ -83,9 +83,12 @@ final readonly class BackgroundProcessManager
                 return true;
             }
 
-            if ('' !== $commandPattern && str_contains($cmdline, $commandPattern)) {
-                return true;
+            // If we can read cmdline and have a pattern, use it as the definitive check
+            if ('' !== $commandPattern) {
+                return str_contains($cmdline, $commandPattern);
             }
+
+            return true;
         }
 
         if (\function_exists('posix_kill')) {

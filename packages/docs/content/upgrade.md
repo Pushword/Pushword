@@ -12,6 +12,27 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## Flat: Deferred Export & Git Auto-Commit
+
+### Breaking Change
+
+`DeferredExportProcessor` no longer runs a background export process directly. Instead, it writes a pending flag file and dispatches a Symfony Messenger message with a 30-second delay for debouncing.
+
+**Action required:** A Messenger worker must be running to process deferred exports:
+
+```bash
+php bin/console messenger:consume async -v
+```
+
+### New Feature
+
+New `auto_git_commit` config option (default: `false`). When enabled, exports automatically commit and push content changes to git.
+
+```yaml
+flat:
+  auto_git_commit: true
+```
+
 ## To 1.0.0-rc372
 
 ### Migration Steps

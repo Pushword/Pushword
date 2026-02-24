@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Service;
 
-use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Flat\Messenger\ConsumePendingExportMessage;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
 
-/**
- * Handles deferred export of entities after admin modifications.
- * Queues entities and triggers export after the request completes.
- */
 final class DeferredExportProcessor
 {
     /** @var array<string, array{type: string, id: int|null, host: string|null, action: string}> */
@@ -20,16 +18,12 @@ final class DeferredExportProcessor
     private bool $shutdownRegistered = false;
 
     public function __construct(
-        private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
-        private readonly string $projectDir,
-        private readonly bool $useBackgroundProcess = true,
+        private readonly string $varDir,
+        private readonly MessageBusInterface $messageBus,
         private readonly bool $autoExportEnabled = true,
     ) {
     }
 
-    /**
-     * Queue an entity for deferred export.
-     */
     public function queue(Page|Media $entity, string $action): void
     {
         if (! $this->autoExportEnabled) {
@@ -53,99 +47,92 @@ final class DeferredExportProcessor
         $this->registerShutdown();
     }
 
-    /**
-     * Process all queued exports.
-     */
     public function processQueue(): void
     {
         if ([] === $this->queue) {
             return;
         }
 
-        // Determine which entity types need to be exported
         $entityTypes = array_unique(array_column($this->queue, 'type'));
         $hosts = array_unique(array_filter(array_column($this->queue, 'host'), static fn ($h): bool => null !== $h && '' !== $h));
 
-        // Clear the queue
         $this->queue = [];
 
-        if ($this->useBackgroundProcess) {
-            $this->runBackgroundExport($entityTypes, $hosts);
-        } else {
-            $this->runInlineExport($entityTypes, $hosts);
-        }
+        $this->writePendingFlag(array_values($entityTypes), array_values($hosts));
+
+        // Dispatch with 30s delay for natural debouncing of rapid saves
+        $this->messageBus->dispatch(new ConsumePendingExportMessage(), [new DelayStamp(30000)]);
     }
 
-    /**
-     * Get the current queue for inspection.
-     *
-     * @return array<string, array{type: string, id: int|null, host: string|null, action: string}>
-     */
+    /** @return array<string, array{type: string, id: int|null, host: string|null, action: string}> */
     public function getQueue(): array
     {
         return $this->queue;
     }
 
-    /**
-     * Check if auto export is enabled.
-     */
     public function isEnabled(): bool
     {
         return $this->autoExportEnabled;
     }
 
-    /**
-     * @param string[] $entityTypes
-     * @param string[] $hosts
-     */
-    private function runBackgroundExport(array $entityTypes, array $hosts): void
+    public function getPendingFlagPath(): string
     {
-        // Build the command arguments
-        $entityArg = 1 === \count($entityTypes) && isset($entityTypes[0]) ? $entityTypes[0] : 'all';
-        $host = 1 === \count($hosts) && isset($hosts[0]) ? $hosts[0] : null;
-
-        $commandParts = $this->buildExportCommandParts($entityArg, $host);
-
-        $this->backgroundTaskDispatcher->dispatch('flat-deferred-export', $commandParts, 'pw:flat:sync');
+        return $this->varDir.'/flat-sync/export-pending.json';
     }
 
-    /**
-     * @param string[] $entityTypes
-     * @param string[] $hosts
-     */
-    private function runInlineExport(array $entityTypes, array $hosts): void
+    /** @return array{entityTypes: string[], hosts: string[]}|null */
+    public function readPendingFlag(): ?array
     {
-        // For inline export, we trigger the sync command directly
-        // This is a fallback when background processes aren't available
-        $entityArg = 1 === \count($entityTypes) && isset($entityTypes[0]) ? $entityTypes[0] : 'all';
-        $host = 1 === \count($hosts) && isset($hosts[0]) ? $hosts[0] : null;
+        $path = $this->getPendingFlagPath();
 
-        $command = $this->buildExportCommand($entityArg, $host);
-
-        exec($command.' > /dev/null 2>&1');
-    }
-
-    private function buildExportCommand(string $entity, ?string $host): string
-    {
-        return implode(' ', array_map(escapeshellarg(...), $this->buildExportCommandParts($entity, $host)));
-    }
-
-    /**
-     * @return string[]
-     */
-    private function buildExportCommandParts(string $entity, ?string $host): array
-    {
-        $consolePath = $this->projectDir.'/bin/console';
-        $parts = ['php', $consolePath, 'pw:flat:sync', '--mode=export'];
-
-        if (null !== $host) {
-            $parts[] = $host;
+        if (! file_exists($path)) {
+            return null;
         }
 
-        $parts[] = '--entity='.$entity;
-        $parts[] = '--force';
+        $content = file_get_contents($path);
+        if (false === $content) {
+            return null;
+        }
 
-        return $parts;
+        /** @var array{entityTypes: string[], hosts: string[]}|null $data */
+        $data = json_decode($content, true);
+
+        return \is_array($data) ? $data : null;
+    }
+
+    public function clearPendingFlag(): void
+    {
+        $path = $this->getPendingFlagPath();
+
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
+
+    /**
+     * @param string[] $entityTypes
+     * @param string[] $hosts
+     */
+    private function writePendingFlag(array $entityTypes, array $hosts): void
+    {
+        $path = $this->getPendingFlagPath();
+        $dir = \dirname($path);
+
+        if (! is_dir($dir)) {
+            mkdir($dir, 0o755, true);
+        }
+
+        // Merge with existing flag if present
+        $existing = $this->readPendingFlag();
+        if (null !== $existing) {
+            $entityTypes = array_values(array_unique([...$existing['entityTypes'], ...$entityTypes]));
+            $hosts = array_values(array_unique([...$existing['hosts'], ...$hosts]));
+        }
+
+        file_put_contents($path, json_encode([
+            'entityTypes' => $entityTypes,
+            'hosts' => $hosts,
+        ], \JSON_THROW_ON_ERROR));
     }
 
     private function registerShutdown(): void
@@ -156,7 +143,6 @@ final class DeferredExportProcessor
 
         $this->shutdownRegistered = true;
 
-        // Use register_shutdown_function to process after response is sent
         register_shutdown_function([$this, 'processQueue']);
     }
 }

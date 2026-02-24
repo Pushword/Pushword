@@ -32,6 +32,9 @@ flat:
   # Use background process for deferred export (default: true)
   use_background_export: true
 
+  # Automatically git commit content changes after export (default: false)
+  auto_git_commit: false
+
   # Editorial lock TTL in seconds (default: 1800 = 30 minutes)
   lock_ttl: 1800
 
@@ -57,6 +60,7 @@ php bin/console pw:flat:sync [host] [options]
 | `--force`, `-f` | Force overwrite even if files are newer than DB               |
 | `--skip-id`     | Skip adding IDs to markdown files and CSV indexes             |
 | `--no-backup`   | Disable automatic database backup before import               |
+| `--consume-pending` | Consume pending export flag and run batched export (for cron) |
 
 **Examples:**
 
@@ -79,6 +83,31 @@ php bin/console pw:flat:sync --mode=export --skip-id
 # Import without creating a database backup
 php bin/console pw:flat:sync --mode=import --no-backup
 ```
+
+### Deferred Export & Git Auto-Commit
+
+When content is saved in admin, a Messenger message is dispatched with a 30-second delay. This naturally debounces rapid saves — multiple saves within 30 seconds are batched into a single export.
+
+A Symfony Messenger worker must be running to process exports:
+
+```bash
+php bin/console messenger:consume async -v
+```
+
+You can also consume pending exports manually via CLI:
+
+```bash
+php bin/console pw:flat:sync --consume-pending
+```
+
+To enable automatic git commits (and push) after export:
+
+```yaml
+flat:
+  auto_git_commit: true
+```
+
+The content directory (or its parent) must be a git repository for auto-commit to work.
 
 ### Editorial Lock System
 

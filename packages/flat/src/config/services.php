@@ -14,6 +14,7 @@ use Pushword\Flat\Service\DeferredExportProcessor;
 use Pushword\Flat\Service\FlatApiTokenValidator;
 use Pushword\Flat\Service\FlatChangeDetector;
 use Pushword\Flat\Service\FlatLockManager;
+use Pushword\Flat\Service\GitAutoCommitter;
 use Pushword\Flat\Sync\ConflictResolver;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 use Pushword\Flat\Sync\PageSync;
@@ -76,8 +77,12 @@ return static function (ContainerConfigurator $container): void {
 
     // DeferredExportProcessor configuration
     $services->set(DeferredExportProcessor::class)
-        ->arg('$useBackgroundProcess', '%pw.pushword_flat.use_background_export%')
+        ->arg('$varDir', '%kernel.project_dir%/var')
         ->arg('$autoExportEnabled', '%pw.pushword_flat.auto_export_enabled%');
+
+    // GitAutoCommitter configuration
+    $services->set(GitAutoCommitter::class)
+        ->arg('$enabled', '%pw.pushword_flat.auto_git_commit%');
 
     // FlatSyncNotifier - make it optional (only works if admin bundle is present)
     $services->set(FlatSyncNotifier::class)

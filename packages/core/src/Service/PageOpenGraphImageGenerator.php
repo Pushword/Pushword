@@ -11,6 +11,7 @@ use Imagine\Image\Palette\Color\ColorInterface;
 use Imagine\Image\Palette\RGB;
 use Imagine\Image\Point;
 use Imagine\Imagick\Imagine;
+use LogicException;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Filesystem\Filesystem;
@@ -52,7 +53,7 @@ class PageOpenGraphImageGenerator
 
     public function getPage(): Page
     {
-        return $this->page ?? throw new \LogicException('Page must be set before generating OG image');
+        return $this->page ?? throw new LogicException('Page must be set before generating OG image');
     }
 
     public function getPath(bool $browserPath = false): string

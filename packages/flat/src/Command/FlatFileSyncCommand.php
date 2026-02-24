@@ -9,7 +9,9 @@ use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Service\SharedOutputInterface;
 use Pushword\Core\Service\TeeOutput;
 use Pushword\Flat\FlatFileSync;
+use Pushword\Flat\Service\DeferredExportProcessor;
 use Pushword\Flat\Service\FlatLockManager;
+use Pushword\Flat\Service\GitAutoCommitter;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -37,6 +39,8 @@ final readonly class FlatFileSyncCommand
         private ProcessOutputStorage $outputStorage,
         private FlatLockManager $lockManager,
         private Filesystem $filesystem,
+        private DeferredExportProcessor $deferredExportProcessor,
+        private GitAutoCommitter $gitAutoCommitter,
     ) {
     }
 
@@ -55,7 +59,13 @@ final readonly class FlatFileSyncCommand
         bool $skipId = false,
         #[Option(description: 'Disable automatic database backup before import', name: 'no-backup')]
         bool $noBackup = false,
+        #[Option(description: 'Consume pending export flag (for cron usage)', name: 'consume-pending')]
+        bool $consumePending = false,
     ): int {
+        if ($consumePending) {
+            return $this->handleConsumePending($input, $output);
+        }
+
         // Normalize entity to lowercase to avoid case-sensitivity issues
         $entity = strtolower($entity);
 
@@ -142,6 +152,49 @@ final readonly class FlatFileSyncCommand
             // Clean up PID file
             $this->processManager->unregisterProcess($pidFile);
         }
+    }
+
+    private function handleConsumePending(InputInterface $input, OutputInterface $output): int
+    {
+        $pending = $this->deferredExportProcessor->readPendingFlag();
+
+        if (null === $pending) {
+            $output->writeln('<info>No pending export flag found.</info>');
+
+            return Command::SUCCESS;
+        }
+
+        $entityTypes = $pending['entityTypes'];
+        $hosts = $pending['hosts'];
+
+        $entity = 1 === \count($entityTypes) ? $entityTypes[0] : 'all';
+
+        $output->writeln(\sprintf(
+            '<info>Consuming pending export: entities=%s, hosts=%s</info>',
+            implode(',', $entityTypes) ?: 'all',
+            implode(',', $hosts) ?: 'all',
+        ));
+
+        // Clear flag before export to avoid losing flags written during export
+        $this->deferredExportProcessor->clearPendingFlag();
+
+        $hostsToExport = [] !== $hosts ? $hosts : [null];
+        foreach ($hostsToExport as $host) {
+            $result = $this->__invoke($input, $output, $host, force: true, entity: $entity, mode: 'export');
+            if (Command::SUCCESS !== $result) {
+                return $result;
+            }
+        }
+
+        // Git auto-commit after successful export
+        if ($this->gitAutoCommitter->isEnabled()) {
+            $committed = $this->gitAutoCommitter->commitIfChanges();
+            if ($committed) {
+                $output->writeln('<info>Git auto-commit: changes committed and pushed.</info>');
+            }
+        }
+
+        return Command::SUCCESS;
     }
 
     private function syncHost(string $host, bool $force, string $entity, string $mode, bool $skipId): void

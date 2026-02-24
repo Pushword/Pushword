@@ -7,6 +7,7 @@ use Pushword\Core\Entity\Dimensions;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Utils\Filepath;
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
@@ -126,13 +127,19 @@ final class ImageCacheManager
         $fileName = $media->getFileName();
         $publicPath = $this->publicDir.'/'.$this->publicMediaDir.'/'.$fileName;
 
+        clearstatcache(true, $publicPath);
+
         if (is_link($publicPath) || $this->filesystem->exists($publicPath)) {
             return;
         }
 
         $this->createFilterDir($this->publicDir.'/'.$this->publicMediaDir);
 
-        $this->filesystem->symlink('../../media/'.$fileName, $publicPath);
+        try {
+            $this->filesystem->symlink('../../media/'.$fileName, $publicPath);
+        } catch (IOException) {
+            // Race condition: another process created the symlink between our check and creation
+        }
     }
 
     public function isFilterCacheFresh(Media $media, string $filterName): bool
