@@ -87,7 +87,10 @@ jobs:
         run: cd packages/skeleton && php bin/console pw:image:cache
 
       - name: Execute tests
-        run: vendor/bin/phpunit --coverage-clover coverage.xml --exclude-group panther
+        run: vendor/bin/paratest --processes=auto --coverage-clover coverage.xml --exclude-group panther
+        #run: vendor/bin/phpunit --coverage-clover coverage.xml --exclude-group panther
+        env:
+          TEST_RUN_ID: ci-${{ github.run_id }}
 
       - name: Send coverage to Codecov
         uses: codecov/codecov-action@v4
