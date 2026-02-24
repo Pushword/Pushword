@@ -102,8 +102,10 @@ class PageGenerator extends AbstractGenerator
             if (Response::HTTP_INTERNAL_SERVER_ERROR === $response->getStatusCode()) {
                 $body = $response->getContent();
                 $detail = '';
-                if (\is_string($body) && preg_match('#<title>\s*(.*?)\s*</title>#si', $body, $m)) {
-                    $detail = ' - '.strip_tags($m[1]);
+                if (\is_string($body) && '' !== $body) {
+                    $text = strip_tags($body);
+                    $text = (string) preg_replace('/\s+/', ' ', trim($text));
+                    $detail = ' - '.mb_substr($text, 0, 300);
                 }
 
                 $this->setErrorFor($liveUri, $page, 'status code '.$response->getStatusCode().$detail);
