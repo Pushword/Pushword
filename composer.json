@@ -157,6 +157,7 @@
     "docs": "./.scripts/generate-docs",
     "reset-skeleton": "./.scripts/reset-skeleton",
     "test-installer": "./.scripts/test-installer",
+    "release": "./.scripts/release",
     "validate-monorepo": "vendor/bin/monorepo-builder validate",
     "post-update-cmd": [
       "composer console cache:clear"

@@ -1,0 +1,38 @@
+#!/bin/bash -e
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+cd "$(git rev-parse --show-toplevel)"
+
+# Check gh CLI is available
+if ! command -v gh &> /dev/null; then
+    echo -e "${RED}Error: gh CLI is required. Install it: https://cli.github.com/${NC}"
+    exit 1
+fi
+
+# Get latest tag and bump RC number
+LATEST_TAG=$(git tag -l '1.0.0-rc*' | sort -V | tail -1)
+if [ -z "$LATEST_TAG" ]; then
+    echo -e "${RED}Error: No 1.0.0-rc* tag found${NC}"
+    exit 1
+fi
+
+CURRENT_RC=$(echo "$LATEST_TAG" | sed 's/1.0.0-rc//')
+NEXT_RC=$((CURRENT_RC + 1))
+NEW_TAG="1.0.0-rc$NEXT_RC"
+
+echo -e "${GREEN}Creating release $NEW_TAG (previous: $LATEST_TAG)${NC}"
+
+# Create and push tag
+git tag "$NEW_TAG"
+git push origin "$NEW_TAG"
+
+# Create GitHub Release with auto-generated notes
+gh release create "$NEW_TAG" --generate-notes --notes-start-tag "$LATEST_TAG" --title "$NEW_TAG"
+
+echo -e "${GREEN}Release $NEW_TAG created: $(gh release view "$NEW_TAG" --json url -q .url)${NC}"
