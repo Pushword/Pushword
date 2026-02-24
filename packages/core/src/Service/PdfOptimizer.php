@@ -41,7 +41,11 @@ final class PdfOptimizer
 
     public function isAvailable(): bool
     {
-        return $this->isGhostscriptAvailable() || $this->isQpdfAvailable();
+        if ($this->isGhostscriptAvailable()) {
+            return true;
+        }
+
+        return $this->isQpdfAvailable();
     }
 
     /**
