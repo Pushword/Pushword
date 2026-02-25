@@ -35,7 +35,7 @@ class HtmlMinifier
         }
 
         // remove new line between two words
-        $html = preg_replace('/\b\n{1,}\b/u', ' ', $html) ?? $html;
+        $html = preg_replace('/\b\n\h*\b/u', ' ', $html) ?? $html;
         // remove multiple horizontal whitespaces
         $html = preg_replace('/\h{2,}/u', ' ', $html) ?? $html;
         // remove whitespace starting a new line

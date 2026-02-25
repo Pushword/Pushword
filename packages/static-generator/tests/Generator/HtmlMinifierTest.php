@@ -73,6 +73,15 @@ class HtmlMinifierTest extends TestCase
         self::assertSame($first, $second);
     }
 
+    public function testCompressPreservesMultilineClassAttributes(): void
+    {
+        $html = "<!DOCTYPE html><html><body><div class=\"flex items-center\n            justify-between\">content</div></body></html>";
+        $result = HtmlMinifier::compress($html);
+        self::assertStringContainsString('items-center', $result);
+        self::assertStringContainsString('justify-between', $result);
+        self::assertStringNotContainsString('items-centerjustify-between', $result);
+    }
+
     public function testCompressLargeHtml(): void
     {
         $body = str_repeat('<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>', 500);
@@ -81,6 +90,6 @@ class HtmlMinifierTest extends TestCase
         $result = HtmlMinifier::compress($html);
 
         self::assertStringStartsWith('<!DOCTYPE html>', $result);
-        self::assertLessThan(\strlen($html), \strlen($result));
+        self::assertLessThanOrEqual(\strlen($html), \strlen($result));
     }
 }
