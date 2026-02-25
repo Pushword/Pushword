@@ -228,8 +228,10 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             if (\is_resource($hash)) {
                 $hash = stream_get_contents($hash);
             }
-
-            if (! \is_string($hash) || '' === $hash) {
+            if (! \is_string($hash)) {
+                continue;
+            }
+            if ('' === $hash) {
                 continue;
             }
 

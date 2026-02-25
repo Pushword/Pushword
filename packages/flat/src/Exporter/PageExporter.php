@@ -159,7 +159,7 @@ final class PageExporter
     /**
      * @param Page[] $pages
      */
-    private function exportIndex(array $pages, bool $skipId = false): void
+    private function exportIndex(array $pages, bool $skipId = true): void
     {
         if ([] === $pages) {
             return;
@@ -225,7 +225,7 @@ final class PageExporter
     /**
      * @param Page[] $pages
      */
-    private function exportIndexForLocale(array $pages, string $filename, bool $skipId = false): void
+    private function exportIndexForLocale(array $pages, string $filename, bool $skipId = true): void
     {
         $customColumns = $this->collectCustomColumns($pages);
         $indexColumns = $skipId ? array_filter($this->pageIndexColumns, static fn ($col): bool => 'id' !== $col) : $this->pageIndexColumns;

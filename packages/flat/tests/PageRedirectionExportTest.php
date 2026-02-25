@@ -78,7 +78,7 @@ final class PageRedirectionExportTest extends KernelTestCase
         self::assertIsString($csvContent);
 
         // Should contain header with correct columns (no locale)
-        self::assertStringContainsString('id,slug,target,code', $csvContent);
+        self::assertStringContainsString('slug,target,code', $csvContent);
 
         // Should contain the redirection
         self::assertStringContainsString('pushword', $csvContent);
@@ -109,7 +109,6 @@ final class PageRedirectionExportTest extends KernelTestCase
         self::assertStringNotContainsString('locale', $header);
 
         // Header should contain expected columns
-        self::assertStringContainsString('id', $header);
         self::assertStringContainsString('slug', $header);
         self::assertStringContainsString('target', $header);
         self::assertStringContainsString('code', $header);

@@ -11,7 +11,7 @@ final class RedirectionExporter
 {
     public const string INDEX_FILE = 'redirection.csv';
 
-    public const array BASE_COLUMNS = ['id', 'slug', 'target', 'code'];
+    public const array BASE_COLUMNS = ['slug', 'target', 'code'];
 
     public string $exportDir = '';
 
@@ -52,7 +52,6 @@ final class RedirectionExporter
     private function buildRow(Page $page): array
     {
         return [
-            'id' => null !== $page->id ? (string) $page->id : '',
             'slug' => $page->getSlug(),
             'target' => $page->getRedirectionUrl(),
             'code' => (string) $page->getRedirectionCode(),

@@ -145,7 +145,7 @@ final class PageSyncTest extends KernelTestCase
         // Append a new redirection to the CSV
         $redirectionCsvPath = $contentDir.'/redirection.csv';
         $csvContent = file_get_contents($redirectionCsvPath);
-        $csvContent .= ",new-redirect-test,https://example.com,302\n";
+        $csvContent .= "new-redirect-test,https://example.com,302\n";
         file_put_contents($redirectionCsvPath, $csvContent);
 
         // Import
@@ -177,14 +177,13 @@ final class PageSyncTest extends KernelTestCase
         $redirectionPage = $this->pageRepo->findOneBy(['slug' => 'pushword', 'host' => 'localhost.dev']);
         self::assertNotNull($redirectionPage);
         $originalTarget = $redirectionPage->getRedirectionUrl();
-        $pageId = $redirectionPage->id;
 
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
 
         // Modify the redirection CSV - change target and code
         $redirectionCsvPath = $contentDir.'/redirection.csv';
-        $csvContent = "id,slug,target,code\n{$pageId},pushword,https://new-target.com,302\n";
+        $csvContent = "slug,target,code\npushword,https://new-target.com,302\n";
         file_put_contents($redirectionCsvPath, $csvContent);
 
         // Import
@@ -449,7 +448,7 @@ MD;
 
         // Create empty redirection.csv (only header)
         $redirectionCsvPath = $contentDir.'/redirection.csv';
-        file_put_contents($redirectionCsvPath, "id,slug,target,code\n");
+        file_put_contents($redirectionCsvPath, "slug,target,code\n");
 
         // This should not throw an exception - if we get here, test passes
         $this->pageSync->import('localhost.dev');
@@ -474,8 +473,8 @@ MD;
 
         // Create redirection.csv with empty target
         $redirectionCsvPath = $contentDir.'/redirection.csv';
-        $csvContent = "id,slug,target,code\n";
-        $csvContent .= ",empty-target-test,,301\n"; // Empty target
+        $csvContent = "slug,target,code\n";
+        $csvContent .= "empty-target-test,,301\n"; // Empty target
         file_put_contents($redirectionCsvPath, $csvContent);
 
         // Import - should not crash and should skip the invalid entry
@@ -2038,7 +2037,7 @@ YAML;
         h1: Numeric Slug YAML Test
         slug: 404
         ---
-        
+
         Content
         YAML_WRAP;
         file_put_contents($mdFilePath, $mdContent);

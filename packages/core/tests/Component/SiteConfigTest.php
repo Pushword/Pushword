@@ -129,6 +129,7 @@ class SiteConfigTest extends TestCase
 
         $site = $this->createSiteConfig($host, $templateDir);
         $site->setCustomProperty('view_fallback_hosts', [$fallbackHost]);
+
         $resolver = $this->createTemplateResolver();
 
         $result = $resolver->resolve($site, '/page/page.html.twig');
@@ -150,6 +151,7 @@ class SiteConfigTest extends TestCase
 
         $site = $this->createSiteConfig($host, $templateDir);
         $site->setCustomProperty('view_fallback_hosts', [$fallbackHost]);
+
         $resolver = $this->createTemplateResolver();
 
         $result = $resolver->resolve($site, '/page/page.html.twig');

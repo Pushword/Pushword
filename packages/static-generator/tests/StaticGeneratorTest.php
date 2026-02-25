@@ -6,6 +6,7 @@ use DateTime;
 use DateTimeImmutable;
 use Exception;
 use FilesystemIterator;
+use LogicException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
@@ -66,7 +67,7 @@ class StaticGeneratorTest extends KernelTestCase
     protected function tearDown(): void
     {
         if (null !== $this->isolatedStaticDir) {
-            (new Filesystem())->remove($this->isolatedStaticDir);
+            new Filesystem()->remove($this->isolatedStaticDir);
         }
 
         parent::tearDown();
@@ -81,12 +82,12 @@ class StaticGeneratorTest extends KernelTestCase
 
         // Clean up shared PID file to prevent cross-worker interference
         $pidFile = self::getContainer()->getParameter('kernel.project_dir').'/var/static-generator.pid';
-        (new Filesystem())->remove($pidFile);
+        new Filesystem()->remove($pidFile);
     }
 
     private function getStaticDir(): string
     {
-        return $this->isolatedStaticDir ?? throw new \LogicException('isolatedStaticDir not set');
+        return $this->isolatedStaticDir ?? throw new LogicException('isolatedStaticDir not set');
     }
 
     private function getStateFilePath(): string
@@ -169,7 +170,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         // Use isolated temp dir for state file
         $tempDir = sys_get_temp_dir().'/pushword-state-test-'.getmypid();
-        (new Filesystem())->mkdir($tempDir.'/var');
+        new Filesystem()->mkdir($tempDir.'/var');
         $stateFile = $tempDir.'/var/.static-generation-state.json';
 
         try {
@@ -204,7 +205,7 @@ class StaticGeneratorTest extends KernelTestCase
             $newUpdatedAt = new DateTimeImmutable('2024-01-16 10:00:00');
             self::assertTrue($stateManager2->needsRegeneration('test.host', 'test-page', $newUpdatedAt));
         } finally {
-            (new Filesystem())->remove($tempDir);
+            new Filesystem()->remove($tempDir);
         }
     }
 

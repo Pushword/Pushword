@@ -2,9 +2,15 @@
 
 namespace Pushword\StaticGenerator;
 
+use DateTime;
+use FilesystemIterator;
+use LogicException;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -25,7 +31,7 @@ class StaticGeneratorBenchmarkTest extends KernelTestCase
     protected function tearDown(): void
     {
         if (null !== $this->isolatedStaticDir) {
-            (new Filesystem())->remove($this->isolatedStaticDir);
+            new Filesystem()->remove($this->isolatedStaticDir);
         }
 
         parent::tearDown();
@@ -42,7 +48,7 @@ class StaticGeneratorBenchmarkTest extends KernelTestCase
 
         // Clean up PID file
         $pidFile = $container->getParameter('kernel.project_dir').'/var/static-generator.pid';
-        (new Filesystem())->remove($pidFile);
+        new Filesystem()->remove($pidFile);
 
         // Create 200 fixture pages
         $em = $container->get('doctrine.orm.entity_manager');
@@ -53,7 +59,7 @@ class StaticGeneratorBenchmarkTest extends KernelTestCase
             $page->setMainContent('<p>Content for benchmark page '.$i.'</p>');
             $page->host = 'localhost.dev';
             $page->locale = 'en';
-            $page->createdAt = new \DateTime();
+            $page->createdAt = new DateTime();
             $em->persist($page);
         }
 
@@ -75,13 +81,13 @@ class StaticGeneratorBenchmarkTest extends KernelTestCase
         self::assertStringContainsString('success', $output, 'Benchmark generation failed: '.$output);
 
         // Count generated HTML files
-        $staticDir = $this->isolatedStaticDir ?? throw new \LogicException('isolatedStaticDir not set');
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($staticDir, \FilesystemIterator::SKIP_DOTS),
+        $staticDir = $this->isolatedStaticDir ?? throw new LogicException('isolatedStaticDir not set');
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($staticDir, FilesystemIterator::SKIP_DOTS),
         );
         $pageCount = 0;
         foreach ($iterator as $file) {
-            if ($file instanceof \SplFileInfo && 'html' === $file->getExtension()) {
+            if ($file instanceof SplFileInfo && 'html' === $file->getExtension()) {
                 ++$pageCount;
             }
         }

@@ -440,8 +440,8 @@ final class MediaSync
 
         foreach ($allMedia as $media) {
             if (! \in_array($media->getFileName(), $importedFileNames, true)) {
-                $this->logger?->info('Deleting media `'.$media->getFileName().'`');
-                $this->output?->writeln(\sprintf('<comment>Deleting media %s</comment>', $media->getFileName()));
+                $this->logger?->info('Deleting media from DB (removed from media.csv) `'.$media->getFileName().'`');
+                $this->output?->writeln(\sprintf('<comment>Deleting media from DB  (removed from media.csv) %s</comment>', $media->getFileName()));
                 ++$this->deletedCount;
                 $this->entityManager->remove($media);
             }

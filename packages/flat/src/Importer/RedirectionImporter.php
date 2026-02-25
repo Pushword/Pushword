@@ -19,9 +19,6 @@ final class RedirectionImporter
     /** @var array<string, array<string, string|null>> Indexed by slug */
     private array $indexData = [];
 
-    /** @var int[] IDs of redirections found in CSV (for deletion detection) */
-    private array $importedIds = [];
-
     /** @var string[] Slugs of redirections found in CSV (for deletion detection) */
     private array $importedSlugs = [];
 
@@ -36,7 +33,6 @@ final class RedirectionImporter
     public function reset(): void
     {
         $this->indexData = [];
-        $this->importedIds = [];
         $this->importedSlugs = [];
     }
 
@@ -60,11 +56,6 @@ final class RedirectionImporter
             if ('' !== $slug) {
                 $this->indexData[$slug] = $row;
                 $this->importedSlugs[] = $slug;
-
-                $id = $row['id'] ?? '';
-                if ('' !== $id && is_numeric($id)) {
-                    $this->importedIds[] = (int) $id;
-                }
             }
         }
     }
@@ -72,14 +63,6 @@ final class RedirectionImporter
     public function hasIndexData(): bool
     {
         return [] !== $this->indexData;
-    }
-
-    /**
-     * @return int[]
-     */
-    public function getImportedIds(): array
-    {
-        return $this->importedIds;
     }
 
     /**
@@ -106,7 +89,6 @@ final class RedirectionImporter
      */
     private function importRedirection(string $slug, array $row, string $host): void
     {
-        $id = $row['id'] ?? '';
         $target = $row['target'] ?? '';
         $code = $row['code'] ?? '301';
 
@@ -116,22 +98,8 @@ final class RedirectionImporter
             return;
         }
 
-        $page = null;
-
-        // Try to find by ID first (only if it's already a redirection)
-        if ('' !== $id && is_numeric($id)) {
-            $found = $this->pageRepo->find((int) $id);
-            if (null !== $found && $found->hasRedirection()) {
-                $page = $found;
-            } elseif (null !== $found) {
-                $this->logger?->warning('Ignoring id {id} for redirection "{slug}": page exists but is not a redirection', ['id' => $id, 'slug' => $slug]);
-            }
-        }
-
-        // Try to find by slug and host
-        if (null === $page) {
-            $page = $this->pageRepo->findOneBy(['slug' => $slug, 'host' => $host]);
-        }
+        // Find by slug and host
+        $page = $this->pageRepo->findOneBy(['slug' => $slug, 'host' => $host]);
 
         // Create new if not found
         if (null === $page) {

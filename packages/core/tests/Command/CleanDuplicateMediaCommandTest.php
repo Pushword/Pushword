@@ -203,6 +203,7 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
         $original->setStoreIn($mediaDir);
         $original->resetHash();
         $original->setHash();
+
         $em->flush();
 
         $duplicate = new Media();
