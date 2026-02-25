@@ -332,6 +332,18 @@ class SiteConfigTest extends TestCase
         self::assertSame(42, $site->getCustomProperty('extra'));
     }
 
+    public function testGetParamsForRenderingIncludesIsStatic(): void
+    {
+        $site = $this->createSiteConfig('localhost.dev', $this->tempDir.'/templates');
+
+        $params = $site->getParamsForRendering();
+        self::assertFalse($params['isStatic']);
+
+        $site->isStatic = true;
+        $params = $site->getParamsForRendering();
+        self::assertTrue($params['isStatic']);
+    }
+
     private function createTemplateResolver(): TemplateResolver
     {
         $loader = new FilesystemLoader();

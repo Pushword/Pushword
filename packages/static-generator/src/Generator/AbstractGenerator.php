@@ -47,6 +47,15 @@ abstract class AbstractGenerator implements GeneratorInterface
 
         $newKernelRouter = static::getKernel()->getContainer()->get(PushwordRouteGenerator::class);
         $newKernelRouter->setUseCustomHostPath(false);
+
+        foreach ($this->apps->getAll() as $site) {
+            $site->isStatic = true;
+        }
+
+        $newKernelSiteRegistry = static::getKernel()->getContainer()->get(SiteRegistry::class);
+        foreach ($newKernelSiteRegistry->getAll() as $site) {
+            $site->isStatic = true;
+        }
     }
 
     public function generate(?string $host = null): void

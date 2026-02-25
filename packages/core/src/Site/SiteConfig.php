@@ -34,6 +34,8 @@ final class SiteConfig
 
     private ?TemplateResolver $templateResolver = null;
 
+    public bool $isStatic = false;
+
     public string $firstAppLocale = 'fr';
 
     /** @param array<string, mixed> $properties */
@@ -75,7 +77,7 @@ final class SiteConfig
         $this->templateResolver = $templateResolver;
     }
 
-    /** @return array{app_base_url: string, app_name: string, app_color: mixed, pwApp: self} */
+    /** @return array{app_base_url: string, app_name: string, app_color: mixed, pwApp: self, isStatic: bool} */
     public function getParamsForRendering(): array
     {
         return [
@@ -83,6 +85,7 @@ final class SiteConfig
             'app_name' => $this->name,
             'app_color' => $this->getCustomProperty('color'),
             'pwApp' => $this,
+            'isStatic' => $this->isStatic,
         ];
     }
 
