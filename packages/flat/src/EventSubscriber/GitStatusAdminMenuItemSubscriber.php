@@ -9,12 +9,14 @@ use Pushword\Admin\Menu\AdminMenuItemsEvent;
 use Pushword\Flat\Service\GitAutoCommitter;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Routing\RouterInterface;
 
 #[AutoconfigureTag('kernel.event_subscriber')]
 final readonly class GitStatusAdminMenuItemSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private GitAutoCommitter $gitAutoCommitter,
+        private RouterInterface $router,
     ) {
     }
 
@@ -35,7 +37,7 @@ final readonly class GitStatusAdminMenuItemSubscriber implements EventSubscriber
         }
 
         $event->addMenuItem(
-            MenuItem::linkToRoute('adminLabelGitStatus', 'fa fa-code-branch', 'admin_git_status'),
+            MenuItem::linkToUrl('adminLabelGitStatus', 'fa fa-code-branch', $this->router->generate('admin_git_status')),
             350,
         );
     }
