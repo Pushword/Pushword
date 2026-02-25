@@ -44,19 +44,6 @@ final readonly class TranslateReviewsCommand
     ): int {
         $io = new SymfonyStyle($input, $output);
 
-        $host ??= $this->apps->getMainHost();
-        $this->apps->switchSite((string) $host);
-
-        if (! $this->translationManager->hasAvailableTranslator()) {
-            if ($this->translationManager->hasConfiguredTranslator() && $this->translationManager->isMonthlyLimitExceeded()) {
-                $io->error('All translation services have exceeded their monthly character limits. Please wait until next month or increase the limits in configuration.');
-            } else {
-                $io->error('No translation service is configured. Please set translation_deepl_api_key or translation_google_api_key in your pushword configuration.');
-            }
-
-            return Command::FAILURE;
-        }
-
         $targetLocales = null !== $locale ? array_map(trim(...), explode(',', $locale)) : [];
         if ([] === $targetLocales) {
             $io->error('You must specify at least one target locale with --locale option.');
@@ -64,91 +51,105 @@ final readonly class TranslateReviewsCommand
             return Command::FAILURE;
         }
 
-        $reviews = $this->getReviews($host);
-
-        if ([] === $reviews) {
-            $io->info('No reviews found to translate.');
-
-            return Command::SUCCESS;
-        }
-
-        $io->title(\sprintf('Translating %d reviews to: %s', \count($reviews), implode(', ', $targetLocales)));
-
-        if ($dryRun) {
-            $io->note('Dry run mode - no changes will be made.');
-        }
-
+        $hosts = null !== $host ? [$host] : $this->apps->getHosts();
         $successCount = 0;
         $errorCount = 0;
         $skippedCount = 0;
 
-        foreach ($reviews as $review) {
-            $previewText = mb_substr($review->getTitle() ?: $review->getContent(), 0, 50);
-            $sourceLocale = $review->locale;
+        foreach ($hosts as $currentHost) {
+            $this->apps->switchSite($currentHost);
 
-            // Auto-detect locale if not already set
-            if (null === $sourceLocale || '' === $sourceLocale) {
-                $textToDetect = $review->getTitle().' '.$review->getContent();
-                $detectedLocale = $this->translationManager->detectLanguage($textToDetect);
-
-                if (null === $detectedLocale) {
-                    $io->warning(\sprintf('Review #%d: could not detect language, skipping.', (int) $review->id));
-                    ++$skippedCount;
-
-                    continue;
-                }
-
-                $sourceLocale = $detectedLocale;
-                $review->locale = $detectedLocale;
-                $io->writeln(\sprintf(
-                    '  Processing review #%d (detected: <comment>%s</comment>): "%s"...',
-                    (int) $review->id,
-                    $sourceLocale,
-                    $previewText,
-                ));
-            } else {
-                $io->writeln(\sprintf(
-                    '  Processing review #%d (%s): "%s"...',
-                    (int) $review->id,
-                    $sourceLocale,
-                    $previewText,
-                ));
-            }
-
-            if ($dryRun) {
-                foreach ($targetLocales as $targetLocale) {
-                    if ($targetLocale === $sourceLocale) {
-                        continue;
-                    }
-
-                    $exists = $review->hasTranslation($targetLocale);
-                    $action = $exists && ! $force ? 'skip (exists)' : 'would translate';
-                    $io->writeln(\sprintf('    -> %s: %s', $targetLocale, $action));
+            if (! $this->translationManager->hasAvailableTranslator()) {
+                if ($this->translationManager->hasConfiguredTranslator() && $this->translationManager->isMonthlyLimitExceeded()) {
+                    $io->error(\sprintf('[%s] All translation services have exceeded their monthly character limits.', $currentHost));
+                } else {
+                    $io->error(\sprintf('[%s] No translation service is configured.', $currentHost));
                 }
 
                 continue;
             }
 
-            $results = $this->translationService->translateReview($review, $targetLocales, $force);
+            $reviews = $this->getReviews($currentHost);
 
-            foreach ($results as $targetLocale => $status) {
-                if (ReviewTranslationService::SKIPPED === $status) {
-                    $io->writeln(\sprintf('    -> %s: <comment>skipped</comment>', $targetLocale));
-                    ++$skippedCount;
-                } elseif (str_starts_with($status, ReviewTranslationService::FAILED)) {
-                    $errorDetail = substr($status, \strlen(ReviewTranslationService::FAILED) + 2) ?: '';
-                    $io->writeln(\sprintf('    -> %s: <error>FAILED</error>%s', $targetLocale, '' !== $errorDetail ? ' ('.$errorDetail.')' : ''));
-                    ++$errorCount;
-                } else {
-                    $io->writeln(\sprintf('    -> %s: <info>OK</info> (%s)', $targetLocale, $status));
-                    ++$successCount;
-                }
+            if ([] === $reviews) {
+                $io->info(\sprintf('[%s] No reviews found to translate.', $currentHost));
+
+                continue;
             }
 
-            $this->translationService->persist($review);
+            $io->section(\sprintf('[%s] Translating %d reviews to: %s', $currentHost, \count($reviews), implode(', ', $targetLocales)));
 
-            if ($delay > 0) {
-                sleep($delay);
+            if ($dryRun) {
+                $io->note('Dry run mode - no changes will be made.');
+            }
+
+            foreach ($reviews as $review) {
+                $previewText = mb_substr($review->getTitle() ?: $review->getContent(), 0, 50);
+                $sourceLocale = $review->locale;
+
+                if (null === $sourceLocale || '' === $sourceLocale) {
+                    $textToDetect = $review->getTitle().' '.$review->getContent();
+                    $detectedLocale = $this->translationManager->detectLanguage($textToDetect);
+
+                    if (null === $detectedLocale) {
+                        $io->warning(\sprintf('Review #%d: could not detect language, skipping.', (int) $review->id));
+                        ++$skippedCount;
+
+                        continue;
+                    }
+
+                    $sourceLocale = $detectedLocale;
+                    $review->locale = $detectedLocale;
+                    $io->writeln(\sprintf(
+                        '  Processing review #%d (detected: <comment>%s</comment>): "%s"...',
+                        (int) $review->id,
+                        $sourceLocale,
+                        $previewText,
+                    ));
+                } else {
+                    $io->writeln(\sprintf(
+                        '  Processing review #%d (%s): "%s"...',
+                        (int) $review->id,
+                        $sourceLocale,
+                        $previewText,
+                    ));
+                }
+
+                if ($dryRun) {
+                    foreach ($targetLocales as $targetLocale) {
+                        if ($targetLocale === $sourceLocale) {
+                            continue;
+                        }
+
+                        $exists = $review->hasTranslation($targetLocale);
+                        $action = $exists && ! $force ? 'skip (exists)' : 'would translate';
+                        $io->writeln(\sprintf('    -> %s: %s', $targetLocale, $action));
+                    }
+
+                    continue;
+                }
+
+                $results = $this->translationService->translateReview($review, $targetLocales, $force);
+
+                foreach ($results as $targetLocale => $status) {
+                    if (ReviewTranslationService::SKIPPED === $status) {
+                        $io->writeln(\sprintf('    -> %s: <comment>skipped</comment>', $targetLocale));
+                        ++$skippedCount;
+                    } elseif (str_starts_with($status, ReviewTranslationService::FAILED)) {
+                        $errorDetail = substr($status, \strlen(ReviewTranslationService::FAILED) + 2) ?: '';
+                        $io->writeln(\sprintf('    -> %s: <error>FAILED</error>%s', $targetLocale, '' !== $errorDetail ? ' ('.$errorDetail.')' : ''));
+                        ++$errorCount;
+                    } else {
+                        $io->writeln(\sprintf('    -> %s: <info>OK</info> (%s)', $targetLocale, $status));
+                        ++$successCount;
+                    }
+                }
+
+                $this->translationService->persist($review);
+
+                if ($delay > 0) {
+                    sleep($delay);
+                }
             }
         }
 
