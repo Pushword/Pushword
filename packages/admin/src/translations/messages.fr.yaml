@@ -9,7 +9,7 @@ adminEdit: Editer
 adminEdition: Edition
 adminElementDeleted: 'Elément supprimé.'
 adminLabelCheatsheet: Aide-mémoire
-adminLabelCheckContent: 'Vérifier le contenu'
+adminLabelCheckContent: 'Scan du contenu'
 adminLabelContent: Pages
 adminLabelConversation: Conversation
 adminLabelGitStatus: "Statut Git"
