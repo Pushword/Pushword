@@ -81,6 +81,8 @@ final class PageController extends AbstractPushwordController
 
     public function showPage(Page $page): Response
     {
+        $this->requestContext->setCurrentPage($page);
+
         $params = ['page' => $page, ...$this->requestContext->getCurrentSite()->getParamsForRendering()];
 
         $view = $this->getView($page->getTemplate() ?? '/page/page.html.twig');
