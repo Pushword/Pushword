@@ -5,6 +5,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Pushword\Conversation\Flat\ConversationSync;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\Admin\FlatSyncNotifier;
+use Pushword\Flat\Controller\Admin\GitStatusController;
 use Pushword\Flat\Controller\Admin\NotificationCrudController;
 use Pushword\Flat\Controller\FlatLockApiController;
 use Pushword\Flat\Converter\FlatPropertyConverterInterface;
@@ -83,7 +84,8 @@ return static function (ContainerConfigurator $container): void {
 
     // GitAutoCommitter configuration
     $services->set(GitAutoCommitter::class)
-        ->arg('$enabled', '%pw.pushword_flat.auto_git_commit%');
+        ->arg('$enabled', '%pw.pushword_flat.auto_git_commit%')
+        ->arg('$varDir', '%kernel.project_dir%/var');
 
     // FlatSyncNotifier - make it optional (only works if admin bundle is present)
     $services->set(FlatSyncNotifier::class)
@@ -103,6 +105,12 @@ return static function (ContainerConfigurator $container): void {
     // ConflictResolver - inject optional notification service
     $services->set(ConflictResolver::class)
         ->arg('$notificationService', service(AdminNotificationService::class)->nullOnInvalid());
+
+    // GitStatusController - admin page for git auto-commit status
+    $services->set(GitStatusController::class)
+        ->autowire()
+        ->autoconfigure()
+        ->tag('controller.service_arguments');
 
     // NotificationCrudController - admin UI for notifications
     $services->set(NotificationCrudController::class)

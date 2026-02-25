@@ -1,0 +1,71 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ 'flatGitStatusTitle'|trans }}{% endblock %}
+
+{% block main %}
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">{{ 'flatGitStatusConfig'|trans }}</div>
+    <div class="card-body">
+      {% if enabled %}
+        <span class="badge bg-success"><i class="fa fa-check me-1"></i>{{ 'flatGitStatusEnabled'|trans }}</span>
+      {% else %}
+        <span class="badge bg-secondary"><i class="fa fa-times me-1"></i>{{ 'flatGitStatusDisabled'|trans }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header fw-semibold">{{ 'flatGitStatusHistory'|trans }}</div>
+    <div class="card-body">
+      {% if history is empty %}
+        <div class="alert alert-info mb-0">
+          <i class="fa fa-info-circle me-2"></i>{{ 'flatGitStatusEmpty'|trans }}
+        </div>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">{{ 'flatGitStatusDate'|trans }}</th>
+                <th scope="col">{{ 'flatGitStatusResult'|trans }}</th>
+                <th scope="col">{{ 'flatGitStatusSteps'|trans }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in history %}
+                <tr>
+                  <td class="text-nowrap">{{ entry.timestamp|date('d/m/Y H:i:s') }}</td>
+                  <td>
+                    {% if entry.success %}
+                      <span class="badge bg-success">{{ 'flatGitStatusSuccess'|trans }}</span>
+                    {% else %}
+                      <span class="badge bg-danger">{{ 'flatGitStatusFailure'|trans }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% for step in entry.steps %}
+                      <div class="mb-1">
+                        {% if step.success %}
+                          <i class="fa fa-check text-success me-1"></i>
+                        {% else %}
+                          <i class="fa fa-times text-danger me-1"></i>
+                        {% endif %}
+                        <code>{{ step.command }}</code>
+                        {% if step.output is not empty %}
+                          <details class="d-inline">
+                            <summary class="btn btn-sm btn-outline-secondary py-0 px-1 ms-1">{{ 'flatGitStatusOutput'|trans }}</summary>
+                            <pre class="mt-1 p-2 bg-light border rounded small">{{ step.output }}</pre>
+                          </details>
+                        {% endif %}
+                      </div>
+                    {% endfor %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

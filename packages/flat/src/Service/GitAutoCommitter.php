@@ -10,16 +10,27 @@ use Symfony\Component\Process\Process;
 
 final readonly class GitAutoCommitter
 {
+    private const int MAX_HISTORY = 50;
+
     public function __construct(
         private bool $enabled,
         private FlatFileContentDirFinder $contentDirFinder,
         private LoggerInterface $logger,
+        private string $varDir,
     ) {
     }
 
     public function isEnabled(): bool
     {
         return $this->enabled;
+    }
+
+    /**
+     * @return list<array{timestamp: int, success: bool, steps: list<array{command: string, success: bool, output: string}>}>
+     */
+    public function getHistory(): array
+    {
+        return $this->readStatusFile();
     }
 
     public function commitIfChanges(?string $host = null): bool
@@ -53,40 +64,89 @@ final readonly class GitAutoCommitter
             return false;
         }
 
-        $add = new Process(['git', '-C', $gitDir, 'add', '-A']);
-        $add->run();
+        /** @var list<array{command: string, success: bool, output: string}> $steps */
+        $steps = [];
 
-        if (! $add->isSuccessful()) {
-            $this->logger->warning('GitAutoCommitter: git add failed: {error}', ['error' => $add->getErrorOutput()]);
-
-            return false;
-        }
-
-        $commit = new Process(['git', '-C', $gitDir, 'commit', '-m', $message]);
-        $commit->run();
-
-        if (! $commit->isSuccessful()) {
-            $this->logger->warning('GitAutoCommitter: git commit failed: {error}', ['error' => $commit->getErrorOutput()]);
+        if (! $this->runStep($gitDir, ['add', '-A'], 'git add -A', $steps)) {
+            $this->saveStatus($steps, false);
 
             return false;
         }
 
-        $pull = new Process(['git', '-C', $gitDir, 'pull', '--rebase']);
-        $pull->run();
+        if (! $this->runStep($gitDir, ['commit', '-m', $message], 'git commit', $steps)) {
+            $this->saveStatus($steps, false);
 
-        if (! $pull->isSuccessful()) {
-            $this->logger->warning('GitAutoCommitter: git pull --rebase failed: {error}', ['error' => $pull->getErrorOutput()]);
-
-            return true;
+            return false;
         }
 
-        $push = new Process(['git', '-C', $gitDir, 'push']);
-        $push->run();
+        $pullOk = $this->runStep($gitDir, ['pull', '--rebase'], 'git pull --rebase', $steps);
+        $pushOk = $this->runStep($gitDir, ['push'], 'git push', $steps);
 
-        if (! $push->isSuccessful()) {
-            $this->logger->warning('GitAutoCommitter: git push failed: {error}', ['error' => $push->getErrorOutput()]);
-        }
+        $this->saveStatus($steps, $pullOk && $pushOk);
 
         return true;
+    }
+
+    /**
+     * @param string[]                                                     $args
+     * @param list<array{command: string, success: bool, output: string}> &$steps
+     */
+    private function runStep(string $gitDir, array $args, string $label, array &$steps): bool
+    {
+        $process = new Process(['git', '-C', $gitDir, ...$args]);
+        $process->run();
+
+        $steps[] = [
+            'command' => $label,
+            'success' => $process->isSuccessful(),
+            'output' => $process->isSuccessful() ? $process->getOutput() : $process->getErrorOutput(),
+        ];
+
+        if (! $process->isSuccessful()) {
+            $this->logger->warning('GitAutoCommitter: {label} failed: {error}', [
+                'label' => $label,
+                'error' => $process->getErrorOutput(),
+            ]);
+        }
+
+        return $process->isSuccessful();
+    }
+
+    private function statusFilePath(): string
+    {
+        return $this->varDir.'/git-autocommit-status.json';
+    }
+
+    /**
+     * @return list<array{timestamp: int, success: bool, steps: list<array{command: string, success: bool, output: string}>}>
+     */
+    private function readStatusFile(): array
+    {
+        $file = $this->statusFilePath();
+        if (! file_exists($file)) {
+            return [];
+        }
+
+        /** @var list<array{timestamp: int, success: bool, steps: list<array{command: string, success: bool, output: string}>}> */
+        return json_decode(file_get_contents($file) ?: '[]', true);
+    }
+
+    /**
+     * @param list<array{command: string, success: bool, output: string}> $steps
+     */
+    private function saveStatus(array $steps, bool $success): void
+    {
+        $history = $this->readStatusFile();
+
+        array_unshift($history, [
+            'timestamp' => time(),
+            'success' => $success,
+            'steps' => $steps,
+        ]);
+
+        file_put_contents(
+            $this->statusFilePath(),
+            json_encode(\array_slice($history, 0, self::MAX_HISTORY), \JSON_PRETTY_PRINT),
+        );
     }
 }

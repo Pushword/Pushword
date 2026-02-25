@@ -97,7 +97,7 @@ final class GitAutoCommitterTest extends KernelTestCase
         self::bootKernel();
         $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
 
-        return new GitAutoCommitter($enabled, $contentDirFinder, new NullLogger());
+        return new GitAutoCommitter($enabled, $contentDirFinder, new NullLogger(), sys_get_temp_dir());
     }
 
     private function initGitRepo(): void

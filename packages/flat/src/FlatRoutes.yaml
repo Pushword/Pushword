@@ -5,3 +5,7 @@ pushword_flat_api:
 pushword_flat_admin_notifications:
     resource: '../src/Controller/Admin/NotificationCrudController.php'
     type: attribute
+
+pushword_flat_admin_git_status:
+    resource: '../src/Controller/Admin/GitStatusController.php'
+    type: attribute

@@ -12,6 +12,19 @@ adminLabelCheatsheet: Cheatsheet
 adminLabelCheckContent: "Check content"
 adminLabelContent: Pages
 adminLabelConversation: Conversation
+adminLabelGitStatus: "Git Status"
+flatGitStatusConfig: Configuration
+flatGitStatusDate: Date
+flatGitStatusDisabled: "Auto-commit disabled"
+flatGitStatusEmpty: "No git operations recorded yet."
+flatGitStatusEnabled: "Auto-commit enabled"
+flatGitStatusFailure: Failed
+flatGitStatusHistory: "Operation History"
+flatGitStatusOutput: output
+flatGitStatusResult: Result
+flatGitStatusSteps: Steps
+flatGitStatusSuccess: OK
+flatGitStatusTitle: "Git Auto-Commit Status"
 adminLabelList: List
 adminLabelManage: Publish
 adminLabelMedia: Media
