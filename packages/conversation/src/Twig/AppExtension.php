@@ -31,7 +31,7 @@ class AppExtension
     {
         $page = $this->apps->getCurrentPage();
         if (! $page instanceof Page) {
-            throw new Exception('A page must be defined...');
+            return '<!-- conversation degraded: no current page -->';
         }
 
         $baseUrl = $this->router->generate('pushword_conversation', [
