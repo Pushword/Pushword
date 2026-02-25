@@ -318,7 +318,7 @@ initShowMore()
 
 ## To 1.0.0-rc80
 
-- [ ] Default static website are now exported under `static/%main_host%` directory instead of `%main_host%`.
+- [ ] Default static website are now exported under `static/{main_host}` directory instead of `{main_host}`.
 - [ ] in your `config/routes.yaml`, replace `resource: "@PushwordCoreBundle/Resources/config/routes/all.yaml"` by `resource: "@PushwordCoreBundle/Resources/config/routes.yaml"`
 
 ```bash

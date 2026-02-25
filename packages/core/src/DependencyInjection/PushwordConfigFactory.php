@@ -129,7 +129,8 @@ final class PushwordConfigFactory
             if (! isset($app[$fallbackProperty])) {
                 /** @var string @phpstan-ignore-next-line */
                 $mainHost = $app['hosts'][0];
-                $app[$fallbackProperty] = \is_string($this->config[$fallbackProperty]) ? str_replace('%main_host%', $mainHost, $this->config[$fallbackProperty])
+                $app[$fallbackProperty] = \is_string($this->config[$fallbackProperty])
+                    ? str_replace(['%main_host%', '{main_host}'], $mainHost, $this->config[$fallbackProperty])
                     : $this->config[$fallbackProperty];
             } elseif ('custom_properties' === $fallbackProperty) {
                 if (! \is_array($this->config['custom_properties']) || ! \is_array($app['custom_properties'])) {

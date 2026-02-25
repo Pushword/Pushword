@@ -362,7 +362,7 @@ Contains media metadata with the following columns:
 
 ### Write
 
-By default, the content is organized in `content/%main_host%/` and images in `content/%main_host%/media` or in `media/`.
+By default, the content is organized in `content/{main_host}/` and images in `content/{main_host}/media` or in `media/`.
 
 Example structure:
 

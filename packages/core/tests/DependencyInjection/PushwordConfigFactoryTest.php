@@ -64,6 +64,33 @@ class PushwordConfigFactoryTest extends TestCase
         // dd ($container->getParameter('pw.apps'));
     }
 
+    public function testMainHostPlaceholderWithCurlyBraces(): void
+    {
+        $this->assertMainHostPlaceholderReplaced('/var/www/static/{main_host}');
+    }
+
+    public function testMainHostPlaceholderWithPercentSigns(): void
+    {
+        $this->assertMainHostPlaceholderReplaced('/var/www/static/%main_host%');
+    }
+
+    private function assertMainHostPlaceholderReplaced(string $staticDir): void
+    {
+        $container = new ContainerBuilder(new ParameterBag([]));
+        $baseConfig = new Processor()->processConfiguration(new Configuration(), [[
+            'apps' => [['hosts' => ['example.tld']]],
+        ]]);
+        $baseConfig['app_fallback_properties'] = [...$baseConfig['app_fallback_properties'], 'static_dir'];
+        $baseConfig['static_dir'] = $staticDir;
+
+        $factory = new PushwordConfigFactory($container, $baseConfig, new Configuration());
+        $factory->loadConfigToParams();
+        $factory->loadApps();
+
+        $apps = $container->getParameter('pw.apps');
+        self::assertSame('/var/www/static/example.tld', $apps['example.tld']['static_dir']);
+    }
+
     private function getConfigArray(): array
     {
         // Load config from pushword.php - extract the apps configuration directly
