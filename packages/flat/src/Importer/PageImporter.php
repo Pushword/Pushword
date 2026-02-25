@@ -487,7 +487,11 @@ final class PageImporter extends AbstractImporter
 
         $this->em->flush();
 
-        $this->getPages(false);
+        // Merge newly imported pages into slug index instead of reloading from DB
+        foreach ($this->pageList as $slug => $page) {
+            $this->slugIndex[$slug] = $page;
+        }
+
         $this->toAddAtTheEnd();
 
         $this->em->flush();
@@ -543,9 +547,9 @@ final class PageImporter extends AbstractImporter
     /**
      * @return Page[]
      */
-    private function getPages(bool $cache = true): array
+    private function getPages(): array
     {
-        if ($cache && null !== $this->pages) {
+        if (null !== $this->pages) {
             return $this->pages;
         }
 
@@ -560,14 +564,18 @@ final class PageImporter extends AbstractImporter
     }
 
     /**
-     * Get the loaded pages from the last getPages() call.
+     * Get the loaded pages (from DB or merged slug index).
      * Returns null if pages haven't been loaded yet.
      *
      * @return Page[]|null
      */
     public function getLoadedPages(): ?array
     {
-        return $this->pages;
+        if (null !== $this->pages) {
+            return $this->pages;
+        }
+
+        return [] !== $this->slugIndex ? array_values($this->slugIndex) : null;
     }
 
     /**

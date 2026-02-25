@@ -193,12 +193,23 @@ final class PageSync
     public function mustImport(?string $host = null): bool
     {
         $app = $this->resolveApp($host);
-        $contentDir = $this->contentDirFinder->get($app->getMainHost());
+        $mainHost = $app->getMainHost();
+        $contentDir = $this->contentDirFinder->get($mainHost);
 
-        return $this->hasNewerFiles($contentDir, $app->getMainHost());
+        // Pre-load all pages for this host once, build slug index
+        $pages = $this->pageRepository->findByHost($mainHost);
+        $slugIndex = [];
+        foreach ($pages as $page) {
+            $slugIndex[$page->getSlug()] = $page;
+        }
+
+        return $this->hasNewerFiles($contentDir, $mainHost, $slugIndex);
     }
 
-    private function hasNewerFiles(string $dir, string $host): bool
+    /**
+     * @param array<string, Page> $slugIndex
+     */
+    private function hasNewerFiles(string $dir, string $host, array $slugIndex): bool
     {
         if (! file_exists($dir)) {
             return false;
@@ -217,14 +228,14 @@ final class PageSync
 
             $path = $dir.'/'.$file;
             if (is_dir($path)) {
-                if ($this->hasNewerFiles($path, $host)) {
+                if ($this->hasNewerFiles($path, $host, $slugIndex)) {
                     return true;
                 }
 
                 continue;
             }
 
-            if ($this->isFileNewer($path, $host)) {
+            if ($this->isFileNewer($path, $host, $slugIndex)) {
                 return true;
             }
         }
@@ -232,7 +243,10 @@ final class PageSync
         return false;
     }
 
-    private function isFileNewer(string $filePath, string $host): bool
+    /**
+     * @param array<string, Page> $slugIndex
+     */
+    private function isFileNewer(string $filePath, string $host, array $slugIndex): bool
     {
         if (str_ends_with($filePath, RedirectionExporter::INDEX_FILE)) {
             return $this->isCsvFileNewer($filePath, $host);
@@ -248,10 +262,7 @@ final class PageSync
         }
 
         $slug = $this->pageImporter->getSlug($filePath, $document);
-        $page = $this->pageImporter->pageRepo->findOneBy([
-            'slug' => $slug,
-            'host' => $host,
-        ]);
+        $page = $slugIndex[$slug] ?? null;
 
         if (null === $page) {
             return true;

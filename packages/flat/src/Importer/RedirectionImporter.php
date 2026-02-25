@@ -72,8 +72,14 @@ final class RedirectionImporter
     {
         $host = $this->apps->get()->getMainHost();
 
+        // Pre-load all pages for this host once
+        $slugIndex = [];
+        foreach ($this->pageRepo->findByHost($host) as $page) {
+            $slugIndex[$page->getSlug()] = $page;
+        }
+
         foreach ($this->indexData as $slug => $row) {
-            $this->importRedirection($slug, $row, $host);
+            $this->importRedirection($slug, $row, $host, $slugIndex[$slug] ?? null);
         }
 
         $this->em->flush();
@@ -82,7 +88,7 @@ final class RedirectionImporter
     /**
      * @param array<string, string|null> $row
      */
-    private function importRedirection(string $slug, array $row, string $host): void
+    private function importRedirection(string $slug, array $row, string $host, ?Page $page): void
     {
         $target = $row['target'] ?? '';
         $code = $row['code'] ?? '301';
@@ -92,9 +98,6 @@ final class RedirectionImporter
 
             return;
         }
-
-        // Find by slug and host
-        $page = $this->pageRepo->findOneBy(['slug' => $slug, 'host' => $host]);
 
         // Create new if not found
         if (null === $page) {
