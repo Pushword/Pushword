@@ -117,6 +117,47 @@ class SiteConfigTest extends TestCase
         self::assertSame('/'.$host.'/conversation/review.html.twig', $result);
     }
 
+    public function testGetViewWithFallbackHostOverride(): void
+    {
+        $host = 'us.example.com';
+        $fallbackHost = 'www.example.com';
+        $templateDir = $this->tempDir.'/templates';
+        $fallbackTemplatePath = $templateDir.'/'.$fallbackHost.'/page/page.html.twig';
+
+        $this->filesystem->mkdir(\dirname($fallbackTemplatePath));
+        $this->filesystem->dumpFile($fallbackTemplatePath, 'Fallback host template');
+
+        $site = $this->createSiteConfig($host, $templateDir);
+        $site->setCustomProperty('view_fallback_hosts', [$fallbackHost]);
+        $resolver = $this->createTemplateResolver();
+
+        $result = $resolver->resolve($site, '/page/page.html.twig');
+
+        self::assertSame('/'.$fallbackHost.'/page/page.html.twig', $result);
+    }
+
+    public function testGetViewHostOverrideTakesPriorityOverFallbackHost(): void
+    {
+        $host = 'us.example.com';
+        $fallbackHost = 'www.example.com';
+        $templateDir = $this->tempDir.'/templates';
+
+        // Create both host and fallback templates
+        $this->filesystem->mkdir($templateDir.'/'.$host.'/page');
+        $this->filesystem->dumpFile($templateDir.'/'.$host.'/page/page.html.twig', 'Host template');
+        $this->filesystem->mkdir($templateDir.'/'.$fallbackHost.'/page');
+        $this->filesystem->dumpFile($templateDir.'/'.$fallbackHost.'/page/page.html.twig', 'Fallback template');
+
+        $site = $this->createSiteConfig($host, $templateDir);
+        $site->setCustomProperty('view_fallback_hosts', [$fallbackHost]);
+        $resolver = $this->createTemplateResolver();
+
+        $result = $resolver->resolve($site, '/page/page.html.twig');
+
+        // Host-specific override wins over fallback
+        self::assertSame('/'.$host.'/page/page.html.twig', $result);
+    }
+
     public function testResolveWithInvalidOverrideNameThrows(): void
     {
         $host = 'localhost.dev';

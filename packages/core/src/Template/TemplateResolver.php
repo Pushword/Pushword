@@ -74,6 +74,15 @@ final readonly class TemplateResolver
             return '/'.$site->getMainHost().$name;
         }
 
+        // 1b. Fallback host overrides
+        foreach ($site->getArray('view_fallback_hosts') as $fallbackHost) {
+            \assert(\is_string($fallbackHost));
+            $fallbackOverride = $templateDir.'/'.$fallbackHost.$name;
+            if (file_exists($fallbackOverride)) {
+                return '/'.$fallbackHost.$name;
+            }
+        }
+
         // 2. Theme-specific override
         $themeOverride = $templateDir.'/'.ltrim($site->getTemplate(), '@').$name;
         if (file_exists($themeOverride)) {
