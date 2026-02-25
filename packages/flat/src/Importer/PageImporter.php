@@ -72,9 +72,6 @@ final class PageImporter extends AbstractImporter
     /** @var array<string, true> translation pairs that were explicitly added (format: "refA|refB") */
     private array $addedTranslationPairs = [];
 
-    /** @var array<int, string> Map of ID => relative file path that claimed it (for duplicate detection) */
-    private array $idToFileMap = [];
-
     /** @var array<string, Page> slug => Page index for O(1) lookups */
     private array $slugIndex = [];
 
@@ -225,23 +222,9 @@ final class PageImporter extends AbstractImporter
         DateTime|DateTimeImmutable|DateTimeInterface $lastEditDateTime,
         string $relativeFilePath = '',
     ): Page {
-        if (isset($data['id']) && is_numeric($data['id'])) {
-            $id = (int) $data['id'];
+        unset($data['id']);
 
-            if (isset($this->idToFileMap[$id])) {
-                $this->logger->warning(
-                    'Duplicate ID {id} in {file}, already used by {original} - ID ignored',
-                    ['id' => $id, 'file' => $relativeFilePath, 'original' => $this->idToFileMap[$id]]
-                );
-            } else {
-                $this->idToFileMap[$id] = $relativeFilePath;
-                $page = $this->pageRepo->find($id);
-            }
-
-            unset($data['id']);
-        }
-
-        $page ??= $this->getPageFromSlug($slug);
+        $page = $this->getPageFromSlug($slug);
 
         if (! $this->newPage && $page->updatedAt >= $lastEditDateTime) {
             ++$this->skippedCount;
@@ -616,7 +599,6 @@ final class PageImporter extends AbstractImporter
         $this->slugs = [];
         $this->pageList = [];
         $this->addedTranslationPairs = [];
-        $this->idToFileMap = [];
         $this->importedCount = 0;
         $this->skippedCount = 0;
     }

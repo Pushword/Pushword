@@ -54,18 +54,18 @@ final class PageSync
         // Stopwatch passed for interface consistency but not used in PageSync
     }
 
-    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null, bool $skipId = false): void
+    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null): void
     {
         if (! $forceExport && $this->mustImport($host)) {
-            $this->import($host, $skipId);
+            $this->import($host);
 
             return;
         }
 
-        $this->export($host, $forceExport, $exportDir, $skipId);
+        $this->export($host, $forceExport, $exportDir);
     }
 
-    public function import(?string $host = null, bool $skipId = false, bool $force = false): void
+    public function import(?string $host = null, bool $force = false): void
     {
         $this->deletedCount = 0;
         $app = $this->resolveApp($host);
@@ -109,7 +109,7 @@ final class PageSync
         $this->deleteMissingPages($allPages);
 
         // 6. Regenerate index.csv to reflect the current database state
-        $this->regenerateIndex($contentDir, $skipId, $allPages);
+        $this->regenerateIndex($contentDir, $allPages);
 
         // 7. Record import in sync state
         $this->stateManager->recordImport('page', $app->getMainHost());
@@ -161,26 +161,26 @@ final class PageSync
     }
 
     /**
-     * Write back auto-generated IDs to imported markdown files and regenerate index CSV.
+     * Regenerate index CSV and re-export imported pages.
      * Only re-exports pages that were actually imported (not the full dataset).
      *
      * @param Page[] $allPages Pre-loaded pages from the import cycle
      */
-    private function regenerateIndex(string $contentDir, bool $skipId, array $allPages): void
+    private function regenerateIndex(string $contentDir, array $allPages): void
     {
         $this->pageExporter->exportDir = $contentDir;
         $importedSlugs = $this->pageImporter->getImportedSlugs();
-        $this->pageExporter->exportPagesSubset($importedSlugs, $skipId, $allPages);
+        $this->pageExporter->exportPagesSubset($importedSlugs, $allPages);
     }
 
-    public function export(?string $host = null, bool $force = false, ?string $exportDir = null, bool $skipId = false): void
+    public function export(?string $host = null, bool $force = false, ?string $exportDir = null): void
     {
         $app = $this->resolveApp($host);
         $targetDir = $exportDir ?? $this->contentDirFinder->get($app->getMainHost());
 
         // Export pages (.md files + index.csv + iDraft.csv)
         $this->pageExporter->exportDir = $targetDir;
-        $this->pageExporter->exportPages($force, $skipId);
+        $this->pageExporter->exportPages($force);
 
         // Export redirections (redirection.csv)
         $this->redirectionExporter->exportDir = $targetDir;

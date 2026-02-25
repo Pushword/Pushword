@@ -46,7 +46,7 @@ php ./.scripts/generate-docs-assets
 CURRENT_DIR='packages/skeleton'
 cd packages/skeleton
 
-php bin/console pw:flat:sync pushword.piedweb.com --mode=import --skip-id --no-backup && php bin/console pw:static pushword.piedweb.com
+php bin/console pw:flat:sync pushword.piedweb.com --mode=import --no-backup && php bin/console pw:static pushword.piedweb.com
 
 cd ../../
 # Syncing with docs branch and sending to dist

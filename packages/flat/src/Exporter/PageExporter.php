@@ -55,7 +55,7 @@ final class PageExporter
         $this->defaultValue = new ExporterDefaultValueHelper();
         $this->pageIndexColumns = [] !== $pageIndexColumns
             ? $pageIndexColumns
-            : ['id', 'slug', 'h1', 'publishedAt', 'locale', 'parentPage', 'tags'];
+            : ['slug', 'h1', 'publishedAt', 'locale', 'parentPage', 'tags'];
     }
 
     public function setOutput(?OutputInterface $output): void
@@ -63,23 +63,23 @@ final class PageExporter
         $this->output = $output;
     }
 
-    public function exportPages(bool $force = false, bool $skipId = false): void
+    public function exportPages(bool $force = false): void
     {
         $this->exportedCount = 0;
         $this->skippedCount = 0;
 
         $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
 
-        $this->exportPagesArray($pages, $force, $skipId);
+        $this->exportPagesArray($pages, $force);
     }
 
     /**
-     * Export only pages matching the given slugs (used after import to write back auto-generated IDs).
+     * Export only pages matching the given slugs (used after import to regenerate index CSV).
      *
      * @param string[] $slugs
      * @param Page[]   $pages Pre-loaded pages to avoid extra DB query; if empty, loads from DB
      */
-    public function exportPagesSubset(array $slugs, bool $skipId = false, array $pages = []): void
+    public function exportPagesSubset(array $slugs, array $pages = []): void
     {
         $this->exportedCount = 0;
         $this->skippedCount = 0;
@@ -89,7 +89,7 @@ final class PageExporter
         }
 
         if ([] === $slugs) {
-            $this->exportIndex($pages, $skipId);
+            $this->exportIndex($pages);
 
             return;
         }
@@ -102,20 +102,20 @@ final class PageExporter
                 continue;
             }
 
-            $exported = $this->exportPage($page, false, $skipId);
+            $exported = $this->exportPage($page);
 
             if ($exported) {
                 $this->output?->writeln(\sprintf('Exported %s.md', $page->getSlug()));
             }
         }
 
-        $this->exportIndex($pages, $skipId);
+        $this->exportIndex($pages);
     }
 
     /**
      * @param Page[] $pages
      */
-    private function exportPagesArray(array $pages, bool $force, bool $skipId): void
+    private function exportPagesArray(array $pages, bool $force): void
     {
         // Filter out redirections for export
         $exportablePages = array_filter($pages, static fn (Page $page): bool => ! $page->hasRedirection());
@@ -131,26 +131,11 @@ final class PageExporter
         }
 
         foreach ($exportablePages as $page) {
-            $exported = $this->exportPage($page, $force, $skipId);
+            $exported = $this->exportPage($page, $force);
 
             if ($exported) {
                 $this->output?->writeln(\sprintf('Exported %s.md', $page->getSlug()));
             }
-        }
-
-        $this->exportIndex($pages, $skipId);
-    }
-
-    /**
-     * Export only index.csv files without re-exporting .md files.
-     * Useful after import to ensure indexes reflect current database state.
-     *
-     * @param Page[] $pages Pre-loaded pages to avoid extra DB query; if empty, loads from DB
-     */
-    public function exportIndexOnly(array $pages = []): void
-    {
-        if ([] === $pages) {
-            $pages = $this->pageRepo->findByHost($this->apps->get()->getMainHost());
         }
 
         $this->exportIndex($pages);
@@ -159,7 +144,7 @@ final class PageExporter
     /**
      * @param Page[] $pages
      */
-    private function exportIndex(array $pages, bool $skipId = true): void
+    private function exportIndex(array $pages): void
     {
         if ([] === $pages) {
             return;
@@ -189,13 +174,13 @@ final class PageExporter
         // Export published pages to index.csv
         foreach ($publishedByLocale as $locale => $localePages) {
             $filename = $this->getIndexFilename($locale, $defaultLocale, self::INDEX_FILE);
-            $this->exportIndexForLocale($localePages, $filename, $skipId);
+            $this->exportIndexForLocale($localePages, $filename);
         }
 
         // Export draft pages to iDraft.csv
         foreach ($draftsByLocale as $locale => $localePages) {
             $filename = $this->getIndexFilename($locale, $defaultLocale, self::DRAFT_INDEX_FILE);
-            $this->exportIndexForLocale($localePages, $filename, $skipId);
+            $this->exportIndexForLocale($localePages, $filename);
         }
     }
 
@@ -225,16 +210,15 @@ final class PageExporter
     /**
      * @param Page[] $pages
      */
-    private function exportIndexForLocale(array $pages, string $filename, bool $skipId = true): void
+    private function exportIndexForLocale(array $pages, string $filename): void
     {
         $customColumns = $this->collectCustomColumns($pages);
-        $indexColumns = $skipId ? array_filter($this->pageIndexColumns, static fn ($col): bool => 'id' !== $col) : $this->pageIndexColumns;
-        $header = array_merge($indexColumns, $customColumns);
+        $header = array_merge($this->pageIndexColumns, $customColumns);
 
         /** @var array<int, array<string, string|null>> $rows */
         $rows = [];
         foreach ($pages as $page) {
-            $row = $this->buildCsvRow($page, $customColumns, $skipId);
+            $row = $this->buildCsvRow($page);
 
             $orderedRow = [];
             foreach ($header as $column) {
@@ -299,15 +283,13 @@ final class PageExporter
     }
 
     /**
-     * @param string[] $customColumns
-     *
      * @return array<string, string|null>
      */
-    private function buildCsvRow(Page $page, array $customColumns, bool $skipId = false): array
+    private function buildCsvRow(Page $page): array
     {
         $h1 = $page->getH1();
 
-        $row = [
+        return [
             'slug' => $page->getSlug(),
             'h1' => '' !== $h1 ? $h1 : $page->getTitle(),
             'publishedAt' => null !== $page->getPublishedAt() ? $page->getPublishedAt()->format('Y-m-d H:i') : '',
@@ -315,35 +297,18 @@ final class PageExporter
             'parentPage' => null !== $page->getParentPage() ? $page->getParentPage()->getSlug() : '',
             'tags' => trim($page->getTags()),
         ];
-
-        if (! $skipId) {
-            return ['id' => null !== $page->id ? (string) $page->id : ''] + $row;
-        }
-
-        // custom properties
-        // /** @var array<string, mixed> $customProperties */
-        // $customProperties = $page->getCustomProperties();
-        // foreach ($customColumns as $column) {
-        //     $row[$column] = array_key_exists($column, $customProperties)
-        //         ? MediaCsvHelper::encodeValue($customProperties[$column])
-        //         : '';
-        // }
-
-        return $row;
     }
 
-    private function exportPage(Page $page, bool $force = false, bool $skipId = false): bool
+    private function exportPage(Page $page, bool $force = false): bool
     {
         $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
 
         // Build content first to enable content comparison
-        $baseProperties = $skipId ? ['title', 'h1', 'slug'] : ['title', 'h1', 'slug', 'id'];
-        $entityProperties = $this->cachedEntityProperties ??= Entity::getProperties($page);
-
-        // When skipId is true, remove 'id' from entity properties
-        if ($skipId) {
-            $entityProperties = array_filter($entityProperties, static fn (string $prop): bool => 'id' !== $prop);
-        }
+        $baseProperties = ['title', 'h1', 'slug'];
+        $entityProperties = $this->cachedEntityProperties ??= array_filter(
+            Entity::getProperties($page),
+            static fn (string $prop): bool => 'id' !== $prop,
+        );
 
         $properties = array_unique([...$baseProperties, ...$entityProperties]);
 

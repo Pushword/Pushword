@@ -19,9 +19,6 @@ final class RedirectionImporter
     /** @var array<string, array<string, string|null>> Indexed by slug */
     private array $indexData = [];
 
-    /** @var string[] Slugs of redirections found in CSV (for deletion detection) */
-    private array $importedSlugs = [];
-
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly SiteRegistry $apps,
@@ -33,7 +30,6 @@ final class RedirectionImporter
     public function reset(): void
     {
         $this->indexData = [];
-        $this->importedSlugs = [];
     }
 
     public function loadIndex(string $dir): void
@@ -55,7 +51,6 @@ final class RedirectionImporter
             $slug = $row['slug'] ?? '';
             if ('' !== $slug) {
                 $this->indexData[$slug] = $row;
-                $this->importedSlugs[] = $slug;
             }
         }
     }
@@ -70,7 +65,7 @@ final class RedirectionImporter
      */
     public function getImportedSlugs(): array
     {
-        return $this->importedSlugs;
+        return array_keys($this->indexData);
     }
 
     public function importAll(): void

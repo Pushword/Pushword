@@ -55,8 +55,6 @@ final readonly class FlatFileSyncCommand
         string $entity = 'all',
         #[Option(description: 'Sync mode: auto (detect), import (flat to db), export (db to flat)', name: 'mode', shortcut: 'm')]
         string $mode = 'auto',
-        #[Option(description: 'Skip adding IDs to markdown files and CSV indexes', name: 'skip-id')]
-        bool $skipId = false,
         #[Option(description: 'Disable automatic database backup before import', name: 'no-backup')]
         bool $noBackup = false,
         #[Option(description: 'Consume pending export flag and run batched export', name: 'consume-pending')]
@@ -127,11 +125,11 @@ final readonly class FlatFileSyncCommand
             }
 
             if (null !== $host) {
-                $this->syncHost($host, $force, $entity, $mode, $skipId);
+                $this->syncHost($host, $force, $entity, $mode);
             } else {
                 foreach ($this->flatFileSync->getHosts() as $appHost) {
                     $teeOutput->writeln(\sprintf('<info>Syncing %s...</info>', $appHost));
-                    $this->syncHost($appHost, $force, $entity, $mode, $skipId);
+                    $this->syncHost($appHost, $force, $entity, $mode);
                 }
             }
 
@@ -197,12 +195,12 @@ final readonly class FlatFileSyncCommand
         return Command::SUCCESS;
     }
 
-    private function syncHost(string $host, bool $force, string $entity, string $mode, bool $skipId): void
+    private function syncHost(string $host, bool $force, string $entity, string $mode): void
     {
         match ($mode) {
-            'import' => $this->flatFileSync->import($host, $skipId, $entity, $force),
-            'export' => $this->flatFileSync->export($host, force: $force, skipId: $skipId, entity: $entity),
-            default => $this->flatFileSync->sync($host, $force, null, $entity, $skipId),
+            'import' => $this->flatFileSync->import($host, $entity, $force),
+            'export' => $this->flatFileSync->export($host, force: $force, entity: $entity),
+            default => $this->flatFileSync->sync($host, $force, null, $entity),
         };
     }
 

@@ -2104,7 +2104,7 @@ YAML;
         touch($newPagePath, time() + 10);
 
         // Run import with force=true
-        $this->pageSync->import('localhost.dev', skipId: true, force: true);
+        $this->pageSync->import('localhost.dev', force: true);
 
         // Assert: existing page was deleted (reset), new page was imported
         $this->em->clear();

@@ -52,15 +52,14 @@ php bin/console pw:flat:sync [host] [options]
 
 **Options:**
 
-| Option          | Description                                                   |
-| --------------- | ------------------------------------------------------------- |
-| `host`          | Optional host to sync (uses default app if not provided)      |
-| `--mode`, `-m`  | Sync direction: `auto` (default), `import`, `export`          |
-| `--entity`      | Entity type: `page`, `media`, `conversation`, `all` (default) |
-| `--force`, `-f` | Force overwrite even if files are newer than DB               |
-| `--skip-id`     | Skip adding IDs to markdown files and CSV indexes             |
-| `--no-backup`   | Disable automatic database backup before import               |
-| `--consume-pending` | Consume pending export flag and run batched export             |
+| Option              | Description                                                   |
+| ------------------- | ------------------------------------------------------------- |
+| `host`              | Optional host to sync (uses default app if not provided)      |
+| `--mode`, `-m`      | Sync direction: `auto` (default), `import`, `export`          |
+| `--entity`          | Entity type: `page`, `media`, `conversation`, `all` (default) |
+| `--force`, `-f`     | Force overwrite even if files are newer than DB               |
+| `--no-backup`       | Disable automatic database backup before import               |
+| `--consume-pending` | Consume pending export flag and run batched export            |
 
 **Examples:**
 
@@ -78,7 +77,7 @@ php bin/console pw:flat:sync --mode=export
 php bin/console pw:flat:sync example.tld --mode=import --entity=page
 
 # Export without adding IDs to files
-php bin/console pw:flat:sync --mode=export --skip-id
+php bin/console pw:flat:sync --mode=export
 
 # Import without creating a database backup
 php bin/console pw:flat:sync --mode=import --no-backup
@@ -379,9 +378,7 @@ content/media/illustration.jpg
 #### `kitchen-sink.md` example:
 
 ```yaml
-
 ---
-
 h1: 'Welcome in Kitchen Sink'
 locale: fr
 translations:
@@ -395,7 +392,6 @@ tags: 'demo example'
 publishedAt: '2025-01-15 10:00'
 
 ---
-
 My Page content Yeah !
 ```
 
@@ -424,22 +420,14 @@ The `translations` property handles the bidirectional many-to-many relationship 
 
 ```yaml
 # In fr/about.md - adds en/about as translation
-
 ---
-
 translations:
   - en/about
-
 ---
-
 # In en/about.md - no translations key, existing links preserved
-
 ---
-
 h1: About Us
-
 ---
-
 ```
 
 With this setup, both pages will be linked as translations of each other after sync.
