@@ -41,7 +41,7 @@ class PageRedirectionCrudController extends PageCrudController
                     ->setSortable(false)
                     ->renderAsHtml()
                     ->formatValue(fn (?string $value, Page $page): string => $this->formatFromColumn($page)),
-                TextField::new('redirection', 'adminPageRedirectionTo')
+                TextField::new('mainContent', 'adminPageRedirectionTo')
                     ->setSortable(false)
                     ->renderAsHtml()
                     ->formatValue(fn (?string $value, Page $page): string => $this->formatToColumn($page)),
