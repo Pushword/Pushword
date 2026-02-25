@@ -77,14 +77,12 @@ final class MediaSync
         $this->mediaImporter->resetIndex();
         $this->mediaImporter->loadIndex($csvPath);
 
-        // 2. Validate files exist and prepare renames
+        // 2. Validate files exist
         if ($this->mediaImporter->hasIndexData()) {
             $this->mediaImporter->validateFilesExist($this->mediaDir);
-            $this->mediaImporter->prepareFileRenames($this->mediaDir);
 
             if (file_exists($localMediaDir)) {
                 $this->mediaImporter->validateFilesExist($localMediaDir);
-                $this->mediaImporter->prepareFileRenames($localMediaDir);
             }
         }
 
@@ -419,7 +417,7 @@ final class MediaSync
 
     /**
      * Delete media that exist in DB but are missing from the CSV.
-     * Only runs if the index CSV was loaded and contains IDs.
+     * Only runs if the index CSV was loaded and contains fileNames.
      *
      * Must be called BEFORE importing new files to avoid deleting newly created media.
      */
@@ -430,11 +428,10 @@ final class MediaSync
             return;
         }
 
-        $importedIds = $this->mediaImporter->getImportedIds();
+        $importedFileNames = $this->mediaImporter->getImportedFileNames();
 
-        // If no IDs in CSV, don't delete anything
-        // This handles the case of fresh imports or CSVs with only new media
-        if ([] === $importedIds) {
+        // If no fileNames in CSV, don't delete anything
+        if ([] === $importedFileNames) {
             return;
         }
 
@@ -442,8 +439,7 @@ final class MediaSync
         $allMedia = $this->mediaRepository->findAll();
 
         foreach ($allMedia as $media) {
-            $mediaId = $media->id;
-            if (null !== $mediaId && ! \in_array($mediaId, $importedIds, true)) {
+            if (! \in_array($media->getFileName(), $importedFileNames, true)) {
                 $this->logger?->info('Deleting media `'.$media->getFileName().'`');
                 $this->output?->writeln(\sprintf('<comment>Deleting media %s</comment>', $media->getFileName()));
                 ++$this->deletedCount;

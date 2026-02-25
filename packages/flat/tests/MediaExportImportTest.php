@@ -17,7 +17,6 @@ use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaExporter;
 use Pushword\Flat\Importer\MediaImporter;
-use RuntimeException;
 
 use function Safe\sha1_file;
 
@@ -223,8 +222,8 @@ CSV;
         $originalHash = $media->getHash();
         self::assertNotNull($originalHash);
 
-        // Create index.csv with the media's ID so importer can find it
-        $indexCsv = "id,fileName,alt\n{$media->id},test-hash.pdf,Test PDF\n";
+        // Create index.csv so importer can find it
+        $indexCsv = "fileName,alt\ntest-hash.pdf,Test PDF\n";
         file_put_contents($this->testMediaDir.'/'.MediaExporter::CSV_FILE, $indexCsv);
 
         // Import same file - should be skipped (hash matches)
@@ -287,8 +286,8 @@ CSV;
         $em->persist($media);
         $em->flush();
 
-        // Create index.csv with the media's ID
-        $indexCsv = "id,fileName,alt\n{$media->id},test-no-reimport.txt,Test Doc\n";
+        // Create index.csv
+        $indexCsv = "fileName,alt\ntest-no-reimport.txt,Test Doc\n";
         file_put_contents($this->testMediaDir.'/'.MediaExporter::CSV_FILE, $indexCsv);
 
         /** @var MediaImporter $importer */
@@ -557,118 +556,6 @@ CSV;
         @unlink($mediaDir.'/test-roundtrip.png');
     }
 
-    public function testPrepareFileRenamesViaInMemoryStorage(): void
-    {
-        /** @var EntityManager $em */
-        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-
-        /** @var string $projectDir */
-        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
-
-        /** @var string $mediaDir */
-        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
-
-        $memStorage = $this->createInMemoryStorage($mediaDir);
-
-        // Create file on disk so MediaHashListener can hash it on persist
-        file_put_contents($mediaDir.'/old-name.pdf', 'PDF content');
-
-        // Create media entity with old filename
-        $media = new Media();
-        $media->setProjectDir($projectDir);
-        $media->setFileName('old-name.pdf');
-        $media->setAlt('Rename Test');
-        $media->setMimeType('application/pdf');
-        $media->setSize(11);
-        $media->setStoreIn($mediaDir);
-
-        $em->persist($media);
-        $em->flush();
-
-        $mediaId = $media->id;
-
-        // Write file with old name into in-memory storage
-        $memStorage->write('old-name.pdf', 'PDF content');
-
-        // Load index CSV with new name for the same ID
-        $csvContent = "id,fileName,alt\n{$mediaId},new-name.pdf,Rename Test\n";
-        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
-        $this->filesystem->dumpFile($csvPath, $csvContent);
-
-        $importer = $this->createImporterWithStorage($memStorage, $mediaDir, $projectDir);
-        $importer->resetIndex();
-        $importer->loadIndex($csvPath);
-
-        // Execute rename via Flysystem move()
-        $importer->prepareFileRenames($this->testMediaDir);
-
-        // Verify: old file gone, new file exists in in-memory storage
-        self::assertFalse($memStorage->fileExists('old-name.pdf'));
-        self::assertTrue($memStorage->fileExists('new-name.pdf'));
-        self::assertSame('PDF content', $memStorage->read('new-name.pdf'));
-
-        // Cleanup
-        $em->remove($media);
-        $em->flush();
-        @unlink($mediaDir.'/old-name.pdf');
-    }
-
-    public function testPrepareFileRenamesCollisionThrowsException(): void
-    {
-        /** @var EntityManager $em */
-        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-
-        /** @var string $projectDir */
-        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
-
-        /** @var string $mediaDir */
-        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
-
-        $memStorage = $this->createInMemoryStorage($mediaDir);
-
-        // Create file on disk so MediaHashListener can hash it on persist
-        file_put_contents($mediaDir.'/source.pdf', 'Source content');
-
-        // Create media entity
-        $media = new Media();
-        $media->setProjectDir($projectDir);
-        $media->setFileName('source.pdf');
-        $media->setAlt('Collision Test');
-        $media->setMimeType('application/pdf');
-        $media->setSize(14);
-        $media->setStoreIn($mediaDir);
-
-        $em->persist($media);
-        $em->flush();
-
-        $mediaId = $media->id;
-
-        // Write both source and target files into in-memory storage
-        $memStorage->write('source.pdf', 'Source content');
-        $memStorage->write('target.pdf', 'Existing target content');
-
-        // Index CSV renames source -> target (collision)
-        $csvContent = "id,fileName,alt\n{$mediaId},target.pdf,Collision Test\n";
-        $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
-        $this->filesystem->dumpFile($csvPath, $csvContent);
-
-        $importer = $this->createImporterWithStorage($memStorage, $mediaDir, $projectDir);
-        $importer->resetIndex();
-        $importer->loadIndex($csvPath);
-
-        try {
-            $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessageMatches('/target file already exists/');
-
-            $importer->prepareFileRenames($this->testMediaDir);
-        } finally {
-            // Cleanup even if exception is thrown
-            $em->remove($media);
-            $em->flush();
-            @unlink($mediaDir.'/source.pdf');
-        }
-    }
-
     public function testValidateFilesExistChecksInMemoryStorage(): void
     {
         /** @var EntityManager $em */
@@ -711,7 +598,7 @@ CSV;
         $memStorage->write('exists-in-storage.pdf', 'PDF content');
 
         // Index CSV references both files
-        $csvContent = "id,fileName,alt\n{$media1->id},exists-in-storage.pdf,Exists\n{$media2->id},missing-everywhere.pdf,Missing\n";
+        $csvContent = "fileName,alt\nexists-in-storage.pdf,Exists\nmissing-everywhere.pdf,Missing\n";
         $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
         $this->filesystem->dumpFile($csvPath, $csvContent);
 
@@ -829,8 +716,8 @@ CSV;
 
         $mediaId = $media->id;
 
-        // Index CSV with the media's ID
-        $csvContent = "id,fileName,alt\n{$mediaId},test-hash-remote.txt,Hash Remote Test\n";
+        // Index CSV
+        $csvContent = "fileName,alt\ntest-hash-remote.txt,Hash Remote Test\n";
         $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;
         $this->filesystem->dumpFile($csvPath, $csvContent);
 

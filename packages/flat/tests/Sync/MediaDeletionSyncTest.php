@@ -103,7 +103,7 @@ final class MediaDeletionSyncTest extends KernelTestCase
         $exporter->exportMedias();
 
         // Remove media2 row from CSV (keep only media1)
-        $csvContent = "id,fileName,alt,tags\n{$media1Id},del-test-1.txt,Delete Test 1,\n";
+        $csvContent = "fileName,alt,tags\ndel-test-1.txt,Delete Test 1,\n";
         new Filesystem()->dumpFile($this->getMediaCsvPath(), $csvContent);
 
         // Import - should delete media2
@@ -124,7 +124,7 @@ final class MediaDeletionSyncTest extends KernelTestCase
         $this->em->flush();
     }
 
-    public function testMediaNotDeletedWhenCsvHasNoIds(): void
+    public function testImportedFileNamesTrackedFromCsv(): void
     {
         /** @var string $projectDir */
         $projectDir = self::getContainer()->getParameter('kernel.project_dir');
@@ -132,20 +132,17 @@ final class MediaDeletionSyncTest extends KernelTestCase
         /** @var string $mediaDir */
         $mediaDir = self::getContainer()->getParameter('pw.media_dir');
 
-        $media = $this->createMediaEntity('no-id-test.txt', 'No ID Test', $mediaDir, $projectDir);
+        $media = $this->createMediaEntity('tracked-test.txt', 'Tracked Test', $mediaDir, $projectDir);
         $this->em->flush();
-        $mediaId = $media->id;
 
-        // Create CSV without ID column
-        new Filesystem()->dumpFile($this->getMediaCsvPath(), "fileName,alt\nno-id-test.txt,No ID Test\n");
+        new Filesystem()->dumpFile($this->getMediaCsvPath(), "fileName,alt\ntracked-test.txt,Tracked Test\n");
 
         /** @var MediaImporter $importer */
         $importer = self::getContainer()->get(MediaImporter::class);
         $importer->resetIndex();
         $importer->loadIndex($this->getMediaCsvPath());
 
-        // getImportedIds should be empty (no IDs in CSV)
-        self::assertSame([], $importer->getImportedIds(), 'No IDs should be tracked when CSV has no ID column');
+        self::assertSame(['tracked-test.txt'], $importer->getImportedFileNames());
 
         // Cleanup
         $this->em->remove($media);
@@ -165,7 +162,7 @@ final class MediaDeletionSyncTest extends KernelTestCase
         $mediaId = $media->id;
 
         // Create CSV with header only (no data rows)
-        new Filesystem()->dumpFile($this->getMediaCsvPath(), "id,fileName,alt,tags\n");
+        new Filesystem()->dumpFile($this->getMediaCsvPath(), "fileName,alt,tags\n");
 
         /** @var MediaSync $mediaSync */
         $mediaSync = self::getContainer()->get(MediaSync::class);
@@ -209,7 +206,7 @@ final class MediaDeletionSyncTest extends KernelTestCase
         $exporter->exportMedias();
 
         // Remove 3 of 5 from CSV (keep only 1 and 4)
-        $csvContent = "id,fileName,alt,tags\n{$ids[1]},multi-del-1.txt,Multi Delete 1,\n{$ids[4]},multi-del-4.txt,Multi Delete 4,\n";
+        $csvContent = "fileName,alt,tags\nmulti-del-1.txt,Multi Delete 1,\nmulti-del-4.txt,Multi Delete 4,\n";
         new Filesystem()->dumpFile($this->getMediaCsvPath(), $csvContent);
 
         /** @var MediaSync $mediaSync */

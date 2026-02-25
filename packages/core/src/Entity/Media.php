@@ -37,6 +37,7 @@ use Vich\UploaderBundle\Mapping\Attribute as Vich;
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: MediaRepository::class)]
 #[ORM\Table(name: 'media')]
+#[ORM\Index(name: 'idx_media_filename', columns: ['media'])]
 class Media implements IdInterface, Taggable, Stringable
 {
     use ExtensiblePropertiesTrait;

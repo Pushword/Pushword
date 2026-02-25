@@ -84,7 +84,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->tempFiles[] = $newFile;
 
         // Create CSV without the new file
-        $this->writeMediaCsv("id,fileName,alt,tags\n");
+        $this->writeMediaCsv("fileName,alt,tags\n");
 
         /** @var MediaSync $mediaSync */
         $mediaSync = self::getContainer()->get(MediaSync::class);
@@ -127,7 +127,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         file_put_contents($filePath, 'modified content that differs');
 
         // Create CSV with the media
-        $csvContent = "id,fileName,alt,tags\n{$mediaId},edge-hash-change.txt,Hash Change Test,\n";
+        $csvContent = "fileName,alt,tags\nedge-hash-change.txt,Hash Change Test,\n";
         $this->writeMediaCsv($csvContent);
 
         /** @var MediaSync $mediaSync */
@@ -156,7 +156,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->tempFiles[] = $filePath;
 
         // Create CSV with duplicate fileName
-        $csvContent = "id,fileName,alt,tags\n,edge-duplicate.txt,First Alt,\n,edge-duplicate.txt,Second Alt,\n";
+        $csvContent = "fileName,alt,tags\nedge-duplicate.txt,First Alt,\nedge-duplicate.txt,Second Alt,\n";
         $this->writeMediaCsv($csvContent);
 
         /** @var MediaImporter $importer */
@@ -188,7 +188,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->tempFiles[] = $filePath;
 
         // CSV with empty alt
-        $csvContent = "id,fileName,alt,tags\n,edge-empty-alt.txt,,\n";
+        $csvContent = "fileName,alt,tags\nedge-empty-alt.txt,,\n";
         $this->writeMediaCsv($csvContent);
 
         /** @var MediaImporter $importer */
@@ -220,7 +220,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->tempFiles[] = $filePath;
 
         // CSV with extra unknown columns
-        $csvContent = "id,fileName,alt,tags,customField1,customField2\n,edge-extra-cols.txt,Extra Cols Test,,value1,value2\n";
+        $csvContent = "fileName,alt,tags,customField1,customField2\nedge-extra-cols.txt,Extra Cols Test,,value1,value2\n";
         $this->writeMediaCsv($csvContent);
 
         /** @var MediaImporter $importer */

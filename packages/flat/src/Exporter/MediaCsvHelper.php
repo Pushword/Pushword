@@ -6,13 +6,13 @@ use JsonException;
 
 final class MediaCsvHelper
 {
-    public const array BASE_COLUMNS = ['id', 'fileName', 'alt', 'tags'];
+    public const array BASE_COLUMNS = ['fileName', 'alt', 'tags'];
 
     /** @var string[] Columns exported but not imported (auto-calculated from media file) */
     public const array DIMENSION_COLUMNS = ['width', 'height', 'ratio'];
 
     /** @var string[] Columns that should not be imported (read-only) */
-    public const array READ_ONLY_COLUMNS = ['id', 'width', 'height', 'ratio', 'fileNameHistory'];
+    public const array READ_ONLY_COLUMNS = ['width', 'height', 'ratio', 'fileNameHistory'];
 
     public const string ALT_COLUMN_PREFIX = 'alt_';
 
