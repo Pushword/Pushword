@@ -158,6 +158,48 @@ final class FlatLockManagerTest extends TestCase
         self::assertFalse($this->manager->isManualLock($host));
     }
 
+    public function testReleaseAutoLockReleasesAutoLock(): void
+    {
+        $host = 'test.example.com';
+
+        $this->manager->acquireLock($host, 'some reason'); // auto lock
+        self::assertTrue($this->manager->isLocked($host));
+
+        $this->manager->releaseAutoLock($host);
+        self::assertFalse($this->manager->isLocked($host));
+    }
+
+    public function testReleaseAutoLockPreservesManualLock(): void
+    {
+        $host = 'test.example.com';
+
+        $this->manager->acquireLock($host, FlatLockManager::LOCK_TYPE_MANUAL);
+        self::assertTrue($this->manager->isLocked($host));
+
+        $this->manager->releaseAutoLock($host);
+        self::assertTrue($this->manager->isLocked($host));
+        self::assertTrue($this->manager->isManualLock($host));
+    }
+
+    public function testReleaseAutoLockPreservesWebhookLock(): void
+    {
+        $host = 'test.example.com';
+
+        $this->manager->acquireWebhookLock($host, 'deploy in progress');
+        self::assertTrue($this->manager->isLocked($host));
+
+        $this->manager->releaseAutoLock($host);
+        self::assertTrue($this->manager->isLocked($host));
+        self::assertTrue($this->manager->isWebhookLocked($host));
+    }
+
+    public function testReleaseAutoLockNoopWhenNoLock(): void
+    {
+        // Should not throw
+        $this->manager->releaseAutoLock('nonexistent.example.com');
+        self::assertFalse($this->manager->isLocked('nonexistent.example.com'));
+    }
+
     public function testNullHostUsesDefault(): void
     {
         $this->manager->acquireLock(null, 'manual');

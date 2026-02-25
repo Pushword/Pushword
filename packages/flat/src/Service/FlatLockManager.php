@@ -155,6 +155,17 @@ final readonly class FlatLockManager
     }
 
     /**
+     * Release the lock only if it's an auto-lock (preserves manual/webhook locks).
+     */
+    public function releaseAutoLock(?string $host = null): void
+    {
+        $lockInfo = $this->getLockInfo($host);
+        if (null !== $lockInfo && self::LOCK_TYPE_AUTO === $lockInfo['lockedBy']) {
+            $this->releaseLock($host);
+        }
+    }
+
+    /**
      * Refresh an auto lock (update timestamp).
      * Only works for auto locks, not manual ones.
      */

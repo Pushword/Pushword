@@ -88,7 +88,7 @@ final readonly class GitAutoCommitter
     }
 
     /**
-     * @param string[]                                                     $args
+     * @param string[]                                                    $args
      * @param list<array{command: string, success: bool, output: string}> &$steps
      */
     private function runStep(string $gitDir, array $args, string $label, array &$steps): bool

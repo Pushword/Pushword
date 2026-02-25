@@ -10,6 +10,7 @@ use Pushword\Core\Service\SharedOutputInterface;
 use Pushword\Core\Service\TeeOutput;
 use Pushword\Flat\FlatFileSync;
 use Pushword\Flat\Service\DeferredExportProcessor;
+use Pushword\Flat\Service\FlatChangeDetector;
 use Pushword\Flat\Service\FlatLockManager;
 use Pushword\Flat\Service\GitAutoCommitter;
 use Symfony\Component\Console\Attribute\Argument;
@@ -38,6 +39,7 @@ final readonly class FlatFileSyncCommand
         private BackgroundProcessManager $processManager,
         private ProcessOutputStorage $outputStorage,
         private FlatLockManager $lockManager,
+        private FlatChangeDetector $changeDetector,
         private Filesystem $filesystem,
         private DeferredExportProcessor $deferredExportProcessor,
         private GitAutoCommitter $gitAutoCommitter,
@@ -142,6 +144,13 @@ final readonly class FlatFileSyncCommand
             $this->printTimingBreakdown($teeOutput);
 
             $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+
+            // Release auto-lock and invalidate change detector cache for synced hosts
+            $syncedHosts = null !== $host ? [$host] : $this->flatFileSync->getHosts();
+            foreach ($syncedHosts as $syncedHost) {
+                $this->lockManager->releaseAutoLock($syncedHost);
+                $this->changeDetector->invalidateCache($syncedHost);
+            }
 
             $this->outputStorage->setStatus(self::PROCESS_TYPE, 'completed');
 
