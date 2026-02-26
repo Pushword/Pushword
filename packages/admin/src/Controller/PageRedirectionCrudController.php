@@ -15,6 +15,9 @@ use LogicException;
 use Override;
 use Pushword\Core\Entity\Page;
 
+/**
+ * @extends PageCrudController<Page>
+ */
 class PageRedirectionCrudController extends PageCrudController
 {
     protected const FORM_FIELD_KEY = 'admin_redirection_form_fields';

@@ -2,16 +2,13 @@
 
 namespace Pushword\Admin\Controller;
 
-use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\CrudMenuItem;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\ControllerMenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\RouteMenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
-use Pushword\Core\Entity\EntityClassRegistry;
-use Pushword\Core\Entity\Media;
-use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -48,7 +45,7 @@ final readonly class AdminMenu
 
         yield [
             'weight' => 800,
-            'item' => MenuItem::linkToCrud('adminLabelMedia', 'fas fa-images', Media::class),
+            'item' => MenuItem::linkTo(MediaCrudController::class, 'adminLabelMedia', 'fas fa-images'),
         ];
 
         yield [
@@ -58,7 +55,7 @@ final readonly class AdminMenu
 
         yield [
             'weight' => 700,
-            'item' => MenuItem::linkToCrud('adminLabelUsers', 'fas fa-users', EntityClassRegistry::getUserClass()),
+            'item' => MenuItem::linkTo(UserCrudController::class, 'adminLabelUsers', 'fas fa-users'),
         ];
 
         yield [
@@ -145,13 +142,11 @@ final readonly class AdminMenu
         $hasMultipleHostsOrLocales = $this->hasMultipleHostsOrLocales();
 
         if (! $hasMultipleHostsOrLocales) {
-            return MenuItem::linkToCrud('adminLabelContent', 'fas fa-file', Page::class)
-                ->setController(PageCrudController::class);
+            return MenuItem::linkTo(PageCrudController::class, 'adminLabelContent', 'fas fa-file');
         }
 
-        $listItem = MenuItem::linkToCrud('adminLabelList', 'fas fa-list', Page::class)
-            ->setCssClass('d-none')
-            ->setController(PageCrudController::class);
+        $listItem = MenuItem::linkTo(PageCrudController::class, 'adminLabelList', 'fas fa-list')
+            ->setCssClass('d-none');
         $subItems = [$listItem];
 
         foreach ($hosts as $host) {
@@ -179,13 +174,11 @@ final readonly class AdminMenu
         $hasMultipleHostsOrLocales = $this->hasMultipleHostsOrLocales();
 
         if (! $hasMultipleHostsOrLocales) {
-            return MenuItem::linkToCrud('adminLabelRedirection', 'fa fa-random', Page::class)
-                ->setController(PageRedirectionCrudController::class);
+            return MenuItem::linkTo(PageRedirectionCrudController::class, 'adminLabelRedirection', 'fa fa-random');
         }
 
-        $listItem = MenuItem::linkToCrud('adminLabelList', 'fas fa-list', Page::class)
-            ->setCssClass('d-none')
-            ->setController(PageRedirectionCrudController::class);
+        $listItem = MenuItem::linkTo(PageRedirectionCrudController::class, 'adminLabelList', 'fas fa-list')
+            ->setCssClass('d-none');
         $subItems = [$listItem];
 
         foreach ($hosts as $host) {
@@ -214,7 +207,7 @@ final readonly class AdminMenu
     }
 
     /**
-     * @return CrudMenuItem[]
+     * @return ControllerMenuItem[]
      */
     private function createHostMenuItems(string $host, string $controller): array
     {
@@ -233,12 +226,11 @@ final readonly class AdminMenu
         return $items;
     }
 
-    private function createHostLocaleMenuItem(string $host, ?string $locale, string $controller): CrudMenuItem
+    private function createHostLocaleMenuItem(string $host, ?string $locale, string $controller): ControllerMenuItem
     {
         $label = null !== $locale ? $host.' ('.$locale.')' : $host;
 
-        $menuItem = MenuItem::linkToCrud($label, 'fa fa-globe', Page::class)
-            ->setController($controller)
+        $menuItem = MenuItem::linkTo($controller, $label, 'fa fa-globe')
             ->setQueryParameter('filters[host]', [
                 'comparison' => '=',
                 'value' => $host,

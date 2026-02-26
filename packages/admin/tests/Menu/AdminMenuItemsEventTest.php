@@ -4,15 +4,15 @@ namespace Pushword\Admin\Tests\Menu;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use PHPUnit\Framework\TestCase;
+use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
-use Pushword\Core\Entity\Page;
 
 class AdminMenuItemsEventTest extends TestCase
 {
     public function testAddMenuItem(): void
     {
         $event = new AdminMenuItemsEvent();
-        $menuItem = MenuItem::linkToCrud('Test', 'fa fa-test', Page::class);
+        $menuItem = MenuItem::linkTo(PageCrudController::class, 'Test', 'fa fa-test');
 
         $event->addMenuItem($menuItem, 100);
 
@@ -25,8 +25,8 @@ class AdminMenuItemsEventTest extends TestCase
     public function testAddMultipleMenuItems(): void
     {
         $event = new AdminMenuItemsEvent();
-        $item1 = MenuItem::linkToCrud('Item 1', 'fa fa-1', Page::class);
-        $item2 = MenuItem::linkToCrud('Item 2', 'fa fa-2', Page::class);
+        $item1 = MenuItem::linkTo(PageCrudController::class, 'Item 1', 'fa fa-1');
+        $item2 = MenuItem::linkTo(PageCrudController::class, 'Item 2', 'fa fa-2');
 
         $event->addMenuItem($item1, 100);
         $event->addMenuItem($item2, 200);
@@ -40,8 +40,8 @@ class AdminMenuItemsEventTest extends TestCase
     public function testSetItems(): void
     {
         $event = new AdminMenuItemsEvent();
-        $item1 = MenuItem::linkToCrud('Item 1', 'fa fa-1', Page::class);
-        $item2 = MenuItem::linkToCrud('Item 2', 'fa fa-2', Page::class);
+        $item1 = MenuItem::linkTo(PageCrudController::class, 'Item 1', 'fa fa-1');
+        $item2 = MenuItem::linkTo(PageCrudController::class, 'Item 2', 'fa fa-2');
 
         $event->addMenuItem($item1, 100);
 
@@ -60,7 +60,7 @@ class AdminMenuItemsEventTest extends TestCase
     public function testDefaultWeight(): void
     {
         $event = new AdminMenuItemsEvent();
-        $menuItem = MenuItem::linkToCrud('Test', 'fa fa-test', Page::class);
+        $menuItem = MenuItem::linkTo(PageCrudController::class, 'Test', 'fa fa-test');
 
         $event->addMenuItem($menuItem);
 

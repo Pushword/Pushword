@@ -1,3 +1,7 @@
+easyadmin:
+    resource: .
+    type: easyadmin.routes
+
 pushword_flat:
     resource: "@PushwordFlatBundle/FlatRoutes.yaml"
 

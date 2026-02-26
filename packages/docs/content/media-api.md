@@ -7,17 +7,11 @@ toc: true
 
 A JSON API to read and update media metadata (alt text, localized alts, tags) without the admin UI. Useful for scripted workflows and external tooling.
 
-## Authentication {id=authentication}
+{id=authentication}
+## Authentication
 
 All requests require a Bearer token in the `Authorization` header. The token is matched against the `apiToken` field of the `User` entity.
-
-### Generate a token
-
-```bash
-php bin/console dbal:run-sql "UPDATE user SET api_token = 'your-secret-token' WHERE email = 'admin@example.tld'"
-```
-
-Or generate one programmatically via `User::generateApiToken()`.
+ 
 
 ### Usage
 
@@ -25,7 +19,8 @@ Or generate one programmatically via `User::generateApiToken()`.
 curl -H "Authorization: Bearer your-secret-token" https://example.com/api/media/photo.jpg
 ```
 
-## Endpoints {id=endpoints}
+{id=endpoints}
+## Endpoints 
 
 ### GET /api/media/{filename}
 
@@ -59,12 +54,12 @@ Partial update — only the fields you send are modified.
 
 **Updatable fields (all optional):**
 
-| Field      | Type              | Description                        |
-|------------|-------------------|------------------------------------|
-| `alt`      | string            | Main alt text                      |
-| `alts`     | object            | Localized alts (`{"fr": "..."}`)   |
-| `tags`     | string[]          | Tag list                           |
-| `filename` | string            | Rename the file (old name is kept in history) |
+| Field      | Type     | Description                                   |
+| ---------- | -------- | --------------------------------------------- |
+| `alt`      | string   | Main alt text                                 |
+| `alts`     | object   | Localized alts (`{"fr": "..."}`)              |
+| `tags`     | string[] | Tag list                                      |
+| `filename` | string   | Rename the file (old name is kept in history) |
 
 **Example:**
 
@@ -80,8 +75,8 @@ Returns the full updated metadata (same format as GET).
 
 ## Error Responses {id=errors}
 
-| Status | Meaning                             |
-|--------|-------------------------------------|
-| 401    | Missing or invalid Bearer token     |
-| 404    | No media found for this filename    |
-| 400    | Invalid JSON body (POST only)       |
+| Status | Meaning                          |
+| ------ | -------------------------------- |
+| 401    | Missing or invalid Bearer token  |
+| 404    | No media found for this filename |
+| 400    | Invalid JSON body (POST only)    |
