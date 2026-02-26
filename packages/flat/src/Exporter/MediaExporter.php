@@ -51,7 +51,7 @@ final class MediaExporter
         $header = array_merge(
             MediaCsvHelper::BASE_COLUMNS,
             MediaCsvHelper::DIMENSION_COLUMNS,
-            ['fileNameHistory'],
+            ['fileNameHistory', 'updatedAt'],
             $altLocaleColumns,
             $customColumns,
         );
@@ -172,6 +172,7 @@ final class MediaExporter
             'height' => null !== $media->getHeight() ? (string) $media->getHeight() : '',
             'ratio' => null !== $media->getRatio() ? (string) $media->getRatio() : '',
             'fileNameHistory' => [] !== $fileNameHistory ? implode(',', $fileNameHistory) : '',
+            'updatedAt' => $media->getUpdatedAtNullable()?->format('Y-m-d H:i:s') ?? '',
         ];
 
         // Add localized alts
