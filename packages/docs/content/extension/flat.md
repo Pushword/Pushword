@@ -361,7 +361,7 @@ Contains media metadata with the following columns:
 
 ### Write
 
-By default, the content is organized in `content/{main_host}/` and images in `content/{main_host}/media` or in `media/`.
+By default, the content is organized in `content/{main_host}/` and images can be placed in either `content/{main_host}/media/` or in the storage directory `media/` (at project root). Both locations are scanned during import.
 
 Example structure:
 
@@ -449,7 +449,7 @@ Here is what happens for typical editing workflows after running `pw:flat:sync -
 
 #### Media
 
-- **Drop a new image into `media/`** — the image is imported as a new media entity. If it exceeds 1980x1280 pixels, it is automatically resized down. A new row appears in `media/index.csv` after sync.
+- **Drop a new image into `media/`** (either `content/{host}/media/` or the storage directory `media/` at project root) — the image is imported as a new media entity. If it exceeds 1980x1280 pixels, it is automatically resized down. A new row appears in `media/index.csv` after sync.
 - **Drop a duplicate image** (same content as an existing media) — the duplicate file is **deleted**. The existing media's `fileNameHistory` is updated. No new entity is created.
 - **Replace an image** (same filename, different content) — the media entity is updated with the new file's hash, dimensions, and size.
 - **Delete an image from disk** — the media entity is **deleted from the database**. The row is removed from `media/index.csv` on next sync.
