@@ -837,7 +837,7 @@ CSV;
         /** @var ImageCacheManager $imageCacheManager */
         $imageCacheManager = self::getContainer()->get(ImageCacheManager::class);
 
-        return new MediaImporter($em, $apps, $mediaDir, $projectDir, $storage, $thumbnailGenerator, $imageCacheManager);
+        return new MediaImporter($em, $apps, $mediaDir, $projectDir, $storage, $thumbnailGenerator, $imageCacheManager, $em->getRepository(Media::class));
     }
 
     private function createExporterWithStorage(MediaStorageAdapter $storage): MediaExporter

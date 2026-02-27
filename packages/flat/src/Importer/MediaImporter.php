@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ThumbnailGenerator;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaCsvHelper;
@@ -50,10 +51,16 @@ class MediaImporter extends AbstractImporter
         private readonly MediaStorageAdapter $mediaStorage,
         private readonly ThumbnailGenerator $thumbnailGenerator,
         private readonly ImageCacheManager $imageCacheManager,
+        private readonly MediaRepository $mediaRepository,
         private readonly ?LoggerInterface $logger = null,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
         parent::__construct($em, $apps);
+    }
+
+    public function preloadMedia(): void
+    {
+        $this->mediaRepository->loadMedias();
     }
 
     private bool $newMedia = false;
@@ -226,7 +233,7 @@ class MediaImporter extends AbstractImporter
             return false;
         }
 
-        if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media)) {
+        if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media, $dateTime)) {
             ++$this->skippedCount;
 
             return false;
@@ -268,7 +275,7 @@ class MediaImporter extends AbstractImporter
             return false;
         }
 
-        if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media)) {
+        if (! $this->newMedia && ! $this->hasFileContentChanged($localPath, $media, $dateTime)) {
             ++$this->skippedCount;
 
             return false;
@@ -321,8 +328,12 @@ class MediaImporter extends AbstractImporter
         return $this->doImportMedia($media, $fileName, $filePath, \dirname($filePath), $dateTime);
     }
 
-    private function hasFileContentChanged(string $filePath, Media $media): bool
+    private function hasFileContentChanged(string $filePath, Media $media, ?DateTimeInterface $fileModifiedAt = null): bool
     {
+        if (null !== $fileModifiedAt && null !== $media->updatedAt && $fileModifiedAt <= $media->updatedAt) {
+            return false;
+        }
+
         return sha1_file($filePath, true) !== $this->getMediaHash($media);
     }
 
@@ -448,6 +459,7 @@ class MediaImporter extends AbstractImporter
 
         if ($this->newMedia) {
             $this->em->persist($media);
+            $this->mediaRepository->resetMediasByFileNameCache();
         }
     }
 
@@ -484,7 +496,7 @@ class MediaImporter extends AbstractImporter
     {
         $this->newMedia = false;
 
-        $mediaEntity = $this->em->getRepository(Media::class)->findOneBy(['fileName' => $fileName]);
+        $mediaEntity = $this->mediaRepository->findOneByFileName($fileName);
         if ($mediaEntity instanceof Media) {
             return $mediaEntity;
         }
@@ -541,7 +553,7 @@ class MediaImporter extends AbstractImporter
 
         // 1. Check missing files (renamed file detection)
         foreach ($this->missingFiles as $key => $missingFileName) {
-            $missingMedia = $this->em->getRepository(Media::class)->findOneBy(['fileName' => $missingFileName]);
+            $missingMedia = $this->mediaRepository->findOneByFileName($missingFileName);
             if (! $missingMedia instanceof Media) {
                 continue;
             }
@@ -549,6 +561,7 @@ class MediaImporter extends AbstractImporter
             if ($fileHash === $this->getMediaHash($missingMedia)) {
                 $this->logger?->info(\sprintf('Hash match: renamed file "%s" matches missing media "%s" (id: %s)', $newFileName, $missingFileName, $missingMedia->id));
                 $missingMedia->setFileName($newFileName);
+                $this->mediaRepository->resetMediasByFileNameCache();
                 unset($this->missingFiles[$key]);
                 $this->missingFiles = array_values($this->missingFiles);
 
@@ -557,7 +570,7 @@ class MediaImporter extends AbstractImporter
         }
 
         // 2. Check all existing media (duplicate detection)
-        $allMedia = $this->em->getRepository(Media::class)->findAll();
+        $allMedia = $this->mediaRepository->findAll();
         foreach ($allMedia as $existingMedia) {
             if ($existingMedia->getFileName() === $newFileName) {
                 continue; // Skip self-match

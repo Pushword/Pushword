@@ -21,7 +21,7 @@ trait ImageImporterTrait
 
     abstract protected function getMedia(string $media): Media;
 
-    abstract private function hasFileContentChanged(string $filePath, Media $media): bool;
+    abstract private function hasFileContentChanged(string $filePath, Media $media, ?DateTimeInterface $fileModifiedAt = null): bool;
 
     private const int MAX_IMAGE_WIDTH = 1980;
 
@@ -40,7 +40,7 @@ trait ImageImporterTrait
         }
 
         // Use hash comparison to detect real content changes
-        if (! $this->newMedia && ! $this->hasFileContentChanged($filePath, $media)) {
+        if (! $this->newMedia && ! $this->hasFileContentChanged($filePath, $media, $dateTime)) {
             ++$this->skippedCount;
 
             return false; // no update needed
