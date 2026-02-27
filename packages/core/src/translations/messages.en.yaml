@@ -6,6 +6,7 @@ errorTitle: 'Oops! An error...'
 feedAlternateTitle: Feed
 feedDescription: 'Last published page.'
 fr: Français
+mediaAltsInvalidYaml: "Invalid YAML format. Use: locale: text (e.g. en: my description). Escape apostrophes by doubling them (e.g. Ko''Ono)."
 mediaDuplicateWarning: 'The file seems to already be present on disk: <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Delete this duplicate version</a>'
 mediaNameWasChanged: 'Name was changed because another media has a similar name one.'
 navigationToggle: 'Toggle Navigation'

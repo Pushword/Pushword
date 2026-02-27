@@ -6,6 +6,7 @@ errorTitle: "Oops! Une erreur..."
 feedAlternateTitle: Flux
 feedDescription: "Dernière page publiée."
 fr: Français
+mediaAltsInvalidYaml: "Format YAML invalide. Utilisez : locale: texte (ex: fr: ma description). Échappez les apostrophes en les doublant (ex: Ko''Ono)."
 mediaDuplicateWarning: 'Ce fichier semble déjà présent sur le disque : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Supprimer ce doublon</a>'
 mediaNameWasChanged: "Le nom a été changé du fait d'un média similaire."
 navigationToggle: "Afficher/Cacher le menu"
