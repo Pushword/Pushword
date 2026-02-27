@@ -159,7 +159,7 @@ class PageCrudController extends AbstractAdminCrudController
      * @param Page $entityInstance
      */
     #[Override]
-    public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    public function persistEntity(EntityManagerInterface $entityManager, object $entityInstance): void
     {
         $this->setSubject($entityInstance);
         $this->syncAppContext($entityInstance);
@@ -173,7 +173,7 @@ class PageCrudController extends AbstractAdminCrudController
      * @param Page $entityInstance
      */
     #[Override]
-    public function updateEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    public function updateEntity(EntityManagerInterface $entityManager, object $entityInstance): void
     {
         $this->setSubject($entityInstance);
         $this->syncAppContext($entityInstance);

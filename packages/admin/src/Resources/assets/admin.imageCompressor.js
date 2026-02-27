@@ -34,7 +34,7 @@ function shouldCompress(file) {
  * @param {File} file - Original file
  * @returns {Promise<File>} - Scaled down file
  */
-async function scaleDownImage(file) {
+export async function scaleDownImage(file) {
   if (!shouldCompress(file)) {
     debugLog(MODULE_NAME, `Skipping scale down for ${file.name} (type: ${file.type})`)
     return file

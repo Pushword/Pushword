@@ -30,6 +30,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Yaml\Yaml;
+use Throwable;
 use Vich\UploaderBundle\Mapping\Attribute as Vich;
 
 #[Vich\Uploadable]
@@ -125,7 +126,7 @@ class Media implements IdInterface, Taggable, Stringable
 
         try {
             $parsed = Yaml::parse((string) $this->alts);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $executionContext
                 ->buildViolation('mediaAltsInvalidYaml')
                 ->atPath('alts')
