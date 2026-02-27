@@ -7,6 +7,10 @@
 
 {% block global_actions %}
   {{ parent() }}
+  <a href="{{ path('admin_media_multi_upload') }}" class="btn btn-primary ms-2">
+    <i class="fas fa-upload" aria-hidden="true"></i>
+    <span class="d-none d-sm-inline ms-1">{{ 'adminMediaMultiUpload'|trans }}</span>
+  </a>
   <div class="btn-group ms-2 media-view-switch" role="group" aria-label="{{ 'adminMediaViewLabel'|trans }}">
     <a href="{{ ea_url().set('view', null) }}"
        class="btn btn-secondary btn-outline-Save  {{ mosaicActive ? 'active' }}"
@@ -193,4 +197,5 @@
   {% else %}
     {{ parent() }}
   {% endif %}
+
 {% endblock %}

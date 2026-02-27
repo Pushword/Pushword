@@ -1,0 +1,86 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}{{ 'adminMediaMultiUpload'|trans }}{% endblock %}
+
+{% block main %}
+  <div id="pw-multi-upload"
+       data-upload-url="{{ path('admin_media_multi_upload_action') }}"
+       data-inline-update-url="{{ path('admin_media_multi_inline_update', {id: '__ID__'}) }}"
+       data-delete-url="{{ path('admin_media_multi_delete', {id: '__ID__'}) }}"
+       data-edit-url="{{ path('admin_media_edit', {entityId: '__ID__'}) }}"
+       data-csrf-token="{{ csrf_token('media_multi_upload') }}"
+       data-all-tags="{{ all_tags|json_encode }}">
+
+    <div id="pw-drop-zone" role="button" tabindex="0" aria-label="{{ 'adminMediaMultiUploadDrop'|trans }}">
+      <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color:#6c757d;"></i>
+      <p class="mb-1"><strong>{{ 'adminMediaMultiUploadDrop'|trans }}</strong></p>
+      <p class="text-muted mb-0"><small>{{ 'adminMediaMultiUploadOr'|trans }}</small></p>
+      <input type="file" id="pw-file-input" multiple style="display:none;">
+    </div>
+
+    <table id="pw-upload-table" class="table table-sm mt-4" style="display:none;">
+      <thead>
+        <tr>
+          <th style="width:55px;"></th>
+          <th>{{ 'adminMediaFileNameLabel'|trans }}</th>
+          <th>{{ 'adminMediaAltLabel'|trans }}</th>
+          <th>{{ 'adminMediaTagsLabel'|trans }}</th>
+          <th>{{ 'adminMediaAltsLabel'|trans }}</th>
+          <th>{{ 'adminMediaSizeLabel'|trans }}</th>
+          <th>{{ 'adminMediaDimensionsLabel'|trans }}</th>
+          <th style="width:70px;"></th>
+        </tr>
+      </thead>
+      <tbody id="pw-upload-tbody"></tbody>
+    </table>
+  </div>
+
+  <style>
+    #pw-drop-zone {
+      border: 2px dashed #ced4da;
+      border-radius: 8px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    #pw-drop-zone.dragover {
+      border-color: #0d6efd;
+      background: rgba(13,110,253,.05);
+    }
+    #pw-upload-table input,
+    #pw-upload-table textarea {
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 2px 4px;
+      width: 100%;
+      border-radius: 3px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    #pw-upload-table input:focus,
+    #pw-upload-table textarea:focus {
+      border-color: #86b7fe;
+      background: #fff;
+      outline: none;
+      text-overflow: unset;
+      overflow: visible;
+      white-space: normal;
+      position: relative;
+      z-index: 1;
+    }
+    #pw-upload-table textarea { resize: vertical; min-height: 32px; height: 32px; }
+    #pw-upload-table textarea:focus { min-height: 60px; }
+    #pw-upload-table .pw-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; }
+    .pw-status-ok { color: #198754; }
+    .pw-status-err { color: #dc3545; }
+    .pw-status-spin { display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: #0d6efd; border-radius: 50%; animation: pw-spin .6s linear infinite; }
+    @keyframes pw-spin { to { transform: rotate(360deg); } }
+    .pw-row-actions { white-space: nowrap; }
+    .pw-row-actions .btn { padding: 2px 6px; font-size: 12px; }
+    .pw-filename-cell { white-space: nowrap; }
+    .pw-filename-cell input { display: inline-block; width: auto; max-width: calc(100% - 30px); font-family: monospace; font-size: 13px; }
+    .pw-ext { font-size: 12px; vertical-align: middle; font-family: monospace; }
+  </style>
+{% endblock %}

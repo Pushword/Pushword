@@ -43,7 +43,7 @@ class AdminMenuTest extends KernelTestCase
             $this->appPool,
             $this->adminContextProvider,
             $this->requestStack,
-            $this->eventDispatcher
+            $this->eventDispatcher,
         );
     }
 

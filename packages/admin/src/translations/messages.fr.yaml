@@ -44,16 +44,21 @@ adminMediaAltsLabel: Traduction
 adminMediaCreatedAtLabel: "Date d'upload"
 adminMediaDimensionsIntFilterLabel: 'Largeur/hauteur (px)'
 adminMediaDimensionsLabel: Dimensions
+adminMediaFileNameLabel: 'Nom du fichier'
 adminMediaFiletypeLabel: 'Type de fichiers'
 adminMediaMainColorLabel: 'Couleur Principale'
 adminMediaMediaFileLabel: Fichier
 adminMediaMosaicEmpty: 'Aucun média ne correspond à votre recherche.'
+adminMediaMultiUpload: "Multi Upload"
+adminMediaMultiUploadDrop: "Déposez vos fichiers ici"
+adminMediaMultiUploadOr: "ou cliquez pour parcourir"
 adminMediaPickerChoose: Choisir
 adminMediaPickerEmpty: 'Aucune image sélectionnée'
 adminMediaPickerRemove: Supprimer
 adminMediaPickerTitle: 'Bibliothèque média'
 adminMediaPickerUpload: Importer
 adminMediaPreviewDominantColor: 'Couleur dominante'
+adminMediaPreviewHistory: "Anciens noms de fichier"
 adminMediaPreviewJson: JSON
 adminMediaPreviewLabel: Aperçu
 adminMediaPreviewMarkdown: Markdown
