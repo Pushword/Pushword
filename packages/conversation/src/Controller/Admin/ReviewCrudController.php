@@ -23,9 +23,6 @@ use Pushword\Conversation\Entity\Review;
 use function sprintf;
 use function str_repeat;
 
-/**
- * @extends ConversationCrudController<Review>
- */
 final class ReviewCrudController extends ConversationCrudController
 {
     #[Override]

@@ -140,6 +140,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
                     $this->relativeSymlink($sourcePath, $targetPath);
                 } else {
                     $this->filesystem->mirror($sourcePath, $targetPath);
+                    $this->resolveSymlinksInDirectory($targetPath);
                 }
 
                 continue;
@@ -165,6 +166,36 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
                     // Copy the actual file content (resolve symlink)
                     $this->filesystem->copy($sourcePath, $targetPath);
                 }
+            }
+        }
+    }
+
+    /**
+     * Replace symlinks with real file copies, remove broken symlinks.
+     */
+    private function resolveSymlinksInDirectory(string $dir): void
+    {
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+        );
+
+        /** @var \SplFileInfo $file */
+        foreach ($iterator as $file) {
+            $path = $file->getPathname();
+            if (! is_link($path)) {
+                continue;
+            }
+
+            if (! $this->filesystem->exists($path)) {
+                $this->filesystem->remove($path);
+
+                continue;
+            }
+
+            $realPath = realpath($path);
+            if (false !== $realPath) {
+                $this->filesystem->remove($path);
+                $this->filesystem->copy($realPath, $path);
             }
         }
     }

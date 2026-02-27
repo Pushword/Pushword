@@ -29,9 +29,7 @@ final class MediaApiControllerTest extends WebTestCase
     {
         $this->client = self::createClient();
 
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        $this->em = $em;
+        $this->em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $this->ensureMediaFileExists();
 
@@ -92,7 +90,6 @@ final class MediaApiControllerTest extends WebTestCase
         $content = $this->client->getResponse()->getContent();
         self::assertIsString($content);
 
-        /** @var array<string, mixed> $response */
         $response = json_decode($content, true);
         self::assertIsArray($response);
         self::assertSame('piedweb-logo.png', $response['filename']);
@@ -116,7 +113,6 @@ final class MediaApiControllerTest extends WebTestCase
         $content = $this->client->getResponse()->getContent();
         self::assertIsString($content);
 
-        /** @var array<string, mixed> $response */
         $response = json_decode($content, true);
         self::assertIsArray($response);
         self::assertSame('Updated alt text', $response['alt']);
@@ -135,7 +131,6 @@ final class MediaApiControllerTest extends WebTestCase
         $content = $this->client->getResponse()->getContent();
         self::assertIsString($content);
 
-        /** @var array<string, mixed> $response */
         $response = json_decode($content, true);
         self::assertIsArray($response);
         self::assertSame($alts, $response['alts']);
@@ -154,7 +149,6 @@ final class MediaApiControllerTest extends WebTestCase
         $content = $this->client->getResponse()->getContent();
         self::assertIsString($content);
 
-        /** @var array<string, mixed> $response */
         $response = json_decode($content, true);
         self::assertIsArray($response);
         self::assertIsArray($response['tags']);

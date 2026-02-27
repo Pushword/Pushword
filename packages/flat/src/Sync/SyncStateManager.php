@@ -7,6 +7,7 @@ namespace Pushword\Flat\Sync;
 use function Safe\json_decode;
 use function Safe\json_encode;
 
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -152,7 +153,11 @@ final readonly class SyncStateManager
             return [];
         }
 
-        $content = $this->filesystem->readFile($filePath);
+        try {
+            $content = $this->filesystem->readFile($filePath);
+        } catch (IOException) {
+            return [];
+        }
 
         /** @var array<string, mixed> */
         return json_decode($content, true);
@@ -179,7 +184,11 @@ final readonly class SyncStateManager
             return [];
         }
 
-        $content = $this->filesystem->readFile($filePath);
+        try {
+            $content = $this->filesystem->readFile($filePath);
+        } catch (IOException) {
+            return [];
+        }
 
         /** @var array<int, array<string, mixed>> */
         return json_decode($content, true);

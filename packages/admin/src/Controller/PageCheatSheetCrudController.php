@@ -8,9 +8,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use Override;
 use Pushword\Core\Entity\Page;
 
-/**
- * @extends PageCrudController<Page>
- */
 class PageCheatSheetCrudController extends PageCrudController
 {
     final public const string CHEATSHEET_SLUG = 'pushword-cheatsheet';

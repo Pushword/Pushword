@@ -121,6 +121,10 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->em->persist($media);
         $this->em->flush();
 
+        // Backdate updatedAt so mtime skip doesn't short-circuit hash check
+        $media->updatedAt = new DateTime('-1 hour');
+        $this->em->flush();
+
         $mediaId = $media->id;
 
         // Modify file content
