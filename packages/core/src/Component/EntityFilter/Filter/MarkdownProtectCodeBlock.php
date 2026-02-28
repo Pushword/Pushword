@@ -24,6 +24,17 @@ final class MarkdownProtectCodeBlock
             $text // @phpstan-ignore-line
         ) ?? $text;
 
+        $text = preg_replace_callback(
+            '/^<pre(?:\s[^>]*)?>.*?<\/pre>(\n\n|$)/ms',
+            static function (array $matches) use (&$codeBlocks, &$i): string {
+                $placeholder = '___CODE_BLOCK_PLACEHOLDER_'.($i++).'___';
+                $codeBlocks[$placeholder] = trim($matches[0]);
+
+                return $placeholder."\n\n";
+            },
+            $text // @phpstan-ignore-line
+        ) ?? $text;
+
         $this->codeBlocks = $codeBlocks;
 
         assert(is_string($text));
