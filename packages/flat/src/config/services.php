@@ -36,9 +36,13 @@ return static function (ContainerConfigurator $container): void {
     $services->instanceof(FlatPropertyConverterInterface::class)
         ->tag('pushword.flat.property_converter');
 
+    $messengerAvailable = interface_exists(\Symfony\Component\Messenger\MessageBusInterface::class);
+    $messengerExclude = $messengerAvailable ? [] : [__DIR__.'/../Messenger/'];
+
     $services->load('Pushword\Flat\\', __DIR__.'/../../src/')
         ->exclude([
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
+            ...$messengerExclude,
         ]);
 
     // PageSync configuration
@@ -79,6 +83,7 @@ return static function (ContainerConfigurator $container): void {
     // DeferredExportProcessor configuration
     $services->set(DeferredExportProcessor::class)
         ->arg('$varDir', '%kernel.project_dir%/var')
+        ->arg('$messageBus', service(\Symfony\Component\Messenger\MessageBusInterface::class)->nullOnInvalid())
         ->arg('$autoExportEnabled', '%pw.pushword_flat.auto_export_enabled%')
         ->arg('$debounceDelay', '%pw.pushword_flat.export_debounce_delay%');
 

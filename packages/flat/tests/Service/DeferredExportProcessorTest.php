@@ -6,6 +6,7 @@ namespace Pushword\Flat\Tests\Service;
 
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\Service\DeferredExportProcessor;
@@ -19,12 +20,15 @@ final class DeferredExportProcessorTest extends KernelTestCase
 {
     private string $tempDir;
 
+    private BackgroundTaskDispatcherInterface $backgroundTaskDispatcher;
+
     private MessageBusInterface $messageBus;
 
     #[Override]
     protected function setUp(): void
     {
         $kernel = self::bootKernel();
+        $this->backgroundTaskDispatcher = $kernel->getContainer()->get(BackgroundTaskDispatcherInterface::class);
         $this->messageBus = $kernel->getContainer()->get('messenger.default_bus');
 
         $this->tempDir = sys_get_temp_dir().'/deferred-export-test-'.uniqid();
@@ -44,10 +48,12 @@ final class DeferredExportProcessorTest extends KernelTestCase
 
     private function createProcessor(
         bool $autoExportEnabled = true,
+        bool $withMessenger = true,
     ): DeferredExportProcessor {
         return new DeferredExportProcessor(
             $this->tempDir,
-            $this->messageBus,
+            $this->backgroundTaskDispatcher,
+            $withMessenger ? $this->messageBus : null,
             $autoExportEnabled,
         );
     }
@@ -165,7 +171,7 @@ final class DeferredExportProcessorTest extends KernelTestCase
         $processor->processQueue();
 
         // Second save: media on host-b (simulated by creating new processor with same varDir)
-        $processor2 = new DeferredExportProcessor($this->tempDir, $this->messageBus);
+        $processor2 = new DeferredExportProcessor($this->tempDir, $this->backgroundTaskDispatcher, $this->messageBus);
         $processor2->queue($this->createMedia(2), 'create');
         $processor2->queue($this->createPage(3, 'host-b.com'), 'update');
         $processor2->processQueue();
@@ -246,6 +252,49 @@ final class DeferredExportProcessorTest extends KernelTestCase
         self::assertCount(2, $queue);
         self::assertSame('host-a.com', $queue['page_1']['host']);
         self::assertSame('host-b.com', $queue['page_2']['host']);
+    }
+
+    public function testProcessQueueFallsBackToBackgroundTaskDispatcherWithoutMessenger(): void
+    {
+        $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
+        $dispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(
+                'flat-deferred-export',
+                ['pw:flat:sync', '--consume-pending'],
+                'pw:flat:sync --consume-pending',
+            );
+
+        $processor = new DeferredExportProcessor(
+            $this->tempDir,
+            $dispatcher,
+            null,
+        );
+
+        $processor->queue($this->createPage(1, 'example.com'), 'update');
+        $processor->processQueue();
+
+        $flag = $processor->readPendingFlag();
+        self::assertNotNull($flag);
+        self::assertContains('page', $flag['entityTypes']);
+    }
+
+    public function testProcessQueueUsesMessengerWhenAvailable(): void
+    {
+        $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
+        $dispatcher->expects(self::never())->method('dispatch');
+
+        $processor = new DeferredExportProcessor(
+            $this->tempDir,
+            $dispatcher,
+            $this->messageBus,
+        );
+
+        $processor->queue($this->createPage(1, 'example.com'), 'update');
+        $processor->processQueue();
+
+        $flag = $processor->readPendingFlag();
+        self::assertNotNull($flag);
     }
 
     public function testProcessQueueWritesFlagWithCorrectEntityTypesAndHosts(): void
