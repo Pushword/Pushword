@@ -149,7 +149,8 @@ body.pw-admin-popup-modal .content {
 
 body.pw-admin-popup-modal .responsive-header,
 body.pw-admin-popup-modal .media-mosaic__actions,
-body.pw-admin-popup-modal .global-actions {
+body.pw-admin-popup-modal .global-actions,
+body.pw-admin-popup-modal .page-actions {
   display: none !important;
 }
 
@@ -188,4 +189,85 @@ body.pw-admin-popup-modal .modal-backdrop {
   border: none;
   background: transparent;
   padding-inline: 0;
+}
+
+/* Multi-select mode */
+.pw-media-picker-multi .media-mosaic__card {
+  cursor: pointer;
+  position: relative;
+}
+
+.pw-media-picker-multi .media-mosaic__card.pw-multi-selected::after {
+  content: '\2713';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: var(--color-primary, #0284c7);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.pw-media-picker-multi .media-mosaic__card.pw-multi-selected {
+  outline: 3px solid var(--color-primary, #0284c7);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.pw-multi-select-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(30,41,59,0.95);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+}
+
+.sf-toolbar ~ .pw-multi-select-bar {
+  bottom: 36px;
+}
+
+.pw-multi-select-bar__btn {
+  padding: 8px 24px;
+  background: var(--color-primary, #0284c7);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pw-multi-select-bar__btn:hover {
+  filter: brightness(0.9);
+}
+
+.pw-multi-select-bar__cancel {
+  padding: 8px 16px;
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pw-multi-select-bar__cancel:hover {
+  color: #fff;
+  border-color: #64748b;
 }

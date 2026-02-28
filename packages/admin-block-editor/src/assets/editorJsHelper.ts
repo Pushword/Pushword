@@ -7,6 +7,10 @@ interface ToolWithCallbacks {
   handleUploadError: (error: any) => void
 }
 
+interface ToolWithMultiCallbacks {
+  onMultiUpload: (items: Array<{ media: string; name: string; url: string }>) => void
+}
+
 export class editorJsHelper {
   private static modeManagers: Record<string, EditorModeManager> = {}
   private static pickerChangeHandlers = new WeakMap<Element, EventListener>()
@@ -142,6 +146,82 @@ export class editorJsHelper {
     actionButton.click()
   }
 
+  static abstractOnMulti(
+    Tool: ToolWithMultiCallbacks,
+    _event: Event,
+    action: 'select' | 'upload' = 'select',
+    inlineImageFieldSelector: string = '[id*="inline_image"]',
+  ): void {
+    const selectElement = document.querySelector(
+      'select' + inlineImageFieldSelector,
+    ) as HTMLSelectElement | null
+
+    if (!selectElement) {
+      console.error('select element not found with selector:', 'select' + inlineImageFieldSelector)
+      return
+    }
+
+    const pickerWrapper = selectElement.closest('.pw-media-picker') as HTMLElement | null
+    if (!pickerWrapper) {
+      console.error('media picker wrapper not found for selector:', selectElement.id)
+      return
+    }
+
+    const actionButton = pickerWrapper.querySelector(
+      '[data-pw-media-picker-action="choose"]',
+    ) as HTMLButtonElement | null
+
+    if (!actionButton) {
+      console.error('media picker choose button not found', { selectId: selectElement.id })
+      return
+    }
+
+    // Listen for multi-select postMessage
+    const messageHandler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      const payload = event.data
+      if (!payload || payload.type !== 'pw-media-picker-multi-select') return
+
+      const { fieldId, items } = payload
+      if (!fieldId || !items || fieldId !== selectElement.id) return
+
+      window.removeEventListener('message', messageHandler)
+
+      const mappedItems = items.map((media: any) => ({
+        media: media.fileName || String(media.id),
+        name: media.alt || media.name || media.fileName || '',
+        url: media.thumb || '',
+      }))
+
+      Tool.onMultiUpload(mappedItems)
+    }
+
+    window.addEventListener('message', messageHandler)
+
+    // Temporarily inject pwMediaPickerMulti=1 into the base URL so the
+    // existing "choose" button opens the picker in multi-select mode.
+    const urlKey = selectElement.dataset.pwMediaPickerModalUrl
+      ? 'pwMediaPickerModalUrl'
+      : 'pwAdminPopupModalUrl'
+    const originalUrl = selectElement.dataset[urlKey] || ''
+
+    try {
+      const url = new URL(originalUrl, window.location.origin)
+      url.searchParams.set('pwMediaPickerMulti', '1')
+      selectElement.dataset[urlKey] = url.toString()
+    } catch {
+      // fallback: append as query string
+      selectElement.dataset[urlKey] = originalUrl +
+        (originalUrl.includes('?') ? '&' : '?') + 'pwMediaPickerMulti=1'
+    }
+
+    // Click the existing choose button (opens modal via admin mediaPicker)
+    actionButton.click()
+
+    // Restore original URL
+    selectElement.dataset[urlKey] = originalUrl
+  }
+
   onSelectImage(Tool: ToolWithCallbacks, event: Event): void {
     editorJsHelper.abstractOn(Tool, event, 'select')
   }
@@ -153,6 +233,10 @@ export class editorJsHelper {
 
   onUploadImage(Tool: ToolWithCallbacks, event: Event): void {
     editorJsHelper.abstractOn(Tool, event, 'upload')
+  }
+
+  onMultiSelectImage(Tool: ToolWithMultiCallbacks, _event: Event): void {
+    editorJsHelper.abstractOnMulti(Tool, _event, 'select')
   }
 
   onUploadFile(Tool: ToolWithCallbacks, event: Event): void {

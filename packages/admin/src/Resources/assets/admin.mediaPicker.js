@@ -10,6 +10,7 @@ import {
 const MEDIA_PICKER_MODAL_ID = 'pw-media-picker-modal'
 const MEDIA_PICKER_IFRAME_CLASS = 'pw-admin-popup-iframe'
 const MESSAGE_TYPE = 'pw-media-picker-select'
+const MESSAGE_TYPE_MULTI = 'pw-media-picker-multi-select'
 
 const debug = (...args) => console.debug('[MediaPicker]', ...args)
 
@@ -41,6 +42,11 @@ function initParentPickers() {
     window.addEventListener(
       'message',
       createMessageHandler(MESSAGE_TYPE, handlePickerPayload),
+      false,
+    )
+    window.addEventListener(
+      'message',
+      createMessageHandler(MESSAGE_TYPE_MULTI, handleMultiPickerPayload),
       false,
     )
     isMessageListenerRegistered = true
@@ -334,17 +340,33 @@ const PICKER_ACTIVE_STORAGE_KEY = 'pwMediaPickerActive'
 function initPickerChildContext() {
   const params = new URLSearchParams(window.location.search)
   const isPickerContextFromUrl = params.has('pwMediaPicker')
+  const isMultiPickerFromUrl = params.has('pwMediaPickerMulti')
 
   // Store fieldId and active state in sessionStorage so it persists across navigation
   // (pagination, search form submission which loses URL params)
   const fieldIdFromUrl = params.get('pwMediaPickerFieldId')
-  if (fieldIdFromUrl && isPickerContextFromUrl) {
+  if (fieldIdFromUrl && (isPickerContextFromUrl || isMultiPickerFromUrl)) {
     try {
       sessionStorage.setItem(PICKER_FIELD_STORAGE_KEY, fieldIdFromUrl)
       sessionStorage.setItem(PICKER_ACTIVE_STORAGE_KEY, '1')
     } catch {
       // Ignore storage errors
     }
+  }
+
+  // Clear stale multi-select state when opening in single-select mode
+  if (!isMultiPickerFromUrl) {
+    try {
+      sessionStorage.removeItem(MULTI_PICKER_STORAGE_KEY)
+      sessionStorage.removeItem('pwMediaPickerMultiIds')
+      sessionStorage.removeItem('pwMediaPickerMultiItems')
+    } catch {}
+  }
+
+  // Multi-select mode takes priority (only from URL, not stale sessionStorage)
+  if (isMultiPickerFromUrl) {
+    initMultiSelectChildContext()
+    return
   }
 
   // Check if we're in picker context from URL or sessionStorage
@@ -488,4 +510,149 @@ function sendSelection(fieldId, media) {
 
   debug('sendSelection', fieldId, media)
   sendMessageToParent(MESSAGE_TYPE, { fieldId, media })
+}
+
+function handleMultiPickerPayload(payload) {
+  const { fieldId, items } = payload
+  debug('Multi-select message received', fieldId, items)
+  // This is handled by editorJsHelper via window message listener
+  closeModal(MEDIA_PICKER_MODAL_ID)
+}
+
+// --- Multi-select child context ---
+
+const MULTI_PICKER_STORAGE_KEY = 'pwMediaPickerMulti'
+
+function isMultiSelectMode() {
+  const params = new URLSearchParams(window.location.search)
+  if (params.has('pwMediaPickerMulti')) return true
+  // Only use sessionStorage fallback if there's no single-select URL param
+  if (params.has('pwMediaPicker')) return false
+  const isInIframe = window.parent !== window
+  if (isInIframe) {
+    try { return sessionStorage.getItem(MULTI_PICKER_STORAGE_KEY) === '1' } catch { return false }
+  }
+  return false
+}
+
+let multiSelectedItems = new Map()
+let multiSelectConfirmBar = null
+
+function initMultiSelectChildContext() {
+  const params = new URLSearchParams(window.location.search)
+  if (params.has('pwMediaPickerMulti')) {
+    try { sessionStorage.setItem(MULTI_PICKER_STORAGE_KEY, '1') } catch {}
+  }
+
+  if (!isMultiSelectMode()) return
+
+  document.body.classList.add('pw-admin-popup-modal', 'pw-media-picker-multi')
+  bindMultiMosaicSelection()
+  createConfirmBar()
+  restoreMultiSelectionState()
+}
+
+function bindMultiMosaicSelection() {
+  const fieldId = getPickerFieldId()
+  debug('bindMultiMosaicSelection', { fieldId })
+  if (!fieldId) return
+
+  document.addEventListener('click', (event) => {
+    if (!(event.target instanceof Element)) return
+
+    const card = event.target.closest('.media-mosaic__card')
+    if (!card) return
+
+    event.preventDefault()
+    toggleCardSelection(card)
+  }, true)
+}
+
+function toggleCardSelection(card) {
+  const mediaId = card.dataset.id
+  if (!mediaId) return
+
+  if (multiSelectedItems.has(mediaId)) {
+    multiSelectedItems.delete(mediaId)
+    card.classList.remove('pw-multi-selected')
+  } else {
+    multiSelectedItems.set(mediaId, extractMediaFromCard(card))
+    card.classList.add('pw-multi-selected')
+  }
+
+  persistMultiSelectionState()
+  updateConfirmBar()
+}
+
+function persistMultiSelectionState() {
+  try {
+    const ids = Array.from(multiSelectedItems.keys())
+    sessionStorage.setItem('pwMediaPickerMultiIds', JSON.stringify(ids))
+    const items = Object.fromEntries(multiSelectedItems)
+    sessionStorage.setItem('pwMediaPickerMultiItems', JSON.stringify(items))
+  } catch {}
+}
+
+function restoreMultiSelectionState() {
+  try {
+    const itemsJson = sessionStorage.getItem('pwMediaPickerMultiItems')
+    if (!itemsJson) return
+    const items = JSON.parse(itemsJson)
+    multiSelectedItems = new Map(Object.entries(items))
+
+    // Re-apply visual state to cards on current page
+    for (const [id] of multiSelectedItems) {
+      const card = document.querySelector(`.media-mosaic__card[data-id="${id}"]`)
+      if (card) card.classList.add('pw-multi-selected')
+    }
+    updateConfirmBar()
+  } catch {}
+}
+
+function createConfirmBar() {
+  if (multiSelectConfirmBar) return
+
+  multiSelectConfirmBar = document.createElement('div')
+  multiSelectConfirmBar.className = 'pw-multi-select-bar'
+  multiSelectConfirmBar.style.display = 'none'
+  multiSelectConfirmBar.innerHTML = `
+    <button type="button" class="pw-multi-select-bar__btn">Add 0 selected</button>
+    <button type="button" class="pw-multi-select-bar__cancel">Cancel</button>
+  `
+  document.body.appendChild(multiSelectConfirmBar)
+
+  multiSelectConfirmBar.querySelector('.pw-multi-select-bar__btn').addEventListener('click', () => {
+    const fieldId = getPickerFieldId()
+    if (!fieldId || multiSelectedItems.size === 0) return
+
+    const items = Array.from(multiSelectedItems.values())
+    debug('sendMultiSelection', fieldId, items)
+    sendMessageToParent(MESSAGE_TYPE_MULTI, { fieldId, items })
+
+    // Clean up
+    multiSelectedItems.clear()
+    try {
+      sessionStorage.removeItem('pwMediaPickerMultiIds')
+      sessionStorage.removeItem('pwMediaPickerMultiItems')
+      sessionStorage.removeItem(MULTI_PICKER_STORAGE_KEY)
+    } catch {}
+  })
+
+  multiSelectConfirmBar.querySelector('.pw-multi-select-bar__cancel').addEventListener('click', () => {
+    multiSelectedItems.clear()
+    document.querySelectorAll('.pw-multi-selected').forEach(c => c.classList.remove('pw-multi-selected'))
+    try {
+      sessionStorage.removeItem('pwMediaPickerMultiIds')
+      sessionStorage.removeItem('pwMediaPickerMultiItems')
+    } catch {}
+    updateConfirmBar()
+  })
+}
+
+function updateConfirmBar() {
+  if (!multiSelectConfirmBar) return
+  const count = multiSelectedItems.size
+  const btn = multiSelectConfirmBar.querySelector('.pw-multi-select-bar__btn')
+  btn.textContent = `Add ${count} selected`
+  multiSelectConfirmBar.style.display = count > 0 ? 'flex' : 'none'
 }

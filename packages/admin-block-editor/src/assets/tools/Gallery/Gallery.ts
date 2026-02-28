@@ -111,6 +111,26 @@ export default class Gallery extends AbstractMediaTool {
     return { items: normalizedItems }
   }
 
+  onMultiUpload(items: Array<{ media: string; name: string; url: string }>): void {
+    this.save()
+    for (const item of items) {
+      if (this.data.items.some((existing) => existing.media === item.media)) {
+        continue
+      }
+
+      const fullUrl = item.url || MediaUtils.buildFullUrlFromData(item.media)
+      const newBlock = this.createNewItem(fullUrl, item.name || '')
+      this.nodeList!.insertBefore(newBlock, this.nodes.fileButton)
+      const imageContainer = newBlock.querySelector('.cdxcarousel-item') as HTMLElement
+      imageContainer.style.setProperty('--bg-image-url', `url('${fullUrl}')`)
+
+      this.data.items.push({
+        media: item.media,
+        caption: item.name || '',
+      })
+    }
+  }
+
   onUpload(response: any): void {
     if (!this.responsIsValid(response)) {
       return this.handleUploadError('incorrect response: ' + JSON.stringify(response))

@@ -17,6 +17,7 @@ export type UiStatus = (typeof STATUS)[keyof typeof STATUS]
 export interface MediaToolConfig {
   onSelectFile: (tool: AbstractMediaTool, event?: Event) => void
   onUploadFile: (tool: AbstractMediaTool, event?: Event) => void
+  onMultiSelectFile?: (tool: AbstractMediaTool, event?: Event) => void
 }
 
 export interface MediaNodes {
@@ -31,6 +32,7 @@ export abstract class AbstractMediaTool extends BaseTool {
   public nodes: MediaNodes
   public onSelectFile: (tool: AbstractMediaTool, event?: Event) => void
   public onUploadFile: (tool: AbstractMediaTool, event?: Event) => void
+  public onMultiSelectFile?: (tool: AbstractMediaTool, event?: Event) => void
   // protected uploader: Uploader
 
   constructor({
@@ -50,6 +52,7 @@ export abstract class AbstractMediaTool extends BaseTool {
     // Configuration des callbacks
     this.onSelectFile = config.onSelectFile
     this.onUploadFile = config.onUploadFile
+    this.onMultiSelectFile = config.onMultiSelectFile
     // this.uploader = new Uploader({
     //   config: {
 
@@ -146,6 +149,16 @@ export abstract class AbstractMediaTool extends BaseTool {
       this.onSelectFile(this, event)
     })
     buttonWrapper.appendChild(selectButton)
+
+    if (this.onMultiSelectFile) {
+      const multiSelectButton = make.element('div', [this.api.styles.button])
+      multiSelectButton.innerHTML = SelectIcon + ' ' + this.api.i18n.t('Multi-select')
+      multiSelectButton.style.marginLeft = '-2px'
+      multiSelectButton.addEventListener('click', (event: Event) => {
+        this.onMultiSelectFile!(this, event)
+      })
+      buttonWrapper.appendChild(multiSelectButton)
+    }
 
     const uploadButton = make.element('div', [this.api.styles.button])
 
