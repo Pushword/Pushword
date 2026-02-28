@@ -356,11 +356,7 @@ function initPickerChildContext() {
 
   // Clear stale multi-select state when opening in single-select mode
   if (!isMultiPickerFromUrl) {
-    try {
-      sessionStorage.removeItem(MULTI_PICKER_STORAGE_KEY)
-      sessionStorage.removeItem('pwMediaPickerMultiIds')
-      sessionStorage.removeItem('pwMediaPickerMultiItems')
-    } catch {}
+    clearMultiSessionStorage()
   }
 
   // Multi-select mode takes priority (only from URL, not stale sessionStorage)
@@ -586,10 +582,14 @@ function toggleCardSelection(card) {
 
 function persistMultiSelectionState() {
   try {
-    const ids = Array.from(multiSelectedItems.keys())
-    sessionStorage.setItem('pwMediaPickerMultiIds', JSON.stringify(ids))
-    const items = Object.fromEntries(multiSelectedItems)
-    sessionStorage.setItem('pwMediaPickerMultiItems', JSON.stringify(items))
+    sessionStorage.setItem('pwMediaPickerMultiItems', JSON.stringify(Object.fromEntries(multiSelectedItems)))
+  } catch {}
+}
+
+function clearMultiSessionStorage() {
+  try {
+    sessionStorage.removeItem('pwMediaPickerMultiItems')
+    sessionStorage.removeItem(MULTI_PICKER_STORAGE_KEY)
   } catch {}
 }
 
@@ -629,22 +629,14 @@ function createConfirmBar() {
     debug('sendMultiSelection', fieldId, items)
     sendMessageToParent(MESSAGE_TYPE_MULTI, { fieldId, items })
 
-    // Clean up
     multiSelectedItems.clear()
-    try {
-      sessionStorage.removeItem('pwMediaPickerMultiIds')
-      sessionStorage.removeItem('pwMediaPickerMultiItems')
-      sessionStorage.removeItem(MULTI_PICKER_STORAGE_KEY)
-    } catch {}
+    clearMultiSessionStorage()
   })
 
   multiSelectConfirmBar.querySelector('.pw-multi-select-bar__cancel').addEventListener('click', () => {
     multiSelectedItems.clear()
     document.querySelectorAll('.pw-multi-selected').forEach(c => c.classList.remove('pw-multi-selected'))
-    try {
-      sessionStorage.removeItem('pwMediaPickerMultiIds')
-      sessionStorage.removeItem('pwMediaPickerMultiItems')
-    } catch {}
+    clearMultiSessionStorage()
     updateConfirmBar()
   })
 }

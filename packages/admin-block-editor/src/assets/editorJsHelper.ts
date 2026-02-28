@@ -149,7 +149,6 @@ export class editorJsHelper {
   static abstractOnMulti(
     Tool: ToolWithMultiCallbacks,
     _event: Event,
-    action: 'select' | 'upload' = 'select',
     inlineImageFieldSelector: string = '[id*="inline_image"]',
   ): void {
     const selectElement = document.querySelector(
@@ -236,7 +235,7 @@ export class editorJsHelper {
   }
 
   onMultiSelectImage(Tool: ToolWithMultiCallbacks, _event: Event): void {
-    editorJsHelper.abstractOnMulti(Tool, _event, 'select')
+    editorJsHelper.abstractOnMulti(Tool, _event)
   }
 
   onUploadFile(Tool: ToolWithCallbacks, event: Event): void {
