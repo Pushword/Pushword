@@ -7,6 +7,11 @@ use Pushword\Core\Component\EntityFilter\Filter\MarkdownProtectCodeBlock;
 
 class MarkdownProtectCodeBlockTest extends TestCase
 {
+    private function splitAndRestore(MarkdownProtectCodeBlock $filter, string $protected): string
+    {
+        return implode("\n\n", $filter->restore(explode("\n\n", $protected)));
+    }
+
     public function testProtectAndRestoreRoundTrip(): void
     {
         $filter = new MarkdownProtectCodeBlock();
@@ -62,12 +67,7 @@ class MarkdownProtectCodeBlockTest extends TestCase
 
         self::assertStringNotContainsString('<pre>', $protected);
         self::assertStringContainsString('___CODE_BLOCK_PLACEHOLDER_', $protected);
-
-        $parts = explode("\n\n", $protected);
-        $restored = $filter->restore($parts);
-        $result = implode("\n\n", $restored);
-
-        self::assertStringContainsString("<pre>\nline 1\n\nline 3\n</pre>", $result);
+        self::assertStringContainsString("<pre>\nline 1\n\nline 3\n</pre>", $this->splitAndRestore($filter, $protected));
     }
 
     public function testPreBlockWithAttributes(): void
@@ -78,12 +78,7 @@ class MarkdownProtectCodeBlockTest extends TestCase
         $protected = $filter->protect($original);
 
         self::assertStringNotContainsString('<pre class', $protected);
-
-        $parts = explode("\n\n", $protected);
-        $restored = $filter->restore($parts);
-        $result = implode("\n\n", $restored);
-
-        self::assertStringContainsString("<pre class=\"language-php\">\ncode here\n\nmore code\n</pre>", $result);
+        self::assertStringContainsString("<pre class=\"language-php\">\ncode here\n\nmore code\n</pre>", $this->splitAndRestore($filter, $protected));
     }
 
     public function testMultiplePreBlocks(): void
@@ -92,13 +87,9 @@ class MarkdownProtectCodeBlockTest extends TestCase
         $original = "<pre>\nblock 1\n\nblank\n</pre>\n\nMiddle\n\n<pre>\nblock 2\n\nblank\n</pre>";
 
         $protected = $filter->protect($original);
+        $result = $this->splitAndRestore($filter, $protected);
 
         self::assertStringNotContainsString('<pre>', $protected);
-
-        $parts = explode("\n\n", $protected);
-        $restored = $filter->restore($parts);
-        $result = implode("\n\n", $restored);
-
         self::assertStringContainsString("<pre>\nblock 1\n\nblank\n</pre>", $result);
         self::assertStringContainsString("<pre>\nblock 2\n\nblank\n</pre>", $result);
     }
@@ -109,16 +100,12 @@ class MarkdownProtectCodeBlockTest extends TestCase
         $original = "```php\necho 1;\n```\n\nText\n\n<pre>\nline\n\nblank\n</pre>\n\nEnd";
 
         $protected = $filter->protect($original);
+        $result = $this->splitAndRestore($filter, $protected);
 
         self::assertStringNotContainsString('```php', $protected);
         self::assertStringNotContainsString('<pre>', $protected);
         self::assertStringContainsString('___CODE_BLOCK_PLACEHOLDER_0___', $protected);
         self::assertStringContainsString('___CODE_BLOCK_PLACEHOLDER_1___', $protected);
-
-        $parts = explode("\n\n", $protected);
-        $restored = $filter->restore($parts);
-        $result = implode("\n\n", $restored);
-
         self::assertStringContainsString("```php\necho 1;\n```", $result);
         self::assertStringContainsString("<pre>\nline\n\nblank\n</pre>", $result);
     }
@@ -128,83 +115,49 @@ class MarkdownProtectCodeBlockTest extends TestCase
         $filter = new MarkdownProtectCodeBlock();
         $original = "Before\n\n<pre>\nline 1\n\n\n\nline 5\n</pre>\n\nAfter";
 
-        $protected = $filter->protect($original);
-
-        $parts = explode("\n\n", $protected);
-        $restored = $filter->restore($parts);
-        $result = implode("\n\n", $restored);
-
-        self::assertStringContainsString("<pre>\nline 1\n\n\n\nline 5\n</pre>", $result);
+        self::assertStringContainsString("<pre>\nline 1\n\n\n\nline 5\n</pre>", $this->splitAndRestore($filter, $filter->protect($original)));
     }
 
     public function testPreBlockAtStartOfContent(): void
     {
         $filter = new MarkdownProtectCodeBlock();
-        $original = "<pre>\ncode\n\nblank\n</pre>\n\nAfter";
-
-        $protected = $filter->protect($original);
+        $protected = $filter->protect("<pre>\ncode\n\nblank\n</pre>\n\nAfter");
 
         self::assertStringNotContainsString('<pre>', $protected);
-
-        $parts = explode("\n\n", $protected);
-        $restored = $filter->restore($parts);
-        $result = implode("\n\n", $restored);
-
-        self::assertStringContainsString("<pre>\ncode\n\nblank\n</pre>", $result);
+        self::assertStringContainsString("<pre>\ncode\n\nblank\n</pre>", $this->splitAndRestore($filter, $protected));
     }
 
     public function testPreBlockAtEndOfContent(): void
     {
         $filter = new MarkdownProtectCodeBlock();
-        $original = "Before\n\n<pre>\ncode\n\nblank\n</pre>";
-
-        $protected = $filter->protect($original);
+        $protected = $filter->protect("Before\n\n<pre>\ncode\n\nblank\n</pre>");
 
         self::assertStringNotContainsString('<pre>', $protected);
-
-        $parts = explode("\n\n", $protected);
-        $restored = $filter->restore($parts);
-        $result = implode("\n\n", $restored);
-
-        self::assertStringContainsString("<pre>\ncode\n\nblank\n</pre>", $result);
+        self::assertStringContainsString("<pre>\ncode\n\nblank\n</pre>", $this->splitAndRestore($filter, $protected));
     }
 
     public function testNestedPreCode(): void
     {
         $filter = new MarkdownProtectCodeBlock();
-        $original = "Text\n\n<pre><code>\nfunction() {\n\n  return true;\n}\n</code></pre>\n\nEnd";
-
-        $protected = $filter->protect($original);
+        $protected = $filter->protect("Text\n\n<pre><code>\nfunction() {\n\n  return true;\n}\n</code></pre>\n\nEnd");
 
         self::assertStringNotContainsString('<pre>', $protected);
-
-        $parts = explode("\n\n", $protected);
-        $restored = $filter->restore($parts);
-        $result = implode("\n\n", $restored);
-
-        self::assertStringContainsString("<pre><code>\nfunction() {\n\n  return true;\n}\n</code></pre>", $result);
+        self::assertStringContainsString("<pre><code>\nfunction() {\n\n  return true;\n}\n</code></pre>", $this->splitAndRestore($filter, $protected));
     }
 
     public function testPreWithoutBlankLinesStillProtected(): void
     {
         $filter = new MarkdownProtectCodeBlock();
-        $original = "Before\n\n<pre>\nsingle line\n</pre>\n\nAfter";
-
-        $protected = $filter->protect($original);
+        $protected = $filter->protect("Before\n\n<pre>\nsingle line\n</pre>\n\nAfter");
 
         self::assertStringNotContainsString('<pre>', $protected);
-
-        $parts = explode("\n\n", $protected);
-        $restored = $filter->restore($parts);
-        $result = implode("\n\n", $restored);
-
-        self::assertStringContainsString("<pre>\nsingle line\n</pre>", $result);
+        self::assertStringContainsString("<pre>\nsingle line\n</pre>", $this->splitAndRestore($filter, $protected));
     }
 
     public function testInlinePreNotCaptured(): void
     {
         $filter = new MarkdownProtectCodeBlock();
-        $original = "Some text with <pre>inline</pre> content.";
+        $original = 'Some text with <pre>inline</pre> content.';
 
         $protected = $filter->protect($original);
 
