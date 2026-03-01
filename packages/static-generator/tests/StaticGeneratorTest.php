@@ -7,6 +7,7 @@ use DateTimeImmutable;
 use Exception;
 use FilesystemIterator;
 use LogicException;
+use Override;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
@@ -64,6 +65,7 @@ class StaticGeneratorTest extends KernelTestCase
         $this->isolatedStaticDir = sys_get_temp_dir().'/pushword-static-test-'.getmypid();
     }
 
+    #[Override]
     protected function tearDown(): void
     {
         if (null !== $this->isolatedStaticDir) {

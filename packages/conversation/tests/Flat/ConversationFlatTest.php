@@ -500,6 +500,7 @@ final class ConversationFlatTest extends KernelTestCase
         $message = $this->createTestMessage('Message to remove media', 'remove@example.com', 'Remove User');
         $message->addMedia($media1);
         $message->addMedia($media2);
+
         $this->entityManager->persist($message);
         $this->entityManager->flush();
 
