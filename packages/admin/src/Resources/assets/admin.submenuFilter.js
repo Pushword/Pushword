@@ -9,10 +9,9 @@ export function submenuFilter() {
     const input = document.createElement('input')
     input.type = 'text'
     input.placeholder = 'Filter...'
-    input.style.cssText = 'width:100%;padding:4px 8px;margin-bottom:4px;border:1px solid #d1d5db;border-radius:3px;font-size:0.85rem;'
 
     const li = document.createElement('li')
-    li.style.cssText = 'padding:4px 8px;list-style:none;'
+    li.className = 'submenu-filter'
     li.appendChild(input)
     submenu.prepend(li)
 
