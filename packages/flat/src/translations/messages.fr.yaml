@@ -1,4 +1,5 @@
 flatConflictDetected: "Conflit détecté sur %entity%. Fichier de sauvegarde créé : %backup%"
+flatFilesModified: "Fichiers flat modifiés"
 flatFilesModifiedNotification: "Des fichiers flat ont été modifiés. Synchronisation recommandée."
 flatLockAcquired: "Lock flat activé."
 flatLockReleased: "Lock flat libéré."
