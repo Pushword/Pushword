@@ -52,4 +52,14 @@ class BlockExtensionTest extends KernelTestCase
 
         self::assertStringContainsString('my-anchor', $html);
     }
+
+    public function testRenderAttachesWithoutSize(): void
+    {
+        $ext = $this->getBlockExtension();
+        $html = $ext->renderAttaches('My GPX', '/media/track.gpx');
+
+        self::assertStringContainsString('My GPX', $html);
+        self::assertStringContainsString('/media/track.gpx', $html);
+        self::assertStringNotContainsString('bytes', $html);
+    }
 }
