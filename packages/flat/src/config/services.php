@@ -9,6 +9,7 @@ use Pushword\Flat\Controller\Admin\GitStatusController;
 use Pushword\Flat\Controller\Admin\NotificationCrudController;
 use Pushword\Flat\Controller\FlatLockApiController;
 use Pushword\Flat\Converter\FlatPropertyConverterInterface;
+use Pushword\Flat\EventSubscriber\LiveReloadSubscriber;
 use Pushword\Flat\FlatFileSync;
 use Pushword\Flat\Service\AdminNotificationService;
 use Pushword\Flat\Service\DeferredExportProcessor;
@@ -117,6 +118,10 @@ return static function (ContainerConfigurator $container): void {
         ->autowire()
         ->autoconfigure()
         ->tag('controller.service_arguments');
+
+    // LiveReloadSubscriber - injects live reload script in dev mode
+    $services->set(LiveReloadSubscriber::class)
+        ->arg('$debug', '%kernel.debug%');
 
     // Register Conversation Flat services when conversation bundle is installed
     // This must be done here (in flat bundle) to ensure FlatFileContentDirFinder is already registered
