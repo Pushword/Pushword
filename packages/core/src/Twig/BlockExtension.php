@@ -30,11 +30,18 @@ class BlockExtension
     public function renderAttaches(
         string $title,
         string $url,
-        int $size, // bytes
+        int|string $size, // bytes
         string $id = '',
     ): string {
-        $url = $this->mediaExtension->transformStringToMedia($url);
-        $url = '/'.$this->publicMediaDir.'/'.$url->getFileName();
+        $size = (int) $size;
+        try {
+            $media = $this->mediaExtension->transformStringToMedia($url);
+            $url = '/'.$this->publicMediaDir.'/'.$media->getFileName();
+        } catch (Exception) {
+            if (! str_starts_with($url, '/') && ! str_starts_with($url, 'http')) {
+                $url = '/'.$this->publicMediaDir.'/'.$url;
+            }
+        }
 
         $template = $this->apps->get()->getView('/component/attaches.html.twig');
 
