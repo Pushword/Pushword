@@ -9,9 +9,11 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\MediaSync;
 use Pushword\Flat\Sync\PageSync;
+use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -31,27 +33,59 @@ final class AutoModeDetectionTest extends KernelTestCase
     /** @var string[] */
     private array $createdFiles = [];
 
+    private ?string $isolatedContentDir = null;
+
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+
+        // Restore pristine DB: other tests in the same ParaTest worker may have
+        // modified pages, causing mustImport detection to give false positives.
+        $cacheFile = getenv('PUSHWORD_TEST_DB_CACHE_FILE');
+        $dbUrl = getenv('PUSHWORD_TEST_DATABASE_URL');
+        if (false !== $cacheFile && '' !== $cacheFile && false !== $dbUrl && file_exists($cacheFile)) {
+            $dbPath = preg_replace('#^sqlite:///+#', '/', $dbUrl);
+            if (null !== $dbPath && file_exists($dbPath)) {
+                copy($cacheFile, $dbPath);
+            }
+        }
+    }
+
     #[Override]
     protected function setUp(): void
     {
         self::bootKernel();
         $this->filesystem = new Filesystem();
 
+        // Use an isolated content dir to avoid ParaTest cross-worker interference
+        $this->isolatedContentDir = sys_get_temp_dir().'/pushword-automode-test-'.getmypid().'-'.mt_rand();
+        $this->filesystem->mkdir($this->isolatedContentDir);
+
+        $container = self::getContainer();
+
+        // Override flat_content_dir on site config
+        $siteRegistry = $container->get(SiteRegistry::class);
+        $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
+        $siteConfig->setCustomProperty('flat_content_dir', $this->isolatedContentDir);
+
+        // Clear FlatFileContentDirFinder cache so it picks up the new dir
+        $contentDirFinder = $container->get(FlatFileContentDirFinder::class);
+        $ref = new ReflectionProperty(FlatFileContentDirFinder::class, 'contentDir');
+        $ref->setValue($contentDirFinder, []);
+
+        $this->contentDir = $contentDirFinder->get('localhost.dev');
+
         /** @var EntityManager $em */
-        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em = $container->get('doctrine.orm.default_entity_manager');
         $this->em = $em;
 
         /** @var PageSync $pageSync */
-        $pageSync = self::getContainer()->get(PageSync::class);
+        $pageSync = $container->get(PageSync::class);
         $this->pageSync = $pageSync;
 
         /** @var MediaSync $mediaSync */
-        $mediaSync = self::getContainer()->get(MediaSync::class);
+        $mediaSync = $container->get(MediaSync::class);
         $this->mediaSync = $mediaSync;
-
-        /** @var FlatFileContentDirFinder $contentDirFinder */
-        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
-        $this->contentDir = $contentDirFinder->get('localhost.dev');
 
         // Export so flat files match DB
         $this->pageSync->export('localhost.dev', true, $this->contentDir);
@@ -72,6 +106,10 @@ final class AutoModeDetectionTest extends KernelTestCase
         }
 
         $this->em->flush();
+
+        if (null !== $this->isolatedContentDir) {
+            $this->filesystem->remove($this->isolatedContentDir);
+        }
 
         parent::tearDown();
     }
