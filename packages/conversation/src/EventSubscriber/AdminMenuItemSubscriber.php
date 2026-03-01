@@ -61,6 +61,7 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
 
         $subItems = [
             $this->createHiddenListItem(ConversationCrudController::class),
+            $this->createSeeAllMenuItem(ConversationCrudController::class),
         ];
 
         foreach ($hosts as $host) {
@@ -82,6 +83,7 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
 
         $subItems = [
             $this->createHiddenListItem(ReviewCrudController::class),
+            $this->createSeeAllMenuItem(ReviewCrudController::class),
         ];
 
         foreach ($hosts as $host) {
@@ -90,6 +92,18 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
 
         return MenuItem::subMenu('adminLabelReview', 'fa fa-star')
             ->setSubItems($subItems);
+    }
+
+    private function createSeeAllMenuItem(string $controller): CrudMenuItem
+    {
+        $menuItem = MenuItem::linkToCrud('adminLabelSeeAll', 'fa fa-list', Message::class)
+            ->setController($controller);
+
+        if ($this->isSeeAllActive($controller)) {
+            $menuItem->getAsDto()->setSelected(true);
+        }
+
+        return $menuItem;
     }
 
     private function createHiddenListItem(string $controller): CrudMenuItem
@@ -113,6 +127,25 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
         }
 
         return $menuItem;
+    }
+
+    private function isSeeAllActive(string $controller): bool
+    {
+        $context = $this->adminContextProvider->getContext();
+
+        if (null === $context) {
+            return false;
+        }
+
+        $crud = $context->getCrud();
+        if (null === $crud || $crud->getControllerFqcn() !== $controller) {
+            return false;
+        }
+
+        /** @var array<string, mixed> $filters */
+        $filters = $context->getRequest()->query->all(EA::FILTERS);
+
+        return ! isset($filters['host']);
     }
 
     private function isHostActive(string $host, string $controller): bool

@@ -20,6 +20,7 @@ adminConversationTagsLabel: Tags
 adminConversationTagsPlaceholder: 'Tags (separated by spaces)'
 adminConversationWeightHelp: 'Lower values appear first'
 adminConversationWeightLabel: Weight
+adminLabelSeeAll: 'See all'
 adminReviewEdit: 'Edit review'
 adminReviewLocaleHelp: 'Original language of this review'
 adminReviewLocaleLabel: Locale
