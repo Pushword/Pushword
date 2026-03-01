@@ -389,7 +389,13 @@ final class ConversationImporter
                     /** @var Message $normalizedMessage */
                     $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
 
-                    // Ajoute les médias manuellement après la dénormalisation
+                    // Sync media: clear existing then re-add from CSV
+                    if (isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {
+                        foreach ($normalizedMessage->getMediaList()->toArray() as $existing) {
+                            $normalizedMessage->removeMedia($existing);
+                        }
+                    }
+
                     foreach ($mediaList as $media) {
                         $normalizedMessage->addMedia($media);
                     }

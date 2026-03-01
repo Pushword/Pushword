@@ -432,6 +432,120 @@ final class ConversationFlatTest extends KernelTestCase
         }
     }
 
+    public function testImportUpdatesMediaOnExistingMessage(): void
+    {
+        // Create media
+        $media1 = $this->createTestMedia('update-media-1.jpg');
+        $media2 = $this->createTestMedia('update-media-2.png');
+
+        // Create a message without media
+        $message = $this->createTestMessage('Message to update media', 'update@example.com', 'Update User');
+        $this->entityManager->persist($message);
+        $this->entityManager->flush();
+
+        $messageId = $message->id;
+        self::assertNotNull($messageId);
+        $this->createdMessageIds[] = $messageId;
+
+        // Verify no media initially
+        self::assertCount(0, $message->getMediaList());
+
+        // Export to CSV
+        $this->exporter->export($this->testHost);
+        self::assertFileExists($this->csvPath);
+
+        // Modify CSV to add media references
+        $csvContent = file_get_contents($this->csvPath);
+        self::assertIsString($csvContent);
+        $lines = explode("\n", $csvContent);
+        /** @var string $headerLine */
+        $headerLine = $lines[0];
+        $mediaListIndex = $this->getColumnIndex($headerLine, 'mediaList');
+        self::assertGreaterThanOrEqual(0, $mediaListIndex);
+
+        foreach ($lines as $i => $line) {
+            if (str_contains($line, 'Message to update media')) {
+                $columns = str_getcsv($line, escape: '\\');
+                $columns[$mediaListIndex] = 'update-media-1.jpg,update-media-2.png';
+                $lines[$i] = $this->arrayToCsvLine($columns);
+
+                break;
+            }
+        }
+
+        file_put_contents($this->csvPath, implode("\n", $lines));
+
+        // Import (update path: message found by ID)
+        $this->importer->import($this->testHost);
+
+        // Refresh entity from DB
+        $this->entityManager->clear();
+        $updatedMessage = $this->messageRepository->find($messageId);
+        self::assertInstanceOf(Message::class, $updatedMessage);
+
+        // Assert media was added
+        $mediaList = $updatedMessage->getMediaList();
+        self::assertCount(2, $mediaList);
+        $fileNames = array_map(static fn (Media $m): string => $m->getFileName(), $mediaList->toArray());
+        self::assertContains('update-media-1.jpg', $fileNames);
+        self::assertContains('update-media-2.png', $fileNames);
+    }
+
+    public function testImportRemovesMediaFromExistingMessage(): void
+    {
+        // Create media and message with media
+        $media1 = $this->createTestMedia('remove-media-1.jpg');
+        $media2 = $this->createTestMedia('remove-media-2.png');
+
+        $message = $this->createTestMessage('Message to remove media', 'remove@example.com', 'Remove User');
+        $message->addMedia($media1);
+        $message->addMedia($media2);
+        $this->entityManager->persist($message);
+        $this->entityManager->flush();
+
+        $messageId = $message->id;
+        self::assertNotNull($messageId);
+        $this->createdMessageIds[] = $messageId;
+        self::assertCount(2, $message->getMediaList());
+
+        // Export to CSV
+        $this->exporter->export($this->testHost);
+
+        // Modify CSV to remove one media
+        $csvContent = file_get_contents($this->csvPath);
+        self::assertIsString($csvContent);
+        $lines = explode("\n", $csvContent);
+        /** @var string $headerLine */
+        $headerLine = $lines[0];
+        $mediaListIndex = $this->getColumnIndex($headerLine, 'mediaList');
+
+        foreach ($lines as $i => $line) {
+            if (str_contains($line, 'Message to remove media')) {
+                $columns = str_getcsv($line, escape: '\\');
+                $columns[$mediaListIndex] = 'remove-media-1.jpg';
+                $lines[$i] = $this->arrayToCsvLine($columns);
+
+                break;
+            }
+        }
+
+        file_put_contents($this->csvPath, implode("\n", $lines));
+
+        // Import (update path)
+        $this->importer->import($this->testHost);
+
+        // Refresh and verify
+        $this->entityManager->clear();
+        $updatedMessage = $this->messageRepository->find($messageId);
+        self::assertInstanceOf(Message::class, $updatedMessage);
+
+        $mediaList = $updatedMessage->getMediaList();
+        self::assertCount(1, $mediaList);
+        $fileNames = array_map(static fn (Media $m): string => $m->getFileName(), $mediaList->toArray());
+        self::assertContains('remove-media-1.jpg', $fileNames);
+        self::assertNotContains('remove-media-2.png', $fileNames);
+    }
+
     public function testImportExternalCreatesMessage(): void
     {
         $csvPath = $this->createCsvFile([
