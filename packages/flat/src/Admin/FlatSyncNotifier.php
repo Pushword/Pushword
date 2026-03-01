@@ -42,7 +42,7 @@ final readonly class FlatSyncNotifier
         $changes = $this->changeDetector->checkForChanges($resolvedHost);
 
         if ($changes['hasChanges']) {
-            $flashBag->add('info', $this->translator->trans('flatFilesModifiedNotification', [], 'messages'));
+            $this->addFlashOnce($flashBag, 'info', 'flatFilesModifiedNotification');
         }
     }
 
@@ -67,9 +67,9 @@ final readonly class FlatSyncNotifier
             return;
         }
 
-        $flashBag->add('warning', $this->translator->trans('flatLockWarning', [
-            '%reason%' => $lockInfo['reason'],
-        ], 'messages'));
+        $this->addFlashOnce($flashBag, 'warning', 'flatLockWarning', [
+            '%reason%' => $this->translator->trans($lockInfo['reason'], [], 'messages'),
+        ]);
     }
 
     /**
@@ -89,9 +89,9 @@ final readonly class FlatSyncNotifier
             return;
         }
 
-        $flashBag->add('error', $this->translator->trans('flatUnresolvedConflicts', [
+        $this->addFlashOnce($flashBag, 'error', 'flatUnresolvedConflicts', [
             '%count%' => \count($conflicts),
-        ], 'messages'));
+        ]);
     }
 
     /**
@@ -122,6 +122,17 @@ final readonly class FlatSyncNotifier
             'hasConflicts' => [] !== $conflicts,
             'conflictCount' => \count($conflicts),
         ];
+    }
+
+    /**
+     * @param array<string, string|int> $parameters
+     */
+    private function addFlashOnce(FlashBagInterface $flashBag, string $type, string $key, array $parameters = []): void
+    {
+        $message = $this->translator->trans($key, $parameters, 'messages');
+        if (! \in_array($message, $flashBag->peek($type), true)) {
+            $flashBag->add($type, $message);
+        }
     }
 
     private function getFlashBag(): ?FlashBagInterface

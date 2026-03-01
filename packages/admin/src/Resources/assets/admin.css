@@ -117,6 +117,25 @@
   padding-top: 30px;
 }
 
+#main-menu .menu .submenu {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+#main-menu .menu .submenu .submenu-filter {
+  padding: 4px 8px;
+  list-style: none;
+}
+
+#main-menu .menu .submenu .submenu-filter input {
+  width: 100%;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  font-size: 0.85rem;
+}
+
 #main-menu .menu .submenu a {
   padding: 3px 0 3px 3px;
 }

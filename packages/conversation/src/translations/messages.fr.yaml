@@ -20,6 +20,7 @@ adminConversationTagsLabel: Tags
 adminConversationTagsPlaceholder: "Tags (séparés par des espaces)"
 adminConversationWeightHelp: "Les valeurs les plus basses apparaissent en premier"
 adminConversationWeightLabel: Poids
+adminLabelSeeAll: 'Voir tout'
 adminReviewEdit: "Éditer l'avis"
 adminReviewLocaleHelp: "Langue originale de cet avis"
 adminReviewLocaleLabel: Langue

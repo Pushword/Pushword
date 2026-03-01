@@ -1,0 +1,20 @@
+flatConflictDetected: "Conflict detected on %entity%. Backup file created: %backup%"
+flatFilesModified: "Flat files modified"
+flatFilesModifiedNotification: "Flat files have been modified. Synchronization recommended."
+flatLockAcquired: "Flat lock activated."
+flatLockReleased: "Flat lock released."
+flatLockWarning: "Flat editing in progress (%reason%) - Risk of conflict if you save."
+flatNotificationDateLabel: Date
+flatNotificationDetailTitle: "Notification #%id%"
+flatNotificationHostLabel: Host
+flatNotificationIndexTitle: "Admin Notifications"
+flatNotificationPlural: Notifications
+flatNotificationReadLabel: Read
+flatNotificationSingular: Notification
+flatNotificationTypeConflict: Conflict
+flatNotificationTypeLockInfo: "Lock Info"
+flatNotificationTypeSyncError: "Sync Error"
+flatUnresolvedConflicts: "%count% unresolved conflict(s). Files to process: ~conflict-*"
+flatWebhookLockMessage: "Locked by %user%: %reason%"
+flatWebhookLockTitle: "Content editing locked"
+flatWebhookLockViewOnly: "View only"

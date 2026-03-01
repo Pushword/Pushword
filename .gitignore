@@ -65,5 +65,8 @@ packages/skeleton/media/
 **/skeleton/media/**
 
 !.gitkeep
+
+# Flat watch live-reload signal file
+**/public/_flat-reload.txt
 # Demo data (regenerated on reset)
 packages/docs/content/conversation.csv

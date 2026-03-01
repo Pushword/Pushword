@@ -132,7 +132,7 @@ final readonly class FlatChangeDetector
 
         // Auto-lock if changes detected
         if ($hasChanges && $this->autoLockOnChanges) {
-            $this->lockManager->acquireLock($host, 'Fichiers flat modifiés');
+            $this->lockManager->acquireLock($host, 'flatFilesModified');
         }
 
         return [
