@@ -38,6 +38,9 @@ import { autoInitEditLock } from './admin.editLock'
 // Tags modules
 import { suggestTags } from './admin.tagsField'
 
+// Sidebar modules
+import { submenuFilter } from './admin.submenuFilter'
+
 // Polyfills
 import 'core-js/stable'
 
@@ -84,6 +87,9 @@ window.addEventListener('load', function () {
 
   // Edit lock
   autoInitEditLock()
+
+  // Sidebar submenu filter
+  submenuFilter()
 
   // document.body.addEventListener('htmx:afterSwap', function () {
   //   suggestTags()
