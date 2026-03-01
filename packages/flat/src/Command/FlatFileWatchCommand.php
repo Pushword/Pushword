@@ -58,21 +58,17 @@ final readonly class FlatFileWatchCommand
             ++$cycle;
 
             foreach ($hosts as $host) {
-                if ($this->lockManager->isWebhookLocked($host)) {
+                if ($this->lockManager->isWebhookLocked($host) || $this->lockManager->isManualLock($host)) {
                     continue;
                 }
-                if ($this->lockManager->isManualLock($host)) {
-                    continue;
-                }
+
                 $changes = $this->changeDetector->forceCheck($host);
 
                 if (! $changes['hasChanges']) {
                     continue;
                 }
 
-                $timestamp = date('H:i:s');
-                $types = implode(', ', $changes['entityTypes']);
-                $output->writeln(\sprintf('<comment>[%s] Changes detected on %s: %s</comment>', $timestamp, $host, $types));
+                $output->writeln(\sprintf('<comment>[%s] Changes detected on %s: %s</comment>', date('H:i:s'), $host, implode(', ', $changes['entityTypes'])));
 
                 match ($mode) {
                     'import' => $this->flatFileSync->import($host),
