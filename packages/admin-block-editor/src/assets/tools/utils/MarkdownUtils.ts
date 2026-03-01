@@ -1,6 +1,5 @@
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { HyperlinkTuneData } from '../HyperlinkTune/HyperlinkTune'
-import * as prettier from 'prettier/standalone'
 import SmartQuotes from './SmartQuotes'
 import he from 'he'
 
@@ -412,17 +411,46 @@ export class MarkdownUtils {
   /**
    * Formate le contenu Markdown avec Prettier
    */
+  private static prettierPromise: Promise<{ prettier: any; plugin: any }> | null = null
+
+  private static loadScript(src: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`)
+      if (existing) {
+        resolve()
+        return
+      }
+      const script = document.createElement('script')
+      script.src = src
+      script.async = true
+      script.onload = () => resolve()
+      script.onerror = () => reject(new Error(`Failed to load ${src}`))
+      document.head.appendChild(script)
+    })
+  }
+
+  private static loadPrettier(): Promise<{ prettier: any; plugin: any }> {
+    if (!MarkdownUtils.prettierPromise) {
+      MarkdownUtils.prettierPromise = Promise.all([
+        MarkdownUtils.loadScript('/bundles/pushwordadminblockeditor/prettier/standalone.js'),
+        MarkdownUtils.loadScript('/bundles/pushwordadminblockeditor/prettier/markdown.js'),
+      ]).then(() => ({
+        prettier: (window as any).prettier,
+        plugin: (window as any).prettierPlugins?.markdown,
+      }))
+    }
+    return MarkdownUtils.prettierPromise
+  }
+
   public static async formatMarkdownWithPrettier(
     markdownContent: string,
   ): Promise<string> {
     try {
-      // Charger le plugin Markdown dynamiquement
-      const prettierMarkdown = await import('prettier/plugins/markdown')
+      const { prettier, plugin } = await MarkdownUtils.loadPrettier()
 
       const formatted = await prettier.format(markdownContent, {
         parser: 'markdown',
-        plugins: [prettierMarkdown],
-        //printWidth: 80,
+        plugins: [plugin],
         proseWrap: 'preserve',
         tabWidth: 2,
         useTabs: false,

@@ -135,6 +135,17 @@ export class editorJs {
       new Undo({ editor })
     }
 
+    // Parse content upfront: pass JSON data directly to constructor to avoid double-render
+    let markdownContent: string | null = null
+    if (window.pageMainContent) {
+      const pageContent = window.pageMainContent
+      try {
+        config.data = JSON.parse(pageContent)
+      } catch {
+        markdownContent = pageContent
+      }
+    }
+
     const editor = new EditorJS(
       Object.assign(config, {
         onReady: () => {
@@ -142,24 +153,15 @@ export class editorJs {
           new Undo({ editor })
           new PasteLink({ editor })
           new ClipboardManager({ editor })
+
+          // Markdown content must be parsed after editor is ready (needs tool instances)
+          if (markdownContent) {
+            // @ts-ignore
+            new window.EditorJsParseMarkdown(editor, markdownContent).parseMarkdown()
+          }
         },
       }),
     )
-
-    if (window.pageMainContent) {
-      const pageContent = window.pageMainContent
-      try {
-        const data = JSON.parse(pageContent)
-        editor.isReady.then(() => {
-          editor.blocks.render(data)
-        })
-      } catch {
-        editor.isReady.then(() => {
-          // @ts-ignore
-          new window.EditorJsParseMarkdown(editor, pageContent).parseMarkdown()
-        })
-      }
-    }
 
     this.editors[config.holder!] = editor
 

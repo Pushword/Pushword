@@ -19,9 +19,9 @@ window.EditorJsParseMarkdown = EditorJsParseMarkdown
 window.EditorJsExportMarkdown = EditorJsExportMarkdown
 window.editorJsHelper = new editorJsHelper()
 
-// Initialize immediately if DOM is ready, otherwise wait for load
+// Initialize as soon as DOM is ready (don't wait for images/resources)
 if (document.readyState === 'loading') {
-  window.addEventListener('load', function () {
+  document.addEventListener('DOMContentLoaded', function () {
     initializeEditors()
   })
 } else {
