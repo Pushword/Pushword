@@ -118,7 +118,7 @@
 }
 
 #main-menu .menu .submenu {
-  max-height: 50vh;
+  max-height: 200px;
   overflow-y: auto;
 }
 
