@@ -2022,6 +2022,67 @@ YAML;
     }
 
     /**
+     * Test: Numeric slug "404" with translations does not get cast to int.
+     *
+     * PHP arrays cast numeric string keys to integers during iteration.
+     * This caused the translation resolver to receive int(404) instead of "404".
+     */
+    public function testNumericSlugWithTranslations(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a regular page
+        $regularMd = $contentDir.'/error-page-fr.md';
+        file_put_contents($regularMd, <<<'MD'
+---
+h1: Page introuvable
+locale: fr
+translations:
+  - 404
+---
+
+La page que vous cherchez n'existe pas.
+MD);
+        touch($regularMd, time() + 10);
+
+        // Create a 404 page that references the translation
+        $notFoundMd = $contentDir.'/404.md';
+        file_put_contents($notFoundMd, <<<'MD'
+---
+h1: Page Not Found
+locale: en
+translations:
+  - error-page-fr
+---
+
+The page you are looking for does not exist.
+MD);
+        touch($notFoundMd, time() + 10);
+
+        // Import — this previously failed because "404" key was cast to int
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $notFoundPage = $this->pageRepo->findOneBy(['slug' => '404', 'host' => 'localhost.dev']);
+        $frPage = $this->pageRepo->findOneBy(['slug' => 'error-page-fr', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($notFoundPage, 'Page with slug "404" should be imported');
+        self::assertNotNull($frPage, 'FR translation page should be imported');
+        self::assertSame('404', $notFoundPage->slug);
+        self::assertCount(1, $notFoundPage->getTranslations(), '404 page should have 1 translation');
+        self::assertSame('error-page-fr', $notFoundPage->getTranslations()->first()->getSlug());
+
+        // Cleanup
+        $this->em->remove($notFoundPage);
+        $this->em->remove($frPage);
+        $this->em->flush();
+        $this->trackFile($notFoundMd);
+        $this->trackFile($regularMd);
+    }
+
+    /**
      * Test: Numeric slug in YAML frontmatter (unquoted) is correctly parsed.
      */
     public function testNumericSlugInFrontmatter(): void
