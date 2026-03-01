@@ -57,7 +57,7 @@ final class EncodingTest extends KernelTestCase
         }
 
         // Clean up test pages
-        foreach (['utf8-bom-test', 'accented-test', 'cjk-test', 'emoji-test', 'special-yaml-test', 'cafe-creme'] as $slug) {
+        foreach (['utf8-bom-test', 'accented-test', 'cjk-test', 'emoji-test', 'special-yaml-test', 'cafe-creme', 'js-guide-test'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
@@ -141,6 +141,44 @@ final class EncodingTest extends KernelTestCase
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'special-yaml-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page);
         self::assertSame("Test: A Page's Title", $page->getH1());
+    }
+
+    /**
+     * @see https://github.com/.../issues/5
+     * finfo misdetects .md files containing JS code examples as application/javascript,
+     * causing them to be silently skipped during import.
+     */
+    public function testMarkdownFileWithJsCodeBlockIsImported(): void
+    {
+        $content = <<<'MD'
+            ---
+            h1: "JavaScript Guide"
+            ---
+
+            Here is an example:
+
+            <pre><code>
+            "use strict";
+            var express = require("express");
+            var app = express();
+            </code></pre>
+            MD;
+
+        // Verify finfo actually misdetects this content
+        $tmpFile = tempnam(sys_get_temp_dir(), 'md_finfo_');
+        file_put_contents($tmpFile, $content);
+        $finfo = finfo_open(\FILEINFO_MIME_TYPE);
+        self::assertNotEmpty($finfo);
+        $mime = (string) finfo_file($finfo, $tmpFile);
+        unlink($tmpFile);
+        self::assertSame('application/javascript', $mime, 'Precondition: finfo should misdetect this .md content as JS');
+
+        $this->createMd('js-guide-test.md', $content);
+
+        $this->pageSync->import('localhost.dev');
+
+        $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'js-guide-test', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $page, '.md file misdetected as application/javascript should still be imported');
     }
 
     public function testNonAsciiSlugFromFileName(): void

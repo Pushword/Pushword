@@ -84,7 +84,7 @@ final class PageImporter extends AbstractImporter
 
     public function getDocumentFromFile(string $filePath): ?Document
     {
-        if (! str_starts_with($this->getMimeTypeFromFile($filePath), 'text/')) {
+        if (! str_starts_with($this->getMimeTypeFromFile($filePath), 'text/') && ! str_ends_with($filePath, '.md')) {
             return null;
         }
 
