@@ -5,6 +5,7 @@ namespace Pushword\StaticGenerator;
 use DateTime;
 use FilesystemIterator;
 use LogicException;
+use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
@@ -21,6 +22,22 @@ class StaticGeneratorBenchmarkTest extends KernelTestCase
 {
     private ?string $isolatedStaticDir = null;
 
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+
+        // Restore pristine DB: other tests in the same ParaTest worker may have
+        // deleted fixture media, causing page rendering to fail on missing media.
+        $cacheFile = getenv('PUSHWORD_TEST_DB_CACHE_FILE');
+        $dbUrl = getenv('PUSHWORD_TEST_DATABASE_URL');
+        if (false !== $cacheFile && '' !== $cacheFile && false !== $dbUrl && file_exists($cacheFile)) {
+            $dbPath = preg_replace('#^sqlite:///+#', '/', $dbUrl);
+            if (null !== $dbPath && file_exists($dbPath)) {
+                copy($cacheFile, $dbPath);
+            }
+        }
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,6 +45,7 @@ class StaticGeneratorBenchmarkTest extends KernelTestCase
         $this->isolatedStaticDir = sys_get_temp_dir().'/pushword-bench-'.getmypid();
     }
 
+    #[Override]
     protected function tearDown(): void
     {
         if (null !== $this->isolatedStaticDir) {
