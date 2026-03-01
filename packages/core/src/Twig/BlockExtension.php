@@ -34,6 +34,7 @@ class BlockExtension
         string $id = '',
     ): string {
         $size = (int) $size;
+
         try {
             $media = $this->mediaExtension->transformStringToMedia($url);
             $url = '/'.$this->publicMediaDir.'/'.$media->getFileName();

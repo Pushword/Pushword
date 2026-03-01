@@ -61,9 +61,11 @@ final readonly class FlatFileWatchCommand
                 if ($this->lockManager->isWebhookLocked($host)) {
                     continue;
                 }
+
                 if ($this->lockManager->isManualLock($host)) {
                     continue;
                 }
+
                 $changes = $this->changeDetector->forceCheck($host);
 
                 if (! $changes['hasChanges']) {
