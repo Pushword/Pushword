@@ -167,7 +167,38 @@ final class MessageRepositoryTest extends KernelTestCase
         self::assertSame('', $testReviews[1]->getContent());
     }
 
-    private function createTestReview(string $content, int $weight): Review
+    public function testGetPublishedReviewsByTagFiltersMinRating(): void
+    {
+        $review3Stars = $this->createTestReview('3 star review', 0, 3);
+        $review5Stars = $this->createTestReview('5 star review', 0, 5);
+
+        $this->entityManager->persist($review3Stars);
+        $this->entityManager->persist($review5Stars);
+        $this->entityManager->flush();
+
+        $this->trackCreatedMessage($review3Stars);
+        $this->trackCreatedMessage($review5Stars);
+
+        // Without minRating: both returned
+        $all = $this->messageRepository->getPublishedReviewsByTag([], 0, 0);
+        $allTest = array_filter(
+            $all,
+            static fn (mixed $r): bool => $r instanceof Review && str_ends_with($r->getContent(), 'star review'),
+        );
+        self::assertCount(2, $allTest);
+
+        // With minRating 4: only the 5-star review
+        $filtered = $this->messageRepository->getPublishedReviewsByTag([], 0, 4);
+        $filteredTest = array_filter(
+            $filtered,
+            static fn (mixed $r): bool => $r instanceof Review && str_ends_with($r->getContent(), 'star review'),
+        );
+        $filteredTest = array_values($filteredTest);
+        self::assertCount(1, $filteredTest);
+        self::assertSame('5 star review', $filteredTest[0]->getContent());
+    }
+
+    private function createTestReview(string $content, int $weight, int $rating = 5): Review
     {
         $review = new Review();
         $review->host = $this->testHost;
@@ -175,7 +206,7 @@ final class MessageRepositoryTest extends KernelTestCase
         $review->setAuthorEmail('test@example.com');
         $review->setAuthorName('Test User');
         $review->setReferring('/test-page');
-        $review->setRating(5);
+        $review->setRating($rating);
         $review->setWeight($weight);
         $review->setPublishedAt(new DateTime());
 

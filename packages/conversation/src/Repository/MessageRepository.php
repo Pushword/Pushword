@@ -76,13 +76,18 @@ class MessageRepository extends ServiceEntityRepository
      *
      * @return Message[]
      */
-    public function getPublishedReviewsByTag(array $tags, int $limit = 0): array
+    public function getPublishedReviewsByTag(array $tags, int $limit = 0, int $minRating = 0): array
     {
         $queryBuilder = $this->createQueryBuilder('m')
             ->andWhere('m.publishedAt is NOT NULL')
             // permits to filter only reviews
             ->andWhere('m.customProperties LIKE :noteFilter')
             ->setParameter('noteFilter', '%"rating":%');
+
+        if ($minRating > 0) {
+            $queryBuilder->andWhere("JSON_EXTRACT(m.customProperties, '$.rating') >= :minRating")
+                ->setParameter('minRating', $minRating);
+        }
 
         if ([] !== $tags) {
             $this->addFilteringByTagsConditions($queryBuilder, $tags);
