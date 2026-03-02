@@ -16,6 +16,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
 use Pushword\Admin\Filter\MediaDimensionIntFilter;
 use Pushword\Admin\Filter\MediaSearchFilter;
+use Pushword\Admin\Filter\MediaTagFilter;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
@@ -161,6 +162,13 @@ class MediaCrudController extends AbstractAdminCrudController
         }
 
         $filters->add(MediaDimensionIntFilter::new('adminMediaDimensionsIntFilterLabel'));
+
+        $mediaTags = $this->mediaRepo->getMediaTags();
+        if ([] !== $mediaTags) {
+            $filters->add(
+                MediaTagFilter::new($this->mediaRepo, 'adminMediaTagsLabel'),
+            );
+        }
 
         return $filters;
     }

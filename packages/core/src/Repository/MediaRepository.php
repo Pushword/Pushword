@@ -262,10 +262,8 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     /**
      * @return string[]
      */
-    public function getAllTags(): array
+    public function getMediaTags(): array
     {
-        $allTags = $this->pageRepository->getAllTags();
-
         $queryBuilder = $this->createQueryBuilder('m')
             ->select('m.tags')
             ->setMaxResults(30000);
@@ -273,7 +271,15 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         /** @var array{tags: string[]}[] */
         $mediaTags = $queryBuilder->getQuery()->getResult();
 
-        return array_values(array_unique([...$allTags, ...$this->flattenTags($mediaTags)]));
+        return $this->flattenTags($mediaTags);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getAllTags(): array
+    {
+        return array_values(array_unique([...$this->pageRepository->getAllTags(), ...$this->getMediaTags()]));
     }
 
     public function getExprToFilterMedia(string $alias, string $filterValue): Orx
