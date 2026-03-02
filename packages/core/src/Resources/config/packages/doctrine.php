@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Pushword\Core\Repository\DQL\JsonExtractFunction;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -28,11 +27,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                     'type' => 'attribute',
                     'dir' => 'Entity',
                     'alias' => 'PushwordCore',
-                ],
-            ],
-            'dql' => [
-                'string_functions' => [
-                    'JSON_EXTRACT' => JsonExtractFunction::class,
                 ],
             ],
         ],

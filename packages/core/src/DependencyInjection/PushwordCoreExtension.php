@@ -5,6 +5,7 @@ namespace Pushword\Core\DependencyInjection;
 use LogicException;
 use Override;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Repository\DQL\JsonExtractFunction;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -52,6 +53,20 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
         $this->prependPackagesConfig($container);
 
         $this->registerResolveTargetEntities($container);
+        $this->registerDqlFunctions($container);
+    }
+
+    private function registerDqlFunctions(ContainerBuilder $container): void
+    {
+        $container->prependExtensionConfig('doctrine', [
+            'orm' => [
+                'dql' => [
+                    'string_functions' => [
+                        'JSON_EXTRACT' => JsonExtractFunction::class,
+                    ],
+                ],
+            ],
+        ]);
     }
 
     private function registerResolveTargetEntities(ContainerBuilder $container): void
