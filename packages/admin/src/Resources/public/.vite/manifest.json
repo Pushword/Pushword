@@ -3,6 +3,9 @@
     "file": "admin.js",
     "name": "admin",
     "src": "src/Resources/assets/admin.js",
-    "isEntry": true
+    "isEntry": true,
+    "css": [
+      "admin.css"
+    ]
   }
 }

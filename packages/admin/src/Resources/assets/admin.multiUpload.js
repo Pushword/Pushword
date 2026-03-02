@@ -30,6 +30,12 @@ async function compressForUpload(file) {
   }
 }
 
+async function computeSha1(file) {
+  const buffer = await file.arrayBuffer()
+  const hashBuffer = await crypto.subtle.digest('SHA-1', buffer)
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 export function initMultiUpload() {
   const container = document.getElementById('pw-multi-upload')
   if (!container) return
@@ -83,10 +89,12 @@ export function initMultiUpload() {
   async function uploadFile(file) {
     const row = createPlaceholderRow(file.name)
 
+    const originalHash = await computeSha1(file)
     const processedFile = await compressForUpload(file)
 
     const formData = new FormData()
     formData.append('file', processedFile)
+    formData.append('originalHash', originalHash)
     formData.append('_token', csrfToken)
 
     try {
@@ -99,7 +107,9 @@ export function initMultiUpload() {
       }
 
       if (data.skipped) {
-        setRowSkipped(row, data.fileName)
+        populateRow(row, data)
+        row.querySelector('.pw-row-status').innerHTML =
+          `<i class="fas fa-forward" style="color:#6c757d;" title="Already exists"></i>`
         return
       }
 
@@ -129,9 +139,9 @@ export function initMultiUpload() {
   function populateRow(row, data) {
     const editUrl = editUrlTemplate.replace('__ID__', data.id)
     const thumbInner = data.thumbnailUrl
-      ? `<img src="${escapeHtml(data.thumbnailUrl)}" class="pw-thumb" alt="">`
+      ? `<img src="${escapeHtml(data.thumbnailUrl)}" class="pw-thumb" alt="" data-full-src="${escapeAttr(data.thumbnailUrl)}">`
       : `<i class="fas fa-file"></i>`
-    const thumbHtml = `<a href="${escapeAttr(editUrl)}">${thumbInner}</a>`
+    const thumbHtml = data.thumbnailUrl ? thumbInner : `<a href="${escapeAttr(editUrl)}">${thumbInner}</a>`
 
     const { slug, ext } = splitFileName(data.fileName)
     const dims = data.width && data.height ? `${data.width}×${data.height}` : '—'
@@ -162,20 +172,25 @@ export function initMultiUpload() {
 
     row.querySelector('.pw-delete-btn').addEventListener('click', () => deleteMedia(data.id, row))
 
+    const thumb = row.querySelector('.pw-thumb')
+    if (thumb) {
+      thumb.addEventListener('click', () => openLightbox(thumb.dataset.fullSrc))
+    }
+
     suggestTags()
+  }
+
+  function openLightbox(src) {
+    const overlay = document.createElement('div')
+    overlay.className = 'pw-lightbox'
+    overlay.innerHTML = `<img src="${escapeAttr(src)}" alt="">`
+    overlay.addEventListener('click', () => overlay.remove())
+    document.body.appendChild(overlay)
   }
 
   function setRowError(row, message) {
     row.querySelector('td').innerHTML = `<i class="fas fa-times pw-status-err"></i>`
-    row.querySelector('td:nth-child(2)').setAttribute('colspan', '')
     row.querySelector('td:nth-child(2)').textContent += ` — ${message}`
-  }
-
-  function setRowSkipped(row, existingFileName) {
-    row.querySelector('td').innerHTML = `<i class="fas fa-forward" style="color:#6c757d;"></i>`
-    row.querySelector('td:nth-child(2)').setAttribute('colspan', '')
-    row.querySelector('td:nth-child(2)').innerHTML =
-      `<span class="text-muted">Skipped (already exists as <em>${escapeHtml(existingFileName)}</em>)</span>`
   }
 
   async function saveField(input, row) {

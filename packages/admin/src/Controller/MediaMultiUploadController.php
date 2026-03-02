@@ -65,20 +65,38 @@ final class MediaMultiUploadController extends AbstractController
             return new JsonResponse(['error' => $file->getErrorMessage()], Response::HTTP_BAD_REQUEST);
         }
 
+        $originalHash = hex2bin((string) $request->request->get('originalHash', '')) ?: null;
+
+        if (null !== $originalHash) {
+            $existing = $this->mediaRepo->findOneBy(['originalHash' => $originalHash]);
+            if ($existing instanceof Media) {
+                return new JsonResponse(['skipped' => true] + $this->mediaToArray($existing));
+            }
+        }
+
         $hash = sha1_file($file->getPathname(), true);
         if (false !== $hash) {
             $existing = $this->mediaRepo->findOneBy(['hash' => $hash]);
             if ($existing instanceof Media) {
-                return new JsonResponse(['skipped' => true, 'fileName' => $existing->getFileName()]);
+                return new JsonResponse(['skipped' => true] + $this->mediaToArray($existing));
             }
         }
 
         $media = new Media();
         $media->setMediaFile($file);
+        if (null !== $originalHash) {
+            $media->setOriginalHash($originalHash);
+        }
 
         $this->em->persist($media);
         $this->em->flush();
 
+        return new JsonResponse($this->mediaToArray($media));
+    }
+
+    /** @return array<string, mixed> */
+    private function mediaToArray(Media $media): array
+    {
         $thumbnailUrl = '';
         if ($media->isImage()) {
             try {
@@ -89,7 +107,7 @@ final class MediaMultiUploadController extends AbstractController
 
         $dimensions = $media->getDimensions();
 
-        return new JsonResponse([
+        return [
             'id' => $media->id,
             'fileName' => $media->getFileName(),
             'alt' => $media->getAlt(),
@@ -100,7 +118,7 @@ final class MediaMultiUploadController extends AbstractController
             'height' => $dimensions?->height,
             'size' => $media->getSize(),
             'mimeType' => $media->getMimeType(),
-        ]);
+        ];
     }
 
     #[AdminRoute(path: '/media/{id}/inline-update', name: 'media_multi_inline_update', options: ['methods' => ['POST']])]

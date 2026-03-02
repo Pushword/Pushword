@@ -23,6 +23,7 @@ use Pushword\Flat\Sync\PageSync;
 use Pushword\Flat\Sync\SyncStateManager;
 use Pushword\Flat\Twig\FlatLockExtension;
 use ReflectionClass;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 return static function (ContainerConfigurator $container): void {
     $services = $container->services()
@@ -37,7 +38,7 @@ return static function (ContainerConfigurator $container): void {
     $services->instanceof(FlatPropertyConverterInterface::class)
         ->tag('pushword.flat.property_converter');
 
-    $messengerAvailable = interface_exists(\Symfony\Component\Messenger\MessageBusInterface::class);
+    $messengerAvailable = interface_exists(MessageBusInterface::class);
     $messengerExclude = $messengerAvailable ? [] : [__DIR__.'/../Messenger/'];
 
     $services->load('Pushword\Flat\\', __DIR__.'/../../src/')
@@ -84,7 +85,7 @@ return static function (ContainerConfigurator $container): void {
     // DeferredExportProcessor configuration
     $services->set(DeferredExportProcessor::class)
         ->arg('$varDir', '%kernel.project_dir%/var')
-        ->arg('$messageBus', service(\Symfony\Component\Messenger\MessageBusInterface::class)->nullOnInvalid())
+        ->arg('$messageBus', service(MessageBusInterface::class)->nullOnInvalid())
         ->arg('$autoExportEnabled', '%pw.pushword_flat.auto_export_enabled%')
         ->arg('$debounceDelay', '%pw.pushword_flat.export_debounce_delay%');
 

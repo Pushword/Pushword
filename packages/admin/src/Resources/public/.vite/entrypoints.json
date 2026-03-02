@@ -2,7 +2,9 @@
   "base": "/build/",
   "entryPoints": {
     "admin": {
-      "css": [],
+      "css": [
+        "/build/admin.css"
+      ],
       "dynamic": [],
       "js": [
         "/build/admin.js"

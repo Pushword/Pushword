@@ -68,6 +68,8 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
   }
 
   var sendForm = function (form, liveFormBlock) {
+    if (liveFormBlock.dataset.submitting) return
+    liveFormBlock.dataset.submitting = '1'
     setLoader(form)
 
     var formData = new FormData(form.srcElement)

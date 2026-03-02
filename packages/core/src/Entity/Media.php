@@ -603,6 +603,10 @@ class Media implements IdInterface, Taggable, Stringable
     #[ORM\Column(type: Types::BINARY, length: 20, options: ['default' => ''])]
     protected $hash;
 
+    /** @var string|resource|null */
+    #[ORM\Column(type: Types::BINARY, length: 20, nullable: true)]
+    protected $originalHash;
+
     public function getHash(): mixed
     {
         return $this->hash ?? $this->setHash()->getHash();
@@ -636,6 +640,20 @@ class Media implements IdInterface, Taggable, Stringable
         }
 
         $this->hash = sha1_file($mediaFilePath, true);
+
+        return $this;
+    }
+
+    // --- Original Hash ---
+
+    public function getOriginalHash(): mixed
+    {
+        return $this->originalHash;
+    }
+
+    public function setOriginalHash(string $originalHash): self
+    {
+        $this->originalHash = $originalHash;
 
         return $this;
     }

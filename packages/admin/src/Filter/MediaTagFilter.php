@@ -22,7 +22,7 @@ final class MediaTagFilter implements FilterInterface
         sort($tags);
         $choices = array_combine($tags, $tags);
 
-        return (new self())
+        return new self()
             ->setFilterFqcn(self::class)
             ->setProperty('tags')
             ->setLabel($label)

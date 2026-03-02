@@ -2,9 +2,13 @@
 
 namespace Pushword\StaticGenerator\Generator;
 
+use FilesystemIterator;
 use Override;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\StaticGenerator\IncrementalGeneratorInterface;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 
 class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorInterface
 {
@@ -175,11 +179,11 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
      */
     private function resolveSymlinksInDirectory(string $dir): void
     {
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
         );
 
-        /** @var \SplFileInfo $file */
+        /** @var SplFileInfo $file */
         foreach ($iterator as $file) {
             $path = $file->getPathname();
             if (! is_link($path)) {
