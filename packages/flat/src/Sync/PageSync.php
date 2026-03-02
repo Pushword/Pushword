@@ -140,6 +140,11 @@ final class PageSync
                 continue;
             }
 
+            // Skip conflict backup files
+            if (str_contains($entry, '~conflict-')) {
+                continue;
+            }
+
             // Skip excluded files
             if (\in_array($entry, $this->excludeFiles, true)) {
                 continue;

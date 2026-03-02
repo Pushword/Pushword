@@ -1,17 +1,17 @@
 {
-  "app.css": {
-    "file": "tw.css",
-    "src": "app.css",
+  "../js-helper/src/app.css": {
+    "file": "theme-DgQnOJ0a.css",
+    "src": "../js-helper/src/app.css",
     "isEntry": true,
-    "name": "tw",
+    "name": "theme",
     "names": [
-      "tw.css"
+      "theme.css"
     ]
   },
-  "app.js": {
-    "file": "app.js",
+  "../js-helper/src/app.js": {
+    "file": "app-CeLNw0T6.js",
     "name": "app",
-    "src": "app.js",
+    "src": "../js-helper/src/app.js",
     "isEntry": true
   }
 }
