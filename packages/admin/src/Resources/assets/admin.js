@@ -51,6 +51,13 @@ import 'core-js/stable'
 window.domChanging = false
 window.copyElementText = copyElementText
 
+// Prevent EasyAdmin clickable-row navigation when clicking on contenteditable elements
+document.addEventListener('click', function (e) {
+  if (e.target.closest('[contenteditable="true"]')) {
+    e.stopPropagation()
+  }
+}, true)
+
 /**
  * Initialize all admin interface modules
  */
