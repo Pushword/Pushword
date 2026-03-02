@@ -23,6 +23,8 @@ use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
 
@@ -61,6 +63,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         protected TranslatorInterface $translator,
         protected SiteRegistry $apps,
         protected MessageRepository $messageRepo,
+        protected CacheInterface $cache,
     ) {
         $this->app = $this->apps->get();
     }
@@ -157,6 +160,20 @@ abstract class AbstractConversationForm implements ConversationFormInterface
     {
         if ($form->isValid()) {
             $this->sanitizeConversation();
+
+            $cacheKey = 'conversation_dedup_'.md5($this->message->getContent().$this->message->getAuthorEmail());
+            $isFirstSubmit = false;
+            $this->cache->get($cacheKey, static function (ItemInterface $item) use (&$isFirstSubmit): bool {
+                $item->expiresAfter(600);
+                $isFirstSubmit = true;
+
+                return true;
+            });
+
+            if (! $isFirstSubmit) {
+                return $this->showSuccess();
+            }
+
             $this->getDoctrine()->getManager()->persist($this->message);
             $this->getDoctrine()->getManager()->flush();
             $this->messageId = (int) $this->message->id;

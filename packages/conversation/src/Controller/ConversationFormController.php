@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as Twig;
 
@@ -45,6 +46,7 @@ final class ConversationFormController extends AbstractController
         #[Autowire('%kernel.environment%')]
         private readonly string $env,
         private readonly MessageRepository $messageRepo,
+        private readonly CacheInterface $cache,
     ) {
     }
 
@@ -103,6 +105,7 @@ final class ConversationFormController extends AbstractController
             $this->translator,
             $this->apps,
             $this->messageRepo,
+            $this->cache,
         );
     }
 

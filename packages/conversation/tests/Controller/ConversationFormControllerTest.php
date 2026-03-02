@@ -4,6 +4,7 @@ namespace Pushword\Conversation\Tests\Controller;
 
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Controller\ConversationFormController;
+use Pushword\Conversation\Entity\Message;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,6 +37,42 @@ class ConversationFormControllerTest extends WebTestCase
         $client->submit($form, [], $server);
 
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+    }
+
+    public function testMessageFormDeduplication(): void
+    {
+        $client = static::createClient();
+        $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
+        $uniqueContent = 'Dedup test message '.uniqid();
+
+        // First submit
+        $crawler = $client->request(Request::METHOD_POST, '/conversation/message/test', [], [], $server);
+        $form = $crawler->filter('[name="form"]')->form([
+            'form[content]' => $uniqueContent,
+            'form[authorEmail]' => 'dedup@example.com',
+            'form[authorName]' => 'Test',
+        ]);
+        $client->catchExceptions(false);
+        $client->submit($form, [], $server);
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Thank you', (string) $client->getResponse()->getContent());
+
+        // Second submit with same content+email — should be deduplicated
+        $crawler = $client->request(Request::METHOD_POST, '/conversation/message/test', [], [], $server);
+        $form = $crawler->filter('[name="form"]')->form([
+            'form[content]' => $uniqueContent,
+            'form[authorEmail]' => 'dedup@example.com',
+            'form[authorName]' => 'Test',
+        ]);
+        $client->submit($form, [], $server);
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Thank you', (string) $client->getResponse()->getContent());
+
+        // Verify only one message was persisted
+        $em = static::getContainer()->get('doctrine')->getManager();
+        $messages = $em->getRepository(Message::class)
+            ->findBy(['content' => $uniqueContent]);
+        self::assertCount(1, $messages, 'Duplicate message should not be persisted');
     }
 
     public function testNewsletterFormWithQueryParams(): void
