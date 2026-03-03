@@ -9,6 +9,8 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Before v1
 
+- [ ] Global check + site audit --resume ce2dcd33-e262-4571-ab2d-d56bb89374e2
+
 ### In progress
 
 - [New] When release v1, remove version from composer.json (restore 1.0.0-rc[0-9]+ to \*)

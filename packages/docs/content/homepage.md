@@ -141,8 +141,8 @@ raw: 1
   <p class="text-center text-gray-500 mb-12 text-lg">Real sites, real performance.</p>
 
   <div class="relative">
-    <button onclick="this.nextElementSibling.scrollBy({left:-320,behavior:'smooth'})" class="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white shadow-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all">&#8249;</button>
-    <button onclick="this.previousElementSibling.scrollBy({left:320,behavior:'smooth'})" class="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white shadow-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all">&#8250;</button>
+    <button onclick="this.parentElement.querySelector('.overflow-x-auto').scrollBy({left:-320,behavior:'smooth'})" class="hidden cursor-pointer md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white shadow-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all">&#8249;</button>
+    <button onclick="this.parentElement.querySelector('.overflow-x-auto').scrollBy({left:320,behavior:'smooth'})" class="hidden cursor-pointer md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white shadow-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all">&#8250;</button>
     <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-none" style="-ms-overflow-style:none;scrollbar-width:none; padding-bottom:28px;margin-bottom:-28px">
 
       <a href="https://piedvert.com" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
