@@ -14,7 +14,7 @@ flatNotificationSingular: Notification
 flatNotificationTypeConflict: Conflit
 flatNotificationTypeLockInfo: "Info de verrouillage"
 flatNotificationTypeSyncError: "Erreur de synchronisation"
-flatUnresolvedConflicts: "%count% conflit(s) non résolu(s). Fichiers à traiter : ~conflict-*"
+flatUnresolvedConflicts: "%count% conflit(s) non résolu(s) : %files%"
 flatWebhookLockMessage: "Verrouillé par %user% : %reason%"
 flatWebhookLockTitle: "Édition de contenu verrouillée"
 flatWebhookLockViewOnly: "Lecture seule"

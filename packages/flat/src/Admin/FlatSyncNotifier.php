@@ -89,8 +89,15 @@ final readonly class FlatSyncNotifier
             return;
         }
 
+        $filenames = array_map(basename(...), $conflicts);
+        $preview = implode(', ', \array_slice($filenames, 0, 3));
+        if (\count($conflicts) > 3) {
+            $preview .= ', …';
+        }
+
         $this->addFlashOnce($flashBag, 'error', 'flatUnresolvedConflicts', [
             '%count%' => \count($conflicts),
+            '%files%' => $preview,
         ]);
     }
 

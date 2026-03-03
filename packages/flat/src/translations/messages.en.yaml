@@ -14,7 +14,7 @@ flatNotificationSingular: Notification
 flatNotificationTypeConflict: Conflict
 flatNotificationTypeLockInfo: "Lock Info"
 flatNotificationTypeSyncError: "Sync Error"
-flatUnresolvedConflicts: "%count% unresolved conflict(s). Files to process: ~conflict-*"
+flatUnresolvedConflicts: "%count% unresolved conflict(s): %files%"
 flatWebhookLockMessage: "Locked by %user%: %reason%"
 flatWebhookLockTitle: "Content editing locked"
 flatWebhookLockViewOnly: "View only"
