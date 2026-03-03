@@ -161,7 +161,7 @@ async function main() {
     const markdownBlocks = await Promise.all(
       editorData.blocks.map((block) => convertBlock(block)),
     )
-    const filteredBlocks = markdownBlocks.filter((content) => content !== '')
+    const filteredBlocks = markdownBlocks.filter((content) => content !== '').map((content) => content.trim())
 
     // Joindre les blocs avec des doubles retours à la ligne
     const markdown = filteredBlocks.join('\n\n')

@@ -458,7 +458,7 @@ export class MarkdownUtils {
 
       return formatted.trim()
     } catch (error) {
-      console.log('Erreur lors du formatage Prettier du Markdown', {
+      console.error('Erreur lors du formatage Prettier du Markdown', {
         content: markdownContent,
       })
 

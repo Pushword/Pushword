@@ -2,7 +2,7 @@ A few example for the editor possibilities. Best to observe this, it’s in admi
 
 ## Inline Tool Demo
 
-See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block){target="\_blank"} <mark>marker</mark> ~~strikethrough~~
+See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block){target="_blank"} <mark>marker</mark> ~~strikethrough~~
 
 ## Links & Routes
 
@@ -24,7 +24,7 @@ See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block){target="\_b
 
 ### Simple Image
 
-![Demo 3](/media/3.jpg)
+![Demo 3](/media/md/3.jpg)
 
 ### Gallery
 
@@ -44,12 +44,12 @@ See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block){target="\_b
 
 ## Table Example
 
-| Fonctionnalité | Statut   | Notes                     |
-| -------------- | -------- | ------------------------- |
-| Table          | ✅ Testé | Nouveau dans Kitchen Sink |
-| Attaches       | ✅ Testé | Gestion des fichiers      |
-| Delimiter      | ✅ Testé | Séparateur de contenu     |
-| linkTune       | ✅ Testé | Liens sur images          |
+| Fonctionnalité | Statut | Notes |
+| --- | --- | --- |
+| Table | ✅ Testé | Nouveau dans Kitchen Sink |
+| Attaches | ✅ Testé | Gestion des fichiers |
+| Delimiter | ✅ Testé | Séparateur de contenu |
+| linkTune | ✅ Testé | Liens sur images |
 
 ## Code Block
 
@@ -72,7 +72,20 @@ See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block){target="\_b
 
 ## Card List (Custom Items)
 
-{{ card_list([{"page":"kitchen-sink-block","title":"Kitchen Sink"},{"title":"Custom Card","image":"1.jpg","link":"https://piedweb.com","description":"A custom card with **bold** and _italic_ text.","buttonLink":"https://piedweb.com","buttonLinkLabel":"Visit"}]) }}
+{{ card_list([
+  {
+    "page": "kitchen-sink-block",
+    "title": "Kitchen Sink"
+  },
+  {
+    "title": "Custom Card",
+    "image": "1.jpg",
+    "link": "https://piedweb.com",
+    "description": "A custom card with **bold** and _italic_ text.",
+    "buttonLink": "https://piedweb.com",
+    "buttonLinkLabel": "Visit"
+  }
+]) }}
 
 [Continue your exploration with the docs ➜](https://pushword.piedweb.com)
 
@@ -84,8 +97,8 @@ Texte avec <u>soulignement</u>, **gras**, _italique_, <mark>surlignage</mark> et
 
 ## Image avec Lien (linkTune)
 
-[![Image cliquable vers la documentation](/media/2.jpg)](https://pushword.piedweb.com)
+[![Image cliquable vers la documentation](/media/md/2.jpg)](https://pushword.piedweb.com)
 
 ## Inline Tool
 
-An #[link](/kitchen-sink-block){target="\_blank" class="link-btn"}.
+An #[link](/kitchen-sink-block){target="_blank" class="link-btn"}.

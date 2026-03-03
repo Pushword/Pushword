@@ -705,7 +705,7 @@ const _MarkdownUtils = class _MarkdownUtils {
       });
       return formatted.trim();
     } catch (error) {
-      console.log("Erreur lors du formatage Prettier du Markdown", {
+      console.error("Erreur lors du formatage Prettier du Markdown", {
         content: markdownContent
       });
       return markdownContent;
@@ -6386,7 +6386,7 @@ async function main() {
     const markdownBlocks = await Promise.all(
       editorData.blocks.map((block) => convertBlock(block))
     );
-    const filteredBlocks = markdownBlocks.filter((content) => content !== "");
+    const filteredBlocks = markdownBlocks.filter((content) => content !== "").map((content) => content.trim());
     const markdown = filteredBlocks.join("\n\n");
     console.log(markdown);
     process.exit(0);
