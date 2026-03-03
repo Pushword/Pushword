@@ -51,7 +51,7 @@ class Message implements Stringable, Taggable, IdInterface
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     protected ?int $authorIp = null;
 
-    #[ORM\Column(type: Types::STRING, nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\NotBlank]
     #[Assert\Length(min: 1, max: 200000, minMessage: 'conversationContentShort', maxMessage: 'conversation.content.long')]
     protected ?string $content = null;
