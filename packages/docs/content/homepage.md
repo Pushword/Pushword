@@ -145,13 +145,6 @@ raw: 1
     <button onclick="this.parentElement.querySelector('.overflow-x-auto').scrollBy({left:320,behavior:'smooth'})" class="hidden cursor-pointer md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white shadow-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all">&#8250;</button>
     <div class="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-none" style="-ms-overflow-style:none;scrollbar-width:none; padding-bottom:28px;margin-bottom:-28px">
 
-      <a href="https://piedvert.com" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
-        <img src="/media/piedvert.png" alt="piedvert.com" class="w-full">
-        <div class="p-4 text-center">
-          <span class="font-semibold text-gray-900 dark:text-white">piedvert.com</span>
-        </div>
-      </a>
-
       <a href="https://altimood.com" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
         <img src="/media/altimood.png" alt="altimood.com" class="w-full">
         <div class="p-4 text-center">
@@ -159,17 +152,24 @@ raw: 1
         </div>
       </a>
 
-      <a href="https://www.kelifos.travel" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+      <a href="https://us.kelifos.travel" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
         <img src="/media/kelifos.png" alt="kelifos.travel" class="w-full">
         <div class="p-4 text-center">
           <span class="font-semibold text-gray-900 dark:text-white">kelifos.travel</span>
         </div>
       </a>
 
-      <a href="https://piedweb.com" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+      <a href="https://en.piedweb.com" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
         <img src="/media/piedweb.png" alt="piedweb.com" class="w-full">
         <div class="p-4 text-center">
           <span class="font-semibold text-gray-900 dark:text-white">piedweb.com</span>
+        </div>
+      </a>
+
+      <a href="https://piedvert.com" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+        <img src="/media/piedvert.png" alt="piedvert.com" class="w-full">
+        <div class="p-4 text-center">
+          <span class="font-semibold text-gray-900 dark:text-white">piedvert.com</span>
         </div>
       </a>
 
