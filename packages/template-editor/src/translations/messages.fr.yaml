@@ -1,4 +1,18 @@
 adminLabelTheme: 'Éditeur de code'
+template_editorAction: Action
+template_editorAdd: Ajouter
+template_editorBackToList: 'Retour à la liste'
+template_editorCreate: Créer
+template_editorCreateTitle: 'Créer un nouveau template'
 template_editorCreationDisabled: 'La création (et donc la suppression) est désactivée.'
+template_editorDeleteConfirm: 'Êtes-vous sûr de vouloir supprimer l''élément <code>%path%</code> ?'
+template_editorDeleteConfirmTitle: 'Confirmation de suppression'
 template_editorDeleteLabel: Supprimer
+template_editorDeleteTitle: 'Suppression d''un template'
+template_editorEdit: Éditer
+template_editorEditTitle: 'Éditer %path%'
 template_editorElementDeleted: 'Élément supprimé.'
+template_editorEmpty: 'Aucun template disponible.'
+template_editorPath: Chemin
+template_editorTitle: Templates
+template_editorUpdate: 'Mettre à jour'

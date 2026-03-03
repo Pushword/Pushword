@@ -16,15 +16,15 @@
 
 {% block content_title %}
     {% if element.path %}
-        Éditer {{ element.path }}
+        {{ 'template_editorEditTitle'|trans({'%path%': element.path}) }}
     {% else %}
-        Créer un nouveau template
+        {{ 'template_editorCreateTitle'|trans }}
     {% endif %}
 {% endblock %}
 
 {% block page_actions %}
     <a class="btn btn-outline-secondary" href="{{ path('admin_template_editor_list') }}">
-        <i class="fa fa-arrow-left me-2" aria-hidden="true"></i> Retour à la liste
+        <i class="fa fa-arrow-left me-2" aria-hidden="true"></i> {{ 'template_editorBackToList'|trans }}
     </a>
 {% endblock %}
 
@@ -37,11 +37,11 @@
             </div>
             <div class="card-footer d-flex flex-wrap gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fa fa-save me-2" aria-hidden="true"></i> {{ element.path ? 'Mettre à jour' : 'Créer' }}
+                    <i class="fa fa-save me-2" aria-hidden="true"></i> {{ element.path ? 'template_editorUpdate'|trans : 'template_editorCreate'|trans }}
                 </button>
                 {% if element.path %}
                     <a class="btn btn-outline-danger" href="{{ path('admin_template_editor_delete', {encodedPath: element.encodedPath}) }}">
-                        <i class="fa fa-minus-circle me-2" aria-hidden="true"></i> Supprimer
+                        <i class="fa fa-minus-circle me-2" aria-hidden="true"></i> {{ 'template_editorDeleteLabel'|trans }}
                     </a>
                 {% endif %}
             </div>

@@ -1,4 +1,18 @@
 adminLabelTheme: 'Code Editor'
+template_editorAction: Action
+template_editorAdd: Add
+template_editorBackToList: 'Back to list'
+template_editorCreate: Create
+template_editorCreateTitle: 'Create a new template'
 template_editorCreationDisabled: 'Creation (and deletion) are disabled.'
+template_editorDeleteConfirm: 'Are you sure you want to delete the element <code>%path%</code>?'
+template_editorDeleteConfirmTitle: 'Delete confirmation'
 template_editorDeleteLabel: Delete
+template_editorDeleteTitle: 'Delete a template'
+template_editorEdit: Edit
+template_editorEditTitle: 'Edit %path%'
 template_editorElementDeleted: 'Element deleted.'
+template_editorEmpty: 'No templates available.'
+template_editorPath: Path
+template_editorTitle: Templates
+template_editorUpdate: Update

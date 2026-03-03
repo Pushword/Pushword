@@ -331,7 +331,7 @@ final class LinkedDocsScanner extends AbstractScanner
         // internal
         $uri = $this->removeBase($url);
 
-        if ($this->mustIgnore($url)) {
+        if ($this->mustIgnore($url) || ($uri !== $url && $this->mustIgnore($uri))) {
             return;
         }
 

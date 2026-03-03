@@ -65,6 +65,7 @@ adminMediaPreviewMarkdown: Markdown
 adminMediaPreviewPath: Chemin
 adminMediaRelatedLabel: 'Pages connectées'
 adminMediaSizeLabel: 'Taille du fichier'
+adminMediaSlugWarning: "Changer le slug change l'URL de l'image et peut créer des erreurs."
 adminMediaTagsLabel: Tags
 adminMediaViewLabel: "Mode d'affichage"
 adminMediaViewMosaic: 'Vue mosaïque'

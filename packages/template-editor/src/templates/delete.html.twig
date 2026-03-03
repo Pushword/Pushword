@@ -1,10 +1,10 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block content_title %}Suppression d'un fichier thème{% endblock %}
+{% block content_title %}{{ 'template_editorDeleteTitle'|trans }}{% endblock %}
 
 {% block page_actions %}
     <a class="btn btn-outline-secondary" href="{{ path('admin_template_editor_list') }}">
-        <i class="fa fa-arrow-left me-2" aria-hidden="true"></i> Retour à la liste
+        <i class="fa fa-arrow-left me-2" aria-hidden="true"></i> {{ 'template_editorBackToList'|trans }}
     </a>
 {% endblock %}
 
@@ -17,11 +17,11 @@
         {{ form_start(form) }}
         <div class="card border-danger">
             <div class="card-header text-danger fw-bold">
-                Confirmation de suppression
+                {{ 'template_editorDeleteConfirmTitle'|trans }}
             </div>
             <div class="card-body">
                 <p class="mb-0">
-                    Êtes-vous sûr de vouloir supprimer l'élément <code>{{ element.path }}</code> sélectionné?
+                    {{ 'template_editorDeleteConfirm'|trans({'%path%': element.path}) }}
                 </p>
             </div>
             <div class="card-footer d-flex justify-content-end gap-2">

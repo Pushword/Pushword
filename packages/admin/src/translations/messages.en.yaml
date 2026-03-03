@@ -56,6 +56,7 @@ adminMediaPreviewMarkdown: Markdown
 adminMediaPreviewPath: Path
 adminMediaRelatedLabel: "Related pages"
 adminMediaSizeLabel: "File size"
+adminMediaSlugWarning: "Changing the slug changes the image URL and may cause errors."
 adminMediaTagsLabel: Tags
 adminMediaViewLabel: "View mode"
 adminMediaViewMosaic: Mosaic

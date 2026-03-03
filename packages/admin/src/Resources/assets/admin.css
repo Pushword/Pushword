@@ -273,4 +273,9 @@ textarea:focus:not(:focus-visible) {
   outline-offset: var(--focus-ring-offset);
 }
 
+/* Fix EasyAdmin empty-state: hide skeleton rows when "No results" is shown */
+.datagrid tbody:has(.no-results) .empty-row {
+  display: none;
+}
+
 /* purgecss end ignore */

@@ -1,6 +1,6 @@
 You just succeed to install **Pushword**.
 
-You are on your future **homepage**. [Look at the docs](https://pushword.piedweb.com/configuration) to configure and customize your own Pushword website.
+You are on your future **homepage**. [Look at the docs](https://pushword.piedweb.com/installation) to configure and customize your own Pushword website.
 
 Have fun,<br>
 [Robin](https://piedweb.com)
@@ -9,7 +9,7 @@ Have fun,<br>
   {
     'image'  : '3',
     'title'  : 'Configure it',
-    'link'    : 'https://pushword.piedweb.com/configuration',
+    'link'    : 'https://pushword.piedweb.com/installation',
   },
   {
     'image'  : '1',

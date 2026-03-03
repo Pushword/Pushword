@@ -38,7 +38,7 @@ class Configuration implements ConfigurationInterface
                         ->end()
                     ->arrayNode('links_to_ignore')
                         ->prototype('scalar')
-                            ->defaultValue(['https://www.example.tld/*'])
+                            ->defaultValue(['https://www.example.tld/*', '/admin/*'])
                         ->end()
                     ->end()
                     ->arrayNode('errors_to_ignore')

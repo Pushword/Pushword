@@ -122,11 +122,3 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - **Complex Right System** : Multi-user editor Multi-site but not everybody can edit everything (extension or core ?)
 
 - **eCommerce** bridge with sylius or odoo ?!
-
-```
-
-```
-
-```
-
-```

@@ -26,7 +26,7 @@ class MediaSlugField extends AbstractField
                         slugField.focus();
                         document.getElementById("disabledLinkSlug").remove();
                     }</script>'
-                    .'<small>Changer le slug change l\'URL de l\'image et peut créer des erreurs.</small>'
+                    .'<small>'.$this->admin->getTranslator()->trans('adminMediaSlugWarning').'</small>'
                 : 'adminPageSlugHelp',
             'attr' => [
                 'class' => 'slug_disabled',
