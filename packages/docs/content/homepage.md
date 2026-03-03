@@ -140,23 +140,30 @@ raw: 1
   <h2 class="text-center text-4xl font-extrabold mb-2 text-gray-900 dark:text-white">Built with Pushword</h2>
   <p class="text-center text-gray-500 mb-12 text-lg">Real sites, real performance.</p>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div class="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
 
-    <a href="https://piedvert.com" class="block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+    <a href="https://piedvert.com" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
       <img src="/media/piedvert.png" alt="piedvert.com" class="w-full">
       <div class="p-4 text-center">
         <span class="font-semibold text-gray-900 dark:text-white">piedvert.com</span>
       </div>
     </a>
 
-    <a href="https://altimood.com" class="block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+    <a href="https://altimood.com" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
       <img src="/media/altimood.png" alt="altimood.com" class="w-full">
       <div class="p-4 text-center">
         <span class="font-semibold text-gray-900 dark:text-white">altimood.com</span>
       </div>
     </a>
 
-    <a href="https://piedweb.com" class="block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+    <a href="https://www.kelifos.travel" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+      <img src="/media/kelifos.png" alt="kelifos.travel" class="w-full">
+      <div class="p-4 text-center">
+        <span class="font-semibold text-gray-900 dark:text-white">kelifos.travel</span>
+      </div>
+    </a>
+
+    <a href="https://piedweb.com" class="snap-start shrink-0 w-80 block bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
       <img src="/media/piedweb.png" alt="piedweb.com" class="w-full">
       <div class="p-4 text-center">
         <span class="font-semibold text-gray-900 dark:text-white">piedweb.com</span>
