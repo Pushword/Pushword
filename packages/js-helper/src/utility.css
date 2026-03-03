@@ -39,6 +39,11 @@
   justify-content: safe center;
 }
 
+/* Prevent prose from overflowing viewport on small screens */
+.prose {
+  max-width: min(65ch, 100%);
+}
+
 /* Typography customization */
 .prose a:not(.not-prose a),
 .prose span[data-rot]:not(.not-prose span[data-rot]),

@@ -1,9 +1,11 @@
+edit: Edit
 en: English
 cardButtonDefaultLabel: Book
 errorDescription: '<a href="/" class="btn btn-secondary">Back</a>'
 errorServerSay: 'The server indicates'
 errorTitle: 'Oops! An error...'
 feedAlternateTitle: Feed
+list: List
 feedDescription: 'Last published page.'
 forgotPasswordButton: 'Send reset link'
 forgotPasswordEmailFooter: 'If you did not request a password reset, please ignore this email.'
@@ -18,8 +20,10 @@ fr: Français
 mediaAltsInvalidYaml: "Invalid YAML format. Use: locale: text (e.g. en: my description). Escape apostrophes by doubling them (e.g. Ko''Ono)."
 mediaDuplicateWarning: 'The file seems to already be present on disk: <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Delete this duplicate version</a>'
 mediaNameWasChanged: 'Name was changed because another media has a similar name one.'
+new: New
 navigationToggle: 'Toggle Navigation'
 powered_by: 'Powered by'
+publish: Publish
 backToLogin: 'Back to login'
 confirmPassword: 'Confirm password'
 mainNavigation: 'Main navigation'

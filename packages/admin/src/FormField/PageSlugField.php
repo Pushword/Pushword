@@ -38,6 +38,8 @@ class PageSlugField extends AbstractField
 
     public function getEasyAdminField(): ?FieldInterface
     {
+        $hasSlug = '' !== $this->admin->getSubject()->getSlug();
+
         return $this->buildEasyAdminField('slug', TextType::class, [
             'required' => false,
             'label' => 'adminPageSlugLabel',
@@ -45,7 +47,7 @@ class PageSlugField extends AbstractField
             'help' => $this->getSlugHelp(),
             'attr' => [
                 'class' => 'slug_disabled',
-                ('' !== $this->admin->getSubject()->getSlug() ? 'readonly' : 't') => '',
+                ($hasSlug ? 'readonly' : 't') => '',
             ],
         ]);
     }

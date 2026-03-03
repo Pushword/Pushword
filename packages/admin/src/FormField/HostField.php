@@ -60,6 +60,7 @@ class HostField extends AbstractField
             ->onlyOnForms()
             ->setChoices(array_combine($hosts, $hosts))
             ->renderAsNativeWidget()
-            ->setFormTypeOption('required', true);
+            ->setFormTypeOption('required', true)
+            ->setFormTypeOption('choice_translation_domain', false);
     }
 }

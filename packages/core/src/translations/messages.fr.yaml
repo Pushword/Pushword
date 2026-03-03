@@ -1,9 +1,11 @@
+edit: Modifier
 en: English
 cardButtonDefaultLabel: Réserver
 errorDescription: '<a href="/" class="btn btn-secondary">Retour</a>'
 errorServerSay: "Le serveur indique"
 errorTitle: "Oops! Une erreur..."
 feedAlternateTitle: Flux
+list: Liste
 feedDescription: "Dernière page publiée."
 forgotPasswordButton: 'Envoyer le lien de réinitialisation'
 forgotPasswordEmailFooter: "Si vous n'avez pas demandé de réinitialisation de mot de passe, ignorez cet email."
@@ -18,8 +20,10 @@ fr: Français
 mediaAltsInvalidYaml: "Format YAML invalide. Utilisez : locale: texte (ex: fr: ma description). Échappez les apostrophes en les doublant (ex: Ko''Ono)."
 mediaDuplicateWarning: 'Ce fichier semble déjà présent sur le disque : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Supprimer ce doublon</a>'
 mediaNameWasChanged: "Le nom a été changé du fait d'un média similaire."
+new: Nouveau
 navigationToggle: "Afficher/Cacher le menu"
 powered_by: "Propulsé par"
+publish: Publier
 backToLogin: "Retour à la connexion"
 confirmPassword: "Confirmer le mot de passe"
 mainNavigation: "Navigation principale"

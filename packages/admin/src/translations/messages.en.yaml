@@ -78,7 +78,7 @@ adminPageCreatedAtLabel: "Created At"
 adminPageCustomPropertiesHelp: "In <em>YAML</em> format."
 adminPageCustomPropertiesLabel: "Other parameters"
 adminPageEditMessageHelp: "Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em>"
-adminPageEditMessageHelpVersionned: 'Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">See hitory</a>'
+adminPageEditMessageHelpVersionned: 'Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">See history</a>'
 adminPageEditMessageLabel: "Reason of modification"
 adminPageEditLockRefresh: "Refresh page"
 adminPageEditLockWarning: "%user% is currently editing this page. Your changes may be overwritten."

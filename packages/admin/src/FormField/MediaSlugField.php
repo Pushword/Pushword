@@ -13,11 +13,13 @@ class MediaSlugField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
+        $hasSlug = '' !== $this->admin->getSubject()->getSlug();
+
         return $this->buildEasyAdminField('slugForce', TextType::class, [
             'label' => 'adminPageSlugLabel',
             'help_html' => true,
             'required' => false,
-            'help' => '' !== $this->admin->getSubject()->getSlug()
+            'help' => $hasSlug
                 ? '<span class="btn btn-link" onclick="toggleDisabled()" id="disabledLinkSlug">
                     <i class="fa fa-unlock"></i></span>
                     <script>function toggleDisabled() {
@@ -30,7 +32,7 @@ class MediaSlugField extends AbstractField
                 : 'adminPageSlugHelp',
             'attr' => [
                 'class' => 'slug_disabled',
-                ('' !== $this->admin->getSubject()->getSlug() ? 'disabled' : 't') => '',
+                ($hasSlug ? 'disabled' : 't') => '',
             ],
         ]);
     }
