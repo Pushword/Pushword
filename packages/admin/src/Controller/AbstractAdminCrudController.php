@@ -31,9 +31,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 abstract class AbstractAdminCrudController extends AbstractCrudController implements AdminInterface
 {
     /** @var int[] */
-    protected array $pageSizeOptions = [25, 50, 100, 250, 500];
+    protected array $pageSizeOptions = [10, 25, 50, 100, 250, 500];
 
-    protected int $defaultPageSize = 100;
+    protected int $defaultPageSize = 10;
 
     protected ?object $subject = null;
 
