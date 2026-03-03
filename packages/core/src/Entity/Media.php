@@ -64,6 +64,7 @@ class Media implements IdInterface, Taggable, Stringable
 
     protected string $projectDir = '';
 
+    // column name = media to avoid bc
     #[ORM\Column(name: 'media', type: Types::STRING, length: 255)]
     protected string $fileName = '';
 
@@ -481,7 +482,7 @@ class Media implements IdInterface, Taggable, Stringable
 
     // --- Alt text ---
 
-    #[ORM\Column(name: 'name', type: Types::TEXT, unique: true)]
+    #[ORM\Column(name: 'name', type: Types::TEXT)] // , unique: true
     protected string $alt = '';
 
     #[ORM\Column(name: 'name_search', type: Types::TEXT, options: ['default' => ''])]

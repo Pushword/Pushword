@@ -112,6 +112,7 @@ final class MediaSync
             }
 
             $this->storageImported = true;
+            $this->mediaImporter->finishImport();
         }
 
         // 5. Import local content dir files (flat content directory)

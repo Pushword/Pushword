@@ -386,6 +386,45 @@ final class MediaEdgeCasesTest extends KernelTestCase
         @unlink($storagePath);
     }
 
+    public function testSameFileInStorageAndFlatDirDoesNotCauseDuplicateConstraintViolation(): void
+    {
+        $mediaDir = $this->getMediaDir();
+
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+        $localMediaDir = $contentDir.'/media';
+        (new Filesystem())->mkdir($localMediaDir);
+
+        $fileName = 'edge-storage-and-flat.txt';
+        $alt = 'VTC SPORTIF';
+
+        // Place the file in both storage (media dir) and the flat content dir
+        $storagePath = $mediaDir.'/'.$fileName;
+        $localPath = $localMediaDir.'/'.$fileName;
+        file_put_contents($storagePath, 'shared file content');
+        file_put_contents($localPath, 'shared file content');
+        $this->tempFiles[] = $storagePath;
+        $this->tempFiles[] = $localPath;
+
+        // CSV with the alt value that would be set on both entities causing the unique constraint violation
+        $this->writeMediaCsv("fileName,alt,tags\n{$fileName},{$alt},\n");
+
+        /** @var MediaSync $mediaSync */
+        $mediaSync = self::getContainer()->get(MediaSync::class);
+        $mediaSync->import('localhost.dev');
+
+        // Should have exactly one media entity — no duplicate constraint violation
+        $results = $this->em->getRepository(Media::class)->findBy(['fileName' => $fileName]);
+        self::assertCount(1, $results, 'Only one media entity should exist when the same file is in both storage and flat dir');
+        self::assertSame($alt, $results[0]->getAlt(true));
+
+        // Cleanup
+        $this->em->remove($results[0]);
+        $this->em->flush();
+        (new Filesystem())->remove($localMediaDir);
+    }
+
     public function testRenamedFileInMediaDirDetectedByHash(): void
     {
         $mediaDir = $this->getMediaDir();
