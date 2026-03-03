@@ -28,11 +28,17 @@ abstract class AbstractMediaPickerField extends AbstractField
             'data-pw-media-picker-placeholder' => Thumb::PLACEHOLDER_DATA_URI,
             'data-pw-media-picker-modal-url' => $this->buildAdminUrl($this->buildPickerQuery('index', $filters)),
             'data-pw-media-picker-upload-url' => $this->buildAdminUrl($this->buildPickerQuery('new', $filters)),
+            'data-pw-media-picker-edit-url' => $this->buildAdminUrl([
+                'crudControllerFqcn' => MediaCrudController::class,
+                'crudAction' => 'edit',
+                'entityId' => '__MEDIA_ID__',
+            ]),
             'data-pw-media-picker-modal-title' => $this->translate('adminMediaPickerTitle'),
             'data-pw-media-picker-choose-label' => $this->translate('adminMediaPickerChoose'),
             'data-pw-media-picker-upload-label' => $this->translate('adminMediaPickerUpload'),
             'data-pw-media-picker-remove-label' => $this->translate('adminMediaPickerRemove'),
             'data-pw-media-picker-empty-label' => $this->translate('adminMediaPickerEmpty'),
+            'data-pw-media-picker-edit-label' => $this->translate('adminMediaPickerEdit'),
         ];
 
         if ($selected instanceof Media && null !== $selected->id) {

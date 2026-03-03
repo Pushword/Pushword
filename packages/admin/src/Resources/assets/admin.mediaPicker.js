@@ -145,6 +145,9 @@ function buildPickerHtml(select) {
       <button class="btn btn-outline-secondary" type="button" data-pw-media-picker-action="upload">
         ${select.dataset.pwMediaPickerUploadLabel || 'Upload'}
       </button>
+      <a class="btn btn-link" href="#" target="_blank" data-pw-media-picker-action="edit" aria-label="${select.dataset.pwMediaPickerEditLabel || 'Edit'}">
+        <span class="fa fa-pencil" aria-hidden="true"></span>
+      </a>
       <button class="btn btn-link ms-auto" type="button" data-pw-media-picker-action="remove" aria-label="${removeLabel}">
         <span class="fa fa-times" aria-hidden="true"></span>
       </button>
@@ -188,6 +191,16 @@ function renderPickerState(select) {
     } else {
       infoEl.textContent = ''
       infoEl.removeAttribute('title')
+    }
+  }
+
+  const editLink = wrapper.querySelector('[data-pw-media-picker-action="edit"]')
+  if (editLink) {
+    if (hasSelection && select.dataset.pwMediaPickerEditUrl) {
+      editLink.href = select.dataset.pwMediaPickerEditUrl.replace('__MEDIA_ID__', select.dataset.pwMediaPickerSelectedId)
+      editLink.style.display = ''
+    } else {
+      editLink.style.display = 'none'
     }
   }
 

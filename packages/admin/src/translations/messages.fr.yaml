@@ -53,6 +53,7 @@ adminMediaMultiUpload: "Multi Upload"
 adminMediaMultiUploadDrop: "Déposez vos fichiers ici"
 adminMediaMultiUploadOr: "ou cliquez pour parcourir"
 adminMediaPickerChoose: Choisir
+adminMediaPickerEdit: Modifier
 adminMediaPickerEmpty: 'Aucune image sélectionnée'
 adminMediaPickerRemove: Supprimer
 adminMediaPickerTitle: 'Bibliothèque média'
