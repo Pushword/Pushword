@@ -51,12 +51,17 @@ import 'core-js/stable'
 window.domChanging = false
 window.copyElementText = copyElementText
 
-// Prevent EasyAdmin clickable-row navigation when clicking on contenteditable elements
-document.addEventListener('click', function (e) {
-  if (e.target.closest('[contenteditable="true"]')) {
-    e.stopPropagation()
-  }
-}, true)
+// Prevent EasyAdmin clickable-row navigation when clicking on contenteditable elements.
+// EasyAdmin's isInteractiveElement() doesn't recognise [contenteditable], so we tag them
+// with a data attribute it DOES check for: [data-bs-toggle].
+function markContentEditableElements() {
+  document.querySelectorAll('[contenteditable="true"]:not([data-bs-toggle])').forEach(function (el) {
+    el.setAttribute('data-bs-toggle', 'pw-inline')
+  })
+}
+document.addEventListener('DOMContentLoaded', markContentEditableElements)
+document.addEventListener('turbo:render', markContentEditableElements)
+document.body?.addEventListener('htmx:afterSwap', markContentEditableElements)
 
 /**
  * Initialize all admin interface modules
