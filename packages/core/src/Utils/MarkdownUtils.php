@@ -36,6 +36,8 @@ final class MarkdownUtils
 
     public static function isItCodeBlock(string $text): bool
     {
+        $text = trim($text);
+
         return str_starts_with($text, '```') && str_ends_with($text, '```');
     }
 

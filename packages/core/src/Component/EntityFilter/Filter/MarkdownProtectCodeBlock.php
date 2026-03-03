@@ -36,6 +36,15 @@ final class MarkdownProtectCodeBlock
         return $text;
     }
 
+    public function restoreString(string $text): string
+    {
+        foreach ($this->codeBlocks as $placeholder => $codeBlock) {
+            $text = str_replace($placeholder, $codeBlock, $text);
+        }
+
+        return $text;
+    }
+
     /**
      * @param string[] $textParts
      *
