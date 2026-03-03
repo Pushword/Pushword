@@ -30,7 +30,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
         index.{locale}.csv
   - [x] Generate a map of the media
   - [ ] In new, create default AGENTS.md (inspired from altimood)
-  - [ ] upgrade skills -> composer req pushword/docs, composer update (retrieve pushword core version upgrade), read vendor/pushword/docs.../upgrade.md, fix local codebase, test (manual composer dev + check few pages) and composer test if available
+  - [ ] upgrade skills -> composer req pushword/docs, composer update (retrieve pushword core version upgrade), read vendor/pushword/docs.../upgrade.md, fix local codebase, test (manual composer dev + check few pages) and composer test if available claude --resume b88a1a80-843c-4e8f-994c-23ef98e63f59
 
 - best bractice : migrate to #[MapQueryParameter] ?string $source = null, and #[MapFormParameter] instead of request
 
