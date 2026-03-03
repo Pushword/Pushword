@@ -13,6 +13,7 @@ use Pushword\Flat\Service\DeferredExportProcessor;
 use ReflectionClass;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Messenger\MessageBus;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 #[Group('integration')]
@@ -29,7 +30,7 @@ final class DeferredExportProcessorTest extends KernelTestCase
     {
         $kernel = self::bootKernel();
         $this->backgroundTaskDispatcher = $kernel->getContainer()->get(BackgroundTaskDispatcherInterface::class);
-        $this->messageBus = $kernel->getContainer()->get('messenger.default_bus');
+        $this->messageBus = new MessageBus();
 
         $this->tempDir = sys_get_temp_dir().'/deferred-export-test-'.uniqid();
         mkdir($this->tempDir, 0755, true);

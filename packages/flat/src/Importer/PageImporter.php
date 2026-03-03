@@ -314,7 +314,6 @@ final class PageImporter extends AbstractImporter
     private function toAddAtTheEnd(): void
     {
         foreach ($this->toAddAtTheEnd as $slug => $data) {
-            $slug = (string) $slug;
             $page = $this->getPage($slug);
             if (null === $page) {
                 $this->logger->warning('Page `{slug}` not found when processing deferred properties', ['slug' => $slug]);
@@ -490,7 +489,7 @@ final class PageImporter extends AbstractImporter
 
         // Merge newly imported pages into slug index instead of reloading from DB
         foreach ($this->pageList as $slug => $page) {
-            $this->slugIndex[(string) $slug] = $page;
+            $this->slugIndex[$slug] = $page;
         }
 
         $this->toAddAtTheEnd();

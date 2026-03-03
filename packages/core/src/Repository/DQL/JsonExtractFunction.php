@@ -13,7 +13,7 @@ use Override;
 
 class JsonExtractFunction extends FunctionNode
 {
-    private Node $column;
+    private Node|string $column;
 
     private Node $path;
 
@@ -22,6 +22,7 @@ class JsonExtractFunction extends FunctionNode
     {
         $parser->match(TokenType::T_IDENTIFIER);
         $parser->match(TokenType::T_OPEN_PARENTHESIS);
+
         $this->column = $parser->ArithmeticPrimary();
         $parser->match(TokenType::T_COMMA);
         $this->path = $parser->StringPrimary();
@@ -31,6 +32,8 @@ class JsonExtractFunction extends FunctionNode
     #[Override]
     public function getSql(SqlWalker $sqlWalker): string
     {
-        return \sprintf('JSON_EXTRACT(%s, %s)', $this->column->dispatch($sqlWalker), $this->path->dispatch($sqlWalker));
+        $column = $this->column instanceof Node ? $this->column->dispatch($sqlWalker) : $this->column;
+
+        return \sprintf('JSON_EXTRACT(%s, %s)', $column, $this->path->dispatch($sqlWalker));
     }
 }

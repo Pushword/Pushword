@@ -2072,7 +2072,9 @@ MD);
         self::assertNotNull($frPage, 'FR translation page should be imported');
         self::assertSame('404', $notFoundPage->slug);
         self::assertCount(1, $notFoundPage->getTranslations(), '404 page should have 1 translation');
-        self::assertSame('error-page-fr', $notFoundPage->getTranslations()->first()->getSlug());
+        $firstTranslation = $notFoundPage->getTranslations()->first();
+        self::assertNotFalse($firstTranslation);
+        self::assertSame('error-page-fr', $firstTranslation->getSlug());
 
         // Cleanup
         $this->em->remove($notFoundPage);
