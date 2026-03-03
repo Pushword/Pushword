@@ -481,10 +481,10 @@ class Media implements IdInterface, Taggable, Stringable
 
     // --- Alt text ---
 
-    #[ORM\Column(name: 'name', type: Types::STRING, length: 100, unique: true)]
+    #[ORM\Column(name: 'name', type: Types::STRING, length: 255, unique: true)]
     protected string $alt = '';
 
-    #[ORM\Column(name: 'name_search', type: Types::STRING, length: 100, options: ['default' => ''])]
+    #[ORM\Column(name: 'name_search', type: Types::STRING, length: 255, options: ['default' => ''])]
     protected string $altSearch = '';
 
     #[ORM\Column(name: 'names', type: Types::TEXT, nullable: true, options: ['default' => ''])]
@@ -503,7 +503,7 @@ class Media implements IdInterface, Taggable, Stringable
             return $this;
         }
 
-        $this->alt = (string) $alt;
+        $this->alt = substr((string) $alt, 0, 255);
         $this->updateAltSearch();
 
         return $this;
