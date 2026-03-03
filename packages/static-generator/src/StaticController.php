@@ -8,7 +8,6 @@ use Exception;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
-use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\HttpFoundation\Response;
@@ -82,9 +81,8 @@ class StaticController extends AbstractController
                 self::COMMAND_PATTERN,
             );
         } catch (Exception $exception) {
-            $this->outputStorage->clear(self::PROCESS_TYPE);
-
-            throw new RuntimeException('Failed to start background process: '.$exception->getMessage(), 0, $exception);
+            $this->outputStorage->write(self::PROCESS_TYPE, 'Failed to start background process: '.$exception->getMessage()."\n");
+            $this->outputStorage->setStatus(self::PROCESS_TYPE, 'error');
         }
 
         // Show running page with HTMX polling

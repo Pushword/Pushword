@@ -3,7 +3,7 @@
 namespace Pushword\Core\BackgroundTask;
 
 use Pushword\Core\Service\BackgroundProcessManager;
-use RuntimeException;
+use Pushword\Core\Service\ProcessAlreadyRunningException;
 
 final readonly class ProcessBackgroundTaskDispatcher implements BackgroundTaskDispatcherInterface
 {
@@ -19,7 +19,7 @@ final readonly class ProcessBackgroundTaskDispatcher implements BackgroundTaskDi
 
         try {
             $this->processManager->startBackgroundProcess($pidFile, $commandParts, $commandPattern);
-        } catch (RuntimeException) {
+        } catch (ProcessAlreadyRunningException) {
             // Already running, skip silently
         }
     }

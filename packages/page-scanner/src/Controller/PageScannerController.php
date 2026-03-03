@@ -103,11 +103,17 @@ final class PageScannerController extends AbstractController
             $this->outputStorage->clear(self::PROCESS_TYPE);
             $this->outputStorage->setStatus(self::PROCESS_TYPE, 'running');
 
-            $this->backgroundTaskDispatcher->dispatch(
-                self::PROCESS_TYPE,
-                ['php', 'bin/console', 'pw:page-scan'],
-                self::COMMAND_PATTERN,
-            );
+            try {
+                $this->backgroundTaskDispatcher->dispatch(
+                    self::PROCESS_TYPE,
+                    ['php', 'bin/console', 'pw:page-scan'],
+                    self::COMMAND_PATTERN,
+                );
+            } catch (Exception $exception) {
+                $this->outputStorage->write(self::PROCESS_TYPE, 'Failed to start background process: '.$exception->getMessage()."\n");
+                $this->outputStorage->setStatus(self::PROCESS_TYPE, 'error');
+            }
+
             $lastTime->setWasRun('now', false);
 
             return $this->renderAdmin('@pwPageScanner/scanning.html.twig', [

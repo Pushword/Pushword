@@ -11,7 +11,7 @@ use function Safe\json_encode;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
-final readonly class BackgroundProcessManager
+readonly class BackgroundProcessManager
 {
     public function __construct(
         private Filesystem $filesystem,
@@ -168,7 +168,7 @@ final readonly class BackgroundProcessManager
         $processInfo = $this->getProcessInfo($pidFile);
 
         if ($processInfo['isRunning']) {
-            throw new RuntimeException('Process is already running (PID: '.$processInfo['pid'].')');
+            throw new ProcessAlreadyRunningException('Process is already running (PID: '.$processInfo['pid'].')');
         }
 
         $commandLine = implode(' ', array_map(escapeshellarg(...), $commandParts));
