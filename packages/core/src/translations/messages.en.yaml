@@ -5,6 +5,15 @@ errorServerSay: 'The server indicates'
 errorTitle: 'Oops! An error...'
 feedAlternateTitle: Feed
 feedDescription: 'Last published page.'
+forgotPasswordButton: 'Send reset link'
+forgotPasswordEmailFooter: 'If you did not request a password reset, please ignore this email.'
+forgotPasswordEmailGreeting: 'Hello %username%,'
+forgotPasswordEmailIntro: 'Click the button below to reset your password:'
+forgotPasswordEmailSent: 'If an account exists with this email, a reset link has been sent. Check your inbox.'
+forgotPasswordEmailSubject: 'Reset your password for %appName%'
+forgotPasswordLink: 'Forgot password?'
+forgotPasswordResetButton: 'Reset your password'
+forgotPasswordTitle: 'Reset password'
 fr: Français
 mediaAltsInvalidYaml: "Invalid YAML format. Use: locale: text (e.g. en: my description). Escape apostrophes by doubling them (e.g. Ko''Ono)."
 mediaDuplicateWarning: 'The file seems to already be present on disk: <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Delete this duplicate version</a>'

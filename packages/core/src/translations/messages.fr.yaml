@@ -5,6 +5,15 @@ errorServerSay: "Le serveur indique"
 errorTitle: "Oops! Une erreur..."
 feedAlternateTitle: Flux
 feedDescription: "Dernière page publiée."
+forgotPasswordButton: 'Envoyer le lien de réinitialisation'
+forgotPasswordEmailFooter: "Si vous n'avez pas demandé de réinitialisation de mot de passe, ignorez cet email."
+forgotPasswordEmailGreeting: 'Bonjour %username%,'
+forgotPasswordEmailIntro: 'Cliquez sur le bouton ci-dessous pour réinitialiser votre mot de passe :'
+forgotPasswordEmailSent: "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé. Vérifiez votre boîte de réception."
+forgotPasswordEmailSubject: 'Réinitialiser votre mot de passe pour %appName%'
+forgotPasswordLink: 'Mot de passe oublié ?'
+forgotPasswordResetButton: 'Réinitialiser votre mot de passe'
+forgotPasswordTitle: 'Réinitialiser le mot de passe'
 fr: Français
 mediaAltsInvalidYaml: "Format YAML invalide. Utilisez : locale: texte (ex: fr: ma description). Échappez les apostrophes en les doublant (ex: Ko''Ono)."
 mediaDuplicateWarning: 'Ce fichier semble déjà présent sur le disque : <a href="%sameMediaEditUrl%">%name%</a>.<br><a class="btn btn-danger" style="text-decoration:none;display:inline-block" href="%deleteMediaUrl%">Supprimer ce doublon</a>'

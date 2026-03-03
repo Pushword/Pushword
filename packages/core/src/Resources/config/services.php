@@ -48,7 +48,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$tailwindGeneratorIsActive', '%pw.tailwind_generator%')
         ->bind('$imageDriver', '%pw.image_driver%')
         ->bind('$pdfPreset', '%pw.pdf_preset%')
-        ->bind('$pdfLinearize', '%pw.pdf_linearize%');
+        ->bind('$pdfLinearize', '%pw.pdf_linearize%')
+        ->bind('$enablePasswordReset', '%pw.enable_password_reset%');
 
     $services->load('Pushword\Core\\', __DIR__.'/../../../src/*')
         ->exclude([

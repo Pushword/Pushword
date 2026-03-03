@@ -15,6 +15,8 @@ class LoginToken
 
     public const string TYPE_SET_PASSWORD = 'set_password';
 
+    public const string TYPE_PASSWORD_RESET = 'password_reset';
+
     public const int TTL_SECONDS = 3600; // 1 hour
 
     #[ORM\Id, ORM\Column(type: Types::INTEGER), ORM\GeneratedValue(strategy: 'AUTO')]

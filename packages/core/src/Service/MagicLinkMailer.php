@@ -25,6 +25,45 @@ final readonly class MagicLinkMailer
     ) {
     }
 
+    public function sendPasswordResetLink(User $user): void
+    {
+        $this->tokenRepo->invalidateUserTokens($user, LoginToken::TYPE_PASSWORD_RESET);
+
+        $plainToken = bin2hex(random_bytes(32));
+
+        $token = new LoginToken($user, LoginToken::TYPE_PASSWORD_RESET);
+        $token->setToken($plainToken);
+
+        $this->em->persist($token);
+        $this->em->flush();
+
+        $urlToken = base64_encode($user->getId().':'.$plainToken);
+
+        $resetUrl = $this->urlGenerator->generate(
+            'pushword_login_set_password',
+            ['token' => $urlToken],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
+
+        $appName = $this->apps->get()->getStr('name') ?: $this->apps->get()->getMainHost();
+
+        $envelope = $this->emailSender->resolveEnvelope(
+            toConfigKey: [$user->email],
+        );
+
+        $this->emailSender->sendTemplated(
+            $envelope,
+            $this->translator->trans('forgotPasswordEmailSubject', ['%appName%' => $appName]),
+            '@Pushword/user/email/password_reset.html.twig',
+            [
+                'user' => $user,
+                'resetUrl' => $resetUrl,
+                'appName' => $appName,
+                'expiresInMinutes' => LoginToken::TTL_SECONDS / 60,
+            ],
+        );
+    }
+
     public function sendMagicLink(User $user): void
     {
         $this->tokenRepo->invalidateUserTokens($user, LoginToken::TYPE_LOGIN);

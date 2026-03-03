@@ -8,6 +8,7 @@ return static function (ContainerConfigurator $container): void {
     $container->extension('pushword', [
         'media_dir' => '%env(PUSHWORD_TEST_MEDIA_DIR)%',
         'database_url' => '%env(PUSHWORD_TEST_DATABASE_URL)%',
+        'enable_password_reset' => true,
     ]);
 
     $container->extension('pushword_flat', [

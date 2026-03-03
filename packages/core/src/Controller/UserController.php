@@ -31,6 +31,7 @@ final class UserController extends AbstractController
         private readonly LoginTokenRepository $tokenRepo,
         private readonly UserAuthenticatorInterface $userAuthenticator,
         private readonly MagicLinkAuthenticator $authenticator,
+        private readonly bool $enablePasswordReset = false,
     ) {
     }
 
@@ -51,6 +52,7 @@ final class UserController extends AbstractController
                 'last_username' => $lastUsername,
                 'error' => $authenticationException,
                 'step' => 'password',
+                'enable_password_reset' => $this->enablePasswordReset,
             ]);
         }
 
@@ -65,6 +67,7 @@ final class UserController extends AbstractController
             'last_username' => $lastUsername,
             'error' => $authenticationException,
             'step' => 'email',
+            'enable_password_reset' => $this->enablePasswordReset,
         ]);
     }
 
@@ -163,7 +166,8 @@ final class UserController extends AbstractController
         }
 
         $tokenHash = hash('sha256', $plainToken);
-        $loginToken = $this->tokenRepo->findValidToken($user, $tokenHash, LoginToken::TYPE_SET_PASSWORD);
+        $loginToken = $this->tokenRepo->findValidToken($user, $tokenHash, LoginToken::TYPE_SET_PASSWORD)
+            ?? $this->tokenRepo->findValidToken($user, $tokenHash, LoginToken::TYPE_PASSWORD_RESET);
 
         if (! $loginToken instanceof LoginToken) {
             $this->addFlash('error', 'magicLinkExpiredOrUsed');
@@ -201,6 +205,39 @@ final class UserController extends AbstractController
         return $this->render('@Pushword/user/set_password.html.twig', [
             'token' => $token,
             'error' => null,
+        ]);
+    }
+
+    #[Route('/login/forgot-password', name: 'pushword_forgot_password', methods: ['GET', 'POST'])]
+    public function forgotPassword(Request $request): Response
+    {
+        if (! $this->enablePasswordReset) {
+            return $this->redirectToRoute('pushword_login');
+        }
+
+        if ($request->isMethod('POST')) {
+            $csrfToken = $request->request->getString('_csrf_token');
+
+            if (! $this->isCsrfTokenValid('forgot_password', $csrfToken)) {
+                $this->addFlash('error', 'securityLoginCsrfError');
+
+                return $this->redirectToRoute('pushword_forgot_password');
+            }
+
+            $email = $request->request->getString('email');
+            $user = $this->userRepository->findOneBy(['email' => $email]);
+
+            if ($user instanceof User) {
+                $this->magicLinkMailer->sendPasswordResetLink($user);
+            }
+
+            return $this->render('@Pushword/user/forgot_password.html.twig', [
+                'email_sent' => true,
+            ]);
+        }
+
+        return $this->render('@Pushword/user/forgot_password.html.twig', [
+            'email_sent' => false,
         ]);
     }
 

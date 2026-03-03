@@ -92,7 +92,12 @@
       <input type="checkbox" name="_remember_me" value="on" class="w-4 h-4 border-gray-300 rounded text-primary focus:ring-primary" checked>
       {{ 'securityLoginRememberMe'|trans }}
     </label>
-    <a href="{{ path('pushword_login') }}" class="text-sm text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">{{ 'securityLoginChangeEmail'|trans }}</a>
+    <div class="flex gap-3">
+      {% if enable_password_reset|default(false) %}
+      <a href="{{ path('pushword_forgot_password') }}" class="text-sm text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">{{ 'forgotPasswordLink'|trans }}</a>
+      {% endif %}
+      <a href="{{ path('pushword_login') }}" class="text-sm text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">{{ 'securityLoginChangeEmail'|trans }}</a>
+    </div>
   </div>
 
   <button type="submit" class="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md bg-primary group hover:opacity-75 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">

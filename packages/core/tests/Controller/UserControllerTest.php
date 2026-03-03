@@ -162,6 +162,113 @@ class UserControllerTest extends WebTestCase
         self::assertResponseRedirects();
     }
 
+    public function testForgotPasswordPageReturnsForm(): void
+    {
+        $this->client->request(Request::METHOD_GET, '/login/forgot-password');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('input[name="email"]');
+    }
+
+    public function testForgotPasswordSubmitWithUnknownEmail(): void
+    {
+        $this->client->request(Request::METHOD_GET, '/login/forgot-password');
+
+        $crawler = $this->client->getCrawler();
+        $form = $crawler->filter('form')->form();
+        $form['email'] = 'nonexistent@example.tld';
+        $this->client->submit($form);
+
+        // Should still show success (prevent email enumeration)
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.bg-green-100');
+    }
+
+    public function testForgotPasswordSubmitWithKnownEmail(): void
+    {
+        $this->createTestUser('forgot-pw-user@example.tld', 'somePassword');
+
+        $this->client->request(Request::METHOD_GET, '/login/forgot-password');
+
+        $crawler = $this->client->getCrawler();
+        $form = $crawler->filter('form')->form();
+        $form['email'] = 'forgot-pw-user@example.tld';
+        $this->client->submit($form);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.bg-green-100');
+    }
+
+    public function testSetPasswordAcceptsPasswordResetToken(): void
+    {
+        $user = $this->createTestUser('reset-token-user@example.tld', 'oldPassword');
+        $plainToken = bin2hex(random_bytes(32));
+        $this->createLoginToken($user, $plainToken, LoginToken::TYPE_PASSWORD_RESET);
+
+        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $this->client->request(Request::METHOD_GET, '/login/set-password/'.$urlToken);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('input[name="password"]');
+    }
+
+    public function testLoginPageShowsForgotLinkWhenEnabled(): void
+    {
+        $this->createTestUser('forgot-link-user@example.tld', 'testPassword');
+
+        $this->client->request(Request::METHOD_GET, '/login');
+        $crawler = $this->client->getCrawler();
+        $form = $crawler->filter('form')->form();
+        $form['email'] = 'forgot-link-user@example.tld';
+        $this->client->submit($form);
+
+        $this->client->followRedirect();
+        self::assertSelectorExists('a[href="/login/forgot-password"]');
+    }
+
+    public function testFullPasswordResetFlow(): void
+    {
+        $user = $this->createTestUser('full-reset-flow@example.tld', 'oldPassword123');
+
+        // Step 1: Visit forgot password page
+        $this->client->request(Request::METHOD_GET, '/login/forgot-password');
+        self::assertResponseIsSuccessful();
+
+        // Step 2: Submit email
+        $crawler = $this->client->getCrawler();
+        $form = $crawler->filter('form')->form();
+        $form['email'] = 'full-reset-flow@example.tld';
+        $this->client->submit($form);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.bg-green-100');
+
+        // Step 3: Re-fetch user (previous entity manager was reset by the client)
+        /** @var UserRepository $userRepo */
+        $userRepo = self::getContainer()->get(UserRepository::class);
+        $user = $userRepo->findOneBy(['email' => 'full-reset-flow@example.tld']);
+        self::assertInstanceOf(User::class, $user);
+
+        // Create a token we know the plain value of for the flow test
+        $plainToken = bin2hex(random_bytes(32));
+        $this->createLoginToken($user, $plainToken, LoginToken::TYPE_PASSWORD_RESET);
+
+        // Step 4: Visit set-password page with the token
+        $urlToken = base64_encode($user->getId().':'.$plainToken);
+        $this->client->request(Request::METHOD_GET, '/login/set-password/'.$urlToken);
+        self::assertResponseIsSuccessful();
+
+        // Step 5: Submit new password
+        $crawler = $this->client->getCrawler();
+        $form = $crawler->filter('form')->form();
+        $form['password'] = 'newSecurePassword123';
+        $form['password_confirm'] = 'newSecurePassword123';
+        $this->client->submit($form);
+
+        // Step 6: Should redirect (authenticated)
+        self::assertResponseRedirects();
+    }
+
     public function testLoginRedirectsWhenAlreadyLoggedIn(): void
     {
         $user = $this->createTestUser('logged-in-user@example.tld', 'testPassword');

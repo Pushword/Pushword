@@ -197,6 +197,7 @@ final class Configuration implements ConfigurationInterface
             ->variableNode('custom_properties')->defaultValue(self::DEFAULT_CUSTOM_PROPERTIES)->end()
             ->variableNode('apps')->defaultValue([[]])->end()
 
+            ->booleanNode('enable_password_reset')->defaultFalse()->end()
             ->booleanNode('tailwind_generator')->defaultTrue()->end()
             ->scalarNode('path_to_bin')->defaultValue('')->end()
 
