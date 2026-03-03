@@ -59,7 +59,7 @@ class Media implements IdInterface, Taggable, Stringable
         $this->initTimestampableProperties();
     }
 
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[ORM\Column(type: Types::TEXT)]
     protected string $storeIn = '';
 
     protected string $projectDir = '';
@@ -481,10 +481,10 @@ class Media implements IdInterface, Taggable, Stringable
 
     // --- Alt text ---
 
-    #[ORM\Column(name: 'name', type: Types::STRING, length: 255, unique: true)]
+    #[ORM\Column(name: 'name', type: Types::TEXT, unique: true)]
     protected string $alt = '';
 
-    #[ORM\Column(name: 'name_search', type: Types::STRING, length: 255, options: ['default' => ''])]
+    #[ORM\Column(name: 'name_search', type: Types::TEXT, options: ['default' => ''])]
     protected string $altSearch = '';
 
     #[ORM\Column(name: 'names', type: Types::TEXT, nullable: true, options: ['default' => ''])]
@@ -503,7 +503,7 @@ class Media implements IdInterface, Taggable, Stringable
             return $this;
         }
 
-        $this->alt = substr((string) $alt, 0, 255);
+        $this->alt = (string) $alt;
         $this->updateAltSearch();
 
         return $this;

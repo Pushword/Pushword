@@ -115,7 +115,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
     // --- Search/SEO properties (inlined from PageSearchTrait) ---
 
     /** HTML Title - SEO */
-    #[ORM\Column(type: Types::STRING, length: 200)]
+    #[ORM\Column(type: Types::TEXT)]
     public string $title = '' {
         set(?string $value) => $this->title = (string) $value;
     }
@@ -127,7 +127,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
     }
 
     /** Links improver / Breadcrumb */
-    #[ORM\Column(type: Types::STRING, length: 150)]
+    #[ORM\Column(type: Types::TEXT)]
     public string $name = '' {
         set(?string $value) => $this->name = (string) $value;
     }

@@ -59,7 +59,7 @@ class Message implements Stringable, Taggable, IdInterface
     /**
      * Identifier referring (most of time, URI).
      */
-    #[ORM\Column(type: Types::STRING, length: 180, options: ['default' => ''])]
+    #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
     protected string $referring = '';
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
