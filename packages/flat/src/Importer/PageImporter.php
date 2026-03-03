@@ -314,6 +314,8 @@ final class PageImporter extends AbstractImporter
     private function toAddAtTheEnd(): void
     {
         foreach ($this->toAddAtTheEnd as $slug => $data) {
+            /** @phpstan-ignore cast.useless */
+            $slug = (string) $slug; // PHP coerces numeric-string array keys to int at runtime
             $page = $this->getPage($slug);
             if (null === $page) {
                 $this->logger->warning('Page `{slug}` not found when processing deferred properties', ['slug' => $slug]);
