@@ -37,6 +37,9 @@ you may have a look inside `vendor/pushword/admin/install.php`.
 # Or add a button to click before loading block
 <button data-src-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'nslttr-'~page.slug, 'host': page.host}) }}" class="btn btn-primary">Register</button>
 
+# Shorthand (obfuscates the URL automatically)
+{{ conversationFormBtn('Register', 'newsletter', 'btn btn-primary') }}
+
 # Advanced usage
 <p>This is an invitation to <button data-src-live="..." data-target="parent">register</button></p>
 ```

@@ -5,6 +5,7 @@ namespace Pushword\Conversation\Twig;
 use Exception;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 
@@ -39,6 +40,23 @@ class AppExtension
         return $baseUrl.'?'.http_build_query([
             'host' => $page->host,
             'locale' => $page->locale,
+        ]);
+    }
+
+    #[AsTwigFunction('conversationFormBtn', needsEnvironment: true, isSafe: ['html'])]
+    public function conversationFormBtn(
+        Twig $twig,
+        string $label,
+        string $type = 'ms-message',
+        string $class = 'link-btn',
+    ): string {
+        $url = $this->app->getStr('base_live_url').$this->getConversationRoute($type);
+        $view = $this->app->getView('/conversation/formBtn.html.twig', '@PushwordConversation');
+
+        return $twig->render($view, [
+            'url' => LinkProvider::obfuscate($url),
+            'label' => $label,
+            'class' => $class,
         ]);
     }
 
