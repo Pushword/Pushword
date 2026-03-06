@@ -121,7 +121,7 @@ final class ParallelUrlChecker
 
     private function interpretResult(int $httpCode, int $error, string $errorMessage): true|string
     {
-        if (in_array($httpCode, [200, 403, 410], true)) {
+        if (in_array($httpCode, [200, 206, 403, 410], true)) {
             return true;
         }
 
