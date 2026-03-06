@@ -394,7 +394,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
         $contentDir = $contentDirFinder->get('localhost.dev');
         $localMediaDir = $contentDir.'/media';
-        (new Filesystem())->mkdir($localMediaDir);
+        new Filesystem()->mkdir($localMediaDir);
 
         $fileName = 'edge-storage-and-flat.txt';
         $alt = 'VTC SPORTIF';
@@ -422,7 +422,7 @@ final class MediaEdgeCasesTest extends KernelTestCase
         // Cleanup
         $this->em->remove($results[0]);
         $this->em->flush();
-        (new Filesystem())->remove($localMediaDir);
+        new Filesystem()->remove($localMediaDir);
     }
 
     public function testRenamedFileInMediaDirDetectedByHash(): void

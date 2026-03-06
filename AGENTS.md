@@ -200,6 +200,12 @@ When working on UI, templates, CSS, or frontend-facing changes, consult `package
 - Clear cache after each modification `composer console cache:clear`
 - Write comment and documentation in english only.
 
+## Docs
+
+- `packages/docs/content/` — project documentation (one `.md` per topic)
+- `packages/docs/content/extension/` — per-bundle feature docs (conversation, flat, admin, …)
+- `packages/core/DesignGuidelines.md` — UI/design principles
+
 ## Fix deprecations
 
 ```
