@@ -101,7 +101,7 @@ class PageCrudController extends AbstractAdminCrudController
             $filters->add(
                 ChoiceFilter::new('host', 'adminPageHostLabel')
                     ->setChoices($this->getHostChoices())
-                    ->setFormTypeOption('choice_translation_domain', false),
+                    ->setFormTypeOption('value_type_options.choice_translation_domain', false),
             );
         }
 
