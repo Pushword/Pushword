@@ -14,14 +14,20 @@ use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\StaticGenerator\Generator\AbstractGenerator;
 use Pushword\StaticGenerator\Generator\CNAMEGenerator;
 use Pushword\StaticGenerator\Generator\CopierGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
+use Pushword\StaticGenerator\Generator\PageGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
+use ReflectionMethod;
+use ReflectionProperty;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\KernelInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -295,6 +301,53 @@ class StaticGeneratorTest extends KernelTestCase
         $generator->generate('localhost.dev');
 
         self::assertFileExists($this->getStaticDir().'/404.html');
+    }
+
+    public function testGetDebugKernelIsAlwaysDebug(): void
+    {
+        self::bootKernel();
+        $this->getGenerator(PagesGenerator::class); // ensures loadKernel was called
+
+        self::assertTrue(AbstractGenerator::getDebugKernel()->isDebug());
+    }
+
+    public function testFiveHundredResponseUsesDebugKernelForDetail(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        // Get generator first so the real kernel is loaded into static properties
+        $generator = $this->getGenerator(PagesGenerator::class);
+
+        $mainKernel = self::createStub(KernelInterface::class);
+        $mainKernel->method('isDebug')->willReturn(false);
+        $mainKernel->method('handle')->willReturn(new Response('', Response::HTTP_INTERNAL_SERVER_ERROR));
+
+        $debugKernel = self::createStub(KernelInterface::class);
+        $debugKernel->method('handle')->willReturn(
+            new Response('<html><body><p>Twig error: variable not found</p></body></html>', 500),
+        );
+
+        $originalAppKernel = AbstractGenerator::$appKernel;
+        $debugKernelProp = new ReflectionProperty(AbstractGenerator::class, 'debugKernel');
+        $originalDebugKernel = $debugKernelProp->getValue(null);
+
+        AbstractGenerator::$appKernel = $mainKernel;
+        $debugKernelProp->setValue(null, $debugKernel);
+
+        try {
+            (new ReflectionMethod(AbstractGenerator::class, 'init'))->invoke($generator, 'localhost.dev');
+            (new ReflectionMethod(PageGenerator::class, 'saveAsStatic'))
+                ->invoke($generator, '/test-500', $this->getStaticDir().'/test-500.html', null);
+        } finally {
+            AbstractGenerator::$appKernel = $originalAppKernel;
+            $debugKernelProp->setValue(null, $originalDebugKernel);
+        }
+
+        $errors = $this->getStaticAppGenerator()->getErrors();
+        self::assertCount(1, $errors);
+        self::assertStringContainsString('status code 500', $errors[0]);
+        self::assertStringContainsString('Twig error: variable not found', $errors[0]);
     }
 
     public function testDownload(): void

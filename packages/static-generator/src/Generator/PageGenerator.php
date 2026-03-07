@@ -100,8 +100,11 @@ class PageGenerator extends AbstractGenerator
 
         if (Response::HTTP_OK !== $response->getStatusCode()) {
             if (Response::HTTP_INTERNAL_SERVER_ERROR === $response->getStatusCode()) {
-                $body = $response->getContent();
                 $detail = '';
+                $body = static::getKernel()->isDebug()
+                    ? $response->getContent()
+                    : static::getDebugKernel()->handle($request)->getContent();
+
                 if (\is_string($body) && '' !== $body) {
                     $text = strip_tags($body);
                     $text = (string) preg_replace('/\s+/', ' ', trim($text));
