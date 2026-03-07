@@ -9,4 +9,9 @@ trait IdTrait
 {
     #[ORM\Id, ORM\GeneratedValue, ORM\Column(type: Types::INTEGER)]
     public private(set) ?int $id = null;
+
+    public function __clone(): void
+    {
+        $this->id = null;
+    }
 }
