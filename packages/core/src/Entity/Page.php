@@ -73,7 +73,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
     // --- Main image (inlined from PageMainImageTrait) ---
 
     #[ORM\ManyToOne(targetEntity: Media::class, cascade: ['persist'], inversedBy: 'mainImagePages')]
-    protected ?Media $mainImage = null;
+    public ?Media $mainImage = null;
 
     public function __clone(): void
     {
@@ -83,7 +83,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
 
     public function getMainImage(): ?Media
     {
-        return $this->mainImage;
+        return $this->mainImage ?? $this->extendedPage?->getMainImage();
     }
 
     public function setMainImage(?Media $media): self
@@ -141,7 +141,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
 
     /** Template - promoted to real column from customProperties */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
-    protected ?string $template = null;
+    public ?string $template = null;
 
     // --- Redirection (computed, not persisted) ---
 
@@ -287,7 +287,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
 
     public function getTemplate(): ?string
     {
-        return $this->template;
+        return $this->template ?? $this->extendedPage?->getTemplate();
     }
 
     public function setTemplate(?string $template): self
@@ -295,6 +295,11 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
         $this->template = $template;
 
         return $this;
+    }
+
+    public function getCustomProperty(string $name): mixed
+    {
+        return $this->customProperties[$name] ?? $this->extendedPage?->getCustomProperty($name);
     }
 
     // --- Search excerpt (fixed typo: searchExcrept -> searchExcerpt) ---

@@ -2480,4 +2480,64 @@ YAML;
         $this->trackFile($contentDir.'/cross-minimal-en.md');
         $this->trackFile($contentDir.'/cross-minimal-fr.md');
     }
+
+    public function testExportDoesNotIncludeInheritedValues(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create parent page with template and custom property
+        $parent = new Page();
+        $parent->setSlug('inherit-parent');
+        $parent->setH1('Parent');
+        $parent->host = 'localhost.dev';
+        $parent->template = 'parent_template.html.twig';
+        $parent->setCustomProperty('mainImageFormat', 'wide');
+        $parent->setMainContent('Parent content');
+        $this->em->persist($parent);
+        $this->em->flush();
+
+        // Create child page extending parent, with NO template or custom property
+        $child = new Page();
+        $child->setSlug('inherit-child');
+        $child->setH1('Child');
+        $child->host = 'localhost.dev';
+        $child->extendedPage = $parent;
+        $child->setMainContent('Child content');
+        $this->em->persist($child);
+        $this->em->flush();
+
+        // Verify inheritance works at entity level
+        self::assertSame('parent_template.html.twig', $child->getTemplate());
+        self::assertSame('wide', $child->getCustomProperty('mainImageFormat'));
+
+        // Export
+        $this->pageSync->sync();
+
+        // Read exported child .md file
+        $childMdPath = $contentDir.'/inherit-child.md';
+        self::assertFileExists($childMdPath);
+        $childContent = file_get_contents($childMdPath);
+
+        // Exported child should NOT contain inherited template
+        self::assertStringNotContainsString('parent_template', $childContent, 'Exported child should not contain inherited template');
+
+        // Exported child should NOT contain inherited custom property
+        self::assertStringNotContainsString('mainImageFormat', $childContent, 'Exported child should not contain inherited custom property');
+
+        // But exported parent should have its own template
+        $parentMdPath = $contentDir.'/inherit-parent.md';
+        self::assertFileExists($parentMdPath);
+        $parentContent = file_get_contents($parentMdPath);
+        self::assertStringContainsString('parent_template', $parentContent, 'Parent export should contain its own template');
+        self::assertStringContainsString('mainImageFormat', $parentContent, 'Parent export should contain its own custom property');
+
+        // Cleanup
+        $this->em->remove($child);
+        $this->em->remove($parent);
+        $this->em->flush();
+        $this->trackFile($childMdPath);
+        $this->trackFile($parentMdPath);
+    }
 }

@@ -378,6 +378,14 @@ final class PageExporter
             return null;
         }
 
+        if ('mainImage' === $property) {
+            return null !== $page->mainImage ? (string) $page->mainImage : null;
+        }
+
+        if ('template' === $property) {
+            return $page->template;
+        }
+
         $getter = 'get'.ucfirst($property);
         $value = $page->$getter(); // @phpstan-ignore-line
 
