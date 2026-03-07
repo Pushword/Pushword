@@ -141,6 +141,21 @@ class MarkdownExtensionTest extends KernelTestCase
         self::assertStringEndsWith('example.com</span> <span class="cea hidden">pbagnpg@rknzcyr.pbz</span>.</p>', $result);
     }
 
+    public function testMailWithoutArgument(): void
+    {
+        $twig = self::getContainer()->get('twig');
+        $result = $twig->render($twig->createTemplate('{{ mail() }}'));
+        self::assertStringContainsString('localhost.dev', $result);
+        self::assertStringContainsString('pbagnpg@ybpnyubfg.qri', $result); // rot13 of contact@localhost.dev
+    }
+
+    public function testTelWithoutArgument(): void
+    {
+        $twig = self::getContainer()->get('twig');
+        $result = $twig->render($twig->createTemplate('{{ tel() }}'));
+        self::assertStringContainsString('data-rot="gry:+33123456789"', $result);
+    }
+
     // ===== Tests de l'autolink téléphone =====
 
     public function testPhoneAutolink(): void
