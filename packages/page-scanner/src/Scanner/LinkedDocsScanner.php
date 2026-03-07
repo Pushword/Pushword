@@ -9,6 +9,7 @@ use PiedWeb\Curl\ExtendedClient;
 use PiedWeb\Curl\Helper;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_match;
 use function Safe\preg_match_all;
@@ -63,6 +64,7 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly SiteRegistry $siteRegistry,
         private readonly array $linksToIgnore,
         private readonly string $publicDir,
         TranslatorInterface $translator,
@@ -149,9 +151,9 @@ final class LinkedDocsScanner extends AbstractScanner
 
     /**
      * Preload pages into cache for fast internal link checking.
-     * If host is provided, only pages from that host are loaded.
+     * Always loads all pages (all hosts) to support cross-host internal link resolution.
      */
-    public function preloadPageCache(string $host = ''): void
+    public function preloadPageCache(): void
     {
         if (null !== $this->pageCache) {
             return;
@@ -159,15 +161,12 @@ final class LinkedDocsScanner extends AbstractScanner
 
         $this->pageCache = [];
 
-        $repo = $this->entityManager->getRepository(Page::class);
-        $queryBuilder = $repo->createQueryBuilder('p');
-
-        if ('' !== $host) {
-            $queryBuilder->andWhere('p.host = :host')->setParameter('host', $host);
-        }
-
         /** @var Page[] $pages */
-        $pages = $queryBuilder->getQuery()->getResult();
+        $pages = $this->entityManager->getRepository(Page::class)
+            ->createQueryBuilder('p')
+            ->getQuery()
+            ->getResult();
+
         foreach ($pages as $page) {
             $key = $page->host.'/'.$page->getSlug();
             $this->pageCache[$key] = $page;
@@ -301,6 +300,34 @@ final class LinkedDocsScanner extends AbstractScanner
         return $url;
     }
 
+    private function isInternalHost(string $url): bool
+    {
+        $host = parse_url($url, \PHP_URL_HOST);
+
+        return \is_string($host) && $this->siteRegistry->isKnownHost($host);
+    }
+
+    private function checkInternalCrossHostLink(string $url, bool $checkRedirection): void
+    {
+        $parsed = parse_url($url);
+        $host = (string) ($parsed['host'] ?? '');
+        $slug = ltrim((string) ($parsed['path'] ?? ''), '/');
+
+        $cacheKey = $host.'/'.$slug;
+
+        $page = null !== $this->pageCache
+            ? ($this->pageCache[$cacheKey] ?? null)
+            : $this->entityManager->getRepository(Page::class)->getPage($slug, $host);
+
+        if (! $page instanceof Page) {
+            $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
+        } elseif (! $page->isPublished()) {
+            $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
+        } elseif ($checkRedirection && $page->hasRedirection()) {
+            $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
+        }
+    }
+
     public function getLinksCheckedCounter(): int
     {
         return $this->linksCheckedCounter;
@@ -353,8 +380,14 @@ final class LinkedDocsScanner extends AbstractScanner
             return;
         }
 
-        // external
         if (str_starts_with($url, 'http')) {
+            // Cross-host internal link: URL points to another host in the same Pushword installation
+            if ($this->isInternalHost($url)) {
+                $this->checkInternalCrossHostLink($url, $checkRedirection);
+
+                return;
+            }
+
             if ($this->skipExternalUrlCheck) {
                 return;
             }
@@ -517,12 +550,10 @@ final class LinkedDocsScanner extends AbstractScanner
             $this->lastPageChecked = $this->findPageInCacheOrDb($slug);
         }
 
-        $this->everChecked[$slug] = (
-            ! $this->lastPageChecked instanceof Page
-                && ! file_exists($this->publicDir.'/'.$slug)
-                && ! file_exists($this->publicDir.'/../'.$slug)
-                && 'feed.xml' !== $slug
-        ) ? false : true;
+        $this->everChecked[$slug] = $this->lastPageChecked instanceof Page
+            || file_exists($this->publicDir.'/'.$slug)
+            || file_exists($this->publicDir.'/../'.$slug)
+            || 'feed.xml' === $slug;
 
         return $this->everChecked[$slug];
     }

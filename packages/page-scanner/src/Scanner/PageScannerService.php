@@ -56,13 +56,11 @@ final class PageScannerService
     /**
      * Preload caches to avoid N+1 queries during scanning.
      * Call this before scanning multiple pages.
-     *
-     * @param string $host If provided, only preload pages from this host
      */
-    public function preloadCaches(string $host = ''): void
+    public function preloadCaches(): void
     {
         $this->mediaExtension->preloadMediaCache();
-        $this->linkedDocsScanner->preloadPageCache($host);
+        $this->linkedDocsScanner->preloadPageCache();
     }
 
     private function resetErrors(): void

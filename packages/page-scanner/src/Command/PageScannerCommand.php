@@ -50,7 +50,7 @@ final class PageScannerCommand
     private function scanAll(string $host): array
     {
         $this->stopwatch?->start('preload.caches');
-        $this->scanner->preloadCaches($host);
+        $this->scanner->preloadCaches();
         $this->stopwatch?->stop('preload.caches');
 
         $pages = $this->pageRepo->getPublishedPages($host);
