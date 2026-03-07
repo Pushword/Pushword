@@ -397,6 +397,23 @@ final class PageExporter
             }
 
             $currentHost = $this->apps->get()->getMainHost();
+
+            if ('translations' === $property) {
+                $siteLocale = $this->apps->get()->getLocale();
+                $isMainLocale = '' === $page->locale || $page->locale === $siteLocale;
+
+                if (! $isMainLocale) {
+                    $mainLocalePages = $value->filter(
+                        static fn (mixed $t): bool => $t instanceof Page
+                            && $t->host === $currentHost
+                            && ('' === $t->locale || $t->locale === $siteLocale)
+                    );
+                    if (! $mainLocalePages->isEmpty()) {
+                        $value = $mainLocalePages;
+                    }
+                }
+            }
+
             $slugs = [];
             foreach ($value as $item) {
                 if ($item instanceof Page) {

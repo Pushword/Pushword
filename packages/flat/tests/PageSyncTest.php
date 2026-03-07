@@ -2183,4 +2183,301 @@ YAML;
         $this->em->flush();
         $this->trackFile($newPagePath);
     }
+
+    public function testMinimalTranslationExportForNonMainLocale(): void
+    {
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        $enPage = new Page();
+        $enPage->setSlug('main-locale-export-en');
+        $enPage->setH1('English');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
+        $enPage->setMainContent('English');
+        $enPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('main-locale-export-fr');
+        $frPage->setH1('Français');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $frCaPage = new Page();
+        $frCaPage->setSlug('main-locale-export-fr-ca');
+        $frCaPage->setH1('Français CA');
+        $frCaPage->host = 'localhost.dev';
+        $frCaPage->locale = 'fr-CA';
+        $frCaPage->setMainContent('Français canadien');
+        $frCaPage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->persist($frCaPage);
+        $this->em->flush();
+
+        $enPage->addTranslation($frPage);
+        $enPage->addTranslation($frCaPage);
+
+        $this->em->flush();
+
+        $enId = $enPage->id;
+        $frId = $frPage->id;
+        $frCaId = $frCaPage->id;
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        $enMd = file_get_contents($contentDir.'/main-locale-export-en.md');
+        $frMd = file_get_contents($contentDir.'/main-locale-export-fr.md');
+        $frCaMd = file_get_contents($contentDir.'/main-locale-export-fr-ca.md');
+
+        // EN (main locale) should list both translations
+        self::assertStringContainsString('main-locale-export-fr', $enMd);
+        self::assertStringContainsString('main-locale-export-fr-ca', $enMd);
+
+        // FR (non-main) should only list EN
+        self::assertStringContainsString('main-locale-export-en', $frMd);
+        self::assertStringNotContainsString('main-locale-export-fr-ca', $frMd);
+
+        // FR-CA (non-main) should only list EN
+        self::assertStringContainsString('main-locale-export-en', $frCaMd);
+        self::assertStringNotContainsString('main-locale-export-fr', $frCaMd);
+
+        // Delete pages and re-import to verify round-trip
+        $this->em->clear();
+        foreach ([$enId, $frId, $frCaId] as $id) {
+            $p = $this->em->find(Page::class, $id);
+            self::assertNotNull($p);
+            foreach ($p->getTranslations()->toArray() as $t) {
+                $p->removeTranslation($t);
+            }
+
+            $this->em->remove($p);
+        }
+
+        $this->em->flush();
+
+        $this->pageSync->import('localhost.dev');
+        $this->em->clear();
+
+        $importedEn = $this->pageRepo->findOneBy(['slug' => 'main-locale-export-en', 'host' => 'localhost.dev']);
+        $importedFr = $this->pageRepo->findOneBy(['slug' => 'main-locale-export-fr', 'host' => 'localhost.dev']);
+        $importedFrCa = $this->pageRepo->findOneBy(['slug' => 'main-locale-export-fr-ca', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedEn);
+        self::assertNotNull($importedFr);
+        self::assertNotNull($importedFrCa);
+
+        // All three should be mutually linked despite minimal export
+        self::assertCount(2, $importedEn->getTranslations());
+        self::assertCount(2, $importedFr->getTranslations());
+        self::assertCount(2, $importedFrCa->getTranslations());
+
+        // Cleanup
+        foreach ([$importedEn, $importedFr, $importedFrCa] as $p) {
+            foreach ($p->getTranslations()->toArray() as $t) {
+                $p->removeTranslation($t);
+            }
+
+            $this->em->remove($p);
+        }
+
+        $this->em->flush();
+        $this->trackFile($contentDir.'/main-locale-export-en.md');
+        $this->trackFile($contentDir.'/main-locale-export-fr.md');
+        $this->trackFile($contentDir.'/main-locale-export-fr-ca.md');
+    }
+
+    public function testMinimalTranslationFallbackWhenNoMainLocaleInGroup(): void
+    {
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Two non-main-locale pages linked together (no en page in the group)
+        $frPage = new Page();
+        $frPage->setSlug('no-main-fallback-fr');
+        $frPage->setH1('Français');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $dePage = new Page();
+        $dePage->setSlug('no-main-fallback-de');
+        $dePage->setH1('Deutsch');
+        $dePage->host = 'localhost.dev';
+        $dePage->locale = 'de';
+        $dePage->setMainContent('Deutsch');
+        $dePage->setPublishedAt(new DateTime());
+
+        $this->em->persist($frPage);
+        $this->em->persist($dePage);
+        $this->em->flush();
+
+        $frPage->addTranslation($dePage);
+        $this->em->flush();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        $frMd = file_get_contents($contentDir.'/no-main-fallback-fr.md');
+        $deMd = file_get_contents($contentDir.'/no-main-fallback-de.md');
+
+        // Both are non-main, but no main-locale page exists → fallback to full list
+        self::assertStringContainsString('no-main-fallback-de', $frMd);
+        self::assertStringContainsString('no-main-fallback-fr', $deMd);
+
+        // Cleanup
+        $frPage->removeTranslation($dePage);
+        $this->em->remove($frPage);
+        $this->em->remove($dePage);
+        $this->em->flush();
+        $this->trackFile($contentDir.'/no-main-fallback-fr.md');
+        $this->trackFile($contentDir.'/no-main-fallback-de.md');
+    }
+
+    public function testEmptyLocaleTreatedAsMainLocale(): void
+    {
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Page with empty locale (treated as main) linked to fr and de
+        $mainPage = new Page();
+        $mainPage->setSlug('empty-locale-main');
+        $mainPage->setH1('Main');
+        $mainPage->host = 'localhost.dev';
+        $mainPage->locale = '';
+        $mainPage->setMainContent('Main content');
+        $mainPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('empty-locale-fr');
+        $frPage->setH1('Français');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $dePage = new Page();
+        $dePage->setSlug('empty-locale-de');
+        $dePage->setH1('Deutsch');
+        $dePage->host = 'localhost.dev';
+        $dePage->locale = 'de';
+        $dePage->setMainContent('Deutsch');
+        $dePage->setPublishedAt(new DateTime());
+
+        $this->em->persist($mainPage);
+        $this->em->persist($frPage);
+        $this->em->persist($dePage);
+        $this->em->flush();
+
+        $mainPage->addTranslation($frPage);
+        $mainPage->addTranslation($dePage);
+
+        $this->em->flush();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        $mainMd = file_get_contents($contentDir.'/empty-locale-main.md');
+        $frMd = file_get_contents($contentDir.'/empty-locale-fr.md');
+        $deMd = file_get_contents($contentDir.'/empty-locale-de.md');
+
+        // Main (empty locale) should list both
+        self::assertStringContainsString('empty-locale-fr', $mainMd);
+        self::assertStringContainsString('empty-locale-de', $mainMd);
+
+        // FR should only list the main page (empty locale = main)
+        self::assertStringContainsString('empty-locale-main', $frMd);
+        self::assertStringNotContainsString('empty-locale-de', $frMd);
+
+        // DE should only list the main page
+        self::assertStringContainsString('empty-locale-main', $deMd);
+        self::assertStringNotContainsString('empty-locale-fr', $deMd);
+
+        // Cleanup
+        foreach ([$mainPage, $frPage, $dePage] as $p) {
+            foreach ($p->getTranslations()->toArray() as $t) {
+                $p->removeTranslation($t);
+            }
+
+            $this->em->remove($p);
+        }
+
+        $this->em->flush();
+        $this->trackFile($contentDir.'/empty-locale-main.md');
+        $this->trackFile($contentDir.'/empty-locale-fr.md');
+        $this->trackFile($contentDir.'/empty-locale-de.md');
+    }
+
+    public function testMinimalTranslationExportWithCrossHost(): void
+    {
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // EN (main locale) on localhost.dev, FR on localhost.dev, DE on another host
+        $enPage = new Page();
+        $enPage->setSlug('cross-minimal-en');
+        $enPage->setH1('English');
+        $enPage->host = 'localhost.dev';
+        $enPage->locale = 'en';
+        $enPage->setMainContent('English');
+        $enPage->setPublishedAt(new DateTime());
+
+        $frPage = new Page();
+        $frPage->setSlug('cross-minimal-fr');
+        $frPage->setH1('Français');
+        $frPage->host = 'localhost.dev';
+        $frPage->locale = 'fr';
+        $frPage->setMainContent('Français');
+        $frPage->setPublishedAt(new DateTime());
+
+        $dePage = new Page();
+        $dePage->setSlug('cross-minimal-de');
+        $dePage->setH1('Deutsch');
+        $dePage->host = 'pushword.piedweb.com';
+        $dePage->locale = 'de';
+        $dePage->setMainContent('Deutsch');
+        $dePage->setPublishedAt(new DateTime());
+
+        $this->em->persist($enPage);
+        $this->em->persist($frPage);
+        $this->em->persist($dePage);
+        $this->em->flush();
+
+        $enPage->addTranslation($frPage);
+        $enPage->addTranslation($dePage);
+
+        $this->em->flush();
+
+        // Export
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        $enMd = file_get_contents($contentDir.'/cross-minimal-en.md');
+        $frMd = file_get_contents($contentDir.'/cross-minimal-fr.md');
+
+        // EN (main) should list both FR and cross-host DE
+        self::assertStringContainsString('cross-minimal-fr', $enMd);
+        self::assertStringContainsString('pushword.piedweb.com/cross-minimal-de', $enMd);
+
+        // FR (non-main) should only list EN (the local main-locale page), not the cross-host DE
+        self::assertStringContainsString('cross-minimal-en', $frMd);
+        self::assertStringNotContainsString('cross-minimal-de', $frMd);
+
+        // Cleanup
+        foreach ([$enPage, $frPage, $dePage] as $p) {
+            foreach ($p->getTranslations()->toArray() as $t) {
+                $p->removeTranslation($t);
+            }
+
+            $this->em->remove($p);
+        }
+
+        $this->em->flush();
+        $this->trackFile($contentDir.'/cross-minimal-en.md');
+        $this->trackFile($contentDir.'/cross-minimal-fr.md');
+    }
 }
