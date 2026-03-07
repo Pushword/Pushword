@@ -5,6 +5,7 @@ namespace Pushword\Core\Entity;
 use Cocur\Slugify\Slugify;
 use DateTime;
 use DateTimeInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
@@ -73,6 +74,12 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
 
     #[ORM\ManyToOne(targetEntity: Media::class, cascade: ['persist'], inversedBy: 'mainImagePages')]
     protected ?Media $mainImage = null;
+
+    public function __clone(): void
+    {
+        $this->id = null;
+        $this->translations = new ArrayCollection();
+    }
 
     public function getMainImage(): ?Media
     {

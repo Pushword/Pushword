@@ -74,6 +74,8 @@ adminMediaViewSelectAll: 'Tout sélectionner'
 adminMediaViewTable: 'Vue liste'
 adminPaginationRatioLabelLabel: Ratio
 adminPageAuthorLabel: Auteur
+adminPageCloneLabel: Dupliquer
+adminPageCloneSuccess: "Page dupliquée avec succès. Pensez à mettre à jour les champs cachés (titre, description…) si cette page a une destination propre."
 adminPageCreatedAtLabel: 'Créé le'
 adminPageCustomPropertiesHelp: 'Au format <em>YAML</em>.'
 adminPageCustomPropertiesLabel: 'Autres paramètres'

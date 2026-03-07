@@ -5,9 +5,11 @@ namespace Pushword\Admin\Controller;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
@@ -21,7 +23,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Exception;
+use LogicException;
 use Override;
 use Pushword\Admin\Filter\PageSearchFilter;
 use Pushword\Admin\FormField\AbstractField;
@@ -70,6 +74,52 @@ class PageCrudController extends AbstractAdminCrudController
                 'crud/index' => '@pwAdmin/page/index.html.twig',
                 'crud/edit' => '@pwAdmin/page/edit.html.twig',
             ]);
+    }
+
+    #[Override]
+    public function configureActions(Actions $actions): Actions
+    {
+        $cloneAction = Action::new('clonePage', 'adminPageCloneLabel', 'fa fa-copy')
+            ->linkToCrudAction('clonePage');
+
+        return $actions->add(Crud::PAGE_INDEX, $cloneAction);
+    }
+
+    /** @param AdminContext<Page> $context */
+    #[AdminRoute('/clone/{entityId}', name: 'clone_page', options: ['methods' => ['GET']])]
+    public function clonePage(AdminContext $context): Response
+    {
+        $page = $context->getEntity()->getInstance();
+        assert($page instanceof Page);
+
+        $clone = clone $page;
+        $clone->setSlug($page->getSlug().'-copy');
+        $clone->setPublishedAt(null);
+
+        $this->getEntityManager()->persist($clone);
+        $this->getEntityManager()->flush();
+
+        FlashBag::get($this->getRequest())?->add('success', $this->getTranslator()->trans('adminPageCloneSuccess'));
+
+        $editUrl = $this->getAdminUrlGenerator()
+            ->setController(static::class)
+            ->setAction(Action::EDIT)
+            ->setEntityId($clone->id)
+            ->generateUrl();
+
+        return $this->redirect($editUrl);
+    }
+
+    private function getAdminUrlGenerator(): AdminUrlGenerator
+    {
+        if (! isset($this->container)) {
+            throw new LogicException('Container not available to generate admin URLs.');
+        }
+
+        /** @var AdminUrlGenerator $adminUrlGenerator */
+        $adminUrlGenerator = $this->container->get(AdminUrlGenerator::class);
+
+        return clone $adminUrlGenerator;
     }
 
     #[Override]

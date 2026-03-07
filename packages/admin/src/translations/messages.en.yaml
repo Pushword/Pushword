@@ -75,6 +75,8 @@ adminMediaPickerUpload: Upload
 adminPaginationRatioLabelLabel: Ratio
 adminPaginationPerPage: "Per page"
 adminPageAuthorLabel: Author
+adminPageCloneLabel: Clone
+adminPageCloneSuccess: "Page cloned successfully. Remember to update hidden fields (title, description…) if this is a new dedicated page."
 adminPageCreatedAtLabel: "Created At"
 adminPageCustomPropertiesHelp: "In <em>YAML</em> format."
 adminPageCustomPropertiesLabel: "Other parameters"
