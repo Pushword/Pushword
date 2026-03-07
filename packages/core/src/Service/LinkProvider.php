@@ -132,11 +132,11 @@ final readonly class LinkProvider
 
     #[AsTwigFunction('mail', needsEnvironment: false, isSafe: ['html'])]
     #[AsTwigFunction('email', needsEnvironment: false, isSafe: ['html'])]
-    public function renderEncodedMail(string $mail, string $class = ''): string
+    public function renderEncodedMail(string $mail = '', string $class = ''): string
     {
         // LINK packages/core/src/templates/component/encoded_mail.html.twig
         $template = $this->getApp()->getView('/component/encoded_mail.html.twig');
-        $mail = trim($mail);
+        $mail = trim($mail) ?: $this->getApp()->getStr('email');
 
         return trim($this->twig->render($template, [
             'mail_readable' => $this->readableEncodedMail($mail),
@@ -160,9 +160,10 @@ final readonly class LinkProvider
     }
 
     #[AsTwigFunction('tel', needsEnvironment: false, isSafe: ['html'])]
-    public function renderPhoneNumber(string $number, string $class = ''): string
+    public function renderPhoneNumber(string $number = '', string $class = ''): string
     {
-        $template = $this->apps->get()->getView('/component/phone_number.html.twig');
+        $number = $number ?: $this->getApp()->getStr('phoneNumber');
+        $template = $this->getApp()->getView('/component/phone_number.html.twig');
         $locale = $this->apps->getLocale();
 
         // For French locale, replace +33 with 0; otherwise keep international format
