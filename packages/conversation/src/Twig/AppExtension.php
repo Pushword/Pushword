@@ -28,13 +28,13 @@ class AppExtension
     }
 
     #[AsTwigFunction('conversation')]
-    public function getConversationRoute(string $type): string
+    public function getConversationRoute(string $type, string $referring = ''): string
     {
         $page = $this->apps->getCurrentPage() ?? throw new Exception('Run from a Pushword Page context');
 
         $baseUrl = $this->router->generate('pushword_conversation', [
             'type' => $type,
-            'referring' => $type.'-'.$page->getRealSlug(),
+            'referring' => ('' !== $referring ? $referring : $type).'_'.$page->host.'/'.$page->getRealSlug(),
         ]);
 
         return $baseUrl.'?'.http_build_query([
@@ -49,8 +49,9 @@ class AppExtension
         string $label,
         string $type = 'ms-message',
         string $class = 'link-btn',
+        string $referring = '',
     ): string {
-        $url = $this->app->getStr('base_live_url').$this->getConversationRoute($type);
+        $url = $this->app->getStr('base_live_url').$this->getConversationRoute($type, $referring);
         $view = $this->app->getView('/conversation/formBtn.html.twig', '@PushwordConversation');
 
         return $twig->render($view, [
