@@ -31,6 +31,10 @@ class Markdown implements FilterInterface
 
     private function render(string $text, Manager $manager): string
     {
+        // Convert inline heading attributes `## Title {#id}` to block syntax `{#id}\n## Title`
+        $text = preg_replace('/^(#{1,6}\s.+?)\s*(\{[#.][^}]+(?<!#)\})\s*$/m', "$2\n$1", $text);
+        assert(is_string($text));
+
         $textPartList = MarkdownUtils::prepareText($text);
 
         // must take care of code block
