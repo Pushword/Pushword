@@ -24,12 +24,10 @@ use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PageGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
-use ReflectionMethod;
-use ReflectionProperty;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\KernelInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use ReflectionMethod;
+use ReflectionProperty;
 
 use function Safe\realpath;
 
@@ -39,6 +37,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 #[Group('integration')]
 class StaticGeneratorTest extends KernelTestCase
@@ -325,7 +325,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $debugKernel = self::createStub(KernelInterface::class);
         $debugKernel->method('handle')->willReturn(
-            new Response('<html><body><p>Twig error: variable not found</p></body></html>', 500),
+            new Response('<html><body><p>Twig error: variable not found</p></body></html>', Response::HTTP_INTERNAL_SERVER_ERROR),
         );
 
         $originalAppKernel = AbstractGenerator::$appKernel;
@@ -336,8 +336,8 @@ class StaticGeneratorTest extends KernelTestCase
         $debugKernelProp->setValue(null, $debugKernel);
 
         try {
-            (new ReflectionMethod(AbstractGenerator::class, 'init'))->invoke($generator, 'localhost.dev');
-            (new ReflectionMethod(PageGenerator::class, 'saveAsStatic'))
+            new ReflectionMethod(AbstractGenerator::class, 'init')->invoke($generator, 'localhost.dev');
+            new ReflectionMethod(PageGenerator::class, 'saveAsStatic')
                 ->invoke($generator, '/test-500', $this->getStaticDir().'/test-500.html', null);
         } finally {
             AbstractGenerator::$appKernel = $originalAppKernel;

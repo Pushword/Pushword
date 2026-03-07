@@ -46,6 +46,6 @@ class PageScannerControllerTest extends AbstractAdminTestClass
         self::assertSame('error', $isolatedStorage->getStatus('page-scanner'));
         self::assertStringContainsString('nohup failed', $isolatedStorage->read('page-scanner')['content']);
 
-        (new Filesystem())->remove($isolatedDir);
+        new Filesystem()->remove($isolatedDir);
     }
 }

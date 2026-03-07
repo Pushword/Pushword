@@ -21,6 +21,7 @@ class AppExtensionTest extends KernelTestCase
         $page->host = $host;
         $page->slug = $slug;
         $page->locale = 'en';
+
         $siteRegistry->setCurrentPage($page);
 
         return self::getContainer()->get(AppExtension::class);
