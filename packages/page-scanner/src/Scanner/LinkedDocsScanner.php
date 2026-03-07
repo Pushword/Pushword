@@ -310,8 +310,8 @@ final class LinkedDocsScanner extends AbstractScanner
     private function checkInternalCrossHostLink(string $url, bool $checkRedirection): void
     {
         $parsed = parse_url($url);
-        $host = (string) ($parsed['host'] ?? '');
-        $slug = ltrim((string) ($parsed['path'] ?? ''), '/');
+        $host = $parsed['host'] ?? '';
+        $slug = ltrim($parsed['path'] ?? '', '/');
 
         $cacheKey = $host.'/'.$slug;
 
