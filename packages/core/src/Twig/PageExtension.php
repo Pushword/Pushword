@@ -87,6 +87,7 @@ final class PageExtension
         $where = [\is_array($where) ? $where : new StringToDQLCriteria($where, $currentPage)->retrieve()];
         $where[] = ['id',  '<>', $currentPage?->id ?? 0]; // @phpstan-ignore nullsafe.neverNull
 
+        $order = str_replace('priority', 'weight', $order); // bc
         $order = '' === $order ? 'publishedAt,weight' : $order;
         $order = \is_string($order) ? ['key' => str_replace(['↑', '↓'], ['ASC', 'DESC'], $order)]
             : ['key' => $order[0], 'direction' => $order[1]];
