@@ -3,6 +3,7 @@
 namespace Pushword\PageScanner;
 
 use DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
@@ -48,17 +49,27 @@ class LinkedDocsScannerTest extends KernelTestCase
         self::assertSame([], $errors);
     }
 
-    public function testCrossHostInternalLinkToHomepage(): void
+    #[DataProvider('homepageUrlProvider')]
+    public function testCrossHostInternalLinkToHomepage(string $url): void
     {
         self::bootKernel();
         $scanner = $this->createScanner();
         $scanner->preloadPageCache();
 
-        // https://localhost.dev/ → slug "" normalized to "homepage" → exists
-        $html = '<a href="https://localhost.dev/">home</a>';
-        $errors = $scanner->scan($this->getPage('other-page'), $html);
+        $errors = $scanner->scan($this->getPage('other-page'), '<a href="'.$url.'">home</a>');
 
-        self::assertSame([], $errors);
+        self::assertSame([], $errors, $url.' should resolve internally without error');
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function homepageUrlProvider(): array
+    {
+        return [
+            'with trailing slash'    => ['https://localhost.dev/'],
+            'without trailing slash' => ['https://localhost.dev'],
+        ];
     }
 
     public function testCrossHostInternalLinkToMissingPage(): void
