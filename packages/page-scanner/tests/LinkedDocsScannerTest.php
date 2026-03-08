@@ -3,6 +3,7 @@
 namespace Pushword\PageScanner;
 
 use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
@@ -84,6 +85,50 @@ class LinkedDocsScannerTest extends KernelTestCase
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('https://localhost.dev/nonexistent', $errors[0]);
+    }
+
+    public function testCrossHostInternalLinkToUnpublishedPage(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $unpublished = new Page();
+        $unpublished->setH1('Future page');
+        $unpublished->setSlug('future-page');
+        $unpublished->host = 'localhost.dev';
+        $unpublished->locale = 'en';
+        $unpublished->setMainContent('...');
+        $unpublished->setPublishedAt(new DateTime('+1 year'));
+        $em->persist($unpublished);
+        $em->flush();
+
+        try {
+            $scanner = $this->createScanner();
+            $scanner->preloadPageCache();
+
+            $html = '<a href="https://localhost.dev/future-page">link</a>';
+            $errors = $scanner->scan($this->getPage('other-page'), $html);
+
+            self::assertCount(1, $errors);
+            self::assertStringContainsString('https://localhost.dev/future-page', $errors[0]);
+        } finally {
+            $em->remove($unpublished);
+            $em->flush();
+        }
+    }
+
+    public function testCrossHostInternalLinkToRedirectionPage(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        // "pushword" page in fixtures has mainContent "Location: ..." → is a redirection
+        $html = '<a href="https://localhost.dev/pushword">link</a>';
+        $errors = $scanner->scan($this->getPage('other-page'), $html);
+
+        self::assertCount(1, $errors);
+        self::assertStringContainsString('https://localhost.dev/pushword', $errors[0]);
     }
 
     public function testExternalLinkStillTreatedAsExternal(): void
