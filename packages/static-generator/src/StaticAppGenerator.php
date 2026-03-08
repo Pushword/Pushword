@@ -124,9 +124,15 @@ final class StaticAppGenerator
             $app->staticDir = $originalStaticDir; // @phpstan-ignore-line
 
             if (! $this->abortGeneration) {
-                $filesystem->remove($originalStaticDir);
+                $backupDir = $originalStaticDir.'~~';
+                $filesystem->remove($backupDir);
+
+                if ($filesystem->exists($originalStaticDir)) {
+                    $filesystem->rename($originalStaticDir, $backupDir);
+                }
+
                 $filesystem->rename($tempDir, $originalStaticDir);
-                $filesystem->remove($tempDir);
+                $filesystem->remove($backupDir);
             }
         }
 
