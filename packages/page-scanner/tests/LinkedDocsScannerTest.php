@@ -99,6 +99,7 @@ class LinkedDocsScannerTest extends KernelTestCase
         $unpublished->locale = 'en';
         $unpublished->setMainContent('...');
         $unpublished->setPublishedAt(new DateTime('+1 year'));
+
         $em->persist($unpublished);
         $em->flush();
 

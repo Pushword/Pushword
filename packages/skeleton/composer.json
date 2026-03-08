@@ -8,7 +8,10 @@
   "require": {
     "pushword/core": "*"
   },
-  "require-dev": {},
+  "require-dev": {
+    "phpunit/phpunit": "^13.0",
+    "brianium/paratest": "^7.19"
+  },
   "extra": {
     "branch-alias": {
       "dev-main": "1.0.x-dev"
@@ -24,5 +27,10 @@
     }
   ],
   "minimum-stability": "dev",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "symfony/runtime": true
+    }
+  }
 }

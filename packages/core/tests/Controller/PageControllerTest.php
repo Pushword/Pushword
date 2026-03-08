@@ -58,6 +58,87 @@ class PageControllerTest extends KernelTestCase
         self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
     }
 
+    /**
+     * Test that sitemap hreflang URLs use the correct host for same-host multi-locale translations.
+     * Fixtures: homepage (en, localhost.dev) ↔ fr/homepage (fr, localhost.dev) ↔ fr-ca/homepage (fr-CA, localhost.dev)
+     */
+    public function testSitemapHreflangSameHost(): void
+    {
+        $response = $this->getSitemapController()->show(Request::create('/sitemap.xml'), 'xml');
+        $content = (string) $response->getContent();
+
+        // The EN homepage should have hreflang links to FR and FR-CA, all on localhost.dev
+        self::assertStringContainsString('hreflang="en"', $content);
+        self::assertStringContainsString('hreflang="fr"', $content);
+
+        // All hreflang URLs for same-host translations must use the same base URL
+        self::assertStringContainsString('hreflang="fr" href="https://localhost.dev/fr/homepage"', $content);
+        // The self-referencing hreflang for EN homepage
+        self::assertStringContainsString('hreflang="en" href="https://localhost.dev/"', $content);
+
+        // Must NOT have wrong cross-host URLs (the bug we fixed)
+        self::assertStringNotContainsString('hreflang="fr" href="https://admin-block-editor.test', $content);
+    }
+
+    /**
+     * Test that sitemap hreflang URLs use the correct host for cross-host translations.
+     */
+    public function testSitemapHreflangCrossHost(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        // Create a page on localhost.dev with a translation on admin-block-editor.test
+        $enPage = new Page();
+        $enPage->setH1('Cross-host EN');
+        $enPage->setSlug('cross-host-test');
+        $enPage->locale = 'en';
+        $enPage->host = 'localhost.dev';
+        $enPage->createdAt = new DateTime();
+        $enPage->updatedAt = new DateTime();
+        $enPage->setMainContent('English page');
+
+        $dePage = new Page();
+        $dePage->setH1('Cross-host DE');
+        $dePage->setSlug('cross-host-test-de');
+        $dePage->locale = 'de';
+        $dePage->host = 'admin-block-editor.test';
+        $dePage->createdAt = new DateTime();
+        $dePage->updatedAt = new DateTime();
+        $dePage->setMainContent('German page');
+
+        $enPage->addTranslation($dePage);
+
+        $em->persist($enPage);
+        $em->persist($dePage);
+        $em->flush();
+
+        try {
+            $response = $this->getSitemapController()->show(Request::create('/sitemap.xml'), 'xml');
+            $content = (string) $response->getContent();
+
+            // The EN page's hreflang for DE must point to admin-block-editor.test, not localhost.dev
+            self::assertStringContainsString(
+                'hreflang="de" href="https://admin-block-editor.test/cross-host-test-de"',
+                $content,
+            );
+            // Self-referencing hreflang must point to localhost.dev
+            self::assertStringContainsString(
+                'hreflang="en" href="https://localhost.dev/cross-host-test"',
+                $content,
+            );
+        } finally {
+            // Re-fetch entities since they may have been detached
+            $enPage = $em->getRepository(Page::class)->findOneBy(['slug' => 'cross-host-test']);
+            $dePage = $em->getRepository(Page::class)->findOneBy(['slug' => 'cross-host-test-de']);
+            if (null !== $enPage && null !== $dePage) {
+                $enPage->removeTranslation($dePage);
+                $em->remove($dePage);
+                $em->remove($enPage);
+                $em->flush();
+            }
+        }
+    }
+
     public function testShowRobotsTxt(): void
     {
         $robotsTxtController = self::getContainer()->get(RobotsTxtController::class);

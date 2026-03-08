@@ -2495,6 +2495,7 @@ YAML;
         $parent->template = 'parent_template.html.twig';
         $parent->setCustomProperty('mainImageFormat', 'wide');
         $parent->setMainContent('Parent content');
+
         $this->em->persist($parent);
         $this->em->flush();
 
@@ -2505,6 +2506,7 @@ YAML;
         $child->host = 'localhost.dev';
         $child->extendedPage = $parent;
         $child->setMainContent('Child content');
+
         $this->em->persist($child);
         $this->em->flush();
 
