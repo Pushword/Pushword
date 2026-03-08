@@ -168,8 +168,7 @@ final class LinkedDocsScanner extends AbstractScanner
             ->getResult();
 
         foreach ($pages as $page) {
-            $key = $page->host.'/'.$page->getSlug();
-            $this->pageCache[$key] = $page;
+            $this->pageCache[$page->host.'/'.$page->getSlug()] = $page;
         }
     }
 
@@ -311,7 +310,7 @@ final class LinkedDocsScanner extends AbstractScanner
     {
         $parsed = parse_url($url);
         $host = $parsed['host'] ?? '';
-        $slug = ltrim($parsed['path'] ?? '', '/');
+        $slug = ltrim($parsed['path'] ?? '', '/') ?: 'homepage';
 
         $cacheKey = $host.'/'.$slug;
 

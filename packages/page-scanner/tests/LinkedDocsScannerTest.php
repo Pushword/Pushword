@@ -48,6 +48,19 @@ class LinkedDocsScannerTest extends KernelTestCase
         self::assertSame([], $errors);
     }
 
+    public function testCrossHostInternalLinkToHomepage(): void
+    {
+        self::bootKernel();
+        $scanner = $this->createScanner();
+        $scanner->preloadPageCache();
+
+        // https://localhost.dev/ → slug "" normalized to "homepage" → exists
+        $html = '<a href="https://localhost.dev/">home</a>';
+        $errors = $scanner->scan($this->getPage('other-page'), $html);
+
+        self::assertSame([], $errors);
+    }
+
     public function testCrossHostInternalLinkToMissingPage(): void
     {
         self::bootKernel();
@@ -76,11 +89,12 @@ class LinkedDocsScannerTest extends KernelTestCase
         self::assertContains('https://unknown-host.com/page', $scanner->getCollectedExternalUrls());
     }
 
-    private function getPage(): Page
+    private function getPage(string $slug = 'homepage', string $host = ''): Page
     {
         $page = new Page();
         $page->setH1('Welcome to Pushword !');
-        $page->setSlug('homepage');
+        $page->setSlug($slug);
+        $page->host = $host;
         $page->locale = 'en';
         $page->createdAt = new DateTime('2 days ago');
         $page->setMainContent('...');
