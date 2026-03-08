@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\PageScanner\EventSubscriber;
 
 use Pushword\Admin\Menu\AbstractRouteMenuItemSubscriber;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Extension\Markdown\Renderer;
 
 use League\CommonMark\Extension\CommonMark\Node\Inline\Image;

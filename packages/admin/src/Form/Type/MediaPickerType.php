@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Admin\Form\Type;
 
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;

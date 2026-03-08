@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Entity;
 
 use Cocur\Slugify\Slugify;
@@ -171,9 +173,9 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
         return $this->slug;
     }
 
-    public function setSlug(?string $slug): self
+    public function setSlug(string|int|null $slug): self
     {
-        $this->slug = $slug;
+        $this->slug = is_int($slug) ? (string) $slug : $slug;
 
         return $this;
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\Importer;
 
 // use iBudasov\Iptc\Manager as Iptc;

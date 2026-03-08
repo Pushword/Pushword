@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Conversation\DependencyInjection;
 
 use Pushword\Conversation\Form\MessageForm;

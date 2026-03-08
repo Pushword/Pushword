@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Version;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;

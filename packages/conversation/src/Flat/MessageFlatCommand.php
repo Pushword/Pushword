@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Conversation\Flat;
 
 use Pushword\Core\Site\SiteRegistry;

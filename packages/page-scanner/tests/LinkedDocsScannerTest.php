@@ -68,7 +68,7 @@ class LinkedDocsScannerTest extends KernelTestCase
     public static function homepageUrlProvider(): array
     {
         return [
-            'with trailing slash'    => ['https://localhost.dev/'],
+            'with trailing slash' => ['https://localhost.dev/'],
             'without trailing slash' => ['https://localhost.dev'],
         ];
     }
