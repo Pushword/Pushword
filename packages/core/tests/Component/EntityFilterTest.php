@@ -117,6 +117,18 @@ class EntityFilterTest extends KernelTestCase
         self::assertStringContainsString('#section-2', $toc);
     }
 
+    public function testMarkdownAnchorNotInterpretedAsTwigComment(): void
+    {
+        $content = "{#difficulty}\n## Physical Difficulty\n\nSome text\n\n{#reservation}\n## Reservation\n\nMore text";
+
+        $page = $this->getPage($content);
+        $splitContent = $this->getContentExtension()->mainContentSplit($page);
+
+        $body = $splitContent->getContent();
+        self::assertStringContainsString('id="difficulty"', $body);
+        self::assertStringContainsString('id="reservation"', $body);
+    }
+
     public function testTwigInHeadingNotAffectedByInlineIdSupport(): void
     {
         $page = $this->getPage("## Title with {{ \"twig\" }}\n\nparagraph");

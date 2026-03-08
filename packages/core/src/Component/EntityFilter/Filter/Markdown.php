@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Exception;
@@ -75,6 +77,8 @@ class Markdown implements FilterInterface
             $inlineCodeProtector = new MarkdownProtectInlineCode();
             $textFiltered = $codeBlockProtector->protect($blockText);
             $textFiltered = $inlineCodeProtector->protect($textFiltered);
+            $textFiltered = preg_replace('/\{#([a-zA-Z0-9_-]+)\}/', '{id=$1}', $textFiltered);
+            assert(\is_string($textFiltered));
             $textFiltered = $manager->applyFilters($textFiltered, ['twig']);
             assert(is_string($textFiltered));
             $textFiltered = $inlineCodeProtector->restore($textFiltered);
