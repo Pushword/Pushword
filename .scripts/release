@@ -28,7 +28,8 @@ NEW_TAG="1.0.0-rc$NEXT_RC"
 
 echo -e "${GREEN}Creating release $NEW_TAG (previous: $LATEST_TAG)${NC}"
 
-# Create and push tag
+# Push commits and create/push tag
+git push
 git tag "$NEW_TAG"
 git push origin "$NEW_TAG"
 
