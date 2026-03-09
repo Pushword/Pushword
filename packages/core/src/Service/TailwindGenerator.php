@@ -35,7 +35,7 @@ class TailwindGenerator
         $fs = new Filesystem();
         $fs->dumpFile(
             $this->projectDir.'/var/TailwindGeneratorCache/'.($page->id ?? 0),
-            serialize($page)
+            $page->getMainContent()
         );
 
         // I prefer to use npm run over yarn because if yarn is installed, so npm is
