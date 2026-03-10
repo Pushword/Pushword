@@ -34,7 +34,7 @@ class StaticGeneratorControllerTest extends AbstractAdminTestClass
                 break;
             }
 
-            usleep(100000); // 100ms - poll frequently instead of sleeping 1s
+            sleep(1);
             ++$waited;
         }
 
