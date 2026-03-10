@@ -3,9 +3,7 @@
 use App\Kernel;
 use Symfony\Component\Dotenv\Dotenv;
 
-$autoload = __DIR__.'/../vendor/autoload.php';
-$autoload = file_exists($autoload) ? $autoload : __DIR__.'/../../../vendor/autoload.php';
-require $autoload;
+require __DIR__.'/../../../vendor/autoload.php';
 
 new Dotenv()->bootEnv(__DIR__.'/../.env');
 

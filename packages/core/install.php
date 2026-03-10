@@ -73,7 +73,9 @@ PostInstall::dumpFile('config/packages/pushword.yaml', $defaultConfig);
 
 PostInstall::copy('vendor/pushword/skeleton/phpstan.dist.neon', 'phpstan.dist.neon');
 PostInstall::copy('vendor/pushword/skeleton/bin/console-test.php', 'bin/console-test.php');
+PostInstall::replace('bin/console-test.php', "'/../../../vendor/autoload.php'", "'/../vendor/autoload.php'");
 PostInstall::copy('vendor/pushword/skeleton/bin/object-test.php', 'bin/object-test.php');
+PostInstall::replace('bin/object-test.php', "'/../../../vendor/autoload.php'", "'/../vendor/autoload.php'");
 // À tester si appeler composer depuis composer ne fout pas le bordel
 exec('composer config --no-plugins allow-plugins.phpstan/extension-installer true');
 exec('composer config --no-plugins scripts.stan "vendor/bin/phpstan"');

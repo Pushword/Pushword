@@ -64,7 +64,13 @@ class StaticGeneratorControllerTest extends AbstractAdminTestClass
 
         $client->disableReboot();
 
-        $mockDispatcher = self::createStub(BackgroundTaskDispatcherInterface::class);
+        // Mock process manager to ensure no process appears as running
+        $mockProcessManager = static::createStub(BackgroundProcessManager::class);
+        $mockProcessManager->method('getProcessInfo')->willReturn(['isRunning' => false, 'startTime' => null, 'pid' => null]);
+        $mockProcessManager->method('getPidFilePath')->willReturn(sys_get_temp_dir().'/pushword-test-static.pid');
+        $client->getContainer()->set(BackgroundProcessManager::class, $mockProcessManager);
+
+        $mockDispatcher = static::createStub(BackgroundTaskDispatcherInterface::class);
         $mockDispatcher->method('dispatch')
             ->willThrowException(new RuntimeException('nohup failed'));
         $client->getContainer()->set(BackgroundTaskDispatcherInterface::class, $mockDispatcher);

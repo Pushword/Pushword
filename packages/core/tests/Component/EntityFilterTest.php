@@ -139,7 +139,9 @@ class EntityFilterTest extends KernelTestCase
         $body = $this->getContentExtension()->mainContentSplit($page)->getContent();
 
         self::assertStringContainsString('id="nextblock"', $body);
-        self::assertStringContainsString('<h3>Heading</h3>', $body);
+        self::assertStringContainsString('<h3', $body);
+        self::assertStringContainsString('Heading</h3>', $body);
+        self::assertStringNotContainsString('id="nextblock">Heading</h3>', $body, 'The {#nextblock} attribute must not leak onto the preceding heading');
         self::assertStringContainsString('<h2', $body);
     }
 
