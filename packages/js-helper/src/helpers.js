@@ -1,5 +1,3 @@
-import 'core-js/stable'
-//import 'regenerator-runtime/runtime'
 /**
  * List of all functions
  *

@@ -23,7 +23,6 @@
     "@sotaproject/strikethrough": "^1.0.1",
     "@types/he": "^1.2.3",
     "autoprefixer": "^10.4",
-    "core-js": "^3.33",
     "editorjs-drag-drop": "^1.1",
     "editorjs-inline-tool": "^0.4",
     "editorjs-style": "^3.0",
