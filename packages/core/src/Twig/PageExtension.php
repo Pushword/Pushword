@@ -215,6 +215,7 @@ final class PageExtension
         array|string $host = '',
         ?Page $currentPage = null,
         bool $excludeAlreadyLinked = false,
+        bool $indexableOnly = true,
     ): string {
         $currentPage ??= $this->apps->getCurrentPage();
 
@@ -267,6 +268,10 @@ final class PageExtension
         }
 
         $this->pageRepo->andNotRedirection($queryBuilder);
+
+        if ($indexableOnly) {
+            $this->pageRepo->andIndexable($queryBuilder);
+        }
 
         if (null !== $currentPage) {
             $queryBuilder->andWhere('p.id <> '.($currentPage->id ?? 0));

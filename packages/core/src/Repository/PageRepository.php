@@ -379,7 +379,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
                 ->setParameter('locale', $locale);
     }
 
-    protected function andIndexable(QueryBuilder $queryBuilder): QueryBuilder
+    public function andIndexable(QueryBuilder $queryBuilder): QueryBuilder
     {
         $alias = $this->getRootAlias($queryBuilder);
 
