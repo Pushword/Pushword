@@ -129,6 +129,20 @@ class EntityFilterTest extends KernelTestCase
         self::assertStringContainsString('id="reservation"', $body);
     }
 
+    public function testInlineHeadingAttributeDoesNotMatchAcrossLines(): void
+    {
+        // Regression: \s* in regex matched newlines, causing {#nextblock} on a separate line
+        // to be incorrectly merged with the preceding heading
+        $content = "### Heading\n\n{#nextblock}\n## Next Section\n\ntext";
+
+        $page = $this->getPage($content);
+        $body = $this->getContentExtension()->mainContentSplit($page)->getContent();
+
+        self::assertStringContainsString('id="nextblock"', $body);
+        self::assertStringContainsString('<h3>Heading</h3>', $body);
+        self::assertStringContainsString('<h2', $body);
+    }
+
     public function testTwigInHeadingNotAffectedByInlineIdSupport(): void
     {
         $page = $this->getPage("## Title with {{ \"twig\" }}\n\nparagraph");
