@@ -266,6 +266,8 @@ final class PageExtension
             $this->pageRepo->andLocale($queryBuilder, $locale);
         }
 
+        $this->pageRepo->andNotRedirection($queryBuilder);
+
         if (null !== $currentPage) {
             $queryBuilder->andWhere('p.id <> '.($currentPage->id ?? 0));
         }

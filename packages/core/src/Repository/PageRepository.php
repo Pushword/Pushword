@@ -387,7 +387,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             ->setParameter('noi2', '%noindex%');
     }
 
-    protected function andNotRedirection(QueryBuilder $queryBuilder): QueryBuilder
+    public function andNotRedirection(QueryBuilder $queryBuilder): QueryBuilder
     {
         $alias = $this->getRootAlias($queryBuilder);
 
