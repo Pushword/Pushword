@@ -25,6 +25,8 @@ final class MediaSync
 
     private bool $storageImported = false;
 
+    private bool $csvExported = false;
+
     /** @var array{result: bool, lastSyncTime: int}|null */
     private ?array $globalMediaDirScanCache = null;
 
@@ -227,11 +229,15 @@ final class MediaSync
         $app = $this->resolveApp($host);
         $targetDir = $exportDir ?? $this->contentDirFinder->get($app->getMainHost());
 
-        $this->measure('media_export', function () use ($targetDir): void {
-            $this->mediaExporter->csvDir = $this->contentDirFinder->getBaseDir();
-            $this->mediaExporter->exportDir = $targetDir;
-            $this->mediaExporter->exportMedias();
-        });
+        // Media CSV is global — only export once across all hosts
+        if (! $this->csvExported || null !== $exportDir) {
+            $this->measure('media_export', function () use ($targetDir): void {
+                $this->mediaExporter->csvDir = $this->contentDirFinder->getBaseDir();
+                $this->mediaExporter->exportDir = $targetDir;
+                $this->mediaExporter->exportMedias();
+            });
+            $this->csvExported = true;
+        }
 
         // Record export in sync state
         $this->stateManager->recordExport('media', $app->getMainHost());
