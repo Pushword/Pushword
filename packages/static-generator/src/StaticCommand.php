@@ -94,7 +94,7 @@ final readonly class StaticCommand
 
             $event = $this->stopWatch->stop('generate');
             $duration = $event->getDuration();
-            $this->printStatus($teeOutput, $msg.' ('.self::formatDuration($duration).').');
+            $this->printStatus($teeOutput, $msg.' ('.$this->formatDuration($duration).').');
 
             // Print timing breakdown
             $this->printTimingBreakdown($teeOutput);
@@ -163,13 +163,13 @@ final readonly class StaticCommand
                 'file.write' => 'write',
                 default => 'page',
             };
-            $parts[] = \sprintf('%s: %s', $shortName, self::formatDuration($duration));
+            $parts[] = \sprintf('%s: %s', $shortName, $this->formatDuration($duration));
         }
 
         $output->writeln('<comment>⏱ '.implode(' | ', $parts).'</comment>');
     }
 
-    private static function formatDuration(float $ms): string
+    private function formatDuration(float $ms): string
     {
         if ($ms < 1000) {
             return \sprintf('%dms', $ms);

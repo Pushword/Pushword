@@ -108,7 +108,7 @@ final class FlatSyncNotifierSubscriberTest extends KernelTestCase
         /** @var FlatSyncNotifier $notifier */
         $notifier = self::getContainer()->get(FlatSyncNotifier::class);
 
-        $security = static::createStub(Security::class);
+        $security = self::createStub(Security::class);
         $security->method('getUser')->willReturn(
             $authenticated ? new InMemoryUser('admin', null, ['ROLE_ADMIN']) : null,
         );

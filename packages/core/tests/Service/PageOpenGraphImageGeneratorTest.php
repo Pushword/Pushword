@@ -14,7 +14,6 @@ use Pushword\Core\Site\SiteRegistry;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
-use Twig\Environment as Twig;
 
 #[Group('integration')]
 class PageOpenGraphImageGeneratorTest extends KernelTestCase

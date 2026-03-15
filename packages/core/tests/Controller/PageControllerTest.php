@@ -60,7 +60,7 @@ class PageControllerTest extends KernelTestCase
 
     /**
      * Test that sitemap hreflang URLs use the correct host for same-host multi-locale translations.
-     * Fixtures: homepage (en, localhost.dev) ↔ fr/homepage (fr, localhost.dev) ↔ fr-ca/homepage (fr-CA, localhost.dev)
+     * Fixtures: homepage (en, localhost.dev) ↔ fr/homepage (fr, localhost.dev) ↔ fr-ca/homepage (fr-CA, localhost.dev).
      */
     public function testSitemapHreflangSameHost(): void
     {

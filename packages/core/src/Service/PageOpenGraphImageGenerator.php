@@ -92,10 +92,10 @@ class PageOpenGraphImageGenerator
             $this->filesystem->mkdir($this->publicDir.'/'.$this->publicMediaDir.'/og/');
 
             $image->save($this->getPath());
-        } catch (Throwable $e) {
+        } catch (Throwable $throwable) {
             $this->logger?->error('OG image generation failed for page "{slug}": {message}', [
                 'slug' => $this->getPage()->getSlug(),
-                'message' => $e->getMessage(),
+                'message' => $throwable->getMessage(),
             ]);
         }
     }

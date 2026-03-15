@@ -22,7 +22,7 @@ class PageTest extends TestCase
 
     public function testMainImageInheritance(): void
     {
-        $media = static::createStub(Media::class);
+        $media = self::createStub(Media::class);
 
         $parent = new Page(false);
         $parent->mainImage = $media;
@@ -36,8 +36,8 @@ class PageTest extends TestCase
 
     public function testMainImageOwnValueTakesPrecedence(): void
     {
-        $parentMedia = static::createStub(Media::class);
-        $childMedia = static::createStub(Media::class);
+        $parentMedia = self::createStub(Media::class);
+        $childMedia = self::createStub(Media::class);
 
         $parent = new Page(false);
         $parent->mainImage = $parentMedia;
