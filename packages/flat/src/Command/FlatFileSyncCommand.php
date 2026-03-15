@@ -58,7 +58,7 @@ final readonly class FlatFileSyncCommand
         #[Option(description: 'Sync mode: auto (detect), import (flat to db), export (db to flat)', name: 'mode', shortcut: 'm')]
         string $mode = 'auto',
         #[Option(description: 'Disable automatic database backup before import', name: 'no-backup')]
-        bool $doBackup = true,
+        bool $noBackup = false,
         #[Option(description: 'Consume pending export flag and run batched export', name: 'consume-pending')]
         bool $consumePending = false,
     ): int {
@@ -120,7 +120,7 @@ final readonly class FlatFileSyncCommand
 
             // Backup database before import (unless disabled)
             $willImport = 'import' === $mode || 'auto' === $mode;
-            if ($willImport && $doBackup && $this->filesystem->exists('var/app.db')) {
+            if ($willImport && !$noBackup && $this->filesystem->exists('var/app.db')) {
                 $backupFileName = 'var/app.db~'.date('YmdHis');
                 $this->filesystem->copy('var/app.db', $backupFileName);
                 $teeOutput->writeln(\sprintf('<comment>Database backup created: %s</comment>', $backupFileName));
