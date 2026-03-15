@@ -48,15 +48,32 @@ final class ConversationSyncCachingTest extends KernelTestCase
 
         $ref = new ReflectionProperty(ConversationSync::class, 'globalExported');
 
-        // Before any export
         self::assertFalse($ref->getValue($conversationSync), 'globalExported should be false initially');
 
-        // First export sets the flag
         $conversationSync->export('localhost.dev');
         self::assertTrue($ref->getValue($conversationSync), 'globalExported should be true after first export');
 
-        // Second export for different host should be a no-op (flag already set)
+        // Second export for different host is a no-op (flag already set)
         $conversationSync->export('pushword.piedweb.com');
         self::assertTrue($ref->getValue($conversationSync), 'globalExported should remain true');
+    }
+
+    public function testGlobalImportRunsOnceAcrossHosts(): void
+    {
+        self::bootKernel();
+
+        /** @var ConversationSync $conversationSync */
+        $conversationSync = self::getContainer()->get(ConversationSyncInterface::class);
+
+        $ref = new ReflectionProperty(ConversationSync::class, 'globalImported');
+
+        self::assertFalse($ref->getValue($conversationSync), 'globalImported should be false initially');
+
+        $conversationSync->import('localhost.dev');
+        self::assertTrue($ref->getValue($conversationSync), 'globalImported should be true after first import');
+
+        // Second import for different host is a no-op (flag already set)
+        $conversationSync->import('pushword.piedweb.com');
+        self::assertTrue($ref->getValue($conversationSync), 'globalImported should remain true');
     }
 }

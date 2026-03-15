@@ -15,6 +15,8 @@ final class ConversationSync implements ConversationSyncInterface
 
     private bool $globalExported = false;
 
+    private bool $globalImported = false;
+
     public function __construct(
         private readonly SiteRegistry $apps,
         private readonly FlatFileContentDirFinder $contentDirFinder,
@@ -37,7 +39,18 @@ final class ConversationSync implements ConversationSyncInterface
 
     public function import(?string $host = null): void
     {
+        $isGlobalMode = $this->isGlobalMode($host);
+
+        // In global mode, the CSV is identical for all hosts — import once
+        if ($isGlobalMode && $this->globalImported) {
+            return;
+        }
+
         $this->importer->import($host);
+
+        if ($isGlobalMode) {
+            $this->globalImported = true;
+        }
     }
 
     public function export(?string $host = null): void
@@ -66,6 +79,18 @@ final class ConversationSync implements ConversationSyncInterface
         }
 
         $this->exporter->export($host);
+
+        // Sync CSV timestamp with last message to prevent import/export cycles
+        $csvPath = $this->getCsvPath($host);
+        if ($this->filesystem->exists($csvPath)) {
+            $lastMessage = $this->importer->getLastUpdatedMessage(
+                $isGlobalMode ? null : $this->resolveHost($host),
+            );
+
+            if (null !== $lastMessage) {
+                touch($csvPath, $lastMessage->updatedAt->getTimestamp()); // @phpstan-ignore method.nonObject
+            }
+        }
     }
 
     public function mustImport(?string $host = null): bool
