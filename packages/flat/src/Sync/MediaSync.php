@@ -332,6 +332,11 @@ final class MediaSync
                 continue;
             }
 
+            // Skip files not modified since last sync (avoids expensive sha1_file)
+            if ($lastSyncTime > 0 && filemtime($path) <= $lastSyncTime) {
+                continue;
+            }
+
             if ($this->isFileNewer($path, $mediaIndex)) {
                 return true;
             }
