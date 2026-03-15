@@ -25,6 +25,9 @@ final class MediaSync
 
     private bool $storageImported = false;
 
+    /** @var array{result: bool, lastSyncTime: int}|null */
+    private ?array $globalMediaDirScanCache = null;
+
     private ?OutputInterface $output = null;
 
     private ?Stopwatch $stopwatch = null;
@@ -239,7 +242,29 @@ final class MediaSync
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
         $lastSyncTime = $this->stateManager->getLastSyncTime('media', $app->getMainHost());
 
-        return array_any($this->getDirectoriesToScan($contentDir), fn (string $directory): bool => $this->hasNewerFiles($directory, $lastSyncTime));
+        foreach ($this->getDirectoriesToScan($contentDir) as $directory) {
+            if ($directory === $this->mediaDir && null !== $this->globalMediaDirScanCache) {
+                if ($this->globalMediaDirScanCache['result']) {
+                    return true;
+                }
+
+                if ($lastSyncTime >= $this->globalMediaDirScanCache['lastSyncTime']) {
+                    continue;
+                }
+            }
+
+            $result = $this->hasNewerFiles($directory, $lastSyncTime);
+
+            if ($directory === $this->mediaDir) {
+                $this->globalMediaDirScanCache = ['result' => $result, 'lastSyncTime' => $lastSyncTime];
+            }
+
+            if ($result) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
