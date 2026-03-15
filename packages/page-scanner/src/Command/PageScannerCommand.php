@@ -331,8 +331,9 @@ final class PageScannerCommand
                 break;
             }
 
-            if (!$this->processManager->isProcessAlive($pid, self::COMMAND_PATTERN)) {
+            if (! $this->processManager->isProcessAlive($pid, self::COMMAND_PATTERN)) {
                 $output->writeln('<error>Process '.$pid.' is no longer running.</error>');
+
                 break;
             }
 

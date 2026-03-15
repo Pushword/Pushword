@@ -2564,6 +2564,7 @@ YAML;
         $page->locale = 'en';
         $page->setMainContent('Original content');
         $page->setPublishedAt(new DateTime('-1 day'));
+
         $this->em->persist($page);
         $this->em->flush();
 
@@ -2620,6 +2621,7 @@ YAML;
         $page->locale = 'en';
         $page->setMainContent('Same content');
         $page->setPublishedAt(new DateTime('-1 day'));
+
         $this->em->persist($page);
         $this->em->flush();
 
@@ -2647,8 +2649,11 @@ YAML;
 
         // Check no new conflicts were recorded
         $conflictsAfter = $stateManager->getConflicts('localhost.dev');
-        self::assertCount($conflictsBefore, $conflictsAfter,
-            'No new conflict should be recorded when content is identical');
+        self::assertCount(
+            $conflictsBefore,
+            $conflictsAfter,
+            'No new conflict should be recorded when content is identical'
+        );
 
         // Cleanup
         $this->em->clear();

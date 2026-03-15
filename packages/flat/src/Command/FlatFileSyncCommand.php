@@ -120,7 +120,7 @@ final readonly class FlatFileSyncCommand
 
             // Backup database before import (unless disabled)
             $willImport = 'import' === $mode || 'auto' === $mode;
-            if ($willImport && !$noBackup && $this->filesystem->exists('var/app.db')) {
+            if ($willImport && ! $noBackup && $this->filesystem->exists('var/app.db')) {
                 $backupFileName = 'var/app.db~'.date('YmdHis');
                 $this->filesystem->copy('var/app.db', $backupFileName);
                 $teeOutput->writeln(\sprintf('<comment>Database backup created: %s</comment>', $backupFileName));
