@@ -541,8 +541,10 @@ final class LinkedDocsScanner extends AbstractScanner
 
         $slug = ltrim($uri, '/');
 
-        if (isset($this->everChecked[$slug])) {
-            return $this->everChecked[$slug];
+        $cacheKey = $this->page->host.'/'.$slug;
+
+        if (isset($this->everChecked[$cacheKey])) {
+            return $this->everChecked[$cacheKey];
         }
 
         $checkDatabase = ! str_starts_with($slug, 'media/'); // we avoid to check in db the media, file exists is enough
@@ -551,12 +553,12 @@ final class LinkedDocsScanner extends AbstractScanner
             $this->lastPageChecked = $this->findPageInCacheOrDb($slug);
         }
 
-        $this->everChecked[$slug] = $this->lastPageChecked instanceof Page
+        $this->everChecked[$cacheKey] = $this->lastPageChecked instanceof Page
             || file_exists($this->publicDir.'/'.$slug)
             || file_exists($this->publicDir.'/../'.$slug)
             || 'feed.xml' === $slug;
 
-        return $this->everChecked[$slug];
+        return $this->everChecked[$cacheKey];
     }
 
     private function findPageInCacheOrDb(string $slug): ?Page
