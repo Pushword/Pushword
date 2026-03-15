@@ -57,7 +57,10 @@ final readonly class PageListener
 
     public function preUpdate(Page $page): void
     {
-        $page->updatedAt = new DateTime();
+        if (! $page->getSkipAutoTimestamp()) {
+            $page->updatedAt = new DateTime();
+        }
+
         $this->updatePageEditor($page);
         $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
     }

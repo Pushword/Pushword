@@ -279,15 +279,27 @@ final class PageSync
         $lastSyncTime = $this->stateManager->getLastSyncTime('page', $host);
         if ($lastSyncTime > 0) {
             $lastSyncAt = new DateTime('@'.$lastSyncTime);
+            $bothModified = $lastEditDateTime > $lastSyncAt && $page->updatedAt > $lastSyncAt;
+
+            // Only read content when both sides modified (expensive, skip for one-sided changes)
+            $fileContent = null;
+            $dbContent = null;
+            if ($bothModified) {
+                $readResult = @file_get_contents($filePath);
+                $fileContent = false !== $readResult ? $readResult : null;
+                $dbContent = $this->pageExporter->generatePageContent($page);
+            }
+
             $conflict = $this->conflictResolver->resolvePageConflict(
                 $page,
                 $filePath,
                 $lastEditDateTime,
                 $lastSyncAt,
+                $fileContent,
+                $dbContent,
             );
 
             if ($conflict['hasConflict']) {
-                // If there's a conflict, flat wins means we should import
                 return 'flat' === $conflict['winner'];
             }
         }

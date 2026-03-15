@@ -50,14 +50,21 @@ final class ConflictResolver
         string $filePath,
         DateTimeInterface $fileModifiedAt,
         DateTimeInterface $lastSyncAt,
+        ?string $fileContent = null,
+        ?string $dbContent = null,
     ): array {
         // No conflict if file or DB was not modified since last sync
         if ($fileModifiedAt <= $lastSyncAt && $page->updatedAt <= $lastSyncAt) {
             return ['hasConflict' => false, 'winner' => null, 'backupFile' => null];
         }
 
-        // Both modified since last sync = conflict
+        // Both modified since last sync = potential conflict
         if ($fileModifiedAt > $lastSyncAt && $page->updatedAt > $lastSyncAt) {
+            // No real conflict if content is identical despite timestamp divergence
+            if (null !== $fileContent && null !== $dbContent && $fileContent === $dbContent) {
+                return ['hasConflict' => false, 'winner' => null, 'backupFile' => null];
+            }
+
             // Most recent wins
             $winner = $fileModifiedAt >= $page->updatedAt ? 'flat' : 'db';
             $backupFile = null;

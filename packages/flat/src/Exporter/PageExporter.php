@@ -303,11 +303,8 @@ final class PageExporter
         ];
     }
 
-    private function exportPage(Page $page, bool $force = false): bool
+    public function generatePageContent(Page $page): string
     {
-        $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
-
-        // Build content first to enable content comparison
         $baseProperties = ['title', 'h1', 'slug'];
         $entityProperties = $this->cachedEntityProperties ??= array_filter(
             Entity::getProperties($page),
@@ -339,7 +336,15 @@ final class PageExporter
         }
 
         $metaData = Yaml::dump($data, indent: 2);
-        $newContent = '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent();
+
+        return '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent();
+    }
+
+    private function exportPage(Page $page, bool $force = false): bool
+    {
+        $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
+
+        $newContent = $this->generatePageContent($page);
 
         // Skip if content unchanged (smart update to avoid unnecessary file writes)
         if ($this->filesystem->exists($exportFilePath)) {

@@ -12,6 +12,18 @@ use ReflectionProperty;
 
 trait TimestampableTrait
 {
+    private bool $skipAutoTimestamp = false;
+
+    public function getSkipAutoTimestamp(): bool
+    {
+        return $this->skipAutoTimestamp;
+    }
+
+    public function setSkipAutoTimestamp(bool $skip): void
+    {
+        $this->skipAutoTimestamp = $skip;
+    }
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     public ?DateTimeInterface $createdAt = null { // @phpstan-ignore-line
         get => $this->createdAt ?? new DateTime();

@@ -8,6 +8,8 @@ use DateTime;
 use DateTimeInterface;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Page;
+use Pushword\Flat\FlatFileContentDirFinder;
+use Pushword\Flat\Sync\ConflictResolver;
 use Pushword\Flat\Sync\SyncStateManager;
 use ReflectionClass;
 use Symfony\Component\Filesystem\Filesystem;
@@ -145,6 +147,69 @@ final class ConflictResolverTest extends TestCase
         }
 
         return $fileModifiedAt >= $page->updatedAt ? 'flat' : 'db';
+    }
+
+    public function testNoConflictWhenContentIdenticalDespiteTimestampDivergence(): void
+    {
+        $page = $this->createPage();
+        $page->updatedAt = new DateTime('-10 minutes'); // DB modified after sync
+
+        $lastSyncAt = new DateTime('-30 minutes');
+        $fileModifiedAt = new DateTime('-5 minutes'); // File also modified after sync
+
+        // Without content comparison, this would be a conflict
+        self::assertTrue($this->checkConflict($page, $fileModifiedAt, $lastSyncAt));
+
+        // But with identical content, ConflictResolver should say no conflict
+        $resolver = $this->createResolver();
+
+        $filePath = $this->contentDir.'/test-page.md';
+        file_put_contents($filePath, 'identical content');
+
+        $result = $resolver->resolvePageConflict(
+            $page,
+            $filePath,
+            $fileModifiedAt,
+            $lastSyncAt,
+            'identical content',
+            'identical content',
+        );
+
+        self::assertFalse($result['hasConflict']);
+    }
+
+    public function testConflictWhenContentDiffersDespiteTimestamps(): void
+    {
+        $page = $this->createPage();
+        $page->updatedAt = new DateTime('-10 minutes');
+
+        $lastSyncAt = new DateTime('-30 minutes');
+        $fileModifiedAt = new DateTime('-5 minutes');
+
+        $resolver = $this->createResolver();
+
+        $filePath = $this->contentDir.'/test-page.md';
+        file_put_contents($filePath, 'file content');
+
+        $result = $resolver->resolvePageConflict(
+            $page,
+            $filePath,
+            $fileModifiedAt,
+            $lastSyncAt,
+            'file content',
+            'db content',
+        );
+
+        self::assertTrue($result['hasConflict']);
+        self::assertSame('flat', $result['winner']);
+    }
+
+    private function createResolver(): ConflictResolver
+    {
+        // Use reflection to instantiate FlatFileContentDirFinder without its constructor (requires SiteRegistry)
+        $contentDirFinder = new ReflectionClass(FlatFileContentDirFinder::class)->newInstanceWithoutConstructor();
+
+        return new ConflictResolver($contentDirFinder, $this->stateManager);
     }
 
     private function createPage(): Page

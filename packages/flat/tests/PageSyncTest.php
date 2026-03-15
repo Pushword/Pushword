@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\PageSync;
+use Pushword\Flat\Sync\SyncStateManager;
 
 use function Safe\file_get_contents;
 
@@ -2541,5 +2542,122 @@ YAML;
         $this->em->flush();
         $this->trackFile($childMdPath);
         $this->trackFile($parentMdPath);
+    }
+
+    /**
+     * Test: Import preserves file timestamp (skipAutoTimestamp prevents drift).
+     *
+     * When importing a page from a flat file, the page's updatedAt should match
+     * the file's mtime, NOT be reset to "now" by PageListener::preUpdate().
+     */
+    public function testImportPreservesFileTimestamp(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create a page in DB
+        $page = new Page();
+        $page->setSlug('timestamp-preserve-test');
+        $page->setH1('Timestamp Test');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->setMainContent('Original content');
+        $page->setPublishedAt(new DateTime('-1 day'));
+        $this->em->persist($page);
+        $this->em->flush();
+
+        // Export to create the .md file
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        $mdFilePath = $contentDir.'/timestamp-preserve-test.md';
+        self::assertFileExists($mdFilePath);
+
+        // Modify the file content and set a specific mtime ahead of the DB's updatedAt
+        $targetTimestamp = $page->updatedAt->getTimestamp() + 10; // @phpstan-ignore method.nonObject
+        $content = file_get_contents($mdFilePath);
+        $content = str_replace('Original content', 'Updated content', $content);
+        file_put_contents($mdFilePath, $content);
+        touch($mdFilePath, $targetTimestamp);
+
+        // Import — PageListener::preUpdate() should NOT overwrite updatedAt
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'timestamp-preserve-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage);
+
+        // updatedAt should match file mtime, not current time
+        self::assertSame($targetTimestamp, $importedPage->updatedAt->getTimestamp(), // @phpstan-ignore method.nonObject
+            'updatedAt should match file mtime, not be reset to now by PageListener');
+
+        // Cleanup
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        $this->trackFile($mdFilePath);
+    }
+
+    /**
+     * Test: No false conflict when file and DB have identical content but different timestamps.
+     *
+     * After export + import cycle, touching the file should not trigger a conflict
+     * because the content comparison layer detects that file and DB are identical.
+     */
+    public function testNoFalseConflictWhenContentIdentical(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        /** @var SyncStateManager $stateManager */
+        $stateManager = self::getContainer()->get(SyncStateManager::class);
+
+        // Create a page and export it (this also records an export sync timestamp)
+        $page = new Page();
+        $page->setSlug('no-false-conflict-test');
+        $page->setH1('No False Conflict');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->setMainContent('Same content');
+        $page->setPublishedAt(new DateTime('-1 day'));
+        $this->em->persist($page);
+        $this->em->flush();
+
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        $mdFilePath = $contentDir.'/no-false-conflict-test.md';
+        self::assertFileExists($mdFilePath);
+
+        // Wait to ensure timestamps diverge from the sync time
+        sleep(1);
+
+        // Touch file (content unchanged) to simulate timestamp drift
+        touch($mdFilePath);
+
+        // Also bump DB updatedAt to simulate the false-conflict scenario
+        // (both sides appear modified since last sync, but content is the same)
+        $page->updatedAt = new DateTime();
+        $this->em->flush();
+
+        $conflicts = $stateManager->getConflicts('localhost.dev');
+        $conflictsBefore = \count($conflicts);
+
+        // mustImport triggers isFileNewer which calls resolvePageConflict with content
+        $this->pageSync->mustImport('localhost.dev');
+
+        // Check no new conflicts were recorded
+        $conflictsAfter = $stateManager->getConflicts('localhost.dev');
+        self::assertCount($conflictsBefore, $conflictsAfter,
+            'No new conflict should be recorded when content is identical');
+
+        // Cleanup
+        $this->em->clear();
+        $page = $this->pageRepo->findOneBy(['slug' => 'no-false-conflict-test', 'host' => 'localhost.dev']);
+        if (null !== $page) {
+            $this->em->remove($page);
+            $this->em->flush();
+        }
+
+        $this->trackFile($mdFilePath);
     }
 }

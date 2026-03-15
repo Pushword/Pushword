@@ -284,6 +284,9 @@ final class PageImporter extends AbstractImporter
         if ($this->newPage) {
             $this->initDateTimeProperties($page, $lastEditDateTime, $publishedAtExplicitlySet);
             $this->em->persist($page);
+        } else {
+            $page->updatedAt = $lastEditDateTime;
+            $page->setSkipAutoTimestamp(true);
         }
 
         return $page;
