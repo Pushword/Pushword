@@ -9,14 +9,16 @@ use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
-final readonly class ConversationSync implements ConversationSyncInterface
+final class ConversationSync implements ConversationSyncInterface
 {
+    private ?bool $globalMustImportCache = null;
+
     public function __construct(
-        private SiteRegistry $apps,
-        private FlatFileContentDirFinder $contentDirFinder,
-        public ConversationImporter $importer,
-        public ConversationExporter $exporter,
-        private Filesystem $filesystem = new Filesystem(),
+        private readonly SiteRegistry $apps,
+        private readonly FlatFileContentDirFinder $contentDirFinder,
+        public readonly ConversationImporter $importer,
+        public readonly ConversationExporter $exporter,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -49,22 +51,29 @@ final readonly class ConversationSync implements ConversationSyncInterface
 
         $isGlobalMode = (bool) $app->get('flat_conversation_global');
 
+        // In global mode, the result is the same for all hosts
+        if ($isGlobalMode && null !== $this->globalMustImportCache) {
+            return $this->globalMustImportCache;
+        }
+
         $csvPath = $isGlobalMode
             ? $this->contentDirFinder->getBaseDir().'/conversation.csv'
             : $this->contentDirFinder->get($app->getMainHost()).'/conversation.csv';
 
         if (! $this->filesystem->exists($csvPath)) {
-            return false;
-        }
-
-        $lastMessage = $this->importer->getLastUpdatedMessage(
+            $result = false;
+        } elseif (null === ($lastMessage = $this->importer->getLastUpdatedMessage(
             $isGlobalMode ? null : $app->getMainHost(),
-        );
-
-        if (null === $lastMessage) {
-            return true;
+        ))) {
+            $result = true;
+        } else {
+            $result = filemtime($csvPath) > $lastMessage->updatedAt->getTimestamp(); // @phpstan-ignore method.nonObject (property hook guarantees non-null)
         }
 
-        return filemtime($csvPath) > $lastMessage->updatedAt->getTimestamp(); // @phpstan-ignore method.nonObject (property hook guarantees non-null)
+        if ($isGlobalMode) {
+            $this->globalMustImportCache = $result;
+        }
+
+        return $result;
     }
 }

@@ -28,6 +28,9 @@ final class MediaSync
     /** @var array{result: bool, lastSyncTime: int}|null */
     private ?array $globalMediaDirScanCache = null;
 
+    /** @var array<string, Media>|null */
+    private ?array $mediaIndexCache = null;
+
     private ?OutputInterface $output = null;
 
     private ?Stopwatch $stopwatch = null;
@@ -242,12 +245,16 @@ final class MediaSync
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
         $lastSyncTime = $this->stateManager->getLastSyncTime('media', $app->getMainHost());
 
-        // Preload all media into an index to avoid per-file DB queries
-        $allMedia = $this->mediaRepository->findAll();
-        $mediaIndex = [];
-        foreach ($allMedia as $media) {
-            $mediaIndex[$media->getFileName()] = $media;
+        // Preload all media into an index to avoid per-file DB queries (cached across hosts)
+        if (null === $this->mediaIndexCache) {
+            $allMedia = $this->mediaRepository->findAll();
+            $this->mediaIndexCache = [];
+            foreach ($allMedia as $media) {
+                $this->mediaIndexCache[$media->getFileName()] = $media;
+            }
         }
+
+        $mediaIndex = $this->mediaIndexCache;
 
         foreach ($this->getDirectoriesToScan($contentDir) as $directory) {
             if ($directory === $this->mediaDir && null !== $this->globalMediaDirScanCache) {

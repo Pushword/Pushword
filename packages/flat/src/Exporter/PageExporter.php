@@ -344,6 +344,17 @@ final class PageExporter
     {
         $exportFilePath = $this->exportDir.'/'.$page->getSlug().'.md';
 
+        // Fast path: skip if file is newer than DB and not forced (avoids expensive content generation)
+        if (
+            false === $force
+            && $this->filesystem->exists($exportFilePath)
+            && filemtime($exportFilePath) >= $page->updatedAt->getTimestamp() // @phpstan-ignore method.nonObject
+        ) {
+            ++$this->skippedCount;
+
+            return false;
+        }
+
         $newContent = $this->generatePageContent($page);
 
         // Skip if content unchanged (smart update to avoid unnecessary file writes)
@@ -354,17 +365,6 @@ final class PageExporter
 
                 return false;
             }
-        }
-
-        // Skip if file is newer and not forced (timestamp-based skip)
-        if (
-            false === $force
-            && $this->filesystem->exists($exportFilePath)
-            && filemtime($exportFilePath) >= $page->updatedAt->getTimestamp() // @phpstan-ignore method.nonObject
-        ) {
-            ++$this->skippedCount;
-
-            return false;
         }
 
         ++$this->exportedCount;
