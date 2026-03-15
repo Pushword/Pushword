@@ -248,6 +248,12 @@ final class MediaSync
 
         // Record export in sync state
         $this->stateManager->recordExport('media', $app->getMainHost());
+
+        // Sync CSV timestamp with recorded sync time to prevent stale filemtime
+        $csvPath ??= $this->contentDirFinder->getBaseDir().'/'.MediaExporter::CSV_FILE;
+        if (file_exists($csvPath)) {
+            touch($csvPath);
+        }
     }
 
     public function mustImport(?string $host = null): bool
