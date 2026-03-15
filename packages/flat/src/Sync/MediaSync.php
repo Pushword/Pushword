@@ -231,11 +231,18 @@ final class MediaSync
 
         // Media CSV is global — only export once across all hosts
         if (! $this->csvExported || null !== $exportDir) {
-            $this->measure('media_export', function () use ($targetDir): void {
-                $this->mediaExporter->csvDir = $this->contentDirFinder->getBaseDir();
-                $this->mediaExporter->exportDir = $targetDir;
-                $this->mediaExporter->exportMedias();
-            });
+            $csvPath = $this->contentDirFinder->getBaseDir().'/'.MediaExporter::CSV_FILE;
+            $lastSyncTime = $this->stateManager->getLastSyncTime('media', $app->getMainHost());
+
+            // Skip CSV regeneration if no media changed since last sync
+            if ($force || ! file_exists($csvPath) || 0 === $lastSyncTime || filemtime($csvPath) < $lastSyncTime) {
+                $this->measure('media_export', function () use ($targetDir): void {
+                    $this->mediaExporter->csvDir = $this->contentDirFinder->getBaseDir();
+                    $this->mediaExporter->exportDir = $targetDir;
+                    $this->mediaExporter->exportMedias();
+                });
+            }
+
             $this->csvExported = true;
         }
 
