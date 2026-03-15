@@ -208,13 +208,15 @@ final class PageSync
             $slugIndex[$page->getSlug()] = $page;
         }
 
-        return $this->hasNewerFiles($contentDir, $mainHost, $slugIndex);
+        $lastSyncTime = $this->stateManager->getLastSyncTime('page', $mainHost);
+
+        return $this->hasNewerFiles($contentDir, $mainHost, $slugIndex, $lastSyncTime);
     }
 
     /**
      * @param array<string, Page> $slugIndex
      */
-    private function hasNewerFiles(string $dir, string $host, array $slugIndex): bool
+    private function hasNewerFiles(string $dir, string $host, array $slugIndex, int $lastSyncTime): bool
     {
         if (! file_exists($dir)) {
             return false;
@@ -233,14 +235,14 @@ final class PageSync
 
             $path = $dir.'/'.$file;
             if (is_dir($path)) {
-                if ($this->hasNewerFiles($path, $host, $slugIndex)) {
+                if ($this->hasNewerFiles($path, $host, $slugIndex, $lastSyncTime)) {
                     return true;
                 }
 
                 continue;
             }
 
-            if ($this->isFileNewer($path, $host, $slugIndex)) {
+            if ($this->isFileNewer($path, $host, $slugIndex, $lastSyncTime)) {
                 return true;
             }
         }
@@ -251,13 +253,18 @@ final class PageSync
     /**
      * @param array<string, Page> $slugIndex
      */
-    private function isFileNewer(string $filePath, string $host, array $slugIndex): bool
+    private function isFileNewer(string $filePath, string $host, array $slugIndex, int $lastSyncTime): bool
     {
         if (str_ends_with($filePath, RedirectionExporter::INDEX_FILE)) {
-            return $this->isCsvFileNewer($filePath, $host);
+            return $this->isCsvFileNewer($filePath, $lastSyncTime);
         }
 
         if (! str_ends_with($filePath, '.md')) {
+            return false;
+        }
+
+        // Fast path: if file hasn't changed since last sync, skip expensive YAML parsing
+        if ($lastSyncTime > 0 && (int) filemtime($filePath) <= $lastSyncTime) {
             return false;
         }
 
@@ -276,7 +283,6 @@ final class PageSync
         $lastEditDateTime = new DateTime()->setTimestamp((int) filemtime($filePath));
 
         // Check for conflicts using the last sync time
-        $lastSyncTime = $this->stateManager->getLastSyncTime('page', $host);
         if ($lastSyncTime > 0) {
             $lastSyncAt = new DateTime('@'.$lastSyncTime);
             $bothModified = $lastEditDateTime > $lastSyncAt && $page->updatedAt > $lastSyncAt;
@@ -307,9 +313,8 @@ final class PageSync
         return $lastEditDateTime > $page->updatedAt;
     }
 
-    private function isCsvFileNewer(string $filePath, string $host): bool
+    private function isCsvFileNewer(string $filePath, int $lastSyncTime): bool
     {
-        $lastSyncTime = $this->stateManager->getLastSyncTime('page', $host);
         if (0 === $lastSyncTime) {
             return true;
         }

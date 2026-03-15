@@ -14,13 +14,16 @@ use Symfony\Component\Filesystem\Filesystem;
  * Manages sync state tracking for flat file synchronization.
  * Stores timestamps and conflict logs per host.
  */
-final readonly class SyncStateManager
+final class SyncStateManager
 {
     private const int MAX_CONFLICT_ENTRIES = 100;
 
+    /** @var array<string, array<string, mixed>> */
+    private array $stateCache = [];
+
     public function __construct(
-        private string $varDir,
-        private Filesystem $filesystem = new Filesystem(),
+        private readonly string $varDir,
+        private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
 
@@ -127,6 +130,8 @@ final readonly class SyncStateManager
      */
     public function resetState(?string $host = null): void
     {
+        $cacheKey = $host ?? '__default__';
+        unset($this->stateCache[$cacheKey]);
         $this->filesystem->remove($this->getStateFilePath($host));
     }
 
@@ -147,20 +152,29 @@ final readonly class SyncStateManager
      */
     private function loadState(?string $host): array
     {
+        $cacheKey = $host ?? '__default__';
+        if (isset($this->stateCache[$cacheKey])) {
+            /** @var array<string, mixed> */
+            return $this->stateCache[$cacheKey];
+        }
+
         $filePath = $this->getStateFilePath($host);
 
         if (! $this->filesystem->exists($filePath)) {
-            return [];
+            return $this->stateCache[$cacheKey] = [];
         }
 
         try {
             $content = $this->filesystem->readFile($filePath);
         } catch (IOException) {
-            return [];
+            return $this->stateCache[$cacheKey] = [];
         }
 
-        /** @var array<string, mixed> */
-        return json_decode($content, true);
+        /** @var array<string, mixed> $decoded */
+        $decoded = json_decode($content, true);
+        $this->stateCache[$cacheKey] = $decoded;
+
+        return $decoded;
     }
 
     /**
@@ -168,6 +182,8 @@ final readonly class SyncStateManager
      */
     private function saveState(array $state, ?string $host): void
     {
+        $cacheKey = $host ?? '__default__';
+        $this->stateCache[$cacheKey] = $state;
         $this->ensureDirectory();
         $filePath = $this->getStateFilePath($host);
         $this->filesystem->dumpFile($filePath, json_encode($state, \JSON_PRETTY_PRINT));

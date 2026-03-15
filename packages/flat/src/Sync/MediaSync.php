@@ -242,6 +242,13 @@ final class MediaSync
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
         $lastSyncTime = $this->stateManager->getLastSyncTime('media', $app->getMainHost());
 
+        // Preload all media into an index to avoid per-file DB queries
+        $allMedia = $this->mediaRepository->findAll();
+        $mediaIndex = [];
+        foreach ($allMedia as $media) {
+            $mediaIndex[$media->getFileName()] = $media;
+        }
+
         foreach ($this->getDirectoriesToScan($contentDir) as $directory) {
             if ($directory === $this->mediaDir && null !== $this->globalMediaDirScanCache) {
                 if ($this->globalMediaDirScanCache['result']) {
@@ -253,7 +260,7 @@ final class MediaSync
                 }
             }
 
-            $result = $this->hasNewerFiles($directory, $lastSyncTime);
+            $result = $this->hasNewerFiles($directory, $lastSyncTime, $mediaIndex);
 
             if ($directory === $this->mediaDir) {
                 $this->globalMediaDirScanCache = ['result' => $result, 'lastSyncTime' => $lastSyncTime];
@@ -285,10 +292,13 @@ final class MediaSync
         return $dirs;
     }
 
-    private function hasNewerFiles(string $dir, int $lastSyncTime = 0): bool
+    /**
+     * @param array<string, Media> $mediaIndex
+     */
+    private function hasNewerFiles(string $dir, int $lastSyncTime, array $mediaIndex): bool
     {
         if ($dir === $this->mediaDir && ! $this->mediaStorage->isLocal()) {
-            return $this->hasNewerStorageFiles($lastSyncTime);
+            return $this->hasNewerStorageFiles($lastSyncTime, $mediaIndex);
         }
 
         if (! file_exists($dir)) {
@@ -308,14 +318,14 @@ final class MediaSync
 
             $path = $dir.'/'.$file;
             if (is_dir($path)) {
-                if ($this->hasNewerFiles($path, $lastSyncTime)) {
+                if ($this->hasNewerFiles($path, $lastSyncTime, $mediaIndex)) {
                     return true;
                 }
 
                 continue;
             }
 
-            if ($this->isFileNewer($path)) {
+            if ($this->isFileNewer($path, $mediaIndex)) {
                 return true;
             }
         }
@@ -323,7 +333,10 @@ final class MediaSync
         return false;
     }
 
-    private function hasNewerStorageFiles(int $lastSyncTime): bool
+    /**
+     * @param array<string, Media> $mediaIndex
+     */
+    private function hasNewerStorageFiles(int $lastSyncTime, array $mediaIndex): bool
     {
         $progressBar = null;
         if (null !== $this->output) {
@@ -361,7 +374,7 @@ final class MediaSync
             ++$checked;
             $progressBar?->setMessage(\sprintf('%d modified since last sync', $checked));
 
-            if ($this->isStorageFileNewer($path)) {
+            if ($this->isStorageFileNewer($path, $mediaIndex)) {
                 $hasNewer = true;
 
                 break;
@@ -375,9 +388,12 @@ final class MediaSync
         return $hasNewer;
     }
 
-    private function isStorageFileNewer(string $storagePath): bool
+    /**
+     * @param array<string, Media> $mediaIndex
+     */
+    private function isStorageFileNewer(string $storagePath, array $mediaIndex): bool
     {
-        $media = $this->mediaRepository->findOneByFileName($storagePath);
+        $media = $mediaIndex[$storagePath] ?? null;
         if (! $media instanceof Media) {
             return true;
         }
@@ -385,14 +401,17 @@ final class MediaSync
         return $this->isMediaHashDifferent($media, $this->mediaStorage->getLocalPath($storagePath));
     }
 
-    private function isFileNewer(string $filePath): bool
+    /**
+     * @param array<string, Media> $mediaIndex
+     */
+    private function isFileNewer(string $filePath, array $mediaIndex): bool
     {
         $fileName = $this->extractMediaName($filePath);
         if ('' === $fileName) {
             return false;
         }
 
-        $media = $this->mediaRepository->findOneByFileName($fileName);
+        $media = $mediaIndex[$fileName] ?? null;
         if (! $media instanceof Media) {
             return true;
         }
