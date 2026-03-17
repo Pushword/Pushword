@@ -390,6 +390,71 @@ class StaticGeneratorTest extends KernelTestCase
         }
     }
 
+    public function testSelectiveSymlinkMediaOnly(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $container = self::getContainer();
+        $siteRegistry = $container->get(SiteRegistry::class);
+        $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
+        $siteConfig->setCustomProperty('static_symlink', ['media']);
+
+        try {
+            // Media should be symlinked
+            $mediaGenerator = $this->getGenerator(MediaGenerator::class);
+            $mediaGenerator->generate('localhost.dev');
+
+            $mediaDir = $this->getStaticDir().'/media';
+            self::assertFileExists($mediaDir);
+            $this->assertMediaFilesAccessible($mediaDir);
+            $this->assertContainsSymlinks($mediaDir);
+            $this->assertSymlinksAreRelative($mediaDir);
+
+            // Assets should be copied (not symlinked)
+            $copierGenerator = $this->getGenerator(CopierGenerator::class);
+            $copierGenerator->generate('localhost.dev');
+
+            $assetsDir = $this->getStaticDir().'/assets';
+            self::assertFileExists($assetsDir);
+            self::assertFalse(is_link($assetsDir), 'Assets should be copied, not symlinked, when static_symlink is [media]');
+        } finally {
+            $siteConfig->setCustomProperty('static_symlink', false);
+        }
+    }
+
+    public function testSelectiveSymlinkAssetsOnly(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $container = self::getContainer();
+        $siteRegistry = $container->get(SiteRegistry::class);
+        $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
+        $siteConfig->setCustomProperty('static_symlink', ['assets']);
+
+        try {
+            // Media should be copied (not symlinked)
+            $mediaGenerator = $this->getGenerator(MediaGenerator::class);
+            $mediaGenerator->generate('localhost.dev');
+
+            $mediaDir = $this->getStaticDir().'/media';
+            self::assertFileExists($mediaDir);
+            $this->assertMediaFilesAccessible($mediaDir);
+            $this->assertContainsNoSymlinks($mediaDir);
+
+            // Assets should be symlinked
+            $copierGenerator = $this->getGenerator(CopierGenerator::class);
+            $copierGenerator->generate('localhost.dev');
+
+            $assetsDir = $this->getStaticDir().'/assets';
+            self::assertFileExists($assetsDir);
+            self::assertTrue(is_link($assetsDir), 'Assets should be symlinked when static_symlink is [assets]');
+        } finally {
+            $siteConfig->setCustomProperty('static_symlink', false);
+        }
+    }
+
     private function assertMediaFilesAccessible(string $dir): void
     {
         /** @var SplFileInfo $file */
@@ -398,6 +463,27 @@ class StaticGeneratorTest extends KernelTestCase
             if (is_link($path)) {
                 self::assertFileExists($path, \sprintf('Broken symlink: %s -> %s', $path, (string) readlink($path)));
             }
+        }
+    }
+
+    private function assertContainsSymlinks(string $dir): void
+    {
+        /** @var SplFileInfo $file */
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
+            if (is_link($file->getPathname())) {
+                return;
+            }
+        }
+
+        self::fail('Expected at least one symlink in '.$dir);
+    }
+
+    private function assertContainsNoSymlinks(string $dir): void
+    {
+        /** @var SplFileInfo $file */
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
+            $path = $file->getPathname();
+            self::assertFalse(is_link($path), \sprintf('Unexpected symlink: %s', $path));
         }
     }
 

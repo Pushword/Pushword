@@ -71,12 +71,32 @@ abstract class AbstractGenerator implements GeneratorInterface
     }
 
     /**
-     * Symlink doesn't work on github page, symlink only for apache if conf say OK to symlink.
+     * @return bool|string[]
      */
-    protected function mustSymlink(): bool
+    private function getSymlinkConfig(): bool|array
     {
-        return $this->useGenerator(CNAMEGenerator::class) ? false
-          : (bool) $this->app->get('static_symlink');
+        if ($this->useGenerator(CNAMEGenerator::class)) {
+            return false;
+        }
+
+        /** @var bool|string[] $config */
+        $config = $this->app->get('static_symlink') ?? true;
+
+        return $config;
+    }
+
+    protected function mustSymlinkMedia(): bool
+    {
+        $config = $this->getSymlinkConfig();
+
+        return \is_array($config) ? \in_array('media', $config, true) : $config;
+    }
+
+    protected function mustSymlinkAssets(): bool
+    {
+        $config = $this->getSymlinkConfig();
+
+        return \is_array($config) ? \in_array('assets', $config, true) : $config;
     }
 
     /**

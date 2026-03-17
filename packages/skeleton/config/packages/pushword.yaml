@@ -38,7 +38,7 @@ pushword:
         stylesheets:
           - "assets/tw.css"
       color_bg: "#fff"
-      static_copy:
+      static_assets:
         - assets
     - hosts:
         - admin-block-editor.test
