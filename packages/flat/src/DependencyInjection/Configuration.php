@@ -66,6 +66,11 @@ class Configuration implements ConfigurationInterface
               ->defaultNull()
               ->info('Sender email address for notifications')
             ->end()
+            ->arrayNode('ignored_properties')
+              ->scalarPrototype()->end()
+              ->defaultValue([])
+              ->info('Custom property names to exclude from flat file export and import')
+            ->end()
         ->end();
 
         return $treeBuilder;
