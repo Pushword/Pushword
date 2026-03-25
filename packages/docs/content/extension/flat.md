@@ -40,6 +40,9 @@ flat:
 
   # Auto-lock when flat files are modified (default: true)
   auto_lock_on_flat_changes: true
+
+  # Custom property names to exclude from flat file export and import (default: [])
+  ignored_properties: ['someTransientProp']
 ```
 
 ## Usage

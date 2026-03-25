@@ -270,7 +270,10 @@ final class PageImporter extends AbstractImporter
                 continue;
             }
 
-            $page->setCustomProperty($key, $this->converterRegistry->fromFlatValue($key, $value));
+            $converted = $this->converterRegistry->fromFlatValue($key, $value);
+            if (null !== $converted) {
+                $page->setCustomProperty($key, $converted);
+            }
         }
 
         $page->host = $this->apps->get()->getMainHost();
