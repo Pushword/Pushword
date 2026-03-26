@@ -105,6 +105,7 @@ class Configuration implements ConfigurationInterface
                         }
 
                         if (\is_array($v)) {
+                            /** @var array<string> $v */
                             return [] !== array_diff($v, ['media', 'assets']);
                         }
 
