@@ -31,7 +31,7 @@
     "knpuniversity/oauth2-client-bundle": "^2.20",
     "league/commonmark": "^2.7",
     "league/flysystem-bundle": "^3.6",
-    "league/oauth2-google": "^4.1",
+    "league/oauth2-google": "^5",
     "nette/utils": "^4.0",
     "pagerfanta/twig": "^4.1",
     "pentatrion/vite-bundle": "*",
