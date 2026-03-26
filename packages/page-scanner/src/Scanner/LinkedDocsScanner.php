@@ -11,6 +11,7 @@ use PiedWeb\Curl\ExtendedClient;
 use PiedWeb\Curl\Helper;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_match;
@@ -70,6 +71,7 @@ final class LinkedDocsScanner extends AbstractScanner
         private readonly array $linksToIgnore,
         private readonly string $publicDir,
         TranslatorInterface $translator,
+        private readonly MediaStorageAdapter $mediaStorage,
         private readonly ?CacheInterface $externalUrlCache = null,
         private readonly int $externalUrlCacheTtl = 86400,
         private readonly bool $skipExternalUrlCheck = false,
@@ -547,15 +549,15 @@ final class LinkedDocsScanner extends AbstractScanner
             return $this->everChecked[$cacheKey];
         }
 
-        $checkDatabase = ! str_starts_with($slug, 'media/'); // we avoid to check in db the media, file exists is enough
+        $isMedia = str_starts_with($slug, 'media/');
 
-        if ($checkDatabase) {
+        if (! $isMedia) {
             $this->lastPageChecked = $this->findPageInCacheOrDb($slug);
         }
 
         $this->everChecked[$cacheKey] = $this->lastPageChecked instanceof Page
-            || file_exists($this->publicDir.'/'.$slug)
-            || file_exists($this->publicDir.'/../'.$slug)
+            || ($isMedia && $this->mediaStorage->fileExists(substr($slug, 6)))
+            || (! $isMedia && (file_exists($this->publicDir.'/'.$slug) || file_exists($this->publicDir.'/../'.$slug)))
             || 'feed.xml' === $slug;
 
         return $this->everChecked[$cacheKey];
