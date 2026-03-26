@@ -27,6 +27,8 @@ final class PageListener
 
     private static bool $processingRedirects = false;
 
+    public static bool $skipSlugChangeDetection = false;
+
     public function __construct(
         private readonly Security $security,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
@@ -102,6 +104,10 @@ final class PageListener
 
     private function detectSlugChange(Page $page, PreUpdateEventArgs $event): void
     {
+        if (self::$skipSlugChangeDetection) {
+            return;
+        }
+
         if (! $event->hasChangedField('slug')) {
             return;
         }

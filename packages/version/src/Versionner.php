@@ -12,6 +12,7 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Column;
 use Exception;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\EventListener\PageListener;
 // use Doctrine\ORM\Event\LifecycleEventArgs;
 use Pushword\Core\Utils\Entity;
 use Symfony\Component\Filesystem\Filesystem;
@@ -68,6 +69,7 @@ class Versionner
     public function loadVersion(string $pageId, string $version): void
     {
         static::$version = false;
+        PageListener::$skipSlugChangeDetection = true;
 
         try {
             $page = $this->entityManager->getRepository(Page::class)->find($pageId);
@@ -93,6 +95,7 @@ class Versionner
             $this->entityManager->flush();
         } finally {
             static::$version = true;
+            PageListener::$skipSlugChangeDetection = false;
         }
     }
 
