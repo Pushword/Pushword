@@ -114,8 +114,9 @@ final class PageScannerCommand
                 $errorNbr += \count($errors[$pageId]);
             }
 
-            if ($errorNbr > 500) {
-                $this->output?->writeln("\n".'Too many errors (>500), stopping scan...');
+            $maxErrors = $this->limit > 0 ? $this->limit : 500;
+            if ($errorNbr > $maxErrors) {
+                $this->output?->writeln("\n".\sprintf('Too many errors (>%d), stopping scan...', $maxErrors));
 
                 break;
             }
@@ -159,6 +160,8 @@ final class PageScannerCommand
     private ?OutputInterface $output = null;
 
     private bool $skipExternal = false;
+
+    private int $limit = 0;
 
     private ?Stopwatch $stopwatch = null;
 
@@ -211,8 +214,11 @@ final class PageScannerCommand
         ?string $host,
         #[Option(description: 'Skip external link checks', name: 'skip-external')]
         bool $skipExternal = false,
+        #[Option(description: 'Stop after N errors (0 = no limit)', name: 'limit')]
+        int $limit = 0,
     ): int {
         $this->skipExternal = $skipExternal;
+        $this->limit = $limit;
 
         // Check if same process type is already running (via PID file)
         $pidFile = $this->processManager->getPidFilePath(self::PROCESS_TYPE);
