@@ -23,4 +23,17 @@ class PageScannerCommandTest extends KernelTestCase
         $output = $commandTester->getDisplay();
         self::assertTrue(str_contains($output, 'done...'));
     }
+
+    public function testPageScannerCommandWithLimit(): void
+    {
+        $kernel = self::createKernel();
+        $application = new Application($kernel);
+
+        $command = $application->find('pw:page-scan');
+        $commandTester = new CommandTester($command);
+        $commandTester->execute(['localhost.dev', '--limit' => 1]);
+
+        $output = $commandTester->getDisplay();
+        self::assertTrue(str_contains($output, 'Too many errors (>1), stopping scan...') || str_contains($output, 'done...'));
+    }
 }

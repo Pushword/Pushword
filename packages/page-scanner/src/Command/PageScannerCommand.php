@@ -64,6 +64,7 @@ final class PageScannerCommand
         $errorNbr = 0;
         $currentPage = 0;
         $lastLineWasError = false;
+        $maxErrors = $this->limit > 0 ? $this->limit : 500;
 
         foreach ($pages as $page) {
             ++$currentPage;
@@ -114,7 +115,6 @@ final class PageScannerCommand
                 $errorNbr += \count($errors[$pageId]);
             }
 
-            $maxErrors = $this->limit > 0 ? $this->limit : 500;
             if ($errorNbr > $maxErrors) {
                 $this->output?->writeln("\n".\sprintf('Too many errors (>%d), stopping scan...', $maxErrors));
 
