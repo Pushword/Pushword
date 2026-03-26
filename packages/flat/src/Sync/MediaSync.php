@@ -369,16 +369,6 @@ final class MediaSync
      */
     private function hasNewerStorageFiles(int $lastSyncTime, array $mediaIndex): bool
     {
-        // Fast path for remote storage: skip expensive listing when we have a sync baseline
-        // and the media.csv hasn't changed since last sync (within a small tolerance for
-        // multi-host syncs where each host records a slightly different lastSyncTime)
-        if ($lastSyncTime > 0) {
-            $csvPath = $this->contentDirFinder->getBaseDir().'/'.MediaExporter::CSV_FILE;
-            if (file_exists($csvPath) && filemtime($csvPath) <= $lastSyncTime + 10) {
-                return false;
-            }
-        }
-
         $progressBar = null;
         if (null !== $this->output) {
             $this->output->writeln('Scanning remote storage for changes...');
