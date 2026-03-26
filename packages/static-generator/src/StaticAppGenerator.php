@@ -8,6 +8,8 @@ use LogicException;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\StaticGenerator\Event\StaticPostGenerateEvent;
+use Pushword\StaticGenerator\Event\StaticPreGenerateEvent;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
@@ -15,6 +17,7 @@ use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Stopwatch\Stopwatch;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Generate 1 App.
@@ -38,6 +41,7 @@ final class StaticAppGenerator
         private readonly RedirectionManager $redirectionManager,
         private readonly LoggerInterface $logger,
         private readonly GenerationStateManager $stateManager,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -106,6 +110,12 @@ final class StaticAppGenerator
         $originalStaticDir = $app->getStr('static_dir');
         $filesystem = new Filesystem();
 
+        $this->cleanupStaleTempDirs($originalStaticDir, $filesystem);
+
+        $this->eventDispatcher->dispatch(
+            new StaticPreGenerateEvent($app, $originalStaticDir, $this->incremental),
+        );
+
         // In incremental mode, work directly in the static dir
         // In full mode, use a temporary directory for atomic swap
         if ($this->incremental && $this->stateManager->hasState($host) && $filesystem->exists($originalStaticDir)) {
@@ -144,7 +154,21 @@ final class StaticAppGenerator
             $this->stateManager->save();
         }
 
+        $this->eventDispatcher->dispatch(
+            new StaticPostGenerateEvent($app, $originalStaticDir, $this->incremental, $this->errors),
+        );
+
         $this->abortGeneration = false;
+    }
+
+    private function cleanupStaleTempDirs(string $staticDir, Filesystem $filesystem): void
+    {
+        foreach ([$staticDir.'~', $staticDir.'~~'] as $dir) {
+            if ($filesystem->exists($dir) && is_dir($dir) && filemtime($dir) < time() - 3600) {
+                $this->logger->info('Removing stale temp directory: '.$dir);
+                $filesystem->remove($dir);
+            }
+        }
     }
 
     private function runGenerators(SiteConfig $app): void

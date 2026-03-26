@@ -36,9 +36,12 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Pushword\StaticGenerator\Event\StaticPostGenerateEvent;
+use Pushword\StaticGenerator\Event\StaticPreGenerateEvent;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[Group('integration')]
 class StaticGeneratorTest extends KernelTestCase
@@ -236,6 +239,7 @@ class StaticGeneratorTest extends KernelTestCase
             $generatorBag->get(RedirectionManager::class), // @phpstan-ignore-line
             $logger,
             new GenerationStateManager($projectDir),
+            self::getContainer()->get(EventDispatcherInterface::class),
         );
     }
 
@@ -510,6 +514,129 @@ class StaticGeneratorTest extends KernelTestCase
         $generator->generate('localhost.dev');
 
         self::assertFileExists($this->getStaticDir().'/index.html');
+    }
+
+    public function testEventsAreDispatched(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $preEvents = [];
+        $postEvents = [];
+
+        $dispatcher = self::getContainer()->get(EventDispatcherInterface::class);
+        $dispatcher->addListener(StaticPreGenerateEvent::class, static function (StaticPreGenerateEvent $event) use (&$preEvents): void {
+            $preEvents[] = $event;
+        });
+        $dispatcher->addListener(StaticPostGenerateEvent::class, static function (StaticPostGenerateEvent $event) use (&$postEvents): void {
+            $postEvents[] = $event;
+        });
+
+        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $command = $application->find('pw:static');
+        $commandTester = new CommandTester($command);
+        $commandTester->execute(['host' => 'localhost.dev']);
+
+        self::assertCount(1, $preEvents, 'StaticPreGenerateEvent should be dispatched once per host');
+        self::assertCount(1, $postEvents, 'StaticPostGenerateEvent should be dispatched once per host');
+        self::assertSame('localhost.dev', $preEvents[0]->app->getMainHost());
+        self::assertSame([], $postEvents[0]->errors);
+        self::assertFalse($preEvents[0]->incremental);
+    }
+
+    public function testGeneratorBagResolvesAllBuiltinGenerators(): void
+    {
+        self::bootKernel();
+        $bag = $this->getGeneratorBag();
+
+        $generatorClasses = [
+            PagesGenerator::class,
+            CopierGenerator::class,
+            MediaGenerator::class,
+            HtaccessGenerator::class,
+            ErrorPageGenerator::class,
+            CNAMEGenerator::class,
+            RedirectionManager::class,
+        ];
+
+        foreach ($generatorClasses as $generatorClass) {
+            $generator = $bag->get($generatorClass);
+            self::assertSame($generatorClass, $generator::class);
+        }
+    }
+
+    public function testGeneratorBagThrowsOnUnknownGenerator(): void
+    {
+        self::bootKernel();
+        $bag = $this->getGeneratorBag();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageMatches('/not registered/');
+        $bag->get('App\\NonExistent\\Generator');
+    }
+
+    public function testStaticAssetsCleanRemovesStaleFiles(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $container = self::getContainer();
+        $siteRegistry = $container->get(SiteRegistry::class);
+        $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
+        $siteConfig->setCustomProperty('static_symlink', false);
+        $siteConfig->setCustomProperty('static_assets_clean', true);
+
+        try {
+            $staticDir = $this->getStaticDir();
+            $filesystem = new Filesystem();
+
+            // First generation to create assets dir
+            $generator = $this->getGenerator(CopierGenerator::class);
+            $generator->generate('localhost.dev');
+            self::assertFileExists($staticDir.'/assets');
+
+            // Plant a stale file that doesn't exist in public/assets
+            $staleFile = $staticDir.'/assets/old-hash-abc123.js';
+            $filesystem->dumpFile($staleFile, 'stale content');
+            self::assertFileExists($staleFile);
+
+            // Regenerate with clean enabled — stale file should be gone
+            $generator->generate('localhost.dev');
+            self::assertFileDoesNotExist($staleFile, 'Stale file should be removed when static_assets_clean is true');
+            self::assertFileExists($staticDir.'/assets');
+        } finally {
+            $siteConfig->setCustomProperty('static_symlink', false);
+            $siteConfig->setCustomProperty('static_assets_clean', false);
+        }
+    }
+
+    public function testStaleTempDirCleanup(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $staticDir = $this->getStaticDir();
+        $filesystem = new Filesystem();
+
+        // Create a stale temp dir (older than 1 hour)
+        $staleTempDir = $staticDir.'~';
+        $filesystem->mkdir($staleTempDir);
+        touch($staleTempDir, time() - 7200);
+
+        $staleBackupDir = $staticDir.'~~';
+        $filesystem->mkdir($staleBackupDir);
+        touch($staleBackupDir, time() - 7200);
+
+        self::assertDirectoryExists($staleTempDir);
+        self::assertDirectoryExists($staleBackupDir);
+
+        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $command = $application->find('pw:static');
+        $commandTester = new CommandTester($command);
+        $commandTester->execute(['host' => 'localhost.dev']);
+
+        self::assertDirectoryDoesNotExist($staleTempDir, 'Stale temp dir should be cleaned up');
+        self::assertDirectoryDoesNotExist($staleBackupDir, 'Stale backup dir should be cleaned up');
     }
 
     public function getGeneratorBag(): GeneratorBag

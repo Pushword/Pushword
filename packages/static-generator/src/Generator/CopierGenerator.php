@@ -65,6 +65,10 @@ class CopierGenerator extends AbstractGenerator
             return;
         }
 
+        if ($this->app->getBoolean('static_assets_clean', false) && (is_link($to) || is_dir($to))) {
+            $this->filesystem->remove($to);
+        }
+
         $this->filesystem->mirror($from, $to);
     }
 }

@@ -25,6 +25,7 @@ class Configuration implements ConfigurationInterface
         'static_symlink',
         'static_dir',
         'static_assets',
+        'static_assets_clean',
         'static_copy',
     ];
 
@@ -130,6 +131,10 @@ class Configuration implements ConfigurationInterface
             ->variableNode('static_assets')
                 ->info('file or folder in your public dir to copy in static')
                 ->defaultValue(self::DEFAULT_ASSETS)
+            ->end()
+            ->booleanNode('static_assets_clean')
+                ->info('Remove stale files in static assets dir before copying (useful with Vite hashed filenames)')
+                ->defaultFalse()
             ->end()
             ->variableNode('static_copy')
                 ->info('Deprecated: use static_assets instead')

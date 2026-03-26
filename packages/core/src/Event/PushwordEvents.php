@@ -22,4 +22,10 @@ final class PushwordEvents
 
     /** Dispatched to customize admin form fields. */
     public const string ADMIN_LOAD_FIELD = 'pushword.admin.load_field';
+
+    /** Dispatched before static generation starts for a host. */
+    public const string STATIC_PRE_GENERATE = 'pushword.static.pre_generate';
+
+    /** Dispatched after static generation completes for a host. */
+    public const string STATIC_POST_GENERATE = 'pushword.static.post_generate';
 }
