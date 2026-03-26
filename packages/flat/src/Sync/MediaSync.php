@@ -64,7 +64,11 @@ final class MediaSync
 
     public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null): void
     {
-        if (! $forceExport && $this->mustImport($host)) {
+        $this->stopwatch?->start('media.detection');
+        $shouldImport = ! $forceExport && $this->mustImport($host);
+        $this->stopwatch?->stop('media.detection');
+
+        if ($shouldImport) {
             $this->import($host);
 
             return;
@@ -351,12 +355,7 @@ final class MediaSync
                 continue;
             }
 
-            // Skip files not modified since last sync (avoids expensive sha1_file)
-            if ($lastSyncTime > 0 && filemtime($path) <= $lastSyncTime) {
-                continue;
-            }
-
-            if ($this->isFileNewer($path, $mediaIndex)) {
+            if ($this->isFileNewer($path, $lastSyncTime, $mediaIndex)) {
                 return true;
             }
         }
@@ -435,7 +434,7 @@ final class MediaSync
     /**
      * @param array<string, Media> $mediaIndex
      */
-    private function isFileNewer(string $filePath, array $mediaIndex): bool
+    private function isFileNewer(string $filePath, int $lastSyncTime, array $mediaIndex): bool
     {
         $fileName = $this->extractMediaName($filePath);
         if ('' === $fileName) {
@@ -444,7 +443,12 @@ final class MediaSync
 
         $media = $mediaIndex[$fileName] ?? null;
         if (! $media instanceof Media) {
-            return true;
+            return true; // New file — always triggers import
+        }
+
+        // Fast path: skip expensive hash check if file hasn't been modified since last sync
+        if ($lastSyncTime > 0 && filemtime($filePath) <= $lastSyncTime) {
+            return false;
         }
 
         return $this->isMediaHashDifferent($media, $filePath);

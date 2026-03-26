@@ -25,6 +25,8 @@ final class PageSync
 
     private ?OutputInterface $output = null;
 
+    private ?Stopwatch $stopwatch = null;
+
     public function __construct(
         private readonly SiteRegistry $apps,
         private readonly FlatFileContentDirFinder $contentDirFinder,
@@ -51,12 +53,16 @@ final class PageSync
 
     public function setStopwatch(?Stopwatch $stopwatch): void
     {
-        // Stopwatch passed for interface consistency but not used in PageSync
+        $this->stopwatch = $stopwatch;
     }
 
     public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null): void
     {
-        if (! $forceExport && $this->mustImport($host)) {
+        $this->stopwatch?->start('page.detection');
+        $shouldImport = ! $forceExport && $this->mustImport($host);
+        $this->stopwatch?->stop('page.detection');
+
+        if ($shouldImport) {
             $this->import($host);
 
             return;
@@ -200,8 +206,14 @@ final class PageSync
         $app = $this->resolveApp($host);
         $mainHost = $app->getMainHost();
         $contentDir = $this->contentDirFinder->get($mainHost);
+        $lastSyncTime = $this->stateManager->getLastSyncTime('page', $mainHost);
 
-        // Pre-load all pages for this host once, build slug index
+        // Fast path: when we have a sync baseline, use filemtime only (no YAML parsing)
+        if ($lastSyncTime > 0) {
+            return $this->hasNewerFilesFast($contentDir, $lastSyncTime);
+        }
+
+        // Slow path (first sync): full YAML-based detection with slug matching
         $pages = $this->pageRepository->findByHost($mainHost);
         $slugIndex = [];
         foreach ($pages as $page) {
@@ -211,6 +223,52 @@ final class PageSync
         $lastSyncTime = $this->stateManager->getLastSyncTime('page', $mainHost);
 
         return $this->hasNewerFiles($contentDir, $mainHost, $slugIndex, $lastSyncTime);
+    }
+
+    /**
+     * Fast direction detection using only filemtime comparison.
+     * Used when lastSyncTime > 0 (not first sync).
+     */
+    private function hasNewerFilesFast(string $dir, int $lastSyncTime): bool
+    {
+        if (! file_exists($dir)) {
+            return false;
+        }
+
+        /** @var string[] $entries */
+        $entries = scandir($dir);
+        foreach ($entries as $entry) {
+            if (\in_array($entry, ['.', '..'], true)) {
+                continue;
+            }
+            if (\in_array($entry, $this->excludeFiles, true)) {
+                continue;
+            }
+            if (str_ends_with($entry, '~')) {
+                continue;
+            }
+            if (str_contains($entry, '~conflict-')) {
+                continue;
+            }
+            $path = $dir.'/'.$entry;
+            if (is_dir($path)) {
+                if ($this->hasNewerFilesFast($path, $lastSyncTime)) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if (! str_ends_with($entry, '.md') && ! str_ends_with($entry, '.csv')) {
+                continue;
+            }
+
+            if (filemtime($path) > $lastSyncTime) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

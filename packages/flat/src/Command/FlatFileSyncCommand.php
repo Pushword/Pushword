@@ -258,7 +258,7 @@ final readonly class FlatFileSyncCommand
         $sections = $this->stopWatch->getSections();
         $timings = [];
 
-        $allowedEvents = ['media.sync', 'page.sync', 'conversation.sync'];
+        $allowedEvents = ['media.sync', 'page.sync', 'conversation.sync', 'media.detection', 'page.detection'];
 
         foreach ($sections as $section) {
             foreach ($section->getEvents() as $name => $event) {
@@ -272,17 +272,25 @@ final readonly class FlatFileSyncCommand
             return;
         }
 
-        arsort($timings);
-
+        // Build display with detection sub-timings
         $parts = [];
-        foreach ($timings as $name => $duration) {
+        foreach (['media.sync', 'page.sync', 'conversation.sync'] as $name) {
+            if (! isset($timings[$name])) {
+                continue;
+            }
+
             $shortName = match ($name) {
                 'media.sync' => 'media',
                 'page.sync' => 'pages',
-                'conversation.sync' => 'conversation', // @phpstan-ignore match.alwaysTrue
-                default => $name,
+                'conversation.sync' => 'conversation',
             };
-            $parts[] = \sprintf('%s: %dms', $shortName, $duration);
+
+            $detectionKey = str_replace('.sync', '.detection', $name);
+            $detectionMs = $timings[$detectionKey] ?? null;
+
+            $parts[] = null !== $detectionMs
+                ? \sprintf('%s: %dms (detection: %dms)', $shortName, $timings[$name], $detectionMs)
+                : \sprintf('%s: %dms', $shortName, $timings[$name]);
         }
 
         $output->writeln('<comment>⏱ '.implode(' | ', $parts).'</comment>');
