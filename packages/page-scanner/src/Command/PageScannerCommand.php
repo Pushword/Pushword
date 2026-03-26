@@ -197,9 +197,9 @@ final class PageScannerCommand
         $plainMessage = strip_tags($message);
 
         foreach ($this->errorsToIgnore as $pattern) {
-            if (str_contains($pattern, ': ')) {
-                [$routePattern, $messagePattern] = explode(': ', $pattern, 2);
-                if (fnmatch($routePattern, $route) && fnmatch($messagePattern, $plainMessage)) {
+            $parts = explode(': ', $pattern, 2);
+            if (isset($parts[1])) {
+                if (fnmatch($parts[0], $route) && fnmatch($parts[1], $plainMessage)) {
                     return true;
                 }
             } elseif (fnmatch($pattern, $plainMessage)) {
