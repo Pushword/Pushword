@@ -15,6 +15,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Stopwatch\Stopwatch;
+use Throwable;
 
 #[AsCommand(name: 'pw:static', description: 'Generate static version for your website')]
 #[AutoconfigureTag('console.command')]
@@ -105,7 +106,7 @@ final readonly class StaticCommand
             $this->outputStorage->setStatus(self::PROCESS_TYPE, $status);
 
             return Command::SUCCESS;
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             $teeOutput->writeln('<error>Fatal: '.$throwable->getMessage().'</error>');
             $this->outputStorage->setStatus(self::PROCESS_TYPE, 'error');
 

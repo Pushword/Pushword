@@ -578,13 +578,8 @@ final class LinkedDocsScanner extends AbstractScanner
 
         // For filtered images, the extension may differ from the original (e.g., .webp from .jpg)
         $baseName = pathinfo($fileName, \PATHINFO_FILENAME);
-        foreach (['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'] as $ext) {
-            if (null !== $repo->findOneByFileName($baseName.'.'.$ext)) {
-                return true;
-            }
-        }
 
-        return false;
+        return array_any(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'], static fn ($ext): bool => null !== $repo->findOneByFileName($baseName.'.'.$ext));
     }
 
     private function findPageInCacheOrDb(string $slug): ?Page

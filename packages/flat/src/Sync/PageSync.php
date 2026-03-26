@@ -241,15 +241,19 @@ final class PageSync
             if (\in_array($entry, ['.', '..'], true)) {
                 continue;
             }
+
             if (\in_array($entry, $this->excludeFiles, true)) {
                 continue;
             }
+
             if (str_ends_with($entry, '~')) {
                 continue;
             }
+
             if (str_contains($entry, '~conflict-')) {
                 continue;
             }
+
             $path = $dir.'/'.$entry;
             if (is_dir($path)) {
                 if ($this->hasNewerFilesFast($path, $lastSyncTime)) {
