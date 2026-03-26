@@ -167,4 +167,28 @@ final class GenerationStateManager
 
         return isset($this->state[$host]) && '' !== $this->state[$host]['lastGeneration'];
     }
+
+    public function mergeFromFile(string $workerStateFile): void
+    {
+        if (! file_exists($workerStateFile)) {
+            return;
+        }
+
+        $this->load();
+
+        /** @var array<string, array{pages: array<string, array{generatedAt: string, pageUpdatedAt: string}>}> $workerState */
+        $workerState = json_decode((string) file_get_contents($workerStateFile), true) ?? [];
+
+        foreach ($workerState as $host => $hostData) {
+            if (! isset($this->state[$host])) {
+                $this->state[$host] = ['lastGeneration' => '', 'pages' => []];
+            }
+
+            foreach ($hostData['pages'] as $slug => $pageState) {
+                $this->state[$host]['pages'][$slug] = $pageState;
+            }
+        }
+
+        unlink($workerStateFile);
+    }
 }

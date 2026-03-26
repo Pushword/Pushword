@@ -242,6 +242,8 @@ class StaticGeneratorTest extends KernelTestCase
             $logger,
             new GenerationStateManager($projectDir),
             self::getContainer()->get(EventDispatcherInterface::class),
+            self::getContainer()->get(PageRepository::class),
+            $projectDir,
         );
     }
 
@@ -741,6 +743,176 @@ class StaticGeneratorTest extends KernelTestCase
         clearstatcache();
         $newMtime = filemtime($indexFile);
         self::assertSame($originalMtime, $newMtime, 'File should not be rewritten when content is unchanged in incremental mode');
+    }
+
+    public function testWorkerCountResolverExplicitOverride(): void
+    {
+        self::assertSame(3, WorkerCountResolver::resolve(3, 100));
+        self::assertSame(5, WorkerCountResolver::resolve(10, 5)); // capped by page count
+    }
+
+    public function testWorkerCountResolverSmallPageCount(): void
+    {
+        self::assertSame(1, WorkerCountResolver::resolve(0, 5));
+        self::assertSame(1, WorkerCountResolver::resolve(0, 9));
+    }
+
+    public function testWorkerCountResolverAutoDetectsAboveThreshold(): void
+    {
+        $workers = WorkerCountResolver::resolve(0, 1000);
+        self::assertGreaterThan(1, $workers);
+    }
+
+    public function testParallelGenerationProducesSameOutput(): void
+    {
+        self::bootKernel();
+
+        $container = self::getContainer();
+        $siteRegistry = $container->get(SiteRegistry::class);
+
+        // Sequential run
+        $seqDir = sys_get_temp_dir().'/pushword-static-seq-'.getmypid();
+        $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
+        $siteConfig->setCustomProperty('static_dir', $seqDir);
+        $this->cleanupPidFiles();
+
+        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $command = $application->find('pw:static');
+        $tester = new CommandTester($command);
+        $tester->execute(['host' => 'localhost.dev', '--workers' => 1]);
+        $seqOutput = $tester->getDisplay();
+        self::assertStringContainsString('success', $seqOutput, 'Sequential generation failed: '.$seqOutput);
+
+        // Parallel run
+        $parDir = sys_get_temp_dir().'/pushword-static-par-'.getmypid();
+        $siteConfig->setCustomProperty('static_dir', $parDir);
+        $this->cleanupPidFiles();
+
+        $tester->execute(['host' => 'localhost.dev', '--workers' => 2]);
+        $parOutput = $tester->getDisplay();
+        self::assertStringContainsString('success', $parOutput, 'Parallel generation failed: '.$parOutput);
+
+        // Compare HTML file list (same pages generated)
+        $seqFiles = $this->getHtmlFiles($seqDir);
+        $parFiles = $this->getHtmlFiles($parDir);
+
+        self::assertSame(array_keys($seqFiles), array_keys($parFiles), 'Parallel should produce same files as sequential');
+
+        // Verify all parallel files have non-empty content
+        foreach ($parFiles as $relativePath => $content) {
+            self::assertNotEmpty($content, 'Empty content for '.$relativePath);
+        }
+
+        (new Filesystem())->remove([$seqDir, $parDir]);
+    }
+
+    public function testParallelGenerationShowsWorkerPrefix(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $this->cleanupPidFiles();
+
+        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $command = $application->find('pw:static');
+        $tester = new CommandTester($command);
+        $tester->execute(['host' => 'localhost.dev', '--workers' => 2]);
+
+        $output = $tester->getDisplay();
+        self::assertStringContainsString('[W0]', $output);
+        self::assertStringContainsString('workers', $output);
+        self::assertStringContainsString('success', $output);
+    }
+
+    public function testStateMergeFromFile(): void
+    {
+        $tempDir = sys_get_temp_dir().'/pushword-state-merge-'.getmypid();
+        (new Filesystem())->mkdir($tempDir.'/var');
+
+        try {
+            $stateManager = new GenerationStateManager($tempDir);
+            $stateManager->setLastGenerationTime('test.host');
+
+            // Create a worker state file
+            $workerFile = $tempDir.'/var/.worker-0.json';
+            file_put_contents($workerFile, json_encode([
+                'test.host' => [
+                    'pages' => [
+                        'page-a' => ['generatedAt' => '2025-01-01T00:00:00+00:00', 'pageUpdatedAt' => '2025-01-01T00:00:00+00:00'],
+                        'page-b' => ['generatedAt' => '2025-01-01T00:00:00+00:00', 'pageUpdatedAt' => '2025-01-01T00:00:00+00:00'],
+                    ],
+                ],
+            ]));
+
+            $stateManager->mergeFromFile($workerFile);
+
+            self::assertFalse($stateManager->needsRegeneration('test.host', 'page-a', new DateTimeImmutable('2025-01-01T00:00:00+00:00')));
+            self::assertFalse($stateManager->needsRegeneration('test.host', 'page-b', new DateTimeImmutable('2025-01-01T00:00:00+00:00')));
+            self::assertFileDoesNotExist($workerFile, 'Worker file should be cleaned up after merge');
+        } finally {
+            (new Filesystem())->remove($tempDir);
+        }
+    }
+
+    public function testRedirectionExportImport(): void
+    {
+        self::bootKernel();
+
+        /** @var RedirectionManager $manager */
+        $manager = $this->getGeneratorBag()->get(RedirectionManager::class);
+        $manager->reset();
+        $manager->add('/old', '/new', 301);
+        $manager->add('/legacy', '/modern', 302);
+
+        $tempFile = sys_get_temp_dir().'/pushword-redir-'.getmypid().'.json';
+
+        try {
+            $manager->exportToFile($tempFile);
+            self::assertFileExists($tempFile);
+
+            // Reset and import
+            $manager->reset();
+            self::assertSame([], $manager->get());
+
+            $manager->importFromFile($tempFile);
+            self::assertCount(2, $manager->get());
+            self::assertSame('/old', $manager->get()[0][0]);
+            self::assertSame('/new', $manager->get()[0][1]);
+            self::assertFileDoesNotExist($tempFile, 'Import should clean up the file');
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    private function cleanupPidFiles(): void
+    {
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+        $filesystem = new Filesystem();
+        foreach (glob($projectDir.'/var/static-generator*.pid') as $pid) {
+            $filesystem->remove($pid);
+        }
+    }
+
+    /**
+     * @return array<string, string> relativePath => content
+     */
+    private function getHtmlFiles(string $dir): array
+    {
+        $files = [];
+        $prefixLen = \strlen($dir) + 1;
+
+        /** @var SplFileInfo $file */
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
+            if ('html' !== $file->getExtension()) {
+                continue;
+            }
+
+            $relativePath = substr($file->getPathname(), $prefixLen);
+            $files[$relativePath] = (string) file_get_contents($file->getPathname());
+        }
+
+        ksort($files);
+
+        return $files;
     }
 
     public function getGeneratorBag(): GeneratorBag

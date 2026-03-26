@@ -146,6 +146,66 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
         $mediaExtension->preloadMediaCache();
     }
 
+    /**
+     * Generate only the given slugs (used by parallel workers).
+     *
+     * @param string[] $slugs
+     */
+    public function generateSlugs(array $slugs, string $workerStateFile, string $workerRedirectionsFile, ?string $host = null): void
+    {
+        parent::generate($host);
+
+        $this->preloadMediaCache();
+        $pages = $this->getPageRepository()->getPublishedPages($this->app->getMainHost());
+
+        $slugSet = array_flip($slugs);
+        $pages = array_filter($pages, static fn (Page $page): bool => isset($slugSet[$page->getSlug()]));
+
+        $hostName = $this->app->getMainHost();
+        $totalPages = \count($pages);
+        $currentPage = 0;
+        $pageStates = [];
+
+        foreach ($pages as $page) {
+            ++$currentPage;
+
+            if ($this->incremental && ! $this->needsRegeneration($page, $hostName)) {
+                echo \sprintf("[%d/%d] Skipped %s/%s (unchanged)\n", $currentPage, $totalPages, $hostName, $page->getSlug() ?: 'index');
+
+                continue;
+            }
+
+            $slug = $page->getSlug() ?: 'index';
+            echo \sprintf("[%d/%d] Generating %s/%s\n", $currentPage, $totalPages, $hostName, $slug);
+
+            try {
+                $this->generatePage($page);
+
+                $pageStates[$page->getSlug()] = [
+                    'generatedAt' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+                    'pageUpdatedAt' => $this->toImmutable($page->updatedAt)->format(DateTimeInterface::ATOM), // @phpstan-ignore argument.type
+                ];
+            } catch (Throwable $e) {
+                echo \sprintf("[ERROR] %s/%s: %s\n", $hostName, $slug, $e->getMessage());
+            }
+
+            if (0 === $currentPage % 2) {
+                static::getKernel()->getContainer()->get('doctrine.orm.entity_manager')->clear();
+            }
+        }
+
+        $this->finishCompression();
+
+        // Write worker state
+        file_put_contents($workerStateFile, json_encode(
+            [$hostName => ['pages' => $pageStates]],
+            \JSON_THROW_ON_ERROR,
+        ));
+
+        // Write worker redirections
+        $this->redirectionManager->exportToFile($workerRedirectionsFile);
+    }
+
     public function generatePageBySlug(string $slug, ?string $host = null): void
     {
         parent::generate($host);

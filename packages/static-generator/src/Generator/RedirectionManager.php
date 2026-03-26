@@ -44,4 +44,22 @@ class RedirectionManager extends AbstractGenerator
     {
         $this->redirections = [];
     }
+
+    public function exportToFile(string $path): void
+    {
+        file_put_contents($path, json_encode($this->redirections, \JSON_THROW_ON_ERROR));
+    }
+
+    public function importFromFile(string $path): void
+    {
+        if (! file_exists($path)) {
+            return;
+        }
+
+        /** @var array<int, array{0: string, 1: string, 2: int}> $data */
+        $data = json_decode((string) file_get_contents($path), true) ?? [];
+        $this->redirections = [...$this->redirections, ...$data];
+
+        unlink($path);
+    }
 }

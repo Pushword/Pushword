@@ -31,6 +31,8 @@ abstract class AbstractGenerator implements GeneratorInterface
 
     protected StaticAppGenerator $staticAppGenerator;
 
+    private ?string $staticDirOverride = null;
+
     public function __construct(
         protected PageRepository $pageRepository,
         protected Twig $twig,
@@ -116,9 +118,14 @@ abstract class AbstractGenerator implements GeneratorInterface
         }
     }
 
+    public function setStaticDirOverride(string $dir): void
+    {
+        $this->staticDirOverride = $dir;
+    }
+
     protected function getStaticDir(): string
     {
-        return $this->app->getStr('static_dir');
+        return $this->staticDirOverride ?? $this->app->getStr('static_dir');
     }
 
     protected function getPageRepository(): PageRepository
