@@ -660,8 +660,8 @@ MD;
         $mdContent = file_get_contents($mdFilePath);
 
         // Extract YAML front matter
-        preg_match('/^---\n(.+?)\n---/s', $mdContent, $matches);
-        self::assertNotEmpty($matches[1], 'YAML front matter should exist');
+        $matchCount = preg_match('/^---\n(.+?)\n---/s', $mdContent, $matches);
+        self::assertSame(1, $matchCount, 'YAML front matter should exist');
 
         // Verify exact format: 'publishedAt: 2024-12-25 14:30' (no seconds, no quotes needed for this format)
         self::assertStringContainsString("publishedAt: '2024-12-25 14:30'", $matches[1], 'publishedAt should be in Y-m-d H:i format with YAML string quoting');

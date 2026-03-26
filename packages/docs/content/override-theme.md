@@ -27,6 +27,14 @@ Example, to override `/page/page_default.html.twig` :
 ./templates/bundles/PushwordCoreBundle/page/page_default.html.twig
 ```
 
+## Custom Error Page (404) {#error-page}
+
+Create a page with the slug `404` in the admin to customize your error page. Pushword will automatically render it when a visitor hits a missing URL.
+
+If no `404` page exists, Pushword falls back to a generic error template displaying translated messages (`errorTitle`, `errorDescription`).
+
+For **static sites** (using [static-generator](/extension/static-generator)), a `404.html` file is generated automatically from the same mechanism — one per configured locale.
+
 ---
 
 - #[See default core template file](https://github.com/Pushword/Pushword/tree/main/packages/core/src/templates/page)
