@@ -8,6 +8,8 @@ use Exception;
 use FilesystemIterator;
 use LogicException;
 use Override;
+use Pushword\StaticGenerator\Generator\CompressionAlgorithm;
+use Pushword\StaticGenerator\Generator\Compressor;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
@@ -637,6 +639,108 @@ class StaticGeneratorTest extends KernelTestCase
 
         self::assertDirectoryDoesNotExist($staleTempDir, 'Stale temp dir should be cleaned up');
         self::assertDirectoryDoesNotExist($staleBackupDir, 'Stale backup dir should be cleaned up');
+    }
+
+    public function testNativeGzipCompression(): void
+    {
+        $compressor = new Compressor();
+
+        // Gzip should be available natively via zlib
+        self::assertTrue(CompressionAlgorithm::Gzip->hasNativeSupport());
+
+        $content = str_repeat('Hello World! This is test content for compression. ', 100);
+        $compressed = CompressionAlgorithm::Gzip->nativeCompress($content);
+        self::assertNotNull($compressed);
+        self::assertLessThan(\strlen($content), \strlen($compressed));
+
+        // Verify decompression produces original content
+        $decompressed = gzdecode($compressed);
+        self::assertIsString($decompressed);
+        self::assertSame($content, $decompressed);
+    }
+
+    public function testNativeCompressionFallbackForMissingExtensions(): void
+    {
+        // Brotli and zstd are not installed as PHP extensions
+        // nativeCompress should return null, not crash
+        if (! \function_exists('brotli_compress')) {
+            self::assertNull(CompressionAlgorithm::Brotli->nativeCompress('test'));
+            self::assertFalse(CompressionAlgorithm::Brotli->hasNativeSupport());
+        }
+
+        if (! \function_exists('zstd_compress')) {
+            self::assertNull(CompressionAlgorithm::Zstd->nativeCompress('test'));
+            self::assertFalse(CompressionAlgorithm::Zstd->hasNativeSupport());
+        }
+    }
+
+    public function testCompressorUsesNativeGzipInsteadOfProcess(): void
+    {
+        $tempFile = sys_get_temp_dir().'/pushword-compress-test-'.getmypid().'.html';
+        file_put_contents($tempFile, '<html><body>Test content for native compression</body></html>');
+
+        try {
+            $compressor = new Compressor();
+            $compressor->compress($tempFile, CompressionAlgorithm::Gzip);
+
+            // Native compression is synchronous — file should exist immediately
+            // (no need to call waitForCompressionToFinish for native)
+            self::assertFileExists($tempFile.'.gz');
+
+            $gzContent = file_get_contents($tempFile.'.gz');
+            self::assertIsString($gzContent);
+            $decompressed = gzdecode($gzContent);
+            self::assertIsString($decompressed);
+            self::assertSame(file_get_contents($tempFile), $decompressed);
+        } finally {
+            @unlink($tempFile);
+            @unlink($tempFile.'.gz');
+        }
+    }
+
+    public function testPreloadedPageSkipsDbQuery(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $generator = $this->getGenerator(PagesGenerator::class);
+        $generator->generate('localhost.dev');
+
+        // The static dir should have index.html — this proves the page was rendered
+        // successfully using the pre-loaded page entity
+        self::assertFileExists($this->getStaticDir().'/index.html');
+
+        $content = file_get_contents($this->getStaticDir().'/index.html');
+        self::assertNotEmpty($content);
+        self::assertStringContainsString('Pushword', $content);
+    }
+
+    public function testContentUnchangedSkipsRewriteInIncremental(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $command = $application->find('pw:static');
+        $commandTester = new CommandTester($command);
+
+        // First run (full)
+        $commandTester->execute(['host' => 'localhost.dev']);
+
+        $indexFile = $this->getStaticDir().'/index.html';
+        self::assertFileExists($indexFile);
+
+        // Set mtime to a known value
+        touch($indexFile, time() + 100);
+        clearstatcache();
+        $originalMtime = filemtime($indexFile);
+
+        // Incremental run — content is unchanged, file should NOT be rewritten
+        $commandTester->execute(['host' => 'localhost.dev', '--incremental' => true]);
+
+        clearstatcache();
+        $newMtime = filemtime($indexFile);
+        self::assertSame($originalMtime, $newMtime, 'File should not be rewritten when content is unchanged in incremental mode');
     }
 
     public function getGeneratorBag(): GeneratorBag

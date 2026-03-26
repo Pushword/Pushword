@@ -53,6 +53,10 @@ class Compressor
 
     private function isAlgorithmInstalled(CompressionAlgorithm $algorithm): bool
     {
+        if ($algorithm->hasNativeSupport()) {
+            return true;
+        }
+
         $process = new Process(['which', $algorithm->value]);
         $process->run();
 
@@ -68,6 +72,17 @@ class Compressor
     {
         if (! $this->isAlgorithmAvailable($algorithm)) {
             return;
+        }
+
+        // Try native PHP compression first (no process spawn)
+        $content = $algorithm->hasNativeSupport() ? file_get_contents($filePath) : false;
+        if (false !== $content) {
+            $compressed = $algorithm->nativeCompress($content);
+            if (null !== $compressed) {
+                file_put_contents($filePath.$algorithm->getExtension(), $compressed);
+
+                return;
+            }
         }
 
         $this->throttleIfNeeded();

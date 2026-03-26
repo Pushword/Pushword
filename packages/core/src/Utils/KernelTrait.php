@@ -21,7 +21,7 @@ trait KernelTrait
         if (null === static::$appKernel) {
             $kernelClass = $kernel::class;
             $env = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? throw new Exception();
-            static::$appKernel = new $kernelClass('test' === $env ? 'test' : 'prod', $kernel->isDebug());
+            static::$appKernel = new $kernelClass('test' === $env ? 'test' : 'prod', false);
             static::$appKernel->boot();
         }
     }
