@@ -98,7 +98,7 @@ final class AutoModeDetectionTest extends KernelTestCase
             @unlink($file);
         }
 
-        foreach (['auto-detect-new-page', 'auto-detect-future'] as $slug) {
+        foreach (['auto-detect-new-page', 'auto-detect-future', 'fast-detect-test'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
@@ -167,6 +167,46 @@ final class AutoModeDetectionTest extends KernelTestCase
 
         // mustImport should still be false (only .md files matter for page detection)
         self::assertFalse($this->pageSync->mustImport('localhost.dev'), 'mustImport should return false — .txt files are ignored');
+    }
+
+    public function testAutoModeIgnoresBackupAndConflictFiles(): void
+    {
+        // Full round-trip to establish lastSyncTime > 0 (fast path)
+        $this->pageSync->import('localhost.dev');
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+        self::assertFalse($this->pageSync->mustImport('localhost.dev'), 'baseline: in sync');
+
+        // Create backup file (ending with ~) with future mtime — should be ignored
+        $backupPath = $this->contentDir.'/some-page.md~';
+        $this->filesystem->dumpFile($backupPath, "---\nh1: Backup\n---\n");
+        touch($backupPath, time() + 200);
+        $this->createdFiles[] = $backupPath;
+
+        self::assertFalse($this->pageSync->mustImport('localhost.dev'), 'backup files (ending ~) should be ignored by fast detection');
+
+        // Create conflict file with future mtime — should be ignored
+        $conflictPath = $this->contentDir.'/page~conflict-abc123.md';
+        $this->filesystem->dumpFile($conflictPath, "---\nh1: Conflict\n---\n");
+        touch($conflictPath, time() + 200);
+        $this->createdFiles[] = $conflictPath;
+
+        self::assertFalse($this->pageSync->mustImport('localhost.dev'), 'conflict files (~conflict-) should be ignored by fast detection');
+    }
+
+    public function testFastDetectionMatchesSlowDetectionForNoChanges(): void
+    {
+        // Full round-trip to establish lastSyncTime > 0 (fast path active)
+        $this->pageSync->import('localhost.dev');
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+
+        // Fast path (lastSyncTime > 0): should return false (no changes)
+        self::assertFalse($this->pageSync->mustImport('localhost.dev'), 'fast path: no changes detected');
+
+        // Create a new .md file with future mtime — should trigger import
+        $this->createMd('fast-detect-test.md', "---\nh1: 'Fast Detect'\n---\n\nContent", time() + 200);
+
+        // Fast path: should detect the new file
+        self::assertTrue($this->pageSync->mustImport('localhost.dev'), 'fast path: should detect new .md file');
     }
 
     public function testAutoModeDetectsRedirectionCsvChange(): void
