@@ -9,8 +9,8 @@ use Exception;
 use Override;
 use PiedWeb\Curl\ExtendedClient;
 use PiedWeb\Curl\Helper;
-use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Site\SiteRegistry;
 
@@ -577,7 +577,7 @@ final class LinkedDocsScanner extends AbstractScanner
         }
 
         // For filtered images, the extension may differ from the original (e.g., .webp from .jpg)
-        $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+        $baseName = pathinfo($fileName, \PATHINFO_FILENAME);
         foreach (['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'] as $ext) {
             if (null !== $repo->findOneByFileName($baseName.'.'.$ext)) {
                 return true;
