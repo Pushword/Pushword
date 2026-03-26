@@ -27,13 +27,6 @@ class ControllerTest extends AbstractAdminTestClass
         $pageId = $page->id;
         self::assertGreaterThan(0, $pageId);
 
-        // Update the page to trigger version creation via the Doctrine postUpdate listener
-        $page->setTitle($page->getTitle().' (version test)');
-        $em->flush();
-
-        /** @var Router $router */
-        $router = self::getContainer()->get('router');
-
         /** @var string $logDir */
         $logDir = self::getContainer()->getParameter('kernel.logs_dir');
         $versionner = new Versionner(
@@ -41,6 +34,16 @@ class ControllerTest extends AbstractAdminTestClass
             $em,
             new Serializer([], ['json' => new JsonEncoder()])
         );
+
+        // Clear stale version files from other tests in the same ParaTest worker
+        $versionner->reset($pageId);
+
+        // Update the page to trigger version creation via the Doctrine postUpdate listener
+        $page->setTitle($page->getTitle().' (version test)');
+        $em->flush();
+
+        /** @var Router $router */
+        $router = self::getContainer()->get('router');
 
         $pageVersions = $versionner->getPageVersions($pageId);
         self::assertNotEmpty($pageVersions, 'Page should have at least one version');
