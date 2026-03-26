@@ -10,8 +10,8 @@ use Override;
 use PiedWeb\Curl\ExtendedClient;
 use PiedWeb\Curl\Helper;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\LinkProvider;
-use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_match;
@@ -71,7 +71,6 @@ final class LinkedDocsScanner extends AbstractScanner
         private readonly array $linksToIgnore,
         private readonly string $publicDir,
         TranslatorInterface $translator,
-        private readonly MediaStorageAdapter $mediaStorage,
         private readonly ?CacheInterface $externalUrlCache = null,
         private readonly int $externalUrlCacheTtl = 86400,
         private readonly bool $skipExternalUrlCheck = false,
@@ -556,11 +555,36 @@ final class LinkedDocsScanner extends AbstractScanner
         }
 
         $this->everChecked[$cacheKey] = $this->lastPageChecked instanceof Page
-            || ($isMedia && $this->mediaStorage->fileExists(substr($slug, 6)))
-            || (! $isMedia && (file_exists($this->publicDir.'/'.$slug) || file_exists($this->publicDir.'/../'.$slug)))
+            || ($isMedia && $this->mediaExistsBySlug(substr($slug, 6)))
+            || file_exists($this->publicDir.'/'.$slug)
+            || file_exists($this->publicDir.'/../'.$slug)
             || 'feed.xml' === $slug;
 
         return $this->everChecked[$cacheKey];
+    }
+
+    /**
+     * Check if a media file exists by its slug (after stripping "media/" prefix).
+     * Handles filter prefixes (e.g., "xs/image.webp") and format conversions (webp→jpg).
+     */
+    private function mediaExistsBySlug(string $mediaSlug): bool
+    {
+        $repo = $this->entityManager->getRepository(Media::class);
+        $fileName = basename($mediaSlug);
+
+        if (null !== $repo->findOneByFileName($fileName)) {
+            return true;
+        }
+
+        // For filtered images, the extension may differ from the original (e.g., .webp from .jpg)
+        $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+        foreach (['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'] as $ext) {
+            if (null !== $repo->findOneByFileName($baseName.'.'.$ext)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function findPageInCacheOrDb(string $slug): ?Page

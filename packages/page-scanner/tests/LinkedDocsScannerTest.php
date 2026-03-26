@@ -7,7 +7,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
-use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\PageScanner\Scanner\LinkedDocsScanner;
 
@@ -26,7 +25,6 @@ class LinkedDocsScannerTest extends KernelTestCase
             [],
             __DIR__.'/../../skeleton/public',
             self::getContainer()->get('translator'),
-            self::getContainer()->get(MediaStorageAdapter::class),
         );
     }
 
