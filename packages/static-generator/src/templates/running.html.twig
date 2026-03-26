@@ -19,7 +19,7 @@
     </div>
 
     <div id="static-output-container"
-         hx-get="{{ path('admin_static_generator_output', {host: host|default('')}) }}"
+         hx-get="{{ path('admin_static_generator_output', {host: host|default(''), pending: pending ? '1' : '0', pt: outputProcessType|default('')}) }}"
          hx-trigger="load"
          hx-swap="innerHTML">
         <div class="d-flex align-items-center">

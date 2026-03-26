@@ -3,7 +3,7 @@
 {% block content_title %}{{ 'page_scannerTitle'|trans }}{% endblock %}
 
 {% block page_actions %}
-    <a class="btn btn-outline-secondary" href="{{ path('admin_page_scanner') }}">
+    <a class="btn btn-outline-secondary" href="{{ path('admin_page_scanner') }}{{ host ? '?host=' ~ host : '' }}">
         <i class="fa fa-sync-alt me-2" aria-hidden="true"></i>{{ 'page_scannerRefresh'|trans }}
     </a>
 {% endblock %}
@@ -11,12 +11,15 @@
 {% block main %}
     <div class="mb-3">
         {% if startTime %}
-            <p class="text-muted mb-0"><small>{{ 'page_scannerStartedAt'|trans }}: {{ startTime|date('d/m/Y à H:i:s') }}</small></p>
+            <p class="text-muted mb-1"><small>{{ 'page_scannerStartedAt'|trans }}: {{ startTime|date('d/m/Y à H:i:s') }}</small></p>
+        {% endif %}
+        {% if host %}
+            <p class="text-muted mb-0"><small><strong>Host:</strong> {{ host }}</small></p>
         {% endif %}
     </div>
 
     <div id="scanner-output-container"
-         hx-get="{{ path('admin_page_scanner_output') }}"
+         hx-get="{{ path('admin_page_scanner_output') }}?host={{ host|default('') }}&amp;pending={{ pending ? '1' : '0' }}&amp;pt={{ outputProcessType|default('') }}"
          hx-trigger="load"
          hx-swap="innerHTML">
         <div class="d-flex align-items-center">

@@ -3,7 +3,7 @@
 {% block content_title %}{{ 'page_scannerTitle'|trans }}{% endblock %}
 
 {% block page_actions %}
-    <a class="btn btn-outline-primary" href="{{ path('admin_page_scanner', {force: 1}) }}">
+    <a class="btn btn-outline-primary" href="{{ path('admin_page_scanner', {force: 1}) }}{{ host is defined and host ? '?host=' ~ host : '' }}">
         <i class="fa fa-sync-alt me-2" aria-hidden="true"></i>{{ 'page_scannerForceScan'|trans }}
     </a>
 {% endblock %}

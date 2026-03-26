@@ -9,6 +9,7 @@ use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\StaticController;
 use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
@@ -84,7 +85,9 @@ class StaticGeneratorControllerTest extends AbstractAdminTestClass
         $mockAdminContext = self::createStub(AdminContextProviderInterface::class);
         $mockAdminContext->method('getContext')->willReturn(null);
 
-        $controller = new StaticController($mockDispatcher, $mockProcessManager, $outputStorage);
+        /** @var SiteRegistry $siteRegistry */
+        $siteRegistry = $container->get(SiteRegistry::class);
+        $controller = new StaticController($mockDispatcher, $mockProcessManager, $outputStorage, $siteRegistry);
         $controller->setAdminContextProvider($mockAdminContext);
         $controller->setContainer($container);
 
@@ -96,5 +99,40 @@ class StaticGeneratorControllerTest extends AbstractAdminTestClass
 
         self::assertSame('error', $outputStorage->getStatus('static-generator'));
         self::assertStringContainsString('nohup failed', $outputStorage->read('static-generator')['content']);
+    }
+
+    public function testDispatchErrorWithHostUsesPerHostProcessType(): void
+    {
+        $client = $this->loginUser();
+        $container = $client->getContainer();
+
+        /** @var ProcessOutputStorage $outputStorage */
+        $outputStorage = $container->get(ProcessOutputStorage::class);
+        $outputStorage->clear('static-generator--localhost.dev');
+
+        $mockProcessManager = self::createStub(BackgroundProcessManager::class);
+        $mockProcessManager->method('getProcessInfo')->willReturn(['isRunning' => false, 'startTime' => null, 'pid' => null]);
+        $mockProcessManager->method('getPidFilePath')->willReturn(sys_get_temp_dir().'/pushword-test-static-host.pid');
+
+        $mockDispatcher = self::createStub(BackgroundTaskDispatcherInterface::class);
+        $mockDispatcher->method('dispatch')
+            ->willThrowException(new RuntimeException('nohup failed'));
+
+        $mockAdminContext = self::createStub(AdminContextProviderInterface::class);
+        $mockAdminContext->method('getContext')->willReturn(null);
+
+        /** @var SiteRegistry $siteRegistry */
+        $siteRegistry = $container->get(SiteRegistry::class);
+        $controller = new StaticController($mockDispatcher, $mockProcessManager, $outputStorage, $siteRegistry);
+        $controller->setAdminContextProvider($mockAdminContext);
+        $controller->setContainer($container);
+
+        try {
+            $controller->generateStatic('localhost.dev');
+        } catch (RuntimeError) {
+        }
+
+        self::assertSame('error', $outputStorage->getStatus('static-generator--localhost.dev'));
+        self::assertStringContainsString('nohup failed', $outputStorage->read('static-generator--localhost.dev')['content']);
     }
 }

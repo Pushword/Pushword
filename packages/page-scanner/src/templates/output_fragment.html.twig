@@ -1,7 +1,7 @@
 {# Wrapper div that will be swapped on each poll #}
 <div id="scanner-output-content"
      {% if status == 'running' %}
-       hx-get="{{ path('admin_page_scanner_output') }}"
+       hx-get="{{ path('admin_page_scanner_output') }}?host={{ host|default('') }}&amp;pending={{ pending|default(false) ? '1' : '0' }}&amp;pt={{ outputProcessType|default('') }}"
        hx-trigger="load delay:500ms"
        hx-swap="outerHTML"
        hx-target="#scanner-output-content"
@@ -17,8 +17,8 @@
     <div class="alert alert-success mb-3" id="status-indicator">
       <i class="fa fa-check-circle me-2"></i>
       {{ 'page_scannerScanComplete'|trans }}<br>
-      <a href="{{ path('admin_page_scanner') }}" class="ms-2">{{ 'page_scannerViewResults'|trans }} ➜</a>
-      <meta http-equiv="refresh" content="2; {{ path('admin_page_scanner') }}">
+      <a href="{{ path('admin_page_scanner') }}{{ host ? '?host=' ~ host : '' }}" class="ms-2">{{ 'page_scannerViewResults'|trans }} ➜</a>
+      <meta http-equiv="refresh" content="2; {{ path('admin_page_scanner') }}{{ host ? '?host=' ~ host : '' }}">
     </div>
   {% endif %}
 

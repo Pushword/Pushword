@@ -41,9 +41,13 @@ final readonly class StaticCommand
         ?string $page,
         #[Option(description: 'Only regenerate pages that have changed since last generation', name: 'incremental', shortcut: 'i')]
         bool $incremental = false,
+        #[Option(description: 'Number of parallel workers (0=auto, 1=sequential)', name: 'workers', shortcut: 'w')]
+        int $workers = 0,
     ): int {
+        $processType = null === $host ? self::PROCESS_TYPE : self::PROCESS_TYPE.'--'.$host;
+
         // Check if same process type is already running (via PID file)
-        $pidFile = $this->processManager->getPidFilePath(self::PROCESS_TYPE);
+        $pidFile = $this->processManager->getPidFilePath($processType);
         $this->processManager->cleanupStaleProcess($pidFile);
         $processInfo = $this->processManager->getProcessInfo($pidFile);
 
@@ -58,23 +62,24 @@ final readonly class StaticCommand
 
         // Only clear storage if not already initialized by web controller
         // (web controller sets status to 'running' before starting background process)
-        $currentStatus = $this->outputStorage->getStatus(self::PROCESS_TYPE);
+        $currentStatus = $this->outputStorage->getStatus($processType);
         if ('running' !== $currentStatus) {
-            $this->outputStorage->clear(self::PROCESS_TYPE);
-            $this->outputStorage->setStatus(self::PROCESS_TYPE, 'running');
+            $this->outputStorage->clear($processType);
+            $this->outputStorage->setStatus($processType, 'running');
         }
 
         // Create tee output to write to both console and shared storage
-        $sharedOutput = new SharedOutputInterface($this->outputStorage, self::PROCESS_TYPE);
+        $sharedOutput = new SharedOutputInterface($this->outputStorage, $processType);
         $teeOutput = new TeeOutput([$output, $sharedOutput]);
 
         try {
             $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
             $this->stopWatch->start('generate');
 
-            // Set tee output and stopwatch for progress reporting
+            // Set tee output, stopwatch, and workers for progress reporting
             $this->staticAppGenerator->setOutput($teeOutput);
             $this->staticAppGenerator->setStopwatch($this->stopWatch);
+            $this->staticAppGenerator->setWorkers($workers);
 
             if (null === $host) {
                 $this->staticAppGenerator->generate(null, $incremental);
@@ -103,12 +108,12 @@ final readonly class StaticCommand
             $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
 
             $status = [] !== $this->staticAppGenerator->getErrors() ? 'error' : 'completed';
-            $this->outputStorage->setStatus(self::PROCESS_TYPE, $status);
+            $this->outputStorage->setStatus($processType, $status);
 
             return Command::SUCCESS;
         } catch (Throwable $throwable) {
             $teeOutput->writeln('<error>Fatal: '.$throwable->getMessage().'</error>');
-            $this->outputStorage->setStatus(self::PROCESS_TYPE, 'error');
+            $this->outputStorage->setStatus($processType, 'error');
 
             return Command::FAILURE;
         } finally {

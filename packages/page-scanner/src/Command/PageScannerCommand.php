@@ -221,14 +221,15 @@ final class PageScannerCommand
     ): int {
         $this->skipExternal = $skipExternal;
         $this->limit = $limit;
+        $processType = null === $host || '' === $host ? self::PROCESS_TYPE : self::PROCESS_TYPE.'--'.$host;
 
         // Check if same process type is already running (via PID file)
-        $pidFile = $this->processManager->getPidFilePath(self::PROCESS_TYPE);
+        $pidFile = $this->processManager->getPidFilePath($processType);
         $this->processManager->cleanupStaleProcess($pidFile);
         $processInfo = $this->processManager->getProcessInfo($pidFile);
 
         if ($processInfo['isRunning'] && null !== $processInfo['pid']) {
-            return $this->streamRunningOutput($output, $processInfo['pid']);
+            return $this->streamRunningOutput($output, $processInfo['pid'], $processType);
         }
 
         // Register this process and setup shared output
@@ -236,14 +237,14 @@ final class PageScannerCommand
 
         // Only clear storage if not already initialized by web controller
         // (web controller sets status to 'running' before starting background process)
-        $currentStatus = $this->outputStorage->getStatus(self::PROCESS_TYPE);
+        $currentStatus = $this->outputStorage->getStatus($processType);
         if ('running' !== $currentStatus) {
-            $this->outputStorage->clear(self::PROCESS_TYPE);
-            $this->outputStorage->setStatus(self::PROCESS_TYPE, 'running');
+            $this->outputStorage->clear($processType);
+            $this->outputStorage->setStatus($processType, 'running');
         }
 
         // Create tee output to write to both console and shared storage
-        $sharedOutput = new SharedOutputInterface($this->outputStorage, self::PROCESS_TYPE);
+        $sharedOutput = new SharedOutputInterface($this->outputStorage, $processType);
         $teeOutput = new TeeOutput([$output, $sharedOutput]);
         $this->output = $teeOutput;
 
@@ -254,7 +255,10 @@ final class PageScannerCommand
             $this->stopwatch->start('scan');
 
             $errors = $this->scanAll($host ?? '');
-            $this->filesystem->dumpFile(PageScannerController::fileCache(), serialize($errors));
+            $cacheFile = null === $host || '' === $host
+                ? PageScannerController::fileCache()
+                : PageScannerController::fileCache().'--'.$host;
+            $this->filesystem->dumpFile($cacheFile, serialize($errors));
 
             $event = $this->stopwatch->stop('scan');
             $teeOutput->writeln(\sprintf('done... (%dms)', $event->getDuration()));
@@ -264,7 +268,7 @@ final class PageScannerCommand
 
             $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
 
-            $this->outputStorage->setStatus(self::PROCESS_TYPE, 'completed');
+            $this->outputStorage->setStatus($processType, 'completed');
 
             return Command::SUCCESS;
         } finally {
@@ -321,19 +325,19 @@ final class PageScannerCommand
         $output->writeln('<comment>⏱ '.implode(' | ', $parts).'</comment>');
     }
 
-    private function streamRunningOutput(OutputInterface $output, int $pid): int
+    private function streamRunningOutput(OutputInterface $output, int $pid, string $processType): int
     {
         $output->writeln('<info>A page scan is already running (PID: '.$pid.'). Streaming its output...</info>');
 
         $offset = 0;
         while (true) {
-            $result = $this->outputStorage->read(self::PROCESS_TYPE, $offset);
+            $result = $this->outputStorage->read($processType, $offset);
             if ('' !== $result['content']) {
                 $output->write($result['content']);
                 $offset = $result['offset'];
             }
 
-            if ('running' !== $this->outputStorage->getStatus(self::PROCESS_TYPE)) {
+            if ('running' !== $this->outputStorage->getStatus($processType)) {
                 break;
             }
 
@@ -347,7 +351,7 @@ final class PageScannerCommand
         }
 
         // Final read to capture any output written after last check
-        $result = $this->outputStorage->read(self::PROCESS_TYPE, $offset);
+        $result = $this->outputStorage->read($processType, $offset);
         if ('' !== $result['content']) {
             $output->write($result['content']);
         }

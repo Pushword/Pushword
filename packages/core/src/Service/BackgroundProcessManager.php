@@ -71,8 +71,12 @@ readonly class BackgroundProcessManager
             return false;
         }
 
-        // If the PID matches current process, it's not "another" running process
+        // If the PID matches current process or its parent (nohup shell wrapper), it's not "another" running process
         if ($pid === getmypid()) {
+            return false;
+        }
+
+        if (\function_exists('posix_getppid') && $pid === posix_getppid()) {
             return false;
         }
 

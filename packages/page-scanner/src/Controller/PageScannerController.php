@@ -11,9 +11,11 @@ use Exception;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\LastTime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -37,6 +39,7 @@ final class PageScannerController extends AbstractController
         private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
         private readonly BackgroundProcessManager $processManager,
         private readonly ProcessOutputStorage $outputStorage,
+        private readonly SiteRegistry $siteRegistry,
         private readonly array $errorsToIgnore = [],
     ) {
         self::setFileCache($varDir);
@@ -69,12 +72,24 @@ final class PageScannerController extends AbstractController
         name: 'page_scanner',
         options: ['defaults' => ['force' => 0]]
     )]
-    public function scan(int $force = 0): Response
+    public function scan(Request $request, int $force = 0): Response
     {
         $force = (bool) $force;
-        $fileCache = self::fileCache();
+        $host = $request->query->getString('host', '') ?: null;
 
-        $pidFile = $this->processManager->getPidFilePath(self::PROCESS_TYPE);
+        // Check for cross-lock
+        $blocking = $this->findBlockingProcess($host);
+        if (null !== $blocking) {
+            return $this->renderAdmin('@pwPageScanner/scanning.html.twig', [
+                'host' => $host,
+                'startTime' => $blocking['startTime'],
+                'pending' => true,
+                'outputProcessType' => $blocking['processType'],
+            ]);
+        }
+
+        $processType = $this->getProcessType($host);
+        $pidFile = $this->processManager->getPidFilePath($processType);
 
         // Clean up stale processes
         $this->processManager->cleanupStaleProcess($pidFile);
@@ -84,11 +99,15 @@ final class PageScannerController extends AbstractController
 
         if ($processInfo['isRunning']) {
             return $this->renderAdmin('@pwPageScanner/scanning.html.twig', [
+                'host' => $host,
                 'startTime' => $processInfo['startTime'],
+                'pending' => false,
+                'outputProcessType' => $processType,
             ]);
         }
 
         // Check for existing results
+        $fileCache = $this->getFileCache($host);
         if ($this->filesystem->exists($fileCache)) {
             /** @var array<int, array<int, array{page: array{host: string, slug: string}, message: string}>> */
             $errors = unserialize($this->filesystem->readFile($fileCache));
@@ -102,28 +121,37 @@ final class PageScannerController extends AbstractController
         $lastTime = new LastTime($fileCache);
         if ($force || ! $lastTime->wasRunSince(new DateInterval($this->pageScanInterval))) {
             // Initialize output storage before starting background process
-            $this->outputStorage->clear(self::PROCESS_TYPE);
-            $this->outputStorage->setStatus(self::PROCESS_TYPE, 'running');
+            $this->outputStorage->clear($processType);
+            $this->outputStorage->setStatus($processType, 'running');
+
+            $commandParts = ['php', 'bin/console', 'pw:page-scan'];
+            if (null !== $host) {
+                $commandParts[] = $host;
+            }
 
             try {
                 $this->backgroundTaskDispatcher->dispatch(
-                    self::PROCESS_TYPE,
-                    ['php', 'bin/console', 'pw:page-scan'],
+                    $processType,
+                    $commandParts,
                     self::COMMAND_PATTERN,
                 );
             } catch (Exception $exception) {
-                $this->outputStorage->write(self::PROCESS_TYPE, 'Failed to start background process: '.$exception->getMessage()."\n");
-                $this->outputStorage->setStatus(self::PROCESS_TYPE, 'error');
+                $this->outputStorage->write($processType, 'Failed to start background process: '.$exception->getMessage()."\n");
+                $this->outputStorage->setStatus($processType, 'error');
             }
 
             $lastTime->setWasRun('now', false);
 
             return $this->renderAdmin('@pwPageScanner/scanning.html.twig', [
+                'host' => $host,
                 'startTime' => time(),
+                'pending' => false,
+                'outputProcessType' => $processType,
             ]);
         }
 
         return $this->renderAdmin('@pwPageScanner/results.html.twig', [
+            'host' => $host,
             'newRun' => false,
             'lastEdit' => $lastEdit,
             'errorsByPages' => $this->filterErrors($errors),
@@ -135,9 +163,13 @@ final class PageScannerController extends AbstractController
         name: 'page_scanner_output'
     )]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
-    public function getScanOutput(): Response
+    public function getScanOutput(Request $request): Response
     {
-        $pidFile = $this->processManager->getPidFilePath(self::PROCESS_TYPE);
+        $host = $request->query->getString('host', '') ?: null;
+        $pending = $request->query->getBoolean('pending');
+        $outputProcessType = $request->query->getString('pt', '') ?: $this->getProcessType($host);
+
+        $pidFile = $this->processManager->getPidFilePath($outputProcessType);
 
         // Clean up stale processes
         $this->processManager->cleanupStaleProcess($pidFile);
@@ -147,17 +179,71 @@ final class PageScannerController extends AbstractController
         $isRunning = $processInfo['isRunning'];
 
         // Get full output from shared storage
-        $outputData = $this->outputStorage->read(self::PROCESS_TYPE);
+        $outputData = $this->outputStorage->read($outputProcessType);
         $output = $outputData['content'];
 
         // Determine status from storage or process state
-        $storageStatus = $this->outputStorage->getStatus(self::PROCESS_TYPE);
+        $storageStatus = $this->outputStorage->getStatus($outputProcessType);
         $status = $isRunning ? 'running' : ($storageStatus ?? 'completed');
+
+        // If pending and process done, auto-redirect to trigger new scan
+        if ($pending && 'running' !== $status) {
+            $response = new Response('', Response::HTTP_OK);
+            $params = null !== $host ? ['host' => $host] : [];
+            $params['force'] = 1;
+            $response->headers->set('HX-Redirect', $this->generateUrl('admin_page_scanner', $params));
+
+            return $response;
+        }
 
         return $this->render('@pwPageScanner/output_fragment.html.twig', [
             'status' => $status,
             'output' => $output,
+            'host' => $host,
+            'pending' => $pending,
+            'outputProcessType' => $outputProcessType,
         ]);
+    }
+
+    private function getProcessType(?string $host): string
+    {
+        return null === $host ? self::PROCESS_TYPE : self::PROCESS_TYPE.'--'.$host;
+    }
+
+    private function getFileCache(?string $host): string
+    {
+        $base = self::fileCache();
+
+        return null === $host ? $base : $base.'--'.$host;
+    }
+
+    /** @return array{startTime: int|null, processType: string}|null */
+    private function findBlockingProcess(?string $host): ?array
+    {
+        if (null !== $host) {
+            return $this->checkProcessRunning(self::PROCESS_TYPE);
+        }
+
+        foreach ($this->siteRegistry->getHosts() as $h) {
+            $result = $this->checkProcessRunning(self::PROCESS_TYPE.'--'.$h);
+            if (null !== $result) {
+                return $result;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{startTime: int|null, processType: string}|null
+     */
+    private function checkProcessRunning(string $processType): ?array
+    {
+        $pidFile = $this->processManager->getPidFilePath($processType);
+        $this->processManager->cleanupStaleProcess($pidFile);
+        $info = $this->processManager->getProcessInfo($pidFile);
+
+        return $info['isRunning'] ? ['startTime' => $info['startTime'], 'processType' => $processType] : null;
     }
 
     /**

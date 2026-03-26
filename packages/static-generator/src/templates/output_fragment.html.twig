@@ -1,7 +1,7 @@
 {# Wrapper div that will be swapped on each poll #}
 <div id="static-output-content"
      {% if status == 'running' %}
-       hx-get="{{ path('admin_static_generator_output', {host: host|default('')}) }}"
+       hx-get="{{ path('admin_static_generator_output', {host: host|default(''), pending: pending|default(false) ? '1' : '0', pt: outputProcessType|default('')}) }}"
        hx-trigger="load delay:500ms"
        hx-swap="outerHTML"
        hx-target="#static-output-content"
