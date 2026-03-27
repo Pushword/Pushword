@@ -887,7 +887,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         $projectDir = self::getContainer()->getParameter('kernel.project_dir');
         $filesystem = new Filesystem();
-        foreach (glob($projectDir.'/var/static-generator*.pid') as $pid) {
+        foreach (glob($projectDir.'/var/static-generator*.pid') ?: [] as $pid) {
             $filesystem->remove($pid);
         }
     }

@@ -133,17 +133,19 @@ final class MultiHostSyncTest extends KernelTestCase
     {
         // Reset state
         $this->stateManager->resetState('localhost.dev');
-        $this->stateManager->resetState('pushword.piedweb.com');
+
+        // Capture host B state before exporting host A (may be non-zero from parallel tests)
+        $hostBTimeBefore = $this->stateManager->getLastSyncTime('page', 'pushword.piedweb.com');
 
         // Export host A
         $this->flatFileSync->export('localhost.dev');
 
-        // Host A should have state, host B should not (yet)
+        // Host A should have state, host B should be unchanged
         $hostATime = $this->stateManager->getLastSyncTime('page', 'localhost.dev');
         self::assertGreaterThan(0, $hostATime, 'Host A should have sync state after export');
 
         $hostBTime = $this->stateManager->getLastSyncTime('page', 'pushword.piedweb.com');
-        self::assertSame(0, $hostBTime, 'Host B should not have sync state yet');
+        self::assertSame($hostBTimeBefore, $hostBTime, 'Exporting Host A should not change Host B sync state');
 
         // Now export host B
         $this->flatFileSync->export('pushword.piedweb.com');
