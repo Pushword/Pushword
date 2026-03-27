@@ -89,7 +89,7 @@ class Compressor
 
         try {
             $cmd = match ($algorithm) {
-                CompressionAlgorithm::Zstd => 'zstd -f --window-log=23 --stdout '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.zst'),
+                CompressionAlgorithm::Zstd => 'zstd -f --zstd=wlog=23 --stdout '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.zst'),
                 CompressionAlgorithm::Brotli => 'brotli --stdout '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.br'),
                 CompressionAlgorithm::Gzip => 'gzip -c '.escapeshellarg($filePath).' > '.escapeshellarg($filePath.'.gz'),
             };

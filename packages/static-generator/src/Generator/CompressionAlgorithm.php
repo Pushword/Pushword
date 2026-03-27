@@ -33,7 +33,7 @@ enum CompressionAlgorithm: string
         return match ($this) {
             self::Gzip => \function_exists('gzencode'),
             self::Brotli => \function_exists('brotli_compress'),
-            self::Zstd => false, // PHP ext doesn't support window size control; must use CLI with --window-log
+            self::Zstd => false, // PHP ext doesn't support window size control; browsers reject large window sizes
         };
     }
 }

@@ -169,6 +169,15 @@ class CompressorTest extends TestCase
         self::assertFileExists($testFile.$algorithm->getExtension());
     }
 
+    public function testZstdNativeCompressionIsDisabled(): void
+    {
+        // PHP's zstd_compress() doesn't allow controlling window size,
+        // producing files with 128MB window that browsers reject.
+        // Native zstd must be disabled so the CLI path is used instead.
+        self::assertNull(CompressionAlgorithm::Zstd->nativeCompress('test content'));
+        self::assertFalse(CompressionAlgorithm::Zstd->hasNativeSupport());
+    }
+
     public function testWaitForCompressionCanBeCalledMultipleTimes(): void
     {
         $compressor = new Compressor();
