@@ -90,7 +90,7 @@ class StaticGeneratorBenchmarkTest extends KernelTestCase
         $memBefore = memory_get_usage(true);
         $start = microtime(true);
 
-        $commandTester->execute(['host' => 'localhost.dev']);
+        $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1]);
 
         $elapsed = microtime(true) - $start;
         $memPeak = memory_get_peak_usage(true);
