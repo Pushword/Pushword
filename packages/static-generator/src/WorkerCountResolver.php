@@ -22,7 +22,7 @@ final class WorkerCountResolver
             return 1;
         }
 
-        $cpuLimit = max(1, self::detectCpuCount() - 1);
+        $cpuLimit = self::detectCpuCount();
         $memoryLimit = max(1, (int) floor(self::detectAvailableMemoryMb() / self::MEMORY_PER_WORKER_MB));
 
         return min($cpuLimit, $memoryLimit, $pageCount);
