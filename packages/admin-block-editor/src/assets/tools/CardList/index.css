@@ -368,7 +368,7 @@
 /* Info button row */
 .cardlist-info-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
 }
 
@@ -409,6 +409,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-top: 8px;
   width: 32px;
   height: 32px;
   border: 1px solid #ddd;
@@ -418,6 +419,7 @@
   background: #f8f8f8;
   transition: all 0.2s;
 }
+
 
 .cardlist-icon-checkbox-label:hover {
   border-color: #aaa;
