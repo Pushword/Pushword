@@ -337,7 +337,17 @@ final class PageExporter
 
         $metaData = Yaml::dump($data, indent: 2);
 
-        return '---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent();
+        return self::normalizeQuotes('---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent());
+    }
+
+    private static function normalizeQuotes(string $text): string
+    {
+        return strtr($text, [
+            "\u{2018}" => "'", // left single quote
+            "\u{2019}" => "'", // right single quote / apostrophe
+            "\u{201C}" => '"', // left double quote
+            "\u{201D}" => '"', // right double quote
+        ]);
     }
 
     private function exportPage(Page $page, bool $force = false): bool

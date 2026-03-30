@@ -57,7 +57,7 @@ final class EncodingTest extends KernelTestCase
         }
 
         // Clean up test pages
-        foreach (['utf8-bom-test', 'accented-test', 'cjk-test', 'emoji-test', 'special-yaml-test', 'cafe-creme', 'js-guide-test'] as $slug) {
+        foreach (['utf8-bom-test', 'accented-test', 'cjk-test', 'emoji-test', 'special-yaml-test', 'cafe-creme', 'js-guide-test', 'smart-quotes-test'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
@@ -179,6 +179,28 @@ final class EncodingTest extends KernelTestCase
 
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'js-guide-test', 'host' => 'localhost.dev']);
         self::assertInstanceOf(Page::class, $page, '.md file misdetected as application/javascript should still be imported');
+    }
+
+    public function testSmartQuotesNormalizedOnExport(): void
+    {
+        // Import a page with smart/typographic quotes (as AI tools would produce)
+        $this->createMd('smart-quotes-test.md', "---\nh1: \"L\u{2019}activité de l\u{2019}été\"\n---\n\nIl a dit \u{201C}bonjour\u{201D} et l\u{2018}ami\u{2019} est parti.");
+
+        $this->pageSync->import('localhost.dev');
+
+        $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'smart-quotes-test', 'host' => 'localhost.dev']);
+        self::assertInstanceOf(Page::class, $page);
+
+        // Export and verify smart quotes are normalized to straight quotes
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+        $exported = $this->filesystem->readFile($this->contentDir.'/smart-quotes-test.md');
+
+        self::assertStringNotContainsString("\u{2018}", $exported);
+        self::assertStringNotContainsString("\u{2019}", $exported);
+        self::assertStringNotContainsString("\u{201C}", $exported);
+        self::assertStringNotContainsString("\u{201D}", $exported);
+        self::assertStringContainsString("L'activit", $exported);
+        self::assertStringContainsString('"bonjour"', $exported);
     }
 
     public function testNonAsciiSlugFromFileName(): void
