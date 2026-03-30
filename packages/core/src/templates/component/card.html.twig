@@ -38,9 +38,8 @@
   {% if image %}
     {{ include('@PushwordCore/component/image.html.twig', {
       image: media_from_string(image),
-      mode: 'thumb',
       page: page,
-      image_class: 'block w-full h-auto m-0',
+      image_class: 'block w-full aspect-square object-cover m-0',
       image_alt: imageAlt
     }, with_context = false) }}
   {% endif %}

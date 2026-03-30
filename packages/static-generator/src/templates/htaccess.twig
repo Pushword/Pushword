@@ -29,7 +29,7 @@ RewriteRule ^index\.(html|php|aspx|cfm|html)$ https://{{ domain }}/ [QSA,L,R=301
 #---
 # Redirect old media to new (patch for site updated from Pushword/Core v0.0.5
 #---
-RewriteRule ^media/(small_thumb|thumb|height_300|xs|sm|md|lg|xl|default)/media(.*)$ /media/$1$2 [QSA,L,R=301,END]
+RewriteRule ^media/(small_thumb|height_300|xs|sm|md|lg|xl|default)/media(.*)$ /media/$1$2 [QSA,L,R=301,END]
 
 {% if redirections is not empty %}
 #---

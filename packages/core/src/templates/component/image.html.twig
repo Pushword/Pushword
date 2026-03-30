@@ -36,8 +36,8 @@
     {% set alt = image_alt|default(image.alt ?? image.fileName) %}
   {% else %}
     {% set breakpoints = {(mode): 576} %}
-    {% set width = mode == 'thumb' ? 1000 : image.width %}
-    {% set height = mode == 'thumb' ? 1000 : image.height %}
+    {% set width = image.width %}
+    {% set height = image.height %}
     {% set alt = image_alt|default(image.getAltLocalized(page.locale ?? '')) %}
   {% endif %}
 

@@ -12,6 +12,36 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## Image: Retina Fix & Thumb Filter Removed
+
+### Breaking Changes
+
+- **`thumb` filter removed** from default `image_filter_sets`. Cards and galleries now use `mode: responsive` with CSS cropping (`aspect-square object-cover`) instead of server-side `coverDown`. This fixes retina pixelation on HiDPI screens.
+- If your custom templates use `mode: 'thumb'`, switch to responsive mode with CSS cropping, or re-add the thumb filter in your config (see below).
+
+### Fix: `image_filter_sets` Now Configurable via YAML
+
+The `image_filter_sets` config node was incorrectly declared as `scalarNode`, which rejected array values from YAML. It is now `variableNode`, so you can override filter sizes:
+
+```yaml
+pushword:
+  image_filter_sets:
+    xs:
+      quality: 90
+      filters: { scaleDown: [576] }
+      formats: [webp]
+    thumb:
+      quality: 90
+      filters: { coverDown: [660, 660] }
+      formats: [webp]
+```
+
+### Action Required
+
+1. Clear image cache: remove `public/media/{xs,sm,md,lg,xl,default}/` directories
+2. Clear Symfony cache: `php bin/console cache:clear`
+3. Update custom templates that reference `mode: 'thumb'`
+
 ## Flat: Deferred Export & Git Auto-Commit
 
 ### Breaking Change

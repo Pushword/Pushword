@@ -102,11 +102,6 @@ final class Configuration implements ConfigurationInterface
             'filters' => ['scaleDown' => [null, 300]],
             'formats' => ['webp'],
         ],
-        'thumb' => [
-            'quality' => 90,
-            'filters' => ['coverDown' => [330, 330]],
-            'formats' => ['webp'],
-        ],
         'xs' => [
             'quality' => 90,
             'filters' => ['scaleDown' => [576]],
@@ -209,9 +204,8 @@ final class Configuration implements ConfigurationInterface
           ->booleanNode('entity_can_override_filters')
           ->defaultValue(self::DEFAULT_ENTITY_CAN_OVERRIDE_FILTERS)
           ->end()
-          ->scalarNode('image_filter_sets')
+          ->variableNode('image_filter_sets')
           ->defaultValue(self::IMAGE_FILTERS_SET)
-          ->cannotBeEmpty()
           ->end()
           ->enumNode('image_driver')
           ->values(['auto', 'vips', 'imagick', 'gd'])

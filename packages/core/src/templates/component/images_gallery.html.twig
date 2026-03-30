@@ -1,7 +1,7 @@
 {#
   @var array images - key is path, value can be: string (alt), array [alt, link, linkAttr, obf], or Media object
   @var bool clickable - default true
-  @var string image_filter - default 'thumb'
+  @var string image_filter - default 'responsive'
   @var int pos - position to disable lazy loading on first image (default 100)
   @var string gallery_class, gallery_li_opener
   @var string image_container, array image_otherAttributes
@@ -35,8 +35,8 @@
     {% set lazy = not (loop.first and (pos ?? 100) < 3) %}
     {% set img = include('@PushwordCore/component/image.html.twig', {
       image: current_media,
-      mode: image_filter|default('thumb'),
-      image_class: (image_otherAttributes ?? {}).class ?? null,
+      mode: image_filter|default('responsive'),
+      image_class: (image_otherAttributes ?? {}).class ?? 'aspect-square object-cover',
       image_alt: current_media.alt,
       image_attr: (image_otherAttributes ?? {})|filter((v, k) => k != 'class'),
       lazy: lazy
