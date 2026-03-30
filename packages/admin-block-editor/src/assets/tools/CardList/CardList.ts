@@ -19,6 +19,7 @@ const ObfuscateIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height
 const InfoIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>`
 
 export interface CardListItem {
+  id?: string
   page?: string
   title?: string
   image?: string
@@ -37,6 +38,7 @@ export interface CardListData extends BlockToolData {
 
 interface CardListItemNodes {
   wrapper: HTMLElement
+  idInput: HTMLInputElement
   pageInput: HTMLInputElement
   titleInput: HTMLElement
   imageContainer: HTMLElement
@@ -324,6 +326,10 @@ export default class CardList extends BaseTool {
     buttonRow.appendChild(buttonLinkLabelField)
     buttonRow.appendChild(buttonLinkField)
 
+    // ID field
+    const idField = this.createField('ID (anchor)', 'id', item.id || '')
+    const idInput = idField.querySelector('input') as HTMLInputElement
+
     // Add custom fields
     customFields.appendChild(titleField)
     customFields.appendChild(imageField)
@@ -331,6 +337,7 @@ export default class CardList extends BaseTool {
     customFields.appendChild(descriptionField)
     customFields.appendChild(infoRow)
     customFields.appendChild(buttonRow)
+    customFields.appendChild(idField)
 
     // Toggle button click handler
     toggleBtn.addEventListener('click', () => {
@@ -344,6 +351,7 @@ export default class CardList extends BaseTool {
 
     return {
       wrapper,
+      idInput,
       pageInput,
       titleInput,
       imageContainer,
@@ -618,6 +626,7 @@ export default class CardList extends BaseTool {
   private updateDataFromNodes(): void {
     this.data.items = this.itemNodes.map((nodes): CardListItem => {
       const item: CardListItem = {}
+      if (nodes.idInput.value) item.id = nodes.idInput.value
       if (nodes.pageInput.value) item.page = nodes.pageInput.value
       // Get HTML content from title (contenteditable)
       const titleHtml = nodes.titleInput.innerHTML?.trim()

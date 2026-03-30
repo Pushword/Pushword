@@ -161,6 +161,7 @@ final class PageExtension
 
     /**
      * @param array<array{
+     *      id: ?string,
      *      page: Page,
      *      image: Media|string,
      *      imageAlt: ?string,

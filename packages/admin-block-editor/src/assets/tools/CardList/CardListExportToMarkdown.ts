@@ -15,6 +15,7 @@ export function exportCardListToMarkdown(
 
   const items = data.items.map((item) => {
     const obj: Record<string, string | boolean> = {}
+    if (item.id) obj.id = item.id
     if (item.page) obj.page = item.page
     if (item.title) obj.title = item.title
     if (item.image) obj.image = item.image
