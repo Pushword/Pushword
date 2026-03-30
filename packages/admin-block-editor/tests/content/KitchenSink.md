@@ -78,10 +78,13 @@ See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block){target="_bl
     "title": "Kitchen Sink"
   },
   {
+    "id": "custom-card",
     "title": "Custom Card",
     "image": "1.jpg",
     "link": "https://piedweb.com",
     "description": "A custom card with **bold** and _italic_ text.",
+    "showInfoButton": true,
+    "infoLinkLabel": "Discover",
     "buttonLink": "https://piedweb.com",
     "buttonLinkLabel": "Visit"
   }

@@ -3741,11 +3741,13 @@ const codeNewline = 10;
 const codeTab = 9;
 const codeReturn = 13;
 const codeNonBreakingSpace = 160;
+const codeMongolianVowelSeparator = 6158;
 const codeEnQuad = 8192;
-const codeHairSpace = 8202;
+const codeZeroWidthSpace = 8203;
 const codeNarrowNoBreakSpace = 8239;
 const codeMediumMathematicalSpace = 8287;
 const codeIdeographicSpace = 12288;
+const codeZeroWidthNoBreakSpace = 65279;
 function isHex(char) {
   return /^[0-9A-Fa-f]$/.test(char);
 }
@@ -3786,7 +3788,7 @@ function isWhitespaceExceptNewline(text, index) {
 }
 function isSpecialWhitespace(text, index) {
   const code = text.charCodeAt(index);
-  return code === codeNonBreakingSpace || code >= codeEnQuad && code <= codeHairSpace || code === codeNarrowNoBreakSpace || code === codeMediumMathematicalSpace || code === codeIdeographicSpace;
+  return code === codeNonBreakingSpace || code === codeMongolianVowelSeparator || code >= codeEnQuad && code <= codeZeroWidthSpace || code === codeNarrowNoBreakSpace || code === codeMediumMathematicalSpace || code === codeIdeographicSpace || code === codeZeroWidthNoBreakSpace;
 }
 function isQuote(char) {
   return isDoubleQuoteLike(char) || isSingleQuoteLike(char);
@@ -6292,12 +6294,15 @@ function exportCardListToMarkdown(data, tunes) {
   }
   const items = data.items.map((item) => {
     const obj = {};
+    if (item.id) obj.id = item.id;
     if (item.page) obj.page = item.page;
     if (item.title) obj.title = item.title;
     if (item.image) obj.image = item.image;
     if (item.link) obj.link = item.link;
     if (item.obfuscateLink) obj.obfuscateLink = item.obfuscateLink;
     if (item.description) obj.description = item.description;
+    if (item.showInfoButton) obj.showInfoButton = item.showInfoButton;
+    if (item.infoLinkLabel) obj.infoLinkLabel = item.infoLinkLabel;
     if (item.buttonLink) obj.buttonLink = item.buttonLink;
     if (item.buttonLinkLabel) obj.buttonLinkLabel = item.buttonLinkLabel;
     return obj;
