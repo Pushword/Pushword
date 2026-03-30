@@ -32,10 +32,10 @@
   "legacy": false,
   "metadatas": {},
   "version": [
-    "8.2.3",
+    "8.2.4",
     8,
     2,
-    3
+    4
   ],
   "viteServer": null
 }
