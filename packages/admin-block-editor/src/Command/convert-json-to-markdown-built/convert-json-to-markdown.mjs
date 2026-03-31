@@ -451,11 +451,23 @@ const _MarkdownUtils = class _MarkdownUtils {
     }
     return result;
   }
+  static formatAttributes(tunes) {
+    return _MarkdownUtils.getAttributes(tunes).replace(/\s+/g, " ").trim();
+  }
   static addAttributes(markdown, tunes) {
-    let result = _MarkdownUtils.getAttributes(tunes);
-    result = result.replace(/\s+/g, " ").trim();
-    if (result !== "") {
-      return "{" + result + "}\n" + markdown;
+    const attrs = _MarkdownUtils.formatAttributes(tunes);
+    if (attrs !== "") {
+      return `{${attrs}}
+${markdown}`;
+    }
+    return markdown;
+  }
+  static addInlineAttributes(markdown, tunes) {
+    const attrs = _MarkdownUtils.formatAttributes(tunes);
+    if (attrs !== "") {
+      const lines = markdown.split("\n");
+      lines[0] = `${lines[0].trimEnd()} {${attrs}}`;
+      return lines.join("\n");
     }
     return markdown;
   }
@@ -467,7 +479,7 @@ const _MarkdownUtils = class _MarkdownUtils {
   }
   static parseAttributes(attributeLine) {
     const tunes = {};
-    const anchorMatch = attributeLine.match(/#([a-zA-Z0-9_-]+)/);
+    const anchorMatch = attributeLine.match(/#([a-zA-Z0-9_-]+)/) ?? attributeLine.match(/id=([a-zA-Z0-9_-]+)/);
     if (anchorMatch) {
       tunes.anchor = anchorMatch[1];
     }
@@ -928,12 +940,20 @@ class Header {
     let markdown = `${hashes} ${data.text}`;
     markdown = MarkdownUtils.convertInlineHtmlToMarkdown(markdown);
     const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown);
-    return MarkdownUtils.addAttributes(formattedMarkdown, tunes);
+    return MarkdownUtils.addInlineAttributes(formattedMarkdown, tunes);
   }
   static importFromMarkdown(editor, markdown) {
-    const result = MarkdownUtils.parseTunesFromMarkdown(markdown);
-    const tunes = result.tunes;
-    let markdownWithoutTunes = result.markdown;
+    let tunes = {};
+    let markdownWithoutTunes = markdown.trim();
+    const inlineAttrMatch = markdownWithoutTunes.match(/^(#{2,6}\s.+?)\s+\{([^}]+)\}\s*$/);
+    if (inlineAttrMatch) {
+      tunes = MarkdownUtils.parseAttributes(inlineAttrMatch[2]);
+      markdownWithoutTunes = inlineAttrMatch[1];
+    } else {
+      const result = MarkdownUtils.parseTunesFromMarkdown(markdown);
+      tunes = result.tunes;
+      markdownWithoutTunes = result.markdown;
+    }
     markdownWithoutTunes = MarkdownUtils.convertInlineMarkdownToHtml(markdownWithoutTunes);
     const levelMatch = markdownWithoutTunes.trim().match(/^#{2,6}\s/);
     if (!levelMatch) {
