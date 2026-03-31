@@ -8,6 +8,7 @@ use Exception;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\Drivers\Vips\Core as VipsCore;
+use Intervention\Image\Drivers\Vips\Driver as VipsDriver;
 use Intervention\Image\ImageManager as InterventionImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\Entity\Media;
@@ -39,16 +40,16 @@ final readonly class ImageReader
 
         if ($this->isVipsClassAvailable()) {
             try {
-                $driver = new \Intervention\Image\Drivers\Vips\Driver();
+                $driver = new VipsDriver();
                 $driver->checkHealth();
 
                 // Verify multi-format encoding works (ensureInMemory uses VipsArea gtype)
-                $mgr = new InterventionImageManager(\Intervention\Image\Drivers\Vips\Driver::class, decodeAnimation: false);
+                $mgr = new InterventionImageManager(VipsDriver::class, decodeAnimation: false);
                 $encoded = $mgr->createImage(1, 1)->encodeUsingFileExtension('jpg');
                 $testImage = $mgr->decode($encoded->toString());
                 VipsCore::ensureInMemory($testImage->core());
 
-                return ['vips', \Intervention\Image\Drivers\Vips\Driver::class];
+                return ['vips', VipsDriver::class];
             } catch (Throwable) {
                 // vips not usable (e.g. ffi.enable=preload, broken gtype), fall through
             }
@@ -64,7 +65,7 @@ final readonly class ImageReader
     private function isVipsClassAvailable(): bool
     {
         return \extension_loaded('ffi')
-            && class_exists(\Intervention\Image\Drivers\Vips\Driver::class);
+            && class_exists(VipsDriver::class);
     }
 
     /**
@@ -73,7 +74,7 @@ final readonly class ImageReader
     private function driverClassFromName(string $name): string
     {
         if ('vips' === $name && $this->isVipsClassAvailable()) {
-            return \Intervention\Image\Drivers\Vips\Driver::class;
+            return VipsDriver::class;
         }
 
         return match ($name) {

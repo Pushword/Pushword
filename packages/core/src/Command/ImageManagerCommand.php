@@ -6,9 +6,9 @@ namespace Pushword\Core\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageReader;
-use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;

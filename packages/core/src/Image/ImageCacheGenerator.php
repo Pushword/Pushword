@@ -214,15 +214,9 @@ final class ImageCacheGenerator
         return $image;
     }
 
-    private function updateMainColor(Media $media, ?ImageInterface $image = null): void
+    private function updateMainColor(Media $media, ImageInterface $image): void
     {
-        if (null === $image) {
-            return;
-        }
-
-        $imageForPalette = clone $image;
-        $color = $imageForPalette->colorAt(0, 0)->toHex(true);
-
+        $color = (clone $image)->colorAt(0, 0)->toHex(true);
         $media->setMainColor($color);
     }
 }
