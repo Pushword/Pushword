@@ -14,9 +14,11 @@ class ConfigurationImageFilterTest extends TestCase
     {
         $config = $this->process([]);
 
-        self::assertArrayNotHasKey('thumb', $config['image_filter_sets']);
-        self::assertArrayHasKey('xs', $config['image_filter_sets']);
-        self::assertArrayHasKey('md', $config['image_filter_sets']);
+        /** @var array<string, mixed> $filterSets */
+        $filterSets = $config['image_filter_sets'];
+        self::assertArrayNotHasKey('thumb', $filterSets);
+        self::assertArrayHasKey('xs', $filterSets);
+        self::assertArrayHasKey('md', $filterSets);
     }
 
     public function testImageFilterSetsAcceptsArrayOverride(): void
@@ -38,15 +40,22 @@ class ConfigurationImageFilterTest extends TestCase
             ],
         ]);
 
-        self::assertSame(660, $config['image_filter_sets']['thumb']['filters']['coverDown'][0]);
-        self::assertSame(85, $config['image_filter_sets']['xs']['quality']);
+        /** @var array{thumb: array{filters: array{coverDown: list<int>}}, xs: array{quality: int}} $filterSets */
+        $filterSets = $config['image_filter_sets'];
+        self::assertSame(660, $filterSets['thumb']['filters']['coverDown'][0]);
+        self::assertSame(85, $filterSets['xs']['quality']);
     }
 
-    /** @param array<int, array<string, mixed>> $configs */
-    private function process(array $configs): array // @phpstan-ignore-line
+    /**
+     * @param array<int, array<string, mixed>> $configs
+     *
+     * @return array<string, mixed>
+     */
+    private function process(array $configs): array
     {
         $processor = new Processor();
 
+        /** @var array<string, mixed> */
         return $processor->processConfiguration(new Configuration(), $configs);
     }
 }

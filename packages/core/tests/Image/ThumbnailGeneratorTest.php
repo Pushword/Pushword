@@ -112,7 +112,7 @@ class ThumbnailGeneratorTest extends KernelTestCase
         $mediaStorage = $this->createMediaStorageAdapter();
         $mediaPath = $mediaStorage->getLocalPath('blank.jpg');
         if (! file_exists($mediaPath)) {
-            new \Symfony\Component\Filesystem\Filesystem()->copy(__DIR__.'/../Service/blank.jpg', $mediaPath);
+            new Filesystem()->copy(__DIR__.'/../Service/blank.jpg', $mediaPath);
         }
 
         $generator->generateCache($media, force: true);
