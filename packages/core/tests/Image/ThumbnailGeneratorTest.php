@@ -5,6 +5,7 @@ namespace Pushword\Core\Tests\Image;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageReader;
@@ -103,7 +104,7 @@ class ThumbnailGeneratorTest extends KernelTestCase
             'default' => ['quality' => 80, 'filters' => ['scaleDown' => [100]]],
         ]);
 
-        $media = new \Pushword\Core\Entity\Media();
+        $media = new Media();
         $media->setProjectDir($this->projectDir);
         $media->setStoreIn($this->getMediaDir());
         $media->setFileName('blank.jpg');

@@ -6,6 +6,7 @@ namespace Pushword\Core\Tests\Twig;
 
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Twig\Environment;
 
@@ -52,7 +53,7 @@ class ImageTemplateTest extends KernelTestCase
         $html = $twig->render('@PushwordCore/component/image.html.twig', [
             'image' => $this->createMedia(900, 600),
             'mode' => 'xs',
-            'page' => new \Pushword\Core\Entity\Page(),
+            'page' => new Page(),
         ]);
 
         // Should use actual image dimensions, not hardcoded 1000x1000
@@ -69,7 +70,7 @@ class ImageTemplateTest extends KernelTestCase
         $html = $twig->render('@PushwordCore/component/image.html.twig', [
             'image' => $this->createMedia(500, 400),
             'mode' => 'md',
-            'page' => new \Pushword\Core\Entity\Page(),
+            'page' => new Page(),
         ]);
 
         self::assertStringContainsString('width="500"', $html);

@@ -337,10 +337,10 @@ final class PageExporter
 
         $metaData = Yaml::dump($data, indent: 2);
 
-        return self::normalizeQuotes('---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent());
+        return $this->normalizeQuotes('---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent());
     }
 
-    private static function normalizeQuotes(string $text): string
+    private function normalizeQuotes(string $text): string
     {
         return strtr($text, [
             "\u{2018}" => "'", // left single quote

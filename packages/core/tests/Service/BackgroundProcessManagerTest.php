@@ -17,13 +17,13 @@ class BackgroundProcessManagerTest extends TestCase
     protected function setUp(): void
     {
         $this->varDir = sys_get_temp_dir().'/pw-bgm-test-'.uniqid();
-        (new Filesystem())->mkdir($this->varDir);
+        new Filesystem()->mkdir($this->varDir);
         $this->manager = new BackgroundProcessManager(new Filesystem(), $this->varDir, $this->varDir);
     }
 
     protected function tearDown(): void
     {
-        (new Filesystem())->remove($this->varDir);
+        new Filesystem()->remove($this->varDir);
     }
 
     public function testCurrentProcessPidIsNotAlive(): void

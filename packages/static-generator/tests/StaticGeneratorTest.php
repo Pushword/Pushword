@@ -780,6 +780,7 @@ class StaticGeneratorTest extends KernelTestCase
         $command = $application->find('pw:static');
         $tester = new CommandTester($command);
         $tester->execute(['host' => 'localhost.dev', '--workers' => 1]);
+
         $seqOutput = $tester->getDisplay();
         self::assertStringContainsString('success', $seqOutput, 'Sequential generation failed: '.$seqOutput);
 
@@ -803,7 +804,7 @@ class StaticGeneratorTest extends KernelTestCase
             self::assertNotEmpty($content, 'Empty content for '.$relativePath);
         }
 
-        (new Filesystem())->remove([$seqDir, $parDir]);
+        new Filesystem()->remove([$seqDir, $parDir]);
     }
 
     public function testParallelGenerationShowsWorkerPrefix(): void
@@ -826,7 +827,7 @@ class StaticGeneratorTest extends KernelTestCase
     public function testStateMergeFromFile(): void
     {
         $tempDir = sys_get_temp_dir().'/pushword-state-merge-'.getmypid();
-        (new Filesystem())->mkdir($tempDir.'/var');
+        new Filesystem()->mkdir($tempDir.'/var');
 
         try {
             $stateManager = new GenerationStateManager($tempDir);
@@ -849,7 +850,7 @@ class StaticGeneratorTest extends KernelTestCase
             self::assertFalse($stateManager->needsRegeneration('test.host', 'page-b', new DateTimeImmutable('2025-01-01T00:00:00+00:00')));
             self::assertFileDoesNotExist($workerFile, 'Worker file should be cleaned up after merge');
         } finally {
-            (new Filesystem())->remove($tempDir);
+            new Filesystem()->remove($tempDir);
         }
     }
 

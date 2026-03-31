@@ -182,7 +182,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                 $this->generatePage($page);
 
                 $pageStates[$page->getSlug()] = [
-                    'generatedAt' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+                    'generatedAt' => new DateTimeImmutable()->format(DateTimeInterface::ATOM),
                     'pageUpdatedAt' => $this->toImmutable($page->updatedAt)->format(DateTimeInterface::ATOM), // @phpstan-ignore argument.type
                 ];
             } catch (Throwable $e) {

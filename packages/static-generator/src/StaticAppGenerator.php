@@ -6,6 +6,7 @@ namespace Pushword\StaticGenerator;
 
 use LogicException;
 use Psr\Log\LoggerInterface;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
@@ -185,7 +186,7 @@ final class StaticAppGenerator
     private function runGenerators(SiteConfig $app): void
     {
         $slugs = array_map(
-            static fn ($page): string => $page->getSlug(),
+            static fn (Page $page): string => $page->getSlug(),
             $this->pageRepository->getPublishedPages($app->getMainHost()),
         );
         $workerCount = WorkerCountResolver::resolve($this->workers, \count($slugs));
