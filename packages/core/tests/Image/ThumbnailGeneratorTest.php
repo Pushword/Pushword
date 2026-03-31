@@ -97,6 +97,30 @@ class ThumbnailGeneratorTest extends KernelTestCase
         self::assertFileDoesNotExist($this->tmpPublicDir.'/'.$this->publicMediaDir.'/xl/blank.jpg');
     }
 
+    public function testMainColorExtraction(): void
+    {
+        $generator = $this->createGenerator([
+            'default' => ['quality' => 80, 'filters' => ['scaleDown' => [100]]],
+        ]);
+
+        $media = new \Pushword\Core\Entity\Media();
+        $media->setProjectDir($this->projectDir);
+        $media->setStoreIn($this->getMediaDir());
+        $media->setFileName('blank.jpg');
+
+        // Copy test image into media dir so ImageReader can find it
+        $mediaStorage = $this->createMediaStorageAdapter();
+        $mediaPath = $mediaStorage->getLocalPath('blank.jpg');
+        if (! file_exists($mediaPath)) {
+            new \Symfony\Component\Filesystem\Filesystem()->copy(__DIR__.'/../Service/blank.jpg', $mediaPath);
+        }
+
+        $generator->generateCache($media, force: true);
+
+        self::assertNotNull($media->getMainColor());
+        self::assertMatchesRegularExpression('/^#[0-9a-f]{6}$/i', $media->getMainColor());
+    }
+
     public function testFilterCacheWithFormats(): void
     {
         $image = __DIR__.'/../Service/blank.jpg';

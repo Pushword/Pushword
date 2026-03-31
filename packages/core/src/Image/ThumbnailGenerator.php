@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pushword\Core\Image;
 
 use Exception;
-use Intervention\Image\Image;
 use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
@@ -228,12 +227,12 @@ final class ThumbnailGenerator
 
     private function updateMainColor(Media $media, ?ImageInterface $image = null): void
     {
-        if (! $image instanceof Image) {
+        if (null === $image) {
             return;
         }
 
         $imageForPalette = clone $image;
-        $color = $imageForPalette->pickColor(0, 0)->toHex('#');
+        $color = $imageForPalette->colorAt(0, 0)->toHex(true);
 
         $media->setMainColor($color);
     }

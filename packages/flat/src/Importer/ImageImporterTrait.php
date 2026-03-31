@@ -103,9 +103,6 @@ trait ImageImporterTrait
         if ($imgSize[0] > self::MAX_IMAGE_WIDTH || $imgSize[1] > self::MAX_IMAGE_HEIGHT) {
             $this->resizeOversizedImage($filePath, $imgSize[0], $imgSize[1]);
             $imgSize = getimagesize($filePath);
-            if (false === $imgSize) {
-                throw new RuntimeException('Image size could not be determined after resize');
-            }
         }
 
         $resolvedFileName = $fileName ?? $media->getFileName();
