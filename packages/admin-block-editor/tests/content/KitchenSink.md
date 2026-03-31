@@ -14,7 +14,7 @@ See **bold** _italic_ `inline code` #[link ➜](/kitchen-sink-block){target="_bl
 - {{ tel('+33 00 00 00 00') }} ou directement +331 00 00 00 00
 - [AnchorLink](#citation)
 
-## Quotes
+## Quotes {#quotes}
 
 {#citation}
 > PHP ecosystem is undeniably awesome! With its extensive library of frameworks like Laravel and Symfony, coupled with its flexibility and scalability, PHP empowers developers to build robust and dynamic web applications effortlessly. Its active community constantly contributes to its evolution, ensuring it stays relevant and cutting-edge. Whether it's for small projects or enterprise-level applications, PHP remains a top choice for developers worldwide. In short, PHP rocks!
