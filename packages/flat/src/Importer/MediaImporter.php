@@ -12,7 +12,7 @@ use Override;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
-use Pushword\Core\Image\ThumbnailGenerator;
+use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
@@ -54,7 +54,7 @@ class MediaImporter extends AbstractImporter
         public string $mediaDir,
         public string $projectDir,
         private readonly MediaStorageAdapter $mediaStorage,
-        private readonly ThumbnailGenerator $thumbnailGenerator,
+        private readonly ImageCacheGenerator $imageCacheGenerator,
         private readonly ImageCacheManager $imageCacheManager,
         private readonly MediaRepository $mediaRepository,
         private readonly ?LoggerInterface $logger = null,

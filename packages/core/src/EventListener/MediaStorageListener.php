@@ -9,7 +9,7 @@ use Exception;
 use LogicException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
-use Pushword\Core\Image\ThumbnailGenerator;
+use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Service\MediaConflictResolver;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Service\PdfOptimizer;
@@ -29,7 +29,7 @@ final readonly class MediaStorageListener
     public function __construct(
         private string $projectDir,
         private MediaStorageAdapter $mediaStorage,
-        private ThumbnailGenerator $thumbnailGenerator,
+        private ImageCacheGenerator $imageCacheGenerator,
         private ImageCacheManager $imageCacheManager,
         private PdfOptimizer $pdfOptimizer,
         private MediaConflictResolver $conflictResolver,
@@ -80,8 +80,8 @@ final readonly class MediaStorageListener
             $this->imageCacheManager->remove($oldFileName);
             $media->setFileNameBeforeUpdate('');
 
-            $this->thumbnailGenerator->generateQuickThumb($media);
-            $this->thumbnailGenerator->runBackgroundCacheGeneration($newFileName);
+            $this->imageCacheGenerator->generateQuickPreview($media);
+            $this->imageCacheGenerator->runBackgroundCacheGeneration($newFileName);
         }
 
         if ($preUpdateEventArgs->hasChangedField('hash')) {
@@ -107,8 +107,8 @@ final readonly class MediaStorageListener
 
         if ($media->isImage()) {
             $this->imageCacheManager->remove($media);
-            $this->thumbnailGenerator->generateQuickThumb($media);
-            $this->thumbnailGenerator->runBackgroundCacheGeneration($media->getFileName());
+            $this->imageCacheGenerator->generateQuickPreview($media);
+            $this->imageCacheGenerator->runBackgroundCacheGeneration($media->getFileName());
 
             return;
         }

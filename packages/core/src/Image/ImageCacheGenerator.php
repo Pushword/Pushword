@@ -10,10 +10,8 @@ use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\MediaStorageAdapter;
 
-final class ThumbnailGenerator
+final class ImageCacheGenerator
 {
-    private ?ImageInterface $lastThumb = null;
-
     public function __construct(
         private readonly ImageReader $imageReader,
         private readonly ImageEncoder $imageEncoder,
@@ -88,10 +86,6 @@ final class ThumbnailGenerator
                 $workImage = clone $currentImage;
                 $resultImage = $this->generateFilteredCache($media, $filterName, $workImage, skipClone: true);
                 $generated = true;
-
-                if ('thumb' === $filterName) {
-                    $this->lastThumb = $resultImage;
-                }
 
                 // Progressive downsizing: use result as base for next smaller filter
                 if (null !== $this->imageCacheManager->getFilterTargetWidth($filterName)) {
@@ -170,7 +164,7 @@ final class ThumbnailGenerator
      *
      * @return ImageInterface|null Returns null if image format is not supported by current driver
      */
-    public function generateQuickThumb(Media $media): ?ImageInterface
+    public function generateQuickPreview(Media $media): ?ImageInterface
     {
         $this->copyOriginalToFilter($media, 'md');
 
@@ -188,11 +182,6 @@ final class ThumbnailGenerator
             ['php', 'bin/console', 'pw:image:cache', $fileName],
             'pw:image:cache',
         );
-    }
-
-    public function getLastThumb(): ?ImageInterface
-    {
-        return $this->lastThumb;
     }
 
     private function runBackgroundOptimization(string $fileName): void

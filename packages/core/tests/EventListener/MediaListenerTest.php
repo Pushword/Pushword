@@ -11,7 +11,7 @@ use Pushword\Core\Image\ExternalImageImporter;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageReader;
-use Pushword\Core\Image\ThumbnailGenerator;
+use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -147,9 +147,9 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         $imageEncoder = new ImageEncoder();
         $imageCacheManager = new ImageCacheManager([], $this->publicDir, $this->publicMediaDir, $mediaStorage);
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
-        $thumbnailGenerator = new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
+        $imageCacheGenerator = new ImageCacheGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
 
-        return $this->importer = new ExternalImageImporter($mediaStorage, $thumbnailGenerator, $this->getMediaDir(), $this->projectDir);
+        return $this->importer = new ExternalImageImporter($mediaStorage, $imageCacheGenerator, $this->getMediaDir(), $this->projectDir);
     }
 
     private function requestMediaCreateForm(KernelBrowser $client): Crawler

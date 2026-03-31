@@ -12,7 +12,7 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
-use Pushword\Core\Image\ThumbnailGenerator;
+use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Exporter\MediaExporter;
@@ -831,13 +831,13 @@ CSV;
         /** @var SiteRegistry $apps */
         $apps = self::getContainer()->get(SiteRegistry::class);
 
-        /** @var ThumbnailGenerator $thumbnailGenerator */
-        $thumbnailGenerator = self::getContainer()->get(ThumbnailGenerator::class);
+        /** @var ImageCacheGenerator $imageCacheGenerator */
+        $imageCacheGenerator = self::getContainer()->get(ImageCacheGenerator::class);
 
         /** @var ImageCacheManager $imageCacheManager */
         $imageCacheManager = self::getContainer()->get(ImageCacheManager::class);
 
-        return new MediaImporter($em, $apps, $mediaDir, $projectDir, $storage, $thumbnailGenerator, $imageCacheManager, $em->getRepository(Media::class));
+        return new MediaImporter($em, $apps, $mediaDir, $projectDir, $storage, $imageCacheGenerator, $imageCacheManager, $em->getRepository(Media::class));
     }
 
     private function createExporterWithStorage(MediaStorageAdapter $storage): MediaExporter

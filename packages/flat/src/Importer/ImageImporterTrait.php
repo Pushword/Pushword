@@ -121,7 +121,7 @@ trait ImageImporterTrait
 
         // Trigger background cache generation for responsive variants + WebP
         if ($this->newMedia) {
-            $this->thumbnailGenerator->runBackgroundCacheGeneration($resolvedFileName);
+            $this->imageCacheGenerator->runBackgroundCacheGeneration($resolvedFileName);
         }
     }
 
@@ -129,7 +129,7 @@ trait ImageImporterTrait
     {
         $this->logger?->info(\sprintf('Resizing oversized image %s (%dx%d → max %dx%d)', basename($filePath), $width, $height, self::MAX_IMAGE_WIDTH, self::MAX_IMAGE_HEIGHT));
 
-        $image = $this->thumbnailGenerator->getImageReader()->read($filePath);
+        $image = $this->imageCacheGenerator->getImageReader()->read($filePath);
         $image = $image->scaleDown(self::MAX_IMAGE_WIDTH, self::MAX_IMAGE_HEIGHT);
         $image->encode(new AutoEncoder(quality: 90))->save($filePath);
 

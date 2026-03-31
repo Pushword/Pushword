@@ -9,14 +9,14 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\ImageEncoder;
 use Pushword\Core\Image\ImageReader;
-use Pushword\Core\Image\ThumbnailGenerator;
+use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
-class ThumbnailGeneratorTest extends KernelTestCase
+class ImageCacheGeneratorTest extends KernelTestCase
 {
     use PathTrait;
 
@@ -24,7 +24,7 @@ class ThumbnailGeneratorTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        $this->tmpPublicDir = sys_get_temp_dir().'/pushword-thumb-test-'.getmypid();
+        $this->tmpPublicDir = sys_get_temp_dir().'/pushword-cache-test-'.getmypid();
         new Filesystem()->mkdir($this->tmpPublicDir);
     }
 
@@ -38,7 +38,7 @@ class ThumbnailGeneratorTest extends KernelTestCase
     /**
      * @param array<string, array<string, mixed>> $filterSets
      */
-    private function createGenerator(array $filterSets = []): ThumbnailGenerator
+    private function createGenerator(array $filterSets = []): ImageCacheGenerator
     {
         self::bootKernel();
         $mediaStorage = $this->createMediaStorageAdapter();
@@ -48,7 +48,7 @@ class ThumbnailGeneratorTest extends KernelTestCase
 
         $backgroundTaskDispatcher = self::getContainer()->get(BackgroundTaskDispatcherInterface::class);
 
-        return new ThumbnailGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
+        return new ImageCacheGenerator($imageReader, $imageEncoder, $imageCacheManager, $backgroundTaskDispatcher, $mediaStorage);
     }
 
     /**
