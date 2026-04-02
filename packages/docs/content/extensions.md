@@ -17,7 +17,7 @@ todo: 'Faire un script pour générer automatiquement un tableau avec le titre, 
 - [Flat](/extension/flat)
   Transform Pushword in a FlatFile CMS.
 - [Page Scanner](/extension/page-scanner)
-  Find dead links, 404, 301 and more (command line or admin).
+  Find dead links, 404, 301, TODO reminders and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)
   Get mail notification when your pushword content (page) is edited.
 - [Static Generator](/extension/static-generator)

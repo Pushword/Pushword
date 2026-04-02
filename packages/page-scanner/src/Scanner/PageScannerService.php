@@ -36,6 +36,9 @@ final class PageScannerService
     #[Required]
     public ParentPageScanner $parentPageScanner;
 
+    #[Required]
+    public TodoScanner $todoScanner;
+
     /** @var DataCollectorTranslator|Translator */
     private readonly TranslatorInterface $translator;
 
@@ -81,6 +84,7 @@ final class PageScannerService
 
         $this->addErrors($page, $this->linkedDocsScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->parentPageScanner->scan($page, $pageHtml));
+        $this->addErrors($page, $this->todoScanner->scan($page, $pageHtml));
 
         return [] === $this->errors ? true : $this->errors;
     }

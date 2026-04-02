@@ -23,5 +23,8 @@ page_scannerScanning: 'Scan en cours...'
 page_scannerStartedAt: 'Démarré à'
 page_scannerStarting: 'Démarrage du scan...'
 page_scannerTitle: 'Vérification du contenu'
+page_scanTodoDoWhenPublished: 'est maintenant publiée — action requise'
+page_scanTodoLinkWhenPublished: 'est maintenant publiée — remplacer le TODO par un lien'
+page_scanTodoUnknownPage: 'TODO fait référence à une page inconnue'
 page_scannerView: Voir
 page_scannerViewResults: 'Voir les résultats'
