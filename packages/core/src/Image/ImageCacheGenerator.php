@@ -10,14 +10,14 @@ use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Service\MediaStorageAdapter;
 
-final class ImageCacheGenerator
+final readonly class ImageCacheGenerator
 {
     public function __construct(
-        private readonly ImageReader $imageReader,
-        private readonly ImageEncoder $imageEncoder,
-        private readonly ImageCacheManager $imageCacheManager,
-        private readonly BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
-        private readonly MediaStorageAdapter $mediaStorage,
+        private ImageReader $imageReader,
+        private ImageEncoder $imageEncoder,
+        private ImageCacheManager $imageCacheManager,
+        private BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
+        private MediaStorageAdapter $mediaStorage,
     ) {
     }
 
