@@ -64,6 +64,7 @@ class MediaFileNameTest extends TestCase
             'mixed special' => ['My Brand® Photo © 2024', 'my-brand-photo_2024'],
             'numeric copyright entity' => ['Image &#169; Owner', 'image_owner'],
             'hex copyright entity' => ['Image &#xA9; Owner', 'image_owner'],
+            'text copyright' => ['Photo (c) Author', 'photo_author'],
         ];
     }
 
