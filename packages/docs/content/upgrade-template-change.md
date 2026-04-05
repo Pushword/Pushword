@@ -95,6 +95,36 @@ Functionality merged into `image.html.twig` with `mode: 'thumb'` parameter.
 - Simplified input normalization using `media_from_string()` automatic format detection
 - Reduced from 105 lines to 67 lines
 
+### `page/page_default.html.twig`
+
+- Fixed Twig 3.24 block scoping issue: variables set inside `{% block body %}` are no longer visible in nested blocks (`{% block content %}`, `{% block footer %}`, etc.)
+- Content and breadcrumb blocks now use `apps.stash()` to store their rendered output for later retrieval
+- The `content` variable is no longer passed to `_footer.html.twig` — `contains_link_to()` now automatically uses stashed content when called without a `content` argument
+- `contains_link_to()` also detects the current page's own slug automatically
+
+**Before:**
+```twig
+{% set pageContent = include(view('/page/_content.html.twig')) %}
+{% block content %}
+  {{ pageContent|raw }}
+{% endblock %}
+{% block footer %}
+  {{ include(view('/page/_footer.html.twig'), {content: '"/' ~ page.slug ~ '" ' ~ pageContent ~ pageBreadcrumb}) }}
+{% endblock %}
+```
+
+**After:**
+```twig
+{% block content %}
+  {{ apps.stash('content', include(view('/page/_content.html.twig')))|raw }}
+{% endblock %}
+{% block footer %}
+  {{ include(view('/page/_footer.html.twig')) }}
+{% endblock %}
+```
+
+**Footer template migration:** replace `contains_link_to('slug', content)` with `contains_link_to('slug')` — the rendered content is now resolved automatically via stash.
+
 ### `page/_content.html.twig`
 
 - Fixed invalid Twig comment: `// if content contains...` → `{# if content contains... #}`

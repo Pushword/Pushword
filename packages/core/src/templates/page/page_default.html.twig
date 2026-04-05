@@ -61,18 +61,16 @@
 {% block body %}
   <div class="flex flex-col min-h-screen">
 
-  {% set pageContent = include(view('/page/_content.html.twig')) %}
   {% block content %}
-    {{ pageContent|raw }}
+    {{ apps.stash('content', include(view('/page/_content.html.twig')))|raw }}
   {% endblock %}
 
-  {% set pageBreadcrumb = include(view('/page/_breadcrumb.html.twig')) %}
   {% block breadcrumb %}
-    {{ pageBreadcrumb|raw }}
+    {{ apps.stash('breadcrumb', include(view('/page/_breadcrumb.html.twig')))|raw }}
   {% endblock %}
 
   {% block footer %}
-    {{ include(view('/page/_footer.html.twig'), {content: '"/' ~ page.slug ~ '" ' ~ pageContent ~ pageBreadcrumb}) }}
+    {{ include(view('/page/_footer.html.twig')) }}
   {% endblock %}
 
   {% block navbar %}

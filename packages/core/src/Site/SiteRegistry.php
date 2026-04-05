@@ -18,6 +18,9 @@ final class SiteRegistry
 
     private ?string $defaultHost = null;
 
+    /** @var array<string, string> */
+    private array $stashed = [];
+
     private ?RequestContext $requestContext = null;
 
     /** @param array<string, array<string, mixed>> $rawApps */
@@ -154,6 +157,7 @@ final class SiteRegistry
 
     public function setCurrentPage(Page $page): self
     {
+        $this->stashed = [];
         $this->context()->setCurrentPage($page);
 
         return $this;
@@ -210,5 +214,17 @@ final class SiteRegistry
     public function sameHost(?string $host): bool
     {
         return $this->context()->sameHost($host);
+    }
+
+    /**
+     * Store a rendered string by key (and return it), or recall a previously stored string.
+     */
+    public function stash(string $key, ?string $value = null): string
+    {
+        if (null !== $value) {
+            $this->stashed[$key] = $value;
+        }
+
+        return $this->stashed[$key] ?? '';
     }
 }
