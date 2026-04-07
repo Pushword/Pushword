@@ -92,6 +92,18 @@ class StringToDQLCriteria
             return;
         }
 
+        if (str_starts_with($search, 'customProperty:')) {
+            $rest = substr($search, \strlen('customProperty:'));
+            $colonPos = strpos($rest, ':');
+            if (false !== $colonPos) {
+                $key = substr($rest, 0, $colonPos);
+                $value = substr($rest, $colonPos + 1);
+                $this->where[] = ['customProperties', 'LIKE', '%"'.$key.'":"'.$value.'"%'];
+
+                return;
+            }
+        }
+
         $this->where[] = ['tags',  'LIKE',  '%"'.$search.'"%'];
         // $this->where[] = ['mainContent',  'LIKE',  '%'.$search.'%'];
     }

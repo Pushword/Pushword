@@ -14,11 +14,13 @@ use Pagerfanta\RouteGenerator\RouteGeneratorFactoryInterface;
 use Pagerfanta\Twig\View\TwigView;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Event\PagesListSearchEvent;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\StringToDQLCriteria;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
@@ -31,6 +33,7 @@ final class PageExtension
         public Twig $twig,
         private readonly RouteGeneratorFactoryInterface $routeGeneratorFactory,
         private readonly LinkCollectorService $linkCollector,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -86,6 +89,13 @@ final class PageExtension
     public function getPublishedPages($host = null, array|string $where = [], array|string $order = 'weight,publishedAt', array|int $max = 0, bool $withRedirection = false): array
     {
         $currentPage = $this->apps->getCurrentPage();
+
+        if (\is_string($where)) {
+            $event = new PagesListSearchEvent($where, $currentPage);
+            $this->eventDispatcher->dispatch($event, PagesListSearchEvent::NAME);
+            $where = $event->getSearch();
+        }
+
         $where = [\is_array($where) ? $where : new StringToDQLCriteria($where, $currentPage)->retrieve()];
         $where[] = ['id',  '<>', $currentPage?->id ?? 0]; // @phpstan-ignore nullsafe.neverNull
 
@@ -243,6 +253,12 @@ final class PageExtension
         $view = 'card' === $view ? '/component/pages_list_card.html.twig'
             : (\in_array($view, ['', 'list'], true) ? '/component/pages_list.html.twig'
                 : $view);
+
+        if (\is_string($search)) {
+            $event = new PagesListSearchEvent($search, $currentPage);
+            $this->eventDispatcher->dispatch($event, PagesListSearchEvent::NAME);
+            $search = $event->getSearch();
+        }
 
         $hasSlugFilter = \is_string($search) && (str_contains($search, 'slug:') || str_contains($search, 'page:'));
 

@@ -28,4 +28,7 @@ final class PushwordEvents
 
     /** Dispatched after static generation completes for a host. */
     public const string STATIC_POST_GENERATE = 'pushword.static.post_generate';
+
+    /** Dispatched before the search string is parsed in pages list. */
+    public const string PAGES_LIST_SEARCH = 'pushword.pages_list.before_search';
 }

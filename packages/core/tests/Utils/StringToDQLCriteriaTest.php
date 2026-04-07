@@ -16,6 +16,20 @@ class StringToDQLCriteriaTest extends KernelTestCase
     {
         self::assertSame([['mainContent', 'LIKE', '%<!--blog-->%']], new StringToDQLCriteria('comment:blog', null)->retrieve());
         self::assertSame([['slug', 'LIKE', 'blog'], 'OR', ['tags', 'LIKE', '%"a"%']], new StringToDQLCriteria('slug:blog OR a', null)->retrieve());
+        self::assertSame(
+            [['customProperties', 'LIKE', '%"productCode":"NLDLV0019"%']],
+            new StringToDQLCriteria('customProperty:productCode:NLDLV0019', null)->retrieve(),
+        );
+        // malformed (no value colon) falls through to tag search
+        self::assertSame(
+            [['tags', 'LIKE', '%"customProperty:keyonly"%']],
+            new StringToDQLCriteria('customProperty:keyonly', null)->retrieve(),
+        );
+        // combined with OR
+        self::assertSame(
+            [['customProperties', 'LIKE', '%"type":"blog"%'], 'OR', ['tags', 'LIKE', '%"travel"%']],
+            new StringToDQLCriteria('customProperty:type:blog OR travel', null)->retrieve(),
+        );
 
         self::bootKernel();
         /** @var EntityManager */
@@ -37,6 +51,12 @@ class StringToDQLCriteriaTest extends KernelTestCase
         }
 
         self::assertTrue($parameterFound ?? false);
+
+        // customProperty: generates valid SQL
+        $where = new StringToDQLCriteria('customProperty:productCode:NLDLV0019', null)->retrieve();
+        $sql = $pageRepo->getPublishedPageQueryBuilder(where: $where)->getQuery()->getSQL();
+        self::assertIsString($sql);
+        self::assertStringContainsString('p0_.custom_properties LIKE ?', $sql);
 
         // Test AND operator (was throwing "malformated where params" exception)
         $where = new StringToDQLCriteria('blog AND europe AND hiking', null)->retrieve();
