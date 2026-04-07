@@ -51,3 +51,31 @@ Or use the `exclude_linked()` function with `pages()`:
 ```
 
 See the [Link Collector documentation](/link-collector) for detailed usage, examples, and the full API reference.
+
+## Extending Search with an Event Listener
+
+Before the search string is parsed into DQL criteria, Pushword dispatches a `PagesListSearchEvent`. A listener can inspect or rewrite the string — useful for expanding application-specific prefixes into standard Pushword ones.
+
+**Event:** `Pushword\Core\Event\PagesListSearchEvent`  
+**Constant:** `PushwordEvents::PAGES_LIST_SEARCH` (`pushword.pages_list.before_search`)  
+**Dispatched by:** `pages_list()` and `pages()` Twig functions
+
+```php
+use Pushword\Core\Event\PagesListSearchEvent;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+#[AsEventListener(event: PagesListSearchEvent::NAME)]
+final readonly class ProductSearchListener
+{
+    public function __invoke(PagesListSearchEvent $event): void
+    {
+        $search = $event->getSearch();
+        // e.g. expand "product:NLDLV0019" into "customProperty:productCode:NLDLV0019"
+        if (str_starts_with($search, 'product:')) {
+            $event->setSearch('customProperty:productCode:' . substr($search, 8));
+        }
+    }
+}
+```
+
+The listener receives the raw search string before any prefix parsing. Call `setSearch()` to replace it; leave it unchanged to pass through as-is. `getCurrentPage()` provides the current page context if needed.

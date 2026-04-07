@@ -24,12 +24,52 @@ class Kernel extends BaseKernel
 
     public function getCacheDir(): string
     {
-        // Use a persistent shared cache dir so the compiled container is reused across test workers
+        // Use a persistent shared cache dir so the compiled container is reused across test workers.
+        // Include a hash of the config files so the cache is invalidated when service definitions change.
         if ('test' === $this->environment) {
-            return sys_get_temp_dir().'/com.github.pushword.pushword/container-cache/'.$this->environment;
+            return sys_get_temp_dir().'/com.github.pushword.pushword/container-cache/'.$this->environment.'/'.$this->computeConfigHash();
         }
 
         return $this->getTestBaseDir().'/cache';
+    }
+
+    private function computeConfigHash(): string
+    {
+        $monoRepoBase = \dirname($this->getProjectDir());
+
+        $files = [];
+        // Config files
+        $configDir = $this->getProjectDir().'/config';
+        foreach (['', '/packages', '/packages/test'] as $subDir) {
+            $dir = $configDir.$subDir;
+            if (! is_dir($dir)) {
+                continue;
+            }
+            foreach (new \FilesystemIterator($dir) as $file) {
+                if ($file instanceof \SplFileInfo && $file->isFile()) {
+                    $files[] = $file->getRealPath();
+                }
+            }
+        }
+
+        // All source PHP files across packages (service classes affect the compiled container)
+        $srcDirs = glob($monoRepoBase.'/packages/*/src', \GLOB_ONLYDIR) ?: [];
+        foreach ($srcDirs as $srcDir) {
+            $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($srcDir, \FilesystemIterator::SKIP_DOTS));
+            foreach ($it as $file) {
+                if ($file instanceof \SplFileInfo && $file->isFile() && 'php' === $file->getExtension()) {
+                    $files[] = $file->getRealPath();
+                }
+            }
+        }
+
+        sort($files);
+        $ctx = hash_init('sha256');
+        foreach ($files as $path) {
+            hash_update($ctx, $path."\0".hash_file('sha256', $path)."\0");
+        }
+
+        return substr(hash_final($ctx), 0, 16);
     }
 
     public function getLogDir(): string

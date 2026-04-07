@@ -116,6 +116,7 @@ final class CrashRecoveryTest extends KernelTestCase
         $page->host = 'localhost.dev';
         $page->locale = 'en';
         $page->setMainContent('Should survive');
+
         $this->em->persist($page);
         $this->em->flush();
 
