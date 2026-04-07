@@ -44,7 +44,7 @@ you may have a look inside `vendor/pushword/admin/install.php`.
 <p>This is an invitation to <button data-src-live="..." data-target="parent">register</button></p>
 ```
 
-Activate the `data-live` element with [@pushword/js-helper](https://yarnpkg.com/package/@pushword/js-helper) :
+Activate the `data-live` element with [@pushword/js-helper](https://github.com/Pushword/js-helper) :
 
 ````
 import { liveForm } from "@pushword/js-helper/src/helpers";

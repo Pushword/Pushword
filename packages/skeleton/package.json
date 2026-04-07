@@ -2,7 +2,7 @@
   "devDependencies": {
     "vite": "^7.1.9",
     "vite-plugin-symfony": "^8.2.2",
-    "@pushword/js-helper": "^0.0"
+    "@pushword/js-helper": "github:Pushword/js-helper"
   },
   "license": "UNLICENSED",
   "private": true,

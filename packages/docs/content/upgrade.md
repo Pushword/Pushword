@@ -12,6 +12,16 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## js-helper: Install from GitHub
+
+`@pushword/js-helper` is no longer published on npm. Update your `package.json`:
+
+```json
+"@pushword/js-helper": "github:Pushword/js-helper"
+```
+
+Then run `yarn install` or `npm install`.
+
 ## Image: Retina Fix & Thumb Filter Removed
 
 ### Breaking Changes
