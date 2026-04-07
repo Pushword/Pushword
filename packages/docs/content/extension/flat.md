@@ -188,6 +188,33 @@ php bin/console pw:flat:conflicts:clear [host] [--dry]
 - Markdown: `page~conflict-abc123.md` (contains the losing version with a comment header)
 - CSV: `index.conflicts.csv` (appends conflict details for media/conversation)
 
+### YAML Front Matter Validation
+
+Invalid YAML in a `.md` file (e.g. an unescaped quote: `title: 'La Baltique : d'Usedom'`) is a common authoring mistake.
+
+**Proactive check before syncing:**
+
+```bash
+php bin/console pw:flat:lint [host]
+```
+
+Returns exit code `0` if all files are valid, `1` if any errors are found. Each error shows the file path and line number.
+
+**During `pw:flat:sync`:**
+
+- Files with invalid YAML are **skipped** (not crash the entire sync)
+- The error is printed to the console with file path and line number
+- The corresponding DB page is **not deleted** (the page is preserved until the YAML is fixed)
+- After sync completes, a warning lists the number of skipped files and suggests running `pw:flat:lint`
+
+**Common YAML pitfalls:**
+
+| Mistake | Fix |
+| --- | --- |
+| `title: 'It's broken'` | Use double quotes: `title: "It's fine"` |
+| `title: 'A: B'` unquoted colon | Already quoted — but inner single quote breaks it: `title: "A: B"` |
+| Smart quotes `'` from copy-paste | Replace with straight quotes `'` or `"` |
+
 ## Sync Behavior Reference
 
 ### Execution Pipeline

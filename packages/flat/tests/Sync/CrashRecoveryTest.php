@@ -15,7 +15,6 @@ use Pushword\Flat\Sync\PageSync;
 use Pushword\Flat\Sync\SyncStateManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Yaml\Exception\ParseException;
 
 #[Group('integration')]
 final class CrashRecoveryTest extends KernelTestCase
@@ -65,7 +64,7 @@ final class CrashRecoveryTest extends KernelTestCase
             @unlink($file);
         }
 
-        foreach (['invalid-yaml-test', 'valid-crash-test', 'crash-good-page'] as $slug) {
+        foreach (['invalid-yaml-test', 'valid-crash-test', 'crash-good-page', 'yaml-deletion-guard', 'yaml-unescaped-quote'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
@@ -91,14 +90,76 @@ final class CrashRecoveryTest extends KernelTestCase
         $this->createdFiles[] = $path;
     }
 
-    public function testImportWithInvalidYamlThrowsException(): void
+    public function testImportWithInvalidYamlSkipsFileAndContinues(): void
     {
-        // Create a file with invalid YAML frontmatter
         $this->createMd('invalid-yaml-test.md', "---\nh1: [invalid yaml: {broken\n---\n\nBroken content");
+        $this->createMd('crash-good-page.md', "---\nh1: Good Page\n---\n\nGood content");
 
-        // Import should throw a ParseException for invalid YAML
-        $this->expectException(ParseException::class);
+        // Import should NOT throw — it should skip the broken file and import the good one
         $this->pageSync->import('localhost.dev');
+
+        self::assertSame(1, $this->pageSync->getYamlErrorCount());
+
+        $goodPage = $this->em->getRepository(Page::class)->findOneBy([
+            'slug' => 'crash-good-page',
+            'host' => 'localhost.dev',
+        ]);
+        self::assertNotNull($goodPage, 'Valid page should be imported despite YAML error in another file');
+    }
+
+    public function testYamlErrorDoesNotDeleteExistingPage(): void
+    {
+        // 1. Create a page in DB and export it to a .md file
+        $page = new Page();
+        $page->setSlug('yaml-deletion-guard');
+        $page->setH1('Deletion Guard');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->setMainContent('Should survive');
+        $this->em->persist($page);
+        $this->em->flush();
+
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+
+        // 2. Replace its .md file with invalid YAML
+        $mdPath = $this->contentDir.'/yaml-deletion-guard.md';
+        self::assertFileExists($mdPath);
+        $this->filesystem->dumpFile($mdPath, "---\nh1: [broken yaml: {invalid\n---\n\nBroken");
+        touch($mdPath, time() + 100);
+        $this->createdFiles[] = $mdPath;
+
+        // 3. Re-import — the page must NOT be deleted
+        $this->pageSync->import('localhost.dev');
+
+        self::assertSame(1, $this->pageSync->getYamlErrorCount());
+
+        $this->em->clear();
+        $survivingPage = $this->em->getRepository(Page::class)->findOneBy([
+            'slug' => 'yaml-deletion-guard',
+            'host' => 'localhost.dev',
+        ]);
+        self::assertNotNull($survivingPage, 'Page with YAML-errored flat file must not be deleted');
+    }
+
+    public function testRealWorldUnescapedQuoteDetected(): void
+    {
+        // The exact error pattern from the user: unescaped single quote inside single-quoted YAML
+        $this->createMd('yaml-unescaped-quote.md', "---\ntitle: 'La Baltique : îles de Rügen et d'Usedom | Grand Angle'\n---\n\nContent");
+
+        $this->pageSync->import('localhost.dev');
+
+        self::assertSame(1, $this->pageSync->getYamlErrorCount());
+    }
+
+    public function testDirectionDetectionSurvivesYamlError(): void
+    {
+        // Create a file with bad YAML so that mustImport's slow-path YAML parsing hits it
+        $this->createMd('invalid-yaml-test.md', "---\nh1: [broken: {yaml\n---\n\nContent");
+
+        // mustImport should not throw — it should return true (trigger import)
+        $result = $this->pageSync->mustImport('localhost.dev');
+
+        self::assertTrue($result);
     }
 
     public function testSyncStateRecordedAfterImport(): void

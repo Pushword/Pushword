@@ -230,7 +230,9 @@ final readonly class FlatFileSyncCommand
             ? ($hasImportOps ? 'import' : ($hasExportOps ? 'export' : 'auto'))
             : $mode;
 
-        if (! $hasImportOps && ! $hasExportOps) {
+        $yamlErrors = $pageSync->getYamlErrorCount();
+
+        if (! $hasImportOps && ! $hasExportOps && 0 === $yamlErrors) {
             $io->success(\sprintf('Sync completed (%s mode - no changes detected). (%dms)', $displayMode, $duration));
 
             return;
@@ -250,6 +252,10 @@ final readonly class FlatFileSyncCommand
                 ['Media', $mediaSync->getExportedCount(), 0],
                 ['Pages', $pageSync->getExportedCount(), $pageSync->getExportSkippedCount()],
             ]);
+        }
+
+        if ($yamlErrors > 0) {
+            $io->warning(\sprintf('%d file(s) skipped due to YAML front matter errors. Run `pw:flat:lint` for details.', $yamlErrors));
         }
     }
 

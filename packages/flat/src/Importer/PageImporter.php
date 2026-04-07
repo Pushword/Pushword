@@ -164,7 +164,7 @@ final class PageImporter extends AbstractImporter
     /**
      * @return non-empty-string
      */
-    private function filePathToSlug(string $filePath): string
+    public function filePathToSlug(string $filePath): string
     {
         $slug = preg_replace('/\.md$/i', '', str_replace($this->getContentDir().'/', '', $filePath)) ?? throw new Exception(\sprintf('Failed to extract slug from file path "%s"', $filePath));
 
