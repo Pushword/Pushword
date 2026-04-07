@@ -43,6 +43,8 @@ export async function clickable(element) {
  */
 export function allClickable(selector) {
   document.querySelectorAll(selector).forEach(function (item) {
+    if (item.dataset.clickableBound) return
+    item.dataset.clickableBound = '1'
     item.addEventListener('click', function (event) {
       if (event.ctrlKey || event.metaKey || event.button === 2) return
       clickable(item)
