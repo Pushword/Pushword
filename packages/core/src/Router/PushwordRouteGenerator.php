@@ -121,6 +121,11 @@ final class PushwordRouteGenerator
             return false;
         }
 
+        // Custom_host route means HTTP host ≠ site host (e.g. 127.0.0.1/{host}/{slug}): keep prefixing
+        if (str_contains($this->apps->getCurrentRoute() ?? '', 'custom_host_')) {
+            return ! $this->apps->isDefaultHost($host ?? $currentHost);
+        }
+
         if ($this->apps->sameHost($host ?? $this->apps->getCurrentPage()?->host)) {
             return false;
         }
