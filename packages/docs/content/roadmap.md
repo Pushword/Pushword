@@ -11,9 +11,9 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 - [ ] Global check + site audit --resume ce2dcd33-e262-4571-ab2d-d56bb89374e2
 - [ ] Run the full test suite for mariadb
-- [ ] Advanced cache feature to bring the smartness of Static into a dynamic application, idea : a new "cache" config at app level (pushword.yaml) permitting to set "allPages", "pageLevel", "none" (actual) behaviour, a new property for page "bool cache" related to "pageLevel", an async static generation in public/cache of the page (html, gz, ...) wich could be served instead the dynamic page (note : dynamic load the user edit block). Challenge this idea, ask me question if you need.
+- [ ] Advanced cache feature see /AWIP.md
 
-### In progress
+### In progress<>
 
 - [New] When release v1, remove version from composer.json (restore 1.0.0-rc[0-9]+ to \*)
 
