@@ -121,6 +121,10 @@ final class PushwordRouteGenerator
             return false;
         }
 
+        if ($this->apps->sameHost($host ?? $this->apps->getCurrentPage()?->host)) {
+            return false;
+        }
+
         return ! $this->apps->isDefaultHost($host ?? $currentHost);
     }
 

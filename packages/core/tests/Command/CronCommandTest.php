@@ -94,18 +94,21 @@ class CronCommandTest extends TestCase
         self::assertSame(Command::SUCCESS, $result);
     }
 
-    /** @param Page[] $pages */
+    /**
+     * @param Page[]                                    $pages
+     * @param array<array{command: string, on: string}> $scheduledCommands
+     */
     private function makeCommand(
         array $pages,
         array $scheduledCommands,
         ?BackgroundTaskDispatcherInterface $dispatcher = null,
     ): CronCommand {
-        $pageRepo = $this->createStub(PageRepository::class);
+        $pageRepo = self::createStub(PageRepository::class);
         $pageRepo->method('findNewlyPublishedSince')->willReturn($pages);
 
         return new CronCommand(
             $pageRepo,
-            $dispatcher ?? $this->createStub(BackgroundTaskDispatcherInterface::class),
+            $dispatcher ?? self::createStub(BackgroundTaskDispatcherInterface::class),
             $this->varDir,
             $scheduledCommands,
         );

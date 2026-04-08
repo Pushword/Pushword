@@ -41,6 +41,7 @@
 
 /* Prevent prose from overflowing viewport on small screens */
 .prose {
+  max-width: var(--prose-max-width, min(65ch, 100%));
   /*max-width: min(65ch, 100%);*/
 }
 
