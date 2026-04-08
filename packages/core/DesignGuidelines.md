@@ -442,10 +442,11 @@ Use Alpine.js for UI state (toggles, dropdowns, modals, tabs, accordions). Don't
 
 | Rule                                    | Details                                                                          |
 | --------------------------------------- | -------------------------------------------------------------------------------- |
+| **Never use `@` shorthand**             | Use `x-on:click` not `@click`, `x-bind:class` not `:class`. The static generator strips `@`-prefixed attributes. |
 | **Always pair `x-show` with `x-cloak`** | Prevents flash of content before Alpine initializes                              |
 | **Always add ARIA attributes**          | `aria-expanded`, `aria-controls`, `aria-haspopup`, `role` — never skip these     |
-| **Escape key closes overlays**          | `@keydown.escape.window="open = false"` on dropdowns and modals                  |
-| **Click outside closes**                | `@click.outside="open = false"` on dropdown menus                                |
+| **Escape key closes overlays**          | `x-on:keydown.escape.window="open = false"` on dropdowns and modals              |
+| **Click outside closes**                | `x-on:click.outside="open = false"` on dropdown menus                            |
 | **Focus trap for modals**               | Use `x-trap.noscroll.inert` — never build a modal without it                     |
 | **Teleport modals**                     | `x-teleport="body"` to avoid z-index issues                                     |
 | **Transitions respect motion**          | `motion-reduce:transition-none` on animated elements                             |
@@ -566,10 +567,10 @@ Before shipping any screen:
 **Alpine.js (when used)**
 
 - [ ] `x-cloak` added to all `x-show` elements
-- [ ] Dropdowns/modals have `@keydown.escape` handler
+- [ ] Dropdowns/modals have `x-on:keydown.escape` handler
 - [ ] Modals use `x-trap.noscroll.inert` from Focus plugin
 - [ ] Modals have `role="dialog"` + `aria-modal="true"` + `aria-labelledby`
-- [ ] Toggle buttons have `:aria-expanded` binding
+- [ ] Toggle buttons have `x-bind:aria-expanded` binding
 - [ ] Tabs use proper `role="tablist"` / `role="tab"` / `role="tabpanel"` + arrow key navigation
 - [ ] `x-teleport="body"` used for modals to avoid z-index issues
 
