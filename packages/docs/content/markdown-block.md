@@ -24,6 +24,20 @@ Advanced content types such as **galleries**, **attachments**, or **page lists**
 
 _You can use twig syntax inside markdown inline code or markdown code block, it will not be parsed by twig. If you want to use twig inside inline code or code block, use html directly (`<pre></pre>`)._
 
+## Tables
+
+Standard GFM table syntax is supported. You can merge cells horizontally using `->` as the cell content — it merges into the preceding cell via `colspan`.
+
+```markdown
+| Service         | Identifiant | ->             |
+| --------------- | ----------- | -------------- |
+| Authentication  | auth        | oauth.provider |
+```
+
+Renders as a table where "Identifiant" spans two columns. Multiple `->` cells can follow each other to span more columns.
+
+_Note: `->` in the first cell of a row has no effect (no preceding cell to merge into)._
+
 ## Example
 
 ```markdown

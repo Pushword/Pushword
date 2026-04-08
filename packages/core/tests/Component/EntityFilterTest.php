@@ -187,6 +187,18 @@ class EntityFilterTest extends KernelTestCase
         self::assertStringNotContainsString('date(M)', $result);
     }
 
+    public function testColspanInPageContent(): void
+    {
+        $content = "## Services\n\n| Service | Identifiant | -> |\n|---|---|---|\n| Auth | auth.service | auth.provider |";
+
+        $page = $this->getPage($content);
+        $body = $this->getContentExtension()->mainContentSplit($page)->getContent();
+
+        self::assertStringContainsString('<th colspan="2">Identifiant</th>', $body);
+        self::assertStringNotContainsString('-&gt;', $body);
+        self::assertStringContainsString('<td>Auth</td>', $body);
+    }
+
     private function getContentReadyForToc(): string
     {
         return "my intro...\n## First Title\nfirst paragraph\n## Second Title\nsecond paragraph";

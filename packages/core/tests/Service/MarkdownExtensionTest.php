@@ -181,6 +181,52 @@ class MarkdownExtensionTest extends KernelTestCase
         self::assertStringNotContainsString('date(W)', $result);
     }
 
+    // ===== Tests du colspan dans les tableaux =====
+
+    public function testColspanInThead(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| Service | Identifiant | -> |\n|---|---|---|\n| A | B | C |");
+
+        self::assertStringContainsString('colspan="2"', $result);
+        self::assertStringContainsString('<th colspan="2">Identifiant</th>', $result);
+        self::assertStringNotContainsString('-&gt;', $result);
+    }
+
+    public function testColspanFullRowThead(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| A | -> | -> |\n|---|---|---|\n| 1 | 2 | 3 |");
+
+        self::assertStringContainsString('<th colspan="3">A</th>', $result);
+    }
+
+    public function testColspanInTbody(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| A | B | C |\n|---|---|---|\n| X | -> | Z |");
+
+        self::assertStringContainsString('<td colspan="2">X</td>', $result);
+        self::assertStringContainsString('<td>Z</td>', $result);
+    }
+
+    public function testColspanArrowFirstCellIgnored(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| -> | A | B |\n|---|---|---|\n| 1 | 2 | 3 |");
+
+        // Arrow in first position has no preceding cell — kept as-is
+        self::assertStringNotContainsString('colspan', $result);
+    }
+
+    public function testNoColspanWithoutArrow(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| A | B | C |\n|---|---|---|\n| 1 | 2 | 3 |");
+
+        self::assertStringNotContainsString('colspan', $result);
+    }
+
     // ===== Tests de non-conversion dans le code =====
 
     public function testNotConvertedInInlineCode(): void
