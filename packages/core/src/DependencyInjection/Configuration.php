@@ -249,6 +249,19 @@ final class Configuration implements ConfigurationInterface
           )
           ->end()
 
+          // Scheduled commands
+          ->arrayNode('scheduled_commands')
+          ->arrayPrototype()
+              ->children()
+                  ->scalarNode('command')->isRequired()->cannotBeEmpty()->end()
+                  ->scalarNode('on')->isRequired()->cannotBeEmpty()
+                      ->info('"publish" or "cron: <expression>"')
+                  ->end()
+              ->end()
+          ->end()
+          ->defaultValue([])
+          ->end()
+
           // PDF optimization
           ->enumNode('pdf_preset')
           ->values(['screen', 'ebook', 'printer', 'prepress'])

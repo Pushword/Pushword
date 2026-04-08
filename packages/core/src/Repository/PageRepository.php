@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Core\Repository;
 
 use DateTime;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\Selectable;
@@ -183,6 +184,19 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             ->setParameter('now', new DateTime(), 'datetime')
             ->andWhere($alias.'.slug <> :cheatsheet')
             ->setParameter('cheatsheet', PageCheatSheetCrudController::CHEATSHEET_SLUG);
+    }
+
+    /** @return Page[] */
+    public function findNewlyPublishedSince(DateTimeInterface $since): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.publishedAt IS NOT NULL')
+            ->andWhere('p.publishedAt > :since')
+            ->andWhere('p.publishedAt <= :now')
+            ->setParameter('since', $since, 'datetime')
+            ->setParameter('now', new DateTime(), 'datetime')
+            ->getQuery()
+            ->getResult();
     }
 
     /**

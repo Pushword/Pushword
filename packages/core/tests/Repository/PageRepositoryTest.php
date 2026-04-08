@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\Controller;
 
+use DateTime;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -48,5 +49,21 @@ class PageRepositoryTest extends KernelTestCase
         // should return null, not the page with that ID
         $result = $pageRepo->getPage($existingId, $existingPage->host);
         self::assertNull($result, 'getPage() with numeric slug should not fallback to matching by ID');
+    }
+
+    public function testFindNewlyPublishedSince(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        // Pages published before 1 hour ago should not appear
+        $pages = $pageRepo->findNewlyPublishedSince(new DateTime('+1 hour'));
+        self::assertCount(0, $pages);
+
+        // All currently published pages should appear if since is far in the past
+        $allPublished = $pageRepo->findNewlyPublishedSince(new DateTime('2000-01-01'));
+        self::assertGreaterThan(0, \count($allPublished));
     }
 }

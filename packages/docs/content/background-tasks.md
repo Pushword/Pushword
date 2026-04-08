@@ -85,6 +85,46 @@ pushword:
     background_task_handler: messenger
 ```
 
+## Scheduled Commands
+
+Configure commands that run automatically on specific triggers: when a scheduled page becomes published, or on a cron schedule.
+
+```yaml
+# config/packages/pushword.yaml
+pushword:
+    scheduled_commands:
+        - { command: 'pw:static -i', on: 'publish' }
+        - { command: 'pw:static', on: 'cron: 0 4 * * *' }
+```
+
+Triggers:
+- `publish` — runs when a page with a future `publishedAt` date becomes published
+- `cron: <expression>` — runs on a cron schedule (e.g., `cron: 0 4 * * *` for daily at 4am)
+
+### With Messenger + Scheduler (recommended)
+
+Everything is automatic — no system cron needed. Install the Scheduler component:
+
+```bash
+composer require symfony/scheduler
+```
+
+Then consume the Pushword schedule alongside your async transport:
+
+```bash
+php bin/console messenger:consume async scheduler_pushword
+```
+
+### Without Messenger (process mode)
+
+For `on: publish` triggers, set up a system cron to run `pw:cron` periodically:
+
+```cron
+*/5 * * * * cd /path/to/project && php bin/console pw:cron
+```
+
+For `on: cron:` triggers in process mode, you need to set up the corresponding system crons manually.
+
 ## Media Maintenance Commands
 
 These commands are run manually to maintain media consistency:
