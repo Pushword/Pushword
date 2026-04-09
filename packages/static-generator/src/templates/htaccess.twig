@@ -150,8 +150,8 @@ RewriteRule ^\.Caddyfile$ - [F]
     Header set Connection keep-alive
     FileETag Size
 
-    # HTML, TXT, XML and others: 1 hour
-    Header set Cache-Control "max-age=3600, public"
+    # HTML, TXT, XML and others: {{ html_max_age }}s{% if html_swr > 0 %} + stale-while-revalidate={{ html_swr }}s{% endif %}
+    Header set Cache-Control "max-age={{ html_max_age }}, public{% if html_swr > 0 %}, stale-while-revalidate={{ html_swr }}{% endif %}"
 
     # Assets: 1 year
     <filesMatch "\.(ico|pdf|flv|jpg|JPG|jpeg|png|gif|webp|svg|eot|ttf|woff|woff2|js|css)$">

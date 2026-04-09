@@ -27,6 +27,8 @@ class Configuration implements ConfigurationInterface
         'static_assets',
         'static_assets_clean',
         'static_copy',
+        'static_html_max_age',
+        'static_html_stale_while_revalidate',
     ];
 
     /**
@@ -139,6 +141,14 @@ class Configuration implements ConfigurationInterface
             ->variableNode('static_copy')
                 ->info('Deprecated: use static_assets instead')
                 ->defaultValue(self::DEFAULT_ASSETS)
+            ->end()
+            ->integerNode('static_html_max_age')
+                ->info('Cache TTL for HTML pages in seconds (default: 10800 = 3 hours)')
+                ->defaultValue(10800)
+            ->end()
+            ->integerNode('static_html_stale_while_revalidate')
+                ->info('stale-while-revalidate TTL in seconds, 0 to disable (default: 3600 = 1 hour)')
+                ->defaultValue(3600)
             ->end()
         ->end();
 

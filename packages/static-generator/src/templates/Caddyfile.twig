@@ -11,8 +11,8 @@
 	@assets path *.ico *.pdf *.flv *.jpg *.jpeg *.png *.gif *.webp *.svg *.eot *.ttf *.woff *.woff2 *.js *.css
 	header @assets Cache-Control "max-age=31536000, public"
 
-	# Default: 1 hour
-	header Cache-Control "max-age=3600, public"
+	# Default: {{ html_max_age }}s{% if html_swr > 0 %} + stale-while-revalidate={{ html_swr }}s{% endif %}
+	header Cache-Control "max-age={{ html_max_age }}, public{% if html_swr > 0 %}, stale-while-revalidate={{ html_swr }}{% endif %}"
 }
 
 (security_{{ domain_snake }}) {

@@ -70,6 +70,24 @@ static_assets: ['assets', 'bundles']
 
 The old name `static_copy` still works as a deprecated alias.
 
+### `static_html_max_age`
+
+Cache TTL for HTML pages (in seconds). Default: `10800` (3 hours).
+
+```yaml
+static_html_max_age: 86400 # 24 hours
+```
+
+### `static_html_stale_while_revalidate`
+
+Adds `stale-while-revalidate` to the `Cache-Control` header, allowing CDNs and browsers to serve stale content while revalidating in the background. Set to `0` to disable. Default: `3600` (1 hour).
+
+```yaml
+static_html_stale_while_revalidate: 0 # disabled
+```
+
+Both settings apply to HTML pages only. Static assets (images, JS, CSS, fonts) always use a 1-year TTL.
+
 ## Command
 
 ```shell

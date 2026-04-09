@@ -17,6 +17,8 @@ class HtaccessGenerator extends PageGenerator
             'domain' => $this->app->getMainHost(),
             'redirections' => $this->getRedirections(),
             'image_fallback_order' => $this->getImageFallbackOrder(),
+            'html_max_age' => $this->app->get('static_html_max_age') ?? 10800,
+            'html_swr' => $this->app->get('static_html_stale_while_revalidate') ?? 3600,
         ]);
         $this->filesystem->dumpFile($this->getStaticDir().'/.htaccess', $htaccess);
     }

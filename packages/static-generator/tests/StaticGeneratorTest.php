@@ -23,6 +23,7 @@ use Pushword\StaticGenerator\Generator\Compressor;
 use Pushword\StaticGenerator\Generator\CopierGenerator;
 use Pushword\StaticGenerator\Generator\ErrorPageGenerator;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
+use Pushword\StaticGenerator\Generator\CaddyfileGenerator;
 use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PageGenerator;
@@ -272,7 +273,25 @@ class StaticGeneratorTest extends KernelTestCase
 
         $generator->generate('localhost.dev');
 
+        $htaccess = (string) file_get_contents($this->getStaticDir().'/.htaccess');
         self::assertFileExists($this->getStaticDir().'/.htaccess');
+        self::assertStringContainsString('max-age=10800', $htaccess);
+        self::assertStringContainsString('stale-while-revalidate=3600', $htaccess);
+    }
+
+    public function testGenerateCaddyfile(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $generator = $this->getGenerator(CaddyfileGenerator::class);
+
+        $generator->generate('localhost.dev');
+
+        $caddyfile = (string) file_get_contents($this->getStaticDir().'/.Caddyfile');
+        self::assertFileExists($this->getStaticDir().'/.Caddyfile');
+        self::assertStringContainsString('max-age=10800', $caddyfile);
+        self::assertStringContainsString('stale-while-revalidate=3600', $caddyfile);
     }
 
     public function testGenerateCNAME(): void

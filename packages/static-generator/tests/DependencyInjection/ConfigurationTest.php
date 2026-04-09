@@ -24,6 +24,31 @@ class ConfigurationTest extends KernelTestCase
         self::assertSame(Configuration::DEFAULT_ASSETS, $apps->get()->get('static_copy'));
     }
 
+    public function testCacheDefaults(): void
+    {
+        $config = new Configuration();
+        $tree = $config->getConfigTreeBuilder()->buildTree();
+        /** @var array{static_html_max_age: int, static_html_stale_while_revalidate: int} $finalized */
+        $finalized = $tree->finalize($tree->normalize([]));
+
+        self::assertSame(10800, $finalized['static_html_max_age']);
+        self::assertSame(3600, $finalized['static_html_stale_while_revalidate']);
+    }
+
+    public function testCacheCanBeOverridden(): void
+    {
+        $config = new Configuration();
+        $tree = $config->getConfigTreeBuilder()->buildTree();
+        /** @var array{static_html_max_age: int, static_html_stale_while_revalidate: int} $finalized */
+        $finalized = $tree->finalize($tree->normalize([
+            'static_html_max_age' => 86400,
+            'static_html_stale_while_revalidate' => 0,
+        ]));
+
+        self::assertSame(86400, $finalized['static_html_max_age']);
+        self::assertSame(0, $finalized['static_html_stale_while_revalidate']);
+    }
+
     public function testStaticSymlinkAcceptsBool(): void
     {
         $config = new Configuration();
