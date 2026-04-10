@@ -54,7 +54,8 @@ final readonly class ImageManagerCommand
 
         $lock = null;
         if (! $noLock) {
-            $lock = $this->lockFactory->createLock('pw:image:cache');
+            $lockKey = null !== $mediaName ? 'pw:image:cache:'.md5($mediaName) : 'pw:image:cache';
+            $lock = $this->lockFactory->createLock($lockKey);
             if (! $lock->acquire(blocking: false)) {
                 $io->info('Another instance of pw:image:cache is already running. Skipping.');
 
