@@ -4,4 +4,7 @@ framework:
     mailer:
         dsn: "null://null"
     session:
+        # Per-worker session save_path so parallel tests can't trip over each
+        # other's MockFileSessionStorage files.
         storage_factory_id: "session.storage.factory.mock_file"
+        save_path: "%env(PUSHWORD_TEST_VAR_DIR)%/sessions"

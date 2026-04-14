@@ -94,9 +94,11 @@ class StaticGeneratorTest extends KernelTestCase
         $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
         $siteConfig->setCustomProperty('static_dir', $this->isolatedStaticDir);
 
-        // Clean up shared PID file to prevent cross-worker interference
-        $pidFile = self::getContainer()->getParameter('kernel.project_dir').'/var/static-generator.pid';
-        new Filesystem()->remove($pidFile);
+        // Clean up any leftover PID files in the per-worker var dir
+        $varDir = (string) getenv('PUSHWORD_TEST_VAR_DIR');
+        if ('' !== $varDir) {
+            new Filesystem()->remove(glob($varDir.'/static-generator*.pid') ?: []);
+        }
     }
 
     private function getStaticDir(): string

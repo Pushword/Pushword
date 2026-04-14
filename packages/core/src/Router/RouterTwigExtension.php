@@ -5,6 +5,7 @@ namespace Pushword\Core\Router;
 use Exception;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Twig\Attribute\AsTwigFunction;
 
 final readonly class RouterTwigExtension
@@ -12,6 +13,7 @@ final readonly class RouterTwigExtension
     public function __construct(
         private PushwordRouteGenerator $router,
         private PageRepository $pageRepository,
+        private SiteRegistry $siteRegistry,
     ) {
     }
 
@@ -46,7 +48,12 @@ final readonly class RouterTwigExtension
         $arg4 = $args[3] ?? null;
         $host ??= \is_string($arg4) ? $arg4 : null;
 
-        $page = $slug instanceof Page ? $slug : $this->pageRepository->getPageBySlug($slug, $host ?? '');
+        // Resolve host from the current site when not explicitly provided.
+        // Without this, getPageBySlug would fall back to a point query on the empty-host
+        // sentinel and bypass the repository's per-host warmup cache.
+        $host ??= $this->siteRegistry->getMainHost() ?? '';
+
+        $page = $slug instanceof Page ? $slug : $this->pageRepository->getPageBySlug($slug, $host);
 
         if (null !== $page && $page->hasRedirection()) {
             $redirectionUrl = $page->getRedirectionUrl();

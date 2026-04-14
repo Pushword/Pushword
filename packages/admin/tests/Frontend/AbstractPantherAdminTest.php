@@ -168,19 +168,28 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
 
         self::createUser();
 
-        $client->request('GET', '/login');
+        // Two-step login is flaky under parallel load (intermittent CSRF/session
+        // race causes step 1 to redirect back to the email form). Retry up to 3x.
+        $attempts = 0;
+        while (true) {
+            $client->request('GET', '/login');
+            $this->sleepMs(self::waitShort());
 
-        // Let the page start loading
-        $this->sleepMs(self::waitShort());
+            // Step 1: Enter email
+            $client->waitFor('input[name="email"]', self::timeoutLong());
+            $client->findElement(WebDriverBy::name('email'))->sendKeys('admin@example.tld');
+            $client->findElement(WebDriverBy::cssSelector('button[type="submit"]'))->click();
 
-        // Step 1: Enter email
-        $client->waitFor('input[name="email"]', self::timeoutLong());
+            try {
+                $client->waitFor('input[name="password"]', self::timeoutLong());
 
-        $client->findElement(WebDriverBy::name('email'))->sendKeys('admin@example.tld');
-        $client->findElement(WebDriverBy::cssSelector('button[type="submit"]'))->click();
-
-        // Step 2: Wait for password step and enter password
-        $client->waitFor('input[name="password"]', self::timeoutLong());
+                break;
+            } catch (TimeoutException $e) {
+                if (++$attempts >= 3) {
+                    throw $e;
+                }
+            }
+        }
 
         $client->findElement(WebDriverBy::name('password'))->sendKeys('mySecr3tpAssword');
         $client->findElement(WebDriverBy::cssSelector('button[type="submit"]'))->click();

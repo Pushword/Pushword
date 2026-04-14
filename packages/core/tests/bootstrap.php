@@ -103,7 +103,10 @@ $envVars = [
     'PUSHWORD_TEST_MEDIA_DIR' => '' !== $runId ? $testBaseDir.'/media' : $monoRepoBase.'/packages/skeleton/media',
     'PUSHWORD_TEST_DATABASE_URL' => 'sqlite:///'.$testBaseDir.'/test.db',
     'PUSHWORD_TEST_FLAT_CONTENT_DIR' => '' !== $runId ? $testBaseDir.'/content/_host_' : $monoRepoBase.'/packages/skeleton/content/_host_',
+    'PUSHWORD_TEST_VAR_DIR' => $testBaseDir.'/var',
 ];
+$fs->mkdir($testBaseDir.'/var');
+$fs->mkdir($testBaseDir.'/var/sessions');
 foreach ($envVars as $key => $value) {
     setTestEnv($key, $value);
 }

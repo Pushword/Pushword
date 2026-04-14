@@ -70,20 +70,30 @@ abstract class AbstractAdminTestClass extends PantherTestCase
 
         self::createUser();
 
-        // Step 1: Enter email
-        $crawler = $client->request(Request::METHOD_GET, '/login');
-        $form = $crawler->filter('[method=post]')->form();
-        $form['email'] = 'admin@example.tld';
-        $client->submit($form);
+        // The two-step HTTP login flow is flaky under parallel test load (intermittent
+        // CSRF/session redirect → step 1 page rendered again → "Unreachable field 'password'").
+        // Retry once if step 2 didn't reach the password form.
+        $attempts = 0;
+        while (true) {
+            $crawler = $client->request(Request::METHOD_GET, '/login');
+            $form = $crawler->filter('[method=post]')->form();
+            $form['email'] = 'admin@example.tld';
+            $client->submit($form);
 
-        // Step 2: Enter password
-        $crawler = $client->followRedirect();
-        $form = $crawler->filter('[method=post]')->form();
-        $form['email'] = 'admin@example.tld';
-        $form['password'] = 'mySecr3tpAssword';
-        $client->submit($form);
+            $crawler = $client->followRedirect();
+            if ($crawler->filter('input[name="password"]')->count() > 0) {
+                $form = $crawler->filter('[method=post]')->form();
+                $form['email'] = 'admin@example.tld';
+                $form['password'] = 'mySecr3tpAssword';
+                $client->submit($form);
 
-        return $client;
+                return $client;
+            }
+
+            if (++$attempts >= 3) {
+                throw new RuntimeException('Login failed: password form not reached after '.$attempts.' attempts.');
+            }
+        }
     }
 
     /**
