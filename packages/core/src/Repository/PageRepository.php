@@ -15,6 +15,7 @@ use LogicException;
 use Pushword\Admin\Controller\PageCheatSheetCrudController;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\ValueObject\PageRedirection;
 use RuntimeException;
 
 /**
@@ -35,6 +36,17 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
     /** @var array<string, true> */
     private array $warmedHosts = [];
+
+    /**
+     * Lightweight URI resolution cache. Holds only the data the page() Twig
+     * function needs to produce a URL, without hydrating full Page entities.
+     *
+     * @var array<string, array<string, array{id: int, host: string, slug: string, redirectUrl: ?string, redirectCode: ?int}>>
+     */
+    private array $slugLightCache = [];
+
+    /** @var array<string, true> */
+    private array $warmedLightHosts = [];
 
     public function __construct(
         ManagerRegistry $registry,
@@ -65,8 +77,10 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
-     * Get a page by slug with caching support.
-     * Uses the warmed cache if available, otherwise falls back to single query.
+     * Get a page by slug with per-slug caching. Does NOT auto-warm the full-entity
+     * cache: callers that need to preload an entire host should call warmupSlugCache()
+     * explicitly (static generation, page scanning). The hot render path goes through
+     * resolvePageUriTarget() instead, which uses a scalar light cache.
      */
     public function getPageBySlug(string $slug, string $host): ?Page
     {
@@ -74,19 +88,92 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             return $this->slugCache[$host][$slug] ?? null;
         }
 
-        // Empty host is a sentinel used by RouterTwigExtension when no host can be
-        // resolved. Do not warm up: findByHost('') would load every page across every host.
-        if ('' === $host) {
-            return $this->findOneBy(['slug' => $slug, 'host' => $host]);
+        if (isset($this->slugCache[$host][$slug])) {
+            return $this->slugCache[$host][$slug];
         }
 
-        $this->warmupSlugCache($host);
+        $page = $this->findOneBy(['slug' => $slug, 'host' => $host]);
 
-        return $this->slugCache[$host][$slug] ?? null;
+        if (null !== $page) {
+            $this->slugCache[$host][$slug] = $page;
+        }
+
+        return $page;
     }
 
     /**
-     * Check if a host's pages are fully loaded in cache.
+     * Populate the lightweight URI cache for a host with a single scalar query.
+     * Non-redirect rows transfer a NULL for the redirect column, so payload size
+     * on a 1300-page host is only a few dozen KB regardless of main_content size.
+     */
+    public function warmupSlugCacheLight(string $host): void
+    {
+        if (isset($this->warmedLightHosts[$host])) {
+            return;
+        }
+
+        $meta = $this->getClassMetadata();
+        $table = $meta->getTableName();
+        $idCol = $meta->getColumnName('id');
+        $slugCol = $meta->getColumnName('slug');
+        $hostCol = $meta->getColumnName('host');
+        $mainContentCol = $meta->getColumnName('mainContent');
+
+        $sql = \sprintf(
+            'SELECT %1$s AS id, %2$s AS slug, CASE WHEN %3$s LIKE %5$s THEN %3$s ELSE NULL END AS redirect_content FROM %4$s WHERE %6$s = ?',
+            $idCol,
+            $slugCol,
+            $mainContentCol,
+            $table,
+            "'Location:%'",
+            $hostCol,
+        );
+
+        /** @var list<array{id: int|string, slug: string, redirect_content: ?string}> $rows */
+        $rows = $this->getEntityManager()->getConnection()->fetchAllAssociative($sql, [$host]);
+
+        $this->slugLightCache[$host] = [];
+        foreach ($rows as $row) {
+            $slug = $row['slug'];
+            $redirectContent = $row['redirect_content'];
+            $redirection = null !== $redirectContent ? PageRedirection::fromContent($redirectContent) : null;
+
+            $this->slugLightCache[$host][$slug] = [
+                'id' => (int) $row['id'],
+                'host' => $host,
+                'slug' => $slug,
+                'redirectUrl' => $redirection?->url,
+                'redirectCode' => $redirection?->code,
+            ];
+        }
+
+        $this->warmedLightHosts[$host] = true;
+    }
+
+    /**
+     * Lightweight URI resolution entry point used by the page() Twig function.
+     * Returns only the data needed to produce a URL (no full Page hydration).
+     * First call per host triggers warmupSlugCacheLight(); subsequent calls are
+     * plain array reads. Returns null for unknown slugs and for the empty-host
+     * sentinel (which the caller resolves via SiteRegistry::getMainHost()).
+     *
+     * @return ?array{id: int, host: string, slug: string, redirectUrl: ?string, redirectCode: ?int}
+     */
+    public function resolvePageUriTarget(string $slug, string $host): ?array
+    {
+        if ('' === $host) {
+            return null;
+        }
+
+        if (! isset($this->warmedLightHosts[$host])) {
+            $this->warmupSlugCacheLight($host);
+        }
+
+        return $this->slugLightCache[$host][$slug] ?? null;
+    }
+
+    /**
+     * Check if a host's full Page entities are loaded in cache.
      */
     public function isHostWarmed(string $host): bool
     {
@@ -94,13 +181,23 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
-     * Clear the internal slug cache.
+     * Check if a host's lightweight URI cache is populated.
+     */
+    public function isHostLightWarmed(string $host): bool
+    {
+        return isset($this->warmedLightHosts[$host]);
+    }
+
+    /**
+     * Clear all internal slug caches.
      * Called automatically when EntityManager::clear() is invoked.
      */
     public function onClear(): void
     {
         $this->slugCache = [];
         $this->warmedHosts = [];
+        $this->slugLightCache = [];
+        $this->warmedLightHosts = [];
     }
 
     public function create(string $host): Page

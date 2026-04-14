@@ -51,7 +51,63 @@ class PageRepositoryTest extends KernelTestCase
         self::assertNull($result, 'getPage() with numeric slug should not fallback to matching by ID');
     }
 
-    public function testGetPageBySlugAutoWarmsHost(): void
+    public function testResolvePageUriTargetWarmsLightCache(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $homepage = $pageRepo->findOneBy(['slug' => 'homepage']);
+        self::assertNotNull($homepage);
+        $host = $homepage->host;
+
+        $em->clear();
+        self::assertFalse($pageRepo->isHostLightWarmed($host));
+        self::assertFalse($pageRepo->isHostWarmed($host), 'full-entity cache must stay cold');
+
+        $target = $pageRepo->resolvePageUriTarget('homepage', $host);
+        self::assertNotNull($target);
+        self::assertSame('homepage', $target['slug']);
+        self::assertSame($host, $target['host']);
+        self::assertNull($target['redirectUrl']);
+        self::assertTrue($pageRepo->isHostLightWarmed($host));
+        self::assertFalse($pageRepo->isHostWarmed($host), 'light path must not touch full-entity cache');
+
+        // Unknown slug on a warmed host returns null without extra queries.
+        self::assertNull($pageRepo->resolvePageUriTarget('this-slug-does-not-exist', $host));
+
+        // EM clear resets the light cache; next call re-warms.
+        $em->clear();
+        self::assertFalse($pageRepo->isHostLightWarmed($host));
+        self::assertNotNull($pageRepo->resolvePageUriTarget('homepage', $host));
+        self::assertTrue($pageRepo->isHostLightWarmed($host));
+
+        // Empty host sentinel: returns null without warming.
+        $em->clear();
+        self::assertNull($pageRepo->resolvePageUriTarget('homepage', ''));
+        self::assertFalse($pageRepo->isHostLightWarmed(''));
+    }
+
+    public function testResolvePageUriTargetReturnsRedirectUrl(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $redirectPage = $pageRepo->findOneBy(['slug' => 'pushword']);
+        self::assertNotNull($redirectPage, 'redirection fixture (slug=pushword) missing');
+
+        $em->clear();
+        $target = $pageRepo->resolvePageUriTarget('pushword', $redirectPage->host);
+
+        self::assertNotNull($target);
+        self::assertSame('https://pushword.piedweb.com', $target['redirectUrl']);
+        self::assertSame(301, $target['redirectCode']);
+    }
+
+    public function testGetPageBySlugDoesNotAutoWarmFullCache(): void
     {
         self::bootKernel();
 
@@ -67,27 +123,10 @@ class PageRepositoryTest extends KernelTestCase
 
         $page = $pageRepo->getPageBySlug('homepage', $host);
         self::assertNotNull($page);
-        self::assertSame('homepage', $page->getSlug());
-        self::assertTrue($pageRepo->isHostWarmed($host), 'First miss must warm up the host');
+        self::assertFalse($pageRepo->isHostWarmed($host), 'getPageBySlug must not auto-warm the full-entity cache');
 
-        // Second call on the same host serves from cache (identity: same object instance).
-        $again = $pageRepo->getPageBySlug('homepage', $host);
-        self::assertSame($page, $again);
-
-        // Unknown slug on a warmed host returns null without falling back to a query.
-        self::assertNull($pageRepo->getPageBySlug('this-slug-does-not-exist', $host));
-        self::assertTrue($pageRepo->isHostWarmed($host));
-
-        // EM clear resets the warmup state; next lookup re-warms.
-        $em->clear();
-        self::assertFalse($pageRepo->isHostWarmed($host));
-        self::assertNotNull($pageRepo->getPageBySlug('homepage', $host));
-        self::assertTrue($pageRepo->isHostWarmed($host));
-
-        // Empty host sentinel must not trigger warmup (would load all hosts).
-        $em->clear();
-        self::assertNull($pageRepo->getPageBySlug('this-slug-does-not-exist', ''));
-        self::assertFalse($pageRepo->isHostWarmed(''));
+        // Second call on the same slug is served from per-slug cache.
+        self::assertSame($page, $pageRepo->getPageBySlug('homepage', $host));
     }
 
     public function testFindNewlyPublishedSince(): void

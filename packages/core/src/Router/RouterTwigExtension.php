@@ -48,27 +48,40 @@ final readonly class RouterTwigExtension
         $arg4 = $args[3] ?? null;
         $host ??= \is_string($arg4) ? $arg4 : null;
 
-        // Resolve host from the current site when not explicitly provided.
-        // Without this, getPageBySlug would fall back to a point query on the empty-host
-        // sentinel and bypass the repository's per-host warmup cache.
+        // Resolve host from the current site when not explicitly provided so the
+        // repository can warm its lightweight URI cache. Without this, resolvePageUriTarget
+        // would short-circuit on the empty-host sentinel.
         $host ??= $this->siteRegistry->getMainHost() ?? '';
 
-        $page = $slug instanceof Page ? $slug : $this->pageRepository->getPageBySlug($slug, $host);
-
-        if (null !== $page && $page->hasRedirection()) {
-            $redirectionUrl = $page->getRedirectionUrl();
-            if (str_starts_with($redirectionUrl, '/')) {
-                $targetSlug = ltrim($redirectionUrl, '/');
-                $targetPage = $this->pageRepository->getPageBySlug($targetSlug, $page->host);
-                if (null !== $targetPage) {
-                    return $this->router->generate($targetPage, $canonical, $pager, $host);
-                }
+        // Page instance: everything is already hydrated, no DB access required.
+        if ($slug instanceof Page) {
+            if ($slug->hasRedirection()) {
+                return $this->resolveRedirection($slug->getRedirectionUrl(), $host, $canonical, $pager);
             }
 
-            return $redirectionUrl;
+            return $this->router->generate($slug, $canonical, $pager, $host);
+        }
+
+        // String slug: resolve via the scalar light cache (no entity hydration).
+        $target = $this->pageRepository->resolvePageUriTarget($slug, $host);
+
+        if (null !== $target && null !== $target['redirectUrl']) {
+            return $this->resolveRedirection($target['redirectUrl'], $host, $canonical, $pager);
         }
 
         return $this->router->generate($slug, $canonical, $pager, $host);
+    }
+
+    private function resolveRedirection(string $redirectionUrl, string $host, bool $canonical, ?int $pager): string
+    {
+        if (str_starts_with($redirectionUrl, '/')) {
+            $targetSlug = ltrim($redirectionUrl, '/');
+            if (null !== $this->pageRepository->resolvePageUriTarget($targetSlug, $host)) {
+                return $this->router->generate($targetSlug, $canonical, $pager, $host);
+            }
+        }
+
+        return $redirectionUrl;
     }
 
     #[AsTwigFunction('is_current_page')]
