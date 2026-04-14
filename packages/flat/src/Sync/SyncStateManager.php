@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Flat\Sync;
 
 use function Safe\json_decode;

@@ -12,6 +12,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 - [ ] Global check + site audit --resume ce2dcd33-e262-4571-ab2d-d56bb89374e2
 - [ ] Run the full test suite for mariadb
 - [ ] Advanced cache feature see /AWIP.md
+- [ ] colspan md with `| -> |` : à intégrer dans l'extension table editor.js
 
 ### In progress<>
 

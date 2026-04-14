@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\Tests\Command;
 
 use DateTime;
@@ -53,7 +51,7 @@ class CronCommandTest extends TestCase
     public function testNoNewlyPublishedPagesDispatchesNothing(): void
     {
         // Initialize timestamp so it's not first run
-        touch($this->varDir.'/pw-cron-last-run', (new DateTime('-1 hour'))->getTimestamp());
+        touch($this->varDir.'/pw-cron-last-run', new DateTime('-1 hour')->getTimestamp());
 
         $dispatcher = $this->createMock(BackgroundTaskDispatcherInterface::class);
         $dispatcher->expects(self::never())->method('dispatch');
@@ -67,7 +65,7 @@ class CronCommandTest extends TestCase
     public function testNewlyPublishedPageDispatchesCommands(): void
     {
         // Initialize timestamp so it's not first run
-        touch($this->varDir.'/pw-cron-last-run', (new DateTime('-1 hour'))->getTimestamp());
+        touch($this->varDir.'/pw-cron-last-run', new DateTime('-1 hour')->getTimestamp());
 
         $page = new Page();
         $page->setPublishedAt(new DateTime('-30 minutes'));

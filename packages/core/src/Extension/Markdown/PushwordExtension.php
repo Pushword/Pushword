@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\Extension\Markdown;
 
 use League\CommonMark\Environment\EnvironmentBuilderInterface;

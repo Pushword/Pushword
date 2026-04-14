@@ -1,6 +1,5 @@
 <?php
 
-declare(strict_types=1);
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\Converter\FlatPropertyConverterInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use Pushword\Core\PushwordCoreBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 

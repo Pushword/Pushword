@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Admin\Controller;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;

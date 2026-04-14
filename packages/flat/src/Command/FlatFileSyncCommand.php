@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Flat\Command;
 
 use Pushword\Core\Service\BackgroundProcessManager;

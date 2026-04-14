@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\AdvancedMainImage\EventSubscriber;
 
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityPersistedEvent;

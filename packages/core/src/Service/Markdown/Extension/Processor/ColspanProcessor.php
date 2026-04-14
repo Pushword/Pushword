@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\Service\Markdown\Extension\Processor;
 
 use League\CommonMark\Event\DocumentParsedEvent;
 use League\CommonMark\Extension\Table\TableCell;
 use League\CommonMark\Extension\Table\TableRow;
 use League\CommonMark\Node\Inline\Text;
+use League\CommonMark\Node\Node;
 use League\CommonMark\Node\NodeIterator;
 
 final class ColspanProcessor
@@ -60,7 +59,7 @@ final class ColspanProcessor
 
     private function isColspanMarker(TableCell $cell): bool
     {
-        /** @var list<\League\CommonMark\Node\Node> $children */
+        /** @var list<Node> $children */
         $children = [...$cell->children()];
         if (1 !== count($children)) {
             return false;

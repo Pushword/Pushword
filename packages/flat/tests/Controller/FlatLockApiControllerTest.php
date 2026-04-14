@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Flat\Tests\Controller;
 
 use Doctrine\ORM\EntityManager;

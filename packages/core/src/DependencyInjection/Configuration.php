@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\DependencyInjection;
 
 use Pushword\Core\Component\EntityFilter\Filter\Date;

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\StaticGenerator\DependencyInjection;
 
 use Pushword\Core\DependencyInjection\ExtensionTrait;

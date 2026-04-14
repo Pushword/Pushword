@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\AdvancedMainImage;
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;

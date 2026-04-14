@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\PageScanner\DependencyInjection;
 
 use Pushword\Core\DependencyInjection\ExtensionTrait;

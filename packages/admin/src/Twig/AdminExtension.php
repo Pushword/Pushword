@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Admin\Twig;
 
 use Pushword\Core\Repository\PageRepository;

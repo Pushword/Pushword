@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 // Used by rector
 use App\Kernel;
 use Symfony\Bundle\FrameworkBundle\Console\Application;

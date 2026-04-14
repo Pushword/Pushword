@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Flat\Importer;
 
 use Doctrine\ORM\EntityManagerInterface;

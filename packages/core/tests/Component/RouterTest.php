@@ -86,6 +86,7 @@ class RouterTest extends KernelTestCase
 
         $page = new Page();
         $page->host = 'pushword.piedweb.com';
+
         $registry->setCurrentPage($page);
 
         self::assertTrue($this->makeRouter()->mayUseCustomPath('pushword.piedweb.com'));
@@ -121,6 +122,7 @@ class RouterTest extends KernelTestCase
         $page = new Page();
         $page->host = 'pushword.piedweb.com';
         $page->setSlug('test-page');
+
         $registry->setCurrentPage($page);
 
         // Should generate /test-page, NOT /pushword.piedweb.com/test-page
@@ -139,6 +141,7 @@ class RouterTest extends KernelTestCase
         $page = new Page();
         $page->host = 'pushword.piedweb.com';
         $page->setSlug('other-page');
+
         $registry->setCurrentPage($page);
 
         // Should keep /pushword.piedweb.com/other-page prefix

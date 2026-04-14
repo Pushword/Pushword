@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\Repository\DQL;
 
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;

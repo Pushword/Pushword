@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Conversation\Entity;
 
 use Doctrine\ORM\Mapping as ORM;

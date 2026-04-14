@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\PageScanner\Command;
 
 use Pushword\Core\Repository\PageRepository;

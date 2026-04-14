@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Conversation\EventSubscriber;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\ControllerMenuItem;

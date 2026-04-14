@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Flat\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;

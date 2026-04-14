@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Flat\DependencyInjection;
 
 use Pushword\Core\DependencyInjection\ExtensionTrait;
