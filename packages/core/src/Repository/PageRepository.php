@@ -117,17 +117,11 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $idCol = $meta->getColumnName('id');
         $slugCol = $meta->getColumnName('slug');
         $hostCol = $meta->getColumnName('host');
-        $mainContentCol = $meta->getColumnName('mainContent');
+        $contentCol = $meta->getColumnName('mainContent');
 
-        $sql = \sprintf(
-            'SELECT %1$s AS id, %2$s AS slug, CASE WHEN %3$s LIKE %5$s THEN %3$s ELSE NULL END AS redirect_content FROM %4$s WHERE %6$s = ?',
-            $idCol,
-            $slugCol,
-            $mainContentCol,
-            $table,
-            "'Location:%'",
-            $hostCol,
-        );
+        $sql = "SELECT $idCol AS id, $slugCol AS slug,"
+            ." CASE WHEN $contentCol LIKE 'Location:%' THEN $contentCol ELSE NULL END AS redirect_content"
+            ." FROM $table WHERE $hostCol = ?";
 
         /** @var list<array{id: int|string, slug: string, redirect_content: ?string}> $rows */
         $rows = $this->getEntityManager()->getConnection()->fetchAllAssociative($sql, [$host]);
