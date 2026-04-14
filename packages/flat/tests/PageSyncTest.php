@@ -318,9 +318,9 @@ MD;
     }
 
     /**
-     * Test 7: Draft pages (unpublished) go to iDraft.csv.
+     * Test 7: Draft pages (unpublished) go to index.draft.csv.
      */
-    public function testDraftPagesExportToIDraftCsv(): void
+    public function testDraftPagesExportToDraftIndexCsv(): void
     {
         /** @var FlatFileContentDirFinder $contentDirFinder */
         $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
@@ -341,9 +341,9 @@ MD;
         // Export
         $this->pageSync->export('localhost.dev', true, $contentDir);
 
-        // Verify draft is in iDraft.csv, not index.csv
+        // Verify draft is in index.draft.csv, not index.csv
         $indexCsvPath = $contentDir.'/index.csv';
-        $draftCsvPath = $contentDir.'/iDraft.csv';
+        $draftCsvPath = $contentDir.'/index.draft.csv';
 
         self::assertFileExists($indexCsvPath);
         self::assertFileExists($draftCsvPath);
@@ -352,7 +352,7 @@ MD;
         $draftContent = file_get_contents($draftCsvPath);
 
         self::assertStringNotContainsString('draft-page-test', $indexContent, 'Draft should not be in index.csv');
-        self::assertStringContainsString('draft-page-test', $draftContent, 'Draft should be in iDraft.csv');
+        self::assertStringContainsString('draft-page-test', $draftContent, 'Draft should be in index.draft.csv');
 
         // Cleanup
         $this->em->remove($draftPage);

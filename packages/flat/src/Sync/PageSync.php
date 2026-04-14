@@ -212,7 +212,7 @@ final class PageSync
         $app = $this->resolveApp($host);
         $targetDir = $exportDir ?? $this->contentDirFinder->get($app->getMainHost());
 
-        // Export pages (.md files + index.csv + iDraft.csv)
+        // Export pages (.md files + index.csv + index.draft.csv)
         $this->pageExporter->exportDir = $targetDir;
         $this->pageExporter->exportPages($force);
 

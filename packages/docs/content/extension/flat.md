@@ -252,7 +252,7 @@ Non-`.md` files (`.txt`, `.csv`, etc.) do NOT influence page auto-detection. Onl
 2. **Markdown import**: all `.md` files are parsed (YAML frontmatter + body)
 3. **Deferred properties**: `parentPage`, `translations`, `extendedPage` are resolved after all pages exist
 4. **Deletion**: pages in DB with no matching `.md` file AND no matching `redirection.csv` row are **deleted**
-5. **Index regeneration**: `index.csv` / `iDraft.csv` are regenerated to reflect DB state
+5. **Index regeneration**: `index.csv` / `index.draft.csv` are regenerated to reflect DB state
 
 **Important behaviors:**
 
@@ -265,7 +265,7 @@ Non-`.md` files (`.txt`, `.csv`, etc.) do NOT influence page auto-detection. Onl
 
 1. Each page is exported as a `.md` file with YAML frontmatter
 2. Pages with redirections go to `redirection.csv` (their `.md` files are deleted)
-3. Published pages are listed in `index.csv`, drafts in `iDraft.csv`
+3. Published pages are listed in `index.csv`, drafts in `index.draft.csv`
 4. **Smart skip**: if exported content matches existing file content, the file is not rewritten
 5. File `mtime` is synced to `page.updatedAt` to prevent false freshness detection on next auto run
 
@@ -470,7 +470,7 @@ Here is what happens for typical editing workflows after running `pw:flat:sync -
 
 #### Pages
 
-- **Create a new `.md` file** — a new page is created in the database. It appears in `index.csv` (or `iDraft.csv` if `publishedAt: draft`).
+- **Create a new `.md` file** — a new page is created in the database. It appears in `index.csv` (or `index.draft.csv` if `publishedAt: draft`).
 - **Edit a `.md` file** — the page is updated in the database (the file's `mtime` must be newer than the page's `updatedAt`).
 - **Delete a `.md` file** — the page is **deleted from the database**. Its row is removed from `index.csv`.
 - **Rename a `.md` file** — the old page is deleted and a new one is created with the slug derived from the new filename. To keep the same page, use the `slug` property in frontmatter instead.

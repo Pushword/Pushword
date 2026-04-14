@@ -24,7 +24,7 @@ final class PageExporter
 {
     public const string INDEX_FILE = 'index.csv';
 
-    public const string DRAFT_INDEX_FILE = 'iDraft.csv';
+    public const string DRAFT_INDEX_FILE = 'index.draft.csv';
 
     public string $exportDir = '';
 
@@ -179,7 +179,7 @@ final class PageExporter
             $this->exportIndexForLocale($localePages, $filename);
         }
 
-        // Export draft pages to iDraft.csv
+        // Export draft pages to index.draft.csv
         foreach ($draftsByLocale as $locale => $localePages) {
             $filename = $this->getIndexFilename($locale, $defaultLocale, self::DRAFT_INDEX_FILE);
             $this->exportIndexForLocale($localePages, $filename);
