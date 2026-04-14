@@ -70,28 +70,19 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      */
     public function getPageBySlug(string $slug, string $host): ?Page
     {
-        // Check if host is warmed up - use cache
         if (isset($this->warmedHosts[$host])) {
             return $this->slugCache[$host][$slug] ?? null;
         }
 
-        // Check if this specific slug is cached
-        if (isset($this->slugCache[$host][$slug])) {
-            return $this->slugCache[$host][$slug];
+        // Empty host is a sentinel used by RouterTwigExtension when no host can be
+        // resolved. Do not warm up: findByHost('') would load every page across every host.
+        if ('' === $host) {
+            return $this->findOneBy(['slug' => $slug, 'host' => $host]);
         }
 
-        // Fallback to single query and cache the result
-        $page = $this->findOneBy(['slug' => $slug, 'host' => $host]);
+        $this->warmupSlugCache($host);
 
-        if (! isset($this->slugCache[$host])) {
-            $this->slugCache[$host] = [];
-        }
-
-        if (null !== $page) {
-            $this->slugCache[$host][$slug] = $page;
-        }
-
-        return $page;
+        return $this->slugCache[$host][$slug] ?? null;
     }
 
     /**
