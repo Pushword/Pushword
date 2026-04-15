@@ -2,14 +2,18 @@
 
 namespace Pushword\Core\Repository;
 
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\ORM\Events;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\Query\Expr\Orx;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
+use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Utils\SearchNormalizer;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Service\Attribute\Required;
 
 /**
@@ -20,55 +24,187 @@ use Symfony\Contracts\Service\Attribute\Required;
  *
  * @method Media[] findAll()
  */
+#[AsDoctrineListener(event: Events::onClear)]
 class MediaRepository extends ServiceEntityRepository implements ObjectRepository, Selectable
 {
     use TagsRepositoryTrait;
 
+    public const VERSION_CACHE_KEY = 'pw.media.version';
+
+    public const INDEX_CACHE_KEY_PREFIX = 'pw.media.filename_index.v';
+
+    private const int INDEX_CACHE_TTL = 86400;
+
     #[Required]
     public PageRepository $pageRepository;
 
+    /**
+     * Lightweight filename index. Scalar rows only — enough to resolve a
+     * filename to a Media id without hydrating the full entity. Built via a
+     * single DQL array-hydration query, then optionally persisted to cache.app
+     * across requests and invalidated by bumping a version counter on writes.
+     *
+     * @var array<string, array{id: int, fileName: string, fileNameHistory: list<string>}>|null
+     */
+    private ?array $fileNameIndexLight = null;
+
+    private bool $warmedLight = false;
+
     public function __construct(
         ManagerRegistry $registry,
+        #[Autowire(service: 'cache.app')]
+        private readonly ?CacheItemPoolInterface $cache = null,
+        #[Autowire('%kernel.debug%')]
+        private readonly bool $debug = false,
     ) {
         parent::__construct($registry, Media::class);
     }
 
-    /** @var array<string, Media> */
-    private array $mediasByFileNameCache = [];
-
-    public function resetMediasByFileNameCache(): void
+    /**
+     * Populate the lightweight filename→id index with a single scalar DQL query.
+     * No Media entity hydration. Persisted across requests via cache.app keyed
+     * by a per-table version counter (unless kernel.debug is true or no cache
+     * pool is available, in which case the index lives for the repo instance
+     * only and is rebuilt per request).
+     */
+    public function warmupFileNameIndexLight(): void
     {
-        $this->mediasByFileNameCache = [];
+        if ($this->warmedLight) {
+            return;
+        }
+
+        $cache = $this->debug ? null : $this->cache;
+
+        if (null !== $cache) {
+            $indexItem = $cache->getItem(self::INDEX_CACHE_KEY_PREFIX.$this->readVersion());
+            if ($indexItem->isHit()) {
+                /** @var array<string, array{id: int, fileName: string, fileNameHistory: list<string>}> $index */
+                $index = $indexItem->get();
+                $this->fileNameIndexLight = $index;
+                $this->warmedLight = true;
+
+                return;
+            }
+
+            $this->fileNameIndexLight = $this->buildFileNameIndex();
+            $this->warmedLight = true;
+
+            $indexItem->set($this->fileNameIndexLight);
+            $indexItem->expiresAfter(self::INDEX_CACHE_TTL);
+            $cache->save($indexItem);
+
+            return;
+        }
+
+        $this->fileNameIndexLight = $this->buildFileNameIndex();
+        $this->warmedLight = true;
+    }
+
+    /**
+     * @return array<string, array{id: int, fileName: string, fileNameHistory: list<string>}>
+     */
+    private function buildFileNameIndex(): array
+    {
+        /** @var list<array{id: int|string, fileName: string, fileNameHistory: mixed}> $rows */
+        $rows = $this->createQueryBuilder('m')
+            ->select('m.id AS id, m.fileName AS fileName, m.fileNameHistory AS fileNameHistory')
+            ->getQuery()
+            ->getArrayResult();
+
+        $index = [];
+        foreach ($rows as $row) {
+            $history = $row['fileNameHistory'];
+            if (! \is_array($history)) {
+                $history = [];
+            }
+
+            /** @var list<string> $historyList */
+            $historyList = array_values(array_filter($history, \is_string(...)));
+
+            $index[$row['fileName']] = [
+                'id' => (int) $row['id'],
+                'fileName' => $row['fileName'],
+                'fileNameHistory' => $historyList,
+            ];
+        }
+
+        return $index;
+    }
+
+    private function readVersion(): int
+    {
+        if (null === $this->cache) {
+            return 0;
+        }
+
+        $item = $this->cache->getItem(self::VERSION_CACHE_KEY);
+        if (! $item->isHit()) {
+            return 0;
+        }
+
+        $value = $item->get();
+
+        return \is_int($value) ? $value : 0;
+    }
+
+    /**
+     * Increment the per-table version counter. The next lookup on any
+     * repository instance rebuilds the index. Safe to call from lifecycle
+     * listeners on every Media write. Non-atomic across parallel requests —
+     * worst case is a duplicate rebuild.
+     */
+    public function bumpVersion(): void
+    {
+        if (null !== $this->cache) {
+            $item = $this->cache->getItem(self::VERSION_CACHE_KEY);
+            $value = $item->isHit() ? $item->get() : null;
+            $item->set((\is_int($value) ? $value : 0) + 1);
+            $this->cache->save($item);
+        }
+
+        $this->resetFileNameIndexLight();
+    }
+
+    public function resetFileNameIndexLight(): void
+    {
+        $this->fileNameIndexLight = null;
+        $this->warmedLight = false;
+    }
+
+    public function isWarmedLight(): bool
+    {
+        return $this->warmedLight;
+    }
+
+    /**
+     * Called automatically by the Doctrine onClear event so CLI batch paths
+     * that call EntityManager::clear() see a fresh rebuild on next lookup.
+     */
+    public function onClear(): void
+    {
+        $this->resetFileNameIndexLight();
     }
 
     public function loadMedias(): void
     {
-        if ([] !== $this->mediasByFileNameCache) {
-            return;
-        }
-
-        $medias = $this->findAll();
-        foreach ($medias as $media) {
-            $this->mediasByFileNameCache[$media->getFileName()] = $media;
-        }
-
-        foreach ($medias as $media) {
-            foreach ($media->getFileNameHistory() as $name) {
-                $this->mediasByFileNameCache[$name] ??= $media;
-            }
-        }
+        $this->warmupFileNameIndexLight();
     }
 
-    /**
-     * On create/update, cache must be invalided with MediaRepository::resetMediasByFileNameCache();.
-     */
+    public function resetMediasByFileNameCache(): void
+    {
+        $this->resetFileNameIndexLight();
+    }
+
     public function findOneByFileName(string $fileName): ?Media
     {
-        if ([] === $this->mediasByFileNameCache) {
-            $this->loadMedias();
+        $this->warmupFileNameIndexLight();
+
+        $entry = $this->fileNameIndexLight[$fileName] ?? null;
+        if (null === $entry) {
+            return null;
         }
 
-        return $this->mediasByFileNameCache[$fileName] ?? null;
+        return $this->find($entry['id']);
     }
 
     /**
@@ -76,20 +212,20 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     public function findOneByFileNameOrHistory(string $fileName): ?Media
     {
-        // First try exact filename match
-        $media = $this->findOneByFileName($fileName);
-        if (null !== $media) {
-            return $media;
+        $this->warmupFileNameIndexLight();
+
+        $entry = $this->fileNameIndexLight[$fileName] ?? null;
+        if (null !== $entry) {
+            return $this->find($entry['id']);
         }
 
-        // Fallback: search in fileNameHistory (JSON contains)
-        /** @var Media|null */
-        return $this->createQueryBuilder('m')
-            ->where('m.fileNameHistory LIKE :fileName')
-            ->setParameter('fileName', '%"'.$fileName.'"%')
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
+        foreach ($this->fileNameIndexLight ?? [] as $candidate) {
+            if (\in_array($fileName, $candidate['fileNameHistory'], true)) {
+                return $this->find($candidate['id']);
+            }
+        }
+
+        return null;
     }
 
     /**
