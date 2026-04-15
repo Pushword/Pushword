@@ -38,12 +38,22 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     private array $warmedHosts = [];
 
     /**
-     * Lightweight URI resolution cache. Holds only the data the page() Twig
-     * function needs to produce a URL, without hydrating full Page entities.
+     * Slug-existence set per host. Used by the page() Twig function to decide
+     * whether an internal redirect target is a known page (in which case the
+     * router generates a URL) or an external URL (returned as-is).
      *
-     * @var array<string, array<string, array{id: int, host: string, slug: string, redirectUrl: ?string, redirectCode: ?int}>>
+     * @var array<string, array<string, true>>
      */
-    private array $slugLightCache = [];
+    private array $slugSets = [];
+
+    /**
+     * Redirect map per host. Only rows whose main_content starts with
+     * "Location:" are kept — on a typical site this is a handful of entries
+     * regardless of total page count.
+     *
+     * @var array<string, array<string, array{url: string, code: int}>>
+     */
+    private array $redirectMaps = [];
 
     /** @var array<string, true> */
     private array $warmedLightHosts = [];
@@ -103,8 +113,9 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
     /**
      * Populate the lightweight URI cache for a host with a single scalar query.
-     * Non-redirect rows transfer a NULL for the redirect column, so payload size
-     * on a 1300-page host is only a few dozen KB regardless of main_content size.
+     * Builds two structures: a slug-existence set (used to detect internal
+     * redirect targets) and a redirect map keyed by slug. The redirect map is
+     * typically a handful of entries even on large sites.
      */
     public function warmupSlugCacheLight(string $host): void
     {
@@ -114,46 +125,68 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
         $meta = $this->getClassMetadata();
         $table = $meta->getTableName();
-        $idCol = $meta->getColumnName('id');
         $slugCol = $meta->getColumnName('slug');
         $hostCol = $meta->getColumnName('host');
         $contentCol = $meta->getColumnName('mainContent');
 
-        $sql = "SELECT $idCol AS id, $slugCol AS slug,"
-            ." CASE WHEN $contentCol LIKE 'Location:%' THEN $contentCol ELSE NULL END AS redirect_content"
-            ." FROM $table WHERE $hostCol = ?";
+        $sql = sprintf('SELECT %s AS slug,', $slugCol)
+            .sprintf(" CASE WHEN %s LIKE 'Location:%%' THEN %s ELSE NULL END AS redirect_content", $contentCol, $contentCol)
+            .sprintf(' FROM %s WHERE %s = ?', $table, $hostCol);
 
-        /** @var list<array{id: int|string, slug: string, redirect_content: ?string}> $rows */
+        /** @var list<array{slug: string, redirect_content: ?string}> $rows */
         $rows = $this->getEntityManager()->getConnection()->fetchAllAssociative($sql, [$host]);
 
-        $this->slugLightCache[$host] = [];
+        $slugSet = [];
+        $redirects = [];
         foreach ($rows as $row) {
             $slug = $row['slug'];
-            $redirectContent = $row['redirect_content'];
-            $redirection = null !== $redirectContent ? PageRedirection::fromContent($redirectContent) : null;
+            $slugSet[$slug] = true;
 
-            $this->slugLightCache[$host][$slug] = [
-                'id' => (int) $row['id'],
-                'host' => $host,
-                'slug' => $slug,
-                'redirectUrl' => $redirection?->url,
-                'redirectCode' => $redirection?->code,
-            ];
+            $redirectContent = $row['redirect_content'];
+            if (null === $redirectContent) {
+                continue;
+            }
+
+            $redirection = PageRedirection::fromContent($redirectContent);
+            if (null === $redirection) {
+                continue;
+            }
+
+            $redirects[$slug] = ['url' => $redirection->url, 'code' => $redirection->code];
         }
 
+        $this->slugSets[$host] = $slugSet;
+        $this->redirectMaps[$host] = $redirects;
         $this->warmedLightHosts[$host] = true;
     }
 
     /**
-     * Lightweight URI resolution entry point used by the page() Twig function.
-     * Returns only the data needed to produce a URL (no full Page hydration).
-     * First call per host triggers warmupSlugCacheLight(); subsequent calls are
-     * plain array reads. Returns null for unknown slugs and for the empty-host
-     * sentinel (which the caller resolves via SiteRegistry::getMainHost()).
-     *
-     * @return ?array{id: int, host: string, slug: string, redirectUrl: ?string, redirectCode: ?int}
+     * Whether a slug exists for the given host (by scalar light cache).
+     * Used by the page() Twig function to decide whether an internal redirect
+     * target can be handed to the router. First call per host triggers the
+     * warmup; subsequent calls are plain array reads. Returns false for the
+     * empty-host sentinel (caller resolves via SiteRegistry::getMainHost()).
      */
-    public function resolvePageUriTarget(string $slug, string $host): ?array
+    public function hasSlug(string $slug, string $host): bool
+    {
+        if ('' === $host) {
+            return false;
+        }
+
+        if (! isset($this->warmedLightHosts[$host])) {
+            $this->warmupSlugCacheLight($host);
+        }
+
+        return isset($this->slugSets[$host][$slug]);
+    }
+
+    /**
+     * Return the redirect target for a slug, or null if the slug is unknown
+     * or not a redirect. Triggers warmup on first call per host.
+     *
+     * @return ?array{url: string, code: int}
+     */
+    public function getRedirectFor(string $slug, string $host): ?array
     {
         if ('' === $host) {
             return null;
@@ -163,7 +196,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             $this->warmupSlugCacheLight($host);
         }
 
-        return $this->slugLightCache[$host][$slug] ?? null;
+        return $this->redirectMaps[$host][$slug] ?? null;
     }
 
     /**
@@ -190,7 +223,8 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     {
         $this->slugCache = [];
         $this->warmedHosts = [];
-        $this->slugLightCache = [];
+        $this->slugSets = [];
+        $this->redirectMaps = [];
         $this->warmedLightHosts = [];
     }
 

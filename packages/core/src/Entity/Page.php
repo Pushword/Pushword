@@ -34,6 +34,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 #[ORM\Entity(repositoryClass: PageRepository::class)]
 #[ORM\Table(name: 'page')]
 #[ORM\UniqueConstraint(name: 'unique_slug_host', columns: ['slug', 'host'])]
+#[ORM\Index(name: 'idx_page_host', columns: ['host'])]
 class Page implements IdInterface, Taggable, Stringable, Weightable
 {
     use IdTrait;

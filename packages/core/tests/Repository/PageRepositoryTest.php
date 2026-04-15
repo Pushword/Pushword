@@ -51,7 +51,7 @@ class PageRepositoryTest extends KernelTestCase
         self::assertNull($result, 'getPage() with numeric slug should not fallback to matching by ID');
     }
 
-    public function testResolvePageUriTargetWarmsLightCache(): void
+    public function testHasSlugWarmsLightCache(): void
     {
         self::bootKernel();
 
@@ -66,30 +66,28 @@ class PageRepositoryTest extends KernelTestCase
         self::assertFalse($pageRepo->isHostLightWarmed($host));
         self::assertFalse($pageRepo->isHostWarmed($host), 'full-entity cache must stay cold');
 
-        $target = $pageRepo->resolvePageUriTarget('homepage', $host);
-        self::assertNotNull($target);
-        self::assertSame('homepage', $target['slug']);
-        self::assertSame($host, $target['host']);
-        self::assertNull($target['redirectUrl']);
+        self::assertTrue($pageRepo->hasSlug('homepage', $host));
+        self::assertNull($pageRepo->getRedirectFor('homepage', $host));
         self::assertTrue($pageRepo->isHostLightWarmed($host));
         self::assertFalse($pageRepo->isHostWarmed($host), 'light path must not touch full-entity cache');
 
-        // Unknown slug on a warmed host returns null without extra queries.
-        self::assertNull($pageRepo->resolvePageUriTarget('this-slug-does-not-exist', $host));
+        // Unknown slug on a warmed host returns false without extra queries.
+        self::assertFalse($pageRepo->hasSlug('this-slug-does-not-exist', $host));
 
         // EM clear resets the light cache; next call re-warms.
         $em->clear();
         self::assertFalse($pageRepo->isHostLightWarmed($host));
-        self::assertNotNull($pageRepo->resolvePageUriTarget('homepage', $host));
+        self::assertTrue($pageRepo->hasSlug('homepage', $host));
         self::assertTrue($pageRepo->isHostLightWarmed($host));
 
-        // Empty host sentinel: returns null without warming.
+        // Empty host sentinel: returns false without warming.
         $em->clear();
-        self::assertNull($pageRepo->resolvePageUriTarget('homepage', ''));
+        self::assertFalse($pageRepo->hasSlug('homepage', ''));
+        self::assertNull($pageRepo->getRedirectFor('homepage', ''));
         self::assertFalse($pageRepo->isHostLightWarmed(''));
     }
 
-    public function testResolvePageUriTargetReturnsRedirectUrl(): void
+    public function testGetRedirectForReturnsRedirectTarget(): void
     {
         self::bootKernel();
 
@@ -100,11 +98,11 @@ class PageRepositoryTest extends KernelTestCase
         self::assertNotNull($redirectPage, 'redirection fixture (slug=pushword) missing');
 
         $em->clear();
-        $target = $pageRepo->resolvePageUriTarget('pushword', $redirectPage->host);
+        $redirect = $pageRepo->getRedirectFor('pushword', $redirectPage->host);
 
-        self::assertNotNull($target);
-        self::assertSame('https://pushword.piedweb.com', $target['redirectUrl']);
-        self::assertSame(301, $target['redirectCode']);
+        self::assertNotNull($redirect);
+        self::assertSame('https://pushword.piedweb.com', $redirect['url']);
+        self::assertSame(301, $redirect['code']);
     }
 
     public function testGetPageBySlugDoesNotAutoWarmFullCache(): void

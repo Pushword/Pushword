@@ -49,8 +49,8 @@ final readonly class RouterTwigExtension
         $host ??= \is_string($arg4) ? $arg4 : null;
 
         // Resolve host from the current site when not explicitly provided so the
-        // repository can warm its lightweight URI cache. Without this, resolvePageUriTarget
-        // would short-circuit on the empty-host sentinel.
+        // repository can warm its lightweight URI cache. Without this, the
+        // empty-host sentinel would short-circuit the redirect lookups below.
         $host ??= $this->siteRegistry->getMainHost() ?? '';
 
         // Page instance: everything is already hydrated, no DB access required.
@@ -62,11 +62,10 @@ final readonly class RouterTwigExtension
             return $this->router->generate($slug, $canonical, $pager, $host);
         }
 
-        // String slug: resolve via the scalar light cache (no entity hydration).
-        $target = $this->pageRepository->resolvePageUriTarget($slug, $host);
-
-        if (null !== $target && null !== $target['redirectUrl']) {
-            return $this->resolveRedirection($target['redirectUrl'], $host, $canonical, $pager);
+        // String slug: only the redirect map is consulted on the hot path.
+        $redirect = $this->pageRepository->getRedirectFor($slug, $host);
+        if (null !== $redirect) {
+            return $this->resolveRedirection($redirect['url'], $host, $canonical, $pager);
         }
 
         return $this->router->generate($slug, $canonical, $pager, $host);
@@ -76,7 +75,7 @@ final readonly class RouterTwigExtension
     {
         if (str_starts_with($redirectionUrl, '/')) {
             $targetSlug = ltrim($redirectionUrl, '/');
-            if (null !== $this->pageRepository->resolvePageUriTarget($targetSlug, $host)) {
+            if ($this->pageRepository->hasSlug($targetSlug, $host)) {
                 return $this->router->generate($targetSlug, $canonical, $pager, $host);
             }
         }
