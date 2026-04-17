@@ -5,7 +5,7 @@ publishedAt: '2025-02-26 12:00'
 toc: true
 ---
 
-A JSON API to read and update media metadata (alt text, localized alts, tags) without the admin UI. Useful for scripted workflows and external tooling.
+An HTTP API to upload media files and read or update their metadata (alt text, localized alts, tags) without the admin UI or SFTP sync. Useful for scripted workflows and external tooling.
 
 {id=authentication}
 ## Authentication
@@ -18,6 +18,19 @@ All requests require a Bearer token in the `Authorization` header. The token is 
 ```bash
 curl -H "Authorization: Bearer your-secret-token" https://example.com/api/media/photo.jpg
 ```
+
+### From a server you already trust (SSH)
+
+If you already have SSH access to the host, you can fetch the token on demand instead of storing it on your laptop. This avoids leaking the token via shell history, backups, or a compromised workstation — exfiltration would require compromising SSH itself.
+
+```bash
+TOKEN=$(ssh server "bin/console pw:user:token robin@example.tld")
+curl -H "Authorization: Bearer $TOKEN" \
+     -F "file=@./photo.jpg" \
+     https://example.com/api/media/photo.jpg
+```
+
+The `pw:user:token` command writes the token raw on stdout (no newline, no decoration) so it captures cleanly through `$(…)`. Errors go to stderr and do not pollute the captured value.
 
 {id=endpoints}
 ## Endpoints 
@@ -50,6 +63,13 @@ The `image` key is `null` for non-image media (PDF, video, etc.).
 
 ### POST /api/media/{filename}
 
+Two request shapes are supported, selected by `Content-Type`:
+
+- `application/json` — update metadata on an existing media (404 if not found)
+- `multipart/form-data` — upload a new file (creates the media)
+
+#### JSON — metadata update
+
 Partial update — only the fields you send are modified.
 
 **Updatable fields (all optional):**
@@ -73,10 +93,41 @@ curl -X POST \
 
 Returns the full updated metadata (same format as GET).
 
+#### Multipart — file upload
+
+Send the binary together with metadata. The `{filename}` in the URL is the target name; if it is already taken, Pushword auto-renames (`photo.jpg` → `photo-2.jpg`) and the response reflects the final name.
+
+**Form fields:**
+
+| Field   | Type         | Description                                                 |
+| ------- | ------------ | ----------------------------------------------------------- |
+| `file`  | file         | **Required.** The binary to upload                          |
+| `alt`   | string       | Main alt text                                               |
+| `alts`  | string       | Localized alts, JSON-encoded object (`{"fr": "…"}`)         |
+| `tags`  | string       | Tag list, JSON-encoded array (`["landscape","nature"]`)     |
+
+**Example:**
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer your-secret-token" \
+  -F "file=@./photo.jpg" \
+  -F "alt=Mountain view" \
+  -F 'alts={"fr":"Vue de montagne"}' \
+  -F 'tags=["landscape","nature"]' \
+  https://example.com/api/media/photo.jpg
+```
+
+**Responses:**
+
+- `201 Created` + full metadata — media successfully created
+- `200 OK` + metadata with `"duplicate": true` — a media with the same SHA-1 already exists; the uploaded file was discarded and the existing media is returned unchanged
+- `400 Bad Request` — missing or invalid file part
+
 ## Error Responses {id=errors}
 
-| Status | Meaning                          |
-| ------ | -------------------------------- |
-| 401    | Missing or invalid Bearer token  |
-| 404    | No media found for this filename |
-| 400    | Invalid JSON body (POST only)    |
+| Status | Meaning                                             |
+| ------ | --------------------------------------------------- |
+| 401    | Missing or invalid Bearer token                     |
+| 404    | No media found for this filename (GET / JSON POST)  |
+| 400    | Invalid JSON body, or missing/invalid upload file   |
