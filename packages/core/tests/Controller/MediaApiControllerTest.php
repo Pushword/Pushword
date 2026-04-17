@@ -124,6 +124,11 @@ final class MediaApiControllerTest extends WebTestCase
         self::assertSame('piedweb-logo.png', $response['filename']);
         self::assertArrayHasKey('mimeType', $response);
         self::assertArrayHasKey('size', $response);
+        self::assertArrayHasKey('hash', $response);
+        self::assertArrayHasKey('fileNameHistory', $response);
+        self::assertIsArray($response['fileNameHistory']);
+        self::assertArrayHasKey('customProperties', $response);
+        self::assertIsArray($response['customProperties']);
         self::assertArrayHasKey('alt', $response);
         self::assertArrayHasKey('alts', $response);
         self::assertArrayHasKey('tags', $response);
@@ -374,6 +379,47 @@ final class MediaApiControllerTest extends WebTestCase
         self::assertSame($renamed, $response['filename']);
 
         $this->trackCreatedMedia($renamed);
+    }
+
+    public function testDeleteRequiresAuthentication(): void
+    {
+        $this->client->request(Request::METHOD_DELETE, '/api/media/piedweb-logo.png');
+        self::assertResponseStatusCodeSame(401);
+    }
+
+    public function testDeleteReturns404ForUnknownMedia(): void
+    {
+        $this->client->request(Request::METHOD_DELETE, '/api/media/nonexistent.png', [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ]);
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testDeleteRemovesMedia(): void
+    {
+        $fileName = 'api-to-delete-'.uniqid().'.jpg';
+        $file = new UploadedFile($this->createTempImage($fileName, 0xFF0000, random_int(1, 0xFFFFFF)), $fileName, 'image/jpeg', null, true);
+
+        $this->client->request(
+            Request::METHOD_POST,
+            '/api/media/'.$fileName,
+            [],
+            ['file' => $file],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken],
+        );
+        self::assertResponseStatusCodeSame(201);
+        $created = $this->decodeResponse();
+        self::assertIsString($created['filename']);
+
+        $this->client->request(Request::METHOD_DELETE, '/api/media/'.$created['filename'], [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ]);
+        self::assertResponseStatusCodeSame(204);
+
+        $this->client->request(Request::METHOD_GET, '/api/media/'.$created['filename'], [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ]);
+        self::assertResponseStatusCodeSame(404);
     }
 
     private function createTempImage(string $fileName, int $color = 0xFF0000, ?int $uniqueSeed = null): string

@@ -5,7 +5,7 @@ publishedAt: '2025-02-26 12:00'
 toc: true
 ---
 
-An HTTP API to upload media files and read or update their metadata (alt text, localized alts, tags) without the admin UI or SFTP sync. Useful for scripted workflows and external tooling.
+An HTTP API to upload, read, update, and delete media files and their metadata (alt text, localized alts, tags, custom properties) without the admin UI or SFTP sync. Useful for scripted workflows and external tooling.
 
 {id=authentication}
 ## Authentication
@@ -46,9 +46,12 @@ Returns metadata for the given media file. Supports current filename and histori
   "filename": "photo.jpg",
   "mimeType": "image/jpeg",
   "size": 204800,
+  "hash": "aabbccdd...",
+  "fileNameHistory": ["old-photo.jpg"],
   "alt": "A mountain view",
   "alts": { "fr": "Une vue de montagne" },
   "tags": ["landscape", "nature"],
+  "customProperties": {},
   "image": {
     "width": 1920,
     "height": 1080,
@@ -59,7 +62,10 @@ Returns metadata for the given media file. Supports current filename and histori
 }
 ```
 
-The `image` key is `null` for non-image media (PDF, video, etc.).
+- `hash` — SHA-1 of the file content, hex-encoded. `null` if not yet computed.
+- `fileNameHistory` — previous filenames after renames.
+- `customProperties` — free-form key/value map set via the admin.
+- `image` is `null` for non-image media (PDF, video, etc.).
 
 ### POST /api/media/{filename}
 
@@ -124,10 +130,24 @@ curl -X POST \
 - `200 OK` + metadata with `"duplicate": true` — a media with the same SHA-1 already exists; the uploaded file was discarded and the existing media is returned unchanged
 - `400 Bad Request` — missing or invalid file part
 
+### DELETE /api/media/{filename}
+
+Deletes the media record and its file from disk. Mirrors the admin delete action: pages referencing the media as `mainImage` are updated to `null`, and the image cache is cleared.
+
+**Example:**
+
+```bash
+curl -X DELETE \
+  -H "Authorization: Bearer your-secret-token" \
+  https://example.com/api/media/photo.jpg
+```
+
+**Response:** `204 No Content` on success. `404 Not Found` if the filename is unknown.
+
 ## Error Responses {id=errors}
 
 | Status | Meaning                                             |
 | ------ | --------------------------------------------------- |
 | 401    | Missing or invalid Bearer token                     |
-| 404    | No media found for this filename (GET / JSON POST)  |
+| 404    | No media found for this filename (GET / JSON POST / DELETE)  |
 | 400    | Invalid JSON body, or missing/invalid upload file   |
