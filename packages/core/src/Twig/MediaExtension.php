@@ -8,6 +8,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Image\ExternalImageImporter;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
+use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_match;
 
@@ -22,9 +23,57 @@ class MediaExtension
         private readonly ExternalImageImporter $externalImageImporter,
         private readonly MediaRepository $mediaRepository,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
+        private readonly SiteRegistry $apps,
         #[Autowire('%pw.public_media_dir%')]
         private readonly string $publicMediaDir,
     ) {
+    }
+
+    /**
+     * @param array<string, mixed>|null $linkAttr
+     * @param array<string, mixed>|null $attr
+     * @param array<string, mixed>|null $pictureAttr
+     */
+    #[AsTwigFunction('image', isSafe: ['html'])]
+    public function renderImage(
+        Media|string $media,
+        ?string $alt = null,
+        string|bool|null $link = null,
+        ?array $linkAttr = null,
+        bool $linkObf = true,
+        ?array $attr = null,
+        ?string $class = null,
+        ?string $wrapper = null,
+        ?string $wrapperClass = null,
+        ?array $pictureAttr = null,
+        bool $lazy = true,
+    ): string {
+        $mediaObj = $this->transformStringToMedia($media, $alt ?? '');
+
+        $params = [
+            'image' => $mediaObj,
+            'image_alt' => $alt ?? $mediaObj->getAltLocalized(''),
+            'image_link' => $link,
+            'image_link_obf' => $linkObf,
+            'image_link_attr' => $linkAttr,
+            'image_attr' => $attr,
+            'image_class' => $class,
+            'picture_attr' => $pictureAttr,
+            'lazy' => $lazy,
+        ];
+
+        if (null !== $wrapper) {
+            $params['image_wrapper'] = $wrapper;
+        }
+
+        if (null !== $wrapperClass) {
+            $params['image_wrapper_class'] = $wrapperClass;
+        }
+
+        return $this->twig->render(
+            $this->apps->get()->getView('/component/image_inline.html.twig'),
+            $params,
+        );
     }
 
     /**
