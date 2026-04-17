@@ -165,9 +165,12 @@ final class MediaApiController extends AbstractController
             'filename' => $media->getFileName(),
             'mimeType' => $media->getMimeType(),
             'size' => $media->getSize(),
+            'hash' => $this->hashToHex($media->getHash()),
+            'fileNameHistory' => $media->getFileNameHistory(),
             'alt' => $media->getAlt(true),
             'alts' => $media->getAltsParsed(),
             'tags' => $media->getTagList(),
+            'customProperties' => $media->getCustomProperties(),
             'image' => $media->isImage() ? [
                 'width' => $media->getWidth(),
                 'height' => $media->getHeight(),
@@ -176,5 +179,14 @@ final class MediaApiController extends AbstractController
                 'mainColor' => $media->getMainColor(),
             ] : null,
         ];
+    }
+
+    private function hashToHex(mixed $hash): ?string
+    {
+        if (\is_resource($hash)) {
+            $hash = stream_get_contents($hash);
+        }
+
+        return \is_string($hash) && '' !== $hash ? bin2hex($hash) : null;
     }
 }
