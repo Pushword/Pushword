@@ -1,4 +1,8 @@
 /* Reduce gutter */
+.row {
+  margin-left: calc(var(--bs-gutter-x) * -0.25);
+  margin-right: calc(var(--bs-gutter-x) * -0.25);
+}
 .row > * {
   padding-left: calc(var(--bs-gutter-x) * 0.25);
   padding-right: calc(var(--bs-gutter-x) * 0.25);
