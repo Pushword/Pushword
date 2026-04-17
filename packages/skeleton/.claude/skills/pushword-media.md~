@@ -1,0 +1,137 @@
+---
+name: pushword-media
+description: "Work with this Pushword site's media library via HTTP API. Upload a new image/PDF/video with its metadata (alt, localized alts, tags) in one call, or update metadata / rename an existing media. Use whenever the user asks to add, edit, retag, or rename a media on the site."
+version: 1.0.0
+---
+
+# pushword-media skill
+
+You upload media to this Pushword site through its HTTP API. Prefer this over SFTP + `pw:flat:sync`: one call sends the binary **and** the metadata (alt, localized alts, tags), and the response tells you the final filename to drop into the content.
+
+> **Customize before use.** Replace every `{{…}}` placeholder below with the values for this project, then rename this file from `pushword-media.md~` to `pushword-media.md`.
+
+## Site configuration
+
+- **Site URL**: `{{https://example.com}}`
+- **SSH host for token retrieval**: `{{user@server.example.com}}` (the remote host where `bin/console` lives)
+- **Admin user email**: `{{robin@example.com}}` (the email of the Pushword user whose `apiToken` you will use)
+- **Default locale** (for `alt`): `{{en}}`
+- **Additional locales** to fill in `alts` by default: `{{["fr"]}}`
+
+## Step 1 — Fetch the token once per session
+
+Fetch the token over SSH on first use and keep the `$TOKEN` shell variable around for the rest of the session:
+
+```bash
+TOKEN=$(ssh {{user@server.example.com}} "bin/console pw:user:token {{robin@example.com}}")
+```
+
+Do **not** persist the token: no writing it to a file, `.env`, shell history, a commit, or the CLAUDE.md. In-memory reuse during a session is fine; disk is not. If a later call returns `401`, the token was rotated — re-fetch once and retry.
+
+The `pw:user:token` command writes the token raw on stdout (no newline), so `$(…)` captures it cleanly. If SSH prompts for a password or the command errors, stop and ask the user.
+
+## Step 2 — Upload the file with its metadata
+
+One request sends the binary and every metadata field at once:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@./photo.jpg" \
+  -F "alt=A mountain view at dawn" \
+  -F 'alts={"fr":"Une vue de montagne au lever du jour"}' \
+  -F 'tags=["landscape","mountain"]' \
+  {{https://example.com}}/api/media/photo.jpg
+```
+
+Field rules:
+
+| Field   | Required | Format                          | Notes                                                 |
+| ------- | -------- | ------------------------------- | ----------------------------------------------------- |
+| `file`  | yes      | `@./path`                       | The binary. `-F` handles multipart for you.           |
+| `alt`   | no       | plain string                    | Main alt text. Always provide one if you have it.     |
+| `alts`  | no       | JSON object, quoted with `'…'`  | `{"fr":"…","de":"…"}` — keys are locale codes.        |
+| `tags`  | no       | JSON array, quoted with `'…'`   | `["landscape","nature"]`                              |
+
+The `{filename}` in the URL is the **target** name. If it is already taken, Pushword auto-renames and the response reflects the **final** name — use that name in the content, not the name you sent.
+
+## Step 3 — Read the response and act on it
+
+The response is JSON. Three shapes matter:
+
+- **`201 Created`** — new media stored. Use `response.filename` in the markdown/content.
+- **`200 OK` with `"duplicate": true`** — a media with the same SHA-1 already exists. The upload was discarded; the server returned the existing media unchanged. Use the returned `filename` and warn the user that their input was a duplicate of something already in the library.
+- **`400 Bad Request`** / **`401 Unauthorized`** — stop and surface the error to the user. Do not retry blindly.
+
+Example success response:
+
+```json
+{
+  "filename": "photo-2.jpg",
+  "mimeType": "image/jpeg",
+  "size": 204800,
+  "alt": "A mountain view at dawn",
+  "alts": { "fr": "Une vue de montagne au lever du jour" },
+  "tags": ["landscape", "mountain"],
+  "image": {
+    "width": 1920, "height": 1080,
+    "ratio": 1.778, "ratioLabel": "16:9",
+    "mainColor": "#3a6ea8"
+  }
+}
+```
+
+## Updating metadata on an existing media
+
+If the binary is already in the library and you only need to change `alt`, `alts`, `tags`, or rename it, send JSON instead of multipart. Same URL, same token, different `Content-Type`:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"alt":"New alt text","tags":["landscape"]}' \
+  {{https://example.com}}/api/media/photo-2.jpg
+```
+
+Rules:
+
+- **Partial update** — only the fields you send are modified. Omit what you don't want to touch.
+- **404** if no media matches the filename (including rename history). Do not fall back to upload silently — ask the user whether to upload.
+- Rename a media by sending `{"filename":"new-name.jpg"}`. The old name stays in history, so GET requests for it still resolve.
+- To **read** current metadata before editing, `GET {{https://example.com}}/api/media/<filename>` with the same Bearer token.
+
+Response is the full updated JSON (same shape as upload).
+
+## Step 4 — Insert the returned filename in the content
+
+Pushword markdown references media by filename only — no `/media/` prefix, no URL. Use what the API returned (after any auto-rename):
+
+```markdown
+![A mountain view at dawn](photo-2.jpg)
+```
+
+If you were writing Twig or another template, use the media helper the theme exposes; do not hardcode a path.
+
+## What not to do
+
+- **Never** edit `content/<host>/media.csv` or `media/index.csv` by hand to register a new file. The API writes those rows for you.
+- **Never** `scp`/`rsync` the binary into `media/` as a shortcut. That bypasses hash detection, conflict resolution, and responsive-variant generation.
+- **Never** reuse a token you saw once. Re-fetch over SSH every time.
+- **Never** guess the final filename after an auto-rename. Always read `response.filename`.
+
+## Minimal happy-path recipe
+
+```bash
+TOKEN=$(ssh {{user@server.example.com}} "bin/console pw:user:token {{robin@example.com}}") && \
+curl -sS -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@./local-photo.jpg" \
+  -F "alt=Short descriptive alt" \
+  {{https://example.com}}/api/media/local-photo.jpg
+```
+
+Capture the response, pull `.filename` out of it, and drop that name into the page the user is editing.
+
+## Reference
+
+Full endpoint documentation (all fields, all status codes, JSON-vs-multipart dispatch): `vendor/pushword/docs/content/media-api.md`.
