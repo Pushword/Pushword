@@ -32,29 +32,15 @@
             {% if page.main_image_multiple is not null %}
                 {% for bg in page.main_image_multiple|split(';') %}
                     {% set bg = bg|split(':') %}
-                    {{
-                        include(view('/component/image_inline.html.twig'), {
-                            image_src: bg.1,
-                            image_alt: (bg.0 ~ ' ' ~ (page.mainImage.altLocalized(page.locale, true)|default(page.getTitle(true))))|striptags|date_shortcode,
-                            image_link: false,
-                            image_attr: {
-                                style: 'display:none',
-                                'x-hash': bg.0
-                            }
-                        }
-                    ) }}
+                    {{ image(bg.1,
+                        alt: (bg.0 ~ ' ' ~ (page.mainImage.altLocalized(page.locale, true)|default(page.getTitle(true))))|striptags|date_shortcode,
+                        attr: {style: 'display:none', 'x-hash': bg.0}) }}
                 {% endfor %}
             {% endif %}
             {% if page.mainImage is not null %}
-                {{
-                    include(view('/component/image_inline.html.twig'), {
-                        image_src: page.mainImage|image('default'),
-                        image_link: false,
-                        image_alt: page.mainImage.altLocalized(page.locale, true)|default(page.getTitle(true))|striptags|date_shortcode,
-                        image_class: hero_image_class ?? 'md:object-cover md:h-full md:absolute md:top-0 md:z-0 w-full h-auto'
-                    }
-                ) }}
-
+                {{ image(page.mainImage,
+                    alt: page.mainImage.altLocalized(page.locale, true)|default(page.getTitle(true))|striptags|date_shortcode,
+                    class: hero_image_class ?? 'md:object-cover md:h-full md:absolute md:top-0 md:z-0 w-full h-auto') }}
             {% endif %}
             {% if page.video is not null %}
             <button class=" {{ page.video.btn_style|default('w-24 h-24 rounded-full bg-red-500 text-white text-center focus:outline-hidden shadow') }}">

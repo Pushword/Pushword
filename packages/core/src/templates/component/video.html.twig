@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% macro videoThumb(image, alt, btn_title) %}
-    {{ include(view('/component/image_inline.html.twig'), {image_src: image, image_alt: alt|striptags, image_link: false, image_class: 'm-0 absolute top-0 left-0 h-full w-full'}) }}
+    {{ image(image, alt: alt|striptags, class: 'm-0 absolute top-0 left-0 h-full w-full') }}
     <span class="absolute inset-0 flex items-center justify-center bg-white/25">
       <span class="block w-2/5 p-5 cursor-pointer text-primary hover:opacity-75">
         {{ btn_title|raw }}

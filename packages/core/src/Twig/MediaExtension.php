@@ -6,7 +6,9 @@ use Exception;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Image\ExternalImageImporter;
+use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Site\SiteRegistry;
 
@@ -24,56 +26,66 @@ class MediaExtension
         private readonly MediaRepository $mediaRepository,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
         private readonly SiteRegistry $apps,
+        private readonly ImageCacheManager $imageCacheManager,
+        private readonly LinkProvider $linkProvider,
         #[Autowire('%pw.public_media_dir%')]
         private readonly string $publicMediaDir,
     ) {
     }
 
     /**
-     * @param array<string, mixed>|null $linkAttr
-     * @param array<string, mixed>|null $attr
-     * @param array<string, mixed>|null $pictureAttr
+     * @param array<string, mixed>  $attr
+     * @param array<string, string> $linkAttr
+     * @param array<string, mixed>  $pictureAttr
      */
     #[AsTwigFunction('image', isSafe: ['html'])]
     public function renderImage(
         Media|string $media,
         ?string $alt = null,
-        string|bool|null $link = null,
-        ?array $linkAttr = null,
-        bool $linkObf = true,
-        ?array $attr = null,
         ?string $class = null,
+        ?string $mode = null,
+        bool $lazy = true,
+        array $attr = [],
+        string|bool|null $link = null,
+        array $linkAttr = [],
+        bool $obfuscate = true,
         ?string $wrapper = null,
         ?string $wrapperClass = null,
-        ?array $pictureAttr = null,
-        bool $lazy = true,
+        array $pictureAttr = [],
     ): string {
         $mediaObj = $this->transformStringToMedia($media, $alt ?? '');
+        $resolvedAlt = $alt ?? $mediaObj->getAltLocalized('');
 
-        $params = [
-            'image' => $mediaObj,
-            'image_alt' => $alt ?? $mediaObj->getAltLocalized(''),
-            'image_link' => $link,
-            'image_link_obf' => $linkObf,
-            'image_link_attr' => $linkAttr,
-            'image_attr' => $attr,
-            'image_class' => $class,
-            'picture_attr' => $pictureAttr,
-            'lazy' => $lazy,
-        ];
-
-        if (null !== $wrapper) {
-            $params['image_wrapper'] = $wrapper;
-        }
-
-        if (null !== $wrapperClass) {
-            $params['image_wrapper_class'] = $wrapperClass;
-        }
-
-        return $this->twig->render(
-            $this->apps->get()->getView('/component/image_inline.html.twig'),
-            $params,
+        $html = $this->twig->render(
+            $this->apps->get()->getView('/component/image.html.twig'),
+            [
+                'image' => $mediaObj,
+                'image_alt' => $resolvedAlt,
+                'image_class' => $class,
+                'image_attr' => $attr ?: null,
+                'picture_attr' => $pictureAttr ?: null,
+                'lazy' => $lazy,
+                'mode' => $mode,
+            ],
         );
+
+        if (null !== $link && false !== $link) {
+            $href = true === $link
+                ? $this->imageCacheManager->getBrowserPath($mediaObj)
+                : $link;
+            $resolvedLinkAttr = [] === $linkAttr
+                ? ['class' => 'glightbox', 'data-dwl' => $this->imageCacheManager->getBrowserPath($mediaObj, 'xl')]
+                : $linkAttr;
+            $html = $this->linkProvider->renderLink($html, $href, $resolvedLinkAttr, $obfuscate);
+        }
+
+        if (null !== $wrapper || null !== $wrapperClass) {
+            $tag = $wrapper ?? 'p';
+            $classAttr = null !== $wrapperClass ? sprintf(' class="%s"', htmlspecialchars($wrapperClass)) : '';
+            $html = sprintf('<%s%s>%s</%s>', $tag, $classAttr, $html, $tag);
+        }
+
+        return $html;
     }
 
     /**

@@ -33,14 +33,12 @@
 
     {# Render image with proper lazy loading #}
     {% set lazy = not (loop.first and (pos ?? 100) < 3) %}
-    {% set img = include('@PushwordCore/component/image.html.twig', {
-      image: current_media,
+    {% set img = image(current_media,
+      alt: current_media.alt,
       mode: image_filter|default('responsive'),
-      image_class: (image_otherAttributes ?? {}).class ?? 'aspect-square object-cover',
-      image_alt: current_media.alt,
-      image_attr: (image_otherAttributes ?? {})|filter((v, k) => k != 'class'),
-      lazy: lazy
-    }, with_context = false) %}
+      class: (image_otherAttributes ?? {}).class ?? 'aspect-square object-cover',
+      attr: (image_otherAttributes ?? {})|filter((v, k) => k != 'class'),
+      lazy: lazy) %}
 
     {# Optional container wrapper #}
     {% set wrapInContainer = image_container is defined and image_container is not same as '' %}

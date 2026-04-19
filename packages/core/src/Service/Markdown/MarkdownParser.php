@@ -13,8 +13,8 @@ use Pushword\Core\Component\EntityFilter\Filter\Date;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\PushwordExtension;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Twig\MediaExtension;
 use Twig\Attribute\AsTwigFilter;
-use Twig\Environment as TwigEnvironment;
 
 class MarkdownParser
 {
@@ -22,8 +22,8 @@ class MarkdownParser
 
     public function __construct(
         LinkProvider $linkProvider,
-        TwigEnvironment $twig,
-        SiteRegistry $apps
+        MediaExtension $mediaExtension,
+        SiteRegistry $apps,
     ) {
         $environment = new Environment();
         $environment->addExtension(new CommonMarkCoreExtension());
@@ -33,7 +33,7 @@ class MarkdownParser
         $environment->addExtension(new TaskListExtension());
         $environment->addExtension(new PushwordExtension(
             $linkProvider,
-            $twig,
+            $mediaExtension,
             $apps,
             new Date($apps),
         ));

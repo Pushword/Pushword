@@ -21,17 +21,13 @@ use Pushword\Core\Service\Markdown\Extension\Renderer\ObfuscatedEmailRenderer;
 use Pushword\Core\Service\Markdown\Extension\Renderer\ObfuscatedLinkRenderer;
 use Pushword\Core\Service\Markdown\Extension\Renderer\PhoneNumberRenderer;
 use Pushword\Core\Site\SiteRegistry;
-use Twig\Environment;
+use Pushword\Core\Twig\MediaExtension;
 
-/**
- * Extension league/commonmark pour Pushword.
- * Gère les liens obfusqués et les images personnalisées.
- */
 final readonly class PushwordExtension implements ExtensionInterface
 {
     public function __construct(
         private LinkProvider $linkProvider,
-        private Environment $twig,
+        private MediaExtension $mediaExtension,
         private SiteRegistry $apps,
         private Date $dateFilter,
     ) {
@@ -64,8 +60,8 @@ final readonly class PushwordExtension implements ExtensionInterface
 
         $environment->addRenderer(
             Image::class,
-            new ImageRenderer($this->twig, $this->apps),
-            10 // Priorité haute pour surcharger le renderer par défaut
+            new ImageRenderer($this->mediaExtension),
+            10
         );
 
         $environment->addEventListener(DocumentParsedEvent::class, new ColspanProcessor());

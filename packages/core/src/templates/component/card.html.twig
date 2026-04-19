@@ -36,12 +36,7 @@
 <article
   class="overflow-hidden rounded-lg shadow transition-all duration-75 ease-in-out motion-reduce:transition-none hover:shadow-md {{ isClickable ? 'clickable cursor-pointer' : '' }}">
   {% if image %}
-    {{ include('@PushwordCore/component/image.html.twig', {
-      image: media_from_string(image),
-      page: page,
-      image_class: 'block w-full aspect-square object-cover m-0',
-      image_alt: imageAlt
-    }, with_context = false) }}
+    {{ image(image, alt: imageAlt, class: 'block w-full aspect-square object-cover m-0') }}
   {% endif %}
   {% block card_date %}
   {#<span class="block p-2 text-sm text-white bg-primary">

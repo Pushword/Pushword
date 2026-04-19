@@ -22,6 +22,10 @@ If you are doing a major upgrade, find the upgrade guide down there.
 
 Then run `yarn install` or `npm install`.
 
+## Image: `image()` Twig Function Is Now the Single Entry Point
+
+`image_inline.html.twig` is now a thin shim that delegates to the `image()` Twig function. If you have overridden `image_inline.html.twig` in your theme, your override still loads but the internal logic it relied on (link wrapping, wrapper element, `media_from_string` resolution) now lives in PHP (`MediaExtension::renderImage()`). Review your override and consider switching to the `image()` function directly. See [Template Changes](/upgrade-template-change#image-template-refactoring) for the full parameter reference.
+
 ## Image: Retina Fix & Thumb Filter Removed
 
 ### Breaking Changes

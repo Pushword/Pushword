@@ -3,39 +3,18 @@
 namespace Pushword\Core\Tests\Service;
 
 use PHPUnit\Framework\Attributes\Group;
-use Pushword\Core\Router\PushwordRouteGenerator;
-use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
 use Pushword\Core\Service\Markdown\MarkdownParser;
-use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Bundle\SecurityBundle\Security;
 
 #[Group('integration')]
 class MarkdownExtensionTest extends KernelTestCase
 {
-    private ?MarkdownParser $markdownParser = null;
-
     private function getMarkdownParser(): MarkdownParser
     {
-        if (null !== $this->markdownParser) {
-            return $this->markdownParser;
-        }
+        self::bootKernel();
 
-        $linkProvider = new LinkProvider(
-            self::getContainer()->get(PushwordRouteGenerator::class),
-            self::getContainer()->get(SiteRegistry::class),
-            self::getContainer()->get('twig'),
-            self::getContainer()->get(Security::class)
-        );
-
-        $this->markdownParser = new MarkdownParser(
-            $linkProvider,
-            self::getContainer()->get('twig'),
-            self::getContainer()->get(SiteRegistry::class)
-        );
-
-        return $this->markdownParser;
+        return self::getContainer()->get(MarkdownParser::class);
     }
 
     // ===== Tests des liens obfusqués #[text](url) =====

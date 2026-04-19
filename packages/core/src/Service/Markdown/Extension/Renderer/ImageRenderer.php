@@ -10,18 +10,12 @@ use League\CommonMark\Node\StringContainerInterface;
 use League\CommonMark\Renderer\ChildNodeRendererInterface;
 use League\CommonMark\Renderer\NodeRendererInterface;
 use Pushword\Core\Service\Markdown\Extension\Util\RawHtml;
-use Pushword\Core\Site\SiteRegistry;
-use Twig\Environment;
+use Pushword\Core\Twig\MediaExtension;
 
-/**
- * Renderer personnalisé pour les images.
- * Utilise le template Twig pour un rendu personnalisé.
- */
 final readonly class ImageRenderer implements NodeRendererInterface
 {
     public function __construct(
-        private Environment $twig,
-        private SiteRegistry $apps
+        private MediaExtension $mediaExtension,
     ) {
     }
 
@@ -33,19 +27,7 @@ final readonly class ImageRenderer implements NodeRendererInterface
         $src = $node->getUrl();
         $alt = $this->getAltText($node);
 
-        // Rendre l'image via le template Twig
-        $html = $this->twig->render(
-            $this->apps->get()->getView('/component/image_inline.html.twig'),
-            [
-                'image_src' => $src,
-                'image_alt' => htmlspecialchars($alt),
-                'image_link' => null,
-                'image_link_attr' => null,
-                'image_link_obf' => false,
-            ]
-        );
-
-        return new RawHtml($html);
+        return new RawHtml($this->mediaExtension->renderImage($src, htmlspecialchars($alt)));
     }
 
     private function getAltText(Image $node): string

@@ -81,9 +81,9 @@ Functionality merged into `image.html.twig` with `mode: 'thumb'` parameter.
 
 ### `component/image_inline.html.twig`
 
-- Simplified image resolution logic using `media_from_string()` directly
-- Replaced internal `renderImage` macro with `image.html.twig` include
-- Reduced from 124 lines to 50 lines
+- Reduced to a backward-compat shim that delegates entirely to the `image()` Twig function
+- All link, wrapper, and image-resolution logic moved to `MediaExtension::renderImage()` in PHP
+- Existing `include(view('/component/image_inline.html.twig'), {...})` call sites continue to work unchanged
 
 ### `component/images_gallery.html.twig`
 
@@ -133,6 +133,45 @@ Functionality merged into `image.html.twig` with `mode: 'thumb'` parameter.
 
 ### Image Template Refactoring
 
+The `image()` Twig function is now the preferred way to render images. It accepts a Media object or filename string and handles link wrapping, container wrapping, and responsive srcset generation.
+
+```twig
+{# Basic usage #}
+{{ image(page.mainImage) }}
+
+{# With options #}
+{{ image(page.mainImage, alt: 'Photo', class: 'w-full', lazy: false) }}
+
+{# With link to full-size (lightbox) #}
+{{ image(media, link: true) }}
+
+{# With custom link #}
+{{ image(media, link: '/gallery', linkAttr: {class: 'glightbox'}) }}
+
+{# With wrapper element #}
+{{ image('photo.jpg', wrapper: 'figure', wrapperClass: 'my-4') }}
+
+{# Single filter mode (for specific breakpoint) #}
+{{ image(media, mode: 'xs', class: 'aspect-square object-cover') }}
+```
+
+Full parameter reference for `image()`:
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `media` | Media\|string | required | Media object or filename |
+| `alt` | string\|null | `null` | Alt text (falls back to media's stored alt) |
+| `class` | string\|null | `null` | CSS class on the `<img>` |
+| `mode` | string\|null | `'responsive'` | `'responsive'` or a filter name (`'xs'`, `'thumb'`, …) |
+| `lazy` | bool | `true` | Adds `loading="lazy"` |
+| `attr` | array | `[]` | Extra attributes on the `<img>` |
+| `link` | string\|bool\|null | `null` | `true` = self-link, string = custom URL |
+| `linkAttr` | array | `[]` | Attributes on the `<a>` (default: glightbox) |
+| `obfuscate` | bool | `true` | Obfuscate the link href |
+| `wrapper` | string\|null | `null` | Wrapper tag name (`'p'`, `'figure'`, …) |
+| `wrapperClass` | string\|null | `null` | Class on the wrapper element |
+| `pictureAttr` | array | `[]` | Attributes on the `<picture>` element |
+
 If you have overridden `image_helper.html.twig`, update your code:
 
 **Before:**
@@ -143,12 +182,7 @@ If you have overridden `image_helper.html.twig`, update your code:
 
 **After:**
 ```twig
-{{ include('@PushwordCore/component/image.html.twig', {
-  image: media_from_string(image),
-  mode: 'thumb',
-  page: page,
-  image_class: 'my-class'
-}, with_context = false) }}
+{{ image(image, mode: 'thumb', class: 'my-class') }}
 ```
 
 ### Images Gallery Structure
