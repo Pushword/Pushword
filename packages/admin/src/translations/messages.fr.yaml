@@ -46,6 +46,7 @@ adminMediaDimensionsIntFilterLabel: 'Largeur/hauteur (px)'
 adminMediaDimensionsLabel: Dimensions
 adminMediaFileNameLabel: 'Nom du fichier'
 adminMediaFiletypeLabel: 'Type de fichiers'
+adminMediaHiddenFromAdminLabel: "Masqué de l'admin"
 adminMediaMainColorLabel: 'Couleur Principale'
 adminMediaMediaFileLabel: Fichier
 adminMediaMosaicEmpty: 'Aucun média ne correspond à votre recherche.'

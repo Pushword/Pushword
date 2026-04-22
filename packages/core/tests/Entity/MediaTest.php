@@ -53,4 +53,17 @@ class MediaTest extends TestCase
         $media->setFileName(null);
         self::assertSame('test.jpg', $media->getFileName());
     }
+
+    public function testHiddenFromAdminDefaultsFalse(): void
+    {
+        $media = new Media();
+        self::assertFalse($media->hiddenFromAdmin);
+    }
+
+    public function testHiddenFromAdminCanBeSetTrue(): void
+    {
+        $media = new Media();
+        $media->hiddenFromAdmin = true;
+        self::assertTrue($media->hiddenFromAdmin);
+    }
 }

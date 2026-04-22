@@ -39,6 +39,7 @@ use Vich\UploaderBundle\Mapping\Attribute as Vich;
 #[ORM\Entity(repositoryClass: MediaRepository::class)]
 #[ORM\Table(name: 'media')]
 #[ORM\Index(name: 'idx_media_filename', columns: ['media'])]
+#[ORM\Index(name: 'idx_media_hidden_from_admin', columns: ['hidden_from_admin'])]
 class Media implements IdInterface, Taggable, Stringable
 {
     use ExtensiblePropertiesTrait;
@@ -79,6 +80,9 @@ class Media implements IdInterface, Taggable, Stringable
 
     #[ORM\Column(type: Types::INTEGER)]
     protected int $size = 0;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    public bool $hiddenFromAdmin = false;
 
     #[Vich\UploadableField(mapping: 'media_media', fileNameProperty: 'slug', size: 'size', mimeType: 'mimeType', dimensions: 'dimensions')]
     protected UploadedFile|File|null $mediaFile = null;

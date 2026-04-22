@@ -2,15 +2,21 @@
 
 namespace Pushword\Admin\Controller;
 
+use Doctrine\ORM\QueryBuilder;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
@@ -100,6 +106,23 @@ class MediaCrudController extends AbstractAdminCrudController
     }
 
     #[Override]
+    public function createIndexQueryBuilder(
+        SearchDto $searchDto,
+        EntityDto $entityDto,
+        FieldCollection $fields,
+        FilterCollection $filters,
+    ): QueryBuilder {
+        $queryBuilder = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
+
+        $alias = $queryBuilder->getRootAliases()[0] ?? 'entity';
+        $queryBuilder
+            ->andWhere(sprintf('%s.hiddenFromAdmin = :notHidden', $alias))
+            ->setParameter('notHidden', false);
+
+        return $queryBuilder;
+    }
+
+    #[Override]
     public function configureResponseParameters(KeyValueStore $responseParameters): KeyValueStore
     {
         $responseParameters = parent::configureResponseParameters($responseParameters);
@@ -140,6 +163,7 @@ class MediaCrudController extends AbstractAdminCrudController
     #[Override]
     public function configureFilters(Filters $filters): Filters
     {
+        $filters->add(BooleanFilter::new('hiddenFromAdmin', 'adminMediaHiddenFromAdminLabel'));
         $filters->add(MediaSearchFilter::new($this->mediaRepo, 'adminMediaAltLabel'));
 
         $available = $this->getAvailableMimeTypes();

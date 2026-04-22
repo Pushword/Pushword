@@ -46,6 +46,7 @@ adminMediaDimensionsIntFilterLabel: "Width/height (px)"
 adminMediaDimensionsLabel: Dimensions
 adminMediaFileNameLabel: Filename
 adminMediaFiletypeLabel: Filetype
+adminMediaHiddenFromAdminLabel: "Hidden from admin"
 adminMediaMainColorLabel: "Main Color"
 adminMediaMediaFileLabel: File
 adminMediaPreviewDominantColor: "Dominant color"
