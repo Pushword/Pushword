@@ -101,6 +101,12 @@ php bin/console pw:static $host
 php bin/console pw:static $host $slug
 ```
 
+## Page cache mode (serve pre-rendered pages without exporting)
+
+Set `cache: static` on an app to pre-render pages into `public/cache/{host}/` so the web server can serve them directly without booting PHP. Unlike the full static export, the application keeps running and invalidates the cache automatically on page save.
+
+See [Page Cache](/extension/page-cache) for setup, Caddy config, and the `pw:cache:clear` command.
+
 ## Using FrankenPHP (Caddy) to serve your static website
 
 You must import the generated `static/example.tld/.Caddyfile` in your main Caddyfile.

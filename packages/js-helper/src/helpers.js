@@ -97,8 +97,23 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
     return null
   }
 
+  // Optional gate on data-live-if="cookie:NAME=VALUE". Extensible prefix form
+  // so we can add data-live-if="media:(min-width: …)", "localStorage:…", etc.
+  var evalLiveIf = function (expr) {
+    var parts = expr.split(':')
+    var kind = parts.shift()
+    var rest = parts.join(':')
+    if (kind !== 'cookie' || !rest) return true
+    var eq = rest.indexOf('=')
+    var name = eq === -1 ? rest : rest.substring(0, eq)
+    var value = eq === -1 ? '1' : rest.substring(eq + 1)
+    return document.cookie.split('; ').indexOf(name + '=' + value) !== -1
+  }
+
   // Listen data-live
   document.querySelectorAll('[data-' + liveBlockAttribute + ']').forEach((item) => {
+    var cond = item.getAttribute('data-' + liveBlockAttribute + '-if')
+    if (cond && !evalLiveIf(cond)) return
     getLiveBlock(item)
   })
 

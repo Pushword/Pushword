@@ -40,6 +40,13 @@ class PageGenerator extends AbstractGenerator
             return;
         }
 
+        // In cache mode, honour per-page opt-out via customProperties[cache] = false.
+        if ('static' === $this->app->getStr('cache', 'none')
+            && false === $page->getCustomProperty('cache')
+        ) {
+            return;
+        }
+
         $this->saveAsStatic($this->generateLivePathFor($page), $this->generateFilePath($page), $page);
 
         $this->generateFeedFor($page);

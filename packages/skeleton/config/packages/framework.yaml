@@ -11,6 +11,11 @@ framework:
   mailer:
     dsn: "%env(MAILER_DSN)%"
   lock: "%env(LOCK_DSN)%"
+  messenger:
+    transports:
+      sync: "sync://"
+    routing:
+      'Pushword\StaticGenerator\Cache\Message\PageCacheRefreshMessage': sync
   cache:
     #app: cache.adapter.apcu
   secret: "%env(APP_SECRET)%"

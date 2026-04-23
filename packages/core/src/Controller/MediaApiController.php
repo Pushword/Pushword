@@ -23,7 +23,7 @@ final class MediaApiController extends AbstractController
     ) {
     }
 
-    #[Route('/api/media/{filename}', name: 'media_api', requirements: ['filename' => RoutePatterns::MEDIA], methods: ['GET', 'POST'])]
+    #[Route('/api/media/{filename}', name: 'media_api', requirements: ['filename' => RoutePatterns::MEDIA], methods: ['GET', 'POST', 'DELETE'])]
     public function __invoke(string $filename, Request $request): JsonResponse
     {
         $token = $request->headers->get('Authorization');
@@ -44,6 +44,13 @@ final class MediaApiController extends AbstractController
         $media = $this->mediaRepository->findOneByFileNameOrHistory($filename);
         if (null === $media) {
             return new JsonResponse(['error' => 'Media not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ('DELETE' === $request->getMethod()) {
+            $this->entityManager->remove($media);
+            $this->entityManager->flush();
+
+            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
         }
 
         if ('POST' === $request->getMethod()) {

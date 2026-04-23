@@ -145,4 +145,30 @@ class PageTest extends TestCase
         self::assertArrayNotHasKey('inherited', $child->getCustomProperties());
         self::assertArrayHasKey('own', $child->getCustomProperties());
     }
+
+    public function testIsCacheDefaultsToTrue(): void
+    {
+        $page = new Page(false);
+
+        self::assertTrue($page->isCache(), 'Cache should be enabled by default (no customProperty set)');
+    }
+
+    public function testSetCacheFalseDisablesCache(): void
+    {
+        $page = new Page(false);
+        $page->setCache(false);
+
+        self::assertFalse($page->isCache());
+        self::assertFalse($page->getCustomProperty('cache'));
+    }
+
+    public function testSetCacheTrueEnablesCache(): void
+    {
+        $page = new Page(false);
+        $page->setCache(false);
+        $page->setCache(true);
+
+        self::assertTrue($page->isCache());
+        self::assertTrue($page->getCustomProperty('cache'));
+    }
 }

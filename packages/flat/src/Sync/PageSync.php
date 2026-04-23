@@ -5,6 +5,7 @@ namespace Pushword\Flat\Sync;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteConfig;
@@ -40,6 +41,7 @@ final class PageSync
         private readonly EntityManagerInterface $entityManager,
         private readonly SyncStateManager $stateManager,
         private readonly ConflictResolver $conflictResolver,
+        private readonly PageCacheSuppressor $cacheSuppressor,
         /** @var string[] */
         private readonly array $excludeFiles = [],
         private readonly ?LoggerInterface $logger = null,
@@ -74,6 +76,11 @@ final class PageSync
     }
 
     public function import(?string $host = null, bool $force = false): void
+    {
+        $this->cacheSuppressor->suppress(fn () => $this->doImport($host, $force));
+    }
+
+    private function doImport(?string $host, bool $force): void
     {
         $this->deletedCount = 0;
         $app = $this->resolveApp($host);

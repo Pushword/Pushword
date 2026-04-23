@@ -8,6 +8,8 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\StaticGenerator\Cache\PageCacheGeneratorInterface;
+use Pushword\StaticGenerator\DependencyInjection\Configuration;
 use Pushword\StaticGenerator\Event\StaticPostGenerateEvent;
 use Pushword\StaticGenerator\Event\StaticPreGenerateEvent;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
@@ -23,7 +25,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 /**
  * Generate 1 App.
  */
-final class StaticAppGenerator
+final class StaticAppGenerator implements PageCacheGeneratorInterface
 {
     private bool $abortGeneration = false;
 
@@ -100,14 +102,26 @@ final class StaticAppGenerator
 
     public function generatePage(string $host, string $page): void
     {
-        $this->apps->switchSite($host)->get();
+        $app = $this->apps->switchSite($host)->get();
+
+        if (self::isCacheMode($app)) {
+            $app->staticDir = $this->getCacheDir($app); // @phpstan-ignore-line
+        }
 
         $this->logger->info('Generating '.$host.'/'.$page);
         /** @var PagesGenerator $pagesGenerator */
         $pagesGenerator = $this->getGenerator(PagesGenerator::class);
         $pagesGenerator->generatePageBySlug($page);
+    }
 
-        // Warning: no net if the generation failed !
+    public static function isCacheMode(SiteConfig $app): bool
+    {
+        return 'static' === $app->getStr('cache', 'none');
+    }
+
+    public function getCacheDir(SiteConfig $app): string
+    {
+        return $this->projectDir.'/public/cache/'.$app->getMainHost();
     }
 
     /**
@@ -117,6 +131,13 @@ final class StaticAppGenerator
     private function generateHost(string $host): void
     {
         $app = $this->apps->switchSite($host)->get();
+
+        if (self::isCacheMode($app)) {
+            $this->generateHostInCacheMode($app);
+
+            return;
+        }
+
         $originalStaticDir = $app->getStr('static_dir');
         $filesystem = new Filesystem();
 
@@ -171,6 +192,35 @@ final class StaticAppGenerator
         $this->abortGeneration = false;
     }
 
+    /**
+     * Cache mode writes directly into public/cache/{host}/ — no temp dir, no atomic swap.
+     * Operators run `pw:cache:clear` for a hard reset; per-page refreshes land in place.
+     */
+    private function generateHostInCacheMode(SiteConfig $app): void
+    {
+        $cacheDir = $this->getCacheDir($app);
+        $app->staticDir = $cacheDir; // @phpstan-ignore-line
+
+        new Filesystem()->mkdir($cacheDir);
+
+        $this->eventDispatcher->dispatch(
+            new StaticPreGenerateEvent($app, $cacheDir, $this->incremental),
+        );
+
+        $this->runGenerators($app);
+
+        if (! $this->abortGeneration) {
+            $this->stateManager->setLastGenerationTime($app->getMainHost());
+            $this->stateManager->save();
+        }
+
+        $this->eventDispatcher->dispatch(
+            new StaticPostGenerateEvent($app, $cacheDir, $this->incremental, $this->errors),
+        );
+
+        $this->abortGeneration = false;
+    }
+
     private function cleanupStaleTempDirs(string $staticDir, Filesystem $filesystem): void
     {
         foreach ([$staticDir.'~', $staticDir.'~~'] as $dir) {
@@ -189,7 +239,11 @@ final class StaticAppGenerator
         );
         $workerCount = WorkerCountResolver::resolve($this->workers, \count($slugs));
 
-        foreach ($app->get('static_generators') as $generator) { // @phpstan-ignore-line
+        $generators = self::isCacheMode($app)
+            ? Configuration::DEFAULT_GENERATOR_CACHE
+            : $app->get('static_generators');
+
+        foreach ($generators as $generator) { // @phpstan-ignore-line
             if (! \is_string($generator)) {
                 throw new LogicException();
             }

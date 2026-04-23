@@ -303,6 +303,20 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
         return $this->customProperties[$name] ?? $this->extendedPage?->getCustomProperty($name);
     }
 
+    // --- Page cache opt-out (used by pushword/static-generator in cache:static mode) ---
+
+    public function isCache(): bool
+    {
+        return false !== $this->getCustomProperty('cache');
+    }
+
+    public function setCache(bool $enabled): self
+    {
+        $this->setCustomProperty('cache', $enabled);
+
+        return $this;
+    }
+
     // --- Search excerpt (fixed typo: searchExcrept -> searchExcerpt) ---
 
     public function getSearchExcerpt(): ?string

@@ -68,5 +68,9 @@ packages/skeleton/media/
 
 # Flat watch live-reload signal file
 **/public/_flat-reload.txt
+
+# Pre-rendered page cache (cache:static mode)
+**/public/cache/
+
 # Demo data (regenerated on reset)
 packages/docs/content/conversation.csv

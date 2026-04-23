@@ -10,6 +10,7 @@ pushword:
         - localhost.dev
         - localhost
       base_url: "https://localhost.dev"
+      cache: static
       randomTest: 123
       generated_og_image: true
       admin_block_editor: false

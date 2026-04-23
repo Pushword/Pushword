@@ -1,0 +1,2 @@
+adminPageCacheLabel: Cache this page
+adminPageCacheHelp: Pre-render this page to public/cache/ so Caddy serves it without booting PHP. Disable for pages with server-side dynamic content.

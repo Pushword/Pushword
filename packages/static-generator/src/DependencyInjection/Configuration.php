@@ -27,6 +27,19 @@ class Configuration implements ConfigurationInterface
         'static_copy',
         'static_html_max_age',
         'static_html_stale_while_revalidate',
+        'cache',
+    ];
+
+    /**
+     * Generators used in `cache: static` mode — we only want HTML + media, nothing web-server-global.
+     *
+     * @var array<class-string<GeneratorInterface>>
+     */
+    final public const array DEFAULT_GENERATOR_CACHE = [
+        PagesGenerator::class,
+        ErrorPageGenerator::class,
+        MediaGenerator::class,
+        PagesCompressor::class,
     ];
 
     /**
@@ -147,6 +160,11 @@ class Configuration implements ConfigurationInterface
             ->integerNode('static_html_stale_while_revalidate')
                 ->info('stale-while-revalidate TTL in seconds, 0 to disable (default: 3600 = 1 hour)')
                 ->defaultValue(3600)
+            ->end()
+            ->enumNode('cache')
+                ->info('Page cache mode: "none" (default) or "static" (pre-render pages to public/cache/{host}/ served by Caddy/Apache without booting PHP)')
+                ->values(['none', 'static'])
+                ->defaultValue('none')
             ->end()
         ->end();
 

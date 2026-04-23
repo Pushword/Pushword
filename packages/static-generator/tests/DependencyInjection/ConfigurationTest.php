@@ -78,4 +78,42 @@ class ConfigurationTest extends KernelTestCase
         $normalized = $tree->normalize(['static_symlink' => ['invalid']]);
         $tree->finalize($normalized);
     }
+
+    public function testCacheModeDefaultsToNone(): void
+    {
+        $config = new Configuration();
+        $tree = $config->getConfigTreeBuilder()->buildTree();
+        /** @var array{cache: string} $finalized */
+        $finalized = $tree->finalize($tree->normalize([]));
+
+        self::assertSame('none', $finalized['cache']);
+    }
+
+    public function testCacheModeAcceptsStatic(): void
+    {
+        $config = new Configuration();
+        $tree = $config->getConfigTreeBuilder()->buildTree();
+        /** @var array{cache: string} $finalized */
+        $finalized = $tree->finalize($tree->normalize(['cache' => 'static']));
+
+        self::assertSame('static', $finalized['cache']);
+    }
+
+    public function testCacheModeRejectsInvalidValue(): void
+    {
+        $config = new Configuration();
+        $tree = $config->getConfigTreeBuilder()->buildTree();
+
+        $this->expectException(InvalidConfigurationException::class);
+        $normalized = $tree->normalize(['cache' => 'invalid']);
+        $tree->finalize($normalized);
+    }
+
+    public function testDefaultGeneratorCacheContainsOnlyPageRelatedGenerators(): void
+    {
+        self::assertContains(\Pushword\StaticGenerator\Generator\PagesGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
+        self::assertNotContains(\Pushword\StaticGenerator\Generator\HtaccessGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
+        self::assertNotContains(\Pushword\StaticGenerator\Generator\CaddyfileGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
+        self::assertNotContains(\Pushword\StaticGenerator\Generator\RobotsGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
+    }
 }

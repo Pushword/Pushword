@@ -28,6 +28,9 @@ you may have a look inside `vendor/pushword/admin/install.php`.
 ```bash
 # Load form via fetch (javascript)
 <div data-live="{{ conversation('newsletter') }}"></div>
+
+# Only fetch when a cookie is present (useful for cached/static pages)
+<div data-live="{{ conversation('newsletter') }}" data-live-if="cookie:pw_auth=1"></div>
 # =
 <div data-live="{{ path('pushword_conversation', {'type': 'newsletter', 'referring': 'newsletter-'~page.slug, 'host': page.host}) }}"></div>
 

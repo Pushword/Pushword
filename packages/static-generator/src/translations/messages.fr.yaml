@@ -1,0 +1,2 @@
+adminPageCacheLabel: Mettre cette page en cache
+adminPageCacheHelp: Pré-rend cette page dans public/cache/ pour que Caddy la serve sans démarrer PHP. Désactivez pour les pages au contenu dynamique côté serveur.
