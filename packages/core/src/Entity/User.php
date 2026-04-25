@@ -15,6 +15,13 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * Traits: ExtensiblePropertiesTrait (JSON key-value bag).
+ *
+ * Key fields: email (unique, identifier), username, locale, roles (JSON array), password (hashed),
+ *   apiToken (64-char hex, for Media API auth), createdAt.
+ * Designed as MappedSuperclass — end-user projects extend this class (e.g. App\Entity\User).
+ */
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity('email', message: 'userEmailAlreadyUsed')]

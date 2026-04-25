@@ -28,3 +28,9 @@ todo: 'Faire un script pour générer automatiquement un tableau avec le titre, 
   Versioning pages with Pushword CMS.
 
 Add your own extension #[editing this file on github](https://github.com/Pushword/Pushword/edit/main/packages/docs/content/extensions.md).
+
+## Extension points
+
+- **Events:** See constants in `Pushword\Core\Event\PushwordEvents`. Usage examples: [Admin Menu](/extension/admin-menu), [Pages List Search](/pages-list).
+- **Entity filters:** Implement `Pushword\Core\Component\EntityFilter\Filter\FilterInterface`, auto-tagged as `pushword.entity_filter`.
+- **Markdown extensions:** Extend the CommonMark environment via `PushwordExtension`.

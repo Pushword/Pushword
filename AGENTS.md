@@ -1,3 +1,13 @@
+## Quick orientation
+
+Read in this order to bootstrap:
+1. This file — coding rules and project shape
+2. `packages/docs/content/architecture.md` — bundle map and dev environment
+3. `packages/docs/content/extensions.md` — what each extension does
+4. `packages/core/src/Entity/Page.php` — main entity (composed from 8 traits in `SharedTrait/` and `PageTrait/`)
+5. `packages/core/src/Entity/Media.php` — media entity
+6. `packages/core/src/Event/PushwordEvents.php` — event constants
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
@@ -220,3 +230,37 @@ SYMFONY_DEPRECATIONS_HELPER='max[self]=0&max[direct]=0' composer test
 # Container deprecations
 php bin/console debug:container --deprecations
 ```
+
+## For AI agents working with a Pushword site
+
+Your project includes `pushword/docs` — read these files from `vendor/pushword/docs/content/`:
+- `architecture.md` — bundle map and packages table
+- `extensions.md` — what each extension does + extension points
+- `media-api.md` — REST API for media upload/read/delete
+- `ai-index.md` — generate CSV indexes for AI content discovery
+
+Entity source is in `vendor/pushword/core/src/Entity/` — class docblocks summarize composition.
+
+### Multi-locale content
+
+Pushword uses the `host` field for multi-site/multi-locale. Each locale is a separate host (e.g., `altimood.com`, `us.altimood.com`). Pages link across locales via the `translations` custom property. Slugs should be localized per language.
+
+### Common commands
+
+- `pw:flat:sync` — sync flat files to/from database
+- `pw:ai-index` — generate CSV index for AI tools
+- `pw:static` — generate static HTML
+- `pw:media:normalize-filenames` — normalize media filenames
+- `pw:page-scan` — scan for dead links and issues
+- `pw:user:token {email}` — get API bearer token
+
+### CLAUDE.md template for your project
+
+Your project's CLAUDE.md should include:
+1. Project purpose and tech stack
+2. Content hosts/locales table
+3. Common commands (from the list above, plus project-specific ones)
+4. Deployment workflow
+5. Editorial voice / content rules (in a separate `.rules/` or `docs/` directory)
+6. Critical invariants the framework won't enforce
+7. Reference to vendor docs: `vendor/pushword/docs/content/` for API and architecture details

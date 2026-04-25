@@ -33,6 +33,16 @@ use Symfony\Component\Yaml\Yaml;
 use Throwable;
 use Vich\UploaderBundle\Mapping\Attribute as Vich;
 
+/**
+ * Traits: IdTrait (PK), TagsTrait (comma-separated tags), TimestampableTrait (createdAt/updatedAt),
+ *   ExtensiblePropertiesTrait (JSON key-value bag).
+ *
+ * Key fields: fileName, slug, alt (main alt text), alts (YAML-encoded localized alts), mimeType, size,
+ *   storeIn (storage path), hash/originalHash (SHA-1 binary), fileNameHistory (JSON rename log), hiddenFromAdmin.
+ * Embedded: ImageData (width, height, ratio, ratioLabel, mainColor) — null for non-image media.
+ * Relations: mainImagePages ←* Page (inverse side of Page.mainImage).
+ * File upload via VichUploaderBundle (mediaFile property, not persisted).
+ */
 #[Vich\Uploadable]
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]

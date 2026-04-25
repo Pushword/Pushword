@@ -28,6 +28,15 @@ use Pushword\Core\Repository\PageRepository;
 use Stringable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
+/**
+ * Traits: IdTrait (PK), HostTrait (multi-site key), TimestampableTrait (createdAt/updatedAt),
+ *   PageI18nTrait (locale, translations), PageParentTrait (parent/children tree),
+ *   TagsTrait (comma-separated tags), WeightTrait (sort order), ExtensiblePropertiesTrait (JSON key-value bag).
+ *
+ * Key fields: slug, h1, title (SEO), mainContent (Markdown/HTML), publishedAt, metaRobots, name (breadcrumb), template.
+ * Relations: mainImage →1 Media, editedBy/createdBy →1 User, extendedPage →1 Page (field inheritance).
+ * CustomProperties store OG/Twitter metadata, searchExcerpt, cache flag, and arbitrary keys.
+ */
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity(fields: ['host', 'slug'], message: 'pageSlugAlreadyUsed', errorPath: 'slug')]

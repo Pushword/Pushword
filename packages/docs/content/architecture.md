@@ -76,3 +76,25 @@ composer stan
 # to play with default app console (skeleton)
 composer console ...
 ```
+
+## Packages
+
+| Package | Purpose | Depends on |
+|---------|---------|------------|
+| core | Base entities (Page, Media, User), entity filters, events, controllers, Twig extensions | — |
+| admin | CRUD interface for Page, Media, User built on EasyAdmin | core |
+| admin-block-editor | Rich text / block editor for the admin | core |
+| advanced-main-image | Main image format options (hidden, hero, etc.) and default templates | core, admin |
+| conversation | Comments, contact forms, user input | core, flat |
+| docs | Project documentation (ships to end users as `vendor/pushword/docs/content/`) | — |
+| flat | Flat-file CMS mode: sync pages/media between database and filesystem | core |
+| installer | Bootstraps a new Pushword project | core |
+| js-helper | Shared JavaScript utilities (Node package) | — |
+| admin-monaco-editor | Monaco code editor for admin (Node package) | — |
+| new | Meta-package that pulls in core + admin + common extensions | core |
+| page-scanner | Dead link detection, 404/301 checks, TODO scanning | core |
+| page-update-notifier | Email notifications on page edits | core |
+| skeleton | Dev/test/demo app (not a real skeleton for end users) | core |
+| static-generator | Generate static HTML sites | core |
+| template-editor | Edit Twig templates from the admin UI | core |
+| version | Page versioning | core |
