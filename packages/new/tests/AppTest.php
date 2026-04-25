@@ -9,7 +9,7 @@ use SQLite3;
  * Verifies that the Pushword installer correctly sets up a new project.
  * Run via: composer test-installer.
  */
-class AppTest extends TestCase
+final class AppTest extends TestCase
 {
     private static string $projectDir;
 

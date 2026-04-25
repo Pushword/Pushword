@@ -22,7 +22,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 
 #[Group('integration')]
-class PageUpdateNotifierTest extends KernelTestCase
+final class PageUpdateNotifierTest extends KernelTestCase
 {
     protected function getNotifier(): PageUpdateNotifier
     {
@@ -162,7 +162,7 @@ class PageUpdateNotifierTest extends KernelTestCase
         $mockConstraintViolationBuilder->method('addViolation')->willReturnSelf();
 
         $mock = $this->createMock(ExecutionContextInterface::class);
-        $mock->method('buildViolation')->willReturnCallback(static function ($arg) use ($mockConstraintViolationBuilder): MockObject {
+        $mock->method('buildViolation')->willReturnCallback(static function (string $arg) use ($mockConstraintViolationBuilder): MockObject {
             if (\in_array($arg, ['pageCustomPropertiesMalformed', 'page.customProperties.notStandAlone'], true)) {
                 throw new Error();
             }

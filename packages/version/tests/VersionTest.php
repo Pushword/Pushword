@@ -10,7 +10,7 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
 #[Group('integration')]
-class VersionTest extends KernelTestCase
+final class VersionTest extends KernelTestCase
 {
     public function testIt(): void
     {

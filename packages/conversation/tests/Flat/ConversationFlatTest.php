@@ -4,7 +4,6 @@ namespace Pushword\Conversation\Tests\Flat;
 
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
@@ -83,7 +82,6 @@ final class ConversationFlatTest extends KernelTestCase
         $this->csvPath = $contentDirFinder->getBaseDir().'/conversation.csv';
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         // Nettoie les messages créés
@@ -101,7 +99,6 @@ final class ConversationFlatTest extends KernelTestCase
                 // Ignore errors during cleanup
             }
         }
-
         // Nettoie les médias créés
         if ([] !== $this->createdMediaFileNames) {
             try {
@@ -117,7 +114,6 @@ final class ConversationFlatTest extends KernelTestCase
                 // Ignore errors during cleanup
             }
         }
-
         // Supprime les fichiers CSV temporaires
         $csvPaths = array_merge([$this->csvPath], $this->temporaryCsvPaths);
         foreach ($csvPaths as $path) {
@@ -125,9 +121,7 @@ final class ConversationFlatTest extends KernelTestCase
                 @unlink($path);
             }
         }
-
         $this->temporaryCsvPaths = [];
-
         parent::tearDown();
     }
 

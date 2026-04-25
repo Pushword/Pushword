@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
-class ControllerTest extends AbstractAdminTestClass
+final class ControllerTest extends AbstractAdminTestClass
 {
     public function testBasics(): void
     {

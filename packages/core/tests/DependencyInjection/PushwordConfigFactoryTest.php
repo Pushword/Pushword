@@ -10,7 +10,7 @@ use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 
-class PushwordConfigFactoryTest extends TestCase
+final class PushwordConfigFactoryTest extends TestCase
 {
     public function testWithoutConfiguration(): void
     {

@@ -2,7 +2,6 @@
 
 namespace Pushword\Flat\Tests;
 
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Flat\Exporter\PageExporter;
 use Pushword\Flat\Exporter\RedirectionExporter;
@@ -25,7 +24,6 @@ final class PageRedirectionExportTest extends KernelTestCase
         $this->filesystem->mkdir($this->testContentDir);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $this->filesystem->remove($this->testContentDir);

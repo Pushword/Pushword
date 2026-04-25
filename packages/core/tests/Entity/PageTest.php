@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 
-class PageTest extends TestCase
+final class PageTest extends TestCase
 {
     public function testBasics(): void
     {

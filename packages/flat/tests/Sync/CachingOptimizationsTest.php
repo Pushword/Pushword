@@ -77,17 +77,14 @@ final class CachingOptimizationsTest extends KernelTestCase
         $this->pageSync->export('localhost.dev', true, $this->contentDir);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
-
         if (null !== $this->isolatedContentDir) {
             $this->filesystem->remove($this->isolatedContentDir);
         }
-
         parent::tearDown();
     }
 

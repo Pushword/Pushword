@@ -5,6 +5,9 @@ use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
 use Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
+use Rector\PHPUnit\CodeQuality\Rector\Class_\PreferPHPUnitThisCallRector;
+use Rector\PHPUnit\CodeQuality\Rector\FuncCall\AssertFuncCallToPHPUnitAssertRector;
+use Rector\PHPUnit\CodeQuality\Rector\MethodCall\StringCastAssertStringContainsStringRector;
 use Rector\Symfony\CodeQuality\Rector\Class_\ControllerMethodInjectionToConstructorRector;
 use Rector\Symfony\Set\SymfonySetList;
 
@@ -37,6 +40,7 @@ return RectorConfig::configure()
         typeDeclarationDocblocks: true,
         instanceOf: true,
         earlyReturn: true,
+        phpunitCodeQuality: true,
         doctrineCodeQuality: true,
         symfonyCodeQuality: true,
         // symfonyConfigs: true
@@ -56,6 +60,9 @@ return RectorConfig::configure()
         FlipTypeControlToUseExclusiveTypeRector::class,
         RemoveUselessReturnTagRector::class,
         RemoveNonExistingVarAnnotationRector::class,
+        PreferPHPUnitThisCallRector::class,
+        AssertFuncCallToPHPUnitAssertRector::class,
+        StringCastAssertStringContainsStringRector::class,
         // @see https://github.com/rectorphp/rector/issues/9519
         ControllerMethodInjectionToConstructorRector::class => [
             '*CrudController.php',

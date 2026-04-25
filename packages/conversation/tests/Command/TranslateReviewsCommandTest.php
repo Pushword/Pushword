@@ -3,7 +3,6 @@
 namespace Pushword\Conversation\Tests\Command;
 
 use Doctrine\ORM\EntityManager;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Entity\Review;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -17,7 +16,6 @@ final class TranslateReviewsCommandTest extends KernelTestCase
     /** @var int[] */
     private array $createdReviewIds = [];
 
-    #[Override]
     protected function tearDown(): void
     {
         $this->cleanupTestData();

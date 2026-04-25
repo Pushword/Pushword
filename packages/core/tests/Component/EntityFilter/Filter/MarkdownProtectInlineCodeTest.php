@@ -5,7 +5,7 @@ namespace Pushword\Core\Tests\Component\EntityFilter\Filter;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Component\EntityFilter\Filter\MarkdownProtectInlineCode;
 
-class MarkdownProtectInlineCodeTest extends TestCase
+final class MarkdownProtectInlineCodeTest extends TestCase
 {
     public function testProtectAndRestoreRoundTrip(): void
     {

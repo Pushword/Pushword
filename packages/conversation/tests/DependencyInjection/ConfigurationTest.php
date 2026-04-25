@@ -11,7 +11,7 @@ use Twig\Environment as Twig;
 use Twig\Loader\FilesystemLoader;
 
 #[Group('integration')]
-class ConfigurationTest extends KernelTestCase
+final class ConfigurationTest extends KernelTestCase
 {
     public function testConf(): void
     {

@@ -54,12 +54,10 @@ final class MediaApiControllerTest extends WebTestCase
         $this->em->flush();
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $container = $this->client->getContainer();
         $this->em = $container->get('doctrine.orm.default_entity_manager');
-
         $mediaRepo = $this->em->getRepository(Media::class);
         foreach ($this->createdMediaFileNames as $fileName) {
             $media = $mediaRepo->findOneByFileNameOrHistory($fileName);
@@ -67,7 +65,6 @@ final class MediaApiControllerTest extends WebTestCase
                 $this->em->remove($media);
             }
         }
-
         if ('' !== $this->testUserEmail) {
             /** @var class-string<User> $userClass */
             $userClass = $container->getParameter('pw.entity_user');
@@ -76,13 +73,10 @@ final class MediaApiControllerTest extends WebTestCase
                 $this->em->remove($user);
             }
         }
-
         $this->em->flush();
-
         $this->createdMediaFileNames = [];
         $this->testUser = null;
         $this->testUserEmail = '';
-
         parent::tearDown();
     }
 

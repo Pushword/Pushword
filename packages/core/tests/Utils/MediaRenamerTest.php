@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Utils\MediaRenamer;
 
-class MediaRenamerTest extends TestCase
+final class MediaRenamerTest extends TestCase
 {
     public function testRenameAppendsIteration(): void
     {

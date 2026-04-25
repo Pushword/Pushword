@@ -4,7 +4,6 @@ namespace Pushword\Core\Tests\Perf;
 
 use DateTime;
 use Doctrine\ORM\EntityManager;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -57,23 +56,18 @@ final class RepositoryBenchmarkTest extends KernelTestCase
         $this->mediaRepo = $em->getRepository(Media::class);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         if ($this->txOpen && $this->em->getConnection()->isTransactionActive()) {
             $this->em->rollback();
         }
-
         $this->txOpen = false;
-
         foreach ($this->touchedFiles as $path) {
             if (is_file($path)) {
                 @unlink($path);
             }
         }
-
         $this->touchedFiles = [];
-
         parent::tearDown();
     }
 

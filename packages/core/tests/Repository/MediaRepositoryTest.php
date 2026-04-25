@@ -10,7 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 #[Group('integration')]
-class MediaRepositoryTest extends KernelTestCase
+final class MediaRepositoryTest extends KernelTestCase
 {
     public function testFindDuplicate(): void
     {

@@ -8,7 +8,7 @@ use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
 use ReflectionClass;
 
-class ElseH1Test extends TestCase
+final class ElseH1Test extends TestCase
 {
     private function createManagerStub(): Manager
     {

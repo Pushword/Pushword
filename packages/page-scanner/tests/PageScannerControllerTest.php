@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Twig\Error\RuntimeError;
 
 #[Group('integration')]
-class PageScannerControllerTest extends AbstractAdminTestClass
+final class PageScannerControllerTest extends AbstractAdminTestClass
 {
     public function testAdmin(): void
     {

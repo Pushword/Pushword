@@ -19,7 +19,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 
 #[Group('integration')]
-class EntityFilterTest extends KernelTestCase
+final class EntityFilterTest extends KernelTestCase
 {
     public function testIt(): void
     {

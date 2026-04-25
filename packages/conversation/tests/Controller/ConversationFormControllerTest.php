@@ -10,11 +10,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
-class ConversationFormControllerTest extends WebTestCase
+final class ConversationFormControllerTest extends WebTestCase
 {
     public function testNewsletterForm(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
         $client->request(Request::METHOD_GET, '/conversation/newsletter/test', [], [], $server);
@@ -24,7 +24,7 @@ class ConversationFormControllerTest extends WebTestCase
 
     public function testMessageForm(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
         $crawler = $client->request(Request::METHOD_POST, '/conversation/message/test', [], [], $server);
@@ -41,7 +41,7 @@ class ConversationFormControllerTest extends WebTestCase
 
     public function testMessageFormDeduplication(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
         $uniqueContent = 'Dedup test message '.uniqid();
 
@@ -69,7 +69,7 @@ class ConversationFormControllerTest extends WebTestCase
         self::assertStringContainsString('Thank you', (string) $client->getResponse()->getContent());
 
         // Verify only one message was persisted
-        $em = static::getContainer()->get('doctrine')->getManager();
+        $em = self::getContainer()->get('doctrine')->getManager();
         $messages = $em->getRepository(Message::class)
             ->findBy(['content' => $uniqueContent]);
         self::assertCount(1, $messages, 'Duplicate message should not be persisted');
@@ -77,7 +77,7 @@ class ConversationFormControllerTest extends WebTestCase
 
     public function testNewsletterFormWithQueryParams(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
         $client->request(
@@ -92,7 +92,7 @@ class ConversationFormControllerTest extends WebTestCase
 
     public function testConversationWithSlashInReferring(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
         $client->request(
@@ -107,6 +107,6 @@ class ConversationFormControllerTest extends WebTestCase
 
     public function getController(): ConversationFormController
     {
-        return static::getContainer()->get(ConversationFormController::class);
+        return self::getContainer()->get(ConversationFormController::class);
     }
 }

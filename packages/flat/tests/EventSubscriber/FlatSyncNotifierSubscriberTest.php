@@ -44,13 +44,11 @@ final class FlatSyncNotifierSubscriberTest extends KernelTestCase
         $lockManager->acquireLock(self::TEST_HOST, 'manual');
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         /** @var FlatLockManager $lockManager */
         $lockManager = self::getContainer()->get(FlatLockManager::class);
         $lockManager->releaseLock(self::TEST_HOST);
-
         parent::tearDown();
     }
 

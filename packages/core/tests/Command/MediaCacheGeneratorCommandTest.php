@@ -10,7 +10,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Lock\LockFactory;
 
 #[Group('integration')]
-class MediaCacheGeneratorCommandTest extends KernelTestCase
+final class MediaCacheGeneratorCommandTest extends KernelTestCase
 {
     use PathTrait;
 
@@ -143,7 +143,7 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
 
     private function createCommandTester(): CommandTester
     {
-        $kernel = static::bootKernel();
+        $kernel = self::bootKernel();
         $application = new Application($kernel);
 
         return new CommandTester($application->find('pw:image:cache'));
@@ -152,7 +152,7 @@ class MediaCacheGeneratorCommandTest extends KernelTestCase
     private function waitForLockRelease(): void
     {
         /** @var LockFactory $lockFactory */
-        $lockFactory = static::getContainer()->get('lock.factory');
+        $lockFactory = self::getContainer()->get('lock.factory');
         $lock = $lockFactory->createLock('pw:image:cache');
         $lock->acquire(blocking: true);
         $lock->release();

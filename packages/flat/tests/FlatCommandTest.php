@@ -9,11 +9,11 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[Group('integration')]
-class FlatCommandTest extends KernelTestCase
+final class FlatCommandTest extends KernelTestCase
 {
     public function testSync(): void
     {
-        $kernel = static::createKernel();
+        $kernel = self::createKernel();
         $application = new Application($kernel);
 
         // Clean up any PID file left by parallel tests

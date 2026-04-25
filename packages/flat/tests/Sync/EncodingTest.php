@@ -47,13 +47,11 @@ final class EncodingTest extends KernelTestCase
         $this->pageSync->export('localhost.dev', true, $this->contentDir);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
-
         // Clean up test pages
         foreach (['utf8-bom-test', 'accented-test', 'cjk-test', 'emoji-test', 'special-yaml-test', 'cafe-creme', 'js-guide-test', 'smart-quotes-test'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
@@ -61,9 +59,7 @@ final class EncodingTest extends KernelTestCase
                 $this->em->remove($page);
             }
         }
-
         $this->em->flush();
-
         parent::tearDown();
     }
 

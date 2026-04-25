@@ -51,13 +51,11 @@ final class FlatSyncNotifierTest extends KernelTestCase
         $changeDetector->invalidateCache(self::TEST_HOST);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         /** @var FlatLockManager $lockManager */
         $lockManager = self::getContainer()->get(FlatLockManager::class);
         $lockManager->releaseLock($this->lockTestHost);
-
         // Clean up conflict files
         $conflictFiles = [
             ...(glob($this->contentDir.'/*~conflict-*') ?: []),
@@ -67,7 +65,6 @@ final class FlatSyncNotifierTest extends KernelTestCase
         foreach ($conflictFiles as $file) {
             $fs->remove($file);
         }
-
         parent::tearDown();
     }
 

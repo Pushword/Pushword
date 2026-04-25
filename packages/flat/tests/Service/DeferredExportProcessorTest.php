@@ -34,14 +34,12 @@ final class DeferredExportProcessorTest extends KernelTestCase
         mkdir($this->tempDir, 0755, true);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $fs = new Filesystem();
         if (is_dir($this->tempDir)) {
             $fs->remove($this->tempDir);
         }
-
         parent::tearDown();
     }
 

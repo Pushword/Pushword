@@ -7,7 +7,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\AdminBlockEditor\EditorJsHelper;
 
-class EditorJsHelperTest extends TestCase
+final class EditorJsHelperTest extends TestCase
 {
     public function testDecodeValidJson(): void
     {

@@ -12,7 +12,7 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
 #[Group('integration')]
-class ControllerTest extends AbstractAdminTestClass
+final class ControllerTest extends AbstractAdminTestClass
 {
     public function testLogin(): void
     {

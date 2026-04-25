@@ -9,7 +9,7 @@ use Pushword\Core\Utils\FontAwesome5To6;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class SVGExtensionTest extends KernelTestCase
+final class SVGExtensionTest extends KernelTestCase
 {
     public function testFontAwesome5To6(): void
     {

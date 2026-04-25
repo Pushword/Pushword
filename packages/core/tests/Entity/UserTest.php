@@ -5,7 +5,7 @@ namespace Pushword\Core\Tests\Entity;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\User;
 
-class UserTest extends TestCase
+final class UserTest extends TestCase
 {
     public function testBasics(): void
     {

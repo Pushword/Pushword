@@ -35,13 +35,11 @@ final class FlatLintCommandTest extends KernelTestCase
         $this->contentDir = $contentDirFinder->get('localhost.dev');
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
-
         parent::tearDown();
     }
 

@@ -6,7 +6,6 @@ use DateTime;
 use Doctrine\ORM\EntityManager;
 use League\Flysystem\Filesystem as Flysystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
@@ -40,14 +39,12 @@ final class MediaExportImportTest extends KernelTestCase
         $this->filesystem->mkdir($this->testMediaDir);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $this->filesystem->remove($this->testMediaDir);
         foreach ($this->tempFiles as $path) {
             @unlink($path);
         }
-
         parent::tearDown();
     }
 

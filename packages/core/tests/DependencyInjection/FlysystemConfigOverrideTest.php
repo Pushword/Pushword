@@ -22,7 +22,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Fix: newly loaded configs are moved to the front of the extension config array.
  */
 #[Group('integration')]
-class FlysystemConfigOverrideTest extends TestCase
+final class FlysystemConfigOverrideTest extends TestCase
 {
     private const array APP_SFTP_CONFIG = [
         'storages' => [

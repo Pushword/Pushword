@@ -47,13 +47,11 @@ final class MultiHostSyncTest extends KernelTestCase
         $this->stateManager = $stateManager;
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
-
         foreach (['multi-host-test-page'] as $slug) {
             foreach (['localhost.dev', 'pushword.piedweb.com'] as $host) {
                 $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => $host]);
@@ -62,9 +60,7 @@ final class MultiHostSyncTest extends KernelTestCase
                 }
             }
         }
-
         $this->em->flush();
-
         parent::tearDown();
     }
 

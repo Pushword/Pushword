@@ -6,13 +6,13 @@ use PHPUnit\Framework\TestCase;
 use Pushword\Core\DependencyInjection\Configuration;
 use Symfony\Component\Config\Definition\Processor;
 
-class ConfigurationTest extends TestCase
+final class ConfigurationTest extends TestCase
 {
     public function testConf(): void
     {
         $config = $this->process([]);
 
-        self::assertSame($config['locale'], '%kernel.default_locale%');
+        self::assertSame('%kernel.default_locale%', $config['locale']);
     }
 
     protected function process(array $configs): array // @phpstan-ignore-line

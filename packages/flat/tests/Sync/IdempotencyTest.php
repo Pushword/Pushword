@@ -44,22 +44,18 @@ final class IdempotencyTest extends KernelTestCase
         $this->contentDir = $contentDirFinder->get('localhost.dev');
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
-
         foreach (['idempotent-test-page'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
             }
         }
-
         $this->em->flush();
-
         parent::tearDown();
     }
 

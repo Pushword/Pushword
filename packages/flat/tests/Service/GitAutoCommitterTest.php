@@ -25,13 +25,11 @@ final class GitAutoCommitterTest extends KernelTestCase
         mkdir($this->tempDir, 0755, true);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         if (is_dir($this->tempDir)) {
             $this->fs->remove($this->tempDir);
         }
-
         parent::tearDown();
     }
 

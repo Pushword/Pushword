@@ -10,7 +10,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class RouterTest extends KernelTestCase
+final class RouterTest extends KernelTestCase
 {
     private function makeRouter(): PushwordRouteGenerator
     {
@@ -45,8 +45,8 @@ class RouterTest extends KernelTestCase
         self::bootKernel();
         $twig = self::getContainer()->get('twig');
 
-        self::assertSame($twig->createTemplate('{{ homepage() }}', null)->render(), '/');
-        self::assertSame($twig->createTemplate('{{ page("homepage") }}', null)->render(), '/');
+        self::assertSame('/', $twig->createTemplate('{{ homepage() }}', null)->render());
+        self::assertSame('/', $twig->createTemplate('{{ page("homepage") }}', null)->render());
     }
 
     public function testMayUseCustomPathReturnsFalseForDefaultHost(): void

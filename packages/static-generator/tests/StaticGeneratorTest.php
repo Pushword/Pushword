@@ -7,7 +7,6 @@ use DateTimeImmutable;
 use Exception;
 use FilesystemIterator;
 use LogicException;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
@@ -47,7 +46,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[Group('integration')]
-class StaticGeneratorTest extends KernelTestCase
+final class StaticGeneratorTest extends KernelTestCase
 {
     private ?StaticAppGenerator $staticAppGenerator = null;
 
@@ -77,13 +76,11 @@ class StaticGeneratorTest extends KernelTestCase
         $this->isolatedStaticDir = sys_get_temp_dir().'/pushword-static-test-'.getmypid();
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         if (null !== $this->isolatedStaticDir) {
             new Filesystem()->remove($this->isolatedStaticDir);
         }
-
         parent::tearDown();
     }
 
@@ -115,7 +112,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         self::bootKernel();
         $this->overrideStaticDir();
-        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
 
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
@@ -142,7 +139,7 @@ class StaticGeneratorTest extends KernelTestCase
     {
         self::bootKernel();
         $this->overrideStaticDir();
-        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
         $staticDir = $this->getStaticDir();
         $stateFile = $this->getStateFilePath();
 
@@ -557,7 +554,7 @@ class StaticGeneratorTest extends KernelTestCase
             $postEvents[] = $event;
         });
 
-        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
         $commandTester->execute(['host' => 'localhost.dev']);
@@ -586,7 +583,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         foreach ($generatorClasses as $generatorClass) {
             $generator = $bag->get($generatorClass);
-            self::assertSame($generatorClass, $generator::class);
+            self::assertSame($generator::class, $generatorClass);
         }
     }
 
@@ -655,7 +652,7 @@ class StaticGeneratorTest extends KernelTestCase
         self::assertDirectoryExists($staleTempDir);
         self::assertDirectoryExists($staleBackupDir);
 
-        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
         $commandTester->execute(['host' => 'localhost.dev']);
@@ -743,7 +740,7 @@ class StaticGeneratorTest extends KernelTestCase
         self::bootKernel();
         $this->overrideStaticDir();
 
-        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
 
@@ -797,7 +794,7 @@ class StaticGeneratorTest extends KernelTestCase
         $siteConfig->setCustomProperty('static_dir', $seqDir);
         $this->cleanupPidFiles();
 
-        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $tester = new CommandTester($command);
         $tester->execute(['host' => 'localhost.dev', '--workers' => 1]);
@@ -834,7 +831,7 @@ class StaticGeneratorTest extends KernelTestCase
         $this->overrideStaticDir();
         $this->cleanupPidFiles();
 
-        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $tester = new CommandTester($command);
         $tester->execute(['host' => 'localhost.dev', '--workers' => 2]);

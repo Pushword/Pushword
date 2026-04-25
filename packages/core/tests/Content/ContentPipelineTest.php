@@ -20,7 +20,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use Twig\Environment as Twig;
 use Twig\Loader\FilesystemLoader;
 
-class ContentPipelineTest extends TestCase
+final class ContentPipelineTest extends TestCase
 {
     /** @param array<string, string> $siteFilters */
     private function createPipeline(

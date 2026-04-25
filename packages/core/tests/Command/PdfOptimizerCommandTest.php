@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[Group('integration')]
-class PdfOptimizerCommandTest extends KernelTestCase
+final class PdfOptimizerCommandTest extends KernelTestCase
 {
     use PathTrait;
 
@@ -21,7 +21,7 @@ class PdfOptimizerCommandTest extends KernelTestCase
 
     public function testExecuteWithNoPdfs(): void
     {
-        $kernel = static::createKernel();
+        $kernel = self::createKernel();
         $application = new Application($kernel);
 
         $command = $application->find('pw:pdf:optimize');
@@ -35,7 +35,7 @@ class PdfOptimizerCommandTest extends KernelTestCase
 
     public function testExecuteWithSpecificPdf(): void
     {
-        $kernel = static::createKernel();
+        $kernel = self::createKernel();
         $application = new Application($kernel);
 
         $command = $application->find('pw:pdf:optimize');
@@ -50,7 +50,7 @@ class PdfOptimizerCommandTest extends KernelTestCase
 
     public function testCommandDescription(): void
     {
-        $kernel = static::createKernel();
+        $kernel = self::createKernel();
         $application = new Application($kernel);
 
         $command = $application->find('pw:pdf:optimize');

@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
-class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // KernelTestCase
+final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // KernelTestCase
 {
     use PathTrait;
 
@@ -42,7 +42,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         $media->setFileName('piedweb.png');
 
         $em->flush();
-        self::assertSame(file_exists($this->getMediaDir().'/piedweb.png'), true);
+        self::assertFileExists($this->getMediaDir().'/piedweb.png');
 
         $media->setFileName('piedweb-logo.png');
         $em->flush();
@@ -62,7 +62,7 @@ class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // Ker
         // If import twice, return the existing one and not create a new copy
         $mediaEntity = $this->getImporter()->importExternal(__DIR__.'/media/2.jpg', '1', '', false);
         self::assertFileDoesNotExist($this->getMediaDir().'/1-3.jpg');
-        self::assertSame($mediaEntity->getFileName(), '1-2.jpg');
+        self::assertSame('1-2.jpg', $mediaEntity->getFileName());
         unlink($this->getMediaDir().'/1-2.jpg');
         self::assertFileDoesNotExist($this->getMediaDir().'/1-2.jpg');
     }

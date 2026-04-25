@@ -7,7 +7,7 @@ use Pushword\StaticGenerator\Generator\CompressionAlgorithm;
 use Pushword\StaticGenerator\Generator\Compressor;
 use Symfony\Component\Filesystem\Filesystem;
 
-class CompressorTest extends TestCase
+final class CompressorTest extends TestCase
 {
     private string $tempDir;
 

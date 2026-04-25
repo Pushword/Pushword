@@ -10,7 +10,7 @@ use Pushword\PageScanner\Scanner\TodoScanner;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class TodoScannerTest extends KernelTestCase
+final class TodoScannerTest extends KernelTestCase
 {
     private TodoScanner $scanner;
 

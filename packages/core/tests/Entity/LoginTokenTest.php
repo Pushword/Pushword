@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
 
-class LoginTokenTest extends TestCase
+final class LoginTokenTest extends TestCase
 {
     public function testTokenCreation(): void
     {

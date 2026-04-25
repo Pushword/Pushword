@@ -10,7 +10,7 @@ use Symfony\Component\Panther\Client;
  * Uses Symfony Panther to test in a real browser.
  */
 #[Group('panther')]
-class AdminMediaPickerTest extends AbstractPantherAdminTest
+final class AdminMediaPickerTest extends AbstractPantherAdminTest
 {
     private const string SELECTOR_MEDIA_PICKER = '[data-pw-media-picker]';
 

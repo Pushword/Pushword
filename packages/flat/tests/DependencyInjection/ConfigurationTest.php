@@ -7,7 +7,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class ConfigurationTest extends KernelTestCase
+final class ConfigurationTest extends KernelTestCase
 {
     public function testConf(): void
     {

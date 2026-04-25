@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Twig\Environment;
 
 #[Group('integration')]
-class ImageTemplateTest extends KernelTestCase
+final class ImageTemplateTest extends KernelTestCase
 {
     private function getTwig(): Environment
     {

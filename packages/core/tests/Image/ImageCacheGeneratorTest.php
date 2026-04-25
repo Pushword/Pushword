@@ -2,7 +2,6 @@
 
 namespace Pushword\Core\Tests\Image;
 
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
@@ -16,7 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
-class ImageCacheGeneratorTest extends KernelTestCase
+final class ImageCacheGeneratorTest extends KernelTestCase
 {
     use PathTrait;
 
@@ -28,7 +27,6 @@ class ImageCacheGeneratorTest extends KernelTestCase
         new Filesystem()->mkdir($this->tmpPublicDir);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         new Filesystem()->remove($this->tmpPublicDir);

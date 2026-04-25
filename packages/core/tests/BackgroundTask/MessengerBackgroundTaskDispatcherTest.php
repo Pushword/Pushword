@@ -9,7 +9,7 @@ use Pushword\Core\Service\BackgroundProcessManager;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-class MessengerBackgroundTaskDispatcherTest extends TestCase
+final class MessengerBackgroundTaskDispatcherTest extends TestCase
 {
     public function testDispatchSendsMessageToBus(): void
     {

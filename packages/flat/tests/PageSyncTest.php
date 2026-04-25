@@ -53,17 +53,14 @@ final class PageSyncTest extends KernelTestCase
         $this->pageSync = $pageSync;
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
-
         foreach (array_reverse($this->createdDirs) as $dir) {
             @rmdir($dir);
         }
-
         parent::tearDown();
     }
 

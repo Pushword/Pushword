@@ -9,7 +9,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class AppExtensionTest extends KernelTestCase
+final class AppExtensionTest extends KernelTestCase
 {
     private function getExtensionWithPage(string $host = 'localhost.dev', string $slug = 'test-page'): AppExtension
     {

@@ -4,6 +4,7 @@ namespace Pushword\PageScanner;
 
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Iterator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
@@ -15,7 +16,7 @@ use function Safe\file_get_contents;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class LinkedDocsScannerTest extends KernelTestCase
+final class LinkedDocsScannerTest extends KernelTestCase
 {
     private function createScanner(): LinkedDocsScanner
     {
@@ -63,14 +64,12 @@ class LinkedDocsScannerTest extends KernelTestCase
     }
 
     /**
-     * @return array<string, array{string}>
+     * @return Iterator<string, array{string}>
      */
-    public static function homepageUrlProvider(): array
+    public static function homepageUrlProvider(): Iterator
     {
-        return [
-            'with trailing slash' => ['https://localhost.dev/'],
-            'without trailing slash' => ['https://localhost.dev'],
-        ];
+        yield 'with trailing slash' => ['https://localhost.dev/'];
+        yield 'without trailing slash' => ['https://localhost.dev'];
     }
 
     public function testCrossHostInternalLinkToMissingPage(): void

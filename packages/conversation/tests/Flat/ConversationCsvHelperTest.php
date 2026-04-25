@@ -7,7 +7,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Conversation\Flat\ConversationCsvHelper;
 
-class ConversationCsvHelperTest extends TestCase
+final class ConversationCsvHelperTest extends TestCase
 {
     public function testFormatDateWithNull(): void
     {

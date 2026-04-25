@@ -3,7 +3,6 @@
 namespace Pushword\Core\Tests\Command;
 
 use Doctrine\ORM\EntityManager;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -33,7 +32,6 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
         $this->createdPageIds = [];
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $this->cleanupTestData();

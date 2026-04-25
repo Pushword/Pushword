@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Symfony\Component\Filesystem\Filesystem;
 
-class BackgroundProcessManagerTest extends TestCase
+final class BackgroundProcessManagerTest extends TestCase
 {
     private string $varDir;
 

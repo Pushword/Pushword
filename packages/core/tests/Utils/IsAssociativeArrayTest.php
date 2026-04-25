@@ -6,7 +6,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Utils\IsAssociativeArray;
 
-class IsAssociativeArrayTest extends TestCase
+final class IsAssociativeArrayTest extends TestCase
 {
     /**
      * @param array<mixed> $input

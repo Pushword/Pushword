@@ -7,7 +7,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use Pushword\Admin\Controller\AdminMenu;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
 use Pushword\Core\Site\SiteRegistry;
@@ -17,32 +16,26 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 #[Group('integration')]
-class AdminMenuTest extends KernelTestCase
+final class AdminMenuTest extends KernelTestCase
 {
     private AdminMenu $adminMenu;
 
     private EventDispatcherInterface&MockObject $eventDispatcher;
-
-    private SiteRegistry $appPool;
-
-    private AdminContextProviderInterface&Stub $adminContextProvider;
-
-    private RequestStack $requestStack;
 
     protected function setUp(): void
     {
         self::bootKernel();
         $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         // SiteRegistry is final, get real instance from container
-        $this->appPool = self::getContainer()->get(SiteRegistry::class);
-        $this->adminContextProvider = self::createStub(AdminContextProviderInterface::class);
-        $this->requestStack = new RequestStack();
-        $this->requestStack->push(new Request());
+        $appPool = self::getContainer()->get(SiteRegistry::class);
+        $adminContextProvider = self::createStub(AdminContextProviderInterface::class);
+        $requestStack = new RequestStack();
+        $requestStack->push(new Request());
 
         $this->adminMenu = new AdminMenu(
-            $this->appPool,
-            $this->adminContextProvider,
-            $this->requestStack,
+            $appPool,
+            $adminContextProvider,
+            $requestStack,
             $this->eventDispatcher,
         );
     }

@@ -13,7 +13,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Twig\Environment as Twig;
 use Twig\Loader\FilesystemLoader;
 
-class SiteConfigTest extends TestCase
+final class SiteConfigTest extends TestCase
 {
     private string $tempDir;
 

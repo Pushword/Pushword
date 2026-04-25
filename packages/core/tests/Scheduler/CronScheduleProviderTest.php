@@ -5,7 +5,7 @@ namespace Pushword\Core\Tests\Scheduler;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Scheduler\CronScheduleProvider;
 
-class CronScheduleProviderTest extends TestCase
+final class CronScheduleProviderTest extends TestCase
 {
     public function testEmptyCommandsReturnsEmptySchedule(): void
     {

@@ -7,7 +7,7 @@ use Pushword\Core\BackgroundTask\RunCommandHandler;
 use Pushword\Core\BackgroundTask\RunCommandMessage;
 use Pushword\Core\Service\BackgroundProcessManager;
 
-class RunCommandHandlerTest extends TestCase
+final class RunCommandHandlerTest extends TestCase
 {
     public function testHandlerExecutesCommandAndCleansUp(): void
     {

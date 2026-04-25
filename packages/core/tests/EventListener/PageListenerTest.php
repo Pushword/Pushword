@@ -9,7 +9,7 @@ use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class PageListenerTest extends KernelTestCase
+final class PageListenerTest extends KernelTestCase
 {
     private EntityManager $em;
 

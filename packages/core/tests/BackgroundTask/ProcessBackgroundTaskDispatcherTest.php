@@ -8,7 +8,7 @@ use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessAlreadyRunningException;
 use RuntimeException;
 
-class ProcessBackgroundTaskDispatcherTest extends TestCase
+final class ProcessBackgroundTaskDispatcherTest extends TestCase
 {
     public function testAlreadyRunningIsSilenced(): void
     {

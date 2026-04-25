@@ -49,13 +49,11 @@ final class ParentPageSyncTest extends KernelTestCase
         $this->pageSync->export('localhost.dev', true, $this->contentDir);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
-
         foreach ($this->testSlugs as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
@@ -63,18 +61,14 @@ final class ParentPageSyncTest extends KernelTestCase
                 $page->setParentPage(null);
             }
         }
-
         $this->em->flush();
-
         foreach ($this->testSlugs as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
             }
         }
-
         $this->em->flush();
-
         parent::tearDown();
     }
 

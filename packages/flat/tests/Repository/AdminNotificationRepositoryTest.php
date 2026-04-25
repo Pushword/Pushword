@@ -35,19 +35,15 @@ final class AdminNotificationRepositoryTest extends KernelTestCase
         $this->repository = $repository;
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach ($this->testNotifications as $notification) {
             $this->em->remove($notification);
         }
-
         if ([] !== $this->testNotifications) {
             $this->em->flush();
         }
-
         $this->testNotifications = [];
-
         parent::tearDown();
     }
 

@@ -6,7 +6,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Utils\FilesizeFormatter;
 
-class FilesizeFormatterTest extends TestCase
+final class FilesizeFormatterTest extends TestCase
 {
     #[DataProvider('provideFormatBytes')]
     public function testFormatBytes(float|int|string $size, string $expected): void

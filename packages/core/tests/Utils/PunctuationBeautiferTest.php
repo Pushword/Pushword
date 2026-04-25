@@ -5,7 +5,7 @@ namespace Pushword\Core\Tests\Utils;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Utils\HtmlBeautifer;
 
-class PunctuationBeautiferTest extends TestCase
+final class PunctuationBeautiferTest extends TestCase
 {
     public function testIt(): void
     {

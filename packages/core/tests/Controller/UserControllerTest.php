@@ -12,13 +12,13 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 
 #[Group('integration')]
-class UserControllerTest extends WebTestCase
+final class UserControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
-        $this->client = static::createClient();
+        $this->client = self::createClient();
     }
 
     public function testLoginPageShowsEmailStep(): void

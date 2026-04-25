@@ -6,7 +6,7 @@ use DateInterval;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Utils\LastTime;
 
-class LastTimeTest extends TestCase
+final class LastTimeTest extends TestCase
 {
     private string $tmpFile;
 

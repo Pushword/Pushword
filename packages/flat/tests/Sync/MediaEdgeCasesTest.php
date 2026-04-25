@@ -33,13 +33,11 @@ final class MediaEdgeCasesTest extends KernelTestCase
         $this->em = $em;
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         foreach ($this->tempFiles as $file) {
             @unlink($file);
         }
-
         parent::tearDown();
     }
 

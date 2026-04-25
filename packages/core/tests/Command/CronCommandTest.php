@@ -11,7 +11,7 @@ use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\NullOutput;
 
-class CronCommandTest extends TestCase
+final class CronCommandTest extends TestCase
 {
     private string $varDir;
 

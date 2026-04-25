@@ -5,7 +5,7 @@ namespace Pushword\Core\Tests\Entity\ValueObject;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\ValueObject\OpenGraphData;
 
-class OpenGraphDataTest extends TestCase
+final class OpenGraphDataTest extends TestCase
 {
     public function testEmptyByDefault(): void
     {

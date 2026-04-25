@@ -5,7 +5,6 @@ namespace Pushword\StaticGenerator;
 use DateTime;
 use FilesystemIterator;
 use LogicException;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
@@ -18,7 +17,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('benchmark')]
-class StaticGeneratorBenchmarkTest extends KernelTestCase
+final class StaticGeneratorBenchmarkTest extends KernelTestCase
 {
     private ?string $isolatedStaticDir = null;
 
@@ -45,13 +44,11 @@ class StaticGeneratorBenchmarkTest extends KernelTestCase
         $this->isolatedStaticDir = sys_get_temp_dir().'/pushword-bench-'.getmypid();
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         if (null !== $this->isolatedStaticDir) {
             new Filesystem()->remove($this->isolatedStaticDir);
         }
-
         parent::tearDown();
     }
 
@@ -85,7 +82,7 @@ class StaticGeneratorBenchmarkTest extends KernelTestCase
 
         $em->flush();
 
-        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
 

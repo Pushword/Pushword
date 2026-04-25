@@ -8,7 +8,7 @@ use Pushword\Core\Service\Markdown\MarkdownParser;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class MarkdownExtensionTest extends KernelTestCase
+final class MarkdownExtensionTest extends KernelTestCase
 {
     private function getMarkdownParser(): MarkdownParser
     {

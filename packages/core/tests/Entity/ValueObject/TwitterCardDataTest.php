@@ -5,7 +5,7 @@ namespace Pushword\Core\Tests\Entity\ValueObject;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\ValueObject\TwitterCardData;
 
-class TwitterCardDataTest extends TestCase
+final class TwitterCardDataTest extends TestCase
 {
     public function testEmptyByDefault(): void
     {

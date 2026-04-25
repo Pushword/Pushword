@@ -7,7 +7,7 @@ use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Symfony\Component\HttpFoundation\Request;
 
 #[Group('integration')]
-class ConversationAdminTest extends AbstractAdminTestClass
+final class ConversationAdminTest extends AbstractAdminTestClass
 {
     public function testAdmin(): void
     {

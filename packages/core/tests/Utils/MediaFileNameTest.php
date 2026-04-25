@@ -3,12 +3,13 @@
 namespace Pushword\Core\Tests\Utils;
 
 use Exception;
+use Iterator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Utils\MediaFileName;
 use Symfony\Component\HttpFoundation\File\File;
 
-class MediaFileNameTest extends TestCase
+final class MediaFileNameTest extends TestCase
 {
     #[DataProvider('extractExtensionProvider')]
     public function testExtractExtension(string $input, string $expected): void
@@ -17,25 +18,23 @@ class MediaFileNameTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: string, 1: string}>
+     * @return Iterator<string, array{string, string}>
      */
-    public static function extractExtensionProvider(): array
+    public static function extractExtensionProvider(): Iterator
     {
-        return [
-            'standard jpg' => ['photo.jpg', '.jpg'],
-            'standard png' => ['image.png', '.png'],
-            'standard jpeg' => ['file.jpeg', '.jpeg'],
-            'four char extension' => ['track.gpx', '.gpx'],
-            'webp extension' => ['image.webp', '.webp'],
-            'no extension' => ['filename', ''],
-            'no dot' => ['filenamewithoutext', ''],
-            'extension too long' => ['file.toolong', ''],
-            'extension too short' => ['file.ab', ''],
-            'multiple dots' => ['my.file.name.jpg', '.jpg'],
-            'dot only' => ['.', ''],
-            'hidden file no ext' => ['.htaccess', ''],
-            'space before extension' => ['file .jpg', '.jpg'],  // space before dot still extracts extension
-        ];
+        yield 'standard jpg' => ['photo.jpg', '.jpg'];
+        yield 'standard png' => ['image.png', '.png'];
+        yield 'standard jpeg' => ['file.jpeg', '.jpeg'];
+        yield 'four char extension' => ['track.gpx', '.gpx'];
+        yield 'webp extension' => ['image.webp', '.webp'];
+        yield 'no extension' => ['filename', ''];
+        yield 'no dot' => ['filenamewithoutext', ''];
+        yield 'extension too long' => ['file.toolong', ''];
+        yield 'extension too short' => ['file.ab', ''];
+        yield 'multiple dots' => ['my.file.name.jpg', '.jpg'];
+        yield 'dot only' => ['.', ''];
+        yield 'hidden file no ext' => ['.htaccess', ''];
+        yield 'space before extension' => ['file .jpg', '.jpg'];
     }
 
     #[DataProvider('slugifyProvider')]
@@ -45,27 +44,26 @@ class MediaFileNameTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: string, 1: string}>
+     * @return Iterator<string, array{string, string}>
      */
-    public static function slugifyProvider(): array
+    public static function slugifyProvider(): Iterator
     {
-        return [
-            'already clean' => ['clean-file-name', 'clean-file-name'],
-            'with spaces' => ['my file name', 'my-file-name'],
-            'with uppercase' => ['MyFileName', 'myfilename'],
-            'with accents' => ['éléphant', 'elephant'],
-            'with special chars' => ['file@name#test', 'fileatname-test'],  // @ becomes 'at'
-            'with registered trademark' => ['Brand® Product', 'brand-product'],
-            'with trademark' => ['Brand™ Product', 'brand-product'],
-            'with copyright' => ['Photo © Author', 'photo_author'],
-            'with html copyright' => ['Photo &copy; Author', 'photo_author'],
-            'preserve dots' => ['file.name', 'file.name'],
-            'preserve underscores' => ['file_name', 'file_name'],
-            'mixed special' => ['My Brand® Photo © 2024', 'my-brand-photo_2024'],
-            'numeric copyright entity' => ['Image &#169; Owner', 'image_owner'],
-            'hex copyright entity' => ['Image &#xA9; Owner', 'image_owner'],
-            'text copyright' => ['Photo (c) Author', 'photo_author'],
-        ];
+        yield 'already clean' => ['clean-file-name', 'clean-file-name'];
+        yield 'with spaces' => ['my file name', 'my-file-name'];
+        yield 'with uppercase' => ['MyFileName', 'myfilename'];
+        yield 'with accents' => ['éléphant', 'elephant'];
+        yield 'with special chars' => ['file@name#test', 'fileatname-test'];
+        // @ becomes 'at'
+        yield 'with registered trademark' => ['Brand® Product', 'brand-product'];
+        yield 'with trademark' => ['Brand™ Product', 'brand-product'];
+        yield 'with copyright' => ['Photo © Author', 'photo_author'];
+        yield 'with html copyright' => ['Photo &copy; Author', 'photo_author'];
+        yield 'preserve dots' => ['file.name', 'file.name'];
+        yield 'preserve underscores' => ['file_name', 'file_name'];
+        yield 'mixed special' => ['My Brand® Photo © 2024', 'my-brand-photo_2024'];
+        yield 'numeric copyright entity' => ['Image &#169; Owner', 'image_owner'];
+        yield 'hex copyright entity' => ['Image &#xA9; Owner', 'image_owner'];
+        yield 'text copyright' => ['Photo (c) Author', 'photo_author'];
     }
 
     #[DataProvider('slugifyPreservingExtensionProvider')]
@@ -81,17 +79,15 @@ class MediaFileNameTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: string, 1: string, 2: string}>
+     * @return Iterator<string, array{string, string, string}>
      */
-    public static function slugifyPreservingExtensionProvider(): array
+    public static function slugifyPreservingExtensionProvider(): Iterator
     {
-        return [
-            'with provided extension' => ['My Photo.jpg', '.jpg', 'my-photo.jpg'],
-            'extract extension auto' => ['My Photo.jpg', '', 'my-photo.jpg'],
-            'no extension in name' => ['My Photo', '.png', 'my-photo.png'],
-            'accents with extension' => ['été à Paris.jpg', '.jpg', 'ete-a-paris.jpg'],
-            'copyright in filename' => ['Photo © 2024.jpg', '', 'photo_2024.jpg'],
-        ];
+        yield 'with provided extension' => ['My Photo.jpg', '.jpg', 'my-photo.jpg'];
+        yield 'extract extension auto' => ['My Photo.jpg', '', 'my-photo.jpg'];
+        yield 'no extension in name' => ['My Photo', '.png', 'my-photo.png'];
+        yield 'accents with extension' => ['été à Paris.jpg', '.jpg', 'ete-a-paris.jpg'];
+        yield 'copyright in filename' => ['Photo © 2024.jpg', '', 'photo_2024.jpg'];
     }
 
     public function testFixExtensionForGpx(): void

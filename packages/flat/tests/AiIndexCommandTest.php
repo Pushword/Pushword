@@ -4,7 +4,6 @@ namespace Pushword\Flat\Tests;
 
 use DateTime;
 use Doctrine\ORM\EntityManager;
-use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -16,7 +15,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Throwable;
 
 #[Group('integration')]
-class AiIndexCommandTest extends KernelTestCase
+final class AiIndexCommandTest extends KernelTestCase
 {
     private string $exportDir;
 
@@ -28,7 +27,7 @@ class AiIndexCommandTest extends KernelTestCase
 
     private function executeCommand(?string $host = null, string $exportDir = ''): CommandTester
     {
-        $kernel = static::createKernel();
+        $kernel = self::createKernel();
         $application = new Application($kernel);
         $command = $application->find('pw:ai-index');
         $commandTester = new CommandTester($command);
@@ -145,12 +144,11 @@ class AiIndexCommandTest extends KernelTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $kernel = static::createKernel();
+        $kernel = self::createKernel();
         $this->exportDir = $kernel->getCacheDir().'/test-ai-index-'.uniqid();
         new Filesystem()->mkdir($this->exportDir);
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         // Clean up created entities
@@ -179,11 +177,9 @@ class AiIndexCommandTest extends KernelTestCase
                 // Ignore errors during cleanup
             }
         }
-
         if (is_dir($this->exportDir)) {
             new Filesystem()->remove($this->exportDir);
         }
-
         parent::tearDown();
     }
 
@@ -195,7 +191,7 @@ class AiIndexCommandTest extends KernelTestCase
         self::assertStringContainsString('Generating pages.csv...', $output);
         self::assertStringContainsString('Generating medias.csv...', $output);
         self::assertStringContainsString('File generated.', $output);
-        self::assertEquals(0, $commandTester->getStatusCode());
+        self::assertSame(0, $commandTester->getStatusCode());
         self::assertFileExists($this->exportDir.'/pages.csv');
         self::assertFileExists($this->exportDir.'/medias.csv');
     }
@@ -208,12 +204,12 @@ class AiIndexCommandTest extends KernelTestCase
         self::assertStringContainsString('Generating pages.csv...', $output);
         self::assertStringContainsString('Generating medias.csv...', $output);
         self::assertStringContainsString('File generated.', $output);
-        self::assertEquals(0, $commandTester->getStatusCode());
+        self::assertSame(0, $commandTester->getStatusCode());
     }
 
     public function testCommandWithEmptyExportDir(): void
     {
-        $kernel = static::createKernel();
+        $kernel = self::createKernel();
         $application = new Application($kernel);
         $command = $application->find('pw:ai-index');
         $commandTester = new CommandTester($command);
@@ -221,7 +217,7 @@ class AiIndexCommandTest extends KernelTestCase
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('Generating pages.csv...', $output);
-        self::assertEquals(0, $commandTester->getStatusCode());
+        self::assertSame(0, $commandTester->getStatusCode());
     }
 
     public function testpagesContainsCreatedPageWithMedia(): void

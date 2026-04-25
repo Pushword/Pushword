@@ -6,7 +6,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Utils\SearchNormalizer;
 
-class SearchNormalizerTest extends TestCase
+final class SearchNormalizerTest extends TestCase
 {
     #[DataProvider('provideNormalize')]
     public function testNormalize(string $input, string $expected): void

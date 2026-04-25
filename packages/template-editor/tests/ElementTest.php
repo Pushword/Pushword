@@ -6,7 +6,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class ElementTest extends KernelTestCase
+final class ElementTest extends KernelTestCase
 {
     public function testIt(): void
     {
@@ -35,7 +35,7 @@ class ElementTest extends KernelTestCase
         self::assertFileDoesNotExist($templateDir.'/'.$path);
         self::assertFileDoesNotExist($templateDir.'/'.$newPath);
 
-        self::assertSame($element->getCode(), '<p>test</p>');
+        self::assertSame('<p>test</p>', $element->getCode());
     }
 
     public function testLoadCode(): void
@@ -71,6 +71,6 @@ class ElementTest extends KernelTestCase
         $templates = $repo->getAll();
         self::assertCount(1, $templates);
         self::assertSame($templates[0]->getPath(), $repo->getOneByEncodedPath($templates[0]->getEncodedPath())?->getPath());
-        self::assertSame($templates[0]->movingIsDisabled(), true);
+        self::assertTrue($templates[0]->movingIsDisabled());
     }
 }

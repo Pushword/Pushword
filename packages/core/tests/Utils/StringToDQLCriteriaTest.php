@@ -10,7 +10,7 @@ use Pushword\Core\Utils\StringToDQLCriteria;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class StringToDQLCriteriaTest extends KernelTestCase
+final class StringToDQLCriteriaTest extends KernelTestCase
 {
     public function testIt(): void
     {

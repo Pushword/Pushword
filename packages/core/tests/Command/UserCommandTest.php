@@ -8,11 +8,11 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
 #[Group('integration')]
-class UserCommandTest extends KernelTestCase
+final class UserCommandTest extends KernelTestCase
 {
     public function testExecute(): void
     {
-        $kernel = static::createKernel();
+        $kernel = self::createKernel();
         $application = new Application($kernel);
 
         $command = $application->find('pw:user:create');
@@ -25,6 +25,6 @@ class UserCommandTest extends KernelTestCase
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
-        self::assertTrue(str_contains($output, 'success'));
+        self::assertStringContainsString('success', $output);
     }
 }

@@ -12,7 +12,7 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
-class CustomPropertiesTraitTest extends TestCase
+final class CustomPropertiesTraitTest extends TestCase
 {
     /**
      * @return array<string, string>
@@ -36,13 +36,13 @@ class CustomPropertiesTraitTest extends TestCase
 
         self::assertEmpty($customProperties->getCustomProperties());
 
-        $customProperties->setCustomProperties(static::customPorperties());
+        $customProperties->setCustomProperties(self::customPorperties());
 
-        self::assertSame($customProperties->getCustomProperties(), static::customPorperties());
-        self::assertSame($customProperties->getUnmanagedPropertiesAsYaml(), static::unmanagedPropertiesYaml());
+        self::assertSame($customProperties->getCustomProperties(), self::customPorperties());
+        self::assertSame($customProperties->getUnmanagedPropertiesAsYaml(), self::unmanagedPropertiesYaml());
 
-        $customProperties->setUnmanagedPropertiesFromYaml(static::unmanagedPropertiesYaml('test 1234'), true);
-        self::assertSame(static::customPorperties('test 1234'), $customProperties->getCustomProperties());
+        $customProperties->setUnmanagedPropertiesFromYaml(self::unmanagedPropertiesYaml('test 1234'), true);
+        self::assertSame(self::customPorperties('test 1234'), $customProperties->getCustomProperties());
 
         $customProperties->removeCustomProperty('newCustomPropertyNotIndexed');
         self::assertArrayNotHasKey('newCustomPropertyNotIndexed', $customProperties->getCustomProperties());
@@ -165,7 +165,7 @@ class CustomPropertiesTraitTest extends TestCase
         $mockConstraintViolationBuilder->method('addViolation')->willReturnSelf();
 
         $mock = $this->createMock(ExecutionContextInterface::class);
-        $mock->method('buildViolation')->willReturnCallback(static function ($arg) use ($mockConstraintViolationBuilder): MockObject {
+        $mock->method('buildViolation')->willReturnCallback(static function (string $arg) use ($mockConstraintViolationBuilder): MockObject {
             if (\in_array($arg, ['pageCustomPropertiesMalformed', 'page.customProperties.notStandAlone'], true)) {
                 throw new Error();
             }

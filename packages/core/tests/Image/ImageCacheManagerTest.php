@@ -15,7 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
-class ImageCacheManagerTest extends KernelTestCase
+final class ImageCacheManagerTest extends KernelTestCase
 {
     use PathTrait;
 

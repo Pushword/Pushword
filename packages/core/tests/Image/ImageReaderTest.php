@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
 
 #[Group('integration')]
-class ImageReaderTest extends KernelTestCase
+final class ImageReaderTest extends KernelTestCase
 {
     use PathTrait;
 

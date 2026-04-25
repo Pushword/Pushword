@@ -7,7 +7,7 @@ use Pushword\Core\Twig\BlockExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-class BlockExtensionTest extends KernelTestCase
+final class BlockExtensionTest extends KernelTestCase
 {
     /** @return BlockExtension<object> */
     private function getBlockExtension(): BlockExtension

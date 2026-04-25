@@ -34,7 +34,6 @@ final class FlatApiTokenValidatorTest extends KernelTestCase
         $this->validator = $validator;
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         if (null !== $this->testUser) {
@@ -42,7 +41,6 @@ final class FlatApiTokenValidatorTest extends KernelTestCase
             $this->em->flush();
             $this->testUser = null;
         }
-
         parent::tearDown();
     }
 
