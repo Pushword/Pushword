@@ -121,6 +121,12 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
     public function getCacheDir(SiteConfig $app): string
     {
+        // Tests isolate the cache dir per ParaTest worker to avoid races on public/cache/{host}/.
+        $testVarDir = getenv('PUSHWORD_TEST_VAR_DIR');
+        if (false !== $testVarDir && '' !== $testVarDir) {
+            return $testVarDir.'/cache/'.$app->getMainHost();
+        }
+
         return $this->projectDir.'/public/cache/'.$app->getMainHost();
     }
 

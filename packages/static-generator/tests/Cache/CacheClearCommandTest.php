@@ -3,6 +3,8 @@
 namespace Pushword\StaticGenerator\Tests\Cache;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Site\SiteRegistry;
+use Pushword\StaticGenerator\StaticAppGenerator;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -33,8 +35,9 @@ final class CacheClearCommandTest extends KernelTestCase
         parent::setUp();
         self::bootKernel();
 
-        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
-        $this->cacheDir = $projectDir.'/public/cache/localhost.dev';
+        $siteRegistry = self::getContainer()->get(SiteRegistry::class);
+        $staticAppGenerator = self::getContainer()->get(StaticAppGenerator::class);
+        $this->cacheDir = $staticAppGenerator->getCacheDir($siteRegistry->switchSite('localhost.dev')->get());
     }
 
     protected function tearDown(): void

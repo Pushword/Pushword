@@ -91,6 +91,9 @@ final class StaticGeneratorTest extends KernelTestCase
         $siteRegistry = $container->get(SiteRegistry::class);
         $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
         $siteConfig->setCustomProperty('static_dir', $this->isolatedStaticDir);
+        // Force classic static mode (pushword.yaml sets `cache: static` for localhost.dev,
+        // which would redirect output into the public cache dir instead of the static dir).
+        $siteConfig->setCustomProperty('cache', 'none');
 
         // Clean up any leftover PID files in the per-worker var dir
         $varDir = (string) getenv('PUSHWORD_TEST_VAR_DIR');
@@ -793,6 +796,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $seqDir = sys_get_temp_dir().'/pushword-static-seq-'.getmypid();
         $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
         $siteConfig->setCustomProperty('static_dir', $seqDir);
+        $siteConfig->setCustomProperty('cache', 'none');
         $this->cleanupPidFiles();
 
         $application = new Application(self::$kernel); // @phpstan-ignore-line
