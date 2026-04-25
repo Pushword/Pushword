@@ -41,7 +41,7 @@ final readonly class RequestContextListener
 
     private function determineEffectiveHost(Request $request): string
     {
-        $httpHost = $request->getHost();
+        $httpHost = $request->getHttpHost();
         $routeHostAttr = $request->attributes->get('host');
         $routeHost = \is_string($routeHostAttr) ? $routeHostAttr : '';
 
@@ -57,6 +57,6 @@ final readonly class RequestContextListener
             }
         }
 
-        return '' !== $knownHttpHost ? $knownHttpHost : $httpHost;
+        return '' !== $knownHttpHost ? $knownHttpHost : $request->getHost();
     }
 }

@@ -21,6 +21,7 @@ pushword:
       page_update_notification_to: "test@example.tld"
     - hosts:
         - pushword.piedweb.com
+        - 127.0.0.1:9090
       base_url: "https://pushword.piedweb.com"
       flat_content_dir: "%pw.piedweb.flat_content_dir%"
       static_dir: "%kernel.project_dir%/../../docs"

@@ -85,18 +85,42 @@ final class SiteRegistry
             }
         }
 
+        $stripped = $this->stripPort($host);
+        if ($stripped !== $host) {
+            return $this->findByHost($stripped);
+        }
+
         return null;
     }
 
     public function findHost(string $host): string
     {
+        if (isset($this->sites[$host])) {
+            return $host;
+        }
+
         foreach ($this->sites as $key => $site) {
             if (\in_array($host, $site->getHosts(), true)) {
                 return $key;
             }
         }
 
+        $stripped = $this->stripPort($host);
+        if ($stripped !== $host) {
+            return $this->findHost($stripped);
+        }
+
         return '';
+    }
+
+    private function stripPort(string $host): string
+    {
+        $colon = strrpos($host, ':');
+        if (false === $colon) {
+            return $host;
+        }
+
+        return substr($host, 0, $colon);
     }
 
     public function isKnownHost(string $host): bool

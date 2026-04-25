@@ -212,6 +212,79 @@ final class RequestContextListenerTest extends KernelTestCase
         self::assertSame($originalHost, $this->appPool->getCurrentHost());
     }
 
+    public function testExactHostPortMatchSelectsCorrectApp(): void
+    {
+        $request = Request::create('http://127.0.0.1:9090/');
+        $kernel = self::$kernel;
+        self::assertNotNull($kernel);
+        $event = new RequestEvent(
+            $kernel,
+            $request,
+            HttpKernelInterface::MAIN_REQUEST
+        );
+
+        ($this->listener)($event);
+
+        self::assertSame('pushword.piedweb.com', $this->appPool->getCurrentHost());
+        self::assertSame('pushword.piedweb.com', $this->appPool->getMainHost());
+    }
+
+    public function testHttpHostWithPortResolvesToConfiguredHost(): void
+    {
+        $request = Request::create('https://localhost.dev:9090/about');
+        $kernel = self::$kernel;
+        self::assertNotNull($kernel);
+        $event = new RequestEvent(
+            $kernel,
+            $request,
+            HttpKernelInterface::MAIN_REQUEST
+        );
+
+        ($this->listener)($event);
+
+        // Port is stripped when the host:port form has no exact configured match
+        self::assertSame('localhost.dev', $this->appPool->getCurrentHost());
+        self::assertSame('localhost.dev', $this->appPool->getMainHost());
+    }
+
+    public function testHttpHostWithPortResolvesToNonDefaultHost(): void
+    {
+        $request = Request::create('https://pushword.piedweb.com:9090/about');
+        $request->attributes->set('slug', 'about');
+        $request->attributes->set('_route', 'pushword_page');
+
+        $kernel = self::$kernel;
+        self::assertNotNull($kernel);
+        $event = new RequestEvent(
+            $kernel,
+            $request,
+            HttpKernelInterface::MAIN_REQUEST
+        );
+
+        ($this->listener)($event);
+
+        self::assertSame('pushword.piedweb.com', $this->appPool->getCurrentHost());
+        self::assertSame('pushword.piedweb.com', $this->appPool->getMainHost());
+    }
+
+    public function testUnknownHttpHostWithPortFallsBackToBareHost(): void
+    {
+        $request = Request::create('http://198.51.100.1:9090/');
+
+        $kernel = self::$kernel;
+        self::assertNotNull($kernel);
+        $event = new RequestEvent(
+            $kernel,
+            $request,
+            HttpKernelInterface::MAIN_REQUEST
+        );
+
+        ($this->listener)($event);
+
+        // No configured match: synthetic fallback uses the port-less host
+        self::assertSame('198.51.100.1', $this->appPool->getCurrentHost());
+    }
+
     public function testListenerIsRegisteredWithCorrectPriority(): void
     {
         $dispatcher = self::getContainer()->get('event_dispatcher');
