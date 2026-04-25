@@ -65,6 +65,7 @@ final class FlatSyncNotifierTest extends KernelTestCase
         foreach ($conflictFiles as $file) {
             $fs->remove($file);
         }
+
         parent::tearDown();
     }
 

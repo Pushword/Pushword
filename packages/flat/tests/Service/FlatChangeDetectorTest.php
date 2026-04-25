@@ -61,6 +61,7 @@ final class FlatChangeDetectorTest extends KernelTestCase
         if (is_dir($this->tempDir)) {
             $fs->remove($this->tempDir);
         }
+
         parent::tearDown();
     }
 

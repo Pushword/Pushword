@@ -94,16 +94,19 @@ final class AutoModeDetectionTest extends KernelTestCase
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
+
         foreach (['auto-detect-new-page', 'auto-detect-future', 'fast-detect-test'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
             }
         }
+
         $this->em->flush();
         if (null !== $this->isolatedContentDir) {
             $this->filesystem->remove($this->isolatedContentDir);
         }
+
         parent::tearDown();
     }
 

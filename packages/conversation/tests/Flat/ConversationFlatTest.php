@@ -99,6 +99,7 @@ final class ConversationFlatTest extends KernelTestCase
                 // Ignore errors during cleanup
             }
         }
+
         // Nettoie les médias créés
         if ([] !== $this->createdMediaFileNames) {
             try {
@@ -114,6 +115,7 @@ final class ConversationFlatTest extends KernelTestCase
                 // Ignore errors during cleanup
             }
         }
+
         // Supprime les fichiers CSV temporaires
         $csvPaths = array_merge([$this->csvPath], $this->temporaryCsvPaths);
         foreach ($csvPaths as $path) {
@@ -121,6 +123,7 @@ final class ConversationFlatTest extends KernelTestCase
                 @unlink($path);
             }
         }
+
         $this->temporaryCsvPaths = [];
         parent::tearDown();
     }

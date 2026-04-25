@@ -46,6 +46,7 @@ final class MessageRepositoryTest extends KernelTestCase
                 // Ignore errors during cleanup
             }
         }
+
         parent::tearDown();
     }
 

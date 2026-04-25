@@ -26,7 +26,7 @@ final readonly class UserCreateCommand
     ) {
     }
 
-    protected function createUser(string $email, string $password, string $role, ?string $username = null): User
+    private function createUser(string $email, string $password, string $role, ?string $username = null): User
     {
         $user = new ($this->userClass)();
         $user->email = $email;

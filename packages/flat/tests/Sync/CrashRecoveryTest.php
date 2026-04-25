@@ -60,18 +60,21 @@ final class CrashRecoveryTest extends KernelTestCase
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
+
         foreach (['invalid-yaml-test', 'valid-crash-test', 'crash-good-page', 'yaml-deletion-guard', 'yaml-unescaped-quote'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
             }
         }
+
         $this->em->flush();
         // Clean up conflict files
         $conflictFiles = glob($this->contentDir.'/*~conflict-*') ?: [];
         foreach ($conflictFiles as $file) {
             @unlink($file);
         }
+
         parent::tearDown();
     }
 

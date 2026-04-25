@@ -31,12 +31,12 @@ final class PageImporter extends AbstractImporter
     /**
      * @var Page[]|null
      */
-    protected ?array $pages = null;
+    private ?array $pages = null;
 
     /**
      * @var array<string, array<string, mixed>>
      */
-    protected array $toAddAtTheEnd = [];
+    private array $toAddAtTheEnd = [];
 
     #[Required]
     public FlatFileContentDirFinder $contentDirFinder;

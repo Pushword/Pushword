@@ -40,9 +40,11 @@ final class AdminNotificationRepositoryTest extends KernelTestCase
         foreach ($this->testNotifications as $notification) {
             $this->em->remove($notification);
         }
+
         if ([] !== $this->testNotifications) {
             $this->em->flush();
         }
+
         $this->testNotifications = [];
         parent::tearDown();
     }

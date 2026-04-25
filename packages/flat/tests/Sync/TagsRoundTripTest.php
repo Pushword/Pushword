@@ -54,12 +54,14 @@ final class TagsRoundTripTest extends KernelTestCase
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
+
         foreach (['tags-test-page', 'empty-tags-page'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
             }
         }
+
         $this->em->flush();
         parent::tearDown();
     }

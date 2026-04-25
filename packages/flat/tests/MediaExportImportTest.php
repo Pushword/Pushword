@@ -45,6 +45,7 @@ final class MediaExportImportTest extends KernelTestCase
         foreach ($this->tempFiles as $path) {
             @unlink($path);
         }
+
         parent::tearDown();
     }
 

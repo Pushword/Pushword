@@ -30,6 +30,7 @@ final class GitAutoCommitterTest extends KernelTestCase
         if (is_dir($this->tempDir)) {
             $this->fs->remove($this->tempDir);
         }
+
         parent::tearDown();
     }
 

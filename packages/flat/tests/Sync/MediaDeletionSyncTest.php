@@ -36,6 +36,7 @@ final class MediaDeletionSyncTest extends KernelTestCase
         foreach ($this->tempFiles as $file) {
             @unlink($file);
         }
+
         parent::tearDown();
     }
 

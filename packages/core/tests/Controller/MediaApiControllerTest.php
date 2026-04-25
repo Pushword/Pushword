@@ -65,6 +65,7 @@ final class MediaApiControllerTest extends WebTestCase
                 $this->em->remove($media);
             }
         }
+
         if ('' !== $this->testUserEmail) {
             /** @var class-string<User> $userClass */
             $userClass = $container->getParameter('pw.entity_user');
@@ -73,6 +74,7 @@ final class MediaApiControllerTest extends WebTestCase
                 $this->em->remove($user);
             }
         }
+
         $this->em->flush();
         $this->createdMediaFileNames = [];
         $this->testUser = null;

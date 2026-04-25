@@ -41,6 +41,7 @@ final class FlatApiTokenValidatorTest extends KernelTestCase
             $this->em->flush();
             $this->testUser = null;
         }
+
         parent::tearDown();
     }
 

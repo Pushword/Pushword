@@ -40,6 +40,7 @@ final class DeferredExportProcessorTest extends KernelTestCase
         if (is_dir($this->tempDir)) {
             $fs->remove($this->tempDir);
         }
+
         parent::tearDown();
     }
 

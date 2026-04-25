@@ -61,12 +61,14 @@ final class RepositoryBenchmarkTest extends KernelTestCase
         if ($this->txOpen && $this->em->getConnection()->isTransactionActive()) {
             $this->em->rollback();
         }
+
         $this->txOpen = false;
         foreach ($this->touchedFiles as $path) {
             if (is_file($path)) {
                 @unlink($path);
             }
         }
+
         $this->touchedFiles = [];
         parent::tearDown();
     }

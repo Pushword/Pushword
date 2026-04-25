@@ -4,10 +4,14 @@ use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
 use Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector;
+use Rector\Doctrine\Set\DoctrineSetList;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
 use Rector\PHPUnit\CodeQuality\Rector\Class_\PreferPHPUnitThisCallRector;
 use Rector\PHPUnit\CodeQuality\Rector\FuncCall\AssertFuncCallToPHPUnitAssertRector;
 use Rector\PHPUnit\CodeQuality\Rector\MethodCall\StringCastAssertStringContainsStringRector;
+use Rector\Privatization\Rector\ClassConst\PrivatizeFinalClassConstantRector;
+use Rector\Privatization\Rector\ClassMethod\PrivatizeFinalClassMethodRector;
+use Rector\Privatization\Rector\Property\PrivatizeFinalClassPropertyRector;
 use Rector\Symfony\CodeQuality\Rector\Class_\ControllerMethodInjectionToConstructorRector;
 use Rector\Symfony\Set\SymfonySetList;
 
@@ -43,7 +47,7 @@ return RectorConfig::configure()
         phpunitCodeQuality: true,
         doctrineCodeQuality: true,
         symfonyCodeQuality: true,
-        // symfonyConfigs: true
+        // symfonyConfigs: true (disabled: rewrites break service definitions, see services.php)
     )
     ->withAttributesSets(
         symfony: true,
@@ -51,6 +55,12 @@ return RectorConfig::configure()
     )
     ->withSets([
         SymfonySetList::SYMFONY_80,
+        DoctrineSetList::TYPED_COLLECTIONS_DOCBLOCKS,
+    ])
+    ->withRules([
+        PrivatizeFinalClassPropertyRector::class,
+        PrivatizeFinalClassMethodRector::class,
+        PrivatizeFinalClassConstantRector::class,
     ])
     ->withSkip([
         'packages/core/src/Twig/AppExtension.php',

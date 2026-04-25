@@ -40,6 +40,7 @@ final class FlatLintCommandTest extends KernelTestCase
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
+
         parent::tearDown();
     }
 

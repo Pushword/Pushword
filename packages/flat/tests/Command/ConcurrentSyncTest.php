@@ -46,6 +46,7 @@ final class ConcurrentSyncTest extends KernelTestCase
         foreach ($this->cleanupFiles as $file) {
             @unlink($file);
         }
+
         // Release any locks
         $this->lockManager->releaseLock($this->lockTestHost);
         parent::tearDown();

@@ -59,6 +59,7 @@ final class FlatLockApiControllerTest extends WebTestCase
             $this->em->flush();
             $this->testUser = null;
         }
+
         // Clean up any locks
         $this->lockManager->releaseLock('test.example.com');
         $this->lockManager->releaseLock();

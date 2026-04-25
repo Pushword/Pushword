@@ -49,6 +49,7 @@ final class StaticGeneratorBenchmarkTest extends KernelTestCase
         if (null !== $this->isolatedStaticDir) {
             new Filesystem()->remove($this->isolatedStaticDir);
         }
+
         parent::tearDown();
     }
 

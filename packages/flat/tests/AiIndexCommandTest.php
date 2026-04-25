@@ -177,9 +177,11 @@ final class AiIndexCommandTest extends KernelTestCase
                 // Ignore errors during cleanup
             }
         }
+
         if (is_dir($this->exportDir)) {
             new Filesystem()->remove($this->exportDir);
         }
+
         parent::tearDown();
     }
 

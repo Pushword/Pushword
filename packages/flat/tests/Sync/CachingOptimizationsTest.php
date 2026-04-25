@@ -82,9 +82,11 @@ final class CachingOptimizationsTest extends KernelTestCase
         foreach ($this->createdFiles as $file) {
             @unlink($file);
         }
+
         if (null !== $this->isolatedContentDir) {
             $this->filesystem->remove($this->isolatedContentDir);
         }
+
         parent::tearDown();
     }
 

@@ -38,6 +38,7 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
             sleep(1);
             ++$waited;
         }
+
         // Clean up PID file and output storage
         new Filesystem()->remove($pidFile);
         $outputStorage->clear('static-generator');
