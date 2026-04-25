@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\StaticGenerator;
 
 use Pushword\Core\Service\BackgroundProcessManager;

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Admin\Menu;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;

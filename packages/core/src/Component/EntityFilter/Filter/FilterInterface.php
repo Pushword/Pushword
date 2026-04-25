@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
 use Pushword\Core\Component\EntityFilter\Manager;

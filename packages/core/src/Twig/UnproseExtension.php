@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\Twig;
 
 use Pushword\Core\Site\SiteRegistry;

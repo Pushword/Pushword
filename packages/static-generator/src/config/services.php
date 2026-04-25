@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\StaticGenerator\Cache\MessageHandler\PageCacheRefreshHandler;

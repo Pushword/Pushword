@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\TemplateEditor\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;

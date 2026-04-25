@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle;
 use Pushword\Admin\Controller\MediaCrudController;
 use Pushword\Admin\Controller\PageCrudController;

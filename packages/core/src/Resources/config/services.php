@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use PiedWeb\RenderAttributes\TwigExtension;
 use Pushword\Core\BackgroundTask\MessengerBackgroundTaskDispatcher;

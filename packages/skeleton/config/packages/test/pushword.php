@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use Pushword\Core\Service\BackgroundProcessManager;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 return [
     '@PER-CS2.0:risky' => true,
     '@PSR2' => true,

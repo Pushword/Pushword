@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\PageScanner\Tests;
 
 use PHPUnit\Framework\Attributes\Group;

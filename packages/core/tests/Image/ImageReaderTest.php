@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\Tests\Image;
 
 use Intervention\Image\Drivers\Vips\Driver;
