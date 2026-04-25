@@ -21,17 +21,17 @@ final readonly class MediaCacheInvalidationListener
     ) {
     }
 
-    public function postPersist(Media $media): void
+    public function postPersist(): void
     {
         $this->invalidate();
     }
 
-    public function postUpdate(Media $media): void
+    public function postUpdate(): void
     {
         $this->invalidate();
     }
 
-    public function postRemove(Media $media): void
+    public function postRemove(): void
     {
         $this->invalidate();
     }

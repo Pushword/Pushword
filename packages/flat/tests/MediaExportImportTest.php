@@ -712,8 +712,6 @@ CSV;
         $em->persist($media);
         $em->flush();
 
-        $mediaId = $media->id;
-
         // Index CSV
         $csvContent = "fileName,alt\ntest-hash-remote.txt,Hash Remote Test\n";
         $csvPath = $this->testMediaDir.'/'.MediaExporter::CSV_FILE;

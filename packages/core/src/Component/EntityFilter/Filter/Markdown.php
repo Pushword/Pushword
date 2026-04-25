@@ -89,16 +89,13 @@ class Markdown implements FilterInterface
             }
 
             $textFiltered = trim($textFiltered);
-            /** @var string $blockText */
             // $blockText = preg_replace('/^ +/m', '', $textFiltered);
             $blockText = $textFiltered;
         }
 
         $blockText = $this->fixTypo($blockText);
 
-        $markdown = $this->parseMarkdown(trim($attribute."\n".$blockText));
-
-        return $markdown;
+        return $this->parseMarkdown(trim($attribute."\n".$blockText));
     }
 
     private function fixTypo(string $text): string

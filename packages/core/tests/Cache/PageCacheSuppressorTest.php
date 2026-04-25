@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\Tests\Cache;
 
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Cache\PageCacheSuppressor;
+use RuntimeException;
 
 final class PageCacheSuppressorTest extends TestCase
 {
@@ -20,7 +19,7 @@ final class PageCacheSuppressorTest extends TestCase
     {
         $suppressor = new PageCacheSuppressor();
 
-        $suppressor->suppress(function () use ($suppressor): void {
+        $suppressor->suppress(static function () use ($suppressor): void {
             self::assertTrue($suppressor->isSuppressed());
         });
     }
@@ -29,7 +28,7 @@ final class PageCacheSuppressorTest extends TestCase
     {
         $suppressor = new PageCacheSuppressor();
 
-        $suppressor->suppress(static fn () => null);
+        $suppressor->suppress(static fn (): null => null);
 
         self::assertFalse($suppressor->isSuppressed());
     }
@@ -38,8 +37,8 @@ final class PageCacheSuppressorTest extends TestCase
     {
         $suppressor = new PageCacheSuppressor();
 
-        $suppressor->suppress(function () use ($suppressor): void {
-            $suppressor->suppress(static fn () => null);
+        $suppressor->suppress(static function () use ($suppressor): void {
+            $suppressor->suppress(static fn (): null => null);
 
             self::assertTrue($suppressor->isSuppressed(), 'Should still be suppressed in outer after inner exits');
         });
@@ -52,10 +51,10 @@ final class PageCacheSuppressorTest extends TestCase
         $suppressor = new PageCacheSuppressor();
 
         try {
-            $suppressor->suppress(static function (): void {
-                throw new \RuntimeException('boom');
+            $suppressor->suppress(static function (): never {
+                throw new RuntimeException('boom');
             });
-        } catch (\RuntimeException) {
+        } catch (RuntimeException) {
         }
 
         self::assertFalse($suppressor->isSuppressed(), 'Must release suppression even when callback throws');

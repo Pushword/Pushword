@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\StaticGenerator\Tests\Cache;
 
 use PHPUnit\Framework\MockObject\MockObject;
@@ -16,13 +14,13 @@ use Pushword\StaticGenerator\Cache\PageCacheGeneratorInterface;
 final class PageCacheRefreshHandlerTest extends TestCase
 {
     /** @var PageRepository&MockObject */
-    private PageRepository $pageRepository;
+    private MockObject $pageRepository;
 
     /** @var PageCacheGeneratorInterface&MockObject */
-    private PageCacheGeneratorInterface $generator;
+    private MockObject $generator;
 
     /** @var PageCacheFileManager&MockObject */
-    private PageCacheFileManager $fileManager;
+    private MockObject $fileManager;
 
     private PageCacheRefreshHandler $handler;
 

@@ -79,10 +79,11 @@ final class IdempotencyTest extends KernelTestCase
         // First import
         $this->pageSync->import('localhost.dev');
 
-        $firstImported = $this->pageSync->getImportedCount();
+        $this->pageSync->getImportedCount();
 
         // Second import — should produce zero new imports
         $this->pageSync->import('localhost.dev');
+
         $secondImported = $this->pageSync->getImportedCount();
 
         self::assertSame(0, $secondImported, 'Second import should produce zero new imports');
@@ -113,7 +114,7 @@ final class IdempotencyTest extends KernelTestCase
         $this->createdFiles[] = $this->contentDir.'/idempotent-test-page.md';
 
         // Capture file content after import
-        $contentAfterImport = $this->filesystem->readFile($this->contentDir.'/idempotent-test-page.md');
+        $this->filesystem->readFile($this->contentDir.'/idempotent-test-page.md');
 
         // Export
         $this->pageSync->export('localhost.dev', true, $this->contentDir);

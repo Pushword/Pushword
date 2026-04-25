@@ -145,7 +145,7 @@ class MediaRepositoryTest extends KernelTestCase
     public function testPersistentCacheHitAcrossInstances(): void
     {
         self::bootKernel();
-        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        self::getContainer()->get('doctrine.orm.default_entity_manager');
         $registry = self::getContainer()->get(ManagerRegistry::class);
         $cache = new ArrayAdapter();
 

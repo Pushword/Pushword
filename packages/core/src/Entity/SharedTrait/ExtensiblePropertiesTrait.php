@@ -138,7 +138,7 @@ trait ExtensiblePropertiesTrait
 
         foreach ($unmanagedProperties as $name => $value) {
             if ($this->isManagedProperty((string) $name)) {
-                throw new InvalidArgumentException('Property `'.(string) $name.'` is managed by a dedicated field and cannot be set via unmanaged properties');
+                throw new InvalidArgumentException('Property `'.$name.'` is managed by a dedicated field and cannot be set via unmanaged properties');
             }
 
             $this->setCustomProperty((string) $name, $value);

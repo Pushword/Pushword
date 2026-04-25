@@ -51,7 +51,7 @@ class UserControllerTest extends WebTestCase
         $this->client->submit($form);
 
         self::assertResponseRedirects('/login?step=password');
-        $crawler = $this->client->followRedirect();
+        $this->client->followRedirect();
 
         // Should now show password field
         self::assertSelectorExists('input[name="password"]');

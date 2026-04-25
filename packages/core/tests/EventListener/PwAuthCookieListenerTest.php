@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Core\Tests\EventListener;
 
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\EventListener\PwAuthCookieListener;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Security\Core\User\InMemoryUser;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\User\InMemoryUser;
 use Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
@@ -35,10 +34,10 @@ final class PwAuthCookieListenerTest extends TestCase
         $this->listener->onLoginSuccess($event);
 
         $cookies = $response->headers->getCookies();
-        $names = array_map(static fn ($c) => $c->getName(), $cookies);
+        $names = array_map(static fn (Cookie $c): string => $c->getName(), $cookies);
         self::assertContains('pw_auth', $names, 'pw_auth cookie should be set on login');
 
-        $cookie = current(array_filter($cookies, static fn ($c) => 'pw_auth' === $c->getName()));
+        $cookie = current(array_filter($cookies, static fn (Cookie $c): bool => 'pw_auth' === $c->getName()));
         self::assertNotFalse($cookie);
         self::assertSame('1', $cookie->getValue());
         self::assertFalse($cookie->isHttpOnly(), 'Cookie must be readable by JS');
@@ -66,7 +65,7 @@ final class PwAuthCookieListenerTest extends TestCase
         $this->listener->onLogout($event);
 
         $cookies = $response->headers->getCookies();
-        $pwAuthCookies = array_filter($cookies, static fn ($c) => 'pw_auth' === $c->getName());
+        $pwAuthCookies = array_filter($cookies, static fn (Cookie $c): bool => 'pw_auth' === $c->getName());
 
         self::assertNotEmpty($pwAuthCookies, 'Clearing the cookie should produce a header');
 
@@ -92,12 +91,12 @@ final class PwAuthCookieListenerTest extends TestCase
     {
         $user = new InMemoryUser('admin', null);
         $passport = new Passport(
-            new UserBadge('admin', static fn () => $user),
+            new UserBadge('admin', static fn (): InMemoryUser => $user),
             new PasswordCredentials(''),
         );
         $token = new UsernamePasswordToken($user, 'main');
 
-        $event = new LoginSuccessEvent(
+        return new LoginSuccessEvent(
             self::createStub(AuthenticatorInterface::class),
             $passport,
             $token,
@@ -105,7 +104,5 @@ final class PwAuthCookieListenerTest extends TestCase
             $response,
             'main',
         );
-
-        return $event;
     }
 }

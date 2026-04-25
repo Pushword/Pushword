@@ -28,7 +28,7 @@ class PdfOptimizerCommandTest extends KernelTestCase
         $commandTester = new CommandTester($command);
         $commandTester->execute([]);
 
-        $output = $commandTester->getDisplay();
+        $commandTester->getDisplay();
         // Either "No PDF files" or shows progress (if PDFs exist in DB)
         self::assertSame(0, $commandTester->getStatusCode());
     }

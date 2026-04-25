@@ -359,7 +359,7 @@ class StaticGeneratorTest extends KernelTestCase
 
         $originalAppKernel = AbstractGenerator::$appKernel;
         $debugKernelProp = new ReflectionProperty(AbstractGenerator::class, 'debugKernel');
-        $originalDebugKernel = $debugKernelProp->getValue(null);
+        $originalDebugKernel = $debugKernelProp->getValue();
 
         AbstractGenerator::$appKernel = $mainKernel;
         $debugKernelProp->setValue(null, $debugKernel);

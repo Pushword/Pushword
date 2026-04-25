@@ -23,7 +23,7 @@ final class EditorJsHelper
     /**
      * @return object{blocks: array<object{type: string, tunes?: object, data?: mixed, text?: string}>}
      */
-    public static function decode(string $raw, bool $throw = true): object
+    public static function decode(string $raw): object
     {
         if ('' === $raw || ! str_contains($raw, 'blocks')) {
             throw new Exception('JSON is empty or not contains blocks');

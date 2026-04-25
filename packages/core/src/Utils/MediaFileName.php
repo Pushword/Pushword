@@ -76,10 +76,9 @@ final class MediaFileName
         // Special handling for copyright symbol - split and rejoin with underscore
         $slug = str_replace(['©', '&copy;', '&#169;', '&#xA9;', '(c)'], '©', $slug);
         $slug = explode('©', $slug, 2);
-        $slug = $slugifier->slugify($slug[0])
-            .(isset($slug[1]) ? '_'.$slugifier->slugify(str_replace('©', '', $slug[1])) : '');
 
-        return $slug;
+        return $slugifier->slugify($slug[0])
+            .(isset($slug[1]) ? '_'.$slugifier->slugify(str_replace('©', '', $slug[1])) : '');
     }
 
     /**

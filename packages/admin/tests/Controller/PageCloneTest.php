@@ -40,7 +40,7 @@ class PageCloneTest extends AbstractAdminTestClass
         $client->request(Request::METHOD_GET, $path);
 
         $location = $client->getResponse()->headers->get('Location') ?? '';
-        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), 'Location: '.$location.' | Body: '.(string) $client->getResponse()->getContent());
+        self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode(), 'Location: '.$location.' | Body: '.$client->getResponse()->getContent());
         self::assertStringNotContainsString('login', $location);
 
         // Container is rebuilt after the HTTP request — fetch fresh instances

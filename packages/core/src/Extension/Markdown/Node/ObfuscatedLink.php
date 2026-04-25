@@ -16,11 +16,6 @@ class ObfuscatedLink extends Link
     /** @var array<string, string> */
     private array $attributes = [];
 
-    public function __construct(string $url, ?string $label = null, ?string $title = null)
-    {
-        parent::__construct($url, $label, $title);
-    }
-
     public function setAttributeClass(?string $class): void
     {
         $this->attributeClass = $class;

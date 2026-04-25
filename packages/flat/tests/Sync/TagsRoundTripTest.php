@@ -207,8 +207,6 @@ final class TagsRoundTripTest extends KernelTestCase
         $exporter->csvDir = $contentDirFinder2->getBaseDir();
         $exporter->exportMedias();
 
-        $mediaId = $media->id;
-
         // Delete from DB
         $this->em->remove($media);
         $this->em->flush();

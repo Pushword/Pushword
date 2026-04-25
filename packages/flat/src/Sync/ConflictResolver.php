@@ -229,8 +229,6 @@ final class ConflictResolver
     {
         $contentDir = $this->contentDirFinder->get($host ?? '');
 
-        $conflicts = [];
-
         // Find markdown conflict files (~conflict-*)
         $conflicts = [
             ...(glob($contentDir.'/**/*~conflict-*') ?: []),

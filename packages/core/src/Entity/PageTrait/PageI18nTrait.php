@@ -54,18 +54,14 @@ trait PageI18nTrait
         }
 
         // Add the other ('ever exist') translations to the new added Translation
-        if ($recursive) {
-            foreach ($this->getTranslations() as $otherTranslation) {
-                $page->addTranslation($otherTranslation, false);
-            }
-        }
-
         // Reversing the syncing
         // Add this Page to the translated Page
         // + Add the translated Page to the other translation
         if ($recursive) {
+            foreach ($this->getTranslations() as $otherTranslation) {
+                $page->addTranslation($otherTranslation, false);
+            }
             $page->addTranslation($this, false);
-
             foreach ($this->getTranslations() as $otherTranslation) {
                 if ($otherTranslation === $this) {  // déjà fait
                     continue;

@@ -66,7 +66,7 @@ final class AiIndexCommand
 
         $result = $this->createpages($output, $host);
 
-        $result2 = $this->createmedias($output, $host);
+        $result2 = $this->createmedias($output);
 
         $output->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
 
@@ -89,7 +89,6 @@ final class AiIndexCommand
 
     private function createmedias(
         OutputInterface $output,
-        string $host,
     ): int {
         $output->writeln('Generating medias.csv...');
 

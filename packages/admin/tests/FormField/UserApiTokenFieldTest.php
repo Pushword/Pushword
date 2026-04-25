@@ -104,7 +104,7 @@ final class UserApiTokenFieldTest extends TestCase
 
     public function testFieldSetsHasTokenDataAttributeWhenNoToken(): void
     {
-        $user = $this->createUser(null);
+        $user = $this->createUser();
         $this->admin->method('getSubject')->willReturn($user);
 
         $field = $this->createField();

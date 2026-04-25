@@ -7,7 +7,6 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\PdfOptimizer;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -29,8 +28,6 @@ final readonly class PdfOptimizerCommand
         ?string $mediaName,
         InputInterface $input,
         OutputInterface $output,
-        #[Option(description: 'Force re-optimization', name: 'force', shortcut: 'f')]
-        bool $force = false,
     ): int {
         $io = new SymfonyStyle($input, $output);
 
@@ -67,7 +64,7 @@ final readonly class PdfOptimizerCommand
             $progressBar->setMessage($media->getFileName());
 
             try {
-                $result = $this->pdfOptimizer->optimize($media, $force);
+                $result = $this->pdfOptimizer->optimize($media);
                 if ($result) {
                     ++$optimized;
                 } else {

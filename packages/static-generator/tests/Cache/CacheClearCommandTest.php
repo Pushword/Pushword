@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\StaticGenerator\Tests\Cache;
 
 use PHPUnit\Framework\Attributes\Group;
@@ -47,7 +45,7 @@ final class CacheClearCommandTest extends KernelTestCase
 
     private function makeCommandTester(): CommandTester
     {
-        $application = new Application(static::$kernel); // @phpstan-ignore-line
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
 
         return new CommandTester($application->find('pw:cache:clear'));
     }

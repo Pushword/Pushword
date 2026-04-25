@@ -332,7 +332,7 @@ final class PageSync
                 continue;
             }
 
-            if ($this->isFileNewer($path, $host, $slugIndex, $lastSyncTime)) {
+            if ($this->isFileNewer($path, $slugIndex, $lastSyncTime)) {
                 return true;
             }
         }
@@ -343,7 +343,7 @@ final class PageSync
     /**
      * @param array<string, Page> $slugIndex
      */
-    private function isFileNewer(string $filePath, string $host, array $slugIndex, int $lastSyncTime): bool
+    private function isFileNewer(string $filePath, array $slugIndex, int $lastSyncTime): bool
     {
         if (str_ends_with($filePath, RedirectionExporter::INDEX_FILE)) {
             return $this->isCsvFileNewer($filePath, $lastSyncTime);

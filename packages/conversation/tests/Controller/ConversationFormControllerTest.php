@@ -17,7 +17,7 @@ class ConversationFormControllerTest extends WebTestCase
         $client = static::createClient();
 
         $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
-        $crawler = $client->request(Request::METHOD_GET, '/conversation/newsletter/test', [], [], $server);
+        $client->request(Request::METHOD_GET, '/conversation/newsletter/test', [], [], $server);
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
         self::assertStringContainsString('pattern="[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{1,63}$"', (string) $client->getResponse()->getContent());
     }
@@ -80,7 +80,7 @@ class ConversationFormControllerTest extends WebTestCase
         $client = static::createClient();
 
         $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
-        $crawler = $client->request(
+        $client->request(
             Request::METHOD_GET,
             '/conversation/newsletter/test?locale=fr&host=localhost.dev',
             [],
@@ -95,7 +95,7 @@ class ConversationFormControllerTest extends WebTestCase
         $client = static::createClient();
 
         $server = ['HTTP_ORIGIN' => 'https://localhost.dev'];
-        $crawler = $client->request(
+        $client->request(
             Request::METHOD_GET,
             '/conversation/newsletter/some/path/with/slashes?locale=en&host=localhost.dev',
             [],

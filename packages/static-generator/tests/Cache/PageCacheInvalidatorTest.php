@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\StaticGenerator\Tests\Cache;
 
 use PHPUnit\Framework\MockObject\MockObject;
@@ -13,6 +11,7 @@ use Pushword\Core\Template\TemplateResolver;
 use Pushword\StaticGenerator\Cache\Message\PageCacheRefreshMessage;
 use Pushword\StaticGenerator\Cache\PageCacheFileManager;
 use Pushword\StaticGenerator\Cache\PageCacheInvalidator;
+use ReflectionProperty;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\Messenger\Envelope;
@@ -23,12 +22,12 @@ use Twig\Loader\FilesystemLoader;
 final class PageCacheInvalidatorTest extends TestCase
 {
     /** @var MessageBusInterface&MockObject */
-    private MessageBusInterface $bus;
+    private MockObject $bus;
 
     private PageCacheSuppressor $suppressor;
 
     /** @var PageCacheFileManager&MockObject */
-    private PageCacheFileManager $fileManager;
+    private MockObject $fileManager;
 
     protected function setUp(): void
     {
@@ -92,7 +91,7 @@ final class PageCacheInvalidatorTest extends TestCase
 
         $this->bus->expects($this->never())->method('dispatch');
 
-        $this->suppressor->suppress(function () use ($invalidator, $page): void {
+        $this->suppressor->suppress(static function () use ($invalidator, $page): void {
             $invalidator->postPersist($page);
             $invalidator->postUpdate($page);
         });
@@ -102,6 +101,7 @@ final class PageCacheInvalidatorTest extends TestCase
     {
         $page = new Page();
         $page->host = 'localhost.dev';
+
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
         $this->bus->expects($this->never())->method('dispatch');
@@ -138,7 +138,7 @@ final class PageCacheInvalidatorTest extends TestCase
 
         $this->fileManager->expects($this->never())->method('delete');
 
-        $this->suppressor->suppress(fn () => $invalidator->preRemove($page));
+        $this->suppressor->suppress(static fn () => $invalidator->preRemove($page));
     }
 
     // --- helpers ---
@@ -177,7 +177,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $page->host = $host;
 
         // id has asymmetric visibility (private(set)) — set via Reflection to simulate a persisted entity.
-        $ref = new \ReflectionProperty(Page::class, 'id');
+        $ref = new ReflectionProperty(Page::class, 'id');
         $ref->setValue($page, 42);
 
         return $page;

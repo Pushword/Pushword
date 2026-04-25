@@ -63,7 +63,7 @@ final class FlatLockApiControllerTest extends WebTestCase
 
         // Clean up any locks
         $this->lockManager->releaseLock('test.example.com');
-        $this->lockManager->releaseLock(null);
+        $this->lockManager->releaseLock();
 
         parent::tearDown();
     }
@@ -242,7 +242,7 @@ final class FlatLockApiControllerTest extends WebTestCase
         self::assertTrue($response['success']);
 
         // Verify global lock is in effect
-        self::assertTrue($this->lockManager->isLocked(null));
+        self::assertTrue($this->lockManager->isLocked());
     }
 
     public function testLockWithCustomTtl(): void

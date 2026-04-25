@@ -38,9 +38,4 @@ class PageEditMessageField extends AbstractField
                     : '',
             ]) : '';
     }
-
-    private function getSubject(): Page
-    {
-        return $this->admin->getSubject();
-    }
 }

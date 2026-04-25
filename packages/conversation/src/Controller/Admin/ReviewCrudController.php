@@ -110,7 +110,7 @@ final class ReviewCrudController extends ConversationCrudController
 
     private function getMediaPickerField(): CollectionField
     {
-        $field = CollectionField::new('mediaList', 'adminReviewMediasLabel')
+        return CollectionField::new('mediaList', 'adminReviewMediasLabel')
             ->onlyOnForms()
             ->setEntryType(MediaPickerType::class)
             ->setFormTypeOption('entry_options', [
@@ -126,8 +126,6 @@ final class ReviewCrudController extends ConversationCrudController
             ->setFormTypeOption('by_reference', false)
             ->setFormTypeOption('prototype', true)
             ->setHelp('adminReviewMediasHelp');
-
-        return $field;
     }
 
     private function getTitleField(): TextField

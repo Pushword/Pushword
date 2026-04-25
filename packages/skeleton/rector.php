@@ -2,6 +2,7 @@
 
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
+use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
 
 $paths = [
@@ -23,6 +24,7 @@ return RectorConfig::configure()
         phpunit: true
     )
     ->withPreparedSets(
+        deadCode: true,
         codeQuality: true,
         codingStyle: true,
         typeDeclarations: true,
@@ -40,5 +42,6 @@ return RectorConfig::configure()
     ->withSkip([
         NullToStrictStringFuncCallArgRector::class,
         FlipTypeControlToUseExclusiveTypeRector::class,
+        RemoveUselessReturnTagRector::class,
     ])
 ;

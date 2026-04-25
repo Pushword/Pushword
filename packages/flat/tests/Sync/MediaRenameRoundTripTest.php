@@ -72,8 +72,6 @@ final class MediaRenameRoundTripTest extends KernelTestCase
         $this->em->persist($media);
         $this->em->flush();
 
-        $mediaId = $media->id;
-
         // Export to get CSV with fileNameHistory
         /** @var FlatFileContentDirFinder $contentDirFinder */
         $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);

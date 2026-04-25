@@ -53,7 +53,7 @@ final class PdfOptimizer
      *
      * @return bool True if file was optimized, false if skipped or failed
      */
-    public function optimize(Media $media, bool $force = false): bool
+    public function optimize(Media $media): bool
     {
         if ('application/pdf' !== $media->getMimeType()) {
             return false;

@@ -88,9 +88,8 @@ final class MarkdownUtils
         $codeBlockProtector = new MarkdownProtectCodeBlock();
         $text = $codeBlockProtector->protect($text);
         $textPartList = explode("\n\n", $text);
-        $textPartList = $codeBlockProtector->restore($textPartList);
 
-        return $textPartList;
+        return $codeBlockProtector->restore($textPartList);
     }
 
     public static function hasAnchor(string $text, string $anchor): bool

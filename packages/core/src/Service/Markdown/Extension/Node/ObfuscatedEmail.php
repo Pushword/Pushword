@@ -9,8 +9,4 @@ use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
  */
 class ObfuscatedEmail extends Link
 {
-    public function __construct(string $url, ?string $label = null)
-    {
-        parent::__construct($url, $label, null);
-    }
 }

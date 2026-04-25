@@ -17,7 +17,6 @@ final class UnproseExtension
     #[AsTwigFilter('unprose', needsEnvironment: false, isSafe: ['html'])]
     public function unprose(string $html): string
     {
-        /** @var Twig */
         $twig = $this->twig;
         $unproseClass = $this->apps->get()->get('unprose') ?? $twig->getGlobals()['unprose'] ?? '';
 

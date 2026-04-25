@@ -9,14 +9,8 @@ use Twig\Attribute\AsTwigFunction;
 
 final class PushwordRouteGenerator
 {
-    /**
-     * @var string
-     */
     public const string PATH = 'pushword_page';
 
-    /**
-     * @var string
-     */
     public const string CUSTOM_HOST_PATH = 'custom_host_pushword_page';
 
     private bool $useCustomHostPath = true;

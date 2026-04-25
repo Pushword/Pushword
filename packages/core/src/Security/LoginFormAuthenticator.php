@@ -20,9 +20,6 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 {
     use TargetPathTrait;
 
-    /**
-     * @var string
-     */
     final public const string LOGIN_ROUTE = 'pushword_login';
 
     public function __construct(private readonly UrlGeneratorInterface $urlGenerator)

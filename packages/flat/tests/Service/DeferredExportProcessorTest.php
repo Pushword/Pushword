@@ -267,7 +267,6 @@ final class DeferredExportProcessorTest extends KernelTestCase
         $processor = new DeferredExportProcessor(
             $this->tempDir,
             $dispatcher,
-            null,
         );
 
         $processor->queue($this->createPage(1, 'example.com'), 'update');

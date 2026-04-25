@@ -202,6 +202,6 @@ final class FlatLockManagerTest extends TestCase
     {
         $this->manager->acquireLock(null, 'manual');
 
-        self::assertTrue($this->manager->isLocked(null));
+        self::assertTrue($this->manager->isLocked());
     }
 }

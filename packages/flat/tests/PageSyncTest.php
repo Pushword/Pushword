@@ -379,7 +379,7 @@ MD;
         self::assertFileExists($indexCsvPath, 'index.csv should exist');
 
         // Check French pages are separated (either in index.fr.csv or fr/index.csv)
-        $indexContent = file_get_contents($indexCsvPath);
+        file_get_contents($indexCsvPath);
 
         // The French homepage should NOT be in the main index.csv (it has locale 'fr')
         // It should be in a separate file

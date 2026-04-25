@@ -152,7 +152,6 @@ final class SyncStateManager
     {
         $cacheKey = $host ?? '__default__';
         if (isset($this->stateCache[$cacheKey])) {
-            /** @var array<string, mixed> */
             return $this->stateCache[$cacheKey];
         }
 

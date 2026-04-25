@@ -156,13 +156,13 @@ class PageGenerator extends AbstractGenerator
 
         // Generate compressed sidecars for static content
         if ($this->responseIsHtml($response) || str_contains($destination, '.xml')) {
-            $this->generateCompressedSidecars($destination, $content);
+            $this->generateCompressedSidecars($destination);
         }
     }
 
     private ?Compressor $compressor = null;
 
-    private function generateCompressedSidecars(string $filePath, string $content): void
+    private function generateCompressedSidecars(string $filePath): void
     {
         if (! $this->useGenerator(PagesCompressor::class)) {
             return;

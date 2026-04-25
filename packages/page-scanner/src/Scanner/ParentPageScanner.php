@@ -3,19 +3,12 @@
 namespace Pushword\PageScanner\Scanner;
 
 use Pushword\Core\Entity\Page;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Permit to find error in image or link.
  */
 final class ParentPageScanner extends AbstractScanner
 {
-    public function __construct(
-        TranslatorInterface $translator,
-    ) {
-        parent::__construct($translator);
-    }
-
     protected function run(): void
     {
         $this->checkParentPageHost($this->page);

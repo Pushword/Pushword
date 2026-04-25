@@ -5,6 +5,10 @@ namespace Pushword\StaticGenerator\Tests\DependencyInjection;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\DependencyInjection\Configuration;
+use Pushword\StaticGenerator\Generator\CaddyfileGenerator;
+use Pushword\StaticGenerator\Generator\HtaccessGenerator;
+use Pushword\StaticGenerator\Generator\PagesGenerator;
+use Pushword\StaticGenerator\Generator\RobotsGenerator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
@@ -111,9 +115,9 @@ class ConfigurationTest extends KernelTestCase
 
     public function testDefaultGeneratorCacheContainsOnlyPageRelatedGenerators(): void
     {
-        self::assertContains(\Pushword\StaticGenerator\Generator\PagesGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
-        self::assertNotContains(\Pushword\StaticGenerator\Generator\HtaccessGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
-        self::assertNotContains(\Pushword\StaticGenerator\Generator\CaddyfileGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
-        self::assertNotContains(\Pushword\StaticGenerator\Generator\RobotsGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
+        self::assertContains(PagesGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
+        self::assertNotContains(HtaccessGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
+        self::assertNotContains(CaddyfileGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
+        self::assertNotContains(RobotsGenerator::class, Configuration::DEFAULT_GENERATOR_CACHE);
     }
 }

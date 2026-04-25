@@ -36,7 +36,7 @@ final readonly class RouterTwigExtension
             $pager = $arg2;
         }
 
-        $canonical = \is_bool($arg2) ? $arg2 : false;
+        $canonical = \is_bool($arg2) && $arg2;
 
         $arg3 = $args[2] ?? null;
         if (! isset($host) && \is_string($arg3)) {

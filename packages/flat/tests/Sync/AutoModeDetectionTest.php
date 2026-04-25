@@ -226,8 +226,7 @@ final class AutoModeDetectionTest extends KernelTestCase
 
     public function testMediaAutoModeDetectsNewFile(): void
     {
-        /** @var string $mediaDir */
-        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+        self::getContainer()->getParameter('pw.media_dir');
 
         // Create new media file in content dir
         $mediaPath = $this->contentDir.'/media';

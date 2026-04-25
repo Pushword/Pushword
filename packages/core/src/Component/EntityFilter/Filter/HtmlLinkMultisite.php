@@ -15,12 +15,8 @@ use function Safe\preg_match_all;
 #[AsFilter]
 final readonly class HtmlLinkMultisite implements FilterInterface
 {
-    /**
-     * @var string
-     */
     public const string HTML_REGEX = '/href=((?P<hrefQuote>\'|")(?P<href1>(?:(?!(?P=hrefQuote)).)+)(?P=hrefQuote)|(?P<href2>[^"\'>][^> \r\n\t\f\v]*))/iJ';
 
-    /** @var string */
     public const string HTML_REGEX_HREF_KEY = 'href';
 
     public function __construct(

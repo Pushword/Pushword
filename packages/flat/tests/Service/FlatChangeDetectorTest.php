@@ -93,7 +93,7 @@ final class FlatChangeDetectorTest extends KernelTestCase
     public function testCheckForChangesReturnsExpectedStructure(): void
     {
         $detector = $this->createDetector();
-        $result = $detector->checkForChanges(null);
+        $result = $detector->checkForChanges();
 
         // Verify structure by accessing expected keys
         $hasChanges = $result['hasChanges'];
@@ -106,9 +106,9 @@ final class FlatChangeDetectorTest extends KernelTestCase
     {
         $detector = $this->createDetector();
 
-        $detector->checkForChanges(null);
+        $detector->checkForChanges();
 
-        $result2 = $detector->forceCheck(null);
+        $result2 = $detector->forceCheck();
 
         self::assertFalse($result2['hasChanges']);
     }
@@ -138,8 +138,8 @@ final class FlatChangeDetectorTest extends KernelTestCase
         $detectorWithLock = $this->createDetector(autoLockOnChanges: true);
         $detectorWithoutLock = $this->createDetector(autoLockOnChanges: false);
 
-        $result1 = $detectorWithLock->checkForChanges(null);
-        $result2 = $detectorWithoutLock->checkForChanges(null);
+        $result1 = $detectorWithLock->checkForChanges();
+        $result2 = $detectorWithoutLock->checkForChanges();
 
         self::assertSame($result1['hasChanges'], $result2['hasChanges']);
     }
@@ -148,7 +148,7 @@ final class FlatChangeDetectorTest extends KernelTestCase
     {
         $detector = $this->createDetector();
 
-        $result = $detector->checkForChanges(null);
+        $result = $detector->checkForChanges();
 
         self::assertFalse($result['hasChanges']);
     }

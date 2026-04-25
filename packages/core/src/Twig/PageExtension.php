@@ -322,7 +322,10 @@ final class PageExtension
 
         $template = $this->apps->get()->getView($view);
 
-        $rendered = $this->twig->render($template, [
+        // $rendered = preg_replace('/\n+/', '\n', $rendered);
+        // $rendered = trim($rendered);
+
+        return $this->twig->render($template, [
             'pager_route' => $this->getPagerRouteName(),
             'pager_route_params' => $this->getPagerRouteParams(),
             'pages' => $pages,
@@ -330,11 +333,6 @@ final class PageExtension
             'id' => $id,
             'wrapperClass' => $wrapperClass,
         ]);
-
-        // $rendered = preg_replace('/\n+/', '\n', $rendered);
-        // $rendered = trim($rendered);
-
-        return $rendered;
     }
 
     /**

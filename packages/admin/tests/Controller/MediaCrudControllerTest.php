@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Pushword\Admin\Tests\Controller;
 
 use Doctrine\ORM\EntityManager;
@@ -20,9 +18,9 @@ final class MediaCrudControllerTest extends AbstractAdminTestClass
         $client->catchExceptions(false);
 
         /** @var EntityManager $em */
-        $em = static::getContainer()->get('doctrine.orm.entity_manager');
-        $projectDir = static::getContainer()->getParameter('kernel.project_dir');
-        $mediaDir = static::getContainer()->getParameter('pw.media_dir');
+        $em = self::getContainer()->get('doctrine.orm.entity_manager');
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
 
         $tempFile = $mediaDir.'/test-hidden-avatar.png';
         $img = imagecreatetruecolor(1, 1);
@@ -50,9 +48,9 @@ final class MediaCrudControllerTest extends AbstractAdminTestClass
 
         // Re-fetch after HTTP request rebuilt the container
         /** @var EntityManager $em */
-        $em = static::getContainer()->get('doctrine.orm.entity_manager');
+        $em = self::getContainer()->get('doctrine.orm.entity_manager');
         /** @var MediaRepository $mediaRepo */
-        $mediaRepo = static::getContainer()->get(MediaRepository::class);
+        $mediaRepo = self::getContainer()->get(MediaRepository::class);
         $toRemove = $mediaRepo->findOneBy(['alt' => '__hidden_avatar_test__']);
         if (null !== $toRemove) {
             $em->remove($toRemove);
