@@ -3,6 +3,7 @@
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
+use Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
 
 $paths = [
@@ -31,6 +32,7 @@ return RectorConfig::configure()
         typeDeclarationDocblocks: true,
         instanceOf: true,
         earlyReturn: true,
+        doctrineCodeQuality: true,
         symfonyCodeQuality: true,
         // symfonyConfigs: true
     )
@@ -43,5 +45,6 @@ return RectorConfig::configure()
         NullToStrictStringFuncCallArgRector::class,
         FlipTypeControlToUseExclusiveTypeRector::class,
         RemoveUselessReturnTagRector::class,
+        RemoveNonExistingVarAnnotationRector::class,
     ])
 ;

@@ -61,6 +61,7 @@ trait PageI18nTrait
             foreach ($this->getTranslations() as $otherTranslation) {
                 $page->addTranslation($otherTranslation, false);
             }
+
             $page->addTranslation($this, false);
             foreach ($this->getTranslations() as $otherTranslation) {
                 if ($otherTranslation === $this) {  // déjà fait
