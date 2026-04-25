@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\EventListener;
 
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;

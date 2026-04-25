@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Flat\EventSubscriber;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;

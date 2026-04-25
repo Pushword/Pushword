@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\StaticGenerator\Event;
 
 use Pushword\Core\Site\SiteConfig;

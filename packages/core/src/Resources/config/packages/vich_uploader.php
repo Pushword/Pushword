@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Pushword\Core\Service\VichUploadPropertyNamer;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 

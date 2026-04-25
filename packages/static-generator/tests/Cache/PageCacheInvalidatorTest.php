@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\StaticGenerator\Tests\Cache;
 
 use PHPUnit\Framework\MockObject\MockObject;

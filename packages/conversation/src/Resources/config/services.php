@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Pushword\Conversation\Flat\ConversationSync;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\Sync\ConversationSyncInterface;

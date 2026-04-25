@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\StaticGenerator\Cache\MessageHandler\PageCacheRefreshHandler;
 use Pushword\StaticGenerator\Cache\PageCacheInvalidator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
+
+use Symfony\Component\Messenger\MessageBusInterface;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     $services = $containerConfigurator->services();

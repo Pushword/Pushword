@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\PageScanner\Scanner;
 
 use Pushword\Core\Entity\Page;
