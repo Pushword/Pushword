@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pushword\Core\Service;
 
 use Cocur\Slugify\Slugify;
@@ -9,6 +11,7 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
@@ -18,7 +21,8 @@ final readonly class LinkProvider
         private PushwordRouteGenerator $router,
         private SiteRegistry $apps,
         private Twig $twig,
-        private Security $security
+        private Security $security,
+        private RequestStack $requestStack,
     ) {
     }
 
@@ -29,6 +33,11 @@ final readonly class LinkProvider
 
     private function currentUserIsAdmin(): bool
     {
+        $request = $this->requestStack->getMainRequest();
+        if (null === $request || ! $request->hasSession()) {
+            return false;
+        }
+
         return $this->security->isGranted('ROLE_ADMIN');
     }
 

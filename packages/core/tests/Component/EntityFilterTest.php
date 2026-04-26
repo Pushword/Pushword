@@ -40,7 +40,8 @@ final class EntityFilterTest extends KernelTestCase
         $twig = self::getContainer()->get('twig');
         $router = self::getContainer()->get(PushwordRouteGenerator::class);
         $security = self::getContainer()->get(Security::class);
-        $linkProvider = new LinkProvider($router, $apps, $twig, $security);
+        $requestStack = self::getContainer()->get('request_stack');
+        $linkProvider = new LinkProvider($router, $apps, $twig, $security, $requestStack);
 
         $filter = new HtmlObfuscateLink($linkProvider);
 
