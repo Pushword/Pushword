@@ -6,8 +6,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $containerConfigurator->extension('flysystem', [
         'storages' => [
             'pushword.mediaStorage' => [
-                'adapter' => 'local',
-                'options' => [
+                'local' => [
                     'directory' => '%pw.media_dir%',
                 ],
             ],
