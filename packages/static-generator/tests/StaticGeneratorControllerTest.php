@@ -40,8 +40,10 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         }
 
         // Clean up PID file and output storage
-        new Filesystem()->remove($pidFile);
+        $fs = new Filesystem();
+        $fs->remove($pidFile);
         $outputStorage->clear('static-generator');
+        $fs->remove(sys_get_temp_dir().'/pushword-controller-test-'.getmypid());
         parent::tearDown();
     }
 
@@ -64,11 +66,8 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
 
         $container = $client->getContainer();
 
-        /** @var ProcessOutputStorage $outputStorage */
-        $outputStorage = $container->get(ProcessOutputStorage::class);
-        $outputStorage->clear('static-generator');
+        $outputStorage = new ProcessOutputStorage(new Filesystem(), sys_get_temp_dir().'/pushword-controller-test-'.getmypid());
 
-        // Mock process manager to ensure no process appears as running
         $mockProcessManager = self::createStub(BackgroundProcessManager::class);
         $mockProcessManager->method('getProcessInfo')->willReturn(['isRunning' => false, 'startTime' => null, 'pid' => null]);
         $mockProcessManager->method('getPidFilePath')->willReturn(sys_get_temp_dir().'/pushword-test-static.pid');
@@ -77,7 +76,6 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         $mockDispatcher->method('dispatch')
             ->willThrowException(new RuntimeException('nohup failed'));
 
-        // Test controller directly since compiled container ignores set() for constructor deps
         $mockAdminContext = self::createStub(AdminContextProviderInterface::class);
         $mockAdminContext->method('getContext')->willReturn(null);
 
@@ -90,7 +88,6 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         try {
             $controller->generateStatic();
         } catch (RuntimeError) {
-            // Template rendering fails without EasyAdmin context, but error handling already executed
         }
 
         self::assertSame('error', $outputStorage->getStatus('static-generator'));
@@ -102,9 +99,7 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $container = $client->getContainer();
 
-        /** @var ProcessOutputStorage $outputStorage */
-        $outputStorage = $container->get(ProcessOutputStorage::class);
-        $outputStorage->clear('static-generator--localhost.dev');
+        $outputStorage = new ProcessOutputStorage(new Filesystem(), sys_get_temp_dir().'/pushword-controller-test-'.getmypid());
 
         $mockProcessManager = self::createStub(BackgroundProcessManager::class);
         $mockProcessManager->method('getProcessInfo')->willReturn(['isRunning' => false, 'startTime' => null, 'pid' => null]);

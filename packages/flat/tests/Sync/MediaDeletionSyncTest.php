@@ -191,10 +191,12 @@ final class MediaDeletionSyncTest extends KernelTestCase
 
         $this->em->flush();
 
+        /** @var array<int, int|null> $ids */
         $ids = [];
         foreach ($mediaEntities as $i => $media) {
             $ids[$i] = $media->id;
         }
+        self::assertCount(5, $ids);
 
         // Export all
         /** @var MediaExporter $exporter */
