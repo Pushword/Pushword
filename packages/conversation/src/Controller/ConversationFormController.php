@@ -147,14 +147,18 @@ final class ConversationFormController extends AbstractController
     {
         $response = new Response();
 
-        if (! \in_array($request->headers->get('origin'), $this->getPossibleOrigins($request), true)) {
-            throw new ErrorException('origin sent is not authorized ('.($request->headers->get('origin') ?? '').') '.json_encode($this->getPossibleOrigins($request)).'.');
-        }
+        $origin = $request->headers->get('origin');
 
-        $response->headers->set('Access-Control-Allow-Credentials', 'true');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Auth-Token');
-        $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('origin'));
+        if (null !== $origin) {
+            if (! \in_array($origin, $this->getPossibleOrigins($request), true)) {
+                throw new ErrorException('origin sent is not authorized ('.$origin.') '.json_encode($this->getPossibleOrigins($request)).'.');
+            }
+
+            $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Auth-Token');
+            $response->headers->set('Access-Control-Allow-Origin', $origin);
+        }
 
         return $response;
     }

@@ -90,6 +90,15 @@ final class ConversationFormControllerTest extends WebTestCase
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }
 
+    public function testFormWithoutOriginHeader(): void
+    {
+        $client = self::createClient();
+
+        $client->request(Request::METHOD_GET, '/conversation/newsletter/test');
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertNull($client->getResponse()->headers->get('Access-Control-Allow-Origin'));
+    }
+
     public function testConversationWithSlashInReferring(): void
     {
         $client = self::createClient();
