@@ -42,6 +42,7 @@ final class StaticGeneratorControllerTest extends AbstractAdminTestClass
         // Clean up PID file and output storage
         $fs = new Filesystem();
         $fs->remove($pidFile);
+
         $outputStorage->clear('static-generator');
         $fs->remove(sys_get_temp_dir().'/pushword-controller-test-'.getmypid());
         parent::tearDown();

@@ -233,7 +233,7 @@ class MediaExtension
     private function findMediaByFileName(string $fileName): ?Media
     {
         // First try exact match (uses repository cache if preloaded)
-        $media = $this->mediaRepository->findOneByFileName($fileName);
+        $media = $this->mediaRepository->findOneByFileNameOrHistory($fileName);
         if (null !== $media) {
             return $media;
         }
@@ -243,7 +243,7 @@ class MediaExtension
         if ('webp' === $extension) {
             $baseName = pathinfo($fileName, \PATHINFO_FILENAME);
             foreach (['jpg', 'jpeg', 'png', 'gif', 'webp'] as $ext) {
-                $media = $this->mediaRepository->findOneByFileName($baseName.'.'.$ext);
+                $media = $this->mediaRepository->findOneByFileNameOrHistory($baseName.'.'.$ext);
                 if (null !== $media) {
                     return $media;
                 }
