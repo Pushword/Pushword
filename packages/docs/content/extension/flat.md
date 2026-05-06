@@ -55,14 +55,15 @@ php bin/console pw:flat:sync [host] [options]
 
 **Options:**
 
-| Option              | Description                                                   |
-| ------------------- | ------------------------------------------------------------- |
-| `host`              | Optional host to sync (uses default app if not provided)      |
-| `--mode`, `-m`      | Sync direction: `auto` (default), `import`, `export`          |
-| `--entity`          | Entity type: `page`, `media`, `conversation`, `all` (default) |
-| `--force`, `-f`     | Force overwrite even if files are newer than DB               |
-| `--no-backup`       | Disable automatic database backup before import               |
-| `--consume-pending` | Consume pending export flag and run batched export            |
+| Option              | Description                                                                     |
+| ------------------- | ------------------------------------------------------------------------------- |
+| `host`              | Optional host to sync (uses default app if not provided)                        |
+| `--mode`, `-m`      | Sync direction: `auto` (default), `import`, `export`                            |
+| `--entity`          | Entity type: `page`, `media`, `conversation`, `all` (default)                   |
+| `--page`            | Slug(s) to sync — repeatable, implies `--entity=page` (see targeted sync below) |
+| `--force`, `-f`     | Force overwrite even if files are newer than DB                                 |
+| `--no-backup`       | Disable automatic database backup before import                                 |
+| `--consume-pending` | Consume pending export flag and run batched export                              |
 
 **Examples:**
 
@@ -79,12 +80,30 @@ php bin/console pw:flat:sync --mode=export
 # Sync only pages on a specific host
 php bin/console pw:flat:sync example.tld --mode=import --entity=page
 
-# Export without adding IDs to files
-php bin/console pw:flat:sync --mode=export
+# Sync a single page (targeted sync — much faster on large multi-site setups)
+php bin/console pw:flat:sync example.tld --page=about
+
+# Sync multiple specific pages
+php bin/console pw:flat:sync example.tld --page=about --page=contact
 
 # Import without creating a database backup
 php bin/console pw:flat:sync --mode=import --no-backup
 ```
+
+#### Targeted page sync (`--page`)
+
+When you modify a single `.md` file in a large multi-site setup, scanning the full content directory of every host is wasteful. Pass `--page` to restrict the sync to specific slugs:
+
+```bash
+php bin/console pw:flat:sync example.tld --page=about --page=contact --mode=import
+```
+
+**Behavior differences vs. a full sync:**
+
+- Only the listed slugs are imported or exported — all other pages are untouched
+- `deleteMissingPages` is **skipped**: pages absent from the filter are never deleted, even if their `.md` file is missing
+- Redirections (`redirection.csv`) are **not re-imported** during a targeted sync
+- `--force` does **not** reset all host pages when `--page` is set; it only re-imports the targeted pages regardless of timestamps
 
 ### Deferred Export & Git Auto-Commit
 
@@ -258,7 +277,7 @@ Non-`.md` files (`.txt`, `.csv`, etc.) do NOT influence page auto-detection. Onl
 
 - `index.csv` is **read-only during import** — editing it has no effect; `.md` files are the source of truth
 - Backup files (`*.md~`) are **ignored** during import
-- With `--force`, ALL host pages are **deleted before importing** (fresh start)
+- With `--force` (without `--page`), ALL host pages are **deleted before importing** (fresh start); combined with `--page`, only the targeted pages are re-imported without resetting others
 - `publishedAt: draft` in frontmatter maps to `null` (unpublished)
 
 #### Export (database to flat)

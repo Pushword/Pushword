@@ -37,7 +37,8 @@ final class FlatFileSync
         $this->pageSync->setStopwatch($stopwatch);
     }
 
-    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null, string $entity = 'all'): void
+    /** @param string[] $pageSlugs */
+    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null, string $entity = 'all', array $pageSlugs = []): void
     {
         if (\in_array($entity, ['media', 'all'], true)) {
             $this->stopwatch?->start('media.sync');
@@ -47,7 +48,7 @@ final class FlatFileSync
 
         if (\in_array($entity, ['page', 'all'], true)) {
             $this->stopwatch?->start('page.sync');
-            $this->pageSync->sync($host, $forceExport, $exportDir);
+            $this->pageSync->sync($host, $forceExport, $exportDir, $pageSlugs);
             $this->stopwatch?->stop('page.sync');
         }
 
@@ -64,7 +65,8 @@ final class FlatFileSync
         }
     }
 
-    public function import(?string $host = null, string $entity = 'all', bool $force = false): void
+    /** @param string[] $pageSlugs */
+    public function import(?string $host = null, string $entity = 'all', bool $force = false, array $pageSlugs = []): void
     {
         if (\in_array($entity, ['media', 'all'], true)) {
             $this->stopwatch?->start('media.sync');
@@ -74,7 +76,7 @@ final class FlatFileSync
 
         if (\in_array($entity, ['page', 'all'], true)) {
             $this->stopwatch?->start('page.sync');
-            $this->pageSync->import($host, $force);
+            $this->pageSync->import($host, $force, $pageSlugs);
             $this->stopwatch?->stop('page.sync');
         }
 
@@ -91,7 +93,8 @@ final class FlatFileSync
         }
     }
 
-    public function export(?string $host = null, ?string $exportDir = null, bool $force = false, string $entity = 'all'): void
+    /** @param string[] $pageSlugs */
+    public function export(?string $host = null, ?string $exportDir = null, bool $force = false, string $entity = 'all', array $pageSlugs = []): void
     {
         if (\in_array($entity, ['media', 'all'], true)) {
             $this->stopwatch?->start('media.sync');
@@ -101,7 +104,7 @@ final class FlatFileSync
 
         if (\in_array($entity, ['page', 'all'], true)) {
             $this->stopwatch?->start('page.sync');
-            $this->pageSync->export($host, $force, $exportDir);
+            $this->pageSync->export($host, $force, $exportDir, $pageSlugs);
             $this->stopwatch?->stop('page.sync');
         }
 

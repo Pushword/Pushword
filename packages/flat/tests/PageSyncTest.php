@@ -2662,4 +2662,129 @@ YAML;
 
         $this->trackFile($mdFilePath);
     }
+
+    public function testPageSlugFilterImportsOnlyTargetedPage(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        $pageA = new Page();
+        $pageA->setSlug('slug-filter-a');
+        $pageA->setH1('Page A');
+        $pageA->host = 'localhost.dev';
+        $pageA->locale = 'en';
+        $pageA->setMainContent('Content A');
+        $pageA->setPublishedAt(new DateTime());
+
+        $pageB = new Page();
+        $pageB->setSlug('slug-filter-b');
+        $pageB->setH1('Page B');
+        $pageB->host = 'localhost.dev';
+        $pageB->locale = 'en';
+        $pageB->setMainContent('Content B');
+        $pageB->setPublishedAt(new DateTime());
+
+        $this->em->persist($pageA);
+        $this->em->persist($pageB);
+        $this->em->flush();
+
+        // Export both to create .md files
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+        $pathA = $contentDir.'/slug-filter-a.md';
+        $pathB = $contentDir.'/slug-filter-b.md';
+        self::assertFileExists($pathA);
+        self::assertFileExists($pathB);
+
+        // Update only page A's .md file
+        $updatedContent = <<<'MD'
+---
+h1: Page A Updated
+locale: en
+---
+
+Updated content.
+MD;
+        file_put_contents($pathA, $updatedContent);
+        touch($pathA, time() + 10);
+
+        // Remove page A from DB to simulate it being re-imported
+        $this->em->remove($pageA);
+        $this->em->remove($pageB);
+        $this->em->flush();
+        $this->em->clear();
+
+        // Import only slug-filter-a
+        $this->pageSync->import('localhost.dev', false, ['slug-filter-a']);
+
+        $this->em->clear();
+        $importedA = $this->pageRepo->findOneBy(['slug' => 'slug-filter-a', 'host' => 'localhost.dev']);
+        $importedB = $this->pageRepo->findOneBy(['slug' => 'slug-filter-b', 'host' => 'localhost.dev']);
+
+        self::assertNotNull($importedA, 'Targeted page should be imported');
+        self::assertSame('Page A Updated', $importedA->getH1(), 'Updated content should be reflected');
+        self::assertNull($importedB, 'Non-targeted page should not be imported');
+
+        // Cleanup
+        $this->em->remove($importedA);
+        $this->em->flush();
+
+        $this->trackFile($pathA);
+        $this->trackFile($pathB);
+    }
+
+    public function testPageSlugFilterDoesNotDeleteOtherPages(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        // Create two pages in DB, export them so .md files exist
+        $pageA = new Page();
+        $pageA->setSlug('no-delete-filter-a');
+        $pageA->setH1('Page A');
+        $pageA->host = 'localhost.dev';
+        $pageA->locale = 'en';
+        $pageA->setMainContent('Content A');
+        $pageA->setPublishedAt(new DateTime());
+
+        $pageB = new Page();
+        $pageB->setSlug('no-delete-filter-b');
+        $pageB->setH1('Page B');
+        $pageB->host = 'localhost.dev';
+        $pageB->locale = 'en';
+        $pageB->setMainContent('Content B');
+        $pageB->setPublishedAt(new DateTime());
+
+        $this->em->persist($pageA);
+        $this->em->persist($pageB);
+        $this->em->flush();
+
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+        $pathA = $contentDir.'/no-delete-filter-a.md';
+        $pathB = $contentDir.'/no-delete-filter-b.md';
+        self::assertFileExists($pathA);
+        self::assertFileExists($pathB);
+
+        // Delete page B's .md file — a full import would delete B from DB
+        unlink($pathB);
+
+        // Import only page A (filtered) — page B should survive despite missing .md
+        $this->pageSync->import('localhost.dev', false, ['no-delete-filter-a']);
+
+        $this->em->clear();
+        $survivingB = $this->pageRepo->findOneBy(['slug' => 'no-delete-filter-b', 'host' => 'localhost.dev']);
+        self::assertNotNull($survivingB, 'Page B should not be deleted during a filtered import');
+
+        // Cleanup
+        foreach (['no-delete-filter-a', 'no-delete-filter-b'] as $slug) {
+            $page = $this->pageRepo->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
+            if ($page instanceof Page) {
+                $this->em->remove($page);
+            }
+        }
+
+        $this->em->flush();
+        $this->trackFile($pathA);
+    }
 }

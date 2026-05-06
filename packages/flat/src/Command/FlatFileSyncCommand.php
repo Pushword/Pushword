@@ -44,6 +44,7 @@ final readonly class FlatFileSyncCommand
     ) {
     }
 
+    /** @param string[] $page */
     public function __invoke(
         InputInterface $input,
         OutputInterface $output,
@@ -59,6 +60,8 @@ final readonly class FlatFileSyncCommand
         bool $backup = false,
         #[Option(description: 'Consume pending export flag and run batched export', name: 'consume-pending')]
         bool $consumePending = false,
+        #[Option(description: 'Page slug(s) to sync (repeatable, implies --entity=page)', name: 'page')]
+        array $page = [],
     ): int {
         if ($consumePending) {
             return $this->handleConsumePending($input, $output);
@@ -66,6 +69,10 @@ final readonly class FlatFileSyncCommand
 
         // Normalize entity to lowercase to avoid case-sensitivity issues
         $entity = strtolower($entity);
+
+        if ([] !== $page) {
+            $entity = 'page';
+        }
 
         // Check for webhook lock - blocks sync during external editing workflow
         if ($this->lockManager->isWebhookLocked($host)) {
@@ -125,11 +132,11 @@ final readonly class FlatFileSyncCommand
             }
 
             if (null !== $host) {
-                $this->syncHost($host, $force, $entity, $mode);
+                $this->syncHost($host, $force, $entity, $mode, $page);
             } else {
                 foreach ($this->flatFileSync->getHosts() as $appHost) {
                     $teeOutput->writeln(\sprintf('<info>Syncing %s...</info>', $appHost));
-                    $this->syncHost($appHost, $force, $entity, $mode);
+                    $this->syncHost($appHost, $force, $entity, $mode, $page);
                 }
             }
 
@@ -202,12 +209,13 @@ final readonly class FlatFileSyncCommand
         return Command::SUCCESS;
     }
 
-    private function syncHost(string $host, bool $force, string $entity, string $mode): void
+    /** @param string[] $pageSlugs */
+    private function syncHost(string $host, bool $force, string $entity, string $mode, array $pageSlugs = []): void
     {
         match ($mode) {
-            'import' => $this->flatFileSync->import($host, $entity, $force),
-            'export' => $this->flatFileSync->export($host, force: $force, entity: $entity),
-            default => $this->flatFileSync->sync($host, $force, null, $entity),
+            'import' => $this->flatFileSync->import($host, $entity, $force, $pageSlugs),
+            'export' => $this->flatFileSync->export($host, force: $force, entity: $entity, pageSlugs: $pageSlugs),
+            default => $this->flatFileSync->sync($host, $force, null, $entity, $pageSlugs),
         };
     }
 

@@ -60,52 +60,62 @@ final class PageSync
         $this->stopwatch = $stopwatch;
     }
 
-    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null): void
+    /** @param string[] $pageSlugs */
+    public function sync(?string $host = null, bool $forceExport = false, ?string $exportDir = null, array $pageSlugs = []): void
     {
         $this->stopwatch?->start('page.detection');
         $shouldImport = ! $forceExport && $this->mustImport($host);
         $this->stopwatch?->stop('page.detection');
 
         if ($shouldImport) {
-            $this->import($host);
+            $this->import($host, false, $pageSlugs);
 
             return;
         }
 
-        $this->export($host, $forceExport, $exportDir);
+        $this->export($host, $forceExport, $exportDir, $pageSlugs);
     }
 
-    public function import(?string $host = null, bool $force = false): void
+    /** @param string[] $pageSlugs */
+    public function import(?string $host = null, bool $force = false, array $pageSlugs = []): void
     {
-        $this->cacheSuppressor->suppress(fn () => $this->doImport($host, $force));
+        $this->cacheSuppressor->suppress(fn () => $this->doImport($host, $force, $pageSlugs));
     }
 
-    private function doImport(?string $host, bool $force): void
+    /** @param string[] $pageSlugs */
+    private function doImport(?string $host, bool $force, array $pageSlugs): void
     {
         $this->deletedCount = 0;
         $app = $this->resolveApp($host);
 
-        if ($force) {
+        if ($force && [] === $pageSlugs) {
             $this->resetHostPages($app->getMainHost());
         }
 
         $contentDir = $this->contentDirFinder->get($app->getMainHost());
 
-        // 1. Import redirections from redirection.csv
-        $this->redirectionImporter->reset();
-        $this->redirectionImporter->loadIndex($contentDir);
-        if ($this->redirectionImporter->hasIndexData()) {
-            $this->redirectionImporter->importAll();
+        // 1. Import redirections from redirection.csv (skip for targeted page sync)
+        if ([] === $pageSlugs) {
+            $this->redirectionImporter->reset();
+            $this->redirectionImporter->loadIndex($contentDir);
+            if ($this->redirectionImporter->hasIndexData()) {
+                $this->redirectionImporter->importAll();
+            }
         }
 
         // 2. Reset page importer and YAML error tracking
         $this->pageImporter->resetImport();
         $this->yamlErrorSlugs = [];
 
-        // 3. Collect all .md files first for progress display
+        // 3. Collect .md files, filtered by target slugs when specified
         $files = $this->collectMarkdownFiles($contentDir);
 
-        // 4. Import all .md files with progress (only show actually imported files)
+        if ([] !== $pageSlugs) {
+            $slugSet = array_flip($pageSlugs);
+            $files = array_filter($files, fn (string $path): bool => isset($slugSet[$this->pageImporter->filePathToSlug($path)]));
+        }
+
+        // 4. Import .md files with progress (only show actually imported files)
         foreach ($files as $path) {
             $lastEditDateTime = new DateTime()->setTimestamp((int) filemtime($path));
 
@@ -139,8 +149,10 @@ final class PageSync
         // Reuse pages loaded by finishImport() to avoid extra findByHost queries
         $allPages = $this->pageImporter->getLoadedPages() ?? $this->pageRepository->findByHost($app->getMainHost());
 
-        // 5. Delete pages that no longer have .md files (excluding redirections from CSV)
-        $this->deleteMissingPages($allPages);
+        // 5. Delete pages that no longer have .md files (skip for targeted page sync)
+        if ([] === $pageSlugs) {
+            $this->deleteMissingPages($allPages);
+        }
 
         // 6. Regenerate index.csv to reflect the current database state
         $this->regenerateIndex($contentDir, $allPages);
@@ -212,14 +224,19 @@ final class PageSync
         $this->pageExporter->exportPagesSubset($importedSlugs, $allPages);
     }
 
-    public function export(?string $host = null, bool $force = false, ?string $exportDir = null): void
+    /** @param string[] $pageSlugs */
+    public function export(?string $host = null, bool $force = false, ?string $exportDir = null, array $pageSlugs = []): void
     {
         $app = $this->resolveApp($host);
         $targetDir = $exportDir ?? $this->contentDirFinder->get($app->getMainHost());
 
         // Export pages (.md files + index.csv + index.draft.csv)
         $this->pageExporter->exportDir = $targetDir;
-        $this->pageExporter->exportPages($force);
+        if ([] !== $pageSlugs) {
+            $this->pageExporter->exportPagesSubset($pageSlugs);
+        } else {
+            $this->pageExporter->exportPages($force);
+        }
 
         // Export redirections (redirection.csv)
         $this->redirectionExporter->exportDir = $targetDir;

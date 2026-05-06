@@ -46,4 +46,27 @@ final class FlatCommandTest extends KernelTestCase
         self::assertStringContainsString('Sync completed', $exportOutput);
         self::assertStringContainsString('export mode', $exportOutput);
     }
+
+    public function testPageOptionFiltersSync(): void
+    {
+        $kernel = self::createKernel();
+        $application = new Application($kernel);
+
+        /** @var BackgroundProcessManager $processManager */
+        $processManager = self::getContainer()->get(BackgroundProcessManager::class);
+        $pidFile = $processManager->getPidFilePath('flat-sync');
+        @unlink($pidFile);
+
+        $command = $application->find('pw:flat:sync');
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'host' => 'pushword.piedweb.com',
+            '--mode' => 'import',
+            '--page' => ['homepage'],
+        ]);
+
+        $output = $commandTester->getDisplay();
+        self::assertStringContainsString('Sync completed', $output);
+        self::assertSame(0, $commandTester->getStatusCode());
+    }
 }
