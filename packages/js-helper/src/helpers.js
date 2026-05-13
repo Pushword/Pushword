@@ -40,13 +40,21 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
       credentials: 'include',
     })
       .then(function (response) {
+        if (!response.ok) {
+          item.dispatchEvent(
+            new CustomEvent('live-block-forbidden', {
+              bubbles: true,
+              detail: { status: response.status, url: url },
+            }),
+          )
+          return null
+        }
         return response.text()
       })
       .then(function (body) {
+        if (body === null) return
         item.removeAttribute('data-' + liveBlockAttribute)
         item.outerHTML = body
-      })
-      .then(function () {
         document.dispatchEvent(new Event('DOMChanged'))
       })
   }
@@ -77,12 +85,21 @@ export function liveBlock(liveBlockAttribute = 'live', liveFormSelector = '.live
       credentials: 'include',
     })
       .then(function (response) {
+        if (!response.ok) {
+          liveFormBlock.dispatchEvent(
+            new CustomEvent('live-block-forbidden', {
+              bubbles: true,
+              detail: { status: response.status, url: form.srcElement.action },
+            }),
+          )
+          delete liveFormBlock.dataset.submitting
+          return null
+        }
         return response.text()
       })
       .then(function (body) {
+        if (body === null) return
         liveFormBlock.outerHTML = body
-      })
-      .then(function () {
         document.dispatchEvent(new Event('DOMChanged'))
       })
   }

@@ -5,7 +5,8 @@
   "author": "Robin@PiedWeb <contact@piedweb.com>",
   "license": "MIT",
   "scripts": {
-    "prettier": "prettier ./src/*.{js,scss} --write"
+    "prettier": "prettier ./src/*.{js,scss} --write",
+    "test": "node node_modules/vitest/dist/cli.js run --environment jsdom"
   },
   "dependencies": {
     "140.css": "^1.0",

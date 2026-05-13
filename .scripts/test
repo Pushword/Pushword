@@ -142,6 +142,19 @@ for arg in "$@"; do
     fi
 done
 
+# Run JS tests (skip when a --filter targets PHPUnit only)
+if [ -z "$1" ] || [ "$1" = "full" ] || [ "$1" = "--no-parallel" ]; then
+    step "Running JS tests (yarn test)"
+    JS_TEST_START=$(date +%s)
+    JS_TEST_EXIT=0
+    (cd packages/js-helper && yarn test) || JS_TEST_EXIT=$?
+    record_step "JS tests" $(( $(date +%s) - JS_TEST_START ))
+    if [ $JS_TEST_EXIT -ne 0 ]; then
+        print_summary
+        exit $JS_TEST_EXIT
+    fi
+fi
+
 if [ "$1" = "--filter" ] && [ -n "$2" ]; then
     FILTER_ARG="--filter $2"
 elif [ "$1" != "full" ] && [ "$1" != "--no-parallel" ] && [ -n "$1" ]; then
