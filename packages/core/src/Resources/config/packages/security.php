@@ -75,6 +75,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                 'roles' => 'PUBLIC_ACCESS',
             ],
             [
+                'path' => '^/admin/fragment/',
+                'roles' => 'PUBLIC_ACCESS',
+            ],
+            [
                 'path' => '^/admin',
                 'roles' => 'ROLE_EDITOR',
             ],

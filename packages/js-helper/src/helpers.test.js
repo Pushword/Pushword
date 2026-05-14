@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { liveBlock } from './helpers.js'
 
 // Helpers to build minimal DOM fixtures
@@ -30,7 +30,7 @@ describe('liveBlock — getLiveBlock', () => {
   })
 
   it('replaces outerHTML and dispatches DOMChanged on 200', async () => {
-    const el = makeLiveBlockEl('/block')
+    makeLiveBlockEl('/block')
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -51,7 +51,7 @@ describe('liveBlock — getLiveBlock', () => {
   })
 
   it('does not replace outerHTML on 403 and fires live-block-forbidden', async () => {
-    const el = makeLiveBlockEl('/block')
+    makeLiveBlockEl('/block')
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
