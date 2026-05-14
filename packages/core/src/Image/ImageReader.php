@@ -24,7 +24,11 @@ final readonly class ImageReader
         private string $imageDriver = 'auto',
     ) {
         [$this->resolvedDriver, $driverClass] = $this->resolveDriver();
-        $this->interventionManager = new InterventionImageManager($driverClass, decodeAnimation: false);
+        // decodeAnimation must stay true: intervention/image 4.0.4 has a bug where
+        // RemoveAnimationModifier clears the source Imagick object before the decoder
+        // reads its mime type, causing "Failed to retrieve image media type" on the
+        // Imagick driver. We strip animation manually after decode instead.
+        $this->interventionManager = new InterventionImageManager($driverClass, decodeAnimation: true);
     }
 
     /**
@@ -42,7 +46,7 @@ final readonly class ImageReader
                 $driver->checkHealth();
 
                 // Verify multi-format encoding works (ensureInMemory uses VipsArea gtype)
-                $mgr = new InterventionImageManager(VipsDriver::class, decodeAnimation: false);
+                $mgr = new InterventionImageManager(VipsDriver::class, decodeAnimation: true);
                 $encoded = $mgr->createImage(1, 1)->encodeUsingFileExtension('jpg');
                 $testImage = $mgr->decode($encoded->toString());
                 VipsCore::ensureInMemory($testImage->core());
@@ -98,6 +102,12 @@ final readonly class ImageReader
         // Copy into memory to allow random access.
         if ($image->core() instanceof VipsCore) {
             VipsCore::ensureInMemory($image->core());
+        }
+
+        // Strip animation here (after decode) instead of via the decoder's
+        // decodeAnimation:false path, which is broken in intervention/image 4.0.4.
+        if ($image->isAnimated()) {
+            $image = $image->removeAnimation();
         }
 
         return $image;
