@@ -72,4 +72,21 @@ final class ImageReaderTest extends KernelTestCase
         self::assertSame(1, $image->width());
         self::assertSame(1, $image->height());
     }
+
+    /**
+     * Regression test: intervention/image 4.0.4 clears the source Imagick inside
+     * the decoder when decodeAnimation:false is set, causing "Failed to retrieve
+     * image media type". Animated images must be stripped after decode instead.
+     */
+    public function testReadAnimatedGifStripsAnimation(): void
+    {
+        $mediaStorage = $this->createMediaStorageAdapter();
+        $reader = new ImageReader($mediaStorage);
+
+        $image = $reader->read(__DIR__.'/animated.gif');
+
+        self::assertFalse($image->isAnimated(), 'Animation must be stripped after read');
+        self::assertSame(4, $image->width());
+        self::assertSame(4, $image->height());
+    }
 }
