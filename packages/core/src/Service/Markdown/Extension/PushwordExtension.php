@@ -4,6 +4,7 @@ namespace Pushword\Core\Service\Markdown\Extension;
 
 use League\CommonMark\Environment\EnvironmentBuilderInterface;
 use League\CommonMark\Event\DocumentParsedEvent;
+use League\CommonMark\Extension\CommonMark\Node\Block\FencedCode;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Image;
 use League\CommonMark\Extension\ExtensionInterface;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
@@ -13,9 +14,10 @@ use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
 use Pushword\Core\Service\Markdown\Extension\Node\PhoneNumber;
 use Pushword\Core\Service\Markdown\Extension\Parser\DateShortcodeParser;
 use Pushword\Core\Service\Markdown\Extension\Parser\EmailAutolinkParser;
-use Pushword\Core\Service\Markdown\Extension\Parser\ObfuscatedLinkParser;
 use Pushword\Core\Service\Markdown\Extension\Parser\PhoneAutolinkParser;
 use Pushword\Core\Service\Markdown\Extension\Processor\ColspanProcessor;
+use Pushword\Core\Service\Markdown\Extension\Processor\ObfuscatedLinkProcessor;
+use Pushword\Core\Service\Markdown\Extension\Renderer\FencedCodeRenderer;
 use Pushword\Core\Service\Markdown\Extension\Renderer\ImageRenderer;
 use Pushword\Core\Service\Markdown\Extension\Renderer\ObfuscatedEmailRenderer;
 use Pushword\Core\Service\Markdown\Extension\Renderer\ObfuscatedLinkRenderer;
@@ -35,8 +37,6 @@ final readonly class PushwordExtension implements ExtensionInterface
 
     public function register(EnvironmentBuilderInterface $environment): void
     {
-        $environment->addInlineParser(new ObfuscatedLinkParser(), 200);
-
         $environment->addInlineParser(new EmailAutolinkParser(), 100);
 
         $environment->addInlineParser(new PhoneAutolinkParser(), 100);
@@ -64,6 +64,16 @@ final readonly class PushwordExtension implements ExtensionInterface
             10
         );
 
+        // Opt-in per site: when `fenced_code_pre_class` is set in the app config,
+        // wrap fenced code blocks in <pre class="..."> so a highlighter (microlight,
+        // hljs, prism…) can pick them up. Default = unset = League's default renderer.
+        $preClass = $this->apps->get()->getStr('fenced_code_pre_class');
+        if ('' !== $preClass) {
+            $environment->addRenderer(FencedCode::class, new FencedCodeRenderer($preClass));
+        }
+
         $environment->addEventListener(DocumentParsedEvent::class, new ColspanProcessor());
+
+        $environment->addEventListener(DocumentParsedEvent::class, new ObfuscatedLinkProcessor());
     }
 }

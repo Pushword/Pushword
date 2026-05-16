@@ -71,6 +71,44 @@ final class MarkdownExtensionTest extends KernelTestCase
         self::assertStringContainsString('my site</span>', $result);
     }
 
+    public function testObfuscatedLinkWithInlineHtml(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform('See #[<svg><path/></svg> github](https://github.com)');
+
+        self::assertStringContainsString('data-rot', $result);
+        self::assertStringContainsString('<svg>', $result, 'Inline HTML in anchor must not be escaped');
+        self::assertStringNotContainsString('&lt;svg', $result);
+    }
+
+    public function testHashWithoutLinkStaysLiteral(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform('Issue #42 is closed');
+
+        self::assertStringContainsString('#42', $result);
+        self::assertStringNotContainsString('data-rot', $result);
+    }
+
+    public function testRegularLinkNotObfuscated(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform('[my site](https://piedweb.com)');
+
+        self::assertStringContainsString('href="https://piedweb.com"', $result);
+        self::assertStringNotContainsString('data-rot', $result);
+    }
+
+    public function testObfuscatedLinkAtParagraphStart(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform('#[my site](https://piedweb.com)');
+
+        self::assertStringContainsString('data-rot', $result);
+        self::assertStringContainsString('my site', $result);
+        self::assertStringNotContainsString('href="https://piedweb.com"', $result);
+    }
+
     // ===== Tests du rendu personnalisé des images =====
 
     public function testCustomImageRenderer(): void
@@ -204,6 +242,34 @@ final class MarkdownExtensionTest extends KernelTestCase
         $result = $parser->transform("| A | B | C |\n|---|---|---|\n| 1 | 2 | 3 |");
 
         self::assertStringNotContainsString('colspan', $result);
+    }
+
+    // ===== Tests des blocs de code fencés =====
+
+    public function testFencedCodeBlockEscapesPhpOpenTag(): void
+    {
+        $parser = $this->getMarkdownParser();
+
+        $result = $parser->transform("```php\n<?php\necho 'hello';\n```");
+
+        // CommonMark must escape the PHP open tag — no literal `<?php` may leak
+        // into the HTML (otherwise the static-generator's HtmlMinifier would
+        // mistake it for a processing instruction and corrupt the output).
+        self::assertStringContainsString('&lt;?php', $result);
+        self::assertStringNotContainsString('<?php', $result);
+        self::assertStringContainsString('<code class="language-php">', $result);
+    }
+
+    public function testFencedCodeBlockUsesDefaultRendererWhenNoPreClassConfigured(): void
+    {
+        // The skeleton's `localhost.dev` app does not set `fenced_code_pre_class`,
+        // so the default League renderer is used — no extra class on <pre>.
+        $parser = $this->getMarkdownParser();
+
+        $result = $parser->transform("```js\nconst x = 1;\n```");
+
+        self::assertStringContainsString('<pre>', $result);
+        self::assertStringNotContainsString('<pre class=', $result);
     }
 
     // ===== Tests de non-conversion dans le code =====
