@@ -83,7 +83,7 @@
     "friendsofphp/php-cs-fixer": "*",
     "league/flysystem-memory": "^3.31",
     "monorepo-php/monorepo": "*",
-    "nunomaduro/pao": "^1.0",
+    "laravel/pao": "^1.0",
     "phpstan/phpstan": "*",
     "phpstan/phpstan-doctrine": "*",
     "phpstan/phpstan-phpunit": "*",

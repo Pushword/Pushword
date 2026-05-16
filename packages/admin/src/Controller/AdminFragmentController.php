@@ -38,6 +38,7 @@ final class AdminFragmentController extends AbstractController
         if (null === $this->getUser()) {
             return $this->emptyAndClearAuthCookie();
         }
+
         if (! $this->isGranted('ROLE_EDITOR')) {
             throw new AccessDeniedHttpException();
         }

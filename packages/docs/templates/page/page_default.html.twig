@@ -35,21 +35,21 @@
 {% endblock %}
 
 {% block html_opener %}
-<html lang="{{ page.locale|default(apps.get().locale) }}" {{ mergeAttr({class: 'leading-tight text-gray-900 bg-white dark:bg-gray-900 dark:text-gray-100 overflow-x-hidden'}, page.htmlOpenerAttr|default({})) }}>
+<html lang="{{ page.locale|default(apps.get().locale) }}" {{ mergeAttr({class: 'leading-relaxed text-stone-900 bg-stone-50 dark:bg-stone-950 dark:text-stone-100'}, page.htmlOpenerAttr|default({})) }}>
 {% endblock %}
 
 {% block content %}
-<div class="flex flex-wrap items-stretch mx-auto max-w-screen-2xl" style="min-height:85vh">
+<div class="mx-auto max-w-(--breakpoint-xl) min-h-[80vh] grid grid-cols-1 lg:grid-cols-[16rem_minmax(0,1fr)]">
 
-    <div class="order-2 w-full mx-auto lg:mr-0 lg:ml-0 lg:w-3/4">
-     <div class="pt-6"></div>
+    <aside class="lg:border-r lg:border-stone-200 lg:dark:border-stone-800">
+        {{ include(view('/page/_right_column.html.twig')) }}
+    </aside>
+
+    <div class="min-w-0">
         {{ include(view('/page/_breadcrumb.html.twig')) }}
         {{ include(view('/page/_content.html.twig')) }}
     </div>
 
-    <div class="order-1 w-0 lg:w-1/4">
-        {{ include(view('/page/_right_column.html.twig')) }}
-    </div>
 </div>
 {% endblock %}
 
