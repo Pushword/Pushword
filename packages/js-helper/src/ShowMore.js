@@ -13,11 +13,13 @@
  */
 
 const STORAGE_KEY = 'showmore_opened'
-const COLLAPSED_MAX_HEIGHT = '250px'
+// Must match the Tailwind class on the collapsed wrapper (max-h-64 = 16rem)
+// applied via data-acinb in show_more.html.twig. Mismatch causes a visible
+// snap at the end of the close animation.
+const COLLAPSED_MAX_HEIGHT = '16rem'
 
 const ShowMore = {
   _initialized: false,
-  _scrollPos: 0,
   _userClosed: new WeakSet(), // Track blocks manually closed by user
   _openedIds: new Set(), // IDs of blocks user has ever opened
 
@@ -87,10 +89,21 @@ const ShowMore = {
     const content = wrapper.children[1]
     if (!content) return
 
-    this._scrollPos = wrapper.getBoundingClientRect().top + window.scrollY
+    wrapper.dataset.showMoreScrollPos = String(wrapper.getBoundingClientRect().top + window.scrollY)
     content.classList.remove('overflow-hidden')
     content.style.maxHeight = content.scrollHeight + 'px'
     wrapper.dataset.showMoreOpen = 'true'
+
+    // Cancel any pending listener / fallback from a previous open() so they
+    // can't fire on top of this new transition.
+    if (content._showMoreOnEnd) {
+      content.removeEventListener('transitionend', content._showMoreOnEnd)
+      delete content._showMoreOnEnd
+    }
+    if (content._showMoreFallback) {
+      clearTimeout(content._showMoreFallback)
+      delete content._showMoreFallback
+    }
 
     // Release max-height after the transition so lazy-loaded images (e.g.
     // review galleries) can grow the box without overflowing siblings below.
@@ -101,11 +114,16 @@ const ShowMore = {
       content.style.maxHeight = 'none'
       content.removeEventListener('transitionend', onEnd)
       delete content._showMoreOnEnd
+      if (content._showMoreFallback) {
+        clearTimeout(content._showMoreFallback)
+        delete content._showMoreFallback
+      }
     }
     content._showMoreOnEnd = onEnd
     content.addEventListener('transitionend', onEnd)
     // Fallback for reduced-motion / no-transition: release after 500ms.
-    setTimeout(() => {
+    content._showMoreFallback = setTimeout(() => {
+      delete content._showMoreFallback
       if (wrapper.dataset.showMoreOpen === 'true' && content.style.maxHeight !== 'none') {
         content.style.maxHeight = 'none'
         content.removeEventListener('transitionend', onEnd)
@@ -138,11 +156,15 @@ const ShowMore = {
     // Mark as user-closed to prevent auto-reopening
     this._userClosed.add(wrapper)
 
-    // Detach any pending open() transitionend listener so it can't fire
-    // mid-close and reset max-height to 'none'.
+    // Detach any pending open() transitionend listener and fallback timer so
+    // they can't fire mid-close and reset max-height to 'none'.
     if (content._showMoreOnEnd) {
       content.removeEventListener('transitionend', content._showMoreOnEnd)
       delete content._showMoreOnEnd
+    }
+    if (content._showMoreFallback) {
+      clearTimeout(content._showMoreFallback)
+      delete content._showMoreFallback
     }
 
     // Transitioning from max-height: none is not animatable. Snap to the
@@ -168,8 +190,10 @@ const ShowMore = {
       this._removeOpenedId(checkbox.id)
     }
 
-    if (this._scrollPos) {
-      window.scrollTo({ top: Math.max(0, this._scrollPos - 20), behavior: 'smooth' })
+    const scrollPos = parseFloat(wrapper.dataset.showMoreScrollPos)
+    delete wrapper.dataset.showMoreScrollPos
+    if (scrollPos) {
+      window.scrollTo({ top: Math.max(0, scrollPos - 20), behavior: 'smooth' })
     } else {
       wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
@@ -210,7 +234,13 @@ const ShowMore = {
     try {
       const target = document.querySelector(hash)
       if (target) {
-        this.openContaining(target)
+        // Hash navigation is explicit user intent (URL load, hashchange, or
+        // anchor click), so force-open even if the user previously closed
+        // this block — otherwise we'd scroll to invisible content inside a
+        // collapsed wrapper.
+        const wrapper = target.closest('.show-more')
+        if (wrapper) this._userClosed.delete(wrapper)
+        this.openContaining(target, false)
         setTimeout(() => {
           target.scrollIntoView({ behavior: 'smooth' })
         }, 100)
