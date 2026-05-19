@@ -23,9 +23,6 @@ const ShowMore = {
   _userClosed: new WeakSet(), // Track blocks manually closed by user
   _openedIds: new Set(), // IDs of blocks user has ever opened
 
-  /**
-   * Load opened block IDs from localStorage
-   */
   _loadOpenedIds() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -37,27 +34,18 @@ const ShowMore = {
     }
   },
 
-  /**
-   * Save opened block ID to localStorage
-   */
   _saveOpenedId(id) {
     if (!id) return
     this._openedIds.add(id)
     this._persistOpenedIds()
   },
 
-  /**
-   * Remove closed block ID from localStorage
-   */
   _removeOpenedId(id) {
     if (!id) return
     this._openedIds.delete(id)
     this._persistOpenedIds()
   },
 
-  /**
-   * Persist opened IDs to localStorage
-   */
   _persistOpenedIds() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...this._openedIds]))
@@ -66,24 +54,32 @@ const ShowMore = {
     }
   },
 
-  /**
-   * Check if user has ever opened this block
-   */
+  // Detach the transitionend listener and fallback timer left by open() so
+  // they can't interfere with a subsequent open or close.
+  _cancelPendingOpen(content) {
+    if (content._showMoreOnEnd) {
+      content.removeEventListener('transitionend', content._showMoreOnEnd)
+      delete content._showMoreOnEnd
+    }
+    if (content._showMoreFallback) {
+      clearTimeout(content._showMoreFallback)
+      delete content._showMoreFallback
+    }
+  },
+
   _hasUserOpened(wrapper) {
     const input = wrapper.querySelector('input.show-hide-input')
     return input && this._openedIds.has(input.id)
   },
 
   /**
-   * Open a show-more block
-   * @param {HTMLElement} el - Element inside the .show-more wrapper (typically .show-more-btn)
-   * @param {boolean} auto - Whether this is an automatic open (not user-initiated)
+   * @param {HTMLElement} el - Element inside the .show-more wrapper
+   * @param {boolean} auto
    */
   open(el, auto = false) {
     const wrapper = el.closest('.show-more')
     if (!wrapper) return
 
-    // Don't auto-open if user manually closed this block
     if (auto && this._userClosed.has(wrapper)) return
 
     const content = wrapper.children[1]
@@ -94,16 +90,7 @@ const ShowMore = {
     content.style.maxHeight = content.scrollHeight + 'px'
     wrapper.dataset.showMoreOpen = 'true'
 
-    // Cancel any pending listener / fallback from a previous open() so they
-    // can't fire on top of this new transition.
-    if (content._showMoreOnEnd) {
-      content.removeEventListener('transitionend', content._showMoreOnEnd)
-      delete content._showMoreOnEnd
-    }
-    if (content._showMoreFallback) {
-      clearTimeout(content._showMoreFallback)
-      delete content._showMoreFallback
-    }
+    this._cancelPendingOpen(content)
 
     // Release max-height after the transition so lazy-loaded images (e.g.
     // review galleries) can grow the box without overflowing siblings below.
@@ -112,12 +99,7 @@ const ShowMore = {
     const onEnd = (e) => {
       if (e.target !== content || e.propertyName !== 'max-height') return
       content.style.maxHeight = 'none'
-      content.removeEventListener('transitionend', onEnd)
-      delete content._showMoreOnEnd
-      if (content._showMoreFallback) {
-        clearTimeout(content._showMoreFallback)
-        delete content._showMoreFallback
-      }
+      this._cancelPendingOpen(content)
     }
     content._showMoreOnEnd = onEnd
     content.addEventListener('transitionend', onEnd)
@@ -131,21 +113,14 @@ const ShowMore = {
       }
     }, 500)
 
-    // Toggle checkbox to update arrow icon state
     const checkbox = wrapper.querySelector('input.show-hide-input')
     if (checkbox) {
       checkbox.checked = true
-      // Save to localStorage when user manually opens (not auto)
-      if (!auto) {
-        this._saveOpenedId(checkbox.id)
-      }
+      if (!auto) this._saveOpenedId(checkbox.id)
     }
   },
 
-  /**
-   * Close a show-more block
-   * @param {HTMLElement} el - Element inside the .show-more wrapper
-   */
+  /** @param {HTMLElement} el */
   close(el) {
     const wrapper = el.closest('.show-more')
     if (!wrapper) return
@@ -153,19 +128,9 @@ const ShowMore = {
     const content = wrapper.children[1]
     if (!content) return
 
-    // Mark as user-closed to prevent auto-reopening
     this._userClosed.add(wrapper)
 
-    // Detach any pending open() transitionend listener and fallback timer so
-    // they can't fire mid-close and reset max-height to 'none'.
-    if (content._showMoreOnEnd) {
-      content.removeEventListener('transitionend', content._showMoreOnEnd)
-      delete content._showMoreOnEnd
-    }
-    if (content._showMoreFallback) {
-      clearTimeout(content._showMoreFallback)
-      delete content._showMoreFallback
-    }
+    this._cancelPendingOpen(content)
 
     // Transitioning from max-height: none is not animatable. Snap to the
     // measured height first, force reflow, then transition to the collapsed
@@ -182,11 +147,9 @@ const ShowMore = {
     })
     delete wrapper.dataset.showMoreOpen
 
-    // Toggle checkbox to update arrow icon state
     const checkbox = wrapper.querySelector('input.show-hide-input')
     if (checkbox) {
       checkbox.checked = false
-      // Remove from localStorage when user closes
       this._removeOpenedId(checkbox.id)
     }
 
@@ -199,19 +162,14 @@ const ShowMore = {
     }
   },
 
-  /**
-   * Check if block is open
-   * @param {HTMLElement} wrapper
-   * @returns {boolean}
-   */
+  /** @param {HTMLElement} wrapper @returns {boolean} */
   isOpen(wrapper) {
     return wrapper.dataset.showMoreOpen === 'true'
   },
 
   /**
-   * Open the show-more block containing the given element
-   * @param {HTMLElement} element - Element inside a show-more block
-   * @param {boolean} auto - Whether this is an automatic open
+   * @param {HTMLElement} element
+   * @param {boolean} auto
    */
   openContaining(element, auto = true) {
     if (!element) return
@@ -224,10 +182,7 @@ const ShowMore = {
     this.open(btn, auto)
   },
 
-  /**
-   * Open show-more block containing the hash target and scroll to it
-   * @param {string} hash - The hash (with #) to navigate to
-   */
+  /** @param {string} hash */
   scrollToHash(hash) {
     if (!hash) return
 
@@ -250,20 +205,12 @@ const ShowMore = {
     }
   },
 
-  /**
-   * Check if a show-more block is currently collapsed
-   * @param {HTMLElement} wrapper - The .show-more wrapper element
-   * @returns {boolean}
-   */
+  /** @param {HTMLElement} wrapper @returns {boolean} */
   isCollapsed(wrapper) {
     const content = wrapper.children[1]
     return content && content.classList.contains('overflow-hidden')
   },
 
-  /**
-   * Open all visible collapsed show-more blocks
-   * Useful when page loads with scroll position
-   */
   openVisibleBlocks() {
     document.querySelectorAll('.show-more').forEach((wrapper) => {
       if (!this.isCollapsed(wrapper)) return
@@ -281,24 +228,16 @@ const ShowMore = {
     })
   },
 
-  /**
-   * Initialize ShowMore functionality
-   * Safe to call multiple times - will only initialize once
-   */
   init() {
     if (this._initialized) return
     this._initialized = true
 
-    // Load previously opened block IDs from localStorage
     this._loadOpenedIds()
 
-    // Open if URL has hash pointing inside a show-more block
     if (location.hash) {
       this.scrollToHash(location.hash)
     }
 
-    // Open if page loaded with scroll (e.g., browser back/refresh)
-    // Listen for scroll events to catch smooth scroll restoration
     let scrollCheckCount = 0
     const maxScrollChecks = 10
     const checkScrollAndOpen = () => {
@@ -365,10 +304,6 @@ const ShowMore = {
     })
   },
 
-  /**
-   * Open all collapsed show-more blocks
-   * Useful for Ctrl+F to make all content searchable
-   */
   openAllCollapsed() {
     document.querySelectorAll('.show-more').forEach((wrapper) => {
       if (this.isCollapsed(wrapper)) {
