@@ -344,21 +344,22 @@ const ShowMore = {
       }
     })
 
-    // Handle clicks on anchor links pointing to content inside show-more
+    // Handle clicks on anchor links pointing to the *current* hash. The
+    // hashchange listener above already handles hash transitions; this only
+    // covers the same-hash case (clicking #x while location.hash === '#x'),
+    // for which the browser does not fire hashchange.
     document.addEventListener('click', (e) => {
       const link = e.target.closest('a[href^="#"]')
-      if (link) {
-        const hash = link.getAttribute('href')
-        if (hash && hash.length > 1) {
-          // Delay to let default navigation happen first
-          setTimeout(() => this.scrollToHash(hash), 10)
-        }
-      }
+      if (!link) return
+      const hash = link.getAttribute('href')
+      if (!hash || hash.length <= 1) return
+      if (hash !== location.hash) return
+      setTimeout(() => this.scrollToHash(hash), 10)
     })
 
     // Ctrl+F: open all collapsed blocks so browser can find text
     document.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
         this.openAllCollapsed()
       }
     })
