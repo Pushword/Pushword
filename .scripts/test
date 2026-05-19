@@ -134,6 +134,16 @@ trap cleanup EXIT
 # Install nodejs dependencies
 [ -d "node_modules" ] || yarn
 
+# Ensure chromedriver matches the installed Chrome (auto-update otherwise drifts)
+if command -v google-chrome >/dev/null && [ -x drivers/chromedriver ]; then
+    CHROME_MAJOR=$(google-chrome --version 2>/dev/null | grep -oE '[0-9]+' | head -1)
+    DRIVER_MAJOR=$(drivers/chromedriver --version 2>/dev/null | grep -oE '[0-9]+' | head -1)
+    if [ -n "$CHROME_MAJOR" ] && [ "$CHROME_MAJOR" != "$DRIVER_MAJOR" ]; then
+        echo "ChromeDriver $DRIVER_MAJOR != Chrome $CHROME_MAJOR — refreshing via bdi"
+        vendor/bin/bdi detect drivers >/dev/null
+    fi
+fi
+
 FILTER_ARG=""
 NO_PARALLEL=0
 for arg in "$@"; do

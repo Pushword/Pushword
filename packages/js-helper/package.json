@@ -23,6 +23,10 @@
     "vite-plugin-static-copy": "^3.1",
     "vite-plugin-symfony": "^8.2"
   },
+  "devDependencies": {
+    "jsdom": "^25.0.0",
+    "vitest": "^2.1.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Pushword/js-helper.git"
