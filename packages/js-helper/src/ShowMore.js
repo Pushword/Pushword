@@ -13,6 +13,7 @@
  */
 
 const STORAGE_KEY = 'showmore_opened'
+const COLLAPSED_MAX_HEIGHT = '250px'
 
 const ShowMore = {
   _initialized: false,
@@ -91,6 +92,27 @@ const ShowMore = {
     content.style.maxHeight = content.scrollHeight + 'px'
     wrapper.dataset.showMoreOpen = 'true'
 
+    // Release max-height after the transition so lazy-loaded images (e.g.
+    // review galleries) can grow the box without overflowing siblings below.
+    // Without this, the wrapper stays pinned to the pre-load scrollHeight and
+    // siblings render over the overflowing content.
+    const onEnd = (e) => {
+      if (e.target !== content || e.propertyName !== 'max-height') return
+      content.style.maxHeight = 'none'
+      content.removeEventListener('transitionend', onEnd)
+      delete content._showMoreOnEnd
+    }
+    content._showMoreOnEnd = onEnd
+    content.addEventListener('transitionend', onEnd)
+    // Fallback for reduced-motion / no-transition: release after 500ms.
+    setTimeout(() => {
+      if (wrapper.dataset.showMoreOpen === 'true' && content.style.maxHeight !== 'none') {
+        content.style.maxHeight = 'none'
+        content.removeEventListener('transitionend', onEnd)
+        delete content._showMoreOnEnd
+      }
+    }, 500)
+
     // Toggle checkbox to update arrow icon state
     const checkbox = wrapper.querySelector('input.show-hide-input')
     if (checkbox) {
@@ -116,8 +138,26 @@ const ShowMore = {
     // Mark as user-closed to prevent auto-reopening
     this._userClosed.add(wrapper)
 
-    content.classList.add('overflow-hidden')
-    content.style.maxHeight = '250px'
+    // Detach any pending open() transitionend listener so it can't fire
+    // mid-close and reset max-height to 'none'.
+    if (content._showMoreOnEnd) {
+      content.removeEventListener('transitionend', content._showMoreOnEnd)
+      delete content._showMoreOnEnd
+    }
+
+    // Transitioning from max-height: none is not animatable. Snap to the
+    // measured height first, force reflow, then transition to the collapsed
+    // value on the next frame so the close animation runs.
+    if (content.style.maxHeight === 'none' || content.style.maxHeight === '') {
+      content.style.maxHeight = content.scrollHeight + 'px'
+      void content.offsetHeight
+    }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        content.classList.add('overflow-hidden')
+        content.style.maxHeight = COLLAPSED_MAX_HEIGHT
+      })
+    })
     delete wrapper.dataset.showMoreOpen
 
     // Toggle checkbox to update arrow icon state
