@@ -8,10 +8,8 @@ use Twig\Environment as Twig;
 
 final readonly class VideoExtension
 {
-    public function __construct(
-        private Twig $twig,
-        private SiteRegistry $apps,
-    ) {
+    public function __construct(private Twig $twig, private SiteRegistry $apps)
+    {
     }
 
     #[AsTwigFunction('video', needsEnvironment: false, isSafe: ['html'])]
@@ -21,22 +19,33 @@ final readonly class VideoExtension
         string $alternativeText = '',
         bool $forceUrl = false,
         string $id = '',
+        ?string $wrapperClass = null,
     ): string {
         $template = $this->apps->get()->getView('/component/video.html.twig');
         $youtube = $forceUrl ? null : $this->getYoutubeVideoUrl($url);
 
-        return trim($this->twig->render($template, [
-            'id' => $id,
-            'url' => $youtube ?? $url,
-            'image' => $image,
-            'alt' => $alternativeText,
-            'embed_code' => null !== $youtube && ! $forceUrl ? $this->getEmbedCode($url) : null, // @phpstan-ignore-line
-        ]));
+        return trim(
+            $this->twig->render($template, [
+                'id' => $id,
+                'url' => $youtube ?? $url,
+                'image' => $image,
+                'alt' => $alternativeText,
+                'embed_code' => null !== $youtube && ! $forceUrl ? $this->getEmbedCode($url) : null, // @phpstan-ignore-line
+                'wrapper_class' => $wrapperClass,
+            ]),
+        );
     }
 
     private function getYoutubeVideoUrl(string $url): string
     {
-        if (1 === preg_match('~^(?:https?://)?(?:www[.])?(?:youtube[.]com/watch[?]v=|youtu[.]be/)([^&]{11})~', $url, $m)) {
+        if (
+            1 ===
+            preg_match(
+                '~^(?:https?://)?(?:www[.])?(?:youtube[.]com/watch[?]v=|youtu[.]be/)([^&]{11})~',
+                $url,
+                $m,
+            )
+        ) {
             return $m[1];
         }
 

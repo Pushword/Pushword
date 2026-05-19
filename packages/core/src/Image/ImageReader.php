@@ -107,7 +107,7 @@ final readonly class ImageReader
         // Strip animation here (after decode) instead of via the decoder's
         // decodeAnimation:false path, which is broken in intervention/image 4.0.4.
         if ($image->isAnimated()) {
-            $image = $image->removeAnimation();
+            return $image->removeAnimation();
         }
 
         return $image;

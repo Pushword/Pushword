@@ -74,7 +74,7 @@ final class FencedCodeRendererTest extends TestCase
     public function testThrowsOnWrongNodeType(): void
     {
         $renderer = new FencedCodeRenderer('hl');
-        $wrong = $this->createMock(Node::class);
+        $wrong = $this->createStub(Node::class);
 
         $this->expectException(InvalidArgumentException::class);
         $renderer->render($wrong, $this->childRenderer());

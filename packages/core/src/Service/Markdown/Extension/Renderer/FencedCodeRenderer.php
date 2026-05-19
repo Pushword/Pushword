@@ -37,6 +37,7 @@ final readonly class FencedCodeRenderer implements NodeRendererInterface
             if (! str_starts_with($class, 'language-')) {
                 $class = 'language-'.$class;
             }
+
             $attrs->append('class', $class);
         }
 
