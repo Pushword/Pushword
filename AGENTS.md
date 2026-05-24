@@ -123,6 +123,6 @@ UI/templates/CSS: consult `packages/core/DesignGuidelines.md` (Tailwind, public 
 
 Read from `vendor/pushword/docs/content/`: `architecture.md`, `extensions.md`, `media-api.md`, `ai-index.md`. Entity source in `vendor/pushword/core/src/Entity/` (docblocks summarize composition).
 
-**Multi-locale**: the `host` field drives multi-site/locale — each locale is a separate host (e.g. `altimood.com`, `us.altimood.com`). Pages link across locales via the `translations` custom property; localize slugs per language.
+**Multi-locale**: the `host` field drives multi-site/locale — each locale is a separate host (e.g. `altimood.com`, `us.altimood.com`). Pages link across locales via the `translations` relation (a `ManyToMany` on `Page`), not a custom property; localize slugs per language.
 
 A downstream CLAUDE.md should cover: project purpose/stack, hosts/locales table, common commands, deployment workflow, editorial rules (in `.rules/` or `docs/`), framework-unenforced invariants, and a pointer to `vendor/pushword/docs/content/`.

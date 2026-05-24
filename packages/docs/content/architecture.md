@@ -1,5 +1,5 @@
 ---
-title: 'Puswhord Code Architecture and preparing a development environment'
+title: 'Pushword Code Architecture and preparing a development environment'
 h1: 'The Code Architecture'
 publishedAt: '2025-12-21 21:55'
 toc: true
@@ -8,7 +8,7 @@ toc: true
 If you are searching for :
 
 - organizing your own app code, see #[symfony good practices](https://symfony.com/doc/current/best_practices.html) or look at the #[demo app](https://github.com/Pushword/Pushword/tree/main/packages/skeleton)
-- organizing the code for a pushword extension : see [create an extension](/create-extension)
+- organizing the code for a pushword extension : see [extensions and extension points](/extensions)
 
 Else, you are at the good place.
 
@@ -27,11 +27,11 @@ It's kind of [majestic monolith](https://m.signalvnoise.com/the-majestic-monolit
 
 The [core](https://github.com/Pushword/Pushword/tree/main/packages/core) contain the minimum features, then everything is done via extensions.
 
-The core code follow as much as it can the #[symfony good practices](https://symfony.com/doc/current/best_practices.html) and have a special folder named `component` for bigger features like the [Entity Filter](/component/entity-filter) system if they do not have their own independent package.
+The core code follows as much as it can the #[symfony good practices](https://symfony.com/doc/current/best_practices.html) and has a special folder named `component` for bigger features like the Entity Filter system if they do not have their own independent package.
 
-Each extension are facultative.
+Each extension is optional.
 
-Keeping all this extensions in one repository permit to test everything is working easily, to understand the code faster and to refactor much quicker.
+Keeping all these extensions in one repository permits testing that everything works easily, understanding the code faster and refactoring much quicker.
 
 The [skeleton](https://github.com/Pushword/Pushword/tree/main/packages/skeleton) isn't a real skeleton (copy and install).
 
@@ -41,7 +41,7 @@ It's used for testing, demo, using for generating the docs and a few class from 
 
 Each package (except _skeleton_, _installer_ and _js-helper_) is built as a [symfony bundle](https://symfony.com/doc/current/bundles.html).
 
-The `core` package required a symfony app instaled to be functionnal.
+The `core` package requires a Symfony app installed to be functional.
 
 Want a particular details about the way the code is organized ?
 
@@ -49,7 +49,7 @@ Want a particular details about the way the code is organized ?
 
 ## Development environement
 
-This is only for [contribution](/contribute), if you are searching to developp a new application with Pushword, see [installation](/installation).
+This is only for [contribution](/contribute), if you are searching to develop a new application with Pushword, see [installation](/installation).
 
 1. Check you have installed all the [required dependencies](/installation).
 

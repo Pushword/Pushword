@@ -3,7 +3,6 @@ title: Extensions
 h1: 'Find your missing feature with a Pushword Extension'
 publishedAt: '2025-12-21 21:55'
 name: Extensions
-todo: 'Faire un script pour générer automatiquement un tableau avec le titre, la description, officially maintained (X/V), le nombre de Stars'
 ---
 
 - [Admin](/extension/admin)
@@ -22,6 +21,8 @@ todo: 'Faire un script pour générer automatiquement un tableau avec le titre, 
   Get mail notification when your pushword content (page) is edited.
 - [Static Generator](/extension/static-generator)
   Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).
+- [Page Cache](/extension/page-cache)
+  Pre-render pages so the web server (Caddy, Apache, FrankenPHP) serves them as static files while the app stays behind for dynamic routes (ships with Static Generator).
 - [Template Editor](/extension/template-editor)
   Edit view file online in the [admin](https://pushword.piedweb.com/extension/admin).
 - [Version](/extension/version)

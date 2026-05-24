@@ -144,7 +144,7 @@ Your content here...</pre>
     <p class="text-sm font-medium tracking-widest uppercase text-[oklch(45%_0.13_35)] mb-3">Compare</p>
     <h2 class="text-3xl md:text-4xl font-semibold tracking-tight mb-4 text-stone-900 dark:text-stone-100">How does Pushword stack up?</h2>
     <p class="text-stone-600 dark:text-stone-300 mb-6 text-lg max-w-2xl">Against WordPress, Statamic, and Sulu, across features, performance, and DX.</p>
-    <a href="/cms-comparison" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
+    <a href="/blog/cms-comparison" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
       Read the comparison
     </a>
   </div>

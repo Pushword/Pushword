@@ -20,4 +20,4 @@ If you create and package a theme, feel free to #[edit this file on github](http
 
 ## Developper › Tips to package a theme
 
-It's exactly like [creating an extension](/create-extension).
+It's exactly like building an [extension](/extensions).

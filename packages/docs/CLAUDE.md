@@ -26,7 +26,7 @@ Entity class docblocks list traits, fields, and relations.
 
 ### Multi-locale content
 
-Pushword uses the `host` field for multi-site/multi-locale. Each locale is a separate host. Pages link across locales via the `translations` custom property. Slugs should be localized per language.
+Pushword uses the `host` field for multi-site/multi-locale. Each locale is a separate host. Pages link across locales via the `translations` relation (a `ManyToMany` on `Page`, defined in `PageTrait/PageI18nTrait.php`), not a custom property. Slugs should be localized per language.
 
 ### Common commands
 
