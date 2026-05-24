@@ -65,6 +65,11 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
      */
     private function registerDefaultWorkflow(ContainerBuilder $container): void
     {
+        $config = new Processor()->processConfiguration(new Configuration(), $container->getExtensionConfig('pushword'));
+        if (false === $config['editorial_workflow']) {
+            return;
+        }
+
         foreach ($container->getExtensionConfig('framework') as $frameworkConfig) {
             if (isset($frameworkConfig['workflows']) && \is_array($frameworkConfig['workflows'])
                 && isset($frameworkConfig['workflows']['page_editorial'])) {

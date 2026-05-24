@@ -16,6 +16,14 @@ class PageWorkflowStateField extends AbstractField
 {
     public function getEasyAdminField(): ?FieldInterface
     {
+        $page = $this->admin->getSubject();
+
+        try {
+            $this->formFieldManager->workflowRegistry->get($page, 'page_editorial');
+        } catch (InvalidArgumentException) {
+            return null; // editorial workflow disabled or not registered: hide the field
+        }
+
         return $this->buildEasyAdminField('workflowState', null, [
             'disabled' => true,
             'label' => 'adminPageWorkflowStateLabel',
@@ -27,12 +35,7 @@ class PageWorkflowStateField extends AbstractField
     private function renderTransitions(): string
     {
         $page = $this->admin->getSubject();
-
-        try {
-            $workflow = $this->formFieldManager->workflowRegistry->get($page, 'page_editorial');
-        } catch (InvalidArgumentException) {
-            return '';
-        }
+        $workflow = $this->formFieldManager->workflowRegistry->get($page, 'page_editorial');
 
         $transitions = [];
         foreach ($workflow->getEnabledTransitions($page) as $transition) {

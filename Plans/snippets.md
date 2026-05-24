@@ -6,11 +6,11 @@
 
 Provide **editor-owned, reusable content fragments** (CTA, author box, pricing
 table, footer note…) that can be included in many pages, edited from the admin
-*and* as flat files, translated per host, and versioned — **without** the dev
+_and_ as flat files, translated per host, and versioned — **without** the dev
 having to touch a Twig template.
 
-This is the real gap vs Sulu: a Twig `{% include %}` is *code* owned by the dev;
-a snippet is *content* owned by the editor/AI.
+This is the real gap vs Sulu: a Twig `{% include %}` is _code_ owned by the dev;
+a snippet is _content_ owned by the editor/AI.
 
 ## Key decision
 
@@ -24,6 +24,7 @@ things clean ("éviter le bordel").
 ### Entity `Pushword\Snippet\Entity\Snippet` (MappedSuperclass, like Page/Media)
 
 Compose existing shared traits to stay consistent:
+
 - `IdTrait`, `HostTrait` (per-locale = per-host, same model as Page), `TimestampableTrait`
 - `Slug` / unique key (the reference used in pages, e.g. `cta-newsletter`)
 - `content` (Markdown — same storage as `Page.mainContent`)
@@ -42,10 +43,11 @@ multisite links → ShowMore… So Markdown + EditorJS compatibility comes for f
 because it's the same rendering path as pages.
 
 Expose via:
+
 - **Twig**: `{{ pw_snippet('cta-newsletter') }}` (new Twig function in this package,
   mirroring `pages_list()` in `core/src/Twig/PageExtension.php`).
 - **EditorJS block**: a "Snippet" tool in `admin-block-editor` (mirror the
-  `PagesList` tool) that stores `<!-- snippet:cta-newsletter -->` in Markdown and
+  `PagesList` tool) that stores `{{ pw_snippet('cta-newsletter') }}` in Markdown and
   resolves it on render — keeps Markdown round-trippable.
 
 ### Flat-file compatibility (`pushword/flat`)
@@ -80,18 +82,3 @@ packages/snippet/
   src/translations/messages.{en,fr}.yaml
   tests/
 ```
-
-## Open questions
-
-- Reference syntax in Markdown: HTML comment `<!-- snippet:slug -->` (consistent
-  with the `comment:` DSL already used by `pages_list`) vs a Twig call. Comment is
-  more flat/AI-friendly.
-- Locale fallback: if a snippet has no translation for the current host, fall back
-  to default host or render nothing?
-- Should `customProperty` snippets support parameters (e.g. variant)? Probably out
-  of scope for v1 — keep it dumb content reuse.
-
-## Non-goals (v1)
-
-- No parameterised/templated snippets, no Smart-Content-style queries (that's
-  `pages_list`), no nested snippet-in-snippet recursion guard beyond a depth limit.

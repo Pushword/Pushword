@@ -180,13 +180,17 @@ class PageCrudController extends AbstractAdminCrudController
             ->add(
                 ChoiceFilter::new('metaRobots', 'adminPageMetaRobotsLabel')
                     ->setChoices($this->getMetaRobotsChoices()),
-            )
-            ->add(
+            );
+
+        if ($this->editorialWorkflowEnabled()) {
+            $filters->add(
                 ChoiceFilter::new('workflowState', 'adminPageWorkflowStateLabel')
                     ->setChoices(['draft' => 'draft', 'in_review' => 'in_review', 'approved' => 'approved'])
                     ->setFormTypeOption('value_type_options.choice_translation_domain', false),
-            )
-            ->add(TextFilter::new('customProperties', 'adminPageCustomPropertiesLabel'));
+            );
+        }
+
+        $filters->add(TextFilter::new('customProperties', 'adminPageCustomPropertiesLabel'));
 
         return $filters;
     }
@@ -341,6 +345,11 @@ class PageCrudController extends AbstractAdminCrudController
         }
     }
 
+    private function editorialWorkflowEnabled(): bool
+    {
+        return $this->workflowRegistry->has(new Page(), 'page_editorial');
+    }
+
     /**
      * @return iterable<FieldInterface|string>
      */
@@ -350,8 +359,10 @@ class PageCrudController extends AbstractAdminCrudController
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
 
-        yield TextField::new('workflowState', 'adminPageWorkflowStateLabel')
-            ->setSortable(true);
+        if ($this->editorialWorkflowEnabled()) {
+            yield TextField::new('workflowState', 'adminPageWorkflowStateLabel')
+                ->setSortable(true);
+        }
 
         yield IntegerField::new('weight', 'adminPageWeightLabel')
             ->setSortable(true)

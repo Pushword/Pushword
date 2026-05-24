@@ -40,6 +40,17 @@ Capitalise on what already exists: `publishedAt` for publish visibility,
 3. **Block publishing unless `approved`: configurable, default OFF**
    (`require_approval_before_publish: false`).
 
+## Disabling the feature
+
+Set `pushword.editorial_workflow: false`. The default `page_editorial` workflow is
+then not registered (`PushwordCoreExtension::registerDefaultWorkflow()` returns early),
+and the admin auto-hides its workflow UI: the form field returns `null` and the index
+column/filter are skipped — all gated on `workflowRegistry->has(Page, 'page_editorial')`,
+so a project bringing its own `page_editorial` workflow keeps the UI. The `workflowState`
+column stays in the schema (inert, defaults to `draft`). Leave
+`require_approval_before_publish` at `false` when disabling, or publishing would be
+blocked with no way to reach `approved`.
+
 ## Backward compatibility
 
 The change is additive and BC, provided we handle the existing-rows default:
@@ -131,8 +142,9 @@ flat-sync, and API writes uniformly — clear `publishedAt` (or reject) unless
 ## Config additions
 
 ```yaml
-# packages/core Configuration.php — new node under `pushword`
+# packages/core Configuration.php — new nodes under `pushword`
 pushword:
+    editorial_workflow: true                 # default; false disables the whole feature
     require_approval_before_publish: false   # default
 
 # default workflow shipped by core (state_machine), user-overridable
