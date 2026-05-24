@@ -324,7 +324,7 @@ class ConversationCrudController extends AbstractAdminCrudController
         return false;
     }
 
-    #[Override] // @phpstan-ignore missingType.generics
+    #[Override]
     protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
     {
         if ($context->getRequest()->query->has('pwInline')) {

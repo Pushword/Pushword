@@ -261,7 +261,7 @@ class PageCrudController extends AbstractAdminCrudController
         return \is_string($action) ? $action : '';
     }
 
-    #[Override] // @phpstan-ignore missingType.generics
+    #[Override]
     protected function getRedirectResponseAfterSave(
         AdminContext $context,
         string $action
