@@ -50,6 +50,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$pdfPreset', '%pw.pdf_preset%')
         ->bind('$pdfLinearize', '%pw.pdf_linearize%')
         ->bind('$enablePasswordReset', '%pw.enable_password_reset%')
+        ->bind('$requireApprovalBeforePublish', '%pw.require_approval_before_publish%')
         ->bind('$scheduledCommands', '%pw.scheduled_commands%');
 
     $services->load('Pushword\Core\\', __DIR__.'/../../../src/*')

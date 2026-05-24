@@ -42,6 +42,7 @@
     "symfony/validator": "^8.0",
     "symfony/web-link": "^8.0",
     "symfony/webpack-encore-bundle": "^2.0",
+    "symfony/workflow": "^8.0",
     "symfony/yaml": "^8.0",
     "symfony/dotenv": "*",
     "symfony/runtime": "^7.3 || ^8.0",

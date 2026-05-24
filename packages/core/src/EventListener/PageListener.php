@@ -27,10 +27,14 @@ final class PageListener
 
     public static bool $skipSlugChangeDetection = false;
 
+    /** Workflow place that allows a page to be published. */
+    private const string PUBLISHABLE_STATE = 'approved';
+
     public function __construct(
         private readonly Security $security,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
         private readonly TailwindGenerator $tailwindGenerator,
+        private readonly bool $requireApprovalBeforePublish = false,
     ) {
     }
 
@@ -49,6 +53,7 @@ final class PageListener
         $page->initTimestampableProperties();
         $this->setIdAsSlugIfNotDefined($page);
         $this->updatePageEditor($page);
+        $this->gatePublishing($page);
         $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
     }
 
@@ -70,6 +75,7 @@ final class PageListener
         }
 
         $this->updatePageEditor($page);
+        $this->gatePublishing($page, $event);
         $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
         $this->detectSlugChange($page, $event);
     }
@@ -90,6 +96,32 @@ final class PageListener
 
         if ($page->editedBy?->id !== $user->id) {
             $page->editedBy = $user;
+        }
+    }
+
+    /**
+     * Prevent publishing (a non-null publishedAt) unless the page is approved,
+     * when require_approval_before_publish is enabled. No-op by default (BC).
+     */
+    private function gatePublishing(Page $page, ?PreUpdateEventArgs $event = null): void
+    {
+        if (! $this->requireApprovalBeforePublish) {
+            return;
+        }
+
+        if (null === $page->publishedAt) {
+            return;
+        }
+
+        if (self::PUBLISHABLE_STATE === $page->workflowState) {
+            return;
+        }
+
+        $page->publishedAt = null;
+
+        // In preUpdate the changeset is already computed; sync it so the reset persists.
+        if (null !== $event && $event->hasChangedField('publishedAt')) {
+            $event->setNewValue('publishedAt', null);
         }
     }
 

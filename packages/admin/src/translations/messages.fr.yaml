@@ -153,6 +153,13 @@ adminPageUpdateNotificationUpdatedOn: "Page mise à jour le"
 adminPageUpdatedAtLabel: 'Mise à jour le'
 adminPageWeightHelp: "Permet d'ordonner les pages. Les valeurs les plus hautes apparaissent en premier."
 adminPageWeightLabel: Poids
+adminPageWorkflowApplied: "État éditorial mis à jour."
+adminPageWorkflowDenied: "Vous n'êtes pas autorisé à appliquer cette transition."
+adminPageWorkflowStateLabel: "État éditorial"
+adminPageWorkflowTransition:
+    approve: Approuver
+    request_changes: Demander des modifications
+    submit: Soumettre à relecture
 adminPaginationPerPage: 'Par page'
 adminStaticAlreadyRunning: 'La génération statique est déjà en cours.'
 adminStaticErrors: 'Erreurs détectées'

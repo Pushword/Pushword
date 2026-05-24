@@ -570,6 +570,53 @@ MD;
         $this->trackFile($mdFilePath);
     }
 
+    public function testWorkflowStateRoundTrip(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        $page = new Page();
+        $page->setSlug('workflow-state-test');
+        $page->setH1('Workflow State Test');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->setMainContent('Content in review');
+        $page->workflowState = 'in_review';
+        $page->reviewedAt = new DateTime('2026-05-20 10:00:00');
+
+        $this->em->persist($page);
+        $this->em->flush();
+
+        $pageId = $page->id;
+
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        $mdFilePath = $contentDir.'/workflow-state-test.md';
+        self::assertFileExists($mdFilePath);
+        $mdContent = file_get_contents($mdFilePath);
+        self::assertStringContainsString('workflowState: in_review', $mdContent);
+        self::assertStringNotContainsString('reviewedAt', $mdContent, 'reviewedAt is editorial metadata, not exported to flat');
+        self::assertStringNotContainsString('reviewedBy', $mdContent);
+
+        $this->em->clear();
+        $pageToRemove = $this->em->find(Page::class, $pageId);
+        self::assertNotNull($pageToRemove);
+        $this->em->remove($pageToRemove);
+        $this->em->flush();
+
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $importedPage = $this->pageRepo->findOneBy(['slug' => 'workflow-state-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage);
+        self::assertSame('in_review', $importedPage->workflowState, 'workflowState should survive round-trip');
+
+        $this->em->remove($importedPage);
+        $this->em->flush();
+        $this->trackFile($mdFilePath);
+    }
+
     /**
      * Test 14: Explicit publishedAt date survives round-trip unchanged.
      */

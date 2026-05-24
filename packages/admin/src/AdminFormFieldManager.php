@@ -15,6 +15,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Workflow\Registry;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment;
 
@@ -35,6 +36,7 @@ class AdminFormFieldManager
         public readonly PageRepository $pageRepo,
         public readonly MediaRepository $mediaRepo,
         public readonly AdminUrlGenerator $adminUrlGenerator,
+        public readonly Registry $workflowRegistry,
     ) {
         $user = $security->getUser();
         $this->user = $user instanceof User ? $user : null;

@@ -39,6 +39,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Workflow\Exception\LogicException as WorkflowLogicException;
+use Symfony\Component\Workflow\Registry;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
@@ -54,6 +56,7 @@ class PageCrudController extends AbstractAdminCrudController
         private readonly PageController $pageController,
         private readonly PageRepository $pageRepo,
         private readonly TwigErrorExtractor $errorExtractor,
+        private readonly Registry $workflowRegistry,
     ) {
     }
 
@@ -177,6 +180,11 @@ class PageCrudController extends AbstractAdminCrudController
             ->add(
                 ChoiceFilter::new('metaRobots', 'adminPageMetaRobotsLabel')
                     ->setChoices($this->getMetaRobotsChoices()),
+            )
+            ->add(
+                ChoiceFilter::new('workflowState', 'adminPageWorkflowStateLabel')
+                    ->setChoices(['draft' => 'draft', 'in_review' => 'in_review', 'approved' => 'approved'])
+                    ->setFormTypeOption('value_type_options.choice_translation_domain', false),
             )
             ->add(TextFilter::new('customProperties', 'adminPageCustomPropertiesLabel'));
 
@@ -342,6 +350,9 @@ class PageCrudController extends AbstractAdminCrudController
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
 
+        yield TextField::new('workflowState', 'adminPageWorkflowStateLabel')
+            ->setSortable(true);
+
         yield IntegerField::new('weight', 'adminPageWeightLabel')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
@@ -500,6 +511,38 @@ class PageCrudController extends AbstractAdminCrudController
             'value' => $page->getPublishedAt(),
             'field' => null,
         ]));
+    }
+
+    #[Route(path: '/admin/page/{id}/workflow/{transition}', name: 'pushword_page_workflow', methods: ['POST'])]
+    public function applyWorkflowTransition(Request $request, Page $page, string $transition): Response
+    {
+        $token = (string) $request->request->get('_token');
+
+        if (! $this->isCsrfTokenValid('workflow-'.$page->id, $token)) {
+            return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
+        }
+
+        $workflow = $this->workflowRegistry->get($page, 'page_editorial');
+
+        if ($workflow->can($page, $transition)) {
+            try {
+                $workflow->apply($page, $transition);
+                $this->getEntityManager()->flush();
+                FlashBag::get($this->getRequest())?->add('success', $this->getTranslator()->trans('adminPageWorkflowApplied'));
+            } catch (WorkflowLogicException) {
+                FlashBag::get($this->getRequest())?->add('danger', $this->getTranslator()->trans('adminPageWorkflowDenied'));
+            }
+        } else {
+            FlashBag::get($this->getRequest())?->add('danger', $this->getTranslator()->trans('adminPageWorkflowDenied'));
+        }
+
+        $editUrl = $this->getAdminUrlGenerator()
+            ->setController(self::class)
+            ->setAction(Action::EDIT)
+            ->setEntityId($page->id)
+            ->generateUrl();
+
+        return $this->redirect($editUrl);
     }
 
     #[Route(path: '/admin/page/{id}/inline-update', name: 'pushword_page_inline_update', methods: ['POST'])]

@@ -66,6 +66,7 @@
     "symfony/validator": "^8.0",
     "symfony/web-link": "^8.0",
     "symfony/webpack-encore-bundle": "^2.0",
+    "symfony/workflow": "^8.0",
     "symfony/yaml": "^8.0",
     "thecodingmachine/safe": "*",
     "thenetworg/oauth2-azure": "^2.2",

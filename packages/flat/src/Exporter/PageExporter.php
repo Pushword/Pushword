@@ -465,7 +465,8 @@ final class PageExporter
             return null;
         }
 
-        if (in_array($property, ['createdAt', 'updatedAt', 'host', 'slug'], true)) {
+        // reviewedBy/reviewedAt are editorial metadata kept in DB (like createdBy/editedBy); git is the audit trail.
+        if (in_array($property, ['createdAt', 'updatedAt', 'host', 'slug', 'reviewedBy', 'reviewedAt'], true)) {
             return null;
         }
 
