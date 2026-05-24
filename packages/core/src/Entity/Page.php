@@ -284,30 +284,6 @@ class Page implements IdInterface, Taggable, Stringable, Weightable
         return $this;
     }
 
-    public function getReviewedBy(): ?User
-    {
-        return $this->reviewedBy;
-    }
-
-    public function setReviewedBy(?User $reviewedBy): self
-    {
-        $this->reviewedBy = $reviewedBy;
-
-        return $this;
-    }
-
-    public function getReviewedAt(): ?DateTimeInterface
-    {
-        return $this->reviewedAt;
-    }
-
-    public function setReviewedAt(?DateTimeInterface $reviewedAt): self
-    {
-        $this->reviewedAt = $reviewedAt;
-
-        return $this;
-    }
-
     public function getRealSlug(): string
     {
         return 'homepage' === $this->slug ? '' : $this->slug;

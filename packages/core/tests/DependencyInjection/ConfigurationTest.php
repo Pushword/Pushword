@@ -15,6 +15,19 @@ final class ConfigurationTest extends TestCase
         self::assertSame('%kernel.default_locale%', $config['locale']);
     }
 
+    public function testEditorialWorkflowDefaultsOn(): void
+    {
+        self::assertTrue($this->process([])['editorial_workflow']);
+    }
+
+    public function testEditorialWorkflowCanBeDisabled(): void
+    {
+        self::assertFalse($this->process([['editorial_workflow' => false]])['editorial_workflow']);
+    }
+
+    /**
+     * @param array<int, array<string, bool>> $configs
+     */
     protected function process(array $configs): array // @phpstan-ignore-line
     {
         $processor = new Processor();
