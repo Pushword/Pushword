@@ -130,6 +130,18 @@ final class EntityFilterTest extends KernelTestCase
         self::assertStringContainsString('id="reservation"', $body);
     }
 
+    public function testBlockAnchorWithTwoBlankLinesBefore(): void
+    {
+        $one = "para text.\n\n{#anchor-one}\n### Heading One\n\nmore";
+        $two = "para text.\n\n\n{#anchor-two}\n### Heading Two\n\nmore";
+
+        $bodyOne = $this->getContentExtension()->mainContentSplit($this->getPage($one))->getContent();
+        $bodyTwo = $this->getContentExtension()->mainContentSplit($this->getPage($two))->getContent();
+
+        self::assertStringContainsString('id="anchor-one"', $bodyOne);
+        self::assertStringContainsString('id="anchor-two"', $bodyTwo);
+    }
+
     public function testInlineHeadingAttributeDoesNotMatchAcrossLines(): void
     {
         // Regression: \s* in regex matched newlines, causing {#nextblock} on a separate line

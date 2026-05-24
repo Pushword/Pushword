@@ -5,6 +5,8 @@ namespace Pushword\Core\Utils;
 use Pushword\Core\Component\EntityFilter\Filter\MarkdownProtectCodeBlock;
 use Pushword\Core\Entity\Page;
 
+use function Safe\preg_replace;
+
 final class MarkdownUtils
 {
     public static function normalizeNewLine(string $text): string
@@ -87,6 +89,11 @@ final class MarkdownUtils
         $text = self::normalizeNewLine($text);
         $codeBlockProtector = new MarkdownProtectCodeBlock();
         $text = $codeBlockProtector->protect($text);
+        // Collapse multiple blank lines so a block never starts with a leftover empty line
+        // (otherwise its leading `{#id}` attribute is not detected). Code blocks are already
+        // protected as single-line placeholders, so their content is unaffected.
+        $text = preg_replace('/\n{3,}/', "\n\n", $text);
+        assert(is_string($text));
         $textPartList = explode("\n\n", $text);
 
         return $codeBlockProtector->restore($textPartList);
