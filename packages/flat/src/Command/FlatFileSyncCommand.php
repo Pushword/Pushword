@@ -52,7 +52,7 @@ final readonly class FlatFileSyncCommand
         ?string $host,
         #[Option(name: 'force', shortcut: 'f')]
         bool $force = false,
-        #[Option(description: 'Entity type to sync (page, media, conversation, all)', name: 'entity')]
+        #[Option(description: 'Entity type to sync (page, media, conversation, snippet, all)', name: 'entity')]
         string $entity = 'all',
         #[Option(description: 'Sync mode: auto (detect), import (flat to db), export (db to flat)', name: 'mode', shortcut: 'm')]
         string $mode = 'auto',
@@ -223,13 +223,18 @@ final readonly class FlatFileSyncCommand
     {
         $mediaSync = $this->flatFileSync->mediaSync;
         $pageSync = $this->flatFileSync->pageSync;
+        $snippetSync = $this->flatFileSync->snippetSync;
 
         $hasImportOps = $mediaSync->getImportedCount() > 0
             || $pageSync->getImportedCount() > 0
             || $mediaSync->getDeletedCount() > 0
-            || $pageSync->getDeletedCount() > 0;
+            || $pageSync->getDeletedCount() > 0
+            || ($snippetSync?->getImportedCount() ?? 0) > 0
+            || ($snippetSync?->getDeletedCount() ?? 0) > 0;
 
-        $hasExportOps = $mediaSync->getExportedCount() > 0 || $pageSync->getExportedCount() > 0;
+        $hasExportOps = $mediaSync->getExportedCount() > 0
+            || $pageSync->getExportedCount() > 0
+            || ($snippetSync?->getExportedCount() ?? 0) > 0;
 
         // Use requested mode unless it's 'auto', then detect from operations
         $displayMode = 'auto' === $mode
@@ -247,17 +252,27 @@ final readonly class FlatFileSyncCommand
         $io->success(\sprintf('Sync completed (%s mode). (%dms)', $displayMode, $duration));
 
         if ($hasImportOps) {
-            $io->table(['Type', 'Imported', 'Skipped', 'Deleted'], [
+            $importRows = [
                 ['Media', $mediaSync->getImportedCount(), $mediaSync->getSkippedCount(), $mediaSync->getDeletedCount()],
                 ['Pages', $pageSync->getImportedCount(), $pageSync->getSkippedCount(), $pageSync->getDeletedCount()],
-            ]);
+            ];
+            if (null !== $snippetSync) {
+                $importRows[] = ['Snippets', $snippetSync->getImportedCount(), $snippetSync->getSkippedCount(), $snippetSync->getDeletedCount()];
+            }
+
+            $io->table(['Type', 'Imported', 'Skipped', 'Deleted'], $importRows);
         }
 
         if ($hasExportOps) {
-            $io->table(['Type', 'Exported', 'Skipped'], [
+            $exportRows = [
                 ['Media', $mediaSync->getExportedCount(), 0],
                 ['Pages', $pageSync->getExportedCount(), $pageSync->getExportSkippedCount()],
-            ]);
+            ];
+            if (null !== $snippetSync) {
+                $exportRows[] = ['Snippets', $snippetSync->getExportedCount(), $snippetSync->getSkippedCount()];
+            }
+
+            $io->table(['Type', 'Exported', 'Skipped'], $exportRows);
         }
 
         if ($yamlErrors > 0) {
@@ -270,7 +285,7 @@ final readonly class FlatFileSyncCommand
         $sections = $this->stopWatch->getSections();
         $timings = [];
 
-        $allowedEvents = ['media.sync', 'page.sync', 'conversation.sync', 'media.detection', 'page.detection'];
+        $allowedEvents = ['media.sync', 'page.sync', 'conversation.sync', 'snippet.sync', 'media.detection', 'page.detection'];
 
         foreach ($sections as $section) {
             foreach ($section->getEvents() as $name => $event) {
@@ -286,7 +301,7 @@ final readonly class FlatFileSyncCommand
 
         // Build display with detection sub-timings
         $parts = [];
-        foreach (['media.sync', 'page.sync', 'conversation.sync'] as $name) {
+        foreach (['media.sync', 'page.sync', 'conversation.sync', 'snippet.sync'] as $name) {
             if (! isset($timings[$name])) {
                 continue;
             }
@@ -295,6 +310,7 @@ final readonly class FlatFileSyncCommand
                 'media.sync' => 'media',
                 'page.sync' => 'pages',
                 'conversation.sync' => 'conversation',
+                'snippet.sync' => 'snippets',
             };
 
             $detectionKey = str_replace('.sync', '.detection', $name);

@@ -1,0 +1,13 @@
+snippet:
+  label:
+    plural: Snippets
+    singular: Snippet
+  field:
+    content: Content
+    host: Host
+    name: Name
+    slug: Reference (slug)
+    slug.help: The key used in <code>{{ snippet('…') }}</code>. Lowercase, unique per host.
+    tags: Tags
+  slug:
+    invalid: The reference may only contain lowercase letters, numbers and hyphens.

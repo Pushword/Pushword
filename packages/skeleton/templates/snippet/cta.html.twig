@@ -1,0 +1,14 @@
+<div class="my-8 rounded-2xl bg-slate-900 px-6 py-10 text-center text-white sm:px-12">
+  {% if params.title %}
+    <h2 class="text-2xl font-bold sm:text-3xl">{{ params.title }}</h2>
+  {% endif %}
+  {% if params.description %}
+    <p class="mx-auto mt-3 max-w-2xl text-slate-300">{{ params.description }}</p>
+  {% endif %}
+  {% if params.buttonText %}
+    <a href="{{ params.buttonUrl }}"
+       class="mt-6 inline-block rounded-lg bg-white px-6 py-3 font-semibold text-slate-900 transition hover:bg-slate-100">
+      {{ params.buttonText }}
+    </a>
+  {% endif %}
+</div>

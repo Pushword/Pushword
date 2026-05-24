@@ -1,0 +1,13 @@
+snippet:
+  label:
+    plural: Fragments
+    singular: Fragment
+  field:
+    content: Contenu
+    host: Hôte
+    name: Nom
+    slug: Référence (slug)
+    slug.help: La clé utilisée dans <code>{{ snippet('…') }}</code>. Minuscules, unique par hôte.
+    tags: Étiquettes
+  slug:
+    invalid: La référence ne peut contenir que des minuscules, des chiffres et des tirets.

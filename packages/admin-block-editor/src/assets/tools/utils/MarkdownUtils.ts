@@ -2,6 +2,7 @@ import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-d
 import { HyperlinkTuneData } from '../HyperlinkTune/HyperlinkTune'
 import SmartQuotes from './SmartQuotes'
 import he from 'he'
+import { jsonrepair } from 'jsonrepair'
 
 export interface BlockTuneDataPushword extends BlockTuneData {
   anchor?: string
@@ -229,6 +230,118 @@ export class MarkdownUtils {
     properties.push(current.trim())
 
     return properties
+  }
+
+  /**
+   * Parse a `snippet('name', { ...json... })` call.
+   *
+   * The first argument is a quoted snippet name; the optional second argument is
+   * a JSON object of per-insertion params. Brace- and quote-aware so nested
+   * objects/arrays and commas inside the JSON do not break parsing.
+   */
+  static extractSnippetCall(
+    markdown: string,
+  ): { name: string; params: Record<string, any> } | null {
+    const open = markdown.match(/{{\s*snippet\s*\(/)
+    if (!open || open.index === undefined) return null
+
+    let i = markdown.indexOf('(', open.index) + 1
+    while (i < markdown.length && /\s/.test(markdown[i])) i++
+
+    const quote = markdown[i]
+    if (quote !== "'" && quote !== '"') return null
+    i++
+
+    let name = ''
+    while (i < markdown.length && markdown[i] !== quote) {
+      if (markdown[i] === '\\') {
+        name += markdown[i + 1] ?? ''
+        i += 2
+        continue
+      }
+      name += markdown[i]
+      i++
+    }
+    i++ // closing quote
+
+    while (i < markdown.length && /\s/.test(markdown[i])) i++
+
+    let params: Record<string, any> = {}
+    if (markdown[i] === ',') {
+      i++
+      while (i < markdown.length && /\s/.test(markdown[i])) i++
+      if (markdown[i] === '{') {
+        params = MarkdownUtils.parseBalancedObject(markdown, i)
+      }
+    }
+
+    return { name, params }
+  }
+
+  /**
+   * Read a brace-balanced object literal starting at `start` and JSON-parse it.
+   * Tolerates single quotes / trailing commas via jsonrepair.
+   */
+  private static parseBalancedObject(input: string, start: number): Record<string, any> {
+    let depth = 0
+    let inStr = false
+    let strCh = ''
+    let end = start
+
+    for (let i = start; i < input.length; i++) {
+      const c = input[i]
+      if (inStr) {
+        if (c === '\\') {
+          i++
+          continue
+        }
+        if (c === strCh) inStr = false
+        continue
+      }
+      if (c === '"' || c === "'") {
+        inStr = true
+        strCh = c
+        continue
+      }
+      if (c === '{') depth++
+      else if (c === '}') {
+        depth--
+        if (depth === 0) {
+          end = i + 1
+          break
+        }
+      }
+    }
+
+    const raw = input.substring(start, end)
+    try {
+      return JSON.parse(raw)
+    } catch {
+      try {
+        return JSON.parse(jsonrepair(raw))
+      } catch {
+        return {}
+      }
+    }
+  }
+
+  /**
+   * Build a `snippet('name', {json})` Twig call. The params object is omitted
+   * when empty so plain content snippets stay terse.
+   */
+  static buildSnippetCall(name: string, params: Record<string, any>): string {
+    const keys = Object.keys(params || {})
+    if (keys.length === 0) {
+      return `{{ snippet(${MarkdownUtils.wrapInQuotes(name)}) }}`
+    }
+    return `{{ snippet(${MarkdownUtils.wrapInQuotes(name)}, ${JSON.stringify(params)}) }}`
+  }
+
+  /** True when the block is exactly a standalone snippet() call (not an inline mention). */
+  static isSnippetBlock(markdown: string): boolean {
+    const body = MarkdownUtils.retrieveMarkdownWithoutTunes(markdown).trim()
+    if (!/^{{\s*snippet\s*\(/.test(body) || !/\)\s*}}$/.test(body)) return false
+    return MarkdownUtils.extractSnippetCall(body) !== null
   }
 
   /**

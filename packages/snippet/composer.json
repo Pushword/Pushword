@@ -1,0 +1,30 @@
+{
+  "name": "pushword/snippet",
+  "type": "symfony-bundle",
+  "description": "Reusable, editor-owned content fragments and dev-registered components for Pushword CMS.",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/snippet",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Snippet\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

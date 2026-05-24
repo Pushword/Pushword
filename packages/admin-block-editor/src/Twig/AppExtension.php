@@ -2,18 +2,42 @@
 
 namespace Pushword\AdminBlockEditor\Twig;
 
+use Pushword\AdminBlockEditor\Editor\EditorJsToolProviderInterface;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\SiteRegistry;
 use stdClass;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Attribute\AsTwigFunction;
 
 class AppExtension
 {
+    /**
+     * @param iterable<EditorJsToolProviderInterface> $toolProviders
+     */
     public function __construct(
         private readonly SiteRegistry $appPool,
-        private readonly PushwordRouteGenerator $router
+        private readonly PushwordRouteGenerator $router,
+        #[AutowireIterator('pushword.editorjs_tool_provider')]
+        private readonly iterable $toolProviders = [],
     ) {
+    }
+
+    /**
+     * Extra EditorJS tool configs contributed by other bundles, merged into
+     * `editorjsConfig.tools` by the widget template.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    #[AsTwigFunction('editorjs_extra_tools', needsEnvironment: false)]
+    public function editorjsExtraTools(string $host = ''): array
+    {
+        $tools = [];
+        foreach ($this->toolProviders as $provider) {
+            $tools = [...$tools, ...$provider->getToolsConfig($host)];
+        }
+
+        return $tools;
     }
 
     #[AsTwigFilter('fixHref', needsEnvironment: false, isSafe: ['html'])]

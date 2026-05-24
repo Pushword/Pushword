@@ -229,6 +229,9 @@ var editorjsConfig = {
     logLevel: "ERROR",
     holder: "{{ editor_id }}",
 };
+
+// Tools contributed by other bundles (e.g. snippet) via EditorJsToolProviderInterface.
+Object.assign(editorjsConfig.tools, {{ editorjs_extra_tools(attr.page_host|default(''))|json_encode|raw }});
 {% endblock %}
 
 window.pageMainContent = "{{ value|default("{}")|raw|e('js') }}"

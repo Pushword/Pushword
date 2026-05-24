@@ -23,6 +23,7 @@ import Image from './tools/Image/Image'
 import Embed from './tools/Embed/Embed'
 import PagesList from './tools/PagesList/PagesList'
 import CardList from './tools/CardList/CardList'
+import Snippet from './tools/Snippet/Snippet'
 import Gallery from './tools/Gallery/Gallery'
 import AlignementTune from './tools/AlignementTune/AlignementTune'
 import HyperlinkTune from './tools/HyperlinkTune/HyperlinkTune'
@@ -82,6 +83,7 @@ export class editorJs {
       Embed: Embed,
       PagesList: PagesList,
       CardList: CardList,
+      Snippet: Snippet,
       Gallery: Gallery,
       Strikethrough: Strikethrough,
       CodeBlock: CodeBlock,

@@ -15,6 +15,7 @@ jobs:
           - flat
           - page-scanner
           - page-update-notifier
+          - snippet
           - static-generator
           - template-editor
           - skeleton

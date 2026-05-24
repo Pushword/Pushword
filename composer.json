@@ -125,6 +125,7 @@
       "Pushword\\Installer\\": "packages/installer/src",
       "Pushword\\PageScanner\\": "packages/page-scanner/src",
       "Pushword\\PageUpdateNotifier\\": "packages/page-update-notifier/src",
+      "Pushword\\Snippet\\": "packages/snippet/src",
       "Pushword\\StaticGenerator\\": "packages/static-generator/src",
       "Pushword\\TemplateEditor\\": "packages/template-editor/src",
       "Pushword\\Version\\": "packages/version/src"
@@ -143,7 +144,8 @@
       "Pushword\\Version\\Tests\\": "packages/version/tests",
       "Pushword\\AdminBlockEditor\\Tests\\": "packages/admin-block-editor/tests",
       "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests",
-      "Pushword\\AdvancedMainImage\\Tests\\": "packages/advanced-main-image/tests"
+      "Pushword\\AdvancedMainImage\\Tests\\": "packages/advanced-main-image/tests",
+      "Pushword\\Snippet\\Tests\\": "packages/snippet/tests"
     }
   },
   "scripts": {

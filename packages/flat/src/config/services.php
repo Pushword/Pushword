@@ -21,8 +21,10 @@ use Pushword\Flat\Service\GitAutoCommitter;
 use Pushword\Flat\Sync\ConflictResolver;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 use Pushword\Flat\Sync\PageSync;
+use Pushword\Flat\Sync\SnippetSync;
 use Pushword\Flat\Sync\SyncStateManager;
 use Pushword\Flat\Twig\FlatLockExtension;
+use Pushword\Snippet\Entity\Snippet;
 use ReflectionClass;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -42,10 +44,15 @@ return static function (ContainerConfigurator $container): void {
     $messengerAvailable = interface_exists(MessageBusInterface::class);
     $messengerExclude = $messengerAvailable ? [] : [__DIR__.'/../Messenger/'];
 
+    // SnippetSync requires the optional pushword/snippet package.
+    $snippetAvailable = class_exists(Snippet::class);
+    $snippetExclude = $snippetAvailable ? [] : [__DIR__.'/../Sync/SnippetSync.php'];
+
     $services->load('Pushword\Flat\\', __DIR__.'/../../src/')
         ->exclude([
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
             ...$messengerExclude,
+            ...$snippetExclude,
         ]);
 
     // PropertyConverterRegistry - inject ignored properties list
@@ -104,9 +111,10 @@ return static function (ContainerConfigurator $container): void {
         ->autowire()
         ->autoconfigure();
 
-    // FlatFileSync - inject optional ConversationSync (provided by conversation bundle)
+    // FlatFileSync - inject optional ConversationSync (conversation bundle) and SnippetSync (snippet bundle)
     $services->set(FlatFileSync::class)
-        ->arg('$conversationSync', service(ConversationSyncInterface::class)->nullOnInvalid());
+        ->arg('$conversationSync', service(ConversationSyncInterface::class)->nullOnInvalid())
+        ->arg('$snippetSync', service(SnippetSync::class)->nullOnInvalid());
 
     // AdminNotificationService - for persistent notifications and email alerts
     // Uses NotificationEmailSender (autowired), with flat-specific config passed via DI

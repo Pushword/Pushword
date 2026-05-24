@@ -6,6 +6,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Sync\ConversationSyncInterface;
 use Pushword\Flat\Sync\MediaSync;
 use Pushword\Flat\Sync\PageSync;
+use Pushword\Flat\Sync\SnippetSync;
 use Pushword\Flat\Sync\UserSync;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
@@ -20,6 +21,7 @@ final class FlatFileSync
         private readonly SiteRegistry $apps,
         private readonly ?ConversationSyncInterface $conversationSync = null,
         private readonly ?UserSync $userSync = null,
+        public readonly ?SnippetSync $snippetSync = null,
     ) {
     }
 
@@ -28,6 +30,7 @@ final class FlatFileSync
         $this->mediaSync->setOutput($output);
         $this->pageSync->setOutput($output);
         $this->userSync?->setOutput($output);
+        $this->snippetSync?->setOutput($output);
     }
 
     public function setStopwatch(Stopwatch $stopwatch): void
@@ -63,6 +66,12 @@ final class FlatFileSync
             $this->userSync->import();
             $this->stopwatch?->stop('user.sync');
         }
+
+        if (\in_array($entity, ['snippet', 'all'], true) && null !== $this->snippetSync) {
+            $this->stopwatch?->start('snippet.sync');
+            $this->snippetSync->sync($host, $forceExport);
+            $this->stopwatch?->stop('snippet.sync');
+        }
     }
 
     /** @param string[] $pageSlugs */
@@ -91,6 +100,12 @@ final class FlatFileSync
             $this->userSync->import();
             $this->stopwatch?->stop('user.sync');
         }
+
+        if (\in_array($entity, ['snippet', 'all'], true) && null !== $this->snippetSync) {
+            $this->stopwatch?->start('snippet.sync');
+            $this->snippetSync->import($host);
+            $this->stopwatch?->stop('snippet.sync');
+        }
     }
 
     /** @param string[] $pageSlugs */
@@ -112,6 +127,12 @@ final class FlatFileSync
             $this->stopwatch?->start('conversation.sync');
             $this->conversationSync->export($host);
             $this->stopwatch?->stop('conversation.sync');
+        }
+
+        if (\in_array($entity, ['snippet', 'all'], true) && null !== $this->snippetSync) {
+            $this->stopwatch?->start('snippet.sync');
+            $this->snippetSync->export($host);
+            $this->stopwatch?->stop('snippet.sync');
         }
     }
 

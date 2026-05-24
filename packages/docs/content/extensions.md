@@ -19,6 +19,8 @@ name: Extensions
   Find dead links, 404, 301, TODO reminders and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)
   Get mail notification when your pushword content (page) is edited.
+- [Snippet](/extension/snippet)
+  Reusable content fragments and dev-registered components, called with `{{ snippet('name', {params}) }}`.
 - [Static Generator](/extension/static-generator)
   Generate a static website serve by github pages, apaches with one command or via the [admin](https://pushword.piedweb.com/extension/admin).
 - [Page Cache](/extension/page-cache)

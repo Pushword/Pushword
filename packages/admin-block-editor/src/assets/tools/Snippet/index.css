@@ -1,0 +1,154 @@
+/* Aligned with CardList: the other multi-field block tool. Same input metrics
+   (1px #ddd, 4px radius, 13px, #388ae5 focus) and neutral family (#ccc / #fafafa). */
+
+/* The whole edit form reads as one grouped block, like CardList's wrapper. */
+.cdx-snippet {
+  border: 1px solid #e6e6e8;
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: #fafafa;
+}
+
+.cdx-snippet__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cdx-snippet__header svg {
+  width: 15px;
+  height: 15px;
+  color: #707684;
+}
+
+.cdx-snippet__header span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #707684;
+}
+
+/* The snippet picker matches the field metrics; it is one control among the form,
+   not an oversized standalone dropdown. */
+.cdx-snippet__select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cdx-snippet__select:focus {
+  border-color: #388ae5;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 138, 229, 0.15);
+}
+
+.cdx-snippet__inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.cdx-snippet__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cdx-snippet__field--bool {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.cdx-snippet__field label {
+  font-size: 12px;
+  color: #707684;
+}
+
+.cdx-snippet__field input[type='text'],
+.cdx-snippet__field input[type='number'],
+.cdx-snippet__field textarea,
+.cdx-snippet__field select {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cdx-snippet__field input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.cdx-snippet__field input:focus,
+.cdx-snippet__field textarea:focus,
+.cdx-snippet__field select:focus {
+  border-color: #388ae5;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 138, 229, 0.15);
+}
+
+.cdx-snippet__field textarea {
+  min-height: 64px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: vertical;
+}
+
+/* Collapsed view: same panel chrome as the edit form, clickable to edit. */
+.cdx-snippet--preview {
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.cdx-snippet--preview:hover {
+  border-color: #c4c8d0;
+  background: #f4f5f7;
+}
+
+.cdx-snippet--preview .cdx-snippet__header {
+  margin-bottom: 8px;
+}
+
+.cdx-snippet-preview__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.cdx-snippet-preview__label {
+  font-weight: 600;
+  color: #1d202b;
+}
+
+.cdx-snippet-preview__params {
+  font-size: 12px;
+  color: #707684;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cdx-snippet--preview,
+  .cdx-snippet__select,
+  .cdx-snippet__field input,
+  .cdx-snippet__field textarea,
+  .cdx-snippet__field select {
+    transition: none;
+  }
+}
