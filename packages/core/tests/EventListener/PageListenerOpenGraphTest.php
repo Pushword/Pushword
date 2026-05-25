@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\EventListener;
 
+use Doctrine\ORM\Event\PreUpdateEventArgs;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Cache\PageCacheSuppressor;
@@ -40,6 +41,21 @@ final class PageListenerOpenGraphTest extends TestCase
         $listener = $this->buildListener($generator, new PageCacheSuppressor());
 
         $listener->prePersist($this->buildPage());
+    }
+
+    public function testOpenGraphImageIsNotGeneratedWhenSuppressedOnUpdate(): void
+    {
+        $generator = $this->createMock(PageOpenGraphImageGenerator::class);
+        $generator->method('setPage')->willReturnSelf();
+        $generator->expects(self::never())->method('generatePreviewImage');
+
+        $suppressor = new PageCacheSuppressor();
+        $listener = $this->buildListener($generator, $suppressor);
+
+        $event = $this->createMock(PreUpdateEventArgs::class);
+        $event->method('hasChangedField')->willReturn(false);
+
+        $suppressor->suppress(fn () => $listener->preUpdate($this->buildPage(), $event));
     }
 
     private function buildListener(PageOpenGraphImageGenerator $generator, PageCacheSuppressor $suppressor): PageListener
