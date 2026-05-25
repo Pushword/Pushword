@@ -46,13 +46,31 @@ final readonly class Searcher
         $result = $this->indexManager->getLoupe($host)->search($parameters);
 
         return [
-            'hits' => $result->getHits(),
+            'hits' => $this->stripRawContent($result->getHits()),
             'facets' => $result->getFacetDistribution(),
             'query' => $query,
             'totalHits' => $result->getTotalHits(),
             'totalPages' => $result->getTotalPages(),
             'page' => $result->getPage(),
         ];
+    }
+
+    /**
+     * The full page body is retrieved only so Loupe can produce the cropped
+     * `_formatted.content` snippet; the raw value is dead weight in the payload
+     * (no consumer reads `hit.content`), so drop it before returning.
+     *
+     * @param list<array<string, mixed>> $hits
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function stripRawContent(array $hits): array
+    {
+        foreach ($hits as &$hit) {
+            unset($hit['content']);
+        }
+
+        return $hits;
     }
 
     private function buildFilter(string $host, ?string $locale, string $extra): string

@@ -239,6 +239,35 @@ final class SearchIndexTest extends KernelTestCase
         }
     }
 
+    /**
+     * Hits carry the cropped highlight snippet but not the full page body — the
+     * raw `content` is retrieved only to feed the snippet, then dropped.
+     */
+    public function testHitsExposeSnippetButNotRawContent(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $searcher = $container->get(Searcher::class);
+
+        $nonce = 'snipnonce'.bin2hex(random_bytes(4));
+        $page = $this->createPage($nonce);
+        $em->persist($page);
+        $em->flush();
+
+        try {
+            $container->get(Indexer::class)->reindexHost(self::HOST);
+            $hits = $searcher->search(self::HOST, $nonce)['hits'];
+            $hit = array_values(array_filter($hits, static fn (array $h): bool => $h['id'] === $page->id))[0];
+
+            self::assertArrayNotHasKey('content', $hit);
+            self::assertStringContainsString($nonce, (string) $hit['_formatted']['content']);
+        } finally {
+            $em->remove($page);
+            $em->flush();
+        }
+    }
+
     private function createPage(string $nonce, string $locale = 'en'): Page
     {
         $page = new Page();
