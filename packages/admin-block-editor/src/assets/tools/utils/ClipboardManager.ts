@@ -748,11 +748,12 @@ export default class ClipboardManager {
                     case 'pre':
                         parts.push('\n\n```\n' + innerContent.trim() + '\n```\n\n')
                         break
-                    case 'blockquote':
+                    case 'blockquote': {
                         const quotedLines = innerContent.trim().split('\n').map(line => '> ' + line).join('\n')
                         parts.push('\n\n' + quotedLines + '\n\n')
                         break
-                    case 'a':
+                    }
+                    case 'a': {
                         const href = el.getAttribute('href') || ''
                         if (href && innerContent.trim()) {
                             parts.push('[' + innerContent.trim() + '](' + href + ')')
@@ -760,25 +761,29 @@ export default class ClipboardManager {
                             parts.push(innerContent)
                         }
                         break
-                    case 'img':
+                    }
+                    case 'img': {
                         const src = el.getAttribute('src') || ''
                         const alt = el.getAttribute('alt') || ''
                         if (src) {
                             parts.push('![' + alt + '](' + src + ')')
                         }
                         break
-                    case 'ul':
+                    }
+                    case 'ul': {
                         const ulItems = Array.from(el.querySelectorAll(':scope > li')).map(li => {
                             return '- ' + this.processNodeToMarkdown(li).trim()
                         }).join('\n')
                         parts.push('\n\n' + ulItems + '\n\n')
                         break
-                    case 'ol':
+                    }
+                    case 'ol': {
                         const olItems = Array.from(el.querySelectorAll(':scope > li')).map((li, idx) => {
                             return (idx + 1) + '. ' + this.processNodeToMarkdown(li).trim()
                         }).join('\n')
                         parts.push('\n\n' + olItems + '\n\n')
                         break
+                    }
                     case 'li':
                         // Li is handled by ul/ol
                         parts.push(innerContent)
@@ -789,7 +794,7 @@ export default class ClipboardManager {
                     case 'hr':
                         parts.push('\n\n---\n\n')
                         break
-                    case 'span':
+                    case 'span': {
                         // Check for inline styles
                         const style = el.getAttribute('style') || ''
                         let content = innerContent
@@ -807,6 +812,7 @@ export default class ClipboardManager {
                         }
                         parts.push(content)
                         break
+                    }
                     default:
                         parts.push(innerContent)
                 }
@@ -910,7 +916,7 @@ export default class ClipboardManager {
         const trimmed = text.trim()
 
         // Skip single-line simple text (no special characters)
-        if (!trimmed.includes('\n') && !/[#*_`\[\]{}><-]/.test(trimmed)) {
+        if (!trimmed.includes('\n') && !/[#*_`[\]{}><-]/.test(trimmed)) {
             return false
         }
 

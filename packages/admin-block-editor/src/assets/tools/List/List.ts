@@ -16,7 +16,7 @@ export default class List extends ListTool {
     }
 
     const isOrdered = data.style === 'ordered'
-    let markdown = List._itemsToMarkdown(data.items, isOrdered, 0)
+    const markdown = List._itemsToMarkdown(data.items, isOrdered, 0)
     const formattedMarkdown = await MarkdownUtils.formatMarkdownWithPrettier(markdown)
     return MarkdownUtils.addAttributes(formattedMarkdown, tunes)
   }
@@ -51,7 +51,7 @@ export default class List extends ListTool {
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    let tunes: BlockTuneData = result.tunes
+    const tunes: BlockTuneData = result.tunes
     let markdownWithoutTunes = result.markdown
     markdownWithoutTunes = MarkdownUtils.convertInlineMarkdownToHtml(markdownWithoutTunes)
 

@@ -431,7 +431,7 @@ export default class TableBlock {
           stickyHeadings = true;
           tunes.class = tunes.class
             .split(/\s+/)
-            .filter((c) => c.replace(/^\./, '') !== TableBlock.STICKY_CLASS)
+            .filter((c: string) => c.replace(/^\./, '') !== TableBlock.STICKY_CLASS)
             .join(' ');
           if (tunes.class === '') {
             delete tunes.class;
@@ -448,7 +448,7 @@ export default class TableBlock {
           .filter((cell) => cell !== '');
         content.push(cells);
 
-        if (i + 1 < lines.length && lines[i + 1]?.trim().match(/^\|[\|\s\-:]+\|$/)) {
+        if (i + 1 < lines.length && lines[i + 1]?.trim().match(/^\|[|\s\-:]+\|$/)) {
           withHeadings = true;
           // Read GFM alignment markers out of the delimiter row.
           columnAlignments = lines[i + 1]!

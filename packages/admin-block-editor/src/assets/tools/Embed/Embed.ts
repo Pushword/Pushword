@@ -1,9 +1,10 @@
-import './index.css'
+import './Embed.css'
 import {
   AbstractMediaTool,
   MediaNodes,
   MediaToolConfig,
   STATUS,
+  UploadResponse,
 } from '../Abstract/AbstractMediaTool'
 import ToolboxIcon from './toolbox-icon.svg?raw'
 import make from '../utils/make'
@@ -81,7 +82,7 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
     return StateBlock.render(this)
   }
 
-  public onUpload(response: any): void {
+  public onUpload(response: UploadResponse): void {
     if (!this.responsIsValid(response)) {
       return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
     }
@@ -180,9 +181,8 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
 
     this.showPreloader(src)
 
-    const self = this
-    this.nodes.imageEl.addEventListener('load', function () {
-      self.hidePreloader(STATUS.EMPTY)
+    this.nodes.imageEl.addEventListener('load', () => {
+      this.hidePreloader(STATUS.EMPTY)
     })
 
     this.nodes.fileButton.appendChild(this.nodes.imageEl)
@@ -209,7 +209,7 @@ export default class Embed extends AbstractMediaTool implements StateBlockToolIn
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    let tunes: BlockTuneData = result.tunes
+    const tunes: BlockTuneData = result.tunes
     markdown = result.markdown
 
     const properties = MarkdownUtils.extractTwigFunctionProperties('video', markdown)

@@ -1,4 +1,4 @@
-import './index.css'
+import './Snippet.css'
 import make from '../utils/make'
 import ToolboxIcon from './toolbox-icon.svg?raw'
 import { MarkdownUtils } from '../utils/MarkdownUtils'

@@ -427,7 +427,7 @@ export default class Table {
    * @param {boolean} [setFocus] - pass true to focus the first cell
    */
   addColumn(columnIndex: number | undefined = -1, setFocus = false): void {
-    let numberOfColumns = this.numberOfColumns;
+    const numberOfColumns = this.numberOfColumns;
      /**
       * Check if the number of columns has reached the maximum allowed columns specified in the configuration,
       * and if so, exit the function to prevent adding more columns beyond the limit.
@@ -474,6 +474,7 @@ export default class Table {
     this.applyColumnAlignments();
 
     this.addHeadingAttrToFirstRow();
+    this.updateColspanMarkers();
   };
 
   /**
@@ -485,7 +486,7 @@ export default class Table {
    */
   addRow(index: number | undefined = -1, setFocus = false): HTMLElement | undefined {
     let insertedRow;
-    let rowElem = $.make('div', CSS.row);
+    const rowElem = $.make('div', CSS.row);
 
     if (this.tunes.withHeadings) {
       this.removeHeadingAttrFromFirstRow();
@@ -496,7 +497,7 @@ export default class Table {
      * by the number of cells in the first row
      * It is necessary that the first line is filled in correctly
      */
-    let numberOfColumns = this.numberOfColumns;
+    const numberOfColumns = this.numberOfColumns;
      /**
       * Check if the number of rows has reached the maximum allowed rows specified in the configuration,
       * and if so, exit the function to prevent adding more columns beyond the limit.
@@ -506,7 +507,7 @@ export default class Table {
     }
 
     if (index! > 0 && index! <= this.numberOfRows) {
-      let row = this.getRow(index!);
+      const row = this.getRow(index!);
 
       insertedRow = $.insertBefore(rowElem, row) as HTMLElement;
     } else {
@@ -558,6 +559,7 @@ export default class Table {
 
     this.columnAlignments.splice(index - 1, 1);
     this.applyColumnAlignments();
+    this.updateColspanMarkers();
   }
 
   /**
@@ -682,9 +684,15 @@ export default class Table {
   }
 
   /**
-   * Flags cells whose content is the `->` colspan marker so they render visually
-   * merged into the preceding cell (see styles/table.pcss). A marker in the first
-   * column is ignored — it has no cell to merge into, matching the markdown renderer.
+   * Renders `->` colspan markers as real spanning cells: a cell preceding one or
+   * more `->` cells spans across them so its content fills the merged width, while
+   * the (transparent) marker cells overlap the spanned area and stay clickable for
+   * editing/removing the `->`. A marker in the first column is ignored — it has no
+   * cell to merge into, matching the markdown renderer.
+   *
+   * Spanning needs an explicit, equal track count (`--table-cols`); `auto-fit`
+   * would recompute the tracks per row once cells start spanning and misalign the
+   * columns across rows.
    *
    * @returns {void}
    */
@@ -693,11 +701,35 @@ export default class Table {
       return;
     }
 
+    this.table.style.setProperty('--table-cols', String(this.numberOfColumns));
+
     this.table.querySelectorAll(`.${CSS.row}`).forEach((row) => {
-      Array.from(row.querySelectorAll(`.${CSS.cell}`)).forEach((cell, index) => {
+      const cells = Array.from(row.querySelectorAll<HTMLElement>(`.${CSS.cell}`));
+
+      cells.forEach((cell, index) => {
         const isMarker = index > 0 && cell.textContent!.trim() === '->';
 
         cell.classList.toggle(CSS.cellColspan, isMarker);
+
+        // Pin every cell to its own track line so a spanning cell can overlap the
+        // marker cells that follow it without shifting the others.
+        cell.style.gridColumnStart = String(index + 1);
+
+        if (isMarker) {
+          cell.style.gridColumnEnd = '';
+
+          return;
+        }
+
+        let run = 0;
+        for (
+          let next = index + 1;
+          next < cells.length && cells[next]!.textContent!.trim() === '->';
+          next++
+        ) {
+          run++;
+        }
+        cell.style.gridColumnEnd = run > 0 ? `span ${run + 1}` : '';
       });
     });
   }
@@ -909,7 +941,7 @@ export default class Table {
    *
    * @returns {void}
    */
-  focusCell(...args: any[]): void {
+  focusCell(..._args: unknown[]): void {
     this.focusedCellElem.focus();
   }
 
@@ -932,7 +964,10 @@ export default class Table {
    */
   updateToolboxesPosition(row: number = this.hoveredRow, column: number = this.hoveredColumn): void {
     if (!this.isColumnMenuShowing) {
-      if (column > 0 && column <= this.numberOfColumns) { // not sure this statement is needed. Maybe it should be fixed in getHoveredCell()
+      // Bounds guard: the coordinate may be 0 (initial state, or the explicit
+      // updateToolboxesPosition(0, 0) reset after addRow), in which case the
+      // toolbox must stay hidden rather than render at a negative calc() offset.
+      if (column > 0 && column <= this.numberOfColumns) {
         this.toolboxColumn.show(() => {
           return {
             style: {
@@ -946,7 +981,9 @@ export default class Table {
     }
 
     if (!this.isRowMenuShowing) {
-      if (row > 0 && row <= this.numberOfRows) { // not sure this statement is needed. Maybe it should be fixed in getHoveredCell()
+      // Bounds guard: see the column branch above. Row 0 means "no hovered row";
+      // showing the toolbox then would call getRow(0) and mis-position it.
+      if (row > 0 && row <= this.numberOfRows) {
         this.toolboxRow.show(() => {
           const hoveredRowElement = this.getRow(row);
           const { fromTopBorder } = $.getRelativeCoordsOfTwoElems(this.table!, hoveredRowElement);
@@ -986,7 +1023,7 @@ export default class Table {
    */
   addHeadingAttrToFirstRow(): void {
     for (let cellIndex = 1; cellIndex <= this.numberOfColumns; cellIndex++) {
-      let cell = this.getCell(1, cellIndex);
+      const cell = this.getCell(1, cellIndex);
 
       if (cell) {
         cell.setAttribute('heading', this.api.i18n.t('Heading'));
@@ -999,7 +1036,7 @@ export default class Table {
    */
   removeHeadingAttrFromFirstRow(): void {
     for (let cellIndex = 1; cellIndex <= this.numberOfColumns; cellIndex++) {
-      let cell = this.getCell(1, cellIndex);
+      const cell = this.getCell(1, cellIndex);
 
       if (cell) {
         cell.removeAttribute('heading');
@@ -1063,7 +1100,7 @@ export default class Table {
       return;
     }
 
-    let cells = this.table!.querySelectorAll(`.${CSS.cellSelected}`);
+    const cells = this.table!.querySelectorAll(`.${CSS.cellSelected}`);
 
     Array.from(cells).forEach(column => {
       column.classList.remove(CSS.cellSelected);

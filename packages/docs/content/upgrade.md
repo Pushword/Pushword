@@ -405,7 +405,7 @@ The default installation is now creating. Look in [`vendor/pushword/core/install
 
 ```
 Scan all files inside the ./templates directory.
-Identify and update every Tailwind CSS class name from version 3 syntax to version 4 syntax, ensuring full compatibility with Tailwind 4’s new naming conventions and features.
+Identify and update every Tailwind CSS class name from version 3 syntax to version 4 syntax, ensuring full compatibility with Tailwind 4's new naming conventions and features.
 https://tailwindcss.com/docs/upgrade-guide#changes-from-v3`)
 ```
 

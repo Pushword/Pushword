@@ -1,4 +1,17 @@
 /**
+ * A media reference: either a bare name/URL string, or an object holding one
+ * under a `media`, `fileName` or `url` key (legacy and current block shapes).
+ */
+export type MediaData =
+  | string
+  | {
+      media?: string
+      fileName?: string
+      url?: string
+      [key: string]: unknown
+    }
+
+/**
  * Utilitaires pour la gestion des médias
  */
 export class MediaUtils {
@@ -23,7 +36,7 @@ export class MediaUtils {
    * @param data - Donnée à vérifier
    * @returns true si c'est une URL complète
    */
-  static isFullUrl(data: any): boolean {
+  static isFullUrl(data: unknown): boolean {
     if (!data || typeof data !== 'string') return false
 
     return (
@@ -54,7 +67,7 @@ export class MediaUtils {
    * @param dataItem - Objet de données qui peut contenir media, url, ou être une string
    * @returns Le nom du média
    */
-  static getMediaNameFromData(dataItem: any): string {
+  static getMediaNameFromData(dataItem: MediaData): string {
     if (typeof dataItem === 'string') {
       return this.isFullUrl(dataItem) ? this.extractMediaName(dataItem) : dataItem
     } else if (dataItem && typeof dataItem === 'object' && dataItem.media) {
@@ -82,7 +95,7 @@ export class MediaUtils {
     }
   }
 
-  static buildFullUrlFromData(dataItem: any, basePath: string = '/media/md/'): string {
+  static buildFullUrlFromData(dataItem: MediaData, basePath: string = '/media/md/'): string {
     if (typeof dataItem === 'string') {
       return this.buildFullUrl(dataItem, basePath)
     } else if (dataItem && typeof dataItem === 'object' && dataItem.url) {

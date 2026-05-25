@@ -172,7 +172,9 @@
 
 .tc-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10px, 1fr));
+  /* Explicit, equal tracks (count set as --table-cols by the tool) so a colspan
+     cell can span without auto-fit re-counting tracks and misaligning rows. */
+  grid-template-columns: repeat(var(--table-cols, 1), minmax(10px, 1fr));
   position: relative;
   border-bottom: 1px solid var(--color-border);
 
@@ -210,12 +212,18 @@
   }
 
   /*
-   * Colspan marker (`->`): visually merge into the preceding cell. The marker cell
-   * stays in the grid (keeping columns aligned across rows); we only hide the arrow
-   * and the divider. The arrow is revealed on focus so it can be edited or removed.
+   * Colspan marker (`->`): the preceding cell spans across it (see
+   * updateColspanMarkers), so the marker overlaps the merged area. Hide its arrow
+   * so the spanned content shows through; reveal it on focus over a solid
+   * background so the `->` can be edited or removed without the content behind it
+   * bleeding through.
    */
   &--colspan:not(:focus) {
     color: transparent;
+  }
+
+  &--colspan:focus {
+    background: var(--color-background);
   }
 }
 

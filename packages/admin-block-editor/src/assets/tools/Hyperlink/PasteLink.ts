@@ -28,7 +28,7 @@ export default class PasteLink {
 
         // Do we have a text to create an anchor ?
         const textSelected = window.getSelection()?.toString() || ''
-        if (!textSelected) return // TODO if clipboard content is url, transfrom clipboard content in link
+        if (!textSelected) return // TODO if clipboard content is url, transform clipboard content in link
 
         // Are we in editor.js instance
         if (!selectedNode || !(selectedNode as Element).closest('.ce-block__content'))

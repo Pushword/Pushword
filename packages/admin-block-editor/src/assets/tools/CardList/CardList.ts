@@ -1,4 +1,4 @@
-import './index.css'
+import './CardList.css'
 import make from '../utils/make'
 import ToolboxIcon from './toolbox-icon.svg?raw'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
@@ -722,7 +722,7 @@ export default class CardList extends BaseTool {
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    let tunes: BlockTuneData = result.tunes
+    const tunes: BlockTuneData = result.tunes
     markdown = result.markdown
 
     // Match: {{ card_list([...]) }} or {{ card_list([...], 'class', 'anchor') }}

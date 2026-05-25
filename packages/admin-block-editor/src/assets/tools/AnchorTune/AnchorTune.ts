@@ -37,7 +37,7 @@ export default class AnchorTune implements BlockTool {
 
     this.input.addEventListener('input', (event: Event) => {
       const target = event.target as HTMLInputElement
-      let value = target.value.replace(/[^a-z0-9_-]/gi, '')
+      const value = target.value.replace(/[^a-z0-9_-]/gi, '')
 
       if (value.length > 0) {
         this.data = value

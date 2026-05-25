@@ -27,3 +27,10 @@ Tailwind content sources for all packages
 [x-cloak] {
   display: none !important;
 }
+
+/* Tables marked with {.table-sticky-header} keep their heading row pinned on scroll. */
+.table-sticky-header thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-background, #fff);
+}

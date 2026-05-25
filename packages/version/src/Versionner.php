@@ -10,9 +10,10 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Column;
 use Exception;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\EventListener\PageListener;
-// use Doctrine\ORM\Event\LifecycleEventArgs;
 use Pushword\Core\Utils\Entity;
+use Pushword\Snippet\Entity\Snippet;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -34,6 +35,23 @@ class Versionner
         $this->fileSystem = new Filesystem();
     }
 
+    /**
+     * URL type slug => versionable entity class. Snippet is included only when
+     * the optional snippet bundle is installed.
+     *
+     * @return array<string, class-string>
+     */
+    public static function versionableTypes(): array
+    {
+        $types = ['page' => Page::class];
+
+        if (class_exists(Snippet::class)) {
+            $types['snippet'] = Snippet::class;
+        }
+
+        return $types;
+    }
+
     public function postPersist(PostPersistEventArgs $lifecycleEventArgs): void
     {
         $this->postUpdate($lifecycleEventArgs);
@@ -46,48 +64,49 @@ class Versionner
         }
 
         $entity = $lifecycleEventArgs->getObject();
+        $type = $this->typeOf($entity);
 
-        if (! $entity instanceof Page) {
+        if (null === $type) {
             return;
         }
 
-        $this->createVersion($entity);
+        \assert($entity instanceof IdInterface); // every versionable type uses IdTrait
+        $this->createVersion($type, $entity);
     }
 
-    private function createVersion(Page $page): void
+    private function typeOf(object $entity): ?string
     {
-        $versionFile = $this->getVersionFile($page);
+        foreach (self::versionableTypes() as $type => $class) {
+            if ($entity instanceof $class) {
+                return $type;
+            }
+        }
+
+        return null;
+    }
+
+    private function createVersion(string $type, IdInterface $entity): void
+    {
+        $versionFile = $this->getVersionFile($type, (int) $entity->id);
 
         $jsonContent = $this->serializer
-            ->serialize($page, 'json', [AbstractNormalizer::ATTRIBUTES => $this->getProperties($page)]);
+            ->serialize($entity, 'json', [AbstractNormalizer::ATTRIBUTES => $this->getProperties($entity)]);
 
         $this->fileSystem->dumpFile($versionFile, $jsonContent);
     }
 
-    public function loadVersion(string $pageId, string $version): void
+    public function loadVersion(string $type, string $id, string $version): void
     {
         static::$version = false;
         PageListener::$skipSlugChangeDetection = true;
 
         try {
-            $page = $this->entityManager->getRepository(Page::class)->find($pageId);
+            $entity = $this->find($type, $id);
 
-            if (! $page instanceof Page) {
-                throw new Exception('Page not found `'.$pageId.'`');
-            }
-
-            $oldSlug = $page->slug;
-            $this->populate($page, $version);
-
-            // If slug changed, remove any redirect page that would conflict
-            if ($page->slug !== $oldSlug) {
-                $conflicting = $this->entityManager->getRepository(Page::class)->findOneBy([
-                    'slug' => $page->slug,
-                    'host' => $page->host,
-                ]);
-                if (null !== $conflicting && $conflicting->id !== $page->id && null !== $conflicting->getRedirection()) {
-                    $this->entityManager->remove($conflicting);
-                }
+            if ($entity instanceof Page) {
+                $this->loadPageVersion($entity, $type, $id, $version);
+            } else {
+                $this->populate($entity, $type, $id, $version);
             }
 
             $this->entityManager->flush();
@@ -97,36 +116,64 @@ class Versionner
         }
     }
 
-    public function populate(Page $page, string $version, ?int $pageId = null): Page
+    private function loadPageVersion(Page $page, string $type, string $id, string $version): void
     {
-        $pageVersionned = $this->getPageVersion($pageId ?? $page, $version);
+        $oldSlug = $page->slug;
+        $this->populate($page, $type, $id, $version);
 
-        $this->serializer->deserialize($pageVersionned, $page::class, 'json', [
-            AbstractNormalizer::OBJECT_TO_POPULATE => $page,
+        // If slug changed, remove any redirect page that would conflict
+        if ($page->slug !== $oldSlug) {
+            $conflicting = $this->entityManager->getRepository(Page::class)->findOneBy([
+                'slug' => $page->slug,
+                'host' => $page->host,
+            ]);
+            if (null !== $conflicting && $conflicting->id !== $page->id && null !== $conflicting->getRedirection()) {
+                $this->entityManager->remove($conflicting);
+            }
+        }
+    }
+
+    public function populate(object $entity, string $type, int|string $id, string $version): object
+    {
+        $serialized = $this->fileSystem->readFile($this->getVersionFile($type, $id, $version));
+
+        $this->serializer->deserialize($serialized, $entity::class, 'json', [
+            AbstractNormalizer::OBJECT_TO_POPULATE => $entity,
             ObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true, // permits to import tags as string
         ]);
 
-        return $page;
+        return $entity;
     }
 
-    private function getPageVersion(int|Page $page, string $version): string
+    public function find(string $type, int|string $id): object
     {
-        $versionFile = $this->getVersionFile($page, $version);
+        $class = self::versionableTypes()[$type] ?? throw new Exception('Unknown version type `'.$type.'`');
 
-        return $this->fileSystem->readFile($versionFile);
+        $entity = $this->entityManager->getRepository($class)->find($id);
+
+        if (null === $entity) {
+            throw new Exception($type.' not found `'.$id.'`');
+        }
+
+        return $entity;
     }
 
-    public function reset(int|Page $pageId): void
+    public function reset(string $type, int|string $id): void
     {
-        $this->fileSystem->remove($this->getVersionDir($pageId));
+        $this->fileSystem->remove($this->getVersionDir($type, $id));
+    }
+
+    public function flush(): void
+    {
+        $this->entityManager->flush();
     }
 
     /**
      * @return string[]
      */
-    public function getPageVersions(int|Page $page): array
+    public function getVersions(string $type, int|string $id): array
     {
-        $dir = $this->getVersionDir($page);
+        $dir = $this->getVersionDir($type, $id);
         if (! $this->fileSystem->exists($dir)) {
             return [];
         }
@@ -139,23 +186,25 @@ class Versionner
         return array_values($versions);
     }
 
-    private function getVersionDir(int|Page $page): string
+    private function getVersionDir(string $type, int|string $id): string
     {
-        $pageId = ($page instanceof Page ? (string) $page->id : $page);
+        // Page versions keep their historical flat path; other types are
+        // namespaced by their slug so ids cannot collide across entities.
+        $prefix = 'page' === $type ? '' : $type.'/';
 
-        return $this->logDir.'/version/'.$pageId;
+        return $this->logDir.'/version/'.$prefix.$id;
     }
 
-    private function getVersionFile(int|Page $page, ?string $version = null): string
+    private function getVersionFile(string $type, int|string $id, ?string $version = null): string
     {
-        return $this->getVersionDir($page).'/'.($version ?? uniqid());
+        return $this->getVersionDir($type, $id).'/'.($version ?? uniqid());
     }
 
     /**
      * @return array<string>
      */
-    private function getProperties(Page $page): array
+    private function getProperties(object $entity): array
     {
-        return Entity::getProperties($page, [Column::class]);
+        return Entity::getProperties($entity, [Column::class]);
     }
 }

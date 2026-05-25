@@ -2,11 +2,14 @@
   --toolbox-padding: 6px;
   --popover-margin: 30px;
   --toggler-click-zone-size: 30px;
-  --toggler-dots-color: #7B7E89;
-  --toggler-dots-color-hovered: #1D202B;
+  --toggler-dots-color: var(--color-text-secondary);
+  --toggler-dots-color-hovered: #1d202b;
 
   position: absolute;
   cursor: pointer;
+  /* Stacking: the table wrapper sits at z-index 1 and the sticky header at 2
+     (see table.pcss); Editor.js' own toolbar is at 4. The toolbox floats above
+     all of them so its row/column menu is never clipped by neighbouring blocks. */
   z-index: 15;
   opacity: 0;
   transition: opacity 0.1s;

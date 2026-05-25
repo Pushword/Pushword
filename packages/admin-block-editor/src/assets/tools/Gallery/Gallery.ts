@@ -1,5 +1,5 @@
 import ToolboxIcon from './toolbox-icon.svg?raw'
-import './index.css'
+import './Gallery.css'
 import { MediaUtils } from '../utils/media'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
@@ -7,7 +7,12 @@ import { MarkdownUtils } from '../utils/MarkdownUtils'
 import CloseIcon from './Close.svg?raw'
 import MoveLeftIcon from './MoveLeft.svg?raw'
 import MoveRightIcon from './MoveRight.svg?raw'
-import { AbstractMediaTool, MediaToolConfig, STATUS } from '../Abstract/AbstractMediaTool'
+import {
+  AbstractMediaTool,
+  MediaToolConfig,
+  STATUS,
+  UploadResponse,
+} from '../Abstract/AbstractMediaTool'
 import Raw from '../Raw/Raw'
 import make from '../utils/make'
 import { jsonrepair } from 'jsonrepair'
@@ -73,7 +78,7 @@ export default class Gallery extends AbstractMediaTool {
     ) {
       for (const item of data.items) {
         if (typeof item !== 'object') continue
-        let media =
+        const media =
           item.media ||
           (item.url ? MediaUtils.extractMediaName(item.url) : null) ||
           item.file?.media
@@ -131,7 +136,7 @@ export default class Gallery extends AbstractMediaTool {
     }
   }
 
-  onUpload(response: any): void {
+  onUpload(response: UploadResponse): void {
     if (!this.responsIsValid(response)) {
       return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
     }
@@ -147,7 +152,7 @@ export default class Gallery extends AbstractMediaTool {
 
     const itemElement = this.getLastGalleryItem()
 
-    this._createImage(response.file.url, itemElement, response.file.name || '')
+    this._createImage(response.file.url || '', itemElement, response.file.name || '')
     this.data.items.push({
       media: mediaName,
       caption: response.file.name || '',
@@ -382,11 +387,11 @@ export default class Gallery extends AbstractMediaTool {
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    let tunes: BlockTuneData = result.tunes
+    const tunes: BlockTuneData = result.tunes
     const markdownWithoutTunes = result.markdown
 
-    let galleryMatch = markdownWithoutTunes.match(
-      /{{ gallery\(\s*(images:\s*)?(?<medias>\{.*?\})\s*(,\s*clickable:\s*(?<clickable>true|false))?\)\ }}/s,
+    const galleryMatch = markdownWithoutTunes.match(
+      /{{ gallery\(\s*(images:\s*)?(?<medias>\{.*?\})\s*(,\s*clickable:\s*(?<clickable>true|false))?\) }}/s,
     )
 
     tunes.clickableTune = {
@@ -410,7 +415,7 @@ export default class Gallery extends AbstractMediaTool {
   private static parseGalleryData(jsonString: string): Record<string, string> | false {
     try {
       return JSON.parse(jsonrepair(jsonString))
-    } catch (e) {
+    } catch {
       return false
     }
   }
@@ -452,7 +457,7 @@ export default class Gallery extends AbstractMediaTool {
       markdown
         .trim()
         .match(
-          /{{ gallery\(\s*(images:\s*)?\{.*?\}\s*(,\s*clickable:\s*(true|false|0|1))?\)\ }}/s,
+          /{{ gallery\(\s*(images:\s*)?\{.*?\}\s*(,\s*clickable:\s*(true|false|0|1))?\) }}/s,
         ) !== null
     )
   }

@@ -383,10 +383,10 @@ export class EditorModeManager {
   }
 
   private showOrHideBtn(show: boolean = true, btn: string = 'all'): void {
-    let btnToggleMarkdown = document.querySelector(
+    const btnToggleMarkdown = document.querySelector(
       `[onclick="toggleEditor('markdown')"]`,
     ) as HTMLElement
-    let btnToggleEditor = document.querySelector(
+    const btnToggleEditor = document.querySelector(
       `[onclick="toggleEditor()"]`,
     ) as HTMLElement
     if (btnToggleMarkdown && ['markdown', 'all'].includes(btn)) {

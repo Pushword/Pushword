@@ -10,7 +10,7 @@ export interface HyperlinkTuneData extends BlockToolData {
   targetBlank?: boolean
 }
 
-export interface HyperlinkTuneNodes extends Record<string, HTMLElement | null> {
+export interface HyperlinkTuneNodes extends Record<string, HTMLElement | null | undefined> {
   url?: HTMLElement
   hideForBot?: HTMLElement
   targetBlank?: HTMLElement
@@ -46,8 +46,7 @@ export default class HyperlinkTune extends BaseTool {
     this.nodes = {}
   }
 
-  public render(value: any = null): HTMLElement {
-    console.log(this.data, value)
+  public render(_value: unknown = null): HTMLElement {
     const wrapper = document.createElement('div')
     wrapper.classList.add('cdx-anchor-tune-wrapper')
     wrapper.style.display = 'block'
@@ -127,9 +126,7 @@ export default class HyperlinkTune extends BaseTool {
     this.data.targetBlank =
       this.nodes.targetBlank?.querySelector('input')?.checked || false
 
-    console.log(this.block)
     this.block?.dispatchChange()
-    console.log(this.api)
     this.api.saver.save()
 
     return this.data

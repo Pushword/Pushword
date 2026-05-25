@@ -1,4 +1,4 @@
-import './index.css'
+import './Abstract.css'
 import { API, BlockTool, BlockToolData } from '@editorjs/editorjs'
 import { logger } from '../utils/logger'
 

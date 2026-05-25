@@ -44,6 +44,30 @@ export default tseslint.config(
       },
       globals: commonGlobals,
     },
+    rules: {
+      // Allow intentionally unused identifiers prefixed with `_` (e.g. params
+      // kept to satisfy a shared tool signature, or unused catch bindings).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+
+  // admin-block-editor wraps Editor.js, whose plugins ship without types: `any`
+  // and `@ts-ignore` are unavoidable at those boundaries. Keep them visible as
+  // warnings (so new ones are noticed) without failing the build, while every
+  // structural rule stays an error.
+  {
+    files: ['packages/admin-block-editor/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/ban-ts-comment': 'warn',
+    },
   },
 
   // JavaScript files

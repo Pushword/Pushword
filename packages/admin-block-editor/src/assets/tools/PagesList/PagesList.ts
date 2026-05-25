@@ -1,4 +1,4 @@
-import './index.css'
+import './PagesList.css'
 import make from '../utils/make'
 import ToolboxIcon from './toolbox-icon.svg?raw'
 import ajax from '@codexteam/ajax'
@@ -9,6 +9,7 @@ import { Suggest } from '../../../../../admin/src/Resources/assets/suggest.js'
 import { BaseTool } from '../Abstract/BaseTool'
 import { BLOCK_STATE, StateBlock, StateBlockToolInterface } from '../utils/StateBlock'
 import { exportPagesListToMarkdown } from './PagesListExportToMarkdown'
+import { logger } from '../utils/logger'
 
 export interface PagesListData extends BlockToolData {
   kw: string
@@ -243,19 +244,18 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
 
   private getPreviewFromServer(): void {
     this.updateData()
-    const self = this
     ajax
       .post({
         url: this.config.preview,
         data: this.data,
         type: ajax.contentType.JSON,
       })
-      .then(function (response: any) {
-        self.setPreviewContent(response.body.content)
+      .then((response) => {
+        this.setPreviewContent((response.body as { content: string }).content)
       })
-      .catch(function (error: any) {
-        console.log('getPreviewFromServer error', error)
-        self.setPreviewContent('An error occured (see console log for more info)')
+      .catch((error: unknown) => {
+        logger.error('getPreviewFromServer error', error)
+        this.setPreviewContent('An error occured (see console log for more info)')
       })
   }
 
@@ -272,7 +272,7 @@ export default class PagesList extends BaseTool implements StateBlockToolInterfa
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    let tunes: BlockTuneData = result.tunes
+    const tunes: BlockTuneData = result.tunes
     markdown = result.markdown
 
     const properties = MarkdownUtils.extractTwigFunctionProperties('pages_list', markdown)

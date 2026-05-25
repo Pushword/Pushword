@@ -89,9 +89,12 @@ export class StateBlock {
       BlockTool.nodes.wrapper.appendChild(BlockTool.nodes.inputs!)
     }
 
-    BlockTool.validate()
-      ? (BlockTool.save(), StateBlock.show(BlockTool, BLOCK_STATE.VIEW))
-      : StateBlock.show(BlockTool, BLOCK_STATE.EDIT)
+    if (BlockTool.validate()) {
+      BlockTool.save()
+      StateBlock.show(BlockTool, BLOCK_STATE.VIEW)
+    } else {
+      StateBlock.show(BlockTool, BLOCK_STATE.EDIT)
+    }
 
     BlockTool.nodes.editInput!.addEventListener('change', () =>
       StateBlock.onEditInputChange(BlockTool),
@@ -101,9 +104,12 @@ export class StateBlock {
   }
 
   private static onEditInputChange(BlockTool: StateBlockToolInterface): void {
-    BlockTool.nodes.editInput!.checked
-      ? (BlockTool.save(), StateBlock.show(BlockTool, BLOCK_STATE.VIEW))
-      : StateBlock.show(BlockTool, BLOCK_STATE.EDIT)
+    if (BlockTool.nodes.editInput!.checked) {
+      BlockTool.save()
+      StateBlock.show(BlockTool, BLOCK_STATE.VIEW)
+    } else {
+      StateBlock.show(BlockTool, BLOCK_STATE.EDIT)
+    }
   }
 
   private static createPreview(BlockTool: StateBlockToolInterface): HTMLElement {

@@ -21,7 +21,7 @@ export default class ClassTune {
     this.block = block
   }
 
-  public render(value: string | null = null): HTMLElement {
+  public render(_value: string | null = null): HTMLElement {
     const wrapper = document.createElement('div')
     wrapper.classList.add('cdx-anchor-tune-wrapper')
 

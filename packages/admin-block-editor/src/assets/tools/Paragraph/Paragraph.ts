@@ -17,7 +17,7 @@ export default class Paragraph extends ParagraphTool {
     }
 
     let markdown = data.text
-      .replace(/(&nbsp;| |\u00A0)+ */g, ' ')
+      .replace(/(&nbsp;| |\u00A0)+ */g, ' ')
       .split('<br>')
       .join('  \n') // 2 spaces = <br> in markdown
     markdown = MarkdownUtils.convertInlineHtmlToMarkdown(markdown)
@@ -27,7 +27,7 @@ export default class Paragraph extends ParagraphTool {
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    let tunes: BlockTuneData = result.tunes
+    const tunes: BlockTuneData = result.tunes
     let markdownWithoutTunes = result.markdown
 
     markdownWithoutTunes = markdownWithoutTunes

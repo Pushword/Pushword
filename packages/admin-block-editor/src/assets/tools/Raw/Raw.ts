@@ -181,7 +181,7 @@ export default class Raw extends BaseTool {
   }
 
   // @ts-ignore
-  static exportToMarkdown(data: RawData, tunes?: BlockTuneData): string {
+  static exportToMarkdown(data: RawData, _tunes?: BlockTuneData): string {
     if (!data || !data.html) {
       return ''
     }
@@ -206,7 +206,7 @@ export default class Raw extends BaseTool {
   }
 
   // @ts-ignore
-  static isItMarkdownExported(markdown: string): boolean {
+  static isItMarkdownExported(_markdown: string): boolean {
     return true // markdown.trim().match(/^[<{]/) !== null
   }
 }

@@ -129,6 +129,7 @@ export class editorJs {
     }
 
     // save
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- onChange's own `this` (the Editor.js instance, for `this.holder`) shadows the class instance, so we keep a reference to it.
     const self = this
     config.onChange = async function (this: any) {
       await self.editorjsSave(this.holder)

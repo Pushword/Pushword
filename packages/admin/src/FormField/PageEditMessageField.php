@@ -34,7 +34,7 @@ class PageEditMessageField extends AbstractField
                 '%lastEditDatetime%' => $page->updatedAt->format($this->admin->getTranslator()->trans('datetimeMediumFormat')), // @phpstan-ignore method.nonObject (property hook guarantees non-null)
                 '%lastEditMessage%' => '' !== $editMessage ? '«&nbsp;'.$editMessage.'&nbsp;»' : '-',
                 '%seeVersionLink%' => class_exists(PushwordVersionBundle::class)
-                    ? $this->formFieldManager->router->generate('admin_version_list', ['id' => $page->id])
+                    ? $this->formFieldManager->router->generate('admin_version_list', ['type' => 'page', 'id' => $page->id])
                     : '',
             ]) : '';
     }

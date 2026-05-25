@@ -1,6 +1,9 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block title %}{{ page.slug }} › {{ 'versionCompare'|trans }}{% endblock %}
+{% set fieldNames = fields|keys %}
+{% set contentField = fieldNames|first %}
+
+{% block title %}{{ entity.slug }} › {{ 'versionCompare'|trans }}{% endblock %}
 
 {% block head_javascript %}
   {{ parent() }}
@@ -8,10 +11,10 @@
 {% endblock %}
 
 {% block page_actions %}
-  <a class="btn btn-outline-secondary" href="{{ path('admin_version_list', {id: page.id}) }}">
+  <a class="btn btn-outline-secondary" href="{{ path('admin_version_list', {type: type, id: entity.id}) }}">
     <i class="fa fa-arrow-left me-1" aria-hidden="true" aria-label="{{ 'versionBackToList'|trans }}"></i>
   </a>
-  <a class="btn btn-warning" href="{{ path('admin_version_load', {id: page.id, version: versionLeft}) }}">
+  <a class="btn btn-warning" href="{{ path('admin_version_load', {type: type, id: entity.id, version: versionLeft}) }}">
     <i class="fa fa-undo me-1" aria-hidden="true"></i> {{ 'versionRestoreFull'|trans }}
   </a>
   <button type="button" class="btn btn-primary" id="save-changes-btn">
@@ -22,18 +25,11 @@
 {% block content_title %}
   <div style="line-height: 1;">
     {{ 'versionCompare'|trans }}<br>
-    <span style="font-size:14px"> › <a href="{{ path('admin_page_edit', {id: page.id}) }}" class="link-primary ">{{ page.slug }}</a></span>
+    <span style="font-size:14px"> › {{ entity.slug }}</span>
   </div>
 {% endblock %}
 
 {% block main %}
-{% set leftH1 = leftPage.h1|default('') %}
-{% set rightH1 = rightPage.h1|default('') %}
-{% set leftTitle = leftPage.title|default('') %}
-{% set rightTitle = rightPage.title|default('') %}
-{% set leftSlug = leftPage.slug|default('') %}
-{% set rightSlug = rightPage.slug|default('') %}
-
 <div class="card shadow-sm mb-3">
   <div class="card-header d-flex justify-content-between align-items-center">
     <div></div>
@@ -57,76 +53,55 @@
   </div>
 
   <div class="card-body">
-    {# H1 Comparison #}
-    <div class="row mb-3">
-      <div class="col-12">
-        <label class="form-label fw-bold">H1 {% if leftH1 != rightH1 %}<span class="badge bg-warning text-dark">{{ 'versionChanged'|trans }}</span>{% endif %}</label>
+    {% for field, label in fields|filter((label, field) => field != contentField) %}
+      {% set leftValue = attribute(leftEntity, field)|default('') %}
+      {% set rightValue = attribute(rightEntity, field)|default('') %}
+      {% if loop.first or leftValue != rightValue %}
+      <div class="row mb-3">
+        <div class="col-12">
+          <label class="form-label fw-bold">{{ label|trans }} {% if leftValue != rightValue %}<span class="badge bg-warning text-dark">{{ 'versionChanged'|trans }}</span>{% endif %}</label>
+        </div>
+        <div class="col-6">
+          <input type="text" class="form-control bg-light" value="{{ leftValue }}" readonly>
+        </div>
+        <div class="col-6">
+          <input type="text" class="form-control" id="field-{{ field }}" value="{{ rightValue }}">
+        </div>
       </div>
-      <div class="col-6">
-        <textarea class="form-control bg-light" rows="2" readonly>{{ leftH1 }}</textarea>
-      </div>
-      <div class="col-6">
-        <textarea class="form-control" rows="2" id="field-h1">{{ rightH1 }}</textarea>
-      </div>
-    </div>
-
-    {# Other fields - only show if different #}
-    {% if leftTitle != rightTitle %}
-    <div class="row mb-3">
-      <div class="col-12">
-        <label class="form-label fw-bold">Title <span class="badge bg-warning text-dark">{{ 'versionChanged'|trans }}</span></label>
-      </div>
-      <div class="col-6">
-        <input type="text" class="form-control bg-light" value="{{ leftTitle }}" readonly>
-      </div>
-      <div class="col-6">
-        <input type="text" class="form-control" id="field-title" value="{{ rightTitle }}">
-      </div>
-    </div>
-    {% endif %}
-
-    {% if leftSlug != rightSlug %}
-    <div class="row mb-3">
-      <div class="col-12">
-        <label class="form-label fw-bold">Slug <span class="badge bg-warning text-dark">{{ 'versionChanged'|trans }}</span></label>
-      </div>
-      <div class="col-6">
-        <input type="text" class="form-control bg-light" value="{{ leftSlug }}" readonly>
-      </div>
-      <div class="col-6">
-        <input type="text" class="form-control" id="field-slug" value="{{ rightSlug }}">
-      </div>
-    </div>
-    {% endif %}
+      {% endif %}
+    {% endfor %}
   </div>
 </div>
 
-{# Main Content Diff #}
+{# Main content diff #}
 <div class="card shadow-sm">
   <div class="card-header">
-    <label class="form-label fw-bold mb-0">{{ 'versionMainContent'|trans }}</label>
+    <label class="form-label fw-bold mb-0">{{ fields[contentField]|trans }}</label>
   </div>
   <div class="card-body p-0">
     <div id="diff-container" style="height: 500px; width: 100%;"></div>
   </div>
 </div>
 
-<form id="save-form" method="POST" action="{{ path('admin_version_save_compare', {id: page.id}) }}">
+<form id="save-form" method="POST" action="{{ path('admin_version_save_compare', {type: type, id: entity.id}) }}">
   <input type="hidden" name="_token" value="{{ csrf_token('version_save') }}">
-  <textarea name="mainContent" id="mainContent-hidden" style="display: none;"></textarea>
-  <input type="hidden" name="h1" id="h1-hidden">
-  <input type="hidden" name="title" id="title-hidden">
-  <input type="hidden" name="slug" id="slug-hidden">
-  </form>
+  <textarea name="{{ contentField }}" id="{{ contentField }}-hidden" style="display: none;"></textarea>
+  {% for field in fieldNames|filter(f => f != contentField) %}
+    <input type="hidden" name="{{ field }}" id="{{ field }}-hidden">
+  {% endfor %}
+</form>
 {% endblock %}
 
 {% block body_javascript %}
 {{ parent() }}
 <script>
 (function() {
-  const leftContent = {{ leftPage.mainContent|default('')|json_encode|raw }};
-  const rightContent = {{ rightPage.mainContent|default('')|json_encode|raw }};
-  const pageId = {{ page.id|json_encode|raw }};
+  const leftContent = {{ attribute(leftEntity, contentField)|default('')|json_encode|raw }};
+  const rightContent = {{ attribute(rightEntity, contentField)|default('')|json_encode|raw }};
+  const contentField = {{ contentField|json_encode|raw }};
+  const fieldNames = {{ fieldNames|json_encode|raw }};
+  const smallFields = fieldNames.filter(function(f) { return f !== contentField; });
+  const compareBase = {{ ('/admin/version/' ~ type ~ '/' ~ entity.id ~ '/compare/')|json_encode|raw }};
 
   let diffEditor = null;
 
@@ -163,27 +138,22 @@
     });
   }
 
-  // Version selector
   document.getElementById('compare-versions-btn').addEventListener('click', function() {
     const leftVersion = document.getElementById('version-left-select').value;
     const rightVersion = document.getElementById('version-right-select').value;
-    window.location.href = '/admin/version/' + pageId + '/compare/' + leftVersion + '/' + rightVersion;
+    window.location.href = compareBase + leftVersion + '/' + rightVersion;
   });
 
   document.getElementById('save-changes-btn').addEventListener('click', function() {
     if (!diffEditor) return;
 
-    // Collect all field values
-    document.getElementById('mainContent-hidden').value = diffEditor.getModifiedEditor().getValue();
+    document.getElementById(contentField + '-hidden').value = diffEditor.getModifiedEditor().getValue();
 
-    const h1Field = document.getElementById('field-h1');
-    if (h1Field) document.getElementById('h1-hidden').value = h1Field.value;
-
-    const titleField = document.getElementById('field-title');
-    if (titleField) document.getElementById('title-hidden').value = titleField.value;
-
-    const slugField = document.getElementById('field-slug');
-    if (slugField) document.getElementById('slug-hidden').value = slugField.value;
+    smallFields.forEach(function(field) {
+      const input = document.getElementById('field-' + field);
+      const hidden = document.getElementById(field + '-hidden');
+      if (input && hidden) hidden.value = input.value;
+    });
 
     document.getElementById('save-form').submit();
   });

@@ -4,7 +4,6 @@ import SelectIcon from './icon/folder.svg?raw'
 import UploadIcon from './icon/upload.svg?raw'
 import make from '../utils/make'
 import { BaseTool } from './BaseTool'
-// import Uploader from './Uploader'
 
 export const STATUS = {
   EMPTY: 'empty',
@@ -24,7 +23,20 @@ export interface MediaNodes {
   wrapper: HTMLDivElement
   fileButton: HTMLElement
   preloader: HTMLElement
-  [key: string]: HTMLElement
+  [key: string]: HTMLElement | undefined
+}
+
+/** Shape returned by the media upload endpoint. */
+export interface UploadResponse {
+  success: boolean
+  file: {
+    media: string
+    name?: string
+    title?: string
+    url?: string
+    size?: number
+    [key: string]: unknown
+  }
 }
 
 export abstract class AbstractMediaTool extends BaseTool {
@@ -33,7 +45,6 @@ export abstract class AbstractMediaTool extends BaseTool {
   public onSelectFile: (tool: AbstractMediaTool, event?: Event) => void
   public onUploadFile: (tool: AbstractMediaTool, event?: Event) => void
   public onMultiSelectFile?: (tool: AbstractMediaTool, event?: Event) => void
-  // protected uploader: Uploader
 
   constructor({
     api,
@@ -71,15 +82,15 @@ export abstract class AbstractMediaTool extends BaseTool {
     }
   }
 
-  protected responsIsValid(response: any): boolean {
-    return response.success && response.file && response.file.media
+  protected responsIsValid(response: UploadResponse): boolean {
+    return response.success && !!response.file && !!response.file.media
   }
 
   public onFileLoading(): void {
     this.toggleStatus(STATUS.UPLOADING)
   }
 
-  public abstract onUpload(response: any): void
+  public abstract onUpload(response: UploadResponse): void
 
   protected handleUploadError(error: any): void {
     const toolName = this.constructor.name
@@ -145,7 +156,6 @@ export abstract class AbstractMediaTool extends BaseTool {
     selectButton.innerHTML = SelectIcon + ' ' + this.api.i18n.t('Select')
 
     selectButton.addEventListener('click', (event: Event) => {
-      console.log('Select button clicked')
       this.onSelectFile(this, event)
     })
     buttonWrapper.appendChild(selectButton)
@@ -165,7 +175,6 @@ export abstract class AbstractMediaTool extends BaseTool {
     uploadButton.innerHTML = `${UploadIcon} ${this.api.i18n.t('Upload')}`
     uploadButton.style.marginLeft = '-2px'
     uploadButton.addEventListener('click', (event: Event) => {
-      console.log('Upload button clicked')
       this.onUploadFile(this, event)
     })
     buttonWrapper.appendChild(uploadButton)

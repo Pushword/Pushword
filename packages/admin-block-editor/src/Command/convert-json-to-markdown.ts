@@ -40,9 +40,7 @@ declare global {
     }
     pagesUriList?: string[]
   }
-  var document: {
-    querySelector: (selector: string) => null
-  }
+  // `document` keeps its ambient DOM type; the Node mock below is assigned with @ts-ignore.
 }
 
 // Initialiser window global avec les valeurs de l'environnement ou par défaut

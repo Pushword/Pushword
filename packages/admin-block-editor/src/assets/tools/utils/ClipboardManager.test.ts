@@ -8,12 +8,15 @@ import ClipboardManager from './ClipboardManager'
  * cell-level copy/paste, and the block-selection Ctrl+C shortcut).
  */
 
-type AnyCm = ClipboardManager & Record<string, any>
+// The suite reaches the private copy/paste handlers directly, so the manager is
+// typed as an open record: members and their return values surface as `any`,
+// which is what a white-box test of internals needs.
+type AnyCm = Record<string, any>
 
 function newManager(): AnyCm {
   // The constructor only needs an object to hang listeners off; the editor API
   // is lazily accessed and stubbed per-test where a method actually uses it.
-  return new ClipboardManager({ editor: {} as any }) as AnyCm
+  return new ClipboardManager({ editor: {} as any }) as unknown as AnyCm
 }
 
 /** Build a detached Editor.js-style table block. */

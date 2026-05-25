@@ -1,14 +1,16 @@
 .tc-popover {
-  --color-border: #eaeaea;
+  /* --color-border is inherited from .tc-wrap so the menu border matches the
+     table; the background stays white on purpose, since this is a floating menu. */
   --color-background: #fff;
-  --color-background-hover: rgba(232,232,235,0.49);
+  --color-background-hover: rgba(232, 232, 235, 0.49);
   --color-background-confirm: #e24a4a;
   --color-background-confirm-hover: #d54040;
   --color-text-confirm: #fff;
+  --popover-shadow: 0 3px 15px -3px rgba(13, 20, 33, 0.13);
 
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  box-shadow: 0 3px 15px -3px rgba(13,20,33,0.13);
+  box-shadow: var(--popover-shadow);
   border-radius: 6px;
   padding: 6px;
   display: none;

@@ -38,7 +38,6 @@ function initializeEditors(): void {
     mainContent.addEventListener('keydown', (event: Event) => {
       const kbEvent = event as KeyboardEvent
       if (kbEvent.ctrlKey && kbEvent.key === 'k') {
-        console.log('ctrl+k')
         const el = document.querySelector(
           '[data-item-name="link"] button',
         ) as HTMLButtonElement | null

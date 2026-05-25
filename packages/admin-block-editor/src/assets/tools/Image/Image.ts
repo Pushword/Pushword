@@ -1,10 +1,11 @@
-import './index.css'
+import './Image.css'
 import make from '../utils/make'
 import {
   AbstractMediaTool,
   MediaNodes,
   MediaToolConfig,
   STATUS,
+  UploadResponse,
 } from '../Abstract/AbstractMediaTool'
 import { IconPicture } from '@codexteam/icons'
 import { MediaUtils } from '../utils/media'
@@ -81,7 +82,7 @@ export default class Image extends AbstractMediaTool {
     }
   }
 
-  public onUpload(response: any): void {
+  public onUpload(response: UploadResponse): void {
     if (!this.responsIsValid(response)) {
       return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
     }
@@ -210,12 +211,11 @@ export default class Image extends AbstractMediaTool {
     let caption = ''
 
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    let tunes: BlockTuneData = result.tunes
+    const tunes: BlockTuneData = result.tunes
     markdown = result.markdown
 
     // TODO manage image with a link
     if (markdown.match(/#?\[!\[.*\]\(.+\)\]\(.+\)/)) {
-      console.log('image with link')
       const imageAndLinkMatch = markdown.match(
         /(#?)\[!\[(.*)\]\((.*)\)]\((.*)\)({target="_blank"})?/,
       )

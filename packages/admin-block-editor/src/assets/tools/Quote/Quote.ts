@@ -31,11 +31,10 @@ export default class Quote extends QuoteTool {
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    let tunes: BlockTuneData = result.tunes
-    let markdownWithoutTunes = result.markdown
+    const tunes: BlockTuneData = result.tunes
+    const markdownWithoutTunes = result.markdown
 
     const lines = markdownWithoutTunes.split('\n')
-    let i = 0
     let caption = ''
     let quoteText = ''
     let inQuote = true
@@ -52,7 +51,6 @@ export default class Quote extends QuoteTool {
       if (line.trim().startsWith('>')) {
         quoteText += line.trim().replace(/^>\s?/, '') + '<br>'
       }
-      i++
     }
 
     caption = caption.trim()

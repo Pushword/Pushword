@@ -42,7 +42,7 @@ export default class AlignmentTune {
   getAlignment(): string {
     if (
       this.settings?.blocks &&
-      this.settings.blocks.hasOwnProperty(this.block.name) &&
+      Object.prototype.hasOwnProperty.call(this.settings.blocks, this.block.name) &&
       typeof this.block.name === 'string'
     ) {
       return this.settings.blocks[this.block.name] ?? AlignmentTune.DEFAULT_ALIGNMENT

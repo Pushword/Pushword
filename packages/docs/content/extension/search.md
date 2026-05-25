@@ -67,6 +67,30 @@ Both triggers ship out of the box:
   build via `index_on_static`). Until then, freshly imported content won't
   appear in search results.
 
+### Moving reindexing off the request (async)
+
+By default the reindex message is unrouted, so it runs synchronously: each save
+absorbs one content render. That is the right default — it keeps the "SQLite,
+zero infra" promise (no worker to run) and makes a saved page searchable
+immediately. If you script many individual saves and the per-save render hurts,
+route the messages to an async transport with standard Messenger routing — no
+bundle config needed:
+
+```yaml
+# config/packages/messenger.yaml
+framework:
+  messenger:
+    routing:
+      'Pushword\Search\Message\ReindexPageMessage': async
+      'Pushword\Search\Message\RemovePageMessage': async
+```
+
+Two consequences: you must run a worker (`php bin/console messenger:consume`),
+and indexing becomes eventually consistent — a saved page appears in search only
+once the worker processes it. Bulk imports are unaffected: the suppressor skips
+dispatching during `flat:sync`/`PageCacheSuppressor::suppress()`, so nothing is
+queued there in the first place.
+
 ## Querying
 
 ### Dynamic & page-cache sites

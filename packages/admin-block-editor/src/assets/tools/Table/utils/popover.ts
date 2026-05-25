@@ -68,7 +68,7 @@ export default class Popover {
         textContent: item.label
       });
 
-      itemEl.dataset.index = index as any;
+      itemEl.dataset.index = String(index);
 
       itemEl.appendChild(icon);
       itemEl.appendChild(label);
@@ -103,8 +103,12 @@ export default class Popover {
       return;
     }
 
-    const clickedItemIndex = clickedItem.dataset.index as any;
+    const clickedItemIndex = Number(clickedItem.dataset.index);
     const item = this.items[clickedItemIndex];
+
+    if (!item) {
+      return;
+    }
 
     if (item.confirmationRequired && !this.hasConfirmationState(clickedItem)) {
       this.setConfirmationState(clickedItem);

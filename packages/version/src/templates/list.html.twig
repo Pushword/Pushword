@@ -1,9 +1,9 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block title %}{{ page.slug }} › {{ 'versionVersions'|trans }}{% endblock %}
+{% block title %}{{ entity.slug }} › {{ 'versionVersions'|trans }}{% endblock %}
 
 {% block actions %}
-    <a class="btn btn-danger" href="{{ path('admin_version_reset', {id: page.id}) }}">
+    <a class="btn btn-danger" href="{{ path('admin_version_reset', {type: type, id: entity.id}) }}">
         <i class="fa fa-trash" aria-hidden="true"></i> {{ 'versionReset'|trans }}
     </a>
 {% endblock %}
@@ -11,7 +11,7 @@
 {% block content_title %}
   <div style="line-height: 1;">
     {{ 'versionVersions'|trans }}<br>
-    <span style="font-size:14px"> › <a href="{{ path('admin_page_edit', {id: page.id}) }}" class="link-primary ">{{ page.slug }}</a></span>
+    <span style="font-size:14px"> › {{ entity.slug }}</span>
   </div>
 {% endblock %}
 
@@ -28,24 +28,24 @@
                 </tr>
             </thead>
             <tbody>
-            {% for version, p in pages|reverse(true) %}
+            {% for version, v in versions|reverse(true) %}
                 <tr>
                     <td>
-                        <a class="link-primary" href="{{ path('admin_version_compare', {id: page.id, versionLeft: version, versionRight: 'current'}) }}">
-                            {{ p.h1|default(p.title) }}
+                        <a class="link-primary" href="{{ path('admin_version_compare', {type: type, id: entity.id, versionLeft: version, versionRight: 'current'}) }}">
+                            {{ attribute(v, 'h1')|default('') ?: (attribute(v, 'title')|default('') ?: v.name|default(v.slug)) }}
                         </a>
                     </td>
                     <td class="text-muted">
-                        {{ p.updatedAt|date }}{{ p.editedBy ? ' (<small>' ~ p.editedBy.username ~ '</small>)' : '' }}
+                        {{ v.updatedAt|date }}{{ attribute(v, 'editedBy')|default(null) ? ' (<small>' ~ v.editedBy.username ~ '</small>)' : '' }}
                     </td>
                     <td class="text-muted">
-                        {{ p.editMessage }}
+                        {{ attribute(v, 'editMessage')|default('') }}
                     </td>
                     <td class="text-end">
-                        <a href="{{ path('admin_version_compare', {id: page.id, versionLeft: version, versionRight: 'current'}) }}" class="btn btn-outline-primary btn-sm px-2 me-1" title="{{ 'versionCompare'|trans }}">
+                        <a href="{{ path('admin_version_compare', {type: type, id: entity.id, versionLeft: version, versionRight: 'current'}) }}" class="btn btn-outline-primary btn-sm px-2 me-1" title="{{ 'versionCompare'|trans }}">
                             <i class="fa fa-code-compare" aria-hidden="true"></i> {{ 'versionCompare'|trans }}
                         </a>
-                        <a href="{{ path('admin_version_load', {id: page.id, version: version}) }}" class="btn btn-outline-secondary btn-sm px-2">
+                        <a href="{{ path('admin_version_load', {type: type, id: entity.id, version: version}) }}" class="btn btn-outline-secondary btn-sm px-2">
                             <i class="fa fa-edit me-2" aria-hidden="true"></i> {{ 'versionSwitch'|trans }}
                         </a>
                     </td>

@@ -1,4 +1,4 @@
-import './index.pcss'
+import './Attaches.pcss'
 import make from '../utils/make'
 import { API, BlockAPI, BlockToolData } from '@editorjs/editorjs'
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
@@ -10,6 +10,7 @@ import {
   MediaNodes,
   MediaToolConfig,
   STATUS,
+  UploadResponse,
 } from '../Abstract/AbstractMediaTool'
 import he from 'he'
 
@@ -31,9 +32,7 @@ export interface AttachesDataToNormalize extends BlockToolData {
   }
 }
 
-export interface AttachesNodes extends MediaNodes {
-  // ...
-}
+export type AttachesNodes = MediaNodes
 
 export default class Attaches extends AbstractMediaTool {
   public nodes: AttachesNodes
@@ -118,14 +117,14 @@ export default class Attaches extends AbstractMediaTool {
     return this.data.title !== '' || this.data.file.media !== ''
   }
 
-  onUpload(response: any): void {
+  onUpload(response: UploadResponse): void {
     if (!this.responsIsValid(response)) {
       return this.handleUploadError('incorrect response: ' + JSON.stringify(response))
     }
 
     this.data.file.media = response.file.media
     this.data.title = response.file.name || response.file.title || ''
-    this.data.file.size = response.file.size
+    this.data.file.size = response.file.size ?? 0
 
     this.showFileData()
 
@@ -223,7 +222,7 @@ export default class Attaches extends AbstractMediaTool {
 
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
-    let tunes: BlockTuneData = result.tunes
+    const tunes: BlockTuneData = result.tunes
     markdown = result.markdown
 
     const properties = MarkdownUtils.extractTwigFunctionProperties('attaches', markdown)

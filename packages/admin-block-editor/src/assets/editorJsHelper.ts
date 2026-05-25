@@ -69,8 +69,6 @@ export class editorJsHelper {
     action: 'select' | 'upload' = 'select',
     inlineImageFieldSelector: string = '[id*="inline_image"]',
   ): void {
-    console.log('abstractOn called', { action, inlineImageFieldSelector })
-
     const selectElement = document.querySelector(
       'select' + inlineImageFieldSelector,
     ) as HTMLSelectElement | null
@@ -226,7 +224,6 @@ export class editorJsHelper {
   }
 
   onSelectFile(Tool: ToolWithCallbacks, event: Event): void {
-    console.log('editorJsHelper.onSelectFile called')
     editorJsHelper.abstractOn(Tool, event, 'select', '[id*="inline_attaches"]')
   }
 
@@ -239,7 +236,6 @@ export class editorJsHelper {
   }
 
   onUploadFile(Tool: ToolWithCallbacks, event: Event): void {
-    console.log('editorJsHelper.onUploadFile called')
     editorJsHelper.abstractOn(Tool, event, 'upload', '[id*="inline_attaches"]')
   }
 

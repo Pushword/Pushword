@@ -123,7 +123,7 @@ export class MarkdownUtils {
 
   static retrieveMarkdownWithoutTunes(markdown: string): string {
     markdown = markdown.trim()
-    let lines = markdown.split('\n')
+    const lines = markdown.split('\n')
     const firstLine = lines[0] ?? ''
 
     // Parse attributes if present
@@ -140,7 +140,7 @@ export class MarkdownUtils {
     markdown: string
   } {
     markdown = markdown.trim()
-    let lines = markdown.split('\n')
+    const lines = markdown.split('\n')
     const firstLine = lines[0] ?? ''
     let tunes: BlockTuneData = {}
 
@@ -581,7 +581,7 @@ export class MarkdownUtils {
       })
 
       return formatted.trim()
-    } catch (error) {
+    } catch {
       console.error('Erreur lors du formatage Prettier du Markdown', {
         content: markdownContent,
       })
