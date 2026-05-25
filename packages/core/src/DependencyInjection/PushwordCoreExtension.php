@@ -56,6 +56,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
         $this->registerResolveTargetEntities($container);
         $this->registerDqlFunctions($container);
         $this->registerDefaultWorkflow($container);
+        $this->registerMarkdownCachePool($container);
     }
 
     /**
@@ -89,6 +90,27 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
                         'submit' => ['from' => 'draft', 'to' => 'in_review'],
                         'approve' => ['from' => 'in_review', 'to' => 'approved', 'guard' => "is_granted('ROLE_EDITOR')"],
                         'request_changes' => ['from' => ['in_review', 'approved'], 'to' => 'draft'],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Dedicated filesystem pool for cached markdown→HTML fragments. Uses
+     * filesystem (not cache.app, which is often APCu) so the cache persists
+     * across CLI invocations — e.g. pw:page-scan — as well as web requests.
+     * Fragments never expire on their own; they are keyed on a version token
+     * that changes when the rendering inputs change.
+     */
+    private function registerMarkdownCachePool(ContainerBuilder $container): void
+    {
+        $container->prependExtensionConfig('framework', [
+            'cache' => [
+                'pools' => [
+                    'cache.pushword_markdown' => [
+                        'adapter' => 'cache.adapter.filesystem',
+                        'default_lifetime' => 0,
                     ],
                 ],
             ],
