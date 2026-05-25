@@ -6,6 +6,8 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Search\Event\SearchDocumentEvent;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Feeds pages into the per-host Loupe index.
@@ -20,6 +22,7 @@ final readonly class Indexer
         private PageRepository $pageRepository,
         private PushwordRouteGenerator $routeGenerator,
         private SiteRegistry $siteRegistry,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -101,7 +104,7 @@ final readonly class Indexer
      */
     private function buildDocument(Page $page): array
     {
-        return [
+        $document = [
             'id' => $page->id,
             'host' => $page->host,
             'locale' => $page->locale,
@@ -112,5 +115,7 @@ final readonly class Indexer
             'tags' => $page->getTagList(),
             'content' => $this->textExtractor->extract($page),
         ];
+
+        return $this->eventDispatcher->dispatch(new SearchDocumentEvent($document, $page))->getDocument();
     }
 }

@@ -6,6 +6,7 @@ use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Search\Event\SearchDocumentEvent;
 use Pushword\Search\Service\Indexer;
 use Pushword\Search\Service\Searcher;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -63,6 +64,7 @@ final class SearchIndexTest extends KernelTestCase
 
         $em->persist($page);
         $em->flush();
+
         $pageId = $page->id;
 
         $afterSave = $searcher->search(self::HOST, $nonce);
@@ -88,6 +90,7 @@ final class SearchIndexTest extends KernelTestCase
 
         $em->persist($page);
         $em->flush();
+
         $pageId = $page->id;
 
         try {
@@ -130,6 +133,78 @@ final class SearchIndexTest extends KernelTestCase
         $searcher = self::getContainer()->get(Searcher::class);
 
         self::assertSame(0, $searcher->search(self::HOST, '   ')['totalHits']);
+    }
+
+    /**
+     * Extension seam: a listener appends a custom attribute to the document and
+     * it round-trips back into the search hit (retrieved via `*`).
+     */
+    public function testEventListenerContributesCustomAttribute(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $searcher = $container->get(Searcher::class);
+
+        $container->get('event_dispatcher')->addListener(
+            SearchDocumentEvent::class,
+            static fn (SearchDocumentEvent $event) => $event->setAttribute('productCode', 'FRALP'.$event->getPage()->id),
+        );
+
+        $nonce = 'evtnonce'.bin2hex(random_bytes(4));
+        $page = $this->createPage($nonce);
+        $em->persist($page);
+        $em->flush();
+
+        try {
+            $container->get(Indexer::class)->reindexHost(self::HOST);
+            $hits = $searcher->search(self::HOST, $nonce)['hits'];
+            $hit = array_filter($hits, static fn (array $h): bool => $h['id'] === $page->id);
+
+            self::assertSame('FRALP'.$page->id, array_values($hit)[0]['productCode']);
+        } finally {
+            $em->remove($page);
+            $em->flush();
+        }
+    }
+
+    /**
+     * Extension seam: an extra filter narrows results and facets aggregate, both
+     * over a filterable attribute (`tags` here, a custom one for a real catalog).
+     */
+    public function testExtraFilterAndFacetsOverFilterableAttribute(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $searcher = $container->get(Searcher::class);
+
+        $nonce = 'facnonce'.bin2hex(random_bytes(4));
+        $hard = $this->createPage($nonce);
+        $hard->setTags('hard');
+
+        $easy = $this->createPage($nonce.'b');
+        $easy->setTags('easy');
+        $easy->setMainContent('A unique marker '.$nonce.' used by the full-text search test.');
+
+        $em->persist($hard);
+        $em->persist($easy);
+        $em->flush();
+
+        try {
+            $container->get(Indexer::class)->reindexHost(self::HOST);
+
+            $filtered = $searcher->search(self::HOST, $nonce, filter: "tags = 'hard'", facets: ['tags']);
+            $ids = array_column($filtered['hits'], 'id');
+
+            self::assertContains($hard->id, $ids);
+            self::assertNotContains($easy->id, $ids);
+            self::assertArrayHasKey('tags', $filtered['facets']);
+        } finally {
+            $em->remove($hard);
+            $em->remove($easy);
+            $em->flush();
+        }
     }
 
     private function createPage(string $nonce, string $locale = 'en'): Page

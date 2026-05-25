@@ -13,6 +13,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autoconfigure()
         ->bind('string $indexDir', '%pw.search.index_dir%')
         ->bind('int $resultsPerPage', '%pw.search.results_per_page%')
+        ->bind('array $searchableAttributes', '%pw.search.searchable_attributes%')
+        ->bind('array $filterableAttributes', '%pw.search.filterable_attributes%')
         ->bind('string $staticMode', '%pw.search.static_mode%')
         ->bind('bool $incremental', '%pw.search.incremental%')
         ->bind('bool $indexOnStatic', '%pw.search.index_on_static%');

@@ -79,9 +79,55 @@ search:
   incremental: true       # reindex a page on save/delete (Messenger)
   index_on_static: true   # build the index during pw:static
   static_mode: both       # endpoint | json | both
+  searchable_attributes: [title, h1, tags, content] # full-text fields, by descending weight
+  filterable_attributes: [host, locale, tags]       # usable in filters and facets
+```
+
+## Indexing custom metadata
+
+To search, filter or facet on your own fields (e.g. a product catalog with
+`productCode`, `difficulty`, `price`), do two things:
+
+1. **Declare the attributes** in `searchable_attributes` (to rank on them) and/or
+   `filterable_attributes` (to filter and facet on them).
+2. **Contribute the values** with a listener on `SearchDocumentEvent`, dispatched
+   once per page while its document is built:
+
+```php
+use Pushword\Search\Event\SearchDocumentEvent;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+#[AsEventListener]
+final readonly class ProductSearchDocumentListener
+{
+    public function __invoke(SearchDocumentEvent $event): void
+    {
+        $product = $this->products->forPage($event->getPage());
+        if (null === $product) {
+            return;
+        }
+
+        $event->setAttribute('productCode', $product->code);
+        $event->setAttribute('difficulty', $product->difficulty);
+        $event->setAttribute('price', $product->price);
+    }
+}
+```
+
+Then query with extra filters and facets — custom attributes are returned on each
+hit automatically (all stored attributes are retrieved):
+
+```php
+$searcher->search(
+    $host, $query,
+    filter: "difficulty = 'hard' AND price < 1000",
+    facets: ['difficulty', 'destination'],
+);
+// $result['facets'] holds the distribution per faceted attribute
 ```
 
 ## Non-goals
 
-No Elasticsearch/OpenSearch adapter (defeats the zero-infra point), no faceted
-search UI beyond host/tag, no search analytics.
+No Elasticsearch/OpenSearch adapter (defeats the zero-infra point), no built-in
+faceted search UI (the building blocks — filters, facets, custom attributes — are
+exposed; the UI is yours), no search analytics.

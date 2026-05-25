@@ -17,17 +17,6 @@ use function Safe\preg_replace;
  */
 final class IndexManager
 {
-    /**
-     * Searchable attributes, ordered by descending weight: headings rank above
-     * the body, so document structure — not markup — drives ranking.
-     *
-     * @var list<string>
-     */
-    public const array SEARCHABLE_ATTRIBUTES = ['title', 'h1', 'tags', 'content'];
-
-    /** @var list<string> */
-    public const array FILTERABLE_ATTRIBUTES = ['host', 'locale', 'tags'];
-
     /** @var array<string, Loupe> */
     private array $indexes = [];
 
@@ -35,9 +24,15 @@ final class IndexManager
 
     private readonly string $indexDir;
 
+    /**
+     * @param list<string> $searchableAttributes ordered by descending weight, so document structure drives ranking
+     * @param list<string> $filterableAttributes
+     */
     public function __construct(
         private readonly SiteRegistry $siteRegistry,
         string $indexDir,
+        private readonly array $searchableAttributes,
+        private readonly array $filterableAttributes,
     ) {
         // ParaTest isolates the index dir per worker to avoid SQLite races on
         // a shared var/search, mirroring the static generator's cache dir.
@@ -89,8 +84,8 @@ final class IndexManager
     {
         return LoupeConfiguration::create()
             ->withPrimaryKey('id')
-            ->withSearchableAttributes(self::SEARCHABLE_ATTRIBUTES)
-            ->withFilterableAttributes(self::FILTERABLE_ATTRIBUTES)
+            ->withSearchableAttributes($this->searchableAttributes)
+            ->withFilterableAttributes($this->filterableAttributes)
             ->withLanguages($this->siteRegistry->get($host)->getLocales());
     }
 
