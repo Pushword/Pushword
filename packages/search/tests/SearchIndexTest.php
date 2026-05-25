@@ -169,6 +169,38 @@ final class SearchIndexTest extends KernelTestCase
     }
 
     /**
+     * The same custom attribute must also be indexed on the incremental path
+     * (a normal admin save → Messenger → indexPage), not just on full reindex.
+     */
+    public function testEventListenerContributesOnIncrementalSave(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $searcher = $container->get(Searcher::class);
+
+        $container->get('event_dispatcher')->addListener(
+            SearchDocumentEvent::class,
+            static fn (SearchDocumentEvent $event) => $event->setAttribute('productCode', 'INC'.$event->getPage()->id),
+        );
+
+        $nonce = 'incattr'.bin2hex(random_bytes(4));
+        $page = $this->createPage($nonce);
+        $em->persist($page);
+        $em->flush();
+
+        try {
+            $hits = $searcher->search(self::HOST, $nonce)['hits'];
+            $hit = array_filter($hits, static fn (array $h): bool => $h['id'] === $page->id);
+
+            self::assertSame('INC'.$page->id, array_values($hit)[0]['productCode']);
+        } finally {
+            $em->remove($page);
+            $em->flush();
+        }
+    }
+
+    /**
      * Extension seam: an extra filter narrows results and facets aggregate, both
      * over a filterable attribute (`tags` here, a custom one for a real catalog).
      */
