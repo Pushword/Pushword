@@ -7,7 +7,9 @@ use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Search\Event\SearchDocumentEvent;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Throwable;
 
 /**
  * Feeds pages into the per-host Loupe index.
@@ -23,6 +25,7 @@ final readonly class Indexer
         private PushwordRouteGenerator $routeGenerator,
         private SiteRegistry $siteRegistry,
         private EventDispatcherInterface $eventDispatcher,
+        private ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -80,7 +83,21 @@ final readonly class Indexer
             return;
         }
 
-        $loupe->addDocument($this->buildDocument($page));
+        // Building the document renders the page body; a page whose content
+        // can't render (e.g. not-yet-converted block-editor JSON) must not abort
+        // the save that triggered this incremental reindex. Skip it instead.
+        try {
+            $document = $this->buildDocument($page);
+        } catch (Throwable $throwable) {
+            $this->logger?->warning('Search: skipped reindexing page {id} — {error}', [
+                'id' => $page->id,
+                'error' => $throwable->getMessage(),
+            ]);
+
+            return;
+        }
+
+        $loupe->addDocument($document);
     }
 
     public function removePage(int $pageId, string $host): void

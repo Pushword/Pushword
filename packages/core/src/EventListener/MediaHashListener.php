@@ -23,6 +23,14 @@ final readonly class MediaHashListener
 
         if (null === $media->getMediaFile() && '' !== $media->getFileName()) {
             $localPath = $this->mediaStorage->getLocalPath($media->getFileName());
+
+            // A media can be persisted while its physical file is (temporarily) absent
+            // — concurrent deletes, remote storage, pending uploads. Hashing a missing
+            // file must not abort the whole flush; leave the hash unset instead.
+            if (! is_file($localPath)) {
+                return;
+            }
+
             $media->setHash(sha1_file($localPath, true));
         } else {
             $media->setHash();
