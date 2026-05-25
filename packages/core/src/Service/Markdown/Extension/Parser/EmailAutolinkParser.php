@@ -20,8 +20,9 @@ final class EmailAutolinkParser implements InlineParserInterface
 
     public function getMatchDefinition(): InlineParserMatch
     {
-        // On match tous les caractères alphanumériques qui pourraient commencer un email
-        return InlineParserMatch::regex('[A-Za-z0-9._+-]');
+        // On ne s'intéresse qu'aux débuts d'email plausibles (partie locale suivie
+        // d'un '@' et d'un domaine), pour ne pas être consulté à chaque caractère.
+        return InlineParserMatch::regex('[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}');
     }
 
     public function parse(InlineParserContext $inlineContext): bool

@@ -63,9 +63,10 @@ class MarkdownParser
      * The input is the post-Twig block text, so any dynamic content (snippets,
      * page lists, galleries) is already baked into $text and thus into the cache
      * key. The only convert-time dependency left is media (image rendering),
-     * covered by the media version token. date() shortcodes are cached as-is:
-     * the slight staleness is acceptable and the fragment refreshes whenever the
-     * page is saved or the media version bumps.
+     * covered by the media version token — but only for fragments that actually
+     * contain a Markdown image (see cacheKeyVersion()). date() shortcodes are
+     * cached as-is: the slight staleness is acceptable and the fragment refreshes
+     * whenever the page is saved or (for image fragments) the media version bumps.
      */
     #[AsTwigFilter('markdown', isSafe: ['html'])]
     public function transform(string $text): string
@@ -75,7 +76,7 @@ class MarkdownParser
         }
 
         try {
-            $item = $this->cache->getItem('pw_md.'.hash('xxh3', $this->cacheVersion().'|'.$text));
+            $item = $this->cache->getItem('pw_md.'.hash('xxh3', $this->cacheKeyVersion($text).'|'.$text));
             if ($item->isHit()) {
                 /** @var string */
                 return $item->get();
@@ -90,6 +91,25 @@ class MarkdownParser
             // A cache backend hiccup must never break rendering.
             return $this->converter->convert($text)->__toString();
         }
+    }
+
+    /**
+     * Version token for a fragment's cache key.
+     *
+     * Image rendering (Markdown `![](…)` → ImageRenderer → media table) is the
+     * only convert-time media dependency. A fragment with no Markdown image is
+     * media-independent: it keeps the bare parser version and stays cached across
+     * media writes. Only image-bearing fragments mix in the media version. Raw
+     * `<img>` HTML (e.g. from gallery shortcodes already expanded by Twig) is
+     * emitted verbatim by CommonMark, so it is media-independent here too.
+     */
+    private function cacheKeyVersion(string $text): string
+    {
+        if (! str_contains($text, '![')) {
+            return (string) self::CACHE_VERSION;
+        }
+
+        return $this->cacheVersion();
     }
 
     /**
