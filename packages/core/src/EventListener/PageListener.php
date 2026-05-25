@@ -7,6 +7,7 @@ use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
+use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
@@ -34,6 +35,7 @@ final class PageListener
         private readonly Security $security,
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
         private readonly TailwindGenerator $tailwindGenerator,
+        private readonly PageCacheSuppressor $cacheSuppressor,
         private readonly bool $requireApprovalBeforePublish = false,
     ) {
     }
@@ -54,7 +56,7 @@ final class PageListener
         $this->setIdAsSlugIfNotDefined($page);
         $this->updatePageEditor($page);
         $this->gatePublishing($page);
-        $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
+        $this->generateOpenGraphImage($page);
     }
 
     public function postPersist(Page $page): void
@@ -76,8 +78,23 @@ final class PageListener
 
         $this->updatePageEditor($page);
         $this->gatePublishing($page, $event);
-        $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
+        $this->generateOpenGraphImage($page);
         $this->detectSlugChange($page, $event);
+    }
+
+    /**
+     * Generate the page's Open Graph preview image, unless a bulk operation is in
+     * progress (e.g. flat import): generating one Imagick image per page leaks
+     * gigabytes of off-heap ImageMagick memory across thousands of pages. When
+     * suppressed, the image is regenerated lazily on first render via MediaExtension.
+     */
+    private function generateOpenGraphImage(Page $page): void
+    {
+        if ($this->cacheSuppressor->isSuppressed()) {
+            return;
+        }
+
+        $this->pageOpenGraphImageGenerator->setPage($page)->generatePreviewImage();
     }
 
     private function updatePageEditor(Page $page): void

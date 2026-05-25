@@ -4,6 +4,7 @@ namespace Pushword\Core\Tests\EventListener;
 
 use DateTime;
 use PHPUnit\Framework\TestCase;
+use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\EventListener\PageListener;
@@ -80,6 +81,7 @@ final class PageWorkflowTest extends TestCase
             $security,
             $ogGenerator,
             self::createStub(TailwindGenerator::class),
+            new PageCacheSuppressor(),
             $requireApproval,
         );
     }
