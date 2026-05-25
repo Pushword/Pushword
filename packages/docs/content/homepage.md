@@ -117,23 +117,26 @@ raw: 1
           <li>Markdown with YAML frontmatter</li>
         </ul>
         <pre class="font-mono text-xs leading-relaxed bg-stone-900 text-stone-300 rounded-md p-4 overflow-x-auto"><span class="text-stone-500">---</span>
+
 <span class="text-[oklch(70%_0.13_35)]">title:</span> <span class="text-stone-100">'My Article'</span>
 <span class="text-[oklch(70%_0.13_35)]">publishedAt:</span> <span class="text-stone-100">'2025-01-15'</span>
 <span class="text-stone-500">---</span>
 Your content here...</pre>
-      </div>
-      <div>
-        <h3 class="text-xs font-semibold tracking-widest uppercase text-stone-500 mb-2">For content editors</h3>
-        <p class="text-lg font-semibold mb-3 text-stone-900 dark:text-stone-100">Admin dashboard</p>
-        <ul class="text-stone-600 dark:text-stone-300 space-y-1.5 mb-5 text-[15px]">
-          <li>Notion-style block editor</li>
-          <li>Drag and drop media (auto WebP)</li>
-          <li>Page versioning with diff view</li>
-          <li>Multi-site management</li>
-        </ul>
-        <img src="/media/admin-pagelist.png" alt="Pushword admin page list" class="w-full rounded-md border border-stone-200 dark:border-stone-800">
-      </div>
-    </div>
+
+</div>
+<div>
+<h3 class="text-xs font-semibold tracking-widest uppercase text-stone-500 mb-2">For content editors</h3>
+<p class="text-lg font-semibold mb-3 text-stone-900 dark:text-stone-100">Admin dashboard</p>
+<ul class="text-stone-600 dark:text-stone-300 space-y-1.5 mb-5 text-[15px]">
+<li>Notion-style block editor</li>
+<li>Drag and drop media (auto WebP)</li>
+<li>Page versioning with diff view</li>
+<li>Multi-site management</li>
+</ul>
+<img src="/media/admin-pagelist.png" alt="Pushword admin page list" class="w-full rounded-md border border-stone-200 dark:border-stone-800">
+</div>
+</div>
+
   </div>
 </section>
 
@@ -158,7 +161,7 @@ Your content here...</pre>
     <h2 class="text-3xl md:text-4xl font-semibold tracking-tight mb-10 text-stone-900 dark:text-stone-100">Real sites, real performance.</h2>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <a href="https://altimood.com" class="block group">
+      <a href="https://us.altimood.com" class="block group">
         <div class="rounded-md border border-stone-200 dark:border-stone-800 overflow-hidden group-hover:border-stone-400 dark:group-hover:border-stone-600">
           <img src="/media/altimood.png" alt="altimood.com" class="w-full">
         </div>
@@ -176,13 +179,14 @@ Your content here...</pre>
         </div>
         <span class="block mt-2 text-sm text-stone-600 dark:text-stone-400 group-hover:text-stone-900 dark:group-hover:text-stone-100">piedweb.com</span>
       </a>
-      <a href="https://piedvert.com" class="block group">
+      <a href="https://en.piedvert.com" class="block group">
         <div class="rounded-md border border-stone-200 dark:border-stone-800 overflow-hidden group-hover:border-stone-400 dark:group-hover:border-stone-600">
           <img src="/media/piedvert.png" alt="piedvert.com" class="w-full">
         </div>
         <span class="block mt-2 text-sm text-stone-600 dark:text-stone-400 group-hover:text-stone-900 dark:group-hover:text-stone-100">piedvert.com</span>
       </a>
     </div>
+
   </div>
 </section>
 
