@@ -26,6 +26,7 @@
     "editorjs-inline-tool": "^0.4",
     "editorjs-style": "^3.0",
     "editorjs-undo": "^2",
+    "happy-dom": "^20.9.0",
     "monaco-editor": "^0.54",
     "postcss": "^8.4",
     "postcss-nested": "^7.0",
@@ -33,14 +34,17 @@
     "terser": "^5.24",
     "typescript": "^5.7.2",
     "vite": "^7",
-    "vite-plugin-svgr": "^4.5.0"
+    "vite-plugin-svgr": "^4.5.0",
+    "vitest": "^3"
   },
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "build": "vite build",
     "build:converter": "vite build --config vite.config.converter.js && rm src/Command/convert-json-to-markdown-built/style.css",
-    "watch": "vite build --watch"
+    "watch": "vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "hast-util-to-mdast": "^10.1.2",

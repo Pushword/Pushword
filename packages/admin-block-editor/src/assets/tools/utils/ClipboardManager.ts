@@ -38,8 +38,23 @@ export default class ClipboardManager {
     }
 
     private initialize(): void {
+        this.initializeCopyShortcut()
         this.initializeCopyListener()
         this.initializePasteListener()
+    }
+
+    private initializeCopyShortcut(): void {
+        // When blocks are selected (e.g. via the block-settings button), the
+        // block-tunes popover consumes the Ctrl/Cmd+C keystroke — it closes and
+        // clears the selection before the native `copy` event (or any document
+        // handler) fires, so handleCopy finds nothing. Catch the shortcut at
+        // keydown on `window`: a window-capture listener runs before Editor.js'
+        // own document-level handlers, while the selection is still intact.
+        window.addEventListener(
+            'keydown',
+            (event: KeyboardEvent) => this.handleCopyShortcut(event),
+            true, // capture phase — run before the popover handles the key
+        )
     }
 
     private initializeCopyListener(): void {
@@ -49,6 +64,38 @@ export default class ClipboardManager {
             (event: ClipboardEvent) => this.handleCopy(event),
             true, // capture phase
         )
+    }
+
+    /**
+     * Copy block-selected content via the Ctrl/Cmd+C shortcut, before the
+     * block-tunes popover clears the selection. Only acts on a pure block
+     * selection (no text range) — inline/text copy is left to the copy event.
+     */
+    private handleCopyShortcut(event: KeyboardEvent): void {
+        const isCopy = (event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'C')
+        if (!isCopy) return
+
+        // A real text selection is handled by the native copy event.
+        const selection = window.getSelection()
+        if (selection && selection.rangeCount > 0 && !selection.isCollapsed) return
+
+        const target = event.target as Element
+        if (target?.closest('.monaco-editor') || target?.closest('[data-editor]')) return
+
+        const editorHolder = target?.closest('[id^="editorjs_"]') || document.querySelector('[id^="editorjs_"]')
+        if (!editorHolder) return
+
+        const selectedBlocks = editorHolder.querySelectorAll('.ce-block--selected')
+        if (selectedBlocks.length === 0) return
+
+        const { markdown, html } = this.extractBlocksMarkdown(selectedBlocks)
+        if (!markdown) return
+
+        // Own the shortcut: preventDefault stops the browser firing the (now
+        // useless) copy event, so we don't double-handle a cleared selection.
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        this.writeToClipboard(markdown, html)
     }
 
     private initializePasteListener(): void {
@@ -143,8 +190,10 @@ export default class ClipboardManager {
             return
         }
 
-        // Single block selection - still need to extract full block formatting
-        if (blocksInSelection.length === 1) {
+        // Single block selection - still need to extract full block formatting.
+        // A selection confined to one table cell is an inline-text copy, not a
+        // whole-table copy: fall through to the inline handling below.
+        if (blocksInSelection.length === 1 && !this.isSelectionWithinTableCell(selection)) {
             const block = blocksInSelection[0]
             if (block) {
                 const result = this.extractBlockContent(block)
@@ -196,23 +245,11 @@ export default class ClipboardManager {
      * Synchronously extracts and converts content to markdown
      */
     private handleBlockSelection(event: ClipboardEvent, selectedBlocks: NodeListOf<Element>): void {
-        const markdownParts: string[] = []
-        const htmlParts: string[] = []
+        const { markdown, html } = this.extractBlocksMarkdown(selectedBlocks)
 
-        selectedBlocks.forEach((block) => {
-            const result = this.extractBlockContent(block)
-            if (result) {
-                markdownParts.push(result.markdown)
-                htmlParts.push(result.html)
-            }
-        })
-
-        if (markdownParts.length === 0) {
+        if (!markdown) {
             return
         }
-
-        const markdown = markdownParts.join('\n\n')
-        const html = htmlParts.join('<br><br>')
 
         // Prevent default and stop immediate propagation to prevent any other handlers
         event.preventDefault()
@@ -225,6 +262,24 @@ export default class ClipboardManager {
 
         // Also use async clipboard API as backup
         this.writeToClipboard(markdown, html)
+    }
+
+    /**
+     * Extract and join the markdown (and html) of a set of selected blocks.
+     */
+    private extractBlocksMarkdown(blocks: ArrayLike<Element>): { markdown: string; html: string } {
+        const markdownParts: string[] = []
+        const htmlParts: string[] = []
+
+        Array.from(blocks).forEach((block) => {
+            const result = this.extractBlockContent(block)
+            if (result) {
+                markdownParts.push(result.markdown)
+                htmlParts.push(result.html)
+            }
+        })
+
+        return { markdown: markdownParts.join('\n\n'), html: htmlParts.join('<br><br>') }
     }
 
     /**
@@ -460,6 +515,19 @@ export default class ClipboardManager {
     }
 
     /**
+     * Whether the selection is confined to a single table cell. Such a selection
+     * is plain inline text (copying a value out of a cell), not a whole-table copy.
+     */
+    private isSelectionWithinTableCell(selection: Selection): boolean {
+        if (selection.rangeCount === 0) return false
+        const commonAncestor = selection.getRangeAt(0).commonAncestorContainer
+        const element = commonAncestor.nodeType === Node.TEXT_NODE
+            ? commonAncestor.parentElement
+            : (commonAncestor as Element)
+        return !!element?.closest('.tc-cell')
+    }
+
+    /**
      * Get all blocks that are partially or fully within the current selection
      */
     private getBlocksInSelection(selection: Selection, editorHolder: Element): Element[] {
@@ -520,10 +588,12 @@ export default class ClipboardManager {
         const blockContent = element?.closest('.ce-block__content')
         if (!blockContent) return
 
-        // Skip if inside Monaco editor, Raw block, or CardList contenteditable
+        // Skip if inside Monaco editor, Raw block, CardList contenteditable, or a
+        // table cell — there, paste is inline text, never new blocks.
         if (element?.closest('.monaco-editor') ||
             element?.closest('.editorjs-monaco-wrapper') ||
-            element?.closest('.cdx-card-list')) return
+            element?.closest('.cdx-card-list') ||
+            element?.closest('.tc-cell')) return
 
         // Get clipboard content
         const plainText = event.clipboardData?.getData('text/plain') || ''
@@ -535,15 +605,18 @@ export default class ClipboardManager {
             return // PasteLink will handle this
         }
 
-        // When the plain text is already a markdown table, it is authoritative
-        // (this editor's own copies, or a pasted markdown table). Converting the
-        // accompanying HTML — e.g. our `tc-table` div grid, which `isRichTextHtml`
-        // flags — would shred the table into paragraphs and drop alignment/sticky.
-        const plainIsMarkdownTable = MarkdownUtils.retrieveMarkdownWithoutTunes(plainText).trimStart().startsWith('|')
+        // When the plain text already carries markdown, it is authoritative
+        // (this editor's own copies always export to markdown — single block or
+        // multi-block). Converting the accompanying HTML instead — e.g. our
+        // `tc-table` div grid, which isn't a real <table> — would shred tables
+        // into paragraphs and drop alignment/sticky. HTML conversion is only a
+        // fallback for genuine external rich text (Google Docs, Word, Sheets),
+        // whose plain text has no markdown syntax.
+        const plainHasMarkdown = this.detectMarkdownPatterns(MarkdownUtils.retrieveMarkdownWithoutTunes(plainText))
 
         // Try to convert HTML to markdown if it looks like rich text (Google Docs, Word, etc.)
         let textToProcess = plainText
-        if (!plainIsMarkdownTable && htmlText && this.isRichTextHtml(htmlText)) {
+        if (!plainHasMarkdown && htmlText && this.isRichTextHtml(htmlText)) {
             const convertedMarkdown = this.convertHtmlToMarkdown(htmlText)
             if (convertedMarkdown) {
                 textToProcess = convertedMarkdown
