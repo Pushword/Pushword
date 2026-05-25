@@ -21,6 +21,15 @@ use Symfony\Component\Yaml\Exception\ParseException;
 
 final class PageSync
 {
+    /**
+     * Content subdirectories owned by sibling entity syncs (e.g. SnippetSync's
+     * `pw-snippets/`). They hold their own Markdown files and must never be
+     * walked as pages.
+     *
+     * @var string[]
+     */
+    private const array RESERVED_DIRS = [SnippetSync::DIR];
+
     private int $deletedCount = 0;
 
     /** @var string[] */
@@ -198,6 +207,10 @@ final class PageSync
 
             $path = $dir.'/'.$entry;
             if (is_dir($path)) {
+                if (\in_array($entry, self::RESERVED_DIRS, true)) {
+                    continue;
+                }
+
                 $files = [...$files, ...$this->collectMarkdownFiles($path)];
 
                 continue;
@@ -301,6 +314,10 @@ final class PageSync
 
             $path = $dir.'/'.$entry;
             if (is_dir($path)) {
+                if (\in_array($entry, self::RESERVED_DIRS, true)) {
+                    continue;
+                }
+
                 if ($this->hasNewerFilesFast($path, $lastSyncTime)) {
                     return true;
                 }
@@ -342,6 +359,10 @@ final class PageSync
 
             $path = $dir.'/'.$file;
             if (is_dir($path)) {
+                if (\in_array($file, self::RESERVED_DIRS, true)) {
+                    continue;
+                }
+
                 if ($this->hasNewerFiles($path, $host, $slugIndex, $lastSyncTime)) {
                     return true;
                 }

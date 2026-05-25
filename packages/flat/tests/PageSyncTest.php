@@ -279,6 +279,39 @@ MD;
     }
 
     /**
+     * Markdown files under the pw-snippets/ directory belong to SnippetSync and
+     * must never be picked up as pages by the recursive page importer.
+     */
+    public function testSnippetsDirectoryIsNotImportedAsPages(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        $snippetsDir = $contentDir.'/pw-snippets';
+        if (! is_dir($snippetsDir)) {
+            mkdir($snippetsDir, 0o755, true);
+            $this->trackDir($snippetsDir);
+        }
+
+        $snippetFile = $snippetsDir.'/page-sync-isolation.md';
+        file_put_contents($snippetFile, "---\nname: Isolation\n---\n\nbody\n");
+        $this->trackFile($snippetFile);
+
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        self::assertNull(
+            $this->pageRepo->findOneBy(['slug' => 'pw-snippets/page-sync-isolation', 'host' => 'localhost.dev']),
+            'A file under pw-snippets/ must not become a page (relative path slug)',
+        );
+        self::assertNull(
+            $this->pageRepo->findOneBy(['slug' => 'page-sync-isolation', 'host' => 'localhost.dev']),
+            'A file under pw-snippets/ must not become a page (basename slug)',
+        );
+    }
+
+    /**
      * Test 6: Editing index.csv has no effect on import.
      */
     public function testIndexCsvIsReadOnly(): void

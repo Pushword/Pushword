@@ -109,6 +109,8 @@ GD is the fallback driver, bundled with PHP (`php-gd`). No extra installation ne
 - Configure the [colors and display](/themes) (also see [automatic tailwind run after page update](/manage-assets)).
 - Supercharge Pushword with [extensions](/extensions) or **custom development**
 
+{{ snippet('pro-support') }}
+
 ## Manual installation
 
 You can use `composer require pushword/core` in an existing Symfony Project. Have a look into `vendor/pushword/core/install.php` to finish manually the installation.
