@@ -158,6 +158,7 @@
     "stan": "vendor/bin/phpstan",
     "test": "./.scripts/test $*",
     "test-live": "PANTHER_NO_HEADLESS=1 PANTHER_NO_SANDBOX=1 composer test $*",
+    "test-mariadb": "PUSHWORD_TEST_MYSQL_URL='mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4' ./.scripts/test $*",
     "test-filter": "./.scripts/test --filter $*",
     "test-unit": "XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/phpunit --exclude-group integration --exclude-group panther",
     "test-coverage": "vendor/bin/phpunit --coverage-html coverage",

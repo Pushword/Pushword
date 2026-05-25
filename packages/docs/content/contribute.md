@@ -58,6 +58,24 @@ composer stan
 composer test
 ```
 
+The suite runs against SQLite by default. To run it against MariaDB/MySQL (catches
+portability issues SQLite hides, such as foreign-key enforcement):
+
+```
+composer test-mariadb
+```
+
+This requires a one-time setup of a `pushword` user owning a `pushword_test*` database
+prefix (each parallel worker gets its own `pushword_test_w<n>` database):
+
+```sql
+CREATE USER 'pushword'@'%' IDENTIFIED BY 'pushword';
+GRANT ALL PRIVILEGES ON `pushword\_test%`.* TO 'pushword'@'%';
+```
+
+The DSN lives in the `test-mariadb` script (`composer.json`); override it by exporting
+`PUSHWORD_TEST_MYSQL_URL` before running `composer test`.
+
 ### Other Requirements
 
 This attention would be nice :

@@ -99,10 +99,24 @@ if (false !== $testToken && '' !== $testToken) {
 $segment = '' !== $runId ? '/'.$runId : '';
 $testBaseDir = sys_get_temp_dir().'/com.github.pushword.pushword/tests'.$segment;
 
+// Optionally run the suite against MariaDB/MySQL instead of SQLite.
+// PUSHWORD_TEST_MYSQL_URL is a base DSN (e.g. mysql://user:pass@127.0.0.1:3306/pushword_test);
+// each parallel worker gets its own database via a "_w<token>" suffix on the database name.
+$mysqlBaseUrl = getenv('PUSHWORD_TEST_MYSQL_URL');
+$useMysql = false !== $mysqlBaseUrl && '' !== $mysqlBaseUrl;
+if ($useMysql) {
+    $dbSuffix = (false !== $testToken && '' !== $testToken) ? '_w'.$testToken : '';
+    $databaseUrl = str_contains($mysqlBaseUrl, '?')
+        ? preg_replace('/\?/', $dbSuffix.'?', $mysqlBaseUrl, 1) ?? $mysqlBaseUrl
+        : $mysqlBaseUrl.$dbSuffix;
+} else {
+    $databaseUrl = 'sqlite:///'.$testBaseDir.'/test.db';
+}
+
 // Export env vars used by the compiled container (pushword.php test config uses %env(...)%)
 $envVars = [
     'PUSHWORD_TEST_MEDIA_DIR' => '' !== $runId ? $testBaseDir.'/media' : $monoRepoBase.'/packages/skeleton/media',
-    'PUSHWORD_TEST_DATABASE_URL' => 'sqlite:///'.$testBaseDir.'/test.db',
+    'PUSHWORD_TEST_DATABASE_URL' => $databaseUrl,
     'PUSHWORD_TEST_FLAT_CONTENT_DIR' => '' !== $runId ? $testBaseDir.'/content/_host_' : $monoRepoBase.'/packages/skeleton/content/_host_',
     'PUSHWORD_TEST_VAR_DIR' => $testBaseDir.'/var',
 ];
@@ -156,12 +170,16 @@ setTestEnv('PUSHWORD_TEST_DB_CACHE_FILE', $cachedDbFile);
 $fs->mkdir($dbCacheDir);
 $fs->mkdir(\dirname($dbTargetPath));
 
-$lockHandle = fopen($lockFile, 'c+');
-if (false !== $lockHandle) {
-    flock($lockHandle, \LOCK_EX);
+// MariaDB/MySQL can't be served from the sqlite file cache; each run rebuilds its schema.
+$lockHandle = false;
+if (! $useMysql) {
+    $lockHandle = fopen($lockFile, 'c+');
+    if (false !== $lockHandle) {
+        flock($lockHandle, \LOCK_EX);
+    }
 }
 
-$cacheHit = file_exists($cachedDbFile);
+$cacheHit = ! $useMysql && file_exists($cachedDbFile);
 
 if ($cacheHit) {
     // Cache hit: copy pristine DB, skip Doctrine commands
@@ -187,7 +205,7 @@ if (! $cacheHit) {
         $application->run(new ArrayInput(['command' => $command] + $args), new ConsoleOutput());
     };
 
-    $runCommand('doctrine:database:drop', ['--no-interaction' => true, '--force' => true]);
+    $runCommand('doctrine:database:drop', ['--no-interaction' => true, '--force' => true, '--if-exists' => true]);
     $runCommand('doctrine:database:create', ['--no-interaction' => true, '--quiet' => true]);
     $runCommand('doctrine:schema:create', ['--quiet' => true]);
     $runCommand('doctrine:fixtures:load', ['--no-interaction' => true, '--append' => false]);
@@ -195,8 +213,8 @@ if (! $cacheHit) {
 
     unset($runCommand, $application);
 
-    // Save pristine DB to cache
-    if (file_exists($dbTargetPath)) {
+    // Save pristine DB to cache (sqlite only)
+    if (! $useMysql && file_exists($dbTargetPath)) {
         $fs->copy($dbTargetPath, $cachedDbFile, true);
     }
 
