@@ -108,6 +108,11 @@ final class PageUpdateNotifierTest extends KernelTestCase
 
         self::assertSame(NotificationStatus::WasEverRunSinceInterval, $notifier->run($this->getPage()));
 
+        // The page-updater page created above is not an original — drop it so it
+        // doesn't leak into the page set seen by sibling tests in this worker
+        // (e.g. the parallel static-generation comparison).
+        $this->removePageIfExists($em, 'page-updater', 'localhost.dev');
+
         // Restore original pages for other tests
         foreach ($savedPagesData as $pageData) {
             $this->removePageIfExists($em, $pageData['slug'], 'localhost.dev');
