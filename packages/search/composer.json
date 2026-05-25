@@ -1,0 +1,31 @@
+{
+  "name": "pushword/search",
+  "type": "symfony-bundle",
+  "description": "Optional SQLite-native full-text search for Pushword CMS, powered by Loupe (zero infra).",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/search",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*",
+    "loupe/loupe": "^0.13"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\Search\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

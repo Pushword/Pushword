@@ -14,6 +14,7 @@ use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\PushwordFlatBundle;
 use Pushword\PageScanner\PushwordPageScannerBundle;
 use Pushword\PageUpdateNotifier\PushwordPageUpdateNotifierBundle;
+use Pushword\Search\PushwordSearchBundle;
 use Pushword\Snippet\PushwordSnippetBundle;
 use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 use Pushword\TemplateEditor\PushwordTemplateEditorBundle;
@@ -44,6 +45,7 @@ $bundles = [
     PushwordConversationBundle::class => ['all' => true],
     PushwordVersionBundle::class => ['all' => true],
     PushwordSnippetBundle::class => ['all' => true],
+    PushwordSearchBundle::class => ['all' => true],
     PushwordAdminBlockEditorBundle::class => ['all' => true],
     PushwordAdvancedMainImageBundle::class => ['all' => true],
 

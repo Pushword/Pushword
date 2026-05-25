@@ -9,6 +9,7 @@
     "pushword/installer": "self.version",
     "pushword/page-scanner": "self.version",
     "pushword/page-update-notifier": "self.version",
+    "pushword/search": "self.version",
     "pushword/static-generator": "self.version",
     "pushword/template-editor": "self.version"
   },
@@ -32,6 +33,7 @@
     "league/commonmark": "^2.7",
     "league/flysystem-bundle": "^3.6",
     "league/oauth2-google": "^5",
+    "loupe/loupe": "^0.13",
     "nette/utils": "^4.0",
     "pagerfanta/twig": "^4.1",
     "pentatrion/vite-bundle": "*",
@@ -125,6 +127,7 @@
       "Pushword\\Installer\\": "packages/installer/src",
       "Pushword\\PageScanner\\": "packages/page-scanner/src",
       "Pushword\\PageUpdateNotifier\\": "packages/page-update-notifier/src",
+      "Pushword\\Search\\": "packages/search/src",
       "Pushword\\Snippet\\": "packages/snippet/src",
       "Pushword\\StaticGenerator\\": "packages/static-generator/src",
       "Pushword\\TemplateEditor\\": "packages/template-editor/src",
@@ -145,7 +148,8 @@
       "Pushword\\AdminBlockEditor\\Tests\\": "packages/admin-block-editor/tests",
       "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests",
       "Pushword\\AdvancedMainImage\\Tests\\": "packages/advanced-main-image/tests",
-      "Pushword\\Snippet\\Tests\\": "packages/snippet/tests"
+      "Pushword\\Snippet\\Tests\\": "packages/snippet/tests",
+      "Pushword\\Search\\Tests\\": "packages/search/tests"
     }
   },
   "scripts": {

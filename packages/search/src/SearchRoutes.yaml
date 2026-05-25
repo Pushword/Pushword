@@ -1,0 +1,3 @@
+pushword_search:
+    resource: "@PushwordSearchBundle/Controller/"
+    type: attribute

@@ -1,0 +1,58 @@
+{% extends view('/page/page_default.html.twig') %}
+
+{% block title %}{{ 'search.metaTitle'|trans({}, 'messages') }}{% endblock %}
+
+{% block breadcrumb %}{% endblock %}
+
+{% block content %}
+  <main class="mx-auto w-full max-w-3xl px-4 py-12">
+    <h1 class="text-3xl font-bold tracking-tight">{{ 'search.heading'|trans({}, 'messages') }}</h1>
+
+    <form method="get" action="" role="search" class="mt-6 flex gap-2">
+      <input
+        type="search"
+        name="q"
+        value="{{ query }}"
+        placeholder="{{ 'search.placeholder'|trans({}, 'messages') }}"
+        aria-label="{{ 'search.heading'|trans({}, 'messages') }}"
+        autofocus
+        class="flex-1 rounded-md border border-gray-300 px-4 py-2 focus:border-gray-900 focus:outline-none">
+      <button type="submit" class="rounded-md bg-gray-900 px-5 py-2 font-medium text-white hover:bg-gray-700">
+        {{ 'search.submit'|trans({}, 'messages') }}
+      </button>
+    </form>
+
+    {% if query is not empty %}
+      {% if results.hits is empty %}
+        <p class="mt-8 text-gray-600">{{ 'search.noResults'|trans({'%query%': query}, 'messages') }}</p>
+      {% else %}
+        <p class="mt-8 text-sm text-gray-500">{{ 'search.resultsCount'|trans({'%count%': results.totalHits}, 'messages') }}</p>
+
+        <ul class="mt-4 divide-y divide-gray-100">
+          {% for hit in results.hits %}
+            <li class="py-5">
+              <a href="{{ hit.url }}" class="text-lg font-semibold text-blue-700 hover:underline">
+                {{ (hit._formatted.title|default(hit.title|default(hit.h1)))|raw }}
+              </a>
+              {% if hit._formatted.content is defined and hit._formatted.content is not empty %}
+                <p class="mt-1 text-gray-600">{{ hit._formatted.content|raw }}</p>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+
+        {% if results.totalPages > 1 %}
+          <nav class="mt-8 flex flex-wrap gap-2" aria-label="{{ 'search.pagination'|trans({}, 'messages') }}">
+            {% for p in 1..results.totalPages %}
+              {% if p == results.page %}
+                <span class="rounded-md bg-gray-900 px-3 py-1 text-white" aria-current="page">{{ p }}</span>
+              {% else %}
+                <a href="?q={{ query|url_encode }}&page={{ p }}" class="rounded-md border border-gray-300 px-3 py-1 hover:bg-gray-100">{{ p }}</a>
+              {% endif %}
+            {% endfor %}
+          </nav>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  </main>
+{% endblock %}

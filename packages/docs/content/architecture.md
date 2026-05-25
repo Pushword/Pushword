@@ -94,6 +94,7 @@ composer console ...
 | new | Meta-package that pulls in core + admin + common extensions | core |
 | page-scanner | Dead link detection, 404/301 checks, TODO scanning | core |
 | page-update-notifier | Email notifications on page edits | core |
+| search | Optional SQLite full-text search via Loupe (zero infra) | core |
 | skeleton | Dev/test/demo app (not a real skeleton for end users) | core |
 | snippet | Reusable content fragments + dev-registered components, via `snippet()` | core |
 | static-generator | Generate static HTML sites | core |

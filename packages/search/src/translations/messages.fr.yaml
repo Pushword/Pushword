@@ -1,0 +1,8 @@
+search:
+  heading: Rechercher
+  metaTitle: Recherche
+  noResults: Aucun résultat pour « %query% ».
+  pagination: Pages de résultats de recherche
+  placeholder: Rechercher…
+  resultsCount: "%count% résultat(s)"
+  submit: Rechercher

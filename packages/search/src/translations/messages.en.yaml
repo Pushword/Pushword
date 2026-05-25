@@ -1,0 +1,8 @@
+search:
+  heading: Search
+  metaTitle: Search
+  noResults: No result found for "%query%".
+  pagination: Search results pages
+  placeholder: Search…
+  resultsCount: "%count% result(s)"
+  submit: Search

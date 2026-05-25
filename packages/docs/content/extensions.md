@@ -19,6 +19,8 @@ name: Extensions
   Find dead links, 404, 301, TODO reminders and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)
   Get mail notification when your pushword content (page) is edited.
+- [Search](/extension/search)
+  Optional SQLite-native full-text search (typo tolerance, ranking) via Loupe — zero infra, ships with the static build.
 - [Snippet](/extension/snippet)
   Reusable content fragments and dev-registered components, called with `{{ snippet('name', {params}) }}`.
 - [Static Generator](/extension/static-generator)
