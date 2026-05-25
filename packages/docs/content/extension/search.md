@@ -50,6 +50,23 @@ Both triggers ship out of the box:
 - **Incremental** — on page save/delete, a Messenger message reindexes the
   single page (mirrors the page-cache invalidation). Toggle with `incremental`.
 
+### Keeping the index fresh
+
+- **Interactive saves** reindex incrementally: a single page edit/delete (admin,
+  API, a one-off script) dispatches a per-page reindex. The message is
+  unrouted, so it runs synchronously in-process — the save absorbs the cost of
+  one content render. Fine for one page; route `ReindexPageMessage` to an async
+  transport if you script many individual saves.
+- **Bulk imports are suppressed.** `pw:flat:sync --mode=import` (and any code
+  wrapped in `PageCacheSuppressor::suppress()`) deliberately skips incremental
+  reindexing — importing thousands of pages must not fire thousands of
+  synchronous renders. The index is therefore **not** refreshed by the sync
+  itself.
+- **So run a rebuild after a bulk import:** append `pw:search:index` to your
+  import/deploy flow, or let `pw:static` handle it (it reindexes during the
+  build via `index_on_static`). Until then, freshly imported content won't
+  appear in search results.
+
 ## Querying
 
 ### Dynamic & page-cache sites
