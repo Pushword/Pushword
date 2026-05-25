@@ -1,8 +1,7 @@
 //require("fslightbox");
 import hljs from 'highlight.js'
 
-//import SimpleJekyllSearch from 'simple-jekyll-search'
-import 'simple-jekyll-search/dest/simple-jekyll-search.min.js'
+import { pushwordSimpleSearch } from '@pushword/js-helper/src/PushwordSimpleSearch.js'
 
 import {
   uncloakLinks,
@@ -20,7 +19,7 @@ function onPageLoaded() {
   const searchInput = document.getElementById('search')
   const resultsBox = document.getElementById('search-results')
   if (searchInput && resultsBox) {
-    window.SimpleJekyllSearch({
+    pushwordSimpleSearch({
       searchInput,
       resultsContainer: resultsBox,
       json: baseUrl + (baseUrl == '/' ? '' : '/') + 'search.json',

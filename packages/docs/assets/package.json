@@ -8,7 +8,6 @@
   },
   "dependencies": {
     "@pushword/js-helper": "file:../../js-helper",
-    "highlight.js": "^10.6.0",
-    "simple-jekyll-search": "^1.9.1"
+    "highlight.js": "^10.6.0"
   }
 }
