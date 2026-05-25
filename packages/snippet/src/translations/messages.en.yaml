@@ -1,10 +1,16 @@
 snippet:
+  action:
+    versionHistory: Versions
   label:
     plural: Snippets
     singular: Snippet
+  fieldset:
+    settings: Settings
   field:
     content: Content
     host: Host
+    host.all: All hosts
+    host.help: Pick a host, or "All hosts" to make it a global fallback used by every host (a host-specific snippet of the same reference overrides it).
     name: Name
     slug: Reference (slug)
     slug.help: The key used in <code>{{ snippet('…') }}</code>. Lowercase, unique per host.

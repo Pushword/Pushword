@@ -36,7 +36,10 @@ final readonly class SnippetExtension
         $definitions = $this->registry->getDefinitions();
 
         $host = '' !== $host ? $host : $this->currentHost();
-        foreach ($this->snippetRepository->findByHost($host) as $snippet) {
+
+        // Host-specific snippets first, then global (host-less) ones as a
+        // fallback so a host-specific snippet is never shadowed by its global twin.
+        foreach ([...$this->snippetRepository->findByHost($host), ...$this->snippetRepository->findByHost('')] as $snippet) {
             $definitions[$snippet->getSlug()] ??= [
                 'label' => $snippet->getName(),
                 'schema' => [],
@@ -48,8 +51,8 @@ final readonly class SnippetExtension
 
     /**
      * Render a reusable snippet by name. Resolves a dev-registered component
-     * first, then falls back to an editor-owned content snippet for the current
-     * host. Returns an empty string when neither exists.
+     * first, then an editor-owned content snippet: the current host's, falling
+     * back to a global (host-less) one. Returns an empty string when none exists.
      *
      * @param array<string, mixed> $params
      */
@@ -60,7 +63,7 @@ final readonly class SnippetExtension
             return $this->renderComponent($name, $params);
         }
 
-        $snippet = $this->snippetRepository->findOneBySlugAndHost($name, $this->currentHost());
+        $snippet = $this->snippetRepository->findOneBySlugForHost($name, $this->currentHost());
 
         return null !== $snippet ? $this->renderContent($snippet, $params) : '';
     }
@@ -103,7 +106,9 @@ final readonly class SnippetExtension
             return $this->markdownParser->transform($content);
         }
 
-        $value = $this->pipelineFactory->get($page)->applyFilters($content, $this->contentFilters($snippet->host), 'mainContent');
+        // Filters follow the page the snippet renders on (not the snippet's own
+        // host), so a global snippet uses the current site's content pipeline.
+        $value = $this->pipelineFactory->get($page)->applyFilters($content, $this->contentFilters($page->host), 'mainContent');
 
         return \is_scalar($value) ? (string) $value : '';
     }

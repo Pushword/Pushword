@@ -1,10 +1,16 @@
 snippet:
+  action:
+    versionHistory: Versions
   label:
     plural: Fragments
     singular: Fragment
+  fieldset:
+    settings: Réglages
   field:
     content: Contenu
     host: Hôte
+    host.all: Tous les hôtes
+    host.help: Choisissez un hôte, ou « Tous les hôtes » pour en faire un fragment global utilisé par défaut sur chaque hôte (un fragment spécifique au même référence le remplace).
     name: Nom
     slug: Référence (slug)
     slug.help: La clé utilisée dans <code>{{ snippet('…') }}</code>. Minuscules, unique par hôte.

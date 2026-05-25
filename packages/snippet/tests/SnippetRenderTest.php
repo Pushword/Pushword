@@ -66,6 +66,71 @@ final class SnippetRenderTest extends KernelTestCase
         self::assertStringContainsString('/contact', $html);
     }
 
+    public function testGlobalSnippetRendersAsFallbackForAnyHost(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+
+        $page = $em->getRepository(Page::class)->findOneBy([]);
+        self::assertInstanceOf(Page::class, $page);
+        $container->get(SiteRegistry::class)->setCurrentPage($page);
+
+        $slug = 'global-'.uniqid();
+        $global = new Snippet();
+        $global->host = ''; // "All hosts"
+        $global->setSlug($slug);
+        $global->setName('Global');
+        $global->setContent('global body');
+
+        $em->persist($global);
+        $em->flush();
+
+        $html = $container->get(SnippetExtension::class)->renderSnippet($slug);
+        self::assertStringContainsString('global body', $html);
+
+        $em->remove($global);
+        $em->flush();
+    }
+
+    public function testHostSpecificSnippetOverridesGlobalOne(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+
+        $page = $em->getRepository(Page::class)->findOneBy([]);
+        self::assertInstanceOf(Page::class, $page);
+        $container->get(SiteRegistry::class)->setCurrentPage($page);
+
+        $slug = 'override-'.uniqid();
+
+        $global = new Snippet();
+        $global->host = '';
+        $global->setSlug($slug);
+        $global->setName('Global');
+        $global->setContent('global body');
+
+        $em->persist($global);
+
+        $specific = new Snippet();
+        $specific->host = $page->host;
+        $specific->setSlug($slug);
+        $specific->setName('Specific');
+        $specific->setContent('host specific body');
+
+        $em->persist($specific);
+        $em->flush();
+
+        $html = $container->get(SnippetExtension::class)->renderSnippet($slug);
+        self::assertStringContainsString('host specific body', $html);
+        self::assertStringNotContainsString('global body', $html);
+
+        $em->remove($global);
+        $em->remove($specific);
+        $em->flush();
+    }
+
     public function testContentSnippetRendersMarkdownAndParams(): void
     {
         self::bootKernel();

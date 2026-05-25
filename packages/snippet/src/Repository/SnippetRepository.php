@@ -22,6 +22,23 @@ class SnippetRepository extends ServiceEntityRepository
     }
 
     /**
+     * Resolve a snippet for a host, preferring an exact host match over a
+     * global (host-less, `host = ''`) snippet that applies to every host.
+     */
+    public function findOneBySlugForHost(string $slug, string $host): ?Snippet
+    {
+        $slug = Snippet::normalizeSlug($slug);
+
+        $snippet = $this->findOneBy(['slug' => $slug, 'host' => $host]);
+
+        if (null !== $snippet || '' === $host) {
+            return $snippet;
+        }
+
+        return $this->findOneBy(['slug' => $slug, 'host' => '']);
+    }
+
+    /**
      * @return Snippet[]
      */
     public function findByHost(string $host): array
