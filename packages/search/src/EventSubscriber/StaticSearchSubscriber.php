@@ -68,7 +68,10 @@ final readonly class StaticSearchSubscriber implements EventSubscriberInterface
             'h1' => $doc['h1'],
             'url' => $doc['url'],
             'slug' => $doc['slug'],
-            'tags' => $doc['tags'],
+            // The client-side search.json is consumed by simple-jekyll-search,
+            // which calls .trim() on every field value: tags must be a string,
+            // not the array kept for the Loupe index.
+            'tags' => implode(' ', (array) $doc['tags']),
             'content' => mb_substr((string) $doc['content'], 0, self::JSON_CONTENT_LENGTH),
         ], $documents);
 

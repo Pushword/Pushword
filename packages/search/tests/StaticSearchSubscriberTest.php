@@ -34,6 +34,14 @@ final class StaticSearchSubscriberTest extends KernelTestCase
 
             $json = json_decode((string) file_get_contents($dir.'/search.json'), true);
             self::assertIsArray($json);
+
+            // simple-jekyll-search calls .trim() on every field value, so each
+            // one must be a string — an array (e.g. tags) breaks client search.
+            foreach ($json as $entry) {
+                foreach ($entry as $value) {
+                    self::assertIsString($value);
+                }
+            }
         } finally {
             $filesystem->remove($dir);
         }
