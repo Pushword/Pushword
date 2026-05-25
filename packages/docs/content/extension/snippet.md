@@ -53,7 +53,8 @@ Resolution order:
 
 1. A dev-registered **component snippet** named `name` (see below).
 2. Otherwise, a **content snippet** whose `slug` is `name`, for the current host.
-3. Otherwise, an empty string.
+3. Otherwise, a **global** content snippet of that slug (the "All hosts" fallback).
+4. Otherwise, an empty string.
 
 `params` is an optional map. For component snippets it is passed to the template
 (and validated against the schema in the editor). For content snippets it is
@@ -65,13 +66,30 @@ A content snippet is a `Snippet` entity: a `slug` (the reference key, unique per
 host), a `name` (admin label), Markdown `content`, optional `tags`, and a custom
 property bag. It is rendered through the **same filter pipeline as a page**
 (Twig → Markdown → multisite links → ShowMore…), so everything you can write in a
-page works in a snippet.
+page works in a snippet. In the admin the `content` field uses the **same block
+editor as a page** (EditorJS with a Markdown/Monaco toggle) when
+`pushword/admin-block-editor` is installed.
+
+### Host and "All hosts"
+
+The host picker is a dropdown of your configured hosts plus an **All hosts**
+option. Pick a host to scope the snippet to one site; pick **All hosts** (stored
+as an empty host) to make it a **global fallback** used on every host. A
+host-specific snippet of the same slug always overrides its global twin. Leaving
+a host unset on the old free-text field meant the snippet rendered nowhere — the
+dropdown removes that footgun. The slug is auto-filled from the name on creation
+while left empty.
+
+> Global ("All hosts") snippets sync too: they live outside any host folder, in
+> the base `{content}/pw-snippets/` directory (host-scoped ones stay under
+> `{content}/{host}/pw-snippets/`). The global directory is synced once per run,
+> during the default app's primary host pass.
 
 Manage them from the admin (**Snippets** in the menu) or as flat files via
 `pushword/flat` (see [Flat-file sync](#flat-file-sync)).
 
 ```markdown
-<!-- {flat_content_dir}/snippets/footer-note.md -->
+<!-- {flat_content_dir}/pw-snippets/footer-note.md -->
 ---
 name: Footer note
 tags:
@@ -203,8 +221,9 @@ The params map accepts inline Twig (`{ title: '…' }`) or JSON
 ## Flat-file sync
 
 With `pushword/flat` installed, content snippets sync to and from
-`{flat_content_dir}/snippets/{slug}.md` (one Markdown file per snippet, YAML
-frontmatter for `name`, `tags` and custom properties):
+`{flat_content_dir}/pw-snippets/{slug}.md` (one Markdown file per snippet, YAML
+frontmatter for `name`, `tags` and custom properties). The `pw-` prefix keeps
+the directory from clashing with a real page tree — the page importer skips it:
 
 ```bash
 php bin/console pw:flat:sync --entity=snippet            # auto-detect direction
@@ -212,17 +231,25 @@ php bin/console pw:flat:sync --entity=snippet -m export  # DB → files
 php bin/console pw:flat:sync --entity=snippet -m import  # files → DB
 ```
 
+Global ("All hosts") snippets have no host folder, so they sync to and from the
+base `{content}/pw-snippets/` directory instead. That directory is processed once
+per run, during the default app's primary host pass — so a full sync (no host
+argument) always covers it, but targeting a single _non-primary_ host
+(`pw:flat:sync some-other-host`) leaves globals untouched.
+
 `--entity=all` (the default) includes snippets alongside pages and media.
 Direction is detected from file modification times against the last sync, the
 same way pages work. Component snippets are code, so they are versioned by git,
 not synced.
 
-## Roadmap
+## Versioning
 
-- **Version** (`pushword/version`): extend the versioning listener to cover the
-  `Snippet` entity so content snippets get the same version/restore history as
-  pages. The versioner is currently `Page`-typed, so this is a real refactor.
-  Component snippets are versioned by git (they are code).
+When `pushword/version` is installed, content snippets get the same
+version/restore history as pages. Every persist or update writes a JSON
+snapshot, and the admin exposes a **Versions** action on the Snippet CRUD that
+opens the familiar list / compare / restore views. Snippet versions are stored
+under `var/log/version/snippet/{id}/` so they never collide with page versions.
+Component snippets are code, so they are versioned by git instead.
 
 ## Migration guide — from custom Twig functions to component snippets
 

@@ -2,6 +2,7 @@
 
 namespace Pushword\Flat\Sync;
 
+use Closure;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Site\SiteConfig;
@@ -17,16 +18,25 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * Bidirectional flat-file sync for {@see Snippet} entities.
  *
- * Snippets live in `{flat_content_dir}/snippets/{slug}.md`, one Markdown file
+ * Snippets live in `{flat_content_dir}/pw-snippets/{slug}.md`, one Markdown file
  * per snippet with a YAML front matter holding `name`, `tags` and any custom
- * property. The slug is the filename; the host is the content dir's host.
+ * property. The slug is the filename; the host is the content dir's host. The
+ * directory is `pw-` prefixed so it never shadows a real page tree (the page
+ * importer skips it, see {@see PageSync}).
+ *
+ * Global snippets (`host = ''`, "All hosts") have no host directory: they live
+ * in `{base_content_dir}/pw-snippets/` (e.g. `content/pw-snippets/`). Since the sync
+ * runs once per configured host, the global directory is processed exactly once
+ * — during the default app's primary host pass — so it is not synced or deleted
+ * repeatedly across hosts.
  *
  * Optional integration: only registered when the `pushword/snippet` package is
  * installed (guarded by `class_exists(Snippet::class)` in the flat services).
  */
 final class SnippetSync
 {
-    private const string DIR = 'snippets';
+    /** Content subdirectory holding snippet Markdown files; `pw-` prefixed to avoid colliding with page slugs. */
+    public const string DIR = 'pw-snippets';
 
     private int $importedCount = 0;
 
@@ -58,26 +68,58 @@ final class SnippetSync
 
     public function sync(?string $host = null, bool $forceExport = false): void
     {
-        if (! $forceExport && $this->mustImport($host)) {
-            $this->import($host);
-
-            return;
-        }
-
-        $this->export($host);
+        $this->resetCounters();
+        $this->eachDirectory($host, function (string $dir, string $resolvedHost) use ($forceExport): void {
+            $this->syncDirectory($dir, $resolvedHost, $forceExport);
+        });
+        $this->entityManager->flush();
     }
 
     public function import(?string $host = null): void
     {
-        $this->importedCount = 0;
-        $this->skippedCount = 0;
-        $this->deletedCount = 0;
+        $this->resetCounters();
+        $this->eachDirectory($host, function (string $dir, string $resolvedHost): void {
+            $this->importDirectory($dir, $resolvedHost);
+            $this->stateManager->recordImport('snippet', $resolvedHost);
+        });
+        $this->entityManager->flush();
+    }
 
+    /**
+     * Run an operation for the resolved host's snippet directory and — only on
+     * the default app's primary host, so it happens exactly once per full sync —
+     * the global (host-less) directory.
+     *
+     * @param Closure(string $dir, string $host): void $process
+     */
+    private function eachDirectory(?string $host, Closure $process): void
+    {
         $mainHost = $this->resolveApp($host)->getMainHost();
-        $dir = $this->dir($mainHost);
+        $process($this->dir($mainHost), $mainHost);
 
+        if ($this->isPrimaryHost($mainHost)) {
+            $process($this->globalDir(), '');
+        }
+    }
+
+    /** Import or export a single directory, based on which side is newer. */
+    private function syncDirectory(string $dir, string $host, bool $forceExport): void
+    {
+        if (! $forceExport && $this->mustImport($dir, $host)) {
+            $this->importDirectory($dir, $host);
+            $this->stateManager->recordImport('snippet', $host);
+
+            return;
+        }
+
+        $this->exportDirectory($dir, $host);
+        $this->stateManager->recordExport('snippet', $host);
+    }
+
+    private function importDirectory(string $dir, string $host): void
+    {
         $existing = [];
-        foreach ($this->snippetRepository->findByHost($mainHost) as $snippet) {
+        foreach ($this->snippetRepository->findByHost($host) as $snippet) {
             $existing[$snippet->getSlug()] = $snippet;
         }
 
@@ -85,24 +127,23 @@ final class SnippetSync
         foreach ($this->collectFiles($dir) as $path) {
             $slug = Snippet::normalizeSlug(basename($path, '.md'));
             $seenSlugs[$slug] = true;
-            $this->importFile($path, $slug, $mainHost, $existing[$slug] ?? null);
+            $this->importFile($path, $slug, $host, $existing[$slug] ?? null);
         }
 
         // Delete snippets whose file was removed (only when at least one file exists).
-        if ([] !== $seenSlugs) {
-            foreach ($existing as $existingSlug => $snippet) {
-                if (isset($seenSlugs[$existingSlug])) {
-                    continue;
-                }
-
-                $this->output?->writeln(\sprintf('<comment>Deleting snippet %s</comment>', $existingSlug));
-                $this->entityManager->remove($snippet);
-                ++$this->deletedCount;
-            }
+        if ([] === $seenSlugs) {
+            return;
         }
 
-        $this->entityManager->flush();
-        $this->stateManager->recordImport('snippet', $mainHost);
+        foreach ($existing as $existingSlug => $snippet) {
+            if (isset($seenSlugs[$existingSlug])) {
+                continue;
+            }
+
+            $this->output?->writeln(\sprintf('<comment>Deleting snippet %s</comment>', $existingSlug));
+            $this->entityManager->remove($snippet);
+            ++$this->deletedCount;
+        }
     }
 
     private function importFile(string $path, string $slug, string $host, ?Snippet $snippet): void
@@ -124,7 +165,7 @@ final class SnippetSync
         $snippet->host = $host;
         $snippet->setSlug($slug);
         $snippet->setName(\is_string($data['name'] ?? null) ? $data['name'] : '');
-        $snippet->setTags(self::normalizeTags($data['tags'] ?? []));
+        $snippet->setTags($this->normalizeTags($data['tags'] ?? []));
         $snippet->setContent(trim($document->body()));
 
         unset($data['name'], $data['tags']);
@@ -139,18 +180,19 @@ final class SnippetSync
 
     public function export(?string $host = null): void
     {
-        $this->exportedCount = 0;
-        $this->skippedCount = 0;
-        $this->deletedCount = 0;
+        $this->resetCounters();
+        $this->eachDirectory($host, function (string $dir, string $resolvedHost): void {
+            $this->exportDirectory($dir, $resolvedHost);
+            $this->stateManager->recordExport('snippet', $resolvedHost);
+        });
+    }
 
-        $mainHost = $this->resolveApp($host)->getMainHost();
-        $dir = $this->dir($mainHost);
+    private function exportDirectory(string $dir, string $host): void
+    {
         $this->filesystem->mkdir($dir);
 
-        $snippets = $this->snippetRepository->findByHost($mainHost);
-
         $keepFiles = [];
-        foreach ($snippets as $snippet) {
+        foreach ($this->snippetRepository->findByHost($host) as $snippet) {
             $path = $dir.'/'.$snippet->getSlug().'.md';
             $keepFiles[$path] = true;
             $content = $this->generateContent($snippet);
@@ -176,8 +218,6 @@ final class SnippetSync
             $this->filesystem->remove($path);
             ++$this->deletedCount;
         }
-
-        $this->stateManager->recordExport('snippet', $mainHost);
     }
 
     /**
@@ -186,7 +226,7 @@ final class SnippetSync
      *
      * @return string[]|string
      */
-    private static function normalizeTags(mixed $tags): array|string
+    private function normalizeTags(mixed $tags): array|string
     {
         if (\is_string($tags)) {
             return $tags;
@@ -215,18 +255,36 @@ final class SnippetSync
         return '---'.\PHP_EOL.Yaml::dump($data, 2).'---'.\PHP_EOL.\PHP_EOL.$snippet->getContent().\PHP_EOL;
     }
 
-    private function mustImport(?string $host): bool
+    private function mustImport(string $dir, string $host): bool
     {
-        $mainHost = $this->resolveApp($host)->getMainHost();
-        $dir = $this->dir($mainHost);
-
         if (! is_dir($dir)) {
             return false;
         }
 
-        $lastSyncTime = $this->stateManager->getLastSyncTime('snippet', $mainHost);
+        $lastSyncTime = $this->stateManager->getLastSyncTime('snippet', $host);
 
         return array_any($this->collectFiles($dir), static fn ($path): bool => filemtime($path) > $lastSyncTime);
+    }
+
+    private function resetCounters(): void
+    {
+        $this->importedCount = 0;
+        $this->skippedCount = 0;
+        $this->deletedCount = 0;
+        $this->exportedCount = 0;
+    }
+
+    /** Global snippets (host = '') live in the base content dir, outside any host folder. */
+    private function globalDir(): string
+    {
+        return $this->contentDirFinder->getBaseDir().'/'.self::DIR;
+    }
+
+    private function isPrimaryHost(string $host): bool
+    {
+        // getDefault() (not get()) so a prior switchSite() in resolveApp() can't
+        // make the switched-to host look like the primary one.
+        return $this->apps->getDefault()->getMainHost() === $host;
     }
 
     /** @return string[] */

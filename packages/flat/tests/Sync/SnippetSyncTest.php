@@ -28,7 +28,7 @@ final class SnippetSyncTest extends KernelTestCase
 
         $this->em = $container->get(EntityManagerInterface::class);
         $this->sync = $container->get(FlatFileSync::class);
-        $this->snippetsDir = $container->get(FlatFileContentDirFinder::class)->get('localhost.dev').'/snippets';
+        $this->snippetsDir = $container->get(FlatFileContentDirFinder::class)->get('localhost.dev').'/pw-snippets';
         $this->slug = 'sync-test-'.uniqid();
     }
 
@@ -81,6 +81,7 @@ final class SnippetSyncTest extends KernelTestCase
         $orphan->setSlug($orphanSlug);
         $orphan->setName('Orphan');
         $orphan->setContent('gone');
+
         $this->em->persist($orphan);
         $this->em->flush();
 
@@ -105,5 +106,127 @@ final class SnippetSyncTest extends KernelTestCase
         self::assertSame('Imported snippet', $snippet->getName());
         self::assertSame(['news'], $snippet->getTagList());
         self::assertStringContainsString('Imported **body**', $snippet->getContent());
+    }
+
+    public function testExportWritesGlobalSnippetToBaseSnippetsDir(): void
+    {
+        $globalDir = self::getContainer()->get(FlatFileContentDirFinder::class)->getBaseDir().'/pw-snippets';
+
+        $globalSlug = 'global-export-'.uniqid();
+        $snippet = new Snippet();
+        $snippet->host = ''; // "All hosts"
+        $snippet->setSlug($globalSlug);
+        $snippet->setName('Global Export');
+        $snippet->setContent('# Global body');
+
+        $this->em->persist($snippet);
+        $this->em->flush();
+
+        $path = $globalDir.'/'.$globalSlug.'.md';
+
+        try {
+            // localhost.dev is the default app's primary host, so the global pass runs.
+            $this->sync->export('localhost.dev', entity: 'snippet');
+
+            self::assertFileExists($path, 'a global snippet must be exported outside any host folder');
+            self::assertStringContainsString('# Global body', (string) file_get_contents($path));
+        } finally {
+            new Filesystem()->remove($path);
+            $this->em->remove($snippet);
+            $this->em->flush();
+        }
+    }
+
+    public function testImportCreatesGlobalSnippetFromBaseSnippetsDir(): void
+    {
+        $globalDir = self::getContainer()->get(FlatFileContentDirFinder::class)->getBaseDir().'/pw-snippets';
+
+        $globalSlug = 'global-import-'.uniqid();
+        $path = $globalDir.'/'.$globalSlug.'.md';
+        new Filesystem()->dumpFile($path, "---\nname: Global Import\n---\n\nglobal content\n");
+
+        try {
+            $this->sync->import('localhost.dev', entity: 'snippet');
+
+            $snippet = $this->em->getRepository(Snippet::class)->findOneBy(['slug' => $globalSlug]);
+            self::assertInstanceOf(Snippet::class, $snippet);
+            self::assertSame('', $snippet->host, 'a snippet under the base snippets dir is global (host = "")');
+            self::assertSame('Global Import', $snippet->getName());
+        } finally {
+            new Filesystem()->remove($path);
+            $snippet = $this->em->getRepository(Snippet::class)->findOneBy(['slug' => $globalSlug]);
+            if ($snippet instanceof Snippet) {
+                $this->em->remove($snippet);
+                $this->em->flush();
+            }
+        }
+    }
+
+    public function testGlobalSnippetsAreNotTouchedByNonPrimaryHostPass(): void
+    {
+        $globalDir = self::getContainer()->get(FlatFileContentDirFinder::class)->getBaseDir().'/pw-snippets';
+
+        $globalSlug = 'global-guard-'.uniqid();
+        $snippet = new Snippet();
+        $snippet->host = ''; // "All hosts"
+        $snippet->setSlug($globalSlug);
+        $snippet->setName('Global Guard');
+        $snippet->setContent('global');
+
+        $this->em->persist($snippet);
+        $this->em->flush();
+
+        $path = $globalDir.'/'.$globalSlug.'.md';
+
+        try {
+            // pushword.piedweb.com is NOT the default app's primary host, so the
+            // global directory must be left untouched (synced once, on the primary pass).
+            $this->sync->export('pushword.piedweb.com', entity: 'snippet');
+
+            self::assertFileDoesNotExist($path, 'a non-primary host pass must not export global snippets');
+        } finally {
+            new Filesystem()->remove($path);
+            $this->em->remove($snippet);
+            $this->em->flush();
+        }
+    }
+
+    public function testImportDeletesGlobalSnippetWhoseFileWasRemoved(): void
+    {
+        $globalDir = self::getContainer()->get(FlatFileContentDirFinder::class)->getBaseDir().'/pw-snippets';
+
+        // A: present as a global file, must survive the import.
+        $keepSlug = 'global-keep-'.uniqid();
+        $keepPath = $globalDir.'/'.$keepSlug.'.md';
+        new Filesystem()->dumpFile($keepPath, "---\nname: Keep\n---\nkeep\n");
+
+        // B: a global snippet in the database only (its file was removed), must be deleted.
+        $orphanSlug = 'global-orphan-'.uniqid();
+        $orphan = new Snippet();
+        $orphan->host = '';
+        $orphan->setSlug($orphanSlug);
+        $orphan->setName('Orphan');
+        $orphan->setContent('gone');
+
+        $this->em->persist($orphan);
+        $this->em->flush();
+
+        try {
+            $this->sync->import('localhost.dev', entity: 'snippet');
+
+            $repo = $this->em->getRepository(Snippet::class);
+            self::assertNull($repo->findOneBy(['slug' => $orphanSlug, 'host' => '']), 'global snippet with no file should be deleted');
+            self::assertInstanceOf(Snippet::class, $repo->findOneBy(['slug' => $keepSlug, 'host' => '']), 'global snippet with a file should be kept');
+        } finally {
+            new Filesystem()->remove($keepPath);
+            foreach ([$keepSlug, $orphanSlug] as $slug) {
+                $found = $this->em->getRepository(Snippet::class)->findOneBy(['slug' => $slug]);
+                if ($found instanceof Snippet) {
+                    $this->em->remove($found);
+                }
+            }
+
+            $this->em->flush();
+        }
     }
 }
