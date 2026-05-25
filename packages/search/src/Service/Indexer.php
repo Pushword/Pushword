@@ -2,12 +2,12 @@
 
 namespace Pushword\Search\Service;
 
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Search\Event\SearchDocumentEvent;
-use Psr\Log\LoggerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
@@ -62,7 +62,21 @@ final readonly class Indexer
             ->getQuery()
             ->getResult();
 
-        return array_map($this->buildDocument(...), $pages);
+        $documents = [];
+        foreach ($pages as $page) {
+            // A single page whose body can't render must not abort the whole
+            // host rebuild — skip it (logged) and index the rest.
+            try {
+                $documents[] = $this->buildDocument($page);
+            } catch (Throwable $throwable) {
+                $this->logger?->warning('Search: skipped indexing page {id} during host reindex — {error}', [
+                    'id' => $page->id,
+                    'error' => $throwable->getMessage(),
+                ]);
+            }
+        }
+
+        return $documents;
     }
 
     /**

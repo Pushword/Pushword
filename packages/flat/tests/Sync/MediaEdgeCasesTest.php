@@ -31,10 +31,19 @@ final class MediaEdgeCasesTest extends KernelTestCase
         /** @var EntityManager $em */
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $this->em = $em;
+
+        // Wrap the test in a transaction rolled back in tearDown: the destructive
+        // media syncs below delete shared fixture media globally, which would
+        // otherwise poison sibling tests sharing this parallel worker's database.
+        $this->em->getConnection()->beginTransaction();
     }
 
     protected function tearDown(): void
     {
+        if ($this->em->getConnection()->isTransactionActive()) {
+            $this->em->getConnection()->rollBack();
+        }
+
         foreach ($this->tempFiles as $file) {
             @unlink($file);
         }
