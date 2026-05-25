@@ -1,7 +1,11 @@
 import EditorJS, { API } from '@editorjs/editorjs'
+import he from 'he'
 import { MarkdownUtils } from './MarkdownUtils'
 import { BlockToolAdapter } from '@editorjs/editorjs/types/tools/adapters/block-tool-adapter'
 import { ToolInterface } from '../Abstract/ToolInterface'
+
+/** GFM delimiter-cell markers per column alignment. */
+const ALIGNMENT_SEPARATORS: Record<string, string> = { left: ':---', center: ':--:', right: '---:' }
 
 interface BlockToolAdapterWithConstructable extends BlockToolAdapter {
     constructable?: ToolInterface
@@ -227,6 +231,13 @@ export default class ClipboardManager {
      * Extract content from a block element and convert to markdown
      */
     private extractBlockContent(block: Element): { markdown: string; html: string } | null {
+        // Table
+        const tableEl = block.querySelector('.tc-table')
+        if (tableEl) {
+            const markdown = this.extractTableMarkdown(block, tableEl)
+            return markdown ? { markdown, html: tableEl.outerHTML } : null
+        }
+
         // Paragraph
         const paragraph = block.querySelector('.ce-paragraph')
         if (paragraph) {
@@ -524,9 +535,15 @@ export default class ClipboardManager {
             return // PasteLink will handle this
         }
 
+        // When the plain text is already a markdown table, it is authoritative
+        // (this editor's own copies, or a pasted markdown table). Converting the
+        // accompanying HTML — e.g. our `tc-table` div grid, which `isRichTextHtml`
+        // flags — would shred the table into paragraphs and drop alignment/sticky.
+        const plainIsMarkdownTable = MarkdownUtils.retrieveMarkdownWithoutTunes(plainText).trimStart().startsWith('|')
+
         // Try to convert HTML to markdown if it looks like rich text (Google Docs, Word, etc.)
         let textToProcess = plainText
-        if (htmlText && this.isRichTextHtml(htmlText)) {
+        if (!plainIsMarkdownTable && htmlText && this.isRichTextHtml(htmlText)) {
             const convertedMarkdown = this.convertHtmlToMarkdown(htmlText)
             if (convertedMarkdown) {
                 textToProcess = convertedMarkdown
@@ -768,6 +785,52 @@ export default class ClipboardManager {
     }
 
     /**
+     * Convert an Editor.js table block's DOM into GFM markdown.
+     * Mirrors the Table tool's own export: inline HTML in cells is preserved
+     * (decoded), the delimiter row carries per-column alignment, and a sticky
+     * heading round-trips as the `{.table-sticky-header}` block attribute.
+     */
+    private extractTableMarkdown(block: Element, tableEl: Element): string | null {
+        const rows = Array.from(tableEl.querySelectorAll('.tc-row'))
+        if (rows.length === 0) {
+            return null
+        }
+
+        const matrix = rows.map(row =>
+            Array.from(row.querySelectorAll('.tc-cell')).map(cell =>
+                he.decode((cell as HTMLElement).innerHTML).trim().replace(/\|/g, '\\|'),
+            ),
+        )
+        const colCount = Math.max(...matrix.map(row => row.length))
+
+        const withHeadings = tableEl.classList.contains('tc-table--heading')
+        const alignments: string[] = []
+        for (let col = 0; col < colCount; col++) {
+            const firstRowCell = rows[0]?.querySelectorAll('.tc-cell')[col] as HTMLElement | undefined
+            alignments.push(firstRowCell?.style.textAlign || '')
+        }
+
+        const lines: string[] = []
+        matrix.forEach((row, rowIndex) => {
+            while (row.length < colCount) {
+                row.push('')
+            }
+            lines.push('| ' + row.join(' | ') + ' |')
+            if (rowIndex === 0 && withHeadings) {
+                lines.push('| ' + alignments.map(a => ALIGNMENT_SEPARATORS[a] ?? '---').join(' | ') + ' |')
+            }
+        })
+
+        let markdown = lines.join('\n')
+        // The sticky class lives on the tool's block container (the parent of .tc-wrap).
+        if (block.querySelector('.table-sticky-header')) {
+            markdown = '{.table-sticky-header}\n' + markdown
+        }
+
+        return markdown
+    }
+
+    /**
      * Detect if text contains markdown or structured content patterns
      */
     private detectMarkdownPatterns(text: string): boolean {
@@ -808,12 +871,48 @@ export default class ClipboardManager {
     private insertMarkdownAsBlocks(markdown: string): void {
         // Normalize multiple newlines
         markdown = markdown.replace(/\n\s*\n+/g, '\n\n')
+        markdown = this.rejoinTableFragments(markdown)
         const blocks = markdown.split('\n\n')
 
         for (const block of blocks) {
             if (!block.trim()) continue
             this.importBlock(block)
         }
+    }
+
+    /**
+     * Keep a markdown table in one block when stray blank lines would otherwise
+     * split it (each fragment would become its own table, and a lone delimiter
+     * row would render as data). A blank line is dropped when it sits next to a
+     * delimiter row (`|---|`, which always belongs to its table) or right after a
+     * block-attribute line (`{...}`, which belongs to the block it precedes).
+     * Two distinct tables — separated by a blank between two non-delimiter rows —
+     * are left untouched.
+     */
+    private rejoinTableFragments(markdown: string): string {
+        const isDelimiter = (line: string): boolean => /^\|[\s:|-]*-[\s:|-]*\|$/.test(line.trim())
+        const isAttribute = (line: string): boolean => /^{[^}]+}$/.test(line.trim())
+
+        const lines = markdown.split('\n')
+        const result: string[] = []
+
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i]!.trim() === '') {
+                const previous = result.length > 0 ? result[result.length - 1]! : ''
+                let next = i + 1
+                while (next < lines.length && lines[next]!.trim() === '') {
+                    next++
+                }
+                const following = next < lines.length ? lines[next]! : ''
+
+                if (isDelimiter(previous) || isDelimiter(following) || isAttribute(previous)) {
+                    continue
+                }
+            }
+            result.push(lines[i]!)
+        }
+
+        return result.join('\n')
     }
 
     /**

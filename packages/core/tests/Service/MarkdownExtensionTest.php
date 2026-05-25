@@ -227,6 +227,53 @@ final class MarkdownExtensionTest extends KernelTestCase
         self::assertStringContainsString('<td>Z</td>', $result);
     }
 
+    public function testColspanArrowHtmlEntityEncoded(): void
+    {
+        // Content authored in the block editor may store the marker as `-&gt;`.
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| Service | Identifiant | -&gt; |\n|---|---|---|\n| A | B | C |");
+
+        self::assertStringContainsString('<th colspan="2">Identifiant</th>', $result);
+        self::assertStringNotContainsString('-&gt;', $result);
+    }
+
+    public function testColspanArrowHtmlEntityEncodedInTbody(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| A | B | C |\n|---|---|---|\n| X | -&gt; | Z |");
+
+        self::assertStringContainsString('<td colspan="2">X</td>', $result);
+        self::assertStringNotContainsString('-&gt;', $result);
+    }
+
+    public function testColspanMultipleArrowsEntityEncoded(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| A | -&gt; | -&gt; |\n|---|---|---|\n| 1 | 2 | 3 |");
+
+        self::assertStringContainsString('<th colspan="3">A</th>', $result);
+    }
+
+    public function testStickyHeaderClassAppliedToTable(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("{.table-sticky-header}\n| A | B |\n|---|---|\n| 1 | 2 |");
+
+        self::assertStringContainsString('class="table-sticky-header"', $result);
+        self::assertStringContainsString('<table', $result);
+    }
+
+    public function testColumnAlignmentFromGfmSeparator(): void
+    {
+        // Per-column GFM alignment markers in the delimiter row must reach the front.
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| A | B | C |\n| :--- | :--: | ---: |\n| 1 | 2 | 3 |");
+
+        self::assertStringContainsString('align="left"', $result);
+        self::assertStringContainsString('align="center"', $result);
+        self::assertStringContainsString('align="right"', $result);
+    }
+
     public function testColspanArrowFirstCellIgnored(): void
     {
         $parser = $this->getMarkdownParser();

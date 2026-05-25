@@ -13,10 +13,12 @@ interface AlignmentTuneConfig {
 interface AlignmentTuneSetting {
   name: string
   icon: string
+  title: string
 }
 
 // tunes.textAlign
 export default class AlignmentTune {
+  private api: API
   private block: any
   private settings?: AlignmentTuneConfig
   private data: string
@@ -52,6 +54,7 @@ export default class AlignmentTune {
   }
 
   constructor({
+    api,
     data,
     config,
     block,
@@ -61,6 +64,7 @@ export default class AlignmentTune {
     config?: AlignmentTuneConfig
     block?: BlockAPI
   }) {
+    this.api = api
     this.block = block
     /**
         config:{
@@ -77,14 +81,17 @@ export default class AlignmentTune {
       {
         name: 'left',
         icon: IconAlignLeft,
+        title: this.api.i18n.t('Align left'),
       },
       {
         name: 'center',
         icon: IconAlignCenter,
+        title: this.api.i18n.t('Align center'),
       },
       {
         name: 'right',
         icon: IconAlignRight,
+        title: this.api.i18n.t('Align right'),
       },
     ]
   }
@@ -103,6 +110,7 @@ export default class AlignmentTune {
         const button = document.createElement('div')
         button.classList.add('cdx-settings-button')
         button.innerHTML = tune.icon
+        button.title = tune.title
 
         button.classList.toggle('cdx-settings-button--active', tune.name === this.data)
 

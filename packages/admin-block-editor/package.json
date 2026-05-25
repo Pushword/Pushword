@@ -18,7 +18,6 @@
     "@editorjs/paragraph": "^2.11.7",
     "@editorjs/quote": "^2.5",
     "@editorjs/raw": "^2.4",
-    "@editorjs/table": "^2.1",
     "@pushword/js-helper": "file:../js-helper",
     "@sotaproject/strikethrough": "^1.0.1",
     "@types/he": "^1.2.3",

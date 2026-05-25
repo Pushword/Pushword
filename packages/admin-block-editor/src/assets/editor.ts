@@ -11,7 +11,7 @@ import InlineCode from '@editorjs/inline-code'
 //import { StyleInlineTool } from "editorjs-style";
 import Hyperlink from './tools/Hyperlink/Hyperlink'
 import Paragraph from './tools/Paragraph/Paragraph'
-import Table from './tools/Table/Table'
+import Table from './tools/Table'
 // @ts-ignore
 import DragDrop from 'editorjs-drag-drop'
 // @ts-ignore
@@ -29,6 +29,7 @@ import AlignementTune from './tools/AlignementTune/AlignementTune'
 import HyperlinkTune from './tools/HyperlinkTune/HyperlinkTune'
 import PasteLink from './tools/Hyperlink/PasteLink'
 import ClipboardManager from './tools/utils/ClipboardManager'
+import { setupPopoverTitles } from './tools/utils/popoverTitles'
 import Raw from './tools/Raw/Raw'
 import CodeBlock from './tools/CodeBlock/CodeBlock'
 import { EditorModeManager } from './EditorModeManager'
@@ -90,6 +91,8 @@ export class editorJs {
       Small: Small,
       //StyleInlineTool: StyleInlineTool,
     }
+
+    setupPopoverTitles()
 
     this.initEditor((window as any).editorjsConfig)
   }

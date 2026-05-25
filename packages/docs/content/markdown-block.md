@@ -38,6 +38,28 @@ Renders as a table where "Identifiant" spans two columns. Multiple `->` cells ca
 
 _Note: `->` in the first cell of a row has no effect (no preceding cell to merge into)._
 
+### Column alignment
+
+Per-column alignment uses the GFM delimiter row: `:---` (left), `:--:` (center), `---:` (right). The block editor's column menu writes these markers for you.
+
+```markdown
+| Name  | Price | Qty  |
+| :---- | ----: | :--: |
+| Apple | 1.20  | 3    |
+```
+
+### Sticky header
+
+Add the `{.table-sticky-header}` block attribute on the line before a table to pin its heading row while scrolling (in the editor and on the front). The block editor's "Sticky heading" toggle adds it for you.
+
+```markdown
+{.table-sticky-header}
+
+| Col 1 | Col 2 |
+| ----- | ----- |
+| Val   | Val 2 |
+```
+
 ## Example
 
 ```markdown

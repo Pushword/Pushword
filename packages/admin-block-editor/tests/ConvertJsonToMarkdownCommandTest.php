@@ -93,6 +93,32 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         self::assertTrue($this->isJsonContent($content), 'Le contenu devrait toujours être en JSON après un dry-run');
     }
 
+    public function testConvertTableWithColumnAlignments(): void
+    {
+        $kernel = self::createKernel();
+        $application = new Application($kernel);
+
+        $json = '{"blocks":[{"type":"table","data":{"withHeadings":true,"content":[["Name","Price","Qty"],["Apple","1.20","3"]],"columnAlignments":["left","right","center"]}}]}';
+        $pageId = $this->createTestPage('table-align', 'Table Alignment', $json);
+
+        $command = $application->find('pw:json-to-markdown');
+        $commandTester = new CommandTester($command);
+        $commandTester->execute(['--page-id' => (string) $pageId]);
+        self::assertSame(0, $commandTester->getStatusCode());
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $page = $em->getRepository(Page::class)->find($pageId);
+        self::assertNotNull($page);
+
+        // The GFM delimiter row must carry per-column alignment markers.
+        $content = $page->getMainContent();
+        self::assertMatchesRegularExpression('/\|\s*:-+\s*\|/', $content, 'left-aligned column');
+        self::assertMatchesRegularExpression('/\|\s*-+:\s*\|/', $content, 'right-aligned column');
+        self::assertMatchesRegularExpression('/\|\s*:-+:\s*\|/', $content, 'center-aligned column');
+    }
+
     public function testNoJsonPages(): void
     {
         $kernel = self::createKernel();
