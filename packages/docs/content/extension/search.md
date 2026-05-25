@@ -107,7 +107,10 @@ no-PHP page cache (a dynamic exception, like the `liveBlock` fragments). Add
 
 - **`endpoint`** — the SQLite Loupe index at `search/loupe.db`, for a
   PHP/FrankenPHP search endpoint at the edge;
-- **`json`** — the client-side `search.json` fallback (zero PHP);
+- **`json`** — the client-side `search.json` fallback (zero PHP), consumed by
+  `PushwordSimpleSearch` (shipped in `@pushword/js-helper`). Its fields mirror
+  `searchable_attributes`, so the browser ranks `title`/`h1` above the body just
+  like Loupe — minus typo tolerance and stemming;
 - **`both`** (default) — both.
 
 ## Configuration
