@@ -66,7 +66,7 @@ final class PageListenerOpenGraphTest extends TestCase
         return new PageListener(
             $security,
             $generator,
-            $this->createMock(TailwindGenerator::class),
+            $this->createStub(TailwindGenerator::class),
             $suppressor,
         );
     }
