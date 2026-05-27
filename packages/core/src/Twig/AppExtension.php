@@ -99,25 +99,28 @@ final class AppExtension
     public function generateBreadcrumbJsonLd(Page $page): string
     {
         $breadcrumbs = [];
-        $position = 1;
         $currentPage = $page;
 
         while (null !== $currentPage) {
             $breadcrumbs[] = [
                 '@type' => 'ListItem',
-                'position' => $position,
-                'name' => $this->dateFilter->convertDateShortCode(
+                'name' => strip_tags($this->dateFilter->convertDateShortCode(
                     $currentPage->getName() ?: $currentPage->getH1() ?: $currentPage->getTitle(),
                     $this->apps->get()->getLocale(),
-                ),
+                )),
                 'item' => $this->router->generate($currentPage, true),
             ];
 
             $currentPage = $currentPage->getParentPage();
-            ++$position;
         }
 
         $breadcrumbs = array_reverse($breadcrumbs);
+
+        foreach ($breadcrumbs as $index => &$breadcrumb) {
+            $breadcrumb['position'] = $index + 1;
+        }
+
+        unset($breadcrumb);
 
         $jsonLd = [
             '@context' => 'https://schema.org',
