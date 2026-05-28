@@ -44,9 +44,6 @@ import { suggestTags } from './admin.tagsField'
 // Sidebar modules
 import { submenuFilter } from './admin.submenuFilter'
 
-// Polyfills
-import 'core-js/stable'
-
 // Global variables
 window.domChanging = false
 window.copyElementText = copyElementText
