@@ -216,9 +216,15 @@ final class PageScannerCommand
         bool $skipExternal = false,
         #[Option(description: 'Stop after N errors (0 = no limit)', name: 'limit')]
         int $limit = 0,
+        #[Option(description: 'Report links pointing to unpublished pages (off by default — those links are hidden at render time)', name: 'check-unpublished')]
+        bool $checkUnpublished = false,
     ): int {
         $this->skipExternal = $skipExternal;
         $this->limit = $limit;
+
+        if ($checkUnpublished) {
+            $this->scanner->linkedDocsScanner->enableCheckUnpublished();
+        }
         $processType = null === $host || '' === $host ? self::PROCESS_TYPE : self::PROCESS_TYPE.'--'.$host;
 
         // Check if same process type is already running (via PID file)

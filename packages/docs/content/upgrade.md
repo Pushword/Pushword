@@ -12,6 +12,29 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## Unpublished Links: Restore JS in Custom `app.js`
+
+Pushword now hides `<a>` tags whose target is a not-yet-published page (replaced by `<span title="Page en cours de publication" data-status="unpublished" data-href="...">`). A shipped JS snippet restores the link for logged-in editors by probing `GET /_pushword/auth-check`. See [Unpublished Links](/unpublished-links) for the full behavior.
+
+**If your project uses the default `@pushword/js-helper` `app.js`**, no action required — the snippet is already wired in.
+
+**If your project ships a custom `assets/app.js`** (typical for sites with a tailored frontend), add the import and call alongside the other `onDomChanged` hooks:
+
+```js
+import { restoreUnpublishedLinks } from "@pushword/js-helper/src/unpublishedLinks.js";
+
+function onDomChanged() {
+  // ... your existing hooks
+  restoreUnpublishedLinks();
+}
+```
+
+Then rebuild assets (`npm run build` / `yarn build`). Without this step, editors won't see clickable links to drafts on your site (visitors are unaffected — the `<span>` correctly hides the URL either way).
+
+If you want to surface unpublished targets visually for editors, style the restored anchors via `a[data-unpublished]` (e.g. dashed underline). Optionally, add a CSS rule on `span[data-status="unpublished"]` to hint at the placeholder during editing.
+
+The `pw:page-scan` command no longer reports links to unpublished pages by default — run `pw:page-scan --check-unpublished` if you want a pre-publication audit.
+
 ## js-helper: Install from GitHub
 
 `@pushword/js-helper` is no longer published on npm. Update your `package.json`:

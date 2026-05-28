@@ -86,19 +86,12 @@ final class LinkedDocsScannerTest extends KernelTestCase
         self::assertStringContainsString('https://localhost.dev/nonexistent', $errors[0]);
     }
 
-    public function testCrossHostInternalLinkToUnpublishedPage(): void
+    public function testCrossHostInternalLinkToUnpublishedPageIgnoredByDefault(): void
     {
         self::bootKernel();
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
-        $unpublished = new Page();
-        $unpublished->setH1('Future page');
-        $unpublished->setSlug('future-page');
-        $unpublished->host = 'localhost.dev';
-        $unpublished->locale = 'en';
-        $unpublished->setMainContent('...');
-        $unpublished->setPublishedAt(new DateTime('+1 year'));
-
+        $unpublished = $this->createUnpublishedFuturePage();
         $em->persist($unpublished);
         $em->flush();
 
@@ -109,12 +102,49 @@ final class LinkedDocsScannerTest extends KernelTestCase
             $html = '<a href="https://localhost.dev/future-page">link</a>';
             $errors = $scanner->scan($this->getPage('other-page'), $html);
 
+            self::assertSame([], $errors, 'unpublished targets must be silent by default');
+        } finally {
+            $em->remove($unpublished);
+            $em->flush();
+        }
+    }
+
+    public function testCrossHostInternalLinkToUnpublishedPageReportedWhenEnabled(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $unpublished = $this->createUnpublishedFuturePage();
+        $em->persist($unpublished);
+        $em->flush();
+
+        try {
+            $scanner = $this->createScanner();
+            $scanner->preloadPageCache();
+            $scanner->enableCheckUnpublished();
+
+            $html = '<a href="https://localhost.dev/future-page">link</a>';
+            $errors = $scanner->scan($this->getPage('other-page'), $html);
+
             self::assertCount(1, $errors);
             self::assertStringContainsString('https://localhost.dev/future-page', $errors[0]);
         } finally {
             $em->remove($unpublished);
             $em->flush();
         }
+    }
+
+    private function createUnpublishedFuturePage(): Page
+    {
+        $page = new Page();
+        $page->setH1('Future page');
+        $page->setSlug('future-page');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->setMainContent('...');
+        $page->setPublishedAt(new DateTime('+1 year'));
+
+        return $page;
     }
 
     public function testCrossHostInternalLinkToRedirectionPage(): void

@@ -7,6 +7,7 @@ use Pushword\Core\Component\EntityFilter\Filter\ElseH1;
 use Pushword\Core\Component\EntityFilter\Filter\Extended;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlLinkMultisite;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
+use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;
 use Pushword\Core\Component\EntityFilter\Filter\LinkCollector;
 use Pushword\Core\Component\EntityFilter\Filter\Markdown;
 use Pushword\Core\Component\EntityFilter\Filter\Name;
@@ -55,6 +56,7 @@ final class Configuration implements ConfigurationInterface
             LinkCollector::class,
             Markdown::class,
             HtmlLinkMultisite::class,
+            HtmlUnpublishedLink::class,
             HtmlObfuscateLink::class,
             Extended::class,
         ],

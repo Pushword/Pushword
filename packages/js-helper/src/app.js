@@ -10,6 +10,7 @@ import {
 } from './helpers.js'
 import { allClickable } from './clickable.js'
 import { initShowMore } from './ShowMore.js'
+import { restoreUnpublishedLinks } from './unpublishedLinks.js'
 
 //import { HorizontalScroll } from '@pushword/js-helper/src/horizontalScroll.js';
 //window.HorizontalScroll = HorizontalScroll;
@@ -30,6 +31,7 @@ function onDomChanged() {
   allClickable('.clickable')
   addClassForNormalUser()
   convertFormFromRot13()
+  restoreUnpublishedLinks()
 }
 
 function onPageLoaded() {

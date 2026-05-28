@@ -51,6 +51,8 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private bool $deferredExternalMode = false;
 
+    private bool $checkUnpublished = false;
+
     /** @var string[] */
     private array $collectedExternalUrls = [];
 
@@ -101,6 +103,22 @@ final class LinkedDocsScanner extends AbstractScanner
     public function disableDeferredExternalMode(): void
     {
         $this->deferredExternalMode = false;
+    }
+
+    /**
+     * Opt-in: report links pointing to pages that exist but are not published.
+     * Off by default — the front-end already hides those links via the
+     * HtmlUnpublishedLink filter, so reporting them is noise unless explicitly
+     * requested via `pw:page-scan --check-unpublished`.
+     */
+    public function enableCheckUnpublished(): void
+    {
+        $this->checkUnpublished = true;
+    }
+
+    public function disableCheckUnpublished(): void
+    {
+        $this->checkUnpublished = false;
     }
 
     /**
@@ -322,7 +340,9 @@ final class LinkedDocsScanner extends AbstractScanner
         if (! $page instanceof Page) {
             $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
         } elseif (! $page->isPublished()) {
-            $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
+            if ($this->checkUnpublished) {
+                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
+            }
         } elseif ($checkRedirection && $page->hasRedirection()) {
             $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
         }
@@ -372,7 +392,9 @@ final class LinkedDocsScanner extends AbstractScanner
             if (! $this->uriExist($this->removeParameters($uri))) {
                 $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotFound'));
             } elseif ($this->lastPageChecked instanceof Page && ! $this->lastPageChecked->isPublished()) {
-                $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
+                if ($this->checkUnpublished) {
+                    $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
+                }
             } elseif ($checkRedirection && $this->lastPageChecked instanceof Page && $this->lastPageChecked->hasRedirection()) {
                 $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
             }
