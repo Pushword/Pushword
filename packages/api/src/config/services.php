@@ -5,6 +5,7 @@ use Pushword\Api\Controller\DocsApiController;
 use Pushword\Api\Controller\MediaApiController;
 use Pushword\Api\Controller\PageApiController;
 use Pushword\Api\Controller\PageRedirectionApiController;
+use Pushword\Api\Routing\ApiControllerRouteLoader;
 use Pushword\Api\Service\OpenApiBuilder;
 use Pushword\Api\Workflow\WorkflowGateInterface;
 use Pushword\Core\PushwordCoreBundle;
@@ -45,4 +46,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(OpenApiBuilder::class)
         ->arg('$controllers', tagged_iterator('pushword.api.controller'));
+
+    // Single loader that registers the routes of every tagged API controller,
+    // including those contributed by optional bundles.
+    $services->set(ApiControllerRouteLoader::class)
+        ->arg('$controllers', tagged_iterator('pushword.api.controller'))
+        ->tag('routing.loader');
 };

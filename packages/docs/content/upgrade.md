@@ -25,7 +25,7 @@ Pushword\PageWorkflow\PushwordPageWorkflowBundle::class => ['all' => true],
 
 ### New Route Imports
 
-Add the API, page-workflow, and snippet route resources to `config/routes.yaml`:
+Add the API and page-workflow route resources to `config/routes.yaml`:
 
 ```yaml
 pushword_api:
@@ -33,10 +33,13 @@ pushword_api:
 
 pushword_page_workflow:
     resource: "@PushwordPageWorkflowBundle/PageWorkflowRoutes.yaml"
-
-pushword_snippet:
-    resource: "@PushwordSnippetBundle/SnippetRoutes.yaml"
 ```
+
+The single `pushword_api` import registers **every** API endpoint — including those
+contributed by optional bundles (conversation, flat, snippet, page-workflow). Those
+bundles no longer need their own API route import, and when `pushword/api` is not
+installed none of those routes (or their controllers) are loaded. `pushword_page_workflow`
+above is only for page-workflow's non-API (editorial) routes.
 
 ## Unpublished Links: Restore JS in Custom `app.js`
 

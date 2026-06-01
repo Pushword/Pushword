@@ -175,6 +175,7 @@
     "docs": "./.scripts/generate-docs",
     "reset-skeleton": "./.scripts/reset-skeleton",
     "test-installer": "./.scripts/test-installer",
+    "test-partial-install": "./.scripts/test-partial-install",
     "release": "./.scripts/release",
     "validate-monorepo": "vendor/bin/monorepo-builder validate",
     "post-update-cmd": [

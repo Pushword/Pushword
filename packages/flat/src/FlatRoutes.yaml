@@ -2,9 +2,8 @@ pushword_flat_api:
     resource: '../src/Controller/FlatLockApiController.php'
     type: attribute
 
-pushword_flat_api_notification:
-    resource: '../src/Controller/Api/'
-    type: attribute
+# Controller/Api (NotificationApiController) routes are registered centrally by
+# pushword/api's loader when that optional package is installed.
 
 pushword_flat_admin_notifications:
     resource: '../src/Controller/Admin/NotificationCrudController.php'

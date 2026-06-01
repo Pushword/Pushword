@@ -1,0 +1,138 @@
+#!/bin/bash -e
+
+# Partial-install matrix test.
+#
+# The monorepo test suite always autoloads every package, so the
+# `interface_exists()` optional-dependency guards (e.g. page-workflow detecting
+# pushword/api, flat/conversation/snippet detecting pushword/api) can never be
+# observed in their "dependency absent" state from within the monorepo.
+#
+# This script performs REAL, isolated composer installs of curated package
+# subsets (via path repositories) so the autoloader only sees the installed
+# packages. For each profile it boots the installed app's container and asserts
+# it compiles — proving each optional package degrades gracefully when its
+# optional siblings are not installed.
+#
+# Heavy (one composer install per profile) — intended for CI, not `composer test`.
+# Run a single profile with: ./.scripts/test-partial-install <profile-name>
+
+MONOREPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Always-present base needed for a bootable Pushword app.
+BASE_PACKAGES="core installer skeleton admin"
+
+# profile name -> extra pushword packages installed ON TOP of the base.
+# Each profile deliberately omits a sibling to exercise an absent-dependency branch.
+declare -A PROFILES=(
+    [base]=""                       # core/admin only: nothing optional installed
+    [api]="api"                     # api WITHOUT page-workflow -> null workflow gate (direct writes)
+    [page-workflow]="page-workflow" # page-workflow WITHOUT api -> ApiWorkflowGate / Controller/Api excluded
+    [flat]="flat"                   # flat WITHOUT api -> NotificationApiController excluded
+    [conversation]="conversation"   # conversation WITHOUT api -> Api controllers excluded
+    [snippet]="snippet"             # snippet WITHOUT api -> Api controller excluded
+)
+
+# pushword short name -> bundle FQCN (recipes don't exist yet for new packages,
+# so we register bundles ourselves to guarantee their services.php is loaded).
+declare -A BUNDLES=(
+    [api]="Pushword\\Api\\PushwordApiBundle"
+    [page-workflow]="Pushword\\PageWorkflow\\PushwordPageWorkflowBundle"
+    [flat]="Pushword\\Flat\\PushwordFlatBundle"
+    [conversation]="Pushword\\Conversation\\PushwordConversationBundle"
+    [snippet]="Pushword\\Snippet\\PushwordSnippetBundle"
+    [admin]="Pushword\\Admin\\PushwordAdminBundle"
+)
+
+run_profile() {
+    local profile="$1"
+    local extra="${PROFILES[$profile]}"
+    local packages="$BASE_PACKAGES $extra"
+    local temp_dir="/tmp/pushword-partial-install-$profile-$$"
+
+    echo ""
+    echo "=== Partial install profile: $profile ==="
+    echo "Packages: $packages"
+
+    rm -rf "$temp_dir"
+    cp -r "$MONOREPO_DIR/packages/new" "$temp_dir"
+
+    # Rewrite composer.json: path repos for all local packages, restrict the
+    # pushword/* flex-require to this profile's package set, strip the
+    # interactive installer.
+    php -r '
+        $monorepoDir = $argv[1];
+        $tempDir = $argv[2];
+        $wanted = array_filter(explode(" ", $argv[3]));
+        $json = json_decode(file_get_contents($tempDir."/composer.json"), true);
+
+        $repos = [];
+        foreach (scandir($monorepoDir."/packages") as $pkg) {
+            if (in_array($pkg, [".", "..", "new", "docs", "js-helper"])) continue;
+            $pkgDir = $monorepoDir."/packages/".$pkg;
+            if (!is_dir($pkgDir) || !file_exists($pkgDir."/composer.json")) continue;
+            $repos[] = ["type" => "path", "url" => $pkgDir, "options" => ["symlink" => false]];
+        }
+        $json["repositories"] = $repos;
+
+        // Drop every pushword/* requirement, then add back only the wanted ones.
+        foreach (array_keys($json["flex-require"] ?? []) as $name) {
+            if (str_starts_with($name, "pushword/")) unset($json["flex-require"][$name]);
+        }
+        foreach ($wanted as $short) {
+            $json["flex-require"]["pushword/".$short] = "@dev";
+        }
+
+        if (isset($json["scripts"]["post-install-cmd"])) {
+            $json["scripts"]["post-install-cmd"] = array_values(array_filter(
+                $json["scripts"]["post-install-cmd"],
+                fn($s) => !str_contains($s, "vendor/pushword/installer/src/installer")
+            ));
+            if (empty($json["scripts"]["post-install-cmd"])) unset($json["scripts"]["post-install-cmd"]);
+        }
+
+        file_put_contents($tempDir."/composer.json",
+            json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+    ' "$MONOREPO_DIR" "$temp_dir" "$packages"
+
+    cd "$temp_dir"
+    COMPOSER_ALLOW_SUPERUSER=1 composer update --no-interaction
+
+    # Ensure every installed pushword bundle is registered (recipes may be absent).
+    for short in $packages; do
+        local fqcn="${BUNDLES[$short]:-}"
+        [ -z "$fqcn" ] && continue
+        php -r '
+            $file = $argv[1]; $fqcn = $argv[2];
+            $content = file_get_contents($file);
+            if (str_contains($content, $fqcn)) exit(0);
+            $line = "    ".$fqcn."::class => [\"all\" => true],\n";
+            $content = preg_replace("/\n\];\s*$/", "\n".$line."];\n", $content, 1);
+            file_put_contents($file, $content);
+        ' "$temp_dir/config/bundles.php" "$fqcn"
+    done
+
+    # Smoke: the container must compile with this exact package subset.
+    echo "--- booting container (cache:clear) ---"
+    php bin/console cache:clear --env=dev --no-debug
+    echo "--- debug:container ---"
+    php bin/console debug:container --env=dev > /dev/null
+
+    echo "=== profile '$profile' OK ==="
+    cd "$MONOREPO_DIR"
+    rm -rf "$temp_dir"
+}
+
+if [ -n "$1" ]; then
+    if [ -z "${PROFILES[$1]+x}" ]; then
+        echo "Unknown profile: $1 (known: ${!PROFILES[*]})" >&2
+        exit 1
+    fi
+    run_profile "$1"
+else
+    for profile in "${!PROFILES[@]}"; do
+        run_profile "$profile"
+    done
+fi
+
+echo ""
+echo "=== All partial-install profiles passed ==="

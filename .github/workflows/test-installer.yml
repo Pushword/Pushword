@@ -7,7 +7,10 @@ on:
       - 'packages/*/install.php'
       - 'packages/installer/**'
       - 'packages/new/**'
+      - 'packages/*/src/config/services.php'
+      - 'packages/*/src/Resources/config/services.php'
       - '.scripts/test-installer'
+      - '.scripts/test-partial-install'
       - '.github/workflows/test-installer.yml'
   pull_request:
     paths:
@@ -15,6 +18,9 @@ on:
       - 'packages/*/install.php'
       - 'packages/installer/**'
       - 'packages/new/**'
+      - 'packages/*/src/config/services.php'
+      - 'packages/*/src/Resources/config/services.php'
+      - '.scripts/test-partial-install'
   repository_dispatch:
     types: [after-split-monorepo]
 
@@ -47,3 +53,26 @@ jobs:
 
       - name: Run installer test
         run: ./.scripts/test-installer
+
+  partial-install:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [base, api, page-workflow, flat, conversation, snippet]
+
+    name: Partial install - ${{ matrix.profile }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: pecl
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo, xdebug
+
+      - name: Run partial-install profile
+        run: ./.scripts/test-partial-install ${{ matrix.profile }}
