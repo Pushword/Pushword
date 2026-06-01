@@ -4,7 +4,6 @@ namespace Pushword\Core\DependencyInjection;
 
 use LogicException;
 use Override;
-use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\DQL\JsonExtractFunction;
 use Symfony\Component\Config\Definition\Processor;
@@ -55,45 +54,7 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
 
         $this->registerResolveTargetEntities($container);
         $this->registerDqlFunctions($container);
-        $this->registerDefaultWorkflow($container);
         $this->registerMarkdownCachePool($container);
-    }
-
-    /**
-     * Ship the default editorial workflow. Skipped when the application already
-     * defines a "page_editorial" workflow, so end users can fully override the
-     * places/transitions/guards from their own framework config.
-     */
-    private function registerDefaultWorkflow(ContainerBuilder $container): void
-    {
-        $config = new Processor()->processConfiguration(new Configuration(), $container->getExtensionConfig('pushword'));
-        if (false === $config['editorial_workflow']) {
-            return;
-        }
-
-        foreach ($container->getExtensionConfig('framework') as $frameworkConfig) {
-            if (isset($frameworkConfig['workflows']) && \is_array($frameworkConfig['workflows'])
-                && isset($frameworkConfig['workflows']['page_editorial'])) {
-                return;
-            }
-        }
-
-        $container->prependExtensionConfig('framework', [
-            'workflows' => [
-                'page_editorial' => [
-                    'type' => 'state_machine',
-                    'marking_store' => ['type' => 'method', 'property' => 'workflowState'],
-                    'supports' => [Page::class],
-                    'initial_marking' => 'draft',
-                    'places' => ['draft', 'in_review', 'approved'],
-                    'transitions' => [
-                        'submit' => ['from' => 'draft', 'to' => 'in_review'],
-                        'approve' => ['from' => 'in_review', 'to' => 'approved', 'guard' => "is_granted('ROLE_EDITOR')"],
-                        'request_changes' => ['from' => ['in_review', 'approved'], 'to' => 'draft'],
-                    ],
-                ],
-            ],
-        ]);
     }
 
     /**

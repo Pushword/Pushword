@@ -3,6 +3,7 @@
 use KnpU\OAuth2ClientBundle\KnpUOAuth2ClientBundle;
 use Pushword\Admin\Controller\MediaCrudController;
 use Pushword\Admin\Controller\PageCrudController;
+use Pushword\Api\Security\ApiTokenAuthenticator;
 use Pushword\Core\Security\LoginFormAuthenticator;
 use Pushword\Core\Security\OAuthAuthenticator;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -13,6 +14,57 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     if (class_exists(KnpUOAuth2ClientBundle::class)) {
         $authenticators[] = OAuthAuthenticator::class;
     }
+
+    // The optional pushword/api bundle exposes a token-authenticated REST mirror of the admin.
+    $firewalls = [
+        'dev' => [
+            'pattern' => '^/(_(profiler|wdt)|css|images|js)/',
+            'security' => false,
+        ],
+    ];
+    $accessControl = [
+        [
+            'path' => '^/login',
+            'roles' => 'PUBLIC_ACCESS',
+        ],
+        [
+            'path' => '^/admin/fragment/',
+            'roles' => 'PUBLIC_ACCESS',
+        ],
+    ];
+
+    if (class_exists(ApiTokenAuthenticator::class)) {
+        $firewalls['api'] = [
+            'pattern' => '^/api(/|$)',
+            'stateless' => true,
+            'custom_authenticators' => [ApiTokenAuthenticator::class],
+        ];
+        $accessControl[] = ['path' => '^/api/docs', 'roles' => 'PUBLIC_ACCESS'];
+        $accessControl[] = ['path' => '^/api/flat/(lock|unlock)', 'roles' => 'PUBLIC_ACCESS'];
+        $accessControl[] = ['path' => '^/api/', 'roles' => 'ROLE_EDITOR'];
+    }
+
+    $firewalls['main'] = [
+        'lazy' => true,
+        'http_basic' => [
+            'realm' => 'Secured Area',
+        ],
+        'custom_authenticators' => $authenticators,
+        'entry_point' => LoginFormAuthenticator::class,
+        'logout' => [
+            'path' => 'pushword_logout',
+        ],
+        'remember_me' => [
+            'lifetime' => 31_536_000,
+            'always_remember_me' => true,
+            'secret' => '%kernel.secret%',
+        ],
+    ];
+
+    $accessControl[] = [
+        'path' => '^/admin',
+        'roles' => 'ROLE_EDITOR',
+    ];
 
     $containerConfigurator->extension('security', [
         'password_hashers' => [
@@ -47,41 +99,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                 ],
             ],
         ],
-        'firewalls' => [
-            'dev' => [
-                'pattern' => '^/(_(profiler|wdt)|css|images|js)/',
-                'security' => false,
-            ],
-            'main' => [
-                'lazy' => true,
-                'http_basic' => [
-                    'realm' => 'Secured Area',
-                ],
-                'custom_authenticators' => $authenticators,
-                'entry_point' => LoginFormAuthenticator::class,
-                'logout' => [
-                    'path' => 'pushword_logout',
-                ],
-                'remember_me' => [
-                    'lifetime' => 31_536_000,
-                    'always_remember_me' => true,
-                    'secret' => '%kernel.secret%',
-                ],
-            ],
-        ],
-        'access_control' => [
-            [
-                'path' => '^/login',
-                'roles' => 'PUBLIC_ACCESS',
-            ],
-            [
-                'path' => '^/admin/fragment/',
-                'roles' => 'PUBLIC_ACCESS',
-            ],
-            [
-                'path' => '^/admin',
-                'roles' => 'ROLE_EDITOR',
-            ],
-        ],
+        'firewalls' => $firewalls,
+        'access_control' => $accessControl,
     ]);
 };

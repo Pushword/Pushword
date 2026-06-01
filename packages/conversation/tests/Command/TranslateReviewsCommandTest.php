@@ -26,7 +26,7 @@ final class TranslateReviewsCommandTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $commandTester = $this->runCommand([]);
+        $commandTester = $this->runTranslateCommand([]);
 
         self::assertStringContainsString('You must specify at least one target locale', $commandTester->getDisplay());
         self::assertSame(1, $commandTester->getStatusCode());
@@ -36,7 +36,7 @@ final class TranslateReviewsCommandTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $commandTester = $this->runCommand(['--locale' => 'fr', '--host' => 'localhost.dev']);
+        $commandTester = $this->runTranslateCommand(['--locale' => 'fr', '--host' => 'localhost.dev']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('[localhost.dev]', $output);
@@ -47,7 +47,7 @@ final class TranslateReviewsCommandTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $commandTester = $this->runCommand(['--locale' => 'fr']);
+        $commandTester = $this->runTranslateCommand(['--locale' => 'fr']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('[localhost.dev]', $output);
@@ -55,7 +55,7 @@ final class TranslateReviewsCommandTest extends KernelTestCase
     }
 
     /** @param array<string, mixed> $options */
-    private function runCommand(array $options): CommandTester
+    private function runTranslateCommand(array $options): CommandTester
     {
         $application = new Application(self::$kernel); // @phpstan-ignore-line
         $commandTester = new CommandTester($application->find('pw:conversation:translate-reviews'));

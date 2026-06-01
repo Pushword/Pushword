@@ -151,13 +151,6 @@ adminPageUpdateNotificationUpdatedOn: "Page updated on"
 adminPageUpdatedAtLabel: "Updated on"
 adminPageWeightHelp: "Allows sorting pages. Higher values appear first."
 adminPageWeightLabel: Weight
-adminPageWorkflowApplied: "Editorial state updated."
-adminPageWorkflowDenied: "You are not allowed to apply this transition."
-adminPageWorkflowStateLabel: "Editorial state"
-adminPageWorkflowTransition:
-    approve: Approve
-    request_changes: Request changes
-    submit: Submit for review
 adminPageTwitterCardHelp: '<a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>Learn more</a>'
 adminPageTwitterCardLabel: "Twitter Card"
 adminStaticAlreadyRunning: "Static generation is already in progress."

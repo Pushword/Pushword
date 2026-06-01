@@ -1,0 +1,31 @@
+{
+  "name": "pushword/page-workflow",
+  "type": "symfony-bundle",
+  "description": "Editorial workflow and pending-modification review cycle for Pushword pages.",
+  "keywords": [],
+  "homepage": "https://pushword.piedweb.com/extension/page-workflow",
+  "license": "MIT",
+  "require": {
+    "pushword/core": "*",
+    "pushword/admin": "^1"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\PageWorkflow\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://piedweb.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

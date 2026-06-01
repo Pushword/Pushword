@@ -2,6 +2,9 @@ easyadmin:
     resource: .
     type: easyadmin.routes
 
+pushword_api:
+    resource: "@PushwordApiBundle/ApiRoutes.yaml"
+
 pushword_flat:
     resource: "@PushwordFlatBundle/FlatRoutes.yaml"
 
@@ -13,6 +16,9 @@ pushword_static_generator:
 
 pushword_page_scanner:
     resource: "@PushwordPageScannerBundle/PageScannerRoutes.yaml"
+
+pushword_page_workflow:
+    resource: "@PushwordPageWorkflowBundle/PageWorkflowRoutes.yaml"
 
 pushword_template_editor:
     resource: "@PushwordTemplateEditorBundle/TemplateEditorRoutes.yaml"

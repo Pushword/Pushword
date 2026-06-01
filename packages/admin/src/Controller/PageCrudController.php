@@ -27,6 +27,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Exception;
 use LogicException;
 use Override;
+use Pushword\Admin\Crud\PageCrudExtensionInterface;
 use Pushword\Admin\Filter\PageSearchFilter;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Core\Controller\PageController;
@@ -35,12 +36,11 @@ use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FlashBag;
 use Pushword\Core\Utils\TwigErrorExtractor;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Workflow\Exception\LogicException as WorkflowLogicException;
-use Symfony\Component\Workflow\Registry;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
@@ -51,12 +51,16 @@ class PageCrudController extends AbstractAdminCrudController
 
     protected const MESSAGE_PREFIX = 'admin.page';
 
+    /**
+     * @param iterable<PageCrudExtensionInterface> $extensions
+     */
     public function __construct(
         private readonly PushwordRouteGenerator $routeGenerator,
         private readonly PageController $pageController,
         private readonly PageRepository $pageRepo,
         private readonly TwigErrorExtractor $errorExtractor,
-        private readonly Registry $workflowRegistry,
+        #[AutowireIterator('pushword.admin.page_crud_extension')]
+        private readonly iterable $extensions = [],
     ) {
     }
 
@@ -85,7 +89,13 @@ class PageCrudController extends AbstractAdminCrudController
         $cloneAction = Action::new('clonePage', 'adminPageCloneLabel', 'fa fa-copy')
             ->linkToCrudAction('clonePage');
 
-        return $actions->add(Crud::PAGE_INDEX, $cloneAction);
+        $actions->add(Crud::PAGE_INDEX, $cloneAction);
+
+        foreach ($this->extensions as $extension) {
+            $extension->configureActions($actions);
+        }
+
+        return $actions;
     }
 
     /** @param AdminContext<Page> $context */
@@ -182,12 +192,8 @@ class PageCrudController extends AbstractAdminCrudController
                     ->setChoices($this->getMetaRobotsChoices()),
             );
 
-        if ($this->editorialWorkflowEnabled()) {
-            $filters->add(
-                ChoiceFilter::new('workflowState', 'adminPageWorkflowStateLabel')
-                    ->setChoices(['draft' => 'draft', 'in_review' => 'in_review', 'approved' => 'approved'])
-                    ->setFormTypeOption('value_type_options.choice_translation_domain', false),
-            );
+        foreach ($this->extensions as $extension) {
+            $extension->configureFilters($filters);
         }
 
         $filters->add(TextFilter::new('customProperties', 'adminPageCustomPropertiesLabel'));
@@ -212,10 +218,14 @@ class PageCrudController extends AbstractAdminCrudController
     public function configureFields(string $pageName): iterable
     {
         if (Crud::PAGE_INDEX === $pageName) {
-            return $this->getIndexFields();
+            yield from $this->getIndexFields();
+        } else {
+            yield from $this->getFormFieldsDefinition();
         }
 
-        return $this->getFormFieldsDefinition();
+        foreach ($this->extensions as $extension) {
+            yield from $extension->configureFields($pageName);
+        }
     }
 
     /**
@@ -345,11 +355,6 @@ class PageCrudController extends AbstractAdminCrudController
         }
     }
 
-    private function editorialWorkflowEnabled(): bool
-    {
-        return $this->workflowRegistry->has(new Page(), 'page_editorial');
-    }
-
     /**
      * @return iterable<FieldInterface|string>
      */
@@ -358,11 +363,6 @@ class PageCrudController extends AbstractAdminCrudController
         yield DateTimeField::new('publishedAt', 'adminPagePublishedAtLabel')
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
-
-        if ($this->editorialWorkflowEnabled()) {
-            yield TextField::new('workflowState', 'adminPageWorkflowStateLabel')
-                ->setSortable(true);
-        }
 
         yield IntegerField::new('weight', 'adminPageWeightLabel')
             ->setSortable(true)
@@ -522,38 +522,6 @@ class PageCrudController extends AbstractAdminCrudController
             'value' => $page->getPublishedAt(),
             'field' => null,
         ]));
-    }
-
-    #[Route(path: '/admin/page/{id}/workflow/{transition}', name: 'pushword_page_workflow', methods: ['POST'])]
-    public function applyWorkflowTransition(Request $request, Page $page, string $transition): Response
-    {
-        $token = (string) $request->request->get('_token');
-
-        if (! $this->isCsrfTokenValid('workflow-'.$page->id, $token)) {
-            return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
-        }
-
-        $workflow = $this->workflowRegistry->get($page, 'page_editorial');
-
-        if ($workflow->can($page, $transition)) {
-            try {
-                $workflow->apply($page, $transition);
-                $this->getEntityManager()->flush();
-                FlashBag::get($this->getRequest())?->add('success', $this->getTranslator()->trans('adminPageWorkflowApplied'));
-            } catch (WorkflowLogicException) {
-                FlashBag::get($this->getRequest())?->add('danger', $this->getTranslator()->trans('adminPageWorkflowDenied'));
-            }
-        } else {
-            FlashBag::get($this->getRequest())?->add('danger', $this->getTranslator()->trans('adminPageWorkflowDenied'));
-        }
-
-        $editUrl = $this->getAdminUrlGenerator()
-            ->setController(self::class)
-            ->setAction(Action::EDIT)
-            ->setEntityId($page->id)
-            ->generateUrl();
-
-        return $this->redirect($editUrl);
     }
 
     #[Route(path: '/admin/page/{id}/inline-update', name: 'pushword_page_inline_update', methods: ['POST'])]

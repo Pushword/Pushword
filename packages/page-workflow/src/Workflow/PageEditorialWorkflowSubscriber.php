@@ -1,22 +1,25 @@
 <?php
 
-namespace Pushword\Core\EventListener;
+namespace Pushword\PageWorkflow\Workflow;
 
 use DateTime;
-use Pushword\Core\Entity\Page;
+use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Entity\User;
+use Pushword\PageWorkflow\Entity\PageEditorialState;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Workflow\Event\EnteredEvent;
 
 /**
- * Records who validated a page when it enters the "approved" place of the
- * page_editorial workflow, mirroring the createdBy/editedBy convention.
+ * Records who validated a page editorial state when it enters the "approved"
+ * place of the page_editorial workflow, mirroring the createdBy/editedBy
+ * convention on Page.
  */
-final readonly class PageWorkflowSubscriber implements EventSubscriberInterface
+final readonly class PageEditorialWorkflowSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private Security $security,
+        private EntityManagerInterface $em,
     ) {
     }
 
@@ -32,16 +35,18 @@ final readonly class PageWorkflowSubscriber implements EventSubscriberInterface
 
     public function onApproved(EnteredEvent $enteredEvent): void
     {
-        $page = $enteredEvent->getSubject();
-        if (! $page instanceof Page) {
+        $state = $enteredEvent->getSubject();
+        if (! $state instanceof PageEditorialState) {
             return;
         }
 
-        $page->reviewedAt = new DateTime();
+        $state->reviewedAt = new DateTime();
 
         $user = $this->security->getUser();
         if ($user instanceof User) {
-            $page->reviewedBy = $user;
+            $state->reviewedBy = $user;
         }
+
+        $this->em->flush();
     }
 }

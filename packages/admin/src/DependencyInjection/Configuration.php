@@ -22,7 +22,6 @@ use Pushword\Admin\FormField\PageSearchExcreptField;
 use Pushword\Admin\FormField\PageSlugField;
 use Pushword\Admin\FormField\PageTitleField;
 use Pushword\Admin\FormField\PageTranslationsField;
-use Pushword\Admin\FormField\PageWorkflowStateField;
 use Pushword\Admin\FormField\TagsField;
 use Pushword\Admin\FormField\UserApiTokenField;
 use Pushword\Admin\FormField\UserEmailField;
@@ -71,7 +70,7 @@ class Configuration implements ConfigurationInterface
         [TagsField::class, PageH1Field::class, PageMainContentField::class],
         [
             'adminPageRevisions' => [PageEditMessageField::class],
-            'adminPageStateLabel' => [PagePublishedAtField::class, PageWorkflowStateField::class, PageMetaRobotsField::class],
+            'adminPageStateLabel' => [PagePublishedAtField::class, PageMetaRobotsField::class],
             'adminPagePermanlienLabel' => [HostField::class, PageSlugField::class],
             'adminPageMainImageLabel' => [PageMainImageField::class],
             'adminPageParentPageLabel' => [PageParentPageField::class],

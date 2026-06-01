@@ -58,6 +58,7 @@ final class AuthCheckControllerTest extends WebTestCase
         $user = new $userClass();
         $user->email = $email;
         $user->setRoles([User::ROLE_SUPER_ADMIN]);
+
         $em->persist($user);
         $em->flush();
 

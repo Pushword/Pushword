@@ -76,20 +76,6 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
         set(?string $value) => $this->editMessage = (string) $value;
     }
 
-    // --- Editorial workflow properties ---
-
-    /** Editorial state backing the page_editorial workflow (places are config-driven). */
-    #[ORM\Column(type: Types::STRING, length: 50, options: ['default' => 'draft'])]
-    public string $workflowState = 'draft' {
-        set(?string $value) => $this->workflowState = $value ?? 'draft';
-    }
-
-    #[ORM\ManyToOne(targetEntity: User::class)]
-    public ?User $reviewedBy = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    public ?DateTimeInterface $reviewedAt = null;
-
     // --- Extended page (inlined from PageExtendedTrait) ---
 
     #[ORM\ManyToOne(targetEntity: self::class)]
@@ -271,18 +257,6 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     public function getEditMessage(): string
     {
         return $this->editMessage;
-    }
-
-    public function getWorkflowState(): string
-    {
-        return $this->workflowState;
-    }
-
-    public function setWorkflowState(?string $workflowState): self
-    {
-        $this->workflowState = $workflowState;
-
-        return $this;
     }
 
     public function getRealSlug(): string

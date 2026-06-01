@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{ 'adminPagePendingCompareTitle'|trans }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <script src="/bundles/pushwordadmin/monaco/app.js"></script>
+  <style>
+    body { background: #f8f9fa; }
+    #diff-container { border: 1px solid #dee2e6; }
+  </style>
+</head>
+<body>
+{% set bigField = 'mainContent' %}
+{% set smallFields = fields|filter(f => f != bigField) %}
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-baseline mb-3">
+    <div>
+      <h1 class="h3 mb-1">{{ 'adminPagePendingCompareTitle'|trans }}</h1>
+      <code>/{{ page.slug }}</code>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="{{ path('pushword_page_pending_edit', {id: page.id}) }}">
+        {{ 'adminPagePendingResumeEdit'|trans }}
+      </a>
+      <button type="button" class="btn btn-primary" id="save-changes-btn">{{ 'adminPagePendingSave'|trans }}</button>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header d-flex align-items-center gap-3">
+      <span class="badge bg-secondary">{{ 'adminPagePendingState'|trans }}: {{ modification.workflowState }}</span>
+      {% if modification.editMessage %}
+        <span class="text-muted">{{ 'adminPagePendingEditMessageLabel'|trans }}: {{ modification.editMessage }}</span>
+      {% endif %}
+    </div>
+
+    <div class="card-body">
+      {% for field in smallFields %}
+        {% set liveVal = live[field]|default('') %}
+        {% set pendingVal = pending[field]|default('') %}
+        {% set differs = liveVal != pendingVal %}
+        <div class="row mb-3">
+          <div class="col-12">
+            <label class="form-label fw-bold">{{ field }}
+              {% if differs %}<span class="badge bg-warning text-dark ms-2">{{ 'adminPagePendingChanged'|trans }}</span>{% endif %}
+            </label>
+          </div>
+          <div class="col-6">
+            <input type="text" class="form-control bg-light" value="{{ liveVal }}" readonly aria-label="{{ 'adminPagePendingLive'|trans }}">
+          </div>
+          <div class="col-6">
+            <input type="text" class="form-control" id="field-{{ field }}" value="{{ pendingVal }}" aria-label="{{ 'adminPagePendingProposed'|trans }}">
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <label class="form-label fw-bold mb-0">{{ bigField }}</label>
+    </div>
+    <div class="card-body p-0">
+      <div id="diff-container" style="height: 500px; width: 100%;"></div>
+    </div>
+  </div>
+
+  <form id="save-form" method="POST" action="{{ path('pushword_page_pending_save_compare', {id: page.id}) }}" class="d-none">
+    <input type="hidden" name="_token" value="{{ csrf_token(saveCsrfTokenId) }}">
+    <textarea name="{{ bigField }}" id="{{ bigField }}-hidden"></textarea>
+    {% for field in smallFields %}
+      <input type="hidden" name="{{ field }}" id="{{ field }}-hidden">
+    {% endfor %}
+  </form>
+
+  <div class="d-flex gap-2 mt-4 flex-wrap">
+    {% for transition in transitions %}
+      <form method="POST" action="{{ path('pushword_page_pending_transition', {id: page.id, transition: transition}) }}" class="d-inline">
+        <input type="hidden" name="_token" value="{{ csrf_token(transitionCsrfTokenId ~ ':' ~ transition) }}">
+        <button type="submit" class="btn btn-primary">{{ ('adminPagePendingTransition.' ~ transition)|trans }}</button>
+      </form>
+    {% endfor %}
+    <form method="POST" action="{{ path('pushword_page_pending_discard', {id: page.id}) }}" class="d-inline ms-auto"
+          onsubmit="return confirm({{ 'adminPagePendingDiscardConfirm'|trans|json_encode|raw }});">
+      <input type="hidden" name="_token" value="{{ csrf_token(discardCsrfTokenId) }}">
+      <button type="submit" class="btn btn-outline-danger">{{ 'adminPagePendingDiscard'|trans }}</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function() {
+  const leftContent = {{ live[bigField]|default('')|json_encode|raw }};
+  const rightContent = {{ pending[bigField]|default('')|json_encode|raw }};
+  const bigField = {{ bigField|json_encode|raw }};
+  const smallFields = {{ smallFields|json_encode|raw }};
+  let diffEditor = null;
+
+  function initDiffEditor() {
+    if (typeof window.monaco === 'undefined') {
+      setTimeout(initDiffEditor, 100);
+      return;
+    }
+    const container = document.getElementById('diff-container');
+    const originalModel = monaco.editor.createModel(leftContent, 'markdown');
+    const modifiedModel = monaco.editor.createModel(rightContent, 'markdown');
+    const settings = window.monacoHelper ? { ...window.monacoHelper.defaultSettings } : {};
+    diffEditor = monaco.editor.createDiffEditor(container, {
+      ...settings,
+      readOnly: false,
+      renderSideBySide: true,
+      enableSplitViewResizing: true,
+      originalEditable: false,
+      lineNumbers: 'on',
+      minimap: { enabled: false },
+    });
+    diffEditor.setModel({ original: originalModel, modified: modifiedModel });
+    window.addEventListener('resize', () => diffEditor.layout());
+  }
+
+  document.getElementById('save-changes-btn').addEventListener('click', function() {
+    if (!diffEditor) return;
+    document.getElementById(bigField + '-hidden').value = diffEditor.getModifiedEditor().getValue();
+    smallFields.forEach(function(field) {
+      const input = document.getElementById('field-' + field);
+      const hidden = document.getElementById(field + '-hidden');
+      if (input && hidden) hidden.value = input.value;
+    });
+    document.getElementById('save-form').submit();
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDiffEditor);
+  } else {
+    initDiffEditor();
+  }
+})();
+</script>
+</body>
+</html>

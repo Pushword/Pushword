@@ -1,0 +1,3 @@
+pushword_api:
+    resource: '../src/Controller/'
+    type: attribute

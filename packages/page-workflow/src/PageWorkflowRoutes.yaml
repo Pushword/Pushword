@@ -1,0 +1,3 @@
+pushword_page_workflow:
+    resource: "@PushwordPageWorkflowBundle/Controller/"
+    type: attribute

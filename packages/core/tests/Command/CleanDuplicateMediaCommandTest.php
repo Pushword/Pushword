@@ -42,7 +42,7 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
     {
         self::bootKernel();
 
-        $commandTester = $this->runCommand([]);
+        $commandTester = $this->runCleanDuplicatesCommand([]);
 
         self::assertStringContainsString('No duplicate media found', $commandTester->getDisplay());
         self::assertSame(0, $commandTester->getStatusCode());
@@ -54,7 +54,7 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
         $em = $this->getEntityManager();
         $duplicateId = $this->createDuplicateMedia($em, 'piedweb-logo-dup.png', 'Dup For DryRun');
 
-        $commandTester = $this->runCommand(['--dry-run' => true]);
+        $commandTester = $this->runCleanDuplicatesCommand(['--dry-run' => true]);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('duplicate(s) found', $output);
@@ -74,7 +74,7 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
         $duplicateId = $this->createDuplicateMedia($em, 'piedweb-logo-dup.png', 'Dup For Merge');
         $pageId = $this->createPageWithMainImage($em, $duplicateId);
 
-        $commandTester = $this->runCommand([]);
+        $commandTester = $this->runCleanDuplicatesCommand([]);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('Merged', $output);
@@ -124,7 +124,7 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
 
         $em->flush();
 
-        $this->runCommand([]);
+        $this->runCleanDuplicatesCommand([]);
 
         $em->clear();
 
@@ -147,7 +147,7 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
         $dup1Id = $this->createDuplicateMedia($em, 'piedweb-logo-dup1.png', 'Dup1 Triple');
         $dup2Id = $this->createDuplicateMedia($em, 'piedweb-logo-dup2.png', 'Dup2 Triple');
 
-        $commandTester = $this->runCommand([]);
+        $commandTester = $this->runCleanDuplicatesCommand([]);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('2 duplicate(s) found in 1 group(s)', $output);
@@ -168,7 +168,7 @@ final class CleanDuplicateMediaCommandTest extends KernelTestCase
     }
 
     /** @param array<string, mixed> $options */
-    private function runCommand(array $options): CommandTester
+    private function runCleanDuplicatesCommand(array $options): CommandTester
     {
         $application = new Application(self::$kernel); // @phpstan-ignore-line
         $commandTester = new CommandTester($application->find('pw:media:clean-duplicates'));

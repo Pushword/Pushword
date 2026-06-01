@@ -9,11 +9,13 @@ use League\FlysystemBundle\FlysystemBundle;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\AdminBlockEditor\PushwordAdminBlockEditorBundle;
 use Pushword\AdvancedMainImage\PushwordAdvancedMainImageBundle;
+use Pushword\Api\PushwordApiBundle;
 use Pushword\Conversation\PushwordConversationBundle;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\PushwordFlatBundle;
 use Pushword\PageScanner\PushwordPageScannerBundle;
 use Pushword\PageUpdateNotifier\PushwordPageUpdateNotifierBundle;
+use Pushword\PageWorkflow\PushwordPageWorkflowBundle;
 use Pushword\Search\PushwordSearchBundle;
 use Pushword\Snippet\PushwordSnippetBundle;
 use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
@@ -40,6 +42,7 @@ $bundles = [
     PushwordPageUpdateNotifierBundle::class => ['all' => true],
     PushwordStaticGeneratorBundle::class => ['all' => true],
     PushwordPageScannerBundle::class => ['all' => true],
+    PushwordPageWorkflowBundle::class => ['all' => true],
     PushwordTemplateEditorBundle::class => ['all' => true],
     PushwordFlatBundle::class => ['all' => true],
     PushwordConversationBundle::class => ['all' => true],
@@ -48,6 +51,7 @@ $bundles = [
     PushwordSearchBundle::class => ['all' => true],
     PushwordAdminBlockEditorBundle::class => ['all' => true],
     PushwordAdvancedMainImageBundle::class => ['all' => true],
+    PushwordApiBundle::class => ['all' => true],
 
     // Symfony
     MonologBundle::class => ['all' => true],

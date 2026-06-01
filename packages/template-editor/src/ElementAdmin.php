@@ -96,6 +96,9 @@ final class ElementAdmin extends AbstractController
     private function clearTwigCache(): void
     {
         $twigCacheFolder = $this->twig->getCache(true);
+        if (! is_string($twigCacheFolder) || '' === $twigCacheFolder) {
+            return;
+        }
 
         $process = new Process(['rm', '-rf', $twigCacheFolder]);
         $process->run();

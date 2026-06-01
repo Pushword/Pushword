@@ -225,6 +225,7 @@ final class PageScannerCommand
         if ($checkUnpublished) {
             $this->scanner->linkedDocsScanner->enableCheckUnpublished();
         }
+
         $processType = null === $host || '' === $host ? self::PROCESS_TYPE : self::PROCESS_TYPE.'--'.$host;
 
         // Check if same process type is already running (via PID file)

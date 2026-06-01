@@ -49,6 +49,7 @@ final class MediaApiControllerTest extends WebTestCase
         $this->testUser->email = $this->testUserEmail;
         $this->testUser->setPassword('hashed-password');
         $this->testUser->apiToken = $this->testToken;
+        $this->testUser->setRoles(['ROLE_EDITOR']);
 
         $this->em->persist($this->testUser);
         $this->em->flush();

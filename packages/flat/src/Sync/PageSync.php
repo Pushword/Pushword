@@ -216,7 +216,7 @@ final class PageSync
                 continue;
             }
 
-            if (str_ends_with($path, '.md')) {
+            if (str_ends_with($path, '.md') && ! str_ends_with($path, '.pending.md')) {
                 $files[] = $path;
             }
         }
@@ -329,6 +329,10 @@ final class PageSync
                 continue;
             }
 
+            if (str_ends_with($entry, '.pending.md')) {
+                continue;
+            }
+
             if (filemtime($path) > $lastSyncTime) {
                 return true;
             }
@@ -387,7 +391,7 @@ final class PageSync
             return $this->isCsvFileNewer($filePath, $lastSyncTime);
         }
 
-        if (! str_ends_with($filePath, '.md')) {
+        if (! str_ends_with($filePath, '.md') || str_ends_with($filePath, '.pending.md')) {
             return false;
         }
 
