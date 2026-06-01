@@ -75,6 +75,24 @@ final class MediaCaptionRenamerTest extends AbstractAdminTestClass
         self::assertSame('manual-name.jpg', $media->getFileName());
     }
 
+    public function testRenamesEvenWhenAltAlreadySyncedToNewCaptionInMemory(): void
+    {
+        self::bootKernel();
+        $media = $this->createAutoNamedMedia('Dolomites Source.jpg');
+
+        // MediaExtension syncs alt = caption in memory while rendering content, before the
+        // renamer runs. The live alt then no longer matches the old filename; only the
+        // persisted alt still does. The rename must rely on the persisted alt and still fire.
+        $media->setAlt('Tre Cime Lavaredo Sunset');
+
+        $this->renamer()->renameFromContent(
+            $this->page('![Tre Cime Lavaredo Sunset](/media/md/dolomites-source.jpg)'),
+        );
+
+        self::assertSame('tre-cime-lavaredo-sunset.jpg', $media->getFileName());
+        self::assertTrue($media->hasFileNameInHistory('dolomites-source.jpg'));
+    }
+
     public function testNoOpWhenCaptionMatchesCurrentName(): void
     {
         self::bootKernel();
