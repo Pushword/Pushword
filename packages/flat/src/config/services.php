@@ -2,11 +2,13 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Conversation\Flat\ConversationSync;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\Admin\FlatSyncNotifier;
 use Pushword\Flat\Controller\Admin\GitStatusController;
 use Pushword\Flat\Controller\Admin\NotificationCrudController;
+use Pushword\Flat\Controller\Api\NotificationApiController;
 use Pushword\Flat\Controller\FlatLockApiController;
 use Pushword\Flat\Converter\FlatPropertyConverterInterface;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
@@ -54,12 +56,17 @@ return static function (ContainerConfigurator $container): void {
     $pageWorkflowAvailable = interface_exists(PendingModificationStorageInterface::class);
     $pageWorkflowExclude = $pageWorkflowAvailable ? [] : [__DIR__.'/../PendingModification/'];
 
+    // NotificationApiController requires the optional pushword/api package.
+    $apiAvailable = interface_exists(ApiControllerInterface::class);
+    $apiExclude = $apiAvailable ? [] : [__DIR__.'/../Controller/Api/'];
+
     $services->load('Pushword\Flat\\', __DIR__.'/../../src/')
         ->exclude([
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
             ...$messengerExclude,
             ...$snippetExclude,
             ...$pageWorkflowExclude,
+            ...$apiExclude,
         ]);
 
     if ($pageWorkflowAvailable) {
@@ -93,6 +100,13 @@ return static function (ContainerConfigurator $container): void {
         ->autowire()
         ->autoconfigure()
         ->tag('controller.service_arguments');
+
+    if ($apiAvailable) {
+        $services->set(NotificationApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
+    }
 
     // FlatLockExtension - Twig functions for lock status
     $services->set(FlatLockExtension::class)
