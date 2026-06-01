@@ -288,6 +288,36 @@ Non-`.md` files (`.txt`, `.csv`, etc.) do NOT influence page auto-detection. Onl
 4. **Smart skip**: if exported content matches existing file content, the file is not rewritten
 5. File `mtime` is synced to `page.updatedAt` to prevent false freshness detection on next auto run
 
+### Internal redirects (`redirectFrom`)
+
+Inspired by Jekyll's `redirect_from`, a page can declare the old paths that should redirect
+**to** it, right next to its content — instead of standalone records in `redirection.csv`:
+
+```yaml
+---
+h1: CMS comparison
+redirectFrom:
+  cms-comparison: 301
+  old/comparison: 302
+---
+```
+
+- The value is a `{ oldPath: httpCode }` map. A Jekyll-style bare list (`- cms-comparison`)
+  is accepted on import and treated as `301`. Paths are host-scoped (same host as the page).
+- Served at runtime and by the static generator (`.htaccess`, `Caddyfile`, and the HTML
+  meta-refresh stub for GitHub Pages), exactly like `redirection.csv` entries.
+- A slug rename now appends the old slug to the destination page's `redirectFrom` (no phantom
+  redirect page is created).
+- `redirection.csv` still holds redirects that have **no destination page**: external targets,
+  non-resolving paths, and chains.
+
+To convert a site's existing internal phantom redirects into `redirectFrom` (database-level,
+works with or without flat sync):
+
+```bash
+php bin/console pw:redirect:migrate [host] [--dry-run]
+```
+
 ### Media Sync
 
 #### Import (flat to database)

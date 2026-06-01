@@ -327,6 +327,14 @@ final class PageExporter
             $data[$property] = $value;
         }
 
+        // Internal redirects authored on this page (Jekyll redirect_from style).
+        // Emitted as a {path: code} map; ksort keeps the output stable for idempotency.
+        $redirectFrom = $page->getRedirectFromMap();
+        if ([] !== $redirectFrom) {
+            ksort($redirectFrom);
+            $data['redirectFrom'] = $redirectFrom;
+        }
+
         // Unpack custom properties at top level and apply converters
         foreach ($page->getCustomProperties() as $key => $value) {
             $converted = $this->converterRegistry->toFlatValue($key, $value);

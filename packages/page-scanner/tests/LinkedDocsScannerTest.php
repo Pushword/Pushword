@@ -14,6 +14,7 @@ use Pushword\PageScanner\Scanner\LinkedDocsScanner;
 use function Safe\file_get_contents;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Group('integration')]
 final class LinkedDocsScannerTest extends KernelTestCase
@@ -159,6 +160,38 @@ final class LinkedDocsScannerTest extends KernelTestCase
 
         self::assertCount(1, $errors);
         self::assertStringContainsString('https://localhost.dev/pushword', $errors[0]);
+    }
+
+    public function testInternalLinkToRedirectFromOldSlugReportedAsRedirection(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $destination = new Page();
+        $destination->setH1('Scan Destination');
+        $destination->setSlug('scan-destination');
+        $destination->host = 'localhost.dev';
+        $destination->locale = 'en';
+        $destination->setMainContent('content');
+        $destination->setRedirectFrom(['scan-old' => 301]);
+
+        $em->persist($destination);
+        $em->flush();
+
+        try {
+            $scanner = $this->createScanner();
+            $scanner->preloadPageCache();
+
+            $translator = self::getContainer()->get(TranslatorInterface::class);
+            $redirectionMsg = $translator->trans('page_scanIsRedirection');
+
+            $errors = $scanner->scan($this->getPage('scan-linking-page', 'localhost.dev'), '<a href="/scan-old">link</a>');
+
+            self::assertContains('<code>/scan-old</code> '.$redirectionMsg, $errors);
+        } finally {
+            $em->remove($destination);
+            $em->flush();
+        }
     }
 
     public function testExternalLinkStillTreatedAsExternal(): void

@@ -39,6 +39,33 @@ final class PageControllerTest extends KernelTestCase
         self::assertSame(404, $response->getStatusCode());
     }
 
+    public function testShowRedirectsFromRedirectFrom(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $destination = new Page();
+        $destination->setH1('Redirect Destination');
+        $destination->setSlug('redirect-from-destination');
+        $destination->locale = 'en';
+        $destination->host = 'localhost.dev';
+        $destination->createdAt = new DateTime();
+        $destination->updatedAt = new DateTime();
+        $destination->setMainContent('Destination content');
+        $destination->setRedirectFrom(['old-incoming' => 301]);
+
+        $em->persist($destination);
+        $em->flush();
+
+        try {
+            $response = $this->getPageController()->show(Request::create('/old-incoming'), 'old-incoming');
+            self::assertSame(Response::HTTP_MOVED_PERMANENTLY, $response->getStatusCode());
+            self::assertStringContainsString('redirect-from-destination', (string) $response->headers->get('location'));
+        } finally {
+            $em->remove($destination);
+            $em->flush();
+        }
+    }
+
     public function testShowFeed(): void
     {
         $slug = 'homepage';

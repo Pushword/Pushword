@@ -322,6 +322,32 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertStringContainsString('<html lang="'.$locale.'">', $html);
     }
 
+    public function testRedirectFromFeedsRedirectionManager(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev');
+
+        /** @var RedirectionManager $redirectionManager */
+        $redirectionManager = $this->getGeneratorBag()->get(RedirectionManager::class);
+        $redirectionManager->reset();
+
+        $page = new Page(false);
+        $page->host = 'localhost.dev';
+        $page->setSlug('redirect-dest-test');
+        $page->setMainContent('content');
+        $page->setRedirectFrom(['old-incoming' => 308]);
+
+        $redirectionManager->addRedirectFrom($page);
+
+        $redirections = $redirectionManager->get();
+        self::assertCount(1, $redirections);
+        [$from, $to, $code] = $redirections[0];
+        self::assertStringContainsString('old-incoming', $from);
+        self::assertStringContainsString('redirect-dest-test', $to);
+        self::assertSame(308, $code);
+    }
+
     public function testGenerateCNAME(): void
     {
         self::bootKernel();

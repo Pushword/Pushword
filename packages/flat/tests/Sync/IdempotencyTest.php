@@ -52,7 +52,7 @@ final class IdempotencyTest extends KernelTestCase
             @unlink($file);
         }
 
-        foreach (['idempotent-test-page', 'revision-export-test', 'revision-import-test'] as $slug) {
+        foreach (['idempotent-test-page', 'revision-export-test', 'revision-import-test', 'redirect-from-test'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
@@ -200,6 +200,27 @@ final class IdempotencyTest extends KernelTestCase
 
         self::assertSame(0, $exportedCount, 'Second export should produce zero new exports');
         self::assertGreaterThanOrEqual(0, $skippedCount, 'Some pages should be skipped on second export');
+    }
+
+    public function testRedirectFromRoundTrips(): void
+    {
+        $this->createMd('redirect-from-test.md', "---\nh1: 'Redirect From Test'\nredirectFrom:\n  old-one: 301\n  old/two: 302\n---\n\nDestination content");
+
+        $this->pageSync->import('localhost.dev');
+        $this->em->clear();
+
+        $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'redirect-from-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($page);
+        self::assertSame(['old-one' => 301, 'old/two' => 302], $page->getRedirectFromMap());
+
+        // Export re-emits redirectFrom; a second export is a no-op (idempotent).
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+        $md = $this->filesystem->readFile($this->contentDir.'/redirect-from-test.md');
+        self::assertStringContainsString('redirectFrom:', $md);
+        self::assertStringContainsString('old/two: 302', $md);
+
+        $this->pageSync->export('localhost.dev', false, $this->contentDir);
+        self::assertSame(0, $this->pageSync->getExportedCount(), 'redirectFrom export must be idempotent');
     }
 
     public function testImportThenExportIsIdempotent(): void

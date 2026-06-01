@@ -55,6 +55,15 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      */
     private array $redirectMaps = [];
 
+    /**
+     * Reverse redirect map per host, built from each page's `redirectFrom` column:
+     * old path => destination slug + code. Old paths that collide with a real (or
+     * phantom) page slug are skipped — that page wins (see coexistence rule).
+     *
+     * @var array<string, array<string, array{slug: string, code: int}>>
+     */
+    private array $redirectFromMaps = [];
+
     /** @var array<string, true> */
     private array $warmedLightHosts = [];
 
@@ -128,12 +137,13 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $slugCol = $meta->getColumnName('slug');
         $hostCol = $meta->getColumnName('host');
         $contentCol = $meta->getColumnName('mainContent');
+        $redirectFromCol = $meta->getColumnName('redirectFrom');
 
-        $sql = sprintf('SELECT %s AS slug,', $slugCol)
+        $sql = sprintf('SELECT %s AS slug, %s AS redirect_from,', $slugCol, $redirectFromCol)
             .sprintf(" CASE WHEN %s LIKE 'Location:%%' THEN %s ELSE NULL END AS redirect_content", $contentCol, $contentCol)
             .sprintf(' FROM %s WHERE %s = ?', $table, $hostCol);
 
-        /** @var list<array{slug: string, redirect_content: ?string}> $rows */
+        /** @var list<array{slug: string, redirect_from: ?string, redirect_content: ?string}> $rows */
         $rows = $this->getEntityManager()->getConnection()->fetchAllAssociative($sql, [$host]);
 
         $slugSet = [];
@@ -155,8 +165,36 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             $redirects[$slug] = ['url' => $redirection->url, 'code' => $redirection->code];
         }
 
+        // Second pass: a redirectFrom path only resolves when no real/phantom page owns it.
+        $redirectFrom = [];
+        foreach ($rows as $row) {
+            $redirectFromJson = $row['redirect_from'];
+            if (null === $redirectFromJson) {
+                continue;
+            }
+
+            if ('' === $redirectFromJson) {
+                continue;
+            }
+
+            /** @var array<string, mixed> $map */
+            $map = json_decode($redirectFromJson, true) ?: [];
+            foreach ($map as $from => $code) {
+                if (isset($slugSet[$from])) {
+                    continue;
+                }
+
+                if (isset($redirectFrom[$from])) {
+                    continue;
+                }
+
+                $redirectFrom[$from] = ['slug' => $row['slug'], 'code' => is_numeric($code) ? (int) $code : 301];
+            }
+        }
+
         $this->slugSets[$host] = $slugSet;
         $this->redirectMaps[$host] = $redirects;
+        $this->redirectFromMaps[$host] = $redirectFrom;
         $this->warmedLightHosts[$host] = true;
     }
 
@@ -177,7 +215,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             $this->warmupSlugCacheLight($host);
         }
 
-        return isset($this->slugSets[$host][$slug]);
+        return isset($this->slugSets[$host][$slug]) || isset($this->redirectFromMaps[$host][$slug]);
     }
 
     /**
@@ -196,7 +234,15 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             $this->warmupSlugCacheLight($host);
         }
 
-        return $this->redirectMaps[$host][$slug] ?? null;
+        if (isset($this->redirectMaps[$host][$slug])) {
+            return $this->redirectMaps[$host][$slug];
+        }
+
+        $redirectFrom = $this->redirectFromMaps[$host][$slug] ?? null;
+
+        return null !== $redirectFrom
+            ? ['url' => '/'.$redirectFrom['slug'], 'code' => $redirectFrom['code']]
+            : null;
     }
 
     /**
@@ -225,6 +271,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $this->warmedHosts = [];
         $this->slugSets = [];
         $this->redirectMaps = [];
+        $this->redirectFromMaps = [];
         $this->warmedLightHosts = [];
     }
 

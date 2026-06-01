@@ -395,7 +395,7 @@ final class LinkedDocsScanner extends AbstractScanner
                 if ($this->checkUnpublished) {
                     $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanNotPublished'));
                 }
-            } elseif ($checkRedirection && $this->lastPageChecked instanceof Page && $this->lastPageChecked->hasRedirection()) {
+            } elseif ($checkRedirection && (($this->lastPageChecked instanceof Page && $this->lastPageChecked->hasRedirection()) || $this->lastUriIsRedirect)) {
                 $this->addError('<code>'.$url.'</code> '.$this->trans('page_scanIsRedirection'));
             }
 
@@ -556,9 +556,12 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private ?Page $lastPageChecked = null;
 
+    private bool $lastUriIsRedirect = false;
+
     private function uriExist(string $uri): bool
     {
         $this->lastPageChecked = null;
+        $this->lastUriIsRedirect = false;
 
         $slug = ltrim($uri, '/');
 
@@ -572,9 +575,17 @@ final class LinkedDocsScanner extends AbstractScanner
 
         if (! $isMedia) {
             $this->lastPageChecked = $this->findPageInCacheOrDb($slug);
+
+            // No page owns this slug, but a destination page's redirectFrom (or a phantom
+            // redirect) may still resolve it — surface it as a redirection, not a dead link.
+            if (! $this->lastPageChecked instanceof Page
+                && null !== $this->entityManager->getRepository(Page::class)->getRedirectFor($slug, $this->page->host)) {
+                $this->lastUriIsRedirect = true;
+            }
         }
 
         $this->everChecked[$cacheKey] = $this->lastPageChecked instanceof Page
+            || $this->lastUriIsRedirect
             || ($isMedia && $this->mediaExistsBySlug(substr($slug, 6)))
             || file_exists($this->publicDir.'/'.$slug)
             || file_exists($this->publicDir.'/../'.$slug)

@@ -12,6 +12,7 @@ use Exception;
 use LogicException;
 use Pushword\Core\Entity\PageTrait\PageI18nTrait;
 use Pushword\Core\Entity\PageTrait\PageParentTrait;
+use Pushword\Core\Entity\PageTrait\RedirectFromTrait;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\ExtensiblePropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\HostTrait;
@@ -56,6 +57,8 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     use PageI18nTrait;
 
     use PageParentTrait;
+
+    use RedirectFromTrait;
 
     use TagsTrait;
 

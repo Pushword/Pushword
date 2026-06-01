@@ -58,8 +58,17 @@ final class PageController extends AbstractPushwordController
     #[Route('/{slug}/{pager}', name: 'pushword_page_pager', requirements: ['slug' => RoutePatterns::SLUG_WITH_TRAILING, 'pager' => RoutePatterns::PAGER], defaults: ['slug' => '', 'pager' => 1], methods: ['GET', 'HEAD', 'POST'], priority: -80)]
     public function show(Request $request, string $slug = ''): Response
     {
-        $page = $this->pageResolver->findPageOr404($request, '' === $slug ? 'homepage' : $slug, true)
-            ?? throw $this->createNotFoundException();
+        $normalizedSlug = '' === $slug ? 'homepage' : $slug;
+        $page = $this->pageResolver->findPageOr404($request, $normalizedSlug, true);
+
+        if (null === $page) {
+            $redirect = $this->resolveRedirectFrom($normalizedSlug);
+            if (null !== $redirect) {
+                return $this->redirect($redirect['url'], $redirect['code']);
+            }
+
+            throw $this->createNotFoundException();
+        }
 
         $host = $request->query->get('host');
         if ('' !== $host && $host === $request->getHost()) {
@@ -92,16 +101,42 @@ final class PageController extends AbstractPushwordController
         return $this->render($view, $params, $response);
     }
 
+    /**
+     * Serve a `redirectFrom` entry: when no page owns the requested slug, an old path
+     * declared on a destination page's redirectFrom resolves here. Internal targets are
+     * route-generated so the canonical (host-prefixed) URL is used.
+     *
+     * @return ?array{url: string, code: int}
+     */
+    private function resolveRedirectFrom(string $slug): ?array
+    {
+        $host = $this->requestContext->getCurrentSite()->getMainHost();
+        $redirect = $this->pageRepository->getRedirectFor(Page::normalizeSlug($slug), $host);
+
+        if (null === $redirect) {
+            return null;
+        }
+
+        return ['url' => $this->generateRedirectTarget($redirect['url'], $host), 'code' => $redirect['code']];
+    }
+
     private function resolveRedirectionUrl(Page $page): string
     {
-        $url = $page->getRedirectionUrl();
+        return $this->generateRedirectTarget($page->getRedirectionUrl(), $page->host);
+    }
 
+    /**
+     * Turn a redirect target into its final URL: an internal `/slug` that maps to an
+     * existing page is route-generated (canonical, host-prefixed); anything else is
+     * returned as-is (external URL, or internal target with no page).
+     */
+    private function generateRedirectTarget(string $url, string $host): string
+    {
         if (! str_starts_with($url, '/')) {
             return $url;
         }
 
-        $slug = ltrim($url, '/');
-        $targetPage = $this->pageRepository->getPageBySlug($slug, $page->host);
+        $targetPage = $this->pageRepository->getPageBySlug(ltrim($url, '/'), $host);
 
         return null !== $targetPage ? $this->routeGenerator->generate($targetPage) : $url;
     }

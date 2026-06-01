@@ -77,6 +77,21 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         self::assertSame(['ogDescription' => 'desc'], $page->getCustomProperties());
     }
 
+    public function testRedirectFromRoundtrips(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('dest');
+
+        // Accepts a {path: code} map and a Jekyll-style bare list (→ 301).
+        $this->mapper->applyFrontmatter($page, ['redirectFrom' => ['old-one' => 302, 'old-two']]);
+        self::assertSame(['old-one' => 302, 'old-two' => 301], $page->getRedirectFromMap());
+
+        // Emitted back in the frontmatter shape.
+        $shape = $this->mapper->toArray($page);
+        self::assertSame(['old-one' => 302, 'old-two' => 301], $shape['frontmatter']['redirectFrom']);
+    }
+
     public function testApplyFrontmatterSkipsUnknownTypesAndPreservesExisting(): void
     {
         $page = new Page();

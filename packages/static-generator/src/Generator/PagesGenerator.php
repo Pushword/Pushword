@@ -112,7 +112,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
     private function needsRegeneration(Page $page, string $host): bool
     {
         // Redirections are always processed (they update the redirection manager)
-        if ($page->hasRedirection()) {
+        if ($page->hasRedirection() || [] !== $page->getRedirectFromMap()) {
             return true;
         }
 

@@ -31,6 +31,17 @@ class RedirectionManager extends AbstractGenerator
     }
 
     /**
+     * Collect the page's `redirectFrom` entries: each old path 30x to this page.
+     */
+    public function addRedirectFrom(Page $page): void
+    {
+        $to = $this->router->generate($page->getRealSlug());
+        foreach ($page->getRedirectFromMap() as $from => $code) {
+            $this->redirections[] = [$this->router->generate($from), $to, $code];
+        }
+    }
+
+    /**
      * @return array<int, array{0: string, 1: string, 2: int}> where 0 is the from, 1 is the to, 2 is the code
      */
     public function get(): array

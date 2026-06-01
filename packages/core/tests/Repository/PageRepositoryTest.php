@@ -105,6 +105,50 @@ final class PageRepositoryTest extends KernelTestCase
         self::assertSame(301, $redirect['code']);
     }
 
+    public function testGetRedirectForResolvesRedirectFromAndRespectsShadowing(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $homepage = $pageRepo->findOneBy(['slug' => 'homepage']);
+        self::assertNotNull($homepage);
+        $host = $homepage->host;
+
+        $destination = new Page();
+        $destination->setH1('RFM Repo Dest');
+        $destination->setSlug('rfm-repo-dest');
+        $destination->host = $host;
+        $destination->locale = 'en';
+        $destination->createdAt = new DateTime();
+        $destination->updatedAt = new DateTime();
+        $destination->setMainContent('content');
+        // 'homepage' collides with a real page → must be shadowed by it.
+        $destination->setRedirectFrom(['rfm-repo-old' => 308, 'homepage' => 301]);
+        $em->persist($destination);
+        $em->flush();
+        $em->clear();
+
+        try {
+            $redirect = $pageRepo->getRedirectFor('rfm-repo-old', $host);
+            self::assertNotNull($redirect);
+            self::assertSame('/rfm-repo-dest', $redirect['url']);
+            self::assertSame(308, $redirect['code']);
+            self::assertTrue($pageRepo->hasSlug('rfm-repo-old', $host));
+
+            // The real homepage page wins: its redirectFrom claim is ignored.
+            self::assertNull($pageRepo->getRedirectFor('homepage', $host));
+        } finally {
+            $em->clear();
+            $toRemove = $pageRepo->findOneBy(['slug' => 'rfm-repo-dest', 'host' => $host]);
+            if (null !== $toRemove) {
+                $em->remove($toRemove);
+                $em->flush();
+            }
+        }
+    }
+
     public function testGetPageBySlugDoesNotAutoWarmFullCache(): void
     {
         self::bootKernel();

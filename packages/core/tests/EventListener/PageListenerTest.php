@@ -50,10 +50,13 @@ final class PageListenerTest extends KernelTestCase
         $this->em->flush();
         $this->em->clear();
 
-        $redirect = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'slug-redirect-old', 'host' => 'localhost.dev']);
-        self::assertNotNull($redirect, 'Redirect page should be created for old slug');
-        self::assertTrue($redirect->hasRedirection());
-        self::assertSame('Location: /slug-redirect-new 301', $redirect->getMainContent());
+        // No phantom page at the old slug — the old path lives on the destination page's redirectFrom.
+        $phantom = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'slug-redirect-old', 'host' => 'localhost.dev']);
+        self::assertNull($phantom, 'No phantom redirect page should be created for the old slug');
+
+        $destination = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'slug-redirect-new', 'host' => 'localhost.dev']);
+        self::assertNotNull($destination);
+        self::assertSame(['slug-redirect-old' => 301], $destination->getRedirectFromMap());
     }
 
     public function testSlugChangeUpdatesExistingRedirectChain(): void
@@ -67,18 +70,20 @@ final class PageListenerTest extends KernelTestCase
         $page->setSlug('chain-test-b');
         $this->em->flush();
 
-        // b→c, and a→b should become a→c
+        // b→c: both old paths now redirect straight to c (no chain), stored on the destination page.
         $page->setSlug('chain-test-c');
         $this->em->flush();
         $this->em->clear();
 
-        $redirectA = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'chain-test-a', 'host' => 'localhost.dev']);
-        self::assertNotNull($redirectA);
-        self::assertSame('Location: /chain-test-c 301', $redirectA->getMainContent());
+        self::assertNull($this->em->getRepository(Page::class)->findOneBy(['slug' => 'chain-test-a', 'host' => 'localhost.dev']));
+        self::assertNull($this->em->getRepository(Page::class)->findOneBy(['slug' => 'chain-test-b', 'host' => 'localhost.dev']));
 
-        $redirectB = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'chain-test-b', 'host' => 'localhost.dev']);
-        self::assertNotNull($redirectB);
-        self::assertSame('Location: /chain-test-c 301', $redirectB->getMainContent());
+        $destination = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'chain-test-c', 'host' => 'localhost.dev']);
+        self::assertNotNull($destination);
+        self::assertSame(
+            ['chain-test-a' => 301, 'chain-test-b' => 301],
+            $destination->getRedirectFromMap(),
+        );
     }
 
     public function testNoRedirectWhenSlugUnchanged(): void
@@ -103,8 +108,10 @@ final class PageListenerTest extends KernelTestCase
         $this->em->flush();
         $this->em->clear();
 
-        $redirect = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'host-test-slug', 'host' => 'localhost.dev']);
-        self::assertNotNull($redirect);
+        // The old path is recorded on the destination page (same host), not as a cross-host entry.
+        $destination = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'host-test-new', 'host' => 'localhost.dev']);
+        self::assertNotNull($destination);
+        self::assertArrayHasKey('host-test-slug', $destination->getRedirectFromMap());
 
         $otherHost = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'host-test-slug', 'host' => 'other.dev']);
         self::assertNull($otherHost, 'Redirect should only exist on the same host');

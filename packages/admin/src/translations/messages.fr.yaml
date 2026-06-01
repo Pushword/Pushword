@@ -119,6 +119,10 @@ adminPagePermanlienLabel: Permanlien
 adminPagePublishedAtDraft: Brouillon
 adminPagePublishedAtLabel: 'Publié le'
 adminPagePublishedAtOnline: '<span style="color:#449d44">Publié</span>'
+adminPageRedirectFromCode: Code
+adminPageRedirectFromHelp: "Anciennes URL de cet hôte à rediriger vers cette page (ex : <code>old-slug</code>). Utilisez 301 pour un déplacement permanent."
+adminPageRedirectFromLabel: 'Rediriger depuis'
+adminPageRedirectFromPath: Chemin
 adminPageRedirectionFrom: De
 adminPageRedirectionTo: Vers
 adminPageRelatedPageLabel: 'Pages Associées'

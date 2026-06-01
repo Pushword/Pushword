@@ -18,6 +18,7 @@ use Pushword\Admin\FormField\PageMetaRobotsField;
 use Pushword\Admin\FormField\PageNameField;
 use Pushword\Admin\FormField\PageParentPageField;
 use Pushword\Admin\FormField\PagePublishedAtField;
+use Pushword\Admin\FormField\PageRedirectFromField;
 use Pushword\Admin\FormField\PageSearchExcreptField;
 use Pushword\Admin\FormField\PageSlugField;
 use Pushword\Admin\FormField\PageTitleField;
@@ -72,6 +73,10 @@ class Configuration implements ConfigurationInterface
             'adminPageRevisions' => [PageEditMessageField::class],
             'adminPageStateLabel' => [PagePublishedAtField::class, PageMetaRobotsField::class],
             'adminPagePermanlienLabel' => [HostField::class, PageSlugField::class],
+            'adminPageRedirectFromLabel' => [
+                'expand' => true,
+                'fields' => [PageRedirectFromField::class],
+            ],
             'adminPageMainImageLabel' => [PageMainImageField::class],
             'adminPageParentPageLabel' => [PageParentPageField::class],
             'adminPageSearchLabel' => [

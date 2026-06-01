@@ -40,6 +40,10 @@ class PageGenerator extends AbstractGenerator
             return;
         }
 
+        if ([] !== $page->getRedirectFromMap()) {
+            $this->redirectionManager->addRedirectFrom($page);
+        }
+
         // In cache mode, honour per-page opt-out via customProperties[cache] = false.
         if ('static' === $this->app->getStr('cache', 'none')
             && false === $page->getCustomProperty('cache')

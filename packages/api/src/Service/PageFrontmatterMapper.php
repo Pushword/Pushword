@@ -41,6 +41,7 @@ final readonly class PageFrontmatterMapper
             'slug' => $page->getSlug(),
             'weight' => $page->getWeight(),
             'tags' => $page->getTagList(),
+            'redirectFrom' => $page->getRedirectFromMap(),
             'publishedAt' => $page->getPublishedAt()?->format(DateTimeInterface::ATOM),
             'mainImage' => $page->getMainImage()?->getFileName(),
             'parentPage' => $page->getParentPage()?->getSlug(),
@@ -107,6 +108,10 @@ final readonly class PageFrontmatterMapper
         if (\array_key_exists('tags', $frontmatter) && \is_array($frontmatter['tags'])) {
             $tags = array_values(array_filter($frontmatter['tags'], is_string(...)));
             $page->setTags($tags);
+        }
+
+        if (\array_key_exists('redirectFrom', $frontmatter) && (\is_array($frontmatter['redirectFrom']) || \is_string($frontmatter['redirectFrom']))) {
+            $page->setRedirectFrom($frontmatter['redirectFrom']);
         }
 
         if (\array_key_exists('publishedAt', $frontmatter)) {

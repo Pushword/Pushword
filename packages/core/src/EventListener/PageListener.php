@@ -157,9 +157,11 @@ final class PageListener
         try {
             $em = $event->getObjectManager();
 
+            $repository = $em->getRepository(Page::class);
+
             foreach ($pending as $data) {
                 // Don't create redirect if old slug is already taken by another page on this host
-                $existing = $em->getRepository(Page::class)->findOneBy([
+                $existing = $repository->findOneBy([
                     'slug' => $data['oldSlug'],
                     'host' => $data['host'],
                 ]);
@@ -167,8 +169,8 @@ final class PageListener
                     continue;
                 }
 
-                // Update existing redirects pointing to old slug → point to new slug (prevent chains)
-                $chainingRedirects = $em->getRepository(Page::class)->createQueryBuilder('p')
+                // Repoint legacy phantom redirects that targeted the old slug → new slug (prevent chains)
+                $chainingRedirects = $repository->createQueryBuilder('p')
                     ->where('p.host = :host')
                     ->andWhere('p.mainContent LIKE :target')
                     ->setParameter('host', $data['host'])
@@ -180,12 +182,15 @@ final class PageListener
                     $chainingRedirect->setMainContent('Location: /'.$data['newSlug'].' '.$chainingRedirect->getRedirectionCode());
                 }
 
-                $redirect = new Page(false);
-                $redirect->host = $data['host'];
-                $redirect->slug = $data['oldSlug'];
-                $redirect->setMainContent('Location: /'.$data['newSlug'].' 301');
-
-                $em->persist($redirect);
+                // Record the old slug next to the content, on the destination page's redirectFrom.
+                $destination = $repository->findOneBy([
+                    'slug' => $data['newSlug'],
+                    'host' => $data['host'],
+                ]);
+                if (null !== $destination) {
+                    $destination->addRedirectFrom($data['oldSlug']);
+                    $em->persist($destination);
+                }
             }
 
             $em->flush();

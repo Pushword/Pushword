@@ -120,6 +120,10 @@ adminPagePermanlienLabel: Permalink
 adminPagePublishedAtDraft: Draft
 adminPagePublishedAtLabel: "Published at"
 adminPagePublishedAtOnline: Online
+adminPageRedirectFromCode: Code
+adminPageRedirectFromHelp: "Old paths on this host that should redirect to this page (e.g. <code>old-slug</code>). Use 301 for permanent moves."
+adminPageRedirectFromLabel: "Redirect from"
+adminPageRedirectFromPath: Path
 adminPageRedirectionFrom: From
 adminPageRedirectionTo: To
 adminPageRelatedPageLabel: "Associated Pages"
