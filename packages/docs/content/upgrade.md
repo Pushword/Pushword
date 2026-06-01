@@ -12,6 +12,31 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc627
+
+### `redirectFrom`: internal redirects authored on the destination page
+
+Pages can now declare the old paths that should redirect **to** them (Jekyll
+`redirect_from` style), stored in a new `redirect_from` JSON column on `page`.
+
+#### Migration Steps
+
+1. Run `composer update`
+2. Run `php bin/console doctrine:schema:update --force` (adds the new `redirect_from`
+   column to the `page` table — **required**, the page resolver reads this column)
+3. *(Optional)* Run `php bin/console pw:redirect:migrate` to fold existing internal
+   redirect pages (`Location: /target`) into their destination page's `redirectFrom`
+   and remove the now-redundant redirect pages. External / non-resolving redirects are
+   left untouched. Use `--dry-run` first to preview.
+4. Clear cache: `php bin/console cache:clear`
+
+#### Behavior change
+
+Renaming a page slug no longer creates a standalone redirect page; instead the old slug
+is appended to the destination page's `redirectFrom`. Existing redirect pages keep
+working unchanged. `redirection.csv` (flat) still holds redirects that have no
+destination page (external targets, non-resolving paths).
+
 ## To 1.0.0-rc623
 
 ### New Bundles: API & Page Workflow
