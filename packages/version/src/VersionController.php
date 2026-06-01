@@ -7,6 +7,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInter
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -136,6 +137,29 @@ class VersionController extends AbstractController
         $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('versionSaveSuccess'));
 
         return $this->redirectToEdit($type, $id);
+    }
+
+    /**
+     * Returns one version's editable fields as JSON so the compare view can
+     * scrub the slider and refresh the diff without a full page reload.
+     */
+    #[AdminRoute(path: '/version/{type}/{id}/data/{version}', name: 'version_data')]
+    #[IsGranted('ROLE_PUSHWORD_ADMIN')]
+    public function versionData(string $type, string $id, string $version): JsonResponse
+    {
+        $entity = 'current' === $version
+            ? $this->versionner->find($type, $id)
+            : $this->versionner->populate($this->newEntity($type), $type, $id, $version);
+
+        $accessor = PropertyAccess::createPropertyAccessor();
+
+        $data = [];
+        foreach (array_keys(self::TYPES[$type]['fields']) as $field) {
+            $value = $accessor->getValue($entity, $field);
+            $data[$field] = \is_scalar($value) ? (string) $value : '';
+        }
+
+        return new JsonResponse($data);
     }
 
     #[AdminRoute(path: '/version/{type}/{id}/{version}', name: 'version_load')]

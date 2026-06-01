@@ -100,6 +100,20 @@ final class ControllerTest extends AbstractAdminTestClass
         $client->request(Request::METHOD_GET, $compareUrl);
         self::assertSame(200, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
+        $dataUrl = $router->generate('admin_version_data', ['type' => 'snippet', 'id' => $snippet->id, 'version' => $versions[0]]);
+        $client->request(Request::METHOD_GET, $dataUrl);
+        self::assertSame(200, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        $payload = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertIsArray($payload);
+        self::assertSame('first', $payload['content'], 'version_data returns the snippet content of the requested version');
+
+        $currentDataUrl = $router->generate('admin_version_data', ['type' => 'snippet', 'id' => $snippet->id, 'version' => 'current']);
+        $client->request(Request::METHOD_GET, $currentDataUrl);
+        self::assertSame(200, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        $currentPayload = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertIsArray($currentPayload);
+        self::assertSame('second', $currentPayload['content'], 'version_data with `current` returns the live entity content');
+
         $loadUrl = $router->generate('admin_version_load', ['type' => 'snippet', 'id' => $snippet->id, 'version' => $versions[0]]);
         $client->request(Request::METHOD_GET, $loadUrl);
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
