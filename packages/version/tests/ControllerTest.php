@@ -53,7 +53,11 @@ final class ControllerTest extends AbstractAdminTestClass
         // Test admin routes (these require EasyAdmin context via admin dashboard)
         $listUrl = $router->generate('admin_version_list', ['type' => 'page', 'id' => $pageId]);
         $client->request(Request::METHOD_GET, $listUrl);
-        self::assertSame(200, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        $listContent = (string) $client->getResponse()->getContent();
+        self::assertSame(200, $client->getResponse()->getStatusCode(), $listContent);
+        // The page_actions block must actually render (wrong block names are silently dropped).
+        $editUrl = $router->generate('admin_page_edit', ['entityId' => $pageId]);
+        self::assertStringContainsString($editUrl, $listContent, 'list page links back to the page edit screen');
 
         $loadUrl = $router->generate('admin_version_load', ['type' => 'page', 'id' => $pageId, 'version' => $version]);
         $client->request(Request::METHOD_GET, $loadUrl);
