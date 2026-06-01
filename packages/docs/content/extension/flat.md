@@ -88,7 +88,22 @@ php bin/console pw:flat:sync example.tld --page=about --page=contact
 
 # Import without creating a database backup
 php bin/console pw:flat:sync --mode=import --no-backup
+
+# Re-stamp the `revision:` front matter on every page (see note below)
+php bin/console pw:flat:sync example.tld --mode=export --force
 ```
+
+#### Revision stamp & re-stamping
+
+Each exported `.md` ends with a `revision: <hash> # read only` line in its front matter — the content hash that mirrors the API's ETag / `If-Match` value, so an agent can read it from the file and `PUT` back without a preliminary `GET`. It is written on export and **ignored on import**.
+
+A normal export skips files whose content is unchanged (and whose mtime is newer than the DB row), so pages exported *before* the stamp existed — or any file missing the line — are **not** re-stamped by a plain sync. Run a full-host force export to rewrite them:
+
+```bash
+php bin/console pw:flat:sync example.tld --mode=export --force
+```
+
+`--force` bypasses the mtime fast-path and regenerates content (now including the stamp); files already carrying the correct revision are left byte-identical. Note: `--force` combined with `--page` does **not** re-stamp — the targeted-export path skips the force flag (see below).
 
 #### Targeted page sync (`--page`)
 
