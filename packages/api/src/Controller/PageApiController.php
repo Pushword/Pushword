@@ -4,6 +4,8 @@ namespace Pushword\Api\Controller;
 
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Api\Service\BodyPatcher;
+use Pushword\Api\Service\BodyPatchException;
 use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Api\Workflow\WorkflowGateInterface;
 use Pushword\Core\Entity\Page;
@@ -27,6 +29,7 @@ final class PageApiController extends AbstractApiController
         private readonly RevisionCalculator $revisions,
         private readonly ValidatorInterface $validator,
         private readonly MarkdownParser $markdownParser,
+        private readonly BodyPatcher $bodyPatcher,
         private readonly string $deleteStrategy = 'soft',
         private readonly ?WorkflowGateInterface $workflowGate = null,
     ) {
@@ -137,9 +140,13 @@ final class PageApiController extends AbstractApiController
         $this->entityManager->persist($page);
         $this->entityManager->flush();
 
-        $payload = $this->buildPagePayload($page);
-
-        return $this->respond($payload, Response::HTTP_CREATED, ['ETag' => $this->revisions->compute($page)]);
+        return $this->writeResponse(
+            $request,
+            $this->buildMinimalPayload($page),
+            fn (): array => $this->buildPagePayload($page),
+            $this->revisions->compute($page),
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
@@ -159,7 +166,29 @@ final class PageApiController extends AbstractApiController
         return $frontmatter;
     }
 
-    #[Route('/api/page/{host}/{slug}', name: 'pushword_api_page_item', requirements: ['slug' => '.+'], methods: ['GET', 'PUT', 'DELETE'])]
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function extractEdits(array $data): array
+    {
+        if (! \is_array($data['edits'] ?? null)) {
+            return [];
+        }
+
+        $edits = [];
+        foreach ($data['edits'] as $edit) {
+            if (\is_array($edit)) {
+                /** @var array<string, mixed> $edit */
+                $edits[] = $edit;
+            }
+        }
+
+        return $edits;
+    }
+
+    #[Route('/api/page/{host}/{slug}', name: 'pushword_api_page_item', requirements: ['slug' => '.+'], methods: ['GET', 'PUT', 'PATCH', 'DELETE'])]
     public function item(string $host, string $slug, Request $request): JsonResponse
     {
         $page = $this->findPage($host, $slug);
@@ -170,6 +199,7 @@ final class PageApiController extends AbstractApiController
         return match ($request->getMethod()) {
             'GET' => $this->doGet($page),
             'PUT' => $this->doUpdate($page, $request),
+            'PATCH' => $this->doPatch($page, $request),
             'DELETE' => $this->doDelete($page),
             default => $this->respond(['error' => 'Method not allowed'], Response::HTTP_METHOD_NOT_ALLOWED),
         };
@@ -191,6 +221,49 @@ final class PageApiController extends AbstractApiController
         $frontmatter = $this->extractFrontmatter($data);
         $body = \is_string($data['body'] ?? null) ? $data['body'] : null;
 
+        return $this->applyAndRespond($page, $frontmatter, $body, $request);
+    }
+
+    private function doPatch(Page $page, Request $request): JsonResponse
+    {
+        $conflict = $this->checkIfMatch($request, $this->revisions->compute($page), fn (): array => $this->buildPagePayload($page));
+        if (null !== $conflict) {
+            return $conflict;
+        }
+
+        $data = $this->decodeJson($request);
+        $frontmatter = $this->extractFrontmatter($data);
+        $edits = $this->extractEdits($data);
+
+        if ([] === $edits && [] === $frontmatter) {
+            return $this->badRequest('Provide at least one of: edits, frontmatter');
+        }
+
+        try {
+            $body = [] === $edits ? null : $this->bodyPatcher->apply($page->getMainContent(), $edits);
+        } catch (BodyPatchException $bodyPatchException) {
+            return $this->respond([
+                'error' => 'patch_failed',
+                'edit' => [
+                    'index' => $bodyPatchException->index,
+                    'reason' => $bodyPatchException->reason,
+                    'matches' => $bodyPatchException->matches,
+                ],
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return $this->applyAndRespond($page, $frontmatter, $body, $request);
+    }
+
+    /**
+     * Shared tail of PUT and PATCH: route through the optional workflow gate
+     * (202), else merge frontmatter + body, validate, persist and return the
+     * token-efficient write response.
+     *
+     * @param array<string, mixed> $frontmatter
+     */
+    private function applyAndRespond(Page $page, array $frontmatter, ?string $body, Request $request): JsonResponse
+    {
         if (null !== $this->workflowGate) {
             $result = $this->workflowGate->intercept($page, $frontmatter, $body, $this->getApiUser());
             if ($result['routed']) {
@@ -218,7 +291,12 @@ final class PageApiController extends AbstractApiController
 
         $this->entityManager->flush();
 
-        return $this->respond($this->buildPagePayload($page), Response::HTTP_OK, ['ETag' => $this->revisions->compute($page)]);
+        return $this->writeResponse(
+            $request,
+            $this->buildMinimalPayload($page),
+            fn (): array => $this->buildPagePayload($page),
+            $this->revisions->compute($page),
+        );
     }
 
     private function doDelete(Page $page): JsonResponse
@@ -241,6 +319,22 @@ final class PageApiController extends AbstractApiController
             'host' => $host,
             'slug' => Page::normalizeSlug($slug),
         ]);
+    }
+
+    /**
+     * Minimal write-response body: just enough for the client to track the new
+     * revision without re-emitting the (potentially large) Markdown body.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildMinimalPayload(Page $page): array
+    {
+        return [
+            'host' => $page->host,
+            'slug' => $page->getSlug(),
+            'revision' => $this->revisions->compute($page),
+            'updatedAt' => $page->updatedAt?->format(DateTimeInterface::ATOM),
+        ];
     }
 
     /**
@@ -297,6 +391,18 @@ final class PageApiController extends AbstractApiController
             ]],
         ];
 
+        $patchBody = [
+            'application/json' => ['schema' => ['$ref' => '#/components/schemas/PagePatch']],
+        ];
+
+        // Opt out of the token-efficient minimal write response.
+        $returnParam = [
+            'name' => 'return',
+            'in' => 'query',
+            'schema' => ['type' => 'string', 'enum' => ['minimal', 'full'], 'default' => 'minimal'],
+            'description' => 'Write responses return {host, slug, revision, updatedAt} by default; use `full` for the complete Page payload.',
+        ];
+
         return [
             'paths' => [
                 '/api/page/search' => [
@@ -325,9 +431,10 @@ final class PageApiController extends AbstractApiController
                     'parameters' => [['name' => 'host', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'string']]],
                     'post' => [
                         'summary' => 'Create a page',
+                        'parameters' => [$returnParam],
                         'requestBody' => ['content' => $writeBody],
                         'responses' => [
-                            '201' => ['description' => 'Created', 'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/Page']]]],
+                            '201' => ['description' => 'Created (minimal write response by default, full Page with ?return=full)'],
                             '409' => ['description' => 'Slug already exists'],
                             '422' => ['description' => 'Validation error'],
                         ],
@@ -346,14 +453,33 @@ final class PageApiController extends AbstractApiController
                         ],
                     ],
                     'put' => [
-                        'summary' => 'Update a page (optimistic concurrency)',
-                        'parameters' => [['name' => 'If-Match', 'in' => 'header', 'required' => true, 'schema' => ['type' => 'string']]],
+                        'summary' => 'Replace a page body/frontmatter (optimistic concurrency)',
+                        'parameters' => [
+                            ['name' => 'If-Match', 'in' => 'header', 'required' => true, 'schema' => ['type' => 'string']],
+                            $returnParam,
+                        ],
                         'requestBody' => ['content' => $writeBody],
                         'responses' => [
-                            '200' => ['description' => 'Updated', 'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/Page']]]],
+                            '200' => ['description' => 'Updated (minimal write response by default, full Page with ?return=full)'],
                             '202' => ['description' => 'Routed to PendingModification via page-workflow'],
                             '409' => ['description' => 'Revision mismatch, includes fresh page'],
                             '422' => ['description' => 'Validation error'],
+                            '428' => ['description' => 'Missing If-Match header'],
+                        ],
+                    ],
+                    'patch' => [
+                        'summary' => 'Token-efficient partial edit: anchored find/replace on the body and/or selective frontmatter merge',
+                        'parameters' => [
+                            ['name' => 'If-Match', 'in' => 'header', 'required' => true, 'schema' => ['type' => 'string']],
+                            $returnParam,
+                        ],
+                        'requestBody' => ['content' => $patchBody],
+                        'responses' => [
+                            '200' => ['description' => 'Patched (minimal write response by default, full Page with ?return=full)'],
+                            '202' => ['description' => 'Routed to PendingModification via page-workflow'],
+                            '400' => ['description' => 'Neither edits nor frontmatter provided'],
+                            '409' => ['description' => 'Revision mismatch, includes fresh page'],
+                            '422' => ['description' => 'patch_failed (find not_found/ambiguous) or validation error'],
                             '428' => ['description' => 'Missing If-Match header'],
                         ],
                     ],
@@ -364,7 +490,27 @@ final class PageApiController extends AbstractApiController
                 ],
             ],
             'components' => [
-                'schemas' => ['Page' => $pageSchema],
+                'schemas' => [
+                    'Page' => $pageSchema,
+                    'PageEdit' => [
+                        'type' => 'object',
+                        'description' => 'A single anchored find/replace edit applied to the Markdown body.',
+                        'required' => ['find', 'replace'],
+                        'properties' => [
+                            'find' => ['type' => 'string', 'description' => 'Exact text to locate; must match once unless replaceAll is true'],
+                            'replace' => ['type' => 'string'],
+                            'replaceAll' => ['type' => 'boolean', 'default' => false],
+                        ],
+                    ],
+                    'PagePatch' => [
+                        'type' => 'object',
+                        'description' => 'Partial update: at least one of edits or frontmatter is required.',
+                        'properties' => [
+                            'edits' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/PageEdit']],
+                            'frontmatter' => ['type' => 'object', 'additionalProperties' => true],
+                        ],
+                    ],
+                ],
             ],
         ];
     }

@@ -109,6 +109,21 @@ abstract class AbstractApiController extends AbstractController implements ApiCo
     }
 
     /**
+     * Token-efficient write response: a minimal body by default (the client just
+     * sent the content, it only needs the new revision), or the full payload when
+     * the client opts in with `?return=full`. Always exposes the ETag header.
+     *
+     * @param array<string, mixed>             $minimal
+     * @param callable(): array<string, mixed> $fullPayload
+     */
+    protected function writeResponse(Request $request, array $minimal, callable $fullPayload, string $revision, int $status = Response::HTTP_OK): JsonResponse
+    {
+        $body = 'full' === $request->query->get('return') ? $fullPayload() : $minimal;
+
+        return $this->respond($body, $status, ['ETag' => $revision]);
+    }
+
+    /**
      * @return array{page: int, perPage: int, offset: int}
      */
     protected function paginationParams(Request $request, int $defaultPerPage = 25, int $maxPerPage = 100): array

@@ -7,6 +7,8 @@ name: Extensions
 
 - [Admin](/extension/admin)
   Create, edit, delete Page, Media, User with an interface built on top of EasyAdmin.
+- [API](/extension/api)
+  Token-authenticated REST API mirroring the admin (Pages, redirections), with a self-describing OpenAPI endpoint and token-efficient partial edits for scripts and LLM agents.
 - [Admin Block Editor](/extension/admin-block-editor)
   Supercharge default admin with a rich text editor which managed blocks.
 - [Advanced Main Image](/extension/advanced-main-image)
