@@ -118,6 +118,44 @@ final class HtmlMinifierTest extends TestCase
         self::assertStringContainsString('</p><pre>kept</pre>', $result);
     }
 
+    public function testRemoveExtraWhiteSpacePreservesMultibyteUtf8(): void
+    {
+        // "à" is C3 A0 in UTF-8; its second byte (0xA0) is matched by \h in 8-bit
+        // mode, so a byte-based whitespace collapse would corrupt it into C3 20.
+        $html = '<!DOCTYPE html><html><body><p>à à là où</p></body></html>';
+
+        $result = HtmlMinifier::removeExtraWhiteSpace($html);
+
+        self::assertStringContainsString('à à là où', $result);
+        self::assertStringNotContainsString("\u{FFFD}", $result);
+        self::assertTrue(mb_check_encoding($result, 'UTF-8'));
+    }
+
+    public function testRemoveExtraWhiteSpacePreservesMultibyteBeforeNewline(): void
+    {
+        // "à" (C3 A0) ending a line, before the newline-collapsing pass: the byte
+        // 0xA0 must not be eaten together with the following newline.
+        $html = "<!DOCTYPE html><html><body><p>voilà\noui</p></body></html>";
+
+        $result = HtmlMinifier::removeExtraWhiteSpace($html);
+
+        self::assertStringContainsString('voilà oui', $result);
+        self::assertTrue(mb_check_encoding($result, 'UTF-8'));
+    }
+
+    public function testRemoveExtraWhiteSpacePreservesMultibyteAroundBlockTag(): void
+    {
+        // "à" (C3 A0) right next to a block tag, before the block-tightening passes:
+        // its 0xA0 byte must not be consumed as whitespace adjacent to the tag.
+        $html = "<!DOCTYPE html><html><body><p>là</p>\n<div>çà</div></body></html>";
+
+        $result = HtmlMinifier::removeExtraWhiteSpace($html);
+
+        self::assertStringContainsString('là', $result);
+        self::assertStringContainsString('çà', $result);
+        self::assertTrue(mb_check_encoding($result, 'UTF-8'));
+    }
+
     public function testNonHtmlDocumentPassthrough(): void
     {
         $html = '<div>  some   spaces  </div>';

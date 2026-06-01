@@ -37,11 +37,13 @@ class HtmlMinifier
         // Collapse every newline (and the whitespace around it) to a single space.
         // This is what a browser renders, so whitespace between text and inline
         // elements (e.g. ": <strong>") is preserved instead of being swallowed.
-        // (no /u flag: we only collapse ASCII whitespace, leaving an intentional
-        // &nbsp; / U+00A0 untouched, and it is faster on large documents)
-        $html = preg_replace('/\h*\n\s*/', ' ', $html) ?? $html;
+        // We match only ASCII space and tab explicitly (not \h): without the /u
+        // flag \h works byte-by-byte and matches 0xA0, the second byte of many
+        // UTF-8 characters (e.g. "à" = C3 A0), which would corrupt them. Using
+        // [ \t] also leaves an intentional &nbsp; / U+00A0 untouched.
+        $html = preg_replace('/[ \t]*\n[ \t\r\n\f]*/', ' ', $html) ?? $html;
         // Collapse remaining runs of horizontal whitespace to a single space.
-        $html = preg_replace('/\h{2,}/', ' ', $html) ?? $html;
+        $html = preg_replace('/[ \t]{2,}/', ' ', $html) ?? $html;
 
         // That single space is only insignificant next to a block-level element
         // edge, where the browser would not render it: drop it there to stay tight.
@@ -52,9 +54,9 @@ class HtmlMinifier
         // Tag names are lowercase ASCII (DomCrawler normalised them above), so no
         // case-insensitive or UTF-8 matching is needed here.
         // before an opening/closing block tag
-        $html = preg_replace('#\h+(</?(?:'.$block.')\b)#', '$1', $html) ?? $html;
+        $html = preg_replace('#[ \t]+(</?(?:'.$block.')\b)#', '$1', $html) ?? $html;
         // after an opening/closing block tag
-        $html = preg_replace('#(</?(?:'.$block.')\b[^>]*+>)\h+#', '$1', $html) ?? $html;
+        $html = preg_replace('#(</?(?:'.$block.')\b[^>]*+>)[ \t]+#', '$1', $html) ?? $html;
 
         // Restore the original content of <pre> and <textarea>
         foreach ($protectedTags as $placeholder => $originalContent) {
