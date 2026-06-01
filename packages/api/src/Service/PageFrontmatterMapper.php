@@ -9,6 +9,7 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -21,6 +22,7 @@ final readonly class PageFrontmatterMapper
     public function __construct(
         private PageRepository $pageRepository,
         private MediaRepository $mediaRepository,
+        private ?PropertyConverterRegistry $converterRegistry = null,
     ) {
     }
 
@@ -143,6 +145,23 @@ final readonly class PageFrontmatterMapper
             $propKey = substr($key, \strlen('customProperty.'));
             $page->setCustomProperty($propKey, $value);
             $page->registerManagedPropertyKey($propKey);
+        }
+
+        // Top-level keys backed by a flat converter (e.g. mainImageFormat) are
+        // managed custom properties in the on-disk frontmatter shape. Route them
+        // through the converter so the API accepts the same payload as the sync.
+        if (null !== $this->converterRegistry) {
+            foreach ($frontmatter as $key => $value) {
+                if (! $this->converterRegistry->hasConverter($key)) {
+                    continue;
+                }
+
+                $converted = $this->converterRegistry->fromFlatValue($key, $value);
+                if (null !== $converted) {
+                    $page->setCustomProperty($key, $converted);
+                    $page->registerManagedPropertyKey($key);
+                }
+            }
         }
     }
 

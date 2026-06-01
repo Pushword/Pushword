@@ -117,6 +117,45 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         self::assertSame('short summary', $page->getCustomProperty('searchExcerpt'));
     }
 
+    public function testTopLevelConverterManagedPropertyIsApplied(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+
+        // mainImageFormat is a managed custom property exposed at the top level in
+        // the on-disk frontmatter shape; the human label must reach the entity as
+        // its integer database value instead of being silently dropped.
+        $this->mapper->applyFrontmatter($page, ['mainImageFormat' => 'Normal']);
+
+        self::assertSame(0, $page->getCustomProperty('mainImageFormat'));
+    }
+
+    public function testTopLevelConverterManagedPropertyAcceptsRawValue(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+
+        // A machine client sends the raw integer instead of the human label.
+        $this->mapper->applyFrontmatter($page, ['mainImageFormat' => 2]);
+
+        self::assertSame(2, $page->getCustomProperty('mainImageFormat'));
+    }
+
+    public function testUnknownTopLevelKeyIsIgnored(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+
+        // A top-level key without a converter must not slip into custom properties:
+        // the allowlist stays strict; custom data goes through customProperty.* only.
+        $this->mapper->applyFrontmatter($page, ['notAColumn' => 'value']);
+
+        self::assertNull($page->getCustomProperty('notAColumn'));
+    }
+
     public function testSummaryReturnsLightProjection(): void
     {
         $page = new Page();

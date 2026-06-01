@@ -7,8 +7,10 @@ use Pushword\Api\Controller\PageApiController;
 use Pushword\Api\Controller\PageRedirectionApiController;
 use Pushword\Api\Routing\ApiControllerRouteLoader;
 use Pushword\Api\Service\OpenApiBuilder;
+use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Api\Workflow\WorkflowGateInterface;
 use Pushword\Core\PushwordCoreBundle;
+use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -43,6 +45,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->arg('$workflowGate', service(WorkflowGateInterface::class)->nullOnInvalid())
         ->tag('controller.service_arguments')
         ->tag('pushword.api.controller');
+
+    // The converter registry lives in the optional pushword/flat bundle; stay
+    // null when it is absent so the mapper degrades gracefully.
+    $services->set(PageFrontmatterMapper::class)
+        ->autowire()
+        ->arg('$converterRegistry', service(PropertyConverterRegistry::class)->nullOnInvalid());
 
     $services->set(OpenApiBuilder::class)
         ->arg('$controllers', tagged_iterator('pushword.api.controller'));
