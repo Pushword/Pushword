@@ -8,6 +8,7 @@ use Doctrine\DBAL\Logging\Middleware as LoggingMiddleware;
 use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\AbstractLogger;
+use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
@@ -352,18 +353,25 @@ final class PerformanceRegressionTest extends KernelTestCase
 
     private function seedPages(string $host, int $count): void
     {
-        for ($i = 0; $i < $count; ++$i) {
-            $page = new Page();
-            $page->setH1('Perf '.$i);
-            $page->setSlug('perf-page-'.$i);
-            $page->host = $host;
-            $page->locale = 'en';
-            $page->createdAt = new DateTime();
-            $page->setMainContent('perf content '.$i);
-            $this->em->persist($page);
-        }
+        // Suppress the per-page Open Graph image generation that PageListener fires
+        // on flush: it writes one Imagick PNG per page into the shared public/media/og
+        // dir, which both leaks test artifacts and races with StaticGeneratorTest's
+        // media copy under parallel runs. The query-count assertions run afterwards and
+        // are unaffected.
+        self::getContainer()->get(PageCacheSuppressor::class)->suppress(function () use ($host, $count): void {
+            for ($i = 0; $i < $count; ++$i) {
+                $page = new Page();
+                $page->setH1('Perf '.$i);
+                $page->setSlug('perf-page-'.$i);
+                $page->host = $host;
+                $page->locale = 'en';
+                $page->createdAt = new DateTime();
+                $page->setMainContent('perf content '.$i);
+                $this->em->persist($page);
+            }
 
-        $this->em->flush();
+            $this->em->flush();
+        });
     }
 
     private function seedMedias(int $count): void

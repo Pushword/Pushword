@@ -33,7 +33,7 @@ final class HtmlUnpublishedLinkTest extends TestCase
      */
     private function createFilter(array $slugMap): HtmlUnpublishedLink
     {
-        $repo = $this->createMock(PageRepository::class);
+        $repo = self::createStub(PageRepository::class);
         $repo->method('getPageBySlug')->willReturnCallback(
             static fn (string $slug, string $host): ?Page => $slugMap[$host.'/'.$slug] ?? null,
         );

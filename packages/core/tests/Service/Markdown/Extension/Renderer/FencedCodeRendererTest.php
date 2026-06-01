@@ -24,7 +24,7 @@ final class FencedCodeRendererTest extends TestCase
 
     private function childRenderer(): ChildNodeRendererInterface
     {
-        return $this->createMock(ChildNodeRendererInterface::class);
+        return self::createStub(ChildNodeRendererInterface::class);
     }
 
     public function testPreClassIsApplied(): void

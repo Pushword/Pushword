@@ -52,7 +52,7 @@ final class PageListenerOpenGraphTest extends TestCase
         $suppressor = new PageCacheSuppressor();
         $listener = $this->buildListener($generator, $suppressor);
 
-        $event = $this->createMock(PreUpdateEventArgs::class);
+        $event = self::createStub(PreUpdateEventArgs::class);
         $event->method('hasChangedField')->willReturn(false);
 
         $suppressor->suppress(fn () => $listener->preUpdate($this->buildPage(), $event));
@@ -60,7 +60,7 @@ final class PageListenerOpenGraphTest extends TestCase
 
     private function buildListener(PageOpenGraphImageGenerator $generator, PageCacheSuppressor $suppressor): PageListener
     {
-        $security = $this->createMock(Security::class);
+        $security = self::createStub(Security::class);
         $security->method('getUser')->willReturn(null);
 
         return new PageListener(

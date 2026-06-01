@@ -18,7 +18,7 @@ final class PageEditorialWorkflowSubscriberTest extends TestCase
     public function testApprovedTransitionRecordsReviewer(): void
     {
         $user = new User();
-        $security = $this->createMock(Security::class);
+        $security = self::createStub(Security::class);
         $security->method('getUser')->willReturn($user);
 
         $em = $this->createMock(EntityManagerInterface::class);

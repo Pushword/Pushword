@@ -47,6 +47,7 @@ final class PageCacheInvalidatorTest extends TestCase
             ->method('dispatch')
             ->with(self::isInstanceOf(PageCacheRefreshMessage::class))
             ->willReturn(new Envelope(new PageCacheRefreshMessage((int) $page->id)));
+        $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postPersist($page);
     }
@@ -59,6 +60,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->bus->expects($this->once())
             ->method('dispatch')
             ->willReturn(new Envelope(new PageCacheRefreshMessage((int) $page->id)));
+        $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postUpdate($page);
     }
@@ -69,6 +71,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'none');
 
         $this->bus->expects($this->never())->method('dispatch');
+        $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postPersist($page);
         $invalidator->postUpdate($page);
@@ -80,6 +83,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
         $this->bus->expects($this->never())->method('dispatch');
+        $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postPersist($page);
     }
@@ -90,6 +94,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
         $this->bus->expects($this->never())->method('dispatch');
+        $this->fileManager->expects($this->never())->method('delete');
 
         $this->suppressor->suppress(static function () use ($invalidator, $page): void {
             $invalidator->postPersist($page);
@@ -105,6 +110,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
         $this->bus->expects($this->never())->method('dispatch');
+        $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postPersist($page);
     }
@@ -117,6 +123,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
         $this->fileManager->expects($this->once())->method('delete')->with($page);
+        $this->bus->expects($this->never())->method('dispatch');
 
         $invalidator->preRemove($page);
     }
@@ -127,6 +134,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'none');
 
         $this->fileManager->expects($this->never())->method('delete');
+        $this->bus->expects($this->never())->method('dispatch');
 
         $invalidator->preRemove($page);
     }
@@ -137,6 +145,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
         $this->fileManager->expects($this->never())->method('delete');
+        $this->bus->expects($this->never())->method('dispatch');
 
         $this->suppressor->suppress(static fn () => $invalidator->preRemove($page));
     }

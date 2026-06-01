@@ -134,12 +134,17 @@ trap cleanup EXIT
 # Install nodejs dependencies
 [ -d "node_modules" ] || yarn
 
-# Ensure chromedriver matches the installed Chrome (auto-update otherwise drifts)
-if command -v google-chrome >/dev/null && [ -x drivers/chromedriver ]; then
+# Ensure chromedriver is installed and matches the installed Chrome.
+# Only invokes bdi when the driver is missing or its major drifts from Chrome's,
+# so a correct driver costs just two fast --version probes.
+if command -v google-chrome >/dev/null; then
     CHROME_MAJOR=$(google-chrome --version 2>/dev/null | grep -oE '[0-9]+' | head -1)
-    DRIVER_MAJOR=$(drivers/chromedriver --version 2>/dev/null | grep -oE '[0-9]+' | head -1)
-    if [ -n "$CHROME_MAJOR" ] && [ "$CHROME_MAJOR" != "$DRIVER_MAJOR" ]; then
-        echo "ChromeDriver $DRIVER_MAJOR != Chrome $CHROME_MAJOR — refreshing via bdi"
+    DRIVER_MAJOR=""
+    if [ -x drivers/chromedriver ]; then
+        DRIVER_MAJOR=$(drivers/chromedriver --version 2>/dev/null | grep -oE '[0-9]+' | head -1)
+    fi
+    if [ ! -x drivers/chromedriver ] || { [ -n "$CHROME_MAJOR" ] && [ "$CHROME_MAJOR" != "$DRIVER_MAJOR" ]; }; then
+        echo "ChromeDriver ${DRIVER_MAJOR:-missing} != Chrome $CHROME_MAJOR — installing via bdi"
         vendor/bin/bdi detect drivers >/dev/null
     fi
 fi

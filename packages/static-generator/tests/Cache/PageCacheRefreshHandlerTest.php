@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator\Tests\Cache;
 
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
@@ -13,8 +14,8 @@ use Pushword\StaticGenerator\Cache\PageCacheGeneratorInterface;
 
 final class PageCacheRefreshHandlerTest extends TestCase
 {
-    /** @var PageRepository&MockObject */
-    private MockObject $pageRepository;
+    /** @var PageRepository&Stub */
+    private Stub $pageRepository;
 
     /** @var PageCacheGeneratorInterface&MockObject */
     private MockObject $generator;
@@ -26,7 +27,7 @@ final class PageCacheRefreshHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->pageRepository = $this->createMock(PageRepository::class);
+        $this->pageRepository = self::createStub(PageRepository::class);
         $this->generator = $this->createMock(PageCacheGeneratorInterface::class);
         $this->fileManager = $this->createMock(PageCacheFileManager::class);
 
@@ -52,6 +53,7 @@ final class PageCacheRefreshHandlerTest extends TestCase
         $page = $this->makePage(host: 'example.com', slug: 'about');
         $this->pageRepository->method('find')->willReturn($page);
         $this->fileManager->method('isCacheable')->willReturn(true);
+        $this->fileManager->expects($this->never())->method('delete');
 
         $this->generator->expects($this->once())
             ->method('generatePage')
@@ -77,6 +79,7 @@ final class PageCacheRefreshHandlerTest extends TestCase
         $page = $this->makePage(host: 'example.com', slug: 'homepage');
         $this->pageRepository->method('find')->willReturn($page);
         $this->fileManager->method('isCacheable')->willReturn(true);
+        $this->fileManager->expects($this->never())->method('delete');
 
         // getRealSlug() returns '' for the homepage slug
         $this->generator->expects($this->once())

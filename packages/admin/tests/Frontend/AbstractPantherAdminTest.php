@@ -100,6 +100,20 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
             }
         }
 
+        // Give each test class its own Chrome user-data-dir. Sibling Panther classes
+        // in the same process share the global PANTHER_CHROME_ARGUMENTS profile dir;
+        // when one class tears its browser down, the OS may not release that profile
+        // lock before the next class launches Chrome on the same dir, crashing it
+        // ("could not connect to chromedriver"). A per-class dir removes the contention.
+        $chromeArguments = (string) ($_SERVER['PANTHER_CHROME_ARGUMENTS'] ?? '');
+        if (str_contains($chromeArguments, '--user-data-dir=')) {
+            $runId = getenv('TEST_RUN_ID') ?: (string) getmypid();
+            $profileDir = sys_get_temp_dir().'/panther-chrome-'.$runId.'-'.dechex(crc32(static::class));
+            $chromeArguments = (string) preg_replace('/--user-data-dir=\S+/', '--user-data-dir='.$profileDir, $chromeArguments);
+            $_SERVER['PANTHER_CHROME_ARGUMENTS'] = $chromeArguments;
+            putenv('PANTHER_CHROME_ARGUMENTS='.$chromeArguments);
+        }
+
         // Assign unique web server port per class so parallel workers don't conflict
         if (! isset($_SERVER['PANTHER_WEB_SERVER_PORT'])) {
             $_SERVER['PANTHER_WEB_SERVER_PORT'] = (string) (9080 + (abs(crc32(static::class)) % 100));
