@@ -12,6 +12,32 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc623
+
+### New Bundles: API & Page Workflow
+
+This release extracts the REST API into a dedicated `PushwordApiBundle` and the editorial workflow into a `PushwordPageWorkflowBundle`. Register both in `config/bundles.php`:
+
+```php
+Pushword\Api\PushwordApiBundle::class => ['all' => true],
+Pushword\PageWorkflow\PushwordPageWorkflowBundle::class => ['all' => true],
+```
+
+### New Route Imports
+
+Add the API, page-workflow, and snippet route resources to `config/routes.yaml`:
+
+```yaml
+pushword_api:
+    resource: "@PushwordApiBundle/ApiRoutes.yaml"
+
+pushword_page_workflow:
+    resource: "@PushwordPageWorkflowBundle/PageWorkflowRoutes.yaml"
+
+pushword_snippet:
+    resource: "@PushwordSnippetBundle/SnippetRoutes.yaml"
+```
+
 ## Unpublished Links: Restore JS in Custom `app.js`
 
 Pushword now hides `<a>` tags whose target is a not-yet-published page (replaced by `<span title="Page en cours de publication" data-status="unpublished" data-href="...">`). A shipped JS snippet restores the link for logged-in editors by probing `GET /_pushword/auth-check`. See [Unpublished Links](/unpublished-links) for the full behavior.
