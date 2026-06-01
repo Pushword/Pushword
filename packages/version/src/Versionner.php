@@ -7,12 +7,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Events;
-use Doctrine\ORM\Mapping\Column;
 use Exception;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\EventListener\PageListener;
-use Pushword\Core\Utils\Entity;
+use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Snippet\Entity\Snippet;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
@@ -30,7 +29,8 @@ class Versionner
     public function __construct(
         private readonly string $storageDir,
         private readonly EntityManagerInterface $entityManager,
-        private readonly SerializerInterface $serializer
+        private readonly SerializerInterface $serializer,
+        private readonly RevisionCalculator $revisions,
     ) {
         $this->fileSystem = new Filesystem();
     }
@@ -87,14 +87,36 @@ class Versionner
 
     private function createVersion(string $type, IdInterface $entity): void
     {
-        $versionFile = $this->getVersionFile($type, (int) $entity->id);
+        $id = (int) $entity->id;
+        $jsonContent = $this->revisions->serialize($entity);
+        $hash = sha1($jsonContent);
 
-        $jsonContent = $this->serializer
-            ->serialize($entity, 'json', [AbstractNormalizer::ATTRIBUTES => $this->getProperties($entity)]);
+        // Idempotency: if the most recent snapshot already carries this hash,
+        // the entity's column-mapped state did not change. Skip writing a
+        // duplicate (e.g. flushes triggered by listeners that don't actually
+        // change a column).
+        $latest = $this->getLatestVersion($type, $id);
+        if (null !== $latest && str_ends_with($latest, '_'.$hash)) {
+            return;
+        }
 
-        $this->fileSystem->dumpFile($versionFile, $jsonContent);
+        $this->fileSystem->dumpFile(
+            $this->getVersionFile($type, $id, $this->buildVersionFilename($hash)),
+            $jsonContent,
+        );
 
-        $this->pruneOldVersions($type, (int) $entity->id);
+        $this->pruneOldVersions($type, $id);
+    }
+
+    /**
+     * Versionner filenames keep a `uniqid()` time prefix so they stay
+     * chronologically sortable (used by getLatestVersion / pruning), and
+     * append the content hash so the file embeds the revision token the
+     * API and flat exporter advertise. Format: `<sec><usec>_<sha1>`.
+     */
+    private function buildVersionFilename(string $hash): string
+    {
+        return uniqid().'_'.$hash;
     }
 
     /**
@@ -262,18 +284,8 @@ class Versionner
         return $this->storageDir.'/'.$prefix.$id;
     }
 
-    private function getVersionFile(string $type, int|string $id, ?string $version = null): string
+    private function getVersionFile(string $type, int|string $id, string $version): string
     {
-        // uniqid('', true) adds entropy after the timestamp prefix so two saves
-        // in the same microsecond cannot silently overwrite each other.
-        return $this->getVersionDir($type, $id).'/'.($version ?? uniqid('', true));
-    }
-
-    /**
-     * @return array<string>
-     */
-    private function getProperties(object $entity): array
-    {
-        return Entity::getProperties($entity, [Column::class]);
+        return $this->getVersionDir($type, $id).'/'.$version;
     }
 }

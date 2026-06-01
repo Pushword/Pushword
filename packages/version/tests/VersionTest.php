@@ -2,19 +2,35 @@
 
 namespace Pushword\Version\Tests;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Snippet\Entity\Snippet;
 use Pushword\Version\Versionner;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Group('integration')]
 final class VersionTest extends KernelTestCase
 {
+    private function buildVersionner(string $storageDir, EntityManagerInterface $em, SerializerInterface $serializer): Versionner
+    {
+        return new Versionner($storageDir, $em, $serializer, new RevisionCalculator($serializer));
+    }
+
+    private function buildPlainSerializer(): Serializer
+    {
+        return new Serializer([new DateTimeNormalizer(), new ObjectNormalizer()], ['json' => new JsonEncoder()]);
+    }
+
     public function testIt(): void
     {
         self::bootKernel();
@@ -38,11 +54,7 @@ final class VersionTest extends KernelTestCase
 
         /** @var string $storageDir */
         $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
-        $versionner = new Versionner(
-            $storageDir,
-            $em,
-            new Serializer([], ['json' => new JsonEncoder()])
-        );
+        $versionner = $this->buildVersionner($storageDir, $em, $this->buildPlainSerializer());
 
         $pageVersions = $versionner->getVersions('page', (int) $page->id);
 
@@ -67,11 +79,7 @@ final class VersionTest extends KernelTestCase
 
         /** @var string $storageDir */
         $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
-        $versionner = new Versionner(
-            $storageDir,
-            $em,
-            $container->get('serializer')
-        );
+        $versionner = $this->buildVersionner($storageDir, $em, $container->get('serializer'));
 
         // Parallel workers have separate DBs but share kernel.logs_dir, so the same
         // auto-increment id can collide on disk. Wipe the dir, then create exactly
@@ -104,6 +112,53 @@ final class VersionTest extends KernelTestCase
         $em->flush();
     }
 
+    /**
+     * Two postUpdate dispatches on the same column-mapped state must produce a
+     * single version file. Guards the hash-suffix duplicate-save short-circuit
+     * in Versionner::createVersion.
+     */
+    public function testIdempotentSaveDoesNotCreateDuplicateVersion(): void
+    {
+        self::bootKernel();
+
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+
+        $snippet = new Snippet();
+        $snippet->host = 'localhost.dev';
+        $snippet->setSlug('idempotent-version-'.uniqid());
+        $snippet->setName('Stable name');
+        $snippet->setContent('Stable content');
+
+        $em->persist($snippet);
+        $em->flush(); // assigns the id
+
+        /** @var string $storageDir */
+        $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
+        $versionner = $this->buildVersionner($storageDir, $em, $container->get('serializer'));
+
+        $id = (int) $snippet->id;
+
+        // Parallel workers share kernel.logs_dir but have separate DBs, so stale
+        // version files may already exist under this id. Wipe before asserting.
+        $versionner->reset('snippet', $id);
+
+        $versionner->postUpdate(new PostUpdateEventArgs($snippet, $em));
+        self::assertCount(1, $versionner->getVersions('snippet', $id), 'First save must create exactly one version');
+
+        // Re-dispatching postUpdate with identical column state must be a no-op.
+        $versionner->postUpdate(new PostUpdateEventArgs($snippet, $em));
+        self::assertCount(1, $versionner->getVersions('snippet', $id), 'Identical state must not produce a second version file');
+
+        // The stored filename embeds the content hash as suffix.
+        [$only] = $versionner->getVersions('snippet', $id);
+        self::assertStringContainsString('_', $only, 'Filename must follow the <prefix>_<hash> convention');
+
+        $versionner->reset('snippet', $id);
+        $em->remove($snippet);
+        $em->flush();
+    }
+
     public function testVersionableTypesIncludesSnippetWhenInstalled(): void
     {
         $types = Versionner::versionableTypes();
@@ -121,10 +176,10 @@ final class VersionTest extends KernelTestCase
 
         /** @var string $storageDir */
         $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
-        $versionner = new Versionner(
+        $versionner = $this->buildVersionner(
             $storageDir,
             $container->get('doctrine.orm.default_entity_manager'),
-            new Serializer([], ['json' => new JsonEncoder()])
+            $this->buildPlainSerializer(),
         );
 
         // Use an id that will never have a version directory on disk.
@@ -140,7 +195,7 @@ final class VersionTest extends KernelTestCase
 
         /** @var string $storageDir */
         $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
-        $versionner = new Versionner($storageDir, $em, $container->get('serializer'));
+        $versionner = $this->buildVersionner($storageDir, $em, $container->get('serializer'));
 
         $snippet = new Snippet();
         $snippet->host = 'localhost.dev';
@@ -200,10 +255,10 @@ final class VersionTest extends KernelTestCase
 
         /** @var string $storageDir */
         $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
-        $versionner = new Versionner(
+        $versionner = $this->buildVersionner(
             $storageDir,
             $container->get('doctrine.orm.default_entity_manager'),
-            new Serializer([], ['json' => new JsonEncoder()])
+            $this->buildPlainSerializer(),
         );
 
         // No version directory on disk → null.
@@ -228,10 +283,10 @@ final class VersionTest extends KernelTestCase
 
         /** @var string $storageDir */
         $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
-        $versionner = new Versionner(
+        $versionner = $this->buildVersionner(
             $storageDir,
             $container->get('doctrine.orm.default_entity_manager'),
-            new Serializer([], ['json' => new JsonEncoder()])
+            $this->buildPlainSerializer(),
         );
 
         $this->expectException(Exception::class);

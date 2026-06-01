@@ -5,11 +5,11 @@ namespace Pushword\Api\Controller;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Api\Service\PageFrontmatterMapper;
-use Pushword\Api\Service\RevisionCalculator;
 use Pushword\Api\Workflow\WorkflowGateInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\Markdown\MarkdownParser;
+use Pushword\Core\Service\RevisionCalculator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -118,6 +118,7 @@ final class PageApiController extends AbstractApiController
 
         $page = new Page();
         $page->setSlug($slug);
+
         $this->mapper->applyFrontmatter($page, $frontmatter);
         if (null !== $body) {
             $page->setMainContent($body);

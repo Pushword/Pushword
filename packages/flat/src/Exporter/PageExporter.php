@@ -9,6 +9,7 @@ use Exception;
 use League\Csv\Writer;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\Entity;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
@@ -49,6 +50,7 @@ final class PageExporter
         private readonly SiteRegistry $apps,
         private readonly PageRepository $pageRepo,
         private readonly PropertyConverterRegistry $converterRegistry,
+        private readonly RevisionCalculator $revisions,
         array $pageIndexColumns = [],
     ) {
         $this->filesystem = new Filesystem();
@@ -335,10 +337,12 @@ final class PageExporter
 
         $metaData = Yaml::dump($data, indent: 2);
 
-        // Stamp a fresh revision id last in the front matter. The `# read only`
-        // comment tells editors (humans and agents) not to touch it; the value
-        // is export-only and ignored on import (see PageImporter::editPage).
-        $metaData .= 'revision: '.uniqid().' # read only'.\PHP_EOL;
+        // Stamp the canonical revision id (content hash) last in the front matter.
+        // Matches the API's ETag / If-Match value so agents can read it from the
+        // .md and PUT back without a preliminary GET. The `# read only` comment
+        // tells editors not to touch it; the value is ignored on import (see
+        // PageImporter::editPage).
+        $metaData .= 'revision: '.$this->revisions->compute($page).' # read only'.\PHP_EOL;
 
         return $this->normalizeQuotes('---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent());
     }

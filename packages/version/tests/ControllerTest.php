@@ -2,19 +2,34 @@
 
 namespace Pushword\Version\Tests;
 
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Snippet\Entity\Snippet;
 use Pushword\Version\Versionner;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Group('integration')]
 final class ControllerTest extends AbstractAdminTestClass
 {
+    private function buildVersionner(string $storageDir, EntityManagerInterface $em, SerializerInterface $serializer): Versionner
+    {
+        return new Versionner($storageDir, $em, $serializer, new RevisionCalculator($serializer));
+    }
+
+    private function buildPlainSerializer(): Serializer
+    {
+        return new Serializer([new DateTimeNormalizer(), new ObjectNormalizer()], ['json' => new JsonEncoder()]);
+    }
+
     public function testLogin(): void
     {
         $client = $this->loginUser();
@@ -30,11 +45,7 @@ final class ControllerTest extends AbstractAdminTestClass
 
         /** @var string $storageDir */
         $storageDir = self::getContainer()->getParameter('pw.pushword_version.storage_dir');
-        $versionner = new Versionner(
-            $storageDir,
-            $em,
-            new Serializer([], ['json' => new JsonEncoder()])
-        );
+        $versionner = $this->buildVersionner($storageDir, $em, $this->buildPlainSerializer());
 
         // Clear stale version files from other tests in the same ParaTest worker
         $versionner->reset('page', $pageId);
@@ -88,7 +99,7 @@ final class ControllerTest extends AbstractAdminTestClass
 
         /** @var string $storageDir */
         $storageDir = self::getContainer()->getParameter('pw.pushword_version.storage_dir');
-        $versionner = new Versionner($storageDir, $em, self::getContainer()->get('serializer'));
+        $versionner = $this->buildVersionner($storageDir, $em, self::getContainer()->get('serializer'));
 
         // ParaTest workers share the version storage dir but each has its own DB,
         // so a sibling worker may have written stale versions under the same id.
@@ -170,7 +181,7 @@ final class ControllerTest extends AbstractAdminTestClass
 
         /** @var string $storageDir */
         $storageDir = self::getContainer()->getParameter('pw.pushword_version.storage_dir');
-        new Versionner($storageDir, $em, self::getContainer()->get('serializer'))->reset('snippet', (int) $snippet->id);
+        $this->buildVersionner($storageDir, $em, self::getContainer()->get('serializer'))->reset('snippet', (int) $snippet->id);
         $em->remove($updated);
         $em->flush();
     }
@@ -220,7 +231,7 @@ final class ControllerTest extends AbstractAdminTestClass
 
         /** @var string $storageDir */
         $storageDir = self::getContainer()->getParameter('pw.pushword_version.storage_dir');
-        new Versionner($storageDir, $em, self::getContainer()->get('serializer'))->reset('snippet', (int) $snippet->id);
+        $this->buildVersionner($storageDir, $em, self::getContainer()->get('serializer'))->reset('snippet', (int) $snippet->id);
         $em->remove($updated);
         $em->flush();
     }

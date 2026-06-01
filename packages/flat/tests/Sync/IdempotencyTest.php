@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityManager;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\PageSync;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -94,6 +95,42 @@ final class IdempotencyTest extends KernelTestCase
 
         $mdContent = $this->filesystem->readFile($mdFilePath);
         self::assertMatchesRegularExpression('/^revision: \S+ # read only$/m', $mdContent, 'Exported file must contain a non-empty revision: stamp flagged read only');
+    }
+
+    /**
+     * Regression: the `.md` `revision:` stamp must equal the token the API will
+     * compute for the same page, so agents can read it and PUT back via the API
+     * with `If-Match: <revision>` without a preliminary GET.
+     */
+    public function testExportedRevisionMatchesApiRevisionCalculator(): void
+    {
+        $page = new Page();
+        $page->setSlug('revision-export-test');
+        $page->setH1('Agreement Test');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->setMainContent('Body');
+        $page->setPublishedAt(new DateTime());
+
+        $this->em->persist($page);
+        $this->em->flush();
+
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+
+        $mdFilePath = $this->contentDir.'/revision-export-test.md';
+        $this->createdFiles[] = $mdFilePath;
+
+        $mdContent = $this->filesystem->readFile($mdFilePath);
+        self::assertSame(1, preg_match('/^revision: (\S+) # read only$/m', $mdContent, $matches));
+        $stamped = $matches[1];
+
+        /** @var RevisionCalculator $revisions */
+        $revisions = self::getContainer()->get(RevisionCalculator::class);
+        self::assertSame(
+            $revisions->compute($page),
+            $stamped,
+            "The exported revision stamp must equal the API's ETag / If-Match value for the same page state"
+        );
     }
 
     /**

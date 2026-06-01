@@ -4,10 +4,10 @@ namespace Pushword\Api\Controller;
 
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Pushword\Api\Service\RevisionCalculator;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Service\RevisionCalculator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
