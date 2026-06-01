@@ -105,7 +105,8 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
         // when one class tears its browser down, the OS may not release that profile
         // lock before the next class launches Chrome on the same dir, crashing it
         // ("could not connect to chromedriver"). A per-class dir removes the contention.
-        $chromeArguments = (string) ($_SERVER['PANTHER_CHROME_ARGUMENTS'] ?? '');
+        $rawChromeArguments = $_SERVER['PANTHER_CHROME_ARGUMENTS'] ?? '';
+        $chromeArguments = \is_string($rawChromeArguments) ? $rawChromeArguments : '';
         if (str_contains($chromeArguments, '--user-data-dir=')) {
             $runId = getenv('TEST_RUN_ID') ?: (string) getmypid();
             $profileDir = sys_get_temp_dir().'/panther-chrome-'.$runId.'-'.dechex(crc32(static::class));

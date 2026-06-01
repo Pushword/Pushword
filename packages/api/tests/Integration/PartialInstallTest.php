@@ -10,8 +10,10 @@ use Pushword\Api\Workflow\WorkflowGateInterface;
 use Pushword\PageWorkflow\PushwordPageWorkflowBundle;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use SplFileInfo;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
@@ -44,17 +46,19 @@ final class PartialInstallTest extends TestCase
         try {
             $container = $kernel->getContainer();
 
-            // PageApiController is wired and the container compiled fine.
-            self::assertTrue(
-                $container->has(PageApiController::class),
-                'PageApiController must be registered when api is installed without page-workflow.',
-            );
-
-            // No service implements the gate → PageApiController falls back to direct writes.
-            self::assertFalse(
-                $container->has(WorkflowGateInterface::class),
-                'WorkflowGateInterface must be unregistered without page-workflow (null gate / direct writes).',
-            );
+            // PageApiController is wired and the container compiled fine; no service
+            // implements the gate → PageApiController falls back to direct writes.
+            $expectedServices = [
+                PageApiController::class => true,
+                WorkflowGateInterface::class => false,
+            ];
+            foreach ($expectedServices as $serviceId => $shouldBeRegistered) {
+                self::assertSame(
+                    $shouldBeRegistered,
+                    $container->has($serviceId),
+                    \sprintf('Service "%s" registration mismatch in the api-without-page-workflow container.', $serviceId),
+                );
+            }
         } finally {
             $kernel->shutdown();
         }
@@ -64,14 +68,14 @@ final class PartialInstallTest extends TestCase
     {
         $skeletonDir = \dirname(__DIR__, 3).'/skeleton';
 
-        /** @var array<class-string, array<string, bool>> $bundles */
+        /** @var array<class-string<BundleInterface>, array<string, bool>> $bundles */
         $bundles = require $skeletonDir.'/config/bundles.php';
         unset($bundles[PushwordPageWorkflowBundle::class]);
 
         $kernel = new class('test', true, $skeletonDir, $bundles) extends BaseKernel {
             use MicroKernelTrait;
 
-            /** @param array<class-string, array<string, bool>> $subsetBundles */
+            /** @param array<class-string<BundleInterface>, array<string, bool>> $subsetBundles */
             public function __construct(
                 string $environment,
                 bool $debug,
@@ -151,6 +155,10 @@ final class PartialInstallTest extends TestCase
             RecursiveIteratorIterator::CHILD_FIRST,
         );
         foreach ($items as $item) {
+            if (! $item instanceof SplFileInfo) {
+                continue;
+            }
+
             $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
         }
 

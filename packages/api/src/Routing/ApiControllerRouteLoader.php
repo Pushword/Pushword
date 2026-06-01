@@ -41,7 +41,10 @@ final class ApiControllerRouteLoader extends Loader
             }
 
             $seen[$class] = true;
-            $collection->addCollection($this->import($class, 'attribute'));
+            $imported = $this->import($class, 'attribute');
+            if ($imported instanceof RouteCollection) {
+                $collection->addCollection($imported);
+            }
         }
 
         return $collection;
