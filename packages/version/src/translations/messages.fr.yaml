@@ -3,6 +3,8 @@ versionBackToList: 'Retour à la liste'
 versionChanged: 'modifié'
 versionCompare: 'Comparer'
 versionCurrent: 'Actuel'
+versionCustomProperties: 'Propriétés personnalisées'
+versionCustomPropertiesInvalid: "Propriétés personnalisées non enregistrées : YAML invalide"
 versionDate: 'Date'
 versionEditPage: 'Éditer la page'
 versionFirstVersion: 'Première version (pas de précédente)'

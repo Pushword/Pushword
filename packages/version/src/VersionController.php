@@ -5,6 +5,8 @@ namespace Pushword\Version;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use Exception;
+use InvalidArgumentException;
+use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,6 +17,7 @@ use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -133,6 +136,15 @@ class VersionController extends AbstractController
             }
         }
 
+        $yaml = $request->request->get('unmanagedPropertiesAsYaml');
+        if ($entity instanceof CustomPropertiesInterface && \is_string($yaml)) {
+            try {
+                $entity->setUnmanagedPropertiesFromYaml($yaml, merge: true);
+            } catch (ParseException|InvalidArgumentException) {
+                $this->getFlashBagFromRequest($request)->add('warning', $this->translator->trans('versionCustomPropertiesInvalid'));
+            }
+        }
+
         $this->versionner->flush();
 
         $this->getFlashBagFromRequest($request)->add('success', $this->translator->trans('versionSaveSuccess'));
@@ -158,6 +170,10 @@ class VersionController extends AbstractController
         foreach (array_keys(self::TYPES[$type]['fields']) as $field) {
             $value = $accessor->getValue($entity, $field);
             $data[$field] = \is_scalar($value) ? (string) $value : '';
+        }
+
+        if ($entity instanceof CustomPropertiesInterface) {
+            $data['unmanagedPropertiesAsYaml'] = $entity->getUnmanagedPropertiesAsYaml();
         }
 
         return new JsonResponse($data);

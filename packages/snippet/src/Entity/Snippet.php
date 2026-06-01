@@ -4,6 +4,7 @@ namespace Pushword\Snippet\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\ExtensiblePropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\HostTrait;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
@@ -28,7 +29,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'snippet')]
 #[ORM\UniqueConstraint(name: 'unique_snippet_slug_host', columns: ['slug', 'host'])]
 #[ORM\Index(name: 'idx_snippet_slug', columns: ['slug'])]
-class Snippet implements IdInterface, Taggable, Stringable
+class Snippet implements IdInterface, Taggable, Stringable, CustomPropertiesInterface
 {
     use ExtensiblePropertiesTrait;
     use HostTrait;

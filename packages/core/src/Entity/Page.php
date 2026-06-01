@@ -12,6 +12,7 @@ use Exception;
 use LogicException;
 use Pushword\Core\Entity\PageTrait\PageI18nTrait;
 use Pushword\Core\Entity\PageTrait\PageParentTrait;
+use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\ExtensiblePropertiesTrait;
 use Pushword\Core\Entity\SharedTrait\HostTrait;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
@@ -44,7 +45,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 #[ORM\Table(name: 'page')]
 #[ORM\UniqueConstraint(name: 'unique_slug_host', columns: ['slug', 'host'])]
 #[ORM\Index(name: 'idx_page_host', columns: ['host'])]
-class Page implements IdInterface, Taggable, Stringable, Weightable
+class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPropertiesInterface
 {
     use IdTrait;
 

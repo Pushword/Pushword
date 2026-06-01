@@ -77,12 +77,23 @@
   </div>
 </div>
 
+{# Custom properties diff (stored as a JSON column, edited here as YAML) #}
+<div class="card shadow-sm mt-3">
+  <div class="card-header">
+    <label class="form-label fw-bold mb-0">{{ 'versionCustomProperties'|trans }}</label>
+  </div>
+  <div class="card-body p-0">
+    <div id="cp-diff-container" style="height: 220px; width: 100%;"></div>
+  </div>
+</div>
+
 <form id="save-form" method="POST" action="{{ path('admin_version_save_compare', {type: type, id: entity.id}) }}">
   <input type="hidden" name="_token" value="{{ csrf_token('version_save') }}">
   <textarea name="{{ contentField }}" id="{{ contentField }}-hidden" style="display: none;"></textarea>
   {% for field in fieldNames|filter(f => f != contentField) %}
     <input type="hidden" name="{{ field }}" id="{{ field }}-hidden">
   {% endfor %}
+  <textarea name="unmanagedPropertiesAsYaml" id="cp-hidden" style="display: none;"></textarea>
 </form>
 {% endblock %}
 
@@ -92,6 +103,9 @@
 (function() {
   const leftContent = {{ attribute(leftEntity, contentField)|default('')|json_encode|raw }};
   const rightContent = {{ attribute(rightEntity, contentField)|default('')|json_encode|raw }};
+  const leftCp = {{ attribute(leftEntity, 'unmanagedPropertiesAsYaml')|default('')|json_encode|raw }};
+  const rightCp = {{ attribute(rightEntity, 'unmanagedPropertiesAsYaml')|default('')|json_encode|raw }};
+  const cpField = 'unmanagedPropertiesAsYaml';
   const contentField = {{ contentField|json_encode|raw }};
   const fieldNames = {{ fieldNames|json_encode|raw }};
   const smallFields = fieldNames.filter(function(f) { return f !== contentField; });
@@ -102,21 +116,12 @@
   const versionRight = {{ versionRight|json_encode|raw }};
 
   let diffEditor = null;
+  let cpEditor = null;
 
-  function initDiffEditor() {
-    if (typeof window.monaco === 'undefined') {
-      setTimeout(initDiffEditor, 100);
-      return;
-    }
-
-    const container = document.getElementById('diff-container');
-
-    const originalModel = monaco.editor.createModel(leftContent, 'markdown');
-    const modifiedModel = monaco.editor.createModel(rightContent, 'markdown');
-
+  function createDiff(containerId, original, modified, language) {
     const settings = window.monacoHelper ? { ...window.monacoHelper.defaultSettings } : {};
 
-    diffEditor = monaco.editor.createDiffEditor(container, {
+    const editor = monaco.editor.createDiffEditor(document.getElementById(containerId), {
       ...settings,
       readOnly: false,
       renderSideBySide: true,
@@ -126,13 +131,26 @@
       minimap: { enabled: false },
     });
 
-    diffEditor.setModel({
-      original: originalModel,
-      modified: modifiedModel,
+    editor.setModel({
+      original: monaco.editor.createModel(original, language),
+      modified: monaco.editor.createModel(modified, language),
     });
+
+    return editor;
+  }
+
+  function initDiffEditor() {
+    if (typeof window.monaco === 'undefined') {
+      setTimeout(initDiffEditor, 100);
+      return;
+    }
+
+    diffEditor = createDiff('diff-container', leftContent, rightContent, 'markdown');
+    cpEditor = createDiff('cp-diff-container', leftCp, rightCp, 'yaml');
 
     window.addEventListener('resize', () => {
       diffEditor.layout();
+      cpEditor.layout();
     });
   }
 
@@ -195,6 +213,7 @@
   function readSide(side) {
     const data = {};
     data[contentField] = 'left' === side ? leftContent : rightContent;
+    data[cpField] = 'left' === side ? leftCp : rightCp;
     smallFields.forEach(function(field) {
       const el = document.getElementById(inputId(side, field));
       data[field] = null !== el ? el.value : '';
@@ -230,6 +249,8 @@
     }
     const model = diffEditor.getModel();
     ('left' === side ? model.original : model.modified).setValue(data[contentField] || '');
+    const cpModel = cpEditor.getModel();
+    ('left' === side ? cpModel.original : cpModel.modified).setValue(data[cpField] || '');
     smallFields.forEach(function(field) {
       const el = document.getElementById(inputId(side, field));
       if (null !== el) el.value = data[field] || '';
@@ -270,6 +291,7 @@
     if (!diffEditor) return;
 
     document.getElementById(contentField + '-hidden').value = diffEditor.getModifiedEditor().getValue();
+    document.getElementById('cp-hidden').value = cpEditor.getModifiedEditor().getValue();
 
     smallFields.forEach(function(field) {
       const input = document.getElementById('field-' + field);
