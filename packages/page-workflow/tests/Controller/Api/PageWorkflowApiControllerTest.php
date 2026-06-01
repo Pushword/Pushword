@@ -12,6 +12,7 @@ use Pushword\PageWorkflow\Pending\PendingModificationStorageInterface;
 use Pushword\PageWorkflow\Repository\PageEditorialStateRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
@@ -46,11 +47,11 @@ final class PageWorkflowApiControllerTest extends WebTestCase
         $user->setPassword('hashed-password');
         $user->apiToken = $this->testToken;
         $user->setRoles(['ROLE_EDITOR']);
+
         $this->em->persist($user);
         $this->em->flush();
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $container = $this->client->getContainer();
@@ -65,19 +66,21 @@ final class PageWorkflowApiControllerTest extends WebTestCase
                 $em->remove($page);
             }
         }
+
         /** @var class-string<User> $userClass */
         $userClass = $container->getParameter('pw.entity_user');
         $user = $em->getRepository($userClass)->findOneBy(['email' => $this->testUserEmail]);
         if (null !== $user) {
             $em->remove($user);
         }
+
         $em->flush();
         parent::tearDown();
     }
 
     public function testTransitionRequiresToken(): void
     {
-        $this->client->request('POST', '/api/page/example.com/foo/transition');
+        $this->client->request(Request::METHOD_POST, '/api/page/example.com/foo/transition');
         self::assertSame(401, $this->client->getResponse()->getStatusCode());
     }
 
@@ -179,6 +182,7 @@ final class PageWorkflowApiControllerTest extends WebTestCase
         $page->setH1('Original');
         $page->setMainContent('## original');
         $page->setPublishedAt(null);
+
         $this->em->persist($page);
         $this->em->flush();
         $this->createdPageIds[] = $page->id ?? 0;

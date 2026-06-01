@@ -30,6 +30,7 @@ final class PageRedirectionApiControllerTest extends WebTestCase
     {
         $this->client = self::createClient();
         $this->client->disableReboot();
+
         $this->em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $this->testToken = bin2hex(random_bytes(32));
@@ -41,11 +42,11 @@ final class PageRedirectionApiControllerTest extends WebTestCase
         $user->setPassword('hashed-password');
         $user->apiToken = $this->testToken;
         $user->setRoles(['ROLE_EDITOR']);
+
         $this->em->persist($user);
         $this->em->flush();
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $container = $this->client->getContainer();
@@ -56,12 +57,14 @@ final class PageRedirectionApiControllerTest extends WebTestCase
                 $em->remove($page);
             }
         }
+
         /** @var class-string<User> $userClass */
         $userClass = $container->getParameter('pw.entity_user');
         $user = $em->getRepository($userClass)->findOneBy(['email' => $this->testUserEmail]);
         if (null !== $user) {
             $em->remove($user);
         }
+
         $em->flush();
         parent::tearDown();
     }
@@ -142,6 +145,7 @@ final class PageRedirectionApiControllerTest extends WebTestCase
         $page->host = $host;
         $page->setSlug('regular-page');
         $page->setMainContent('# Just content');
+
         $this->em->persist($page);
         $this->em->flush();
         $this->createdPageIds[] = $page->id ?? 0;
@@ -155,7 +159,7 @@ final class PageRedirectionApiControllerTest extends WebTestCase
         $host = 'api-test-'.uniqid().'.example.com';
         [, $slug] = $this->seedRedirection($host);
 
-        $response = $this->request('GET', '/api/redirection?host='.$host);
+        $this->request('GET', '/api/redirection?host='.$host);
         self::assertResponseIsSuccessful();
         $body = $this->decode();
         self::assertGreaterThan(0, $body['total']);
@@ -166,6 +170,7 @@ final class PageRedirectionApiControllerTest extends WebTestCase
                 $slugs[] = $row['slug'];
             }
         }
+
         self::assertContains($slug, $slugs);
     }
 

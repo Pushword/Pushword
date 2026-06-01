@@ -2,21 +2,19 @@
 
 namespace Pushword\Conversation\Tests\Controller\Api;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
 final class ConversationApiControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
-
-    private EntityManagerInterface $em;
 
     private string $testToken = '';
 
@@ -30,7 +28,8 @@ final class ConversationApiControllerTest extends WebTestCase
     {
         $this->client = self::createClient();
         $this->client->disableReboot();
-        $this->em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $this->testToken = bin2hex(random_bytes(32));
         $this->testUserEmail = 'conv-api-test-'.uniqid().'@example.com';
@@ -41,11 +40,11 @@ final class ConversationApiControllerTest extends WebTestCase
         $user->setPassword('hashed-password');
         $user->apiToken = $this->testToken;
         $user->setRoles(['ROLE_EDITOR']);
-        $this->em->persist($user);
-        $this->em->flush();
+
+        $em->persist($user);
+        $em->flush();
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $container = $this->client->getContainer();
@@ -56,19 +55,21 @@ final class ConversationApiControllerTest extends WebTestCase
                 $em->remove($message);
             }
         }
+
         /** @var class-string<User> $userClass */
         $userClass = $container->getParameter('pw.entity_user');
         $user = $em->getRepository($userClass)->findOneBy(['email' => $this->testUserEmail]);
         if (null !== $user) {
             $em->remove($user);
         }
+
         $em->flush();
         parent::tearDown();
     }
 
     public function testListRequiresToken(): void
     {
-        $this->client->request('GET', '/api/conversation');
+        $this->client->request(Request::METHOD_GET, '/api/conversation');
         self::assertSame(401, $this->client->getResponse()->getStatusCode());
     }
 

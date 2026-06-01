@@ -51,7 +51,9 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 | **Flat-file Support**   | Native                         | Via plugins (unreliable) | Native        | Optional            |
 | **Multi-site**          | Native                         | Multisite network        | Pro addon     | Native (Webspaces)  |
 | **i18n / Multilingual** | Native                         | Plugins (WPML, Polylang) | Native        | Native              |
-| **Page Versioning**     | Extension                      | Revisions (basic)        | Revisions     | Native              |
+| **Page Versioning**     | Extension (diff/restore/timeline) | Revisions (basic)     | Revisions     | Native              |
+| **Editorial Workflow**  | Extension (draft→review→approve) | Plugins (PublishPress) | Workflow addon | Native (workflows) |
+| **REST API**            | Token + OpenAPI (extension)    | REST core / GraphQL plugin | REST + GraphQL (Pro) | REST (GraphQL ready) |
 | **Media Management**    | Auto-optimization (WebP)       | Basic + plugins          | Asset manager | Media bundles       |
 | **Custom Fields**       | Custom properties              | ACF / Meta Box           | Fieldsets     | Content types       |
 | **Git Integration**     | Full support (flat-file)       | Requires workarounds     | Full support  | Developer-dependent |
@@ -65,6 +67,8 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 **WordPress** pioneered block editing with Gutenberg (2018+). While powerful, Gutenberg is React-based and can feel heavyweight in browser. The ecosystem provides extensive field plugins (ACF, Meta Box), but multilingual sites require paid plugins (WPML ~€99/year or free but less feature-rich Polylang). Multi-site mode is available but less polished than dedicated multi-site CMSs.
 
 **Statamic**'s Bard editor is praised for writing experience and live preview across device sizes. Peak (visual editor) offers drag-and-drop layout building. Flat-file storage enables Git workflows for content versioning—critical for teams using version control for documentation or content-heavy sites. Native multi-site requires Pro license ($275/site/year).
+
+Recent additions strengthen Pushword's collaborative and headless story: a **page-workflow** extension adds an editorial lifecycle (`draft → in_review → approved`) plus a pending-modification review cycle—proposed edits to published pages are reviewed side-by-side and applied atomically (and, with Flat installed, tracked in Git as `{slug}.pending.md` overlays). The **version** extension adds automatic versioning with side-by-side diff, one-click restore, and a time-slider timeline. The **api** extension exposes a token-authenticated REST API (Page, Media, redirections) with an OpenAPI description and optimistic-concurrency revision guards—built for headless and scripted workflows.
 
 **Sulu** enforces structured content modeling through content types and blocks. This prevents content anarchy but requires upfront planning. Block definitions ensure responsive rendering (developers control rendering complexity). Media management integrates tightly with content, supporting enterprise workflows with roles/permissions.
 
@@ -124,7 +128,7 @@ Each plugin adds database queries and JavaScript overhead. Caching plugins (WP S
 | **Content Editing**       | EditorJS (modern blocks)   | Gutenberg (mature blocks)        | Bard (live preview)      | Content blocks            |
 | **Media Upload**          | Drag & drop, auto-optimize | Drag & drop                      | Drag & drop              | Structured upload         |
 | **Preview / Draft**       | Yes                        | Yes                              | Live preview (real-time) | Preview mode              |
-| **Collaborative Editing** | Basic                      | Real-time (plugins)              | Basic                    | Advanced (workflows)      |
+| **Collaborative Editing** | Editorial workflow (extension) | Real-time (plugins)          | Basic                    | Advanced (workflows)      |
 | **Mobile Admin**          | Responsive                 | Native apps (Jetpack)            | Responsive               | Responsive                |
 | **Onboarding**            | Documented                 | Extensive tutorials              | Excellent                | Complex (requires setup)  |
 | **Documentation**         | Growing                    | Extensive (tutorials everywhere) | Excellent                | Good (enterprise-focused) |
@@ -150,14 +154,14 @@ Each plugin adds database queries and JavaScript overhead. Caching plugins (WP S
 | **Extensibility**      | Symfony bundles            | Plugins / hooks                | Addons / Laravel services  | Symfony bundles          |
 | **CLI Tools**          | Symfony Console            | WP-CLI                         | Artisan                    | Symfony Console          |
 | **Testing**            | PHPUnit, PHPStan           | PHPUnit                        | Pest / PHPUnit             | PHPUnit                  |
-| **API**                | Custom endpoints (REST)    | REST (core) / GraphQL (plugin) | REST + GraphQL (Pro)       | REST (GraphQL ready)     |
+| **API**                | REST API (token + OpenAPI) | REST (core) / GraphQL (plugin) | REST + GraphQL (Pro)       | REST (GraphQL ready)     |
 | **Type Safety**        | Strong (PHP 8.4+ strict)   | Weak (legacy PHP)              | Good (Laravel types)       | Good (Symfony types)     |
 | **Code Quality Tools** | PHPStan, Rector            | Basic                          | Pint, Larastan             | PHPStan, Rector          |
 | **Framework Maturity** | Symfony 8 (cutting-edge)   | Custom (legacy)                | Laravel 11+ (mature)       | Symfony 6+ (stable)      |
 
 ### Analysis
 
-**Pushword** inherits Symfony's excellent patterns: dependency injection, service containers, event dispatchers. Developers familiar with Symfony ecosystem will find Pushword natural and enjoyable. Monorepo structure with officially maintained extensions ensures compatibility and quality. PHPStan enforces type safety; Rector enables refactoring at scale. PHP 8.4+ enables cutting-edge language features (property hooks, asymmetric visibility, attributes, enums).
+**Pushword** inherits Symfony's excellent patterns: dependency injection, service containers, event dispatchers. Developers familiar with Symfony ecosystem will find Pushword natural and enjoyable. Monorepo structure with officially maintained extensions ensures compatibility and quality. PHPStan enforces type safety; Rector enables refactoring at scale. PHP 8.4+ enables cutting-edge language features (property hooks, asymmetric visibility, attributes, enums). A token-authenticated REST API (OpenAPI-described, with optimistic-concurrency revision guards) covers Page, Media and redirections for headless and CI-driven editing.
 
 Trade-off: Requires Symfony knowledge. Developers from WordPress/custom PHP backgrounds face moderate learning curve.
 
@@ -259,6 +263,9 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 - **Zero-layer AI editing**: Content stored as plain markdown—AI tools (Cursor, Claude Code, Copilot) edit files directly without API abstraction
 - **Bulk operations for power users**: grep, sed, find/replace across hundreds of pages in seconds—no admin UI needed
 - Native multi-site and i18n without plugins
+- **Editorial workflow** extension: draft → in_review → approved, plus a pending-modification review cycle for published pages
+- **Page & snippet versioning**: side-by-side diff, restore, and time-slider timeline
+- **Token-authenticated REST API** (Page, Media, redirections) with OpenAPI docs and optimistic concurrency—headless/scripted editing
 - SEO-first design (built by SEO consultant)
 - Static site generation built-in extension
 - Lightweight, no bloat
@@ -516,6 +523,8 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 - **Bulk content operations are needed**: Mass find/replace, scripted updates, CLI-based content management
 - SEO is a primary concern
 - Multi-site or i18n required without plugins
+- Editorial review workflows are needed (draft → review → approve, pending modifications)
+- Headless or scripted editing via a token REST API (CI, external tooling)
 - Static site generation needed
 - Lightweight, maintainable code is priority
 - Team has Symfony experience or wants to learn
@@ -657,7 +666,7 @@ Before choosing, evaluate your project across these dimensions:
 <div class="not-prose p-4 mb-8 bg-blue-50 dark:bg-blue-900/30 rounded-lg shadow">
   <p class="text-sm text-blue-800 dark:text-blue-200">
     <strong>About this comparison</strong><br>
-    This page is written by the Pushword Original Author (and Claude). I strive for objectivity, but readers should be aware of my perspective. All claims are based on official documentation and hands-on testing as of December 2025. We acknowledge our bias toward modern PHP architecture and provide this comparison to help teams evaluate CMSs based on their specific needs, not just ecosystem size.<br>
+    This page is written by the Pushword Original Author (and Claude). I strive for objectivity, but readers should be aware of my perspective. All claims are based on official documentation and hands-on testing as of June 2026. We acknowledge our bias toward modern PHP architecture and provide this comparison to help teams evaluate CMSs based on their specific needs, not just ecosystem size.<br>
     <span class="text-xs">Found an error? <a href="https://github.com/Pushword/Pushword/issues" class="underline">Let us know on GitHub</a>. We welcome corrections and improvements to this analysis.</span>
   </p>
 </div>
@@ -667,6 +676,6 @@ Before choosing, evaluate your project across these dimensions:
 <div class="not-prose p-4 mt-8 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
   <p class="text-sm text-amber-800 dark:text-amber-200">
     <strong>Version</strong><br>
-    Last updated: December 2025. This comparison reflects platform status as of December 2025. Features and pricing may change; we welcome updates via GitHub issues.
+    Last updated: June 2026 (added Pushword page-workflow, versioning and REST API). This comparison reflects platform status as of June 2026. Features and pricing may change; we welcome updates via GitHub issues.
   </p>
 </div>

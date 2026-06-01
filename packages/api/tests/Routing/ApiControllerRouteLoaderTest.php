@@ -18,7 +18,7 @@ final class ApiControllerRouteLoaderTest extends TestCase
 
         self::assertTrue($loader->supports('.', 'pushword_api'));
         self::assertFalse($loader->supports('.', 'attribute'));
-        self::assertFalse($loader->supports('.', null));
+        self::assertFalse($loader->supports('.'));
     }
 
     public function testLoadsEachControllerClassOnceEvenWhenRepeated(): void

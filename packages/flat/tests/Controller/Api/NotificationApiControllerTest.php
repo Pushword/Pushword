@@ -9,6 +9,7 @@ use Pushword\Core\Entity\User;
 use Pushword\Flat\Entity\AdminNotification;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
@@ -30,6 +31,7 @@ final class NotificationApiControllerTest extends WebTestCase
     {
         $this->client = self::createClient();
         $this->client->disableReboot();
+
         $this->em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $this->testToken = bin2hex(random_bytes(32));
@@ -41,11 +43,11 @@ final class NotificationApiControllerTest extends WebTestCase
         $user->setPassword('hashed-password');
         $user->apiToken = $this->testToken;
         $user->setRoles(['ROLE_EDITOR']);
+
         $this->em->persist($user);
         $this->em->flush();
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $container = $this->client->getContainer();
@@ -56,19 +58,21 @@ final class NotificationApiControllerTest extends WebTestCase
                 $em->remove($notification);
             }
         }
+
         /** @var class-string<User> $userClass */
         $userClass = $container->getParameter('pw.entity_user');
         $user = $em->getRepository($userClass)->findOneBy(['email' => $this->testUserEmail]);
         if (null !== $user) {
             $em->remove($user);
         }
+
         $em->flush();
         parent::tearDown();
     }
 
     public function testListRequiresToken(): void
     {
-        $this->client->request('GET', '/api/notification');
+        $this->client->request(Request::METHOD_GET, '/api/notification');
         self::assertSame(401, $this->client->getResponse()->getStatusCode());
     }
 
@@ -143,6 +147,7 @@ final class NotificationApiControllerTest extends WebTestCase
         $notification->type = 'info';
         $notification->message = 'Test '.uniqid();
         $notification->host = $host;
+
         $this->em->persist($notification);
         $this->em->flush();
         $this->createdIds[] = $notification->id ?? 0;

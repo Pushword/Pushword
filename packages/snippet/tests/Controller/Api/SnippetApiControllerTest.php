@@ -9,6 +9,7 @@ use Pushword\Core\Entity\User;
 use Pushword\Snippet\Entity\Snippet;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
@@ -43,11 +44,11 @@ final class SnippetApiControllerTest extends WebTestCase
         $user->setPassword('hashed-password');
         $user->apiToken = $this->testToken;
         $user->setRoles(['ROLE_EDITOR']);
+
         $this->em->persist($user);
         $this->em->flush();
     }
 
-    #[Override]
     protected function tearDown(): void
     {
         $container = $this->client->getContainer();
@@ -59,19 +60,21 @@ final class SnippetApiControllerTest extends WebTestCase
                 $em->remove($snippet);
             }
         }
+
         /** @var class-string<User> $userClass */
         $userClass = $container->getParameter('pw.entity_user');
         $user = $em->getRepository($userClass)->findOneBy(['email' => $this->testUserEmail]);
         if (null !== $user) {
             $em->remove($user);
         }
+
         $em->flush();
         parent::tearDown();
     }
 
     public function testListWithoutTokenReturns401(): void
     {
-        $this->client->request('GET', '/api/snippet');
+        $this->client->request(Request::METHOD_GET, '/api/snippet');
         self::assertSame(401, $this->client->getResponse()->getStatusCode());
     }
 

@@ -4,20 +4,21 @@ namespace Pushword\Api\Tests\Service;
 
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Core\Entity\Page;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
 final class PageFrontmatterMapperTest extends KernelTestCase
 {
-    private \Pushword\Api\Service\PageFrontmatterMapper $mapper;
+    private PageFrontmatterMapper $mapper;
 
     #[Override]
     protected function setUp(): void
     {
         self::bootKernel();
-        /** @var \Pushword\Api\Service\PageFrontmatterMapper $mapper */
-        $mapper = self::getContainer()->get(\Pushword\Api\Service\PageFrontmatterMapper::class);
+        /** @var PageFrontmatterMapper $mapper */
+        $mapper = self::getContainer()->get(PageFrontmatterMapper::class);
         $this->mapper = $mapper;
     }
 
