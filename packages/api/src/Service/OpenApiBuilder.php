@@ -37,10 +37,12 @@ final readonly class OpenApiBuilder
 
             if (isset($fragment['paths']) && \is_array($fragment['paths'])) {
                 foreach ($fragment['paths'] as $path => $operations) {
-                    if (! \is_string($path) || ! \is_array($operations)) {
+                    if (! \is_string($path)) {
                         continue;
                     }
-
+                    if (! \is_array($operations)) {
+                        continue;
+                    }
                     /** @var array<string, mixed> $existing */
                     $existing = $paths[$path] ?? [];
                     /** @var array<string, mixed> $operations */
@@ -51,10 +53,12 @@ final readonly class OpenApiBuilder
             $components = $fragment['components'] ?? null;
             if (\is_array($components) && isset($components['schemas']) && \is_array($components['schemas'])) {
                 foreach ($components['schemas'] as $name => $schema) {
-                    if (! \is_string($name) || ! \is_array($schema)) {
+                    if (! \is_string($name)) {
                         continue;
                     }
-
+                    if (! \is_array($schema)) {
+                        continue;
+                    }
                     /** @var array<string, mixed> $schema */
                     $schemas[$name] = $schema;
                 }
