@@ -140,9 +140,10 @@ final class PageApiController extends AbstractApiController
         $this->entityManager->persist($page);
         $this->entityManager->flush();
 
+        // Echo the slug: it is not in the create URL and may have been normalized.
         return $this->writeResponse(
             $request,
-            $this->buildMinimalPayload($page),
+            ['slug' => $page->getSlug()] + $this->buildMinimalPayload($page),
             fn (): array => $this->buildPagePayload($page),
             $this->revisions->compute($page),
             Response::HTTP_CREATED,
@@ -322,16 +323,15 @@ final class PageApiController extends AbstractApiController
     }
 
     /**
-     * Minimal write-response body: just enough for the client to track the new
-     * revision without re-emitting the (potentially large) Markdown body.
+     * Minimal write-response body: only what the client cannot already derive.
+     * The host and slug are part of the request URL, so they are omitted — just
+     * the new revision (for the next If-Match) and the server-set timestamp.
      *
      * @return array<string, mixed>
      */
     private function buildMinimalPayload(Page $page): array
     {
         return [
-            'host' => $page->host,
-            'slug' => $page->getSlug(),
             'revision' => $this->revisions->compute($page),
             'updatedAt' => $page->updatedAt?->format(DateTimeInterface::ATOM),
         ];
@@ -400,7 +400,7 @@ final class PageApiController extends AbstractApiController
             'name' => 'return',
             'in' => 'query',
             'schema' => ['type' => 'string', 'enum' => ['minimal', 'full'], 'default' => 'minimal'],
-            'description' => 'Write responses return {host, slug, revision, updatedAt} by default; use `full` for the complete Page payload.',
+            'description' => 'Write responses return {revision, updatedAt} by default (create also echoes the normalized slug); use `full` for the complete Page payload.',
         ];
 
         return [

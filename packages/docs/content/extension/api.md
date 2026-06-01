@@ -164,11 +164,19 @@ plus `page` / `per_page`. Returns light items `{ host, slug, h1, locale, updated
 {id=write-responses}
 ## Write responses (minimal by default)
 
-To save tokens, `POST` / `PUT` / `PATCH` return only what the client needs to track the
-new state — it already has the content it just sent:
+To save tokens, `POST` / `PUT` / `PATCH` return only what the client cannot already
+derive. The `host` and `slug` are in the request URL, so they aren't echoed — just the new
+`revision` (for the next `If-Match`) and the server-set `updatedAt`:
 
 ```json
-{ "host": "example.com", "slug": "pricing", "revision": "9f1c…", "updatedAt": "2026-06-01T10:12:00+00:00" }
+{ "revision": "9f1c…", "updatedAt": "2026-06-01T10:12:00+00:00" }
+```
+
+Create is the exception: it also returns the `slug`, which isn't in its URL and may have
+been normalized (e.g. `"Qui Sommes-Nous"` → `"qui-sommes-nous"`).
+
+```json
+{ "slug": "qui-sommes-nous", "revision": "9f1c…", "updatedAt": "2026-06-01T10:12:00+00:00" }
 ```
 
 The new `revision` is also in the `ETag` header. Add `?return=full` to get the complete

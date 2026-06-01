@@ -80,15 +80,16 @@ final class PageApiControllerTest extends WebTestCase
 
         self::assertSame(201, $response->getStatusCode());
         $body = $this->decode();
-        self::assertSame($host, $body['host']);
         self::assertNotEmpty($body['revision']);
         self::assertSame($body['revision'], $response->headers->get('ETag'));
         self::assertArrayHasKey('updatedAt', $body);
+        // Host is in the URL, so it isn't echoed; the slug is (it may be normalized).
+        self::assertArrayNotHasKey('host', $body);
+        self::assertIsString($body['slug']);
         // Minimal write response: the body the client just sent isn't echoed back.
         self::assertArrayNotHasKey('body', $body);
         self::assertArrayNotHasKey('frontmatter', $body);
 
-        self::assertIsString($body['slug']);
         $this->createdPageIds[] = $this->lookupPageId($host, $body['slug']);
     }
 
@@ -168,7 +169,9 @@ final class PageApiControllerTest extends WebTestCase
 
         self::assertSame(200, $response->getStatusCode());
         $body = $this->decode();
-        // Minimal write response by default.
+        // Minimal write response by default: host and slug are in the URL, so omitted.
+        self::assertArrayNotHasKey('host', $body);
+        self::assertArrayNotHasKey('slug', $body);
         self::assertArrayNotHasKey('body', $body);
         self::assertNotSame($revision, $body['revision']);
 
@@ -240,6 +243,8 @@ final class PageApiControllerTest extends WebTestCase
 
         self::assertSame(200, $response->getStatusCode());
         $body = $this->decode();
+        self::assertArrayNotHasKey('host', $body);
+        self::assertArrayNotHasKey('slug', $body);
         self::assertArrayNotHasKey('body', $body);
         self::assertNotSame($revision, $body['revision']);
         self::assertSame($body['revision'], $response->headers->get('ETag'));
