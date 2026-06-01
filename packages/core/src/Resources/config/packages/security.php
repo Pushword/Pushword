@@ -37,6 +37,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         $firewalls['api'] = [
             'pattern' => '^/api(/|$)',
             'stateless' => true,
+            // Explicit provider: required when a downstream app registers a second
+            // provider, otherwise the authenticator's provider is ambiguous. API
+            // tokens live on the User entity, so the user provider is the right one.
+            'provider' => 'pushword_user_provider',
             'custom_authenticators' => [ApiTokenAuthenticator::class],
         ];
         $accessControl[] = ['path' => '^/api/docs', 'roles' => 'PUBLIC_ACCESS'];
@@ -46,6 +50,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $firewalls['main'] = [
         'lazy' => true,
+        'provider' => 'pushword_user_provider',
         'http_basic' => [
             'realm' => 'Secured Area',
         ],
