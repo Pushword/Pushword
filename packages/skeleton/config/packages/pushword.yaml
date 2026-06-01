@@ -33,6 +33,7 @@ pushword:
         - Pushword\StaticGenerator\Generator\RobotsGenerator
         - Pushword\StaticGenerator\Generator\ErrorPageGenerator
         - Pushword\StaticGenerator\Generator\CopierGenerator
+        - Pushword\StaticGenerator\Generator\RedirectionHtmlGenerator
         - Pushword\StaticGenerator\Generator\CNAMEGenerator
       assets:
         javascripts:

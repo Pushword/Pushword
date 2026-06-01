@@ -27,6 +27,7 @@ use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PageGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
+use Pushword\StaticGenerator\Generator\RedirectionHtmlGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -295,6 +296,30 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertFileExists($this->getStaticDir().'/.Caddyfile');
         self::assertStringContainsString('max-age=10800', $caddyfile);
         self::assertStringContainsString('stale-while-revalidate=3600', $caddyfile);
+    }
+
+    public function testGenerateRedirectionHtml(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $siteRegistry = self::getContainer()->get(SiteRegistry::class);
+        $locale = $siteRegistry->switchSite('localhost.dev')->get()->getLocale();
+
+        /** @var RedirectionManager $redirectionManager */
+        $redirectionManager = $this->getGeneratorBag()->get(RedirectionManager::class);
+        $redirectionManager->reset();
+        $redirectionManager->add('/cms-comparison', '/blog/cms-comparison', 301);
+
+        $this->getGenerator(RedirectionHtmlGenerator::class)->generate('localhost.dev');
+
+        $stub = $this->getStaticDir().'/cms-comparison.html';
+        self::assertFileExists($stub);
+
+        $html = (string) file_get_contents($stub);
+        self::assertStringContainsString('<link rel="canonical" href="/blog/cms-comparison">', $html);
+        self::assertStringContainsString('content="0; url=/blog/cms-comparison"', $html);
+        self::assertStringContainsString('<html lang="'.$locale.'">', $html);
     }
 
     public function testGenerateCNAME(): void

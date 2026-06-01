@@ -12,6 +12,7 @@ use Pushword\StaticGenerator\Generator\HtaccessGenerator;
 use Pushword\StaticGenerator\Generator\MediaGenerator;
 use Pushword\StaticGenerator\Generator\PagesCompressor;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
+use Pushword\StaticGenerator\Generator\RedirectionHtmlGenerator;
 use Pushword\StaticGenerator\Generator\RobotsGenerator;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -80,6 +81,7 @@ class Configuration implements ConfigurationInterface
         ErrorPageGenerator::class,
         CopierGenerator::class,
         MediaGenerator::class,
+        RedirectionHtmlGenerator::class,
         CNAMEGenerator::class,
     ];
 
