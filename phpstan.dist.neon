@@ -18,6 +18,8 @@ parameters:
         - packages/admin-block-editor/src
         - packages/admin-block-editor/tests
         - packages/advanced-main-image/src
+        - packages/api/src
+        - packages/api/tests
         - packages/conversation/src
         - packages/conversation/tests
         - packages/core/src

@@ -32,8 +32,12 @@ abstract class AbstractApiController extends AbstractController implements ApiCo
         }
 
         $decoded = json_decode($raw, true);
+        if (! \is_array($decoded)) {
+            return [];
+        }
 
-        return \is_array($decoded) ? $decoded : [];
+        /** @var array<string, mixed> $decoded */
+        return $decoded;
     }
 
     /**
@@ -75,6 +79,33 @@ abstract class AbstractApiController extends AbstractController implements ApiCo
         }
 
         return $this->respond($body, Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * Validate an `If-Match` header against the resource's current revision.
+     *
+     * Returns null when the header matches (caller proceeds with the write);
+     * returns the appropriate 428/409 JSON response otherwise.
+     *
+     * @param callable(): array<string, mixed> $freshPayload
+     */
+    protected function checkIfMatch(Request $request, string $currentRevision, callable $freshPayload): ?JsonResponse
+    {
+        $expected = $request->headers->get('If-Match');
+        if (null === $expected || '' === $expected) {
+            return $this->respond(['error' => 'Missing If-Match header'], Response::HTTP_PRECONDITION_REQUIRED);
+        }
+
+        if ($expected !== $currentRevision) {
+            return $this->respond([
+                'error' => 'revision_mismatch',
+                'your_revision' => $expected,
+                'current_revision' => $currentRevision,
+                'current' => $freshPayload(),
+            ], Response::HTTP_CONFLICT);
+        }
+
+        return null;
     }
 
     /**

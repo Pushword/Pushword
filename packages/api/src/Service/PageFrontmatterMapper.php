@@ -18,16 +18,6 @@ use Symfony\Component\Yaml\Yaml;
  */
 final readonly class PageFrontmatterMapper
 {
-    /** Scalar fields exposed via proper get/set methods on Page. */
-    private const array SETTER_FIELDS = [
-        'h1', 'title', 'name', 'metaRobots',
-    ];
-
-    /** Scalar fields exposed as public properties on Page. */
-    private const array PROPERTY_FIELDS = [
-        'host', 'locale', 'template', 'editMessage',
-    ];
-
     public function __construct(
         private PageRepository $pageRepository,
         private MediaRepository $mediaRepository,
@@ -39,28 +29,27 @@ final readonly class PageFrontmatterMapper
      */
     public function toArray(Page $page): array
     {
-        $frontmatter = [];
-
-        foreach (self::SETTER_FIELDS as $field) {
-            $getter = 'get'.ucfirst($field);
-            $frontmatter[$field] = $page->$getter();
-        }
-
-        foreach (self::PROPERTY_FIELDS as $field) {
-            $frontmatter[$field] = $page->$field;
-        }
-
-        $frontmatter['slug'] = $page->getSlug();
-        $frontmatter['weight'] = $page->getWeight();
-        $frontmatter['tags'] = $page->getTagList();
-        $frontmatter['publishedAt'] = $page->getPublishedAt()?->format(DateTimeInterface::ATOM);
-        $frontmatter['mainImage'] = $page->getMainImage()?->getFileName();
-        $frontmatter['parentPage'] = $page->getParentPage()?->getSlug();
-        $frontmatter['translations'] = array_values(array_map(
-            static fn (Page $t): string => $t->getSlug(),
-            $page->getTranslations()->toArray(),
-        ));
-        $frontmatter['customProperties'] = $page->getCustomProperties();
+        $frontmatter = [
+            'h1' => $page->getH1(),
+            'title' => $page->title,
+            'name' => $page->name,
+            'metaRobots' => $page->metaRobots,
+            'host' => $page->host,
+            'locale' => $page->locale,
+            'template' => $page->template,
+            'editMessage' => $page->editMessage,
+            'slug' => $page->getSlug(),
+            'weight' => $page->getWeight(),
+            'tags' => $page->getTagList(),
+            'publishedAt' => $page->getPublishedAt()?->format(DateTimeInterface::ATOM),
+            'mainImage' => $page->getMainImage()?->getFileName(),
+            'parentPage' => $page->getParentPage()?->getSlug(),
+            'translations' => array_values(array_map(
+                static fn (Page $t): string => $t->getSlug(),
+                $page->getTranslations()->toArray(),
+            )),
+            'customProperties' => $page->getCustomProperties(),
+        ];
 
         return [
             'frontmatter' => $frontmatter,
@@ -75,31 +64,36 @@ final readonly class PageFrontmatterMapper
      */
     public function applyFrontmatter(Page $page, array $frontmatter): void
     {
-        foreach (self::SETTER_FIELDS as $field) {
-            if (! \array_key_exists($field, $frontmatter)) {
-                continue;
-            }
-
-            $value = $frontmatter[$field];
-            if (! \is_string($value) && null !== $value) {
-                continue;
-            }
-
-            $setter = 'set'.ucfirst($field);
-            $page->$setter($value ?? '');
+        if (\array_key_exists('h1', $frontmatter) && (\is_string($frontmatter['h1']) || null === $frontmatter['h1'])) {
+            $page->setH1($frontmatter['h1'] ?? '');
         }
 
-        foreach (self::PROPERTY_FIELDS as $field) {
-            if (! \array_key_exists($field, $frontmatter)) {
-                continue;
-            }
+        if (\array_key_exists('title', $frontmatter) && (\is_string($frontmatter['title']) || null === $frontmatter['title'])) {
+            $page->setTitle($frontmatter['title'] ?? '');
+        }
 
-            $value = $frontmatter[$field];
-            if (! \is_string($value) && null !== $value) {
-                continue;
-            }
+        if (\array_key_exists('name', $frontmatter) && (\is_string($frontmatter['name']) || null === $frontmatter['name'])) {
+            $page->setName($frontmatter['name'] ?? '');
+        }
 
-            $page->$field = $value;
+        if (\array_key_exists('metaRobots', $frontmatter) && (\is_string($frontmatter['metaRobots']) || null === $frontmatter['metaRobots'])) {
+            $page->setMetaRobots($frontmatter['metaRobots'] ?? '');
+        }
+
+        if (\array_key_exists('host', $frontmatter) && \is_string($frontmatter['host'])) {
+            $page->host = $frontmatter['host'];
+        }
+
+        if (\array_key_exists('locale', $frontmatter) && \is_string($frontmatter['locale'])) {
+            $page->locale = $frontmatter['locale'];
+        }
+
+        if (\array_key_exists('template', $frontmatter) && (\is_string($frontmatter['template']) || null === $frontmatter['template'])) {
+            $page->template = $frontmatter['template'];
+        }
+
+        if (\array_key_exists('editMessage', $frontmatter) && \is_string($frontmatter['editMessage'])) {
+            $page->editMessage = $frontmatter['editMessage'];
         }
 
         if (\array_key_exists('slug', $frontmatter) && \is_string($frontmatter['slug']) && '' !== $frontmatter['slug']) {
@@ -111,7 +105,6 @@ final readonly class PageFrontmatterMapper
         }
 
         if (\array_key_exists('tags', $frontmatter) && \is_array($frontmatter['tags'])) {
-            /** @var list<string> $tags */
             $tags = array_values(array_filter($frontmatter['tags'], is_string(...)));
             $page->setTags($tags);
         }
@@ -129,15 +122,22 @@ final readonly class PageFrontmatterMapper
         }
 
         if (\array_key_exists('customProperties', $frontmatter) && \is_array($frontmatter['customProperties'])) {
-            $page->setCustomProperties($frontmatter['customProperties']);
+            /** @var array<string, mixed> $custom */
+            $custom = $frontmatter['customProperties'];
+            $page->setCustomProperties($custom);
+            foreach (array_keys($custom) as $key) {
+                $page->registerManagedPropertyKey($key);
+            }
         }
 
         foreach ($frontmatter as $key => $value) {
-            if (! str_starts_with((string) $key, 'customProperty.')) {
+            if (! str_starts_with($key, 'customProperty.')) {
                 continue;
             }
 
-            $page->setCustomProperty(substr((string) $key, \strlen('customProperty.')), $value);
+            $propKey = substr($key, \strlen('customProperty.'));
+            $page->setCustomProperty($propKey, $value);
+            $page->registerManagedPropertyKey($propKey);
         }
     }
 
@@ -160,11 +160,7 @@ final readonly class PageFrontmatterMapper
 
     private function resolveMedia(mixed $reference): ?Media
     {
-        if (null === $reference || '' === $reference) {
-            return null;
-        }
-
-        if (! \is_string($reference)) {
+        if (! \is_string($reference) || '' === $reference) {
             return null;
         }
 
@@ -173,11 +169,7 @@ final readonly class PageFrontmatterMapper
 
     private function resolvePageRef(mixed $reference, string $host): ?Page
     {
-        if (null === $reference || '' === $reference) {
-            return null;
-        }
-
-        if (! \is_string($reference)) {
+        if (! \is_string($reference) || '' === $reference) {
             return null;
         }
 
@@ -214,7 +206,7 @@ final readonly class PageFrontmatterMapper
             'slug' => $page->getSlug(),
             'h1' => $page->getH1(),
             'locale' => $page->locale,
-            'updatedAt' => $page->updatedAt->format(DateTimeInterface::ATOM),
+            'updatedAt' => $page->updatedAt?->format(DateTimeInterface::ATOM),
         ];
     }
 

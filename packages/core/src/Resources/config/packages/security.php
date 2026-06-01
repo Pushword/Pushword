@@ -40,7 +40,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'custom_authenticators' => [ApiTokenAuthenticator::class],
         ];
         $accessControl[] = ['path' => '^/api/docs', 'roles' => 'PUBLIC_ACCESS'];
-        $accessControl[] = ['path' => '^/api/flat/(lock|unlock)', 'roles' => 'PUBLIC_ACCESS'];
+        $accessControl[] = ['path' => '^/api/flat/(lock|unlock|status)', 'roles' => 'PUBLIC_ACCESS'];
         $accessControl[] = ['path' => '^/api/', 'roles' => 'ROLE_EDITOR'];
     }
 

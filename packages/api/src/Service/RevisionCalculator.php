@@ -12,6 +12,8 @@ final readonly class RevisionCalculator
      */
     public function compute(Page $page): string
     {
-        return sha1($page->host.'|'.$page->getSlug().'|'.$page->updatedAt->format('Y-m-d\TH:i:s.uP'));
+        $stamp = $page->updatedAt?->format('Y-m-d\TH:i:s.uP') ?? '';
+
+        return sha1($page->host.'|'.$page->getSlug().'|'.$stamp);
     }
 }
