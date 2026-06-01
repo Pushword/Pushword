@@ -8,6 +8,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Snippet\Entity\Snippet;
 use Pushword\Version\Versionner;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
@@ -35,10 +36,10 @@ final class VersionTest extends KernelTestCase
         $page->setH1('edited title to test Versioning the second time');
         $em->flush();
 
-        /** @var string $logDir */
-        $logDir = $container->getParameter('kernel.logs_dir');
+        /** @var string $storageDir */
+        $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
         $versionner = new Versionner(
-            $logDir,
+            $storageDir,
             $em,
             new Serializer([], ['json' => new JsonEncoder()])
         );
@@ -64,10 +65,10 @@ final class VersionTest extends KernelTestCase
         $em->persist($snippet);
         $em->flush(); // assigns the id
 
-        /** @var string $logDir */
-        $logDir = $container->getParameter('kernel.logs_dir');
+        /** @var string $storageDir */
+        $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
         $versionner = new Versionner(
-            $logDir,
+            $storageDir,
             $em,
             $container->get('serializer')
         );
@@ -118,10 +119,10 @@ final class VersionTest extends KernelTestCase
         self::bootKernel();
         $container = self::getContainer();
 
-        /** @var string $logDir */
-        $logDir = $container->getParameter('kernel.logs_dir');
+        /** @var string $storageDir */
+        $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
         $versionner = new Versionner(
-            $logDir,
+            $storageDir,
             $container->get('doctrine.orm.default_entity_manager'),
             new Serializer([], ['json' => new JsonEncoder()])
         );
@@ -131,15 +132,104 @@ final class VersionTest extends KernelTestCase
         self::assertSame([], $versionner->getVersions('snippet', \PHP_INT_MAX));
     }
 
+    public function testRetentionPrunesOldVersionsInTiers(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+
+        /** @var string $storageDir */
+        $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
+        $versionner = new Versionner($storageDir, $em, $container->get('serializer'));
+
+        $snippet = new Snippet();
+        $snippet->host = 'localhost.dev';
+        $snippet->setSlug('retention-test-'.uniqid());
+        $snippet->setName('placeholder');
+        $snippet->setContent('placeholder');
+
+        $em->persist($snippet);
+        $em->flush(); // assigns the id (and creates a recent version)
+
+        $id = (int) $snippet->id;
+        $versionner->reset('snippet', $id);
+
+        $now = time();
+        $dir = $storageDir.'/snippet/'.$id;
+        $fs = new Filesystem();
+        // Version filenames start with an 8-hex-char Unix timestamp.
+        $name = static fn (int $ts, string $suffix): string => str_pad(dechex($ts), 8, '0', \STR_PAD_LEFT).$suffix;
+
+        // Bucket-align the old timestamps so each pair lands in a single bucket.
+        $day = intdiv($now - 45 * 86400, 86400) * 86400;        // 30–90 days window
+        $week = intdiv($now - 200 * 86400, 7 * 86400) * 7 * 86400; // beyond 90 days
+
+        // Recent (< 30 days): both kept.
+        $fs->dumpFile($dir.'/'.$name($now - 86400, '00001'), '{}');
+        $fs->dumpFile($dir.'/'.$name($now - 2 * 86400, '00002'), '{}');
+        // Same calendar day: collapsed to the newer one.
+        $fs->dumpFile($dir.'/'.$name($day + 10, '00001'), '{}');
+        $fs->dumpFile($dir.'/'.$name($day + 20, '00002'), '{}');
+        // Same 7-day bucket: collapsed to the newer one.
+        $fs->dumpFile($dir.'/'.$name($week + 10, '00001'), '{}');
+        $fs->dumpFile($dir.'/'.$name($week + 20, '00002'), '{}');
+
+        self::assertCount(6, $versionner->getVersions('snippet', $id));
+
+        // A new save triggers pruning.
+        $snippet->setContent('changed');
+        $em->flush();
+
+        $versions = $versionner->getVersions('snippet', $id);
+        // 2 recent + 1 new save + 1 day survivor + 1 week survivor.
+        self::assertCount(5, $versions);
+        self::assertContains($name($day + 20, '00002'), $versions);
+        self::assertNotContains($name($day + 10, '00001'), $versions);
+        self::assertContains($name($week + 20, '00002'), $versions);
+        self::assertNotContains($name($week + 10, '00001'), $versions);
+
+        $versionner->reset('snippet', $id);
+        $em->remove($snippet);
+        $em->flush();
+    }
+
+    public function testGetLatestVersionReturnsNewestOrNull(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+
+        /** @var string $storageDir */
+        $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
+        $versionner = new Versionner(
+            $storageDir,
+            $container->get('doctrine.orm.default_entity_manager'),
+            new Serializer([], ['json' => new JsonEncoder()])
+        );
+
+        // No version directory on disk → null.
+        self::assertNull($versionner->getLatestVersion('page', \PHP_INT_MAX));
+
+        // Write out-of-order version files; the chronologically greatest wins.
+        $dir = $storageDir.'/snippet/'.\PHP_INT_MAX;
+        $fs = new Filesystem();
+        $fs->dumpFile($dir.'/64000000aaa', '{}');
+        $fs->dumpFile($dir.'/65000000ccc', '{}'); // newest
+        $fs->dumpFile($dir.'/64ffffffbbb', '{}');
+
+        self::assertSame('65000000ccc', $versionner->getLatestVersion('snippet', \PHP_INT_MAX));
+
+        $versionner->reset('snippet', \PHP_INT_MAX);
+    }
+
     public function testFindThrowsOnUnknownType(): void
     {
         self::bootKernel();
         $container = self::getContainer();
 
-        /** @var string $logDir */
-        $logDir = $container->getParameter('kernel.logs_dir');
+        /** @var string $storageDir */
+        $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
         $versionner = new Versionner(
-            $logDir,
+            $storageDir,
             $container->get('doctrine.orm.default_entity_manager'),
             new Serializer([], ['json' => new JsonEncoder()])
         );

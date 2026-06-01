@@ -28,7 +28,7 @@ class Versionner
     public static bool $version = true;
 
     public function __construct(
-        private readonly string $logDir,
+        private readonly string $storageDir,
         private readonly EntityManagerInterface $entityManager,
         private readonly SerializerInterface $serializer
     ) {
@@ -93,6 +93,61 @@ class Versionner
             ->serialize($entity, 'json', [AbstractNormalizer::ATTRIBUTES => $this->getProperties($entity)]);
 
         $this->fileSystem->dumpFile($versionFile, $jsonContent);
+
+        $this->pruneOldVersions($type, (int) $entity->id);
+    }
+
+    /**
+     * Cap history growth with a tiered policy (timestamps come from the
+     * filename, no extra metadata): keep every version younger than 30 days,
+     * then one per day up to 90 days, then one per week beyond.
+     */
+    private function pruneOldVersions(string $type, int|string $id): void
+    {
+        $now = time();
+        $keep = []; // bucket => newest filename kept in that bucket
+        $toDelete = [];
+
+        foreach ($this->getVersions($type, $id) as $version) {
+            $timestamp = $this->timestampOf($version);
+            if (null === $timestamp) {
+                continue; // never prune names we cannot date
+            }
+
+            $age = $now - $timestamp;
+            if ($age < 30 * 86400) {
+                continue; // keep all recent versions
+            }
+
+            $bucket = $age < 90 * 86400
+                ? 'd'.intdiv($timestamp, 86400)     // 1/day in the 30–90 days window
+                : 'w'.intdiv($timestamp, 7 * 86400); // 1/week beyond 90 days
+
+            if (! isset($keep[$bucket])) {
+                $keep[$bucket] = $version;
+
+                continue;
+            }
+
+            // uniqid filenames sort chronologically, so keep the greater one.
+            if ($version > $keep[$bucket]) {
+                $toDelete[] = $keep[$bucket];
+                $keep[$bucket] = $version;
+            } else {
+                $toDelete[] = $version;
+            }
+        }
+
+        foreach ($toDelete as $version) {
+            $this->fileSystem->remove($this->getVersionFile($type, $id, $version));
+        }
+    }
+
+    private function timestampOf(string $version): ?int
+    {
+        $hex = substr($version, 0, 8);
+
+        return ctype_xdigit($hex) ? (int) hexdec($hex) : null;
     }
 
     public function loadVersion(string $type, string $id, string $version): void
@@ -186,18 +241,32 @@ class Versionner
         return array_values($versions);
     }
 
+    public function getLatestVersion(string $type, int|string $id): ?string
+    {
+        $versions = $this->getVersions($type, $id);
+        if ([] === $versions) {
+            return null;
+        }
+
+        sort($versions); // uniqid prefix is chronological
+
+        return $versions[array_key_last($versions)];
+    }
+
     private function getVersionDir(string $type, int|string $id): string
     {
         // Page versions keep their historical flat path; other types are
         // namespaced by their slug so ids cannot collide across entities.
         $prefix = 'page' === $type ? '' : $type.'/';
 
-        return $this->logDir.'/version/'.$prefix.$id;
+        return $this->storageDir.'/'.$prefix.$id;
     }
 
     private function getVersionFile(string $type, int|string $id, ?string $version = null): string
     {
-        return $this->getVersionDir($type, $id).'/'.($version ?? uniqid());
+        // uniqid('', true) adds entropy after the timestamp prefix so two saves
+        // in the same microsecond cannot silently overwrite each other.
+        return $this->getVersionDir($type, $id).'/'.($version ?? uniqid('', true));
     }
 
     /**

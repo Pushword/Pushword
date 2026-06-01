@@ -9,6 +9,15 @@ class Configuration implements ConfigurationInterface
 {
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        return new TreeBuilder('version');
+        $treeBuilder = new TreeBuilder('pushword_version');
+        $treeBuilder->getRootNode()
+            ->children()
+                ->scalarNode('storage_dir')
+                    ->defaultValue('%kernel.project_dir%/var/log/version')
+                    ->cannotBeEmpty()
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

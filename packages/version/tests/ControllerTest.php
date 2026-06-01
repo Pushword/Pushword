@@ -28,10 +28,10 @@ final class ControllerTest extends AbstractAdminTestClass
         $pageId = $page->id;
         self::assertGreaterThan(0, $pageId);
 
-        /** @var string $logDir */
-        $logDir = self::getContainer()->getParameter('kernel.logs_dir');
+        /** @var string $storageDir */
+        $storageDir = self::getContainer()->getParameter('pw.pushword_version.storage_dir');
         $versionner = new Versionner(
-            $logDir,
+            $storageDir,
             $em,
             new Serializer([], ['json' => new JsonEncoder()])
         );
@@ -85,9 +85,9 @@ final class ControllerTest extends AbstractAdminTestClass
         /** @var Router $router */
         $router = self::getContainer()->get('router');
 
-        /** @var string $logDir */
-        $logDir = self::getContainer()->getParameter('kernel.logs_dir');
-        $versionner = new Versionner($logDir, $em, self::getContainer()->get('serializer'));
+        /** @var string $storageDir */
+        $storageDir = self::getContainer()->getParameter('pw.pushword_version.storage_dir');
+        $versionner = new Versionner($storageDir, $em, self::getContainer()->get('serializer'));
 
         $versions = $versionner->getVersions('snippet', (int) $snippet->id);
         self::assertNotEmpty($versions, 'Snippet should have at least one version');
@@ -155,9 +155,9 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertSame('after content', $updated->getContent());
         self::assertSame('After', $updated->getName());
 
-        /** @var string $logDir */
-        $logDir = self::getContainer()->getParameter('kernel.logs_dir');
-        new Versionner($logDir, $em, self::getContainer()->get('serializer'))->reset('snippet', (int) $snippet->id);
+        /** @var string $storageDir */
+        $storageDir = self::getContainer()->getParameter('pw.pushword_version.storage_dir');
+        new Versionner($storageDir, $em, self::getContainer()->get('serializer'))->reset('snippet', (int) $snippet->id);
         $em->remove($updated);
         $em->flush();
     }

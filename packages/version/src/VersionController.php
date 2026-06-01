@@ -89,6 +89,7 @@ class VersionController extends AbstractController
             'type' => $type,
             'entity' => $entity,
             'versions' => $versions,
+            'editUrl' => $this->generateUrl(self::TYPES[$type]['editRoute'], ['entityId' => $id]),
         ]);
     }
 

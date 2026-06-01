@@ -3,6 +3,9 @@
 {% block title %}{{ entity.slug }} › {{ 'versionVersions'|trans }}{% endblock %}
 
 {% block actions %}
+    <a class="btn btn-secondary" href="{{ editUrl }}">
+        <i class="fa fa-pen-to-square" aria-hidden="true"></i> {{ 'versionEditPage'|trans }}
+    </a>
     <a class="btn btn-danger" href="{{ path('admin_version_reset', {type: type, id: entity.id}) }}">
         <i class="fa fa-trash" aria-hidden="true"></i> {{ 'versionReset'|trans }}
     </a>
