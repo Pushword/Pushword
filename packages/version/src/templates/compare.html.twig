@@ -160,24 +160,17 @@
   const leftLabel = document.getElementById('version-left-label');
   const rightSelect = document.getElementById('version-right-select');
 
-  // uniqid() only encodes whole seconds, so we show relative time ("3 min ago")
-  // and keep the absolute date (to the minute) as the tooltip / SR value.
-  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
-  const UNITS = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60]];
-
   function versionDate(v) {
     const sec = parseInt(v.slice(0, 8), 16);
     return Number.isNaN(sec) ? null : new Date(sec * 1000);
   }
 
+  // uniqid() only encodes whole seconds. Show a compact absolute date/time:
+  // relative labels ("a minute ago") blur together for closely spaced saves
+  // and hide the real order, which defeats the purpose of an audit history.
   function versionLabel(v) {
     const date = versionDate(v);
-    if (null === date) return v.slice(0, 13);
-    const diff = (date.getTime() - Date.now()) / 1000;
-    for (const [unit, size] of UNITS) {
-      if (Math.abs(diff) >= size) return rtf.format(Math.round(diff / size), unit);
-    }
-    return rtf.format(Math.round(diff / 60), 'minute');
+    return null === date ? v.slice(0, 13) : date.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
   }
 
   function versionTitle(v) {
