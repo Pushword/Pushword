@@ -8,6 +8,7 @@ use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\Admin\FlatSyncNotifier;
 use Pushword\Flat\Controller\Admin\GitStatusController;
 use Pushword\Flat\Controller\Admin\NotificationCrudController;
+use Pushword\Flat\Controller\Api\ContentSnapshotApiController;
 use Pushword\Flat\Controller\Api\NotificationApiController;
 use Pushword\Flat\Controller\FlatLockApiController;
 use Pushword\Flat\Converter\FlatPropertyConverterInterface;
@@ -103,6 +104,11 @@ return static function (ContainerConfigurator $container): void {
 
     if ($apiAvailable) {
         $services->set(NotificationApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
+
+        $services->set(ContentSnapshotApiController::class)
             ->autowire()
             ->tag('controller.service_arguments')
             ->tag('pushword.api.controller');
