@@ -1,6 +1,6 @@
-# Flat File CMS with Pushword
+# Pushword Flat — Flat-File CMS
 
-Transform Pushword in a FlatFile CMS.
+Turn Pushword into a **flat-file CMS** — pages and media stored as Markdown + CSV on disk, round-tripped with the database and trackable in **Git**.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -10,30 +10,24 @@ Transform Pushword in a FlatFile CMS.
 [![Type Coverage](https://shepherd.dev/github/pushword/pushword/coverage.svg)](https://shepherd.dev/github/pushword/pushword)
 [![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.svg?style=flat)](https://packagist.org/packages/pushword/core)
 
+## Features
+
+- Two-way **`pw:flat:sync`** between Markdown/CSV files and the database.
+- **Auto-export** after admin edits, optional **auto git commit**.
+- **Conflict resolution**, editorial locks and webhook locking.
+- Optional **user sync** (`users.yaml`) and conversation sync.
+
+## Installation
+
+```shell
+composer require pushword/flat
+```
+
 ## Documentation
 
-Visit [pushword.piedweb.com](https://pushword.piedweb.com/extension/flat)
+Visit [pushword.piedweb.com/extension/flat](https://pushword.piedweb.com/extension/flat).
 
-## Contributing
-
-If you're interested in contributing to Pushword, please read our [contributing docs](https://pushword.piedweb.com/contribute) before submitting a pull request.
-
-## Credits
-
-- [PiedWeb](https://piedweb.com)
-- [All Contributors](https://github.com/Pushword/Core/graphs/contributors)
-
-## License
-
-The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license#license) for more information.
-
-<p align="center"><a href="https://dev.piedweb.com">
-<img src="https://raw.githubusercontent.com/Pushword/Pushword/f5021f4c5d5d3ab3f2858ec2e4bdd70818806c6a/packages/admin/src/Resources/assets/logo.svg" width="200" height="200" alt="PHP Packages Open Source" />
-</a></p>
-
----
-
-# Schéma du flux `pw:flat:sync`
+## Sync flow (`pw:flat:sync`)
 
 ```mermaid
 flowchart TD
@@ -138,3 +132,53 @@ Synchronisation bidirectionnelle entre `config/users.yaml` et la DB :
 ### ConversationSync (optionnel)
 
 Interface pour synchroniser les conversations (implémenté par le package conversation)
+
+## The Pushword ecosystem
+
+Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the core and one bundle per feature. Pick only what you need:
+
+**Core**
+- [pushword/core](https://github.com/Pushword/core) — Symfony-based CMS core: Page, Media & User entities, Markdown + Twig rendering.
+
+**Editing & admin**
+- [pushword/admin](https://github.com/Pushword/admin) — EasyAdmin interface to manage pages, media and users.
+- [pushword/admin-block-editor](https://github.com/Pushword/admin-block-editor) — Gutenberg-like block editor (stores Markdown).
+- [pushword/advanced-main-image](https://github.com/Pushword/advanced-main-image) — Hero images & main-image format control.
+- [pushword/template-editor](https://github.com/Pushword/template-editor) — Edit Twig templates online.
+- [pushword/snippet](https://github.com/Pushword/snippet) — Reusable content fragments & components.
+
+**Content & workflow**
+- **pushword/flat** — Flat-file (Markdown + Git) CMS mode. *(this package)*
+- [pushword/page-workflow](https://github.com/Pushword/page-workflow) — Editorial workflow & pending modifications.
+- [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
+- [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
+- [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
+
+**Publishing & performance**
+- [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
+- [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
+- [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
+- [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
+
+**Tooling**
+- [pushword/installer](https://github.com/Pushword/installer) — Project & package installer.
+- [pushword/js-helper](https://github.com/Pushword/js-helper) — Front-end JavaScript helpers.
+
+Full list and guides on [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).
+
+## Contributing
+
+If you're interested in contributing to Pushword, please read our [contributing docs](https://pushword.piedweb.com/contribute) before submitting a pull request.
+
+## Credits
+
+- [PiedWeb](https://piedweb.com)
+- [All Contributors](https://github.com/Pushword/Core/graphs/contributors)
+
+## License
+
+The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license#license) for more information.
+
+<p align="center"><a href="https://dev.piedweb.com">
+<img src="https://raw.githubusercontent.com/Pushword/Pushword/f5021f4c5d5d3ab3f2858ec2e4bdd70818806c6a/packages/admin/src/Resources/assets/logo.svg" width="200" height="200" alt="PHP Packages Open Source" />
+</a></p>

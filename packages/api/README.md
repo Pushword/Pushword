@@ -1,6 +1,6 @@
-# Pushword Installer
+# Pushword API
 
-Install Pushword and its packages in minutes — an interactive setup script plus automatic per-package install hooks.
+Token-authenticated **REST API** mirroring the Pushword admin — manage Pages, Media and redirections programmatically, with an OpenAPI description.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -12,29 +12,20 @@ Install Pushword and its packages in minutes — an interactive setup script plu
 
 ## Features
 
-- **Interactive setup** during `composer create-project` (database, admin user, routes, assets).
-- **Automatic package setup** — runs each package's `install.php` on `composer require`.
-- Stays installed to support **future package installs**.
+- REST endpoints for **Page, Media and page redirections**.
+- **Bearer-token** auth against the User `apiToken` (`pw:user:token` to fetch one).
+- **OpenAPI**-described, machine-readable docs endpoint.
+- Built for **scripted workflows** and external tooling (CI, headless editing).
 
-## How It Works
+## Installation
 
-This package provides two mechanisms:
-
-1. **Interactive Setup** (`src/installer`): A bash script that runs once during `composer create-project` to set up a new Pushword project (database, admin user, routes, assets).
-
-2. **Automatic Package Setup** (`PostInstall::runPostUpdate`): Automatically executes each package's `install.php` when you add new Pushword packages via `composer require`.
-
-After initial setup, `pushword/installer` remains installed to support future package installations. Only the interactive bash script reference is removed from `post-install-cmd`.
-
-## Manual Installation
-
-If you prefer not to use automatic installation, you can:
-1. Remove `pushword/installer` from your dependencies
-2. Manually follow the steps in each package's `install.php` file
+```shell
+composer require pushword/api
+```
 
 ## Documentation
 
-Visit [pushword.piedweb.com/installation](https://pushword.piedweb.com/installation).
+Visit [pushword.piedweb.com/extension/api](https://pushword.piedweb.com/extension/api) and [media-api](https://pushword.piedweb.com/media-api).
 
 ## The Pushword ecosystem
 
@@ -61,10 +52,10 @@ Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the 
 - [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
 - [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
 - [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
-- [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
+- **pushword/api** — Token-authenticated REST API. *(this package)*
 
 **Tooling**
-- **pushword/installer** — Project & package installer. *(this package)*
+- [pushword/installer](https://github.com/Pushword/installer) — Project & package installer.
 - [pushword/js-helper](https://github.com/Pushword/js-helper) — Front-end JavaScript helpers.
 
 Full list and guides on [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).

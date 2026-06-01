@@ -1,6 +1,6 @@
-# Advanced Main Image
+# Pushword Advanced Main Image
 
-Supercharge the Pushword Admin with a new admin form field to customize the main image format from not visible to HERO + default template files.
+Add an admin field to control a page's main image format — from hidden to full-width **hero** — plus the matching templates.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -10,9 +10,54 @@ Supercharge the Pushword Admin with a new admin form field to customize the main
 [![Type Coverage](https://shepherd.dev/github/pushword/pushword/coverage.svg)](https://shepherd.dev/github/pushword/pushword)
 [![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.svg?style=flat)](https://packagist.org/packages/pushword/core)
 
+## Features
+
+- New **admin form field** to pick the main-image format (none → hero).
+- Ships **hero templates** (`page_hero.html.twig`, `_content_hero.html.twig`).
+- **Per-app activation** via config.
+
+## Installation
+
+```shell
+composer require pushword/advanced-main-image
+```
+
 ## Documentation
 
-Visit [pushword.piedweb.com](https://pushword.piedweb.com/extension/advanced-main-image)
+Visit [pushword.piedweb.com/extension/advanced-main-image](https://pushword.piedweb.com/extension/advanced-main-image).
+
+## The Pushword ecosystem
+
+Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the core and one bundle per feature. Pick only what you need:
+
+**Core**
+- [pushword/core](https://github.com/Pushword/core) — Symfony-based CMS core: Page, Media & User entities, Markdown + Twig rendering.
+
+**Editing & admin**
+- [pushword/admin](https://github.com/Pushword/admin) — EasyAdmin interface to manage pages, media and users.
+- [pushword/admin-block-editor](https://github.com/Pushword/admin-block-editor) — Gutenberg-like block editor (stores Markdown).
+- **pushword/advanced-main-image** — Hero images & main-image format control. *(this package)*
+- [pushword/template-editor](https://github.com/Pushword/template-editor) — Edit Twig templates online.
+- [pushword/snippet](https://github.com/Pushword/snippet) — Reusable content fragments & components.
+
+**Content & workflow**
+- [pushword/flat](https://github.com/Pushword/flat) — Flat-file (Markdown + Git) CMS mode.
+- [pushword/page-workflow](https://github.com/Pushword/page-workflow) — Editorial workflow & pending modifications.
+- [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
+- [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
+- [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
+
+**Publishing & performance**
+- [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
+- [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
+- [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
+- [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
+
+**Tooling**
+- [pushword/installer](https://github.com/Pushword/installer) — Project & package installer.
+- [pushword/js-helper](https://github.com/Pushword/js-helper) — Front-end JavaScript helpers.
+
+Full list and guides on [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).
 
 ## Contributing
 
@@ -20,8 +65,8 @@ If you're interested in contributing to Pushword, please read our [contributing 
 
 ## Credits
 
-- [Pied Web](https://piedweb.com)
-- [All Contributors](https://github.com/Pushword/Pushword/graphs/contributors)
+- [PiedWeb](https://piedweb.com)
+- [All Contributors](https://github.com/Pushword/Core/graphs/contributors)
 
 ## License
 

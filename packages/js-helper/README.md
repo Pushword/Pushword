@@ -1,6 +1,6 @@
-# Pushword Javascript Helpers
+# Pushword JS Helper
 
-Some js helpers for Pushword front end.
+Front-end **JavaScript helpers** for Pushword themes — live forms, lightbox, client-side search, scroll enhancers and more. Published as `@pushword/js-helper` on npm.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -10,9 +10,55 @@ Some js helpers for Pushword front end.
 [![Type Coverage](https://shepherd.dev/github/pushword/pushword/coverage.svg)](https://shepherd.dev/github/pushword/pushword)
 [![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.svg?style=flat)](https://packagist.org/packages/pushword/core)
 
+## Features
+
+- **Live forms / live blocks** (`liveForm`) for [Conversation](https://github.com/Pushword/conversation).
+- **Client-side search** (`PushwordSimpleSearch`) and **lightbox** (GLightbox).
+- **Scroll enhancers**, show-more, clickable blocks, unpublished-link helpers.
+- Ships as the npm package **`@pushword/js-helper`**.
+
+## Installation
+
+```shell
+yarn add @pushword/js-helper
+```
+
 ## Documentation
 
-Visit [pushword.piedweb.com](https://pushword.piedweb.com/themes)
+Visit [pushword.piedweb.com/themes](https://pushword.piedweb.com/themes).
+
+## The Pushword ecosystem
+
+Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the core and one bundle per feature. Pick only what you need:
+
+**Core**
+- [pushword/core](https://github.com/Pushword/core) — Symfony-based CMS core: Page, Media & User entities, Markdown + Twig rendering.
+
+**Editing & admin**
+- [pushword/admin](https://github.com/Pushword/admin) — EasyAdmin interface to manage pages, media and users.
+- [pushword/admin-block-editor](https://github.com/Pushword/admin-block-editor) — Gutenberg-like block editor (stores Markdown).
+- [pushword/advanced-main-image](https://github.com/Pushword/advanced-main-image) — Hero images & main-image format control.
+- [pushword/template-editor](https://github.com/Pushword/template-editor) — Edit Twig templates online.
+- [pushword/snippet](https://github.com/Pushword/snippet) — Reusable content fragments & components.
+
+**Content & workflow**
+- [pushword/flat](https://github.com/Pushword/flat) — Flat-file (Markdown + Git) CMS mode.
+- [pushword/page-workflow](https://github.com/Pushword/page-workflow) — Editorial workflow & pending modifications.
+- [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
+- [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
+- [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.
+
+**Publishing & performance**
+- [pushword/static-generator](https://github.com/Pushword/static-generator) — Export a static website (GitHub Pages, Apache, FrankenPHP).
+- [pushword/search](https://github.com/Pushword/search) — SQLite full-text search (Loupe), zero infra.
+- [pushword/page-scanner](https://github.com/Pushword/page-scanner) — Find dead links, 404s, redirects & TODOs.
+- [pushword/api](https://github.com/Pushword/api) — Token-authenticated REST API.
+
+**Tooling**
+- [pushword/installer](https://github.com/Pushword/installer) — Project & package installer.
+- **pushword/js-helper** — Front-end JavaScript helpers. *(this package)*
+
+Full list and guides on [pushword.piedweb.com/extensions](https://pushword.piedweb.com/extensions).
 
 ## Contributing
 
