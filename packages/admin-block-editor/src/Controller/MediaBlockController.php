@@ -102,6 +102,9 @@ final class MediaBlockController extends AbstractController
         }
 
         $data['url'] = $url;
+        // Aliases matching the editor's UploadResponse shape (file.media / file.name).
+        $data['media'] = $media->getFileName();
+        $data['name'] = $media->getAlt();
 
         return $data;
     }

@@ -159,7 +159,6 @@ export class editorJs {
           new Undo({ editor })
           new PasteLink({ editor })
           new ClipboardManager({ editor })
-          self.setupFileDropUpload(editor, config.holder!)
 
           // Markdown content must be parsed after editor is ready (needs tool instances)
           if (markdownContent) {
@@ -178,52 +177,6 @@ export class editorJs {
 
     // Enregistrer dans editorJsHelper pour l'accès global
     editorJsHelper.setModeManager(config.holder!, modeManager)
-  }
-
-  /**
-   * Upload image files dropped from the OS onto the editor and insert an image block for each.
-   * editorjs-drag-drop only reorders existing blocks; dropping files is handled here.
-   */
-  private setupFileDropUpload(editor: any, holderId: string): void {
-    const holder = document.getElementById(holderId)
-    if (!holder) return
-
-    const hasFiles = (event: DragEvent): boolean =>
-      Array.from(event.dataTransfer?.items || []).some((item) => item.kind === 'file')
-
-    holder.addEventListener('dragover', (event: DragEvent) => {
-      if (hasFiles(event)) event.preventDefault()
-    })
-
-    holder.addEventListener('drop', async (event: DragEvent) => {
-      const files = Array.from(event.dataTransfer?.files || []).filter((file) =>
-        file.type.startsWith('image/'),
-      )
-      if (files.length === 0) return
-
-      event.preventDefault()
-      event.stopPropagation()
-
-      for (const file of files) {
-        await this.uploadAndInsertImage(editor, file)
-      }
-    })
-  }
-
-  private async uploadAndInsertImage(editor: any, file: File): Promise<void> {
-    const formData = new FormData()
-    formData.append('image', file)
-
-    const response = await fetch('/admin/media/block', { method: 'POST', body: formData })
-    if (!response.ok) return
-
-    const json = await response.json()
-    if (json?.success !== 1 || !json.file?.media) return
-
-    await editor.blocks.insert('image', {
-      media: json.file.media,
-      caption: json.file.name || '',
-    })
   }
 
   async editorjsSave(holderId: string): Promise<void> {

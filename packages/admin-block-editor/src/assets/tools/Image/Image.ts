@@ -257,10 +257,9 @@ export default class Image extends AbstractMediaTool {
       patterns: {
         image: /(https?:\/\/|\/media\/)\S+\.(gif|jpe?g|png|webp)$/i,
       },
-      // not supported
-      // files: {
-      //   mimeTypes: ['image/*'],
-      // },
+      files: {
+        mimeTypes: ['image/*'],
+      },
     }
   }
 
@@ -283,7 +282,24 @@ export default class Image extends AbstractMediaTool {
       return
     }
     if (event.type === 'file') {
-      // not supported
+      const file = event.detail?.file as File | undefined
+      if (file) void this.uploadFile(file)
+    }
+  }
+
+  /** Upload a dropped/pasted file through the shared media endpoint, then fill the block. */
+  private async uploadFile(file: File): Promise<void> {
+    this.onFileLoading()
+
+    const formData = new FormData()
+    formData.append('image', file)
+
+    try {
+      const response = await fetch('/admin/media/block', { method: 'POST', body: formData })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      this.onUpload(await response.json())
+    } catch (error) {
+      this.handleUploadError(error)
     }
   }
 }

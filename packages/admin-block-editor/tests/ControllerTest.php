@@ -111,7 +111,13 @@ final class ControllerTest extends AbstractAdminTestClass
         );
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
-        self::assertSame('image/png', json_decode((string) $client->getResponse()->getContent())->file->mimeType); // @phpstan-ignore-line
+        /** @var array{file: array{mimeType: string, fileName: string, media: string, name: string}} $response */
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertSame('image/png', $response['file']['mimeType']);
+        // The editor's onUpload reads file.media (fileName) and file.name (alt);
+        // both aliases must be present for drag-drop / paste uploads to fill the block.
+        self::assertSame($response['file']['fileName'], $response['file']['media']);
+        self::assertSame('test', $response['file']['name']);
     }
 
     public function testMediaResolveController(): void
