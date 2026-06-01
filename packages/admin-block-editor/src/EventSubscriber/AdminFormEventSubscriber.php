@@ -2,6 +2,8 @@
 
 namespace Pushword\AdminBlockEditor\EventSubscriber;
 
+use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityPersistedEvent;
+use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityUpdatedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityPersistedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityUpdatedEvent;
 use Pushword\Admin\Controller\PageCrudController;
@@ -10,6 +12,7 @@ use Pushword\Admin\FormField\PageMainContentField;
 use Pushword\Admin\Utils\FormFieldReplacer;
 use Pushword\AdminBlockEditor\FormField\PageInlineMediaField;
 use Pushword\AdminBlockEditor\FormField\PageMainContentEditorJsField;
+use Pushword\AdminBlockEditor\Service\MediaCaptionRenamer;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -21,6 +24,7 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
     public function __construct(
         public bool $editorBlockForNewPage,
         public readonly RequestStack $requestStack,
+        private readonly MediaCaptionRenamer $mediaCaptionRenamer,
     ) {
         parent::__construct($editorBlockForNewPage);
     }
@@ -34,13 +38,29 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
             'pushword.admin.load_field' => 'replaceFields',
             BeforeEntityPersistedEvent::class => 'setMainContent',
             BeforeEntityUpdatedEvent::class => 'setMainContent',
+            AfterEntityPersistedEvent::class => 'autoRenameMediaFromCaptions',
+            AfterEntityUpdatedEvent::class => 'autoRenameMediaFromCaptions',
         ];
     }
 
     /**
-     * @param BeforeEntityPersistedEvent<object>|BeforeEntityUpdatedEvent<object>|FormEvent<object> $event
+     * @param AfterEntityPersistedEvent<object>|AfterEntityUpdatedEvent<object> $event
      */
-    private function getPage(BeforeEntityPersistedEvent|BeforeEntityUpdatedEvent|FormEvent $event): ?Page
+    public function autoRenameMediaFromCaptions(AfterEntityPersistedEvent|AfterEntityUpdatedEvent $event): void
+    {
+        $page = $this->getPage($event);
+
+        if (null === $page) {
+            return;
+        }
+
+        $this->mediaCaptionRenamer->renameFromContent($page);
+    }
+
+    /**
+     * @param AfterEntityPersistedEvent<object>|AfterEntityUpdatedEvent<object>|BeforeEntityPersistedEvent<object>|BeforeEntityUpdatedEvent<object>|FormEvent<object> $event
+     */
+    private function getPage(AfterEntityPersistedEvent|AfterEntityUpdatedEvent|BeforeEntityPersistedEvent|BeforeEntityUpdatedEvent|FormEvent $event): ?Page
     {
         $subject = $event instanceof FormEvent ? $event->getAdmin()->getSubject() : $event->getEntityInstance();
         if ($subject instanceof Page) {
