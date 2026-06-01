@@ -56,8 +56,7 @@ final class ContentSnapshotApiController extends AbstractApiController
             return $this->notFound('No content snapshot available');
         }
 
-        $label = '' !== $host ? $host : 'all';
-        $filename = \sprintf('snapshot-%s-%s.tar.gz', $label, date('Y-m-d'));
+        $filename = \sprintf('snapshot-%s-%s.tar.gz', $host ?: 'all', date('Y-m-d'));
 
         $response = new StreamedResponse(fn () => $this->streamTarball($dir));
         $response->headers->set('Content-Type', 'application/gzip');

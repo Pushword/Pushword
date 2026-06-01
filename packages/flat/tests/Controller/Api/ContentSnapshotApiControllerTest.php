@@ -142,6 +142,21 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         }
     }
 
+    public function testSnapshotExcludesRootDotfiles(): void
+    {
+        $this->populateContentDir();
+        $this->filesystem->dumpFile($this->contentDir.'/.env', 'SECRET=1');
+
+        $response = $this->request('/api/content/snapshot.tar.gz?host='.self::HOST);
+        self::assertSame(200, $response->getStatusCode());
+
+        $entries = $this->tarballEntries($this->captureStream());
+        self::assertTrue($this->entriesContainSuffix($entries, 'page.md'), 'Tarball should keep content');
+        foreach ($entries as $entry) {
+            self::assertStringNotContainsString('.env', $entry, 'Tarball must not contain root dotfiles');
+        }
+    }
+
     public function testSnapshotWithoutHostReturnsAllSites(): void
     {
         // With a literal (placeholder-free) flat_content_dir, the base dir
