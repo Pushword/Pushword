@@ -93,6 +93,7 @@ final class PageImporter extends AbstractImporter
           || str_ends_with($filePath, 'medias.csv')
           || str_ends_with($filePath, 'conversation.csv')
           || str_ends_with($filePath, 'redirection.csv')
+          || str_ends_with($filePath, '.pending.md')
           || 1 === preg_match('/^index(\.[a-z]{2}(-[a-zA-Z]{2,})?)?\.csv$/', $filename)
           || 1 === preg_match('/^index\.draft(\.[a-z]{2}(-[a-zA-Z]{2,})?)?\.csv$/', $filename)
         ) {
@@ -240,6 +241,10 @@ final class PageImporter extends AbstractImporter
         foreach ($data as $key => $value) {
             $key = $this->normalizePropertyName($key);
             $camelKey = self::underscoreToCamelCase($key);
+
+            if ('revision' === $camelKey) {
+                continue; // export-only stamp; re-importing it would loop on every sync
+            }
 
             if (\array_key_exists($camelKey, $this->getObjectRequiredProperties())) {
                 $this->toAddAtTheEnd[$slug] = array_merge($this->toAddAtTheEnd[$slug] ?? [], [$camelKey => $value]);

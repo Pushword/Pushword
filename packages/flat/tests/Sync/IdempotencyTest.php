@@ -2,6 +2,7 @@
 
 namespace Pushword\Flat\Tests\Sync;
 
+use DateTime;
 use Doctrine\ORM\EntityManager;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
@@ -50,7 +51,7 @@ final class IdempotencyTest extends KernelTestCase
             @unlink($file);
         }
 
-        foreach (['idempotent-test-page'] as $slug) {
+        foreach (['idempotent-test-page', 'revision-export-test', 'revision-import-test'] as $slug) {
             $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => $slug, 'host' => 'localhost.dev']);
             if ($page instanceof Page) {
                 $this->em->remove($page);
@@ -67,6 +68,68 @@ final class IdempotencyTest extends KernelTestCase
         $this->filesystem->dumpFile($path, $content);
         touch($path, time() + 100);
         $this->createdFiles[] = $path;
+    }
+
+    /**
+     * Export stamps a non-empty `revision:` key in the YAML front matter.
+     */
+    public function testExportStampsRevisionInFrontMatter(): void
+    {
+        $page = new Page();
+        $page->setSlug('revision-export-test');
+        $page->setH1('Revision Export Test');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->setMainContent('Content');
+        $page->setPublishedAt(new DateTime());
+
+        $this->em->persist($page);
+        $this->em->flush();
+
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+
+        $mdFilePath = $this->contentDir.'/revision-export-test.md';
+        self::assertFileExists($mdFilePath);
+        $this->createdFiles[] = $mdFilePath;
+
+        $mdContent = $this->filesystem->readFile($mdFilePath);
+        self::assertMatchesRegularExpression('/^revision: \S+ # read only$/m', $mdContent, 'Exported file must contain a non-empty revision: stamp flagged read only');
+    }
+
+    /**
+     * Importing a file that contains `revision:` does NOT store it as a custom property.
+     */
+    public function testImportDoesNotStoreRevisionAsCustomProperty(): void
+    {
+        // Mirror the real exported format, including the inline `# read only` comment.
+        $md = "---\nh1: 'Revision Import Test'\nrevision: abc123fixed # read only\n---\n\nContent";
+        $this->createMd('revision-import-test.md', $md);
+
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $importedPage = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'revision-import-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($importedPage, 'Page should be imported');
+        self::assertNull($importedPage->getCustomProperty('revision'), 'revision must not be stored as a custom property');
+        // The inline comment must not corrupt parsing of the rest of the front matter.
+        self::assertSame('Revision Import Test', $importedPage->getH1(), 'sibling keys must parse despite the revision comment');
+    }
+
+    /**
+     * A file that already carries a `revision:` stamp does not trigger a re-import
+     * on the next sync cycle (no sync loop).
+     */
+    public function testRevisionStampDoesNotCauseSyncLoop(): void
+    {
+        // Export — files now contain revision: stamps
+        $this->pageSync->export('localhost.dev', true, $this->contentDir);
+
+        // First import — may or may not update pages (file mtime vs DB)
+        $this->pageSync->import('localhost.dev');
+
+        // Second import — revision: in the files must not trigger another import
+        $this->pageSync->import('localhost.dev');
+        self::assertSame(0, $this->pageSync->getImportedCount(), 'revision: stamp must not cause a sync loop');
     }
 
     public function testDoubleImportProducesZeroNewImports(): void

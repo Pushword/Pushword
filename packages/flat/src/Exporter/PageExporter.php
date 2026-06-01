@@ -335,6 +335,11 @@ final class PageExporter
 
         $metaData = Yaml::dump($data, indent: 2);
 
+        // Stamp a fresh revision id last in the front matter. The `# read only`
+        // comment tells editors (humans and agents) not to touch it; the value
+        // is export-only and ignored on import (see PageImporter::editPage).
+        $metaData .= 'revision: '.uniqid().' # read only'.\PHP_EOL;
+
         return $this->normalizeQuotes('---'.\PHP_EOL.$metaData.'---'.\PHP_EOL.\PHP_EOL.$page->getMainContent());
     }
 
@@ -465,8 +470,7 @@ final class PageExporter
             return null;
         }
 
-        // reviewedBy/reviewedAt are editorial metadata kept in DB (like createdBy/editedBy); git is the audit trail.
-        if (in_array($property, ['createdAt', 'updatedAt', 'host', 'slug', 'reviewedBy', 'reviewedAt'], true)) {
+        if (in_array($property, ['createdAt', 'updatedAt', 'host', 'slug'], true)) {
             return null;
         }
 
