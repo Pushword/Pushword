@@ -110,6 +110,13 @@ final class StaticGeneratorTest extends KernelTestCase
 
     private function getStateFilePath(): string
     {
+        // Mirror GenerationStateManager::getStateFilePath(): tests isolate the
+        // state file per ParaTest worker via PUSHWORD_TEST_VAR_DIR.
+        $testVarDir = getenv('PUSHWORD_TEST_VAR_DIR');
+        if (false !== $testVarDir && '' !== $testVarDir) {
+            return $testVarDir.'/.static-generation-state.json';
+        }
+
         return self::getContainer()->getParameter('kernel.project_dir').'/var/.static-generation-state.json';
     }
 
@@ -172,8 +179,16 @@ final class StaticGeneratorTest extends KernelTestCase
         clearstatcache();
         $originalMtime = filemtime($indexFile);
 
+        // Reboot the kernel so the incremental run starts from a clean container,
+        // exactly like the separate `pw:static --incremental` process it simulates.
+        // Without this, transient render state cached on shared entities (e.g. a
+        // Media's soft alt set while rendering another page) leaks from the full run
+        // into the incremental render and produces non-deterministic HTML.
+        $commandTester = $this->rebootStaticCommandTester();
+
         // Second generation with incremental flag
         $commandTester->execute(['host' => 'localhost.dev', '--incremental' => true]);
+
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('success', $output);
         self::assertStringContainsString('incremental mode', $output);
@@ -184,9 +199,31 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertSame($originalMtime, $newMtime, 'File should not be regenerated in incremental mode when unchanged');
     }
 
+    /**
+     * Reboot the kernel and return a fresh CommandTester for `pw:static`, keeping
+     * the per-process static dir override in place. Used by incremental tests so
+     * the second run mirrors a real, separate command invocation rather than
+     * reusing the first run's in-memory container state.
+     */
+    private function rebootStaticCommandTester(): CommandTester
+    {
+        self::ensureKernelShutdown();
+        self::bootKernel();
+        $this->overrideStaticDir();
+
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
+
+        return new CommandTester($application->find('pw:static'));
+    }
+
     public function testGenerationStateManager(): void
     {
-        // Use isolated temp dir for state file
+        // Use isolated temp dir for state file. Unset PUSHWORD_TEST_VAR_DIR so
+        // GenerationStateManager honours the constructor projectDir under test
+        // (it otherwise redirects the state file to the per-worker var dir).
+        $previousVarDir = getenv('PUSHWORD_TEST_VAR_DIR');
+        putenv('PUSHWORD_TEST_VAR_DIR');
+
         $tempDir = sys_get_temp_dir().'/pushword-state-test-'.getmypid();
         new Filesystem()->mkdir($tempDir.'/var');
         $stateFile = $tempDir.'/var/.static-generation-state.json';
@@ -224,6 +261,7 @@ final class StaticGeneratorTest extends KernelTestCase
             self::assertTrue($stateManager2->needsRegeneration('test.host', 'test-page', $newUpdatedAt));
         } finally {
             new Filesystem()->remove($tempDir);
+            putenv(false === $previousVarDir ? 'PUSHWORD_TEST_VAR_DIR' : 'PUSHWORD_TEST_VAR_DIR='.$previousVarDir);
         }
     }
 
@@ -809,6 +847,11 @@ final class StaticGeneratorTest extends KernelTestCase
         touch($indexFile, time() + 100);
         clearstatcache();
         $originalMtime = filemtime($indexFile);
+
+        // Reboot so the incremental run mirrors a real, separate command invocation
+        // (avoids transient render state leaking from the full run; see
+        // rebootStaticCommandTester).
+        $commandTester = $this->rebootStaticCommandTester();
 
         // Incremental run — content is unchanged, file should NOT be rewritten
         $commandTester->execute(['host' => 'localhost.dev', '--incremental' => true]);

@@ -131,8 +131,9 @@ function wait_for_background_tasks {
 
 trap cleanup EXIT
 
-# Install nodejs dependencies
+# Install nodejs dependencies (root + js-helper, whose node_modules holds vitest)
 [ -d "node_modules" ] || yarn
+[ -d "packages/js-helper/node_modules" ] || (cd packages/js-helper && yarn)
 
 # Ensure chromedriver is installed and matches the installed Chrome.
 # Only invokes bdi when the driver is missing or its major drifts from Chrome's,

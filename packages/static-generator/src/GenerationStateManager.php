@@ -27,6 +27,13 @@ final class GenerationStateManager
 
     private function getStateFilePath(): string
     {
+        // Tests isolate the state file per ParaTest worker to avoid races on the
+        // shared var/ dir (mirrors StaticAppGenerator::getCacheDir).
+        $testVarDir = getenv('PUSHWORD_TEST_VAR_DIR');
+        if (false !== $testVarDir && '' !== $testVarDir) {
+            return $testVarDir.'/'.self::STATE_FILE;
+        }
+
         return $this->projectDir.'/var/'.self::STATE_FILE;
     }
 
