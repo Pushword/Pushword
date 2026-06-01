@@ -99,6 +99,7 @@
 
 {% block body_javascript %}
 {{ parent() }}
+{{ include('@PushwordVersion/_version_date.html.twig') }}
 <script>
 (function() {
   const leftContent = {{ attribute(leftEntity, contentField)|default('')|json_encode|raw }};
@@ -114,6 +115,8 @@
   const allVersions = {{ allVersions|json_encode|raw }};
   const versionLeft = {{ versionLeft|json_encode|raw }};
   const versionRight = {{ versionRight|json_encode|raw }};
+  const versionLocale = {{ app.request.locale|json_encode|raw }};
+  const versionLabel = window.pwVersionLabel;
 
   let diffEditor = null;
   let cpEditor = null;
@@ -165,17 +168,12 @@
     return Number.isNaN(sec) ? null : new Date(sec * 1000);
   }
 
-  // uniqid() only encodes whole seconds. Show a compact absolute date/time:
-  // relative labels ("a minute ago") blur together for closely spaced saves
-  // and hide the real order, which defeats the purpose of an audit history.
-  function versionLabel(v) {
-    const date = versionDate(v);
-    return null === date ? v.slice(0, 13) : date.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-  }
-
+  // The visible label (shared with the version list via pwVersionLabel) stays
+  // compact; the tooltip and screen-reader text carry the full, unambiguous
+  // timestamp so closely spaced saves never collapse into the same string.
   function versionTitle(v) {
     const date = versionDate(v);
-    return null === date ? '' : date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    return null === date ? '' : date.toLocaleString(versionLocale, { dateStyle: 'medium', timeStyle: 'short' });
   }
 
   // Mirror the same relative labels (and absolute tooltips) on the right side.

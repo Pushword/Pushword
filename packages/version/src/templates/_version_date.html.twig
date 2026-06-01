@@ -1,0 +1,23 @@
+{# Shared client-side version-date formatter, used by both the list and the
+   compare slider so they can never disagree. A version id is a uniqid(): its
+   first 8 hex chars encode the Unix timestamp (seconds). Rendering in the
+   visitor's local timezone matches the clock they saved against. Current-year
+   saves keep the time ("1 juin à 10h26"); older saves, pruned to at most one
+   per week, drop it for the year ("1 juin 2026"). #}
+<script>
+  window.pwVersionLabel = window.pwVersionLabel || (function () {
+    var locale = {{ app.request.locale|json_encode|raw }};
+    return function (id) {
+      var sec = parseInt(id.slice(0, 8), 16);
+      if (Number.isNaN(sec)) return id.slice(0, 13);
+      var date = new Date(sec * 1000);
+      var day = date.getDate() + ' ' + date.toLocaleDateString(locale, { month: 'long' });
+      if (date.getFullYear() !== new Date().getFullYear()) {
+        return day + ' ' + date.getFullYear();
+      }
+      var hh = String(date.getHours()).padStart(2, '0');
+      var mm = String(date.getMinutes()).padStart(2, '0');
+      return locale.slice(0, 2) === 'fr' ? day + ' à ' + hh + 'h' + mm : day + ' at ' + hh + ':' + mm;
+    };
+  })();
+</script>

@@ -41,7 +41,7 @@
                         </a>
                     </td>
                     <td class="text-muted">
-                        {{ v.updatedAt|date }}{{ attribute(v, 'editedBy')|default(null) ? ' (<small>' ~ v.editedBy.username ~ '</small>)' : '' }}
+                        <time data-version-id="{{ version }}">{{ version|slice(0, 13) }}</time>{{ attribute(v, 'editedBy')|default(null) ? ' (<small>' ~ v.editedBy.username ~ '</small>)' : '' }}
                     </td>
                     <td class="text-muted">
                         {{ attribute(v, 'editMessage')|default('') }}
@@ -64,4 +64,17 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block body_javascript %}
+{{ parent() }}
+{{ include('@PushwordVersion/_version_date.html.twig') }}
+<script>
+  document.querySelectorAll('time[data-version-id]').forEach(function (el) {
+    var id = el.dataset.versionId;
+    el.textContent = window.pwVersionLabel(id);
+    var sec = parseInt(id.slice(0, 8), 16);
+    if (!Number.isNaN(sec)) el.dateTime = new Date(sec * 1000).toISOString();
+  });
+</script>
 {% endblock %}
