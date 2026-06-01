@@ -2,6 +2,7 @@
 
 namespace Pushword\Api\Service;
 
+use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
@@ -10,6 +11,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
+use Pushword\Flat\Converter\PublishedAtConverter;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -165,7 +167,7 @@ final readonly class PageFrontmatterMapper
         }
     }
 
-    private function parseDateTime(mixed $value): ?DateTimeImmutable
+    private function parseDateTime(mixed $value): ?DateTimeInterface
     {
         if (null === $value || '' === $value) {
             return null;
@@ -176,10 +178,16 @@ final readonly class PageFrontmatterMapper
         }
 
         try {
-            return new DateTimeImmutable((string) $value);
+            // Reuse the flat sync's parser so the API accepts the same date
+            // formats and `draft` sentinel as the on-disk frontmatter.
+            $parsed = PublishedAtConverter::fromFlatValue($value);
         } catch (Exception) {
             return null;
         }
+
+        // Page::$publishedAt is mapped DATETIME_MUTABLE; Doctrine rejects a
+        // DateTimeImmutable at flush, so normalize to a mutable DateTime.
+        return $parsed instanceof DateTimeImmutable ? DateTime::createFromInterface($parsed) : $parsed;
     }
 
     private function resolveMedia(mixed $reference): ?Media

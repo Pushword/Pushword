@@ -2,6 +2,7 @@
 
 namespace Pushword\Conversation\Flat;
 
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
@@ -241,35 +242,56 @@ final class ConversationImporter
     }
 
     /**
+     * Parse the date columns into mutable DateTime and drop them from $data.
+     *
+     * They are applied to the entity after denormalization rather than by the
+     * Serializer because Symfony's DateTimeNormalizer resolves the Message
+     * ?DateTimeInterface columns to DateTimeImmutable, which Doctrine's
+     * DATETIME_MUTABLE mapping rejects at flush. Its default RFC3339 format also
+     * only reaches the flat `Y-m-d H:i` shape through a loose constructor that is
+     * deprecated and throws in Symfony 9. Parsing here keeps both formats and a
+     * mutable type, and silently skips unparsable values as before.
+     *
      * @param array<string, mixed> $data
      *
-     * @return array<string, mixed>
+     * @return array{0: array<string, mixed>, 1: array<string, DateTime>}
      */
-    private function validateDates(array $data): array
+    private function extractDates(array $data): array
     {
-        // Valide le format des dates avant de les passer au dénormaliseur
-        $dateFields = ['publishedAt', 'createdAt', 'updatedAt'];
-        foreach ($dateFields as $field) {
-            if (! isset($data[$field])) {
+        $dates = [];
+        foreach (['publishedAt', 'createdAt', 'updatedAt'] as $field) {
+            $value = $data[$field] ?? null;
+            unset($data[$field]);
+
+            if (! \is_string($value)) {
                 continue;
             }
 
-            $dateValue = $data[$field];
-            if (! \is_string($dateValue)) {
-                unset($data[$field]);
-
-                continue;
-            }
-
-            // Essaie de parser la date pour valider le format
-            $parsed = ConversationCsvHelper::parseDate($dateValue);
-            if (null === $parsed) {
-                // Si le parsing échoue, retire la date pour éviter les erreurs
-                unset($data[$field]);
+            $parsed = ConversationCsvHelper::parseDate($value);
+            if (null !== $parsed) {
+                $dates[$field] = DateTime::createFromInterface($parsed);
             }
         }
 
-        return $data;
+        return [$data, $dates];
+    }
+
+    /**
+     * @param array<string, DateTime> $dates
+     */
+    private function applyDates(Message $message, array $dates): void
+    {
+        if (isset($dates['publishedAt'])) {
+            $message->setPublishedAt($dates['publishedAt']);
+        }
+
+        if (isset($dates['createdAt'])) {
+            $message->createdAt = $dates['createdAt'];
+        }
+
+        if (isset($dates['updatedAt'])) {
+            $message->updatedAt = $dates['updatedAt'];
+        }
     }
 
     /**
@@ -354,8 +376,9 @@ final class ConversationImporter
 
                 $data = $this->buildDenormalizationData($row, $customColumns, $host);
 
-                // Valide les dates avant de les passer au dénormaliseur
-                $data = $this->validateDates($data);
+                // Pull the dates out and parse them ourselves; they are applied
+                // after denormalization (see extractDates() for the rationale).
+                [$data, $dates] = $this->extractDates($data);
 
                 // Extrait mediaList avant la dénormalisation car setMediaList() attend une Collection
                 /** @var Media[] $mediaList */
@@ -369,18 +392,11 @@ final class ConversationImporter
                     $ignoredAttributes[] = 'authorIpRaw';
                 }
 
-                // Ignore les dates si elles sont absentes pour éviter les erreurs de parsing
-                if (! isset($data['publishedAt'])) {
-                    $ignoredAttributes[] = 'publishedAt';
-                }
-
-                if (! isset($data['createdAt'])) {
-                    $ignoredAttributes[] = 'createdAt';
-                }
-
-                if (! isset($data['updatedAt'])) {
-                    $ignoredAttributes[] = 'updatedAt';
-                }
+                // Dates are applied manually after denormalization, so keep the
+                // denormalizer away from them.
+                $ignoredAttributes[] = 'publishedAt';
+                $ignoredAttributes[] = 'createdAt';
+                $ignoredAttributes[] = 'updatedAt';
 
                 $options[AbstractNormalizer::IGNORED_ATTRIBUTES] = $ignoredAttributes;
                 $options[AbstractNormalizer::ALLOW_EXTRA_ATTRIBUTES] = true;
@@ -388,6 +404,8 @@ final class ConversationImporter
                 try {
                     /** @var Message $normalizedMessage */
                     $normalizedMessage = $this->denormalizer->denormalize($data, $messageClass, 'array', $options);
+
+                    $this->applyDates($normalizedMessage, $dates);
 
                     // Sync media: clear existing then re-add from CSV
                     if (isset($options[AbstractNormalizer::OBJECT_TO_POPULATE])) {

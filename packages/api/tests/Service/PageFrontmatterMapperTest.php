@@ -2,16 +2,26 @@
 
 namespace Pushword\Api\Tests\Service;
 
+use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
+use Iterator;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Core\Entity\Page;
+use Pushword\Flat\Converter\PublishedAtConverter;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
 final class PageFrontmatterMapperTest extends KernelTestCase
 {
     private PageFrontmatterMapper $mapper;
+
+    private EntityManagerInterface $em;
+
+    /** @var int[] */
+    private array $createdPageIds = [];
 
     #[Override]
     protected function setUp(): void
@@ -20,6 +30,24 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         /** @var PageFrontmatterMapper $mapper */
         $mapper = self::getContainer()->get(PageFrontmatterMapper::class);
         $this->mapper = $mapper;
+
+        $this->em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->createdPageIds as $id) {
+            $page = $this->em->find(Page::class, $id);
+            if (null !== $page) {
+                $this->em->remove($page);
+            }
+        }
+
+        if ([] !== $this->createdPageIds) {
+            $this->em->flush();
+        }
+
+        parent::tearDown();
     }
 
     public function testToArraySplitsFrontmatterFromBody(): void
@@ -180,5 +208,77 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         self::assertNull($page->id);
         self::assertSame('Preview', $page->getH1());
         self::assertSame('# Body', $page->getMainContent());
+    }
+
+    /**
+     * Page::$publishedAt is mapped DATETIME_MUTABLE; a DateTimeImmutable would be
+     * accepted in memory but rejected by Doctrine at flush. Accept both the flat
+     * `Y-m-d H:i` shape and ISO 8601, and always store a mutable DateTime.
+     *
+     * @return Iterator<string, array{string}>
+     */
+    public static function publishedAtFormatProvider(): Iterator
+    {
+        yield 'flat Y-m-d H:i' => ['2026-04-09 10:00'];
+        yield 'iso 8601' => ['2026-04-09T10:00:00+00:00'];
+    }
+
+    #[DataProvider('publishedAtFormatProvider')]
+    public function testApplyFrontmatterStoresMutableDateTimeAndFlushes(string $publishedAt): void
+    {
+        $host = 'api-test-'.uniqid().'.example.com';
+        $page = new Page();
+        $page->host = $host;
+        $page->setSlug('published-'.uniqid());
+        $page->setMainContent('# Content');
+
+        $this->mapper->applyFrontmatter($page, ['publishedAt' => $publishedAt]);
+
+        // DateTimeImmutable does not extend DateTime, so this also asserts the
+        // stored value is mutable as Doctrine's DATETIME_MUTABLE column requires.
+        $stored = $page->getPublishedAt();
+        self::assertInstanceOf(DateTime::class, $stored);
+        self::assertSame('2026-04-09 10:00', $stored->format('Y-m-d H:i'));
+
+        // Reproduces the production crash: a DateTimeImmutable throws
+        // Doctrine\DBAL\Types\Exception\InvalidType here.
+        $this->em->persist($page);
+        $this->em->flush();
+        $this->createdPageIds[] = $page->id ?? 0;
+
+        self::assertNotNull($page->id);
+    }
+
+    public function testApplyFrontmatterAcceptsDraftSentinel(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('draft-page');
+
+        $this->mapper->applyFrontmatter($page, ['publishedAt' => PublishedAtConverter::DRAFT_VALUE]);
+
+        self::assertNull($page->getPublishedAt());
+    }
+
+    /**
+     * @return Iterator<string, array{mixed}>
+     */
+    public static function unparsablePublishedAtProvider(): Iterator
+    {
+        yield 'garbage string' => ['not-a-date'];
+        yield 'empty string' => [''];
+        yield 'null' => [null];
+    }
+
+    #[DataProvider('unparsablePublishedAtProvider')]
+    public function testApplyFrontmatterMapsUnparsablePublishedAtToNull(mixed $publishedAt): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+
+        $this->mapper->applyFrontmatter($page, ['publishedAt' => $publishedAt]);
+
+        self::assertNull($page->getPublishedAt());
     }
 }

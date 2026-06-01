@@ -562,6 +562,41 @@ final class ConversationFlatTest extends KernelTestCase
         }
     }
 
+    public function testImportParsesFlatDateAndStoresMutableDateTime(): void
+    {
+        $csvPath = $this->createCsvFile([
+            [
+                'content' => 'Dated external message',
+                'authorEmail' => 'dated@example.com',
+                'authorName' => 'Dated User',
+                'referring' => '/dated',
+                'host' => $this->testHost,
+                // Flat `Y-m-d H:i` shape: the Serializer's default RFC3339 rejects
+                // it and yields an immutable that Doctrine refuses at flush.
+                'publishedAt' => '2026-04-09 10:00',
+            ],
+        ]);
+
+        // importExternal() ends with flush(); the unfixed code throws here.
+        $this->importer->importExternal($csvPath);
+
+        $message = $this->messageRepository->findOneBy([
+            'host' => $this->testHost,
+            'content' => 'Dated external message',
+        ]);
+
+        self::assertInstanceOf(Message::class, $message);
+        // DateTimeImmutable does not extend DateTime, so this also pins the
+        // mutable type Doctrine's DATETIME_MUTABLE column requires.
+        $publishedAt = $message->getPublishedAt();
+        self::assertInstanceOf(DateTime::class, $publishedAt);
+        self::assertSame('2026-04-09 10:00', $publishedAt->format('Y-m-d H:i'));
+
+        if (null !== $message->id) {
+            $this->createdMessageIds[] = $message->id;
+        }
+    }
+
     public function testImportExternalSkipsDuplicateContent(): void
     {
         $existing = $this->createTestMessage('Duplicate content', 'dup@example.com', 'Dup User');
