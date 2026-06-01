@@ -92,12 +92,19 @@ final class ContentSnapshotApiController extends AbstractApiController
      * native `tar` via proc_open (array form, no shell) keeps memory flat for
      * multi-MB directories. `--exclude-vcs` drops `.git`; `--exclude=./.*`
      * drops root-level dotfiles.
+     *
+     * `--use-compress-program=gzip` instead of `-z` pins the compressor to a
+     * single-member gzip stream, even on distros where `gzip` resolves to a
+     * parallel implementation that would otherwise emit multi-member output
+     * — valid per RFC 1952 but tripping up naive consumers.
      */
     private function streamTarball(string $dir): void
     {
+        // stderr → /dev/null (descriptor spec, not a pipe) so warnings from tar
+        // can never fill the OS pipe buffer and deadlock the response.
         $process = proc_open(
-            ['tar', '-czf', '-', '--exclude-vcs', '--exclude=./.*', '-C', $dir, '.'],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            ['tar', '-cf', '-', '--use-compress-program=gzip', '--exclude-vcs', '--exclude=./.*', '-C', $dir, '.'],
+            [1 => ['pipe', 'w'], 2 => ['file', '/dev/null', 'w']],
             $pipes,
         );
 
@@ -116,7 +123,6 @@ final class ContentSnapshotApiController extends AbstractApiController
         }
 
         fclose($pipes[1]);
-        fclose($pipes[2]);
         proc_close($process);
     }
 
