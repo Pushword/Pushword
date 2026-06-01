@@ -7,6 +7,7 @@ use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\User;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Snippet\Entity\Snippet;
 use Pushword\Version\Versionner;
@@ -157,6 +158,50 @@ final class VersionTest extends KernelTestCase
         $versionner->reset('snippet', $id);
         $em->remove($snippet);
         $em->flush();
+    }
+
+    /**
+     * editedBy is a ManyToOne association, absent from the hash-backed snapshot.
+     * Versionner injects it for the version list, and populate() must ignore it
+     * on restore so no phantom User is built.
+     */
+    public function testEditorIsCapturedInSnapshotButIgnoredOnRestore(): void
+    {
+        self::bootKernel();
+
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+
+        $user = $em->getRepository(User::class)->findOneBy([]);
+        self::assertNotNull($user, 'A user is required to act as editor');
+
+        $page = $em->getRepository(Page::class)->findOneBy(['slug' => 'homepage'])
+            ?? $em->getRepository(Page::class)->findOneBy([]);
+        self::assertNotNull($page);
+
+        $page->editedBy = $user;
+        $page->setH1('editor capture test '.uniqid());
+
+        $em->flush();
+
+        /** @var string $storageDir */
+        $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
+        $versionner = $this->buildVersionner($storageDir, $em, $container->get('serializer'));
+
+        $latest = $versionner->getLatestVersion('page', (int) $page->id);
+        self::assertNotNull($latest);
+        $snapshot = new Filesystem()->readFile($storageDir.'/'.(int) $page->id.'/'.$latest);
+        self::assertStringContainsString('"editedBy"', $snapshot, 'Snapshot must record the editor');
+        self::assertStringContainsString($user->getUserIdentifier(), $snapshot);
+
+        // The version list reads the editor through editorOf(), not the entity.
+        self::assertSame($user->getUserIdentifier(), $versionner->editorOf('page', (int) $page->id, $latest));
+
+        // Restore must not fail nor replace the editor with a phantom User.
+        $versionner->loadVersion('page', (string) $page->id, $latest);
+        $restored = $em->getRepository(Page::class)->find($page->id);
+        self::assertNotNull($restored);
+        self::assertSame($user->id, $restored->editedBy?->id);
     }
 
     public function testVersionableTypesIncludesSnippetWhenInstalled(): void

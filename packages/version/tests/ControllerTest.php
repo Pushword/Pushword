@@ -69,6 +69,8 @@ final class ControllerTest extends AbstractAdminTestClass
         // The page_actions block must actually render (wrong block names are silently dropped).
         $editUrl = $router->generate('admin_page_edit', ['entityId' => $pageId]);
         self::assertStringContainsString($editUrl, $listContent, 'list page links back to the page edit screen');
+        // The editor column header must render (missing i18n key would blank it).
+        self::assertStringContainsString('<th scope="col">By</th>', $listContent, 'version list exposes the editor column');
 
         $loadUrl = $router->generate('admin_version_load', ['type' => 'page', 'id' => $pageId, 'version' => $version]);
         $client->request(Request::METHOD_GET, $loadUrl);

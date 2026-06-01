@@ -6,6 +6,7 @@ versionCurrent: 'Actuel'
 versionCustomProperties: 'Propriétés personnalisées'
 versionCustomPropertiesInvalid: "Propriétés personnalisées non enregistrées : YAML invalide"
 versionDate: 'Date'
+versionEditor: 'Par'
 versionEditPage: 'Éditer la page'
 versionFirstVersion: 'Première version (pas de précédente)'
 versionHistorical: 'Historique'

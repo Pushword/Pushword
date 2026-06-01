@@ -84,14 +84,17 @@ class VersionController extends AbstractController
         $entity = $this->versionner->find($type, $id);
 
         $versions = [];
+        $editors = [];
         foreach ($this->versionner->getVersions($type, $id) as $version) {
             $versions[$version] = $this->versionner->populate($this->newEntity($type), $type, $id, $version);
+            $editors[$version] = $this->versionner->editorOf($type, $id, $version);
         }
 
         return $this->renderAdmin('@PushwordVersion/list.html.twig', [
             'type' => $type,
             'entity' => $entity,
             'versions' => $versions,
+            'editors' => $editors,
             'editUrl' => $this->generateUrl(self::TYPES[$type]['editRoute'], ['entityId' => $id]),
         ]);
     }

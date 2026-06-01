@@ -28,6 +28,7 @@
                 <tr>
                     <th scope="col">{{ 'versionTitle'|trans }}</th>
                     <th scope="col">{{ 'versionDate'|trans }}</th>
+                    <th scope="col">{{ 'versionEditor'|trans }}</th>
                     <th scope="col">{{ 'versionReason'|trans }}</th>
                     <th scope="col" class="text-end">{{ 'versionAction'|trans }}</th>
                 </tr>
@@ -41,7 +42,14 @@
                         </a>
                     </td>
                     <td class="text-muted">
-                        <time data-version-id="{{ version }}">{{ version|slice(0, 13) }}</time>{{ attribute(v, 'editedBy')|default(null) ? ' (<small>' ~ v.editedBy.username ~ '</small>)' : '' }}
+                        <time data-version-id="{{ version }}">{{ version|slice(0, 13) }}</time>
+                    </td>
+                    <td class="text-muted">
+                        {% if editors[version]|default(null) %}
+                            {{ editors[version] }}
+                        {% else %}
+                            <span class="opacity-50" aria-hidden="true">·</span>
+                        {% endif %}
                     </td>
                     <td class="text-muted">
                         {{ attribute(v, 'editMessage')|default('') }}
@@ -57,7 +65,7 @@
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="4" class="text-center text-muted py-4">{{ 'versionNoVersion'|trans }}</td>
+                    <td colspan="5" class="text-center text-muted py-4">{{ 'versionNoVersion'|trans }}</td>
                 </tr>
             {% endfor %}
             </tbody>

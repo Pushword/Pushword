@@ -7,11 +7,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Events;
+use Doctrine\ORM\Mapping\Column;
 use Exception;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\EventListener\PageListener;
 use Pushword\Core\Service\RevisionCalculator;
+use Pushword\Core\Utils\Entity;
 use Pushword\Snippet\Entity\Snippet;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
@@ -102,10 +104,31 @@ class Versionner
 
         $this->fileSystem->dumpFile(
             $this->getVersionFile($type, $id, $this->buildVersionFilename($hash)),
-            $jsonContent,
+            $this->snapshotWithEditor($entity, $jsonContent),
         );
 
         $this->pruneOldVersions($type, $id);
+    }
+
+    /**
+     * The hash-backed snapshot only covers `#[Column]` properties, so the
+     * editor (a ManyToOne association) is absent. Inject it for display in the
+     * version list without touching the revision hash. populate() restricts
+     * deserialization to column properties, so this extra key is ignored on
+     * restore (no phantom User is created). Flat imports have no authenticated
+     * editor, so editedBy stays null and nothing is injected.
+     */
+    private function snapshotWithEditor(IdInterface $entity, string $jsonContent): string
+    {
+        if (! $entity instanceof Page || null === $entity->editedBy) {
+            return $jsonContent;
+        }
+
+        /** @var array<string, mixed> $data */
+        $data = json_decode($jsonContent, true, 512, \JSON_THROW_ON_ERROR);
+        $data['editedBy'] = ['username' => $entity->editedBy->getUserIdentifier()];
+
+        return json_encode($data, \JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -217,9 +240,27 @@ class Versionner
         $this->serializer->deserialize($serialized, $entity::class, 'json', [
             AbstractNormalizer::OBJECT_TO_POPULATE => $entity,
             ObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true, // permits to import tags as string
+            // Restrict to the same column properties the snapshot was built
+            // from, so display-only keys like editedBy never reach the entity.
+            AbstractNormalizer::ATTRIBUTES => Entity::getProperties($entity, [Column::class]),
         ]);
 
         return $entity;
+    }
+
+    /**
+     * The editor that snapshotWithEditor() recorded for a version, for display
+     * in the version list. Returns null for versions written without an
+     * authenticated editor (e.g. pw:flat:sync) or before editor capture existed.
+     */
+    public function editorOf(string $type, int|string $id, string $version): ?string
+    {
+        $serialized = $this->fileSystem->readFile($this->getVersionFile($type, $id, $version));
+
+        /** @var array{editedBy?: array{username?: string}} $data */
+        $data = json_decode($serialized, true, 512, \JSON_THROW_ON_ERROR);
+
+        return $data['editedBy']['username'] ?? null;
     }
 
     public function find(string $type, int|string $id): object

@@ -154,7 +154,7 @@ final class PageImporter extends AbstractImporter
         $data = \is_array($data) ? $data : throw new Exception(\sprintf('Failed to parse front matter in "%s": expected array, got %s', $filePath, get_debug_type($data)));
         /** @var array<string, mixed> $data */
         $previousImportedCount = $this->importedCount;
-        $this->pageList[$slug] = $this->editPage($slug, $data, $document->body(), $lastEditDateTime);
+        $this->pageList[$slug] = $this->editPage($slug, $data, $document->body(), $lastEditDateTime, $relativeFilePath);
 
         // Return true if this file was actually imported (not skipped)
         return $this->importedCount > $previousImportedCount;
@@ -221,6 +221,7 @@ final class PageImporter extends AbstractImporter
         array $data,
         string $content,
         DateTime|DateTimeImmutable|DateTimeInterface $lastEditDateTime,
+        string $relativeFilePath,
     ): Page {
         unset($data['id']);
 
@@ -235,7 +236,12 @@ final class PageImporter extends AbstractImporter
         $this->logger->info('Importing page `'.$slug.'` ('.($this->newPage ? 'new' : $page->id).')');
         ++$this->importedCount;
 
+        // No authenticated user exists in CLI context, so editedBy/createdBy stay
+        // null. Record the flat origin in editMessage to keep the edit traceable.
+        $page->editMessage = 'Imported via pw:flat:sync from '.$relativeFilePath;
+
         $page->setCustomProperties([]);
+
         $publishedAtExplicitlySet = false;
 
         foreach ($data as $key => $value) {

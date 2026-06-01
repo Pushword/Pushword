@@ -2820,4 +2820,30 @@ MD;
         $this->em->flush();
         $this->trackFile($pathA);
     }
+
+    /**
+     * A page imported from a flat file has no authenticated user, so editedBy
+     * stays null; editMessage records the flat origin to keep it traceable.
+     */
+    public function testFlatImportRecordsEditMessageOrigin(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        $mdPath = $contentDir.'/flat-origin-test.md';
+        file_put_contents($mdPath, "---\nh1: Flat Origin Test\n---\n\nBody from flat file.\n");
+        $this->trackFile($mdPath);
+
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $page = $this->pageRepo->findOneBy(['slug' => 'flat-origin-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($page, 'Flat file should be imported as a page');
+        self::assertNull($page->editedBy, 'No authenticated user in CLI context');
+        self::assertSame('Imported via pw:flat:sync from flat-origin-test.md', $page->editMessage);
+
+        $this->em->remove($page);
+        $this->em->flush();
+    }
 }
