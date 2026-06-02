@@ -52,7 +52,7 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 | **Multi-site**          | Native                         | Multisite network        | Pro addon     | Native (Webspaces)  |
 | **i18n / Multilingual** | Native                         | Plugins (WPML, Polylang) | Native        | Native              |
 | **Page Versioning**     | Extension (diff/restore/timeline) | Revisions (basic)     | Revisions     | Native              |
-| **Editorial Workflow**  | Extension (draft→review→approve) | Plugins (PublishPress) | Workflow addon | Native (workflows) |
+| **Publication control** | Per-page publication hold + version diffs | Plugins (PublishPress) | Workflow addon | Native (workflows) |
 | **REST API**            | Token + OpenAPI (extension)    | REST core / GraphQL plugin | REST + GraphQL (Pro) | REST (GraphQL ready) |
 | **Media Management**    | Auto-optimization (WebP)       | Basic + plugins          | Asset manager | Media bundles       |
 | **Custom Fields**       | Custom properties              | ACF / Meta Box           | Fieldsets     | Content types       |
@@ -68,7 +68,7 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 
 **Statamic**'s Bard editor is praised for writing experience and live preview across device sizes. Peak (visual editor) offers drag-and-drop layout building. Flat-file storage enables Git workflows for content versioning—critical for teams using version control for documentation or content-heavy sites. Native multi-site requires Pro license ($275/site/year).
 
-Recent additions strengthen Pushword's collaborative and headless story: a **page-workflow** extension adds an editorial lifecycle (`draft → in_review → approved`) plus a pending-modification review cycle—proposed edits to published pages are reviewed side-by-side and applied atomically (and, with Flat installed, tracked in Git as `{slug}.pending.md` overlays). The **version** extension adds automatic versioning with side-by-side diff, one-click restore, and a time-slider timeline. The **api** extension exposes a token-authenticated REST API (Page, Media, redirections) with an OpenAPI description and optimistic-concurrency revision guards—built for headless and scripted workflows.
+Recent additions strengthen Pushword's collaborative and headless story: a per-page **publication hold**—edits to a published page are saved to the database immediately, but in static (cache) mode the public keeps seeing the previously generated static file until you release the hold (Page "hold publication" switch / API `holdPublication: true`) and regenerate. The **version** extension adds automatic versioning with side-by-side diff, one-click restore, and a time-slider timeline so you can review exactly what changed. The **api** extension exposes a token-authenticated REST API (Page, Media, redirections) with an OpenAPI description and optimistic-concurrency revision guards—built for headless and scripted workflows.
 
 **Sulu** enforces structured content modeling through content types and blocks. This prevents content anarchy but requires upfront planning. Block definitions ensure responsive rendering (developers control rendering complexity). Media management integrates tightly with content, supporting enterprise workflows with roles/permissions.
 
@@ -128,7 +128,7 @@ Each plugin adds database queries and JavaScript overhead. Caching plugins (WP S
 | **Content Editing**       | EditorJS (modern blocks)   | Gutenberg (mature blocks)        | Bard (live preview)      | Content blocks            |
 | **Media Upload**          | Drag & drop, auto-optimize | Drag & drop                      | Drag & drop              | Structured upload         |
 | **Preview / Draft**       | Yes                        | Yes                              | Live preview (real-time) | Preview mode              |
-| **Collaborative Editing** | Editorial workflow (extension) | Real-time (plugins)          | Basic                    | Advanced (workflows)      |
+| **Collaborative Editing** | Publication hold + version diffs | Real-time (plugins)          | Basic                    | Advanced (workflows)      |
 | **Mobile Admin**          | Responsive                 | Native apps (Jetpack)            | Responsive               | Responsive                |
 | **Onboarding**            | Documented                 | Extensive tutorials              | Excellent                | Complex (requires setup)  |
 | **Documentation**         | Growing                    | Extensive (tutorials everywhere) | Excellent                | Good (enterprise-focused) |
@@ -263,7 +263,7 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 - **Zero-layer AI editing**: Content stored as plain markdown—AI tools (Cursor, Claude Code, Copilot) edit files directly without API abstraction
 - **Bulk operations for power users**: grep, sed, find/replace across hundreds of pages in seconds—no admin UI needed
 - Native multi-site and i18n without plugins
-- **Editorial workflow** extension: draft → in_review → approved, plus a pending-modification review cycle for published pages
+- **Publication hold**: stage edits to a published page while the static site keeps serving the previous version until you release the hold and regenerate
 - **Page & snippet versioning**: side-by-side diff, restore, and time-slider timeline
 - **Token-authenticated REST API** (Page, Media, redirections) with OpenAPI docs and optimistic concurrency—headless/scripted editing
 - SEO-first design (built by SEO consultant)
@@ -523,7 +523,7 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 - **Bulk content operations are needed**: Mass find/replace, scripted updates, CLI-based content management
 - SEO is a primary concern
 - Multi-site or i18n required without plugins
-- Editorial review workflows are needed (draft → review → approve, pending modifications)
+- Controlled publishing is needed (per-page publication hold plus version diffs)
 - Headless or scripted editing via a token REST API (CI, external tooling)
 - Static site generation needed
 - Lightweight, maintainable code is priority
@@ -676,6 +676,6 @@ Before choosing, evaluate your project across these dimensions:
 <div class="not-prose p-4 mt-8 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
   <p class="text-sm text-amber-800 dark:text-amber-200">
     <strong>Version</strong><br>
-    Last updated: June 2026 (added Pushword page-workflow, versioning and REST API). This comparison reflects platform status as of June 2026. Features and pricing may change; we welcome updates via GitHub issues.
+    Last updated: June 2026 (added Pushword publication hold, versioning and REST API). This comparison reflects platform status as of June 2026. Features and pricing may change; we welcome updates via GitHub issues.
   </p>
 </div>

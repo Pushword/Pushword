@@ -7,7 +7,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Api\Service\BodyPatcher;
 use Pushword\Api\Service\BodyPatchException;
 use Pushword\Api\Service\PageFrontmatterMapper;
-use Pushword\Api\Workflow\WorkflowGateInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\Markdown\MarkdownParser;
@@ -31,7 +30,6 @@ final class PageApiController extends AbstractApiController
         private readonly MarkdownParser $markdownParser,
         private readonly BodyPatcher $bodyPatcher,
         private readonly string $deleteStrategy = 'soft',
-        private readonly ?WorkflowGateInterface $workflowGate = null,
     ) {
     }
 
@@ -257,27 +255,13 @@ final class PageApiController extends AbstractApiController
     }
 
     /**
-     * Shared tail of PUT and PATCH: route through the optional workflow gate
-     * (202), else merge frontmatter + body, validate, persist and return the
-     * token-efficient write response.
+     * Shared tail of PUT and PATCH: merge frontmatter + body, validate, persist
+     * and return the token-efficient write response.
      *
      * @param array<string, mixed> $frontmatter
      */
     private function applyAndRespond(Page $page, array $frontmatter, ?string $body, Request $request): JsonResponse
     {
-        if (null !== $this->workflowGate) {
-            $result = $this->workflowGate->intercept($page, $frontmatter, $body, $this->getApiUser());
-            if ($result['routed']) {
-                return $this->respond([
-                    'pendingModification' => [
-                        'id' => $result['pendingId'] ?? null,
-                        'state' => $result['state'] ?? null,
-                    ],
-                    'page' => $this->buildPagePayload($page),
-                ], Response::HTTP_ACCEPTED);
-            }
-        }
-
         $this->mapper->applyFrontmatter($page, $frontmatter);
         if (null !== $body) {
             $page->setMainContent($body);
@@ -343,10 +327,6 @@ final class PageApiController extends AbstractApiController
     private function buildPagePayload(Page $page): array
     {
         $shape = $this->mapper->toArray($page);
-        $editorial = $this->workflowGate?->describeEditorial($page);
-        if (null !== $editorial) {
-            $shape['frontmatter']['editorial'] = $editorial;
-        }
 
         return [
             'host' => $page->host,
@@ -461,7 +441,6 @@ final class PageApiController extends AbstractApiController
                         'requestBody' => ['content' => $writeBody],
                         'responses' => [
                             '200' => ['description' => 'Updated (minimal write response by default, full Page with ?return=full)'],
-                            '202' => ['description' => 'Routed to PendingModification via page-workflow'],
                             '409' => ['description' => 'Revision mismatch, includes fresh page'],
                             '422' => ['description' => 'Validation error'],
                             '428' => ['description' => 'Missing If-Match header'],
@@ -476,7 +455,6 @@ final class PageApiController extends AbstractApiController
                         'requestBody' => ['content' => $patchBody],
                         'responses' => [
                             '200' => ['description' => 'Patched (minimal write response by default, full Page with ?return=full)'],
-                            '202' => ['description' => 'Routed to PendingModification via page-workflow'],
                             '400' => ['description' => 'Neither edits nor frontmatter provided'],
                             '409' => ['description' => 'Revision mismatch, includes fresh page'],
                             '422' => ['description' => 'patch_failed (find not_found/ambiguous) or validation error'],

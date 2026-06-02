@@ -15,7 +15,6 @@ use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\PushwordFlatBundle;
 use Pushword\PageScanner\PushwordPageScannerBundle;
 use Pushword\PageUpdateNotifier\PushwordPageUpdateNotifierBundle;
-use Pushword\PageWorkflow\PushwordPageWorkflowBundle;
 use Pushword\Search\PushwordSearchBundle;
 use Pushword\Snippet\PushwordSnippetBundle;
 use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
@@ -42,7 +41,6 @@ $bundles = [
     PushwordPageUpdateNotifierBundle::class => ['all' => true],
     PushwordStaticGeneratorBundle::class => ['all' => true],
     PushwordPageScannerBundle::class => ['all' => true],
-    PushwordPageWorkflowBundle::class => ['all' => true],
     PushwordTemplateEditorBundle::class => ['all' => true],
     PushwordFlatBundle::class => ['all' => true],
     PushwordConversationBundle::class => ['all' => true],

@@ -46,7 +46,7 @@ curl -H "Authorization: Bearer $TOKEN" https://example.com/api/page/search
 ## Discovery — `GET /api/docs`
 
 Public (no token needed). Returns the OpenAPI 3.1 spec covering every endpoint and schema,
-including those contributed by optional bundles (page-workflow, conversation, snippet…).
+including those contributed by optional bundles (conversation, snippet…).
 
 ```bash
 curl https://example.com/api/docs | jq '.paths | keys'
@@ -203,19 +203,14 @@ Writes require `If-Match: <revision>`:
 }
 ```
 
-{id=workflow}
-## Editorial workflow integration
+{id=hold-publication}
+## Holding publication
 
-When the [Page Workflow](/extension/page-workflow) bundle is installed and the target page
-is already **published**, a `PUT`/`PATCH` does not mutate the page directly. Instead it
-records a pending modification and returns `202 Accepted`:
-
-```json
-{ "pendingModification": { "id": 42, "state": "in_review" }, "page": { "…current page…" } }
-```
-
-The page stays unchanged until the modification is applied through the workflow. Draft
-pages (and installs without the bundle) are written directly.
+A `PUT`/`PATCH` saves to the database immediately. In static (cache) mode the public keeps
+seeing the previously generated static file until you release the hold and regenerate. Set
+`holdPublication: true` in the write payload to keep the live static page in place while you
+stage edits; clear it (and regenerate) to publish. Use the [Version](/extension/version)
+extension to see diffs between revisions.
 
 {id=redirections}
 ## Redirections

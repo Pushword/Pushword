@@ -8,7 +8,6 @@ use Pushword\Api\Controller\PageRedirectionApiController;
 use Pushword\Api\Routing\ApiControllerRouteLoader;
 use Pushword\Api\Service\OpenApiBuilder;
 use Pushword\Api\Service\PageFrontmatterMapper;
-use Pushword\Api\Workflow\WorkflowGateInterface;
 use Pushword\Core\PushwordCoreBundle;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -29,7 +28,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->load('Pushword\Api\\', __DIR__.'/../*')
         ->exclude([
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
-            __DIR__.'/../Workflow/WorkflowGateInterface.php',
         ]);
 
     foreach ([MediaApiController::class, PageRedirectionApiController::class, DocsApiController::class] as $controllerClass) {
@@ -42,7 +40,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->set(PageApiController::class)
         ->autowire()
         ->arg('$deleteStrategy', '%pw.api.delete_strategy%')
-        ->arg('$workflowGate', service(WorkflowGateInterface::class)->nullOnInvalid())
         ->tag('controller.service_arguments')
         ->tag('pushword.api.controller');
 

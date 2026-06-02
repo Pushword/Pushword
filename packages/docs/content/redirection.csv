@@ -1,3 +1,5 @@
 slug,target,code
 extension,/extensions,301
 cms-comparison,/blog/cms-comparison,301
+extension/page-workflow,/extension/static-generator,301
+editorial-workflow,/extension/static-generator,301

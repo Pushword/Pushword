@@ -12,6 +12,45 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc637
+
+### Per-page publication hold (replaces `page-workflow`)
+
+A published page can now hold its publication: edits are saved to the database
+immediately, but in **static (cache) mode** the public keeps seeing the
+previously generated static file until you release the hold and regenerate. This
+replaces the removed `pushword/page-workflow` package — use it together with the
+`version` package (diffs / restore) for review.
+
+- **New column**: `page.hold_publication_at` (nullable datetime). Hold via the
+  edit-only "Hold publication" switch (cache-mode admin), or the API
+  (`holdPublication: true` / `false`). Release = turn it off, then regenerate
+  (`pw:static <host> <slug>` or `pw:static -i`).
+- `pw:static` skips held pages and carries their previously published files over
+  the full temp-dir + swap rebuild, so held pages keep serving the old version.
+
+#### Migration steps
+
+1. `composer update`
+2. `php bin/console doctrine:schema:update --force` (**required** — adds
+   `hold_publication_at` and drops the `page_editorial_state` table)
+3. `php bin/console cache:clear`
+
+#### Breaking changes
+
+- **`pushword/page-workflow` is removed** (the `page_editorial` and
+  `page_pending_modification` workflows, `PageEditorialState`, the
+  `PendingModification` JSON/`.pending.md` storage and its admin/API routes).
+  Remove `PushwordPageWorkflowBundle` from `config/bundles.php` and the
+  `pushword_page_workflow` block from `config/routes.yaml`. The
+  `page_editorial_state` table is dropped by the schema update.
+- The API no longer routes edits of a published page to a pending modification
+  (the `202` / `pendingModification` response and the `WorkflowGateInterface`
+  are gone). A PUT/PATCH on any page now writes directly to the database;
+  hold its publication to keep it out of production.
+- To stage a brand-new page, leave it a draft (`publishedAt` null/future) as
+  before.
+
 ## To 1.0.0-rc627
 
 ### `redirectFrom`: internal redirects authored on the destination page

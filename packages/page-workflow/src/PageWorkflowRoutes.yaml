@@ -1,6 +1,0 @@
-pushword_page_workflow:
-    resource: ./Controller/
-    type: attribute
-    # Controller/Api routes are registered centrally by pushword/api's loader
-    # when that optional package is installed.
-    exclude: ./Controller/Api/

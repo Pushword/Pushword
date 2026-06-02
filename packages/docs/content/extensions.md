@@ -21,8 +21,6 @@ name: Extensions
   Find dead links, 404, 301, TODO reminders and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)
   Get mail notification when your pushword content (page) is edited.
-- [Page Workflow](/extension/page-workflow)
-  Editorial workflow (draft → in_review → approved) for new pages, plus a pending-modification cycle to review changes to already-published pages before they go live.
 - [Search](/extension/search)
   Optional SQLite-native full-text search (typo tolerance, ranking) via Loupe — zero infra, ships with the static build.
 - [Snippet](/extension/snippet)

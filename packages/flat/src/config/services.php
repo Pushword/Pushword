@@ -15,7 +15,6 @@ use Pushword\Flat\Converter\FlatPropertyConverterInterface;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\EventSubscriber\LiveReloadSubscriber;
 use Pushword\Flat\FlatFileSync;
-use Pushword\Flat\PendingModification\FlatPendingModificationStorage;
 use Pushword\Flat\Service\AdminNotificationService;
 use Pushword\Flat\Service\DeferredExportProcessor;
 use Pushword\Flat\Service\FlatApiTokenValidator;
@@ -28,7 +27,6 @@ use Pushword\Flat\Sync\PageSync;
 use Pushword\Flat\Sync\SnippetSync;
 use Pushword\Flat\Sync\SyncStateManager;
 use Pushword\Flat\Twig\FlatLockExtension;
-use Pushword\PageWorkflow\Pending\PendingModificationStorageInterface;
 use Pushword\Snippet\Entity\Snippet;
 use ReflectionClass;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -53,10 +51,6 @@ return static function (ContainerConfigurator $container): void {
     $snippetAvailable = class_exists(Snippet::class);
     $snippetExclude = $snippetAvailable ? [] : [__DIR__.'/../Sync/SnippetSync.php'];
 
-    // FlatPendingModificationStorage requires the optional pushword/page-workflow package.
-    $pageWorkflowAvailable = interface_exists(PendingModificationStorageInterface::class);
-    $pageWorkflowExclude = $pageWorkflowAvailable ? [] : [__DIR__.'/../PendingModification/'];
-
     // NotificationApiController requires the optional pushword/api package.
     $apiAvailable = interface_exists(ApiControllerInterface::class);
     $apiExclude = $apiAvailable ? [] : [__DIR__.'/../Controller/Api/'];
@@ -66,13 +60,8 @@ return static function (ContainerConfigurator $container): void {
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
             ...$messengerExclude,
             ...$snippetExclude,
-            ...$pageWorkflowExclude,
             ...$apiExclude,
         ]);
-
-    if ($pageWorkflowAvailable) {
-        $services->alias(PendingModificationStorageInterface::class, FlatPendingModificationStorage::class);
-    }
 
     // PropertyConverterRegistry - inject ignored properties list
     $services->set(PropertyConverterRegistry::class)

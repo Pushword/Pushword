@@ -7,7 +7,6 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
-use Pushword\Flat\FlatFileContentDirFinder;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -154,7 +153,7 @@ final class PageApiControllerTest extends WebTestCase
 
     public function testPutWithMatchingIfMatchUpdatesPage(): void
     {
-        // Create as draft (no publishedAt) so the workflow gate doesn't route us to PendingModification.
+        // Create as draft (no publishedAt).
         [$host, $slug] = $this->createTestPage(['publishedAt' => null]);
 
         // Re-fetch to get the canonical revision (DB roundtrip may truncate microseconds).
@@ -182,29 +181,6 @@ final class PageApiControllerTest extends WebTestCase
         self::assertIsArray($fresh['frontmatter']);
         self::assertSame('Updated H1', $fresh['frontmatter']['h1']);
         self::assertSame('New body content', $fresh['body']);
-    }
-
-    public function testPutPublishedPageRoutesToPendingModification(): void
-    {
-        // Default create publishes the page; workflow gate should then intercept the PUT.
-        [$host, $slug] = $this->createTestPage();
-        $this->request('GET', '/api/page/'.$host.'/'.$slug);
-        $current = $this->decode();
-        self::assertIsString($current['revision']);
-        $revision = $current['revision'];
-
-        $response = $this->request('PUT', '/api/page/'.$host.'/'.$slug, [
-            'frontmatter' => ['h1' => 'Through workflow'],
-        ], ['HTTP_IF_MATCH' => $revision]);
-
-        self::assertSame(202, $response->getStatusCode());
-        $body = $this->decode();
-        self::assertArrayHasKey('pendingModification', $body);
-        self::assertArrayHasKey('page', $body);
-        self::assertIsArray($body['page']);
-        self::assertIsArray($body['page']['frontmatter']);
-        // Page itself wasn't mutated — h1 should be unchanged from the create-time value.
-        self::assertSame('Test', $body['page']['frontmatter']['h1']);
     }
 
     public function testPreviewRendersMarkdown(): void
@@ -407,79 +383,6 @@ final class PageApiControllerTest extends WebTestCase
         self::assertSame('Only Frontmatter', $fresh['frontmatter']['h1']);
     }
 
-    public function testPatchPublishedPageRoutesToPendingModification(): void
-    {
-        // Default create publishes the page; the workflow gate should intercept the PATCH.
-        [$host, $slug] = $this->createTestPage();
-        $revision = $this->currentRevision($host, $slug);
-
-        $response = $this->request('PATCH', '/api/page/'.$host.'/'.$slug, [
-            'edits' => [['find' => 'Hello', 'replace' => 'Hi']],
-        ], ['HTTP_IF_MATCH' => $revision]);
-
-        self::assertSame(202, $response->getStatusCode());
-        $body = $this->decode();
-        self::assertArrayHasKey('pendingModification', $body);
-
-        // Page body itself wasn't mutated.
-        $this->request('GET', '/api/page/'.$host.'/'.$slug);
-        self::assertSame('Hello', $this->decode()['body']);
-    }
-
-    /**
-     * End-to-end: two API writes to a published page both route to the SAME
-     * flat `.pending.md` overlay (merged, never touching the live page), then a
-     * submit + approve via the workflow transition route applies the merge onto
-     * the live page and removes the overlay.
-     */
-    public function testPublishedPageEditsMergeInFlatOverlayThenApproveUpdatesLive(): void
-    {
-        // Default create publishes the page with body "Hello".
-        [$host, $slug, $revision] = $this->createTestPage();
-        $pageId = $this->lookupPageId($host, $slug);
-
-        // Edit #1: change the h1 → routed to a pending modification (202).
-        $put = $this->request('PUT', '/api/page/'.$host.'/'.$slug, [
-            'frontmatter' => ['h1' => 'Reviewed title'],
-        ], ['HTTP_IF_MATCH' => $revision]);
-        self::assertSame(202, $put->getStatusCode());
-
-        // Edit #2: a typo fix on the body → merged into the SAME pending overlay.
-        $patch = $this->request('PATCH', '/api/page/'.$host.'/'.$slug, [
-            'edits' => [['find' => 'Hello', 'replace' => 'Hi']],
-        ], ['HTTP_IF_MATCH' => $this->currentRevision($host, $slug)]);
-        self::assertSame(202, $patch->getStatusCode());
-
-        // The live page is still untouched by either edit.
-        $this->request('GET', '/api/page/'.$host.'/'.$slug);
-        $live = $this->decode();
-        self::assertIsArray($live['frontmatter']);
-        self::assertSame('Test', $live['frontmatter']['h1']);
-        self::assertSame('Hello', $live['body']);
-
-        // The flat overlay holds BOTH proposed changes.
-        $pendingPath = $this->pendingOverlayPath($host, $slug);
-        self::assertFileExists($pendingPath);
-        $overlay = file_get_contents($pendingPath);
-        self::assertIsString($overlay);
-        self::assertStringContainsString('Reviewed title', $overlay);
-        self::assertStringContainsString('Hi', $overlay);
-
-        // Validate via API: submit then approve. Approval applies onto the page.
-        self::assertSame(200, $this->request('POST', '/api/page-workflow/pending/'.$pageId.'/transition', ['transition' => 'submit'])->getStatusCode());
-        $approve = $this->request('POST', '/api/page-workflow/pending/'.$pageId.'/transition', ['transition' => 'approve']);
-        self::assertSame(200, $approve->getStatusCode());
-        self::assertTrue($this->decode()['applied']);
-
-        // Live page now reflects both merged changes; the overlay is gone.
-        $this->request('GET', '/api/page/'.$host.'/'.$slug);
-        $applied = $this->decode();
-        self::assertIsArray($applied['frontmatter']);
-        self::assertSame('Reviewed title', $applied['frontmatter']['h1']);
-        self::assertSame('Hi', $applied['body']);
-        self::assertFileDoesNotExist($pendingPath);
-    }
-
     public function testGetUnknownPageReturns404(): void
     {
         $response = $this->request('GET', '/api/page/nope.example.com/nothing-here');
@@ -541,8 +444,7 @@ final class PageApiControllerTest extends WebTestCase
     }
 
     /**
-     * Create a draft page (no publishedAt, so the workflow gate stays out of the
-     * way) with a known body, returning [host, slug].
+     * Create a draft page (no publishedAt) with a known body, returning [host, slug].
      *
      * @return array{0: string, 1: string}
      */
@@ -569,14 +471,6 @@ final class PageApiControllerTest extends WebTestCase
         self::assertIsString($current['revision']);
 
         return $current['revision'];
-    }
-
-    private function pendingOverlayPath(string $host, string $slug): string
-    {
-        /** @var FlatFileContentDirFinder $finder */
-        $finder = self::getContainer()->get(FlatFileContentDirFinder::class);
-
-        return $finder->get($host).'/'.$slug.'.pending.md';
     }
 
     private function lookupPageId(string $host, string $slug): int
