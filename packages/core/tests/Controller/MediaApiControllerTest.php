@@ -422,18 +422,22 @@ final class MediaApiControllerTest extends WebTestCase
     private function createTempImage(string $fileName, int $color = 0xFF0000, ?int $uniqueSeed = null): string
     {
         $path = sys_get_temp_dir().'/'.$fileName;
-        $img = imagecreatetruecolor(10, 10);
+        $img = imagecreatetruecolor(16, 16);
         $allocated = imagecolorallocate($img, ($color >> 16) & 0xFF, ($color >> 8) & 0xFF, $color & 0xFF);
         \assert(false !== $allocated);
-        imagefilledrectangle($img, 0, 0, 9, 9, $allocated);
+        imagefilledrectangle($img, 0, 0, 15, 15, $allocated);
 
         if (null !== $uniqueSeed) {
+            // Paint the seed as a full 8x8 block (a complete JPEG DCT block) so the
+            // content hash stays unique per seed. A single seed pixel gets quantized
+            // away by JPEG compression, collapsing distinct seeds to the same hash —
+            // which the API dedupes as a duplicate (200) instead of created (201).
             $noise = imagecolorallocate($img, $uniqueSeed & 0xFF, ($uniqueSeed >> 8) & 0xFF, ($uniqueSeed >> 16) & 0xFF);
             \assert(false !== $noise);
-            imagesetpixel($img, 0, 0, $noise);
+            imagefilledrectangle($img, 0, 0, 7, 7, $noise);
         }
 
-        imagejpeg($img, $path);
+        imagejpeg($img, $path, 100);
 
         return $path;
     }
