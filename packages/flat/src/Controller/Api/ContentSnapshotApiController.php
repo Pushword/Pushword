@@ -4,8 +4,10 @@ namespace Pushword\Flat\Controller\Api;
 
 use FilesystemIterator;
 use Pushword\Api\Controller\AbstractApiController;
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
+use Pushword\Flat\FlatFileSync;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
@@ -21,10 +23,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * gzipped tarball, so marketing power users can pull a fresh, grep-able
  * `content/` snapshot to edit locally with their AI agent.
  *
- * Strictly read-only: it serves whatever the existing DB → flat mirror task
- * already wrote on disk. It never writes, locks, or triggers an export. The
- * flat directory path is resolved through {@see FlatFileContentDirFinder}, the
- * same source of truth used by the exporters and `pw:flat:sync`.
+ * Before streaming, it re-exports the DB → flat mirror for the snapshot scope
+ * so every shipped `.md` carries an up-to-date `revision:` front-matter stamp,
+ * even when the on-disk mirror was left stale (older exporter, or a file
+ * written out-of-band). The page exporter is incremental — unchanged files are
+ * skipped after a cheap mtime check — so freshening an up-to-date mirror is
+ * near free. The flat directory path is resolved through
+ * {@see FlatFileContentDirFinder}, the same source of truth used by the
+ * exporters and `pw:flat:sync`.
  */
 #[IsGranted('ROLE_EDITOR')]
 final class ContentSnapshotApiController extends AbstractApiController
@@ -32,6 +38,7 @@ final class ContentSnapshotApiController extends AbstractApiController
     public function __construct(
         private readonly SiteRegistry $siteRegistry,
         private readonly FlatFileContentDirFinder $contentDirFinder,
+        private readonly FlatFileSync $flatSync,
     ) {
     }
 
@@ -56,6 +63,11 @@ final class ContentSnapshotApiController extends AbstractApiController
             return $this->notFound('No content snapshot available');
         }
 
+        // Freshen an existing mirror from the DB so each .md ships with a current
+        // `revision:`. Done after the 404 check, so a never-exported (empty) dir
+        // still short-circuits without touching the DB.
+        $this->refreshMirror($host);
+
         $filename = \sprintf('snapshot-%s-%s.tar.gz', $host ?: 'all', date('Y-m-d'));
 
         $response = new StreamedResponse(fn () => $this->streamTarball($dir));
@@ -66,6 +78,24 @@ final class ContentSnapshotApiController extends AbstractApiController
         );
 
         return $response;
+    }
+
+    /**
+     * Re-export pages for the snapshot scope: a single host, or every configured
+     * site (deduplicated by main host) when the host is omitted.
+     */
+    private function refreshMirror(string $host): void
+    {
+        $hosts = '' !== $host
+            ? [$host]
+            : array_values(array_unique(array_map(
+                static fn (SiteConfig $site): string => $site->getMainHost(),
+                $this->siteRegistry->getAll(),
+            )));
+
+        foreach ($hosts as $h) {
+            $this->flatSync->export($h, entity: 'page');
+        }
     }
 
     private function hasMarkdown(string $dir): bool
@@ -136,7 +166,7 @@ final class ContentSnapshotApiController extends AbstractApiController
                 '/api/content/snapshot.tar.gz' => [
                     'get' => [
                         'summary' => 'Download the flat content directory as a gzipped tarball',
-                        'description' => 'Streams the DB → flat mirror of a host (or every host when `host` is omitted) as application/gzip. Read-only.',
+                        'description' => 'Re-exports then streams the DB → flat mirror of a host (or every host when `host` is omitted) as application/gzip, so each .md carries a current revision.',
                         'parameters' => [
                             [
                                 'name' => 'host',

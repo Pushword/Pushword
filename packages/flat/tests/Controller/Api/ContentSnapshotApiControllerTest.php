@@ -172,6 +172,39 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         );
     }
 
+    public function testSnapshotWithoutHostFreshensEverySite(): void
+    {
+        // Exercises the all-hosts branch: the dedup loop over getAll() must
+        // re-export each site, so a stale localhost.dev mirror file is restamped.
+        $stale = $this->contentDir.'/homepage.md';
+        $this->filesystem->dumpFile($stale, "---\nslug: homepage\n---\nstale body");
+        $this->filesystem->touch($stale, 1);
+
+        $response = $this->request('/api/content/snapshot.tar.gz');
+        self::assertSame(200, $response->getStatusCode());
+
+        $homepage = $this->tarballEntryContent($this->captureStream(), 'homepage.md');
+        self::assertStringContainsString('revision:', $homepage);
+        self::assertStringNotContainsString('stale body', $homepage);
+    }
+
+    public function testSnapshotFreshensStaleMarkdownWithRevision(): void
+    {
+        // A pre-existing mirror file for the `homepage` DB page, missing a
+        // `revision:` stamp and dated in the past so the incremental exporter
+        // re-generates it instead of taking the mtime fast path.
+        $stale = $this->contentDir.'/homepage.md';
+        $this->filesystem->dumpFile($stale, "---\nslug: homepage\n---\nstale body");
+        $this->filesystem->touch($stale, 1);
+
+        $response = $this->request('/api/content/snapshot.tar.gz?host='.self::HOST);
+        self::assertSame(200, $response->getStatusCode());
+
+        $homepage = $this->tarballEntryContent($this->captureStream(), 'homepage.md');
+        self::assertStringContainsString('revision:', $homepage, 'Exported page must carry a fresh revision stamp');
+        self::assertStringNotContainsString('stale body', $homepage, 'Stale mirror content must be overwritten');
+    }
+
     private function request(string $url): Response
     {
         $this->client->request(Request::METHOD_GET, $url, [], [], [
@@ -193,7 +226,13 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         $container = self::getContainer();
 
         $siteRegistry = $container->get(SiteRegistry::class);
-        $siteRegistry->switchSite(self::HOST)->get()->setCustomProperty('flat_content_dir', $dir);
+        // Point every site at the same isolated dir so the all-hosts export loop
+        // can never write into a shared (real or test) content directory.
+        foreach ($siteRegistry->getAll() as $site) {
+            $site->setCustomProperty('flat_content_dir', $dir);
+        }
+
+        $siteRegistry->switchSite(self::HOST);
 
         $finder = $container->get(FlatFileContentDirFinder::class);
         new ReflectionProperty(FlatFileContentDirFinder::class, 'contentDir')->setValue($finder, []);
@@ -230,6 +269,26 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         $this->filesystem->remove($tmp);
 
         return $entries;
+    }
+
+    /**
+     * Extract the gzipped tarball and return the content of a root-level entry.
+     */
+    private function tarballEntryContent(string $gzippedTar, string $relativePath): string
+    {
+        $dir = sys_get_temp_dir().'/pw-snap-extract-'.getmypid().'-'.uniqid();
+        $this->filesystem->mkdir($dir);
+        $archive = $dir.'/archive.tar.gz';
+        $this->filesystem->dumpFile($archive, $gzippedTar);
+
+        exec('tar -xzf '.escapeshellarg($archive).' -C '.escapeshellarg($dir).' 2>/dev/null');
+
+        $path = $dir.'/'.$relativePath;
+        $content = $this->filesystem->exists($path) ? (string) file_get_contents($path) : '';
+
+        $this->filesystem->remove($dir);
+
+        return $content;
     }
 
     /**
