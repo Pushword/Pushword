@@ -126,6 +126,7 @@ final class PageRepositoryTest extends KernelTestCase
         $destination->setMainContent('content');
         // 'homepage' collides with a real page → must be shadowed by it.
         $destination->setRedirectFrom(['rfm-repo-old' => 308, 'homepage' => 301]);
+
         $em->persist($destination);
         $em->flush();
         $em->clear();

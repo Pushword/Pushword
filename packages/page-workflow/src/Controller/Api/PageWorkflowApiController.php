@@ -129,6 +129,63 @@ final class PageWorkflowApiController extends AbstractApiController
         return $this->respond(['host' => $page->host, 'slug' => $page->getSlug(), 'applied' => true]);
     }
 
+    /**
+     * Drive the pending modification's own workflow (draft → in_review →
+     * approved). Mirrors the admin PendingModificationController: when the
+     * transition reaches `approved`, the snapshot is applied onto the live Page
+     * and the pending storage is cleared.
+     */
+    #[Route('/api/page-workflow/pending/{pageId}/transition', name: 'pushword_api_page_workflow_pending_transition', methods: ['POST'])]
+    public function pendingTransition(int $pageId, Request $request): JsonResponse
+    {
+        $page = $this->pageRepository->find($pageId);
+        if (! $page instanceof Page) {
+            return $this->notFound('Page not found');
+        }
+
+        $modification = $this->storage->read($page);
+        if (null === $modification) {
+            return $this->notFound('No pending modification');
+        }
+
+        $data = $this->decodeJson($request);
+        $transition = \is_string($data['transition'] ?? null) ? $data['transition'] : '';
+        if ('' === $transition) {
+            return $this->badRequest('Missing transition');
+        }
+
+        $workflow = $this->workflowRegistry->get($modification, 'page_pending_modification');
+        if (! $workflow->can($modification, $transition)) {
+            return $this->respond([
+                'error' => 'transition_denied',
+                'state' => $modification->workflowState,
+            ], Response::HTTP_CONFLICT);
+        }
+
+        try {
+            $workflow->apply($modification, $transition);
+        } catch (WorkflowLogicException $workflowLogicException) {
+            return $this->respond(['error' => 'transition_failed', 'message' => $workflowLogicException->getMessage()], Response::HTTP_CONFLICT);
+        }
+
+        $applied = false;
+        if ('approved' === $modification->workflowState) {
+            PendingPayload::applyOnPage($page, $modification->payload);
+            $this->storage->delete($page);
+            $this->em->flush();
+            $applied = true;
+        } else {
+            $this->storage->write($page, $modification);
+        }
+
+        return $this->respond([
+            'host' => $page->host,
+            'slug' => $page->getSlug(),
+            'state' => $modification->workflowState,
+            'applied' => $applied,
+        ]);
+    }
+
     #[Route('/api/page-workflow/pending/{pageId}', name: 'pushword_api_page_workflow_pending_delete', methods: ['DELETE'])]
     public function pendingDelete(int $pageId): JsonResponse
     {
@@ -173,6 +230,18 @@ final class PageWorkflowApiController extends AbstractApiController
                         'summary' => 'Apply an approved pending modification onto the Page',
                         'parameters' => [['name' => 'pageId', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
                         'responses' => ['200' => ['description' => 'Applied'], '409' => ['description' => 'Not approved yet']],
+                    ],
+                ],
+                '/api/page-workflow/pending/{pageId}/transition' => [
+                    'post' => [
+                        'summary' => 'Transition a pending modification (submit → in_review → approve → approved); applies onto the Page on approval',
+                        'parameters' => [['name' => 'pageId', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
+                        'requestBody' => ['content' => ['application/json' => ['schema' => [
+                            'type' => 'object',
+                            'properties' => ['transition' => ['type' => 'string', 'enum' => ['submit', 'approve', 'request_changes']]],
+                            'required' => ['transition'],
+                        ]]]],
+                        'responses' => ['200' => ['description' => 'Transition applied'], '409' => ['description' => 'Transition denied']],
                     ],
                 ],
                 '/api/page-workflow/pending/{pageId}' => [

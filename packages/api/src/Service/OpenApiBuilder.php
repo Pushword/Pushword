@@ -40,9 +40,11 @@ final readonly class OpenApiBuilder
                     if (! \is_string($path)) {
                         continue;
                     }
+
                     if (! \is_array($operations)) {
                         continue;
                     }
+
                     /** @var array<string, mixed> $existing */
                     $existing = $paths[$path] ?? [];
                     /** @var array<string, mixed> $operations */
@@ -56,9 +58,11 @@ final readonly class OpenApiBuilder
                     if (! \is_string($name)) {
                         continue;
                     }
+
                     if (! \is_array($schema)) {
                         continue;
                     }
+
                     /** @var array<string, mixed> $schema */
                     $schemas[$name] = $schema;
                 }

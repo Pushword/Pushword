@@ -95,6 +95,7 @@ final class PageUpdateNotifierTest extends KernelTestCase
             // violated by the non-topological delete order below.
             $page->setParentPage(null);
         }
+
         $em->flush();
 
         foreach ($pages as $page) {

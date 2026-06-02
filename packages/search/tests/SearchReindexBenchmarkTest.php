@@ -9,7 +9,6 @@ use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Page;
 use Pushword\Search\Service\Indexer;
-use Pushword\Search\Service\IndexManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -36,8 +35,6 @@ final class SearchReindexBenchmarkTest extends KernelTestCase
 
     private Indexer $indexer;
 
-    private IndexManager $indexManager;
-
     private CacheItemPoolInterface $markdownCache;
 
     private bool $txOpen = false;
@@ -49,7 +46,6 @@ final class SearchReindexBenchmarkTest extends KernelTestCase
 
         $this->em = $container->get(EntityManagerInterface::class);
         $this->indexer = $container->get(Indexer::class);
-        $this->indexManager = $container->get(IndexManager::class);
         /** @var CacheItemPoolInterface $pool */
         $pool = $container->get('cache.pushword_markdown');
         $this->markdownCache = $pool;

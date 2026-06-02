@@ -44,6 +44,7 @@ final class SnippetQueryRegressionTest extends KernelTestCase
         /** @var EntityManager $em */
         $em = $container->get('doctrine.orm.default_entity_manager');
         $this->em = $em;
+
         $this->repo = $em->getRepository(Snippet::class);
 
         // Seed a handful of host snippets plus a global one to exercise both
@@ -66,6 +67,7 @@ final class SnippetQueryRegressionTest extends KernelTestCase
         $global->setSlug($globalSlug);
         $global->setName('Global');
         $global->setContent('global body');
+
         $em->persist($global);
 
         $em->flush();

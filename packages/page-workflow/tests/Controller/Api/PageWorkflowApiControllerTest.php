@@ -160,6 +160,70 @@ final class PageWorkflowApiControllerTest extends WebTestCase
         self::assertSame(Response::HTTP_CONFLICT, $response->getStatusCode());
     }
 
+    public function testTransitionPendingSubmitMovesToInReviewWithoutTouchingPage(): void
+    {
+        $page = $this->seedPage();
+        $this->seedPendingFor($page, 'draft', ['h1' => 'Proposed']);
+        self::assertNotNull($page->id);
+
+        $response = $this->request('POST', '/api/page-workflow/pending/'.$page->id.'/transition', ['transition' => 'submit']);
+        self::assertSame(200, $response->getStatusCode());
+        $body = $this->decode();
+        self::assertSame('in_review', $body['state']);
+        self::assertFalse($body['applied']);
+
+        // Page is untouched; the pending modification is still stored, now in_review.
+        $this->em->refresh($page);
+        self::assertSame('Original', $page->getH1());
+        /** @var PendingModificationStorageInterface $storage */
+        $storage = self::getContainer()->get(PendingModificationStorageInterface::class);
+        $stored = $storage->read($page);
+        self::assertNotNull($stored);
+        self::assertSame('in_review', $stored->workflowState);
+    }
+
+    public function testTransitionPendingApproveAppliesOntoPageAndClearsStorage(): void
+    {
+        $page = $this->seedPage();
+        $this->seedPendingFor($page, 'in_review', ['h1' => 'Approved H1', 'mainContent' => '## approved body']);
+        self::assertNotNull($page->id);
+
+        $response = $this->request('POST', '/api/page-workflow/pending/'.$page->id.'/transition', ['transition' => 'approve']);
+        self::assertSame(200, $response->getStatusCode());
+        $body = $this->decode();
+        self::assertSame('approved', $body['state']);
+        self::assertTrue($body['applied']);
+
+        $this->em->refresh($page);
+        self::assertSame('Approved H1', $page->getH1());
+        self::assertStringContainsString('approved body', $page->getMainContent());
+
+        /** @var PendingModificationStorageInterface $storage */
+        $storage = self::getContainer()->get(PendingModificationStorageInterface::class);
+        self::assertFalse($storage->has($page));
+    }
+
+    public function testTransitionDeniedFromDraftReturns409(): void
+    {
+        $page = $this->seedPage();
+        // 'approve' is not enabled from 'draft'.
+        $this->seedPendingFor($page, 'draft');
+        self::assertNotNull($page->id);
+
+        $response = $this->request('POST', '/api/page-workflow/pending/'.$page->id.'/transition', ['transition' => 'approve']);
+        self::assertSame(Response::HTTP_CONFLICT, $response->getStatusCode());
+        self::assertSame('transition_denied', $this->decode()['error']);
+    }
+
+    public function testTransitionUnknownPendingReturns404(): void
+    {
+        $page = $this->seedPage();
+        self::assertNotNull($page->id);
+
+        $response = $this->request('POST', '/api/page-workflow/pending/'.$page->id.'/transition', ['transition' => 'submit']);
+        self::assertSame(404, $response->getStatusCode());
+    }
+
     public function testDeletePendingDiscards(): void
     {
         $page = $this->seedPage();
