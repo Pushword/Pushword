@@ -136,6 +136,13 @@ final class ImageCacheManagerTest extends KernelTestCase
     {
         $this->ensureMediaFileExists();
 
+        // Use a per-worker-unique source copy: this test removes the media's cache,
+        // and the variant dir (public/media/{filter}) is shared across all paratest
+        // workers. Operating on the shared piedweb-logo would delete variants other
+        // workers are reading (static generation, MediaCacheController), causing flakes.
+        $probe = 'cache-fresh-probe-'.getmypid().'.png';
+        new Filesystem()->copy($this->getMediaDir().'/piedweb-logo.png', $this->getMediaDir().'/'.$probe, true);
+
         $filters = [
             'default' => ['quality' => 90, 'filters' => ['scaleDown' => [1980, 1280]], 'formats' => ['original', 'webp']],
             'thumb' => ['quality' => 80, 'filters' => ['coverDown' => [330, 330]], 'formats' => ['webp']],
@@ -144,10 +151,10 @@ final class ImageCacheManagerTest extends KernelTestCase
         $manager = $this->createManager($filters);
 
         $media = new Media();
-        $media->setFileName('piedweb-logo.png');
+        $media->setFileName($probe);
 
         // Remove thumb cache to force a stale thumb
-        $manager->remove('piedweb-logo.png');
+        $manager->remove($probe);
 
         // No cache exists → should return false (thumb stale = early exit)
         self::assertFalse($manager->isAllCacheFresh($media));
