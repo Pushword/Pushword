@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\Entity;
 
+use DateTime;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -18,6 +19,39 @@ final class PageTest extends TestCase
 
         $page->setSlug('hello you');
         self::assertSame('hello-you', $page->getSlug());
+    }
+
+    public function testHoldPublication(): void
+    {
+        $page = new Page();
+        self::assertFalse($page->isHoldPublication());
+
+        $page->setHoldPublication(true);
+        self::assertTrue($page->isHoldPublication());
+
+        $page->setHoldPublication(false);
+        self::assertFalse($page->isHoldPublication());
+        self::assertNull($page->getHoldPublicationAt());
+    }
+
+    public function testHoldPublicationKeepsExplicitTimestamp(): void
+    {
+        $page = new Page();
+        $explicit = new DateTime('2026-01-01 00:00');
+        $page->setHoldPublicationAt($explicit);
+        self::assertTrue($page->isHoldPublication());
+
+        // Holding again must not overwrite an existing timestamp.
+        $page->setHoldPublication(true);
+        self::assertSame($explicit, $page->getHoldPublicationAt());
+    }
+
+    public function testCloneResetsHoldPublication(): void
+    {
+        $page = new Page();
+        $page->setHoldPublication(true);
+
+        self::assertFalse((clone $page)->isHoldPublication());
     }
 
     public function testRedirectFromNormalizesMapListAndRows(): void

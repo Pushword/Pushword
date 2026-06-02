@@ -47,6 +47,7 @@ final readonly class PageFrontmatterMapper
             'tags' => $page->getTagList(),
             'redirectFrom' => $page->getRedirectFromMap(),
             'publishedAt' => $page->getPublishedAt()?->format(DateTimeInterface::ATOM),
+            'holdPublication' => $page->isHoldPublication(),
             'mainImage' => $page->getMainImage()?->getFileName(),
             'parentPage' => $page->getParentPage()?->getSlug(),
             'translations' => array_values(array_map(
@@ -120,6 +121,10 @@ final readonly class PageFrontmatterMapper
 
         if (\array_key_exists('publishedAt', $frontmatter)) {
             $page->setPublishedAt($this->parseDateTime($frontmatter['publishedAt']));
+        }
+
+        if (\array_key_exists('holdPublication', $frontmatter)) {
+            $page->setHoldPublication((bool) $frontmatter['holdPublication']);
         }
 
         if (\array_key_exists('mainImage', $frontmatter)) {

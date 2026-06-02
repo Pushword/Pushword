@@ -249,6 +249,23 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         self::assertNotNull($page->id);
     }
 
+    public function testHoldPublicationRoundtrips(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('held');
+
+        // Held via API: stored as a timestamp, exposed back as a boolean.
+        $this->mapper->applyFrontmatter($page, ['holdPublication' => true]);
+        self::assertTrue($page->isHoldPublication());
+        self::assertTrue($this->mapper->toArray($page)['frontmatter']['holdPublication']);
+
+        // Releasing via API clears it.
+        $this->mapper->applyFrontmatter($page, ['holdPublication' => false]);
+        self::assertFalse($page->isHoldPublication());
+        self::assertNull($page->getHoldPublicationAt());
+    }
+
     public function testApplyFrontmatterAcceptsDraftSentinel(): void
     {
         $page = new Page();

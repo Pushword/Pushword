@@ -173,6 +173,11 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             $app->staticDir = $originalStaticDir; // @phpstan-ignore-line
 
             if (! $this->abortGeneration) {
+                // Held pages are skipped by the generators, so the temp dir lacks
+                // their output. Carry the previously published files over so the
+                // atomic swap keeps serving the held version instead of dropping it.
+                $this->carryOverHeldPages($originalStaticDir, $tempDir, $app, $filesystem);
+
                 $backupDir = $originalStaticDir.'~~';
                 $filesystem->remove($backupDir);
 
@@ -225,6 +230,53 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         );
 
         $this->abortGeneration = false;
+    }
+
+    /**
+     * Copy the previously generated files of each held page from the live static
+     * dir into the freshly built temp dir, so a full (temp + swap) rebuild keeps
+     * serving their published version. Cache mode and incremental mode write in
+     * place and need no carry-over. Paginated feed pages keep only their primary
+     * files (extra pager files are rebuilt on release).
+     */
+    private function carryOverHeldPages(string $originalStaticDir, string $tempDir, SiteConfig $app, Filesystem $filesystem): void
+    {
+        if (! $filesystem->exists($originalStaticDir)) {
+            return;
+        }
+
+        foreach ($this->pageRepository->getPublishedPages($app->getMainHost()) as $page) {
+            if (null === $page->holdPublicationAt) {
+                continue;
+            }
+
+            $relative = $this->staticRelativePathFor($page);
+            $bases = [$relative];
+            if (str_ends_with($relative, '.html')) {
+                $bases[] = substr($relative, 0, -5).'.xml'; // children feed variant
+            }
+
+            foreach ($bases as $base) {
+                foreach (['', '.gz', '.br', '.zst'] as $suffix) {
+                    $source = $originalStaticDir.'/'.$base.$suffix;
+                    if ($filesystem->exists($source)) {
+                        $filesystem->copy($source, $tempDir.'/'.$base.$suffix, true);
+                    }
+                }
+            }
+        }
+    }
+
+    /** Mirrors PageGenerator::generateFilePath for the static-dir-relative path. */
+    private function staticRelativePathFor(Page $page): string
+    {
+        $slug = '' === $page->getRealSlug() ? 'index' : $page->getRealSlug();
+
+        if (str_ends_with($slug, '.json') || str_ends_with($slug, '.xml')) {
+            return $slug;
+        }
+
+        return $slug.'.html';
     }
 
     private function cleanupStaleTempDirs(string $staticDir, Filesystem $filesystem): void

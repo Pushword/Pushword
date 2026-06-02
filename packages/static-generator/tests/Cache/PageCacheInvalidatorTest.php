@@ -102,6 +102,20 @@ final class PageCacheInvalidatorTest extends TestCase
         });
     }
 
+    public function testNoDispatchWhenPageIsHeld(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev');
+        $page->setHoldPublication(true);
+
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+
+        // A held page keeps its current static file: neither refreshed nor deleted.
+        $this->bus->expects($this->never())->method('dispatch');
+        $this->fileManager->expects($this->never())->method('delete');
+
+        $invalidator->postUpdate($page);
+    }
+
     public function testNoDispatchWhenPageIdIsNull(): void
     {
         $page = new Page();

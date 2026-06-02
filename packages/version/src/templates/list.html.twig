@@ -30,6 +30,7 @@
                     <th scope="col">{{ 'versionDate'|trans }}</th>
                     <th scope="col">{{ 'versionEditor'|trans }}</th>
                     <th scope="col">{{ 'versionReason'|trans }}</th>
+                    <th scope="col">{{ 'versionHold'|trans }}</th>
                     <th scope="col" class="text-end">{{ 'versionAction'|trans }}</th>
                 </tr>
             </thead>
@@ -54,6 +55,13 @@
                     <td class="text-muted">
                         {{ attribute(v, 'editMessage')|default('') }}
                     </td>
+                    <td>
+                        {% if attribute(v, 'holdPublicationAt')|default(null) %}
+                            <span class="badge bg-warning text-dark">{{ 'versionHold'|trans }}</span>
+                        {% else %}
+                            <span class="opacity-50" aria-hidden="true">·</span>
+                        {% endif %}
+                    </td>
                     <td class="text-end">
                         <a href="{{ path('admin_version_compare', {type: type, id: entity.id, versionLeft: version, versionRight: 'current'}) }}" class="btn btn-outline-primary btn-sm px-2 me-1" title="{{ 'versionCompare'|trans }}">
                             <i class="fa fa-code-compare" aria-hidden="true"></i> {{ 'versionCompare'|trans }}
@@ -65,7 +73,7 @@
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">{{ 'versionNoVersion'|trans }}</td>
+                    <td colspan="6" class="text-center text-muted py-4">{{ 'versionNoVersion'|trans }}</td>
                 </tr>
             {% endfor %}
             </tbody>

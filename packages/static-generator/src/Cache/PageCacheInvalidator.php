@@ -49,6 +49,12 @@ final readonly class PageCacheInvalidator
             return;
         }
 
+        // Held pages keep their current static file; releasing the hold (set back
+        // to null) is itself an update that re-enables the refresh.
+        if (null !== $page->holdPublicationAt) {
+            return;
+        }
+
         $this->bus->dispatch(new PageCacheRefreshMessage($page->id));
     }
 

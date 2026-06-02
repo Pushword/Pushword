@@ -216,6 +216,62 @@ final class StaticGeneratorTest extends KernelTestCase
         return new CommandTester($application->find('pw:static'));
     }
 
+    public function testHeldPageKeepsPublishedVersionAcrossFullRebuild(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $container = self::getContainer();
+        $pageRepository = $container->get(PageRepository::class);
+        $em = $container->get('doctrine.orm.default_entity_manager');
+
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
+        $staticDir = $this->getStaticDir();
+        $commandTester = new CommandTester($application->find('pw:static'));
+
+        // First full generation produces index.html for the homepage.
+        $commandTester->execute(['host' => 'localhost.dev']);
+
+        $indexFile = $staticDir.'/index.html';
+        self::assertFileExists($indexFile);
+        $publishedContent = (string) file_get_contents($indexFile);
+
+        $homepage = $pageRepository->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
+        self::assertNotNull($homepage);
+        $originalH1 = $homepage->getH1();
+
+        try {
+            // Edit the page AND hold it: the live DB changes but production must
+            // keep serving the previously published version across a full rebuild.
+            $homepage->setHoldPublication(true);
+            $homepage->setH1('Held edit '.uniqid());
+            $em->flush();
+
+            $commandTester = $this->rebootStaticCommandTester();
+            $commandTester->execute(['host' => 'localhost.dev']);
+
+            self::assertStringContainsString('Held', $commandTester->getDisplay());
+
+            clearstatcache();
+            self::assertFileExists($indexFile, 'Held page must survive a full (temp + swap) rebuild');
+            self::assertFileExists($indexFile.'.gz', 'Held page compressed sidecars must be carried over');
+            self::assertSame(
+                $publishedContent,
+                (string) file_get_contents($indexFile),
+                'Held page must keep serving its previously published version',
+            );
+        } finally {
+            // Restore pristine state for the shared worker DB.
+            $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
+            $reloaded = self::getContainer()->get(PageRepository::class)
+                ->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
+            if (null !== $reloaded) {
+                $reloaded->setHoldPublication(false);
+                $reloaded->setH1($originalH1);
+                $resetEm->flush();
+            }
+        }
+    }
+
     public function testGenerationStateManager(): void
     {
         // Use isolated temp dir for state file. Unset PUSHWORD_TEST_VAR_DIR so

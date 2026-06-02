@@ -34,6 +34,12 @@ class PageGenerator extends AbstractGenerator
 
     public function generatePage(Page $page): void
     {
+        // A held page keeps its previously generated static file untouched so the
+        // pending edit stays out of production until publication is released.
+        if (null !== $page->holdPublicationAt) {
+            return;
+        }
+
         if ($page->hasRedirection()) {
             $this->redirectionManager->addPage($page);
 

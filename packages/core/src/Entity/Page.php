@@ -93,6 +93,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     {
         $this->id = null;
         $this->translations = new ArrayCollection();
+        $this->holdPublicationAt = null;
     }
 
     public function getMainImage(): ?Media
@@ -132,6 +133,15 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['default' => 'CURRENT_TIMESTAMP'])]
     public ?DateTimeInterface $publishedAt = null;
+
+    /**
+     * When set, the (already published) page keeps serving its previously generated
+     * static file: edits are saved to the database but stay out of production until
+     * the hold is released (set back to null). Distinct from the per-page cache
+     * opt-out, which renders dynamically and exposes edits immediately.
+     */
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    public ?DateTimeInterface $holdPublicationAt = null;
 
     // --- Search/SEO properties (inlined from PageSearchTrait) ---
 
@@ -248,6 +258,30 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     public function setPublishedAt(?DateTimeInterface $publishedAt): self
     {
         $this->publishedAt = $publishedAt;
+
+        return $this;
+    }
+
+    public function getHoldPublicationAt(): ?DateTimeInterface
+    {
+        return $this->holdPublicationAt;
+    }
+
+    public function setHoldPublicationAt(?DateTimeInterface $holdPublicationAt): self
+    {
+        $this->holdPublicationAt = $holdPublicationAt;
+
+        return $this;
+    }
+
+    public function isHoldPublication(): bool
+    {
+        return null !== $this->holdPublicationAt;
+    }
+
+    public function setHoldPublication(bool $hold): self
+    {
+        $this->holdPublicationAt = $hold ? ($this->holdPublicationAt ?? new DateTime()) : null;
 
         return $this;
     }

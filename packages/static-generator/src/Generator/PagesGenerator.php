@@ -54,6 +54,19 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                 continue;
             }
 
+            // Held pages keep their current static file until publication is released.
+            if (null !== $page->holdPublicationAt) {
+                $this->staticAppGenerator->writeln(\sprintf(
+                    '[%d/%d] <comment>Held</comment> %s/%s (publication on hold)',
+                    $currentPage,
+                    $totalPages,
+                    $hostName,
+                    $page->getSlug() ?: 'index',
+                ));
+
+                continue;
+            }
+
             $slug = $page->getSlug() ?: 'index';
             $this->staticAppGenerator->writeln(\sprintf(
                 '[%d/%d] Generating %s/%s',
@@ -181,6 +194,12 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
 
             if ($this->incremental && ! $this->needsRegeneration($page, $hostName)) {
                 echo \sprintf("[%d/%d] Skipped %s/%s (unchanged)\n", $currentPage, $totalPages, $hostName, $page->getSlug() ?: 'index');
+
+                continue;
+            }
+
+            if (null !== $page->holdPublicationAt) {
+                echo \sprintf("[%d/%d] Held %s/%s (publication on hold)\n", $currentPage, $totalPages, $hostName, $page->getSlug() ?: 'index');
 
                 continue;
             }

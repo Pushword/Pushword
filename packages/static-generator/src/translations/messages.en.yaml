@@ -1,2 +1,4 @@
 adminPageCacheLabel: Cache this page
 adminPageCacheHelp: Pre-render this page to public/cache/ so Caddy serves it without booting PHP. Disable for pages with server-side dynamic content.
+adminPageHoldPublicationLabel: Hold publication
+adminPageHoldPublicationHelp: Keep serving the current static version to visitors. Your edits are saved but stay out of production until you turn this off.
