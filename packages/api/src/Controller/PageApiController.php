@@ -54,6 +54,12 @@ final class PageApiController extends AbstractApiController
                 ->setParameter('parentSlug', $request->query->getString('parentPage'));
         }
 
+        if (null !== $request->query->get('held')) {
+            $qb->andWhere($request->query->getBoolean('held')
+                ? 'p.holdPublicationAt IS NOT NULL'
+                : 'p.holdPublicationAt IS NULL');
+        }
+
         if (null !== $request->query->get('q')) {
             $qb->andWhere('p.h1 LIKE :q OR p.slug LIKE :q OR p.title LIKE :q OR p.mainContent LIKE :q')
                 ->setParameter('q', '%'.$request->query->getString('q').'%');
@@ -393,6 +399,7 @@ final class PageApiController extends AbstractApiController
                             ['name' => 'q', 'in' => 'query', 'schema' => ['type' => 'string']],
                             ['name' => 'locale', 'in' => 'query', 'schema' => ['type' => 'string']],
                             ['name' => 'parentPage', 'in' => 'query', 'schema' => ['type' => 'string']],
+                            ['name' => 'held', 'in' => 'query', 'schema' => ['type' => 'boolean'], 'description' => 'true: only pages with publication held; false: only released pages'],
                             ['name' => 'tag', 'in' => 'query', 'schema' => ['type' => 'array', 'items' => ['type' => 'string']]],
                             ['name' => 'page', 'in' => 'query', 'schema' => ['type' => 'integer']],
                             ['name' => 'per_page', 'in' => 'query', 'schema' => ['type' => 'integer']],

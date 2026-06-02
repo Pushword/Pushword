@@ -209,6 +209,42 @@ final class PageApiControllerTest extends WebTestCase
         self::assertSame(2, $body['per_page']);
     }
 
+    public function testSearchFiltersHeldPages(): void
+    {
+        [$host] = $this->createTestPage(['holdPublication' => true]);
+
+        $this->request('GET', '/api/page/search?held=true&host='.$host);
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertIsArray($body['items']);
+        self::assertCount(1, $body['items']);
+        self::assertIsArray($body['items'][0]);
+        self::assertTrue($body['items'][0]['holdPublication']);
+
+        $this->request('GET', '/api/page/search?held=false&host='.$host);
+        $body = $this->decode();
+        self::assertIsArray($body['items']);
+        self::assertCount(0, $body['items']);
+    }
+
+    public function testSearchHeldFalseReturnsReleasedPages(): void
+    {
+        [$host] = $this->createTestPage();
+
+        $this->request('GET', '/api/page/search?held=false&host='.$host);
+        self::assertResponseIsSuccessful();
+        $body = $this->decode();
+        self::assertIsArray($body['items']);
+        self::assertCount(1, $body['items']);
+        self::assertIsArray($body['items'][0]);
+        self::assertFalse($body['items'][0]['holdPublication']);
+
+        $this->request('GET', '/api/page/search?held=true&host='.$host);
+        $body = $this->decode();
+        self::assertIsArray($body['items']);
+        self::assertCount(0, $body['items']);
+    }
+
     public function testPatchAnchoredEditUpdatesBody(): void
     {
         [$host, $slug] = $this->createDraftWithBody("# Title\n\nÀ partir de 90€ par jour.\n\nFin.");

@@ -243,6 +243,7 @@ final readonly class PageFrontmatterMapper
             'slug' => $page->getSlug(),
             'h1' => $page->getH1(),
             'locale' => $page->locale,
+            'holdPublication' => $page->isHoldPublication(),
             'updatedAt' => $page->updatedAt?->format(DateTimeInterface::ATOM),
         ];
     }
