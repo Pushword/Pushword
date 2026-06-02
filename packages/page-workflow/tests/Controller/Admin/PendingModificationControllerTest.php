@@ -137,6 +137,26 @@ final class PendingModificationControllerTest extends AbstractAdminTestClass
         self::assertFalse($this->storage()->has($refreshed), 'storage must be emptied after approval');
     }
 
+    public function testCompareSerializesSmallFieldsAsJsArray(): void
+    {
+        $client = $this->loginUser();
+        $page = $this->createPublishedPage();
+
+        $seed = new PendingModification(pageId: (int) $page->id, payload: []);
+        $this->storage()->write($page, $seed);
+
+        $client->request(Request::METHOD_GET, '/admin/page/'.$page->id.'/pending/compare');
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+
+        // mainContent is filtered out of the middle of FIELDS; without re-indexing the
+        // remaining array keeps sparse keys and json_encode emits a JS object, breaking
+        // smallFields.forEach() in the browser.
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('const smallFields = ["h1","title","name","metaRobots"];', $content);
+
+        $this->storage()->delete($page);
+    }
+
     public function testPendingDiscardRejectsInvalidCsrfTokenWith403(): void
     {
         $client = $this->loginUser();
