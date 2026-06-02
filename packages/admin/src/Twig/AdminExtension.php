@@ -3,7 +3,7 @@
 namespace Pushword\Admin\Twig;
 
 use Pushword\Core\Repository\PageRepository;
-use Pushword\Core\Site\SiteRegistry;
+use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 
 use function Safe\json_encode;
 
@@ -14,12 +14,8 @@ class AdminExtension
     /** @var array<string, string> */
     private array $cache = [];
 
-    /** @var array<string, bool> */
-    private array $holdableCache = [];
-
     public function __construct(
         private readonly PageRepository $pageRepository,
-        private readonly SiteRegistry $apps,
     ) {
     }
 
@@ -32,15 +28,13 @@ class AdminExtension
     }
 
     /**
-     * Whether a page on this host can be "held": only meaningful when the host
-     * is served from a static/cache build, where edits stay out of production
-     * until the hold is released.
+     * Whether a page can be "held": meaningful whenever the static-generator
+     * bundle is installed, since both the full static export (`pw:static`) and
+     * `cache: static` mode keep the previously generated file while a hold is set.
      */
     #[AsTwigFunction('pw_page_holdable')]
     public function isHoldable(?string $host = null): bool
     {
-        $key = $host ?? '';
-
-        return $this->holdableCache[$key] ??= 'static' === $this->apps->getAppValue('cache', $key);
+        return class_exists(PushwordStaticGeneratorBundle::class);
     }
 }

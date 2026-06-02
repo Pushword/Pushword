@@ -37,6 +37,7 @@ use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Utils\FlashBag;
 use Pushword\Core\Utils\TwigErrorExtractor;
+use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -193,7 +194,7 @@ class PageCrudController extends AbstractAdminCrudController
                     ->setChoices($this->getMetaRobotsChoices()),
             );
 
-        if ($this->hasStaticHost()) {
+        if (class_exists(PushwordStaticGeneratorBundle::class)) {
             $filters->add(PageHoldFilter::new('holdPublicationAt', 'adminPageHoldFilterLabel'));
         }
 
@@ -204,11 +205,6 @@ class PageCrudController extends AbstractAdminCrudController
         $filters->add(TextFilter::new('customProperties', 'adminPageCustomPropertiesLabel'));
 
         return $filters;
-    }
-
-    private function hasStaticHost(): bool
-    {
-        return array_any($this->apps->getAll(), static fn ($app): bool => 'static' === $app->getStr('cache'));
     }
 
     #[Override]
