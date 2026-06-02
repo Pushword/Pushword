@@ -60,6 +60,10 @@ final class StaticGeneratorBenchmarkTest extends KernelTestCase
         $container = self::getContainer();
         $siteRegistry = $container->get(SiteRegistry::class);
         $siteConfig = $siteRegistry->switchSite('localhost.dev')->get();
+        // Force full static-dir generation: localhost.dev is configured as a
+        // `cache: static` host, which would write into the cache dir and ignore
+        // the isolated static_dir this benchmark counts files in.
+        $siteConfig->setCustomProperty('cache', 'none');
         $siteConfig->setCustomProperty('static_dir', $this->isolatedStaticDir);
 
         // Clean up any leftover PID files in the per-worker var dir
