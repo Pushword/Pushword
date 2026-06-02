@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
 use Exception;
 use League\Csv\Writer;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\RevisionCalculator;
@@ -18,6 +19,7 @@ use Stringable;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
+use Throwable;
 
 final class PageExporter
 {
@@ -52,6 +54,7 @@ final class PageExporter
         private readonly PropertyConverterRegistry $converterRegistry,
         private readonly RevisionCalculator $revisions,
         array $pageIndexColumns = [],
+        private readonly ?LoggerInterface $logger = null,
     ) {
         $this->filesystem = new Filesystem();
         $this->defaultValue = new ExporterDefaultValueHelper();
@@ -104,11 +107,7 @@ final class PageExporter
                 continue;
             }
 
-            $exported = $this->exportPage($page);
-
-            if ($exported) {
-                $this->output?->writeln(\sprintf('Exported %s.md', $page->getSlug()));
-            }
+            $this->exportPageSafe($page);
         }
 
         $this->exportIndex($pages);
@@ -133,14 +132,33 @@ final class PageExporter
         }
 
         foreach ($exportablePages as $page) {
-            $exported = $this->exportPage($page, $force);
-
-            if ($exported) {
-                $this->output?->writeln(\sprintf('Exported %s.md', $page->getSlug()));
-            }
+            $this->exportPageSafe($page, $force);
         }
 
         $this->exportIndex($pages);
+    }
+
+    /**
+     * Export a single page, isolating failures so one bad page cannot abort the
+     * whole export (mirroring the per-file resilience of the import side). A
+     * throwing converter, serializer, or lazy-load is logged and skipped.
+     */
+    private function exportPageSafe(Page $page, bool $force = false): void
+    {
+        try {
+            $exported = $this->exportPage($page, $force);
+        } catch (Throwable $throwable) {
+            $this->logger?->error('Flat export failed for page {slug}: {message}', [
+                'slug' => $page->getSlug(),
+                'message' => $throwable->getMessage(),
+            ]);
+
+            return;
+        }
+
+        if ($exported) {
+            $this->output?->writeln(\sprintf('Exported %s.md', $page->getSlug()));
+        }
     }
 
     /**

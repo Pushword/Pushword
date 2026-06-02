@@ -205,6 +205,30 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         self::assertStringNotContainsString('stale body', $homepage, 'Stale mirror content must be overwritten');
     }
 
+    public function testSnapshotStreamsStaleMirrorWhenRefreshFails(): void
+    {
+        // Seed a real mirror so hasMarkdown() passes and there is content to stream.
+        $this->populateContentDir();
+
+        // Force the DB → flat refresh to throw from deep inside the exporter, in a
+        // way root cannot bypass: make `index.csv` a directory, so exportIndex()'s
+        // unguarded readFile()/dumpFile() raises an IOException. Without the
+        // controller's try/catch this bubbles up as a 500; with it, the existing
+        // mirror is streamed instead.
+        $this->filesystem->mkdir($this->contentDir.'/index.csv');
+
+        $response = $this->request('/api/content/snapshot.tar.gz?host='.self::HOST);
+
+        self::assertSame(200, $response->getStatusCode(), 'A refresh failure must not 500 the snapshot');
+        self::assertSame('application/gzip', $response->headers->get('Content-Type'));
+
+        $entries = $this->tarballEntries($this->captureStream());
+        self::assertTrue(
+            $this->entriesContainSuffix($entries, 'page.md'),
+            'The existing mirror must still be streamed despite the refresh failure',
+        );
+    }
+
     private function request(string $url): Response
     {
         $this->client->request(Request::METHOD_GET, $url, [], [], [

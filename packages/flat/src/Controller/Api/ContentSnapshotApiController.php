@@ -3,6 +3,7 @@
 namespace Pushword\Flat\Controller\Api;
 
 use FilesystemIterator;
+use Psr\Log\LoggerInterface;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
@@ -17,6 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Throwable;
 
 /**
  * Streams the flat content directory of a host — or every host at once — as a
@@ -39,6 +41,7 @@ final class ContentSnapshotApiController extends AbstractApiController
         private readonly SiteRegistry $siteRegistry,
         private readonly FlatFileContentDirFinder $contentDirFinder,
         private readonly FlatFileSync $flatSync,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -65,8 +68,17 @@ final class ContentSnapshotApiController extends AbstractApiController
 
         // Freshen an existing mirror from the DB so each .md ships with a current
         // `revision:`. Done after the 404 check, so a never-exported (empty) dir
-        // still short-circuits without touching the DB.
-        $this->refreshMirror($host);
+        // still short-circuits without touching the DB. A refresh failure must not
+        // sink the whole snapshot: log it and stream the existing (slightly stale)
+        // mirror rather than returning a 500.
+        try {
+            $this->refreshMirror($host);
+        } catch (Throwable $throwable) {
+            $this->logger?->error('Snapshot mirror refresh failed for host {host}, streaming stale mirror: {message}', [
+                'host' => $host ?: 'all',
+                'message' => $throwable->getMessage(),
+            ]);
+        }
 
         $filename = \sprintf('snapshot-%s-%s.tar.gz', $host ?: 'all', date('Y-m-d'));
 
