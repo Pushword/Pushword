@@ -21,6 +21,14 @@ trait ExtensiblePropertiesTrait
 
     protected string $unmanagedPropertiesYaml = '';
 
+    /**
+     * True once the YAML editing surface (admin textarea) has fed a value.
+     * Guards the destructive reconciliation so callers that never expose the
+     * textarea (e.g. the API) cannot wipe unmanaged properties on validation.
+     */
+    #[Ignore]
+    protected bool $unmanagedPropertiesYamlProvided = false;
+
     #[Ignore]
     protected string $buildValidationAtPath = 'unmanagedPropertiesAsYaml';
 
@@ -65,6 +73,7 @@ trait ExtensiblePropertiesTrait
     public function setUnmanagedPropertiesFromYaml(?string $yaml, bool $merge = false): self
     {
         $this->unmanagedPropertiesYaml = (string) $yaml;
+        $this->unmanagedPropertiesYamlProvided = true;
 
         if ($merge) {
             $this->mergeUnmanagedProperties();
@@ -109,6 +118,12 @@ trait ExtensiblePropertiesTrait
 
     protected function mergeUnmanagedProperties(): void
     {
+        // Only reconcile when the YAML surface actually fed a value; otherwise
+        // an empty transient YAML would silently drop every unmanaged property.
+        if (! $this->unmanagedPropertiesYamlProvided) {
+            return;
+        }
+
         $unmanagedProperties = '' !== $this->unmanagedPropertiesYaml
             ? Yaml::parse($this->unmanagedPropertiesYaml)
             : [];
@@ -118,6 +133,7 @@ trait ExtensiblePropertiesTrait
         }
 
         $this->unmanagedPropertiesYaml = '';
+        $this->unmanagedPropertiesYamlProvided = false;
 
         // Remove unmanaged properties that were deleted from the YAML
         foreach (array_keys($this->customProperties) as $existingKey) {

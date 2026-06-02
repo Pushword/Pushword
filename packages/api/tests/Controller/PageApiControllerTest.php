@@ -183,6 +183,37 @@ final class PageApiControllerTest extends WebTestCase
         self::assertSame('New body content', $fresh['body']);
     }
 
+    public function testPutOmittingCustomPropertiesKeepsThem(): void
+    {
+        // Regression: a PUT that doesn't resend customProperties must not wipe
+        // them. Validation used to reconcile against an empty YAML surface and
+        // delete every unmanaged custom property.
+        $host = 'api-test-'.uniqid().'.example.com';
+        $slug = 'product-'.uniqid();
+        $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => $slug, 'h1' => 'Product', 'locale' => 'en', 'customProperties' => ['productCode' => 'ABC-123']],
+            'body' => 'Hello',
+        ]);
+        self::assertSame(201, $this->client->getResponse()->getStatusCode());
+        $created = $this->decode();
+        self::assertIsString($created['slug']);
+        $slug = $created['slug'];
+        $this->createdPageIds[] = $this->lookupPageId($host, $slug);
+
+        $revision = $this->currentRevision($host, $slug);
+
+        $response = $this->request('PUT', '/api/page/'.$host.'/'.$slug, [
+            'frontmatter' => ['h1' => 'Renamed Product'],
+        ], ['HTTP_IF_MATCH' => $revision]);
+        self::assertSame(200, $response->getStatusCode());
+
+        $this->request('GET', '/api/page/'.$host.'/'.$slug);
+        $fresh = $this->decode();
+        self::assertIsArray($fresh['frontmatter']);
+        self::assertSame('Renamed Product', $fresh['frontmatter']['h1']);
+        self::assertSame(['productCode' => 'ABC-123'], $fresh['frontmatter']['customProperties']);
+    }
+
     public function testPreviewRendersMarkdown(): void
     {
         $this->request('POST', '/api/page/preview', [

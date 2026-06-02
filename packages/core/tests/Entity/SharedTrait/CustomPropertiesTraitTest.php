@@ -105,6 +105,18 @@ final class CustomPropertiesTraitTest extends TestCase
         self::assertNull($page->getCustomProperty('removeThis'));
     }
 
+    public function testValidationWithoutYamlSurfaceKeepsCustomProperties(): void
+    {
+        // Reproduces the API flow: customProperties are set directly and the page
+        // is validated without the admin YAML textarea ever feeding a value.
+        $page = new Page();
+        $page->setCustomProperties(['productCode' => 'ABC-123']);
+
+        $page->validateUnmanagedProperties($this->getExceptionContextInterface());
+
+        self::assertSame(['productCode' => 'ABC-123'], $page->getCustomProperties());
+    }
+
     public function testMergeThrowsWhenYamlContainsManagedProperty(): void
     {
         $page = new Page();
@@ -158,7 +170,7 @@ final class CustomPropertiesTraitTest extends TestCase
         $page->setUnmanagedPropertiesFromYaml('just a string', true);
     }
 
-    protected function getExceptionContextInterface(): MockObject
+    protected function getExceptionContextInterface(): ExecutionContextInterface&MockObject
     {
         $mockConstraintViolationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
         $mockConstraintViolationBuilder->method('atPath')->willReturnSelf();
