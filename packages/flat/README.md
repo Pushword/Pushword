@@ -149,7 +149,6 @@ Pushword is a modular CMS — one [Symfony](https://symfony.com) bundle for the 
 
 **Content & workflow**
 - **pushword/flat** — Flat-file (Markdown + Git) CMS mode. *(this package)*
-- [pushword/page-workflow](https://github.com/Pushword/page-workflow) — Editorial workflow & pending modifications.
 - [pushword/version](https://github.com/Pushword/version) — Page & snippet versioning.
 - [pushword/page-update-notifier](https://github.com/Pushword/page-update-notifier) — Email alerts on content changes.
 - [pushword/conversation](https://github.com/Pushword/conversation) — Comments, contact & newsletter forms.

@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: [base, api, page-workflow, flat, conversation, snippet]
+        profile: [base, api, flat, conversation, snippet]
 
     name: Partial install - ${{ matrix.profile }}
 

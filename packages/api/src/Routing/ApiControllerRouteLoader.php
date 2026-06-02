@@ -9,7 +9,7 @@ use Symfony\Component\Routing\RouteCollection;
 /**
  * Loads the #[Route] attributes of every controller tagged
  * `pushword.api.controller` — api's own controllers plus those contributed by
- * optional bundles (conversation, flat, snippet, page-workflow).
+ * optional bundles (conversation, flat, snippet).
  *
  * Routing all API endpoints through this single loader means optional packages
  * never register their own API routes: they cannot be half-wired or forgotten,

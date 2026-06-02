@@ -29,7 +29,6 @@ jobs:
           - advanced-main-image
           - api
           - docs
-          - page-workflow
 
     steps:
       - uses: actions/checkout@v3
