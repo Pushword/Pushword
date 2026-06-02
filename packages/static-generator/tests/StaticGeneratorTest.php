@@ -469,6 +469,7 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertStringContainsString('Twig error: variable not found', $errors[0]);
     }
 
+    #[Group('serial')]
     public function testDownload(): void
     {
         self::bootKernel();
@@ -485,6 +486,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $this->assertMediaFilesAccessible($mediaDir);
     }
 
+    #[Group('serial')]
     public function testDownloadWithSymlink(): void
     {
         self::bootKernel();
@@ -879,6 +881,7 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertGreaterThan(1, $workers);
     }
 
+    #[Group('serial')]
     public function testParallelGenerationProducesSameOutput(): void
     {
         self::bootKernel();
@@ -924,6 +927,7 @@ final class StaticGeneratorTest extends KernelTestCase
         new Filesystem()->remove([$seqDir, $parDir]);
     }
 
+    #[Group('serial')]
     public function testParallelGenerationShowsWorkerPrefix(): void
     {
         self::bootKernel();

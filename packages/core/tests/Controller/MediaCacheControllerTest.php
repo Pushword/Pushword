@@ -11,7 +11,11 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 
+// Serial: these tests unlink/regenerate variants of the shared piedweb-logo fixture
+// in public/media (a dir shared across all paratest workers), so they need exclusive
+// access — otherwise a concurrent worker mutating the same path flakes them.
 #[Group('integration')]
+#[Group('serial')]
 final class MediaCacheControllerTest extends WebTestCase
 {
     use PathTrait;

@@ -117,8 +117,12 @@ jobs:
         run: cd packages/skeleton && php bin/console pw:image:cache
 
       - name: Execute tests
-        run: vendor/bin/paratest --processes=auto --coverage-clover coverage.xml --exclude-group=panther --exclude-group=benchmark
-        #run: vendor/bin/phpunit --coverage-clover coverage.xml --exclude-group panther
+        # The 'serial' group holds tests that need exclusive access to the shared
+        # public/media variant dir (not per-worker isolatable); run them sequentially
+        # after the parallel batch so concurrent workers can't mutate it underneath them.
+        run: |
+          vendor/bin/paratest --processes=auto --coverage-clover coverage.xml --exclude-group=panther --exclude-group=benchmark --exclude-group=serial
+          vendor/bin/paratest --processes=1 --group=serial
         env:
           TEST_RUN_ID: ci-${{ github.run_id }}
 
@@ -183,7 +187,10 @@ jobs:
         run: cd packages/skeleton && php bin/console pw:image:cache
 
       - name: Execute tests
-        run: vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark
+        # Serial group runs after the parallel batch — see the SQLite job above.
+        run: |
+          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial
+          vendor/bin/paratest --processes=1 --group=serial
         env:
           TEST_RUN_ID: ci-mariadb-${{ github.run_id }}
           PUSHWORD_TEST_MYSQL_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
