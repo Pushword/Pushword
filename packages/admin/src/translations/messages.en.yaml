@@ -94,6 +94,11 @@ adminPageFaqLabel: "Associated Questions"
 adminPageGalleryLabel: "Image gallery"
 adminPageH1Help: "<small>The <em>H1</em> is visible on your pages while the <code>Title</code> of your document will be displayed in the browser bar and in search engines.</small>"
 adminPageH1Label: Title
+adminPageHoldBadge: On hold
+adminPageHoldFilterLabel: Hold publication
+adminPageHoldOnlyHeld: On hold
+adminPageHoldOnlyLive: Live
+adminPageHoldToggleHelp: "Hold publication: keep the published static version online while editing; the change goes live once released."
 adminPageHostLabel: Domain
 adminPageImagesLabel: Images
 adminPageLocaleHelp: "<small>In the format described by RFC 5646 (e.g. <code>fr</code>, <code>fr-FR</code>, <code>en</code>, <code>en-US</code>...)</small>"

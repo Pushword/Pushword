@@ -28,6 +28,7 @@ use Exception;
 use LogicException;
 use Override;
 use Pushword\Admin\Crud\PageCrudExtensionInterface;
+use Pushword\Admin\Filter\PageHoldFilter;
 use Pushword\Admin\Filter\PageSearchFilter;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Core\Controller\PageController;
@@ -192,6 +193,10 @@ class PageCrudController extends AbstractAdminCrudController
                     ->setChoices($this->getMetaRobotsChoices()),
             );
 
+        if ($this->hasStaticHost()) {
+            $filters->add(PageHoldFilter::new('holdPublicationAt', 'adminPageHoldFilterLabel'));
+        }
+
         foreach ($this->extensions as $extension) {
             $extension->configureFilters($filters);
         }
@@ -199,6 +204,11 @@ class PageCrudController extends AbstractAdminCrudController
         $filters->add(TextFilter::new('customProperties', 'adminPageCustomPropertiesLabel'));
 
         return $filters;
+    }
+
+    private function hasStaticHost(): bool
+    {
+        return array_any($this->apps->getAll(), static fn ($app): bool => 'static' === $app->getStr('cache'));
     }
 
     #[Override]
@@ -522,6 +532,29 @@ class PageCrudController extends AbstractAdminCrudController
             'value' => $page->getPublishedAt(),
             'field' => null,
         ]));
+    }
+
+    #[Route(path: '/admin/page/{id}/toggle-hold', name: 'pushword_page_toggle_hold', methods: ['POST'])]
+    public function toggleHold(Request $request, Page $page): Response
+    {
+        $token = (string) $request->request->get('_token');
+
+        if (! $this->isCsrfTokenValid($this->getHoldToggleTokenId($page), $token)) {
+            return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
+        }
+
+        $page->setHoldPublication('1' === (string) $request->request->get('hold'));
+
+        $this->getEntityManager()->flush();
+
+        return new Response($this->adminFormFieldManager->twig->render('@pwAdmin/components/hold_toggle.html.twig', [
+            'entity' => ['instance' => $page],
+        ]));
+    }
+
+    private function getHoldToggleTokenId(Page $page): string
+    {
+        return sprintf('page_toggle_hold_%d', $page->id ?? 0);
     }
 
     #[Route(path: '/admin/page/{id}/inline-update', name: 'pushword_page_inline_update', methods: ['POST'])]

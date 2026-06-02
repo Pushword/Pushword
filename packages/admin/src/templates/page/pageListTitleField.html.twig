@@ -40,6 +40,9 @@
   </div>
 
   <div class="d-flex flex-wrap align-items-center text-muted small pw-inline-tags-wrapper">
+    {% if pw_page_holdable(page.host) %}
+      {% include '@pwAdmin/components/hold_toggle.html.twig' with {entity: {instance: page}} only %}
+    {% endif %}
     <span style="font-weight:200; color:#94a3b8;">#</span>
     <input
       type="text"

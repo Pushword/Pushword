@@ -3,10 +3,10 @@
 namespace Pushword\StaticGenerator\Cache\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use Pushword\Admin\FormField\AbstractField;
 use Pushword\Core\Entity\Page;
 use Pushword\StaticGenerator\StaticAppGenerator;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 
 /**
  * Edit-only switch letting an editor hold an already published page's static
@@ -34,10 +34,9 @@ final class PageHoldPublicationField extends AbstractField
             return null;
         }
 
-        return $this->buildEasyAdminField('holdPublication', CheckboxType::class, [
-            'label' => 'adminPageHoldPublicationLabel',
-            'help' => 'adminPageHoldPublicationHelp',
-            'required' => false,
-        ]);
+        return BooleanField::new('holdPublication', 'adminPageHoldPublicationLabel')
+            ->setHelp('adminPageHoldPublicationHelp')
+            ->renderAsSwitch(true)
+            ->onlyOnForms();
     }
 }

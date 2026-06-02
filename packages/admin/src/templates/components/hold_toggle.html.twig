@@ -1,0 +1,29 @@
+{# Inline "hold publication" switch for the page list.
+   Only included for pages whose host runs in static/cache mode.
+   @var page \Pushword\Core\Entity\Page #}
+{% set page = entity.instance %}
+{% set held = page.holdPublicationAt is not null %}
+{% set target = 'pw-hold-' ~ page.id %}
+{% set token = csrf_token('page_toggle_hold_' ~ page.id) %}
+{% set action = url('pushword_page_toggle_hold', {id: page.id}) %}
+
+<span
+  id="{{ target }}"
+  class="pw-hold d-inline-flex align-items-center me-2{{ held ? ' pw-hold-on' : '' }}"
+  title="{{ 'adminPageHoldToggleHelp'|trans }}">
+  <label class="form-check form-switch mb-0 d-inline-flex align-items-center">
+    <input
+      type="checkbox"
+      class="form-check-input mt-0"
+      role="switch"
+      hx-post="{{ action }}"
+      hx-trigger="change"
+      hx-target="#{{ target }}"
+      hx-swap="outerHTML"
+      hx-vals='js:{hold: event.target.checked ? 1 : 0, _token: "{{ token|e('js') }}"}'
+      {{ held ? 'checked' : '' }}>
+  </label>
+  {% if held %}
+    <small class="text-warning fw-semibold ms-1"><i class="fa fa-pause-circle"></i> {{ 'adminPageHoldBadge'|trans }}</small>
+  {% endif %}
+</span>
