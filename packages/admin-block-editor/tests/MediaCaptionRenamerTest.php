@@ -20,6 +20,28 @@ final class MediaCaptionRenamerTest extends AbstractAdminTestClass
 
     private const string FIXTURE = __DIR__.'/../../core/tests/EventListener/media/2.jpg';
 
+    /** @var int[] media IDs to clean up after each test */
+    private array $createdMediaIds = [];
+
+    protected function tearDown(): void
+    {
+        // Every media created here is a copy of the same fixture, so they all
+        // share one content hash. Left in the shared per-worker DB they surface
+        // as a duplicate group to sibling tests (e.g. CleanDuplicateMediaCommandTest).
+        $em = $this->em();
+        foreach ($this->createdMediaIds as $id) {
+            $media = $em->getRepository(Media::class)->find($id);
+            if ($media instanceof Media) {
+                $em->remove($media);
+            }
+        }
+
+        $em->flush();
+        $this->createdMediaIds = [];
+
+        parent::tearDown();
+    }
+
     public function testRenamesImageFromCaption(): void
     {
         self::bootKernel();
@@ -151,6 +173,10 @@ final class MediaCaptionRenamerTest extends AbstractAdminTestClass
 
         // Reload from DB so the instance has no pending upload file, as in the real edit flow.
         $id = $media->id;
+        if (null !== $id) {
+            $this->createdMediaIds[] = $id;
+        }
+
         $this->em()->clear();
 
         return $this->em()->getRepository(Media::class)->find($id) ?? throw new Exception();
