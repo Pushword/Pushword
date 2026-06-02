@@ -30,7 +30,9 @@ jobs:
           composer-options: --prefer-dist --prefer-stable --no-interaction
 
       - name: Build container
-        run: cd packages/skeleton && php ./bin/console cache:clear
+        # cache:warmup dumps App_KernelDevDebugContainer.xml that phpstan-symfony
+        # reads (see phpstan.dist.neon); cache:clear warms then drops that XML.
+        run: cd packages/skeleton && php ./bin/console cache:warmup --env=dev
 
       - name: PHPStan
         run: vendor/bin/phpstan --memory-limit=1G analyse --error-format=github
