@@ -1,4 +1,6 @@
 page_scanner:
-  resource: "@PushwordPageScannerBundle/Controller/"
+  # Only the admin controller — the API controller (Controller/Api/) is routed by
+  # pushword/api's loader under /api, without this /admin/page prefix.
+  resource: "@PushwordPageScannerBundle/Controller/PageScannerController.php"
   type: attribute
   prefix: /admin/page

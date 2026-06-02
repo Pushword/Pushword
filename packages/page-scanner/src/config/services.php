@@ -1,6 +1,8 @@
 <?php
 
+use Pushword\Api\Controller\ApiControllerInterface;
 use Pushword\Core\PushwordCoreBundle;
+use Pushword\PageScanner\Controller\Api\PageScanApiController;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -22,6 +24,20 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$skipExternalUrlCheck', '%pw.pushword_page_scanner.skip_external_url_check%')
         ->bind('$errorsToIgnore', '%pw.pushword_page_scanner.errors_to_ignore%');
 
+    // The JSON API controller requires the optional pushword/api package.
+    $apiAvailable = interface_exists(ApiControllerInterface::class);
+    $apiExclude = $apiAvailable ? [] : [__DIR__.'/../Controller/Api/'];
+
     $services->load('Pushword\PageScanner\\', __DIR__.'/../*')
-        ->exclude([__DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH]);
+        ->exclude([
+            __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
+            ...$apiExclude,
+        ]);
+
+    if ($apiAvailable) {
+        $services->set(PageScanApiController::class)
+            ->autowire()
+            ->tag('controller.service_arguments')
+            ->tag('pushword.api.controller');
+    }
 };

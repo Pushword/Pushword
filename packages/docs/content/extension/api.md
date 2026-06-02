@@ -219,6 +219,52 @@ extension to see diffs between revisions.
 redirections, addressed by `(host, slug)` like pages. Shape:
 `{ host, slug, redirectTo, code, revision, updatedAt }`. Same `If-Match` concurrency rules.
 
+{id=page-scan}
+## Page scan (dead links, 404, 301)
+
+Mirrors the admin [Page scanner](/extension/page-scanner). A scan can run for minutes, so the
+API never blocks: `POST` dispatches a **background** scan, `GET` polls its progress and
+findings.
+
+| Method | Route                       | Action                                              |
+|--------|-----------------------------|-----------------------------------------------------|
+| `POST` | `/api/page-scan`            | Start a background scan (or return a fresh result)  |
+| `GET`  | `/api/page-scan`            | Poll status, live output, and the cached findings   |
+
+Both take an optional `?host=` (a configured host; omit to scan every site at once). An
+unknown host yields `400`.
+
+```bash
+# Trigger — returns 202 with a statusUrl to poll (or 200 if a fresh result already exists)
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+     "https://example.com/api/page-scan?host=example.com"
+
+# Poll until status is "completed"
+curl -H "Authorization: Bearer $TOKEN" \
+     "https://example.com/api/page-scan?host=example.com"
+```
+
+```json
+{
+  "host": "example.com",
+  "status": "completed",
+  "running": false,
+  "lastScannedAt": "2026-06-02T09:14:00+00:00",
+  "errorCount": 2,
+  "errors": [
+    { "host": "example.com", "slug": "about", "message": "404 /team" }
+  ]
+}
+```
+
+- `status` — `idle` (never scanned), `running`, `completed`, or `error`. While `running`
+  (or on `error`) the body also carries the live console `output`.
+- `POST` returns `202 Accepted` when a scan is running (just started, or already in
+  progress), or `200` with the cached result when it is still within the configured
+  `min_interval_between_scan` window — pass `?force=1` to bypass that and rescan.
+- `errors[].message` is plain text (admin HTML stripped), grouped per page in the admin but
+  flattened to a list here.
+
 {id=errors}
 ## Error reference
 

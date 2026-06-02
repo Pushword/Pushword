@@ -28,6 +28,11 @@ php bin/console pw:page-scan --limit=100      # stop after 100 errors
 
 The scanner is accessible via the admin menu. Results are cached and refreshed automatically.
 
+### API
+
+With the [API extension](/extension/api) installed, the same scan is available over REST at
+`POST/GET /api/page-scan` (background dispatch + polling) for scripted and agent workflows.
+
 ## What it checks
 
 - **Internal links**: page exists, is published, is not a redirect
