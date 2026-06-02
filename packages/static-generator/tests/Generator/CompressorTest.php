@@ -169,6 +169,18 @@ final class CompressorTest extends TestCase
         self::assertFileExists($testFile.$algorithm->getExtension());
     }
 
+    public function testFileSuffixesCoversPrimaryAndEveryAlgorithm(): void
+    {
+        $suffixes = CompressionAlgorithm::fileSuffixes();
+
+        self::assertSame('', $suffixes[0], 'The primary (uncompressed) file must come first.');
+        self::assertCount(\count(CompressionAlgorithm::cases()) + 1, $suffixes);
+
+        foreach (CompressionAlgorithm::cases() as $algorithm) {
+            self::assertContains($algorithm->getExtension(), $suffixes);
+        }
+    }
+
     public function testZstdNativeCompressionIsDisabled(): void
     {
         // PHP's zstd_compress() doesn't allow controlling window size,

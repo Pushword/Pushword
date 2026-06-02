@@ -17,6 +17,18 @@ enum CompressionAlgorithm: string
         };
     }
 
+    /**
+     * The primary file (empty suffix) plus every compressed sidecar extension.
+     * Single source of truth for code that copies or deletes a page's whole
+     * file set, so a new algorithm is covered everywhere automatically.
+     *
+     * @return string[]
+     */
+    public static function fileSuffixes(): array
+    {
+        return ['', ...array_map(static fn (self $algorithm): string => $algorithm->getExtension(), self::cases())];
+    }
+
     public function nativeCompress(string $content): ?string
     {
         return match ($this) {

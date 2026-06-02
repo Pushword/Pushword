@@ -4,6 +4,7 @@ namespace Pushword\StaticGenerator\Cache;
 
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\StaticGenerator\Generator\CompressionAlgorithm;
 use Pushword\StaticGenerator\StaticAppGenerator;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -12,9 +13,6 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 readonly class PageCacheFileManager
 {
-    /** @var string[] */
-    private const array COMPRESSION_SUFFIXES = ['', '.gz', '.br', '.zst'];
-
     private Filesystem $filesystem;
 
     public function __construct(
@@ -49,7 +47,7 @@ readonly class PageCacheFileManager
             return;
         }
 
-        foreach (self::COMPRESSION_SUFFIXES as $suffix) {
+        foreach (CompressionAlgorithm::fileSuffixes() as $suffix) {
             $this->filesystem->remove($path.$suffix);
         }
     }

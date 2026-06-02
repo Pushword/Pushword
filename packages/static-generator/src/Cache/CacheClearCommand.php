@@ -46,16 +46,28 @@ final readonly class CacheClearCommand
 
             $cacheDir = $this->staticAppGenerator->getCacheDir($app);
             $output->writeln('<info>Clearing cache: '.$cacheDir.'</info>');
-            $filesystem->remove($cacheDir);
-            ++$processedCount;
 
-            if ($noWarmup) {
-                continue;
+            // Move the live cache aside instead of deleting it outright: held pages
+            // get no fresh output (the generators skip them), so their frozen files
+            // must be carried over from here or visitors would fall through to the
+            // live draft. The backup is removed once the carry-over is done.
+            $backupDir = $cacheDir.'~clearing';
+            $filesystem->remove($backupDir);
+            if ($filesystem->exists($cacheDir)) {
+                $filesystem->rename($cacheDir, $backupDir);
             }
 
-            $output->writeln('<info>Warming cache for '.$targetHost.'</info>');
-            $this->staticAppGenerator->setOutput($output);
-            $this->staticAppGenerator->generate($targetHost);
+            $filesystem->mkdir($cacheDir);
+            ++$processedCount;
+
+            if (! $noWarmup) {
+                $output->writeln('<info>Warming cache for '.$targetHost.'</info>');
+                $this->staticAppGenerator->setOutput($output);
+                $this->staticAppGenerator->generate($targetHost);
+            }
+
+            $this->staticAppGenerator->carryOverHeldPages($backupDir, $cacheDir, $app, $filesystem);
+            $filesystem->remove($backupDir);
         }
 
         if (0 === $processedCount) {

@@ -12,6 +12,7 @@ use Pushword\StaticGenerator\Cache\PageCacheGeneratorInterface;
 use Pushword\StaticGenerator\DependencyInjection\Configuration;
 use Pushword\StaticGenerator\Event\StaticPostGenerateEvent;
 use Pushword\StaticGenerator\Event\StaticPreGenerateEvent;
+use Pushword\StaticGenerator\Generator\CompressionAlgorithm;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
@@ -233,23 +234,21 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     }
 
     /**
-     * Copy the previously generated files of each held page from the live static
-     * dir into the freshly built temp dir, so a full (temp + swap) rebuild keeps
-     * serving their published version. Cache mode and incremental mode write in
-     * place and need no carry-over. Paginated feed pages keep only their primary
-     * files (extra pager files are rebuilt on release).
+     * Copy the previously generated files of each held page from a source dir
+     * into a destination dir, so a rebuild keeps serving their published version
+     * instead of dropping them (the generators skip held pages). Used by the full
+     * (temp + swap) rebuild and by `pw:cache:clear` after wiping the cache dir.
+     * Paginated feed pages keep only their primary files (extra pager files are
+     * rebuilt on release).
      */
-    private function carryOverHeldPages(string $originalStaticDir, string $tempDir, SiteConfig $app, Filesystem $filesystem): void
+    public function carryOverHeldPages(string $originalStaticDir, string $tempDir, SiteConfig $app, Filesystem $filesystem): void
     {
         if (! $filesystem->exists($originalStaticDir)) {
             return;
         }
 
-        foreach ($this->pageRepository->getPublishedPages($app->getMainHost()) as $page) {
-            if (null === $page->holdPublicationAt) {
-                continue;
-            }
-
+        $heldPages = $this->pageRepository->getPublishedPages($app->getMainHost(), [['holdPublicationAt', 'IS NOT', null]]);
+        foreach ($heldPages as $page) {
             $relative = $this->staticRelativePathFor($page);
             $bases = [$relative];
             if (str_ends_with($relative, '.html')) {
@@ -257,7 +256,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             }
 
             foreach ($bases as $base) {
-                foreach (['', '.gz', '.br', '.zst'] as $suffix) {
+                foreach (CompressionAlgorithm::fileSuffixes() as $suffix) {
                     $source = $originalStaticDir.'/'.$base.$suffix;
                     if ($filesystem->exists($source)) {
                         $filesystem->copy($source, $tempDir.'/'.$base.$suffix, true);

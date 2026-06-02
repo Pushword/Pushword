@@ -3,6 +3,7 @@
 namespace Pushword\StaticGenerator\Tests\Cache;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\StaticAppGenerator;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -81,6 +82,39 @@ final class CacheClearCommandTest extends KernelTestCase
         self::assertStringContainsString('Clearing cache', $commandTester->getDisplay());
         self::assertStringNotContainsString('Warming', $commandTester->getDisplay());
         self::assertFileDoesNotExist($this->cacheDir.'/index.html');
+    }
+
+    public function testCacheClearPreservesHeldPages(): void
+    {
+        $commandTester = $this->makeCommandTester();
+
+        // Warm so the homepage's frozen file exists.
+        $commandTester->execute(['host' => 'localhost.dev']);
+        self::assertFileExists($this->cacheDir.'/index.html');
+        $frozenHtml = (string) file_get_contents($this->cacheDir.'/index.html');
+
+        $entityManager = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $homepage = $entityManager->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
+        self::assertInstanceOf(Page::class, $homepage);
+        $originalH1 = $homepage->getH1();
+
+        try {
+            // Hold the page and mutate its content: the draft must never reach the
+            // cache dir; the frozen version must survive the clear + warm cycle.
+            $homepage->setHoldPublication(true);
+            $homepage->setH1('DRAFT must not be published');
+            $entityManager->flush();
+
+            $commandTester->execute(['host' => 'localhost.dev']);
+
+            self::assertFileExists($this->cacheDir.'/index.html');
+            self::assertStringEqualsFile($this->cacheDir.'/index.html', $frozenHtml);
+            self::assertStringNotContainsString('DRAFT must not be published', (string) file_get_contents($this->cacheDir.'/index.html'));
+        } finally {
+            $homepage->setHoldPublication(false);
+            $homepage->setH1($originalH1);
+            $entityManager->flush();
+        }
     }
 
     public function testCacheClearSkipsNonStaticSites(): void
