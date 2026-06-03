@@ -7,6 +7,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Type\ComparisonType;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Symfony\Component\Translation\TranslatableMessage;
 
 /**
  * @extends AbstractMediaPickerField<Page>
@@ -18,12 +19,20 @@ class PageMainImageField extends AbstractMediaPickerField
         /** @var Page $page */
         $page = $this->admin->getSubject();
 
-        return AssociationField::new('mainImage', ' ')
+        $field = AssociationField::new('mainImage', ' ')
             ->onlyOnForms()
             ->setFormTypeOption('required', false)
             ->setFormTypeOption('choice_label', static fn (Media $media): string => $media->getAlt() ?: $media->getFileName())
             ->setFormTypeOption('placeholder', 'adminPageMainImageLabel')
             ->setFormTypeOption('attr', $this->mediaPickerAttributes('mainImage', $this->defaultFilters(), $page->getMainImage()));
+
+        // Surface a broken reference recorded by flat import (media named in content but absent from the library).
+        $notFound = $page->getCustomProperty('mainImageNotFound');
+        if (\is_string($notFound) && '' !== $notFound) {
+            $field->setHelp(new TranslatableMessage('adminPageMainImageNotFoundHelp', ['%value%' => $notFound]));
+        }
+
+        return $field;
     }
 
     /**

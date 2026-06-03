@@ -116,6 +116,30 @@ final class PageTest extends TestCase
         self::assertSame($childMedia, $child->getMainImage());
     }
 
+    public function testSetMainImageClearsNotFoundMarker(): void
+    {
+        $media = self::createStub(Media::class);
+        $media->method('getWidth')->willReturn(1200);
+
+        $page = new Page(false);
+        $page->setCustomProperty('mainImageNotFound', 'heal-me.png');
+
+        $page->setMainImage($media);
+
+        self::assertSame($media, $page->mainImage);
+        self::assertFalse($page->hasCustomProperty('mainImageNotFound'), 'Setting a real image clears the broken-reference marker');
+    }
+
+    public function testSetMainImageNullKeepsNotFoundMarker(): void
+    {
+        $page = new Page(false);
+        $page->setCustomProperty('mainImageNotFound', 'heal-me.png');
+
+        $page->setMainImage(null);
+
+        self::assertSame('heal-me.png', $page->getCustomProperty('mainImageNotFound'), 'Clearing the image must not erase a pending broken-reference marker');
+    }
+
     public function testTemplateInheritance(): void
     {
         $parent = new Page(false);

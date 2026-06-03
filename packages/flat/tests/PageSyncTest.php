@@ -7,6 +7,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\PageSync;
@@ -1320,6 +1321,102 @@ MD;
         $this->em->remove($importedPage);
         $this->em->flush();
         $this->trackFile($mdFilePath);
+    }
+
+    /**
+     * Test 22b: An unresolved mainImage is recorded as a `mainImageNotFound` marker,
+     * round-trips through export, and self-heals on a later import once the media exists.
+     */
+    public function testMainImageNotFoundMarkerRoundTripAndSelfHeal(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        /** @var string $mediaDir */
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+
+        /** @var string $projectDir */
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+
+        // A flat file whose mainImage points at a media not yet present in the DB.
+        $mdFilePath = $contentDir.'/main-image-missing-test.md';
+        $md = <<<'MD'
+            ---
+            h1: Main Image Missing Test
+            slug: main-image-missing-test
+            locale: en
+            publishedAt: '2024-01-01 00:00'
+            mainImage: heal-me.png
+            ---
+
+            Body content.
+            MD;
+        file_put_contents($mdFilePath, $md);
+        $this->trackFile($mdFilePath);
+
+        // First import: media is missing, so mainImage stays null and a marker is recorded.
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $page = $this->pageRepo->findOneBy(['slug' => 'main-image-missing-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($page);
+        self::assertNull($page->mainImage, 'mainImage stays null when the media is missing');
+        self::assertSame('heal-me.png', $page->getCustomProperty('mainImageNotFound'), 'Unresolved reference is recorded as a marker');
+
+        // Export: the marker round-trips into the flat file; no resolved mainImage is written.
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+        $exported = file_get_contents($mdFilePath);
+        self::assertStringContainsString('mainImageNotFound: heal-me.png', $exported, 'Marker should be exported');
+        self::assertStringNotContainsString('mainImage: heal-me.png', $exported, 'No resolved mainImage should be exported');
+
+        // The media now arrives in the DB (file on disk so persist listeners can hash it).
+        $this->createPng($mediaDir.'/heal-me.png');
+        $media = new Media();
+        $media->setProjectDir($projectDir);
+        $media->setFileName('heal-me.png');
+        $media->setMimeType('image/png');
+        $media->setSize(100);
+        $media->setStoreIn($mediaDir);
+        $media->setDimensions([100, 100]);
+
+        $this->em->persist($media);
+        $this->em->flush();
+
+        // Re-import: resolution is retried from the marker. Touch so the file beats updatedAt.
+        touch($mdFilePath, time() + 10);
+        $this->pageSync->import('localhost.dev');
+
+        $this->em->clear();
+        $healed = $this->pageRepo->findOneBy(['slug' => 'main-image-missing-test', 'host' => 'localhost.dev']);
+        self::assertNotNull($healed);
+        self::assertNotNull($healed->mainImage, 'mainImage resolves once the media exists');
+        self::assertSame('heal-me.png', $healed->mainImage->getFileName());
+        self::assertFalse($healed->hasCustomProperty('mainImageNotFound'), 'Marker is cleared after the link heals');
+
+        // Cleanup
+        $mediaToRemove = $this->em->getRepository(Media::class)->findOneBy(['fileName' => 'heal-me.png']);
+        $pageToRemove = $this->em->find(Page::class, $healed->id);
+        if (null !== $pageToRemove) {
+            $pageToRemove->mainImage = null;
+            $this->em->remove($pageToRemove);
+        }
+
+        if ($mediaToRemove instanceof Media) {
+            $this->em->remove($mediaToRemove);
+        }
+
+        $this->em->flush();
+        @unlink($mediaDir.'/heal-me.png');
+    }
+
+    private function createPng(string $path): void
+    {
+        $img = imagecreatetruecolor(1, 1);
+        if (false !== $img) {
+            imagepng($img, $path);
+            imagedestroy($img);
+        }
     }
 
     /**

@@ -106,6 +106,7 @@ adminPageLocaleLabel: Language
 adminPageMainContentHelp: ""
 adminPageMainContentLabel: "Page body"
 adminPageMainImageLabel: "Header image"
+adminPageMainImageNotFoundHelp: '⚠ Referenced image "%value%" was not found in the media library. Upload it (keeping that filename) and it will reconnect on the next sync, or pick another image here.'
 adminPageMarkdownHelp: 'Applies text enrichment via Markdown syntax to the entire content.<br>Otherwise use directly <code>{% filter markdown %}my text{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>Learn more</a>.'
 adminPageMarkdownLabel: "Markdown formatting"
 adminPageMetaRobotsChoiceNoIndex: "Disallow indexing"

@@ -109,6 +109,11 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
 
         $this->mainImage = $media;
 
+        // Picking a real image clears any pending "not found" marker recorded by flat import.
+        if (null !== $media && $this->hasCustomProperty('mainImageNotFound')) {
+            $this->removeCustomProperty('mainImageNotFound');
+        }
+
         return $this;
     }
 

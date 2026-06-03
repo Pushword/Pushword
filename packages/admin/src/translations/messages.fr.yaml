@@ -105,6 +105,7 @@ adminPageLocaleLabel: Language
 adminPageMainContentHelp: ''
 adminPageMainContentLabel: 'Corps de la page'
 adminPageMainImageLabel: "Image d'en-tête"
+adminPageMainImageNotFoundHelp: '⚠ L''image « %value% » référencée est introuvable dans la médiathèque. Importez-la (en conservant ce nom de fichier) et elle sera reconnectée à la prochaine synchronisation, ou choisissez-en une autre ici.'
 adminPageMarkdownHelp: 'Applique l''enrichissement du texte via la syntaxe Markdown à l''intégralité du contenu.<br>Sinon utiliser directement <code>{% filter markdown %}mon texte{% endfilter %}</code>. <br><a href="/admin/markdown-cheatsheet" target=_blank>En savoir plus</a>.'
 adminPageMarkdownLabel: 'Formatage markdown'
 adminPageMetaRobotsChoiceNoIndex: "Interdire l'indexation"

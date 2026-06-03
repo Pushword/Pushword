@@ -258,6 +258,13 @@ final class PageImporter extends AbstractImporter
                 continue;
             }
 
+            if ('mainImageNotFound' === $camelKey) {
+                // Marker persisted by a previous failed import: retry resolving it as a mainImage.
+                $this->toAddAtTheEnd[$slug] = array_merge($this->toAddAtTheEnd[$slug] ?? [], ['mainImage' => $value]);
+
+                continue;
+            }
+
             if ('locale' === $camelKey) {
                 $page->locale = \is_scalar($value) ? (string) $value : '';
 
@@ -363,7 +370,9 @@ final class PageImporter extends AbstractImporter
                     $mediaName = preg_replace('@^/?media/(default)?/@', '', $value) ?? throw new Exception(\sprintf('Failed to extract media name from "%s" for property "%s"', $value, $property));
                     $media = $this->mediaRepo->findOneByFileName($mediaName);
                     if (! $media instanceof Media) {
-                        $this->logger->warning('Media `{value}` ({mediaName}) not found in `{slug)}`, skipping', [
+                        // Record the unresolved reference so it round-trips and gets retried on each import.
+                        $page->setCustomProperty('mainImageNotFound', $value);
+                        $this->logger->warning('Media `{value}` ({mediaName}) not found in `{slug)}`, recorded as mainImageNotFound for retry', [
                             'value' => $value,
                             'mediaName' => $mediaName,
                             'slug' => $slug,
