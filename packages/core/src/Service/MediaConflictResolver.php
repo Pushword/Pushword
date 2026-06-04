@@ -11,6 +11,12 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final readonly class MediaConflictResolver
 {
+    /**
+     * Safety bound on the number of `name (N)` suffixes we try before giving up,
+     * high enough to absorb large series of similarly named files.
+     */
+    private const int MAX_RENAME_ATTEMPTS = 100;
+
     public function __construct(
         private EntityManagerInterface $em,
         private MediaRepository $mediaRepo,
@@ -22,7 +28,7 @@ final readonly class MediaConflictResolver
         $renamer = new MediaRenamer();
         $renamed = false;
 
-        for ($i = 0; $i < 10; ++$i) {
+        for ($i = 0; $i < self::MAX_RENAME_ATTEMPTS; ++$i) {
             if (! $this->identifiersAreToken($media)) {
                 return $renamed;
             }
