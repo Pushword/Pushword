@@ -378,6 +378,33 @@ final class MediaApiControllerTest extends WebTestCase
         $this->trackCreatedMedia($renamed);
     }
 
+    public function testHandlesUnderscoreInFilename(): void
+    {
+        // Normalized filenames keep underscores (MediaFileName::slugify), so the
+        // route must match them — otherwise the request 404s at the routing layer.
+        $fileName = 'api_underscore_'.uniqid().'.jpg';
+        $file = new UploadedFile($this->createTempImage($fileName, 0xFF0000, random_int(1, 0xFFFFFF)), $fileName, 'image/jpeg', null, true);
+
+        $this->client->request(
+            Request::METHOD_POST,
+            '/api/media/'.$fileName,
+            [],
+            ['file' => $file],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken],
+        );
+        self::assertResponseStatusCodeSame(201);
+        $created = $this->decodeResponse();
+        self::assertIsString($created['filename']);
+        self::assertStringContainsString('_', $created['filename']);
+        $this->trackCreatedMedia($created['filename']);
+
+        $this->client->request(Request::METHOD_GET, '/api/media/'.$created['filename'], [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSame($created['filename'], $this->decodeResponse()['filename']);
+    }
+
     public function testDeleteRequiresAuthentication(): void
     {
         $this->client->request(Request::METHOD_DELETE, '/api/media/piedweb-logo.png');

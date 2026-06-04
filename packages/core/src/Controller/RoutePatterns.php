@@ -26,6 +26,6 @@ final class RoutePatterns
 
     public const string PAGER_OPTIONAL = '(|\d+)';
 
-    // Media file pattern
-    public const string MEDIA = '[a-zA-Z0-9\-/\.]*';
+    // Media file pattern — underscores are valid in normalized filenames (see MediaFileName::slugify)
+    public const string MEDIA = '[a-zA-Z0-9_\-/\.]*';
 }
