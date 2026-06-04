@@ -117,27 +117,64 @@
   padding-top: 30px;
 }
 
-#main-menu .menu .submenu {
-  max-height: 200px;
+/* When expanded, a host submenu (Pages / Redirection) becomes a bounded,
+   recessed scroll panel so a long list of sites stays contained and reads as
+   a distinct group, clearly detached from the following top-level menu items.
+   Scoped to .expanded so the accordion still collapses cleanly (no leftover
+   border sliver) and the !important cap overrides EasyAdmin's inline
+   max-height (set to scrollHeight in app.js, which otherwise lets the list
+   grow unbounded). */
+#main-menu .menu-item.has-submenu.expanded > .submenu {
+  max-height: min(45vh, 19rem) !important;
   overflow-y: auto;
+  scrollbar-width: thin;
+  margin: 4px 8px 14px;
+  padding: 2px 0;
+  border: 1px solid #e2e8f0; /* slate-200 */
+  border-radius: 8px;
+  background: #f1f5f9; /* slate-100, recessed below the slate-50 sidebar */
 }
 
 #main-menu .menu .submenu .submenu-filter {
-  padding: 4px 8px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 6px 8px;
   list-style: none;
+  background: #f1f5f9; /* match panel so scrolled items don't bleed through */
 }
 
 #main-menu .menu .submenu .submenu-filter input {
   width: 100%;
-  padding: 4px 8px;
-  margin-bottom: 4px;
-  border: 1px solid #d1d5db;
-  border-radius: 3px;
+  padding: 5px 9px;
+  border: 1px solid #cbd5e1; /* slate-300 */
+  border-radius: 5px;
   font-size: 0.85rem;
+  background: #fff;
 }
 
-#main-menu .menu .submenu a {
-  padding: 3px 0 3px 3px;
+#main-menu .menu .submenu > li.menu-item > a {
+  margin: 0 4px;
+  padding: 4px 10px;
+  border-radius: 5px;
+}
+
+/* Keep long hostnames on a single line; ellipsis instead of wrapping. */
+#main-menu .menu .submenu > li.menu-item > a .menu-item-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#main-menu .menu .submenu > li.menu-item > a:hover {
+  background: #e2e8f0; /* slate-200 */
+}
+
+#main-menu .menu .submenu > li.menu-item.active > a {
+  background: #e0f2fe; /* sky-100, current site */
 }
 
 .action-saveAndContinue[data-pw-ctrl-s-state='saving'] {
