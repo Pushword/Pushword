@@ -132,6 +132,7 @@ class AppFixtures extends Fixture
             $variantMaster->host = 'localhost.dev';
             $variantMaster->createdAt = new DateTime('1 day ago');
             $variantMaster->updatedAt = new DateTime('1 day ago');
+            $variantMaster->setTags('mountain-lodge');
             $variantMaster->setMainContent(
                 "This is the **master** page for this stay — the one search engines index.\n\n"
                 .'Several partners resell the same stay with their own wording. See '
@@ -148,6 +149,7 @@ class AppFixtures extends Fixture
             $variantPartner->host = 'localhost.dev';
             $variantPartner->createdAt = new DateTime('1 day ago');
             $variantPartner->updatedAt = new DateTime('1 day ago');
+            $variantPartner->setTags('mountain-lodge');
             $variantPartner->setMainContent(
                 "Partner B's own pitch for the **same** stay: different wording, identical product.\n\n"
                 .'This page renders fully on its own URL but its canonical points to '

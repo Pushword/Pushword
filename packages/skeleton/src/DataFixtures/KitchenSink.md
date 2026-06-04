@@ -72,6 +72,12 @@ See **bold** _italic_ `inline code` #[link](/kitchen-sink-block{target="_blank"}
 
 {{ pages_list('content:fun', '9', 'publishedAt ↓', 'card') }}
 
+### Variant pages in a content list
+
+The master stay and its variant share the `mountain-lodge` tag. Both appear below — variants are kept out of the sitemap, the search and the menus, but **not** out of content lists/cards:
+
+{{ pages_list('mountain-lodge', '9', 'publishedAt ↓', 'list') }}
+
 ## Card List (Custom Items)
 
 {{ card_list([{"page":"kitchen-sink-block","title":"Kitchen Sink"},{"id":"custom-card","title":"Custom Card","image":"1.jpg","link":"https://piedweb.com","description":"A custom card with **bold** and _italic_ text.","showInfoButton":true,"infoLinkLabel":"Discover","buttonLink":"https://piedweb.com","buttonLinkLabel":"Visit"}]) }}
