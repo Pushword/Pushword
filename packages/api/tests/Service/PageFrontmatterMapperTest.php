@@ -120,6 +120,45 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         self::assertSame(['old-one' => 302, 'old-two' => 301], $shape['frontmatter']['redirectFrom']);
     }
 
+    public function testVariantOfAndCustomCanonicalRoundtrip(): void
+    {
+        $host = 'variant-test-'.uniqid().'.example.com';
+
+        // The master must exist so resolvePageRef() can find it by slug+host.
+        $master = new Page();
+        $master->host = $host;
+        $master->setSlug('master-trek');
+        $master->setMainContent('# Master');
+        $this->em->persist($master);
+        $this->em->flush();
+        $this->createdPageIds[] = $master->id ?? 0;
+
+        $variant = new Page();
+        $variant->host = $host;
+        $variant->setSlug('master-trek-self-guided');
+        $variant->setMainContent('# Variant');
+
+        $this->mapper->applyFrontmatter($variant, [
+            'variantOf' => 'master-trek',
+            'customCanonical' => 'https://example.com/canonical',
+        ]);
+
+        self::assertSame($master, $variant->getVariantOf());
+        self::assertTrue($variant->isVariant());
+        self::assertSame('https://example.com/canonical', $variant->getCustomCanonical());
+
+        // Both fields are emitted back in the frontmatter shape.
+        $shape = $this->mapper->toArray($variant);
+        self::assertSame('master-trek', $shape['frontmatter']['variantOf']);
+        self::assertSame('https://example.com/canonical', $shape['frontmatter']['customCanonical']);
+
+        // Clearing the relation un-links and resets the canonical override.
+        $this->mapper->applyFrontmatter($variant, ['variantOf' => '', 'customCanonical' => null]);
+        self::assertNull($variant->getVariantOf());
+        self::assertFalse($variant->isVariant());
+        self::assertNull($variant->getCustomCanonical());
+    }
+
     public function testApplyFrontmatterSkipsUnknownTypesAndPreservesExisting(): void
     {
         $page = new Page();

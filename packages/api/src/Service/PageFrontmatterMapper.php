@@ -50,6 +50,8 @@ final readonly class PageFrontmatterMapper
             'holdPublication' => $page->isHoldPublication(),
             'mainImage' => $page->getMainImage()?->getFileName(),
             'parentPage' => $page->getParentPage()?->getSlug(),
+            'variantOf' => $page->getVariantOf()?->getSlug(),
+            'customCanonical' => $page->getCustomCanonical(),
             'translations' => array_values(array_map(
                 static fn (Page $t): string => $t->getSlug(),
                 $page->getTranslations()->toArray(),
@@ -133,6 +135,17 @@ final readonly class PageFrontmatterMapper
 
         if (\array_key_exists('parentPage', $frontmatter)) {
             $page->setParentPage($this->resolvePageRef($frontmatter['parentPage'], $page->host));
+        }
+
+        if (\array_key_exists('variantOf', $frontmatter)) {
+            // Resolve the master by slug on the same host. setVariantOf() enforces
+            // the single-level rule (a variant's master cannot itself be a variant
+            // and a page cannot be its own master) and throws on violation.
+            $page->setVariantOf($this->resolvePageRef($frontmatter['variantOf'], $page->host));
+        }
+
+        if (\array_key_exists('customCanonical', $frontmatter) && (\is_string($frontmatter['customCanonical']) || null === $frontmatter['customCanonical'])) {
+            $page->setCustomCanonical($frontmatter['customCanonical']);
         }
 
         if (\array_key_exists('customProperties', $frontmatter) && \is_array($frontmatter['customProperties'])) {
