@@ -2,6 +2,7 @@
 
 namespace Pushword\Core\Tests\EventListener;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -10,6 +11,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\EventListener\PageListener;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Service\TailwindGenerator;
+use Pushword\Core\Service\VariantManager;
 use Symfony\Bundle\SecurityBundle\Security;
 
 /**
@@ -68,6 +70,7 @@ final class PageListenerOpenGraphTest extends TestCase
             $generator,
             self::createStub(TailwindGenerator::class),
             $suppressor,
+            new VariantManager(self::createStub(EntityManagerInterface::class)),
         );
     }
 

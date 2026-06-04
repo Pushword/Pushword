@@ -79,6 +79,8 @@ adminPageAuthorLabel: Author
 adminPageCloneLabel: Clone
 adminPageCloneSuccess: "Page cloned successfully. Remember to update hidden fields (title, description…) if this is a new dedicated page."
 adminPageCreatedAtLabel: "Created At"
+adminPageCustomCanonicalHelp: "<small>Force the canonical URL of this page (SEO consolidation). Leave empty for the default self-canonical.</small>"
+adminPageCustomCanonicalLabel: "Canonical URL (override)"
 adminPageCustomPropertiesHelp: "In <em>YAML</em> format."
 adminPageCustomPropertiesLabel: "Other parameters"
 adminPageEditMessageHelp: "Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em>"
@@ -123,6 +125,8 @@ adminPageOgTitleLabel: Title
 adminPageParamsLabel: Settings
 adminPageParentPageLabel: "Parent Page"
 adminPagePermanlienLabel: Permalink
+adminPagePromoteVariantLabel: "Promote to master"
+adminPagePromoteVariantSuccess: "Variant promoted to master; the former master and the other variants now point to it."
 adminPagePublishedAtDraft: Draft
 adminPagePublishedAtLabel: "Published at"
 adminPagePublishedAtOnline: Online
@@ -159,6 +163,9 @@ adminPageUpdateNotificationTitle: "[%appName%] Editing in progress"
 adminPageUpdateNotificationEdit: Edit
 adminPageUpdateNotificationUpdatedOn: "Page updated on"
 adminPageUpdatedAtLabel: "Updated on"
+adminPageVariantLabel: Variant
+adminPageVariantOfHelp: "<small>Make this page a variant of a master page: it consolidates onto the master for SEO (canonical → master) and is excluded from sitemap, search and menus.</small>"
+adminPageVariantOfLabel: "Variant of (master page)"
 adminPageWeightHelp: "Allows sorting pages. Higher values appear first."
 adminPageWeightLabel: Weight
 adminPageTwitterCardHelp: '<a href="https://developer.twitter.com/en/docs/twitter-for-websites/cards/guides/getting-started" target=_blanks>Learn more</a>'

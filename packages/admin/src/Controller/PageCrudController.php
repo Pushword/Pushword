@@ -35,6 +35,7 @@ use Pushword\Core\Controller\PageController;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Service\VariantManager;
 use Pushword\Core\Utils\FlashBag;
 use Pushword\Core\Utils\TwigErrorExtractor;
 use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
@@ -93,6 +94,13 @@ class PageCrudController extends AbstractAdminCrudController
 
         $actions->add(Crud::PAGE_INDEX, $cloneAction);
 
+        $promoteVariantAction = Action::new('promoteVariant', 'adminPagePromoteVariantLabel', 'fa fa-arrow-up')
+            ->linkToCrudAction('promoteVariant')
+            ->displayIf(static fn (Page $page): bool => $page->isVariant());
+
+        $actions->add(Crud::PAGE_INDEX, $promoteVariantAction);
+        $actions->add(Crud::PAGE_EDIT, $promoteVariantAction);
+
         foreach ($this->extensions as $extension) {
             $extension->configureActions($actions);
         }
@@ -120,6 +128,29 @@ class PageCrudController extends AbstractAdminCrudController
             ->setController(static::class)
             ->setAction(Action::EDIT)
             ->setEntityId($clone->id)
+            ->generateUrl();
+
+        return $this->redirect($editUrl);
+    }
+
+    /** @param AdminContext<Page> $context */
+    #[AdminRoute('/promote-variant/{entityId}', name: 'promote_variant', options: ['methods' => ['GET']])]
+    public function promoteVariant(AdminContext $context): Response
+    {
+        $page = $context->getEntity()->getInstance();
+        assert($page instanceof Page);
+
+        if ($page->isVariant()) {
+            new VariantManager($this->getEntityManager())->promote($page);
+            $this->getEntityManager()->flush();
+
+            FlashBag::get($this->getRequest())?->add('success', $this->getTranslator()->trans('adminPagePromoteVariantSuccess'));
+        }
+
+        $editUrl = $this->getAdminUrlGenerator()
+            ->setController(static::class)
+            ->setAction(Action::EDIT)
+            ->setEntityId($page->id)
             ->generateUrl();
 
         return $this->redirect($editUrl);

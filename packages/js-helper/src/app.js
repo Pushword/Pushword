@@ -11,12 +11,16 @@ import {
 import { allClickable } from './clickable.js'
 import { initShowMore } from './ShowMore.js'
 import { restoreUnpublishedLinks } from './unpublishedLinks.js'
+import { initVariantLinks } from './variantLinks.js'
 
 //import { HorizontalScroll } from '@pushword/js-helper/src/horizontalScroll.js';
 //window.HorizontalScroll = HorizontalScroll;
 
 // Initialize ShowMore (exposes window.ShowMore and sets up event listeners)
 initShowMore()
+
+// Opt-in progressive enhancement for variant links (delegated, wired once).
+initVariantLinks()
 
 let lightbox
 function onDomChanged() {

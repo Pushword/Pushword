@@ -539,13 +539,14 @@ final class PageImporter extends AbstractImporter
     /**
      * Todo, get them automatically.
      *
-     * @return array{extendedPage: class-string<Page>, parentPage: class-string<Page>, translations: string, mainImage: class-string<Media>}
+     * @return array{extendedPage: class-string<Page>, parentPage: class-string<Page>, variantOf: class-string<Page>, translations: string, mainImage: class-string<Media>}
      */
     private function getObjectRequiredProperties(): array
     {
         return [
             'extendedPage' => Page::class,
             'parentPage' => Page::class,
+            'variantOf' => Page::class,
             'translations' => 'addPages',
             'mainImage' => Media::class,
         ];

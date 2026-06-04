@@ -78,6 +78,8 @@ adminPageAuthorLabel: Auteur
 adminPageCloneLabel: Dupliquer
 adminPageCloneSuccess: "Page dupliquée avec succès. Pensez à mettre à jour les champs cachés (titre, description…) si cette page a une destination propre."
 adminPageCreatedAtLabel: 'Créé le'
+adminPageCustomCanonicalHelp: "<small>Force l'URL canonique de cette page (consolidation SEO). Laisser vide pour la canonique par défaut.</small>"
+adminPageCustomCanonicalLabel: "URL canonique (forcée)"
 adminPageCustomPropertiesHelp: 'Au format <em>YAML</em>.'
 adminPageCustomPropertiesLabel: 'Autres paramètres'
 adminPageEditMessageHelp: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>'
@@ -122,6 +124,8 @@ adminPageOgTitleLabel: Titre
 adminPageParamsLabel: Paramètres
 adminPageParentPageLabel: 'Page Parente'
 adminPagePermanlienLabel: Permanlien
+adminPagePromoteVariantLabel: "Promouvoir en maîtresse"
+adminPagePromoteVariantSuccess: "Variante promue en maîtresse ; l'ancienne maîtresse et les autres variantes pointent désormais vers elle."
 adminPagePublishedAtDraft: Brouillon
 adminPagePublishedAtLabel: 'Publié le'
 adminPagePublishedAtOnline: '<span style="color:#449d44">Publié</span>'
@@ -161,6 +165,9 @@ adminPageUpdateNotificationTitle: '[%appName%] Edition en cours'
 adminPageUpdateNotificationEdit: Editer
 adminPageUpdateNotificationUpdatedOn: "Page mise à jour le"
 adminPageUpdatedAtLabel: 'Mise à jour le'
+adminPageVariantLabel: Variante
+adminPageVariantOfHelp: "<small>Faire de cette page une variante d'une page maîtresse : elle se consolide sur la maîtresse pour le SEO (canonical → maîtresse) et est exclue du sitemap, de la recherche et des menus.</small>"
+adminPageVariantOfLabel: "Variante de (page maîtresse)"
 adminPageWeightHelp: "Permet d'ordonner les pages. Les valeurs les plus hautes apparaissent en premier."
 adminPageWeightLabel: Poids
 adminPaginationPerPage: 'Par page'

@@ -8,6 +8,7 @@ use Pushword\Core\Component\EntityFilter\Filter\Extended;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlLinkMultisite;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlObfuscateLink;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;
+use Pushword\Core\Component\EntityFilter\Filter\HtmlVariantLink;
 use Pushword\Core\Component\EntityFilter\Filter\LinkCollector;
 use Pushword\Core\Component\EntityFilter\Filter\Markdown;
 use Pushword\Core\Component\EntityFilter\Filter\Name;
@@ -58,6 +59,7 @@ final class Configuration implements ConfigurationInterface
             HtmlLinkMultisite::class,
             HtmlUnpublishedLink::class,
             HtmlObfuscateLink::class,
+            HtmlVariantLink::class,
             Extended::class,
         ],
         'name' => [Twig::class, Date::class, Name::class, Extended::class],

@@ -210,6 +210,42 @@ final class PageControllerTest extends KernelTestCase
         $em->flush();
     }
 
+    public function testCustomCanonicalOverridesCanonical(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $page = new Page();
+        $page->setH1('Custom canonical page');
+        $page->setSlug('custom-canonical-test');
+        $page->locale = 'en';
+        $page->host = 'localhost.dev';
+        $page->createdAt = new DateTime();
+        $page->updatedAt = new DateTime();
+        $page->setMainContent('Content here');
+        $page->setCustomCanonical('https://example.tld/master-page');
+
+        $em->persist($page);
+        $em->flush();
+
+        try {
+            $content = (string) $this->getPageController()
+                ->show(Request::create('/custom-canonical-test'), 'custom-canonical-test')
+                ->getContent();
+
+            self::assertStringContainsString(
+                '<link rel="canonical" href="https://example.tld/master-page">',
+                $content,
+            );
+            self::assertStringNotContainsString(
+                'rel="canonical" href="https://localhost.dev/custom-canonical-test"',
+                $content,
+            );
+        } finally {
+            $em->remove($page);
+            $em->flush();
+        }
+    }
+
     public function getPageController(): PageController
     {
         return self::getContainer()->get(PageController::class);

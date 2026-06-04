@@ -12,6 +12,7 @@ use Exception;
 use LogicException;
 use Pushword\Core\Entity\PageTrait\PageI18nTrait;
 use Pushword\Core\Entity\PageTrait\PageParentTrait;
+use Pushword\Core\Entity\PageTrait\PageVariantTrait;
 use Pushword\Core\Entity\PageTrait\RedirectFromTrait;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
 use Pushword\Core\Entity\SharedTrait\ExtensiblePropertiesTrait;
@@ -33,6 +34,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 /**
  * Traits: IdTrait (PK), HostTrait (multi-site key), TimestampableTrait (createdAt/updatedAt),
  *   PageI18nTrait (locale, translations), PageParentTrait (parent/children tree),
+ *   PageVariantTrait (variantOf/variants, SEO consolidation),
  *   TagsTrait (comma-separated tags), WeightTrait (sort order), ExtensiblePropertiesTrait (JSON key-value bag).
  *
  * Key fields: slug, h1, title (SEO), mainContent (Markdown/HTML), publishedAt, metaRobots, name (breadcrumb), template.
@@ -57,6 +59,8 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     use PageI18nTrait;
 
     use PageParentTrait;
+
+    use PageVariantTrait;
 
     use RedirectFromTrait;
 
@@ -162,6 +166,10 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
         set(?string $value) => $this->metaRobots = (string) $value;
     }
 
+    /** Override the canonical URL (variant/duplicate SEO consolidation). */
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    public ?string $customCanonical = null;
+
     /** Links improver / Breadcrumb */
     #[ORM\Column(type: Types::TEXT)]
     public string $name = '' {
@@ -239,6 +247,18 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     public function setMetaRobots(?string $metaRobots): self
     {
         $this->metaRobots = $metaRobots;
+
+        return $this;
+    }
+
+    public function getCustomCanonical(): ?string
+    {
+        return $this->customCanonical;
+    }
+
+    public function setCustomCanonical(?string $customCanonical): self
+    {
+        $this->customCanonical = $customCanonical;
 
         return $this;
     }

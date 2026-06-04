@@ -201,6 +201,80 @@ final class PageSyncTest extends KernelTestCase
     }
 
     /**
+     * variantOf round-trips as the master slug; customCanonical round-trips as a string.
+     */
+    public function testVariantOfAndCustomCanonicalRoundTrip(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        $master = new Page();
+        $master->setSlug('rt-master');
+        $master->setH1('RT Master');
+        $master->host = 'localhost.dev';
+        $master->locale = 'en';
+        $master->setMainContent('Master content');
+        $master->setPublishedAt(new DateTime());
+        $master->setCustomCanonical('https://example.tld/forced');
+
+        $variant = new Page();
+        $variant->setSlug('rt-variant');
+        $variant->setH1('RT Variant');
+        $variant->host = 'localhost.dev';
+        $variant->locale = 'en';
+        $variant->setMainContent('Variant content');
+        $variant->setPublishedAt(new DateTime());
+        $variant->setVariantOf($master);
+
+        $this->em->persist($master);
+        $this->em->persist($variant);
+        $this->em->flush();
+
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+
+        $masterMd = $contentDir.'/rt-master.md';
+        $variantMd = $contentDir.'/rt-variant.md';
+        $this->trackFile($masterMd);
+        $this->trackFile($variantMd);
+        self::assertFileExists($masterMd);
+        self::assertFileExists($variantMd);
+        self::assertStringContainsString('rt-master', file_get_contents($variantMd), 'variant front matter carries the master slug');
+        self::assertStringContainsString('https://example.tld/forced', file_get_contents($masterMd));
+
+        // Drop from DB (variant first to keep the master without variants), then re-import from md.
+        $this->em->remove($variant);
+        $this->em->flush();
+        $this->em->remove($master);
+        $this->em->flush();
+        $this->em->clear();
+
+        $this->pageSync->import('localhost.dev');
+        $this->em->clear();
+
+        $reMaster = $this->pageRepo->findOneBy(['slug' => 'rt-master', 'host' => 'localhost.dev']);
+        $reVariant = $this->pageRepo->findOneBy(['slug' => 'rt-variant', 'host' => 'localhost.dev']);
+
+        try {
+            self::assertNotNull($reMaster);
+            self::assertNotNull($reVariant);
+            self::assertSame('https://example.tld/forced', $reMaster->customCanonical);
+            self::assertTrue($reVariant->isVariant());
+            self::assertSame('rt-master', $reVariant->getVariantOf()?->getSlug());
+        } finally {
+            if (null !== $reVariant) {
+                $this->em->remove($reVariant);
+                $this->em->flush();
+            }
+
+            if (null !== $reMaster) {
+                $this->em->remove($reMaster);
+                $this->em->flush();
+            }
+        }
+    }
+
+    /**
      * Test 4: Deleting a .md file removes the page from DB.
      */
     public function testPageDeletionSync(): void

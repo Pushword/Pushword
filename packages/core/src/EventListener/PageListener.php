@@ -12,6 +12,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Service\TailwindGenerator;
+use Pushword\Core\Service\VariantManager;
 use Symfony\Bundle\SecurityBundle\Security;
 
 #[AsEntityListener(event: Events::preRemove, entity: Page::class)]
@@ -33,6 +34,7 @@ final class PageListener
         private readonly PageOpenGraphImageGenerator $pageOpenGraphImageGenerator,
         private readonly TailwindGenerator $tailwindGenerator,
         private readonly PageCacheSuppressor $cacheSuppressor,
+        private readonly VariantManager $variantManager,
     ) {
     }
 
@@ -44,6 +46,9 @@ final class PageListener
                 $childrenPage->setParentPage(null);
             }
         }
+
+        // Auto-promote a variant when its master is removed (no orphans, self-FK kept).
+        $this->variantManager->promoteOnMasterRemoval($page);
     }
 
     public function prePersist(Page $page): void

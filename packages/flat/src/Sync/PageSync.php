@@ -473,11 +473,15 @@ final class PageSync
 
         $this->output?->writeln(\sprintf('<comment>Resetting %d pages for host %s...</comment>', $count, $host));
 
-        // Break the self-referential parent links first so the deletes below don't
-        // violate the parent_page_id foreign key (enforced by MySQL/MariaDB).
+        // Break the self-referential parent and variant links first so the deletes
+        // below don't violate the self-referencing foreign keys (enforced by MySQL/MariaDB).
         foreach ($pages as $page) {
             if (null !== $page->getParentPage()) {
                 $page->setParentPage(null);
+            }
+
+            if (null !== $page->getVariantOf()) {
+                $page->setVariantOf(null);
             }
         }
 

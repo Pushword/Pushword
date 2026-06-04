@@ -404,6 +404,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $queryBuilder = $this->andLocale($queryBuilder, $locale);
 
         $this->andNotRedirection($queryBuilder);
+        $this->andNotVariant($queryBuilder);
 
         if (null !== $limit) {
             $queryBuilder->setMaxResults($limit);
@@ -568,6 +569,17 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
         return $queryBuilder->andWhere($alias.'.mainContent NOT LIKE :noi')
             ->setParameter('noi', 'Location:%');
+    }
+
+    /**
+     * Exclude variant pages (they consolidate onto their master: kept out of
+     * sitemap, feed and search index).
+     */
+    public function andNotVariant(QueryBuilder $queryBuilder): QueryBuilder
+    {
+        $alias = $this->getRootAlias($queryBuilder);
+
+        return $queryBuilder->andWhere($alias.'.variantOf IS NULL');
     }
 
     /**

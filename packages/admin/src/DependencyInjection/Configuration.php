@@ -9,6 +9,7 @@ use Pushword\Admin\FormField\MediaMediaFileField;
 use Pushword\Admin\FormField\MediaNameField;
 use Pushword\Admin\FormField\MediaNamesField;
 use Pushword\Admin\FormField\MediaSlugField;
+use Pushword\Admin\FormField\PageCustomCanonicalField;
 use Pushword\Admin\FormField\PageEditMessageField;
 use Pushword\Admin\FormField\PageH1Field;
 use Pushword\Admin\FormField\PageLocaleField;
@@ -23,6 +24,7 @@ use Pushword\Admin\FormField\PageSearchExcreptField;
 use Pushword\Admin\FormField\PageSlugField;
 use Pushword\Admin\FormField\PageTitleField;
 use Pushword\Admin\FormField\PageTranslationsField;
+use Pushword\Admin\FormField\PageVariantOfField;
 use Pushword\Admin\FormField\TagsField;
 use Pushword\Admin\FormField\UserApiTokenField;
 use Pushword\Admin\FormField\UserEmailField;
@@ -79,6 +81,7 @@ class Configuration implements ConfigurationInterface
             ],
             'adminPageMainImageLabel' => [PageMainImageField::class],
             'adminPageParentPageLabel' => [PageParentPageField::class],
+            'adminPageVariantLabel' => [PageVariantOfField::class, PageCustomCanonicalField::class],
             'adminPageSearchLabel' => [
                 'expand' => true,
                 'fields' => [PageTitleField::class, PageNameField::class, PageSearchExcreptField::class, WeightField::class],
