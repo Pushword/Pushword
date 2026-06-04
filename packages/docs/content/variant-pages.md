@@ -42,7 +42,7 @@ It runs last among the link filters so nothing reconstructs the `<a>` afterwards
 
 The core only emits the `data-variant` hook. The opt-in vanilla helper in `pushword/js-helper` (`variantLinks.js`, wired in `app.js`) intercepts the click, fetches the variant page, swaps its content zone in place and pushes the variant URL for shareability, then dispatches a `DOMChanged` event so other components (Alpine, Glightbox, a booking widget…) can re-initialise. Without JS it is a no-op. Sites with their own JS (htmx/Alpine) can bind the `data-variant` hook themselves.
 
-The content zone selector defaults to `[data-variant-zone], main, #content` and can be overridden: `initVariantLinks({ zone: '#my-zone' })`.
+The content zone selector defaults to `[data-variant-zone], main, #content` and can be overridden: `initVariantLinks({ zone: '#my-zone' })`. The bundled theme (`page/_content.html.twig`) already exposes `data-variant-zone` on its content wrapper, so the swap works out of the box; custom themes should mark their content zone the same way.
 
 ## Reversibility (promote / demote)
 

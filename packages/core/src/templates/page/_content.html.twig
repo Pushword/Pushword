@@ -7,7 +7,7 @@
   {% endblock %}
 
 {% set mainContent = mainContentSplit(page) %}
-<div class="{{ content_container_class|default('prose mx-auto py-12 px-3 md:px-0') }}">
+<div data-variant-zone class="{{ content_container_class|default('prose mx-auto py-12 px-3 md:px-0') }}">
 
   {% block content_header %}
     {% block h1 %}

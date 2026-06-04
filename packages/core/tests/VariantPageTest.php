@@ -118,7 +118,9 @@ final class VariantPageTest extends KernelTestCase
                 ->show(Request::create('/plain-source-page'), 'plain-source-page')
                 ->getContent();
 
-            self::assertStringNotContainsString('data-variant', $content);
+            // The link keeps its own href and gains no data-variant hook
+            // (data-variant-zone is the unrelated content-wrapper attribute).
+            self::assertStringNotContainsString('data-variant="', $content);
             self::assertStringContainsString('href="/plain-target-page"', $content);
         } finally {
             $em->remove($linking);
