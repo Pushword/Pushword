@@ -2,9 +2,11 @@
 
 namespace Pushword\Core\Tests\Entity;
 
+use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\VariantManager;
 
 final class PageVariantTest extends TestCase
 {
@@ -54,5 +56,13 @@ final class PageVariantTest extends TestCase
 
         self::assertFalse($variant->isVariant());
         self::assertNull($variant->getVariantOf());
+    }
+
+    public function testPromoteThrowsOnNonVariant(): void
+    {
+        $manager = new VariantManager(self::createStub(EntityManagerInterface::class));
+
+        $this->expectException(LogicException::class);
+        $manager->promote(new Page());
     }
 }

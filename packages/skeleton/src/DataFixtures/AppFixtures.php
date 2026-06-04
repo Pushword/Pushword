@@ -121,6 +121,45 @@ class AppFixtures extends Fixture
 
         $manager->persist($ksPage);
 
+        // Variant pages demo (localhost.dev): a master stay and a partner variant
+        // that consolidates onto it (canonical → master, link rewriting, exclusions).
+        if ('localhost.dev' === $this->apps->getMainHost()) {
+            $variantMaster = new Page();
+            $variantMaster->setH1('Mountain Lodge — 3-night stay');
+            $variantMaster->setTitle('Mountain Lodge — 3-night stay | Variant pages demo');
+            $variantMaster->setSlug('demo-variant-master');
+            $variantMaster->locale = 'en';
+            $variantMaster->host = 'localhost.dev';
+            $variantMaster->createdAt = new DateTime('1 day ago');
+            $variantMaster->updatedAt = new DateTime('1 day ago');
+            $variantMaster->setMainContent(
+                "This is the **master** page for this stay — the one search engines index.\n\n"
+                .'Several partners resell the same stay with their own wording. See '
+                ."[Partner B's version](/demo-variant-partner): it is a **variant** of this page. "
+                .'In the HTML source that link is rewritten to point here (the master), keeping the '
+                .'variant URL on a `data-variant` hook — so crawlers and no-JS visitors consolidate onto the master.'
+            );
+
+            $variantPartner = new Page();
+            $variantPartner->setH1('Mountain Lodge getaway, curated by Partner B');
+            $variantPartner->setTitle('Mountain Lodge getaway — Partner B | Variant pages demo');
+            $variantPartner->setSlug('demo-variant-partner');
+            $variantPartner->locale = 'en';
+            $variantPartner->host = 'localhost.dev';
+            $variantPartner->createdAt = new DateTime('1 day ago');
+            $variantPartner->updatedAt = new DateTime('1 day ago');
+            $variantPartner->setMainContent(
+                "Partner B's own pitch for the **same** stay: different wording, identical product.\n\n"
+                .'This page renders fully on its own URL but its canonical points to '
+                .'[the master](/demo-variant-master), it emits no hreflang, and it is excluded from the '
+                .'sitemap, the internal search and the menus. Use **Promote to master** in the admin to swap roles.'
+            );
+            $variantPartner->setVariantOf($variantMaster);
+
+            $manager->persist($variantMaster);
+            $manager->persist($variantPartner);
+        }
+
         if (\in_array('admin-block-editor.test', $this->apps->getHosts(), true)) {
             $ksBlockPage = new Page();
             $ksBlockPage->setH1('Demo Page - Kitchen Sink Block');

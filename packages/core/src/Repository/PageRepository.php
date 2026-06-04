@@ -67,6 +67,9 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     /** @var array<string, true> */
     private array $warmedLightHosts = [];
 
+    /** @var array<string, bool> host => whether any variant page exists */
+    private array $hasVariantCache = [];
+
     public function __construct(
         ManagerRegistry $registry,
         // #[Autowire('%pw.public_media_dir%')]
@@ -273,6 +276,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $this->redirectMaps = [];
         $this->redirectFromMaps = [];
         $this->warmedLightHosts = [];
+        $this->hasVariantCache = [];
     }
 
     public function create(string $host): Page
@@ -580,6 +584,23 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         $alias = $this->getRootAlias($queryBuilder);
 
         return $queryBuilder->andWhere($alias.'.variantOf IS NULL');
+    }
+
+    /**
+     * Whether the host has at least one variant page. Memoized per host (reset on
+     * EM clear) so the variant link filter can skip work entirely on sites without
+     * variants — the common case.
+     */
+    public function hasVariant(string $host): bool
+    {
+        return $this->hasVariantCache[$host] ??= null !== $this->createQueryBuilder('p')
+            ->select('p.id')
+            ->where('p.variantOf IS NOT NULL')
+            ->andWhere('p.host = :host')
+            ->setParameter('host', $host)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**

@@ -102,6 +102,31 @@ final class VariantPageTest extends KernelTestCase
         }
     }
 
+    public function testNonVariantLinkIsLeftUntouched(): void
+    {
+        $em = $this->em();
+        $target = $this->newPage('plain-target-page');
+        $linking = $this->newPage('plain-source-page');
+        $linking->setMainContent('See [the page](/plain-target-page) now.');
+
+        $em->persist($target);
+        $em->persist($linking);
+        $em->flush();
+
+        try {
+            $content = (string) self::getContainer()->get(PageController::class)
+                ->show(Request::create('/plain-source-page'), 'plain-source-page')
+                ->getContent();
+
+            self::assertStringNotContainsString('data-variant', $content);
+            self::assertStringContainsString('href="/plain-target-page"', $content);
+        } finally {
+            $em->remove($linking);
+            $em->remove($target);
+            $em->flush();
+        }
+    }
+
     public function testIndexableQueryExcludesVariants(): void
     {
         $em = $this->em();
@@ -124,6 +149,27 @@ final class VariantPageTest extends KernelTestCase
 
             self::assertContains('indexable-master-page', $slugs);
             self::assertNotContains('indexable-variant-page', $slugs);
+        } finally {
+            $em->remove($variant);
+            $em->remove($master);
+            $em->flush();
+        }
+    }
+
+    public function testHasVariantShortCircuitsHostsWithoutVariants(): void
+    {
+        $em = $this->em();
+        $master = $this->newPage('hv-master');
+        $variant = $this->newPage('hv-variant', $master);
+        $em->persist($master);
+        $em->persist($variant);
+        $em->flush();
+
+        $repo = self::getContainer()->get(PageRepository::class);
+
+        try {
+            self::assertTrue($repo->hasVariant('localhost.dev'));
+            self::assertFalse($repo->hasVariant('host-without-variant.invalid'));
         } finally {
             $em->remove($variant);
             $em->remove($master);

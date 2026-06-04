@@ -39,6 +39,11 @@ final readonly class HtmlVariantLink implements FilterInterface
             return $body;
         }
 
+        // No variant on this host → nothing to consolidate, skip the per-link lookups.
+        if (! $this->pageRepository->hasVariant($page->host)) {
+            return $body;
+        }
+
         return preg_replace_callback(
             HtmlUnpublishedLink::HTML_REGEX,
             fn (array $match): string => $this->maybeRewriteVariantLink($match, $page),
@@ -58,12 +63,12 @@ final readonly class HtmlVariantLink implements FilterInterface
             return $match[0];
         }
 
-        $masterUrl = $this->routeGenerator->generate($master);
         $quote = $match['quote'];
+        $masterUrl = htmlspecialchars($this->routeGenerator->generate($master), \ENT_QUOTES | \ENT_HTML5);
+        $variantUrl = htmlspecialchars($match['href'], \ENT_QUOTES | \ENT_HTML5);
 
-        return '<a'.$match['before'].'href='.$quote.htmlspecialchars($masterUrl, \ENT_QUOTES | \ENT_HTML5).$quote
-            .$match['after'].' data-variant='.$quote.htmlspecialchars($match['href'], \ENT_QUOTES | \ENT_HTML5).$quote.'>'
-            .$match['content'].'</a>';
+        return '<a'.$match['before'].'href='.$quote.$masterUrl.$quote.$match['after']
+            .' data-variant='.$quote.$variantUrl.$quote.'>'.$match['content'].'</a>';
     }
 
     private function resolveTargetPage(string $href, Page $currentPage): ?Page
