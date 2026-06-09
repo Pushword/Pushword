@@ -10,6 +10,7 @@ use Pushword\Flat\Exporter\PageExporter;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * A single page that throws during export must not abort the whole snapshot —
@@ -66,5 +67,34 @@ final class PageExportResilienceTest extends KernelTestCase
         // The healthy page was still exported; the bad one was skipped.
         self::assertFileExists($this->testContentDir.'/homepage.md');
         self::assertFileDoesNotExist($this->testContentDir.'/broken-export-page.md');
+    }
+
+    /**
+     * Regression: a typographic apostrophe (U+2019) in a front-matter value
+     * must produce valid YAML. Yaml::dump() wraps the value in a single-quoted
+     * scalar where the curly apostrophe is harmless; the old normalizeQuotes()
+     * ran over the *dumped* YAML and straightened it to "'", which prematurely
+     * terminated the scalar (e.g. 'l’Albanie' -> 'l'Albanie') — invalid YAML
+     * that broke flat import for every page with such a title.
+     */
+    public function testTypographicQuotesInFrontMatterStayValidYaml(): void
+    {
+        $page = new Page(false);
+        $page->setSlug('apostrophe-page');
+        $page->host = 'localhost.dev';
+        $page->setTitle("Tour de l\u{2019}Albanie : \u{201C}joyaux\u{201D} de l\u{2019}\u{00CE}le");
+        $page->setH1("Les \u{00EE}les d\u{2019}\u{00C5}land");
+
+        /** @var PageExporter $exporter */
+        $exporter = self::getContainer()->get(PageExporter::class);
+        $content = $exporter->generatePageContent($page);
+
+        self::assertSame(1, preg_match('/^---\n(.*?)\n---\n/s', $content, $matches), 'front matter delimiters present');
+        $parsed = Yaml::parse($matches[1]); // throws on invalid YAML — the regression
+        self::assertIsArray($parsed);
+
+        // Curly quotes are straightened *before* the dump, so they round-trip as ASCII.
+        self::assertSame('Tour de l\'Albanie : "joyaux" de l\'Île', $parsed['title']);
+        self::assertSame('Les îles d\'Åland', $parsed['h1']);
     }
 }
