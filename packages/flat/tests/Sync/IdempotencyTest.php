@@ -177,8 +177,6 @@ final class IdempotencyTest extends KernelTestCase
         // First import
         $this->pageSync->import('localhost.dev');
 
-        $this->pageSync->getImportedCount();
-
         // Second import — should produce zero new imports
         $this->pageSync->import('localhost.dev');
 

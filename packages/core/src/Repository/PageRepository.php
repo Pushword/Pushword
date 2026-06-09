@@ -499,7 +499,6 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
 
         // Escape special characters for LIKE patterns
         $escapedFileName = $this->escapeLikePattern($media->getFileName());
-        $this->escapeLikePattern($media->getAlt());
 
         // Search for filename in content (with proper escaping)
         $orx->add($queryBuilder->expr()->like('p.mainContent', ':fileNamePattern'));
