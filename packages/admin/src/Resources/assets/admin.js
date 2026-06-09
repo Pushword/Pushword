@@ -17,6 +17,9 @@ import { initImageCompressor } from './admin.imageCompressor'
 // Multi-upload module
 import { initMultiUpload } from './admin.multiUpload'
 
+// Media list inline-edit module
+import { initMediaTableEdit } from './admin.mediaInlineEdit'
+
 // Selection modules
 import { mediaPicker } from './admin.mediaPicker'
 import { inlinePopup } from './admin.inlinePopup'
@@ -87,6 +90,9 @@ window.addEventListener('load', function () {
 
   // Multi-upload
   initMultiUpload()
+
+  // Media list inline editing (?view=table)
+  initMediaTableEdit()
 
   // Selectors
   mediaPicker()

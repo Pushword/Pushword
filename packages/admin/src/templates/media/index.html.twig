@@ -1,8 +1,8 @@
 {% extends '@EasyAdmin/crud/index.html.twig' %}
 
 {% set pwMediaView = app.request.query.get('view') ?? '' %}
-{% set isTableView = pwMediaView == 'table' %}
-{% set mosaicActive = not isTableView %}
+{% set mosaicActive = pwMediaView == 'mosaic' %}
+{% set isTableView = not mosaicActive %}
 {% set mediaFallbackThumb = constant('Pushword\\Admin\\Utils\\Thumb::PLACEHOLDER_DATA_URI') %}
 
 {% block global_actions %}
@@ -13,16 +13,16 @@
   </a>
   <div class="btn-group ms-2 media-view-switch" role="group" aria-label="{{ 'adminMediaViewLabel'|trans }}">
     <a href="{{ ea_url().set('view', null) }}"
-       class="btn btn-secondary btn-outline-Save  {{ mosaicActive ? 'active' }}"
-       aria-pressed="{{ mosaicActive ? 'true' : 'false' }}">
-      <i class="fa fa-th-large" aria-hidden="true"></i>
-      <span class="d-none d-sm-inline ms-1">{{ 'adminMediaViewMosaic'|trans }}</span>
-    </a>
-    <a href="{{ ea_url().set('view', 'table') }}"
        class="btn  btn-secondary btn-outline-default {{ isTableView ? 'active' }}"
        aria-pressed="{{ isTableView ? 'true' : 'false' }}">
       <i class="fa fa-list" aria-hidden="true"></i>
       <span class="d-none d-sm-inline ms-1">{{ 'adminMediaViewTable'|trans }}</span>
+    </a>
+    <a href="{{ ea_url().set('view', 'mosaic') }}"
+       class="btn btn-secondary btn-outline-Save  {{ mosaicActive ? 'active' }}"
+       aria-pressed="{{ mosaicActive ? 'true' : 'false' }}">
+      <i class="fa fa-th-large" aria-hidden="true"></i>
+      <span class="d-none d-sm-inline ms-1">{{ 'adminMediaViewMosaic'|trans }}</span>
     </a>
   </div>
 {% endblock %}
@@ -195,7 +195,209 @@
       {{ include('@EasyAdmin/crud/includes/_batch_action_modal.html.twig', {}, with_context: false) }}
     {% endif %}
   {% else %}
-    {{ parent() }}
+    {% import _self as pw %}
+    {% set eaContext = ea() %}
+    {% set visible_entities = entities|filter(item => item.isAccessible) %}
+    {% set num_results = visible_entities|length %}
+    {% set some_results_are_hidden = num_results != entities|length %}
+    {% set currentSort = app.request.query.all('sort') %}
+
+    {% if num_results > 0 %}
+      <div id="pw-media-table"
+           data-inline-update-url="{{ path('admin_media_multi_inline_update', {id: '__ID__'}) }}"
+           data-delete-url="{{ path('admin_media_multi_delete', {id: '__ID__'}) }}"
+           data-csrf-token="{{ csrf_token('media_multi_upload') }}">
+        <table class="table pw-media-table">
+          <thead>
+            <tr>
+              <th class="pw-m-sorthead">
+                <span class="text-muted">{{ 'adminMediaViewTable'|trans }}</span>
+                <span class="pw-m-sortlinks">
+                  {{ pw.pwSortHeader('adminMediaAltLabel', 'alt', currentSort) }} ·
+                  {{ pw.pwSortHeader('adminMediaFileNameLabel', 'fileName', currentSort) }} ·
+                  {{ pw.pwSortHeader('adminMediaSizeLabel', 'size', currentSort) }} ·
+                  {{ pw.pwSortHeader('adminPageUpdatedAtLabel', 'updatedAt', currentSort) }}
+                </span>
+              </th>
+              <th style="width:80px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entity in visible_entities %}
+              {# @var \Pushword\Core\Entity\Media media #}
+              {% set media = entity.instance %}
+              {% set isImage = media.isImage %}
+              {% set thumbUrl = isImage ? media|image('md', checkFileExists: true) : '' %}
+              {% set ext = media.fileName|slice(media.slug|length) %}
+              {% set bytes = media.size ?? 0 %}
+              {% if bytes >= 1048576 %}
+                {% set readableSize = (bytes / 1048576)|number_format(1, '.', ' ') ~ ' MB' %}
+              {% elseif bytes >= 1024 %}
+                {% set readableSize = (bytes / 1024)|number_format(0, '.', ' ') ~ ' KB' %}
+              {% else %}
+                {% set readableSize = bytes|number_format(0, '.', ' ') ~ ' B' %}
+              {% endif %}
+              {% set editUrl = ea_url().setAction('edit').setEntityId(media.id) %}
+              <tr data-id="{{ media.id }}">
+                <td class="pw-m-cell">
+                  <div class="pw-m-row">
+                    <div class="pw-m-thumb-wrap">
+                      {% if isImage %}
+                        <span class="pw-m-thumb" style="--bg-image-url: url('{{ thumbUrl }}'){% if media.width and media.height %}; aspect-ratio: {{ media.width }} / {{ media.height }}{% endif %}">
+                          <img src="{{ thumbUrl }}" class="pw-thumb" alt="{{ media.alt }}" loading="lazy" data-full-src="{{ media|image('default') }}">
+                        </span>
+                        {% if media.ratioLabel %}<span class="pw-m-ratio">{{ media.ratioLabel }}</span>{% endif %}
+                      {% else %}
+                        <a href="{{ editUrl }}" class="pw-m-fileicon"><i class="fas fa-file fa-2x"></i></a>
+                      {% endif %}
+                    </div>
+                    <div class="pw-m-body">
+                      <input class="pw-m-name" type="text" value="{{ media.alt }}" data-field="alt" data-id="{{ media.id }}" placeholder="{{ 'adminMediaAltLabel'|trans }}" aria-label="{{ 'adminMediaAltLabel'|trans }}">
+                      <div class="pw-m-fileline">
+                        <input class="pw-m-slug" type="text" value="{{ media.slug }}" size="{{ min(media.slug|length, 48) }}" data-field="slug" data-id="{{ media.id }}" aria-label="{{ 'adminMediaFileNameLabel'|trans }}"><span class="pw-ext">{{ ext }}</span>
+                        {% if isImage %}<a href="{{ media|image('default') }}" target="_blank" rel="noopener noreferrer" class="pw-m-open" title="{{ media.fileName }}"><i class="fa fa-external-link"></i></a>{% endif %}
+                      </div>
+                      <div class="pw-m-meta">
+                        {% if media.mimeType %}<span class="badge bg-light text-body">{{ media.mimeType }}</span>{% endif %}
+                        {% if media.width and media.height %}<span><i class="fa fa-expand"></i> {{ media.width }}×{{ media.height }}</span>{% endif %}
+                        <span><i class="fa fa-weight-hanging"></i> {{ readableSize }}</span>
+                        {% if media.updatedAt %}<span><i class="fa fa-clock"></i> {{ media.updatedAt|format_datetime }}</span>{% endif %}
+                      </div>
+                      <div class="pw-m-tags">
+                        <span class="pw-hash">#</span>
+                        <input class="pw-m-tagsinput" type="text" value="{{ media.tags }}" data-field="tags" data-id="{{ media.id }}" data-tags="{{ all_tags|default([])|json_encode }}" data-delimiter=" " autocomplete="off" placeholder="{{ 'adminMediaTagsLabel'|trans }}" aria-label="{{ 'adminMediaTagsLabel'|trans }}">
+                        <div class="textSuggester" style="display:none;"></div>
+                      </div>
+                      <div class="pw-m-alts">
+                        <i class="fa fa-language" title="{{ 'adminMediaAltsLabel'|trans }}"></i>
+                        <textarea class="pw-m-altsinput" data-field="alts" data-id="{{ media.id }}" rows="1" placeholder="{{ 'adminMediaAltsLabel'|trans }}" aria-label="{{ 'adminMediaAltsLabel'|trans }}">{{ media.alts }}</textarea>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="pw-row-actions">
+                  <span class="pw-row-status d-inline"></span>
+                  <a href="{{ editUrl }}" class="btn btn-outline-secondary btn-sm" title="{{ 'adminMediaPickerEdit'|trans }}">
+                    <i class="fas fa-pencil-alt"></i>
+                  </a>
+                  <button type="button" class="btn btn-outline-danger btn-sm pw-delete-btn" data-id="{{ media.id }}" data-confirm="{{ 'delete.confirm'|trans({}, 'EasyAdminBundle') }}" title="{{ 'action.delete'|trans({}, 'EasyAdminBundle') }}">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if some_results_are_hidden %}
+        <div class="alert alert-warning mt-3 d-flex align-items-center gap-2">
+          <twig:ea:Icon name="internal:lock" />
+          <span>{{ 'datagrid.hidden_results'|trans({}, 'EasyAdminBundle') }}</span>
+        </div>
+      {% endif %}
+
+      <div class="content-panel-footer without-padding without-border">
+        {{ include(eaContext.templatePath('crud/paginator'), {render_detailed_pagination: not some_results_are_hidden}) }}
+      </div>
+
+      {{ include('@EasyAdmin/crud/includes/_action_confirmation_modal.html.twig', with_context: false) }}
+    {% else %}
+      <div class="media-mosaic__empty">{{ 'adminMediaMosaicEmpty'|trans }}</div>
+    {% endif %}
   {% endif %}
 
+  <style>
+    .pw-media-table { border-collapse: separate; border-spacing: 0; }
+    .pw-media-table td { vertical-align: middle; padding: 10px 8px; border-top: 1px solid #eef1f5; }
+    .pw-media-table tbody tr:hover { background: #f8fafc; }
+    .pw-m-sorthead { font-weight: 600; }
+    .pw-m-sortlinks { font-weight: 400; font-size: 12px; margin-left: 10px; color: #94a3b8; }
+    .pw-m-sortlinks a { color: #64748b; }
+
+    .pw-m-row { display: flex; gap: 14px; align-items: flex-start; }
+    .pw-m-thumb-wrap { position: relative; flex: 0 0 auto; width: 96px; }
+    .pw-m-thumb {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 96px;
+      max-height: 110px;
+      overflow: hidden;
+      border-radius: 6px;
+      border: 1px solid #dee2e6;
+      box-shadow: 0 1px 4px rgba(0,0,0,.12);
+      background-color: #f1f5f9;
+    }
+    .pw-m-thumb::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-image: var(--bg-image-url, none);
+      background-size: cover;
+      background-position: center;
+      filter: blur(8px);
+      transform: scale(1.1);
+      opacity: .6;
+    }
+    .pw-media-table .pw-thumb { position: relative; z-index: 1; display: block; width: 100%; height: 100%; max-height: 110px; object-fit: contain; cursor: zoom-in; }
+    .pw-m-ratio { position: absolute; left: 4px; top: 4px; z-index: 2; background: rgba(0,0,0,.65); color: #fff; font-size: 10px; line-height: 1; padding: 2px 5px; border-radius: 3px; }
+    .pw-m-fileicon { display: flex; width: 72px; height: 72px; align-items: center; justify-content: center; color: #94a3b8; border: 1px solid #dee2e6; border-radius: 6px; }
+
+    .pw-m-body { flex: 1 1 auto; min-width: 0; }
+    .pw-media-table input,
+    .pw-media-table textarea {
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: 4px;
+      padding: 2px 5px;
+      width: 100%;
+      max-width: 100%;
+    }
+    .pw-media-table input:hover:not(:focus),
+    .pw-media-table textarea:hover:not(:focus) {
+      background: #eef2f7;
+      border-color: #e2e8f0;
+    }
+    .pw-media-table input:focus,
+    .pw-media-table textarea:focus {
+      border-color: #86b7fe;
+      background: #fff;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(13,110,253,.12);
+    }
+    .pw-m-name { font-size: 15px; font-weight: 600; color: #1e293b; }
+    .pw-m-fileline { display: flex; align-items: center; gap: 0; margin-top: 1px; flex-wrap: wrap; }
+    .pw-media-table .pw-m-fileline .pw-m-slug { font-family: monospace; font-size: 12px; color: #64748b; width: auto; flex: 0 1 auto; max-width: 100%; padding-right: 0; }
+    .pw-m-fileline .pw-ext { font-family: monospace; font-size: 12px; color: #94a3b8; white-space: nowrap; margin-left: -2px; }
+    .pw-m-open { color: #94a3b8; font-size: 11px; padding-left: 6px; white-space: nowrap; }
+    .pw-m-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 11px; color: #64748b; margin: 5px 0; }
+    .pw-m-meta .badge { font-weight: 500; }
+    .pw-m-meta i { opacity: .6; margin-right: 2px; }
+    .pw-m-tags { display: flex; align-items: center; position: relative; }
+    .pw-m-tags .pw-hash { color: #cbd5e1; font-weight: 300; padding-left: 4px; }
+    .pw-m-alts { display: flex; align-items: flex-start; gap: 6px; color: #94a3b8; margin-top: 2px; }
+    .pw-m-alts .fa-language { padding-top: 6px; }
+    .pw-m-altsinput { resize: vertical; min-height: 30px; height: 30px; font-size: 12px; font-style: italic; overflow: hidden; }
+    .pw-m-altsinput:focus { min-height: 56px; overflow: auto; }
+
+    .pw-media-table .pw-row-actions { white-space: nowrap; text-align: right; }
+    .pw-media-table .pw-row-actions .btn { padding: 2px 6px; font-size: 12px; }
+    .pw-status-ok { color: #198754; }
+    .pw-status-err { color: #dc3545; }
+    .pw-status-spin { display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: #0d6efd; border-radius: 50%; animation: pw-spin .6s linear infinite; }
+    @keyframes pw-spin { to { transform: rotate(360deg); } }
+    .pw-lightbox { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
+    .pw-lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+  </style>
 {% endblock %}
+
+{% macro pwSortHeader(label, field, currentSort) %}
+  {%- set dir = currentSort[field]|default('') == 'ASC' ? 'DESC' : 'ASC' -%}
+  <a href="{{ ea_url().set('sort', {(field): dir}) }}" class="text-decoration-none text-reset">
+    {{- label|trans -}}
+    {%- if currentSort[field] is defined %} <i class="fas fa-sort-{{ currentSort[field] == 'ASC' ? 'up' : 'down' }}"></i>{% endif -%}
+  </a>
+{% endmacro %}

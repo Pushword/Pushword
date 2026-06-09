@@ -1,5 +1,14 @@
 import imageCompression from 'browser-image-compression'
 import { suggestTags } from './admin.tagsField'
+import {
+  deleteMedia,
+  escapeAttr,
+  escapeHtml,
+  formatSize,
+  openLightbox,
+  saveField,
+  showFlash,
+} from './admin.mediaInlineEdit'
 
 const COMPRESSIBLE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
@@ -41,15 +50,25 @@ export function initMultiUpload() {
   if (!container) return
 
   const uploadUrl = container.dataset.uploadUrl
-  const inlineUpdateUrlTemplate = container.dataset.inlineUpdateUrl
-  const deleteUrlTemplate = container.dataset.deleteUrl
   const editUrlTemplate = container.dataset.editUrl
   const csrfToken = container.dataset.csrfToken
   const allTags = container.dataset.allTags
+  const ctx = {
+    inlineUpdateUrl: container.dataset.inlineUpdateUrl,
+    deleteUrl: container.dataset.deleteUrl,
+    csrfToken,
+  }
   const dropZone = document.getElementById('pw-drop-zone')
   const fileInput = document.getElementById('pw-file-input')
   const table = document.getElementById('pw-upload-table')
   const tbody = document.getElementById('pw-upload-tbody')
+  const tagAllBar = document.getElementById('pw-tag-all-bar')
+  const tagAllInput = document.getElementById('pw-tag-all')
+  const tagAllBtn = document.getElementById('pw-tag-all-btn')
+
+  tagAllBtn.addEventListener('click', () => {
+    tbody.querySelectorAll('tr').forEach((row) => applyTagAllToRow(row))
+  })
 
   // Drop zone events
   dropZone.addEventListener('click', () => fileInput.click())
@@ -80,6 +99,7 @@ export function initMultiUpload() {
     if (!fileList || fileList.length === 0) return
     const files = Array.from(fileList)
     table.style.display = ''
+    tagAllBar.style.display = ''
     for (const file of files) {
       await uploadFile(file)
     }
@@ -114,9 +134,19 @@ export function initMultiUpload() {
       }
 
       populateRow(row, data)
+      applyTagAllToRow(row)
     } catch (err) {
       setRowError(row, 'Network error')
     }
+  }
+
+  function applyTagAllToRow(row) {
+    const value = tagAllInput.value.trim()
+    if (!value) return
+    const tagsInput = row.querySelector('[data-field="tags"]')
+    if (!tagsInput || tagsInput.value === value) return
+    tagsInput.value = value
+    saveField(tagsInput, row, ctx)
   }
 
   function createPlaceholderRow(fileName) {
@@ -167,10 +197,10 @@ export function initMultiUpload() {
     `
 
     row.querySelectorAll('input, textarea').forEach((input) => {
-      input.addEventListener('blur', () => saveField(input, row))
+      input.addEventListener('blur', () => saveField(input, row, ctx))
     })
 
-    row.querySelector('.pw-delete-btn').addEventListener('click', () => deleteMedia(data.id, row))
+    row.querySelector('.pw-delete-btn').addEventListener('click', () => deleteMedia(data.id, row, ctx))
 
     const thumb = row.querySelector('.pw-thumb')
     if (thumb) {
@@ -180,99 +210,8 @@ export function initMultiUpload() {
     suggestTags()
   }
 
-  function openLightbox(src) {
-    const overlay = document.createElement('div')
-    overlay.className = 'pw-lightbox'
-    overlay.innerHTML = `<img src="${escapeAttr(src)}" alt="">`
-    overlay.addEventListener('click', () => overlay.remove())
-    document.body.appendChild(overlay)
-  }
-
   function setRowError(row, message) {
     row.querySelector('td').innerHTML = `<i class="fas fa-times pw-status-err"></i>`
     row.querySelector('td:nth-child(2)').textContent += ` — ${message}`
-  }
-
-  async function saveField(input, row) {
-    const id = input.dataset.id
-    const field = input.dataset.field
-    const value = input.value
-    const statusEl = row.querySelector('.pw-row-status')
-
-    statusEl.innerHTML = '<span class="pw-status-spin"></span>'
-
-    const url = inlineUpdateUrlTemplate.replace('__ID__', id)
-    const formData = new FormData()
-    formData.append('field', field)
-    formData.append('value', value)
-    formData.append('_token', csrfToken)
-
-    try {
-      const response = await fetch(url, { method: 'POST', body: formData })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.slug && data.slug !== input.value) {
-          showFlash(`Renamed to "${data.fileName}" (name was already taken)`, 'warning')
-          input.value = data.slug
-        }
-        statusEl.innerHTML = '<i class="fas fa-check pw-status-ok"></i>'
-      } else {
-        statusEl.innerHTML = '<i class="fas fa-exclamation-triangle pw-status-err"></i>'
-      }
-    } catch {
-      statusEl.innerHTML = '<i class="fas fa-exclamation-triangle pw-status-err"></i>'
-    }
-  }
-
-  async function deleteMedia(id, row) {
-    const url = deleteUrlTemplate.replace('__ID__', id)
-    const formData = new FormData()
-    formData.append('_token', csrfToken)
-
-    const statusEl = row.querySelector('.pw-row-status')
-    statusEl.innerHTML = '<span class="pw-status-spin"></span>'
-
-    try {
-      const response = await fetch(url, { method: 'POST', body: formData })
-      if (response.ok) {
-        row.style.transition = 'opacity .3s'
-        row.style.opacity = '0'
-        setTimeout(() => row.remove(), 300)
-      } else {
-        statusEl.innerHTML = '<i class="fas fa-exclamation-triangle pw-status-err"></i>'
-        showFlash('Delete failed', 'error')
-      }
-    } catch {
-      statusEl.innerHTML = '<i class="fas fa-exclamation-triangle pw-status-err"></i>'
-      showFlash('Network error', 'error')
-    }
-  }
-
-  function showFlash(message, type) {
-    const flash = document.createElement('div')
-    const alertTypes = { success: 'success', warning: 'warning' }
-    flash.className = `alert alert-${alertTypes[type] ?? 'danger'} alert-dismissible fade show`
-    flash.setAttribute('role', 'status')
-    flash.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;min-width:250px;box-shadow:0 4px 12px rgba(0,0,0,.15);'
-    flash.innerHTML = `${escapeHtml(message)}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`
-    document.body.appendChild(flash)
-    setTimeout(() => flash.remove(), 4000)
-  }
-
-  function formatSize(bytes) {
-    if (!bytes) return '—'
-    if (bytes < 1024) return bytes + ' B'
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-    return (bytes / 1024 / 1024).toFixed(1) + ' MB'
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div')
-    div.textContent = str ?? ''
-    return div.innerHTML
-  }
-
-  function escapeAttr(str) {
-    return (str ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   }
 }

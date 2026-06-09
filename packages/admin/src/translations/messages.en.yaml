@@ -67,6 +67,8 @@ adminMediaMosaicEmpty: "No media matches your search."
 adminMediaMultiUpload: "Multi Upload"
 adminMediaMultiUploadDrop: "Drop files here to upload"
 adminMediaMultiUploadOr: "or click to browse"
+adminMediaMultiUploadTagAll: "Tags to apply to every file"
+adminMediaMultiUploadTagAllApply: "Apply to all"
 adminMediaPickerChoose: Choose
 adminMediaPickerEdit: Edit
 adminMediaPickerEmpty: "No image selected"

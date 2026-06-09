@@ -53,6 +53,8 @@ adminMediaMosaicEmpty: 'Aucun média ne correspond à votre recherche.'
 adminMediaMultiUpload: "Multi Upload"
 adminMediaMultiUploadDrop: "Déposez vos fichiers ici"
 adminMediaMultiUploadOr: "ou cliquez pour parcourir"
+adminMediaMultiUploadTagAll: "Tags à appliquer à tous les fichiers"
+adminMediaMultiUploadTagAllApply: "Appliquer à tous"
 adminMediaPickerChoose: Choisir
 adminMediaPickerEdit: Modifier
 adminMediaPickerEmpty: 'Aucune image sélectionnée'

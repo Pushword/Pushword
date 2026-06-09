@@ -18,6 +18,15 @@
       <input type="file" id="pw-file-input" multiple style="display:none;">
     </div>
 
+    <div id="pw-tag-all-bar" class="d-flex align-items-center gap-2 mt-4" style="display:none;">
+      <label for="pw-tag-all" class="mb-0 text-nowrap"><strong>{{ 'adminMediaMultiUploadTagAll'|trans }}</strong></label>
+      <div style="position:relative; flex:1; max-width:420px;">
+        <input type="text" id="pw-tag-all" class="form-control form-control-sm" data-tags="{{ all_tags|json_encode }}" data-delimiter=" " autocomplete="off">
+        <div class="textSuggester" style="display:none;"></div>
+      </div>
+      <button type="button" id="pw-tag-all-btn" class="btn btn-outline-primary btn-sm text-nowrap">{{ 'adminMediaMultiUploadTagAllApply'|trans }}</button>
+    </div>
+
     <table id="pw-upload-table" class="table table-sm mt-4" style="display:none;">
       <thead>
         <tr>
