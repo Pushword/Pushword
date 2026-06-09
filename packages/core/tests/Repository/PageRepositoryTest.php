@@ -211,6 +211,61 @@ final class PageRepositoryTest extends KernelTestCase
         self::assertNull($pageRepo->getPageBySlug('no-such-page', $host));
     }
 
+    public function testFindWithMainImageByIdsPreservesOrderAndDropsUnknownIds(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $pages = $pageRepo->findByHost('');
+        self::assertGreaterThanOrEqual(2, \count($pages), 'fixtures must provide at least two pages');
+
+        $first = $pages[0];
+        $second = $pages[1];
+        self::assertNotNull($first->id);
+        self::assertNotNull($second->id);
+
+        // Reversed input order + an id that does not exist.
+        $result = $pageRepo->findWithMainImageByIds([$second->id, 999999, $first->id]);
+
+        self::assertCount(2, $result, 'unknown ids are dropped');
+        self::assertSame($second->id, $result[0]->id, 'order follows the supplied ids, not SQL IN');
+        self::assertSame($first->id, $result[1]->id);
+
+        // Empty input short-circuits without a query.
+        self::assertSame([], $pageRepo->findWithMainImageByIds([]));
+    }
+
+    public function testFindWithMainImageByIdsEagerLoadsMainImage(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        // The homepage fixture carries a mainImage (AppFixtures).
+        $homepage = $pageRepo->findOneBy(['slug' => 'homepage']);
+        self::assertNotNull($homepage);
+        self::assertNotNull($homepage->mainImage, 'homepage fixture must carry a mainImage');
+        $homepageId = $homepage->id;
+        self::assertNotNull($homepageId);
+
+        $em->clear();
+
+        $result = $pageRepo->findWithMainImageByIds([$homepageId]);
+        self::assertCount(1, $result);
+
+        $mainImage = $result[0]->mainImage;
+        self::assertNotNull($mainImage);
+        // Eager-joined: the media is fully hydrated, not an uninitialized proxy, so
+        // reading it issues no follow-up SELECT (the N+1 the helper exists to prevent).
+        self::assertFalse(
+            $em->getUnitOfWork()->isUninitializedObject($mainImage),
+            'mainImage must be eager-loaded, not a lazy proxy',
+        );
+    }
+
     public function testFindNewlyPublishedSince(): void
     {
         self::bootKernel();

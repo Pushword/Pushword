@@ -462,6 +462,49 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
+     * Hydrate pages by id with parentPage and mainImage eager-joined, returned in
+     * the order of the supplied ids (SQL IN does not preserve order; unknown ids are
+     * dropped). Consumers that resolve page ids through a custom query — search
+     * relevance, related pages, a hand-written id-IN — should rehydrate through this
+     * instead of a bare id fetch, which re-introduces a per-row mainImage N+1 once the
+     * result set is card- or list-rendered. Mirrors the joins buildPublishedPageQuery() does.
+     *
+     * @param list<int> $ids
+     *
+     * @return Page[]
+     */
+    public function findWithMainImageByIds(array $ids): array
+    {
+        if ([] === $ids) {
+            return [];
+        }
+
+        /** @var Page[] $pages */
+        $pages = $this->createQueryBuilder('p')
+            ->leftJoin('p.parentPage', 'parent')->addSelect('parent')
+            ->leftJoin('p.mainImage', 'mainImage')->addSelect('mainImage')
+            ->andWhere('p.id IN (:ids)')->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+
+        $byId = [];
+        foreach ($pages as $page) {
+            if (null !== $page->id) {
+                $byId[$page->id] = $page;
+            }
+        }
+
+        $ordered = [];
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $ordered[] = $byId[$id];
+            }
+        }
+
+        return $ordered;
+    }
+
+    /**
      * @param string|string[] $host
      *                              Return page for sitemap and main Feed (PageController)
      *                              $queryBuilder->getQuery()->getResult();
