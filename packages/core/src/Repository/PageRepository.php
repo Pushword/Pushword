@@ -38,6 +38,15 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     private array $warmedHosts = [];
 
     /**
+     * Slugs that have been definitively resolved (found or not) per host, so
+     * getPageBySlug() can short-circuit to the slug cache (or null) without a
+     * query. Populated by single lookups and by warmupSlugCacheFor().
+     *
+     * @var array<string, array<string, true>>
+     */
+    private array $resolvedSlugs = [];
+
+    /**
      * Slug-existence set per host. Used by the page() Twig function to decide
      * whether an internal redirect target is a known page (in which case the
      * router generates a URL) or an external URL (returned as-is).
@@ -106,12 +115,8 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      */
     public function getPageBySlug(string $slug, string $host): ?Page
     {
-        if (isset($this->warmedHosts[$host])) {
+        if (isset($this->warmedHosts[$host]) || isset($this->resolvedSlugs[$host][$slug])) {
             return $this->slugCache[$host][$slug] ?? null;
-        }
-
-        if (isset($this->slugCache[$host][$slug])) {
-            return $this->slugCache[$host][$slug];
         }
 
         $page = $this->findOneBy(['slug' => $slug, 'host' => $host]);
@@ -120,7 +125,47 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             $this->slugCache[$host][$slug] = $page;
         }
 
+        $this->resolvedSlugs[$host][$slug] = true;
+
         return $page;
+    }
+
+    /**
+     * Batch-resolve a set of slugs for a host in a single query, populating the
+     * per-slug cache. The render pipeline (LinkCollector) calls this with the
+     * internal-link slugs found in a page body so the downstream Html*Link
+     * filters resolve them from cache instead of each firing one getPageBySlug()
+     * per link. Both hits and misses are marked resolved, so a slug warmed here
+     * never triggers a follow-up query.
+     *
+     * @param string[] $slugs
+     */
+    public function warmupSlugCacheFor(array $slugs, string $host): void
+    {
+        if (isset($this->warmedHosts[$host])) {
+            return;
+        }
+
+        $pending = [];
+        foreach ($slugs as $slug) {
+            if ('' !== $slug && ! isset($this->resolvedSlugs[$host][$slug])) {
+                $pending[$slug] = true;
+            }
+        }
+
+        if ([] === $pending) {
+            return;
+        }
+
+        $pendingSlugs = array_keys($pending);
+
+        foreach ($this->findBy(['slug' => $pendingSlugs, 'host' => $host]) as $page) {
+            $this->slugCache[$host][$page->getSlug()] = $page;
+        }
+
+        foreach ($pendingSlugs as $slug) {
+            $this->resolvedSlugs[$host][$slug] = true;
+        }
     }
 
     /**
@@ -272,6 +317,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     {
         $this->slugCache = [];
         $this->warmedHosts = [];
+        $this->resolvedSlugs = [];
         $this->slugSets = [];
         $this->redirectMaps = [];
         $this->redirectFromMaps = [];

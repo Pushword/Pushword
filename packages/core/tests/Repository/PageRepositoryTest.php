@@ -172,6 +172,38 @@ final class PageRepositoryTest extends KernelTestCase
         self::assertSame($page, $pageRepo->getPageBySlug('homepage', $host));
     }
 
+    public function testWarmupSlugCacheForResolvesHitsAndMisses(): void
+    {
+        self::bootKernel();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $pageRepo = $em->getRepository(Page::class);
+
+        $homepage = $pageRepo->findOneBy(['slug' => 'homepage']);
+        self::assertNotNull($homepage);
+        $host = $homepage->host;
+
+        $em->clear();
+
+        // Empty input is a no-op (no query, no error).
+        $pageRepo->warmupSlugCacheFor([], $host);
+
+        $pageRepo->warmupSlugCacheFor(['homepage', 'no-such-page'], $host);
+
+        // Batch warmup must not flip the full-host warmed flag — it only seeds
+        // the per-slug cache for the requested slugs.
+        self::assertFalse($pageRepo->isHostWarmed($host), 'batch warmup must not mark the whole host warmed');
+
+        // A found slug resolves to the real page from the warm cache.
+        $page = $pageRepo->getPageBySlug('homepage', $host);
+        self::assertNotNull($page);
+        self::assertSame('homepage', $page->getSlug());
+
+        // A missing slug resolves to null and stays null (negative cache).
+        self::assertNull($pageRepo->getPageBySlug('no-such-page', $host));
+        self::assertNull($pageRepo->getPageBySlug('no-such-page', $host));
+    }
+
     public function testFindNewlyPublishedSince(): void
     {
         self::bootKernel();

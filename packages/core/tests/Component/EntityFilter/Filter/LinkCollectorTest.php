@@ -7,6 +7,7 @@ use Pushword\Core\Component\EntityFilter\Filter\LinkCollector;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\LinkCollectorService;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -16,7 +17,7 @@ final class LinkCollectorTest extends KernelTestCase
     public function testCollectMarkdownLinks(): void
     {
         $service = new LinkCollectorService();
-        $filter = new LinkCollector($service);
+        $filter = $this->makeFilter($service);
         $page = $this->createPage();
         $manager = $this->getManager($page);
 
@@ -30,7 +31,7 @@ final class LinkCollectorTest extends KernelTestCase
     public function testCollectHtmlHrefs(): void
     {
         $service = new LinkCollectorService();
-        $filter = new LinkCollector($service);
+        $filter = $this->makeFilter($service);
         $page = $this->createPage();
         $manager = $this->getManager($page);
 
@@ -44,7 +45,7 @@ final class LinkCollectorTest extends KernelTestCase
     public function testIgnoreExternalLinks(): void
     {
         $service = new LinkCollectorService();
-        $filter = new LinkCollector($service);
+        $filter = $this->makeFilter($service);
         $page = $this->createPage();
         $manager = $this->getManager($page);
 
@@ -57,7 +58,7 @@ final class LinkCollectorTest extends KernelTestCase
     public function testHandleAnchorsAndQueryStrings(): void
     {
         $service = new LinkCollectorService();
-        $filter = new LinkCollector($service);
+        $filter = $this->makeFilter($service);
         $page = $this->createPage();
         $manager = $this->getManager($page);
 
@@ -71,7 +72,7 @@ final class LinkCollectorTest extends KernelTestCase
     public function testContentPassedThrough(): void
     {
         $service = new LinkCollectorService();
-        $filter = new LinkCollector($service);
+        $filter = $this->makeFilter($service);
         $page = $this->createPage();
         $manager = $this->getManager($page);
 
@@ -84,7 +85,7 @@ final class LinkCollectorTest extends KernelTestCase
     public function testCollectMarkdownLinksWithClosingParenthesis(): void
     {
         $service = new LinkCollectorService();
-        $filter = new LinkCollector($service);
+        $filter = $this->makeFilter($service);
         $page = $this->createPage();
         $manager = $this->getManager($page);
 
@@ -97,7 +98,7 @@ final class LinkCollectorTest extends KernelTestCase
     public function testCollectLinksWithUnderscores(): void
     {
         $service = new LinkCollectorService();
-        $filter = new LinkCollector($service);
+        $filter = $this->makeFilter($service);
         $page = $this->createPage();
         $manager = $this->getManager($page);
 
@@ -111,7 +112,7 @@ final class LinkCollectorTest extends KernelTestCase
     public function testIgnoreRelativeLinks(): void
     {
         $service = new LinkCollectorService();
-        $filter = new LinkCollector($service);
+        $filter = $this->makeFilter($service);
         $page = $this->createPage();
         $manager = $this->getManager($page);
 
@@ -124,7 +125,7 @@ final class LinkCollectorTest extends KernelTestCase
     public function testTrailingSlashesAreNormalized(): void
     {
         $service = new LinkCollectorService();
-        $filter = new LinkCollector($service);
+        $filter = $this->makeFilter($service);
         $page = $this->createPage();
         $manager = $this->getManager($page);
 
@@ -143,6 +144,16 @@ final class LinkCollectorTest extends KernelTestCase
         $page->host = 'localhost';
 
         return $page;
+    }
+
+    private function makeFilter(LinkCollectorService $service): LinkCollector
+    {
+        self::bootKernel();
+
+        /** @var PageRepository $pageRepository */
+        $pageRepository = self::getContainer()->get(PageRepository::class);
+
+        return new LinkCollector($service, $pageRepository);
     }
 
     private function getManager(Page $page): Manager

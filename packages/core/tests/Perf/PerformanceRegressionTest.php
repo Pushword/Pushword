@@ -207,6 +207,41 @@ final class PerformanceRegressionTest extends KernelTestCase
         self::assertSame(1, $count, 'page() Twig function must warm the light cache exactly once per host');
     }
 
+    public function testWarmupSlugCacheForBatchesAllSlugsIntoSingleQuery(): void
+    {
+        $host = $this->hostForFixtures();
+        $this->resetRepoCaches();
+
+        // Mix of an existing slug and unknown ones: a single IN(...) query must
+        // resolve them all, regardless of whether each slug maps to a page.
+        $slugs = ['homepage', 'no-such-page-a', 'no-such-page-b', 'no-such-page-c'];
+
+        $count = $this->countQueries(fn () => $this->pageRepo->warmupSlugCacheFor($slugs, $host));
+
+        self::assertSame(1, $count, 'warmupSlugCacheFor must batch every slug into a single SELECT');
+    }
+
+    public function testGetPageBySlugAfterBatchWarmupEmitsZeroQueries(): void
+    {
+        $host = $this->hostForFixtures();
+        $this->resetRepoCaches();
+
+        $slugs = ['homepage', 'no-such-page-a', 'no-such-page-b', 'no-such-page-c'];
+        $this->pageRepo->warmupSlugCacheFor($slugs, $host);
+
+        // Both found and missing slugs must come from the warm cache — the
+        // miss path is what makes the three Html*Link filters free per link.
+        $count = $this->countQueries(function () use ($slugs, $host): void {
+            for ($i = 0; $i < 10; ++$i) {
+                foreach ($slugs as $slug) {
+                    $this->pageRepo->getPageBySlug($slug, $host);
+                }
+            }
+        });
+
+        self::assertSame(0, $count, 'getPageBySlug must not re-query slugs warmed by warmupSlugCacheFor (hits or misses)');
+    }
+
     public function testWarmupFileNameIndexLightEmitsExactlyOneQuery(): void
     {
         $this->resetRepoCaches();
