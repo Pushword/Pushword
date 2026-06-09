@@ -166,6 +166,38 @@ final class MediaRepositoryTest extends KernelTestCase
         self::assertSame('1.jpg', $media->getFileName());
     }
 
+    public function testSelfHealsStaleIndexId(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $registry = self::getContainer()->get(ManagerRegistry::class);
+        $cache = new ArrayAdapter();
+
+        // Poison the persisted index so '1.jpg' maps to an id that does not exist
+        // in the DB — what a worker reads when media changed out of band (bulk
+        // import, DB restore) without bumping the version counter. version=0 since
+        // no version item is set, so this is the key warmup() will read.
+        $indexItem = $cache->getItem(MediaRepository::INDEX_CACHE_KEY_PREFIX.'0');
+        $indexItem->set(['1.jpg' => ['id' => 999999, 'fileName' => '1.jpg', 'fileNameHistory' => []]]);
+
+        $cache->save($indexItem);
+
+        $repo = new MediaRepository($registry, $cache, debug: false);
+
+        // Without self-healing this returns null and rendering throws
+        // "Internal - Can't handle the value submitted". It must rebuild and resolve.
+        $media = $repo->findOneByFileName('1.jpg');
+        self::assertNotNull($media, 'stale cached index id must self-heal via a rebuild');
+        self::assertSame('1.jpg', $media->getFileName());
+
+        // A fresh instance reads the still-poisoned cache (the heal is in-process,
+        // not written back) — findOneByFileNameOrHistory must self-heal too.
+        $repoFresh = new MediaRepository($registry, $cache, debug: false);
+        $viaHistory = $repoFresh->findOneByFileNameOrHistory('1.jpg');
+        self::assertNotNull($viaHistory);
+        self::assertSame('1.jpg', $viaHistory->getFileName());
+    }
+
     public function testDoctrineListenerBumpsVersionOnWrite(): void
     {
         self::bootKernel();

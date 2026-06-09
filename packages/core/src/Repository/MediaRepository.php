@@ -204,7 +204,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             return null;
         }
 
-        return $this->find($entry['id']);
+        return $this->resolveIndexedId($entry['id'], $fileName);
     }
 
     /**
@@ -216,7 +216,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         $entry = $this->fileNameIndexLight[$fileName] ?? null;
         if (null !== $entry) {
-            return $this->find($entry['id']);
+            return $this->resolveIndexedId($entry['id'], $fileName);
         }
 
         foreach ($this->fileNameIndexLight ?? [] as $candidate) {
@@ -226,6 +226,28 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
         }
 
         return null;
+    }
+
+    /**
+     * Resolve an id taken from the filename index. A persisted index (cache.app,
+     * reused across requests in worker mode) can point at an id that no longer
+     * exists if media changed out of band without bumping the version counter —
+     * a bulk import bypassing the lifecycle listener, a DB restore. Rather than
+     * return null (which surfaces as a hard "can't handle the value" failure when
+     * rendering), rebuild the index once from the DB and retry by filename so a
+     * long-lived worker self-heals.
+     */
+    private function resolveIndexedId(int $id, string $fileName): ?Media
+    {
+        $media = $this->find($id);
+        if (null !== $media) {
+            return $media;
+        }
+
+        $this->fileNameIndexLight = $this->buildFileNameIndex();
+        $entry = $this->fileNameIndexLight[$fileName] ?? null;
+
+        return null !== $entry ? $this->find($entry['id']) : null;
     }
 
     /**
