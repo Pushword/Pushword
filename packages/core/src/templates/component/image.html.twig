@@ -48,6 +48,9 @@
   {% set sizes_string = sizes_parts|slice(0, -1)|join(',') ~ (sizes_parts|length > 1 ? ',' : '') ~ breakpoints|last ~ 'px' %}
 
   {% set modern_format = preferred_modern_format(breakpoints|keys|first) %}
+  {# The <img> is the fallback for browsers that don't support the modern <source>
+     (e.g. webp), so it must serve the original source format, not the webp variant. #}
+  {% set fallback_format = image.extension|default(null) %}
 
   <picture {{ attr(picture_attr) }}>
   {% if modern_format %}
@@ -56,9 +59,9 @@
       sizes="{{ sizes_string }}">
   {% endif %}
     <img {{ mergeAttr({
-      srcset: _self.build_srcset(image, breakpoints, null),
+      srcset: _self.build_srcset(image, breakpoints, fallback_format),
       sizes: sizes_string,
-      src: image|image('default'),
+      src: image|image('default', fallback_format),
       class: image_class ?? 'w-full h-auto mb-4',
       width: width,
       height: height,

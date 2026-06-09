@@ -192,6 +192,16 @@ class Media implements IdInterface, Taggable, Stringable
         return $this->fileName;
     }
 
+    /**
+     * Source file extension without the leading dot (e.g. "jpg"), lowercased.
+     * Used to build the non-modern <img> fallback in the responsive picture
+     * component, so it serves the original format rather than the webp variant.
+     */
+    public function getExtension(): string
+    {
+        return strtolower(ltrim(MediaFileName::extractExtension($this->fileName), '.'));
+    }
+
     public function setFileName(?string $fileName): self
     {
         if (null === $fileName) {

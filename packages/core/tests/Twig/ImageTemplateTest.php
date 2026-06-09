@@ -45,6 +45,23 @@ final class ImageTemplateTest extends KernelTestCase
         self::assertStringContainsString('height="800"', $html);
     }
 
+    public function testImgFallbackServesOriginalFormatNotWebp(): void
+    {
+        $twig = $this->getTwig();
+        $html = $twig->render('@PushwordCore/component/image.html.twig', [
+            'image' => $this->createMedia(),
+        ]);
+
+        // The modern <source> advertises webp...
+        self::assertStringContainsString('type="image/webp"', $html);
+
+        // ...but the <img> fallback must point at the original (.jpg) source, so a
+        // browser without webp support still has a usable image. Isolate the <img>.
+        $img = substr($html, (int) strpos($html, '<img'));
+        self::assertStringContainsString('test-image.jpg', $img);
+        self::assertStringNotContainsString('.webp', $img);
+    }
+
     public function testSingleFilterModeUsesActualDimensions(): void
     {
         $twig = $this->getTwig();
