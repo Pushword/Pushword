@@ -16,6 +16,28 @@ final class MediaTest extends TestCase
         self::assertSame('test', $media->getAlt());
     }
 
+    public function testGetExtensionReturnsLowercasedExtensionWithoutDot(): void
+    {
+        $cases = [
+            'photo.jpg' => 'jpg',
+            'image.jpeg' => 'jpeg',
+            'logo.png' => 'png',
+            'pic.webp' => 'webp',
+            // Normalization keeps the uppercase extension, so getExtension() must
+            // lowercase it — the <picture> fallback path depends on it matching the
+            // generated (lowercase) cache file.
+            'graphic.SVG' => 'svg',
+            // No extension yields an empty string (degenerate, never a real image).
+            'noextension' => '',
+        ];
+
+        foreach ($cases as $fileName => $expected) {
+            $media = new Media();
+            $media->setFileName($fileName);
+            self::assertSame($expected, $media->getExtension(), $fileName);
+        }
+    }
+
     public function testSetFileNameNormalizesInput(): void
     {
         $media = new Media();
