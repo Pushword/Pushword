@@ -8,9 +8,21 @@ use Symfony\Contracts\Cache\CacheInterface;
 use Twig\Environment as Twig;
 use Twig\Error\LoaderError;
 
-final readonly class TemplateResolver
+final class TemplateResolver
 {
-    public function __construct(private Twig $twig, private CacheInterface $cache)
+    /**
+     * In-memory memo of resolved views, keyed by cache key. The resolution is a
+     * pure function of host/path/fallback and the on-disk template set (stable for
+     * a process' lifetime), so it is safe to keep across requests in a worker.
+     * Collapses the hundreds of identical resolve() calls a media-rich page makes
+     * (getView() runs once per rendered <picture>) into array reads instead of one
+     * cache.app filesystem read each.
+     *
+     * @var array<string, string>
+     */
+    private array $memo = [];
+
+    public function __construct(private readonly Twig $twig, private readonly CacheInterface $cache)
     {
     }
 
@@ -22,7 +34,7 @@ final readonly class TemplateResolver
         $cacheKey =
           'pushword.view.'.md5($site->getMainHost().'|'.$path.'|'.$fallback);
 
-        return $this->cache->get(
+        return $this->memo[$cacheKey] ??= $this->cache->get(
             $cacheKey,
             fn (): string => $this->doResolve($site, $path, $fallback),
         );
