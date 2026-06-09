@@ -54,6 +54,7 @@ final class PageOpenGraphImageGeneratorTest extends KernelTestCase
 
         $first = new Page();
         $first->setSlug('first-request');
+
         $generator->setPage($first);
         self::assertSame($first, $generator->getPage());
 
@@ -64,6 +65,7 @@ final class PageOpenGraphImageGeneratorTest extends KernelTestCase
 
         $second = new Page();
         $second->setSlug('second-request');
+
         $generator->setPage($second);
         self::assertSame($second, $generator->getPage());
     }
