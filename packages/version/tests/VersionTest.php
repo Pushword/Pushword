@@ -10,8 +10,11 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Snippet\Entity\Snippet;
+use Pushword\Version\Entity\VersionLog;
 use Pushword\Version\Versionner;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
@@ -337,5 +340,114 @@ final class VersionTest extends KernelTestCase
         $this->expectException(Exception::class);
         $this->expectExceptionMessageMatches('/Unknown version type/');
         $versionner->find('not_a_real_type', 1);
+    }
+
+    /**
+     * Each versionable action appends one row to the queryable version_log
+     * index, tagged with its action (created/updated) and denormalized
+     * title/host, ordered newest first — the data the admin activity journal
+     * reads without reopening snapshot files.
+     */
+    public function testActivityIsLoggedPerActionNewestFirst(): void
+    {
+        self::bootKernel();
+
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+        $repo = $em->getRepository(VersionLog::class);
+
+        $slug = 'activity-log-'.uniqid();
+        $snippet = new Snippet();
+        $snippet->host = 'localhost.dev';
+        $snippet->setSlug($slug);
+        $snippet->setName('First name');
+        $snippet->setContent('Body');
+
+        $em->persist($snippet);
+        $em->flush();
+        // postPersist => "created"
+        $id = (int) $snippet->id;
+
+        $created = $repo->findBy(['type' => 'snippet', 'entityId' => $id]);
+        self::assertCount(1, $created, 'Creating an entity logs exactly one activity row');
+        self::assertSame(VersionLog::ACTION_CREATED, $created[0]->action);
+        self::assertSame('First name', $created[0]->title);
+        self::assertSame($slug, $created[0]->slug, 'Slug is denormalized for the journal second line');
+        self::assertSame('localhost.dev', $created[0]->host);
+
+        $snippet->setName('Second name');
+        $em->flush(); // postUpdate => "updated"
+
+        // Newest first: createdAt may tie within the same second, so id breaks it.
+        $rows = $repo->findBy(['type' => 'snippet', 'entityId' => $id], ['createdAt' => 'DESC', 'id' => 'DESC']);
+        self::assertCount(2, $rows, 'Updating logs a second activity row');
+        self::assertSame(VersionLog::ACTION_UPDATED, $rows[0]->action, 'Most recent row first');
+        self::assertSame('Second name', $rows[0]->title, 'Title is denormalized at action time');
+
+        // Re-flushing with no column change must not log a duplicate (idempotency).
+        $em->flush();
+        self::assertCount(2, $repo->findBy(['type' => 'snippet', 'entityId' => $id]), 'Unchanged state logs nothing');
+
+        // A restore is logged explicitly (the VersionController path) as a
+        // "restored" action, carrying the acting user that find() can't supply.
+        $container->get(Versionner::class)->logActivity('snippet', $snippet, $rows[0]->version, VersionLog::ACTION_RESTORED, 'admin@example.tld');
+        $restored = $repo->findOneBy(['type' => 'snippet', 'entityId' => $id, 'action' => VersionLog::ACTION_RESTORED]);
+        self::assertNotNull($restored, 'Restoring logs a "restored" row');
+        self::assertSame('admin@example.tld', $restored->editor, 'The restorer is recorded');
+
+        $container->get(Versionner::class)->reset('snippet', $id);
+        foreach ($repo->findBy(['type' => 'snippet', 'entityId' => $id]) as $row) {
+            $em->remove($row);
+        }
+
+        $em->remove($snippet);
+        $em->flush();
+    }
+
+    /**
+     * pw:version:log:clear purges the journal: --days keeps recent rows, a bare
+     * run wipes everything after confirmation. Snapshots on disk are untouched.
+     */
+    public function testClearLogCommandPurgesEntries(): void
+    {
+        $kernel = self::bootKernel();
+
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+        $repo = $em->getRepository(VersionLog::class);
+
+        $snippet = new Snippet();
+        $snippet->host = 'localhost.dev';
+        $snippet->setSlug('clear-log-'.uniqid());
+        $snippet->setName('Clear me');
+        $snippet->setContent('Body');
+
+        $em->persist($snippet);
+        $em->flush(); // logs one "created" row
+
+        self::assertGreaterThanOrEqual(1, \count($repo->findAll()));
+
+        $application = new Application($kernel);
+        $tester = new CommandTester($application->find('pw:version:log:clear'));
+
+        // Nothing is old enough to prune, so the journal is untouched.
+        $tester->execute(['--days' => 36500]);
+        $tester->assertCommandIsSuccessful();
+        self::assertGreaterThanOrEqual(1, \count($repo->findAll()), 'No row is 100 years old');
+
+        // A bare run wipes everything once confirmed.
+        $tester->setInputs(['yes']);
+        $tester->execute([]);
+        $tester->assertCommandIsSuccessful();
+
+        $em->clear();
+        self::assertSame([], $repo->findAll(), 'Full clear empties the journal');
+
+        $container->get(Versionner::class)->reset('snippet', (int) $snippet->id);
+        $deletable = $em->getRepository(Snippet::class)->find($snippet->id);
+        if (null !== $deletable) {
+            $em->remove($deletable);
+            $em->flush();
+        }
     }
 }

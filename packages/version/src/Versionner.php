@@ -2,7 +2,9 @@
 
 namespace Pushword\Version;
 
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
@@ -15,6 +17,8 @@ use Pushword\Core\EventListener\PageListener;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Core\Utils\Entity;
 use Pushword\Snippet\Entity\Snippet;
+use Pushword\Version\Entity\VersionLog;
+use Stringable;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -56,16 +60,20 @@ class Versionner
 
     public function postPersist(PostPersistEventArgs $lifecycleEventArgs): void
     {
-        $this->postUpdate($lifecycleEventArgs);
+        $this->handle($lifecycleEventArgs->getObject(), VersionLog::ACTION_CREATED);
     }
 
-    public function postUpdate(PostPersistEventArgs|PostUpdateEventArgs $lifecycleEventArgs): void
+    public function postUpdate(PostUpdateEventArgs $lifecycleEventArgs): void
+    {
+        $this->handle($lifecycleEventArgs->getObject(), VersionLog::ACTION_UPDATED);
+    }
+
+    private function handle(object $entity, string $action): void
     {
         if (! static::$version) {
             return;
         }
 
-        $entity = $lifecycleEventArgs->getObject();
         $type = $this->typeOf($entity);
 
         if (null === $type) {
@@ -73,7 +81,7 @@ class Versionner
         }
 
         \assert($entity instanceof IdInterface); // every versionable type uses IdTrait
-        $this->createVersion($type, $entity);
+        $this->createVersion($type, $entity, $action);
     }
 
     private function typeOf(object $entity): ?string
@@ -87,7 +95,7 @@ class Versionner
         return null;
     }
 
-    private function createVersion(string $type, IdInterface $entity): void
+    private function createVersion(string $type, IdInterface $entity, string $action): void
     {
         $id = (int) $entity->id;
         $jsonContent = $this->revisions->serialize($entity);
@@ -102,12 +110,60 @@ class Versionner
             return;
         }
 
+        $filename = $this->buildVersionFilename($hash);
         $this->fileSystem->dumpFile(
-            $this->getVersionFile($type, $id, $this->buildVersionFilename($hash)),
+            $this->getVersionFile($type, $id, $filename),
             $this->snapshotWithEditor($entity, $jsonContent),
         );
 
         $this->pruneOldVersions($type, $id);
+
+        $editor = $entity instanceof Page ? $entity->editedBy?->getUserIdentifier() : null;
+        $this->logActivity($type, $entity, $filename, $action, $editor);
+    }
+
+    /**
+     * Append a row to the queryable activity index (version_log). Uses a direct
+     * DBAL insert instead of persisting an entity so it is safe to call from
+     * within a Doctrine flush (postPersist/postUpdate) without mutating the
+     * UnitOfWork. Title/host are denormalized so the admin journal renders
+     * without reopening snapshot files or hydrating the entity.
+     */
+    public function logActivity(string $type, IdInterface $entity, ?string $version, string $action, ?string $editor): void
+    {
+        $this->entityManager->getConnection()->insert('version_log', [
+            'type' => $type,
+            'entity_id' => (int) $entity->id,
+            'version' => $version,
+            'action' => $action,
+            'editor' => $editor,
+            'title' => $this->labelOf($entity),
+            'slug' => $this->slugOf($entity),
+            'host' => $this->hostOf($entity),
+            'created_at' => new DateTimeImmutable(),
+        ], ['created_at' => Types::DATETIME_IMMUTABLE]);
+    }
+
+    private function labelOf(IdInterface $entity): string
+    {
+        if ($entity instanceof Page) {
+            return $entity->getH1() ?: ($entity->getTitle() ?: $entity->getSlug());
+        }
+
+        // Snippet (the only other versionable type) is Stringable: name ?: slug.
+        return $entity instanceof Stringable ? (string) $entity : (string) $entity->id;
+    }
+
+    private function hostOf(IdInterface $entity): ?string
+    {
+        // Both versionable types carry a host via HostTrait, but Snippet does not
+        // declare HostInterface, so match the concrete types like labelOf().
+        return $entity instanceof Page || $entity instanceof Snippet ? $entity->host : null;
+    }
+
+    private function slugOf(IdInterface $entity): ?string
+    {
+        return $entity instanceof Page || $entity instanceof Snippet ? $entity->getSlug() : null;
     }
 
     /**

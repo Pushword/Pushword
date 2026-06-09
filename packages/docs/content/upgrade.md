@@ -12,6 +12,33 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc650
+
+### Version: activity journal (who changed what, when)
+
+The `version` package now records every versionable action (create / update /
+restore) into a queryable **activity log**, surfaced as a read-only admin
+journal ordered newest-first with filters (type, editor, action, host). Each row
+links to the entity's edit screen (when it still exists) and to the side-by-side
+diff. The on-disk snapshots are unchanged — this adds a denormalized index on top
+of them.
+
+- **New table**: `version_log` (written via a direct insert when the action
+  happens; the editor is captured for authenticated edits, left empty for flat
+  sync / CLI).
+- **New command**: `pw:version:log:clear` empties the journal, or
+  `--days=N` prunes entries older than N days. Snapshots on disk are untouched.
+
+#### Migration steps
+
+1. `composer update`
+2. `php bin/console doctrine:schema:update --force` (**required** — adds the
+   `version_log` table the journal reads/writes)
+3. `php bin/console cache:clear`
+
+No breaking changes: the journal starts empty and fills as pages/snippets are
+edited (there is no backfill of pre-upgrade history).
+
 ## To 1.0.0-rc637
 
 ### Per-page publication hold (replaces `page-workflow`)

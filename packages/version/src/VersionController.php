@@ -7,6 +7,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInter
 use Exception;
 use InvalidArgumentException;
 use Pushword\Core\Entity\SharedTrait\CustomPropertiesInterface;
+use Pushword\Core\Entity\SharedTrait\IdInterface;
+use Pushword\Version\Entity\VersionLog;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -187,6 +189,12 @@ class VersionController extends AbstractController
     public function loadVersion(string $type, string $id, string $version): RedirectResponse
     {
         $this->versionner->loadVersion($type, $id, $version);
+
+        // Restores don't write a new snapshot, so record the action explicitly
+        // with the acting user (find() now reflects the restored content/host).
+        $entity = $this->versionner->find($type, $id);
+        \assert($entity instanceof IdInterface);
+        $this->versionner->logActivity($type, $entity, $version, VersionLog::ACTION_RESTORED, $this->getUser()?->getUserIdentifier());
 
         return $this->redirectToEdit($type, (int) $id);
     }

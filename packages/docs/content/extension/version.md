@@ -28,6 +28,26 @@ It adds a new [admin](/extension/admin) (reachable for each page under the _crea
 
 Then you can switch from one version to another (identified by its _h1_ and the _updated date_), or compare two versions side by side.
 
+### Activity journal
+
+Beyond the per-page history, the extension keeps a global **activity log**: every
+create / update / restore is recorded with its actor and timestamp into a
+`version_log` table, exposed as a read-only admin page (menu **Activity log**)
+ordered newest-first. Filter by type, editor, action or host; each row shows the
+entity on two lines (H1/title then slug), links to its edit screen when it still
+exists, and to the diff.
+
+The log is a denormalized index built at write time, so the page renders from
+plain SQL without reopening any snapshot file. The editor is captured for
+authenticated admin/API edits and left empty for `pw:flat:sync` / CLI writes.
+Unlike the snapshot history (which is pruned over time), the journal is kept as
+an audit trail — clear it with:
+
+```shell
+php bin/console pw:version:log:clear          # wipe the whole journal
+php bin/console pw:version:log:clear --days=90 # only entries older than 90 days
+```
+
 ### Versioned entities
 
 Pages are versioned out of the box. When [`pushword/snippet`](/extension/snippet)
