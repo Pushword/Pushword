@@ -217,7 +217,7 @@ final class ConversationImporter
      */
     private function isEmptyRow(array $row): bool
     {
-        return array_all($row, static fn ($value): bool => ! (null !== $value && '' !== trim($value)));
+        return array_all($row, static fn (?string $value): bool => ! (null !== $value && '' !== trim($value)));
     }
 
     /**

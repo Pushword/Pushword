@@ -35,15 +35,14 @@ abstract class AbstractConversationForm implements ConversationFormInterface
      *
      * @var array<int, string>
      */
-    protected static $step = [
+    protected static array $step = [
         1 => 'One',
         2 => 'Two',
         3 => 'Three',
         4 => 'Four',
     ];
 
-    /** @var string */
-    protected $successMessage = 'conversationSendSuccess';
+    protected string $successMessage = 'conversationSendSuccess';
 
     protected ?int $currentStep = null;
 

@@ -108,6 +108,7 @@
     "symfony/scheduler": "^8.0",
     "symfony/stopwatch": "^8.0",
     "symplify/config-transformer": "*",
+    "tomasvotruba/type-coverage": "^2.2",
     "tomasvotruba/unused-public": "^2.0",
     "vincentlanglet/twig-cs-fixer": "*"
   },

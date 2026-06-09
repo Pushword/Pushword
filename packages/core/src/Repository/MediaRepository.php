@@ -29,9 +29,9 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 {
     use TagsRepositoryTrait;
 
-    public const VERSION_CACHE_KEY = 'pw.media.version';
+    public const string VERSION_CACHE_KEY = 'pw.media.version';
 
-    public const INDEX_CACHE_KEY_PREFIX = 'pw.media.filename_index.v';
+    public const string INDEX_CACHE_KEY_PREFIX = 'pw.media.filename_index.v';
 
     private const int INDEX_CACHE_TTL = 86400;
 

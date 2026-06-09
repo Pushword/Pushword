@@ -150,7 +150,7 @@ final class ContentPipeline
             return [];
         }
 
-        return array_map(static fn ($item): string => \is_scalar($item) ? (string) $item : throw new Exception(), $filters);
+        return array_map(static fn (mixed $item): string => \is_scalar($item) ? (string) $item : throw new Exception(), $filters);
     }
 
     /**

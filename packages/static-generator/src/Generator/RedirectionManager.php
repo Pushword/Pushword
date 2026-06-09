@@ -11,7 +11,7 @@ class RedirectionManager extends AbstractGenerator
      *
      * @var array<int, array{0: string, 1: string, 2: int}> where 0 is the from, 1 is the to, 2 is the code
      */
-    protected $redirections = [];
+    protected array $redirections = [];
 
     /**
      * The function cache redirection found during generatePages.

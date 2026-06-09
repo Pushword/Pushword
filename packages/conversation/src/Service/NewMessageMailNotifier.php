@@ -55,7 +55,7 @@ class NewMessageMailNotifier
     /**
      * @return Message[]
      */
-    protected function getMessagesPostedSince(DateTimeInterface $datetime)
+    protected function getMessagesPostedSince(DateTimeInterface $datetime): array
     {
         $query = 'SELECT m FROM '.Message::class.' m WHERE m.authorEmail IS NULL AND m.host = :host AND m.createdAt > :lastNotificationTime';
         $query = $this->em->createQuery($query)

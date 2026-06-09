@@ -50,9 +50,9 @@ use Twig\Error\SyntaxError;
 /** @extends AbstractAdminCrudController<Page> */
 class PageCrudController extends AbstractAdminCrudController
 {
-    protected const FORM_FIELD_KEY = 'admin_page_form_fields';
+    protected const string FORM_FIELD_KEY = 'admin_page_form_fields';
 
-    protected const MESSAGE_PREFIX = 'admin.page';
+    protected const string MESSAGE_PREFIX = 'admin.page';
 
     /**
      * @param iterable<PageCrudExtensionInterface> $extensions
@@ -425,7 +425,6 @@ class PageCrudController extends AbstractAdminCrudController
 
         $this->adminFormFieldManager->setMessagePrefix(self::MESSAGE_PREFIX);
 
-        /** @var string $formFieldKey */
         $formFieldKey = static::FORM_FIELD_KEY;
         $fields = array_replace(
             [[], [], []],

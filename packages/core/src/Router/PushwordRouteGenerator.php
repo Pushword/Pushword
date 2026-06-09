@@ -45,11 +45,8 @@ final class PushwordRouteGenerator
         return $this->generate($homepage, $canonical);
     }
 
-    /**
-     * @param string|Page $slug
-     */
     public function generate(
-        $slug = 'homepage',
+        Page|string $slug = 'homepage',
         bool $canonical = false,
         ?int $pager = null,
         ?string $host = null,

@@ -74,7 +74,7 @@ function computeDbCacheHash(string $monoRepoBase): string
 }
 
 // Suppress fsockopen warnings from Panther checking if server is already running
-set_error_handler(static function ($errno, $errstr, $errfile, $errline): bool {
+set_error_handler(static function (int $errno, string $errstr, string $errfile, int $errline): bool {
     // Suppress fsockopen connection refused warnings from Panther
     if (\E_WARNING === $errno && str_contains($errstr, 'fsockopen()') && str_contains($errstr, 'Connection refused')) {
         return true; // Suppress this warning

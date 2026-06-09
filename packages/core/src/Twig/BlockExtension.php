@@ -199,6 +199,6 @@ class BlockExtension
     #[AsTwigFunction('legacyImageArray', needsEnvironment: false, isSafe: ['html'])]
     public function legacyImageArray(array $images): array
     {
-        return array_map(static fn ($mediaName): array => ['media' => $mediaName], $images);
+        return array_map(static fn (mixed $mediaName): array => ['media' => $mediaName], $images);
     }
 }

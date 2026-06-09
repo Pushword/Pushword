@@ -8,9 +8,15 @@ includes:
     - vendor/phpstan/phpstan-symfony/extension.neon
     - vendor/phpstan/phpstan-symfony/rules.neon
     - vendor/tomasvotruba/unused-public/config/extension.neon
+    - vendor/tomasvotruba/type-coverage/config/extension.neon
 
 parameters:
     level: max
+    type_coverage:
+        return_type: 100
+        param_type: 100
+        property_type: 100
+        constant_type: 100
     paths:
         - rector.php
         - packages/admin/src
@@ -53,6 +59,10 @@ parameters:
         constants: false
     ignoreErrors:
         - '#Short ternary operator is not allowed#'
+        # MediaStorageAdapter wraps Flysystem stream methods: `resource` has no native PHP type hint,
+        # so writeStream($stream) and readStream() cannot reach 100% type coverage.
+        - message: '#possible (param|return) types#'
+          path: packages/core/src/Service/MediaStorageAdapter.php
         # Symfony 7.4+ TreeBuilder generics are not well supported by PHPStan
         # Expected with resolve_target_entities remapping core User to App\Entity\User
         - '#type mapping mismatch.*Pushword\\Core\\Entity\\User.*App\\Entity\\User#'

@@ -250,7 +250,7 @@ final readonly class FlatChangeDetector
      */
     private function matchesExcludePattern(string $filename, array $patterns): bool
     {
-        return array_any($patterns, static fn ($pattern): bool => fnmatch($pattern, $filename));
+        return array_any($patterns, static fn (string $pattern): bool => fnmatch($pattern, $filename));
     }
 
     private function isTempOrLockFile(string $filename): bool

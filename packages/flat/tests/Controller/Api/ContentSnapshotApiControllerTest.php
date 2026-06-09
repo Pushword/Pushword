@@ -368,6 +368,6 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
      */
     private function entriesContainSuffix(array $entries, string $suffix): bool
     {
-        return array_any($entries, static fn ($entry): bool => str_ends_with($entry, $suffix));
+        return array_any($entries, static fn (string $entry): bool => str_ends_with($entry, $suffix));
     }
 }

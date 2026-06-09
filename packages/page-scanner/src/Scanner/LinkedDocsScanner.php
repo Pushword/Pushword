@@ -370,7 +370,7 @@ final class LinkedDocsScanner extends AbstractScanner
 
     private function mustIgnore(string $url): bool
     {
-        return array_any($this->toIgnore, static fn ($toIgnore): bool => fnmatch($toIgnore, $url));
+        return array_any($this->toIgnore, static fn (string $toIgnore): bool => fnmatch($toIgnore, $url));
     }
 
     private function checkLinkedDoc(string $url, bool $checkRedirection = true): void
@@ -610,7 +610,7 @@ final class LinkedDocsScanner extends AbstractScanner
         // For filtered images, the extension may differ from the original (e.g., .webp from .jpg)
         $baseName = pathinfo($fileName, \PATHINFO_FILENAME);
 
-        return array_any(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'], static fn ($ext): bool => null !== $repo->findOneByFileName($baseName.'.'.$ext));
+        return array_any(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'], static fn (string $ext): bool => null !== $repo->findOneByFileName($baseName.'.'.$ext));
     }
 
     private function findPageInCacheOrDb(string $slug): ?Page

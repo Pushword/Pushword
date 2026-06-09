@@ -17,7 +17,7 @@ use Pushword\Core\Entity\Page;
 
 class PageRedirectionCrudController extends PageCrudController
 {
-    protected const FORM_FIELD_KEY = 'admin_redirection_form_fields';
+    protected const string FORM_FIELD_KEY = 'admin_redirection_form_fields';
 
     private ?AdminUrlGenerator $adminUrlGenerator = null;
 

@@ -55,7 +55,7 @@ final class DeferredExportProcessor
         }
 
         $entityTypes = array_unique(array_column($this->queue, 'type'));
-        $hosts = array_unique(array_filter(array_column($this->queue, 'host'), static fn ($h): bool => null !== $h && '' !== $h));
+        $hosts = array_unique(array_filter(array_column($this->queue, 'host'), static fn (mixed $h): bool => null !== $h && '' !== $h));
 
         $this->queue = [];
 

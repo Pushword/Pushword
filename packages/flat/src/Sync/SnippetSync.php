@@ -263,7 +263,7 @@ final class SnippetSync
 
         $lastSyncTime = $this->stateManager->getLastSyncTime('snippet', $host);
 
-        return array_any($this->collectFiles($dir), static fn ($path): bool => filemtime($path) > $lastSyncTime);
+        return array_any($this->collectFiles($dir), static fn (string $path): bool => filemtime($path) > $lastSyncTime);
     }
 
     private function resetCounters(): void

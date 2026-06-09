@@ -84,7 +84,7 @@ final class PageExtension
      * @return Page[]
      */
     #[AsTwigFunction('pages')]
-    public function getPublishedPages($host = null, array|string $where = [], array|string $order = 'weight,publishedAt', array|int $max = 0, bool $withRedirection = false): array
+    public function getPublishedPages(string|array|null $host = null, array|string $where = [], array|string $order = 'weight,publishedAt', array|int $max = 0, bool $withRedirection = false): array
     {
         $currentPage = $this->apps->getCurrentPage();
 
@@ -110,7 +110,7 @@ final class PageExtension
      */
     #[AsTwigFunction('p')]
     #[AsTwigFunction('loadPageEntity')]
-    public function getPublishedPage(string $slug, $host = null): ?Page
+    public function getPublishedPage(string $slug, string|array|null $host = null): ?Page
     {
         $pages = $this->pageRepo->getPublishedPages(
             $host ?? $this->apps->getMainHost() ?? [],
