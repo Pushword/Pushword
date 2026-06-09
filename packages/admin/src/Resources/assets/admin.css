@@ -155,7 +155,6 @@
 }
 
 #main-menu .menu .submenu > li.menu-item > a {
-  margin: 0 4px;
   padding: 4px 10px;
   border-radius: 5px;
 }
@@ -229,9 +228,9 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
-[role="button"]:focus-visible,
-[role="option"]:focus-visible,
-[tabindex]:focus-visible:not([tabindex="-1"]) {
+[role='button']:focus-visible,
+[role='option']:focus-visible,
+[tabindex]:focus-visible:not([tabindex='-1']) {
   outline: var(--focus-ring-width) solid var(--focus-ring-color);
   outline-offset: var(--focus-ring-offset);
 }
