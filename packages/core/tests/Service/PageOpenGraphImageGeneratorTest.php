@@ -46,6 +46,28 @@ final class PageOpenGraphImageGeneratorTest extends KernelTestCase
         $generator->setPage($page)->generatePreviewImage();
     }
 
+    public function testResetClearsLeakedPageForWorkerMode(): void
+    {
+        self::bootKernel();
+
+        $generator = $this->buildGenerator();
+
+        $first = new Page();
+        $first->setSlug('first-request');
+        $generator->setPage($first);
+        self::assertSame($first, $generator->getPage());
+
+        // Simulate the kernel.reset between two worker requests: the previous
+        // request's page must not leak into the next one.
+        $generator->reset();
+        self::assertNull($generator->page);
+
+        $second = new Page();
+        $second->setSlug('second-request');
+        $generator->setPage($second);
+        self::assertSame($second, $generator->getPage());
+    }
+
     public function testLogsErrorAndDoesNotThrowWhenImagickFails(): void
     {
         self::bootKernel();

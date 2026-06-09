@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Contracts\Service\ResetInterface;
 use Throwable;
 use Twig\Environment as Twig;
 
@@ -23,7 +24,7 @@ use Twig\Environment as Twig;
  * Credit JoliCode
  * https://jolicode.com/blog/create-your-own-shiny-open-graph-images-with-imagine-php.
  */
-class PageOpenGraphImageGenerator
+class PageOpenGraphImageGenerator implements ResetInterface
 {
     private ?RGB $rgb = null;
 
@@ -42,9 +43,6 @@ class PageOpenGraphImageGenerator
         private readonly int $marginSize = 60,
         private readonly ?LoggerInterface $logger = null,
     ) {
-        if (null !== ($currentPage = $this->apps->getCurrentPage())) {
-            $this->page = $currentPage;
-        }
     }
 
     public function setPage(Page $page): static
@@ -56,7 +54,21 @@ class PageOpenGraphImageGenerator
 
     public function getPage(): Page
     {
-        return $this->page ?? throw new LogicException('Page must be set before generating OG image');
+        // Resolve the current page lazily rather than snapshotting it at construct
+        // time, so a long-lived worker instance always reflects the active request.
+        return $this->page
+            ?? $this->apps->getCurrentPage()
+            ?? throw new LogicException('Page must be set before generating OG image');
+    }
+
+    /**
+     * Worker-mode safety (kernel.reset): clear the per-request page so an
+     * explicit setPage() from one request never leaks into the next. The default
+     * is resolved fresh in getPage(), so it stays correct each request.
+     */
+    public function reset(): void
+    {
+        $this->page = null;
     }
 
     public function getPath(bool $browserPath = false): string
