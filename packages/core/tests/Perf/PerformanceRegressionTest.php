@@ -7,7 +7,6 @@ use Doctrine\DBAL\Driver as DriverInterface;
 use Doctrine\DBAL\Logging\Middleware as LoggingMiddleware;
 use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\Attributes\Group;
-use Psr\Log\AbstractLogger;
 use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -15,7 +14,6 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\RouterTwigExtension;
 use ReflectionProperty;
-use Stringable;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -455,31 +453,5 @@ final class PerformanceRegressionTest extends KernelTestCase
         $value = $prop->getValue($this->mediaRepo);
 
         return $value ?? [];
-    }
-}
-
-/**
- * PSR logger that counts DBAL "Executing statement" log messages.
- * Kept file-local — not promoted to a shared utility until a second test needs it.
- */
-final class PerfQueryCounter extends AbstractLogger
-{
-    public int $count = 0;
-
-    /** @var list<string> */
-    public array $queries = [];
-
-    public function log($level, string|Stringable $message, array $context = []): void
-    {
-        $msg = (string) $message;
-        // Match both "Executing statement: {sql}" (from prepared-statement execute
-        // and Connection::exec) and "Executing query: {sql}" (from Connection::query).
-        if (! str_starts_with($msg, 'Executing statement') && ! str_starts_with($msg, 'Executing query')) {
-            return;
-        }
-
-        ++$this->count;
-        $sql = $context['sql'] ?? $msg;
-        $this->queries[] = \is_string($sql) ? $sql : $msg;
     }
 }

@@ -44,6 +44,9 @@ php -S 127.0.0.1:8004 -t public/
 
 The first available port will be used automatically (like `symfony server:start`).
 
+FrankenPHP can also run in **worker mode** (a long-running kernel). Pushword is safe
+to run this way — see [Performance](/performance) for how to enable it and why.
+
 #### Available commands:
 
 ```shell

@@ -1,0 +1,148 @@
+<?php
+
+namespace Pushword\Core\Tests\Worker;
+
+use PHPUnit\Framework\Attributes\Group;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\HttpKernel\TerminableInterface;
+
+/**
+ * Worker-mode production-readiness guard. Drives a single booted kernel through a
+ * realistic mixed request stream — different hosts and locales — exactly as a
+ * FrankenPHP `worker` / Symfony Runtime process would: each request is handled,
+ * terminated, then services are reset (`kernel.reset`) before the next one.
+ *
+ * Pushword is multi-site (host-driven) and multi-locale, so the prod risk is one
+ * request's host/locale/site bleeding into the next when the kernel is reused.
+ * These tests assert every response stays correct for its own host+locale and
+ * that memory does not grow across a long mixed run (no cache accumulating per
+ * host across requests).
+ *
+ * Companion to WorkerModeStateResetTest, which proves the repository caches are
+ * flushed by the same reset; this one covers the full HTTP request pipeline.
+ */
+#[Group('integration')]
+#[Group('worker')]
+final class WorkerModeCrossRequestTest extends KernelTestCase
+{
+    public function testCrossHostAndCrossLocaleRequestsStayCorrect(): void
+    {
+        self::bootKernel();
+
+        // 1) Default host, English.
+        $en = $this->workerHandle('https://localhost.dev/');
+        self::assertSame(Response::HTTP_OK, $en->getStatusCode());
+        $enBody = (string) $en->getContent();
+        self::assertSame('en', $this->lang($enBody));
+        self::assertStringContainsString('href="https://localhost.dev/"', $this->canonical($enBody));
+        self::assertStringContainsString('Welcome to Pushword', $enBody);
+
+        // 2) A different host entirely. Its content and canonical host must be its
+        //    own — no bleed from the previous localhost.dev request.
+        $other = $this->workerHandle('https://admin-block-editor.test/kitchen-sink');
+        self::assertSame(Response::HTTP_OK, $other->getStatusCode());
+        $otherBody = (string) $other->getContent();
+        self::assertStringContainsString('href="https://admin-block-editor.test/kitchen-sink"', $this->canonical($otherBody));
+        self::assertStringContainsString('Kitchen Sink Block', $otherBody);
+        self::assertStringNotContainsString('localhost.dev', $this->canonical($otherBody), "previous host must not leak into this request's canonical");
+
+        // 3) Back to the default host, but a French page. Locale must switch.
+        $fr = $this->workerHandle('https://localhost.dev/fr/homepage');
+        self::assertSame(Response::HTTP_OK, $fr->getStatusCode());
+        $frBody = (string) $fr->getContent();
+        self::assertSame('fr', $this->lang($frBody));
+        self::assertStringContainsString('Bienvenue sur Pushword', $frBody);
+
+        // 4) English homepage again: the locale set to 'fr' in the previous request
+        //    must not stick — the lang attribute must be back to 'en'.
+        $enAgain = $this->workerHandle('https://localhost.dev/');
+        self::assertSame(Response::HTTP_OK, $enAgain->getStatusCode());
+        $enAgainBody = (string) $enAgain->getContent();
+        self::assertSame('en', $this->lang($enAgainBody), 'locale from a previous request must not leak across the worker boundary');
+        self::assertStringContainsString('Welcome to Pushword', $enAgainBody);
+    }
+
+    public function testMemoryStaysStableAcrossManyMixedRequests(): void
+    {
+        // Boot debug OFF to measure the production runtime. In debug mode the
+        // profiler-style collectors and the PHPUnit deprecation accumulator grow
+        // ~50KB/request — pure test/debug machinery absent from APP_ENV=prod, which
+        // would mask a real leak behind harness noise. With debug off the heap is
+        // flat, so a tight bound here is both meaningful and stable.
+        self::bootKernel(['debug' => false]);
+
+        $urls = [
+            'https://localhost.dev/',
+            'https://localhost.dev/fr/homepage',
+            'https://localhost.dev/fr-ca/homepage',
+            'https://admin-block-editor.test/kitchen-sink',
+        ];
+
+        // Warm several full cycles so lazily-initialized services settle, then
+        // snapshot memory — the delta reflects steady-state per-request growth.
+        for ($i = 0; $i < 3; ++$i) {
+            foreach ($urls as $url) {
+                self::assertSame(Response::HTTP_OK, $this->workerHandle($url)->getStatusCode());
+            }
+        }
+
+        gc_collect_cycles();
+        $memAfterWarm = memory_get_usage();
+
+        $cycles = 25;
+        for ($i = 0; $i < $cycles; ++$i) {
+            foreach ($urls as $url) {
+                $this->workerHandle($url);
+            }
+        }
+
+        gc_collect_cycles();
+        $memDelta = memory_get_usage() - $memAfterWarm;
+
+        fwrite(\STDERR, \sprintf(
+            "\n[WORKER] prod-mode heap growth over %d requests across %d hosts/locales: %.2f MB\n",
+            $cycles * \count($urls),
+            \count($urls),
+            $memDelta / 1024 / 1024,
+        ));
+
+        self::assertLessThan(
+            4 * 1024 * 1024,
+            $memDelta,
+            'worker heap grew across a mixed request stream — a per-host/per-request cache is likely accumulating across requests',
+        );
+    }
+
+    /**
+     * Handle one request through the full kernel, then run the exact worker
+     * request boundary: terminate the request and reset all kernel.reset services.
+     */
+    private function workerHandle(string $url): Response
+    {
+        $kernel = self::$kernel;
+        \assert($kernel instanceof KernelInterface);
+
+        $request = Request::create($url);
+        $response = $kernel->handle($request);
+        if ($kernel instanceof TerminableInterface) {
+            $kernel->terminate($request, $response);
+        }
+
+        $kernel->getContainer()->get('services_resetter')->reset();
+
+        return $response;
+    }
+
+    private function lang(string $body): string
+    {
+        return 1 === preg_match('/<html[^>]*\blang="([^"]+)"/', $body, $m) ? $m[1] : '';
+    }
+
+    private function canonical(string $body): string
+    {
+        return 1 === preg_match('/<link[^>]*rel="canonical"[^>]*>/', $body, $m) ? $m[0] : '';
+    }
+}

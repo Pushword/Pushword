@@ -35,7 +35,9 @@
 
 	php_server {
 		resolve_root_symlink
-	    # Uncomment this for worker mode (no noticeable difference in performance)
+	    # Uncomment for worker mode (long-running kernel). Safe — see
+	    # docs/content/performance.md. Perf gain depends on workload: it mostly
+	    # amortizes the kernel boot, so it helps light pages most.
         # root public/
         # worker index.php 1
     }

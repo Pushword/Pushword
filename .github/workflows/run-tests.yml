@@ -120,9 +120,20 @@ jobs:
         # The 'serial' group holds tests that need exclusive access to the shared
         # public/media variant dir (not per-worker isolatable); run them sequentially
         # after the parallel batch so concurrent workers can't mutate it underneath them.
+        # The 'worker' group runs in its own step below (it shares a cache.app version
+        # counter that parallel workers would race).
         run: |
-          vendor/bin/paratest --processes=auto --coverage-clover coverage.xml --exclude-group=panther --exclude-group=benchmark --exclude-group=serial
+          vendor/bin/paratest --processes=auto --coverage-clover coverage.xml --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker
           vendor/bin/paratest --processes=1 --group=serial
+        env:
+          TEST_RUN_ID: ci-${{ github.run_id }}
+
+      - name: Worker-mode safety guard
+        # Simulates a long-running worker (FrankenPHP `worker` / Symfony Runtime) reusing
+        # one kernel across requests: asserts the repositories' in-memory caches (slug /
+        # redirect maps, media filename index) don't serve stale data after a write in a
+        # prior request. A dedicated, named check keeps this non-obvious invariant visible.
+        run: vendor/bin/paratest --processes=1 --group=worker
         env:
           TEST_RUN_ID: ci-${{ github.run_id }}
 
