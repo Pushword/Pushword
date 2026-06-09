@@ -208,9 +208,11 @@ final class PageExporter
 
                 continue;
             }
+
             if (str_contains($entry, '~conflict-')) {
                 continue;
             }
+
             if (str_ends_with($entry, '~')) {
                 continue;
             }

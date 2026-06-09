@@ -53,6 +53,7 @@ final class WhoAmIApiControllerTest extends WebTestCase
             $this->em->remove($user);
             $this->em->flush();
         }
+
         parent::tearDown();
     }
 

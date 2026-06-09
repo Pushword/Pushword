@@ -129,6 +129,7 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $master->host = $host;
         $master->setSlug('master-trek');
         $master->setMainContent('# Master');
+
         $this->em->persist($master);
         $this->em->flush();
         $this->createdPageIds[] = $master->id ?? 0;

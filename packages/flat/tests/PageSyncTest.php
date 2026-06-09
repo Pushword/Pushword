@@ -102,6 +102,7 @@ final class PageSyncTest extends KernelTestCase
         $page->locale = 'en';
         $page->setPublishedAt(new DateTime());
         $page->setMainContent('temporary content');
+
         $this->em->persist($page);
         $this->em->flush();
 

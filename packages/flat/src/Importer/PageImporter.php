@@ -276,7 +276,7 @@ final class PageImporter extends AbstractImporter
                 if ('publishedAt' === $camelKey) {
                     $value = PublishedAtConverter::fromFlatValue($value);
                     $publishedAtExplicitlySet = true;
-                } elseif (\in_array($camelKey, ['createdAt', 'updatedAt'], true) && \is_scalar($value)) {
+                } elseif (\in_array($camelKey, ['createdAt', 'updatedAt', 'holdPublicationAt'], true) && \is_scalar($value)) {
                     $value = new DateTime((string) $value);
                 }
 
