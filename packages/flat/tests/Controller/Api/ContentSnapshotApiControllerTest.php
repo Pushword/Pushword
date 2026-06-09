@@ -2,8 +2,11 @@
 
 namespace Pushword\Flat\Tests\Controller\Api;
 
+use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
@@ -19,9 +22,16 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
 {
     private const string HOST = 'localhost.dev';
 
+    /** Deterministic DB pages exported by the snapshot refresh, independent of skeleton fixtures. */
+    private const string ROOT_SLUG = 'snapshot-fixture';
+
+    private const string NESTED_SLUG = 'snapshot-fixture/leaf';
+
     private KernelBrowser $client;
 
     private Filesystem $filesystem;
+
+    private string $baseDir = '';
 
     private string $contentDir = '';
 
@@ -50,26 +60,56 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         $user->setRoles(['ROLE_EDITOR']);
 
         $em->persist($user);
+
+        // Seed deterministic pages for the host so the snapshot's DB → flat refresh
+        // exports known files (a root and a nested one), regardless of whether the
+        // ambient skeleton fixtures are loaded in this worker's DB.
+        $this->seedPage($em, self::ROOT_SLUG);
+        $this->seedPage($em, self::NESTED_SLUG);
         $em->flush();
 
         $this->contentDir = $this->isolateContentDir();
     }
 
+    private function seedPage(EntityManagerInterface $em, string $slug): void
+    {
+        $page = new Page();
+        $page->setSlug($slug);
+        $page->setH1('Snapshot fixture');
+        $page->host = self::HOST;
+        $page->locale = 'en';
+        $page->createdAt = new DateTime('2 days ago');
+        $page->updatedAt = new DateTime('now');
+        $page->setMainContent('Body of '.$slug);
+
+        $em->persist($page);
+    }
+
     protected function tearDown(): void
     {
-        if ('' !== $this->contentDir && $this->filesystem->exists($this->contentDir)) {
-            $this->filesystem->remove($this->contentDir);
+        if ('' !== $this->baseDir && $this->filesystem->exists($this->baseDir)) {
+            $this->filesystem->remove($this->baseDir);
         }
 
         $container = $this->client->getContainer();
         $em = $container->get('doctrine.orm.default_entity_manager');
+
+        $pageRepository = $em->getRepository(Page::class);
+        foreach ([self::ROOT_SLUG, self::NESTED_SLUG] as $slug) {
+            $page = $pageRepository->findOneBy(['slug' => $slug, 'host' => self::HOST]);
+            if (null !== $page) {
+                $em->remove($page);
+            }
+        }
+
         /** @var class-string<User> $userClass */
         $userClass = $container->getParameter('pw.entity_user');
         $user = $em->getRepository($userClass)->findOneBy(['email' => $this->testUserEmail]);
         if (null !== $user) {
             $em->remove($user);
-            $em->flush();
         }
+
+        $em->flush();
 
         parent::tearDown();
     }
@@ -116,13 +156,14 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         self::assertSame('application/gzip', $response->headers->get('Content-Type'));
         self::assertStringContainsString('attachment', (string) $response->headers->get('Content-Disposition'));
 
+        // The refresh re-mirrors the DB, so the tarball ships the exported pages.
         $entries = $this->tarballEntries($this->captureStream());
         self::assertTrue(
-            $this->entriesContainSuffix($entries, 'page.md'),
-            'Tarball should contain page.md, got: '.implode(', ', $entries),
+            $this->entriesContainSuffix($entries, self::ROOT_SLUG.'.md'),
+            'Tarball should contain the exported page, got: '.implode(', ', $entries),
         );
         self::assertTrue(
-            $this->entriesContainSuffix($entries, 'blog/post.md'),
+            $this->entriesContainSuffix($entries, self::NESTED_SLUG.'.md'),
             'Tarball should keep nested subdirectories',
         );
     }
@@ -151,7 +192,7 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         self::assertSame(200, $response->getStatusCode());
 
         $entries = $this->tarballEntries($this->captureStream());
-        self::assertTrue($this->entriesContainSuffix($entries, 'page.md'), 'Tarball should keep content');
+        self::assertTrue($this->entriesContainSuffix($entries, self::ROOT_SLUG.'.md'), 'Tarball should keep content');
         foreach ($entries as $entry) {
             self::assertStringNotContainsString('.env', $entry, 'Tarball must not contain root dotfiles');
         }
@@ -176,33 +217,33 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
     {
         // Exercises the all-hosts branch: the dedup loop over getAll() must
         // re-export each site, so a stale localhost.dev mirror file is restamped.
-        $stale = $this->contentDir.'/homepage.md';
-        $this->filesystem->dumpFile($stale, "---\nslug: homepage\n---\nstale body");
+        $stale = $this->contentDir.'/'.self::ROOT_SLUG.'.md';
+        $this->filesystem->dumpFile($stale, "---\nslug: ".self::ROOT_SLUG."\n---\nstale body");
         $this->filesystem->touch($stale, 1);
 
         $response = $this->request('/api/content/snapshot.tar.gz');
         self::assertSame(200, $response->getStatusCode());
 
-        $homepage = $this->tarballEntryContent($this->captureStream(), 'homepage.md');
-        self::assertStringContainsString('revision:', $homepage);
-        self::assertStringNotContainsString('stale body', $homepage);
+        $exported = $this->tarballEntryContent($this->captureStream(), self::ROOT_SLUG.'.md');
+        self::assertStringContainsString('revision:', $exported);
+        self::assertStringNotContainsString('stale body', $exported);
     }
 
     public function testSnapshotFreshensStaleMarkdownWithRevision(): void
     {
-        // A pre-existing mirror file for the `homepage` DB page, missing a
+        // A pre-existing mirror file for the seeded DB page, missing a
         // `revision:` stamp and dated in the past so the incremental exporter
         // re-generates it instead of taking the mtime fast path.
-        $stale = $this->contentDir.'/homepage.md';
-        $this->filesystem->dumpFile($stale, "---\nslug: homepage\n---\nstale body");
+        $stale = $this->contentDir.'/'.self::ROOT_SLUG.'.md';
+        $this->filesystem->dumpFile($stale, "---\nslug: ".self::ROOT_SLUG."\n---\nstale body");
         $this->filesystem->touch($stale, 1);
 
         $response = $this->request('/api/content/snapshot.tar.gz?host='.self::HOST);
         self::assertSame(200, $response->getStatusCode());
 
-        $homepage = $this->tarballEntryContent($this->captureStream(), 'homepage.md');
-        self::assertStringContainsString('revision:', $homepage, 'Exported page must carry a fresh revision stamp');
-        self::assertStringNotContainsString('stale body', $homepage, 'Stale mirror content must be overwritten');
+        $exported = $this->tarballEntryContent($this->captureStream(), self::ROOT_SLUG.'.md');
+        self::assertStringContainsString('revision:', $exported, 'Exported page must carry a fresh revision stamp');
+        self::assertStringNotContainsString('stale body', $exported, 'Stale mirror content must be overwritten');
     }
 
     public function testSnapshotStreamsStaleMirrorWhenRefreshFails(): void
@@ -224,7 +265,7 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
 
         $entries = $this->tarballEntries($this->captureStream());
         self::assertTrue(
-            $this->entriesContainSuffix($entries, 'page.md'),
+            $this->entriesContainSuffix($entries, self::ROOT_SLUG.'.md'),
             'The existing mirror must still be streamed despite the refresh failure',
         );
     }
@@ -239,20 +280,22 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
     }
 
     /**
-     * Point the host's flat_content_dir at a fresh, isolated temp directory and
-     * reset the finder cache so the controller resolves to it.
+     * Give every site its OWN isolated temp directory (under one base dir) and
+     * reset the finder cache so the controller resolves to it. Per-host dirs keep
+     * the all-hosts export loop from writing into a shared (real or test) content
+     * directory, and stop one host's orphan-prune from deleting another host's
+     * freshly exported files. Returns the dir of {@see self::HOST}.
      */
     private function isolateContentDir(): string
     {
-        $dir = sys_get_temp_dir().'/pushword-snapshot-test-'.getmypid().'-'.uniqid();
-        $this->filesystem->mkdir($dir);
+        $this->baseDir = sys_get_temp_dir().'/pushword-snapshot-test-'.getmypid().'-'.uniqid();
 
         $container = self::getContainer();
 
         $siteRegistry = $container->get(SiteRegistry::class);
-        // Point every site at the same isolated dir so the all-hosts export loop
-        // can never write into a shared (real or test) content directory.
         foreach ($siteRegistry->getAll() as $site) {
+            $dir = $this->hostDir($site->getMainHost());
+            $this->filesystem->mkdir($dir);
             $site->setCustomProperty('flat_content_dir', $dir);
         }
 
@@ -261,7 +304,12 @@ final class ContentSnapshotApiControllerTest extends WebTestCase
         $finder = $container->get(FlatFileContentDirFinder::class);
         new ReflectionProperty(FlatFileContentDirFinder::class, 'contentDir')->setValue($finder, []);
 
-        return $dir;
+        return $this->hostDir(self::HOST);
+    }
+
+    private function hostDir(string $host): string
+    {
+        return $this->baseDir.'/'.str_replace(['/', '\\', ':'], '_', $host);
     }
 
     private function populateContentDir(): void
