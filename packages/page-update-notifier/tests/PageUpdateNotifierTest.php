@@ -91,9 +91,11 @@ final class PageUpdateNotifierTest extends KernelTestCase
                 'createdAt' => $page->createdAt,
                 'updatedAt' => $page->updatedAt,
             ];
-            // Break parent links first so MariaDB's parent_page_id FK isn't
-            // violated by the non-topological delete order below.
+            // Break parent and variant links first so MariaDB's parent_page_id
+            // and variant_of_id FKs aren't violated by the non-topological
+            // delete order below.
             $page->setParentPage(null);
+            $page->setVariantOf(null);
         }
 
         $em->flush();
