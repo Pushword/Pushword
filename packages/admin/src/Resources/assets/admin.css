@@ -172,6 +172,19 @@
   background: #e2e8f0; /* slate-200 */
 }
 
+#main-menu .menu-item.has-submenu.expanded > .submenu {
+  padding: 0;
+}
+#main-menu .menu .submenu .menu-item {
+  margin: 0;
+}
+
+#main-menu .menu .menu-item,
+#main-menu .menu .submenu .menu-item.active {
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+}
+
 #main-menu .menu .submenu > li.menu-item.active > a {
   background: #e0f2fe; /* sky-100, current site */
 }

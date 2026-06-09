@@ -45,7 +45,11 @@ final readonly class AdminMenu
 
         yield [
             'weight' => 800,
-            'item' => MenuItem::linkTo(MediaCrudController::class, 'adminLabelMedia', 'fas fa-images'),
+            'item' => MenuItem::linkTo(
+                MediaCrudController::class,
+                'adminLabelMedia',
+                'fas fa-images',
+            ),
         ];
 
         yield [
@@ -55,7 +59,11 @@ final readonly class AdminMenu
 
         yield [
             'weight' => 700,
-            'item' => MenuItem::linkTo(UserCrudController::class, 'adminLabelUsers', 'fas fa-users'),
+            'item' => MenuItem::linkTo(
+                UserCrudController::class,
+                'adminLabelUsers',
+                'fas fa-users',
+            ),
         ];
 
         yield [
@@ -142,24 +150,37 @@ final readonly class AdminMenu
         $hasMultipleHostsOrLocales = $this->hasMultipleHostsOrLocales();
 
         if (! $hasMultipleHostsOrLocales) {
-            return MenuItem::linkTo(PageCrudController::class, 'adminLabelContent', 'fas fa-file');
+            return MenuItem::linkTo(
+                PageCrudController::class,
+                'adminLabelContent',
+                'fas fa-file',
+            );
         }
 
-        $listItem = MenuItem::linkTo(PageCrudController::class, 'adminLabelList', 'fas fa-list')
-            ->setCssClass('d-none');
+        $listItem = MenuItem::linkTo(
+            PageCrudController::class,
+            'adminLabelList',
+            'fas fa-list',
+        )->setCssClass('d-none');
         $subItems = [$listItem];
 
         foreach ($hosts as $host) {
-            $subItems = [...$subItems, ...$this->createHostMenuItems($host, PageCrudController::class)];
+            $subItems = [
+                ...$subItems,
+                ...$this->createHostMenuItems($host, PageCrudController::class),
+            ];
         }
 
-        return MenuItem::subMenu('adminLabelContent', 'fas fa-file')
-            ->setSubItems($subItems);
+        return MenuItem::subMenu('adminLabelContent', 'fas fa-file')->setSubItems($subItems);
     }
 
     private function buildCheatSheetMenu(): RouteMenuItem
     {
-        $cheatSheetItem = MenuItem::linkToRoute('adminLabelCheatsheet', 'fa fa-book', 'cheatsheetEditRoute');
+        $cheatSheetItem = MenuItem::linkToRoute(
+            'adminLabelCheatsheet',
+            'fa fa-book',
+            'cheatsheetEditRoute',
+        );
 
         if ($this->isCheatSheetActive()) {
             $cheatSheetItem->getAsDto()->setSelected(true);
@@ -174,19 +195,30 @@ final readonly class AdminMenu
         $hasMultipleHostsOrLocales = $this->hasMultipleHostsOrLocales();
 
         if (! $hasMultipleHostsOrLocales) {
-            return MenuItem::linkTo(PageRedirectionCrudController::class, 'adminLabelRedirection', 'fa fa-random');
+            return MenuItem::linkTo(
+                PageRedirectionCrudController::class,
+                'adminLabelRedirection',
+                'fa fa-random',
+            );
         }
 
-        $listItem = MenuItem::linkTo(PageRedirectionCrudController::class, 'adminLabelList', 'fas fa-list')
-            ->setCssClass('d-none');
+        $listItem = MenuItem::linkTo(
+            PageRedirectionCrudController::class,
+            'adminLabelList',
+            'fas fa-list',
+        )->setCssClass('d-none');
         $subItems = [$listItem];
 
         foreach ($hosts as $host) {
-            $subItems = [...$subItems, ...$this->createHostMenuItems($host, PageRedirectionCrudController::class)];
+            $subItems = [
+                ...$subItems,
+                ...$this->createHostMenuItems($host, PageRedirectionCrudController::class),
+            ];
         }
 
-        return MenuItem::subMenu('adminLabelRedirection', 'fa fa-random')
-            ->setSubItems($subItems);
+        return MenuItem::subMenu('adminLabelRedirection', 'fa fa-random')->setSubItems(
+            $subItems,
+        );
     }
 
     private function hasMultipleHostsOrLocales(): bool
@@ -226,15 +258,20 @@ final readonly class AdminMenu
         return $items;
     }
 
-    private function createHostLocaleMenuItem(string $host, ?string $locale, string $controller): ControllerMenuItem
-    {
+    private function createHostLocaleMenuItem(
+        string $host,
+        ?string $locale,
+        string $controller,
+    ): ControllerMenuItem {
         $label = null !== $locale ? $host.' ('.$locale.')' : $host;
 
-        $menuItem = MenuItem::linkTo($controller, $label, 'fa fa-globe')
-            ->setQueryParameter('filters[host]', [
+        $menuItem = MenuItem::linkTo($controller, $label)->setQueryParameter(
+            'filters[host]',
+            [
                 'comparison' => '=',
                 'value' => $host,
-            ]);
+            ],
+        );
 
         if (null !== $locale) {
             $menuItem->setQueryParameter('filters[locale]', [
@@ -250,8 +287,11 @@ final readonly class AdminMenu
         return $menuItem;
     }
 
-    private function isHostLocaleActive(string $host, ?string $locale, string $controller): bool
-    {
+    private function isHostLocaleActive(
+        string $host,
+        ?string $locale,
+        string $controller,
+    ): bool {
         $context = $this->adminContextProvider->getContext();
 
         if (null === $context) {
@@ -265,8 +305,12 @@ final readonly class AdminMenu
 
         /** @var array<string, mixed> $filters */
         $filters = $context->getRequest()->query->all(EA::FILTERS);
-        $filteredHost = \is_array($filters['host'] ?? null) ? ($filters['host']['value'] ?? null) : null;
-        $filteredLocale = \is_array($filters['locale'] ?? null) ? ($filters['locale']['value'] ?? null) : null;
+        $filteredHost = \is_array($filters['host'] ?? null)
+          ? $filters['host']['value'] ?? null
+          : null;
+        $filteredLocale = \is_array($filters['locale'] ?? null)
+          ? $filters['locale']['value'] ?? null
+          : null;
 
         if (\is_string($filteredHost)) {
             if ($filteredHost !== $host) {
@@ -302,7 +346,10 @@ final readonly class AdminMenu
         $context = $this->adminContextProvider->getContext();
         if (null !== $context) {
             $crud = $context->getCrud();
-            if (null !== $crud && PageCheatSheetCrudController::class === $crud->getControllerFqcn()) {
+            if (
+                null !== $crud
+                && PageCheatSheetCrudController::class === $crud->getControllerFqcn()
+            ) {
                 return true;
             }
         }
