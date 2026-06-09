@@ -35,9 +35,13 @@
 
 	php_server {
 		resolve_root_symlink
-	    # Uncomment for worker mode (long-running kernel). Safe — see
-	    # docs/content/performance.md. Perf gain depends on workload: it mostly
-	    # amortizes the kernel boot, so it helps light pages most.
+	    # Worker mode (long-running kernel) is SAFE but is NOT just uncommenting the
+	    # two lines below — the default public/index.php is a one-shot front
+	    # controller and will not loop. First: `composer require
+	    # runtime/frankenphp-symfony`, set APP_RUNTIME, and switch index.php to the
+	    # runtime closure form. Full steps + why it's safe: docs/content/performance.md.
+	    # Perf gain depends on workload: it mostly amortizes the kernel boot, so it
+	    # helps light pages most.
         # root public/
         # worker index.php 1
     }

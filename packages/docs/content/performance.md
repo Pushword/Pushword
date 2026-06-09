@@ -12,17 +12,52 @@ which removes the per-request kernel boot.
 ## Worker mode
 
 Worker mode is provided by [FrankenPHP](https://frankenphp.dev/)'s `worker`
-directive (or any Symfony Runtime worker). In the skeleton `Caddyfile`:
+directive driving a [Symfony Runtime](https://symfony.com/doc/current/components/runtime.html)
+worker. One booted kernel handles many requests instead of one process per request.
 
-```caddyfile
-php_server {
-    root public/
-    worker index.php 1
-}
-```
+### Enabling it
 
-Between requests the runtime resets every service tagged `kernel.reset`
-(`services_resetter`), exactly as a fresh FPM process would start clean.
+It is **not** just uncommenting the `worker` directive — the default
+`public/index.php` is a classic one-shot front controller (`new Kernel` → `handle`
+→ `send` → `terminate`) and will not loop. Three steps:
+
+1. Install the FrankenPHP runtime:
+
+   ```bash
+   composer require runtime/frankenphp-symfony
+   ```
+
+2. Select it (e.g. in `.env`, or your environment):
+
+   ```dotenv
+   APP_RUNTIME=Runtime\FrankenPhpSymfony\Runtime
+   ```
+
+3. Switch `public/index.php` to the runtime closure form so the runtime owns the
+   request loop:
+
+   ```php
+   <?php
+
+   use App\Kernel;
+
+   require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
+
+   return fn (array $context) => new Kernel($context['APP_ENV'], (bool) $context['APP_DEBUG']);
+   ```
+
+4. Enable the directive in the `Caddyfile`:
+
+   ```caddyfile
+   php_server {
+       root public/
+       worker index.php 1
+   }
+   ```
+
+The runtime then loops `frankenphp_handle_request()` internally, reusing the kernel.
+Between requests it resets every service tagged `kernel.reset` (`services_resetter`),
+exactly as a fresh FPM process would start clean.
 
 ### Why it is safe
 
