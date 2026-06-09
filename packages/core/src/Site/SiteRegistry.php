@@ -8,8 +8,9 @@ use LogicException;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Template\TemplateResolver;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
-final class SiteRegistry
+final class SiteRegistry implements ResetInterface
 {
     /** @var array<string, SiteConfig> */
     private array $sites = [];
@@ -42,6 +43,16 @@ final class SiteRegistry
     public function setRequestContext(RequestContext $requestContext): void
     {
         $this->requestContext = $requestContext;
+    }
+
+    /**
+     * Worker-mode safety (kernel.reset): drop the per-request stash so rendered
+     * fragments from one request never leak into the next. The site config and
+     * RequestContext binding are process-global and intentionally kept.
+     */
+    public function reset(): void
+    {
+        $this->stashed = [];
     }
 
     private function context(): RequestContext

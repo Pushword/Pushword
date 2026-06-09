@@ -11,6 +11,8 @@ use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Site\RequestContext;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -112,6 +114,51 @@ final class WorkerModeStateResetTest extends KernelTestCase
         } finally {
             $this->removeProbeMedia();
         }
+    }
+
+    public function testRequestContextDoesNotLeakCurrentPageAcrossRequests(): void
+    {
+        self::bootKernel();
+
+        /** @var RequestContext $context */
+        $context = self::getContainer()->get(RequestContext::class);
+
+        // --- Request A: a page request sets the current page. ---
+        $page = new Page();
+        $page->setSlug(self::PROBE_SLUG);
+
+        $context->setCurrentPage($page);
+        self::assertSame($page, $context->getCurrentPage());
+
+        // --- The worker boundary. RequestContext is tagged kernel.reset, so this
+        // must clear the current page. Without it a later non-page request (404,
+        // sitemap, API) that never calls setCurrentPage() would read this stale
+        // page — wrong OG image, canonical, breadcrumb — possibly cross-host. ---
+        $this->simulateWorkerRequestBoundary();
+
+        self::assertNull(
+            $context->getCurrentPage(),
+            'worker mode: the current page must not leak into a request that does not set its own',
+        );
+    }
+
+    public function testSiteRegistryStashDoesNotLeakAcrossRequests(): void
+    {
+        self::bootKernel();
+
+        /** @var SiteRegistry $registry */
+        $registry = self::getContainer()->get(SiteRegistry::class);
+
+        $registry->stash('worker-probe', 'rendered-in-request-A');
+        self::assertSame('rendered-in-request-A', $registry->stash('worker-probe'));
+
+        $this->simulateWorkerRequestBoundary();
+
+        self::assertSame(
+            '',
+            $registry->stash('worker-probe'),
+            'worker mode: a stashed fragment must not leak into the next request',
+        );
     }
 
     /**

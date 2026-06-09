@@ -4,8 +4,9 @@ namespace Pushword\Core\Site;
 
 use LogicException;
 use Pushword\Core\Entity\Page;
+use Symfony\Contracts\Service\ResetInterface;
 
-final class RequestContext
+final class RequestContext implements ResetInterface
 {
     private ?SiteConfig $currentSite = null;
 
@@ -23,6 +24,22 @@ final class RequestContext
         private readonly SiteRegistry $siteRegistry,
     ) {
         $this->currentSite = $siteRegistry->getDefault();
+    }
+
+    /**
+     * Worker-mode safety (kernel.reset): wipe every request-scoped field so one
+     * request's page/host/route/slug/pager never leaks into the next when a single
+     * kernel serves many requests (and many hosts). Mirrors a fresh process: the
+     * site falls back to the default, exactly as the constructor leaves it.
+     */
+    public function reset(): void
+    {
+        $this->currentSite = $this->siteRegistry->getDefault();
+        $this->currentPage = null;
+        $this->currentHost = null;
+        $this->currentRoute = null;
+        $this->currentSlug = null;
+        $this->currentPager = 1;
     }
 
     public function switchSite(Page|string $host): self
