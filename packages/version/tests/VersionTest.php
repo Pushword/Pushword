@@ -137,30 +137,32 @@ final class VersionTest extends KernelTestCase
         $em->persist($snippet);
         $em->flush(); // assigns the id
 
-        /** @var string $storageDir */
-        $storageDir = $container->getParameter('pw.pushword_version.storage_dir');
+        // The shared storage_dir is keyed by the entity auto-increment id, which
+        // parallel workers reuse across their separate DBs — another worker can
+        // drop a version file under this id between reset() and the assertions
+        // (a TOCTOU race, not just stale state). Give this test a private,
+        // per-worker storage dir so nothing else can write into it.
+        $storageDir = sys_get_temp_dir().'/pw-version-idempotent-'.(getenv('TEST_TOKEN') ?: '0').'-'.uniqid('', true);
         $versionner = $this->buildVersionner($storageDir, $em, $container->get('serializer'));
 
         $id = (int) $snippet->id;
 
-        // Parallel workers share kernel.logs_dir but have separate DBs, so stale
-        // version files may already exist under this id. Wipe before asserting.
-        $versionner->reset('snippet', $id);
+        try {
+            $versionner->postUpdate(new PostUpdateEventArgs($snippet, $em));
+            self::assertCount(1, $versionner->getVersions('snippet', $id), 'First save must create exactly one version');
 
-        $versionner->postUpdate(new PostUpdateEventArgs($snippet, $em));
-        self::assertCount(1, $versionner->getVersions('snippet', $id), 'First save must create exactly one version');
+            // Re-dispatching postUpdate with identical column state must be a no-op.
+            $versionner->postUpdate(new PostUpdateEventArgs($snippet, $em));
+            self::assertCount(1, $versionner->getVersions('snippet', $id), 'Identical state must not produce a second version file');
 
-        // Re-dispatching postUpdate with identical column state must be a no-op.
-        $versionner->postUpdate(new PostUpdateEventArgs($snippet, $em));
-        self::assertCount(1, $versionner->getVersions('snippet', $id), 'Identical state must not produce a second version file');
-
-        // The stored filename embeds the content hash as suffix.
-        [$only] = $versionner->getVersions('snippet', $id);
-        self::assertStringContainsString('_', $only, 'Filename must follow the <prefix>_<hash> convention');
-
-        $versionner->reset('snippet', $id);
-        $em->remove($snippet);
-        $em->flush();
+            // The stored filename embeds the content hash as suffix.
+            [$only] = $versionner->getVersions('snippet', $id);
+            self::assertStringContainsString('_', $only, 'Filename must follow the <prefix>_<hash> convention');
+        } finally {
+            new Filesystem()->remove($storageDir);
+            $em->remove($snippet);
+            $em->flush();
+        }
     }
 
     /**
