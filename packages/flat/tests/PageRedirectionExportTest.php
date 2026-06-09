@@ -131,6 +131,59 @@ final class PageRedirectionExportTest extends KernelTestCase
         self::assertFileExists($contentDir.'/homepage.md');
     }
 
+    public function testOrphanedMdFileDeletedOnFullExport(): void
+    {
+        /** @var PageExporter $exporter */
+        $exporter = self::getContainer()->get(PageExporter::class);
+        $exporter->exportDir = $this->testContentDir;
+
+        // Simulates the file left behind by a deleted page or an old slug after a
+        // rename: a .md with no matching page in the database.
+        $orphan = $this->testContentDir.'/this-page-was-deleted.md';
+        file_put_contents($orphan, "---\ntitle: Ghost\n---\n\nboo");
+
+        $exporter->exportPages(true);
+
+        self::assertFileDoesNotExist($orphan, 'Orphaned .md with no matching DB page should be removed');
+        self::assertFileExists($this->testContentDir.'/homepage.md', 'Real pages are still exported');
+    }
+
+    public function testOrphanCleanupPreservesReservedAndPendingFiles(): void
+    {
+        /** @var PageExporter $exporter */
+        $exporter = self::getContainer()->get(PageExporter::class);
+        $exporter->exportDir = $this->testContentDir;
+
+        // Snippets live in a sibling-owned dir and must never be touched.
+        $snippetFile = $this->testContentDir.'/pw-snippets/foo.md';
+        $this->filesystem->dumpFile($snippetFile, "---\nname: foo\n---\n\nsnippet");
+
+        // Pending writes are mid-flight and not yet page files.
+        $pendingFile = $this->testContentDir.'/draft.pending.md';
+        file_put_contents($pendingFile, 'pending');
+
+        $exporter->exportPages(true);
+
+        self::assertFileExists($snippetFile, 'Snippet files must survive page orphan cleanup');
+        self::assertFileExists($pendingFile, 'Pending writes must survive page orphan cleanup');
+    }
+
+    public function testOrphanCleanupKeepsIndexMdForHomepage(): void
+    {
+        /** @var PageExporter $exporter */
+        $exporter = self::getContainer()->get(PageExporter::class);
+        $exporter->exportDir = $this->testContentDir;
+
+        // A homepage authored as index.md must not be treated as an orphan: the
+        // index ↔ homepage equivalence maps it back to the existing homepage page.
+        $indexFile = $this->testContentDir.'/index.md';
+        file_put_contents($indexFile, "---\ntitle: Home\n---\n\nhome");
+
+        $exporter->exportPages(true);
+
+        self::assertFileExists($indexFile, 'index.md must be preserved as the homepage, not deleted as an orphan');
+    }
+
     public function testMdFileDeletedWhenPageBecomesRedirection(): void
     {
         /** @var FlatFileContentDirFinder $contentDirFinder */

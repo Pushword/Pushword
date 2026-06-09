@@ -18,7 +18,7 @@ final class PushwordApiExtension extends ConfigurableExtension implements Prepen
      */
     protected function loadInternal(array $mergedConfig, ContainerBuilder $container): void
     {
-        $deleteStrategy = \is_string($mergedConfig['delete_strategy'] ?? null) ? $mergedConfig['delete_strategy'] : 'soft';
+        $deleteStrategy = \is_string($mergedConfig['delete_strategy'] ?? null) ? $mergedConfig['delete_strategy'] : 'hard';
         $softState = \is_string($mergedConfig['soft_delete_workflow_state'] ?? null) ? $mergedConfig['soft_delete_workflow_state'] : 'archived';
 
         $container->setParameter('pw.api.delete_strategy', $deleteStrategy);

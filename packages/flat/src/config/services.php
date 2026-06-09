@@ -14,6 +14,7 @@ use Pushword\Flat\Controller\FlatLockApiController;
 use Pushword\Flat\Converter\FlatPropertyConverterInterface;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\EventSubscriber\LiveReloadSubscriber;
+use Pushword\Flat\Exporter\PageExporter;
 use Pushword\Flat\FlatFileSync;
 use Pushword\Flat\Service\AdminNotificationService;
 use Pushword\Flat\Service\DeferredExportProcessor;
@@ -69,6 +70,11 @@ return static function (ContainerConfigurator $container): void {
 
     // PageSync configuration
     $services->set(PageSync::class)
+        ->arg('$excludeFiles', '%pw.pushword_flat.exclude_files%');
+
+    // PageExporter needs the same exclude list so orphan cleanup never removes
+    // excluded files (CLAUDE.md, README.md, …) that happen to end in .md.
+    $services->set(PageExporter::class)
         ->arg('$excludeFiles', '%pw.pushword_flat.exclude_files%');
 
     // SyncStateManager configuration

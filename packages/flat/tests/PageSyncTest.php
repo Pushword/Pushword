@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\FlatFileContentDirFinder;
+use Pushword\Flat\Service\DeferredExportProcessor;
 use Pushword\Flat\Sync\PageSync;
 use Pushword\Flat\Sync\SyncStateManager;
 
@@ -75,6 +76,54 @@ final class PageSyncTest extends KernelTestCase
     private function trackDir(string $path): void
     {
         $this->createdDirs[] = $path;
+    }
+
+    /**
+     * End-to-end regression for the reported bug: hard-deleting a page must
+     * remove its flat .md file so a later `--mode=import` cannot resurrect it.
+     * Exercises the real chain: EntityManager::remove fires the postRemove
+     * listener (which queues a host export), and the export removes the orphan.
+     */
+    public function testHardDeletedPageRemovesFlatFileEndToEnd(): void
+    {
+        /** @var FlatFileContentDirFinder $contentDirFinder */
+        $contentDirFinder = self::getContainer()->get(FlatFileContentDirFinder::class);
+        $contentDir = $contentDirFinder->get('localhost.dev');
+
+        /** @var DeferredExportProcessor $deferredExport */
+        $deferredExport = self::getContainer()->get(DeferredExportProcessor::class);
+        self::assertTrue($deferredExport->isEnabled(), 'Auto-export must be enabled for this end-to-end test');
+
+        $slug = 'hard-delete-e2e-'.uniqid();
+        $page = new Page();
+        $page->setSlug($slug);
+        $page->setH1('To be deleted');
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->setPublishedAt(new DateTime());
+        $page->setMainContent('temporary content');
+        $this->em->persist($page);
+        $this->em->flush();
+
+        // Export so the flat file exists on disk.
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+        $mdFile = $contentDir.'/'.$slug.'.md';
+        $this->trackFile($mdFile);
+        self::assertFileExists($mdFile, 'Flat file should exist after export');
+
+        // Hard delete: the postRemove listener must queue a host export.
+        $this->em->remove($page);
+        $this->em->flush();
+
+        $queuedRemoval = array_filter(
+            $deferredExport->getQueue(),
+            static fn (array $item): bool => 'remove' === $item['action'] && 'localhost.dev' === $item['host'],
+        );
+        self::assertNotEmpty($queuedRemoval, 'postRemove should queue a host export on hard delete');
+
+        // The queued export (what consume-pending runs) removes the orphaned file.
+        $this->pageSync->export('localhost.dev', true, $contentDir);
+        self::assertFileDoesNotExist($mdFile, 'Flat file must be deleted after the page is hard-deleted');
     }
 
     /**

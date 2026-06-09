@@ -456,6 +456,21 @@ final class PageApiControllerTest extends WebTestCase
         self::assertSame(404, $response->getStatusCode());
     }
 
+    public function testDeleteHardRemovesPageByDefault(): void
+    {
+        [$host, $slug] = $this->createTestPage();
+
+        $response = $this->request('DELETE', '/api/page/'.$host.'/'.$slug);
+        self::assertSame(204, $response->getStatusCode());
+
+        // Default strategy is hard delete: the row is gone, not just unpublished.
+        $this->em->clear();
+        $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
+        self::assertNull($page);
+
+        self::assertSame(404, $this->request('GET', '/api/page/'.$host.'/'.$slug)->getStatusCode());
+    }
+
     public function testWithoutTokenReturns401(): void
     {
         $this->client->request(Request::METHOD_GET, '/api/page/search');

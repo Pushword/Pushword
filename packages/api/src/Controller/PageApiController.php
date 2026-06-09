@@ -29,7 +29,7 @@ final class PageApiController extends AbstractApiController
         private readonly ValidatorInterface $validator,
         private readonly MarkdownParser $markdownParser,
         private readonly BodyPatcher $bodyPatcher,
-        private readonly string $deleteStrategy = 'soft',
+        private readonly string $deleteStrategy = 'hard',
     ) {
     }
 

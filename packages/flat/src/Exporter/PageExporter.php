@@ -15,6 +15,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\Entity;
 use Pushword\Flat\Converter\PropertyConverterRegistry;
 use Pushword\Flat\Converter\PublishedAtConverter;
+use Pushword\Flat\Sync\SnippetSync;
 use Stringable;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -54,6 +55,8 @@ final class PageExporter
         private readonly PropertyConverterRegistry $converterRegistry,
         private readonly RevisionCalculator $revisions,
         array $pageIndexColumns = [],
+        /** @var string[] Filenames excluded from sync (e.g. CLAUDE.md, README.md) */
+        private readonly array $excludeFiles = [],
         private readonly ?LoggerInterface $logger = null,
     ) {
         $this->filesystem = new Filesystem();
@@ -135,7 +138,107 @@ final class PageExporter
             $this->exportPageSafe($page, $force);
         }
 
+        $this->deleteOrphanedFiles($exportablePages);
+
         $this->exportIndex($pages);
+    }
+
+    /**
+     * Remove .md files whose page no longer exists in the database — the mirror
+     * of the import side's deleteMissingPages(). Without this, a slug rename
+     * leaves the old-slug file behind and a hard delete leaves the file behind;
+     * both then resurrect the page on the next `--mode=import`.
+     *
+     * @param Page[] $exportablePages Non-redirection pages for the current host
+     */
+    private function deleteOrphanedFiles(array $exportablePages): void
+    {
+        // Safety: never mass-delete when the DB returned nothing (query glitch,
+        // wrong host, empty site) — there is nothing legitimate to compare against.
+        if ([] === $exportablePages) {
+            return;
+        }
+
+        $expectedSlugs = [];
+        foreach ($exportablePages as $page) {
+            $expectedSlugs[$page->getSlug()] = true;
+        }
+
+        foreach ($this->collectExportedMarkdownFiles($this->exportDir) as $filePath) {
+            if (isset($expectedSlugs[$this->fileToSlug($filePath)])) {
+                continue;
+            }
+
+            $this->filesystem->remove($filePath);
+            $this->output?->writeln(\sprintf('Deleted %s (no matching page)', basename($filePath)));
+        }
+    }
+
+    /**
+     * Recursively collect page .md files under a content dir, skipping sibling
+     * entity dirs (snippets), pending writes, conflict backups and editor
+     * backups — matching what the import walker considers a page file.
+     *
+     * @return string[]
+     */
+    private function collectExportedMarkdownFiles(string $dir): array
+    {
+        if (! is_dir($dir)) {
+            return [];
+        }
+
+        $files = [];
+
+        /** @var string[] $entries */
+        $entries = scandir($dir);
+        foreach ($entries as $entry) {
+            if (\in_array($entry, ['.', '..', SnippetSync::DIR], true)) {
+                continue;
+            }
+
+            // Excluded files (CLAUDE.md, README.md, …) are not page files.
+            if (\in_array($entry, $this->excludeFiles, true)) {
+                continue;
+            }
+
+            $path = $dir.'/'.$entry;
+
+            if (is_dir($path)) {
+                $files = [...$files, ...$this->collectExportedMarkdownFiles($path)];
+
+                continue;
+            }
+            if (str_contains($entry, '~conflict-')) {
+                continue;
+            }
+            if (str_ends_with($entry, '~')) {
+                continue;
+            }
+
+            if (str_ends_with($entry, '.md') && ! str_ends_with($entry, '.pending.md')) {
+                $files[] = $path;
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Derive a page slug from an exported file path, mirroring
+     * PageImporter::filePathToSlug (including the index ↔ homepage equivalence)
+     * so renamed/index files are matched against DB slugs consistently.
+     */
+    private function fileToSlug(string $filePath): string
+    {
+        $slug = preg_replace('/\.md$/i', '', str_replace($this->exportDir.'/', '', $filePath)) ?? '';
+
+        if ('index' === $slug) {
+            $slug = 'homepage';
+        } elseif ('index' === basename($slug)) {
+            $slug = substr($slug, 0, -\strlen('index'));
+        }
+
+        return Page::normalizeSlug($slug);
     }
 
     /**

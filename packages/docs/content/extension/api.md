@@ -62,7 +62,7 @@ curl https://example.com/api/docs | jq '.paths | keys'
 | `POST`   | `/api/page/{host}`             | Create (slug comes from the frontmatter)            |
 | `PUT`    | `/api/page/{host}/{slug}`      | Replace body/frontmatter (`If-Match` required)      |
 | `PATCH`  | `/api/page/{host}/{slug}`      | Partial edit — find/replace on the body (`If-Match`)|
-| `DELETE` | `/api/page/{host}/{slug}`      | Soft-delete (unpublish) or hard-delete via config   |
+| `DELETE` | `/api/page/{host}/{slug}`      | Hard-delete (default) or soft-delete (unpublish) via config |
 | `POST`   | `/api/page/preview`            | Render Markdown to HTML without persisting          |
 
 ### Read a page

@@ -14,7 +14,7 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->enumNode('delete_strategy')
                     ->values(['soft', 'hard'])
-                    ->defaultValue('soft')
+                    ->defaultValue('hard')
                 ->end()
                 ->scalarNode('soft_delete_workflow_state')
                     ->defaultValue('archived')
