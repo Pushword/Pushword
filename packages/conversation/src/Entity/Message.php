@@ -21,7 +21,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MessageRepository::class)]
 #[ORM\InheritanceType('SINGLE_TABLE')]
-#[ORM\DiscriminatorColumn(name: 'message_type', type: Types::INTEGER, columnDefinition: 'INT DEFAULT 0 NOT NULL')]
+#[ORM\DiscriminatorColumn(name: 'message_type', type: Types::INTEGER, options: ['default' => 0])]
 #[ORM\DiscriminatorMap([
     0 => Message::class,
     1 => Review::class,
