@@ -197,6 +197,7 @@
   {% else %}
     {% import _self as pw %}
     {% set eaContext = ea() %}
+    {% set has_filters = filters|length > 0 %}
     {% set visible_entities = entities|filter(item => item.isAccessible) %}
     {% set num_results = visible_entities|length %}
     {% set some_results_are_hidden = num_results != entities|length %}
@@ -210,15 +211,9 @@
         <table class="table pw-media-table">
           <thead>
             <tr>
-              <th class="pw-m-sorthead">
-                <span class="text-muted">{{ 'adminMediaViewTable'|trans }}</span>
-                <span class="pw-m-sortlinks">
-                  {{ pw.pwSortHeader('adminMediaAltLabel', 'alt', currentSort) }} ·
-                  {{ pw.pwSortHeader('adminMediaFileNameLabel', 'fileName', currentSort) }} ·
-                  {{ pw.pwSortHeader('adminMediaSizeLabel', 'size', currentSort) }} ·
-                  {{ pw.pwSortHeader('adminPageUpdatedAtLabel', 'updatedAt', currentSort) }}
-                </span>
-              </th>
+              <th>{{ 'adminLabelMedia'|trans }}</th>
+              <th class="pw-m-meta-col">{{ 'adminMediaFiletypeLabel'|trans }}</th>
+              <th class="pw-m-date-col">{{ pw.pwSortHeader('adminPageUpdatedAtLabel', 'updatedAt', currentSort) }}</th>
               <th style="width:80px;"></th>
             </tr>
           </thead>
@@ -257,12 +252,6 @@
                         <input class="pw-m-slug" type="text" value="{{ media.slug }}" size="{{ min(media.slug|length, 48) }}" data-field="slug" data-id="{{ media.id }}" aria-label="{{ 'adminMediaFileNameLabel'|trans }}"><span class="pw-ext">{{ ext }}</span>
                         {% if isImage %}<a href="{{ media|image('default') }}" target="_blank" rel="noopener noreferrer" class="pw-m-open" title="{{ media.fileName }}"><i class="fa fa-external-link"></i></a>{% endif %}
                       </div>
-                      <div class="pw-m-meta">
-                        {% if media.mimeType %}<span class="badge bg-light text-body">{{ media.mimeType }}</span>{% endif %}
-                        {% if media.width and media.height %}<span><i class="fa fa-expand"></i> {{ media.width }}×{{ media.height }}</span>{% endif %}
-                        <span><i class="fa fa-weight-hanging"></i> {{ readableSize }}</span>
-                        {% if media.updatedAt %}<span><i class="fa fa-clock"></i> {{ media.updatedAt|format_datetime }}</span>{% endif %}
-                      </div>
                       <div class="pw-m-tags">
                         <span class="pw-hash">#</span>
                         <input class="pw-m-tagsinput" type="text" value="{{ media.tags }}" data-field="tags" data-id="{{ media.id }}" data-tags="{{ all_tags|default([])|json_encode }}" data-delimiter=" " autocomplete="off" placeholder="{{ 'adminMediaTagsLabel'|trans }}" aria-label="{{ 'adminMediaTagsLabel'|trans }}">
@@ -275,6 +264,12 @@
                     </div>
                   </div>
                 </td>
+                <td class="pw-m-meta-col">
+                  {% if media.mimeType %}<div class="badge bg-light text-body">{{ media.mimeType }}</div>{% endif %}
+                  {% if media.width and media.height %}<div><i class="fa fa-expand"></i> {{ media.width }}×{{ media.height }}</div>{% endif %}
+                  <div><i class="fa fa-weight-hanging"></i> {{ readableSize }}</div>
+                </td>
+                <td class="pw-m-date">{% if media.updatedAt %}<span title="{{ media.updatedAt|format_datetime }}">{{ media.updatedAt|format_date('short') }}</span>{% endif %}</td>
                 <td class="pw-row-actions">
                   <span class="pw-row-status d-inline"></span>
                   <a href="{{ editUrl }}" class="btn btn-outline-secondary btn-sm" title="{{ 'adminMediaPickerEdit'|trans }}">
@@ -305,15 +300,19 @@
     {% else %}
       <div class="media-mosaic__empty">{{ 'adminMediaMosaicEmpty'|trans }}</div>
     {% endif %}
+
+    {% if has_filters %}
+      {{ include('@EasyAdmin/crud/includes/_filters_modal.html.twig') }}
+    {% endif %}
   {% endif %}
 
   <style>
     .pw-media-table { border-collapse: separate; border-spacing: 0; }
     .pw-media-table td { vertical-align: middle; padding: 10px 8px; border-top: 1px solid #eef1f5; }
     .pw-media-table tbody tr:hover { background: #f8fafc; }
-    .pw-m-sorthead { font-weight: 600; }
-    .pw-m-sortlinks { font-weight: 400; font-size: 12px; margin-left: 10px; color: #94a3b8; }
-    .pw-m-sortlinks a { color: #64748b; }
+    .pw-media-table thead th { font-size: 12px; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+    .pw-m-date-col { white-space: nowrap; text-align: right; }
+    .pw-m-date { white-space: nowrap; font-size: 12px; color: #64748b; text-align: right; }
 
     .pw-m-row { display: flex; gap: 14px; align-items: flex-start; }
     .pw-m-thumb-wrap { position: relative; flex: 0 0 auto; width: 96px; }
@@ -370,12 +369,14 @@
     }
     .pw-m-name { font-size: 15px; font-weight: 600; color: #1e293b; }
     .pw-m-fileline { display: flex; align-items: center; gap: 0; margin-top: 1px; flex-wrap: wrap; }
-    .pw-media-table .pw-m-fileline .pw-m-slug { font-family: monospace; font-size: 12px; color: #64748b; width: auto; flex: 0 1 auto; max-width: 100%; padding-right: 0; }
+    .pw-media-table .pw-m-fileline .pw-m-slug { font-family: monospace; font-size: 12px; color: #64748b; width: auto; field-sizing: content; min-width: 4ch; flex: 0 1 auto; max-width: 100%; padding-right: 0; }
     .pw-m-fileline .pw-ext { font-family: monospace; font-size: 12px; color: #94a3b8; white-space: nowrap; margin-left: -2px; }
     .pw-m-open { color: #94a3b8; font-size: 11px; padding-left: 6px; white-space: nowrap; }
-    .pw-m-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 11px; color: #64748b; margin: 5px 0; }
-    .pw-m-meta .badge { font-weight: 500; }
-    .pw-m-meta i { opacity: .6; margin-right: 2px; }
+    .pw-m-meta-col { white-space: nowrap; font-size: 12px; color: #64748b; text-align: right; }
+    th.pw-m-meta-col { text-align: right; }
+    .pw-m-meta-col > div { margin: 2px 0; }
+    .pw-m-meta-col .badge { font-weight: 500; }
+    .pw-m-meta-col i { opacity: .6; margin-right: 2px; }
     .pw-m-tags { display: flex; align-items: center; position: relative; }
     .pw-m-tags .pw-hash { color: #cbd5e1; font-weight: 300; padding-left: 4px; }
     .pw-m-alts { display: flex; align-items: flex-start; gap: 6px; color: #94a3b8; margin-top: 2px; }

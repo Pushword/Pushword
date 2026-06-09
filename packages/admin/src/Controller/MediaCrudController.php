@@ -15,7 +15,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
@@ -243,14 +242,6 @@ class MediaCrudController extends AbstractAdminCrudController
     {
         yield TextField::new('alt', 'adminMediaAltLabel')
             ->setSortable(true);
-        // Registered so the list (?view=table) sort links are honoured by EasyAdmin;
-        // not rendered as columns (the index template is fully overridden).
-        yield TextField::new('fileName', 'adminMediaFileNameLabel')
-            ->setSortable(true)
-            ->onlyOnIndex();
-        yield IntegerField::new('size', 'adminMediaSizeLabel')
-            ->setSortable(true)
-            ->onlyOnIndex();
         yield TextField::new('mimeType', 'adminMediaFiletypeLabel')
             ->setSortable(true);
         yield DateTimeField::new('updatedAt', 'adminPageUpdatedAtLabel')
