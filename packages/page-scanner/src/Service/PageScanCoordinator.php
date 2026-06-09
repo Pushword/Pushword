@@ -26,12 +26,14 @@ final readonly class PageScanCoordinator
 
     public const string COMMAND_PATTERN = 'pw:page-scan';
 
+    private string $varDir;
+
     /**
      * @param string[] $errorsToIgnore
      */
     public function __construct(
         private Filesystem $filesystem,
-        private string $varDir,
+        string $varDir,
         private string $pageScanInterval,
         private BackgroundTaskDispatcherInterface $backgroundTaskDispatcher,
         private BackgroundProcessManager $processManager,
@@ -39,6 +41,11 @@ final readonly class PageScanCoordinator
         private SiteRegistry $siteRegistry,
         private array $errorsToIgnore = [],
     ) {
+        // Tests isolate the var dir per ParaTest worker (mirrors ProcessOutputStorage
+        // and BackgroundProcessManager) so the cached results file is not shared
+        // across parallel workers on the project var/ dir.
+        $testVarDir = getenv('PUSHWORD_TEST_VAR_DIR');
+        $this->varDir = false !== $testVarDir && '' !== $testVarDir ? $testVarDir : $varDir;
     }
 
     public function getProcessType(?string $host): string

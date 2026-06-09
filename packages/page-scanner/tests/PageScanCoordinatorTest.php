@@ -19,9 +19,15 @@ final class PageScanCoordinatorTest extends KernelTestCase
 
     private ProcessOutputStorage $outputStorage;
 
+    private string|false $previousTestVarDir = false;
+
     protected function setUp(): void
     {
         self::bootKernel();
+        // This test injects explicit temp dirs and asserts against them, so opt out
+        // of the per-worker PUSHWORD_TEST_VAR_DIR override the services honor.
+        $this->previousTestVarDir = getenv('PUSHWORD_TEST_VAR_DIR');
+        putenv('PUSHWORD_TEST_VAR_DIR');
         $this->varDir = sys_get_temp_dir().'/pw-coordinator-'.uniqid();
         $this->outputStorage = new ProcessOutputStorage(new Filesystem(), $this->varDir);
     }
@@ -29,6 +35,7 @@ final class PageScanCoordinatorTest extends KernelTestCase
     protected function tearDown(): void
     {
         new Filesystem()->remove($this->varDir);
+        putenv(false === $this->previousTestVarDir ? 'PUSHWORD_TEST_VAR_DIR' : 'PUSHWORD_TEST_VAR_DIR='.$this->previousTestVarDir);
         parent::tearDown();
     }
 

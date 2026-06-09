@@ -10,10 +10,17 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 final readonly class ProcessOutputStorage
 {
+    private string $varDir;
+
     public function __construct(
         private Filesystem $filesystem,
-        private string $varDir,
+        string $varDir,
     ) {
+        // Tests isolate the var dir per ParaTest worker (mirrors BackgroundProcessManager
+        // and StaticAppGenerator) so parallel workers don't race on process status/output
+        // files living in the shared project var/ dir.
+        $testVarDir = getenv('PUSHWORD_TEST_VAR_DIR');
+        $this->varDir = false !== $testVarDir && '' !== $testVarDir ? $testVarDir : $varDir;
     }
 
     public function write(string $processType, string $message): void

@@ -152,6 +152,13 @@ final class PageScanApiControllerTest extends WebTestCase
 
     private function varDir(): string
     {
+        // Mirror the per-worker isolation the page-scan services apply, so the state
+        // this test seeds and cleans matches what the controller reads/writes.
+        $testVarDir = getenv('PUSHWORD_TEST_VAR_DIR');
+        if (false !== $testVarDir && '' !== $testVarDir) {
+            return $testVarDir;
+        }
+
         return self::getContainer()->getParameter('kernel.project_dir').'/var';
     }
 

@@ -34,6 +34,13 @@ final class PageScannerController extends AbstractController
 
     public static function setFileCache(string $varDir): void
     {
+        // Tests isolate the var dir per ParaTest worker (mirrors PageScanCoordinator)
+        // so the results file written by the command/admin matches what the API reads.
+        $testVarDir = getenv('PUSHWORD_TEST_VAR_DIR');
+        if (false !== $testVarDir && '' !== $testVarDir) {
+            $varDir = $testVarDir;
+        }
+
         self::$fileCache = null !== self::$fileCache && '' !== self::$fileCache ? self::$fileCache : $varDir.'/page-scan';
     }
 
