@@ -323,6 +323,9 @@ redirectFrom:
   meta-refresh stub for GitHub Pages), exactly like `redirection.csv` entries.
 - A slug rename now appends the old slug to the destination page's `redirectFrom` (no phantom
   redirect page is created).
+- Internal links to an old path are rewritten at render to the current slug
+  (`[x](/old-name)` → `<a href="/new-name">`), so they target the page directly instead of
+  relying on a 301 hop — mirroring how a renamed media is resolved by its `fileNameHistory`.
 - `redirection.csv` still holds redirects that have **no destination page**: external targets,
   non-resolving paths, and chains.
 

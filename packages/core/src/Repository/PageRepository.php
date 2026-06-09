@@ -294,6 +294,29 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
     }
 
     /**
+     * Resolve an old path registered in some page's redirectFrom to that page's
+     * current slug, or null when the path is not a known redirectFrom entry.
+     * Lets the render pipeline rewrite an internal link pointing at a renamed
+     * page's former slug to its current slug, so the link targets the page
+     * directly instead of relying on a 301 hop (mirrors how a renamed media is
+     * resolved by its fileNameHistory). Old paths that collide with a live page
+     * slug are absent from the map (that page wins — see warmupSlugCacheLight),
+     * so this never shadows a real page.
+     */
+    public function resolveRedirectFromSlug(string $slug, string $host): ?string
+    {
+        if ('' === $host) {
+            return null;
+        }
+
+        if (! isset($this->warmedLightHosts[$host])) {
+            $this->warmupSlugCacheLight($host);
+        }
+
+        return $this->redirectFromMaps[$host][$slug]['slug'] ?? null;
+    }
+
+    /**
      * Check if a host's full Page entities are loaded in cache.
      */
     public function isHostWarmed(string $host): bool

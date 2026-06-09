@@ -138,8 +138,15 @@ final class PageRepositoryTest extends KernelTestCase
             self::assertSame(308, $redirect['code']);
             self::assertTrue($pageRepo->hasSlug('rfm-repo-old', $host));
 
+            // resolveRedirectFromSlug maps the old path to the destination slug
+            // (used to rewrite internal links at render).
+            self::assertSame('rfm-repo-dest', $pageRepo->resolveRedirectFromSlug('rfm-repo-old', $host));
+            // A live page slug is not a redirectFrom entry.
+            self::assertNull($pageRepo->resolveRedirectFromSlug('rfm-repo-dest', $host));
+
             // The real homepage page wins: its redirectFrom claim is ignored.
             self::assertNull($pageRepo->getRedirectFor('homepage', $host));
+            self::assertNull($pageRepo->resolveRedirectFromSlug('homepage', $host));
         } finally {
             $em->clear();
             $toRemove = $pageRepo->findOneBy(['slug' => 'rfm-repo-dest', 'host' => $host]);
