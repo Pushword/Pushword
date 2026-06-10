@@ -129,6 +129,9 @@ final class ConversationFormController extends AbstractController
         }
 
         if ('dev' === $this->env) {
+            // Trust the dev server's own origin whatever port it picked (the
+            // hardcoded 8000-8002 miss any other one, e.g. when 8000 is taken).
+            $this->possibleOrigins[] = $request->getSchemeAndHttpHost();
             $this->possibleOrigins[] = 'http://'.$request->getHost();
             $this->possibleOrigins[] = 'https://'.$request->getHost();
             $this->possibleOrigins[] = 'http://'.$request->getHost().':8000';
