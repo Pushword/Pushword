@@ -14,13 +14,14 @@ use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Service\TailwindGenerator;
 use Pushword\Core\Service\VariantManager;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Contracts\Service\ResetInterface;
 
 #[AsEntityListener(event: Events::preRemove, entity: Page::class)]
 #[AsEntityListener(event: Events::preUpdate, entity: Page::class)]
 #[AsEntityListener(event: Events::prePersist, entity: Page::class)]
 #[AsEntityListener(event: Events::postPersist, entity: Page::class)]
 #[AsEntityListener(event: Events::postUpdate, entity: Page::class)]
-final class PageListener
+final class PageListener implements ResetInterface
 {
     /** @var array<int, array{oldSlug: string, newSlug: string, host: string}> */
     private static array $pendingRedirects = [];
@@ -36,6 +37,22 @@ final class PageListener
         private readonly PageCacheSuppressor $cacheSuppressor,
         private readonly VariantManager $variantManager,
     ) {
+    }
+
+    /**
+     * Worker-mode safety (kernel.reset): these statics are process-global and
+     * normally drained within the flush that fills them. But a slug change queued
+     * in preUpdate is only consumed in postUpdate, so a flush that throws in
+     * between would orphan a pending redirect — replayed during a later request in
+     * a long-lived worker as a phantom redirect for a slug change that rolled back.
+     * Clearing every boundary neutralizes that (and any flag a caller left set on a
+     * fatal). In classic FPM the process dies between requests, so this is a no-op.
+     */
+    public function reset(): void
+    {
+        self::$pendingRedirects = [];
+        self::$processingRedirects = false;
+        self::$skipSlugChangeDetection = false;
     }
 
     public function preRemove(Page $page): void

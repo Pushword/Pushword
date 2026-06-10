@@ -9,10 +9,12 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\EventListener\PageListener;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
+use ReflectionObject;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -158,6 +160,36 @@ final class WorkerModeStateResetTest extends KernelTestCase
             '',
             $registry->stash('worker-probe'),
             'worker mode: a stashed fragment must not leak into the next request',
+        );
+    }
+
+    public function testPageListenerStaticStateDoesNotLeakAcrossRequests(): void
+    {
+        self::bootKernel();
+
+        // Initialize the listener so the worker runtime tracks it for reset.
+        $listener = self::getContainer()->get(PageListener::class);
+
+        // Simulate state orphaned by a request: a slug-change redirect queued in
+        // preUpdate whose flush threw before postUpdate could drain it, plus a skip
+        // flag a caller left set on a fatal. Both are process-global statics.
+        $reflection = new ReflectionObject($listener);
+        $pending = $reflection->getProperty('pendingRedirects');
+        $pending->setValue(null, [['oldSlug' => 'old', 'newSlug' => 'new', 'host' => 'localhost.dev']]);
+
+        PageListener::$skipSlugChangeDetection = true;
+
+        // --- The worker boundary. ---
+        $this->simulateWorkerRequestBoundary();
+
+        self::assertSame(
+            [],
+            $pending->getValue(),
+            'worker mode: an orphaned pending redirect must not replay in a later request',
+        );
+        self::assertFalse(
+            PageListener::$skipSlugChangeDetection,
+            'worker mode: a leftover skip-slug-detection flag must not disable redirects globally',
         );
     }
 

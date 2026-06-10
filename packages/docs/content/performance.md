@@ -63,10 +63,12 @@ boot-amortization figure.
 
 ### One thing to watch
 
-`PageListener` keeps a few `static` properties (e.g. the pending-redirect queue used
-during slug changes). They are process-global and not reset between requests. Normal
-public `GET` traffic leaves them empty, but if you extend the admin/save path in a
-worker deployment, make sure they are cleared per request.
+`PageListener` keeps a few `static` properties (the pending-redirect queue used
+during slug changes, plus skip/reentrancy flags). They are process-global, so it
+implements `ResetInterface` and clears them at the worker boundary — a slug-change
+redirect orphaned by a flush that threw before `postUpdate` can't replay in a later
+request, and a leftover skip flag can't disable redirects globally. If you add your
+own process-global `static` state on the save path, follow the same pattern.
 
 ### Admin
 
