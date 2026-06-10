@@ -1,0 +1,22 @@
+quiz:
+  questions:
+    min: 'A quiz needs at least one question.'
+  question:
+    text:
+      empty: 'A question cannot be empty.'
+    answers:
+      min: 'A question needs at least two answers.'
+    correct:
+      min: 'A question needs at least one correct answer.'
+    video:
+      altRequired: 'A video question requires an alternative text (accessibility).'
+  answer:
+    text:
+      empty: 'An answer cannot be empty.'
+  result:
+    min:
+      range: 'A score band threshold must be between 0 and 100.'
+    msg:
+      empty: 'A score band needs a message.'
+  feedback:
+    invalid: 'Feedback must be "immediate" or "end".'

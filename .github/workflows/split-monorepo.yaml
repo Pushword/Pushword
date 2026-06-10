@@ -28,6 +28,7 @@ jobs:
           - admin-block-editor
           - advanced-main-image
           - api
+          - quiz
           - docs
 
     steps:

@@ -24,6 +24,7 @@ import Embed from './tools/Embed/Embed'
 import PagesList from './tools/PagesList/PagesList'
 import CardList from './tools/CardList/CardList'
 import Snippet from './tools/Snippet/Snippet'
+import Quiz from './tools/Quiz/Quiz'
 import Gallery from './tools/Gallery/Gallery'
 import AlignementTune from './tools/AlignementTune/AlignementTune'
 import HyperlinkTune from './tools/HyperlinkTune/HyperlinkTune'
@@ -85,6 +86,7 @@ export class editorJs {
       PagesList: PagesList,
       CardList: CardList,
       Snippet: Snippet,
+      Quiz: Quiz,
       Gallery: Gallery,
       Strikethrough: Strikethrough,
       CodeBlock: CodeBlock,

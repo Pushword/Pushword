@@ -121,6 +121,24 @@ class AppFixtures extends Fixture
 
         $manager->persist($ksPage);
 
+        // Quiz block demo: a client-side QCM with an end-of-quiz conversion form.
+        $quizPage = new Page();
+        $quizPage->setH1('Quiz — Montagnes du monde');
+        $quizPage->setTitle('Quiz — Montagnes du monde | Demo');
+        $quizPage->setSlug('quiz-montagnes');
+        $quizPage->setMainImage($media['Demo 3']);
+        $quizPage->locale = 'fr';
+        $quizPage->setParentPage($homepage);
+        $quizPage->createdAt = new DateTime('1 day ago');
+        $quizPage->updatedAt = new DateTime('1 day ago');
+        $quizPage->setMainContent((string) file_get_contents(__DIR__.'/Quiz.md'));
+
+        if ('localhost.dev' === $this->apps->getMainHost()) {
+            $quizPage->host = 'localhost.dev';
+        }
+
+        $manager->persist($quizPage);
+
         // Variant pages demo (localhost.dev): a master stay and a partner variant
         // that consolidates onto it (canonical → master, link rewriting, exclusions).
         if ('localhost.dev' === $this->apps->getMainHost()) {

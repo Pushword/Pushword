@@ -1,0 +1,22 @@
+quiz:
+  questions:
+    min: 'Un quiz doit comporter au moins une question.'
+  question:
+    text:
+      empty: 'Une question ne peut pas être vide.'
+    answers:
+      min: 'Une question doit proposer au moins deux réponses.'
+    correct:
+      min: 'Une question doit avoir au moins une bonne réponse.'
+    video:
+      altRequired: 'Une question vidéo nécessite un texte alternatif (accessibilité).'
+  answer:
+    text:
+      empty: 'Une réponse ne peut pas être vide.'
+  result:
+    min:
+      range: 'Le seuil d''une tranche de score doit être compris entre 0 et 100.'
+    msg:
+      empty: 'Une tranche de score doit avoir un message.'
+  feedback:
+    invalid: 'Le retour doit être « immediate » ou « end ».'

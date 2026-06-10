@@ -1,0 +1,6 @@
+controllers:
+  resource: ./../../../Controller/
+  type: attribute
+  # Controller/Api routes are registered centrally by pushword/api's loader
+  # (only when that optional package is installed), so exclude them here.
+  exclude: ./../../../Controller/Api/

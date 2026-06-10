@@ -1,0 +1,250 @@
+/*
+ * Pushword quiz runtime — plain ES, no build step.
+ *
+ * The page already ships the full quiz as readable HTML (SEO + no-JS). This
+ * script progressively enhances each `[data-pw-quiz]` into an interactive game:
+ * one question at a time, immediate feedback, score donut, anonymous percentile,
+ * and an optional end-of-quiz conversion form (pushword/conversation).
+ *
+ * Idempotent: safe to evaluate more than once and to re-scan after DOM changes.
+ */
+;(function () {
+  'use strict'
+
+  var RESULT_ENDPOINT = '/quiz/result'
+  var STORAGE_KEY = 'pwQuizId'
+
+  function initAll() {
+    var quizzes = document.querySelectorAll('[data-pw-quiz]:not([data-pw-quiz-ready])')
+    for (var i = 0; i < quizzes.length; i++) initQuiz(quizzes[i])
+  }
+
+  function readConfig(root) {
+    var node = root.querySelector('.pw-quiz-config')
+    if (!node) return {}
+    try {
+      return JSON.parse(node.textContent) || {}
+    } catch (e) {
+      return {}
+    }
+  }
+
+  function initQuiz(root) {
+    root.setAttribute('data-pw-quiz-ready', '1')
+    root.classList.add('pw-quiz--js')
+
+    var config = readConfig(root)
+    var immediate = 'end' !== config.feedback
+    var questions = Array.prototype.slice.call(root.querySelectorAll('.pw-quiz-q'))
+    if (0 === questions.length) return
+
+    var total = questions.length
+    var answered = 0
+    var score = 0
+
+    questions.forEach(function (q, idx) {
+      if (idx > 0) q.setAttribute('data-locked', '1')
+      var buttons = Array.prototype.slice.call(q.querySelectorAll('.pw-quiz-a'))
+      buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (q.hasAttribute('data-answered') || q.hasAttribute('data-locked')) return
+          answer(q, idx, btn, buttons)
+        })
+      })
+    })
+
+    function answer(q, idx, chosen, buttons) {
+      q.setAttribute('data-answered', '1')
+      q.classList.add('pw-quiz-q--answered')
+
+      var isCorrect = chosen.hasAttribute('data-correct')
+      if (isCorrect) score++
+      q.classList.add(isCorrect ? 'pw-quiz-q--correct' : 'pw-quiz-q--wrong')
+
+      buttons.forEach(function (btn) {
+        btn.disabled = true
+        btn.setAttribute('aria-disabled', 'true')
+        if (immediate && btn.hasAttribute('data-correct')) btn.classList.add('pw-quiz-a--correct')
+      })
+      chosen.setAttribute('aria-pressed', 'true')
+      chosen.classList.add(isCorrect ? 'pw-quiz-a--chosen-correct' : 'pw-quiz-a--chosen-wrong')
+
+      answered++
+      if (answered >= total) {
+        finish()
+        return
+      }
+
+      var next = questions[idx + 1]
+      if (next) {
+        next.removeAttribute('data-locked')
+        softScroll(next)
+      }
+    }
+
+    function finish() {
+      root.classList.add('pw-quiz--done')
+      var pct = Math.round((score / total) * 100)
+
+      var resultBox = root.querySelector('.pw-quiz-result')
+      var scoreBox = root.querySelector('.pw-quiz-score')
+      if (resultBox) resultBox.hidden = false
+      if (scoreBox) scoreBox.innerHTML = buildScoreHtml(pct, score, total, config)
+      if (resultBox) softScroll(resultBox)
+
+      submitResult(root.getAttribute('data-slug'), pct, scoreBox, config)
+      maybeShowCta(root, pct)
+    }
+  }
+
+  function buildScoreHtml(pct, score, total, config) {
+    var band = bandMessage(pct, config.results || [])
+    var labels = config.i18n || {}
+    return (
+      donutSvg(pct) +
+      '<p class="pw-quiz-correct">' +
+      (labels.scoreLabel ? escapeHtml(labels.scoreLabel) + ' ' : '') +
+      score +
+      '/' +
+      total +
+      '</p>' +
+      (band ? '<p class="pw-quiz-band">' + escapeHtml(band) + '</p>' : '') +
+      '<p class="pw-quiz-percentile" hidden></p>'
+    )
+  }
+
+  function bandMessage(pct, bands) {
+    var best = null
+    for (var i = 0; i < bands.length; i++) {
+      if (pct >= bands[i].min && (null === best || bands[i].min > best.min)) best = bands[i]
+    }
+    return best ? best.msg : ''
+  }
+
+  function donutSvg(pct) {
+    var r = 52
+    var c = 2 * Math.PI * r
+    var dash = (pct / 100) * c
+    return (
+      '<svg class="pw-quiz-donut" viewBox="0 0 120 120" role="img" aria-label="' +
+      pct +
+      '%">' +
+      '<circle class="pw-quiz-donut-bg" cx="60" cy="60" r="' +
+      r +
+      '" fill="none" stroke-width="12"/>' +
+      '<circle class="pw-quiz-donut-fg" cx="60" cy="60" r="' +
+      r +
+      '" fill="none" stroke-width="12" stroke-linecap="round" ' +
+      'stroke-dasharray="' +
+      dash +
+      ' ' +
+      c +
+      '" transform="rotate(-90 60 60)"/>' +
+      '<text class="pw-quiz-donut-text" x="60" y="60" text-anchor="middle" dominant-baseline="central">' +
+      pct +
+      '%</text>' +
+      '</svg>'
+    )
+  }
+
+  function submitResult(slug, pct, scoreBox, config) {
+    if (!slug || !scoreBox || !window.fetch) return
+    var line = scoreBox.querySelector('.pw-quiz-percentile')
+
+    fetch(RESULT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quiz: slug, score: pct }),
+    })
+      .then(function (r) {
+        return r.ok ? r.json() : null
+      })
+      .then(function (data) {
+        if (!data || 'number' !== typeof data.percentile || !line) return
+        var tpl = (config.i18n && config.i18n.betterThan) || 'Better than {p}% of participants'
+        line.textContent = tpl.replace('{p}', data.percentile)
+        line.hidden = false
+      })
+      .catch(function () {})
+  }
+
+  /* ----- conversion form (pushword/conversation), deferred to the end ----- */
+
+  function maybeShowCta(root, pct) {
+    var cta = root.querySelector('.pw-quiz-cta')
+    if (!cta) return
+
+    var url = cta.getAttribute('data-quiz-cta')
+    if (!url) return
+
+    // Carry the score along so the lead can be attributed to this attempt.
+    url += (url.indexOf('?') === -1 ? '?' : '&') + 'quizScore=' + pct
+
+    // pushword/js-helper loads `[data-live]` blocks and re-scans on DOMChanged.
+    cta.setAttribute('data-live', url)
+    document.dispatchEvent(new Event('DOMChanged'))
+
+    // Prefill the form from a previously stored identity, and capture it on submit.
+    watchCtaForm(cta)
+  }
+
+  function watchCtaForm(cta) {
+    var identity = readIdentity()
+
+    var observer = new MutationObserver(function () {
+      var email = cta.querySelector('input[type="email"], input[name*="Email" i]')
+      var name = cta.querySelector('input[name*="Name" i]')
+      if (!email && !name) return
+      if (identity) {
+        if (name && identity.n && !name.value) name.value = identity.n
+        if (email && identity.e && !email.value) email.value = identity.e
+      }
+      observer.disconnect()
+    })
+    observer.observe(cta, { childList: true, subtree: true })
+
+    cta.addEventListener(
+      'submit',
+      function () {
+        var email = cta.querySelector('input[type="email"], input[name*="Email" i]')
+        var name = cta.querySelector('input[name*="Name" i]')
+        storeIdentity({ n: name ? name.value : '', e: email ? email.value : '' })
+      },
+      true,
+    )
+  }
+
+  function readIdentity() {
+    try {
+      return JSON.parse(window.localStorage.getItem(STORAGE_KEY)) || null
+    } catch (e) {
+      return null
+    }
+  }
+
+  function storeIdentity(id) {
+    if (!id.e && !id.n) return
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(id))
+    } catch (e) {}
+  }
+
+  /* ----- helpers ----- */
+
+  function softScroll(el) {
+    if (el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
+    })
+  }
+
+  if ('loading' === document.readyState) {
+    document.addEventListener('DOMContentLoaded', initAll)
+  } else {
+    initAll()
+  }
+  document.addEventListener('DOMChanged', initAll)
+})()

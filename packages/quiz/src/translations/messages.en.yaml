@@ -1,0 +1,15 @@
+quiz:
+  betterThan: 'Better than {p}% of participants'
+  explanation: 'Explanation'
+  question: 'Question'
+  questions: 'questions'
+  scoreLabel: 'Your score:'
+  result:
+    label:
+      plural: 'Quiz results'
+      singular: 'Quiz result'
+    field:
+      createdAt: 'Date'
+      host: 'Host'
+      quiz: 'Quiz'
+      score: 'Score (%)'

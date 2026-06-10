@@ -1,0 +1,236 @@
+/* Pushword quiz — self-contained styles. Themeable via the CSS variables below. */
+.pw-quiz {
+  --pw-quiz-radius: 14px;
+  --pw-quiz-card: #ffffff;
+  --pw-quiz-border: #e5e7eb;
+  --pw-quiz-accent: #6d28d9;
+  --pw-quiz-correct: #16a34a;
+  --pw-quiz-correct-bg: #dcfce7;
+  --pw-quiz-wrong: #e11d48;
+  --pw-quiz-wrong-bg: #ffe4e6;
+  --pw-quiz-muted: #6b7280;
+  display: block;
+  margin: 2rem 0;
+}
+
+.pw-quiz * {
+  box-sizing: border-box;
+}
+
+/* ---- header ---- */
+.pw-quiz-head {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+.pw-quiz-title {
+  margin: 0 0 0.25rem;
+}
+.pw-quiz-meta {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  align-items: center;
+  color: var(--pw-quiz-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+.pw-quiz-diff {
+  background: var(--pw-quiz-accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+/* ---- questions ---- */
+.pw-quiz-questions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.pw-quiz-q {
+  position: relative;
+  background: var(--pw-quiz-card);
+  border: 1px solid var(--pw-quiz-border);
+  border-radius: var(--pw-quiz-radius);
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.pw-quiz-q-num {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--pw-quiz-accent);
+  margin-bottom: 0.5rem;
+}
+.pw-quiz-media {
+  margin: 0 0 0.75rem;
+}
+.pw-quiz-media-img,
+.pw-quiz-media img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+.pw-quiz-question {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+/* ---- answers ---- */
+.pw-quiz-answers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+@media (min-width: 540px) {
+  .pw-quiz-answers {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.pw-quiz-a {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: #f9fafb;
+  border: 1px solid var(--pw-quiz-border);
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  cursor: default;
+  transition: background 0.15s, border-color 0.15s;
+}
+.pw-quiz-a-img {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex: 0 0 auto;
+}
+.pw-quiz-a-text {
+  flex: 1 1 auto;
+}
+.pw-quiz-a-mark {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* ---- explanation ---- */
+.pw-quiz-explanation {
+  margin: 0.9rem 0 0;
+  padding: 0.75rem 1rem;
+  background: #f3f4f6;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #374151;
+}
+.pw-quiz-explanation-label {
+  font-weight: 700;
+}
+
+/* ===========================================================================
+   No-JS / crawler view (default): everything is visible and the correct
+   answers are flagged with a ✓ so the page reads as a Q&A article.
+   =========================================================================== */
+.pw-quiz:not(.pw-quiz--js) .pw-quiz-a[data-correct] {
+  border-color: var(--pw-quiz-correct);
+  background: var(--pw-quiz-correct-bg);
+}
+.pw-quiz:not(.pw-quiz--js) .pw-quiz-a[data-correct] .pw-quiz-a-mark::after {
+  content: "\2713"; /* ✓ */
+  color: var(--pw-quiz-correct);
+}
+
+/* ===========================================================================
+   Interactive view (JS on).
+   =========================================================================== */
+.pw-quiz--js .pw-quiz-q[data-locked] {
+  display: none;
+}
+.pw-quiz--js .pw-quiz-a:not([disabled]) {
+  cursor: pointer;
+}
+.pw-quiz--js .pw-quiz-a:not([disabled]):hover {
+  border-color: var(--pw-quiz-accent);
+  background: #f5f3ff;
+}
+/* Hide the explanation until its question has been answered. */
+.pw-quiz--js .pw-quiz-q:not(.pw-quiz-q--answered) .pw-quiz-explanation {
+  display: none;
+}
+
+/* Reveal correctness only after answering. ✓/✗ glyphs back up the colours
+   (WCAG 1.4.1 — never signal by colour alone). */
+.pw-quiz--js .pw-quiz-a--correct {
+  border-color: var(--pw-quiz-correct);
+  background: var(--pw-quiz-correct-bg);
+}
+.pw-quiz--js .pw-quiz-a--correct .pw-quiz-a-mark::after {
+  content: "\2713"; /* ✓ */
+  color: var(--pw-quiz-correct);
+}
+.pw-quiz--js .pw-quiz-a--chosen-wrong {
+  border-color: var(--pw-quiz-wrong);
+  background: var(--pw-quiz-wrong-bg);
+}
+.pw-quiz--js .pw-quiz-a--chosen-wrong .pw-quiz-a-mark::after {
+  content: "\2717"; /* ✗ */
+  color: var(--pw-quiz-wrong);
+}
+
+/* ---- result ---- */
+.pw-quiz-result {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--pw-quiz-card);
+  border: 1px solid var(--pw-quiz-border);
+  border-radius: var(--pw-quiz-radius);
+}
+.pw-quiz-donut {
+  width: 130px;
+  height: 130px;
+}
+.pw-quiz-donut-bg {
+  stroke: var(--pw-quiz-border);
+}
+.pw-quiz-donut-fg {
+  stroke: var(--pw-quiz-accent);
+  transition: stroke-dasharray 0.6s ease;
+}
+.pw-quiz-donut-text {
+  font-size: 1.8rem;
+  font-weight: 700;
+  fill: #111827;
+}
+.pw-quiz-band {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0.25rem 0;
+}
+.pw-quiz-correct {
+  color: var(--pw-quiz-muted);
+  margin: 0.25rem 0;
+}
+.pw-quiz-percentile {
+  color: var(--pw-quiz-accent);
+  font-weight: 600;
+  margin: 0.25rem 0;
+}
+.pw-quiz-cta {
+  margin-top: 1.25rem;
+}

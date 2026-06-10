@@ -10,6 +10,7 @@
     "pushword/installer": "self.version",
     "pushword/page-scanner": "self.version",
     "pushword/page-update-notifier": "self.version",
+    "pushword/quiz": "self.version",
     "pushword/search": "self.version",
     "pushword/static-generator": "self.version",
     "pushword/template-editor": "self.version"
@@ -130,6 +131,7 @@
       "Pushword\\Installer\\": "packages/installer/src",
       "Pushword\\PageScanner\\": "packages/page-scanner/src",
       "Pushword\\PageUpdateNotifier\\": "packages/page-update-notifier/src",
+      "Pushword\\Quiz\\": "packages/quiz/src",
       "Pushword\\Search\\": "packages/search/src",
       "Pushword\\Snippet\\": "packages/snippet/src",
       "Pushword\\StaticGenerator\\": "packages/static-generator/src",
@@ -152,6 +154,7 @@
       "Pushword\\AdminBlockEditor\\Tests\\": "packages/admin-block-editor/tests",
       "Pushword\\TemplateEditor\\Tests\\": "packages/template-editor/tests",
       "Pushword\\AdvancedMainImage\\Tests\\": "packages/advanced-main-image/tests",
+      "Pushword\\Quiz\\Tests\\": "packages/quiz/tests",
       "Pushword\\Snippet\\Tests\\": "packages/snippet/tests",
       "Pushword\\Search\\Tests\\": "packages/search/tests"
     }

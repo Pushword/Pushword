@@ -32,5 +32,8 @@ pushword_conversation:
 pushword_search:
     resource: "@PushwordSearchBundle/SearchRoutes.yaml"
 
+pushword_quiz:
+    resource: "@PushwordQuizBundle/Resources/config/routes/quiz.yaml"
+
 pushword:
     resource: "@PushwordCoreBundle/Resources/config/routes.yaml"

@@ -1,0 +1,82 @@
+{#
+  Quiz block. Rendered fully server-side: every question, answer, the correct
+  flag and the explanation are in the HTML — that is the SEO + no-JS version
+  (a readable Q&A). quiz.js progressively enhances it into an interactive game.
+#}
+{% set slug = page.slug|default('') %}
+{% set total = quiz.questions|length %}
+
+<link rel="stylesheet" href="{{ asset('bundles/pushwordquiz/quiz.css') }}">
+
+<section class="pw-quiz" id="{{ id }}" data-pw-quiz data-slug="{{ slug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
+  {% if quiz.title or quiz.difficulty %}
+    <header class="pw-quiz-head">
+      {% if quiz.title %}<h2 class="pw-quiz-title">{{ quiz.title }}</h2>{% endif %}
+      <p class="pw-quiz-meta">
+        <span>{{ total }} {{ 'quiz.questions'|trans }}</span>
+        {% if quiz.difficulty %}<span class="pw-quiz-diff">{{ quiz.difficulty }}</span>{% endif %}
+      </p>
+    </header>
+  {% endif %}
+
+  <ol class="pw-quiz-questions">
+    {% for q in quiz.questions %}
+      <li class="pw-quiz-q" data-q="{{ loop.index0 }}">
+        <span class="pw-quiz-q-num" aria-hidden="true">{{ 'quiz.question'|trans }} {{ loop.index }}/{{ total }}</span>
+
+        {% if q.video %}
+          <div class="pw-quiz-media">{{ video(q.video, q.poster|default(''), q.alt|default('')) }}</div>
+        {% elseif q.media %}
+          <div class="pw-quiz-media">{{ image(q.media, alt: q.alt|default(''), mode: 'responsive', lazy: true, class: 'pw-quiz-media-img') }}</div>
+        {% endif %}
+
+        <p class="pw-quiz-question">{{ q.q }}</p>
+
+        <ul class="pw-quiz-answers">
+          {% for a in q.answers %}
+            <li>
+              <button type="button" class="pw-quiz-a"{{ a.correct ? ' data-correct' : '' }} aria-pressed="false">
+                {% if a.media %}{{ image(a.media, alt: a.alt|default(''), lazy: true, class: 'pw-quiz-a-img') }}{% endif %}
+                <span class="pw-quiz-a-text">{{ a.text }}</span>
+                <span class="pw-quiz-a-mark" aria-hidden="true"></span>
+              </button>
+            </li>
+          {% endfor %}
+        </ul>
+
+        {% if q.explanation %}
+          <p class="pw-quiz-explanation"><span class="pw-quiz-explanation-label">{{ 'quiz.explanation'|trans }}</span> {{ q.explanation }}</p>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+
+  <div class="pw-quiz-result" hidden>
+    <div class="pw-quiz-score" aria-live="polite"></div>
+    {% if quiz.cta and conversationAvailable %}
+      <div class="pw-quiz-cta" data-quiz-cta="{{ conversation(quiz.cta, 'quiz-' ~ slug) }}"></div>
+    {% endif %}
+  </div>
+
+  <script type="application/json" class="pw-quiz-config">{{ config|json_encode|raw }}</script>
+</section>
+
+{# schema.org Quiz: makes the Q&A eligible for rich results and indexable. #}
+{% set questionsLd = [] %}
+{% for q in quiz.questions %}
+  {% set correct = q.answers|filter(a => a.correct)|first %}
+  {% set questionsLd = questionsLd|merge([{
+    '@type': 'Question',
+    'name': q.q,
+    'acceptedAnswer': { '@type': 'Answer', 'text': correct.text ~ (q.explanation ? ' — ' ~ q.explanation : '') },
+    'suggestedAnswer': q.answers|map(a => { '@type': 'Answer', 'text': a.text }),
+  }]) %}
+{% endfor %}
+<script type="application/ld+json">{{ {
+  '@context': 'https://schema.org',
+  '@type': 'Quiz',
+  'name': quiz.title|default('Quiz'),
+  'hasPart': questionsLd,
+}|json_encode|raw }}</script>
+
+<script src="{{ asset('bundles/pushwordquiz/quiz.js') }}" defer></script>
