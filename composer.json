@@ -89,7 +89,7 @@
     "league/flysystem-memory": "^3.31",
     "monorepo-php/monorepo": "*",
     "phpstan/phpstan": "*",
-    "phpstan/phpstan-doctrine": "*",
+    "phpstan/phpstan-doctrine": "* !=2.0.26",
     "phpstan/phpstan-phpunit": "*",
     "phpstan/phpstan-strict-rules": "*",
     "phpstan/phpstan-symfony": "*",
