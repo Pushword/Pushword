@@ -197,7 +197,7 @@ describe('ClipboardManager – handleCopyShortcut (block-selection Ctrl+C)', () 
     cm.handleCopyShortcut(event)
 
     expect(write).toHaveBeenCalledOnce()
-    expect(write.mock.calls[0][0]).toBe('| A | B |\n| --- | --- |\n| 1 | 2 |')
+    expect(write.mock.calls[0]![0]).toBe('| A | B |\n| --- | --- |\n| 1 | 2 |')
     expect(event.preventDefault).toHaveBeenCalled()
   })
 

@@ -618,7 +618,7 @@ export default class Table {
     const isValidArray = Array.isArray(content);
     const isNotEmptyArray = isValidArray ? content!.length : false;
     const contentRows = isValidArray ? content!.length : undefined;
-    const contentCols = isNotEmptyArray ? content![0].length : undefined;
+    const contentCols = isNotEmptyArray ? content![0]!.length : undefined;
     const parsedRows = Number.parseInt(this.config && this.config.rows as any);
     const parsedCols = Number.parseInt(this.config && this.config.cols as any);
 
@@ -665,8 +665,9 @@ export default class Table {
 
     if (data && data.content) {
       for (let i = 0; i < data.content.length; i++) {
-        for (let j = 0; j < data.content[i].length; j++) {
-          this.setCellContent(i + 1, j + 1, data.content[i][j]);
+        const rowContent = data.content[i]!;
+        for (let j = 0; j < rowContent.length; j++) {
+          this.setCellContent(i + 1, j + 1, rowContent[j] ?? '');
         }
       }
     }

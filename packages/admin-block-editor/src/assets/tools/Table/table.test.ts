@@ -63,14 +63,14 @@ describe('Table colspan (`->`) spanning', () => {
 
   it('spans the content cell across the trailing `->` markers and tags them', () => {
     const table = newTable([['A', '->'], ['1', '2']])
-    const [content, marker] = cellsOf(table, 1)
+    const [content, marker] = cellsOf(table, 1) as [HTMLElement, HTMLElement]
     expect(content.style.gridColumnStart).toBe('1')
     expect(content.style.gridColumnEnd).toBe('span 2')
     expect(marker.style.gridColumnStart).toBe('2')
     expect(marker.style.gridColumnEnd).toBe('')
     expect(marker.classList.contains('tc-cell--colspan')).toBe(true)
     // a normal row is left on single tracks (no span)
-    expect(cellsOf(table, 2)[0].style.gridColumnEnd).toBe('')
+    expect(cellsOf(table, 2)[0]!.style.gridColumnEnd).toBe('')
   })
 
   it('sets the explicit column-track count on the table', () => {
@@ -80,13 +80,13 @@ describe('Table colspan (`->`) spanning', () => {
 
   it('merges a run of consecutive markers and un-merges when a `->` is cleared', () => {
     const table = newTable([['A', '->', '->'], ['1', '2', '3']])
-    expect(cellsOf(table, 1)[0].style.gridColumnEnd).toBe('span 3')
+    expect(cellsOf(table, 1)[0]!.style.gridColumnEnd).toBe('span 3')
 
     // Clear the first marker; the span shifts to the remaining run.
-    cellsOf(table, 1)[1].textContent = 'x'
+    cellsOf(table, 1)[1]!.textContent = 'x'
     table.updateColspanMarkers()
-    expect(cellsOf(table, 1)[0].style.gridColumnEnd).toBe('')
-    expect(cellsOf(table, 1)[1].style.gridColumnStart).toBe('2')
-    expect(cellsOf(table, 1)[1].style.gridColumnEnd).toBe('span 2')
+    expect(cellsOf(table, 1)[0]!.style.gridColumnEnd).toBe('')
+    expect(cellsOf(table, 1)[1]!.style.gridColumnStart).toBe('2')
+    expect(cellsOf(table, 1)[1]!.style.gridColumnEnd).toBe('span 2')
   })
 })

@@ -241,9 +241,9 @@ export default class TableBlock {
     const tableContent = this.table!.getData();
 
     const result = {
-      withHeadings: this.data.withHeadings,
+      withHeadings: this.data.withHeadings ?? false,
       stickyHeadings: this.data.stickyHeadings,
-      stretched: this.data.stretched,
+      stretched: this.data.stretched ?? false,
       content: tableContent,
       columnAlignments: this.table!.getColumnAlignments()
     };
@@ -380,7 +380,7 @@ export default class TableBlock {
 
       // The GFM delimiter row carries per-column alignment (`:---`, `:--:`, `---:`).
       if (withHeadings && rowIndex === 0) {
-        const separators = cells.map((_, i) => ALIGNMENT_SEPARATORS[alignments[i]] ?? '---');
+        const separators = cells.map((_, i) => ALIGNMENT_SEPARATORS[alignments[i] ?? ''] ?? '---');
         markdown += '| ' + separators.join(' | ') + ' |\n';
       }
     });

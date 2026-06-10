@@ -80,7 +80,7 @@ export class MarkdownUtils {
     const attrs = MarkdownUtils.formatAttributes(tunes)
     if (attrs !== '') {
       const lines = markdown.split('\n')
-      lines[0] = `${lines[0].trimEnd()} {${attrs}}`
+      lines[0] = `${(lines[0] ?? '').trimEnd()} {${attrs}}`
       return lines.join('\n')
     }
     return markdown
@@ -246,7 +246,7 @@ export class MarkdownUtils {
     if (!open || open.index === undefined) return null
 
     let i = markdown.indexOf('(', open.index) + 1
-    while (i < markdown.length && /\s/.test(markdown[i])) i++
+    while (i < markdown.length && /\s/.test(markdown[i] ?? '')) i++
 
     const quote = markdown[i]
     if (quote !== "'" && quote !== '"') return null
@@ -264,12 +264,12 @@ export class MarkdownUtils {
     }
     i++ // closing quote
 
-    while (i < markdown.length && /\s/.test(markdown[i])) i++
+    while (i < markdown.length && /\s/.test(markdown[i] ?? '')) i++
 
     let params: Record<string, any> = {}
     if (markdown[i] === ',') {
       i++
-      while (i < markdown.length && /\s/.test(markdown[i])) i++
+      while (i < markdown.length && /\s/.test(markdown[i] ?? '')) i++
       if (markdown[i] === '{') {
         params = MarkdownUtils.parseBalancedObject(markdown, i)
       }

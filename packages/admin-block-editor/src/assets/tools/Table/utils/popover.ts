@@ -39,7 +39,7 @@ export default class Popover {
    *
    * @returns {object}
    */
-  static get CSS(): Record<string, string> {
+  static get CSS() {
     return {
       popover: 'tc-popover',
       popoverOpened: 'tc-popover--opened',
@@ -166,7 +166,7 @@ export default class Popover {
      */
     this.items.forEach((item, index) => {
       if (typeof item.hideIf === 'function') {
-        this.itemEls[index].classList.toggle(Popover.CSS.itemHidden, item.hideIf());
+        this.itemEls[index]?.classList.toggle(Popover.CSS.itemHidden, item.hideIf());
       }
     });
 

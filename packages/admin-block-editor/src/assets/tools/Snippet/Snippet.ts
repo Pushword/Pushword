@@ -149,7 +149,7 @@ export default class Snippet extends BaseTool implements StateBlockToolInterface
       return
     }
 
-    keys.forEach((key) => this.buildSchemaField(key, schema[key]))
+    keys.forEach((key) => this.buildSchemaField(key, schema[key]!))
   }
 
   private buildSchemaField(key: string, field: SnippetSchemaField): void {
@@ -249,7 +249,7 @@ export default class Snippet extends BaseTool implements StateBlockToolInterface
 
     const params: Record<string, any> = {}
     Object.keys(this.fieldReaders).forEach((key) => {
-      const value = this.fieldReaders[key]()
+      const value = this.fieldReaders[key]!()
       if (value === undefined) return
       if (key === '__json__') {
         Object.assign(params, value)

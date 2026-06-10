@@ -309,8 +309,8 @@ export default class Header {
 
     const inlineAttrMatch = markdownWithoutTunes.match(/^(#{2,6}\s.+?)\s+\{([^}]+)\}\s*$/)
     if (inlineAttrMatch) {
-      tunes = MarkdownUtils.parseAttributes(inlineAttrMatch[2])
-      markdownWithoutTunes = inlineAttrMatch[1]
+      tunes = MarkdownUtils.parseAttributes(inlineAttrMatch[2]!)
+      markdownWithoutTunes = inlineAttrMatch[1]!
     } else {
       const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
       tunes = result.tunes

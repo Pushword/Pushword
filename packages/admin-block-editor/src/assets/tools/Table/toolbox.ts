@@ -71,7 +71,7 @@ export default class Toolbox {
   /**
    * Style classes
    */
-  static get CSS(): Record<string, string> {
+  static get CSS() {
     return {
       toolbox: "tc-toolbox",
       toolboxShowed: "tc-toolbox--showed",

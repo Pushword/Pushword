@@ -13,7 +13,6 @@ interface ToolWithMultiCallbacks {
 
 export class editorJsHelper {
   private static modeManagers: Record<string, EditorModeManager> = {}
-  private static pickerChangeHandlers = new WeakMap<Element, EventListener>()
   public modeManagers: Record<string, EditorModeManager> = {}
 
   constructor() {
@@ -36,25 +35,6 @@ export class editorJsHelper {
     if (window.editorJsHelper) {
       window.editorJsHelper.modeManagers[editorId] = modeManager
     }
-  }
-
-  private static registerPickerChangeHandler(
-    select: HTMLSelectElement,
-    handler: EventListener,
-  ): void {
-    const previousHandler = this.pickerChangeHandlers.get(select)
-    if (previousHandler) {
-      select.removeEventListener('change', previousHandler)
-    }
-
-    const wrappedHandler: EventListener = (event) => {
-      handler(event)
-      select.removeEventListener('change', wrappedHandler)
-      this.pickerChangeHandlers.delete(select)
-    }
-
-    select.addEventListener('change', wrappedHandler)
-    this.pickerChangeHandlers.set(select, wrappedHandler)
   }
 
   /**

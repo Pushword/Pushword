@@ -44,7 +44,7 @@ export abstract class AbstractMediaTool extends BaseTool {
   public nodes: MediaNodes
   public onSelectFile: (tool: AbstractMediaTool, event?: Event) => void
   public onUploadFile: (tool: AbstractMediaTool, event?: Event) => void
-  public onMultiSelectFile?: (tool: AbstractMediaTool, event?: Event) => void
+  public onMultiSelectFile?: ((tool: AbstractMediaTool, event?: Event) => void) | undefined
 
   constructor({
     api,
