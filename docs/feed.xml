@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+                <title>Pushword - The Modern CMS for Developers (ready for AI era)</title>
+        <link>https://pushword.piedweb.com/</link>
+        <description><![CDATA[]]></description>
+        <atom:link
+            href="https://pushword.piedweb.com/feed.xml"
+            rel="self"
+            type="application/rss+xml"
+        />
+                                                            <item>
+                    <title><![CDATA[Quiz]]></title>
+                    <link>https://pushword.piedweb.com/extension/quiz</link>
+                    <guid>https://pushword.piedweb.com/extension/quiz</guid>
+                    <pubDate>Wed, 10 Jun 2026 12:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Performance &amp; worker mode]]></title>
+                    <link>https://pushword.piedweb.com/performance</link>
+                    <guid>https://pushword.piedweb.com/performance</guid>
+                    <pubDate>Tue, 09 Jun 2026 12:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Variant Pages Consolidate near-duplicate pages onto a master for SEO]]></title>
+                    <link>https://pushword.piedweb.com/variant-pages</link>
+                    <guid>https://pushword.piedweb.com/variant-pages</guid>
+                    <pubDate>Thu, 04 Jun 2026 12:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[API]]></title>
+                    <link>https://pushword.piedweb.com/extension/api</link>
+                    <guid>https://pushword.piedweb.com/extension/api</guid>
+                    <pubDate>Mon, 01 Jun 2026 10:00:00 +0000</pubDate>
+                </item>
+                                                                <item>
+                    <title><![CDATA[Unpublished Links Hide draft targets from visitors, restore them for editors]]></title>
+                    <link>https://pushword.piedweb.com/unpublished-links</link>
+                    <guid>https://pushword.piedweb.com/unpublished-links</guid>
+                    <pubDate>Thu, 28 May 2026 12:00:00 +0000</pubDate>
+                </item>
+                            
+    </channel>
+</rss>
