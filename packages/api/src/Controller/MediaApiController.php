@@ -29,9 +29,10 @@ final class MediaApiController extends AbstractApiController
         $pagination = $this->paginationParams($request);
         $qb = $this->mediaRepository->createQueryBuilder('m');
 
-        if (null !== $request->query->get('q')) {
+        $keyword = $request->query->get('q') ?? $request->query->get('search');
+        if (null !== $keyword) {
             $qb->andWhere('m.fileName LIKE :q OR m.alt LIKE :q')
-                ->setParameter('q', '%'.$request->query->getString('q').'%');
+                ->setParameter('q', '%'.$keyword.'%');
         }
 
         if (null !== $request->query->get('mimeType')) {
@@ -263,7 +264,8 @@ final class MediaApiController extends AbstractApiController
                     'get' => [
                         'summary' => 'List media',
                         'parameters' => [
-                            ['name' => 'q', 'in' => 'query', 'schema' => ['type' => 'string']],
+                            ['name' => 'q', 'in' => 'query', 'description' => 'Keyword filter on filename and alt (alias: search)', 'schema' => ['type' => 'string']],
+                            ['name' => 'search', 'in' => 'query', 'description' => 'Alias of q', 'schema' => ['type' => 'string']],
                             ['name' => 'mimeType', 'in' => 'query', 'schema' => ['type' => 'string']],
                             ['name' => 'tag', 'in' => 'query', 'schema' => ['type' => 'string']],
                             ['name' => 'page', 'in' => 'query', 'schema' => ['type' => 'integer']],
