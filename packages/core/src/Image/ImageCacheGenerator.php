@@ -81,12 +81,19 @@ final readonly class ImageCacheGenerator
             $currentImage = $image;
 
             foreach ($filtersToProcess as $filterName) {
-                $workImage = clone $currentImage;
+                // Chainable filters (proportional width scaleDown, sorted largest-first)
+                // derive from the progressively-downsized base — lossless and faster.
+                // Crops (coverDown) and height-only filters (e.g. height_300) must derive
+                // from the full source image; otherwise they inherit an already-shrunk or
+                // cropped base and produce a too-small square (e.g. 259x259 instead of
+                // a 667x300 proportional crop).
+                $chainable = $this->imageCacheManager->isChainableDownscale($filterName);
+                $workImage = clone ($chainable ? $currentImage : $image);
                 $resultImage = $this->generateFilteredCache($media, $filterName, $workImage, skipClone: true);
                 $generated = true;
 
                 // Progressive downsizing: use result as base for next smaller filter
-                if (null !== $this->imageCacheManager->getFilterTargetWidth($filterName)) {
+                if ($chainable) {
                     unset($currentImage);
                     $currentImage = $resultImage;
                 }

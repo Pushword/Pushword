@@ -113,6 +113,29 @@ final class ImageCacheManagerTest extends KernelTestCase
         self::assertNull($manager->getFilterTargetWidth('nonexistent'));
     }
 
+    public function testIsChainableDownscale(): void
+    {
+        $manager = $this->createManager([
+            'default' => ['quality' => 90, 'filters' => ['scaleDown' => [1980, 1280]]],
+            'xl' => ['quality' => 90, 'filters' => ['scaleDown' => [1600]]],
+            'thumb' => ['quality' => 80, 'filters' => ['coverDown' => [330, 330]]],
+            'height_300' => ['quality' => 82, 'filters' => ['scaleDown' => [null, 300]]],
+            'empty' => ['quality' => 90, 'filters' => []],
+        ]);
+
+        // Pure width scaleDown (with or without a height cap) is chainable.
+        self::assertTrue($manager->isChainableDownscale('default'));
+        self::assertTrue($manager->isChainableDownscale('xl'));
+
+        // Crops and height-only scaleDown must derive from the full source: not chainable.
+        self::assertFalse($manager->isChainableDownscale('thumb'));
+        self::assertFalse($manager->isChainableDownscale('height_300'));
+
+        // No filters / unknown filter is never chainable.
+        self::assertFalse($manager->isChainableDownscale('empty'));
+        self::assertFalse($manager->isChainableDownscale('nonexistent'));
+    }
+
     public function testGetSourceDimensions(): void
     {
         $manager = $this->createManager();

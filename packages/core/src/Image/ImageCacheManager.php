@@ -260,6 +260,35 @@ final class ImageCacheManager
         return false;
     }
 
+    /**
+     * A filter is chainable when it is a pure proportional width-based scaleDown:
+     * deriving a smaller such filter from a larger one is dimensionally lossless,
+     * so the progressive-downsizing chain may reuse its output as the next base.
+     *
+     * coverDown (crops) and height-only scaleDown (null width) are NOT chainable:
+     * they change the aspect ratio or need the full source height, so they must
+     * derive from the original image — never from an already-shrunk chain base.
+     */
+    public function isChainableDownscale(string $filterName): bool
+    {
+        /** @var array<string, mixed> $filters */
+        $filters = $this->filterSets[$filterName]['filters'] ?? [];
+
+        if ([] === $filters) {
+            return false;
+        }
+
+        foreach ($filters as $method => $parameters) {
+            $parameters = \is_array($parameters) ? $parameters : [$parameters];
+
+            if ('scaleDown' !== $method || ! isset($parameters[0]) || ! \is_int($parameters[0])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function getFilterTargetWidth(string $filterName): ?int
     {
         $filterConfig = $this->filterSets[$filterName] ?? null;

@@ -120,6 +120,52 @@ final class ImageCacheGeneratorTest extends KernelTestCase
         self::assertMatchesRegularExpression('/^#[0-9a-f]{6}$/i', $media->getMainColor());
     }
 
+    public function testHeightAndCropFiltersDeriveFromSourceNotChain(): void
+    {
+        // Regression: height-only (height_300) and crop (thumb/coverDown) filters must
+        // derive from the full source image, not from the progressively-downsized
+        // responsive chain. Previously height_300 inherited the xs/thumb output and
+        // produced a tiny square crop (259x259 from a 1980x891 source) instead of a
+        // proportional 667x300 image, and thumb shrank to 259x259 instead of 330x330.
+        $mediaStorage = $this->createMediaStorageAdapter();
+
+        $probe = 'height-chain-probe-'.getmypid().'.png';
+        $probePath = $mediaStorage->getLocalPath($probe);
+        $gd = imagecreatetruecolor(1980, 891);
+        imagepng($gd, $probePath);
+
+        $filters = [
+            'default' => ['quality' => 90, 'filters' => ['scaleDown' => [1980, 1280]], 'formats' => ['webp']],
+            'xl' => ['quality' => 90, 'filters' => ['scaleDown' => [1600]], 'formats' => ['webp']],
+            'md' => ['quality' => 90, 'filters' => ['scaleDown' => [992]], 'formats' => ['webp']],
+            'xs' => ['quality' => 90, 'filters' => ['scaleDown' => [576]], 'formats' => ['webp']],
+            'thumb' => ['quality' => 80, 'filters' => ['coverDown' => [330, 330]], 'formats' => ['webp']],
+            'height_300' => ['quality' => 90, 'filters' => ['scaleDown' => [null, 300]], 'formats' => ['webp']],
+        ];
+
+        $generator = $this->createGenerator($filters);
+        $cacheManager = $this->createCacheManager($filters);
+
+        $media = new Media();
+        $media->setFileName($probe);
+
+        try {
+            $generator->generateCache($media, force: true);
+
+            $heightSize = getimagesize($cacheManager->getFilterPath($probe, 'height_300', 'webp'));
+            self::assertIsArray($heightSize);
+            self::assertSame(300, $heightSize[1], 'height_300 must be 300px tall (derived from the full source)');
+            self::assertEqualsWithDelta(667, $heightSize[0], 1, 'height_300 width must stay proportional, not a square crop');
+
+            $thumbSize = getimagesize($cacheManager->getFilterPath($probe, 'thumb', 'webp'));
+            self::assertIsArray($thumbSize);
+            self::assertSame([330, 330], [$thumbSize[0], $thumbSize[1]], 'thumb must crop the full source to 330x330');
+        } finally {
+            $cacheManager->remove($probe);
+            @unlink($probePath);
+        }
+    }
+
     public function testFilterCacheWithFormats(): void
     {
         $image = __DIR__.'/../Service/blank.jpg';
