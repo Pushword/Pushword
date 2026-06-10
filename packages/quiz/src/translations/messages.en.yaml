@@ -1,9 +1,4 @@
 quiz:
-  betterThan: 'Better than {p}% of participants'
-  explanation: 'Explanation'
-  question: 'Question'
-  questions: 'questions'
-  scoreLabel: 'Your score:'
   result:
     label:
       plural: 'Quiz results'

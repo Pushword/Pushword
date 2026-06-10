@@ -1,6 +1,9 @@
 import './Quiz.css'
 import make from '../utils/make'
 import ToolboxIcon from './toolbox-icon.svg?raw'
+import SelectIcon from '../Abstract/icon/folder.svg?raw'
+import UploadIcon from '../Abstract/icon/upload.svg?raw'
+import { MediaUtils } from '../utils/media'
 import { API, BlockToolData } from '@editorjs/editorjs'
 import { BaseTool } from '../Abstract/BaseTool'
 
@@ -15,7 +18,6 @@ interface QuizQuestion {
   q?: string
   media?: string
   video?: string
-  poster?: string
   alt?: string
   explanation?: string
   answers?: QuizAnswer[]
@@ -31,8 +33,19 @@ export interface QuizData extends BlockToolData {
   difficulty?: string
   feedback?: string
   cta?: string
+  ctaTitle?: string
+  numbering?: string
+  labels?: Record<string, string>
   results?: QuizResultBand[]
   questions?: QuizQuestion[]
+}
+
+const LABEL_DEFAULTS: Record<string, string> = {
+  question: 'Question',
+  questions: 'questions',
+  explanation: 'Explanation',
+  score: 'Your score:',
+  better: 'Better than {p}% of participants',
 }
 
 /**
@@ -43,6 +56,7 @@ export interface QuizData extends BlockToolData {
 export default class Quiz extends BaseTool {
   declare public data: QuizData
   private wrapper!: HTMLElement
+  private mediaPickerMessageHandler: ((event: MessageEvent) => void) | null = null
 
   public static toolbox = {
     title: 'Quiz',
@@ -62,6 +76,9 @@ export default class Quiz extends BaseTool {
       difficulty: data.difficulty || '',
       feedback: data.feedback || 'immediate',
       cta: data.cta || '',
+      ctaTitle: data.ctaTitle || '',
+      numbering: data.numbering || '',
+      labels: data.labels || {},
       results: Array.isArray(data.results) ? data.results : [],
       questions,
     }
@@ -81,8 +98,18 @@ export default class Quiz extends BaseTool {
     make.option(feedback, 'end', 'end')
     feedback.value = this.data.feedback || 'immediate'
     meta.appendChild(feedback)
+    const numbering = make.element('select', ['cdx-quiz__numbering']) as HTMLSelectElement
+    make.option(numbering, '', 'No numbering')
+    make.option(numbering, 'A', 'A, B, C…')
+    make.option(numbering, 'a', 'a, b, c…')
+    make.option(numbering, '1', '1, 2, 3…')
+    numbering.value = this.data.numbering || ''
+    meta.appendChild(numbering)
     meta.appendChild(this.inputEl('cdx-quiz__cta', 'End form (conversation type, optional)', this.data.cta || ''))
     this.wrapper.appendChild(meta)
+    this.wrapper.appendChild(
+      this.inputEl('cdx-quiz__cta-title', 'End form heading (call to action, optional)', this.data.ctaTitle || ''),
+    )
 
     const questions = make.element('div', 'cdx-quiz__questions')
     ;(this.data.questions || []).forEach((q) => questions.appendChild(this.buildQuestion(q)))
@@ -107,6 +134,18 @@ export default class Quiz extends BaseTool {
       }),
     )
 
+    // Author-defined UI words (no i18n). Empty = English default (the placeholder).
+    this.wrapper.appendChild(
+      make.element('div', 'cdx-quiz__subtitle', {}, 'Labels (optional — override the default words)'),
+    )
+    const labels = make.element('div', 'cdx-quiz__labels')
+    Object.keys(LABEL_DEFAULTS).forEach((key) => {
+      const input = this.inputEl('cdx-quiz__label', LABEL_DEFAULTS[key], (this.data.labels || {})[key] || '')
+      input.dataset.label = key
+      labels.appendChild(input)
+    })
+    this.wrapper.appendChild(labels)
+
     return this.wrapper
   }
 
@@ -124,11 +163,13 @@ export default class Quiz extends BaseTool {
 
     el.appendChild(this.textareaEl('cdx-quiz__q-text', 'Question text', q.q || ''))
 
+    el.appendChild(
+      this.buildMediaField('cdx-quiz__q-media', 'Image filename — also the video poster', q.media || ''),
+    )
+
     const row = make.element('div', 'cdx-quiz__row')
-    row.appendChild(this.inputEl('cdx-quiz__q-media', 'Image filename (optional)', q.media || ''))
     row.appendChild(this.inputEl('cdx-quiz__q-video', 'Video URL (optional)', q.video || ''))
-    row.appendChild(this.inputEl('cdx-quiz__q-poster', 'Video poster (optional)', q.poster || ''))
-    row.appendChild(this.inputEl('cdx-quiz__q-alt', 'Media alt text', q.alt || ''))
+    row.appendChild(this.inputEl('cdx-quiz__q-alt', 'Media alt text (required for video)', q.alt || ''))
     el.appendChild(row)
 
     const answers = make.element('div', 'cdx-quiz__answers')
@@ -150,20 +191,22 @@ export default class Quiz extends BaseTool {
   private buildAnswer(a: QuizAnswer): HTMLElement {
     const el = make.element('div', 'cdx-quiz__a')
 
+    const main = make.element('div', 'cdx-quiz__a-main')
     const correct = make.element('input', 'cdx-quiz__a-correct', {
       type: 'checkbox',
-      title: 'Correct answer',
+      title: 'Mark as a correct answer',
     }) as HTMLInputElement
     correct.checked = !!a.correct
-    el.appendChild(correct)
-
-    el.appendChild(this.inputEl('cdx-quiz__a-text', 'Answer', a.a || ''))
-    el.appendChild(this.inputEl('cdx-quiz__a-media', 'Image (optional)', a.media || ''))
-    el.appendChild(
+    main.appendChild(correct)
+    main.appendChild(this.inputEl('cdx-quiz__a-text', 'Answer', a.a || ''))
+    main.appendChild(
       make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove answer' }, '✕', () =>
         el.remove(),
       ),
     )
+    el.appendChild(main)
+
+    el.appendChild(this.buildMediaField('cdx-quiz__a-media', 'Answer image (optional)', a.media || ''))
 
     return el
   }
@@ -202,6 +245,124 @@ export default class Quiz extends BaseTool {
     return textarea
   }
 
+  /**
+   * A filename input paired with media-library "Select" and "Upload" buttons and
+   * a thumbnail preview. The input keeps `cls` so save() still reads it. Reused
+   * for the question image (which doubles as the video poster) and answer images.
+   */
+  private buildMediaField(cls: string, placeholder: string, value: string): HTMLElement {
+    const field = make.element('div', 'cdx-quiz__media')
+
+    const thumb = make.element('img', 'cdx-quiz__media-thumb') as HTMLImageElement
+    const syncThumb = (current: string): void => {
+      if (current) {
+        thumb.src = MediaUtils.buildFullUrl(current)
+        thumb.style.display = 'block'
+      } else {
+        thumb.removeAttribute('src')
+        thumb.style.display = 'none'
+      }
+    }
+
+    const input = this.inputEl(cls, placeholder, value)
+    input.classList.add('cdx-quiz__media-input')
+    input.addEventListener('input', () => syncThumb(input.value.trim()))
+
+    const select = make.element(
+      'button',
+      'cdx-quiz__media-btn',
+      { type: 'button', title: 'Browse the media library' },
+      SelectIcon,
+      () => this.openMediaPicker(input, syncThumb),
+    )
+    const upload = make.element(
+      'button',
+      'cdx-quiz__media-btn',
+      { type: 'button', title: 'Upload a file' },
+      UploadIcon,
+      () => this.uploadMedia(input, syncThumb),
+    )
+
+    field.appendChild(thumb)
+    field.appendChild(input)
+    field.appendChild(select)
+    field.appendChild(upload)
+    syncThumb(value)
+
+    return field
+  }
+
+  /** Open the shared admin media picker modal and write the chosen filename into `input`. */
+  private openMediaPicker(input: HTMLInputElement, onSet: (value: string) => void): void {
+    const picker = document.querySelector('select[id*="inline_image"]') as HTMLSelectElement | null
+    const wrapper = picker ? (picker.closest('.pw-media-picker') as HTMLElement | null) : null
+    const chooseButton = wrapper
+      ? (wrapper.querySelector('[data-pw-media-picker-action="choose"]') as HTMLButtonElement | null)
+      : null
+
+    if (!picker || !chooseButton) {
+      this.api.notifier.show({ message: 'Media picker not available', style: 'error' })
+      return
+    }
+
+    this.cleanupMediaPickerHandler()
+    this.mediaPickerMessageHandler = (event: MessageEvent): void => {
+      if (event.origin !== window.location.origin) return
+      const payload = event.data
+      if (!payload || payload.type !== 'pw-media-picker-select' || payload.fieldId !== picker.id) return
+
+      this.cleanupMediaPickerHandler()
+      const media = payload.media
+      if (!media) return
+
+      const mediaName = media.fileName || String(media.id)
+      input.value = mediaName
+      onSet(mediaName)
+    }
+
+    window.addEventListener('message', this.mediaPickerMessageHandler)
+    chooseButton.click()
+  }
+
+  /** Upload a local file through the shared media endpoint, then write its filename into `input`. */
+  private uploadMedia(input: HTMLInputElement, onSet: (value: string) => void): void {
+    const file = make.element('input', null, { type: 'file', accept: 'image/*' }) as HTMLInputElement
+    file.style.display = 'none'
+    file.addEventListener('change', async () => {
+      const chosen = file.files?.[0]
+      if (chosen) {
+        const formData = new FormData()
+        formData.append('image', chosen)
+        try {
+          const response = await fetch('/admin/media/block', { method: 'POST', body: formData })
+          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          const data = await response.json()
+          const mediaName: string | undefined = data?.file?.media
+          if (mediaName) {
+            input.value = mediaName
+            onSet(mediaName)
+          }
+        } catch {
+          this.api.notifier.show({ message: 'Upload failed', style: 'error' })
+        }
+      }
+      file.remove()
+    })
+    document.body.appendChild(file)
+    file.click()
+  }
+
+  private cleanupMediaPickerHandler(): void {
+    if (this.mediaPickerMessageHandler) {
+      window.removeEventListener('message', this.mediaPickerMessageHandler)
+      this.mediaPickerMessageHandler = null
+    }
+  }
+
+  public destroy(): void {
+    this.cleanupMediaPickerHandler()
+  }
+
   public save(): QuizData {
     const root = this.wrapper
     const val = (selector: string, scope: Element = root): string => {
@@ -220,6 +381,19 @@ export default class Quiz extends BaseTool {
     if (difficulty) data.difficulty = difficulty
     const cta = val('.cdx-quiz__cta')
     if (cta) data.cta = cta
+    const ctaTitle = val('.cdx-quiz__cta-title')
+    if (ctaTitle) data.ctaTitle = ctaTitle
+
+    const numbering = (root.querySelector('.cdx-quiz__numbering') as HTMLSelectElement)?.value || ''
+    if (numbering) data.numbering = numbering
+
+    const labels: Record<string, string> = {}
+    root.querySelectorAll('.cdx-quiz__label').forEach((labelEl) => {
+      const key = (labelEl as HTMLElement).dataset.label || ''
+      const value = (labelEl as HTMLInputElement).value.trim()
+      if (key && value) labels[key] = value
+    })
+    if (Object.keys(labels).length > 0) data.labels = labels
 
     root.querySelectorAll('.cdx-quiz__q').forEach((qEl) => {
       const question: QuizQuestion = { q: val('.cdx-quiz__q-text', qEl), answers: [] }
@@ -227,8 +401,6 @@ export default class Quiz extends BaseTool {
       if (media) question.media = media
       const video = val('.cdx-quiz__q-video', qEl)
       if (video) question.video = video
-      const poster = val('.cdx-quiz__q-poster', qEl)
-      if (poster) question.poster = poster
       const alt = val('.cdx-quiz__q-alt', qEl)
       if (alt) question.alt = alt
       const explanation = val('.cdx-quiz__q-explanation', qEl)
@@ -274,12 +446,14 @@ export default class Quiz extends BaseTool {
     if (data.title) out.title = data.title
     if (data.difficulty) out.difficulty = data.difficulty
     if (data.cta) out.cta = data.cta
+    if (data.ctaTitle) out.ctaTitle = data.ctaTitle
+    if (data.numbering) out.numbering = data.numbering
+    if (data.labels && Object.keys(data.labels).length > 0) out.labels = data.labels
 
     ;(data.questions || []).forEach((q) => {
       const cq: QuizQuestion = { q: q.q || '', answers: [] }
       if (q.media) cq.media = q.media
       if (q.video) cq.video = q.video
-      if (q.poster) cq.poster = q.poster
       if (q.alt) cq.alt = q.alt
       if (q.explanation) cq.explanation = q.explanation
       ;(q.answers || []).forEach((a) => {

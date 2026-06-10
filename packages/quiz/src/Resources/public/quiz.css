@@ -1,9 +1,11 @@
-/* Pushword quiz — self-contained styles. Themeable via the CSS variables below. */
+/* Pushword quiz — self-contained styles. Themeable via the CSS variables below.
+   The accent follows the host theme's --primary token; the purple is only the
+   fallback when a site hasn't defined one. */
 .pw-quiz {
   --pw-quiz-radius: 14px;
   --pw-quiz-card: #ffffff;
   --pw-quiz-border: #e5e7eb;
-  --pw-quiz-accent: #6d28d9;
+  --pw-quiz-accent: var(--primary, #6d28d9);
   --pw-quiz-correct: #16a34a;
   --pw-quiz-correct-bg: #dcfce7;
   --pw-quiz-wrong: #e11d48;
@@ -112,6 +114,19 @@
   cursor: default;
   transition: background 0.15s, border-color 0.15s;
 }
+.pw-quiz-a-prefix {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--pw-quiz-accent) 14%, #fff);
+  color: var(--pw-quiz-accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
 .pw-quiz-a-img {
   width: 38px;
   height: 38px;
@@ -166,7 +181,7 @@
 }
 .pw-quiz--js .pw-quiz-a:not([disabled]):hover {
   border-color: var(--pw-quiz-accent);
-  background: #f5f3ff;
+  background: color-mix(in oklch, var(--pw-quiz-accent) 6%, #fff);
 }
 /* Hide the explanation until its question has been answered. */
 .pw-quiz--js .pw-quiz-q:not(.pw-quiz-q--answered) .pw-quiz-explanation {
@@ -202,15 +217,17 @@
   border-radius: var(--pw-quiz-radius);
 }
 .pw-quiz-donut {
+  display: block;
   width: 130px;
   height: 130px;
+  margin: 0 auto 0.75rem;
 }
 .pw-quiz-donut-bg {
   stroke: var(--pw-quiz-border);
 }
 .pw-quiz-donut-fg {
   stroke: var(--pw-quiz-accent);
-  transition: stroke-dasharray 0.6s ease;
+  transition: stroke-dasharray 0.7s cubic-bezier(0.22, 1, 0.36, 1); /* ease-out-quint */
 }
 .pw-quiz-donut-text {
   font-size: 1.8rem;
@@ -232,5 +249,19 @@
   margin: 0.25rem 0;
 }
 .pw-quiz-cta {
-  margin-top: 1.25rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--pw-quiz-border);
+}
+.pw-quiz-cta-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-quiz-donut-fg,
+  .pw-quiz-a {
+    transition: none;
+  }
 }

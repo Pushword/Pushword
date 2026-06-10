@@ -21,6 +21,8 @@ name: Extensions
   Find dead links, 404, 301, TODO reminders and more (command line or admin).
 - [Page Update Notifier](/extension/page-update-notifier)
   Get mail notification when your pushword content (page) is edited.
+- [Quiz](/extension/quiz)
+  Interactive client-side QCM declared inline with `{{ quiz('…json…') }}`, rendered server-side for SEO, with an anonymous percentile and an optional end-of-quiz conversion form.
 - [Search](/extension/search)
   Optional SQLite-native full-text search (typo tolerance, ranking) via Loupe — zero infra, ships with the static build.
 - [Snippet](/extension/snippet)

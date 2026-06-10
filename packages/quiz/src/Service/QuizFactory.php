@@ -22,11 +22,33 @@ final class QuizFactory
         return new Quiz(
             title: $this->stringOrNull($data['title'] ?? null),
             questions: $this->buildQuestions($data['questions'] ?? null),
-            feedback: \is_string($data['feedback'] ?? null) ? $data['feedback'] : 'immediate',
+            feedback: $this->stringOr($data['feedback'] ?? null, 'immediate'),
             difficulty: $this->stringOrNull($data['difficulty'] ?? null),
             results: $this->buildResults($data['results'] ?? null),
             cta: $this->stringOrNull($data['cta'] ?? null),
+            ctaTitle: $this->stringOrNull($data['ctaTitle'] ?? null),
+            numbering: $this->stringOr($data['numbering'] ?? null, ''),
+            labels: $this->buildLabels($data['labels'] ?? null),
         );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function buildLabels(mixed $raw): array
+    {
+        if (! \is_array($raw)) {
+            return [];
+        }
+
+        $labels = [];
+        foreach ($raw as $key => $value) {
+            if (\is_string($key) && \is_string($value) && '' !== $value) {
+                $labels[$key] = $value;
+            }
+        }
+
+        return $labels;
     }
 
     /**
@@ -49,7 +71,6 @@ final class QuizFactory
                 answers: $this->buildAnswers($question['answers'] ?? null),
                 media: $this->stringOrNull($question['media'] ?? null),
                 video: $this->stringOrNull($question['video'] ?? null),
-                poster: $this->stringOrNull($question['poster'] ?? null),
                 alt: $this->stringOrNull($question['alt'] ?? null),
                 explanation: $this->stringOrNull($question['explanation'] ?? null),
             );
@@ -111,6 +132,11 @@ final class QuizFactory
     private function stringOrNull(mixed $value): ?string
     {
         return \is_string($value) && '' !== $value ? $value : null;
+    }
+
+    private function stringOr(mixed $value, string $default): string
+    {
+        return \is_string($value) ? $value : $default;
     }
 
     private function toString(mixed $value): string

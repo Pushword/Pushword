@@ -47,7 +47,8 @@ Interactive, (almost) server-less quizzes (QCM) for [Pushword](https://pushword.
 }
 ```
 
-A question may carry an image (`media`) **or** a video (`video` + optional
-`poster`); a video requires an `alt` (accessibility). The single source of
-truth for validity is the `Quiz` model + Symfony Validator, shared by the
-renderer, the editor lint and the API endpoint.
+A question may carry an image (`media`) **or** a video (`video`); a video reuses
+the `media` image as its poster, so both `media` and an `alt` (accessibility)
+are required for one. The single source of truth for validity is the `Quiz`
+model + Symfony Validator, shared by the renderer, the editor lint and the API
+endpoint.

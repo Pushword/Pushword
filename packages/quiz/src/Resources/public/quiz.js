@@ -99,11 +99,11 @@
 
   function buildScoreHtml(pct, score, total, config) {
     var band = bandMessage(pct, config.results || [])
-    var labels = config.i18n || {}
+    var labels = config.labels || {}
     return (
       donutSvg(pct) +
       '<p class="pw-quiz-correct">' +
-      (labels.scoreLabel ? escapeHtml(labels.scoreLabel) + ' ' : '') +
+      (labels.score ? escapeHtml(labels.score) + ' ' : '') +
       score +
       '/' +
       total +
@@ -160,8 +160,9 @@
         return r.ok ? r.json() : null
       })
       .then(function (data) {
-        if (!data || 'number' !== typeof data.percentile || !line) return
-        var tpl = (config.i18n && config.i18n.betterThan) || 'Better than {p}% of participants'
+        // Skip "better than 0%": it is meaningless and reads as a put-down.
+        if (!data || 'number' !== typeof data.percentile || data.percentile <= 0 || !line) return
+        var tpl = (config.labels && config.labels.better) || 'Better than {p}% of participants'
         line.textContent = tpl.replace('{p}', data.percentile)
         line.hidden = false
       })
@@ -174,14 +175,19 @@
     var cta = root.querySelector('.pw-quiz-cta')
     if (!cta) return
 
-    var url = cta.getAttribute('data-quiz-cta')
+    // The form replaces this inner holder (js-helper swaps the element's
+    // outerHTML), so the CTA title sitting next to it survives.
+    var holder = cta.querySelector('[data-quiz-cta]')
+    if (!holder) return
+
+    var url = holder.getAttribute('data-quiz-cta')
     if (!url) return
 
     // Carry the score along so the lead can be attributed to this attempt.
     url += (url.indexOf('?') === -1 ? '?' : '&') + 'quizScore=' + pct
 
     // pushword/js-helper loads `[data-live]` blocks and re-scans on DOMChanged.
-    cta.setAttribute('data-live', url)
+    holder.setAttribute('data-live', url)
     document.dispatchEvent(new Event('DOMChanged'))
 
     // Prefill the form from a previously stored identity, and capture it on submit.
@@ -232,7 +238,9 @@
   /* ----- helpers ----- */
 
   function softScroll(el) {
-    if (el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (!el.scrollIntoView) return
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' })
   }
 
   function escapeHtml(s) {

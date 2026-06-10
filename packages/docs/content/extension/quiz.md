@@ -31,16 +31,16 @@ Use the `quiz()` Twig function in a page's content. The argument is a JSON
 ```
 
 You normally never write that JSON by hand — the **EditorJS block** generates it
-(add/remove questions and answers, flag the correct answer, attach an image or a
-video, write the explanation).
+(add/remove questions and answers, flag the correct answer, pick or upload an
+image from the media library, add a video, write the explanation).
 
 ### Question & answer fields
 
 | Field | Where | Notes |
 | --- | --- | --- |
 | `q` | question | The question text. |
-| `media` | question / answer | An image filename (rendered with `image()`). |
-| `video`, `poster` | question | A video URL + poster (rendered with `video()`). |
+| `media` | question / answer | An image filename (rendered with `image()`). On a video question it doubles as the poster and is then **required**. |
+| `video` | question | A video URL (rendered with `video()`), using `media` as its poster. |
 | `alt` | question / answer | Media alternative text. **Required** for a video. |
 | `explanation` | question | Shown once the question is answered. |
 | `a` | answer | The answer text. |
@@ -53,6 +53,13 @@ video, write the explanation).
 - `results` — score bands `{min, msg}`; the highest matched `min` wins.
 - `cta` — a Conversation form type shown at the end (skipped if Conversation is
   not installed).
+- `ctaTitle` — a call-to-action heading shown above that end form (for example
+  *"Receive the next quizzes in your mailbox"*).
+- `numbering` — prefix each answer so people can refer to one out loud: `"A"`
+  (A, B, C…), `"a"` (a, b, c…), `"1"` (1, 2, 3…), or `""` for none (default).
+- `labels` — author-defined UI words (no i18n), overriding the English
+  defaults: `question`, `questions`, `explanation`, `score`, and `better` (use
+  `{p}` as the percentile placeholder). Set these in the quiz's own language.
 
 ## SEO & accessibility
 

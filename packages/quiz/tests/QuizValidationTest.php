@@ -105,6 +105,7 @@ final class QuizValidationTest extends KernelTestCase
                 [
                     'q' => 'Watch then answer',
                     'video' => 'https://youtube.com/watch?v=x',
+                    'media' => 'poster.jpg', // poster present, so only the alt is missing
                     'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']],
                 ],
             ],
@@ -116,5 +117,62 @@ final class QuizValidationTest extends KernelTestCase
         }
 
         self::assertContains('questions[0].alt', $paths);
+    }
+
+    public function testVideoQuestionRequiresPoster(): void
+    {
+        self::bootKernel();
+        // A video uses the `media` image as its poster, so one is mandatory.
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'questions' => [
+                [
+                    'q' => 'Watch then answer',
+                    'video' => 'https://youtube.com/watch?v=x',
+                    'alt' => 'A short clip', // alt present, so only the poster is missing
+                    'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']],
+                ],
+            ],
+        ]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('questions[0].media', $paths);
+    }
+
+    public function testFactoryParsesNumberingAndLabels(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'numbering' => 'A',
+            'cta' => 'newsletter',
+            'ctaTitle' => 'Receive the next quizzes in your mailbox',
+            'labels' => ['explanation' => 'Explication', 'score' => 'Votre score :'],
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]]],
+        ]);
+
+        self::assertSame('A', $quiz->numbering);
+        self::assertSame('newsletter', $quiz->cta);
+        self::assertSame('Receive the next quizzes in your mailbox', $quiz->ctaTitle);
+        self::assertSame('Explication', $quiz->labels['explanation']);
+        self::assertCount(0, self::getContainer()->get(ValidatorInterface::class)->validate($quiz));
+    }
+
+    public function testInvalidNumberingIsRejected(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'numbering' => 'Z',
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]]],
+        ]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('numbering', $paths);
     }
 }

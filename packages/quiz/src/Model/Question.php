@@ -6,8 +6,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * A quiz question. It carries an optional illustration (`media` image OR `video`
- * + `poster`), at least two answers, and an explanation revealed once answered.
+ * A quiz question. It carries an optional illustration: either a `media` image,
+ * or a `video` whose poster is that same `media` image. It has at least two
+ * answers and an explanation revealed once answered.
  */
 class Question
 {
@@ -22,7 +23,6 @@ class Question
         public array $answers = [],
         public ?string $media = null,
         public ?string $video = null,
-        public ?string $poster = null,
         public ?string $alt = null,
         public ?string $explanation = null
     ) {
@@ -38,8 +38,20 @@ class Question
                 ->addViolation();
         }
 
+        if (null === $this->video || '' === $this->video) {
+            return;
+        }
+
+        // The video is rendered with a poster, and that poster is the `media`
+        // image — so an illustrated video must carry one.
+        if (null === $this->media || '' === $this->media) {
+            $context->buildViolation('quiz.question.video.posterRequired')
+                ->atPath('media')
+                ->addViolation();
+        }
+
         // A video has no stored Media to fall back on, so its alt text is mandatory.
-        if (null !== $this->video && '' !== $this->video && (null === $this->alt || '' === $this->alt)) {
+        if (null === $this->alt || '' === $this->alt) {
             $context->buildViolation('quiz.question.video.altRequired')
                 ->atPath('alt')
                 ->addViolation();

@@ -24,6 +24,15 @@ use Twig\Environment as Twig;
  */
 final class QuizExtension
 {
+    /** English fallbacks for the author-defined UI words (see Quiz::$labels). */
+    private const array DEFAULT_LABELS = [
+        'question' => 'Question',
+        'questions' => 'questions',
+        'explanation' => 'Explanation',
+        'score' => 'Your score:',
+        'better' => 'Better than {p}% of participants',
+    ];
+
     private int $instances = 0;
 
     public function __construct(
@@ -68,19 +77,21 @@ final class QuizExtension
             $quiz->results,
         );
 
+        // UI words live in the quiz JSON (author-defined, no i18n); fall back to
+        // English defaults so a quiz that sets none still reads correctly.
+        $labels = [...self::DEFAULT_LABELS, ...$quiz->labels];
+
         $template = $this->apps->get()->getView('/component/quiz.html.twig', '@PushwordQuiz');
 
         return $this->twig->render($template, [
             'quiz' => $quiz,
             'page' => $this->apps->getCurrentPage(),
             'id' => 'pw-quiz-'.(++$this->instances),
+            'labels' => $labels,
             'config' => [
                 'feedback' => $quiz->feedback,
                 'results' => $results,
-                'i18n' => [
-                    'betterThan' => $this->translator->trans('quiz.betterThan'),
-                    'scoreLabel' => $this->translator->trans('quiz.scoreLabel'),
-                ],
+                'labels' => ['score' => $labels['score'], 'better' => $labels['better']],
             ],
             'conversationAvailable' => class_exists(AppExtension::class),
         ]);

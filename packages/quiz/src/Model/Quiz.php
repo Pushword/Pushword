@@ -13,8 +13,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Quiz
 {
     /**
-     * @param Question[]   $questions
-     * @param ResultBand[] $results
+     * @param Question[]            $questions
+     * @param ResultBand[]          $results
+     * @param array<string, string> $labels    author-defined UI words (no i18n): question, questions, explanation, score, better
      */
     public function __construct(
         public ?string $title = null,
@@ -26,7 +27,11 @@ class Quiz
         public ?string $difficulty = null,
         #[Assert\Valid]
         public array $results = [],
-        public ?string $cta = null
+        public ?string $cta = null,
+        public ?string $ctaTitle = null,
+        #[Assert\Choice(choices: ['', 'A', 'a', '1'], message: 'quiz.numbering.invalid')]
+        public string $numbering = '',
+        public array $labels = [],
     ) {
     }
 }

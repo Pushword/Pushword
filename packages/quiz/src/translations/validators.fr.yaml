@@ -10,6 +10,7 @@ quiz:
       min: 'Une question doit avoir au moins une bonne réponse.'
     video:
       altRequired: 'Une question vidéo nécessite un texte alternatif (accessibilité).'
+      posterRequired: 'Une question vidéo nécessite un nom de fichier image, utilisé comme poster.'
   answer:
     text:
       empty: 'Une réponse ne peut pas être vide.'
@@ -20,3 +21,5 @@ quiz:
       empty: 'Une tranche de score doit avoir un message.'
   feedback:
     invalid: 'Le retour doit être « immediate » ou « end ».'
+  numbering:
+    invalid: 'La numérotation doit être vide, « A », « a » ou « 1 ».'

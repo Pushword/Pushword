@@ -10,6 +10,7 @@ quiz:
       min: 'A question needs at least one correct answer.'
     video:
       altRequired: 'A video question requires an alternative text (accessibility).'
+      posterRequired: 'A video question requires an image filename, used as its poster.'
   answer:
     text:
       empty: 'An answer cannot be empty.'
@@ -20,3 +21,5 @@ quiz:
       empty: 'A score band needs a message.'
   feedback:
     invalid: 'Feedback must be "immediate" or "end".'
+  numbering:
+    invalid: 'Numbering must be empty, "A", "a" or "1".'

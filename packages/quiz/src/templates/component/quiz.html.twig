@@ -5,6 +5,11 @@
 #}
 {% set slug = page.slug|default('') %}
 {% set total = quiz.questions|length %}
+{% set prefixes = {
+  'A': 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z'|split(' '),
+  'a': 'a b c d e f g h i j k l m n o p q r s t u v w x y z'|split(' '),
+  '1': 1..30,
+}[quiz.numbering] ?? [] %}
 
 <link rel="stylesheet" href="{{ asset('bundles/pushwordquiz/quiz.css') }}">
 
@@ -13,7 +18,7 @@
     <header class="pw-quiz-head">
       {% if quiz.title %}<h2 class="pw-quiz-title">{{ quiz.title }}</h2>{% endif %}
       <p class="pw-quiz-meta">
-        <span>{{ total }} {{ 'quiz.questions'|trans }}</span>
+        <span>{{ total }} {{ labels.questions }}</span>
         {% if quiz.difficulty %}<span class="pw-quiz-diff">{{ quiz.difficulty }}</span>{% endif %}
       </p>
     </header>
@@ -22,10 +27,10 @@
   <ol class="pw-quiz-questions">
     {% for q in quiz.questions %}
       <li class="pw-quiz-q" data-q="{{ loop.index0 }}">
-        <span class="pw-quiz-q-num" aria-hidden="true">{{ 'quiz.question'|trans }} {{ loop.index }}/{{ total }}</span>
+        <span class="pw-quiz-q-num" aria-hidden="true">{{ labels.question }} {{ loop.index }}/{{ total }}</span>
 
         {% if q.video %}
-          <div class="pw-quiz-media">{{ video(q.video, q.poster|default(''), q.alt|default('')) }}</div>
+          <div class="pw-quiz-media">{{ video(q.video, q.media|default(''), q.alt|default('')) }}</div>
         {% elseif q.media %}
           <div class="pw-quiz-media">{{ image(q.media, alt: q.alt|default(''), mode: 'responsive', lazy: true, class: 'pw-quiz-media-img') }}</div>
         {% endif %}
@@ -36,6 +41,7 @@
           {% for a in q.answers %}
             <li>
               <button type="button" class="pw-quiz-a"{{ a.correct ? ' data-correct' : '' }} aria-pressed="false">
+                {% if prefixes[loop.index0] is defined %}<span class="pw-quiz-a-prefix" aria-hidden="true">{{ prefixes[loop.index0] }}</span>{% endif %}
                 {% if a.media %}{{ image(a.media, alt: a.alt|default(''), lazy: true, class: 'pw-quiz-a-img') }}{% endif %}
                 <span class="pw-quiz-a-text">{{ a.text }}</span>
                 <span class="pw-quiz-a-mark" aria-hidden="true"></span>
@@ -45,7 +51,7 @@
         </ul>
 
         {% if q.explanation %}
-          <p class="pw-quiz-explanation"><span class="pw-quiz-explanation-label">{{ 'quiz.explanation'|trans }}</span> {{ q.explanation }}</p>
+          <p class="pw-quiz-explanation"><span class="pw-quiz-explanation-label">{{ labels.explanation }}</span> {{ q.explanation }}</p>
         {% endif %}
       </li>
     {% endfor %}
@@ -54,7 +60,10 @@
   <div class="pw-quiz-result" hidden>
     <div class="pw-quiz-score" aria-live="polite"></div>
     {% if quiz.cta and conversationAvailable %}
-      <div class="pw-quiz-cta" data-quiz-cta="{{ conversation(quiz.cta, 'quiz-' ~ slug) }}"></div>
+      <div class="pw-quiz-cta">
+        {% if quiz.ctaTitle %}<p class="pw-quiz-cta-title">{{ quiz.ctaTitle }}</p>{% endif %}
+        <div class="pw-quiz-cta-form" data-quiz-cta="{{ conversation(quiz.cta, 'quiz-' ~ slug) }}"></div>
+      </div>
     {% endif %}
   </div>
 
