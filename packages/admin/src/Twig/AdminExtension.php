@@ -7,9 +7,10 @@ use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 
 use function Safe\json_encode;
 
+use Symfony\Contracts\Service\ResetInterface;
 use Twig\Attribute\AsTwigFunction;
 
-class AdminExtension
+class AdminExtension implements ResetInterface
 {
     /** @var array<string, string> */
     private array $cache = [];
@@ -17,6 +18,16 @@ class AdminExtension
     public function __construct(
         private readonly PageRepository $pageRepository,
     ) {
+    }
+
+    /**
+     * Worker-mode safety (kernel.reset): drop the per-host tag cache so a tag
+     * added/removed in one request is not served stale to the next request
+     * handled by the same long-lived worker process.
+     */
+    public function reset(): void
+    {
+        $this->cache = [];
     }
 
     #[AsTwigFunction('pw_all_tags_json')]

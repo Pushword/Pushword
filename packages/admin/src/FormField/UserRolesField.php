@@ -32,7 +32,7 @@ class UserRolesField extends AbstractField
             'adminUserRoleUser' => 'ROLE_USER',
         ];
 
-        if (\in_array('ROLE_SUPER_ADMIN', $this->formFieldManager->user?->getRoles() ?? [], true)) {
+        if (\in_array('ROLE_SUPER_ADMIN', $this->formFieldManager->getUser()?->getRoles() ?? [], true)) {
             return ['adminUserRoleSuperAdmin' => 'ROLE_SUPER_ADMIN'] + $choices;
         }
 

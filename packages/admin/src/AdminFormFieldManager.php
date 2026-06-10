@@ -20,24 +20,33 @@ use Twig\Environment;
 
 class AdminFormFieldManager
 {
-    public ?User $user;
-
     public function __construct(
         public readonly SiteRegistry $apps,
         public readonly EntityManagerInterface $em,
         public readonly RouterInterface $router,
         public readonly Environment $twig,
         public readonly ImageCacheManager $imageCacheManager,
-        // TokenStorageInterface $securityTokenStorage,
-        Security $security,
+        private readonly Security $security,
         public readonly EventDispatcherInterface $eventDispatcher,
         public readonly RequestStack $requestStack,
         public readonly PageRepository $pageRepo,
         public readonly MediaRepository $mediaRepo,
         public readonly AdminUrlGenerator $adminUrlGenerator,
     ) {
-        $user = $security->getUser();
-        $this->user = $user instanceof User ? $user : null;
+    }
+
+    /**
+     * Resolve the current user lazily. This service is shared, so capturing the
+     * user at construction would freeze it on the first request's identity for
+     * the whole life of a worker process — leaking it (and its roles) into every
+     * later admin request. Reading from Security on each call stays correct per
+     * request without needing kernel.reset.
+     */
+    public function getUser(): ?User
+    {
+        $user = $this->security->getUser();
+
+        return $user instanceof User ? $user : null;
     }
 
     public function getEntityManager(): EntityManagerInterface

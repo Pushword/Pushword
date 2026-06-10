@@ -68,6 +68,23 @@ during slug changes). They are process-global and not reset between requests. No
 public `GET` traffic leaves them empty, but if you extend the admin/save path in a
 worker deployment, make sure they are cleared per request.
 
+### Admin
+
+The public front is the proven-safe path. The EasyAdmin back office reuses the
+same kernel under a worker, and its services were audited for cross-request state:
+
+- `AdminFormFieldManager` resolves the current user lazily from `Security` on each
+  call (it does not capture it at construction), so the authenticated identity —
+  and the `ROLE_SUPER_ADMIN` gate in `UserRolesField` — is always the current
+  request's user.
+- `AdminExtension` implements `ResetInterface`; its per-host tag cache is cleared
+  at the worker boundary so a newly created tag is never hidden by a stale cache.
+
+These are guarded by `packages/admin/tests/Worker/AdminWorkerStateResetTest`. As
+with the front, audit any custom admin service that captures the request, the user,
+or the host at construction, or caches per-request data in a property — make it
+lazy or `ResetInterface`.
+
 ## Running benchmarks
 
 The benchmark suite is opt-in (excluded from CI via the `benchmark` group):
