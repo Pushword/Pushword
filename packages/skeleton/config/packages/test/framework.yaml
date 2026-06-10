@@ -1,6 +1,15 @@
 framework:
     test: true
     lock: "%env(LOCK_DSN)%"
+    cache:
+        # Per-worker cache pools (cache.app persists the MediaRepository
+        # filename index across requests). The default directory sits in the
+        # shared container-cache dir, where an index persisted by one paratest
+        # worker — or a previous run — against its own database poisons lookups
+        # in another. SQLite masks it (every worker copies the same pristine DB,
+        # so ids always match); MariaDB rebuilds fixtures per worker and 500s
+        # on the stale index.
+        directory: "%env(PUSHWORD_TEST_VAR_DIR)%/pools"
     mailer:
         dsn: "null://null"
     session:

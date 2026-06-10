@@ -216,7 +216,7 @@ else
     if [ -z "$FILTER_ARG" ] && [ $NO_PARALLEL -eq 0 ]; then
         step "Running PHPUnit (parallel)"
         PHPUNIT_START=$(date +%s)
-        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=auto --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" --exclude-group=serial || PHPUNIT_EXIT=$?
+        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=auto --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --log-junit="$JUNIT_XML" --exclude-group=serial --exclude-group=worker || PHPUNIT_EXIT=$?
         record_step "PHPUnit (parallel)" $(( $(date +%s) - PHPUNIT_START ))
 
         # Serial group: tests needing exclusive access to the shared public/media
@@ -225,6 +225,13 @@ else
         SERIAL_START=$(date +%s)
         XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=1 --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --group=serial || PHPUNIT_EXIT=$?
         record_step "PHPUnit (serial)" $(( $(date +%s) - SERIAL_START ))
+
+        # Worker group: shares a cache.app version counter that parallel workers
+        # would race; run alone (mirrors the dedicated CI step).
+        step "Running PHPUnit (worker group)"
+        WORKER_START=$(date +%s)
+        XDEBUG_MODE=off php -dxdebug.mode=off vendor/bin/paratest --processes=1 --no-progress --colors=always --cache-directory=.phpunit.cache-${TEST_RUN_ID} --group=worker || PHPUNIT_EXIT=$?
+        record_step "PHPUnit (worker)" $(( $(date +%s) - WORKER_START ))
     else
         step "Running PHPUnit"
         PHPUNIT_START=$(date +%s)

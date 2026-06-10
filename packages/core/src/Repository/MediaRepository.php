@@ -89,6 +89,15 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
             $this->fileNameIndexLight = $this->buildFileNameIndex();
             $this->warmedLight = true;
 
+            // Never persist an empty index: a warmup against a media table that
+            // is empty only transiently (mid-fixtures, mid-import — e.g. the
+            // static generator rendering synchronously from a postPersist while
+            // media rows are not flushed yet) would poison every later consumer
+            // at this version with a hit that misses all media.
+            if ([] === $this->fileNameIndexLight) {
+                return;
+            }
+
             $indexItem->set($this->fileNameIndexLight);
             $indexItem->expiresAfter(self::INDEX_CACHE_TTL);
             $cache->save($indexItem);

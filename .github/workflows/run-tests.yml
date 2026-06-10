@@ -198,10 +198,18 @@ jobs:
         run: cd packages/skeleton && php bin/console pw:image:cache
 
       - name: Execute tests
-        # Serial group runs after the parallel batch — see the SQLite job above.
+        # Serial and worker groups run after the parallel batch — see the SQLite job above.
         run: |
-          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial
+          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker
           vendor/bin/paratest --processes=1 --group=serial
+        env:
+          TEST_RUN_ID: ci-mariadb-${{ github.run_id }}
+          PUSHWORD_TEST_MYSQL_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
+
+      - name: Worker-mode safety guard
+        # Same guard as the SQLite job: worker tests share a cache.app version
+        # counter that parallel workers would race, so they run alone.
+        run: vendor/bin/paratest --processes=1 --group=worker
         env:
           TEST_RUN_ID: ci-mariadb-${{ github.run_id }}
           PUSHWORD_TEST_MYSQL_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
