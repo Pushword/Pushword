@@ -31,7 +31,7 @@
     "symfony/filesystem": "^7.3 || ^8.0",
     "phpstan/extension-installer": "*",
     "phpstan/phpstan": "*",
-    "phpstan/phpstan-doctrine": "*",
+    "phpstan/phpstan-doctrine": "* !=2.0.26",
     "phpstan/phpstan-phpunit": "*",
     "phpstan/phpstan-strict-rules": "*",
     "phpstan/phpstan-symfony": "*",
