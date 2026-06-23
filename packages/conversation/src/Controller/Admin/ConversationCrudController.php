@@ -6,6 +6,7 @@ use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
@@ -55,6 +56,92 @@ class ConversationCrudController extends AbstractAdminCrudController
     public function configureActions(Actions $actions): Actions
     {
         return $actions->add(Crud::PAGE_EDIT, Action::DELETE);
+    }
+
+    #[Override]
+    public function configureAssets(Assets $assets): Assets
+    {
+        $labels = json_encode([
+            'on' => $this->translator->trans('adminConversationPublishedToggleOnLabel'),
+            'off' => $this->translator->trans('adminConversationPublishedToggleOffLabel'),
+        ], \JSON_THROW_ON_ERROR);
+
+        $script = str_replace('__PW_PUBLISH_LABELS__', $labels, <<<'HTML'
+            <script>
+            (function () {
+                function init() {
+                    var input = document.querySelector('form input[name$="[publishedAt]"]');
+                    if (null === input || input.dataset.pwPublishToggle) {
+                        return;
+                    }
+                    input.dataset.pwPublishToggle = '1';
+
+                    var labels = __PW_PUBLISH_LABELS__;
+
+                    function nowLocal() {
+                        var now = new Date();
+                        now.setSeconds(0, 0);
+                        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                        return now.toISOString().slice(0, 16);
+                    }
+
+                    var lastValue = '' !== input.value ? input.value : nowLocal();
+
+                    var wrap = document.createElement('div');
+                    wrap.className = 'form-check form-switch mb-2';
+
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'form-check-input';
+                    checkbox.id = 'pw-publish-switch';
+                    checkbox.checked = '' !== input.value;
+
+                    var label = document.createElement('label');
+                    label.className = 'form-check-label';
+                    label.htmlFor = 'pw-publish-switch';
+
+                    function syncLabel() {
+                        label.textContent = checkbox.checked ? labels.on : labels.off;
+                    }
+
+                    checkbox.addEventListener('change', function () {
+                        if (checkbox.checked) {
+                            if ('' === input.value) {
+                                input.value = lastValue;
+                            }
+                        } else {
+                            if ('' !== input.value) {
+                                lastValue = input.value;
+                            }
+                            input.value = '';
+                        }
+                        syncLabel();
+                    });
+
+                    input.addEventListener('change', function () {
+                        if ('' !== input.value) {
+                            lastValue = input.value;
+                        }
+                        checkbox.checked = '' !== input.value;
+                        syncLabel();
+                    });
+
+                    syncLabel();
+                    wrap.appendChild(checkbox);
+                    wrap.appendChild(label);
+                    input.parentNode.insertBefore(wrap, input);
+                }
+
+                if ('loading' !== document.readyState) {
+                    init();
+                } else {
+                    document.addEventListener('DOMContentLoaded', init);
+                }
+            })();
+            </script>
+            HTML);
+
+        return $assets->addHtmlContentToBody($script);
     }
 
     #[Override]
