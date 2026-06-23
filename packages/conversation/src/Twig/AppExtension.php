@@ -98,6 +98,7 @@ class AppExtension
             'reviews' => $reviews,
             'page' => $this->apps->getCurrentPage(),
             'defaultReplyAuthor' => $this->app->getStr('conversation_review_default_reply_author'),
+            'siteName' => $this->app->getName(),
         ]);
     }
 

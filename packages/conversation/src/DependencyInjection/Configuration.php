@@ -78,7 +78,7 @@ class Configuration implements ConfigurationInterface
                     ->booleanNode('review_enabled')->defaultTrue()->end()
                     ->scalarNode('conversation_review_default_reply_author')
                         ->defaultNull()
-                        ->info('Default name shown in the reply footer when a review has no specific reply author (e.g. "Etienne (Pushword)")')
+                        ->info('Default name shown in the reply footer when a review has no specific reply author. The %siteName% placeholder is replaced with the current site name (e.g. "The %siteName% team").')
                     ->end()
                     ->scalarNode('translation_deepl_api_key')
                         ->defaultNull()

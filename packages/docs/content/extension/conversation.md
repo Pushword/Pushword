@@ -140,10 +140,18 @@ pushword:
       conversation_review_default_reply_author: "Lorène (Grand Angle)"
 ```
 
-When a review is saved from the admin (form or inline reply) with an empty author, the
-configured default is written onto the review. The footer also falls back to it at render time,
-so existing reviews and imports display it too. With no author and no default configured, the
-footer shows a generic "Reply from the team".
+The `%siteName%` placeholder is replaced at render time with the current site name (the host's
+`name`), so a single global default works across hosts:
+
+```yaml
+conversation:
+  conversation_review_default_reply_author: "The %siteName% team"
+```
+
+It also works in a review's own *Reply author* field. When a review is saved from the admin
+(form or inline reply) with an empty author, the configured default is written onto the review.
+The footer also falls back to it at render time, so existing reviews and imports display it too.
+With no author and no default configured, the footer shows a generic "Reply from the team".
 
 ## Review Translation
 
