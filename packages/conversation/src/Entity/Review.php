@@ -60,6 +60,52 @@ class Review extends Message
     }
 
     /**
+     * Owner reply to this review.
+     */
+    public function getReply(): string
+    {
+        $reply = $this->getCustomProperty('reply');
+
+        return \is_string($reply) ? $reply : '';
+    }
+
+    public function setReply(?string $reply): self
+    {
+        if (null === $reply || '' === trim($reply)) {
+            $this->removeCustomProperty('reply');
+
+            return $this;
+        }
+
+        $this->setCustomProperty('reply', $reply);
+
+        return $this;
+    }
+
+    /**
+     * Name of the author who wrote the reply (shown in the reply footer).
+     */
+    public function getReplyAuthor(): string
+    {
+        $replyAuthor = $this->getCustomProperty('replyAuthor');
+
+        return \is_string($replyAuthor) ? $replyAuthor : '';
+    }
+
+    public function setReplyAuthor(?string $replyAuthor): self
+    {
+        if (null === $replyAuthor || '' === trim($replyAuthor)) {
+            $this->removeCustomProperty('replyAuthor');
+
+            return $this;
+        }
+
+        $this->setCustomProperty('replyAuthor', $replyAuthor);
+
+        return $this;
+    }
+
+    /**
      * Get all translations as array.
      *
      * @return array<string, array{title?: string, content?: string}>

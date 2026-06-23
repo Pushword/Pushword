@@ -12,6 +12,24 @@ Run `composer update` and the job is done (almost).
 
 If you are doing a major upgrade, find the upgrade guide down there.
 
+## To 1.0.0-rc673
+
+### Review replies (owner answers shown under each review)
+
+Reviews can now carry a public **reply** and the **name of who replied**. Both are
+stored as custom properties on the review (no schema change) — edit them inline in the
+review list or from the full edit form at `/admin/review`. On the front, the reply
+renders below the review with a `— Reply from {author}` footer.
+
+- **New config** (optional, app-fallback property): `conversation_review_default_reply_author`
+  sets the name used in the footer when a review has no explicit reply author. With
+  neither set, the footer falls back to a generic "Reply from the team".
+- **No migration**: `composer update` then `php bin/console cache:clear`. Nothing to run
+  against the database (replies live in the review's `customProperties`).
+- **If you override `review.html.twig` or `reviewTruncated.html.twig`**: copy the new
+  `{% block reviewReply %}` from the shipped templates into your override, otherwise
+  published replies stay invisible to visitors.
+
 ## To 1.0.0-rc650
 
 ### Version: activity journal (who changed what, when)

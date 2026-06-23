@@ -3,16 +3,27 @@
 namespace Pushword\Conversation\Tests\DependencyInjection;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Conversation\DependencyInjection\Configuration;
 use Pushword\Conversation\DependencyInjection\PushwordConversationExtension;
 use Pushword\Conversation\PushwordConversationBundle;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Config\Definition\Processor;
 use Twig\Environment as Twig;
 use Twig\Loader\FilesystemLoader;
 
 #[Group('integration')]
 final class ConfigurationTest extends KernelTestCase
 {
+    public function testReviewDefaultReplyAuthorDefaultsToNullAndIsOverridablePerHost(): void
+    {
+        $config = new Processor()->processConfiguration(new Configuration(), []);
+
+        self::assertNull($config['conversation_review_default_reply_author']);
+        self::assertIsArray($config['app_fallback_properties']);
+        self::assertContains('conversation_review_default_reply_author', $config['app_fallback_properties']);
+    }
+
     public function testConf(): void
     {
         self::bootKernel();

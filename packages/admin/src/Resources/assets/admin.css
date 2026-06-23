@@ -79,6 +79,69 @@
   }
 }
 
+/* Inline gallery of media linked to a review/message, shown on the list view.
+   Each thumbnail carries a calm remove badge that turns destructive on intent. */
+.pw-message-media {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+.pw-message-media__item {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+.pw-message-media__thumb,
+.pw-message-media__file {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(15, 23, 42, 0.08); /* slate-900 @ 8% */
+  object-fit: cover;
+  transition: box-shadow 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pw-message-media__file {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8; /* slate-400 */
+  background: #f8fafc; /* slate-50 */
+}
+.pw-message-media__item:hover .pw-message-media__thumb,
+.pw-message-media__item:hover .pw-message-media__file {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+}
+.pw-message-media__remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 9px;
+  line-height: 1;
+  background: rgba(15, 23, 42, 0.62); /* slate-900 scrim, calm at rest */
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
+  cursor: pointer;
+  transform: translate(35%, -35%);
+  transition:
+    background 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pw-message-media__remove:hover,
+.pw-message-media__remove:focus-visible {
+  background: #ef4444; /* red-500, destructive on intent */
+  transform: translate(35%, -35%) scale(1.12);
+}
+
 .textSuggester {
   max-height: 120px;
   overflow-y: auto;

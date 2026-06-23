@@ -24,10 +24,16 @@ adminLabelSeeAll: 'See all'
 adminReviewEdit: 'Edit review'
 adminReviewLocaleHelp: 'Original language of this review'
 adminReviewLocaleLabel: Locale
+adminReviewMediaUnlink: 'Remove this media'
 adminReviewMediasHelp: 'Attach one or several images illustrating the review'
 adminReviewMediasLabel: Media
 adminReviewRatingHelp: 'Select a score between 1 (poor) and 5 (excellent)'
 adminReviewRatingLabel: Rating
+adminReviewReplyAuthorHelp: 'Name shown in the reply footer (defaults to the team)'
+adminReviewReplyAuthorLabel: 'Reply author'
+adminReviewReplyHelp: 'Public reply published below the review'
+adminReviewReplyLabel: Reply
+adminReviewReplyPlaceholder: 'Reply to this review…'
 adminReviewTitleHelp: 'Short headline describing the review'
 adminReviewTitleLabel: Title
 adminReviewTranslationsHelp: 'AI-generated translations'
@@ -46,6 +52,8 @@ conversationReviewAnonymous: Anonymous
 conversationReviewCommentSentBy: 'Comment sent by'
 conversationReviewIn: 'in'
 conversationReviewOn: 'on'
+conversationReviewReplyFrom: 'Reply from %name%'
+conversationReviewReplyFromTeam: 'Reply from the team'
 conversationReviewEmpty: 'No reviews have been published yet.'
 conversationReviewSeeLess: 'See less'
 conversationReviewSeeMore: 'See more'

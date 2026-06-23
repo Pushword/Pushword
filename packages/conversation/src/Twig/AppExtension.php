@@ -97,6 +97,7 @@ class AppExtension
         return $twig->render($view, [
             'reviews' => $reviews,
             'page' => $this->apps->getCurrentPage(),
+            'defaultReplyAuthor' => $this->app->getStr('conversation_review_default_reply_author'),
         ]);
     }
 

@@ -72,6 +72,21 @@
       gallery_container_class: 'overflow-x-hidden md:overflow-x-auto w-full mt-4'
     } %}
   {% endif %}
+  {% block reviewReply %}
+    {% if review.reply %}
+      {% set replyAuthor = review.replyAuthor ?: defaultReplyAuthor|default('') %}
+      <div class="{{ reviewReplyClass|default('mt-4 ml-4 pl-4 border-l-2 border-gray-200 not-italic text-base') }}">
+        <div class="prose">{{ review.reply|markdown|raw }}</div>
+        <footer class="text-sm text-gray-500 mt-2">
+          {% if replyAuthor %}
+            — {{ 'conversationReviewReplyFrom'|trans({'%name%': replyAuthor}) }}
+          {% else %}
+            — {{ 'conversationReviewReplyFromTeam'|trans }}
+          {% endif %}
+        </footer>
+      </div>
+    {% endif %}
+  {% endblock %}
 </blockquote>
 {% endblock %}
 

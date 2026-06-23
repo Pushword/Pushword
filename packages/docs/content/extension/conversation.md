@@ -121,6 +121,30 @@ php bin/console pw:message:flat [host] [-f sync]
 php bin/console pw:message:import path/to/conversation.csv [--host=example.com]
 ```
 
+## Review replies
+
+Each review can carry a public **reply** and the **name of who replied**, both stored as
+custom properties on the review. Edit them from `/admin/review`: the reply text is editable
+inline directly in the list, and the full edit form exposes both the *Reply* and *Reply author*
+fields. On the front, the reply renders below the review followed by a footer:
+`— Reply from {author}`.
+
+When a review has no specific reply author, the footer falls back to a site-wide default name.
+Configure it per host (it is an app-fallback property, so a global default under `conversation:`
+applies to every host unless overridden):
+
+```yaml
+pushword:
+  apps:
+    - hosts: ["example.com"]
+      conversation_review_default_reply_author: "Lorène (Grand Angle)"
+```
+
+When a review is saved from the admin (form or inline reply) with an empty author, the
+configured default is written onto the review. The footer also falls back to it at render time,
+so existing reviews and imports display it too. With no author and no default configured, the
+footer shows a generic "Reply from the team".
+
 ## Review Translation
 
 Automatically translate reviews to multiple languages using DeepL or Google Cloud Translation APIs.

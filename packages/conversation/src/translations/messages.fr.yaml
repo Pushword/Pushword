@@ -24,10 +24,16 @@ adminLabelSeeAll: 'Voir tout'
 adminReviewEdit: "Éditer l'avis"
 adminReviewLocaleHelp: "Langue originale de cet avis"
 adminReviewLocaleLabel: Langue
+adminReviewMediaUnlink: "Retirer ce média"
 adminReviewMediasHelp: "Ajoutez une ou plusieurs images illustrant l'avis"
 adminReviewMediasLabel: Médias
 adminReviewRatingHelp: "Choisissez une note de 1 (décevant) à 5 (excellent)"
 adminReviewRatingLabel: Note
+adminReviewReplyAuthorHelp: "Nom affiché dans le pied de la réponse (par défaut : l'équipe)"
+adminReviewReplyAuthorLabel: "Auteur de la réponse"
+adminReviewReplyHelp: "Réponse publique affichée sous l'avis"
+adminReviewReplyLabel: Réponse
+adminReviewReplyPlaceholder: "Répondre à cet avis…"
 adminReviewTitleHelp: "Courte accroche décrivant l'avis"
 adminReviewTitleLabel: Titre
 adminReviewTranslationsHelp: "Traductions générées par IA"
@@ -46,6 +52,8 @@ conversationReviewAnonymous: Anonyme
 conversationReviewCommentSentBy: "Commentaire envoyé par"
 conversationReviewIn: "en"
 conversationReviewOn: "sur"
+conversationReviewReplyFrom: "Réponse de %name%"
+conversationReviewReplyFromTeam: "Réponse de l'équipe"
 conversationReviewEmpty: "Aucun avis n'a encore été publié."
 conversationReviewSeeLess: "Voir moins"
 conversationReviewSeeMore: "Voir plus"

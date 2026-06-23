@@ -1,0 +1,29 @@
+{# @var message \Pushword\Conversation\Entity\Message #}
+{% set galleryTarget = 'pw-message-media-' ~ message.id %}
+{% set unlinkToken = csrf_token('conversation_media_unlink_' ~ message.id) %}
+
+<div id="{{ galleryTarget }}" class="pw-message-media">
+  {% for media in message.mediaList %}
+    <div class="pw-message-media__item">
+      {% if media.image %}
+        <img class="pw-message-media__thumb" src="{{ imageUrl(media, 'md') }}" alt="{{ media.alt }}" loading="lazy">
+      {% else %}
+        <span class="pw-message-media__file" title="{{ media.fileName }}">
+          <i class="fa fa-file" aria-hidden="true"></i>
+        </span>
+      {% endif %}
+      <button
+        type="button"
+        class="pw-message-media__remove"
+        aria-label="{{ 'adminReviewMediaUnlink'|trans }}"
+        title="{{ 'adminReviewMediaUnlink'|trans }}"
+        hx-post="{{ url('pushword_conversation_media_unlink', {id: message.id, mediaId: media.id}) }}"
+        hx-target="#{{ galleryTarget }}"
+        hx-swap="outerHTML"
+        hx-vals='js:{_token: "{{ unlinkToken|e('js') }}"}'
+      >
+        <i class="fa fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+  {% endfor %}
+</div>

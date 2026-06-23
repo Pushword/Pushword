@@ -258,7 +258,7 @@ class AppFixtures extends Fixture
             $manager->persist($message);
 
             // Create reviews from YAML file
-            /** @var array<array{title: string, content: string, authorName: string, authorEmail: string, rating: int, publishedAt: string}>[] $reviewsData */
+            /** @var array<array{title: string, content: string, authorName: string, authorEmail: string, rating: int, publishedAt: string, reply?: string, replyAuthor?: string, media?: list<string>}>[] $reviewsData */
             $reviewsData = Yaml::parseFile(__DIR__.'/reviews.yaml');
 
             foreach ($reviewsData['reviews'] as $reviewData) {
@@ -268,9 +268,17 @@ class AppFixtures extends Fixture
                 $review->setAuthorName($reviewData['authorName']);
                 $review->setAuthorEmail($reviewData['authorEmail']);
                 $review->setRating($reviewData['rating']);
+                $review->setReply($reviewData['reply'] ?? null);
+                $review->setReplyAuthor($reviewData['replyAuthor'] ?? null);
                 $review->host = 'localhost.dev';
                 $review->setPublishedAt(new DateTime($reviewData['publishedAt']));
                 $review->setTags('kitchen-sink');
+
+                foreach ($reviewData['media'] ?? [] as $mediaName) {
+                    if (isset($media[$mediaName])) {
+                        $review->addMedia($media[$mediaName]);
+                    }
+                }
 
                 $manager->persist($review);
             }

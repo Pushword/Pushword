@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 use function is_numeric;
@@ -48,7 +49,7 @@ final class ReviewCrudController extends ConversationCrudController
             return $this->getIndexFields();
         }
 
-        $this->registerRatingCustomProperty();
+        $this->registerManagedCustomProperties();
 
         return $this->getFormFieldsDefinition();
     }
@@ -77,9 +78,26 @@ final class ReviewCrudController extends ConversationCrudController
         $fields[] = $this->getRatingFormField();
         $fields[] = $this->getLocaleField();
         $fields = array_merge($fields, parent::getMainFields());
+        $fields[] = $this->getReplyField();
+        $fields[] = $this->getReplyAuthorField();
         $fields[] = $this->getMediaPickerField();
 
         return $fields;
+    }
+
+    private function getReplyField(): TextareaField
+    {
+        return TextareaField::new('reply', 'adminReviewReplyLabel')
+            ->setHelp('adminReviewReplyHelp')
+            ->setFormTypeOption('required', false)
+            ->setFormTypeOption('attr', ['rows' => 4]);
+    }
+
+    private function getReplyAuthorField(): TextField
+    {
+        return TextField::new('replyAuthor', 'adminReviewReplyAuthorLabel')
+            ->setHelp('adminReviewReplyAuthorHelp')
+            ->setFormTypeOption('required', false);
     }
 
     private function getLocaleField(): ChoiceField
@@ -186,7 +204,7 @@ final class ReviewCrudController extends ConversationCrudController
         return $choices;
     }
 
-    private function registerRatingCustomProperty(): void
+    private function registerManagedCustomProperties(): void
     {
         $message = $this->getContext()?->getEntity()?->getInstance();
 
@@ -195,5 +213,7 @@ final class ReviewCrudController extends ConversationCrudController
         }
 
         $message->registerManagedPropertyKey('rating');
+        $message->registerManagedPropertyKey('reply');
+        $message->registerManagedPropertyKey('replyAuthor');
     }
 }

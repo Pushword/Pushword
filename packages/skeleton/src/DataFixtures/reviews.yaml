@@ -5,6 +5,9 @@ reviews:
     authorEmail: "alice.johnson@example.com"
     rating: 5
     publishedAt: "3 days ago"
+    reply: "Thank you so much, Alice! We're thrilled the documentation helped you get started so quickly. 🙌"
+    replyAuthor: "Robin, Founder"
+    media: ["Demo 1", "Demo 2", "Demo 3"]
   - title: "Great tool for prototyping"
     content: "Kitchen Sink has been invaluable for quickly prototyping new features. The variety of components available saves a lot of development time. Highly recommended!"
     authorName: "Bob Smith"
@@ -17,15 +20,18 @@ reviews:
     authorEmail: "carol.williams@example.com"
     rating: 5
     publishedAt: "1 week ago"
+    media: ["Demo 2"]
   - title: "Good but could be improved"
     content: "Kitchen Sink is a solid foundation, but I think some components could use more customization options. Overall, it's a good starting point for projects."
     authorName: "David Brown"
     authorEmail: "david.brown@example.com"
     rating: 3
     publishedAt: "2 weeks ago"
+    reply: "Thanks for the honest feedback, David. More customization options are on our roadmap — stay tuned for the next release!"
   - title: "Perfect for beginners"
     content: "As someone new to the framework, Kitchen Sink has been a lifesaver. The examples are clear and easy to follow. It helped me understand best practices quickly."
     authorName: "Emma Davis"
     authorEmail: "emma.davis@example.com"
     rating: 5
     publishedAt: "10 days ago"
+    media: ["Demo 3", "Demo 1"]

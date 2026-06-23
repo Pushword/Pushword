@@ -3,6 +3,7 @@
 namespace Pushword\Conversation\Controller\Admin;
 
 use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
@@ -233,6 +234,8 @@ class ConversationCrudController extends AbstractAdminCrudController
             return new Response('Field not editable.', Response::HTTP_BAD_REQUEST);
         }
 
+        $this->applyDefaultReplyAuthor($message);
+
         $this->getEntityManager()->flush();
 
         $template = 'weight' === $field
@@ -243,6 +246,67 @@ class ConversationCrudController extends AbstractAdminCrudController
             'entity' => ['instance' => $message],
             'value' => 'weight' === $field ? $message->getWeight() : null,
             'field' => null,
+        ]));
+    }
+
+    #[Override]
+    public function persistEntity(EntityManagerInterface $entityManager, object $entityInstance): void
+    {
+        $this->applyDefaultReplyAuthor($entityInstance);
+
+        parent::persistEntity($entityManager, $entityInstance);
+    }
+
+    #[Override]
+    public function updateEntity(EntityManagerInterface $entityManager, object $entityInstance): void
+    {
+        $this->applyDefaultReplyAuthor($entityInstance);
+
+        parent::updateEntity($entityManager, $entityInstance);
+    }
+
+    /**
+     * When a review has a reply but no explicit reply author, fall back to the
+     * host's configured default (conversation_review_default_reply_author).
+     */
+    private function applyDefaultReplyAuthor(object $message): void
+    {
+        if (! $message instanceof ReviewEntity) {
+            return;
+        }
+
+        if ('' === $message->getReply() || '' !== $message->getReplyAuthor()) {
+            return;
+        }
+
+        $default = $this->apps->get($message->host)->getStr('conversation_review_default_reply_author');
+
+        if ('' !== $default) {
+            $message->setReplyAuthor($default);
+        }
+    }
+
+    #[Route(path: '/admin/conversation/{id}/media/{mediaId}/unlink', name: 'pushword_conversation_media_unlink', requirements: ['id' => '\d+', 'mediaId' => '\d+'], methods: ['POST'])]
+    public function unlinkMedia(Request $request, Message $message, int $mediaId): Response
+    {
+        $token = (string) $request->request->get('_token');
+
+        if (! $this->isCsrfTokenValid('conversation_media_unlink_'.($message->id ?? 0), $token)) {
+            return new Response('Invalid CSRF token.', Response::HTTP_FORBIDDEN);
+        }
+
+        foreach ($message->getMediaList() as $media) {
+            if ($media->id === $mediaId) {
+                $message->removeMedia($media);
+
+                break;
+            }
+        }
+
+        $this->getEntityManager()->flush();
+
+        return new Response($this->adminFormFieldManager->twig->render('@PushwordConversation/admin/messageListMediaGallery.html.twig', [
+            'message' => $message,
         ]));
     }
 
@@ -264,6 +328,7 @@ class ConversationCrudController extends AbstractAdminCrudController
             'weight' => $message->setWeight($value),
             'title' => $this->updateReviewField($message, $trimmed, 'title'),
             'rating' => $this->updateReviewField($message, $trimmed, 'rating'),
+            'reply' => $this->updateReviewField($message, $trimmed, 'reply'),
             default => false,
         };
     }
@@ -300,6 +365,12 @@ class ConversationCrudController extends AbstractAdminCrudController
 
         if ('title' === $field) {
             $message->setTitle('' === $value ? null : $value);
+
+            return true;
+        }
+
+        if ('reply' === $field) {
+            $message->setReply('' === $value ? null : $value);
 
             return true;
         }

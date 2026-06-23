@@ -48,6 +48,24 @@
     {{ message.content|striptags|trim ?: '—' }}
   </div>
 
+  {% if isReview %}
+    <div class="d-flex align-items-start gap-1 p-1 small text-muted fst-italic">
+      <i class="fa fa-reply mt-1" aria-hidden="true" title="{{ 'adminReviewReplyLabel'|trans }}"></i>
+      <div
+        class="flex-grow-1 px-1"
+        style="min-height: 1.4em;"
+        contenteditable="true"
+        hx-post="{{ inlineAction }}"
+        hx-trigger="blur"
+        hx-target="#{{ inlineTarget }}"
+        hx-swap="outerHTML"
+        hx-vals='js:{field: "reply", value: event.target.innerText.trim(), _token: "{{ inlineToken|e('js') }}"}'
+        data-placeholder="{{ 'adminReviewReplyPlaceholder'|trans }}"
+        title="{{ 'adminReviewReplyPlaceholder'|trans }}"
+      >{{ review.reply }}</div>
+    </div>
+  {% endif %}
+
   <div class="text-muted small d-flex flex-wrap gap1">
     {% if isReview %}
       <span class="d-flex align-items-center gap-1 me-3">
@@ -109,6 +127,10 @@
       <span class="sr-only">Edit</span>
     </a>
   </div>
+
+  {% if message.mediaList is not empty %}
+    {% include '@PushwordConversation/admin/messageListMediaGallery.html.twig' with { message: message } only %}
+  {% endif %}
 
   <div class="d-flex flex-wrap align-items-center text-muted small pw-inline-tags-wrapper">
     <span>#</span>

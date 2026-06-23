@@ -29,6 +29,7 @@ class Configuration implements ConfigurationInterface
         'conversation_form_ms_message',
         'conversation_form_newsletter',
         'possible_origins',
+        'conversation_review_default_reply_author',
         'translation_deepl_api_key',
         'translation_google_api_key',
         'translation_deepl_use_free_api',
@@ -75,6 +76,10 @@ class Configuration implements ConfigurationInterface
 
                     ->scalarNode('possible_origins')->defaultNull()->end()
                     ->booleanNode('review_enabled')->defaultTrue()->end()
+                    ->scalarNode('conversation_review_default_reply_author')
+                        ->defaultNull()
+                        ->info('Default name shown in the reply footer when a review has no specific reply author (e.g. "Etienne (Pushword)")')
+                    ->end()
                     ->scalarNode('translation_deepl_api_key')
                         ->defaultNull()
                         ->info('DeepL API key for translation service')
