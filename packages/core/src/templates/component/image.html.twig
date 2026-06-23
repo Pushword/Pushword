@@ -7,7 +7,7 @@
   array    image_attr    default: {}
   string   image_alt     default: image.alt
   bool     lazy          default: true
-  array    picture_attr  default: {style: 'margin:0'}
+  array    picture_attr  default: {} // previously style: 'margin:0'
   Page     page          Optional. Used to get locale for alt text.
 #}
 
@@ -15,7 +15,7 @@
 {% set lazy = lazy ?? true %}
 
 {# SVG files are vector images - render simple img tag without srcset/picture complexity #}
-{% set picture_attr = picture_attr ?? {style: 'margin:0'} %}
+{% set picture_attr = picture_attr ?? {} %}
 
 {% if image.fileName ends with '.svg' %}
   <picture {{ attr(picture_attr) }}>
