@@ -23,3 +23,5 @@ quiz:
     invalid: 'Le retour doit être « immediate » ou « end ».'
   numbering:
     invalid: 'La numérotation doit être vide, « A », « a » ou « 1 ».'
+  pass:
+    range: 'Le seuil de réussite doit être compris entre 0 et 100.'

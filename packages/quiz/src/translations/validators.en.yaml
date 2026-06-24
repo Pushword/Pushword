@@ -23,3 +23,5 @@ quiz:
     invalid: 'Feedback must be "immediate" or "end".'
   numbering:
     invalid: 'Numbering must be empty, "A", "a" or "1".'
+  pass:
+    range: 'The pass threshold must be between 0 and 100.'

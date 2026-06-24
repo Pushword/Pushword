@@ -19,9 +19,12 @@ final class QuizFactory
      */
     public function fromArray(array $data): Quiz
     {
+        $levels = $this->buildLevels($data['levels'] ?? null, $data);
+
         return new Quiz(
             title: $this->stringOrNull($data['title'] ?? null),
-            questions: $this->buildQuestions($data['questions'] ?? null),
+            // `levels` owns the questions; the root keeps only the shared metadata.
+            questions: [] === $levels ? $this->buildQuestions($data['questions'] ?? null) : [],
             feedback: $this->stringOr($data['feedback'] ?? null, 'immediate'),
             difficulty: $this->stringOrNull($data['difficulty'] ?? null),
             results: $this->buildResults($data['results'] ?? null),
@@ -29,6 +32,60 @@ final class QuizFactory
             ctaTitle: $this->stringOrNull($data['ctaTitle'] ?? null),
             numbering: $this->stringOr($data['numbering'] ?? null, ''),
             labels: $this->buildLabels($data['labels'] ?? null),
+            pass: $this->intOrNull($data['pass'] ?? null),
+            label: $this->stringOrNull($data['label'] ?? null),
+            levels: $levels,
+        );
+    }
+
+    /**
+     * Build the difficulty levels, each a leaf quiz inheriting the root's shared
+     * metadata when it does not override it. Recursion is bound to a single depth:
+     * a level never reads its own `levels` key.
+     *
+     * @param array<string, mixed> $root
+     *
+     * @return Quiz[]
+     */
+    private function buildLevels(mixed $raw, array $root): array
+    {
+        if (! \is_array($raw) || [] === $raw) {
+            return [];
+        }
+
+        $levels = [];
+        foreach ($raw as $entry) {
+            if (! \is_array($entry)) {
+                continue;
+            }
+
+            $levels[] = $this->buildLevel($entry, $root);
+        }
+
+        return $levels;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $root
+     */
+    private function buildLevel(array $data, array $root): Quiz
+    {
+        $rootLabels = \is_array($root['labels'] ?? null) ? $root['labels'] : [];
+        $levelLabels = \is_array($data['labels'] ?? null) ? $data['labels'] : [];
+
+        return new Quiz(
+            questions: $this->buildQuestions($data['questions'] ?? null),
+            feedback: $this->stringOr($data['feedback'] ?? $root['feedback'] ?? null, 'immediate'),
+            difficulty: $this->stringOrNull($data['difficulty'] ?? null),
+            results: $this->buildResults($data['results'] ?? $root['results'] ?? null),
+            cta: $this->stringOrNull($data['cta'] ?? $root['cta'] ?? null),
+            ctaTitle: $this->stringOrNull($data['ctaTitle'] ?? $root['ctaTitle'] ?? null),
+            numbering: $this->stringOr($data['numbering'] ?? $root['numbering'] ?? null, ''),
+            labels: $this->buildLabels(array_merge($rootLabels, $levelLabels)),
+            pass: $this->intOrNull($data['pass'] ?? $root['pass'] ?? null),
+            label: $this->stringOrNull($data['label'] ?? null),
+            levels: [],
         );
     }
 
@@ -155,5 +212,14 @@ final class QuizFactory
         }
 
         return is_numeric($value) ? (int) $value : 0;
+    }
+
+    private function intOrNull(mixed $value): ?int
+    {
+        if (\is_int($value)) {
+            return $value;
+        }
+
+        return is_numeric($value) ? (int) $value : null;
     }
 }

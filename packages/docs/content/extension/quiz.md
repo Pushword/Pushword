@@ -57,10 +57,42 @@ image from the media library, add a video, write the explanation).
   *"Receive the next quizzes in your mailbox"*).
 - `numbering` — prefix each answer so people can refer to one out loud: `"A"`
   (A, B, C…), `"a"` (a, b, c…), `"1"` (1, 2, 3…), or `""` for none (default).
+- `pass` — the score (in %) at or above which a difficulty level counts as
+  passed and offers the next one (default `50`). Only meaningful with `levels`.
 - `labels` — overrides for the UI words, which otherwise default to the site
-  locale: `question`, `questions`, `explanation`, `score`, and `better` (use
-  `{p}` as the percentile placeholder). Set these only to force a specific
-  wording.
+  locale: `question`, `questions`, `explanation`, `score`, `better` (use `{p}`
+  as the percentile placeholder), `level` and `nextLevel`. Set these only to
+  force a specific wording.
+- `levels` — turn the quiz into several difficulty levels (see below).
+
+## Difficulty levels
+
+A single quiz can offer several difficulty levels behind an accessible tab
+selector. Add a `levels` array: each entry is a **complete quiz of its own**
+(same shape — `difficulty`, `questions`, `results`, `feedback`, `cta`, `pass`,
+`labels`), while the root keeps the shared metadata (`title`, `labels`, …).
+
+```twig
+{{ quiz('{"title":"Mountains","cta":"newsletter","pass":50,"levels":[
+  {"difficulty":"Easy","questions":[ … ],"results":[ … ]},
+  {"difficulty":"Intermediate","questions":[ … ]},
+  {"difficulty":"Hard","questions":[ … ]}
+]}') }}
+```
+
+- The tab label is `label ?? difficulty`.
+- A level inherits the root's `labels` (merged), `feedback`, `numbering`, `cta`,
+  `ctaTitle`, `results` and `pass` when it does not set its own.
+- Tabs are always freely clickable (WAI-ARIA tabs: arrow keys, `Home`/`End`,
+  roving focus). When a level is **passed** (score ≥ its `pass`), a *"Next level →"*
+  button appears and jumps to the following tab.
+- Each level keeps its **own** percentile and lead attribution (the score store
+  key and the Conversation `referring` are discriminated per level), so an Easy
+  score never dilutes a Hard one.
+- A quiz **without** `levels` renders exactly as before — zero change.
+
+In the EditorJS block, tick *"Multiple difficulty levels"* to switch a quiz to
+levels mode and edit one full sub-quiz per level.
 
 ## SEO & accessibility
 
@@ -68,6 +100,8 @@ The whole quiz — questions, answers, the correct flag and the explanations —
 is rendered **server-side** as a readable, schema.org `Quiz` Q&A. That is what
 crawlers and no-JS visitors get. `quiz.js` then progressively enhances it into a
 game. Correctness is never signalled by colour alone (✓/✗ glyphs + `aria-live`).
+With difficulty levels, every level is server-rendered (panels stack without JS)
+and emits its own schema.org `Quiz`.
 
 ## Percentile & leads
 

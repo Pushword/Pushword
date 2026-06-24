@@ -2,71 +2,46 @@
   Quiz block. Rendered fully server-side: every question, answer, the correct
   flag and the explanation are in the HTML — that is the SEO + no-JS version
   (a readable Q&A). quiz.js progressively enhances it into an interactive game.
+
+  A quiz may expose several difficulty `levels`: each level is a leaf quiz, the
+  root keeps the shared metadata and the template renders an accessible tab
+  selector (role=tablist). A quiz without `levels` renders exactly as before.
 #}
-{% set slug = page.slug|default('') %}
-{% set total = quiz.questions|length %}
-{% set prefixes = {
-  'A': 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z'|split(' '),
-  'a': 'a b c d e f g h i j k l m n o p q r s t u v w x y z'|split(' '),
-  '1': 1..30,
-}[quiz.numbering] ?? [] %}
 
-{# UI words default to the site locale; the quiz JSON `labels` override them. #}
-{% set labels = {
-  question: labels.question|default('quiz.label.question'|trans),
-  questions: labels.questions|default('quiz.label.questions'|trans),
-  explanation: labels.explanation|default('quiz.label.explanation'|trans),
-  score: labels.score|default('quiz.label.score'|trans),
-  better: labels.better|default('quiz.label.better'|trans),
-} %}
-{% set config = config|merge({ labels: { score: labels.score, better: labels.better } }) %}
+{# ---- one question <li>; shared by the single quiz and every level ---- #}
+{% macro qitem(q, idx0, idx, total, prefixes, l) %}
+  <li class="pw-quiz-q" data-q="{{ idx0 }}">
+    <span class="pw-quiz-q-num" aria-hidden="true">{{ l.question }} {{ idx }}/{{ total }}</span>
 
-<link rel="stylesheet" href="{{ asset('bundles/pushwordquiz/quiz.css') }}">
+    {% if q.video %}
+      <div class="pw-quiz-media">{{ video(q.video, q.media|default(''), q.alt|default('')) }}</div>
+    {% elseif q.media %}
+      <div class="pw-quiz-media">{{ image(q.media, alt: q.alt|default(''), mode: 'responsive', lazy: true, class: 'pw-quiz-media-img') }}</div>
+    {% endif %}
 
-<section class="pw-quiz" id="{{ id }}" data-pw-quiz data-slug="{{ slug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
-  {% if quiz.title or quiz.difficulty %}
-    <header class="pw-quiz-head">
-      {% if quiz.title %}<h2 class="pw-quiz-title">{{ quiz.title }}</h2>{% endif %}
-      <p class="pw-quiz-meta">
-        <span>{{ total }} {{ labels.questions }}</span>
-        {% if quiz.difficulty %}<span class="pw-quiz-diff">{{ quiz.difficulty }}</span>{% endif %}
-      </p>
-    </header>
-  {% endif %}
+    <p class="pw-quiz-question">{{ q.q }}</p>
 
-  <ol class="pw-quiz-questions">
-    {% for q in quiz.questions %}
-      <li class="pw-quiz-q" data-q="{{ loop.index0 }}">
-        <span class="pw-quiz-q-num" aria-hidden="true">{{ labels.question }} {{ loop.index }}/{{ total }}</span>
+    <ul class="pw-quiz-answers">
+      {% for a in q.answers %}
+        <li>
+          <button type="button" class="pw-quiz-a"{{ a.correct ? ' data-correct' : '' }} aria-pressed="false">
+            {% if prefixes[loop.index0] is defined %}<span class="pw-quiz-a-prefix" aria-hidden="true">{{ prefixes[loop.index0] }}</span>{% endif %}
+            {% if a.media %}{{ image(a.media, alt: a.alt|default(''), lazy: true, class: 'pw-quiz-a-img') }}{% endif %}
+            <span class="pw-quiz-a-text">{{ a.text }}</span>
+            <span class="pw-quiz-a-mark" aria-hidden="true"></span>
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
 
-        {% if q.video %}
-          <div class="pw-quiz-media">{{ video(q.video, q.media|default(''), q.alt|default('')) }}</div>
-        {% elseif q.media %}
-          <div class="pw-quiz-media">{{ image(q.media, alt: q.alt|default(''), mode: 'responsive', lazy: true, class: 'pw-quiz-media-img') }}</div>
-        {% endif %}
+    {% if q.explanation %}
+      <p class="pw-quiz-explanation"><span class="pw-quiz-explanation-label">{{ l.explanation }}</span> {{ q.explanation }}</p>
+    {% endif %}
+  </li>
+{% endmacro %}
 
-        <p class="pw-quiz-question">{{ q.q }}</p>
-
-        <ul class="pw-quiz-answers">
-          {% for a in q.answers %}
-            <li>
-              <button type="button" class="pw-quiz-a"{{ a.correct ? ' data-correct' : '' }} aria-pressed="false">
-                {% if prefixes[loop.index0] is defined %}<span class="pw-quiz-a-prefix" aria-hidden="true">{{ prefixes[loop.index0] }}</span>{% endif %}
-                {% if a.media %}{{ image(a.media, alt: a.alt|default(''), lazy: true, class: 'pw-quiz-a-img') }}{% endif %}
-                <span class="pw-quiz-a-text">{{ a.text }}</span>
-                <span class="pw-quiz-a-mark" aria-hidden="true"></span>
-              </button>
-            </li>
-          {% endfor %}
-        </ul>
-
-        {% if q.explanation %}
-          <p class="pw-quiz-explanation"><span class="pw-quiz-explanation-label">{{ labels.explanation }}</span> {{ q.explanation }}</p>
-        {% endif %}
-      </li>
-    {% endfor %}
-  </ol>
-
+{# ---- end-of-quiz result box (score + optional conversion form) ---- #}
+{% macro resultBox(quiz, slug, conversationAvailable) %}
   <div class="pw-quiz-result" hidden>
     <div class="pw-quiz-score" aria-live="polite"></div>
     {% if quiz.cta and conversationAvailable %}
@@ -76,26 +51,137 @@
       </div>
     {% endif %}
   </div>
+{% endmacro %}
 
-  <script type="application/json" class="pw-quiz-config">{{ config|json_encode|raw }}</script>
-</section>
+{# ---- JS runtime config (score bands, pass threshold, labels) ---- #}
+{% macro configScript(quiz, l) %}
+  <script type="application/json" class="pw-quiz-config">{{ {
+    feedback: quiz.feedback,
+    pass: quiz.pass,
+    results: quiz.results|map(b => { min: b.min, msg: b.msg }),
+    labels: { score: l.score, better: l.better, nextLevel: l.nextLevel },
+  }|json_encode|raw }}</script>
+{% endmacro %}
 
-{# schema.org Quiz: makes the Q&A eligible for rich results and indexable. #}
-{% set questionsLd = [] %}
-{% for q in quiz.questions %}
-  {% set correct = q.answers|filter(a => a.correct)|first %}
-  {% set questionsLd = questionsLd|merge([{
-    '@type': 'Question',
-    'name': q.q,
-    'acceptedAnswer': { '@type': 'Answer', 'text': correct.text ~ (q.explanation ? ' — ' ~ q.explanation : '') },
-    'suggestedAnswer': q.answers|map(a => { '@type': 'Answer', 'text': a.text }),
-  }]) %}
-{% endfor %}
-<script type="application/ld+json">{{ {
-  '@context': 'https://schema.org',
-  '@type': 'Quiz',
-  'name': quiz.title|default('Quiz'),
-  'hasPart': questionsLd,
-}|json_encode|raw }}</script>
+{# ---- schema.org Quiz: makes the Q&A eligible for rich results and indexable ---- #}
+{% macro schemaOrg(quiz, name) %}
+  {% set questionsLd = [] %}
+  {% for q in quiz.questions %}
+    {% set correct = q.answers|filter(a => a.correct)|first %}
+    {% set questionsLd = questionsLd|merge([{
+      '@type': 'Question',
+      'name': q.q,
+      'acceptedAnswer': { '@type': 'Answer', 'text': correct.text ~ (q.explanation ? ' — ' ~ q.explanation : '') },
+      'suggestedAnswer': q.answers|map(a => { '@type': 'Answer', 'text': a.text }),
+    }]) %}
+  {% endfor %}
+  <script type="application/ld+json">{{ {
+    '@context': 'https://schema.org',
+    '@type': 'Quiz',
+    'name': name,
+    'hasPart': questionsLd,
+  }|json_encode|raw }}</script>
+{% endmacro %}
+
+{% set baseSlug = page.slug|default('') %}
+{% set numberings = {
+  'A': 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z'|split(' '),
+  'a': 'a b c d e f g h i j k l m n o p q r s t u v w x y z'|split(' '),
+  '1': 1..30,
+} %}
+
+<link rel="stylesheet" href="{{ asset('bundles/pushwordquiz/quiz.css') }}">
+
+{% if quiz.levels is empty %}
+  {# UI words default to the site locale; the quiz JSON `labels` override them. #}
+  {% set total = quiz.questions|length %}
+  {% set prefixes = numberings[quiz.numbering] ?? [] %}
+  {% set l = {
+    question: quiz.labels.question|default('quiz.label.question'|trans),
+    questions: quiz.labels.questions|default('quiz.label.questions'|trans),
+    explanation: quiz.labels.explanation|default('quiz.label.explanation'|trans),
+    score: quiz.labels.score|default('quiz.label.score'|trans),
+    better: quiz.labels.better|default('quiz.label.better'|trans),
+    nextLevel: quiz.labels.nextLevel|default('quiz.label.nextLevel'|trans),
+  } %}
+
+  <section class="pw-quiz" id="{{ id }}" data-pw-quiz data-slug="{{ baseSlug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
+    {% if quiz.title or quiz.difficulty %}
+      <header class="pw-quiz-head">
+        {% if quiz.title %}<h2 class="pw-quiz-title">{{ quiz.title }}</h2>{% endif %}
+        <p class="pw-quiz-meta">
+          <span>{{ total }} {{ l.questions }}</span>
+          {% if quiz.difficulty %}<span class="pw-quiz-diff">{{ quiz.difficulty }}</span>{% endif %}
+        </p>
+      </header>
+    {% endif %}
+
+    <ol class="pw-quiz-questions">
+      {% for q in quiz.questions %}{{ _self.qitem(q, loop.index0, loop.index, total, prefixes, l) }}{% endfor %}
+    </ol>
+
+    {{ _self.resultBox(quiz, baseSlug, conversationAvailable) }}
+    {{ _self.configScript(quiz, l) }}
+  </section>
+
+  {{ _self.schemaOrg(quiz, quiz.title|default('Quiz')) }}
+
+{% else %}
+  {# Several difficulty levels: an accessible tab selector, one leaf quiz per panel. #}
+  <section class="pw-quiz pw-quiz--levels" id="{{ id }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
+    {% if quiz.title %}<header class="pw-quiz-head"><h2 class="pw-quiz-title">{{ quiz.title }}</h2></header>{% endif %}
+
+    <div class="pw-quiz-tabs" role="tablist"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
+      {% for level in quiz.levels %}
+        <button type="button" class="pw-quiz-tab" role="tab"
+                id="{{ id }}-tab-{{ loop.index0 }}"
+                aria-controls="{{ id }}-panel-{{ loop.index0 }}"
+                aria-selected="{{ loop.first ? 'true' : 'false' }}"
+                tabindex="{{ loop.first ? '0' : '-1' }}">{{ level.label ?? level.difficulty ?? ('quiz.label.level'|trans ~ ' ' ~ loop.index) }}</button>
+      {% endfor %}
+    </div>
+
+    {% for level in quiz.levels %}
+      {# A per-level percentile key / CTA source. The dot keeps it within the
+         conversation route's allowed charset ([-A-Za-z0-9_/.]). #}
+      {% set lslug = baseSlug ~ '.' ~ loop.index0 %}
+      {% set nextTab = loop.last ? '' : id ~ '-tab-' ~ loop.index %}
+      {% set ltotal = level.questions|length %}
+      {% set prefixes = numberings[level.numbering] ?? [] %}
+      {% set l = {
+        question: level.labels.question|default('quiz.label.question'|trans),
+        questions: level.labels.questions|default('quiz.label.questions'|trans),
+        explanation: level.labels.explanation|default('quiz.label.explanation'|trans),
+        score: level.labels.score|default('quiz.label.score'|trans),
+        better: level.labels.better|default('quiz.label.better'|trans),
+        nextLevel: level.labels.nextLevel|default('quiz.label.nextLevel'|trans),
+      } %}
+
+      <div class="pw-quiz-panel" role="tabpanel"
+           id="{{ id }}-panel-{{ loop.index0 }}"
+           aria-labelledby="{{ id }}-tab-{{ loop.index0 }}"{% if not loop.first %} hidden{% endif %}>
+        <div class="pw-quiz-level" data-pw-quiz data-slug="{{ lslug }}" data-next-tab="{{ nextTab }}">
+          <p class="pw-quiz-meta">
+            <span>{{ ltotal }} {{ l.questions }}</span>
+            {% if level.difficulty %}<span class="pw-quiz-diff">{{ level.difficulty }}</span>{% endif %}
+          </p>
+
+          <ol class="pw-quiz-questions">
+            {% for q in level.questions %}{{ _self.qitem(q, loop.index0, loop.index, ltotal, prefixes, l) }}{% endfor %}
+          </ol>
+
+          {{ _self.resultBox(level, lslug, conversationAvailable) }}
+          {{ _self.configScript(level, l) }}
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
+  {% for level in quiz.levels %}
+    {% set tabLabel = level.label ?? level.difficulty ?? ('quiz.label.level'|trans ~ ' ' ~ loop.index) %}
+    {% set schemaName = quiz.title ? quiz.title ~ ' — ' ~ tabLabel : tabLabel %}
+    {{ _self.schemaOrg(level, schemaName) }}
+  {% endfor %}
+{% endif %}
 
 <script src="{{ asset('bundles/pushwordquiz/quiz.js') }}" defer></script>

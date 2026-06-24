@@ -31,6 +31,8 @@ interface QuizResultBand {
 export interface QuizData extends BlockToolData {
   title?: string
   difficulty?: string
+  label?: string
+  pass?: number
   feedback?: string
   cta?: string
   ctaTitle?: string
@@ -38,6 +40,7 @@ export interface QuizData extends BlockToolData {
   labels?: Record<string, string>
   results?: QuizResultBand[]
   questions?: QuizQuestion[]
+  levels?: QuizData[]
 }
 
 const LABEL_DEFAULTS: Record<string, string> = {
@@ -56,6 +59,10 @@ const LABEL_DEFAULTS: Record<string, string> = {
 export default class Quiz extends BaseTool {
   declare public data: QuizData
   private wrapper!: HTMLElement
+  private singleSection!: HTMLElement
+  private levelsSection!: HTMLElement
+  private levelsList!: HTMLElement
+  private levelsMode = false
   private mediaPickerMessageHandler: ((event: MessageEvent) => void) | null = null
 
   public static toolbox = {
@@ -81,7 +88,9 @@ export default class Quiz extends BaseTool {
       labels: data.labels || {},
       results: Array.isArray(data.results) ? data.results : [],
       questions,
+      levels: Array.isArray(data.levels) ? data.levels : [],
     }
+    this.levelsMode = (this.data.levels || []).length > 0
   }
 
   public render(): HTMLElement {
@@ -92,7 +101,6 @@ export default class Quiz extends BaseTool {
 
     const meta = make.element('div', 'cdx-quiz__meta')
     meta.appendChild(this.inputEl('cdx-quiz__title', 'Title', this.data.title || ''))
-    meta.appendChild(this.inputEl('cdx-quiz__difficulty', 'Difficulty', this.data.difficulty || ''))
     const feedback = make.element('select', ['cdx-quiz__feedback']) as HTMLSelectElement
     make.option(feedback, 'immediate', 'immediate')
     make.option(feedback, 'end', 'end')
@@ -111,28 +119,40 @@ export default class Quiz extends BaseTool {
       this.inputEl('cdx-quiz__cta-title', 'End form heading (call to action, optional)', this.data.ctaTitle || ''),
     )
 
-    const questions = make.element('div', 'cdx-quiz__questions')
-    ;(this.data.questions || []).forEach((q) => questions.appendChild(this.buildQuestion(q)))
-    this.wrapper.appendChild(questions)
-    this.wrapper.appendChild(
-      make.element('button', 'cdx-quiz__add', { type: 'button' }, '+ Question', () => {
-        questions.appendChild(
-          this.buildQuestion({ q: '', answers: [{ a: '', correct: true }, { a: '' }] }),
-        )
-      }),
-    )
+    // Mode toggle: a single quiz, or several difficulty levels behind tabs.
+    const modeWrap = make.element('label', 'cdx-quiz__mode')
+    const modeToggle = make.element('input', 'cdx-quiz__mode-toggle', { type: 'checkbox' }) as HTMLInputElement
+    modeToggle.checked = this.levelsMode
+    modeToggle.addEventListener('change', () => {
+      this.levelsMode = modeToggle.checked
+      if (this.levelsMode && 0 === this.levelsList.children.length) {
+        this.levelsList.appendChild(this.buildLevel({}))
+      }
 
-    this.wrapper.appendChild(
-      make.element('div', 'cdx-quiz__subtitle', {}, 'Score bands (optional)'),
-    )
-    const results = make.element('div', 'cdx-quiz__results')
-    ;(this.data.results || []).forEach((r) => results.appendChild(this.buildResult(r)))
-    this.wrapper.appendChild(results)
-    this.wrapper.appendChild(
-      make.element('button', 'cdx-quiz__add', { type: 'button' }, '+ Band', () => {
-        results.appendChild(this.buildResult({ min: 0, msg: '' }))
+      this.applyMode()
+    })
+    modeWrap.appendChild(modeToggle)
+    modeWrap.appendChild(make.element('span', null, {}, 'Multiple difficulty levels (tabs)'))
+    this.wrapper.appendChild(modeWrap)
+
+    // Single-quiz editor (difficulty + questions + score bands).
+    this.singleSection = make.element('div', 'cdx-quiz__single')
+    this.singleSection.appendChild(this.inputEl('cdx-quiz__difficulty', 'Difficulty', this.data.difficulty || ''))
+    this.singleSection.appendChild(this.buildQuestionsBlock(this.data.questions || []))
+    this.singleSection.appendChild(this.buildResultsBlock(this.data.results || []))
+    this.wrapper.appendChild(this.singleSection)
+
+    // Multi-level editor: one full sub-quiz per level.
+    this.levelsSection = make.element('div', 'cdx-quiz__levels')
+    this.levelsList = make.element('div', 'cdx-quiz__levels-list')
+    ;(this.data.levels || []).forEach((level) => this.levelsList.appendChild(this.buildLevel(level)))
+    this.levelsSection.appendChild(this.levelsList)
+    this.levelsSection.appendChild(
+      make.element('button', 'cdx-quiz__add', { type: 'button' }, '+ Level', () => {
+        this.levelsList.appendChild(this.buildLevel({}))
       }),
     )
+    this.wrapper.appendChild(this.levelsSection)
 
     // Author-defined UI words (no i18n). Empty = English default (the placeholder).
     this.wrapper.appendChild(
@@ -146,7 +166,74 @@ export default class Quiz extends BaseTool {
     })
     this.wrapper.appendChild(labels)
 
+    this.applyMode()
+
     return this.wrapper
+  }
+
+  /** Show the single-quiz editor or the levels editor, per the current mode. */
+  private applyMode(): void {
+    this.singleSection.hidden = this.levelsMode
+    this.levelsSection.hidden = !this.levelsMode
+  }
+
+  /** A questions list plus its "+ Question" button. Reused per level. */
+  private buildQuestionsBlock(questions: QuizQuestion[]): HTMLElement {
+    const block = make.element('div', 'cdx-quiz__questions-block')
+    const list = make.element('div', 'cdx-quiz__questions')
+    questions.forEach((q) => list.appendChild(this.buildQuestion(q)))
+    block.appendChild(list)
+    block.appendChild(
+      make.element('button', 'cdx-quiz__add', { type: 'button' }, '+ Question', () => {
+        list.appendChild(this.buildQuestion({ q: '', answers: [{ a: '', correct: true }, { a: '' }] }))
+      }),
+    )
+    return block
+  }
+
+  /** A score-bands list plus its "+ Band" button. Reused per level. */
+  private buildResultsBlock(results: QuizResultBand[]): HTMLElement {
+    const block = make.element('div', 'cdx-quiz__results-block')
+    block.appendChild(make.element('div', 'cdx-quiz__subtitle', {}, 'Score bands (optional)'))
+    const list = make.element('div', 'cdx-quiz__results')
+    results.forEach((r) => list.appendChild(this.buildResult(r)))
+    block.appendChild(list)
+    block.appendChild(
+      make.element('button', 'cdx-quiz__add', { type: 'button' }, '+ Band', () => {
+        list.appendChild(this.buildResult({ min: 0, msg: '' }))
+      }),
+    )
+    return block
+  }
+
+  /** One difficulty level: its label/difficulty/pass plus a full sub-quiz. */
+  private buildLevel(level: QuizData): HTMLElement {
+    const el = make.element('div', 'cdx-quiz__level')
+
+    const head = make.element('div', 'cdx-quiz__level-head')
+    head.appendChild(make.element('span', null, {}, 'Level'))
+    head.appendChild(
+      make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove level' }, '✕', () => el.remove()),
+    )
+    el.appendChild(head)
+
+    const row = make.element('div', 'cdx-quiz__row')
+    row.appendChild(this.inputEl('cdx-quiz__level-label', 'Tab label (defaults to difficulty)', level.label || ''))
+    row.appendChild(this.inputEl('cdx-quiz__level-difficulty', 'Difficulty', level.difficulty || ''))
+    const pass = make.element('input', ['cdx-quiz__input', 'cdx-quiz__level-pass'], {
+      type: 'number',
+      min: '0',
+      max: '100',
+      placeholder: 'Pass % (default 50)',
+    }) as HTMLInputElement
+    if (level.pass !== undefined && level.pass !== null) pass.value = String(level.pass)
+    row.appendChild(pass)
+    el.appendChild(row)
+
+    el.appendChild(this.buildQuestionsBlock(level.questions || []))
+    el.appendChild(this.buildResultsBlock(level.results || []))
+
+    return el
   }
 
   private buildQuestion(q: QuizQuestion): HTMLElement {
@@ -363,39 +450,16 @@ export default class Quiz extends BaseTool {
     this.cleanupMediaPickerHandler()
   }
 
-  public save(): QuizData {
-    const root = this.wrapper
-    const val = (selector: string, scope: Element = root): string => {
-      const el = scope.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement | null
-      return el ? el.value.trim() : ''
-    }
+  private static val(selector: string, scope: Element): string {
+    const el = scope.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement | null
+    return el ? el.value.trim() : ''
+  }
 
-    const data: QuizData = {
-      feedback: (root.querySelector('.cdx-quiz__feedback') as HTMLSelectElement)?.value || 'immediate',
-      questions: [],
-    }
-
-    const title = val('.cdx-quiz__title')
-    if (title) data.title = title
-    const difficulty = val('.cdx-quiz__difficulty')
-    if (difficulty) data.difficulty = difficulty
-    const cta = val('.cdx-quiz__cta')
-    if (cta) data.cta = cta
-    const ctaTitle = val('.cdx-quiz__cta-title')
-    if (ctaTitle) data.ctaTitle = ctaTitle
-
-    const numbering = (root.querySelector('.cdx-quiz__numbering') as HTMLSelectElement)?.value || ''
-    if (numbering) data.numbering = numbering
-
-    const labels: Record<string, string> = {}
-    root.querySelectorAll('.cdx-quiz__label').forEach((labelEl) => {
-      const key = (labelEl as HTMLElement).dataset.label || ''
-      const value = (labelEl as HTMLInputElement).value.trim()
-      if (key && value) labels[key] = value
-    })
-    if (Object.keys(labels).length > 0) data.labels = labels
-
-    root.querySelectorAll('.cdx-quiz__q').forEach((qEl) => {
+  /** Read every `.cdx-quiz__q` within `scope` into question objects. */
+  private readQuestions(scope: Element): QuizQuestion[] {
+    const val = Quiz.val
+    const questions: QuizQuestion[] = []
+    scope.querySelectorAll('.cdx-quiz__q').forEach((qEl) => {
       const question: QuizQuestion = { q: val('.cdx-quiz__q-text', qEl), answers: [] }
       const media = val('.cdx-quiz__q-media', qEl)
       if (media) question.media = media
@@ -418,16 +482,72 @@ export default class Quiz extends BaseTool {
         question.answers!.push(answer)
       })
 
-      data.questions!.push(question)
+      questions.push(question)
     })
+    return questions
+  }
 
+  /** Read every `.cdx-quiz__result-row` within `scope` into score bands. */
+  private readResults(scope: Element): QuizResultBand[] {
     const results: QuizResultBand[] = []
-    root.querySelectorAll('.cdx-quiz__result-row').forEach((rEl) => {
-      const msg = val('.cdx-quiz__result-msg', rEl)
+    scope.querySelectorAll('.cdx-quiz__result-row').forEach((rEl) => {
+      const msg = Quiz.val('.cdx-quiz__result-msg', rEl)
       if (!msg) return
-      results.push({ min: Number(val('.cdx-quiz__result-min', rEl)) || 0, msg })
+      results.push({ min: Number(Quiz.val('.cdx-quiz__result-min', rEl)) || 0, msg })
     })
-    if (results.length > 0) data.results = results
+    return results
+  }
+
+  public save(): QuizData {
+    const root = this.wrapper
+    const val = (selector: string): string => Quiz.val(selector, root)
+
+    const data: QuizData = {
+      feedback: (root.querySelector('.cdx-quiz__feedback') as HTMLSelectElement)?.value || 'immediate',
+      questions: [],
+    }
+
+    const title = val('.cdx-quiz__title')
+    if (title) data.title = title
+    const cta = val('.cdx-quiz__cta')
+    if (cta) data.cta = cta
+    const ctaTitle = val('.cdx-quiz__cta-title')
+    if (ctaTitle) data.ctaTitle = ctaTitle
+
+    const numbering = (root.querySelector('.cdx-quiz__numbering') as HTMLSelectElement)?.value || ''
+    if (numbering) data.numbering = numbering
+
+    const labels: Record<string, string> = {}
+    root.querySelectorAll('.cdx-quiz__label').forEach((labelEl) => {
+      const key = (labelEl as HTMLElement).dataset.label || ''
+      const value = (labelEl as HTMLInputElement).value.trim()
+      if (key && value) labels[key] = value
+    })
+    if (Object.keys(labels).length > 0) data.labels = labels
+
+    if (this.levelsMode) {
+      const levels: QuizData[] = []
+      this.levelsList.querySelectorAll('.cdx-quiz__level').forEach((levelEl) => {
+        const level: QuizData = { questions: this.readQuestions(levelEl) }
+        const label = Quiz.val('.cdx-quiz__level-label', levelEl)
+        if (label) level.label = label
+        const difficulty = Quiz.val('.cdx-quiz__level-difficulty', levelEl)
+        if (difficulty) level.difficulty = difficulty
+        const passValue = Quiz.val('.cdx-quiz__level-pass', levelEl)
+        if (passValue) level.pass = Number(passValue)
+        const levelResults = this.readResults(levelEl)
+        if (levelResults.length > 0) level.results = levelResults
+        levels.push(level)
+      })
+      data.levels = levels
+      // The root keeps no questions of its own once levels carry them.
+    } else {
+      const difficulty = val('.cdx-quiz__difficulty')
+      if (difficulty) data.difficulty = difficulty
+      data.questions = this.readQuestions(this.singleSection)
+      const results = this.readResults(this.singleSection)
+      if (results.length > 0) data.results = results
+    }
 
     this.data = data
     return data
@@ -437,20 +557,9 @@ export default class Quiz extends BaseTool {
     return true
   }
 
-  /** Strip empty optional fields so the exported JSON stays compact. */
-  private static clean(data: QuizData): QuizData {
-    const out: QuizData = {
-      feedback: 'end' === data.feedback ? 'end' : 'immediate',
-      questions: [],
-    }
-    if (data.title) out.title = data.title
-    if (data.difficulty) out.difficulty = data.difficulty
-    if (data.cta) out.cta = data.cta
-    if (data.ctaTitle) out.ctaTitle = data.ctaTitle
-    if (data.numbering) out.numbering = data.numbering
-    if (data.labels && Object.keys(data.labels).length > 0) out.labels = data.labels
-
-    ;(data.questions || []).forEach((q) => {
+  private static cleanQuestions(questions: QuizQuestion[] | undefined): QuizQuestion[] {
+    const out: QuizQuestion[] = []
+    ;(questions || []).forEach((q) => {
       const cq: QuizQuestion = { q: q.q || '', answers: [] }
       if (q.media) cq.media = q.media
       if (q.video) cq.video = q.video
@@ -464,10 +573,47 @@ export default class Quiz extends BaseTool {
         if (a.alt) ca.alt = a.alt
         cq.answers!.push(ca)
       })
-      out.questions!.push(cq)
+      out.push(cq)
     })
+    return out
+  }
 
-    const bands = (data.results || []).filter((r) => r.msg).map((r) => ({ min: Number(r.min) || 0, msg: r.msg }))
+  private static cleanBands(results: QuizResultBand[] | undefined): QuizResultBand[] {
+    return (results || []).filter((r) => r.msg).map((r) => ({ min: Number(r.min) || 0, msg: r.msg ?? '' }))
+  }
+
+  private static cleanLevel(level: QuizData): QuizData {
+    const out: QuizData = { questions: Quiz.cleanQuestions(level.questions) }
+    if (level.label) out.label = level.label
+    if (level.difficulty) out.difficulty = level.difficulty
+    if (level.pass !== undefined && level.pass !== null && !Number.isNaN(Number(level.pass))) {
+      out.pass = Number(level.pass)
+    }
+
+    const bands = Quiz.cleanBands(level.results)
+    if (bands.length > 0) out.results = bands
+    return out
+  }
+
+  /** Strip empty optional fields so the exported JSON stays compact. */
+  private static clean(data: QuizData): QuizData {
+    const out: QuizData = { feedback: 'end' === data.feedback ? 'end' : 'immediate' }
+    if (data.title) out.title = data.title
+    if (data.cta) out.cta = data.cta
+    if (data.ctaTitle) out.ctaTitle = data.ctaTitle
+    if (data.numbering) out.numbering = data.numbering
+    if (data.labels && Object.keys(data.labels).length > 0) out.labels = data.labels
+
+    // Levels own the questions; the root keeps only the shared metadata.
+    if (Array.isArray(data.levels) && data.levels.length > 0) {
+      out.levels = data.levels.map((level) => Quiz.cleanLevel(level))
+      return out
+    }
+
+    if (data.difficulty) out.difficulty = data.difficulty
+    out.questions = Quiz.cleanQuestions(data.questions)
+
+    const bands = Quiz.cleanBands(data.results)
     if (bands.length > 0) out.results = bands
 
     return out
@@ -475,7 +621,9 @@ export default class Quiz extends BaseTool {
 
   public static exportToMarkdown(data: QuizData): string {
     const clean = Quiz.clean(data)
-    if (!clean.questions || 0 === clean.questions.length) return ''
+    const hasQuestions = !!clean.questions && clean.questions.length > 0
+    const hasLevels = !!clean.levels && clean.levels.length > 0
+    if (!hasQuestions && !hasLevels) return ''
 
     // Inline JSON inside a single-quoted Twig string: double backslashes, then
     // escape single quotes. Twig sees only a string literal — it cannot choke

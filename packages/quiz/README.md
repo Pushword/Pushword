@@ -52,3 +52,30 @@ the `media` image as its poster, so both `media` and an `alt` (accessibility)
 are required for one. The single source of truth for validity is the `Quiz`
 model + Symfony Validator, shared by the renderer, the editor lint and the API
 endpoint.
+
+## Difficulty levels
+
+Add a `levels` array to offer several difficulty levels behind an accessible tab
+selector. Each entry is a full quiz (`difficulty`, `questions`, `results`, …);
+the root keeps the shared metadata (`title`, `labels`). The tab label is
+`label ?? difficulty`, and a level inherits the root's `labels`/`feedback`/
+`cta`/`pass` when it omits its own.
+
+```json
+{
+  "title": "Mountains",
+  "cta": "newsletter",
+  "pass": 50,
+  "levels": [
+    { "difficulty": "Easy", "questions": [ … ], "results": [ … ] },
+    { "difficulty": "Intermediate", "questions": [ … ] },
+    { "difficulty": "Hard", "questions": [ … ] }
+  ]
+}
+```
+
+Tabs are freely clickable (WAI-ARIA: arrow keys, roving focus). Passing a level
+(score ≥ its `pass`, default 50) reveals a *"Next level →"* button to the next
+tab. Each level keeps its **own** percentile and lead attribution. A quiz
+without `levels` renders exactly as before. In the EditorJS block, tick
+*"Multiple difficulty levels"* to edit one sub-quiz per level.

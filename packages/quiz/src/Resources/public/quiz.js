@@ -15,8 +15,64 @@
   var STORAGE_KEY = 'pwQuizId'
 
   function initAll() {
+    // Multi-level quizzes first: each sets up its tab selector and then inits its
+    // own panels (marking them ready), so the standalone pass below skips them.
+    var leveled = document.querySelectorAll('.pw-quiz--levels:not([data-pw-levels-ready])')
+    for (var l = 0; l < leveled.length; l++) initLevels(leveled[l])
+
     var quizzes = document.querySelectorAll('[data-pw-quiz]:not([data-pw-quiz-ready])')
     for (var i = 0; i < quizzes.length; i++) initQuiz(quizzes[i])
+  }
+
+  /* ----- multi-level tab selector (WAI-ARIA tabs pattern) ----- */
+
+  function initLevels(section) {
+    section.setAttribute('data-pw-levels-ready', '1')
+
+    var tabs = Array.prototype.slice.call(section.querySelectorAll('.pw-quiz-tab'))
+    var panels = Array.prototype.slice.call(section.querySelectorAll('.pw-quiz-panel'))
+    if (0 === tabs.length) return
+
+    function activate(idx, focus) {
+      for (var i = 0; i < tabs.length; i++) {
+        var selected = i === idx
+        tabs[i].setAttribute('aria-selected', selected ? 'true' : 'false')
+        tabs[i].tabIndex = selected ? 0 : -1
+        if (panels[i]) panels[i].hidden = !selected
+        if (selected && focus) tabs[i].focus()
+      }
+    }
+
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener('click', function () {
+        activate(i, false)
+      })
+      tab.addEventListener('keydown', function (e) {
+        var idx = -1
+        if ('ArrowRight' === e.key || 'ArrowDown' === e.key) idx = (i + 1) % tabs.length
+        else if ('ArrowLeft' === e.key || 'ArrowUp' === e.key) idx = (i - 1 + tabs.length) % tabs.length
+        else if ('Home' === e.key) idx = 0
+        else if ('End' === e.key) idx = tabs.length - 1
+        if (idx >= 0) {
+          e.preventDefault()
+          activate(idx, true)
+        }
+      })
+    })
+
+    function goToTab(tabId) {
+      for (var i = 0; i < tabs.length; i++) {
+        if (tabs[i].id === tabId) {
+          activate(i, true)
+          return
+        }
+      }
+    }
+
+    var levels = Array.prototype.slice.call(section.querySelectorAll('.pw-quiz-level'))
+    levels.forEach(function (level) {
+      initQuiz(level, { goToTab: goToTab, nextTabId: level.getAttribute('data-next-tab') || '' })
+    })
   }
 
   function readConfig(root) {
@@ -29,7 +85,7 @@
     }
   }
 
-  function initQuiz(root) {
+  function initQuiz(root, levelCtx) {
     root.setAttribute('data-pw-quiz-ready', '1')
     root.classList.add('pw-quiz--js')
 
@@ -94,7 +150,26 @@
 
       submitResult(root.getAttribute('data-slug'), pct, scoreBox, config)
       maybeShowCta(root, pct)
+      maybeOfferNextLevel(scoreBox, pct, config, levelCtx)
     }
+  }
+
+  // When a level is passed (score >= its threshold, default 50%), surface a
+  // button that jumps to the next level's tab.
+  function maybeOfferNextLevel(scoreBox, pct, config, levelCtx) {
+    if (!scoreBox || !levelCtx || !levelCtx.nextTabId) return
+    var pass = 'number' === typeof config.pass ? config.pass : 50
+    if (pct < pass) return
+
+    var labels = config.labels || {}
+    var btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = 'pw-quiz-next'
+    btn.textContent = (labels.nextLevel || 'Next level') + ' →'
+    btn.addEventListener('click', function () {
+      levelCtx.goToTab(levelCtx.nextTabId)
+    })
+    scoreBox.appendChild(btn)
   }
 
   function buildScoreHtml(pct, score, total, config) {

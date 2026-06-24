@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 #[Group('integration')]
@@ -69,6 +70,26 @@ final class QuizApiControllerTest extends WebTestCase
         self::assertSame(1, $body['questions']);
     }
 
+    public function testLevelsPayloadSumsQuestionsAcrossLevels(): void
+    {
+        $body = $this->post([
+            'title' => 'Mountains',
+            'levels' => [
+                ['difficulty' => 'Easy', 'questions' => [
+                    ['q' => 'Q1', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]],
+                ]],
+                ['difficulty' => 'Hard', 'questions' => [
+                    ['q' => 'Q2', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]],
+                    ['q' => 'Q3', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]],
+                ]],
+            ],
+        ]);
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertTrue($body['valid']);
+        self::assertSame(3, $body['questions']);
+    }
+
     public function testInvalidPayloadReturns422WithPreciseViolations(): void
     {
         $body = $this->post([
@@ -84,7 +105,7 @@ final class QuizApiControllerTest extends WebTestCase
     public function testRequiresAuthentication(): void
     {
         $this->client->request(
-            'POST',
+            Request::METHOD_POST,
             '/api/quiz/validate',
             [],
             [],
@@ -103,7 +124,7 @@ final class QuizApiControllerTest extends WebTestCase
     private function post(array $body): array
     {
         $server = ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken, 'CONTENT_TYPE' => 'application/json'];
-        $this->client->request('POST', '/api/quiz/validate', [], [], $server, (string) json_encode($body));
+        $this->client->request(Request::METHOD_POST, '/api/quiz/validate', [], [], $server, (string) json_encode($body));
 
         return (array) json_decode((string) $this->client->getResponse()->getContent(), true);
     }

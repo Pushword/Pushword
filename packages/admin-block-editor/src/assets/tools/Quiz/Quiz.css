@@ -234,3 +234,42 @@
 .cdx-quiz__del:hover {
   background: #ffe4e6;
 }
+
+/* ---- difficulty levels ---- */
+.cdx-quiz__mode {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: #1f2937;
+  margin-bottom: 0.85rem;
+  cursor: pointer;
+}
+.cdx-quiz__mode-toggle {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--q-accent);
+  cursor: pointer;
+}
+.cdx-quiz__level {
+  border: 1px solid var(--q-border);
+  border-left: 3px solid var(--q-accent);
+  border-radius: 10px;
+  padding: 0.85rem;
+  margin-bottom: 0.85rem;
+  background: #fff;
+}
+.cdx-quiz__level-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--q-accent);
+  margin-bottom: 0.5rem;
+}
+.cdx-quiz__level .cdx-quiz__row {
+  grid-template-columns: 1fr 1fr 6rem;
+}

@@ -213,4 +213,143 @@ final class QuizValidationTest extends KernelTestCase
 
         self::assertContains('numbering', $paths);
     }
+
+    public function testEmptyQuizWithoutQuestionsOrLevelsIsRejected(): void
+    {
+        self::bootKernel();
+        // No questions and no levels: the structure callback must complain.
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('questions', $paths);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function leveledQuiz(): array
+    {
+        $level = static fn (string $difficulty): array => [
+            'difficulty' => $difficulty,
+            'questions' => [
+                ['q' => 'Q in '.$difficulty, 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]],
+            ],
+        ];
+
+        return [
+            'title' => 'Mountains',
+            'levels' => [$level('Easy'), $level('Hard')],
+        ];
+    }
+
+    public function testLevelsQuizValidates(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray($this->leveledQuiz());
+
+        // The root carries no questions of its own once it delegates to levels.
+        self::assertCount(0, $quiz->questions);
+        self::assertCount(2, $quiz->levels);
+        self::assertCount(0, self::getContainer()->get(ValidatorInterface::class)->validate($quiz));
+    }
+
+    public function testLevelWithoutQuestionsIsRejected(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'title' => 'Mountains',
+            'levels' => [
+                ['difficulty' => 'Easy', 'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]]]],
+                ['difficulty' => 'Empty', 'questions' => []],
+            ],
+        ]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('levels[1].questions', $paths);
+    }
+
+    public function testLevelInheritsRootMetadata(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'cta' => 'newsletter',
+            'pass' => 60,
+            'labels' => ['explanation' => 'Exp'],
+            'levels' => [
+                [
+                    'difficulty' => 'Easy',
+                    'labels' => ['score' => 'Sc'],
+                    'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]]],
+                ],
+            ],
+        ]);
+
+        $level = $quiz->levels[0];
+        self::assertSame('Easy', $level->difficulty);
+        self::assertSame('newsletter', $level->cta, 'cta inherited from the root');
+        self::assertSame(60, $level->pass, 'pass inherited from the root');
+        self::assertSame('Exp', $level->labels['explanation'], 'root labels merged in');
+        self::assertSame('Sc', $level->labels['score'], 'level labels override/extend the root');
+    }
+
+    public function testPassThresholdOutOfRangeIsRejected(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'pass' => 150,
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]]],
+        ]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('pass', $paths);
+    }
+
+    public function testNestedLevelsAreIgnored(): void
+    {
+        self::bootKernel();
+        // Recursion is bound to a single depth: a level never carries its own levels.
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'levels' => [
+                [
+                    'difficulty' => 'Easy',
+                    'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]]],
+                    'levels' => [['difficulty' => 'Nested', 'questions' => []]],
+                ],
+            ],
+        ]);
+
+        self::assertCount(0, $quiz->levels[0]->levels);
+        self::assertCount(0, self::getContainer()->get(ValidatorInterface::class)->validate($quiz));
+    }
+
+    public function testRenderLevelsProducesAccessibleTabs(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $extension = self::getContainer()->get(QuizExtension::class);
+
+        $output = $extension->renderQuiz((string) json_encode($this->leveledQuiz()));
+
+        self::assertStringContainsString('pw-quiz--levels', $output);
+        self::assertStringContainsString('role="tablist"', $output);
+        self::assertStringContainsString('role="tab"', $output);
+        self::assertStringContainsString('role="tabpanel"', $output);
+        // Each level submits its percentile under a discriminated slug (no collision).
+        self::assertStringContainsString('.0"', $output);
+        self::assertStringContainsString('.1"', $output);
+        // Tab labels fall back to the level difficulty.
+        self::assertStringContainsString('>Easy</button>', $output);
+    }
 }

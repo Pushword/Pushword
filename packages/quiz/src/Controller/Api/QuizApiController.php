@@ -35,9 +35,14 @@ final class QuizApiController extends AbstractApiController
             return $this->validationErrors($violations);
         }
 
+        $questions = \count($quiz->questions);
+        foreach ($quiz->levels as $level) {
+            $questions += \count($level->questions);
+        }
+
         return $this->respond([
             'valid' => true,
-            'questions' => \count($quiz->questions),
+            'questions' => $questions,
         ]);
     }
 

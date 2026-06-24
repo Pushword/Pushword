@@ -4,7 +4,6 @@ namespace Pushword\Quiz\Twig;
 
 use Pushword\Conversation\Twig\AppExtension;
 use Pushword\Core\Site\SiteRegistry;
-use Pushword\Quiz\Model\ResultBand;
 use Pushword\Quiz\Service\QuizFactory;
 
 use function Safe\json_decode;
@@ -63,24 +62,16 @@ final class QuizExtension
             return $this->renderError($messages);
         }
 
-        $results = array_map(
-            static fn (ResultBand $band): array => ['min' => $band->min, 'msg' => $band->msg],
-            $quiz->results,
-        );
-
         $template = $this->apps->get()->getView('/component/quiz.html.twig', '@PushwordQuiz');
 
         // UI words default to the site locale (resolved with |trans in the
         // template); a quiz can override any of them through its JSON `labels`.
+        // The template builds the per-unit JS config itself, so it handles both
+        // a single quiz and the per-level tabs uniformly.
         return $this->twig->render($template, [
             'quiz' => $quiz,
             'page' => $this->apps->getCurrentPage(),
             'id' => 'pw-quiz-'.(++$this->instances),
-            'labels' => $quiz->labels,
-            'config' => [
-                'feedback' => $quiz->feedback,
-                'results' => $results,
-            ],
             'conversationAvailable' => class_exists(AppExtension::class),
         ]);
     }
