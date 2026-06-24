@@ -5,20 +5,20 @@ description: >-
   build, edit, or validate content features that Pushword exposes through Twig
   functions and its API, even if the user doesn't name Pushword explicitly.
   Right now it covers ONE thing: creating a quiz (an interactive multiple-choice
-  QCM declared inline with `{{ quiz('…json…') }}`, rendered server-side for SEO).
+  QCM declared inline with a `{% quiz %}` block, rendered server-side for SEO).
   Trigger it for requests like "add a quiz about X to this page", "make a QCM",
   "create an interactive quiz", "build a knowledge test", "turn this lesson into
   a quiz", or "validate this quiz" on a site built with Pushword. Authoring the
-  JSON by hand is error-prone (a single-quote footgun, a strict validator); this
-  skill makes it reliable.
+  JSON by hand drifts from a strict validator; this skill encodes the rules and a
+  one-command lint so the result renders the first time.
 ---
 
 # pw — Pushword content authoring
 
 A router for authoring Pushword content. Pushword is a modular Symfony CMS; some
-of its features are declared inline in a page through Twig functions (e.g.
-`{{ quiz('…') }}`) and validated by a strict server-side schema. Writing that by
-hand drifts from the rules. Each command below encodes the real schema, the
+of its features are declared inline in a page through Twig blocks/functions (e.g.
+the `{% quiz %}` block) and validated by a strict server-side schema. Writing that
+by hand drifts from the rules. Each command below encodes the real schema, the
 gotchas, and a verification step so the result renders the first time.
 
 ## Commands

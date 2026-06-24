@@ -22,7 +22,7 @@ name: Extensions
 - [Page Update Notifier](/extension/page-update-notifier)
   Get mail notification when your pushword content (page) is edited.
 - [Quiz](/extension/quiz)
-  Interactive client-side QCM declared inline with `{{ quiz('…json…') }}`, rendered server-side for SEO, with an anonymous percentile and an optional end-of-quiz conversion form.
+  Interactive client-side QCM declared inline with a `{% quiz %}` block, rendered server-side for SEO, with an anonymous percentile and an optional end-of-quiz conversion form.
 - [Search](/extension/search)
   Optional SQLite-native full-text search (typo tolerance, ranking) via Loupe — zero infra, ships with the static build.
 - [Snippet](/extension/snippet)
