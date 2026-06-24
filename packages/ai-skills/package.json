@@ -1,0 +1,17 @@
+{
+  "name": "@pushword/ai-skills",
+  "version": "0.0.0",
+  "private": true,
+  "description": "AI authoring skills for Pushword. Ships the `pw` skill (invoked as /pw <command>); currently /pw quiz authors, embeds and validates an interactive QCM. Inspired by pbakaus/impeccable.",
+  "license": "MIT",
+  "keywords": [
+    "pushword",
+    "claude",
+    "skill",
+    "agent",
+    "quiz"
+  ],
+  "files": [
+    "pw"
+  ]
+}
