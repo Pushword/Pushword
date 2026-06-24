@@ -15,7 +15,7 @@ class Quiz
     /**
      * @param Question[]            $questions
      * @param ResultBand[]          $results
-     * @param array<string, string> $labels    author-defined UI words (no i18n): question, questions, explanation, score, better
+     * @param array<string, string> $labels    overrides for the locale-defaulted UI words: question, questions, explanation, score, better
      */
     public function __construct(
         public ?string $title = null,

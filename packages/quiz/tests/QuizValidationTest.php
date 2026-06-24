@@ -3,11 +3,13 @@
 namespace Pushword\Quiz\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Site\RequestContext;
 use Pushword\Quiz\Editor\QuizEditorToolProvider;
 use Pushword\Quiz\Service\QuizFactory;
 use Pushword\Quiz\Twig\QuizExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Group('integration')]
 final class QuizValidationTest extends KernelTestCase
@@ -66,6 +68,42 @@ final class QuizValidationTest extends KernelTestCase
         $output = self::getContainer()->get(QuizExtension::class)->renderQuiz('this is not json');
 
         self::assertSame('', $output);
+    }
+
+    public function testRenderLocalizesLabelDefaults(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $extension = self::getContainer()->get(QuizExtension::class);
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+
+        $json = '{"questions":[{"q":"Capital of France?","answers":'
+            .'[{"a":"Paris","correct":true},{"a":"Lyon"}],"explanation":"Paris is the capital."}]}';
+
+        $translator->setLocale('en');
+        $en = $extension->renderQuiz($json);
+        self::assertStringContainsString('>Explanation<', $en);
+        // `score`/`better` feed only the JS config (no server-rendered HTML).
+        self::assertStringContainsString('Your score:', $en);
+        self::assertStringContainsString('Better than {p}% of participants', $en);
+
+        $translator->setLocale('fr');
+        self::assertStringContainsString('>Explication<', $extension->renderQuiz($json));
+    }
+
+    public function testRenderLabelsHonorJsonOverride(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $extension = self::getContainer()->get(QuizExtension::class);
+        self::getContainer()->get(TranslatorInterface::class)->setLocale('fr');
+
+        $json = '{"labels":{"explanation":"Note"},"questions":[{"q":"Capital of France?",'
+            .'"answers":[{"a":"Paris","correct":true},{"a":"Lyon"}],"explanation":"Paris is the capital."}]}';
+        $output = $extension->renderQuiz($json);
+
+        self::assertStringContainsString('>Note<', $output);
+        self::assertStringNotContainsString('>Explication<', $output);
     }
 
     public function testEditorProviderExposesQuizTool(): void

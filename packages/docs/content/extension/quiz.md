@@ -57,9 +57,10 @@ image from the media library, add a video, write the explanation).
   *"Receive the next quizzes in your mailbox"*).
 - `numbering` — prefix each answer so people can refer to one out loud: `"A"`
   (A, B, C…), `"a"` (a, b, c…), `"1"` (1, 2, 3…), or `""` for none (default).
-- `labels` — author-defined UI words (no i18n), overriding the English
-  defaults: `question`, `questions`, `explanation`, `score`, and `better` (use
-  `{p}` as the percentile placeholder). Set these in the quiz's own language.
+- `labels` — overrides for the UI words, which otherwise default to the site
+  locale: `question`, `questions`, `explanation`, `score`, and `better` (use
+  `{p}` as the percentile placeholder). Set these only to force a specific
+  wording.
 
 ## SEO & accessibility
 

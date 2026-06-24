@@ -24,15 +24,6 @@ use Twig\Environment as Twig;
  */
 final class QuizExtension
 {
-    /** English fallbacks for the author-defined UI words (see Quiz::$labels). */
-    private const array DEFAULT_LABELS = [
-        'question' => 'Question',
-        'questions' => 'questions',
-        'explanation' => 'Explanation',
-        'score' => 'Your score:',
-        'better' => 'Better than {p}% of participants',
-    ];
-
     private int $instances = 0;
 
     public function __construct(
@@ -77,21 +68,18 @@ final class QuizExtension
             $quiz->results,
         );
 
-        // UI words live in the quiz JSON (author-defined, no i18n); fall back to
-        // English defaults so a quiz that sets none still reads correctly.
-        $labels = [...self::DEFAULT_LABELS, ...$quiz->labels];
-
         $template = $this->apps->get()->getView('/component/quiz.html.twig', '@PushwordQuiz');
 
+        // UI words default to the site locale (resolved with |trans in the
+        // template); a quiz can override any of them through its JSON `labels`.
         return $this->twig->render($template, [
             'quiz' => $quiz,
             'page' => $this->apps->getCurrentPage(),
             'id' => 'pw-quiz-'.(++$this->instances),
-            'labels' => $labels,
+            'labels' => $quiz->labels,
             'config' => [
                 'feedback' => $quiz->feedback,
                 'results' => $results,
-                'labels' => ['score' => $labels['score'], 'better' => $labels['better']],
             ],
             'conversationAvailable' => class_exists(AppExtension::class),
         ]);

@@ -11,6 +11,16 @@
   '1': 1..30,
 }[quiz.numbering] ?? [] %}
 
+{# UI words default to the site locale; the quiz JSON `labels` override them. #}
+{% set labels = {
+  question: labels.question|default('quiz.label.question'|trans),
+  questions: labels.questions|default('quiz.label.questions'|trans),
+  explanation: labels.explanation|default('quiz.label.explanation'|trans),
+  score: labels.score|default('quiz.label.score'|trans),
+  better: labels.better|default('quiz.label.better'|trans),
+} %}
+{% set config = config|merge({ labels: { score: labels.score, better: labels.better } }) %}
+
 <link rel="stylesheet" href="{{ asset('bundles/pushwordquiz/quiz.css') }}">
 
 <section class="pw-quiz" id="{{ id }}" data-pw-quiz data-slug="{{ slug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>

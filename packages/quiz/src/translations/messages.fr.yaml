@@ -1,4 +1,10 @@
 quiz:
+  label:
+    better: 'Mieux que {p}% des participants'
+    explanation: 'Explication'
+    question: 'Question'
+    questions: 'questions'
+    score: 'Votre score :'
   result:
     label:
       plural: 'Résultats de quiz'
