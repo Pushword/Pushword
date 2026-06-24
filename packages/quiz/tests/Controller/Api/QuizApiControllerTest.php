@@ -90,6 +90,22 @@ final class QuizApiControllerTest extends WebTestCase
         self::assertSame(3, $body['questions']);
     }
 
+    public function testSchemaEndpointReturnsJsonSchema(): void
+    {
+        $this->client->request(
+            Request::METHOD_GET,
+            '/api/quiz/schema',
+            [],
+            [],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken],
+        );
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $schema = (array) json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertSame('Pushword Quiz', $schema['title']);
+        self::assertArrayHasKey('$defs', $schema);
+    }
+
     public function testInvalidPayloadReturns422WithPreciseViolations(): void
     {
         $body = $this->post([

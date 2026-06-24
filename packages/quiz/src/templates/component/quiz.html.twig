@@ -13,11 +13,8 @@
   <li class="pw-quiz-q" data-q="{{ idx0 }}">
     <span class="pw-quiz-q-num" aria-hidden="true">{{ l.question }} {{ idx }}/{{ total }}</span>
 
-    {% if q.video %}
-      <div class="pw-quiz-media">{{ video(q.video, q.media|default(''), q.alt|default('')) }}</div>
-    {% elseif q.media %}
-      <div class="pw-quiz-media">{{ image(q.media, alt: q.alt|default(''), mode: 'responsive', lazy: true, class: 'pw-quiz-media-img') }}</div>
-    {% endif %}
+    {# Guarded render: a missing/broken media file skips the figure instead of 500-ing the page. #}
+    {{ quiz_figure(q) }}
 
     <p class="pw-quiz-question">{{ q.q }}</p>
 
@@ -26,7 +23,7 @@
         <li>
           <button type="button" class="pw-quiz-a"{{ a.correct ? ' data-correct' : '' }} aria-pressed="false">
             {% if prefixes[loop.index0] is defined %}<span class="pw-quiz-a-prefix" aria-hidden="true">{{ prefixes[loop.index0] }}</span>{% endif %}
-            {% if a.media %}{{ image(a.media, alt: a.alt|default(''), lazy: true, class: 'pw-quiz-a-img') }}{% endif %}
+            {{ quiz_answer_image(a) }}
             <span class="pw-quiz-a-text">{{ a.text }}</span>
             <span class="pw-quiz-a-mark" aria-hidden="true"></span>
           </button>

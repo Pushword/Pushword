@@ -52,9 +52,10 @@ const LABEL_DEFAULTS: Record<string, string> = {
 }
 
 /**
- * Editor for the `{{ quiz('…json…') }}` block: add/remove questions and answers,
- * flag the correct answer(s), attach an image or video, write the explanation.
- * Round-trips to/from a single-quoted Twig-string JSON payload.
+ * Editor for the quiz block: add/remove questions and answers, flag the correct
+ * answer(s), attach an image or video, write the explanation. Exports a
+ * `{% quiz %}…{% endquiz %}` block with pretty-printed raw JSON, and imports both
+ * that and the legacy `{{ quiz('…') }}` form.
  */
 export default class Quiz extends BaseTool {
   declare public data: QuizData
@@ -625,20 +626,17 @@ export default class Quiz extends BaseTool {
     const hasLevels = !!clean.levels && clean.levels.length > 0
     if (!hasQuestions && !hasLevels) return ''
 
-    // Inline JSON inside a single-quoted Twig string: double backslashes, then
-    // escape single quotes. Twig sees only a string literal — it cannot choke
-    // on the quiz structure, so a bad payload degrades instead of 500-ing.
-    const escaped = JSON.stringify(clean).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
-
-    return `{{ quiz('${escaped}') }}`
+    // The `{% quiz %}` body is raw JSON: no Twig-string escaping (apostrophes stay
+    // literal) and pretty-printed so the stored content reads and diffs cleanly.
+    // JSON.stringify never emits blank lines, which the Markdown pipeline splits on.
+    return `{% quiz %}\n${JSON.stringify(clean, null, 2)}\n{% endquiz %}`
   }
 
   static importFromMarkdown(editor: API, markdown: string): QuizData {
     const empty: QuizData = { feedback: 'immediate', questions: [] }
-    const match = markdown.match(/\{\{\s*quiz\(\s*'((?:\\.|[^'\\])*)'\s*\)\s*\}\}/)
-    if (!match) return empty
+    const json = Quiz.extractJson(markdown)
+    if (json === null) return empty
 
-    const json = match[1].replace(/\\(['\\])/g, '$1')
     let data: QuizData
     try {
       data = JSON.parse(json)
@@ -651,7 +649,22 @@ export default class Quiz extends BaseTool {
     return data
   }
 
+  /**
+   * Pull the JSON out of either the `{% quiz %}` block (raw body) or the legacy
+   * `{{ quiz('…') }}` function (a single-quoted Twig string, so `\'`/`\\` are
+   * unescaped back to JSON).
+   */
+  private static extractJson(markdown: string): string | null {
+    const tag = markdown.match(/\{%\s*quiz\s*%\}([\s\S]*?)\{%\s*endquiz\s*%\}/)
+    if (tag) return (tag[1] ?? '').trim()
+
+    const fn = markdown.match(/\{\{\s*quiz\(\s*'((?:\\.|[^'\\])*)'\s*\)\s*\}\}/)
+    if (fn) return (fn[1] ?? '').replace(/\\(['\\])/g, '$1')
+
+    return null
+  }
+
   static isItMarkdownExported(markdown: string): boolean {
-    return /\{\{\s*quiz\(/.test(markdown)
+    return /\{%\s*quiz\s*%\}/.test(markdown) || /\{\{\s*quiz\(/.test(markdown)
   }
 }

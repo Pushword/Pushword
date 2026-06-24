@@ -4,8 +4,10 @@ namespace Pushword\Quiz\Controller\Api;
 
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Quiz\Service\QuizFactory;
+use Pushword\Quiz\Service\QuizSchemaProvider;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -22,7 +24,14 @@ final class QuizApiController extends AbstractApiController
     public function __construct(
         private readonly QuizFactory $factory,
         private readonly ValidatorInterface $validator,
+        private readonly QuizSchemaProvider $schemaProvider,
     ) {
+    }
+
+    #[Route(path: '/api/quiz/schema', name: 'pushword_api_quiz_schema', methods: ['GET'])]
+    public function schema(): Response
+    {
+        return new Response($this->schemaProvider->json(), Response::HTTP_OK, ['Content-Type' => 'application/schema+json']);
     }
 
     #[Route(path: '/api/quiz/validate', name: 'pushword_api_quiz_validate', methods: ['POST'])]
@@ -56,7 +65,7 @@ final class QuizApiController extends AbstractApiController
                 '/api/quiz/validate' => [
                     'post' => [
                         'summary' => 'Validate a quiz JSON payload',
-                        'description' => 'Returns {valid:true} on success, or 422 with {violations:[{path,message}]}.',
+                        'description' => 'Returns {valid:true} on success, or 422 with {violations:[{path,message}]}. Fetch /api/quiz/schema for the payload shape.',
                         'tags' => ['Quiz'],
                         'requestBody' => [
                             'required' => true,
@@ -65,6 +74,16 @@ final class QuizApiController extends AbstractApiController
                         'responses' => [
                             '200' => ['description' => 'Valid quiz'],
                             '422' => ['description' => 'Validation errors'],
+                        ],
+                    ],
+                ],
+                '/api/quiz/schema' => [
+                    'get' => [
+                        'summary' => 'JSON Schema of a quiz payload',
+                        'description' => 'Returns the machine-readable JSON Schema describing the quiz JSON shape (keys, aliases, enums).',
+                        'tags' => ['Quiz'],
+                        'responses' => [
+                            '200' => ['description' => 'JSON Schema'],
                         ],
                     ],
                 ],

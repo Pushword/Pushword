@@ -23,16 +23,38 @@ table stores anonymous scores for the percentile) and `bin/console assets:instal
 
 ## Declare a quiz
 
-Use the `quiz()` Twig function in a page's content. The argument is a JSON
-**string** describing the quiz:
+Declare a quiz inline in a page's content. The payload is a JSON object; there
+are two equivalent ways to write it.
+
+**Recommended — the `{% quiz %}` block.** The JSON is the raw tag body, so
+apostrophes and quotes need **no escaping** and the JSON stays readable/diffable:
 
 ```twig
-{{ quiz('{"title":"Mountains","feedback":"immediate","cta":"newsletter","questions":[{"q":"Highest summit?","answers":[{"a":"Mont Blanc"},{"a":"Everest","correct":true},{"a":"K2"}],"explanation":"Everest is 8,849 m."}],"results":[{"min":0,"msg":"Try again"},{"min":80,"msg":"Expert!"}]}') }}
+{% quiz %}{"title":"Mountains","feedback":"immediate","cta":"newsletter","questions":[{"q":"Highest summit?","answers":[{"a":"Mont Blanc"},{"a":"Everest","correct":true},{"a":"K2"}],"explanation":"Everest is 8,849 m."}],"results":[{"min":0,"msg":"Try again"},{"min":80,"msg":"Expert!"}]}{% endquiz %}
+```
+
+**Legacy — the `quiz()` function.** Here the JSON is a single-quoted Twig
+string, so every literal apostrophe must be escaped as `\'`:
+
+```twig
+{{ quiz('{"title":"Mountains", … }') }}
 ```
 
 You normally never write that JSON by hand — the **EditorJS block** generates it
 (add/remove questions and answers, flag the correct answer, pick or upload an
-image from the media library, add a video, write the explanation).
+image from the media library, add a video, write the explanation). When you do
+author a flat file by hand, prefer the `{% quiz %}` block and lint it with
+`pw:quiz:validate` (below).
+
+> The `{% quiz %}` body is sub-parsed as Twig, so a `{{ … }}` inside it is still
+> interpolated — but the result is then JSON-decoded, so only quote-free output
+> is safe (a bare URL, a number). A helper like `{{ link() }}` emits HTML with
+> double quotes and would break the JSON. Keep the JSON body free of **blank
+> lines** (compact or pretty-printed without empty lines): the Markdown pipeline
+> splits content on blank lines, which would cut the block in two.
+
+A missing or unknown media file no longer 500s the page: the illustration is
+skipped (admins see an inline warning) and the rest of the quiz still renders.
 
 ### Question & answer fields
 
@@ -73,11 +95,11 @@ selector. Add a `levels` array: each entry is a **complete quiz of its own**
 `labels`), while the root keeps the shared metadata (`title`, `labels`, …).
 
 ```twig
-{{ quiz('{"title":"Mountains","cta":"newsletter","pass":50,"levels":[
+{% quiz %}{"title":"Mountains","cta":"newsletter","pass":50,"levels":[
   {"difficulty":"Easy","questions":[ … ],"results":[ … ]},
   {"difficulty":"Intermediate","questions":[ … ]},
   {"difficulty":"Hard","questions":[ … ]}
-]}') }}
+]}{% endquiz %}
 ```
 
 - The tab label is `label ?? difficulty`.
@@ -123,3 +145,32 @@ curl -X POST https://example.tld/api/quiz/validate \
   -d '{"questions":[{"q":"","answers":[{"a":"x"}]}]}'
 # 422 → {"error":"validation","violations":[{"path":"questions[0].q","message":"A question cannot be empty."}, …]}
 ```
+
+## Validate from the CLI (no server)
+
+`pw:quiz:validate` lints every quiz block in a flat file (both `{% quiz %}` and
+`{{ quiz('…') }}` forms) — or stdin (`-`) — against the same rules, printing
+`{path, message}` violations and exiting non-zero. Drop it into an edit→check
+loop:
+
+```bash
+bin/console pw:quiz:validate content/my-page.md
+#  ✓ Quiz #1 (line 12, {% quiz %}) — valid
+cat draft.md | bin/console pw:quiz:validate -
+```
+
+It also warns (without failing) when a `cta` does not match a registered
+Conversation form type.
+
+## JSON Schema
+
+Fetch the machine-readable JSON Schema of a quiz payload (keys, aliases, enums)
+to generate a structurally-valid quiz in one shot:
+
+```bash
+bin/console pw:quiz:schema                 # prints the schema
+curl https://example.tld/api/quiz/schema   # same schema (token-authenticated)
+```
+
+The Symfony Validator on the `Quiz` model stays the source of truth; the schema
+mirrors its structure as an authoring aid.

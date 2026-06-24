@@ -1,0 +1,100 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://pushword.piedweb.com/schema/quiz.json",
+    "title": "Pushword Quiz",
+    "description": "A quiz declared inline in a page via {% quiz %}…{% endquiz %} (raw JSON body) or {{ quiz('…json…') }} (single-quoted Twig string). The Symfony Validator on the Quiz model is the source of truth; this schema mirrors its structure as an authoring aid. Cross-field rules it cannot express: a quiz needs `questions` unless it delegates them to `levels`; each question needs at least one `correct` answer; a `video` requires both `media` (used as the poster) and `alt`.",
+    "type": "object",
+    "anyOf": [
+        { "required": ["questions"] },
+        { "required": ["levels"] }
+    ],
+    "properties": {
+        "title": { "type": "string" },
+        "difficulty": { "type": "string", "description": "Free label shown as a badge, e.g. \"Easy\"." },
+        "feedback": { "enum": ["immediate", "end"], "default": "immediate" },
+        "numbering": { "enum": ["", "A", "a", "1"], "default": "", "description": "Answer prefix style." },
+        "cta": { "type": "string", "description": "A registered pushword/conversation form type shown at the end (e.g. \"newsletter\"). Ignored if conversation is not installed." },
+        "ctaTitle": { "type": "string" },
+        "pass": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Score %% needed to pass a level and reveal the next-level button (default 50)." },
+        "label": { "type": "string", "description": "Tab label for a difficulty level; falls back to `difficulty`." },
+        "labels": { "$ref": "#/$defs/labels" },
+        "results": { "type": "array", "items": { "$ref": "#/$defs/band" } },
+        "questions": { "type": "array", "items": { "$ref": "#/$defs/question" } },
+        "levels": {
+            "type": "array",
+            "description": "Difficulty levels, each a full leaf quiz (no nested levels). The root keeps the shared metadata.",
+            "items": { "$ref": "#/$defs/level" }
+        }
+    },
+    "additionalProperties": false,
+    "$defs": {
+        "labels": {
+            "type": "object",
+            "description": "Overrides for the locale-defaulted UI words.",
+            "properties": {
+                "question": { "type": "string" },
+                "questions": { "type": "string" },
+                "explanation": { "type": "string" },
+                "score": { "type": "string" },
+                "better": { "type": "string" },
+                "level": { "type": "string" },
+                "nextLevel": { "type": "string" }
+            },
+            "additionalProperties": { "type": "string" }
+        },
+        "question": {
+            "type": "object",
+            "required": ["q", "answers"],
+            "properties": {
+                "q": { "type": "string", "minLength": 1, "description": "The question text (alias: text)." },
+                "text": { "type": "string" },
+                "answers": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/answer" } },
+                "media": { "type": "string", "description": "Image filename; also the poster when `video` is set." },
+                "video": { "type": "string", "description": "Video URL; requires `media` (poster) and `alt`." },
+                "alt": { "type": "string" },
+                "explanation": { "type": "string" }
+            },
+            "additionalProperties": false
+        },
+        "answer": {
+            "type": "object",
+            "required": ["a"],
+            "properties": {
+                "a": { "type": "string", "minLength": 1, "description": "The answer text (alias: text)." },
+                "text": { "type": "string" },
+                "correct": { "type": "boolean", "default": false },
+                "media": { "type": "string" },
+                "alt": { "type": "string" }
+            },
+            "additionalProperties": false
+        },
+        "band": {
+            "type": "object",
+            "required": ["min", "msg"],
+            "properties": {
+                "min": { "type": "integer", "minimum": 0, "maximum": 100 },
+                "msg": { "type": "string", "description": "Message for scores ≥ min (alias: message)." },
+                "message": { "type": "string" }
+            },
+            "additionalProperties": false
+        },
+        "level": {
+            "type": "object",
+            "required": ["questions"],
+            "description": "A difficulty level: like the root quiz but with its own questions/results, inheriting feedback/cta/ctaTitle/pass/labels/results when omitted. Any nested `levels` are ignored.",
+            "properties": {
+                "label": { "type": "string" },
+                "difficulty": { "type": "string" },
+                "feedback": { "enum": ["immediate", "end"] },
+                "numbering": { "enum": ["", "A", "a", "1"] },
+                "cta": { "type": "string" },
+                "ctaTitle": { "type": "string" },
+                "pass": { "type": "integer", "minimum": 0, "maximum": 100 },
+                "labels": { "$ref": "#/$defs/labels" },
+                "results": { "type": "array", "items": { "$ref": "#/$defs/band" } },
+                "questions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/question" } }
+            },
+            "additionalProperties": false
+        }
+    }
+}

@@ -2,12 +2,19 @@
 
 Interactive, (almost) server-less quizzes (QCM) for [Pushword](https://pushword.piedweb.com).
 
-- **`{{ quiz('…json…') }}` Twig block** — declare a quiz inline in a page. The
-  payload is a JSON *string* (not a Twig hash) on purpose: Twig can never choke
-  on its structure, so a malformed quiz degrades gracefully (admins see a
-  detailed error panel, visitors see nothing) instead of 500-ing the page.
+- **`{% quiz %}{ …json… }{% endquiz %}` block** (recommended) — declare a quiz
+  inline in a page. The JSON is the **raw tag body**, so apostrophes/quotes need
+  no escaping and the payload stays readable/diffable. The legacy
+  `{{ quiz('…json…') }}` function still works (there the JSON is a single-quoted
+  Twig string, so literal `'` must be escaped as `\'`). A malformed quiz degrades
+  gracefully (admins see a detailed error panel, visitors see nothing) instead of
+  500-ing the page — and a missing media file is skipped, not fatal.
 - **EditorJS block** — add/remove questions and answers, flag the correct
   answer(s), attach an image or a video, write the explanation.
+- **`pw:quiz:validate <file|->`** — lint quiz blocks in a flat file (or stdin)
+  with precise `{path, message}` violations and a non-zero exit, for an
+  edit→check loop without a server. `pw:quiz:schema` prints the payload's JSON
+  Schema.
 - **Progressive enhancement** — the full quiz is rendered server-side as a
   readable, schema.org-tagged Q&A (great for SEO and no-JS); `quiz.js` turns it
   into a one-question-at-a-time game with immediate feedback and a score donut.
@@ -18,6 +25,7 @@ Interactive, (almost) server-less quizzes (QCM) for [Pushword](https://pushword.
   identity). Optional soft dependency.
 - **`POST /api/quiz/validate`** — token-authenticated endpoint (for AI agents)
   that validates a quiz payload and returns precise `{path, message}` violations.
+  **`GET /api/quiz/schema`** serves the payload's JSON Schema.
 
 ## Quiz JSON shape
 

@@ -2,7 +2,10 @@
 
 namespace Pushword\Quiz\Tests;
 
+use DateTime;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Component\EntityFilter\ManagerPool;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Quiz\Editor\QuizEditorToolProvider;
 use Pushword\Quiz\Service\QuizFactory;
@@ -10,6 +13,7 @@ use Pushword\Quiz\Twig\QuizExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Environment;
 
 #[Group('integration')]
 final class QuizValidationTest extends KernelTestCase
@@ -332,6 +336,112 @@ final class QuizValidationTest extends KernelTestCase
 
         self::assertCount(0, $quiz->levels[0]->levels);
         self::assertCount(0, self::getContainer()->get(ValidatorInterface::class)->validate($quiz));
+    }
+
+    public function testQuizTagSurvivesTheMainContentMarkdownPipeline(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+
+        $page = new Page();
+        $page->setH1('Quiz pipeline page');
+        $page->setSlug('quiz-pipeline');
+        $page->locale = 'en';
+        $page->createdAt = new DateTime('1 day ago');
+        $page->updatedAt = new DateTime('1 day ago');
+        $page->setMainContent(
+            'Intro paragraph.'."\n\n"
+            .'{% quiz %}{"questions":[{"q":"L\'eau bout à ?",'
+            .'"answers":[{"a":"100°C","correct":true},{"a":"0°C"}]}]}{% endquiz %}'."\n\n"
+            .'Outro paragraph.'
+        );
+
+        $manager = self::getContainer()->get(ManagerPool::class)->getManager($page);
+        $html = $manager->mainContent(); // @phpstan-ignore-line (magic __call applies the main_content chain)
+
+        self::assertIsString($html);
+        // The quiz block rendered to its component markup, not a literal code block.
+        self::assertStringContainsString('pw-quiz', $html);
+        self::assertStringContainsString('data-correct', $html);
+        self::assertStringContainsString('100°C', $html);
+        // Surrounding paragraphs still went through Markdown.
+        self::assertStringContainsString('<p>Intro paragraph.</p>', $html);
+        self::assertStringContainsString('<p>Outro paragraph.</p>', $html);
+    }
+
+    public function testMissingQuestionMediaDoesNotFatalTheRender(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $extension = self::getContainer()->get(QuizExtension::class);
+
+        // `image()` throws on an unknown internal media; the guard must swallow it —
+        // for both the question figure and an answer thumbnail — so the question
+        // (and the rest of the page) still renders instead of 500-ing.
+        $json = '{"questions":[{"q":"Has a broken image","media":"this-media-does-not-exist-xyz.jpg",'
+            .'"answers":[{"a":"A","correct":true,"media":"missing-answer-img.jpg"},{"a":"B"}]}]}';
+        $output = $extension->renderQuiz($json);
+
+        self::assertStringContainsString('Has a broken image', $output);
+        self::assertStringContainsString('pw-quiz', $output);
+        // Both the question figure and the answer thumbnail were skipped, not rendered.
+        self::assertStringNotContainsString('pw-quiz-media-img', $output);
+        self::assertStringNotContainsString('pw-quiz-a-img', $output);
+    }
+
+    public function testQuizTagInterpolatesQuoteFreeTwig(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $twig = self::getContainer()->get(Environment::class);
+
+        // The tag body is sub-parsed as Twig: a quote-free {{ … }} is interpolated
+        // before the JSON is decoded (HTML-emitting helpers would break the JSON).
+        $template = '{% quiz %}{"questions":[{"q":"1 + 1 = {{ 1 + 1 }}?",'
+            .'"answers":[{"a":"Two","correct":true},{"a":"Three"}]}]}{% endquiz %}';
+        $output = $twig->createTemplate($template)->render();
+
+        self::assertStringContainsString('1 + 1 = 2?', $output);
+    }
+
+    public function testQuizTagRendersUnescapedJsonBody(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $twig = self::getContainer()->get(Environment::class);
+
+        // The raw `{% quiz %}` body carries a literal apostrophe — no `\'` escaping,
+        // unlike the single-quoted Twig string the `{{ quiz('…') }}` form requires.
+        $template = '{% quiz %}{"questions":[{"q":"L\'eau bout à ?",'
+            .'"answers":[{"a":"100°C","correct":true},{"a":"0°C"}]}]}{% endquiz %}';
+        $output = $twig->createTemplate($template)->render();
+
+        self::assertStringContainsString('pw-quiz', $output);
+        self::assertStringContainsString('100°C', $output);
+        // The apostrophe survived the round-trip (Twig autoescapes it in the markup).
+        self::assertStringContainsString('eau bout', $output);
+        self::assertStringContainsString('data-correct', $output);
+    }
+
+    public function testQuizTagAndFunctionProduceEquivalentMarkup(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $twig = self::getContainer()->get(Environment::class);
+        $json = '{"questions":[{"q":"Capital of France?",'
+            .'"answers":[{"a":"Paris","correct":true},{"a":"Lyon"}]}]}';
+
+        $fromTag = $twig->createTemplate('{% quiz %}'.$json.'{% endquiz %}')->render();
+        $fromFunction = self::getContainer()->get(QuizExtension::class)->renderQuiz($json);
+
+        // Same payload, same markup — only the authoring syntax differs. The
+        // instance counter makes the `id`/`pw-quiz-N` differ, so compare structure.
+        self::assertStringContainsString('Capital of France?', $fromTag);
+        self::assertStringContainsString('Capital of France?', $fromFunction);
+        self::assertSame(
+            substr_count($fromFunction, 'pw-quiz-a'),
+            substr_count($fromTag, 'pw-quiz-a'),
+        );
     }
 
     public function testRenderLevelsProducesAccessibleTabs(): void

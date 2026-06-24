@@ -5,8 +5,8 @@ import { API } from '@editorjs/editorjs'
 /**
  * Round-trip tests for the difficulty-levels mode: the editor must render N full
  * sub-quizzes, save them back as a `levels` array (with no root questions), and
- * export/import them through the `{{ quiz('…') }}` block without drift. A quiz
- * without levels must keep behaving as a single quiz.
+ * export/import them through the `{% quiz %}` block without drift. A quiz without
+ * levels must keep behaving as a single quiz.
  */
 
 const api = { notifier: { show: () => {} }, i18n: { t: (k: string) => k } } as unknown as API
@@ -18,9 +18,9 @@ function mounted(data: QuizData): Quiz {
 }
 
 function parseBlock(markdown: string): QuizData {
-  const match = markdown.match(/\{\{\s*quiz\(\s*'((?:\\.|[^'\\])*)'\s*\)\s*\}\}/)
-  if (!match) throw new Error('not a quiz block: ' + markdown)
-  return JSON.parse(match[1].replace(/\\(['\\])/g, '$1'))
+  const tag = markdown.match(/\{%\s*quiz\s*%\}([\s\S]*?)\{%\s*endquiz\s*%\}/)
+  if (!tag) throw new Error('not a quiz block: ' + markdown)
+  return JSON.parse(tag[1] ?? '{}')
 }
 
 const leveled: QuizData = {
@@ -69,5 +69,35 @@ describe('Quiz difficulty levels', () => {
   it('round-trips export → parse → export without drift', () => {
     const markdown = Quiz.exportToMarkdown(leveled)
     expect(Quiz.exportToMarkdown(parseBlock(markdown))).toBe(markdown)
+  })
+
+  it('exports the {% quiz %} block with pretty-printed, unescaped JSON', () => {
+    const md = Quiz.exportToMarkdown({
+      questions: [{ q: "L'eau bout à ?", answers: [{ a: '100°C', correct: true }, { a: '0°C' }] }],
+    })
+
+    expect(md.startsWith('{% quiz %}\n')).toBe(true)
+    expect(md.endsWith('\n{% endquiz %}')).toBe(true)
+    expect(md).toContain('\n  "questions"') // beautified (2-space indent)
+    expect(md).toContain("L'eau bout à ?") // apostrophe left raw, not \'-escaped
+    expect(md).not.toContain('\\') // no Twig-string escaping at all
+    expect(md).not.toMatch(/\n\s*\n/) // blank-line free, so the Markdown split keeps it whole
+  })
+
+  it('imports the legacy {{ quiz(\'…\') }} form', () => {
+    let inserted: QuizData | undefined
+    const importApi = {
+      blocks: { insert: (_t: string, d: QuizData) => ({ id: 'x', data: (inserted = d) }), update: () => {} },
+    } as unknown as API
+
+    Quiz.importFromMarkdown(importApi, "{{ quiz('{\"questions\":[{\"q\":\"L\\'eau\",\"answers\":[{\"a\":\"A\",\"correct\":true},{\"a\":\"B\"}]}]}') }}")
+
+    expect(inserted?.questions?.[0]?.q).toBe("L'eau")
+  })
+
+  it('detects both block forms', () => {
+    expect(Quiz.isItMarkdownExported('{% quiz %}{}{% endquiz %}')).toBe(true)
+    expect(Quiz.isItMarkdownExported("{{ quiz('{}') }}")).toBe(true)
+    expect(Quiz.isItMarkdownExported('just a paragraph')).toBe(false)
   })
 })
