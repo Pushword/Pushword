@@ -52,7 +52,7 @@ describe('Quiz difficulty levels', () => {
     expect(saved.levels).toHaveLength(2)
     expect(saved.levels![0].difficulty).toBe('Easy')
     expect(saved.levels![0].pass).toBe(50)
-    expect(saved.levels![0].questions![0].answers.find((a) => a.correct)?.a).toBe('A')
+    expect(saved.levels![0].questions![0].answers!.find((a) => a.correct)?.a).toBe('A')
     expect(saved.levels![1].difficulty).toBe('Hard')
     // The root keeps no questions of its own once levels carry them.
     expect(saved.questions).toEqual([])
