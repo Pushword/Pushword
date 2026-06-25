@@ -18,6 +18,14 @@ return static function (ContainerConfigurator $container): void {
         'flat_content_dir' => '%env(PUSHWORD_TEST_FLAT_CONTENT_DIR)%',
     ]);
 
+    // Per-worker version storage. Without this, parallel workers share
+    // var/log/version keyed by entity id (which collides at 1 across workers'
+    // separate DBs), so one worker's reset() deletes another's snapshots
+    // mid-request → 500 in admin_version_* routes.
+    $container->extension('pushword_version', [
+        'storage_dir' => '%env(PUSHWORD_TEST_VAR_DIR)%/version',
+    ]);
+
     // Per-worker var dir for BackgroundProcessManager pid files.
     // Without this, parallel workers running pw:static share the same pid file
     // and one worker sees another's pid → exits early, leaving the test files
