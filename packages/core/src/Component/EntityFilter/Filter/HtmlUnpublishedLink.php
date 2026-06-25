@@ -36,11 +36,42 @@ final readonly class HtmlUnpublishedLink implements FilterInterface
             return $body;
         }
 
+        // Batch-resolve every link target up front (one query per host) so the
+        // per-link callback below hits the warm slug cache. This filter runs on the
+        // fully rendered HTML, so it sees links produced downstream of LinkCollector
+        // (e.g. Twig-built listing/card links) that the collector never warmed —
+        // without this each link fired its own getPageBySlug(), an N+1 that cost
+        // ~140 SELECTs on a single /equipe render. As the first link-resolving
+        // filter it also primes the cache for HtmlVariantLink et al. that follow.
+        $this->warmupLinkTargets($body, $page);
+
         return preg_replace_callback(
             self::HTML_REGEX,
             fn (array $match): string => $this->maybeMaskLink($match, $page),
             $body
         ) ?? $body;
+    }
+
+    private function warmupLinkTargets(string $body, Page $currentPage): void
+    {
+        if (false === preg_match_all(self::HTML_REGEX, $body, $matches) || [] === ($matches['href'] ?? [])) {
+            return;
+        }
+
+        /** @var array<string, list<string>> $slugsByHost */
+        $slugsByHost = [];
+        foreach ($matches['href'] as $href) {
+            $target = $this->resolveTarget($href, $currentPage);
+            if (null === $target) {
+                continue;
+            }
+
+            $slugsByHost[$target['host']][] = $target['slug'];
+        }
+
+        foreach ($slugsByHost as $host => $slugs) {
+            $this->pageRepository->warmupSlugCacheFor($slugs, $host);
+        }
     }
 
     /**
@@ -59,6 +90,22 @@ final readonly class HtmlUnpublishedLink implements FilterInterface
     }
 
     private function resolveTargetPage(string $href, Page $currentPage): ?Page
+    {
+        $target = $this->resolveTarget($href, $currentPage);
+        if (null === $target) {
+            return null;
+        }
+
+        return $this->pageRepository->getPageBySlug($target['slug'], $target['host']);
+    }
+
+    /**
+     * Map an href to the (host, slug) it points at, or null when it is not an
+     * internal page link (anchor, mailto/tel/js/data, external scheme, …).
+     *
+     * @return array{host: string, slug: string}|null
+     */
+    private function resolveTarget(string $href, Page $currentPage): ?array
     {
         if ('' === $href
             || str_starts_with($href, '#')
@@ -84,9 +131,7 @@ final readonly class HtmlUnpublishedLink implements FilterInterface
             return null;
         }
 
-        $slug = $this->extractSlug($path);
-
-        return $this->pageRepository->getPageBySlug($slug, $host);
+        return ['host' => $host, 'slug' => $this->extractSlug($path)];
     }
 
     private function extractSlug(string $path): string

@@ -208,4 +208,44 @@ final class HtmlUnpublishedLinkTest extends TestCase
 
         self::assertSame($html, $this->apply($filter, $html, $currentPage));
     }
+
+    /**
+     * Every internal link target is batch-warmed in a single query per host
+     * before the per-link resolution, instead of one getPageBySlug() per link.
+     * This filter runs on fully rendered HTML (incl. Twig/listing links the
+     * LinkCollector never saw), so without this it is a per-link N+1 — ~140
+     * SELECTs on one /equipe render. External / mailto / anchor links are skipped.
+     */
+    public function testLinkTargetsAreBatchWarmedOncePerHost(): void
+    {
+        /** @var array<string, list<string>> $warmed host => slugs */
+        $warmed = [];
+
+        $repo = $this->createMock(PageRepository::class);
+        $repo->method('warmupSlugCacheFor')->willReturnCallback(
+            static function (array $slugs, string $host) use (&$warmed): void {
+                // Each host must be warmed exactly once (the whole point of batching).
+                self::assertArrayNotHasKey($host, $warmed, 'host '.$host.' warmed more than once');
+                $warmed[$host] = $slugs;
+            },
+        );
+        $repo->method('getPageBySlug')->willReturn(null);
+
+        $filter = new HtmlUnpublishedLink($repo);
+        $currentPage = $this->createPage('home', new DateTime('-1 day'));
+
+        // 4 same-host internal links (one absolute same-host) + one cross-host
+        // multisite link + skipped anchor/mailto/external-domain links.
+        $html = '<a href="/a">A</a> <a href="/b">B</a> <a href="#x">anchor</a>'
+            .' <a href="mailto:x@y.tld">mail</a> <a href="/c">C</a>'
+            .' <a href="https://localhost/d?q=1#t">D</a>'
+            .' <a href="https://brand2.example/e">multisite</a>';
+
+        $this->apply($filter, $html, $currentPage);
+
+        // All four current-host targets collapse into a single warm-up call…
+        self::assertSame(['a', 'b', 'c', 'd'], $warmed['localhost'] ?? null);
+        // …and a cross-host (multisite) target is batched under its own host.
+        self::assertSame(['e'], $warmed['brand2.example'] ?? null);
+    }
 }
