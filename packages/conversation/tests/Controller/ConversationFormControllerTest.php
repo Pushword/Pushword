@@ -114,6 +114,44 @@ final class ConversationFormControllerTest extends WebTestCase
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }
 
+    /**
+     * Regression test for a worker-mode state leak: this controller is a shared
+     * service, so under a long-running worker (FrankenPHP, RoadRunner…) the same
+     * instance handles successive requests. It used to cache $form / $possibleOrigins
+     * across requests, pinning every later request to the first one's site — so a
+     * second request from a different host saw the first host's allowed origins and
+     * was rejected with "origin sent is not authorized". disableReboot() reuses the
+     * kernel between requests to reproduce that worker reuse.
+     */
+    public function testStateDoesNotLeakAcrossRequestsWhenKernelIsReused(): void
+    {
+        $client = self::createClient();
+        $client->disableReboot();
+
+        // Request #1 resolves the localhost.dev site and its allowed origins.
+        $client->request(
+            Request::METHOD_GET,
+            '/conversation/newsletter/test?host=localhost.dev',
+            [],
+            [],
+            ['HTTP_ORIGIN' => 'https://localhost.dev'],
+        );
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertSame('https://localhost.dev', $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
+
+        // Request #2 targets a different site whose origin is only valid once the
+        // per-request state is rebuilt. Without the reset it 500s on the cached origins.
+        $client->request(
+            Request::METHOD_GET,
+            '/conversation/newsletter/test?host=pushword.piedweb.com',
+            [],
+            [],
+            ['HTTP_ORIGIN' => 'https://pushword.piedweb.com'],
+        );
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertSame('https://pushword.piedweb.com', $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
+    }
+
     public function getController(): ConversationFormController
     {
         return self::getContainer()->get(ConversationFormController::class);

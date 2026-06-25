@@ -172,6 +172,14 @@ final class ConversationFormController extends AbstractController
     ], methods: ['POST', 'GET'])]
     public function show(Request $request, string $type): Response
     {
+        // Reset per-request state. This controller is a shared service, so under a
+        // long-running worker (FrankenPHP, RoadRunner…) $form and $possibleOrigins
+        // would survive between requests and pin every later request to the first
+        // request's host/locale/origin. show() is the only entrypoint, so clearing
+        // here is enough to guarantee a fresh resolution per request.
+        $this->form = null;
+        $this->possibleOrigins = [];
+
         $host = $request->query->getString('host') ?: $request->getHost();
         $this->apps->switchSite($host);
 
