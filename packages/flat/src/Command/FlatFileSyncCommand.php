@@ -290,9 +290,12 @@ final class FlatFileSyncCommand
         $exported = $mediaSync->getExportedCount() + $pageSync->getExportedCount() + ($snippetSync?->getExportedCount() ?? 0);
         $deleted = $mediaSync->getDeletedCount() + $pageSync->getDeletedCount() + ($snippetSync?->getDeletedCount() ?? 0);
 
-        $displayMode = 'auto' === $mode
-            ? ($imported > 0 ? 'import' : ($exported > 0 ? 'export' : 'auto'))
-            : $mode;
+        $displayMode = match (true) {
+            'auto' !== $mode => $mode,
+            $imported > 0 => 'import',
+            $exported > 0 => 'export',
+            default => 'auto',
+        };
 
         return [
             'tool' => 'pw:flat:sync',

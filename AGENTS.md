@@ -70,6 +70,8 @@ composer reset-skeleton                # reset demo
 
 Pushword CLI: `pw:flat:sync`, `pw:ai-index`, `pw:static`, `pw:media:normalize-filenames`, `pw:page-scan`, `pw:user:token {email}`.
 
+**Agent-optimized output**: `pw:page-scan`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`, `pw:image:cache`, `pw:quiz:validate` emit one compact JSON line when run by an AI agent (auto-detected) instead of progress/colors/timing. Add it to a command with `Pushword\Core\Command\AgentOutputTrait` + a `--format` option (auto|agent|text); gate every human write behind `if (! $this->agentMode)`. Tests asserting human output must pass `'--format' => 'text'`. See `packages/docs/content/agent-output.md`.
+
 ## Quality gates
 
 - Lint and test, fixing all warnings/notices: `composer stan`, `composer rector`, `composer test` (or `composer test-filter ExampleTest`). Never use `vendor/bin/phpunit` directly. Never leave a broken build.
