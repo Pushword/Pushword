@@ -1,0 +1,15 @@
+{
+  "name": "@pushword/quiz",
+  "version": "0.0.1",
+  "description": "Pushword quiz — interactive QCM block runtime tests.",
+  "author": "Robin@PiedWeb <contact@piedweb.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "node node_modules/vitest/dist/cli.js run"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0",
+    "vitest": "^2.1.0"
+  }
+}

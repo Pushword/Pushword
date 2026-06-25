@@ -39,7 +39,7 @@ jobs:
 
   js-quality:
     runs-on: ubuntu-latest
-    name: JS Type-check, Lint & Editor tests
+    name: JS Type-check, Lint, Editor & Quiz tests
 
     steps:
       - name: Checkout
@@ -64,6 +64,12 @@ jobs:
 
       - name: Editor unit tests
         run: cd packages/admin-block-editor && yarn test
+
+      - name: Install quiz dependencies
+        run: cd packages/quiz && yarn install
+
+      - name: Quiz runtime tests
+        run: cd packages/quiz && yarn test
 
   test:
     runs-on: ${{ matrix.os }}

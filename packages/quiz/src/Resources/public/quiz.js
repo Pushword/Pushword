@@ -28,6 +28,10 @@
 
   function initLevels(section) {
     section.setAttribute('data-pw-levels-ready', '1')
+    // Flip the no-JS gate on the .pw-quiz section itself: in a leveled quiz the
+    // [data-pw-quiz] flag lands on each .pw-quiz-level, so without this the
+    // `.pw-quiz:not(.pw-quiz--js)` CSS keeps revealing the correct answer.
+    section.classList.add('pw-quiz--js')
 
     var tabs = Array.prototype.slice.call(section.querySelectorAll('.pw-quiz-tab'))
     var panels = Array.prototype.slice.call(section.querySelectorAll('.pw-quiz-panel'))
