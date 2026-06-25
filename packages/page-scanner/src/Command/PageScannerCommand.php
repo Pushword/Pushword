@@ -10,6 +10,7 @@ use Pushword\Core\Service\TeeOutput;
 use Pushword\PageScanner\Controller\PageScannerController;
 use Pushword\PageScanner\Scanner\PageScannerService;
 use Pushword\PageScanner\Scanner\ParallelUrlChecker;
+use Pushword\PageScanner\Service\AgentDetector;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -18,6 +19,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Stopwatch\Stopwatch;
 
+/**
+ * @phpstan-type ScanError array{message: string, page: array{id: int, slug: string, h1: string, metaRobots: string, host: string}}
+ */
 #[AsCommand(
     name: 'pw:page-scan',
     description: 'Find dead links, 404, 301 and more in your content.'
@@ -45,7 +49,7 @@ final class PageScannerCommand
     }
 
     /**
-     * @return array<int, mixed[]>
+     * @return array<int, array<ScanError>>
      */
     private function scanAll(string $host): array
     {
@@ -57,7 +61,7 @@ final class PageScannerCommand
         $pagesCount = \count($pages);
 
         // Single pass: scan all pages, collect internal errors AND external URLs
-        $this->output?->writeln(\sprintf('Scanning %d pages...', $pagesCount));
+        $this->human(\sprintf('Scanning %d pages...', $pagesCount));
         $this->scanner->linkedDocsScanner->enableDeferredExternalMode();
 
         $errors = [];
@@ -72,10 +76,12 @@ final class PageScannerCommand
             $pageHost = $page->host ?? '';
 
             // Progress indicator: overwrite line unless previous was an error
-            if ($lastLineWasError) {
-                $this->output?->write(\sprintf('Scanning... [%d/%d]', $currentPage, $pagesCount));
-            } else {
-                $this->output?->write(\sprintf("\rScanning... [%d/%d]", $currentPage, $pagesCount));
+            if (! $this->agentMode) {
+                if ($lastLineWasError) {
+                    $this->output?->write(\sprintf('Scanning... [%d/%d]', $currentPage, $pagesCount));
+                } else {
+                    $this->output?->write(\sprintf("\rScanning... [%d/%d]", $currentPage, $pagesCount));
+                }
             }
 
             $lastLineWasError = false;
@@ -86,7 +92,7 @@ final class PageScannerCommand
             $event = $this->stopwatch?->stop('scan:'.$page->getSlug());
             $this->stopwatch?->stop('scanPage');
 
-            if (null !== $event && $event->getDuration() > 500 && null !== $this->output && $this->output->isVerbose()) {
+            if (! $this->agentMode && null !== $event && $event->getDuration() > 500 && null !== $this->output && $this->output->isVerbose()) {
                 $this->output->writeln("\n".\sprintf('<comment>⏱ %s/%s: %dms (slow)</comment>', $pageHost, $pageSlug, $event->getDuration()));
                 $lastLineWasError = true;
             }
@@ -95,34 +101,38 @@ final class PageScannerCommand
                 $pageId = (int) $page->id;
                 $errors[$pageId] = $scan;
 
-                $hasVisibleErrors = false;
-                foreach ($scan as $s) {
-                    $route = $s['page']['host'].'/'.$s['page']['slug'];
-                    if (! $this->mustIgnoreError($route, $s['message'])) {
-                        if (! $hasVisibleErrors) {
-                            $this->output?->writeln("\n".$pageHost.'/'.$pageSlug);
-                            $hasVisibleErrors = true;
+                if (! $this->agentMode) {
+                    $hasVisibleErrors = false;
+                    foreach ($scan as $s) {
+                        $route = $s['page']['host'].'/'.$s['page']['slug'];
+                        if (! $this->mustIgnoreError($route, $s['message'])) {
+                            if (! $hasVisibleErrors) {
+                                $this->output?->writeln("\n".$pageHost.'/'.$pageSlug);
+                                $hasVisibleErrors = true;
+                            }
+
+                            $this->output?->writeln('  <error>➜ '.$this->formatErrorForCli($s['message']).'</error>');
                         }
-
-                        $this->output?->writeln('  <error>➜ '.$this->formatErrorForCli($s['message']).'</error>');
                     }
-                }
 
-                if ($hasVisibleErrors) {
-                    $lastLineWasError = true;
+                    if ($hasVisibleErrors) {
+                        $lastLineWasError = true;
+                    }
                 }
 
                 $errorNbr += \count($errors[$pageId]);
             }
 
             if ($errorNbr > $maxErrors) {
-                $this->output?->writeln("\n".\sprintf('Too many errors (>%d), stopping scan...', $maxErrors));
+                $this->human("\n".\sprintf('Too many errors (>%d), stopping scan...', $maxErrors));
 
                 break;
             }
         }
 
-        if (! $lastLineWasError) {
+        $this->pagesScanned = $currentPage;
+
+        if (! $this->agentMode && ! $lastLineWasError) {
             $this->output?->writeln('');
         }
 
@@ -131,7 +141,7 @@ final class PageScannerCommand
             $externalUrls = $this->scanner->linkedDocsScanner->getCollectedExternalUrls();
             $urlCount = \count($externalUrls);
             if ($urlCount > 0) {
-                $this->output?->writeln(\sprintf('Checking %d external URLs in parallel...', $urlCount));
+                $this->human(\sprintf('Checking %d external URLs in parallel...', $urlCount));
                 $this->stopwatch?->start('external.urls');
                 $urlResults = $this->parallelUrlChecker->checkUrls($externalUrls);
                 $this->stopwatch?->stop('external.urls');
@@ -144,7 +154,7 @@ final class PageScannerCommand
         foreach ($externalErrors as $pageId => $pageErrors) {
             foreach ($pageErrors as $error) {
                 $route = $error['page']['host'].'/'.$error['page']['slug'];
-                if (! $this->mustIgnoreError($route, $error['message'])) {
+                if (! $this->agentMode && ! $this->mustIgnoreError($route, $error['message'])) {
                     $this->output?->writeln($route.' <error>➜ '.$this->formatErrorForCli($error['message']).'</error>');
                 }
             }
@@ -163,7 +173,71 @@ final class PageScannerCommand
 
     private int $limit = 0;
 
+    private bool $agentMode = false;
+
+    private int $pagesScanned = 0;
+
     private ?Stopwatch $stopwatch = null;
+
+    /**
+     * Write a human-facing line, suppressed when emitting agent-optimized output.
+     */
+    private function human(string $message): void
+    {
+        if (! $this->agentMode) {
+            $this->output?->writeln($message);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function writeJson(OutputInterface $output, array $data): void
+    {
+        $output->writeln(json_encode($data, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * Emit a single compact JSON document for AI agents: pages grouped, ignored
+     * errors filtered out, no ANSI/progress noise. Inspired by laravel/pao.
+     *
+     * @param array<int, array<ScanError>> $errors
+     */
+    private function printAgentSummary(OutputInterface $output, array $errors, int $durationMs): void
+    {
+        $issues = [];
+        $errorCount = 0;
+
+        foreach ($errors as $pageErrors) {
+            $route = '';
+            $messages = [];
+            foreach ($pageErrors as $error) {
+                $route = $error['page']['host'].'/'.$error['page']['slug'];
+                if ($this->mustIgnoreError($route, $error['message'])) {
+                    continue;
+                }
+
+                $messages[] = $this->formatErrorForCli($error['message']);
+            }
+
+            if ([] !== $messages) {
+                $issues[] = ['page' => $route, 'errors' => $messages];
+                $errorCount += \count($messages);
+            }
+        }
+
+        $summary = [
+            'tool' => 'pw:page-scan',
+            'result' => [] === $issues ? 'passed' : 'failed',
+            'pages_scanned' => $this->pagesScanned,
+            'pages_with_errors' => \count($issues),
+            'errors' => $errorCount,
+            'issues' => $issues,
+            'duration_ms' => $durationMs,
+        ];
+
+        $this->writeJson($output, $summary);
+    }
 
     private function formatErrorForCli(string $message): string
     {
@@ -218,9 +292,13 @@ final class PageScannerCommand
         int $limit = 0,
         #[Option(description: 'Report links pointing to unpublished pages (off by default — those links are hidden at render time)', name: 'check-unpublished')]
         bool $checkUnpublished = false,
+        #[Option(description: 'Output format: auto (compact JSON when an AI agent is detected), agent (force JSON), or text', name: 'format')]
+        string $format = 'auto',
     ): int {
         $this->skipExternal = $skipExternal;
         $this->limit = $limit;
+        $this->agentMode = \in_array($format, ['agent', 'json'], true)
+            || ('auto' === $format && AgentDetector::isAgent());
 
         if ($checkUnpublished) {
             $this->scanner->linkedDocsScanner->enableCheckUnpublished();
@@ -234,6 +312,18 @@ final class PageScannerCommand
         $processInfo = $this->processManager->getProcessInfo($pidFile);
 
         if ($processInfo['isRunning'] && null !== $processInfo['pid']) {
+            if ($this->agentMode) {
+                // Never stream the other process's human output into agent output.
+                $this->writeJson($output, [
+                    'tool' => 'pw:page-scan',
+                    'result' => 'running',
+                    'pid' => $processInfo['pid'],
+                    'message' => 'A scan is already running; re-run once it completes.',
+                ]);
+
+                return Command::SUCCESS;
+            }
+
             return $this->streamRunningOutput($output, $processInfo['pid'], $processType);
         }
 
@@ -254,7 +344,9 @@ final class PageScannerCommand
         $this->output = $teeOutput;
 
         try {
-            $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
+            if (! $this->agentMode) {
+                $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
+            }
 
             $this->stopwatch = new Stopwatch();
             $this->stopwatch->start('scan');
@@ -266,12 +358,14 @@ final class PageScannerCommand
             $this->filesystem->dumpFile($cacheFile, serialize($errors));
 
             $event = $this->stopwatch->stop('scan');
-            $teeOutput->writeln(\sprintf('done... (%dms)', $event->getDuration()));
 
-            // Print timing breakdown
-            $this->printTimingBreakdown($teeOutput);
-
-            $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+            if ($this->agentMode) {
+                $this->printAgentSummary($teeOutput, $errors, (int) $event->getDuration());
+            } else {
+                $teeOutput->writeln(\sprintf('done... (%dms)', $event->getDuration()));
+                $this->printTimingBreakdown($teeOutput);
+                $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+            }
 
             $this->outputStorage->setStatus($processType, 'completed');
 

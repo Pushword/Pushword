@@ -113,6 +113,10 @@ final readonly class PageScanCoordinator
             $commandParts[] = $host;
         }
 
+        // The admin UI streams this output as text; never let an inherited
+        // agent environment switch it to JSON.
+        $commandParts[] = '--format=text';
+
         try {
             $this->backgroundTaskDispatcher->dispatch($processType, $commandParts, self::COMMAND_PATTERN);
         } catch (Exception $exception) {

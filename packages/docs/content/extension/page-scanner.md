@@ -24,6 +24,20 @@ php bin/console pw:page-scan --skip-external  # skip external URL checks
 php bin/console pw:page-scan --limit=100      # stop after 100 errors
 ```
 
+### AI agents
+
+When the command detects it is running inside an AI agent (Claude Code, Cursor,
+Gemini CLI, Codex, …, via the same environment variables as `laravel/agent-detector`),
+it drops the progress bar, colors, PID, timing and memory lines and emits a single
+compact JSON document instead — issues grouped per page, ignored errors filtered out:
+
+```json
+{"tool":"pw:page-scan","result":"failed","pages_scanned":42,"pages_with_errors":1,"errors":2,"issues":[{"page":"localhost.dev/about","errors":["Dead link → `/old-page`","Broken anchor → `#missing`"]}],"duration_ms":1280}
+```
+
+Detection is automatic; force it either way with `--format=agent` (JSON) or
+`--format=text` (human output). The admin UI always uses text.
+
 ### Admin
 
 The scanner is accessible via the admin menu. Results are cached and refreshed automatically.

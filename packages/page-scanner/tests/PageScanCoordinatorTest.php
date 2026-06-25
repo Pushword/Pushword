@@ -61,6 +61,24 @@ final class PageScanCoordinatorTest extends KernelTestCase
         self::assertSame('running', $this->outputStorage->getStatus('page-scanner'));
     }
 
+    public function testStartScanForcesTextFormat(): void
+    {
+        $captured = [];
+        $dispatcher = self::createMock(BackgroundTaskDispatcherInterface::class);
+        $dispatcher->method('dispatch')->willReturnCallback(
+            static function (string $processType, array $commandParts) use (&$captured): void {
+                $captured = $commandParts;
+            }
+        );
+
+        // The admin UI streams this output as text; an inherited agent env must
+        // never switch the web-spawned scan to JSON.
+        $this->coordinator($dispatcher)->startScan('localhost.dev');
+
+        self::assertContains('--format=text', $captured);
+        self::assertContains('localhost.dev', $captured);
+    }
+
     public function testReadResultsFiltersIgnoredErrorsAndKeepsTheRest(): void
     {
         $errors = [42 => [
