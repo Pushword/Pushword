@@ -29,7 +29,6 @@ jobs:
           - static-generator
           - template-editor
           - skeleton
-          - svg
           - installer
           - js-helper
           - version
