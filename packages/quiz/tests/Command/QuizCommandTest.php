@@ -31,7 +31,7 @@ final class QuizCommandTest extends KernelTestCase
             .'"answers":[{"a":"A","correct":true},{"a":"B"}]}]}{% endquiz %}');
 
         $tester = $this->tester('pw:quiz:validate');
-        $tester->execute(['path' => $path]);
+        $tester->execute(['path' => $path, '--format' => 'text']);
 
         self::assertSame(0, $tester->getStatusCode());
         self::assertStringContainsString('valid', $tester->getDisplay());
@@ -43,7 +43,7 @@ final class QuizCommandTest extends KernelTestCase
         $path = $this->fileWith('{% quiz %}{"pass":150,"questions":[{"q":"","answers":[{"a":"only"}]}]}{% endquiz %}');
 
         $tester = $this->tester('pw:quiz:validate');
-        $tester->execute(['path' => $path]);
+        $tester->execute(['path' => $path, '--format' => 'text']);
 
         self::assertSame(1, $tester->getStatusCode());
         $display = $tester->getDisplay();
@@ -59,10 +59,35 @@ final class QuizCommandTest extends KernelTestCase
             .'"answers":[{"a":"A","correct":true},{"a":"B"}]}]}{% endquiz %}');
 
         $tester = $this->tester('pw:quiz:validate');
-        $tester->execute(['path' => $path]);
+        $tester->execute(['path' => $path, '--format' => 'text']);
 
         self::assertSame(0, $tester->getStatusCode(), 'an unknown cta is a warning, not a failure');
         self::assertStringContainsString('unknown cta "bogusForm"', $tester->getDisplay());
+        unlink($path);
+    }
+
+    public function testValidateAgentOutputIsSingleJsonLine(): void
+    {
+        $path = $this->fileWith('{% quiz %}{"pass":150,"questions":[{"q":"","answers":[{"a":"only"}]}]}{% endquiz %}');
+
+        $tester = $this->tester('pw:quiz:validate');
+        $tester->execute(['path' => $path, '--format' => 'agent']);
+
+        self::assertSame(1, $tester->getStatusCode());
+
+        $output = trim($tester->getDisplay());
+
+        // No human noise leaks into agent output.
+        self::assertStringNotContainsString('invalid', $output);
+
+        $decoded = json_decode($output, true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame('pw:quiz:validate', $decoded['tool']);
+        self::assertSame('failed', $decoded['result']);
+        self::assertArrayHasKey('blocks_checked', $decoded);
+        self::assertArrayHasKey('errors', $decoded);
+        self::assertArrayHasKey('warnings', $decoded);
+        self::assertArrayHasKey('issues', $decoded);
         unlink($path);
     }
 

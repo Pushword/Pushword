@@ -20,18 +20,22 @@ use Symfony\Component\Process\Process;
 use Throwable;
 
 #[AsCommand(name: 'pw:image:cache', description: 'Generate all images cache')]
-final readonly class ImageManagerCommand
+final class ImageManagerCommand
 {
+    use AgentOutputTrait;
+
     private const string PROGRESS_FORMAT = "%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% \r\n %message%";
 
+    private bool $agentMode = false;
+
     public function __construct(
-        private MediaRepository $mediaRepository,
-        private EntityManagerInterface $entityManager,
-        private ImageCacheGenerator $imageCacheGenerator,
-        private ImageCacheManager $imageCacheManager,
-        private ImageReader $imageReader,
-        private LockFactory $lockFactory,
-        private string $projectDir,
+        private readonly MediaRepository $mediaRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ImageCacheGenerator $imageCacheGenerator,
+        private readonly ImageCacheManager $imageCacheManager,
+        private readonly ImageReader $imageReader,
+        private readonly LockFactory $lockFactory,
+        private readonly string $projectDir,
     ) {
     }
 
@@ -46,7 +50,11 @@ final readonly class ImageManagerCommand
         int $parallel = 0,
         #[Option(description: 'Skip lock (internal use by parallel workers)', name: 'no-lock')]
         bool $noLock = false,
+        #[Option(description: 'Output format: auto (compact JSON when an AI agent is detected), agent (force JSON), or text', name: 'format')]
+        string $format = 'auto',
     ): int {
+        $this->agentMode = $this->isAgentFormat($format);
+
         $io = new SymfonyStyle($input, $output);
         $startTime = microtime(true);
 
@@ -55,6 +63,16 @@ final readonly class ImageManagerCommand
             $lockKey = null !== $mediaName ? 'pw:image:cache:'.md5($mediaName) : 'pw:image:cache';
             $lock = $this->lockFactory->createLock($lockKey);
             if (! $lock->acquire(blocking: false)) {
+                if ($this->agentMode) {
+                    $this->writeAgentJson($output, [
+                        'tool' => 'pw:image:cache',
+                        'result' => 'running',
+                        'message' => 'Another instance of pw:image:cache is already running.',
+                    ]);
+
+                    return 0;
+                }
+
                 $io->info('Another instance of pw:image:cache is already running. Skipping.');
 
                 return 0;
@@ -69,12 +87,14 @@ final readonly class ImageManagerCommand
             $workers = $parallel > 0 ? $parallel : $this->detectCpuCount();
 
             if (null === $mediaName && $workers > 1) {
-                $io->info(\sprintf('Image driver: %s', $this->imageReader->getResolvedDriver()));
+                if (! $this->agentMode) {
+                    $io->info(\sprintf('Image driver: %s', $this->imageReader->getResolvedDriver()));
+                }
 
                 return $this->executeParallel($medias, $workers, $force, $io, $output, $startTime);
             }
 
-            if (null === $mediaName) {
+            if (null === $mediaName && ! $this->agentMode) {
                 $io->info(\sprintf('Image driver: %s', $this->imageReader->getResolvedDriver()));
             }
 
@@ -109,7 +129,7 @@ final readonly class ImageManagerCommand
      */
     private function executeSequential(array $medias, bool $force, bool $isWorker, SymfonyStyle $io, OutputInterface $output, float $startTime): int
     {
-        $progressBar = $isWorker ? null : $this->createProgressBar($output, \count($medias));
+        $progressBar = ($isWorker || $this->agentMode) ? null : $this->createProgressBar($output, \count($medias));
 
         $errors = [];
         $skipped = 0;
@@ -128,7 +148,7 @@ final readonly class ImageManagerCommand
                     $errors[] = $media->getFileName().': '.$exception->getMessage();
                 }
 
-                if ($isWorker) {
+                if ($isWorker && ! $this->agentMode) {
                     $output->writeln('DONE:'.$media->getFileName());
                 }
             } else {
@@ -144,6 +164,12 @@ final readonly class ImageManagerCommand
 
         $this->entityManager->flush();
         $progressBar?->finish();
+
+        if ($this->agentMode) {
+            $this->reportAgentSummary($output, \count($medias) - $skipped - \count($errors), $skipped, $errors, $startTime);
+
+            return 0;
+        }
 
         if (! $isWorker) {
             $this->reportSummary($io, \count($medias) - $skipped - \count($errors), $skipped, \count($errors), $startTime);
@@ -169,7 +195,11 @@ final readonly class ImageManagerCommand
 
         $total = \count($imageMedias);
         if (0 === $total) {
-            $io->info('No images to process.');
+            if ($this->agentMode) {
+                $this->reportAgentSummary($output, 0, 0, [], $startTime);
+            } else {
+                $io->info('No images to process.');
+            }
 
             return 0;
         }
@@ -187,23 +217,29 @@ final readonly class ImageManagerCommand
                 }
             }
 
-            if ($preSkipped > 0) {
+            if ($preSkipped > 0 && ! $this->agentMode) {
                 $io->info(\sprintf('%d image(s) already cached, %d to process', $preSkipped, \count($staleMedias)));
             }
         }
 
         $staleCount = \count($staleMedias);
         if (0 === $staleCount) {
-            $this->reportSummary($io, 0, $preSkipped, 0, $startTime);
+            if ($this->agentMode) {
+                $this->reportAgentSummary($output, 0, $preSkipped, [], $startTime);
+            } else {
+                $this->reportSummary($io, 0, $preSkipped, 0, $startTime);
+            }
 
             return 0;
         }
 
         // Batch images per worker to amortize kernel boot cost
         $chunks = array_chunk($staleMedias, max(1, (int) ceil($staleCount / $workers)));
-        $io->info(\sprintf('Processing %d image(s) in %d batch(es) with %d worker(s)', $staleCount, \count($chunks), $workers));
+        if (! $this->agentMode) {
+            $io->info(\sprintf('Processing %d image(s) in %d batch(es) with %d worker(s)', $staleCount, \count($chunks), $workers));
+        }
 
-        $progressBar = $this->createProgressBar($output, $staleCount);
+        $progressBar = $this->agentMode ? null : $this->createProgressBar($output, $staleCount);
 
         /** @var array<int, array{process: Process, count: int, reported: int}> $running */
         $running = [];
@@ -232,10 +268,10 @@ final readonly class ImageManagerCommand
                 if ('' !== $newOutput) {
                     $lines = substr_count($newOutput, 'DONE:');
                     if ($lines > 0) {
-                        $progressBar->advance($lines);
+                        $progressBar?->advance($lines);
                         $entry['reported'] += $lines;
                         if (1 === preg_match('/DONE:(.+)/', $newOutput, $m)) {
-                            $progressBar->setMessage($m[1]);
+                            $progressBar?->setMessage($m[1]);
                         }
                     }
                 }
@@ -243,7 +279,7 @@ final readonly class ImageManagerCommand
                 if (! $entry['process']->isRunning()) {
                     $remaining = $entry['count'] - $entry['reported'];
                     if ($remaining > 0) {
-                        $progressBar->advance($remaining);
+                        $progressBar?->advance($remaining);
                     }
 
                     if (! $entry['process']->isSuccessful()) {
@@ -262,7 +298,13 @@ final readonly class ImageManagerCommand
             }
         }
 
-        $progressBar->finish();
+        $progressBar?->finish();
+
+        if ($this->agentMode) {
+            $this->reportAgentSummary($output, $staleCount - \count($errors), $preSkipped, $errors, $startTime);
+
+            return 0;
+        }
 
         $this->reportSummary($io, $staleCount - \count($errors), $preSkipped, \count($errors), $startTime);
         $this->reportErrors($errors, $io);
@@ -300,6 +342,27 @@ final readonly class ImageManagerCommand
             $elapsed,
             memory_get_peak_usage(true) / 1024 / 1024,
         ));
+    }
+
+    /**
+     * Emit a single compact JSON document for AI agents: counters only, no
+     * progress/ANSI noise. Inspired by laravel/pao.
+     *
+     * @param string[] $errors
+     */
+    private function reportAgentSummary(OutputInterface $output, int $generated, int $skipped, array $errors, float $startTime): void
+    {
+        $errorCount = \count($errors);
+
+        $this->writeAgentJson($output, [
+            'tool' => 'pw:image:cache',
+            'result' => 0 === $errorCount ? 'passed' : 'failed',
+            'processed' => $generated + $skipped + $errorCount,
+            'errors' => $errorCount,
+            'generated' => $generated,
+            'skipped' => $skipped,
+            'duration_ms' => (int) round((microtime(true) - $startTime) * 1000),
+        ]);
     }
 
     private function detectCpuCount(): int

@@ -25,7 +25,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester = $this->createCommandTester();
 
         $this->waitForLockRelease();
-        $commandTester->execute(['--parallel' => '1']);
+        $commandTester->execute(['--parallel' => '1', '--format' => 'text']);
 
         self::assertStringContainsString('100%', $commandTester->getDisplay());
     }
@@ -35,7 +35,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester = $this->createCommandTester();
 
         $this->waitForLockRelease();
-        $commandTester->execute(['media' => 'piedweb-logo.png']);
+        $commandTester->execute(['media' => 'piedweb-logo.png', '--format' => 'text']);
 
         self::assertStringContainsString('100%', $commandTester->getDisplay());
     }
@@ -45,7 +45,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester = $this->createCommandTester();
 
         $this->waitForLockRelease();
-        $commandTester->execute(['--parallel' => '2', '--force' => true]);
+        $commandTester->execute(['--parallel' => '2', '--force' => true, '--format' => 'text']);
 
         self::assertStringContainsString('100%', $commandTester->getDisplay());
         self::assertStringContainsString('worker(s)', $commandTester->getDisplay());
@@ -56,7 +56,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester = $this->createCommandTester();
 
         $this->waitForLockRelease();
-        $commandTester->execute(['media' => 'piedweb-logo.png', '--force' => true]);
+        $commandTester->execute(['media' => 'piedweb-logo.png', '--force' => true, '--format' => 'text']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('100%', $output);
@@ -68,7 +68,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester = $this->createCommandTester();
 
         // --no-lock with media name = worker mode (emits DONE: markers, no progress bar)
-        $commandTester->execute(['media' => 'piedweb-logo.png', '--no-lock' => true]);
+        $commandTester->execute(['media' => 'piedweb-logo.png', '--no-lock' => true, '--format' => 'text']);
 
         self::assertStringContainsString('DONE:piedweb-logo.png', $commandTester->getDisplay());
     }
@@ -79,11 +79,11 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
 
         // First run generates cache
         $this->waitForLockRelease();
-        $commandTester->execute(['--parallel' => '1']);
+        $commandTester->execute(['--parallel' => '1', '--format' => 'text']);
 
         // Second run should skip
         $this->waitForLockRelease();
-        $commandTester->execute(['--parallel' => '1']);
+        $commandTester->execute(['--parallel' => '1', '--format' => 'text']);
 
         self::assertStringContainsString('skipped', $commandTester->getDisplay());
     }
@@ -93,7 +93,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester = $this->createCommandTester();
 
         $this->waitForLockRelease();
-        $commandTester->execute(['media' => 'piedweb-logo.png,piedweb-logo.png', '--force' => true]);
+        $commandTester->execute(['media' => 'piedweb-logo.png,piedweb-logo.png', '--force' => true, '--format' => 'text']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('100%', $output);
@@ -105,11 +105,11 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
 
         // First run to populate cache
         $this->waitForLockRelease();
-        $commandTester->execute(['--parallel' => '1', '--force' => true]);
+        $commandTester->execute(['--parallel' => '1', '--force' => true, '--format' => 'text']);
 
         // Parallel run should pre-filter and detect cached images
         $this->waitForLockRelease();
-        $commandTester->execute(['--parallel' => '2']);
+        $commandTester->execute(['--parallel' => '2', '--format' => 'text']);
 
         $output = $commandTester->getDisplay();
         // The summary line always appears and includes the skipped count.
@@ -124,7 +124,7 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester = $this->createCommandTester();
 
         $this->waitForLockRelease();
-        $commandTester->execute(['--parallel' => '1']);
+        $commandTester->execute(['--parallel' => '1', '--format' => 'text']);
 
         self::assertStringContainsString('Image driver:', $commandTester->getDisplay());
     }
@@ -134,11 +134,32 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester = $this->createCommandTester();
 
         $this->waitForLockRelease();
-        $commandTester->execute(['--parallel' => '1']);
+        $commandTester->execute(['--parallel' => '1', '--format' => 'text']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('processed', $output);
         self::assertStringContainsString('peak memory', $output);
+    }
+
+    public function testAgentOutputIsJson(): void
+    {
+        $commandTester = $this->createCommandTester();
+
+        $this->waitForLockRelease();
+        $commandTester->execute(['--parallel' => '1', '--format' => 'agent']);
+
+        $output = trim($commandTester->getDisplay());
+
+        // No human noise (progress bar / summary line) leaks into agent output.
+        self::assertStringNotContainsString('peak memory', $output);
+        self::assertStringNotContainsString('100%', $output);
+
+        $decoded = json_decode($output, true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame('pw:image:cache', $decoded['tool']);
+        self::assertContains($decoded['result'], ['passed', 'failed']);
+        self::assertArrayHasKey('processed', $decoded);
+        self::assertArrayHasKey('errors', $decoded);
     }
 
     private function createCommandTester(): CommandTester

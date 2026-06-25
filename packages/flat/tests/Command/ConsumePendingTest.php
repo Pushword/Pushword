@@ -30,7 +30,7 @@ final class ConsumePendingTest extends KernelTestCase
         $processor = self::getContainer()->get(DeferredExportProcessor::class);
         $processor->clearPendingFlag();
 
-        $tester->execute(['--consume-pending' => true]);
+        $tester->execute(['--consume-pending' => true, '--format' => 'text']);
 
         self::assertSame(0, $tester->getStatusCode());
         self::assertStringContainsString('No pending export flag found', $tester->getDisplay());
@@ -54,7 +54,7 @@ final class ConsumePendingTest extends KernelTestCase
             'hosts' => [],
         ]));
 
-        $tester->execute(['--consume-pending' => true]);
+        $tester->execute(['--consume-pending' => true, '--format' => 'text']);
 
         self::assertSame(0, $tester->getStatusCode());
         self::assertStringContainsString('Consuming pending export', $tester->getDisplay());

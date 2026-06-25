@@ -2,6 +2,7 @@
 
 namespace Pushword\Flat\Command;
 
+use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Service\SharedOutputInterface;
@@ -16,6 +17,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
@@ -25,22 +27,29 @@ use Symfony\Component\Stopwatch\Stopwatch;
     name: 'pw:flat:sync',
     description: 'Syncing database toward flat yaml files (and json for media).'
 )]
-final readonly class FlatFileSyncCommand
+final class FlatFileSyncCommand
 {
+    use AgentOutputTrait;
+
     private const string PROCESS_TYPE = 'flat-sync';
 
     private const string COMMAND_PATTERN = 'pw:flat:sync';
 
+    private bool $agentMode = false;
+
+    /** Suppress agent JSON emission during nested (consume-pending) recursion. */
+    private bool $silent = false;
+
     public function __construct(
-        private FlatFileSync $flatFileSync,
-        private Stopwatch $stopWatch,
-        private BackgroundProcessManager $processManager,
-        private ProcessOutputStorage $outputStorage,
-        private FlatLockManager $lockManager,
-        private FlatChangeDetector $changeDetector,
-        private Filesystem $filesystem,
-        private DeferredExportProcessor $deferredExportProcessor,
-        private GitAutoCommitter $gitAutoCommitter,
+        private readonly FlatFileSync $flatFileSync,
+        private readonly Stopwatch $stopWatch,
+        private readonly BackgroundProcessManager $processManager,
+        private readonly ProcessOutputStorage $outputStorage,
+        private readonly FlatLockManager $lockManager,
+        private readonly FlatChangeDetector $changeDetector,
+        private readonly Filesystem $filesystem,
+        private readonly DeferredExportProcessor $deferredExportProcessor,
+        private readonly GitAutoCommitter $gitAutoCommitter,
     ) {
     }
 
@@ -62,7 +71,11 @@ final readonly class FlatFileSyncCommand
         bool $consumePending = false,
         #[Option(description: 'Page slug(s) to sync (repeatable, implies --entity=page)', name: 'page')]
         array $page = [],
+        #[Option(description: 'Output format: auto (compact JSON when an AI agent is detected), agent (force JSON), or text', name: 'format')]
+        string $format = 'auto',
     ): int {
+        $this->agentMode = $this->isAgentFormat($format);
+
         if ($consumePending) {
             return $this->handleConsumePending($input, $output);
         }
@@ -76,6 +89,14 @@ final readonly class FlatFileSyncCommand
 
         // Check for webhook lock - blocks sync during external editing workflow
         if ($this->lockManager->isWebhookLocked($host)) {
+            if ($this->agentMode) {
+                if (! $this->silent) {
+                    $this->writeAgentJson($output, ['tool' => 'pw:flat:sync', 'result' => 'blocked', 'message' => 'webhook lock active']);
+                }
+
+                return Command::FAILURE;
+            }
+
             $lockInfo = $this->lockManager->getLockInfo($host);
             $remainingTime = $this->lockManager->getRemainingTime($host);
             $output->writeln('<error>Sync blocked: webhook lock active.</error>');
@@ -96,7 +117,13 @@ final readonly class FlatFileSyncCommand
         $processInfo = $this->processManager->getProcessInfo($pidFile);
 
         if ($processInfo['isRunning']) {
-            $output->writeln('<error>Flat sync is already running (PID: '.$processInfo['pid'].').</error>');
+            if ($this->agentMode) {
+                if (! $this->silent) {
+                    $this->writeAgentJson($output, ['tool' => 'pw:flat:sync', 'result' => 'running', 'pid' => $processInfo['pid']]);
+                }
+            } else {
+                $output->writeln('<error>Flat sync is already running (PID: '.$processInfo['pid'].').</error>');
+            }
 
             return Command::FAILURE;
         }
@@ -116,11 +143,14 @@ final readonly class FlatFileSyncCommand
         $teeOutput = new TeeOutput([$output, $sharedOutput]);
 
         try {
-            $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
+            if (! $this->agentMode) {
+                $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
+            }
+
             $this->stopWatch->start('sync');
 
-            // Set tee output and stopwatch for progress reporting
-            $this->flatFileSync->setOutput($teeOutput);
+            // Set tee output and stopwatch for progress reporting (silenced for agents)
+            $this->flatFileSync->setOutput($this->agentMode ? new NullOutput() : $teeOutput);
             $this->flatFileSync->setStopwatch($this->stopWatch);
 
             // Backup database before import (unless disabled)
@@ -128,14 +158,19 @@ final readonly class FlatFileSyncCommand
             if ($willImport && $backup && $this->filesystem->exists('var/app.db')) {
                 $backupFileName = 'var/app.db~'.date('YmdHis');
                 $this->filesystem->copy('var/app.db', $backupFileName);
-                $teeOutput->writeln(\sprintf('<comment>Database backup created: %s</comment>', $backupFileName));
+                if (! $this->agentMode) {
+                    $teeOutput->writeln(\sprintf('<comment>Database backup created: %s</comment>', $backupFileName));
+                }
             }
 
             if (null !== $host) {
                 $this->syncHost($host, $force, $entity, $mode, $page);
             } else {
                 foreach ($this->flatFileSync->getHosts() as $appHost) {
-                    $teeOutput->writeln(\sprintf('<info>Syncing %s...</info>', $appHost));
+                    if (! $this->agentMode) {
+                        $teeOutput->writeln(\sprintf('<info>Syncing %s...</info>', $appHost));
+                    }
+
                     $this->syncHost($appHost, $force, $entity, $mode, $page);
                 }
             }
@@ -143,12 +178,15 @@ final readonly class FlatFileSyncCommand
             $event = $this->stopWatch->stop('sync');
             $duration = $event->getDuration();
 
-            $this->displaySummary(new SymfonyStyle($input, $teeOutput), $duration, $mode);
-
-            // Print timing breakdown
-            $this->printTimingBreakdown($teeOutput);
-
-            $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+            if ($this->agentMode) {
+                if (! $this->silent) {
+                    $this->writeAgentJson($teeOutput, $this->buildSyncSummary($duration, $mode));
+                }
+            } else {
+                $this->displaySummary(new SymfonyStyle($input, $teeOutput), $duration, $mode);
+                $this->printTimingBreakdown($teeOutput);
+                $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+            }
 
             // Release auto-lock and invalidate change detector cache for synced hosts
             $syncedHosts = null !== $host ? [$host] : $this->flatFileSync->getHosts();
@@ -171,7 +209,11 @@ final readonly class FlatFileSyncCommand
         $pending = $this->deferredExportProcessor->readPendingFlag();
 
         if (null === $pending) {
-            $output->writeln('<info>No pending export flag found.</info>');
+            if ($this->agentMode) {
+                $this->writeAgentJson($output, ['tool' => 'pw:flat:sync', 'result' => 'passed', 'mode' => 'consume-pending', 'pending' => false]);
+            } else {
+                $output->writeln('<info>No pending export flag found.</info>');
+            }
 
             return Command::SUCCESS;
         }
@@ -181,32 +223,87 @@ final readonly class FlatFileSyncCommand
 
         $entity = 1 === \count($entityTypes) ? $entityTypes[0] : 'all';
 
-        $output->writeln(\sprintf(
-            '<info>Consuming pending export: entities=%s, hosts=%s</info>',
-            implode(',', $entityTypes) ?: 'all',
-            implode(',', $hosts) ?: 'all',
-        ));
+        if (! $this->agentMode) {
+            $output->writeln(\sprintf(
+                '<info>Consuming pending export: entities=%s, hosts=%s</info>',
+                implode(',', $entityTypes) ?: 'all',
+                implode(',', $hosts) ?: 'all',
+            ));
+        }
 
         // Clear flag before export to avoid losing flags written during export
         $this->deferredExportProcessor->clearPendingFlag();
 
+        // Suppress the nested invocations' own output; emit a single summary here.
+        $innerFormat = $this->agentMode ? 'agent' : 'text';
         $hostsToExport = [] !== $hosts ? $hosts : [null];
-        foreach ($hostsToExport as $host) {
-            $result = $this->__invoke($input, $output, $host, force: true, entity: $entity, mode: 'export');
-            if (Command::SUCCESS !== $result) {
-                return $result;
+        $this->silent = true;
+
+        try {
+            foreach ($hostsToExport as $host) {
+                $result = $this->__invoke($input, $output, $host, force: true, entity: $entity, mode: 'export', format: $innerFormat);
+                if (Command::SUCCESS !== $result) {
+                    if ($this->agentMode) {
+                        $this->writeAgentJson($output, ['tool' => 'pw:flat:sync', 'result' => 'failed', 'mode' => 'consume-pending', 'host' => $host]);
+                    }
+
+                    return $result;
+                }
             }
+        } finally {
+            $this->silent = false;
         }
 
         // Git auto-commit after successful export
+        $committed = false;
         if ($this->gitAutoCommitter->isEnabled()) {
             $committed = $this->gitAutoCommitter->commitIfChanges();
-            if ($committed) {
+            if ($committed && ! $this->agentMode) {
                 $output->writeln('<info>Git auto-commit: changes committed and pushed.</info>');
             }
         }
 
+        if ($this->agentMode) {
+            $this->writeAgentJson($output, [
+                'tool' => 'pw:flat:sync',
+                'result' => 'passed',
+                'mode' => 'consume-pending',
+                'hosts' => $hosts,
+                'entities' => $entityTypes,
+                'committed' => $committed,
+            ]);
+        }
+
         return Command::SUCCESS;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildSyncSummary(float $duration, string $mode): array
+    {
+        $mediaSync = $this->flatFileSync->mediaSync;
+        $pageSync = $this->flatFileSync->pageSync;
+        $snippetSync = $this->flatFileSync->snippetSync;
+
+        $imported = $mediaSync->getImportedCount() + $pageSync->getImportedCount() + ($snippetSync?->getImportedCount() ?? 0);
+        $exported = $mediaSync->getExportedCount() + $pageSync->getExportedCount() + ($snippetSync?->getExportedCount() ?? 0);
+        $deleted = $mediaSync->getDeletedCount() + $pageSync->getDeletedCount() + ($snippetSync?->getDeletedCount() ?? 0);
+
+        $displayMode = 'auto' === $mode
+            ? ($imported > 0 ? 'import' : ($exported > 0 ? 'export' : 'auto'))
+            : $mode;
+
+        return [
+            'tool' => 'pw:flat:sync',
+            'result' => 'passed',
+            'mode' => $displayMode,
+            'imported' => $imported,
+            'exported' => $exported,
+            'deleted' => $deleted,
+            'yaml_errors' => $pageSync->getYamlErrorCount(),
+            'duration_ms' => (int) $duration,
+        ];
     }
 
     /** @param string[] $pageSlugs */

@@ -1,13 +1,13 @@
 <?php
 
-namespace Pushword\PageScanner\Service;
+namespace Pushword\Core\Service;
 
 /**
  * Detects whether the current process is being driven by an AI coding agent
  * (Claude Code, Cursor, Gemini CLI, Codex, …).
  *
- * Mirrors the environment-variable conventions of laravel/agent-detector so the
- * scanner can emit agent-optimized output without any extra configuration.
+ * Mirrors the environment-variable conventions of laravel/agent-detector so
+ * commands can emit agent-optimized output without any extra configuration.
  */
 final class AgentDetector
 {

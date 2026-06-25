@@ -28,6 +28,7 @@ final class FlatCommandTest extends KernelTestCase
         $commandTester->execute([
             'host' => 'pushword.piedweb.com',
             '--mode' => 'import',
+            '--format' => 'text',
         ]);
 
         $output = $commandTester->getDisplay();
@@ -40,6 +41,7 @@ final class FlatCommandTest extends KernelTestCase
             'host' => 'pushword.piedweb.com',
             '--mode' => 'export',
             '--force' => true,
+            '--format' => 'text',
         ]);
 
         $exportOutput = $commandTester->getDisplay();
@@ -63,10 +65,40 @@ final class FlatCommandTest extends KernelTestCase
             'host' => 'pushword.piedweb.com',
             '--mode' => 'import',
             '--page' => ['homepage'],
+            '--format' => 'text',
         ]);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('Sync completed', $output);
         self::assertSame(0, $commandTester->getStatusCode());
+    }
+
+    public function testSyncAgentOutputIsJson(): void
+    {
+        $kernel = self::createKernel();
+        $application = new Application($kernel);
+
+        /** @var BackgroundProcessManager $processManager */
+        $processManager = self::getContainer()->get(BackgroundProcessManager::class);
+        @unlink($processManager->getPidFilePath('flat-sync'));
+
+        $command = $application->find('pw:flat:sync');
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([
+            'host' => 'pushword.piedweb.com',
+            '--mode' => 'import',
+            '--format' => 'agent',
+        ]);
+
+        $output = trim($commandTester->getDisplay());
+        self::assertStringNotContainsString('Sync completed', $output);
+        self::assertStringNotContainsString('PID:', $output);
+
+        $decoded = json_decode($output, true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame('pw:flat:sync', $decoded['tool']);
+        self::assertArrayHasKey('imported', $decoded);
+        self::assertArrayHasKey('exported', $decoded);
+        self::assertArrayHasKey('duration_ms', $decoded);
     }
 }

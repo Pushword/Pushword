@@ -129,7 +129,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $command = $application->find('pw:static');
         $commandTester = new CommandTester($command);
 
-        $commandTester->execute(['host' => 'localhost.dev']);
+        $commandTester->execute(['host' => 'localhost.dev', '--format' => 'text']);
 
         // the output of the command in the console
         $output = $commandTester->getDisplay();
@@ -147,6 +147,33 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertFileExists($staticDir.'/favicon.ico');
     }
 
+    public function testStaticCommandAgentOutputIsJson(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $application = new Application(self::$kernel); // @phpstan-ignore-line
+
+        $command = $application->find('pw:static');
+        $commandTester = new CommandTester($command);
+
+        $commandTester->execute(['host' => 'localhost.dev', '--format' => 'agent']);
+
+        $output = trim($commandTester->getDisplay());
+
+        // No human noise leaks into agent output.
+        self::assertStringNotContainsString('PID', $output);
+        self::assertStringNotContainsString('peak memory', $output);
+        self::assertStringNotContainsString('success', $output);
+
+        $decoded = json_decode($output, true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame('pw:static', $decoded['tool']);
+        self::assertContains($decoded['result'], ['passed', 'failed']);
+        self::assertArrayHasKey('errors_count', $decoded);
+        self::assertArrayHasKey('errors', $decoded);
+        self::assertArrayHasKey('duration_ms', $decoded);
+    }
+
     public function testIncrementalGeneration(): void
     {
         self::bootKernel();
@@ -159,7 +186,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $commandTester = new CommandTester($command);
 
         // First full generation
-        $commandTester->execute(['host' => 'localhost.dev']);
+        $commandTester->execute(['host' => 'localhost.dev', '--format' => 'text']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('success', $output);
@@ -187,7 +214,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $commandTester = $this->rebootStaticCommandTester();
 
         // Second generation with incremental flag
-        $commandTester->execute(['host' => 'localhost.dev', '--incremental' => true]);
+        $commandTester->execute(['host' => 'localhost.dev', '--incremental' => true, '--format' => 'text']);
 
         $output = $commandTester->getDisplay();
         self::assertStringContainsString('success', $output);
@@ -247,7 +274,7 @@ final class StaticGeneratorTest extends KernelTestCase
             $em->flush();
 
             $commandTester = $this->rebootStaticCommandTester();
-            $commandTester->execute(['host' => 'localhost.dev']);
+            $commandTester->execute(['host' => 'localhost.dev', '--format' => 'text']);
 
             self::assertStringContainsString('Held', $commandTester->getDisplay());
 
@@ -955,7 +982,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $tester = new CommandTester($command);
-        $tester->execute(['host' => 'localhost.dev', '--workers' => 1]);
+        $tester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
 
         $seqOutput = $tester->getDisplay();
         self::assertStringContainsString('success', $seqOutput, 'Sequential generation failed: '.$seqOutput);
@@ -965,7 +992,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $siteConfig->setCustomProperty('static_dir', $parDir);
         $this->cleanupPidFiles();
 
-        $tester->execute(['host' => 'localhost.dev', '--workers' => 2]);
+        $tester->execute(['host' => 'localhost.dev', '--workers' => 2, '--format' => 'text']);
         $parOutput = $tester->getDisplay();
         self::assertStringContainsString('success', $parOutput, 'Parallel generation failed: '.$parOutput);
 
@@ -993,7 +1020,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $application = new Application(self::$kernel); // @phpstan-ignore-line
         $command = $application->find('pw:static');
         $tester = new CommandTester($command);
-        $tester->execute(['host' => 'localhost.dev', '--workers' => 2]);
+        $tester->execute(['host' => 'localhost.dev', '--workers' => 2, '--format' => 'text']);
 
         $output = $tester->getDisplay();
         self::assertStringContainsString('[W0]', $output);

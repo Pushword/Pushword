@@ -52,7 +52,7 @@ final class FlatLintCommandTest extends KernelTestCase
 
         $command = $this->application->find('pw:flat:lint');
         $tester = new CommandTester($command);
-        $tester->execute(['host' => 'localhost.dev']);
+        $tester->execute(['host' => 'localhost.dev', '--format' => 'text']);
 
         self::assertSame(Command::FAILURE, $tester->getStatusCode());
         self::assertStringContainsString('lint-test-invalid.md', $tester->getDisplay());
@@ -67,7 +67,7 @@ final class FlatLintCommandTest extends KernelTestCase
 
         $command = $this->application->find('pw:flat:lint');
         $tester = new CommandTester($command);
-        $tester->execute(['host' => 'localhost.dev']);
+        $tester->execute(['host' => 'localhost.dev', '--format' => 'text']);
 
         self::assertSame(Command::FAILURE, $tester->getStatusCode());
         self::assertStringContainsString('lint-test-quote.md', $tester->getDisplay());
@@ -77,10 +77,33 @@ final class FlatLintCommandTest extends KernelTestCase
     {
         $command = $this->application->find('pw:flat:lint');
         $tester = new CommandTester($command);
-        $tester->execute(['host' => 'localhost.dev']);
+        $tester->execute(['host' => 'localhost.dev', '--format' => 'text']);
 
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
         self::assertStringContainsString('valid YAML front matter', $tester->getDisplay());
+    }
+
+    public function testLintAgentOutputIsJson(): void
+    {
+        $path = $this->contentDir.'/lint-test-agent.md';
+        $this->filesystem->dumpFile($path, "---\nh1: [invalid yaml: {broken\n---\n\nContent");
+        $this->createdFiles[] = $path;
+
+        $command = $this->application->find('pw:flat:lint');
+        $tester = new CommandTester($command);
+        $tester->execute(['host' => 'localhost.dev', '--format' => 'agent']);
+
+        $output = trim($tester->getDisplay());
+
+        // No human noise leaks into agent output.
+        self::assertStringNotContainsString('valid YAML front matter', $output);
+
+        $decoded = json_decode($output, true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame('pw:flat:lint', $decoded['tool']);
+        self::assertArrayHasKey('files_checked', $decoded);
+        self::assertArrayHasKey('errors', $decoded);
+        self::assertArrayHasKey('issues', $decoded);
     }
 
     public function testSyncShowsYamlErrorWarning(): void
@@ -92,7 +115,7 @@ final class FlatLintCommandTest extends KernelTestCase
 
         $command = $this->application->find('pw:flat:sync');
         $tester = new CommandTester($command);
-        $tester->execute(['host' => 'localhost.dev', '--mode' => 'import']);
+        $tester->execute(['host' => 'localhost.dev', '--mode' => 'import', '--format' => 'text']);
 
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
         self::assertStringContainsString('YAML front matter errors', $tester->getDisplay());

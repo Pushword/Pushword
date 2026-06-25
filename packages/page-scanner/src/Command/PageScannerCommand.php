@@ -2,6 +2,7 @@
 
 namespace Pushword\PageScanner\Command;
 
+use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
@@ -10,7 +11,6 @@ use Pushword\Core\Service\TeeOutput;
 use Pushword\PageScanner\Controller\PageScannerController;
 use Pushword\PageScanner\Scanner\PageScannerService;
 use Pushword\PageScanner\Scanner\ParallelUrlChecker;
-use Pushword\PageScanner\Service\AgentDetector;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -28,6 +28,8 @@ use Symfony\Component\Stopwatch\Stopwatch;
 )]
 final class PageScannerCommand
 {
+    use AgentOutputTrait;
+
     private const string PROCESS_TYPE = 'page-scanner';
 
     private const string COMMAND_PATTERN = 'pw:page-scan';
@@ -190,14 +192,6 @@ final class PageScannerCommand
     }
 
     /**
-     * @param array<string, mixed> $data
-     */
-    private function writeJson(OutputInterface $output, array $data): void
-    {
-        $output->writeln(json_encode($data, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR));
-    }
-
-    /**
      * Emit a single compact JSON document for AI agents: pages grouped, ignored
      * errors filtered out, no ANSI/progress noise. Inspired by laravel/pao.
      *
@@ -236,7 +230,7 @@ final class PageScannerCommand
             'duration_ms' => $durationMs,
         ];
 
-        $this->writeJson($output, $summary);
+        $this->writeAgentJson($output, $summary);
     }
 
     private function formatErrorForCli(string $message): string
@@ -297,8 +291,7 @@ final class PageScannerCommand
     ): int {
         $this->skipExternal = $skipExternal;
         $this->limit = $limit;
-        $this->agentMode = \in_array($format, ['agent', 'json'], true)
-            || ('auto' === $format && AgentDetector::isAgent());
+        $this->agentMode = $this->isAgentFormat($format);
 
         if ($checkUnpublished) {
             $this->scanner->linkedDocsScanner->enableCheckUnpublished();
@@ -314,7 +307,7 @@ final class PageScannerCommand
         if ($processInfo['isRunning'] && null !== $processInfo['pid']) {
             if ($this->agentMode) {
                 // Never stream the other process's human output into agent output.
-                $this->writeJson($output, [
+                $this->writeAgentJson($output, [
                     'tool' => 'pw:page-scan',
                     'result' => 'running',
                     'pid' => $processInfo['pid'],

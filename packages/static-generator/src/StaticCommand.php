@@ -2,6 +2,7 @@
 
 namespace Pushword\StaticGenerator;
 
+use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Core\Service\BackgroundProcessManager;
 use Pushword\Core\Service\ProcessOutputStorage;
 use Pushword\Core\Service\SharedOutputInterface;
@@ -17,17 +18,21 @@ use Throwable;
 
 #[AsCommand(name: 'pw:static', description: 'Generate static version for your website')]
 #[AutoconfigureTag('console.command')]
-final readonly class StaticCommand
+final class StaticCommand
 {
+    use AgentOutputTrait;
+
     private const string PROCESS_TYPE = 'static-generator';
 
     private const string COMMAND_PATTERN = 'pw:static';
 
+    private bool $agentMode = false;
+
     public function __construct(
-        private StaticAppGenerator $staticAppGenerator,
-        private Stopwatch $stopWatch,
-        private BackgroundProcessManager $processManager,
-        private ProcessOutputStorage $outputStorage,
+        private readonly StaticAppGenerator $staticAppGenerator,
+        private readonly Stopwatch $stopWatch,
+        private readonly BackgroundProcessManager $processManager,
+        private readonly ProcessOutputStorage $outputStorage,
     ) {
     }
 
@@ -41,7 +46,11 @@ final readonly class StaticCommand
         bool $incremental = false,
         #[Option(description: 'Number of parallel workers (0=auto, 1=sequential)', name: 'workers', shortcut: 'w')]
         int $workers = 0,
+        #[Option(description: 'Output format: auto (compact JSON when an AI agent is detected), agent (force JSON), or text', name: 'format')]
+        string $format = 'auto',
     ): int {
+        $this->agentMode = $this->isAgentFormat($format);
+
         $processType = null === $host ? self::PROCESS_TYPE : self::PROCESS_TYPE.'--'.$host;
 
         // Check if same process type is already running (via PID file)
@@ -50,6 +59,17 @@ final readonly class StaticCommand
         $processInfo = $this->processManager->getProcessInfo($pidFile);
 
         if ($processInfo['isRunning']) {
+            if ($this->agentMode) {
+                $this->writeAgentJson($output, [
+                    'tool' => 'pw:static',
+                    'result' => 'running',
+                    'pid' => $processInfo['pid'],
+                    'message' => 'Static generation is already running; re-run once it completes.',
+                ]);
+
+                return Command::FAILURE;
+            }
+
             $output->writeln('<error>Static generation is already running (PID: '.$processInfo['pid'].').</error>');
 
             return Command::FAILURE;
@@ -71,11 +91,19 @@ final readonly class StaticCommand
         $teeOutput = new TeeOutput([$output, $sharedOutput]);
 
         try {
-            $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
+            if (! $this->agentMode) {
+                $teeOutput->writeln('<comment>PID: '.getmypid().'</comment>');
+            }
+
             $this->stopWatch->start('generate');
 
-            // Set tee output, stopwatch, and workers for progress reporting
-            $this->staticAppGenerator->setOutput($teeOutput);
+            // Set tee output, stopwatch, and workers for progress reporting.
+            // In agent mode, skip the output so the generator stays silent and
+            // stdout carries only the final JSON line.
+            if (! $this->agentMode) {
+                $this->staticAppGenerator->setOutput($teeOutput);
+            }
+
             $this->staticAppGenerator->setStopwatch($this->stopWatch);
             $this->staticAppGenerator->setWorkers($workers);
 
@@ -98,19 +126,42 @@ final readonly class StaticCommand
 
             $event = $this->stopWatch->stop('generate');
             $duration = $event->getDuration();
-            $this->printStatus($teeOutput, $msg.' ('.$this->formatDuration($duration).').');
+            $errors = $this->staticAppGenerator->getErrors();
 
-            // Print timing breakdown
-            $this->printTimingBreakdown($teeOutput);
+            if ($this->agentMode) {
+                $this->writeAgentJson($teeOutput, [
+                    'tool' => 'pw:static',
+                    'result' => [] !== $errors ? 'failed' : 'passed',
+                    'errors_count' => \count($errors),
+                    'errors' => array_values($errors),
+                    'duration_ms' => (int) $duration,
+                ]);
+            } else {
+                $this->printStatus($teeOutput, $msg.' ('.$this->formatDuration($duration).').');
 
-            $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+                // Print timing breakdown
+                $this->printTimingBreakdown($teeOutput);
 
-            $status = [] !== $this->staticAppGenerator->getErrors() ? 'error' : 'completed';
+                $teeOutput->writeln(\sprintf('<comment>:: peak memory: %.1f MB</comment>', memory_get_peak_usage(true) / 1024 / 1024));
+            }
+
+            $status = [] !== $errors ? 'error' : 'completed';
             $this->outputStorage->setStatus($processType, $status);
 
             return Command::SUCCESS;
         } catch (Throwable $throwable) {
-            $teeOutput->writeln('<error>Fatal: '.$throwable->getMessage().'</error>');
+            if ($this->agentMode) {
+                $this->writeAgentJson($teeOutput, [
+                    'tool' => 'pw:static',
+                    'result' => 'failed',
+                    'errors_count' => 1,
+                    'errors' => [$throwable->getMessage()],
+                    'duration_ms' => 0,
+                ]);
+            } else {
+                $teeOutput->writeln('<error>Fatal: '.$throwable->getMessage().'</error>');
+            }
+
             $this->outputStorage->setStatus($processType, 'error');
 
             return Command::FAILURE;

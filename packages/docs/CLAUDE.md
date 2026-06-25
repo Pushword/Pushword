@@ -37,6 +37,16 @@ Pushword uses the `host` field for multi-site/multi-locale. Each locale is a sep
 - `pw:page-scan` — scan for dead links and issues
 - `pw:user:token {email}` — get API bearer token
 
+#### Agent-optimized output
+
+`pw:page-scan`, `pw:flat:sync`, `pw:flat:lint`, `pw:static`, `pw:image:cache` and
+`pw:quiz:validate` auto-detect when an AI agent runs them (via the same env vars as
+laravel/agent-detector) and emit a single compact JSON line instead of progress
+bars, colors, PID/timing/memory chatter — far cheaper to parse. Each starts with
+`{"tool": "...", "result": "passed|failed|done|running", ...}`. Force it with
+`--format=agent` (JSON) or `--format=text` (human); default is `--format=auto`.
+`pw:media:debug --json` and `pw:quiz:schema` are already JSON.
+
 ### Quality gates
 
 - PHPStan (`composer stan`), php-cs-fixer (`composer format`), Rector (`composer rector`)

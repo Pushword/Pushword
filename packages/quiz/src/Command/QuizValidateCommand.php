@@ -3,12 +3,14 @@
 namespace Pushword\Quiz\Command;
 
 use Pushword\Conversation\Form\ConversationFormInterface;
+use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Quiz\Model\Quiz;
 use Pushword\Quiz\Service\QuizBlockExtractor;
 use Pushword\Quiz\Service\QuizFactory;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -25,14 +27,18 @@ use Throwable;
     name: 'pw:quiz:validate',
     description: 'Validate the quiz blocks of a flat file (or stdin) against the Quiz model.',
 )]
-final readonly class QuizValidateCommand
+final class QuizValidateCommand
 {
+    use AgentOutputTrait;
+
+    private bool $agentMode = false;
+
     public function __construct(
-        private QuizFactory $factory,
-        private ValidatorInterface $validator,
-        private QuizBlockExtractor $extractor,
-        private TranslatorInterface $translator,
-        private SiteRegistry $apps,
+        private readonly QuizFactory $factory,
+        private readonly ValidatorInterface $validator,
+        private readonly QuizBlockExtractor $extractor,
+        private readonly TranslatorInterface $translator,
+        private readonly SiteRegistry $apps,
     ) {
     }
 
@@ -40,9 +46,26 @@ final readonly class QuizValidateCommand
         SymfonyStyle $io,
         #[Argument(description: 'Path to a file with quiz blocks, or - for stdin')]
         string $path = '-',
+        #[Option(description: 'Output format: auto (compact JSON when an AI agent is detected), agent (force JSON), or text', name: 'format')]
+        string $format = 'auto',
     ): int {
+        $this->agentMode = $this->isAgentFormat($format);
+
         $content = $this->read($path);
         if (null === $content) {
+            if ($this->agentMode) {
+                $this->writeAgentJson($io, [
+                    'tool' => 'pw:quiz:validate',
+                    'result' => 'failed',
+                    'blocks_checked' => 0,
+                    'errors' => 1,
+                    'warnings' => 0,
+                    'issues' => [['path' => $path, 'message' => \sprintf('Cannot read "%s".', $path)]],
+                ]);
+
+                return Command::FAILURE;
+            }
+
             $io->error(\sprintf('Cannot read "%s".', $path));
 
             return Command::FAILURE;
@@ -50,17 +73,45 @@ final readonly class QuizValidateCommand
 
         $blocks = $this->extractor->extract($content);
         if ([] === $blocks) {
+            if ($this->agentMode) {
+                $this->writeAgentJson($io, [
+                    'tool' => 'pw:quiz:validate',
+                    'result' => 'passed',
+                    'blocks_checked' => 0,
+                    'errors' => 0,
+                    'warnings' => 0,
+                    'issues' => [],
+                ]);
+
+                return Command::SUCCESS;
+            }
+
             $io->warning("No quiz block found (looked for {% quiz %}…{% endquiz %} and {{ quiz('…') }}).");
 
             return Command::SUCCESS;
         }
 
         $invalid = 0;
+        $issues = [];
+        $warningCount = 0;
         foreach ($blocks as $index => $block) {
             $label = \sprintf('Quiz #%d (line %d, %s)', $index + 1, $block['line'], $block['form']);
-            if (! $this->validateBlock($io, $label, $block['json'])) {
+            if (! $this->validateBlock($io, $label, $block['json'], $issues, $warningCount)) {
                 ++$invalid;
             }
+        }
+
+        if ($this->agentMode) {
+            $this->writeAgentJson($io, [
+                'tool' => 'pw:quiz:validate',
+                'result' => 0 === $invalid ? 'passed' : 'failed',
+                'blocks_checked' => \count($blocks),
+                'errors' => \count($issues),
+                'warnings' => $warningCount,
+                'issues' => $issues,
+            ]);
+
+            return $invalid > 0 ? Command::FAILURE : Command::SUCCESS;
         }
 
         if ($invalid > 0) {
@@ -74,20 +125,29 @@ final readonly class QuizValidateCommand
         return Command::SUCCESS;
     }
 
-    private function validateBlock(SymfonyStyle $io, string $label, string $json): bool
+    /**
+     * @param list<array{path: string, message: string}> $issues
+     */
+    private function validateBlock(SymfonyStyle $io, string $label, string $json, array &$issues, int &$warningCount): bool
     {
         try {
             $data = json_decode($json, true, flags: \JSON_THROW_ON_ERROR);
         } catch (Throwable $throwable) {
-            $io->section($label);
-            $io->error('Malformed JSON: '.$throwable->getMessage());
+            $issues[] = ['path' => $label, 'message' => 'Malformed JSON: '.$throwable->getMessage()];
+            if (! $this->agentMode) {
+                $io->section($label);
+                $io->error('Malformed JSON: '.$throwable->getMessage());
+            }
 
             return false;
         }
 
         if (! \is_array($data)) {
-            $io->section($label);
-            $io->error('The quiz payload must be a JSON object.');
+            $issues[] = ['path' => $label, 'message' => 'The quiz payload must be a JSON object.'];
+            if (! $this->agentMode) {
+                $io->section($label);
+                $io->error('The quiz payload must be a JSON object.');
+            }
 
             return false;
         }
@@ -96,25 +156,29 @@ final readonly class QuizValidateCommand
         $quiz = $this->factory->fromArray($data);
         $violations = $this->validator->validate($quiz);
         $warnings = $this->ctaWarnings($quiz);
+        $warningCount += \count($warnings);
 
         if (\count($violations) > 0) {
-            $io->section($label);
             $rows = [];
             foreach ($violations as $violation) {
-                $rows[] = [
-                    $violation->getPropertyPath(),
-                    $this->translator->trans((string) $violation->getMessage(), [], 'validators'),
-                ];
+                $message = $this->translator->trans((string) $violation->getMessage(), [], 'validators');
+                $issues[] = ['path' => $violation->getPropertyPath(), 'message' => $message];
+                $rows[] = [$violation->getPropertyPath(), $message];
             }
 
-            $io->table(['path', 'message'], $rows);
-            $this->printWarnings($io, $warnings);
+            if (! $this->agentMode) {
+                $io->section($label);
+                $io->table(['path', 'message'], $rows);
+                $this->printWarnings($io, $warnings);
+            }
 
             return false;
         }
 
-        $io->writeln(' <info>✓</info> '.$label.' — valid');
-        $this->printWarnings($io, $warnings);
+        if (! $this->agentMode) {
+            $io->writeln(' <info>✓</info> '.$label.' — valid');
+            $this->printWarnings($io, $warnings);
+        }
 
         return true;
     }

@@ -1,9 +1,9 @@
 <?php
 
-namespace Pushword\PageScanner\Tests\Service;
+namespace Pushword\Core\Tests\Service;
 
 use PHPUnit\Framework\TestCase;
-use Pushword\PageScanner\Service\AgentDetector;
+use Pushword\Core\Service\AgentDetector;
 
 final class AgentDetectorTest extends TestCase
 {
