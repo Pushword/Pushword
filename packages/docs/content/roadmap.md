@@ -9,8 +9,7 @@ Long road till today ! Half way till tomorrow. First commit _Nov 10, 2018_.
 
 ## Before v1
 
-- [x] page hold -> cache:static (originguide) déjà couvert ; survit désormais à `pw:cache:clear` (les fichiers gelés sont conservés)
-- [ ] npx pushword ai plugin inspired from https://github.com/gsd-build/get-shit-done https://github.com/pbakaus/impeccable and current prompt/cmd/skills on my projects
+- [ ] npx pushword ai plugin inspired from https://github.com/gsd-build/get-shit-done https://github.com/pbakaus/impeccable and current prompt/cmd/skills on my projects (wip -> ai-skills package)
 
 ### In progress<>
 
