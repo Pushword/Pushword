@@ -242,8 +242,16 @@ final class PageExtension
         }
 
         $max = (int) $max;
+        // $max < 1 means "no limit": the repository's limit() treats 0 as unlimited, so
+        // omitting max — e.g. pages_list('slug:a OR slug:b') — renders every matching page
+        // instead of throwing (which surfaced as a 500 on the rendered content block).
+        // Pagination still needs a positive per-page count, so guard only that combination.
         if ($max < 1) {
-            throw new LogicException();
+            if ($maxPages > 1) {
+                throw new LogicException('pages_list: "max" (items per page) must be >= 1 when paginating with maxPages.');
+            }
+
+            $max = 0;
         }
 
         // end normalize args
