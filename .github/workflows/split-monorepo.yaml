@@ -1,6 +1,11 @@
 name: Split Monorepo
 
-on: push
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
 
 jobs:
   split_monorepo:
@@ -36,10 +41,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - # get git previous tag
-        id: previous_tag
-        uses: "WyriHaximus/github-action-get-previous-tag@master"
-
       - # Uses an action in the root directory
         name: Monorepo Split of ${{ matrix.package }}
         uses: danharrin/monorepo-split-github-action@v2.4.5
@@ -49,7 +50,10 @@ jobs:
           package_directory: "packages/${{ matrix.package }}"
           repository_organization: "pushword"
           repository_name: "${{ matrix.package }}"
-          tag: ${{ steps.previous_tag.outputs.tag }}
+          # Only tag on a genuine tag push, with the exact tag pushed.
+          # On branch pushes the tag is empty so the action skips tagging
+          # (re-applying an existing tag is fatal under v2.4.5 — no --force).
+          tag: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
           user_name: "RobinDev"
           user_email: "contact@piedweb.com"
 
