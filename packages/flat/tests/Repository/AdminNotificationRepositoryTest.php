@@ -85,7 +85,7 @@ final class AdminNotificationRepositoryTest extends KernelTestCase
     public function testFindUnreadFiltersByHost(): void
     {
         $this->createNotification(message: 'Host A', host: 'host-a.com', isRead: false);
-        $globalNotification = $this->createNotification(message: 'Global', host: null, isRead: false);
+        $globalNotification = $this->createNotification(message: 'Global', isRead: false);
         $this->createNotification(message: 'Host B', host: 'host-b.com', isRead: false);
 
         $result = $this->repository->findUnread('host-a.com');
@@ -106,7 +106,7 @@ final class AdminNotificationRepositoryTest extends KernelTestCase
     public function testCountUnreadFiltersByHost(): void
     {
         $this->createNotification(host: 'host-a.com', isRead: false);
-        $this->createNotification(host: null, isRead: false); // Global
+        $this->createNotification(isRead: false); // Global
         $this->createNotification(host: 'host-b.com', isRead: false);
 
         self::assertSame(2, $this->repository->countUnread('host-a.com'));

@@ -19,6 +19,7 @@ final class QuizResultCrudControllerTest extends AbstractAdminTestClass
         $result->host = 'localhost.dev';
         $result->quiz = 'admin-test-quiz';
         $result->score = 73;
+
         $entityManager->persist($result);
         $entityManager->flush();
 

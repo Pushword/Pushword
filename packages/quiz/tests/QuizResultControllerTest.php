@@ -13,7 +13,7 @@ final class QuizResultControllerTest extends WebTestCase
 {
     public function testRecordsAttemptsAndComputesPercentile(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $quiz = 'controller-test-quiz';
 
         // First attempt: no prior participant → percentile 0.
@@ -31,7 +31,7 @@ final class QuizResultControllerTest extends WebTestCase
 
     public function testRejectsInvalidPayloads(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $this->post($client, ['quiz' => 'x', 'score' => 150]); // out of 0-100
         self::assertSame(Response::HTTP_BAD_REQUEST, $client->getResponse()->getStatusCode());
