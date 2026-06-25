@@ -248,4 +248,60 @@ final class HtmlUnpublishedLinkTest extends TestCase
         // …and a cross-host (multisite) target is batched under its own host.
         self::assertSame(['e'], $warmed['brand2.example'] ?? null);
     }
+
+    /**
+     * When the body has <a> tags but none resolve to a (host, slug) target —
+     * anchors, mailto/tel/javascript schemes, and schemeless-relative hrefs —
+     * warmupLinkTargets collects no slugs and must never call
+     * warmupSlugCacheFor() — no empty-batch query.
+     *
+     * Note: an absolute http(s) href is NOT considered "external" here; the
+     * filter has no known-host allowlist, so it treats any URL with a host as a
+     * potential page on that host (see the multisite case in
+     * testLinkTargetsAreBatchWarmedOncePerHost). Only http(s) URLs with no host
+     * are dropped.
+     */
+    public function testNoInternalLinksWarmsNothing(): void
+    {
+        $repo = $this->createMock(PageRepository::class);
+        $repo->expects(self::never())->method('warmupSlugCacheFor');
+        $repo->method('getPageBySlug')->willReturn(null);
+
+        $filter = new HtmlUnpublishedLink($repo);
+        $currentPage = $this->createPage('home', new DateTime('-1 day'));
+
+        $html = '<a href="#x">anchor</a> <a href="mailto:x@y.tld">mail</a>'
+            .' <a href="tel:+1234">tel</a> <a href="javascript:void(0)">js</a>'
+            .' <a href="relative/path">rel</a>';
+
+        self::assertSame($html, $this->apply($filter, $html, $currentPage));
+    }
+
+    /**
+     * Repeated internal links to the same slug are passed to the warm-up as-is;
+     * the filter does not de-duplicate (that is the repository's job). This pins
+     * the actual collection behaviour so a future change to it is deliberate.
+     */
+    public function testDuplicateSlugsArePassedThroughWithoutDeduplication(): void
+    {
+        /** @var array<string, list<string>> $warmed host => slugs */
+        $warmed = [];
+
+        $repo = $this->createMock(PageRepository::class);
+        $repo->method('warmupSlugCacheFor')->willReturnCallback(
+            static function (array $slugs, string $host) use (&$warmed): void {
+                $warmed[$host] = $slugs;
+            },
+        );
+        $repo->method('getPageBySlug')->willReturn(null);
+
+        $filter = new HtmlUnpublishedLink($repo);
+        $currentPage = $this->createPage('home', new DateTime('-1 day'));
+
+        $html = '<a href="/pub">One</a> <a href="/pub">Two</a> <a href="/other">Three</a>';
+
+        $this->apply($filter, $html, $currentPage);
+
+        self::assertSame(['pub', 'pub', 'other'], $warmed['localhost'] ?? null);
+    }
 }
