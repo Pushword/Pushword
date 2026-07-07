@@ -1,3 +1,4 @@
+page_scanBrokenImage: 'image introuvable'
 page_scanCanonical: 'La canonical est différente'
 page_scanDifferentHost: 'La page parente a un domaine différent'
 page_scanIsRedirection: redirection

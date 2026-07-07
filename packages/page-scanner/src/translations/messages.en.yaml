@@ -1,3 +1,4 @@
+page_scanBrokenImage: 'image not found'
 page_scanCanonical: 'Canonical is different'
 page_scanDifferentHost: 'Parent page has a different host'
 page_scanIsRedirection: redirection

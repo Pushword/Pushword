@@ -77,6 +77,7 @@ adminMediaViewSelectAll: 'Tout sélectionner'
 adminMediaViewTable: 'Vue liste'
 adminPaginationRatioLabelLabel: Ratio
 adminPageAuthorLabel: Auteur
+adminPageBrokenImageWarning: "Cette page référence des image(s) introuvable(s). Elles sont ignorées à l'affichage de la page :"
 adminPageCloneLabel: Dupliquer
 adminPageCloneSuccess: "Page dupliquée avec succès. Pensez à mettre à jour les champs cachés (titre, description…) si cette page a une destination propre."
 adminPageCreatedAtLabel: 'Créé le'

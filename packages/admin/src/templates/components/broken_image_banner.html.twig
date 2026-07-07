@@ -1,0 +1,25 @@
+{# @var page \Pushword\Core\Entity\Page #}
+{% if entity.instance.id is defined and entity.instance.id %}
+  {% set brokenImages = pw_broken_images(entity.instance) %}
+  {% if brokenImages is not empty %}
+    <div class="pw-broken-image-banner"
+         style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 1px solid #ef4444; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.12);"
+         role="alert">
+      <div style="display: flex; align-items: flex-start; gap: 12px;">
+        <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #ef4444; border-radius: 50%; flex-shrink: 0;">
+          <svg style="width: 18px; height: 18px; color: white;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div style="flex-grow: 1;">
+          <div style="font-size: 14px; font-weight: 600; color: #991b1b;">{{ 'adminPageBrokenImageWarning'|trans }}</div>
+          <ul style="margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: #7f1d1d;">
+            {% for src in brokenImages %}
+              <li><code>{{ src }}</code></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}

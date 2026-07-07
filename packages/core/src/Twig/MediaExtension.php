@@ -252,4 +252,30 @@ class MediaExtension
 
         return null;
     }
+
+    /**
+     * Body-image sources in $markdown that resolve to no internal Media — the
+     * "broken image" case a `![](…)` degrades to at render time. Read-only: it
+     * never hits the network, so external sources (whose reachability is a
+     * separate concern) and non-image markdown are ignored. Mirrors the internal
+     * branch of transformStringToMedia() so it flags exactly what would fail.
+     *
+     * @return string[] the offending sources, in order of appearance, deduplicated
+     */
+    public function findBrokenInternalImages(string $markdown): array
+    {
+        if (false === preg_match_all('/!\[[^\]]*\]\(\s*([^)\s]+)/', $markdown, $matches) || [] === $matches[1]) {
+            return [];
+        }
+
+        $broken = [];
+        foreach (array_unique($matches[1]) as $src) {
+            $normalized = $this->normalizeMediaPath($src);
+            if ($this->mayBeAnInternalImage($normalized) && null === $this->findMediaByFileName($normalized)) {
+                $broken[] = $src;
+            }
+        }
+
+        return $broken;
+    }
 }

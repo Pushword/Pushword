@@ -2,7 +2,9 @@
 
 namespace Pushword\Admin\Twig;
 
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Twig\MediaExtension;
 use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 
 use function Safe\json_encode;
@@ -17,6 +19,7 @@ class AdminExtension implements ResetInterface
 
     public function __construct(
         private readonly PageRepository $pageRepository,
+        private readonly MediaExtension $mediaExtension,
     ) {
     }
 
@@ -47,5 +50,18 @@ class AdminExtension implements ResetInterface
     public function isHoldable(?string $host = null): bool
     {
         return class_exists(PushwordStaticGeneratorBundle::class);
+    }
+
+    /**
+     * Body-image sources of $page that resolve to no media, so the edit screen
+     * can warn the author. These degrade to an invisible marker at render (no
+     * image shown) instead of 500-ing the page.
+     *
+     * @return string[]
+     */
+    #[AsTwigFunction('pw_broken_images')]
+    public function getBrokenImages(Page $page): array
+    {
+        return $this->mediaExtension->findBrokenInternalImages($page->getMainContent());
     }
 }

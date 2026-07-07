@@ -5,6 +5,7 @@
     {% if entity.instance.id is defined and entity.instance.id %}
         {% include '@pwAdmin/components/edit_lock_banner.html.twig' %}
     {% endif %}
+    {% include '@pwAdmin/components/broken_image_banner.html.twig' %}
     {{ parent() }}
 {% endblock %}
 

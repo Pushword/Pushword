@@ -5,6 +5,8 @@ namespace Pushword\PageScanner;
 use DateTime;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\Markdown\BrokenImageComment;
+use Pushword\PageScanner\Scanner\BrokenImageScanner;
 use Pushword\PageScanner\Scanner\PageScannerService;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -21,6 +23,26 @@ final class PageScannerTest extends KernelTestCase
         $errors = $scanner->scan($this->getPage());
 
         self::assertTrue(\is_array($errors) || $errors); // TODO @phpstan-ignore-line
+    }
+
+    public function testBrokenImageIsReported(): void
+    {
+        self::bootKernel();
+
+        /** @var BrokenImageScanner $scanner */
+        $scanner = self::getContainer()->get(BrokenImageScanner::class);
+
+        // The renderer degrades an unresolvable body image to this marker (see
+        // MarkdownExtensionTest::testBrokenBodyImageDegradesToComment); the scanner
+        // surfaces it from the rendered page HTML.
+        $pageHtml = '<p>'.BrokenImageComment::for('does-not-exist-broken.jpg').'</p>';
+
+        $errors = $scanner->scan($this->getPage(), $pageHtml);
+
+        self::assertNotEmpty(
+            array_filter($errors, static fn (string $message): bool => str_contains($message, 'does-not-exist-broken.jpg')),
+            'A broken body image must surface as a scan error.',
+        );
     }
 
     public function getPage(): Page

@@ -5,6 +5,7 @@ namespace Pushword\Core\Tests\Service;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Service\Markdown\Extension\Node\ObfuscatedLink;
 use Pushword\Core\Service\Markdown\MarkdownParser;
+use Pushword\Core\Twig\MediaExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
@@ -122,6 +123,46 @@ final class MarkdownExtensionTest extends KernelTestCase
         self::assertStringContainsString('/media/', $result);
         self::assertMatchesRegularExpression('/2\.(jpg|webp)/', $result);
         self::assertStringContainsString('Alt text', $result);
+    }
+
+    public function testBrokenBodyImageDegradesToComment(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("Intro text.\n\n![Alt](does-not-exist-broken.jpg)\n\nOutro text.");
+
+        // A missing body image degrades to an invisible marker instead of throwing…
+        self::assertStringContainsString('pushword:broken-image', $result);
+        self::assertStringContainsString('does-not-exist-broken.jpg', $result);
+        self::assertStringNotContainsString('<picture', $result);
+        // …and the healthy blocks around it still render.
+        self::assertStringContainsString('Intro text', $result);
+        self::assertStringContainsString('Outro text', $result);
+    }
+
+    public function testFindBrokenInternalImages(): void
+    {
+        self::bootKernel();
+        $mediaExtension = self::getContainer()->get(MediaExtension::class);
+
+        $markdown = "![ok](/media/default/2.jpg)\n\n![broken](does-not-exist-broken.jpg)";
+
+        self::assertSame(['does-not-exist-broken.jpg'], $mediaExtension->findBrokenInternalImages($markdown));
+        self::assertSame([], $mediaExtension->findBrokenInternalImages('![ok](/media/default/2.jpg)'));
+    }
+
+    public function testFindBrokenInternalImagesIgnoresExternalSourcesAndDeduplicates(): void
+    {
+        self::bootKernel();
+        $mediaExtension = self::getContainer()->get(MediaExtension::class);
+
+        // External images are a separate (network-bound) concern, so they are never flagged…
+        self::assertSame([], $mediaExtension->findBrokenInternalImages('![x](https://example.com/remote.jpg)'));
+
+        // …and the same broken source referenced twice is reported once.
+        self::assertSame(
+            ['does-not-exist-broken.jpg'],
+            $mediaExtension->findBrokenInternalImages("![a](does-not-exist-broken.jpg)\n\n![b](does-not-exist-broken.jpg)"),
+        );
     }
 
     // ===== Tests de l'autolink email =====
