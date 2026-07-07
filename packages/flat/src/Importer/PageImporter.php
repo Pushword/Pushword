@@ -552,9 +552,6 @@ final class PageImporter extends AbstractImporter
         ];
     }
 
-    /**
-     * @return string|class-string
-     */
     private function getObjectRequiredProperty(string $key): string
     {
         $properties = $this->getObjectRequiredProperties();
