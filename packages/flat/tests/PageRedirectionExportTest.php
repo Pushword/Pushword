@@ -6,6 +6,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Flat\Exporter\PageExporter;
 use Pushword\Flat\Exporter\RedirectionExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
+use Pushword\Flat\Sync\PageSync;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -146,6 +147,36 @@ final class PageRedirectionExportTest extends KernelTestCase
 
         self::assertFileDoesNotExist($orphan, 'Orphaned .md with no matching DB page should be removed');
         self::assertFileExists($this->testContentDir.'/homepage.md', 'Real pages are still exported');
+    }
+
+    /**
+     * Regression: deleting a host's last page leaves findByHost() empty. The orphan
+     * sweep previously bailed on an empty page list, so the stale .md survived and
+     * resurrected the page on the next `--mode=import`. An authoritative empty result
+     * must still be swept.
+     */
+    public function testOrphanCleanupRunsWhenHostHasNoPages(): void
+    {
+        /** @var PageSync $pageSync */
+        $pageSync = self::getContainer()->get(PageSync::class);
+
+        // pushword.piedweb.com has no fixture pages, so its page list is empty —
+        // the same state a host reaches once its last page is hard-deleted.
+        $orphan = $this->testContentDir.'/ghost-of-deleted-page.md';
+        file_put_contents($orphan, "---\ntitle: Ghost\n---\n\nboo");
+
+        // The empty-host sweep must stay targeted: sibling-owned and mid-flight files
+        // are not page files and must survive even when the host has zero pages.
+        $snippetFile = $this->testContentDir.'/pw-snippets/foo.md';
+        $this->filesystem->dumpFile($snippetFile, "---\nname: foo\n---\n\nsnippet");
+        $pendingFile = $this->testContentDir.'/draft.pending.md';
+        file_put_contents($pendingFile, 'pending');
+
+        $pageSync->export('pushword.piedweb.com', true, $this->testContentDir);
+
+        self::assertFileDoesNotExist($orphan, 'Orphaned .md must be swept even when the host has zero pages');
+        self::assertFileExists($snippetFile, 'Snippet files must survive the empty-host sweep');
+        self::assertFileExists($pendingFile, 'Pending writes must survive the empty-host sweep');
     }
 
     public function testOrphanCleanupPreservesReservedAndPendingFiles(): void

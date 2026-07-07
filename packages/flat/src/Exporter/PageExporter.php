@@ -138,7 +138,11 @@ final class PageExporter
             $this->exportPageSafe($page, $force);
         }
 
-        $this->deleteOrphanedFiles($exportablePages);
+        // $pages comes from findByHost(): an authoritative, complete list for this
+        // host. An empty $exportablePages therefore means the host genuinely has no
+        // markdown-backed pages (e.g. its last one was just deleted), so every
+        // exported .md is an orphan and cleanup must still run.
+        $this->deleteOrphanedFiles($exportablePages, authoritative: true);
 
         $this->exportIndex($pages);
     }
@@ -150,12 +154,14 @@ final class PageExporter
      * both then resurrect the page on the next `--mode=import`.
      *
      * @param Page[] $exportablePages Non-redirection pages for the current host
+     * @param bool   $authoritative   Whether $exportablePages is the complete host page
+     *                                list (from findByHost), so an empty list may be swept
      */
-    private function deleteOrphanedFiles(array $exportablePages): void
+    private function deleteOrphanedFiles(array $exportablePages, bool $authoritative = false): void
     {
-        // Safety: never mass-delete when the DB returned nothing (query glitch,
-        // wrong host, empty site) — there is nothing legitimate to compare against.
-        if ([] === $exportablePages) {
+        // Safety: without an authoritative list, an empty array is ambiguous (query
+        // glitch, wrong host) — never mass-delete when there is nothing to compare against.
+        if ([] === $exportablePages && ! $authoritative) {
             return;
         }
 
