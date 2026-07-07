@@ -60,4 +60,20 @@ final class BlockExtensionTest extends KernelTestCase
         self::assertStringContainsString('/media/track.gpx', $html);
         self::assertStringNotContainsString('bytes', $html);
     }
+
+    public function testRenderGalleryDegradesBrokenImageAndKeepsValidOnes(): void
+    {
+        $ext = $this->getBlockExtension();
+
+        $html = $ext->renderGallery([
+            '2.jpg' => 'A valid photo',
+            'does-not-exist-broken.jpg' => 'A photo lost in migration',
+        ]);
+
+        // The valid image still renders…
+        self::assertStringContainsString('<picture', $html);
+        // …while the broken one degrades to an invisible, scannable marker instead of 500-ing.
+        self::assertStringContainsString('pushword:broken-image', $html);
+        self::assertStringContainsString('does-not-exist-broken.jpg', $html);
+    }
 }

@@ -9,12 +9,14 @@ use Pushword\Core\Image\ExternalImageImporter;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
+use Pushword\Core\Service\Markdown\BrokenImageComment;
 use Pushword\Core\Service\PageOpenGraphImageGenerator;
 use Pushword\Core\Site\SiteRegistry;
 
 use function Safe\preg_match;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Throwable;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
 
@@ -224,6 +226,33 @@ class MediaExtension
         }
 
         throw new Exception("Can't handle the value submitted (".$src.')');
+    }
+
+    /**
+     * Like transformStringToMedia() but returns null instead of throwing when the
+     * source resolves to no Media. Lets callers that render many images at once
+     * (galleries, snippets) degrade a single broken one instead of taking down the
+     * whole render — pair it with broken_image_comment() to leave a scan trace.
+     */
+    #[AsTwigFunction('media_from_string_or_null')]
+    public function tryTransformStringToMedia(Media|string|int|null $src, Media|string $name = ''): ?Media
+    {
+        try {
+            return $this->transformStringToMedia($src, $name);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Emit the invisible marker a broken image degrades to (see BrokenImageComment):
+     * the page scanner reports it and it keeps hostile sources from breaking out of
+     * the comment.
+     */
+    #[AsTwigFunction('broken_image_comment', isSafe: ['html'])]
+    public function renderBrokenImageComment(int|string $src): string
+    {
+        return BrokenImageComment::for((string) $src);
     }
 
     /**
