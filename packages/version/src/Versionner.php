@@ -372,6 +372,66 @@ class Versionner
         return $versions[array_key_last($versions)];
     }
 
+    /**
+     * Pick the most relevant past version to diff the current entity against for
+     * the admin "review changes" shortcut on the page list.
+     *
+     * - Held page: the newest version that was live (not held) — the last state
+     *   that actually reached production, so the diff shows exactly what the hold
+     *   is keeping back. Falls back to the oldest version when every snapshot was
+     *   itself held.
+     * - Otherwise: the newest snapshot whose content differs from the current
+     *   state (the previous distinct revision). The latest snapshot usually
+     *   mirrors current, so identical ones are skipped.
+     *
+     * Returns null when the entity has no stored version.
+     */
+    public function pickComparisonVersion(string $type, int|string $id): ?string
+    {
+        $versions = $this->getVersions($type, $id);
+        if ([] === $versions) {
+            return null;
+        }
+
+        sort($versions); // uniqid prefix is chronological, oldest first
+
+        $current = $this->find($type, $id);
+
+        if ($current instanceof Page && $current->isHoldPublication()) {
+            foreach (array_reverse($versions) as $version) {
+                if (! $this->isHeldSnapshot($type, $id, $version)) {
+                    return $version;
+                }
+            }
+
+            return $versions[0]; // every version was held → oldest
+        }
+
+        $currentHash = sha1($this->revisions->serialize($current));
+        foreach (array_reverse($versions) as $version) {
+            if (! str_ends_with($version, '_'.$currentHash)) {
+                return $version;
+            }
+        }
+
+        return $versions[0]; // every version matches current → oldest
+    }
+
+    /**
+     * Whether the snapshot recorded the page in "hold publication" mode. Reads the
+     * raw JSON (like editorOf) instead of hydrating, since holdPublicationAt is a
+     * column and always present in the snapshot.
+     */
+    private function isHeldSnapshot(string $type, int|string $id, string $version): bool
+    {
+        $serialized = $this->fileSystem->readFile($this->getVersionFile($type, $id, $version));
+
+        /** @var array{holdPublicationAt?: mixed} $data */
+        $data = json_decode($serialized, true, 512, \JSON_THROW_ON_ERROR);
+
+        return null !== ($data['holdPublicationAt'] ?? null);
+    }
+
     private function getVersionDir(string $type, int|string $id): string
     {
         // Page versions keep their historical flat path; other types are

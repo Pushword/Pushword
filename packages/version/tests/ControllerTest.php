@@ -81,6 +81,86 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
     }
 
+    public function testReviewRouteRedirectsToCompareAndActionIsListed(): void
+    {
+        $client = $this->loginUser();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->setSlug('review-route-'.uniqid());
+        $page->setMainContent('first');
+
+        $em->persist($page);
+        $em->flush();
+
+        $id = (int) $page->id;
+
+        $versionner = self::getContainer()->get(Versionner::class);
+        $versionner->reset('page', $id);
+
+        $page->setMainContent('second');
+        $em->flush(); // v1
+        $page->setMainContent('third');
+        $em->flush(); // v2 — mirrors current
+
+        $versions = $versionner->getVersions('page', $id);
+        sort($versions);
+
+        /** @var Router $router */
+        $router = self::getContainer()->get('router');
+
+        // The shortcut redirects to the compare view against the previous distinct
+        // revision (v1), since v2 mirrors the current live state.
+        $reviewUrl = $router->generate('admin_version_review', ['type' => 'page', 'id' => $id]);
+        $client->request(Request::METHOD_GET, $reviewUrl);
+        self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        $location = (string) $client->getResponse()->headers->get('Location');
+        self::assertStringContainsString('/compare/'.$versions[0].'/current', $location);
+
+        // The page list exposes the per-row "review changes" action (wired via the
+        // optional PageCrudExtension).
+        $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
+        self::assertSame(200, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertStringContainsString('Review changes', (string) $client->getResponse()->getContent(), 'the page list renders the version review action');
+
+        $versionner->reset('page', $id);
+        $em->remove($em->getRepository(Page::class)->find($id) ?? $page);
+        $em->flush();
+    }
+
+    public function testReviewRouteFallsBackToListWithoutHistory(): void
+    {
+        $client = $this->loginUser();
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->setSlug('review-empty-'.uniqid());
+        $page->setMainContent('only');
+
+        $em->persist($page);
+        $em->flush();
+
+        $id = (int) $page->id;
+
+        $versionner = self::getContainer()->get(Versionner::class);
+        $versionner->reset('page', $id); // wipe history so there is nothing to compare against
+
+        /** @var Router $router */
+        $router = self::getContainer()->get('router');
+
+        $reviewUrl = $router->generate('admin_version_review', ['type' => 'page', 'id' => $id]);
+        $client->request(Request::METHOD_GET, $reviewUrl);
+        self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertStringContainsString('/version/page/'.$id.'/list', (string) $client->getResponse()->headers->get('Location'));
+
+        $em->remove($em->getRepository(Page::class)->find($id) ?? $page);
+        $em->flush();
+    }
+
     public function testSnippetVersionRoutes(): void
     {
         $client = $this->loginUser();

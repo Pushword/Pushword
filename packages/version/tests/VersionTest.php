@@ -324,6 +324,132 @@ final class VersionTest extends KernelTestCase
         $versionner->reset('snippet', \PHP_INT_MAX);
     }
 
+    /**
+     * A page kept on hold records `holdPublicationAt` in every snapshot taken
+     * while held, which is why the version list shows "on hold" on all of them.
+     * The page-list shortcut therefore diffs against the newest snapshot that was
+     * *not* held (the last state that reached production), so the review shows
+     * exactly what the hold is keeping back — skipping the more recent held ones.
+     */
+    public function testPickComparisonVersionForHeldPageTargetsLastLiveVersion(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+        $versionner = $container->get(Versionner::class);
+
+        $page = $this->createFreshPage($em, 'A');
+        $id = (int) $page->id;
+        $versionner->reset('page', $id); // drop the creation snapshot for a clean slate
+
+        $page->setMainContent('B');
+        $em->flush(); // v1 — live
+        $page->setMainContent('C');
+        $em->flush(); // v2 — live (the newest not-held state)
+
+        $page->setHoldPublication(true);
+        $page->setMainContent('D');
+
+        $em->flush(); // v3 — held
+
+        $versions = $versionner->getVersions('page', $id);
+        sort($versions);
+        self::assertCount(3, $versions);
+
+        // Held snapshots carry the flag, live ones don't (this is what paints the
+        // whole list "on hold" once a page stays held).
+        self::assertSame($versions[1], $versionner->pickComparisonVersion('page', $id), 'newest not-held snapshot is the diff baseline');
+
+        $versionner->reset('page', $id);
+        $em->remove($page);
+        $em->flush();
+    }
+
+    /**
+     * A live (not-held) page diffs against the previous distinct revision. The
+     * latest snapshot mirrors the current state, so it is skipped.
+     */
+    public function testPickComparisonVersionForLivePageTargetsPreviousRevision(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+        $versionner = $container->get(Versionner::class);
+
+        $page = $this->createFreshPage($em, 'A');
+        $id = (int) $page->id;
+        $versionner->reset('page', $id);
+
+        $page->setMainContent('B');
+        $em->flush(); // v1
+        $page->setMainContent('C');
+        $em->flush(); // v2 — mirrors current
+
+        $versions = $versionner->getVersions('page', $id);
+        sort($versions);
+        self::assertCount(2, $versions);
+
+        self::assertSame($versions[0], $versionner->pickComparisonVersion('page', $id), 'v2 mirrors current, so the previous revision (v1) is the baseline');
+
+        $versionner->reset('page', $id);
+        $em->remove($page);
+        $em->flush();
+    }
+
+    /**
+     * When every snapshot was itself held (the page went on hold before its first
+     * recorded version), fall back to the oldest version.
+     */
+    public function testPickComparisonVersionAllHeldFallsBackToOldest(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+        $versionner = $container->get(Versionner::class);
+
+        $page = $this->createFreshPage($em, 'A');
+        $id = (int) $page->id;
+        $versionner->reset('page', $id);
+
+        $page->setHoldPublication(true);
+        $page->setMainContent('B');
+
+        $em->flush(); // v1 — held
+        $page->setMainContent('C');
+        $em->flush(); // v2 — held
+
+        $versions = $versionner->getVersions('page', $id);
+        sort($versions);
+        self::assertCount(2, $versions);
+
+        self::assertSame($versions[0], $versionner->pickComparisonVersion('page', $id), 'no live snapshot exists, so the oldest is the baseline');
+
+        $versionner->reset('page', $id);
+        $em->remove($page);
+        $em->flush();
+    }
+
+    public function testPickComparisonVersionReturnsNullWithoutHistory(): void
+    {
+        self::bootKernel();
+        $versionner = self::getContainer()->get(Versionner::class);
+
+        self::assertNull($versionner->pickComparisonVersion('page', \PHP_INT_MAX));
+    }
+
+    private function createFreshPage(EntityManagerInterface $em, string $mainContent): Page
+    {
+        $page = new Page();
+        $page->host = 'version-pick-'.uniqid().'.example.com';
+        $page->setSlug('pick-'.uniqid());
+        $page->setMainContent($mainContent);
+
+        $em->persist($page);
+        $em->flush(); // assigns the id (and creates a first snapshot)
+
+        return $page;
+    }
+
     public function testFindThrowsOnUnknownType(): void
     {
         self::bootKernel();

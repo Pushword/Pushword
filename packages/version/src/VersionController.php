@@ -184,6 +184,29 @@ class VersionController extends AbstractController
         return new JsonResponse($data);
     }
 
+    /**
+     * Shortcut used by the page-list action: jump straight to the compare view
+     * against the most relevant baseline (see Versionner::pickComparisonVersion),
+     * falling back to the version list when the entity has no history yet.
+     */
+    #[AdminRoute(path: '/version/{type}/{id}/review', name: 'version_review')]
+    #[IsGranted('ROLE_PUSHWORD_ADMIN')]
+    public function reviewVersion(string $type, string $id): RedirectResponse
+    {
+        $versionLeft = $this->versionner->pickComparisonVersion($type, $id);
+
+        if (null === $versionLeft) {
+            return $this->redirectToRoute('admin_version_list', ['type' => $type, 'id' => $id]);
+        }
+
+        return $this->redirectToRoute('admin_version_compare', [
+            'type' => $type,
+            'id' => $id,
+            'versionLeft' => $versionLeft,
+            'versionRight' => 'current',
+        ]);
+    }
+
     #[AdminRoute(path: '/version/{type}/{id}/{version}', name: 'version_load')]
     #[IsGranted('ROLE_PUSHWORD_ADMIN')]
     public function loadVersion(string $type, string $id, string $version): RedirectResponse
