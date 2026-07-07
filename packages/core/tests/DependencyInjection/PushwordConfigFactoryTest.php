@@ -74,6 +74,40 @@ final class PushwordConfigFactoryTest extends TestCase
         $this->assertMainHostPlaceholderReplaced('/var/www/static/%main_host%');
     }
 
+    public function testBaseLiveUrlFallsBackToBaseUrl(): void
+    {
+        $container = new ContainerBuilder(new ParameterBag([]));
+        $factory = new PushwordConfigFactory($container, $this->getConfigArray(), new Configuration());
+        $factory->loadConfigToParams();
+        $factory->loadApps();
+
+        // A plain live site never sets base_live_url: it must inherit its own
+        // origin (base_url), not the global https://localhost placeholder — else
+        // the statically-prefixed conversation/quiz fetch goes cross-origin.
+        $app = $container->getParameter('pw.apps')['localhost.dev'];
+        self::assertSame('https://localhost.dev', $app['base_live_url']);
+        self::assertSame($app['base_url'], $app['base_live_url']);
+    }
+
+    public function testExplicitBaseLiveUrlIsHonored(): void
+    {
+        $container = new ContainerBuilder(new ParameterBag([]));
+        $config = new Processor()->processConfiguration(new Configuration(), [[
+            'apps' => [[
+                'hosts' => ['static.example'],
+                'base_url' => 'https://static.example',
+                'base_live_url' => 'https://dynamic.example',
+            ]],
+        ]]);
+
+        $factory = new PushwordConfigFactory($container, $config, new Configuration());
+        $factory->loadConfigToParams();
+        $factory->loadApps();
+
+        // Static/dynamic split: the explicit base_live_url (the PHP host) wins.
+        self::assertSame('https://dynamic.example', $container->getParameter('pw.apps')['static.example']['base_live_url']);
+    }
+
     private function assertMainHostPlaceholderReplaced(string $staticDir): void
     {
         $container = new ContainerBuilder(new ParameterBag([]));

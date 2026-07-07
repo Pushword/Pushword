@@ -37,7 +37,11 @@ class AppExtension
             'referring' => ('' !== $referring ? $referring : $type).'_'.$page->host.'/'.$page->getRealSlug(),
         ]);
 
-        return $baseUrl.'?'.http_build_query([
+        // Prefix the page's live host so the URL is absolute. A statically served
+        // page (pw:static, no PHP) must fetch the form from the dynamic host — a
+        // relative route would resolve against its own PHP-less origin and 404.
+        // base_live_url already sends the CORS headers for these origins.
+        return $this->apps->get($page->host)->getStr('base_live_url').$baseUrl.'?'.http_build_query([
             'host' => $page->host,
             'locale' => $page->locale,
         ]);
@@ -51,7 +55,7 @@ class AppExtension
         string $class = 'link-btn',
         string $referring = '',
     ): string {
-        $url = $this->app->getStr('base_live_url').$this->getConversationRoute($type, $referring);
+        $url = $this->getConversationRoute($type, $referring);
         $view = $this->app->getView('/conversation/formBtn.html.twig', '@PushwordConversation');
 
         return $twig->render($view, [

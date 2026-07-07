@@ -33,6 +33,9 @@ final class AppExtensionTest extends KernelTestCase
 
         $url = $ext->getConversationRoute('ms-message');
 
+        // Must be absolute (prefixed with the live host): a statically served page
+        // has no PHP, so a relative route would 404 against its own origin.
+        self::assertStringStartsWith('http', $url);
         self::assertStringContainsString('/conversation/ms-message/', $url);
         self::assertStringContainsString('ms-message_localhost.dev/test-page', $url);
         self::assertStringContainsString('host=localhost.dev', $url);

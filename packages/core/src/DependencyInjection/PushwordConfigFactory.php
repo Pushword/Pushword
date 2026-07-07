@@ -127,6 +127,20 @@ final class PushwordConfigFactory
 
         foreach ($fallbackProperties as $fallbackProperty) {
             if (! isset($app[$fallbackProperty])) {
+                // base_live_url is the origin where PHP runs for this site. It
+                // defaults to the app's own base_url — only a static/dynamic host
+                // split (pages served without PHP, PHP on a separate host) needs
+                // to override it. Falling back to the global default
+                // (https://localhost) would break same-origin fetches on a plain
+                // live site. Honor an explicit global base_live_url otherwise.
+                if ('base_live_url' === $fallbackProperty
+                    && isset($app['base_url'])
+                    && $this->config['base_live_url'] === $this->config['base_url']) {
+                    $app['base_live_url'] = $app['base_url'];
+
+                    continue;
+                }
+
                 /** @var string @phpstan-ignore-next-line */
                 $mainHost = $app['hosts'][0];
                 $app[$fallbackProperty] = \is_string($this->config[$fallbackProperty])
