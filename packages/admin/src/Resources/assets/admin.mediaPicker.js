@@ -80,16 +80,20 @@ function enhancePicker(select) {
 
   renderPickerState(select)
 
+  // choose and remove are bound on every matching element so the thumbnail
+  // overlay controls share the same behaviour as the buttons below it.
   wrapper
-    .querySelector('[data-pw-media-picker-action="choose"]')
-    ?.addEventListener('click', () => {
-      const targetUrl = buildPickerUrl(
-        getDatasetValue(select, 'pwMediaPickerModalUrl', 'pwAdminPopupModalUrl'),
-        select,
-      )
-      if (!targetUrl) return
-      openPickerModal(select, targetUrl)
-    })
+    .querySelectorAll('[data-pw-media-picker-action="choose"]')
+    .forEach((element) =>
+      element.addEventListener('click', () => {
+        const targetUrl = buildPickerUrl(
+          getDatasetValue(select, 'pwMediaPickerModalUrl', 'pwAdminPopupModalUrl'),
+          select,
+        )
+        if (!targetUrl) return
+        openPickerModal(select, targetUrl)
+      }),
+    )
 
   wrapper
     .querySelector('[data-pw-media-picker-action="upload"]')
@@ -100,10 +104,12 @@ function enhancePicker(select) {
     })
 
   wrapper
-    .querySelector('[data-pw-media-picker-action="remove"]')
-    ?.addEventListener('click', () => {
-      clearPickerSelection(select)
-    })
+    .querySelectorAll('[data-pw-media-picker-action="remove"]')
+    .forEach((element) =>
+      element.addEventListener('click', () => {
+        clearPickerSelection(select)
+      }),
+    )
 
   select.addEventListener('change', () => renderPickerState(select))
 
@@ -128,10 +134,17 @@ function initCollectionListeners() {
 function buildPickerHtml(select) {
   const emptyLabel = select.dataset.pwMediaPickerEmptyLabel || ''
   const removeLabel = select.dataset.pwMediaPickerRemoveLabel || 'Remove'
+  const chooseLabel = select.dataset.pwMediaPickerChooseLabel || 'Choose'
   return `
     <div class="pw-media-picker__preview">
       <div class="pw-media-picker__thumb">
         <div class="pw-media-picker__thumb-inner"></div>
+        <button class="pw-media-picker__thumb-change" type="button" data-pw-media-picker-action="choose" title="${chooseLabel}" aria-label="${chooseLabel}">
+          <span class="fa fa-pen" aria-hidden="true"></span>
+        </button>
+        <button class="pw-media-picker__thumb-remove" type="button" data-pw-media-picker-action="remove" title="${removeLabel}" aria-label="${removeLabel}">
+          <span class="fa fa-times" aria-hidden="true"></span>
+        </button>
       </div>
       <div class="pw-media-picker__details">
         <span class="pw-media-picker__name">${emptyLabel}</span>

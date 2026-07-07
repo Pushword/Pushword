@@ -14,11 +14,13 @@ final class AdminMediaPickerTest extends AbstractPantherAdminTest
 {
     private const string SELECTOR_MEDIA_PICKER = '[data-pw-media-picker]';
 
-    private const string SELECTOR_MEDIA_PICKER_CHOOSE = '[data-pw-media-picker-action="choose"]';
+    // Scoped to the action row: the same actions also exist as overlay controls on
+    // the thumbnail (choose/remove), so an unscoped selector would match two elements.
+    private const string SELECTOR_MEDIA_PICKER_CHOOSE = '.pw-media-picker__actions [data-pw-media-picker-action="choose"]';
 
-    private const string SELECTOR_MEDIA_PICKER_UPLOAD = '[data-pw-media-picker-action="upload"]';
+    private const string SELECTOR_MEDIA_PICKER_UPLOAD = '.pw-media-picker__actions [data-pw-media-picker-action="upload"]';
 
-    private const string SELECTOR_MEDIA_PICKER_REMOVE = '[data-pw-media-picker-action="remove"]';
+    private const string SELECTOR_MEDIA_PICKER_REMOVE = '.pw-media-picker__actions [data-pw-media-picker-action="remove"]';
 
     private const string SELECTOR_MEDIA_PICKER_MODAL = '#pw-media-picker-modal';
 

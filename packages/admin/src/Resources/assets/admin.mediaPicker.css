@@ -98,6 +98,52 @@
   display: none;
 }
 
+/* One-click overlay controls shown on top of the selected image. */
+.pw-media-picker__thumb-change,
+.pw-media-picker__thumb-remove {
+  position: absolute;
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+/* Click anywhere on the image to pick another one. */
+.pw-media-picker__thumb-change {
+  inset: 0;
+  width: 100%;
+  font-size: 1.25rem;
+  background: rgba(15, 23, 42, 0);
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.pw-media-picker__thumb:hover .pw-media-picker__thumb-change,
+.pw-media-picker__thumb-change:focus-visible {
+  opacity: 1;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+/* Quick remove in the top-right corner, above the change overlay. */
+.pw-media-picker__thumb-remove {
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  background: rgba(15, 23, 42, 0.6);
+  z-index: 2;
+  transition: background-color 0.15s ease;
+}
+
+.pw-media-picker__thumb-remove:hover,
+.pw-media-picker__thumb-remove:focus-visible {
+  background: #dc2626;
+}
+
 .pw-media-picker__modal .modal-body,
 .pw-inline-edit__modal .modal-body {
   min-height: 70vh;
@@ -135,6 +181,16 @@
   }
 }
 
+/* EasyAdmin restyles .btn-close hover/focus with the `background` shorthand, which
+   drops the close-icon image and paints a solid primary fill over it. Restore the
+   icon and keep opacity 1 so the modal close button stays visible when focused. */
+.pw-admin-modal .btn-close:hover,
+.pw-admin-modal .btn-close:focus,
+.pw-admin-modal .btn-close:focus-visible {
+  background: transparent var(--bs-btn-close-bg) center/1em auto no-repeat !important;
+  opacity: 1;
+}
+
 body.pw-admin-popup-modal .sidebar,
 body.pw-admin-popup-modal header.navbar,
 body.pw-admin-popup-modal .user-menu-wrapper,
@@ -149,8 +205,20 @@ body.pw-admin-popup-modal .content {
 
 body.pw-admin-popup-modal .responsive-header,
 body.pw-admin-popup-modal .media-mosaic__actions,
-body.pw-admin-popup-modal .global-actions,
-body.pw-admin-popup-modal .page-actions {
+body.pw-admin-popup-modal .global-actions {
+  display: none !important;
+}
+
+/* Media grid (choose view): no form to submit, so page actions are noise while
+   the search box stays useful for finding a media. */
+body.pw-admin-popup-modal.ea-index .page-actions {
+  display: none !important;
+}
+
+/* Upload/edit form: keep the save button (rendered in .page-actions) visible and
+   hide the search box, which is meaningless on a form. */
+body.pw-admin-popup-modal.ea-new .content-top,
+body.pw-admin-popup-modal.ea-edit .content-top {
   display: none !important;
 }
 
