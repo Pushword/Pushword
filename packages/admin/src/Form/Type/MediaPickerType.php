@@ -120,10 +120,13 @@ final class MediaPickerType extends AbstractType
     {
         $urlGenerator = clone $this->adminUrlGenerator;
 
-        // Remove sort and filters from the current page context
-        // as they may not be valid for the Media entity
+        // Remove sort, filters and entityId from the current page context
+        // as they belong to the edited entity (e.g. the Page), not the Media picker.
+        // Keeping entityId would make the Media "new"/"index" action try to load a
+        // Media with the Page's id, throwing EntityNotFoundException.
         $urlGenerator->unset('sort');
         $urlGenerator->unset('filters');
+        $urlGenerator->unset('entityId');
 
         if (isset($query['crudControllerFqcn']) && \is_string($query['crudControllerFqcn'])) {
             $urlGenerator->setController($query['crudControllerFqcn']);

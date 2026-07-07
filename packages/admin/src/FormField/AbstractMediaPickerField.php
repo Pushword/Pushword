@@ -84,10 +84,13 @@ abstract class AbstractMediaPickerField extends AbstractField
     {
         $adminUrlGenerator = clone $this->formFieldManager->adminUrlGenerator;
 
-        // Remove sort and filters from the current page context
-        // as they may not be valid for the Media entity
+        // Remove sort, filters and entityId from the current page context
+        // as they belong to the edited entity (e.g. the Page), not the Media picker.
+        // Keeping entityId would make the Media "new"/"index" action try to load a
+        // Media with the Page's id, throwing EntityNotFoundException.
         $adminUrlGenerator->unset('sort');
         $adminUrlGenerator->unset('filters');
+        $adminUrlGenerator->unset('entityId');
 
         if (isset($query['crudControllerFqcn']) && \is_string($query['crudControllerFqcn'])) {
             $adminUrlGenerator->setController($query['crudControllerFqcn']);

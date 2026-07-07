@@ -9,6 +9,7 @@ use Pushword\Conversation\Entity\Review;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -80,6 +81,38 @@ final class ReviewMediaGalleryTest extends AbstractAdminTestClass
         ]);
         self::assertSame(Response::HTTP_FORBIDDEN, $client->getResponse()->getStatusCode());
         self::assertTrue($this->reviewHasMedia($reviewId, $mediaId), 'An invalid token must not unlink the media.');
+    }
+
+    /**
+     * The media picker on the review edit form is built by cloning the current
+     * AdminUrlGenerator, which carries the Review's entityId. If it leaked into the
+     * Media "new"/"index" URLs, the picker would try to load a Media with the
+     * Review's id and throw EntityNotFoundException.
+     */
+    public function testEditFormMediaPickerUrlsDoNotLeakReviewEntityId(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $mediaId = $this->createMedia($client, 'review-picker-entityid', 24, 16);
+        $reviewId = $this->createReviewWithMedia($mediaId);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/review/'.$reviewId.'/edit');
+        self::assertResponseIsSuccessful();
+
+        $pickers = $crawler->filter('[data-pw-media-picker-upload-url]');
+        self::assertGreaterThan(0, $pickers->count(), 'The review edit form must render at least one media picker.');
+
+        /** @var array<array{upload: string, modal: string}> $urls */
+        $urls = $pickers->each(static fn (Crawler $picker): array => [
+            'upload' => $picker->attr('data-pw-media-picker-upload-url') ?? '',
+            'modal' => $picker->attr('data-pw-media-picker-modal-url') ?? '',
+        ]);
+
+        foreach ($urls as $url) {
+            self::assertStringNotContainsString('entityId', $url['upload'], 'Upload URL must not carry the Review entityId: '.$url['upload']);
+            self::assertStringNotContainsString('entityId', $url['modal'], 'Modal URL must not carry the Review entityId: '.$url['modal']);
+        }
     }
 
     /**
