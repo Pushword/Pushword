@@ -126,3 +126,94 @@ describe('quiz runtime — single quiz (unchanged)', () => {
     expect(section.matches('.pw-quiz:not(.pw-quiz--js)')).toBe(false)
   })
 })
+
+// A personality test: answers carry weights (no data-correct); every outcome is
+// server-rendered and hidden, and the runtime reveals the highest-tallied one.
+function profileAnswer(weights, label) {
+  return (
+    '<li><button type="button" class="pw-quiz-a" data-weights=\'' +
+    JSON.stringify(weights) +
+    '\' aria-pressed="false">' +
+    '<span class="pw-quiz-a-text">' +
+    label +
+    '</span><span class="pw-quiz-a-mark"></span></button></li>'
+  )
+}
+
+function profileQuestion(idx, aWeights, bWeights) {
+  return (
+    '<li class="pw-quiz-q" data-q="' +
+    idx +
+    '"><p class="pw-quiz-question">Q' +
+    idx +
+    '</p><ul class="pw-quiz-answers">' +
+    profileAnswer(aWeights, 'A') +
+    profileAnswer(bWeights, 'B') +
+    '</ul></li>'
+  )
+}
+
+function profileQuiz() {
+  return (
+    '<section class="pw-quiz pw-quiz--profile" id="qp" data-pw-quiz data-slug="perso">' +
+    '<ol class="pw-quiz-questions">' +
+    profileQuestion(0, { explorer: 2 }, { builder: 2 }) +
+    profileQuestion(1, { explorer: 1 }, { builder: 1 }) +
+    '</ol>' +
+    '<div class="pw-quiz-result" hidden><div class="pw-quiz-score"></div>' +
+    '<div class="pw-quiz-profiles">' +
+    '<div class="pw-quiz-profile" data-profile-key="explorer" hidden><h3>Explorer</h3></div>' +
+    '<div class="pw-quiz-profile" data-profile-key="builder" hidden><h3>Builder</h3></div>' +
+    '</div></div>' +
+    '<script type="application/json" class="pw-quiz-config">{"mode":"profile","feedback":"end","labels":{"profile":"Your profile:"}}</script>' +
+    '</section>'
+  )
+}
+
+describe('quiz runtime — personality test (profile mode)', () => {
+  it('reveals the highest-tallied profile and never flags a correct answer', () => {
+    document.body.innerHTML = profileQuiz()
+    bootRuntime()
+
+    const answers = document.querySelectorAll('.pw-quiz-a')
+    // Pick the "explorer" answer on both questions (indices 0 and 2).
+    answers[0].click()
+    answers[2].click()
+
+    const cards = document.querySelectorAll('.pw-quiz-profile')
+    const explorer = document.querySelector('.pw-quiz-profile[data-profile-key="explorer"]')
+    const builder = document.querySelector('.pw-quiz-profile[data-profile-key="builder"]')
+    expect(explorer.hidden).toBe(false)
+    expect(builder.hidden).toBe(true)
+
+    // No right/wrong semantics: the chosen answer is marked neutrally.
+    expect(answers[0].classList.contains('pw-quiz-a--chosen')).toBe(true)
+    expect(answers[0].classList.contains('pw-quiz-a--chosen-correct')).toBe(false)
+    expect(cards.length).toBe(2)
+  })
+
+  it('breaks a tie by profile declaration order', () => {
+    // One question whose only answer weighs both profiles equally → a tie, which
+    // must resolve to the first-declared card (explorer), not builder.
+    document.body.innerHTML =
+      '<section class="pw-quiz pw-quiz--profile" id="qt" data-pw-quiz data-slug="tie">' +
+      '<ol class="pw-quiz-questions">' +
+      '<li class="pw-quiz-q" data-q="0"><ul class="pw-quiz-answers">' +
+      profileAnswer({ explorer: 1, builder: 1 }, 'Both') +
+      '</ul></li>' +
+      '</ol>' +
+      '<div class="pw-quiz-result" hidden><div class="pw-quiz-score"></div>' +
+      '<div class="pw-quiz-profiles">' +
+      '<div class="pw-quiz-profile" data-profile-key="explorer" hidden><h3>Explorer</h3></div>' +
+      '<div class="pw-quiz-profile" data-profile-key="builder" hidden><h3>Builder</h3></div>' +
+      '</div></div>' +
+      '<script type="application/json" class="pw-quiz-config">{"mode":"profile","feedback":"end"}</script>' +
+      '</section>'
+    bootRuntime()
+
+    document.querySelector('.pw-quiz-a').click()
+
+    expect(document.querySelector('.pw-quiz-profile[data-profile-key="explorer"]').hidden).toBe(false)
+    expect(document.querySelector('.pw-quiz-profile[data-profile-key="builder"]').hidden).toBe(true)
+  })
+})

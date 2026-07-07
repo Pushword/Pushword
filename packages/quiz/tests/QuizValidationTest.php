@@ -338,6 +338,197 @@ final class QuizValidationTest extends KernelTestCase
         self::assertCount(0, self::getContainer()->get(ValidatorInterface::class)->validate($quiz));
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function profileQuiz(): array
+    {
+        return [
+            'mode' => 'profile',
+            'title' => 'Which explorer are you?',
+            'profiles' => [
+                ['key' => 'sommet', 'title' => 'The Summiteer', 'msg' => 'Higher, always.'],
+                ['key' => 'calm', 'title' => 'The Contemplative'],
+            ],
+            'questions' => [
+                [
+                    'q' => 'A free weekend, you…',
+                    'answers' => [
+                        ['a' => 'climb a peak', 'weights' => ['sommet' => 2]],
+                        ['a' => 'walk by a lake', 'profile' => 'calm'],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    public function testValidProfileQuizPasses(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray($this->profileQuiz());
+
+        self::assertSame('profile', $quiz->mode);
+        // Personality mode always scores at the end (no correct answer to reveal).
+        self::assertSame('end', $quiz->feedback);
+        // An explicit weights map is parsed as-is; the `profile` shorthand becomes {key: 1}.
+        self::assertSame(['sommet' => 2], $quiz->questions[0]->answers[0]->weights);
+        self::assertSame(['calm' => 1], $quiz->questions[0]->answers[1]->weights);
+        self::assertCount(0, self::getContainer()->get(ValidatorInterface::class)->validate($quiz));
+    }
+
+    public function testProfileWithEmptyKeyOrTitleIsRejected(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'mode' => 'profile',
+            'profiles' => [
+                ['key' => '', 'title' => 'No key'],
+                ['key' => 'nomsg', 'title' => ''],
+            ],
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'profile' => 'nomsg'], ['a' => 'B']]]],
+        ]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('profiles[0].key', $paths);
+        self::assertContains('profiles[1].title', $paths);
+    }
+
+    public function testProfileQuizWithoutQuestionsIsRejected(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'mode' => 'profile',
+            'profiles' => [['key' => 'a', 'title' => 'A']],
+            'questions' => [],
+        ]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('questions', $paths);
+    }
+
+    public function testQuizModeQuestionWithoutCorrectAnswerIsRejected(): void
+    {
+        self::bootKernel();
+        // Regression: the "at least one correct answer" rule moved from Question to
+        // Quiz (so it can be skipped in profile mode). With two answers (so the
+        // min-2 rule is satisfied) and none correct, it must still fire on the
+        // question's answers in a knowledge quiz.
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'questions' => [['q' => 'No right answer', 'answers' => [['a' => 'A'], ['a' => 'B']]]],
+        ]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        // The only rule that can flag this (2 answers, non-empty text) is the correct-answer one.
+        self::assertContains('questions[0].answers', $paths);
+    }
+
+    public function testProfileQuizWithoutProfilesIsRejected(): void
+    {
+        self::bootKernel();
+        $data = $this->profileQuiz();
+        $data['profiles'] = [];
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray($data);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('profiles', $paths);
+    }
+
+    public function testProfileWeightReferencingUnknownProfileIsRejected(): void
+    {
+        self::bootKernel();
+        $data = $this->profileQuiz();
+        $data['questions'][0]['answers'][0]['weights'] = ['typo' => 2]; // no such profile
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray($data);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('questions[0].answers[0].weights', $paths);
+    }
+
+    public function testProfileQuizDoesNotRequireCorrectAnswers(): void
+    {
+        self::bootKernel();
+        // None of the answers are `correct`; that rule must not apply in profile mode.
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray($this->profileQuiz());
+
+        $messages = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $messages[] = (string) $violation->getMessage();
+        }
+
+        self::assertNotContains('quiz.question.correct.min', $messages);
+    }
+
+    public function testProfilesInQuizModeHintAtTheMissingMode(): void
+    {
+        self::bootKernel();
+        // A knowledge quiz that carries profiles/weights but forgot `mode: profile`.
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'profiles' => [['key' => 'a', 'title' => 'A']],
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'yes', 'profile' => 'a'], ['a' => 'no']]]],
+        ]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('mode', $paths);
+    }
+
+    public function testInvalidModeIsRejected(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'mode' => 'bogus',
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]]],
+        ]);
+
+        $paths = [];
+        foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertContains('mode', $paths);
+    }
+
+    public function testRenderProfileModeEmitsCardsAndSkipsQuizSchema(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $extension = self::getContainer()->get(QuizExtension::class);
+
+        $output = $extension->renderQuiz((string) json_encode($this->profileQuiz()));
+
+        self::assertStringContainsString('pw-quiz--profile', $output);
+        // Every outcome is server-rendered (SEO/no-JS), and answers carry weights.
+        self::assertStringContainsString('data-profile-key="sommet"', $output);
+        self::assertStringContainsString('The Summiteer', $output);
+        self::assertStringContainsString('data-weights=', $output);
+        // A personality test has no accepted answer → no schema.org/Quiz markup.
+        self::assertStringNotContainsString('"@type":"Quiz"', $output);
+        self::assertStringNotContainsString('acceptedAnswer', $output);
+    }
+
     public function testQuizTagSurvivesTheMainContentMarkdownPipeline(): void
     {
         self::bootKernel();

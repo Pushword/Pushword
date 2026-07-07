@@ -7,6 +7,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\Core\Twig\VideoExtension;
 use Pushword\Quiz\Model\Answer;
+use Pushword\Quiz\Model\Profile;
 use Pushword\Quiz\Model\Question;
 
 use function Safe\json_decode;
@@ -125,6 +126,28 @@ final class QuizRenderer implements RuntimeExtensionInterface
 
         try {
             return $this->mediaExtension->renderImage($answer->media, alt: $answer->alt ?? '', class: 'pw-quiz-a-img', lazy: true);
+        } catch (Throwable $throwable) {
+            return $this->mediaWarning($throwable);
+        }
+    }
+
+    /**
+     * Personality-result card illustration, guarded like {@see renderFigure()}.
+     */
+    public function renderProfileImage(Profile $profile): string
+    {
+        if (null === $profile->media) {
+            return '';
+        }
+
+        try {
+            return $this->mediaExtension->renderImage(
+                $profile->media,
+                alt: $profile->alt ?? $profile->title,
+                class: 'pw-quiz-profile-img',
+                mode: 'responsive',
+                lazy: true,
+            );
         } catch (Throwable $throwable) {
             return $this->mediaWarning($throwable);
         }

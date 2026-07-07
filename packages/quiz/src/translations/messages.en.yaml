@@ -4,9 +4,11 @@ quiz:
     explanation: 'Explanation'
     level: 'Level'
     nextLevel: 'Next level'
+    profile: 'Your profile:'
     question: 'Question'
     questions: 'questions'
     score: 'Your score:'
+    share: '{p}% got the same profile'
   result:
     label:
       plural: 'Quiz results'
@@ -15,4 +17,5 @@ quiz:
       createdAt: 'Date'
       host: 'Host'
       quiz: 'Quiz'
+      result: 'Profile'
       score: 'Score (%)'

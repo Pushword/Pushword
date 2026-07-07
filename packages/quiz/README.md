@@ -87,3 +87,42 @@ Tabs are freely clickable (WAI-ARIA: arrow keys, roving focus). Passing a level
 tab. Each level keeps its **own** percentile and lead attribution. A quiz
 without `levels` renders exactly as before. In the EditorJS block, tick
 *"Multiple difficulty levels"* to edit one sub-quiz per level.
+
+## Personality test (`mode: profile`)
+
+Set `"mode": "profile"` to turn the same block into a personality test ("Which X
+are you?"). There is no correct answer: each answer carries `weights` toward one
+or more named `profiles`, and the highest-tallied profile is shown as a result
+card (title + description + image). Backward compatible — a quiz without `mode`
+behaves exactly as before.
+
+```json
+{
+  "mode": "profile",
+  "title": "Which explorer are you?",
+  "profiles": [
+    { "key": "sommet", "title": "The Summiteer", "msg": "Higher, always.", "media": "peak.jpg" },
+    { "key": "calm",   "title": "The Contemplative", "msg": "The mountain is your refuge." }
+  ],
+  "questions": [
+    {
+      "q": "A free weekend, you…",
+      "answers": [
+        { "a": "climb a peak",    "weights": { "sommet": 2 } },
+        { "a": "walk by a lake",  "profile": "calm" }
+      ]
+    }
+  ],
+  "cta": "newsletter"
+}
+```
+
+An answer weighs profiles with a `weights` map, or the `profile: "key"` shorthand
+(== `{ "key": 1 }`). The validator enforces at least one profile and that every
+weight references a declared profile `key` (a typo would otherwise vote for
+nothing). `feedback` is always `end` (no correct answer to reveal), `levels` are
+not used, and no schema.org/Quiz markup is emitted (there is no accepted answer).
+`POST /quiz/result` accepts `{ quiz, result }` and returns `{ share }` — "X% got
+the same profile". Its knowledge-quiz and personality tallies stay separate even
+under one page slug. In the EditorJS block, tick *"Personality test"* to swap the
+correct-answer flag for per-answer profile weights and edit the profile cards.

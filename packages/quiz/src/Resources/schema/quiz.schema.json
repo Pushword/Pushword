@@ -2,27 +2,31 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://pushword.piedweb.com/schema/quiz.json",
     "title": "Pushword Quiz",
-    "description": "A quiz declared inline in a page via {% quiz %}…{% endquiz %} (raw JSON body) or {{ quiz('…json…') }} (single-quoted Twig string). The Symfony Validator on the Quiz model is the source of truth; this schema mirrors its structure as an authoring aid. Cross-field rules it cannot express: a quiz needs `questions` unless it delegates them to `levels`; each question needs at least one `correct` answer; a `video` requires both `media` (used as the poster) and `alt`.",
+    "description": "A quiz declared inline in a page via {% quiz %}…{% endquiz %} (raw JSON body) or {{ quiz('…json…') }} (single-quoted Twig string). The Symfony Validator on the Quiz model is the source of truth; this schema mirrors its structure as an authoring aid. Two modes: a knowledge quiz (default) scored on `correct` answers, or a personality test (`mode: profile`) where answers carry `weights` toward named `profiles` and the highest-tallied one wins. Cross-field rules this schema cannot fully express: a quiz needs `questions` unless it delegates them to `levels`; in the default mode each question needs at least one `correct` answer; in `mode: profile` it needs at least one `profile` and every answer weight must reference a declared profile key; a `video` requires both `media` (used as the poster) and `alt`.",
     "type": "object",
     "anyOf": [
         { "required": ["questions"] },
         { "required": ["levels"] }
     ],
+    "if": { "properties": { "mode": { "const": "profile" } }, "required": ["mode"] },
+    "then": { "required": ["profiles"] },
     "properties": {
+        "mode": { "enum": ["quiz", "profile"], "default": "quiz", "description": "\"quiz\" (default): scored on correct answers. \"profile\": a personality test scored on answer weights toward named profiles." },
         "title": { "type": "string" },
         "difficulty": { "type": "string", "description": "Free label shown as a badge, e.g. \"Easy\"." },
-        "feedback": { "enum": ["immediate", "end"], "default": "immediate" },
+        "feedback": { "enum": ["immediate", "end"], "default": "immediate", "description": "Ignored in mode:profile (always scored at the end)." },
         "numbering": { "enum": ["", "A", "a", "1"], "default": "", "description": "Answer prefix style." },
         "cta": { "type": "string", "description": "A registered pushword/conversation form type shown at the end (e.g. \"newsletter\"). Ignored if conversation is not installed." },
         "ctaTitle": { "type": "string" },
-        "pass": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Score %% needed to pass a level and reveal the next-level button (default 50)." },
+        "pass": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Score %% needed to pass a level and reveal the next-level button (default 50). Knowledge quiz only." },
         "label": { "type": "string", "description": "Tab label for a difficulty level; falls back to `difficulty`." },
         "labels": { "$ref": "#/$defs/labels" },
-        "results": { "type": "array", "items": { "$ref": "#/$defs/band" } },
+        "results": { "type": "array", "items": { "$ref": "#/$defs/band" }, "description": "Score bands (knowledge quiz)." },
+        "profiles": { "type": "array", "items": { "$ref": "#/$defs/profile" }, "description": "Possible outcomes of a personality test (mode:profile)." },
         "questions": { "type": "array", "items": { "$ref": "#/$defs/question" } },
         "levels": {
             "type": "array",
-            "description": "Difficulty levels, each a full leaf quiz (no nested levels). The root keeps the shared metadata.",
+            "description": "Difficulty levels, each a full leaf quiz (no nested levels). The root keeps the shared metadata. Knowledge quiz only — not used in mode:profile.",
             "items": { "$ref": "#/$defs/level" }
         }
     },
@@ -62,8 +66,28 @@
             "properties": {
                 "a": { "type": "string", "minLength": 1, "description": "The answer text (alias: text)." },
                 "text": { "type": "string" },
-                "correct": { "type": "boolean", "default": false },
+                "correct": { "type": "boolean", "default": false, "description": "Knowledge quiz: marks an expected answer." },
+                "weights": {
+                    "type": "object",
+                    "description": "Personality test: profile key => points this answer contributes.",
+                    "additionalProperties": { "type": "integer" }
+                },
+                "profile": { "type": "string", "description": "Personality test shorthand: profile key worth 1 point (== weights {key: 1})." },
                 "media": { "type": "string" },
+                "alt": { "type": "string" }
+            },
+            "additionalProperties": false
+        },
+        "profile": {
+            "type": "object",
+            "required": ["key", "title"],
+            "description": "A personality-test outcome. The answer weights tally toward its `key`; the highest wins.",
+            "properties": {
+                "key": { "type": "string", "minLength": 1, "description": "Identifier referenced by answer weights." },
+                "title": { "type": "string", "minLength": 1, "description": "Result card heading." },
+                "msg": { "type": "string", "description": "Result card description (alias: message)." },
+                "message": { "type": "string" },
+                "media": { "type": "string", "description": "Result card image filename." },
                 "alt": { "type": "string" }
             },
             "additionalProperties": false

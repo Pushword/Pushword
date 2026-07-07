@@ -3,6 +3,7 @@
 namespace Pushword\Quiz\Twig;
 
 use Pushword\Quiz\Model\Answer;
+use Pushword\Quiz\Model\Profile;
 use Pushword\Quiz\Model\Question;
 use Pushword\Quiz\Service\QuizRenderer;
 use Twig\Attribute\AsTwigFunction;
@@ -42,5 +43,11 @@ final readonly class QuizExtension
     public function renderAnswerImage(Answer $answer): string
     {
         return $this->renderer->renderAnswerImage($answer);
+    }
+
+    #[AsTwigFunction('quiz_profile_image', isSafe: ['html'])]
+    public function renderProfileImage(Profile $profile): string
+    {
+        return $this->renderer->renderProfileImage($profile);
     }
 }

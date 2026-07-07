@@ -21,7 +21,7 @@
     <ul class="pw-quiz-answers">
       {% for a in q.answers %}
         <li>
-          <button type="button" class="pw-quiz-a"{{ a.correct ? ' data-correct' : '' }} aria-pressed="false">
+          <button type="button" class="pw-quiz-a"{{ a.correct ? ' data-correct' : '' }}{% if a.weights is not empty %} data-weights="{{ a.weights|json_encode }}"{% endif %} aria-pressed="false">
             {% if prefixes[loop.index0] is defined %}<span class="pw-quiz-a-prefix" aria-hidden="true">{{ prefixes[loop.index0] }}</span>{% endif %}
             {{ quiz_answer_image(a) }}
             <span class="pw-quiz-a-text">{{ a.text }}</span>
@@ -37,10 +37,22 @@
   </li>
 {% endmacro %}
 
-{# ---- end-of-quiz result box (score + optional conversion form) ---- #}
+{# ---- end-of-quiz result box (score or personality card + optional conversion form) ---- #}
 {% macro resultBox(quiz, slug, conversationAvailable) %}
   <div class="pw-quiz-result" hidden>
     <div class="pw-quiz-score" aria-live="polite"></div>
+    {% if quiz.mode == 'profile' %}
+      {# Every possible outcome is server-rendered (SEO + no-JS); the runtime reveals the winning one. #}
+      <div class="pw-quiz-profiles">
+        {% for p in quiz.profiles %}
+          <div class="pw-quiz-profile" data-profile-key="{{ p.key }}" hidden>
+            <h3 class="pw-quiz-profile-title">{{ p.title }}</h3>
+            {{ quiz_profile_image(p) }}
+            {% if p.msg %}<p class="pw-quiz-profile-msg">{{ p.msg }}</p>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
     {% if quiz.cta and conversationAvailable %}
       <div class="pw-quiz-cta">
         {% if quiz.ctaTitle %}<p class="pw-quiz-cta-title">{{ quiz.ctaTitle }}</p>{% endif %}
@@ -50,13 +62,14 @@
   </div>
 {% endmacro %}
 
-{# ---- JS runtime config (score bands, pass threshold, labels) ---- #}
+{# ---- JS runtime config (mode, score bands, pass threshold, labels) ---- #}
 {% macro configScript(quiz, l) %}
   <script type="application/json" class="pw-quiz-config">{{ {
+    mode: quiz.mode,
     feedback: quiz.feedback,
     pass: quiz.pass,
     results: quiz.results|map(b => { min: b.min, msg: b.msg }),
-    labels: { score: l.score, better: l.better, nextLevel: l.nextLevel },
+    labels: { score: l.score, better: l.better, nextLevel: l.nextLevel, profile: l.profile, share: l.share },
   }|json_encode|raw }}</script>
 {% endmacro %}
 
@@ -100,9 +113,11 @@
     score: quiz.labels.score|default('quiz.label.score'|trans),
     better: quiz.labels.better|default('quiz.label.better'|trans),
     nextLevel: quiz.labels.nextLevel|default('quiz.label.nextLevel'|trans),
+    profile: quiz.labels.profile|default('quiz.label.profile'|trans),
+    share: quiz.labels.share|default('quiz.label.share'|trans),
   } %}
 
-  <section class="pw-quiz" id="{{ id }}" data-pw-quiz data-slug="{{ baseSlug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
+  <section class="pw-quiz{% if quiz.mode == 'profile' %} pw-quiz--profile{% endif %}" id="{{ id }}" data-pw-quiz data-slug="{{ baseSlug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
     {% if quiz.title or quiz.difficulty %}
       <header class="pw-quiz-head">
         {% if quiz.title %}<h2 class="pw-quiz-title">{{ quiz.title }}</h2>{% endif %}
@@ -121,7 +136,10 @@
     {{ _self.configScript(quiz, l) }}
   </section>
 
-  {{ _self.schemaOrg(quiz, quiz.title|default('Quiz')) }}
+  {# A personality test has no accepted answer, so the schema.org/Quiz markup would be misleading. #}
+  {% if quiz.mode != 'profile' %}
+    {{ _self.schemaOrg(quiz, quiz.title|default('Quiz')) }}
+  {% endif %}
 
 {% else %}
   {# Several difficulty levels: an accessible tab selector, one leaf quiz per panel. #}
@@ -152,6 +170,8 @@
         score: level.labels.score|default('quiz.label.score'|trans),
         better: level.labels.better|default('quiz.label.better'|trans),
         nextLevel: level.labels.nextLevel|default('quiz.label.nextLevel'|trans),
+        profile: level.labels.profile|default('quiz.label.profile'|trans),
+        share: level.labels.share|default('quiz.label.share'|trans),
       } %}
 
       <div class="pw-quiz-panel" role="tabpanel"

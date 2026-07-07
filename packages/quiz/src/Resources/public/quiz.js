@@ -94,13 +94,15 @@
     root.classList.add('pw-quiz--js')
 
     var config = readConfig(root)
-    var immediate = 'end' !== config.feedback
+    var profileMode = 'profile' === config.mode
+    var immediate = !profileMode && 'end' !== config.feedback
     var questions = Array.prototype.slice.call(root.querySelectorAll('.pw-quiz-q'))
     if (0 === questions.length) return
 
     var total = questions.length
     var answered = 0
     var score = 0
+    var scores = {} // profile mode: tallied weights per profile key
 
     questions.forEach(function (q, idx) {
       if (idx > 0) q.setAttribute('data-locked', '1')
@@ -117,9 +119,15 @@
       q.setAttribute('data-answered', '1')
       q.classList.add('pw-quiz-q--answered')
 
-      var isCorrect = chosen.hasAttribute('data-correct')
-      if (isCorrect) score++
-      q.classList.add(isCorrect ? 'pw-quiz-q--correct' : 'pw-quiz-q--wrong')
+      if (profileMode) {
+        // No right or wrong: each answer tallies weights toward one or more profiles.
+        var weights = parseWeights(chosen.getAttribute('data-weights'))
+        for (var key in weights) if (Object.prototype.hasOwnProperty.call(weights, key)) scores[key] = (scores[key] || 0) + weights[key]
+      } else {
+        var isCorrect = chosen.hasAttribute('data-correct')
+        if (isCorrect) score++
+        q.classList.add(isCorrect ? 'pw-quiz-q--correct' : 'pw-quiz-q--wrong')
+      }
 
       buttons.forEach(function (btn) {
         btn.disabled = true
@@ -127,7 +135,8 @@
         if (immediate && btn.hasAttribute('data-correct')) btn.classList.add('pw-quiz-a--correct')
       })
       chosen.setAttribute('aria-pressed', 'true')
-      chosen.classList.add(isCorrect ? 'pw-quiz-a--chosen-correct' : 'pw-quiz-a--chosen-wrong')
+      if (profileMode) chosen.classList.add('pw-quiz-a--chosen')
+      else chosen.classList.add(isCorrect ? 'pw-quiz-a--chosen-correct' : 'pw-quiz-a--chosen-wrong')
 
       answered++
       if (answered >= total) {
@@ -144,17 +153,71 @@
 
     function finish() {
       root.classList.add('pw-quiz--done')
-      var pct = Math.round((score / total) * 100)
-
       var resultBox = root.querySelector('.pw-quiz-result')
-      var scoreBox = root.querySelector('.pw-quiz-score')
       if (resultBox) resultBox.hidden = false
+
+      if (profileMode) finishProfile(resultBox)
+      else finishScore(resultBox)
+    }
+
+    function finishScore(resultBox) {
+      var pct = Math.round((score / total) * 100)
+      var scoreBox = root.querySelector('.pw-quiz-score')
       if (scoreBox) scoreBox.innerHTML = buildScoreHtml(pct, score, total, config)
       if (resultBox) softScroll(resultBox)
 
       submitResult(root.getAttribute('data-slug'), pct, scoreBox, config)
-      maybeShowCta(root, pct)
+      maybeShowCta(root, 'quizScore=' + pct)
       maybeOfferNextLevel(scoreBox, pct, config, levelCtx)
+    }
+
+    function finishProfile(resultBox) {
+      var winner = winningKey(root, scores)
+      var scoreBox = root.querySelector('.pw-quiz-score')
+
+      // Reveal the winning outcome among the server-rendered profile cards.
+      var cards = root.querySelectorAll('.pw-quiz-profile')
+      var card = null
+      for (var i = 0; i < cards.length; i++) {
+        if (cards[i].getAttribute('data-profile-key') === winner) card = cards[i]
+      }
+      if (!card && cards.length) card = cards[0]
+      for (i = 0; i < cards.length; i++) cards[i].hidden = cards[i] !== card
+
+      if (scoreBox && config.labels && config.labels.profile) {
+        scoreBox.innerHTML = '<p class="pw-quiz-profile-intro">' + escapeHtml(config.labels.profile) + '</p>'
+      }
+      if (resultBox) softScroll(resultBox)
+
+      submitProfileResult(root.getAttribute('data-slug'), winner, scoreBox, config)
+      maybeShowCta(root, 'quizProfile=' + encodeURIComponent(winner || ''))
+    }
+  }
+
+  // The profile with the highest tally wins; ties break by declaration order (the
+  // order the cards appear in), so iterate the cards rather than the scores map.
+  function winningKey(root, scores) {
+    var cards = root.querySelectorAll('.pw-quiz-profile')
+    var best = null
+    var bestVal = -Infinity
+    for (var i = 0; i < cards.length; i++) {
+      var key = cards[i].getAttribute('data-profile-key')
+      var val = scores[key] || 0
+      if (val > bestVal) {
+        bestVal = val
+        best = key
+      }
+    }
+    return best
+  }
+
+  function parseWeights(raw) {
+    if (!raw) return {}
+    try {
+      var w = JSON.parse(raw)
+      return w && 'object' === typeof w ? w : {}
+    } catch (e) {
+      return {}
     }
   }
 
@@ -248,9 +311,32 @@
       .catch(function () {})
   }
 
+  // Personality mode: record the chosen profile and show how common it is.
+  function submitProfileResult(slug, result, scoreBox, config) {
+    if (!slug || !result || !scoreBox || !window.fetch) return
+
+    fetch(RESULT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quiz: slug, result: result }),
+    })
+      .then(function (r) {
+        return r.ok ? r.json() : null
+      })
+      .then(function (data) {
+        if (!data || 'number' !== typeof data.share || data.share <= 0) return
+        var tpl = (config.labels && config.labels.share) || '{p}% got the same profile'
+        var line = document.createElement('p')
+        line.className = 'pw-quiz-share'
+        line.textContent = tpl.replace('{p}', data.share)
+        scoreBox.appendChild(line)
+      })
+      .catch(function () {})
+  }
+
   /* ----- conversion form (pushword/conversation), deferred to the end ----- */
 
-  function maybeShowCta(root, pct) {
+  function maybeShowCta(root, query) {
     var cta = root.querySelector('.pw-quiz-cta')
     if (!cta) return
 
@@ -262,8 +348,8 @@
     var url = holder.getAttribute('data-quiz-cta')
     if (!url) return
 
-    // Carry the score along so the lead can be attributed to this attempt.
-    url += (url.indexOf('?') === -1 ? '?' : '&') + 'quizScore=' + pct
+    // Carry the attempt's outcome along so the lead can be attributed to it.
+    url += (url.indexOf('?') === -1 ? '?' : '&') + query
 
     // pushword/js-helper loads `[data-live]` blocks and re-scans on DOMChanged.
     holder.setAttribute('data-live', url)

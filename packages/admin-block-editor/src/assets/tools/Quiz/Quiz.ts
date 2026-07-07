@@ -10,6 +10,8 @@ import { BaseTool } from '../Abstract/BaseTool'
 interface QuizAnswer {
   a?: string
   correct?: boolean
+  weights?: Record<string, number>
+  profile?: string
   media?: string
   alt?: string
 }
@@ -28,7 +30,16 @@ interface QuizResultBand {
   msg?: string
 }
 
+interface QuizProfile {
+  key?: string
+  title?: string
+  msg?: string
+  media?: string
+  alt?: string
+}
+
 export interface QuizData extends BlockToolData {
+  mode?: string
   title?: string
   difficulty?: string
   label?: string
@@ -39,6 +50,7 @@ export interface QuizData extends BlockToolData {
   numbering?: string
   labels?: Record<string, string>
   results?: QuizResultBand[]
+  profiles?: QuizProfile[]
   questions?: QuizQuestion[]
   levels?: QuizData[]
 }
@@ -63,7 +75,11 @@ export default class Quiz extends BaseTool {
   private singleSection!: HTMLElement
   private levelsSection!: HTMLElement
   private levelsList!: HTMLElement
+  private profilesSection!: HTMLElement
+  private levelsToggle!: HTMLInputElement
+  private profileToggle!: HTMLInputElement
   private levelsMode = false
+  private profileMode = false
   private mediaPickerMessageHandler: ((event: MessageEvent) => void) | null = null
 
   public static toolbox = {
@@ -80,6 +96,7 @@ export default class Quiz extends BaseTool {
         : [{ q: '', answers: [{ a: '', correct: true }, { a: '' }] }]
 
     this.data = {
+      mode: 'profile' === data.mode ? 'profile' : 'quiz',
       title: data.title || '',
       difficulty: data.difficulty || '',
       feedback: data.feedback || 'immediate',
@@ -88,10 +105,12 @@ export default class Quiz extends BaseTool {
       numbering: data.numbering || '',
       labels: data.labels || {},
       results: Array.isArray(data.results) ? data.results : [],
+      profiles: Array.isArray(data.profiles) ? data.profiles : [],
       questions,
       levels: Array.isArray(data.levels) ? data.levels : [],
     }
     this.levelsMode = (this.data.levels || []).length > 0
+    this.profileMode = 'profile' === this.data.mode
   }
 
   public render(): HTMLElement {
@@ -120,28 +139,59 @@ export default class Quiz extends BaseTool {
       this.inputEl('cdx-quiz__cta-title', 'End form heading (call to action, optional)', this.data.ctaTitle || ''),
     )
 
-    // Mode toggle: a single quiz, or several difficulty levels behind tabs.
+    // Difficulty-levels toggle: a single quiz, or several levels behind tabs.
     const modeWrap = make.element('label', 'cdx-quiz__mode')
-    const modeToggle = make.element('input', 'cdx-quiz__mode-toggle', { type: 'checkbox' }) as HTMLInputElement
-    modeToggle.checked = this.levelsMode
-    modeToggle.addEventListener('change', () => {
-      this.levelsMode = modeToggle.checked
+    this.levelsToggle = make.element('input', 'cdx-quiz__mode-toggle', { type: 'checkbox' }) as HTMLInputElement
+    this.levelsToggle.checked = this.levelsMode
+    this.levelsToggle.addEventListener('change', () => {
+      this.levelsMode = this.levelsToggle.checked
+      // Difficulty levels and a personality test are mutually exclusive.
+      if (this.levelsMode) {
+        this.profileMode = false
+        this.profileToggle.checked = false
+      }
+
       if (this.levelsMode && 0 === this.levelsList.children.length) {
         this.levelsList.appendChild(this.buildLevel({}))
       }
 
       this.applyMode()
     })
-    modeWrap.appendChild(modeToggle)
+    modeWrap.appendChild(this.levelsToggle)
     modeWrap.appendChild(make.element('span', null, {}, 'Multiple difficulty levels (tabs)'))
     this.wrapper.appendChild(modeWrap)
 
-    // Single-quiz editor (difficulty + questions + score bands).
+    // Personality-test toggle: answers weigh profiles instead of being correct.
+    const profileWrap = make.element('label', 'cdx-quiz__mode')
+    this.profileToggle = make.element('input', 'cdx-quiz__mode-toggle', { type: 'checkbox' }) as HTMLInputElement
+    this.profileToggle.checked = this.profileMode
+    this.profileToggle.addEventListener('change', () => {
+      this.profileMode = this.profileToggle.checked
+      if (this.profileMode) {
+        this.levelsMode = false
+        this.levelsToggle.checked = false
+        if (0 === this.profilesSection.querySelectorAll('.cdx-quiz__profile').length) {
+          this.profilesSection.querySelector('.cdx-quiz__profiles')?.appendChild(this.buildProfile({}))
+        }
+      }
+
+      this.applyMode()
+    })
+    profileWrap.appendChild(this.profileToggle)
+    profileWrap.appendChild(make.element('span', null, {}, 'Personality test (profiles instead of correct answers)'))
+    this.wrapper.appendChild(profileWrap)
+
+    // Single-quiz editor (difficulty + questions + score bands). Its questions are
+    // reused by the personality test — only their answers read weights, not a flag.
     this.singleSection = make.element('div', 'cdx-quiz__single')
     this.singleSection.appendChild(this.inputEl('cdx-quiz__difficulty', 'Difficulty', this.data.difficulty || ''))
     this.singleSection.appendChild(this.buildQuestionsBlock(this.data.questions || []))
     this.singleSection.appendChild(this.buildResultsBlock(this.data.results || []))
     this.wrapper.appendChild(this.singleSection)
+
+    // Personality-test outcomes (shown instead of score bands in profile mode).
+    this.profilesSection = this.buildProfilesBlock(this.data.profiles || [])
+    this.wrapper.appendChild(this.profilesSection)
 
     // Multi-level editor: one full sub-quiz per level.
     this.levelsSection = make.element('div', 'cdx-quiz__levels')
@@ -172,10 +222,52 @@ export default class Quiz extends BaseTool {
     return this.wrapper
   }
 
-  /** Show the single-quiz editor or the levels editor, per the current mode. */
+  /** Reflect the active mode (single quiz / difficulty levels / personality test). */
   private applyMode(): void {
-    this.singleSection.hidden = this.levelsMode
-    this.levelsSection.hidden = !this.levelsMode
+    // A CSS class swaps the per-answer control (correct flag <-> profile weights)
+    // and hides the score bands / difficulty in personality mode.
+    this.wrapper.classList.toggle('cdx-quiz--profile', this.profileMode)
+    // The questions live in the single section, reused by the personality test.
+    this.singleSection.hidden = this.levelsMode && !this.profileMode
+    this.levelsSection.hidden = !this.levelsMode || this.profileMode
+    this.profilesSection.hidden = !this.profileMode
+  }
+
+  /** A profiles list plus its "+ Profile" button (personality-test outcomes). */
+  private buildProfilesBlock(profiles: QuizProfile[]): HTMLElement {
+    const block = make.element('div', 'cdx-quiz__profiles-block')
+    block.appendChild(make.element('div', 'cdx-quiz__subtitle', {}, 'Profiles (personality results)'))
+    const list = make.element('div', 'cdx-quiz__profiles')
+    profiles.forEach((p) => list.appendChild(this.buildProfile(p)))
+    block.appendChild(list)
+    block.appendChild(
+      make.element('button', 'cdx-quiz__add', { type: 'button' }, '+ Profile', () => {
+        list.appendChild(this.buildProfile({}))
+      }),
+    )
+    return block
+  }
+
+  /** One personality outcome: its key (referenced by answer weights), title, description, image. */
+  private buildProfile(p: QuizProfile): HTMLElement {
+    const el = make.element('div', 'cdx-quiz__profile')
+
+    const head = make.element('div', 'cdx-quiz__level-head')
+    head.appendChild(make.element('span', null, {}, 'Profile'))
+    head.appendChild(
+      make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove profile' }, '✕', () => el.remove()),
+    )
+    el.appendChild(head)
+
+    const row = make.element('div', 'cdx-quiz__row')
+    row.appendChild(this.inputEl('cdx-quiz__profile-key', 'Key (used by answer weights)', p.key || ''))
+    row.appendChild(this.inputEl('cdx-quiz__profile-title', 'Title', p.title || ''))
+    el.appendChild(row)
+
+    el.appendChild(this.textareaEl('cdx-quiz__profile-msg', 'Description (shown on the result card)', p.msg || ''))
+    el.appendChild(this.buildMediaField('cdx-quiz__profile-media', 'Result image (optional)', p.media || ''))
+
+    return el
   }
 
   /** A questions list plus its "+ Question" button. Reused per level. */
@@ -293,6 +385,11 @@ export default class Quiz extends BaseTool {
       ),
     )
     el.appendChild(main)
+
+    // Personality mode only (a CSS class shows it in place of the correct flag):
+    // which profiles this answer weighs, e.g. "explorer:2, builder".
+    const weights = this.inputEl('cdx-quiz__a-weights', 'Profiles (e.g. explorer:2, builder)', Quiz.weightsToStr(a.weights, a.profile))
+    el.appendChild(weights)
 
     el.appendChild(this.buildMediaField('cdx-quiz__a-media', 'Answer image (optional)', a.media || ''))
 
@@ -475,7 +572,10 @@ export default class Quiz extends BaseTool {
         const text = val('.cdx-quiz__a-text', aEl)
         if (!text) return
         const answer: QuizAnswer = { a: text }
-        if ((aEl.querySelector('.cdx-quiz__a-correct') as HTMLInputElement)?.checked) {
+        if (this.profileMode) {
+          const weights = Quiz.parseWeights(val('.cdx-quiz__a-weights', aEl))
+          if (Object.keys(weights).length > 0) answer.weights = weights
+        } else if ((aEl.querySelector('.cdx-quiz__a-correct') as HTMLInputElement)?.checked) {
           answer.correct = true
         }
         const answerMedia = val('.cdx-quiz__a-media', aEl)
@@ -486,6 +586,50 @@ export default class Quiz extends BaseTool {
       questions.push(question)
     })
     return questions
+  }
+
+  /** Read every `.cdx-quiz__profile` within `scope` into personality outcomes. */
+  private readProfiles(scope: Element): QuizProfile[] {
+    const profiles: QuizProfile[] = []
+    scope.querySelectorAll('.cdx-quiz__profile').forEach((pEl) => {
+      const key = Quiz.val('.cdx-quiz__profile-key', pEl)
+      const title = Quiz.val('.cdx-quiz__profile-title', pEl)
+      if (!key || !title) return
+      const profile: QuizProfile = { key, title }
+      const msg = Quiz.val('.cdx-quiz__profile-msg', pEl)
+      if (msg) profile.msg = msg
+      const media = Quiz.val('.cdx-quiz__profile-media', pEl)
+      if (media) profile.media = media
+      profiles.push(profile)
+    })
+    return profiles
+  }
+
+  /** Serialise `weights` (+ the `profile` shorthand) into the "key:points, key" input text. */
+  private static weightsToStr(weights?: Record<string, number>, profile?: string): string {
+    const map: Record<string, number> = { ...(weights || {}) }
+    if (profile && !(profile in map)) map[profile] = 1
+    return Object.keys(map)
+      .map((k) => (1 === map[k] ? k : `${k}:${map[k]}`))
+      .join(', ')
+  }
+
+  /** Parse the "key:points, key" input text back into a weights map (bare key == 1 point). */
+  private static parseWeights(raw: string): Record<string, number> {
+    const out: Record<string, number> = {}
+    raw.split(',').forEach((part) => {
+      const seg = part.trim()
+      if (!seg) return
+      const at = seg.lastIndexOf(':')
+      if (-1 === at) {
+        out[seg] = 1
+        return
+      }
+      const key = seg.slice(0, at).trim()
+      const value = Number(seg.slice(at + 1).trim())
+      if (key) out[key] = Number.isFinite(value) && 0 !== value ? value : 1
+    })
+    return out
   }
 
   /** Read every `.cdx-quiz__result-row` within `scope` into score bands. */
@@ -526,7 +670,13 @@ export default class Quiz extends BaseTool {
     })
     if (Object.keys(labels).length > 0) data.labels = labels
 
-    if (this.levelsMode) {
+    if (this.profileMode) {
+      data.mode = 'profile'
+      data.feedback = 'end' // no correct answer to reveal mid-way
+      data.questions = this.readQuestions(this.singleSection)
+      const profiles = this.readProfiles(this.profilesSection)
+      if (profiles.length > 0) data.profiles = profiles
+    } else if (this.levelsMode) {
       const levels: QuizData[] = []
       this.levelsList.querySelectorAll('.cdx-quiz__level').forEach((levelEl) => {
         const level: QuizData = { questions: this.readQuestions(levelEl) }
@@ -570,6 +720,9 @@ export default class Quiz extends BaseTool {
         if (!a.a) return
         const ca: QuizAnswer = { a: a.a }
         if (a.correct) ca.correct = true
+        // Canonicalise personality weights: an explicit map, or the `profile` shorthand (== {key: 1}).
+        if (a.weights && Object.keys(a.weights).length > 0) ca.weights = a.weights
+        else if (a.profile) ca.weights = { [a.profile]: 1 }
         if (a.media) ca.media = a.media
         if (a.alt) ca.alt = a.alt
         cq.answers!.push(ca)
@@ -581,6 +734,18 @@ export default class Quiz extends BaseTool {
 
   private static cleanBands(results: QuizResultBand[] | undefined): QuizResultBand[] {
     return (results || []).filter((r) => r.msg).map((r) => ({ min: Number(r.min) || 0, msg: r.msg ?? '' }))
+  }
+
+  private static cleanProfiles(profiles: QuizProfile[] | undefined): QuizProfile[] {
+    return (profiles || [])
+      .filter((p) => p.key && p.title)
+      .map((p) => {
+        const cp: QuizProfile = { key: p.key ?? '', title: p.title ?? '' }
+        if (p.msg) cp.msg = p.msg
+        if (p.media) cp.media = p.media
+        if (p.alt) cp.alt = p.alt
+        return cp
+      })
   }
 
   private static cleanLevel(level: QuizData): QuizData {
@@ -598,12 +763,25 @@ export default class Quiz extends BaseTool {
 
   /** Strip empty optional fields so the exported JSON stays compact. */
   private static clean(data: QuizData): QuizData {
-    const out: QuizData = { feedback: 'end' === data.feedback ? 'end' : 'immediate' }
+    const isProfile = 'profile' === data.mode
+
+    // Shared metadata, in one place for every mode. Personality tests always
+    // score at the end (no correct answer to reveal).
+    const out: QuizData = { feedback: isProfile || 'end' === data.feedback ? 'end' : 'immediate' }
+    if (isProfile) out.mode = 'profile'
     if (data.title) out.title = data.title
     if (data.cta) out.cta = data.cta
     if (data.ctaTitle) out.ctaTitle = data.ctaTitle
     if (data.numbering) out.numbering = data.numbering
     if (data.labels && Object.keys(data.labels).length > 0) out.labels = data.labels
+
+    // Personality test: profile cards + weighted-answer questions.
+    if (isProfile) {
+      const profiles = Quiz.cleanProfiles(data.profiles)
+      if (profiles.length > 0) out.profiles = profiles
+      out.questions = Quiz.cleanQuestions(data.questions)
+      return out
+    }
 
     // Levels own the questions; the root keeps only the shared metadata.
     if (Array.isArray(data.levels) && data.levels.length > 0) {

@@ -3,6 +3,7 @@
 namespace Pushword\Quiz\Service;
 
 use Pushword\Quiz\Model\Answer;
+use Pushword\Quiz\Model\Profile;
 use Pushword\Quiz\Model\Question;
 use Pushword\Quiz\Model\Quiz;
 use Pushword\Quiz\Model\ResultBand;
@@ -19,13 +20,18 @@ final class QuizFactory
      */
     public function fromArray(array $data): Quiz
     {
-        $levels = $this->buildLevels($data['levels'] ?? null, $data);
+        $mode = $this->stringOr($data['mode'] ?? null, 'quiz');
+        $isProfile = 'profile' === $mode;
+
+        // A personality test has no difficulty levels; it always owns its questions.
+        $levels = $isProfile ? [] : $this->buildLevels($data['levels'] ?? null, $data);
 
         return new Quiz(
             title: $this->stringOrNull($data['title'] ?? null),
             // `levels` owns the questions; the root keeps only the shared metadata.
             questions: [] === $levels ? $this->buildQuestions($data['questions'] ?? null) : [],
-            feedback: $this->stringOr($data['feedback'] ?? null, 'immediate'),
+            // No correct answer to reveal, so a personality test only ever scores at the end.
+            feedback: $isProfile ? 'end' : $this->stringOr($data['feedback'] ?? null, 'immediate'),
             difficulty: $this->stringOrNull($data['difficulty'] ?? null),
             results: $this->buildResults($data['results'] ?? null),
             cta: $this->stringOrNull($data['cta'] ?? null),
@@ -35,6 +41,8 @@ final class QuizFactory
             pass: $this->intOrNull($data['pass'] ?? null),
             label: $this->stringOrNull($data['label'] ?? null),
             levels: $levels,
+            mode: $mode,
+            profiles: $this->buildProfiles($data['profiles'] ?? null),
         );
     }
 
@@ -156,10 +164,62 @@ final class QuizFactory
                 correct: (bool) ($answer['correct'] ?? false),
                 media: $this->stringOrNull($answer['media'] ?? null),
                 alt: $this->stringOrNull($answer['alt'] ?? null),
+                weights: $this->buildWeights($answer['weights'] ?? null, $answer['profile'] ?? null),
             );
         }
 
         return $answers;
+    }
+
+    /**
+     * Personality-mode answer weights: a `{profileKey: points}` map, plus the
+     * `profile: "key"` shorthand (== `{key: 1}`) which never overrides an explicit map entry.
+     *
+     * @return array<string, int>
+     */
+    private function buildWeights(mixed $weights, mixed $profile): array
+    {
+        $out = [];
+        if (\is_array($weights)) {
+            foreach ($weights as $key => $value) {
+                if (\is_string($key) && '' !== $key && is_numeric($value)) {
+                    $out[$key] = (int) $value;
+                }
+            }
+        }
+
+        if (\is_string($profile) && '' !== $profile && ! isset($out[$profile])) {
+            $out[$profile] = 1;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return Profile[]
+     */
+    private function buildProfiles(mixed $raw): array
+    {
+        if (! \is_array($raw)) {
+            return [];
+        }
+
+        $profiles = [];
+        foreach ($raw as $profile) {
+            if (! \is_array($profile)) {
+                continue;
+            }
+
+            $profiles[] = new Profile(
+                key: $this->toString($profile['key'] ?? ''),
+                title: $this->toString($profile['title'] ?? ''),
+                msg: $this->stringOrNull($profile['msg'] ?? $profile['message'] ?? null),
+                media: $this->stringOrNull($profile['media'] ?? null),
+                alt: $this->stringOrNull($profile['alt'] ?? null),
+            );
+        }
+
+        return $profiles;
     }
 
     /**

@@ -19,6 +19,18 @@ quiz:
       range: 'A score band threshold must be between 0 and 100.'
     msg:
       empty: 'A score band needs a message.'
+  mode:
+    invalid: 'Mode must be "quiz" or "profile".'
+    hint: 'You defined profiles or answer weights but mode is "quiz" — did you mean mode:"profile"?'
+  profiles:
+    min: 'A personality test needs at least one profile.'
+  profile:
+    key:
+      empty: 'A profile needs a key.'
+    title:
+      empty: 'A profile needs a title.'
+    weight:
+      unknown: 'An answer weight references an unknown profile "{key}".'
   feedback:
     invalid: 'Feedback must be "immediate" or "end".'
   numbering:

@@ -28,16 +28,12 @@ class Question
     ) {
     }
 
+    // The "at least one correct answer" rule is mode-dependent (it must not apply
+    // to a personality test), so it lives in {@see Quiz::validateStructure()} which
+    // knows the mode — not here.
     #[Assert\Callback]
-    public function validateAnswers(ExecutionContextInterface $context): void
+    public function validateVideo(ExecutionContextInterface $context): void
     {
-        $correct = array_filter($this->answers, static fn (Answer $answer): bool => $answer->correct);
-        if ([] === $correct) {
-            $context->buildViolation('quiz.question.correct.min')
-                ->atPath('answers')
-                ->addViolation();
-        }
-
         if (null === $this->video || '' === $this->video) {
             return;
         }

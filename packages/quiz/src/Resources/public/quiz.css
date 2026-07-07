@@ -212,6 +212,15 @@
   content: "\2717"; /* ✗ */
   color: var(--pw-quiz-wrong);
 }
+/* Personality mode: an answer is a preference, not right or wrong — just mark
+   the chosen one and drop the ✓/✗ affordance. */
+.pw-quiz--profile .pw-quiz-a-mark {
+  display: none;
+}
+.pw-quiz--js.pw-quiz--profile .pw-quiz-a--chosen {
+  border-color: var(--pw-quiz-accent);
+  background: color-mix(in oklch, var(--pw-quiz-accent) 10%, #fff);
+}
 
 /* ---- result ---- */
 .pw-quiz-result {
@@ -263,6 +272,34 @@
   font-size: 1.05rem;
   font-weight: 600;
   margin: 0 0 0.75rem;
+}
+
+/* ---- personality result card ---- */
+.pw-quiz-profile-intro {
+  color: var(--pw-quiz-muted);
+  margin: 0 0 0.5rem;
+}
+.pw-quiz-profile-title {
+  font-size: 1.4rem;
+  margin: 0 0 0.75rem;
+  color: var(--pw-quiz-accent);
+}
+.pw-quiz-profile-img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto 0.75rem;
+  border-radius: var(--pw-quiz-radius);
+}
+.pw-quiz-profile-msg {
+  margin: 0.25rem auto 0;
+  max-width: 42rem;
+  line-height: 1.6;
+}
+.pw-quiz-share {
+  color: var(--pw-quiz-accent);
+  font-weight: 600;
+  margin: 0.75rem 0 0;
 }
 
 /* ===========================================================================

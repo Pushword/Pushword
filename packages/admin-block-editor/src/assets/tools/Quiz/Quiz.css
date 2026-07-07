@@ -273,3 +273,27 @@
 .cdx-quiz__level .cdx-quiz__row {
   grid-template-columns: 1fr 1fr 6rem;
 }
+
+/* ---- personality test (profile mode) ---- */
+/* The weights input replaces the correct flag; the score bands and difficulty
+   drop out. The profiles section is shown/hidden from JS via the `hidden` attr. */
+.cdx-quiz__a-weights {
+  display: none;
+  margin-top: 0.4rem;
+}
+.cdx-quiz--profile .cdx-quiz__a-weights {
+  display: block;
+}
+.cdx-quiz--profile .cdx-quiz__a-correct,
+.cdx-quiz--profile .cdx-quiz__results-block,
+.cdx-quiz--profile .cdx-quiz__difficulty {
+  display: none;
+}
+.cdx-quiz__profile {
+  border: 1px solid var(--q-border);
+  border-left: 3px solid var(--q-accent);
+  border-radius: 10px;
+  padding: 0.85rem;
+  margin-bottom: 0.6rem;
+  background: #fff;
+}

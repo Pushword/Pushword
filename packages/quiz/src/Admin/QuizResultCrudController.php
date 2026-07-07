@@ -59,6 +59,7 @@ class QuizResultCrudController extends AbstractCrudController
     {
         yield TextField::new('quiz', 'quiz.result.field.quiz');
         yield IntegerField::new('score', 'quiz.result.field.score');
+        yield TextField::new('result', 'quiz.result.field.result');
         yield TextField::new('host', 'quiz.result.field.host');
         yield DateTimeField::new('createdAt', 'quiz.result.field.createdAt');
     }

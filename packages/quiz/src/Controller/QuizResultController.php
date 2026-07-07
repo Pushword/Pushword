@@ -42,13 +42,39 @@ final class QuizResultController extends AbstractController
 
         $quizRaw = $data['quiz'] ?? null;
         $quiz = \is_string($quizRaw) ? trim($quizRaw) : '';
-        $scoreRaw = $data['score'] ?? null;
-        $score = is_numeric($scoreRaw) ? (int) $scoreRaw : -1;
-        if ('' === $quiz || $score < 0 || $score > 100) {
+        if ('' === $quiz) {
             return $this->json(['error' => 'Invalid payload'], Response::HTTP_BAD_REQUEST);
         }
 
         $host = $request->getHost();
+
+        // Personality test: a chosen profile key instead of a numeric score.
+        $profileRaw = $data['result'] ?? null;
+        $profile = \is_string($profileRaw) ? trim($profileRaw) : '';
+        if ('' !== $profile) {
+            if (mb_strlen($profile) > 255) {
+                return $this->json(['error' => 'Invalid payload'], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Compare against prior participants before inserting the current attempt.
+            $share = $this->repository->shareOfSameResult($host, $quiz, $profile);
+
+            $entity = new QuizResult();
+            $entity->host = $host;
+            $entity->quiz = $quiz;
+            $entity->result = $profile;
+
+            $this->entityManager->persist($entity);
+            $this->entityManager->flush();
+
+            return $this->json(['share' => $share]);
+        }
+
+        $scoreRaw = $data['score'] ?? null;
+        $score = is_numeric($scoreRaw) ? (int) $scoreRaw : -1;
+        if ($score < 0 || $score > 100) {
+            return $this->json(['error' => 'Invalid payload'], Response::HTTP_BAD_REQUEST);
+        }
 
         // Compare against prior participants before inserting the current attempt.
         $percentile = $this->repository->percentileBelow($host, $quiz, $score);

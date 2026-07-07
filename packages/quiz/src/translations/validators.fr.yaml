@@ -19,6 +19,18 @@ quiz:
       range: 'Le seuil d''une tranche de score doit être compris entre 0 et 100.'
     msg:
       empty: 'Une tranche de score doit avoir un message.'
+  mode:
+    invalid: 'Le mode doit être « quiz » ou « profile ».'
+    hint: 'Vous avez défini des profils ou des poids de réponse, mais le mode est « quiz » — vouliez-vous mode:"profile" ?'
+  profiles:
+    min: 'Un test de personnalité nécessite au moins un profil.'
+  profile:
+    key:
+      empty: 'Un profil nécessite une clé.'
+    title:
+      empty: 'Un profil nécessite un titre.'
+    weight:
+      unknown: 'Un poids de réponse référence un profil inconnu « {key} ».'
   feedback:
     invalid: 'Le retour doit être « immediate » ou « end ».'
   numbering:

@@ -11,9 +11,10 @@ use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Quiz\Repository\QuizResultRepository;
 
 /**
- * One anonymous quiz attempt: just a score (in %) per quiz per host. No PII —
- * this feeds the "better than X% of participants" percentile only. Identified
- * leads live in pushword/conversation, not here.
+ * One anonymous quiz attempt per quiz per host. No PII — it feeds only the
+ * "better than X% of participants" percentile (knowledge quiz, {@see $score}) or
+ * the "X% got the same profile" share (personality test, {@see $result}).
+ * Identified leads live in pushword/conversation, not here.
  */
 #[ORM\Entity(repositoryClass: QuizResultRepository::class)]
 #[ORM\Table(name: 'quiz_result')]
@@ -29,6 +30,12 @@ class QuizResult implements IdInterface
 
     #[ORM\Column(type: Types::SMALLINT)]
     public int $score = 0;
+
+    /**
+     * The chosen profile key in a personality test; null for a knowledge quiz.
+     */
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    public ?string $result = null;
 
     public function __construct()
     {

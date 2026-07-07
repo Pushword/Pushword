@@ -19,7 +19,8 @@ composer require pushword/quiz
 ```
 
 Then run `bin/console doctrine:schema:update --force` (a tiny `quiz_result`
-table stores anonymous scores for the percentile) and `bin/console assets:install`.
+table stores anonymous scores for the percentile — and chosen profiles for a
+personality test) and `bin/console assets:install`.
 
 ## Declare a quiz
 
@@ -66,12 +67,19 @@ skipped (admins see an inline warning) and the rest of the quiz still renders.
 | `alt` | question / answer | Media alternative text. **Required** for a video. |
 | `explanation` | question | Shown once the question is answered. |
 | `a` | answer | The answer text. |
-| `correct` | answer | `true` for an expected answer (several allowed). |
+| `correct` | answer | `true` for an expected answer (several allowed). Knowledge quiz only. |
+| `weights` | answer | Personality test (`mode: profile`): a `{profileKey: points}` map. |
+| `profile` | answer | Personality test shorthand: a profile key worth 1 point (== `weights {key: 1}`). |
 
 ### Quiz-level fields
 
+- `mode` — `quiz` (default, scored on `correct` answers) or `profile` (a
+  personality test scored on answer `weights`; see below).
 - `title`, `difficulty` — header.
-- `feedback` — `immediate` (reveal each answer at once, default) or `end`.
+- `feedback` — `immediate` (reveal each answer at once, default) or `end`. Forced
+  to `end` in `mode: profile` (no correct answer to reveal).
+- `profiles` — personality-test outcomes `{key, title, msg?, media?, alt?}`; used
+  only in `mode: profile`.
 - `results` — score bands `{min, msg}`; the highest matched `min` wins.
 - `cta` — a Conversation form type shown at the end (skipped if Conversation is
   not installed).
@@ -83,8 +91,8 @@ skipped (admins see an inline warning) and the rest of the quiz still renders.
   passed and offers the next one (default `50`). Only meaningful with `levels`.
 - `labels` — overrides for the UI words, which otherwise default to the site
   locale: `question`, `questions`, `explanation`, `score`, `better` (use `{p}`
-  as the percentile placeholder), `level` and `nextLevel`. Set these only to
-  force a specific wording.
+  as the percentile placeholder), `level`, `nextLevel`, `profile` and `share`
+  (personality mode; `{p}` = the share). Set these only to force a specific wording.
 - `levels` — turn the quiz into several difficulty levels (see below).
 
 ## Difficulty levels
@@ -116,6 +124,34 @@ selector. Add a `levels` array: each entry is a **complete quiz of its own**
 In the EditorJS block, tick *"Multiple difficulty levels"* to switch a quiz to
 levels mode and edit one full sub-quiz per level.
 
+## Personality test (`mode: profile`)
+
+Set `"mode": "profile"` to turn the same block into a personality test ("Which X
+are you?"). There is no correct answer: each answer weighs one or more named
+`profiles`, and the highest-tallied profile is shown as a result card.
+
+```twig
+{% quiz %}{"mode":"profile","title":"Which explorer are you?","profiles":[{"key":"sommet","title":"The Summiteer","msg":"Higher, always.","media":"peak.jpg"},{"key":"calm","title":"The Contemplative","msg":"The mountain is your refuge."}],"questions":[{"q":"A free weekend, you…","answers":[{"a":"climb a peak","weights":{"sommet":2}},{"a":"walk by a lake","profile":"calm"}]}],"cta":"newsletter"}{% endquiz %}
+```
+
+- Each answer weighs profiles with a `weights` map, or the `profile: "key"`
+  shorthand (== `{ "key": 1 }`). The highest tally wins; ties break by the order
+  profiles are declared.
+- The validator requires at least one profile and enforces that **every weight
+  references a declared profile `key`** — a typo would otherwise vote for nothing.
+- `feedback` is always `end`, `levels` are not used, and **no schema.org/Quiz
+  markup** is emitted (there is no accepted answer to advertise). Every outcome is
+  still server-rendered (hidden) for SEO/no-JS, and the runtime reveals the winner.
+- On completion the browser posts `{ quiz, result }` to `POST /quiz/result` and
+  gets back `{ share }` — *"X% got the same profile"*. The knowledge-quiz
+  percentile and the personality share stay separate even under one page slug.
+- `labels.profile` (the *"Your profile:"* heading) and `labels.share` (use `{p}`
+  for the share) override the wording.
+
+In the EditorJS block, tick *"Personality test"* to swap the correct-answer flag
+for a per-answer profile-weights field (`explorer:2, builder`) and edit the
+profile cards. It is mutually exclusive with difficulty levels.
+
 ## SEO & accessibility
 
 The whole quiz — questions, answers, the correct flag and the explanations —
@@ -123,7 +159,9 @@ is rendered **server-side** as a readable, schema.org `Quiz` Q&A. That is what
 crawlers and no-JS visitors get. `quiz.js` then progressively enhances it into a
 game. Correctness is never signalled by colour alone (✓/✗ glyphs + `aria-live`).
 With difficulty levels, every level is server-rendered (panels stack without JS)
-and emits its own schema.org `Quiz`.
+and emits its own schema.org `Quiz`. A personality test (`mode: profile`) is
+server-rendered the same way but emits **no** schema.org `Quiz` — it has no
+accepted answer, so that markup would be misleading.
 
 ## Percentile & leads
 

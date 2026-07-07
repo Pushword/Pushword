@@ -101,3 +101,52 @@ describe('Quiz difficulty levels', () => {
     expect(Quiz.isItMarkdownExported('just a paragraph')).toBe(false)
   })
 })
+
+const personality: QuizData = {
+  mode: 'profile',
+  title: 'Which explorer are you?',
+  profiles: [
+    { key: 'sommet', title: 'The Summiteer', msg: 'Higher, always.' },
+    { key: 'calm', title: 'The Contemplative' },
+  ],
+  questions: [
+    {
+      q: 'A free weekend, you…',
+      answers: [
+        { a: 'climb a peak', weights: { sommet: 2 } },
+        { a: 'walk by a lake', profile: 'calm' },
+      ],
+    },
+  ],
+}
+
+describe('Quiz personality test (profile mode)', () => {
+  it('exports profiles + weights, forces feedback:end, and drops score bands', () => {
+    const json = parseBlock(Quiz.exportToMarkdown(personality))
+
+    expect(json.mode).toBe('profile')
+    expect(json.feedback).toBe('end')
+    expect(json.results).toBeUndefined()
+    expect(json.profiles).toHaveLength(2)
+    expect(json.profiles![0].key).toBe('sommet')
+    expect(json.questions![0].answers![0].weights).toEqual({ sommet: 2 })
+    // The `profile` shorthand is normalised to a {key: 1} weight on export.
+    expect(json.questions![0].answers![1].weights).toEqual({ calm: 1 })
+    expect(json.questions![0].answers![1].correct).toBeUndefined()
+  })
+
+  it('renders in profile mode and saves profiles + weighted answers back', () => {
+    const saved = mounted(personality).save()
+
+    expect(saved.mode).toBe('profile')
+    expect(saved.profiles).toHaveLength(2)
+    expect(saved.profiles![1].key).toBe('calm')
+    expect(saved.questions![0].answers![0].weights).toEqual({ sommet: 2 })
+    expect(saved.questions![0].answers![0].correct).toBeUndefined()
+  })
+
+  it('round-trips export → parse → export without drift', () => {
+    const markdown = Quiz.exportToMarkdown(personality)
+    expect(Quiz.exportToMarkdown(parseBlock(markdown))).toBe(markdown)
+  })
+})
