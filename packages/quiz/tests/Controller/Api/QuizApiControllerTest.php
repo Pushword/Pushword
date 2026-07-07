@@ -114,6 +114,8 @@ final class QuizApiControllerTest extends WebTestCase
 
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
         self::assertNotEmpty($body['violations']);
+        self::assertIsArray($body['violations']);
+        self::assertIsArray($body['violations'][0]);
         self::assertArrayHasKey('path', $body['violations'][0]);
         self::assertArrayHasKey('message', $body['violations'][0]);
     }

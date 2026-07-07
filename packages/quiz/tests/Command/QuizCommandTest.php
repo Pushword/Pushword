@@ -100,6 +100,7 @@ final class QuizCommandTest extends KernelTestCase
         $schema = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($schema);
         self::assertSame('Pushword Quiz', $schema['title']);
+        self::assertIsArray($schema['$defs']);
         self::assertArrayHasKey('question', $schema['$defs']);
     }
 }

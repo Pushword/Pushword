@@ -110,6 +110,65 @@ final class QuizValidationTest extends KernelTestCase
         self::assertStringNotContainsString('>Explication<', $output);
     }
 
+    public function testProfileMessageRendersMarkdown(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $extension = self::getContainer()->get(QuizExtension::class);
+
+        $json = '{"mode":"profile","profiles":[{"key":"a","title":"A",'
+            .'"msg":"Read the [guide](https://example.com)."}],'
+            .'"questions":[{"q":"Q?","answers":[{"a":"Yes","profile":"a"},{"a":"No"}]}]}';
+        $output = $extension->renderQuiz($json);
+
+        self::assertStringContainsString('<div class="pw-quiz-profile-msg">', $output);
+        self::assertStringContainsString('href="https://example.com"', $output);
+        self::assertStringNotContainsString('[guide]', $output);
+    }
+
+    public function testResultBandMessageRendersMarkdown(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $extension = self::getContainer()->get(QuizExtension::class);
+
+        // The band message is delivered to the JS runtime as pre-rendered HTML
+        // inside the config <script>; Markdown must be resolved server-side.
+        $json = '{"questions":[{"q":"Q?","answers":[{"a":"Yes","correct":true},{"a":"No"}]}],'
+            .'"results":[{"min":0,"msg":"See the [guide](https://example.com)."}]}';
+        $output = $extension->renderQuiz($json);
+
+        // Hardening: angle brackets are hex-escaped inside the JSON <script>, so
+        // the embedded HTML can never prematurely close it (no </script> break-out).
+        self::assertStringContainsString('\\u003Ca href=', $output);
+        self::assertStringNotContainsString('<a href=', $output);
+
+        // …yet it decodes back to real, Markdown-rendered HTML for the runtime.
+        $bandMsg = $this->firstBandMessage($output);
+        self::assertStringContainsString('href="https://example.com"', $bandMsg);
+        self::assertStringNotContainsString('[guide]', $bandMsg);
+    }
+
+    /**
+     * Pull the first score band's message out of the JS runtime config embedded
+     * in a rendered quiz.
+     */
+    private function firstBandMessage(string $html): string
+    {
+        self::assertSame(1, preg_match('#class="pw-quiz-config">(.*?)</script>#s', $html, $matches));
+
+        $config = json_decode($matches[1], true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($config);
+        self::assertArrayHasKey('results', $config);
+        self::assertIsArray($config['results']);
+        self::assertArrayHasKey(0, $config['results']);
+        self::assertIsArray($config['results'][0]);
+        self::assertArrayHasKey('msg', $config['results'][0]);
+        self::assertIsString($config['results'][0]['msg']);
+
+        return $config['results'][0]['msg'];
+    }
+
     public function testEditorProviderExposesQuizTool(): void
     {
         self::bootKernel();
@@ -452,9 +511,14 @@ final class QuizValidationTest extends KernelTestCase
     public function testProfileWeightReferencingUnknownProfileIsRejected(): void
     {
         self::bootKernel();
-        $data = $this->profileQuiz();
-        $data['questions'][0]['answers'][0]['weights'] = ['typo' => 2]; // no such profile
-        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray($data);
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'mode' => 'profile',
+            'profiles' => [['key' => 'sommet', 'title' => 'The Summiteer']],
+            'questions' => [['q' => 'Q', 'answers' => [
+                ['a' => 'A', 'weights' => ['typo' => 2]], // no such profile
+                ['a' => 'B'],
+            ]]],
+        ]);
 
         $paths = [];
         foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {

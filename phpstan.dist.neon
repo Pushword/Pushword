@@ -37,6 +37,8 @@ parameters:
         - packages/page-scanner/tests
         - packages/page-update-notifier/src
         - packages/page-update-notifier/tests
+        - packages/quiz/src
+        - packages/quiz/tests
         - packages/skeleton/src
         - packages/skeleton/tests
         - packages/static-generator/src

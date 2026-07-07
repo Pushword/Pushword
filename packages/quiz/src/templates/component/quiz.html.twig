@@ -48,7 +48,7 @@
           <div class="pw-quiz-profile" data-profile-key="{{ p.key }}" hidden>
             <h3 class="pw-quiz-profile-title">{{ p.title }}</h3>
             {{ quiz_profile_image(p) }}
-            {% if p.msg %}<p class="pw-quiz-profile-msg">{{ p.msg }}</p>{% endif %}
+            {% if p.msg %}<div class="pw-quiz-profile-msg">{{ p.msg|markdown }}</div>{% endif %}
           </div>
         {% endfor %}
       </div>
@@ -68,9 +68,9 @@
     mode: quiz.mode,
     feedback: quiz.feedback,
     pass: quiz.pass,
-    results: quiz.results|map(b => { min: b.min, msg: b.msg }),
+    results: quiz.results|map(b => { min: b.min, msg: b.msg|markdown }),
     labels: { score: l.score, better: l.better, nextLevel: l.nextLevel, profile: l.profile, share: l.share },
-  }|json_encode|raw }}</script>
+  }|json_encode(constant('JSON_HEX_TAG'))|raw }}</script>
 {% endmacro %}
 
 {# ---- schema.org Quiz: makes the Q&A eligible for rich results and indexable ---- #}

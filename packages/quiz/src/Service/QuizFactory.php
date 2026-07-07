@@ -74,8 +74,8 @@ final class QuizFactory
     }
 
     /**
-     * @param array<string, mixed> $data
-     * @param array<string, mixed> $root
+     * @param array<array-key, mixed> $data a decoded level object (untyped JSON entry)
+     * @param array<string, mixed>    $root
      */
     private function buildLevel(array $data, array $root): Quiz
     {

@@ -296,6 +296,16 @@
   max-width: 42rem;
   line-height: 1.6;
 }
+/* Both message boxes now hold rendered Markdown (a wrapping <p>, maybe more):
+   collapse the block's outer margins so the container's own spacing wins. */
+.pw-quiz-band > :first-child,
+.pw-quiz-profile-msg > :first-child {
+  margin-top: 0;
+}
+.pw-quiz-band > :last-child,
+.pw-quiz-profile-msg > :last-child {
+  margin-bottom: 0;
+}
 .pw-quiz-share {
   color: var(--pw-quiz-accent);
   font-weight: 600;

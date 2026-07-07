@@ -240,6 +240,8 @@
   }
 
   function buildScoreHtml(pct, score, total, config) {
+    // `band` is server-rendered Markdown→HTML (trusted, same source as page
+    // content), so it is injected as markup rather than escaped.
     var band = bandMessage(pct, config.results || [])
     var labels = config.labels || {}
     return (
@@ -250,7 +252,7 @@
       '/' +
       total +
       '</p>' +
-      (band ? '<p class="pw-quiz-band">' + escapeHtml(band) + '</p>' : '') +
+      (band ? '<div class="pw-quiz-band">' + band + '</div>' : '') +
       '<p class="pw-quiz-percentile" hidden></p>'
     )
   }

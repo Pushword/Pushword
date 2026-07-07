@@ -217,3 +217,40 @@ describe('quiz runtime — personality test (profile mode)', () => {
     expect(document.querySelector('.pw-quiz-profile[data-profile-key="builder"]').hidden).toBe(true)
   })
 })
+
+// The server renders each score band's Markdown message to HTML; the runtime
+// injects it verbatim into the score box (no client-side escaping).
+function bandedQuiz(bandMsg) {
+  return (
+    '<section class="pw-quiz" id="qb" data-pw-quiz data-slug="banded">' +
+    '<ol class="pw-quiz-questions">' +
+    questionHtml(0) +
+    questionHtml(1) +
+    '</ol>' +
+    '<div class="pw-quiz-result" hidden><div class="pw-quiz-score"></div></div>' +
+    '<script type="application/json" class="pw-quiz-config">' +
+    JSON.stringify({ feedback: 'immediate', pass: 50, results: [{ min: 0, msg: bandMsg }] }) +
+    '</script>' +
+    '</section>'
+  )
+}
+
+describe('quiz runtime — score band (Markdown)', () => {
+  it('injects the pre-rendered band HTML as markup, not escaped text', () => {
+    document.body.innerHTML = bandedQuiz('<strong>Nice</strong> — <a href="https://example.com">more</a>')
+    bootRuntime()
+
+    const questions = document.querySelectorAll('.pw-quiz-q')
+    // Answer both questions to finish the quiz and render the score box.
+    questions[0].querySelector('.pw-quiz-a').click()
+    questions[1].querySelector('.pw-quiz-a').click()
+
+    const band = document.querySelector('.pw-quiz-band')
+    expect(band).not.toBeNull()
+    // Real elements land in the DOM (Markdown was resolved server-side)…
+    expect(band.querySelector('strong')).not.toBeNull()
+    expect(band.querySelector('a[href="https://example.com"]')).not.toBeNull()
+    // …and the raw tags are not shown as literal text.
+    expect(band.textContent).not.toContain('<strong>')
+  })
+})
