@@ -100,9 +100,17 @@
   grid-template-columns: 1fr;
   gap: 0.6rem;
 }
+/* Let each answer button fill its grid cell so side-by-side boxes match the
+   tallest one in their row. */
+.pw-quiz-answers > li {
+  display: flex;
+}
 @media (min-width: 540px) {
   .pw-quiz-answers {
     grid-template-columns: 1fr 1fr;
+    /* Equal-height rows: every box in the two-column layout matches the tallest
+       answer, so a long answer no longer leaves its neighbours shorter. */
+    grid-auto-rows: 1fr;
   }
 }
 .pw-quiz-a {
