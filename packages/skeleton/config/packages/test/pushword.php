@@ -12,6 +12,12 @@ return static function (ContainerConfigurator $container): void {
         'media_dir' => '%env(PUSHWORD_TEST_MEDIA_DIR)%',
         'database_url' => '%env(PUSHWORD_TEST_DATABASE_URL)%',
         'enable_password_reset' => true,
+        // Per-worker runtime state dir. Without this, parallel workers share
+        // var/page-scan* result caches and background output/status files
+        // (keyed only by host), so one worker's scan state bleeds into another's
+        // — e.g. the all-hosts page-scan status reads as non-idle. Mirrors the
+        // per-worker version storage and PID file isolation below.
+        'var_dir' => '%env(PUSHWORD_TEST_VAR_DIR)%',
     ]);
 
     $container->extension('pushword_flat', [

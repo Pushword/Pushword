@@ -152,7 +152,10 @@ final class PageScanApiControllerTest extends WebTestCase
 
     private function varDir(): string
     {
-        return self::getContainer()->getParameter('kernel.project_dir').'/var';
+        // The same per-worker runtime dir the coordinator and output storage use,
+        // so seeded state and the controller's reads never diverge (or collide
+        // with a parallel worker).
+        return self::getContainer()->getParameter('pw.var_dir');
     }
 
     /**
