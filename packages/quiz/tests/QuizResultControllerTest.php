@@ -80,17 +80,49 @@ final class QuizResultControllerTest extends WebTestCase
         self::assertSame(100, $share['share']);
     }
 
+    public function testSetsCorsHeaderSoStaticPagesCanReadTheResult(): void
+    {
+        $client = self::createClient();
+        $this->post($client, ['quiz' => 'cors-quiz', 'score' => 50]);
+
+        self::assertSame('*', $client->getResponse()->headers->get('Access-Control-Allow-Origin'));
+    }
+
+    public function testScopesByOriginHostNotTheSharedDynamicHost(): void
+    {
+        $client = self::createClient();
+        $quiz = 'origin-scoped-quiz';
+
+        // A statically served page posts cross-origin: it lands on the shared
+        // dynamic PHP host, but its Origin is the real site.
+        $this->post($client, ['quiz' => $quiz, 'score' => 90], 'https://site-a.example');
+
+        // Another site's page, same score: a fresh bucket (percentile 0) proves
+        // results are scoped per Origin, not collapsed under the PHP host.
+        $other = $this->post($client, ['quiz' => $quiz, 'score' => 90], 'https://site-b.example');
+        self::assertSame(0, $other['percentile']);
+
+        // A second attempt from site-a sees its own prior 90 → beats it (100).
+        $second = $this->post($client, ['quiz' => $quiz, 'score' => 100], 'https://site-a.example');
+        self::assertSame(100, $second['percentile']);
+    }
+
     /**
      * @param array<string, mixed> $payload
      *
      * @return array<array-key, mixed>
      */
-    private function post(KernelBrowser $client, array $payload): array
+    private function post(KernelBrowser $client, array $payload, ?string $origin = null): array
     {
+        $server = ['CONTENT_TYPE' => 'application/json'];
+        if (null !== $origin) {
+            $server['HTTP_ORIGIN'] = $origin;
+        }
+
         $client->request(
             Request::METHOD_POST,
             '/quiz/result',
-            server: ['CONTENT_TYPE' => 'application/json'],
+            server: $server,
             content: (string) json_encode($payload),
         );
 

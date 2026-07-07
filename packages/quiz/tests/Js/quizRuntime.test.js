@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -252,5 +252,41 @@ describe('quiz runtime — score band (Markdown)', () => {
     expect(band.querySelector('a[href="https://example.com"]')).not.toBeNull()
     // …and the raw tags are not shown as literal text.
     expect(band.textContent).not.toContain('<strong>')
+  })
+})
+
+describe('quiz runtime — result submission endpoint', () => {
+  const realFetch = window.fetch
+  afterEach(() => {
+    window.fetch = realFetch
+  })
+
+  it('posts to the absolute live-host endpoint from config as a simple request', () => {
+    const calls = []
+    window.fetch = (url, opts) => {
+      calls.push({ url: url, opts: opts })
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ percentile: 0 }) })
+    }
+
+    document.body.innerHTML =
+      '<section class="pw-quiz" id="qe" data-pw-quiz data-slug="endpoint">' +
+      '<ol class="pw-quiz-questions">' +
+      questionHtml(0) +
+      '</ol>' +
+      '<div class="pw-quiz-result" hidden><div class="pw-quiz-score"></div></div>' +
+      '<script type="application/json" class="pw-quiz-config">' +
+      JSON.stringify({ feedback: 'immediate', resultEndpoint: 'https://live.example/quiz/result' }) +
+      '</script>' +
+      '</section>'
+    bootRuntime()
+
+    // Answering the only question finishes the quiz and submits the result.
+    document.querySelector('.pw-quiz-a[data-correct]').click()
+
+    expect(calls.length).toBe(1)
+    // Absolute URL to the live host, so a PHP-less static origin still reaches it.
+    expect(calls[0].url).toBe('https://live.example/quiz/result')
+    // No headers → CORS "simple request", no preflight the static host can't answer.
+    expect(calls[0].opts.headers).toBeUndefined()
   })
 })

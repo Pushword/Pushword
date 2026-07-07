@@ -30,6 +30,18 @@ final class QuizResultController extends AbstractController
     #[Route(path: '/quiz/result', name: 'pushword_quiz_result', methods: ['POST'])]
     public function record(Request $request): JsonResponse
     {
+        $response = $this->handle($request);
+
+        // Anonymous, no-credential stats: any origin may read the response. CORS
+        // only gates the browser reading the reply (the POST itself is never
+        // blocked), so a wildcard is enough and needs no per-site origin allowlist.
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+
+        return $response;
+    }
+
+    private function handle(Request $request): JsonResponse
+    {
         try {
             $data = json_decode($request->getContent(), true);
         } catch (Throwable) {
@@ -46,7 +58,7 @@ final class QuizResultController extends AbstractController
             return $this->json(['error' => 'Invalid payload'], Response::HTTP_BAD_REQUEST);
         }
 
-        $host = $request->getHost();
+        $host = $this->resolveHost($request);
 
         // Personality test: a chosen profile key instead of a numeric score.
         $profileRaw = $data['result'] ?? null;
@@ -88,5 +100,25 @@ final class QuizResultController extends AbstractController
         $this->entityManager->flush();
 
         return $this->json(['percentile' => $percentile]);
+    }
+
+    /**
+     * Scope the attempt to the site the visitor is actually on. On a statically
+     * served page the request reaches the dynamic host cross-origin, so
+     * getHost() would be that shared PHP host and collapse every site's stats
+     * together. The Origin header carries the real site host and, being
+     * browser-set, cannot be spoofed by a page script.
+     */
+    private function resolveHost(Request $request): string
+    {
+        $origin = $request->headers->get('origin');
+        if (null !== $origin) {
+            $originHost = parse_url($origin, \PHP_URL_HOST);
+            if (\is_string($originHost) && '' !== $originHost) {
+                return $originHost;
+            }
+        }
+
+        return $request->getHost();
     }
 }

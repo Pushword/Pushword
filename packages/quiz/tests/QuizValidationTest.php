@@ -110,6 +110,21 @@ final class QuizValidationTest extends KernelTestCase
         self::assertStringNotContainsString('>Explication<', $output);
     }
 
+    public function testRenderEmitsAbsoluteResultEndpoint(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $extension = self::getContainer()->get(QuizExtension::class);
+
+        $json = '{"questions":[{"q":"Q?","answers":[{"a":"Yes","correct":true},{"a":"No"}]}]}';
+        $output = $extension->renderQuiz($json);
+
+        // The runtime posts the attempt here; it must be an absolute live-host URL
+        // so a statically served page (no PHP on its own origin) still reaches it.
+        self::assertStringContainsString('"resultEndpoint":"http', $output);
+        self::assertStringContainsString('\/quiz\/result"', $output);
+    }
+
     public function testProfileMessageRendersMarkdown(): void
     {
         self::bootKernel();

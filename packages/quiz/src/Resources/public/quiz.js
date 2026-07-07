@@ -295,9 +295,11 @@
     if (!slug || !scoreBox || !window.fetch) return
     var line = scoreBox.querySelector('.pw-quiz-percentile')
 
-    fetch(RESULT_ENDPOINT, {
+    // No Content-Type header: keeps this a CORS "simple request" (no preflight),
+    // so a statically served page can POST cross-origin to the live host, which
+    // reads the raw JSON body regardless.
+    fetch(resultEndpoint(config), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quiz: slug, score: pct }),
     })
       .then(function (r) {
@@ -317,9 +319,8 @@
   function submitProfileResult(slug, result, scoreBox, config) {
     if (!slug || !result || !scoreBox || !window.fetch) return
 
-    fetch(RESULT_ENDPOINT, {
+    fetch(resultEndpoint(config), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quiz: slug, result: result }),
     })
       .then(function (r) {
@@ -403,6 +404,12 @@
   }
 
   /* ----- helpers ----- */
+
+  // Absolute live-host endpoint when the page is served statically; falls back
+  // to the same-origin relative path when the config omits it.
+  function resultEndpoint(config) {
+    return (config && config.resultEndpoint) || RESULT_ENDPOINT
+  }
 
   function softScroll(el) {
     if (!el.scrollIntoView) return
