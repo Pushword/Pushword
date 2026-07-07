@@ -16,6 +16,7 @@ use Pushword\Core\Service\Markdown\Extension\Parser\DateShortcodeParser;
 use Pushword\Core\Service\Markdown\Extension\Parser\EmailAutolinkParser;
 use Pushword\Core\Service\Markdown\Extension\Parser\PhoneAutolinkParser;
 use Pushword\Core\Service\Markdown\Extension\Processor\ColspanProcessor;
+use Pushword\Core\Service\Markdown\Extension\Processor\EmptyTableHeadProcessor;
 use Pushword\Core\Service\Markdown\Extension\Processor\ObfuscatedLinkProcessor;
 use Pushword\Core\Service\Markdown\Extension\Renderer\FencedCodeRenderer;
 use Pushword\Core\Service\Markdown\Extension\Renderer\ImageRenderer;
@@ -73,6 +74,8 @@ final readonly class PushwordExtension implements ExtensionInterface
         }
 
         $environment->addEventListener(DocumentParsedEvent::class, new ColspanProcessor());
+
+        $environment->addEventListener(DocumentParsedEvent::class, new EmptyTableHeadProcessor());
 
         $environment->addEventListener(DocumentParsedEvent::class, new ObfuscatedLinkProcessor());
     }

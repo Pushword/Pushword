@@ -1,6 +1,7 @@
 import Table from './table';
 import * as $ from './utils/dom';
 import { MarkdownUtils } from '../utils/MarkdownUtils';
+import { HtmlTableUtils } from '../utils/HtmlTableUtils';
 import he from 'he';
 import { BlockToolData, API } from '@editorjs/editorjs';
 import { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data';
@@ -80,6 +81,9 @@ export default class TableBlock {
 
   /** Class that makes the heading row sticky, in the editor and on the front (via {.table-sticky-header}) */
   static readonly STICKY_CLASS = 'table-sticky-header';
+
+  /** Matches a block that is raw HTML table markup (vs. a GFM pipe table). */
+  private static readonly HTML_TABLE_START = /^<table[\s>]/i;
 
   /**
    * Notify core that read-only mode is supported
@@ -408,6 +412,10 @@ export default class TableBlock {
    * @returns {any} the inserted block
    */
   static importFromMarkdown(editor: API, markdown: string): any {
+    if (TableBlock.HTML_TABLE_START.test(MarkdownUtils.retrieveMarkdownWithoutTunes(markdown))) {
+      return TableBlock.importFromHtmlTable(editor, markdown);
+    }
+
     const lines = markdown.split('\n');
     let i = 0;
     let tunes: BlockTuneData = {};
@@ -442,11 +450,7 @@ export default class TableBlock {
       }
 
       if (line.includes('|')) {
-        const cells = line
-          .split('|')
-          .map((cell) => cell.trim())
-          .filter((cell) => cell !== '');
-        content.push(cells);
+        content.push(TableBlock.splitPipeRow(line));
 
         if (i + 1 < lines.length && lines[i + 1]?.trim().match(/^\|[|\s\-:]+\|$/)) {
           withHeadings = true;
@@ -482,12 +486,67 @@ export default class TableBlock {
   }
 
   /**
-   * Detect a Markdown fragment produced by this tool.
+   * Split a GFM pipe row into its cells, keeping interior empty cells.
+   *
+   * A row is wrapped in pipes (`| a | b |` → ['', 'a', 'b', '']); only those
+   * outer artifacts are dropped. Interior empties matter: they carry the empty
+   * header row of a headerless table and any deliberately blank cell.
+   *
+   * @param {string} line - a single pipe-table row
+   * @returns {string[]} trimmed cell values
+   */
+  static splitPipeRow(line: string): string[] {
+    const cells = line.split('|').map((cell) => cell.trim());
+    if (cells.length > 0 && cells[0] === '') cells.shift();
+    if (cells.length > 0 && cells[cells.length - 1] === '') cells.pop();
+
+    return cells;
+  }
+
+  /**
+   * Build a table block from a simple HTML `<table>` (see {@link HtmlTableUtils}).
+   *
+   * @param {API} editor - Editor.js API
+   * @param {string} markdown - HTML table (optionally prefixed with a block-attribute line)
+   * @returns {any} the inserted block, or null when the HTML has no table
+   */
+  static importFromHtmlTable(editor: API, markdown: string): any {
+    const { tunes, markdown: html } = MarkdownUtils.parseTunesFromMarkdown(markdown);
+    const table = HtmlTableUtils.parseTable(html);
+    if (table === null) {
+      return null;
+    }
+
+    const { content, withHeadings, columnAlignments } = HtmlTableUtils.parse(table);
+
+    const block = editor.blocks.insert('table');
+    editor.blocks.update(
+      block.id,
+      { content, withHeadings, stickyHeadings: false, columnAlignments },
+      tunes,
+    );
+
+    return block;
+  }
+
+  /**
+   * Detect a fragment this tool can build: a GFM pipe table, or a simple HTML
+   * `<table>` (merged/nested/block-content tables are left to the Raw tool).
    *
    * @param {string} markdown - candidate Markdown
    * @returns {boolean}
    */
   static isItMarkdownExported(markdown: string): boolean {
-    return markdown.startsWith('|');
+    const trimmed = markdown.trimStart();
+    if (trimmed.startsWith('|')) {
+      return true;
+    }
+
+    if (TableBlock.HTML_TABLE_START.test(trimmed)) {
+      const table = HtmlTableUtils.parseTable(trimmed);
+      return table !== null && HtmlTableUtils.isSimpleTable(table);
+    }
+
+    return false;
   }
 }

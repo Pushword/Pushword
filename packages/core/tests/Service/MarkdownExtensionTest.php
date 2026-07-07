@@ -295,6 +295,39 @@ final class MarkdownExtensionTest extends KernelTestCase
         self::assertStringContainsString('<th colspan="3">A</th>', $result);
     }
 
+    // ===== Tests de l'en-tête vide (tableaux sans header du block editor) =====
+
+    public function testEmptyHeaderRowIsDropped(): void
+    {
+        // A headerless table is stored with an empty header row; the front must
+        // render it as <tbody> only, not with a blank <thead> bar on top.
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("|  |  |\n| --- | --- |\n| <strong>En bref</strong> | L'île |\n| <strong>Idéal</strong> | la marche |");
+
+        self::assertStringContainsString('<table>', $result);
+        self::assertStringNotContainsString('<thead>', $result);
+        self::assertStringContainsString('<td><strong>En bref</strong></td>', $result);
+    }
+
+    public function testRealHeaderRowIsKept(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| Col A | Col B |\n| --- | --- |\n| a | b |");
+
+        self::assertStringContainsString('<thead>', $result);
+        self::assertStringContainsString('<th>Col A</th>', $result);
+    }
+
+    public function testHeaderWithOneEmptyCellIsKept(): void
+    {
+        // Only a fully empty header row is dropped; a partial header stays.
+        $parser = $this->getMarkdownParser();
+        $result = $parser->transform("| Col A |  |\n| --- | --- |\n| a | b |");
+
+        self::assertStringContainsString('<thead>', $result);
+        self::assertStringContainsString('<th>Col A</th>', $result);
+    }
+
     public function testStickyHeaderClassAppliedToTable(): void
     {
         $parser = $this->getMarkdownParser();

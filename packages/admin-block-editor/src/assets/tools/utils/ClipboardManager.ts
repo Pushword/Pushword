@@ -789,7 +789,12 @@ export default class ClipboardManager {
                         parts.push(innerContent)
                         break
                     case 'table':
-                        parts.push('\n\n' + this.convertTableToMarkdown(el) + '\n\n')
+                        // Keep the table as HTML and let the Table tool decide: a
+                        // simple table becomes a Table block, a complex one (merged
+                        // or nested cells, block-level content) falls back to Raw.
+                        // Flatten to one line so a blank line in the source can't
+                        // split it across blocks.
+                        parts.push('\n\n' + el.outerHTML.replace(/[\r\n]+/g, ' ') + '\n\n')
                         break
                     case 'hr':
                         parts.push('\n\n---\n\n')
@@ -822,45 +827,6 @@ export default class ClipboardManager {
         return parts.join('')
             .replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines
             .replace(/\u00A0/g, ' ')     // Replace any remaining non-breaking spaces
-    }
-
-    /**
-     * Convert HTML table to markdown table
-     */
-    private convertTableToMarkdown(table: HTMLElement): string {
-        const rows: string[][] = []
-
-        table.querySelectorAll('tr').forEach(tr => {
-            const cells: string[] = []
-            tr.querySelectorAll('th, td').forEach(cell => {
-                cells.push(this.processNodeToMarkdown(cell).trim().replace(/\|/g, '\\|'))
-            })
-            if (cells.length > 0) {
-                rows.push(cells)
-            }
-        })
-
-        if (rows.length === 0) return ''
-
-        const maxCols = Math.max(...rows.map(r => r.length))
-
-        // Normalize all rows to have the same number of columns
-        rows.forEach(row => {
-            while (row.length < maxCols) {
-                row.push('')
-            }
-        })
-
-        const lines: string[] = []
-        rows.forEach((row, idx) => {
-            lines.push('| ' + row.join(' | ') + ' |')
-            // Add separator after first row (header)
-            if (idx === 0) {
-                lines.push('| ' + row.map(() => '---').join(' | ') + ' |')
-            }
-        })
-
-        return lines.join('\n')
     }
 
     /**
@@ -927,6 +893,7 @@ export default class ClipboardManager {
             /^>\s/m,                         // Blockquotes
             /^```/m,                         // Code blocks
             /^\|.+\|$/m,                     // Tables
+            /<table[\s>]/i,                  // HTML tables (kept verbatim → Table or Raw)
             /!\[.*\]\(.+\)/,                 // Images
             /\[.+\]\(.+\)/,                  // Links
             /\*\*[^*]+\*\*/,                 // Bold

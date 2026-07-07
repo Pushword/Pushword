@@ -94,6 +94,25 @@ describe('ClipboardManager – pure helpers', () => {
     it('returns false for multi-line plain text without markdown', () => {
       expect(cm.detectMarkdownPatterns('Name Status\nAlice OK\nBob KO')).toBe(false)
     })
+
+    it('detects a raw HTML table so it gets routed to a block', () => {
+      expect(cm.detectMarkdownPatterns('<table><tr><td>a</td></tr></table>')).toBe(true)
+    })
+  })
+
+  describe('convertHtmlToMarkdown – tables kept as HTML', () => {
+    it('preserves a pasted table verbatim instead of flattening it to pipes', () => {
+      const result = cm.convertHtmlToMarkdown('<table><tr><th>Name</th><th>Status</th></tr></table>')
+      expect(result).toContain('<table')
+      expect(result).not.toContain('| Name |')
+    })
+
+    it('preserves a merged-cell table (colspan) rather than mangling its grid', () => {
+      const result = cm.convertHtmlToMarkdown(
+        '<table><tr><td colspan="2">a</td></tr><tr><td>b</td><td>c</td></tr></table>',
+      )
+      expect(result).toContain('colspan="2"')
+    })
   })
 })
 
