@@ -30,9 +30,11 @@
       <br>
       <a
         href="{{ page(page ) }}"
+        target="_blank"
+        rel="noopener"
         class="me-2 align-items-center"
-        style="text-decoration: none; color:#333; font-weight:400; font-size:90%">
-        <i class="fa fa-external-link" style="opacity:0.4; color:#94a3b8; font-size:70%; padding-right:3px"></i>
+        style="text-decoration: none; color:#475569; font-weight:500; font-size:90%; word-break:break-word;">
+        <i class="fa fa-external-link" style="opacity:0.7; color:#475569; font-size:75%; padding-right:3px"></i>
         {{ page.host ? page.host ~ ' › ' : '' }}{{ page.slug }}
       </a>
     </div>
