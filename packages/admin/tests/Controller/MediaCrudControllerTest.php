@@ -12,6 +12,59 @@ use Symfony\Component\HttpFoundation\Request;
 #[Group('integration')]
 final class MediaCrudControllerTest extends AbstractAdminTestClass
 {
+    /**
+     * The rotate buttons live under the image preview, not in the actions bar, so
+     * they are routed via #[AdminRoute] rather than registered in configureActions.
+     * This guards that the action still dispatches (no ForbiddenActionException)
+     * and actually rotates the master.
+     */
+    public function testRotateActionRotatesImage(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        /** @var EntityManager $em */
+        $em = self::getContainer()->get('doctrine.orm.entity_manager');
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+
+        $fileName = 'test-rotate-action-'.uniqid().'.png';
+        $tempFile = $mediaDir.'/'.$fileName;
+        $img = imagecreatetruecolor(4, 2);
+        \assert(false !== $img);
+        imagepng($img, $tempFile);
+
+        $media = new Media()
+            ->setProjectDir($projectDir)
+            ->setStoreIn($mediaDir)
+            ->setMimeType('image/png')
+            ->setDimensions([4, 2])
+            ->setSize(1)
+            ->setFileName($fileName)
+            ->setAlt('__rotate_action_test__');
+        $em->persist($media);
+        $em->flush();
+
+        $id = $media->id;
+
+        $router = self::getContainer()->get('router');
+        $client->request(Request::METHOD_GET, $router->generate('admin_media_rotate_right', ['entityId' => $id]));
+        self::assertResponseRedirects();
+
+        /** @var EntityManager $em */
+        $em = self::getContainer()->get('doctrine.orm.entity_manager');
+        /** @var MediaRepository $mediaRepo */
+        $mediaRepo = self::getContainer()->get(MediaRepository::class);
+        $rotated = $mediaRepo->find($id);
+        self::assertInstanceOf(Media::class, $rotated);
+        self::assertSame(2, $rotated->getWidth(), 'rotate-right must swap width/height');
+        self::assertSame(4, $rotated->getHeight());
+
+        $em->remove($rotated);
+        $em->flush();
+        @unlink($tempFile);
+    }
+
     public function testHiddenFromAdminIsExcludedFromIndex(): void
     {
         $client = $this->loginUser();

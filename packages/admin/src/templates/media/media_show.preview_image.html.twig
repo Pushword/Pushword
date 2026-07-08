@@ -7,6 +7,12 @@
                  class="img-responsive img-thumbnail"
                  style="max-width: 100%; height: auto;">
         </a>
+        {% if rotate_left_url is defined %}
+        <div class="d-flex gap-2 justify-content-center" style="margin-top: 8px;">
+            <a href="{{ rotate_left_url }}" class="btn btn-sm btn-outline-secondary" title="{{ 'adminMediaRotateLeftLabel'|trans }}" aria-label="{{ 'adminMediaRotateLeftLabel'|trans }}"><i class="fa fa-rotate-left" aria-hidden="true"></i></a>
+            <a href="{{ rotate_right_url }}" class="btn btn-sm btn-outline-secondary" title="{{ 'adminMediaRotateRightLabel'|trans }}" aria-label="{{ 'adminMediaRotateRightLabel'|trans }}"><i class="fa fa-rotate-right" aria-hidden="true"></i></a>
+        </div>
+        {% endif %}
     </div>
     <div class="col-md-6">
         <div style="margin-bottom: 15px;">

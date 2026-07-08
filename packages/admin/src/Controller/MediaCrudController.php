@@ -7,7 +7,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
@@ -109,27 +108,6 @@ class MediaCrudController extends AbstractAdminCrudController
                 'crud/edit' => '@pwAdmin/media/edit.html.twig',
             ])
             ->showEntityActionsInlined();
-    }
-
-    #[Override]
-    public function configureActions(Actions $actions): Actions
-    {
-        $isImage = static fn (Media $media): bool => $media->isImage();
-
-        $rotateLeft = Action::new('rotateLeft', 'adminMediaRotateLeftLabel', 'fa fa-rotate-left')
-            ->linkToCrudAction('rotateLeft')
-            ->displayIf($isImage);
-
-        $rotateRight = Action::new('rotateRight', 'adminMediaRotateRightLabel', 'fa fa-rotate-right')
-            ->linkToCrudAction('rotateRight')
-            ->displayIf($isImage);
-
-        foreach ([Crud::PAGE_INDEX, Crud::PAGE_EDIT] as $page) {
-            $actions->add($page, $rotateLeft);
-            $actions->add($page, $rotateRight);
-        }
-
-        return $actions;
     }
 
     /** @param AdminContext<Media> $context */
@@ -291,13 +269,24 @@ class MediaCrudController extends AbstractAdminCrudController
 
     private function renderMediaPreview(Media $media): string
     {
-        $template = $media->isImage()
-            ? '@pwAdmin/media/media_show.preview_image.html.twig'
-            : '@pwAdmin/media/media_show.preview.html.twig';
+        if (! $media->isImage()) {
+            return $this->renderView('@pwAdmin/media/media_show.preview.html.twig', [
+                'media' => $media,
+            ]);
+        }
 
-        return $this->renderView($template, [
+        return $this->renderView('@pwAdmin/media/media_show.preview_image.html.twig', [
             'media' => $media,
+            'rotate_left_url' => $this->rotateUrl($media, 'rotateLeft'),
+            'rotate_right_url' => $this->rotateUrl($media, 'rotateRight'),
         ]);
+    }
+
+    private function rotateUrl(Media $media, string $action): string
+    {
+        $url = clone $this->adminUrlGenerator;
+
+        return $url->setController(self::class)->setAction($action)->setEntityId($media->id)->generateUrl();
     }
 
     /**
