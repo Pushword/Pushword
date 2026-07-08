@@ -63,6 +63,42 @@ final class ImageCacheManagerTest extends KernelTestCase
         self::assertSame('/'.$this->publicMediaDir.'/xs/test.webp', $manager->getBrowserPath('test.png', 'xs', 'webp'));
     }
 
+    public function testZeroByteVariantIsTreatedAsMissing(): void
+    {
+        $fs = new Filesystem();
+
+        // Real source so isFilterCacheFresh reaches the variant check. Unique per
+        // worker: the md/ variant dir is shared across paratest workers.
+        $probe = 'zero-byte-probe-'.getmypid().'.jpg';
+        $slug = 'zero-byte-probe-'.getmypid();
+        $fs->copy(__DIR__.'/../Service/blank.jpg', $this->getMediaDir().'/'.$probe, true);
+
+        $filters = ['md' => ['quality' => 90, 'filters' => ['scaleDown' => [992]], 'formats' => ['webp', 'original']]];
+        $manager = $this->createManager($filters);
+        $manager->remove($probe);
+
+        $mdDir = $this->publicDir.'/'.$this->publicMediaDir.'/md';
+        $fs->mkdir($mdDir);
+        // Valid original preview beside a transient 0-byte webp (the production failure mode).
+        $fs->dumpFile($mdDir.'/'.$slug.'.jpg', 'non-empty-jpeg-preview');
+        $fs->dumpFile($mdDir.'/'.$slug.'.webp', '');
+
+        $media = new Media();
+        $media->setFileName($probe);
+
+        // Renderer must skip the 0-byte webp and serve the usable original.
+        self::assertSame(
+            '/'.$this->publicMediaDir.'/md/'.$slug.'.jpg',
+            $manager->getBrowserPath($media, 'md', checkFileExists: true),
+        );
+
+        // A 0-byte variant is stale, so pw:image:cache regenerates it instead of skipping forever.
+        self::assertFalse($manager->isFilterCacheFresh($media, 'md'));
+
+        $manager->remove($probe);
+        $fs->remove($this->getMediaDir().'/'.$probe);
+    }
+
     public function testPreferredModernFormat(): void
     {
         // Test with WebP - should return WebP

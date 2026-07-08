@@ -1,0 +1,66 @@
+<?php
+
+namespace Pushword\Core\Tests\Image;
+
+use Intervention\Image\Interfaces\EncodedImageInterface;
+use Intervention\Image\Interfaces\ImageInterface;
+use PHPUnit\Framework\TestCase;
+use Pushword\Core\Image\ImageEncoder;
+use RuntimeException;
+use Symfony\Component\Filesystem\Filesystem;
+
+final class ImageEncoderTest extends TestCase
+{
+    /**
+     * A transient encoder failure yields an empty payload. Promoting it would
+     * poison the cache with a 0-byte file that reads as fresh forever (broken
+     * <img>, never regenerated), so it must be refused and leave no file behind.
+     */
+    public function testRefusesToWriteEmptyEncode(): void
+    {
+        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded->method('toString')->willReturn('');
+
+        $image = $this->createMock(ImageInterface::class);
+        $image->method('encodeUsingFormat')->willReturn($encoded);
+
+        $output = sys_get_temp_dir().'/pw-encoder-empty-'.getmypid().'.webp';
+        $fs = new Filesystem();
+        $fs->remove($output);
+
+        $thrown = false;
+        try {
+            new ImageEncoder()->encodeWebp($image, $output, 90);
+        } catch (RuntimeException) {
+            $thrown = true;
+        }
+
+        self::assertTrue($thrown, 'An empty encode must throw');
+        self::assertFileDoesNotExist($output, 'An empty encode must not create the output file');
+    }
+
+    public function testWritesNonEmptyEncodeIntoPlace(): void
+    {
+        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded->method('toString')->willReturn('WEBP-BYTES');
+        $encoded->method('save')->willReturnCallback(function (string $path) use (&$encoded): EncodedImageInterface {
+            file_put_contents($path, 'WEBP-BYTES');
+
+            return $encoded;
+        });
+
+        $image = $this->createMock(ImageInterface::class);
+        $image->method('encodeUsingFormat')->willReturn($encoded);
+
+        $output = sys_get_temp_dir().'/pw-encoder-ok-'.getmypid().'.webp';
+        $fs = new Filesystem();
+        $fs->remove($output);
+
+        new ImageEncoder()->encodeWebp($image, $output, 90);
+
+        self::assertFileExists($output);
+        self::assertSame('WEBP-BYTES', file_get_contents($output));
+
+        $fs->remove($output);
+    }
+}

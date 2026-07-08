@@ -55,19 +55,29 @@ final class ImageCacheManager
 
         if (\in_array('webp', $formats, true)) {
             $webpPath = $this->getFilterPath($media, $filterName, 'webp');
-            if (! $checkFileExists || $this->filesystem->exists($webpPath)) {
+            if (! $checkFileExists || $this->cacheFileIsUsable($webpPath)) {
                 return $this->getFilterPath($media, $filterName, 'webp', true);
             }
         }
 
         if (\in_array('original', $formats, true)) {
             $originalPath = $this->getFilterPath($media, $filterName);
-            if (! $checkFileExists || $this->filesystem->exists($originalPath)) {
+            if (! $checkFileExists || $this->cacheFileIsUsable($originalPath)) {
                 return $this->getFilterPath($media, $filterName, null, true);
             }
         }
 
         return $this->getFilterPath($media, $filterName, null, true);
+    }
+
+    /**
+     * A cached variant is usable only when it exists AND is non-empty. A 0-byte
+     * file (transient encoder failure) must count as missing, so the renderer
+     * falls back to a valid variant and the freshness check regenerates it.
+     */
+    private function cacheFileIsUsable(string $path): bool
+    {
+        return $this->filesystem->exists($path) && 0 < (@filesize($path) ?: 0);
     }
 
     #[AsTwigFunction('image_dimensions')]
@@ -162,7 +172,7 @@ final class ImageCacheManager
                 ? $this->getFilterPath($media, $filterName)
                 : $this->getFilterPath($media, $filterName, $format);
 
-            if (! $this->filesystem->exists($cachePath)) {
+            if (! $this->cacheFileIsUsable($cachePath)) {
                 return false;
             }
 

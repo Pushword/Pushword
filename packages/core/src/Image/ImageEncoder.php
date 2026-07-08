@@ -7,6 +7,7 @@ use Intervention\Image\Format;
 use Intervention\Image\Interfaces\EncodedImageInterface;
 use Intervention\Image\Interfaces\ImageInterface;
 use Pushword\Core\Entity\Media;
+use RuntimeException;
 
 final readonly class ImageEncoder
 {
@@ -28,9 +29,17 @@ final readonly class ImageEncoder
      * Write to a unique temp file then atomically rename into place, so a
      * concurrent reader (e.g. the static generator copying the image cache while
      * another process regenerates the same variant) never sees a partial file.
+     *
+     * A transient encoder failure can yield an empty payload; promoting it would
+     * poison the cache with a 0-byte file that reads as fresh forever (broken
+     * <img>, never regenerated). Refuse it so the source stays the fallback.
      */
     private function saveAtomically(EncodedImageInterface $encoded, string $outputPath): void
     {
+        if ('' === $encoded->toString()) {
+            throw new RuntimeException('Refusing to write an empty encoded image to '.$outputPath);
+        }
+
         $tmpPath = $outputPath.'.'.getmypid().'.'.uniqid().'.tmp';
         $encoded->save($tmpPath);
         rename($tmpPath, $outputPath);
