@@ -33,10 +33,13 @@ final class AppExtensionTest extends KernelTestCase
 
         $url = $ext->getConversationRoute('ms-message');
 
-        // Must be absolute (prefixed with the live host): a statically served page
-        // has no PHP, so a relative route would 404 against its own origin.
-        self::assertStringStartsWith('http', $url);
-        self::assertStringContainsString('/conversation/ms-message/', $url);
+        // Must be absolute AND prefixed with exactly the page's base_live_url: a
+        // statically served page has no PHP, so a relative route would 404 against
+        // its own origin. Asserting the exact prefix guards against a wrong prefix
+        // or the double-prefix that conversationFormBtn used to add on top.
+        $baseLiveUrl = self::getContainer()->get(SiteRegistry::class)->get('localhost.dev')->getStr('base_live_url');
+        self::assertNotSame('', $baseLiveUrl);
+        self::assertStringStartsWith($baseLiveUrl.'/conversation/ms-message/', $url);
         self::assertStringContainsString('ms-message_localhost.dev/test-page', $url);
         self::assertStringContainsString('host=localhost.dev', $url);
         self::assertStringContainsString('locale=en', $url);

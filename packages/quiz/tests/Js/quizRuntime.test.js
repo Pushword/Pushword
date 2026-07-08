@@ -255,6 +255,32 @@ describe('quiz runtime — score band (Markdown)', () => {
   })
 })
 
+// Stub window.fetch, recording every call; the caller restores it afterwards.
+function mockFetch() {
+  const calls = []
+  window.fetch = (url, opts) => {
+    calls.push({ url: url, opts: opts })
+    return Promise.resolve({ ok: true, json: () => Promise.resolve({ percentile: 0 }) })
+  }
+  return calls
+}
+
+// A one-question quiz that finishes on the first click, carrying `config`.
+function resultQuiz(id, slug, config) {
+  return (
+    '<section class="pw-quiz" id="' +
+    id +
+    '" data-pw-quiz data-slug="' +
+    slug +
+    '"><ol class="pw-quiz-questions">' +
+    questionHtml(0) +
+    '</ol><div class="pw-quiz-result" hidden><div class="pw-quiz-score"></div></div>' +
+    '<script type="application/json" class="pw-quiz-config">' +
+    JSON.stringify(config) +
+    '</script></section>'
+  )
+}
+
 describe('quiz runtime — result submission endpoint', () => {
   const realFetch = window.fetch
   afterEach(() => {
@@ -262,22 +288,11 @@ describe('quiz runtime — result submission endpoint', () => {
   })
 
   it('posts to the absolute live-host endpoint from config as a simple request', () => {
-    const calls = []
-    window.fetch = (url, opts) => {
-      calls.push({ url: url, opts: opts })
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({ percentile: 0 }) })
-    }
-
-    document.body.innerHTML =
-      '<section class="pw-quiz" id="qe" data-pw-quiz data-slug="endpoint">' +
-      '<ol class="pw-quiz-questions">' +
-      questionHtml(0) +
-      '</ol>' +
-      '<div class="pw-quiz-result" hidden><div class="pw-quiz-score"></div></div>' +
-      '<script type="application/json" class="pw-quiz-config">' +
-      JSON.stringify({ feedback: 'immediate', resultEndpoint: 'https://live.example/quiz/result' }) +
-      '</script>' +
-      '</section>'
+    const calls = mockFetch()
+    document.body.innerHTML = resultQuiz('qe', 'endpoint', {
+      feedback: 'immediate',
+      resultEndpoint: 'https://live.example/quiz/result',
+    })
     bootRuntime()
 
     // Answering the only question finishes the quiz and submits the result.
@@ -288,5 +303,16 @@ describe('quiz runtime — result submission endpoint', () => {
     expect(calls[0].url).toBe('https://live.example/quiz/result')
     // No headers → CORS "simple request", no preflight the static host can't answer.
     expect(calls[0].opts.headers).toBeUndefined()
+  })
+
+  it('falls back to the relative endpoint when config omits it (pre-change static HTML)', () => {
+    const calls = mockFetch()
+    document.body.innerHTML = resultQuiz('qf', 'legacy', { feedback: 'immediate' })
+    bootRuntime()
+
+    document.querySelector('.pw-quiz-a[data-correct]').click()
+
+    expect(calls.length).toBe(1)
+    expect(calls[0].url).toBe('/quiz/result')
   })
 })
