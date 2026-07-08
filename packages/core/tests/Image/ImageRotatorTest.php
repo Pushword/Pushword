@@ -70,6 +70,28 @@ final class ImageRotatorTest extends KernelTestCase
         self::assertFileExists($this->cacheDir.'/md/'.$this->sourceFileName, 'quick preview cache must be regenerated');
     }
 
+    public function testRotate90TurnsClockwise(): void
+    {
+        $rotator = $this->createRotator();
+        // 8x4 PNG: left half red, right half blue.
+        $media = $this->createColoredSourceMedia();
+
+        $rotator->rotate($media, 90);
+
+        $image = imagecreatefrompng($this->mediaStorage->getMediaDir().'/'.$this->sourceFileName);
+        self::assertNotFalse($image);
+        self::assertSame(4, imagesx($image), 'rotated width');
+        self::assertSame(8, imagesy($image), 'rotated height');
+
+        // A clockwise quarter-turn moves the former LEFT edge (red) to the TOP.
+        $top = imagecolorat($image, 2, 1);
+        $bottom = imagecolorat($image, 2, 6);
+        self::assertNotFalse($top);
+        self::assertNotFalse($bottom);
+        self::assertTrue($this->isReddish($top), 'red (was left) must be on top after a clockwise turn');
+        self::assertTrue($this->isBluish($bottom), 'blue (was right) must be on the bottom after a clockwise turn');
+    }
+
     public function testRotate180KeepsDimensions(): void
     {
         $rotator = $this->createRotator();
@@ -143,5 +165,45 @@ final class ImageRotatorTest extends KernelTestCase
             ->setHash($hash);
 
         return $media;
+    }
+
+    private function createColoredSourceMedia(): Media
+    {
+        $this->sourceFileName = 'zz-rotate-color-'.getmypid().'-'.uniqid().'.png';
+        $mediaDir = $this->mediaStorage->getMediaDir();
+        new Filesystem()->mkdir($mediaDir);
+
+        $gd = imagecreatetruecolor(8, 4);
+        self::assertNotFalse($gd);
+        $red = imagecolorallocate($gd, 255, 0, 0);
+        $blue = imagecolorallocate($gd, 0, 0, 255);
+        self::assertNotFalse($red);
+        self::assertNotFalse($blue);
+        imagefilledrectangle($gd, 0, 0, 3, 3, $red);
+        imagefilledrectangle($gd, 4, 0, 7, 3, $blue);
+        imagepng($gd, $mediaDir.'/'.$this->sourceFileName);
+
+        $hash = sha1_file($mediaDir.'/'.$this->sourceFileName, true);
+        self::assertNotFalse($hash);
+
+        $media = new Media();
+        $media->setProjectDir(self::getContainer()->getParameter('kernel.project_dir'))
+            ->setStoreIn($mediaDir)
+            ->setFileName($this->sourceFileName)
+            ->setAlt('rotation direction fixture')
+            ->setMimeType('image/png')
+            ->setHash($hash);
+
+        return $media;
+    }
+
+    private function isReddish(int $color): bool
+    {
+        return (($color >> 16) & 0xFF) > 150 && ($color & 0xFF) < 100;
+    }
+
+    private function isBluish(int $color): bool
+    {
+        return ($color & 0xFF) > 150 && (($color >> 16) & 0xFF) < 100;
     }
 }

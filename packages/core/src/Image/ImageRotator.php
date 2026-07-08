@@ -44,9 +44,9 @@ final readonly class ImageRotator
         }
 
         $image = $this->imageReader->read($media);
-        // Intervention rotates counter-clockwise for positive angles; our API is
-        // clockwise, so feed the complementary angle.
-        $image->rotate(360 - $clockwise);
+        // Intervention Image v4 rotates clockwise for positive angles (see its
+        // RotateModifier), which matches our clockwise API — pass it as-is.
+        $image->rotate($clockwise);
 
         $fileName = $media->getFileName();
         $binary = $this->imageEncoder->encodeOriginalToString($image, self::QUALITY, $media);
