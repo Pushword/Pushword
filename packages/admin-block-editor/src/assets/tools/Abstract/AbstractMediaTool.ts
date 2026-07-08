@@ -39,6 +39,13 @@ export interface UploadResponse {
   }
 }
 
+/** Best-effort human string from an unknown throw value (Error, string, or neither). */
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  if (typeof error === 'string') return error
+  return ''
+}
+
 export abstract class AbstractMediaTool extends BaseTool {
   protected config: MediaToolConfig
   public nodes: MediaNodes
@@ -92,14 +99,19 @@ export abstract class AbstractMediaTool extends BaseTool {
 
   public abstract onUpload(response: UploadResponse): void
 
-  protected handleUploadError(error: any): void {
+  protected handleUploadError(error: unknown): void {
     const toolName = this.constructor.name
     logger.error(`${toolName}: uploading failed`, error)
 
     this.hidePreloader()
 
+    // Surface the server-provided reason (or the caught error) next to the
+    // generic notice — the bare "Veuillez réessayer." is too light to debug.
+    const detail = toErrorMessage(error)
+    const message = this.api.i18n.t("Échec du téléchargement de l'image. Veuillez réessayer.")
+
     this.api.notifier.show({
-      message: this.api.i18n.t("Échec du téléchargement de l'image. Veuillez réessayer."),
+      message: detail ? `${message} (${detail})` : message,
       style: 'error',
     })
   }

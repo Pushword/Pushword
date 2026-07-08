@@ -296,7 +296,7 @@ export default class Image extends AbstractMediaTool {
 
     try {
       const response = await fetch('/admin/media/block', { method: 'POST', body: formData })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      if (!response.ok) throw new Error(await MediaUtils.uploadErrorMessage(response))
       this.onUpload(await response.json())
     } catch (error) {
       this.handleUploadError(error)

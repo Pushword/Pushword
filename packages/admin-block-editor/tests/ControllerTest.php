@@ -120,6 +120,26 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertSame('test', $response['file']['name']);
     }
 
+    public function testMediaControllerReturnsReadableErrorOnFailure(): void
+    {
+        $client = $this->loginUser();
+
+        // No image field -> the endpoint must answer a readable JSON error
+        // instead of an opaque 500, so the editor sees the real reason.
+        $client->request(Request::METHOD_POST, '/admin/media/block');
+
+        self::assertSame(
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+            $client->getResponse()->getStatusCode(),
+            (string) $client->getResponse()->getContent()
+        );
+
+        /** @var array{success: int, error: string} $response */
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertSame(0, $response['success']);
+        self::assertNotSame('', $response['error']);
+    }
+
     public function testMediaResolveController(): void
     {
         $client = $this->loginUser();

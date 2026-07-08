@@ -5,6 +5,7 @@ namespace Pushword\AdminBlockEditor\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use LogicException;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Utils\Entity;
@@ -24,6 +25,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Throwable;
 
 #[IsGranted('ROLE_EDITOR')]
 final class MediaBlockController extends AbstractController
@@ -33,6 +35,7 @@ final class MediaBlockController extends AbstractController
         #[Autowire('%pw.public_media_dir%')]
         private readonly string $publicMediaDir,
         private readonly ImageCacheManager $imageCacheManager,
+        private readonly LoggerInterface $logger,
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
     }
@@ -40,11 +43,33 @@ final class MediaBlockController extends AbstractController
     #[Route('/admin/media/block', name: 'admin_media_block', methods: ['POST'])]
     public function manage(Request $request, string $publicMediaDir): Response
     {
-        /** @var File|Media $mediaFile */
+        // The endpoint is ROLE_EDITOR-gated, so surfacing the real reason (bad
+        // mime, dedup lookup, image processing, disk write…) to the editor is
+        // safe and spares them the opaque "Veuillez réessayer." generic message.
+        try {
+            return $this->upload($request, $publicMediaDir);
+        } catch (Throwable $throwable) {
+            $this->logger->error('Media block upload failed: {message}', [
+                'message' => $throwable->getMessage(),
+                'exception' => $throwable,
+            ]);
+
+            return new JsonResponse([
+                'success' => 0,
+                'error' => $throwable->getMessage(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    private function upload(Request $request, string $publicMediaDir): Response
+    {
+        /** @var Media|UploadedFile|null $mediaFile */
         $mediaFile = '' !== $request->getContent() && '0' !== $request->getContent() ? $this->getMediaFrom($request->getContent())
             : $request->files->get('image');
 
-        // if (false === strpos($mediaFile->getMimeType(), 'image/')) { return new Response(json_encode(['error' => 'media sent is not an image'])); }
+        if (! $mediaFile instanceof File && ! $mediaFile instanceof Media) {
+            throw new LogicException('No image received (empty upload or unsupported field).');
+        }
 
         if ($mediaFile instanceof Media) {
             $media = $mediaFile;

@@ -520,15 +520,19 @@ export default class Quiz extends BaseTool {
         formData.append('image', chosen)
         try {
           const response = await fetch('/admin/media/block', { method: 'POST', body: formData })
-          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          if (!response.ok) throw new Error(await MediaUtils.uploadErrorMessage(response))
           const data = await response.json()
           const mediaName: string | undefined = data?.file?.media
           if (mediaName) {
             input.value = mediaName
             onSet(mediaName)
           }
-        } catch {
-          this.api.notifier.show({ message: 'Upload failed', style: 'error' })
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : ''
+          this.api.notifier.show({
+            message: detail ? `Upload failed (${detail})` : 'Upload failed',
+            style: 'error',
+          })
         }
       }
       file.remove()

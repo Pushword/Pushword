@@ -95,6 +95,21 @@ export class MediaUtils {
     }
   }
 
+  /**
+   * Builds a human-readable message from a failed media upload response.
+   * The endpoint answers `{ success: 0, error }` on failure; fall back to the
+   * bare HTTP status when the body isn't that JSON (e.g. an HTML error page).
+   */
+  static async uploadErrorMessage(response: Response): Promise<string> {
+    try {
+      const data = await response.json()
+      if (data && typeof data.error === 'string' && data.error) return data.error
+    } catch {
+      // body wasn't the expected JSON — fall back to the status below
+    }
+    return `HTTP ${response.status}`
+  }
+
   static buildFullUrlFromData(dataItem: MediaData, basePath: string = '/media/md/'): string {
     if (typeof dataItem === 'string') {
       return this.buildFullUrl(dataItem, basePath)
