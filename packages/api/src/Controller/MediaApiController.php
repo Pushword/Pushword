@@ -149,6 +149,16 @@ final class MediaApiController extends AbstractApiController
             $media->setTags($tags);
         }
 
+        // Rename log: lets the importer replay the harvester's rename chain so a
+        // body reference to an old/original filename still resolves via
+        // MediaRepository::findOneByFileNameOrHistory(). Without this the API
+        // silently drops it and every stale reference 404s / degrades.
+        if (\array_key_exists('fileNameHistory', $data) && \is_array($data['fileNameHistory'])) {
+            /** @var string[] $history */
+            $history = array_values(array_filter($data['fileNameHistory'], is_string(...)));
+            $media->setFileNameHistory($history);
+        }
+
         if (\array_key_exists('filename', $data) && \is_string($data['filename'])) {
             $media->setFileName($data['filename']);
         }
@@ -174,6 +184,11 @@ final class MediaApiController extends AbstractApiController
         $tags = $this->decodeJsonArray($request->request->get('tags'));
         if (null !== $tags) {
             $data['tags'] = $tags;
+        }
+
+        $fileNameHistory = $this->decodeJsonArray($request->request->get('fileNameHistory'));
+        if (null !== $fileNameHistory) {
+            $data['fileNameHistory'] = $fileNameHistory;
         }
 
         return $data;
