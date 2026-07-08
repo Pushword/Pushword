@@ -63,17 +63,18 @@
 {% endmacro %}
 
 {# ---- JS runtime config (mode, score bands, pass threshold, labels) ---- #}
-{% macro configScript(quiz, l) %}
+{# resultEndpoint is an absolute live-host URL (resolved + guarded in QuizRenderer)
+   so a statically served page, with no PHP on its own origin, still reaches the
+   dynamic host to record its attempt; empty when the route is unavailable. #}
+{% macro configScript(quiz, l, resultEndpoint) %}
   <script type="application/json" class="pw-quiz-config">{{ {
     mode: quiz.mode,
     feedback: quiz.feedback,
     pass: quiz.pass,
     results: quiz.results|map(b => { min: b.min, msg: b.msg|markdown }),
     labels: { score: l.score, better: l.better, nextLevel: l.nextLevel, profile: l.profile, share: l.share },
-    resultEndpoint: base() ~ path('pushword_quiz_result'),
+    resultEndpoint: resultEndpoint,
   }|json_encode(constant('JSON_HEX_TAG'))|raw }}</script>
-  {# resultEndpoint is absolute (base() = live host) so a statically served page,
-     with no PHP on its own origin, still reaches the dynamic host to record its attempt. #}
 {% endmacro %}
 
 {# ---- schema.org Quiz: makes the Q&A eligible for rich results and indexable ---- #}
@@ -136,7 +137,7 @@
     </ol>
 
     {{ _self.resultBox(quiz, baseSlug, conversationAvailable) }}
-    {{ _self.configScript(quiz, l) }}
+    {{ _self.configScript(quiz, l, resultEndpoint) }}
   </section>
 
   {# A personality test has no accepted answer, so the schema.org/Quiz markup would be misleading. #}
@@ -191,7 +192,7 @@
           </ol>
 
           {{ _self.resultBox(level, lslug, conversationAvailable) }}
-          {{ _self.configScript(level, l) }}
+          {{ _self.configScript(level, l, resultEndpoint) }}
         </div>
       </div>
     {% endfor %}

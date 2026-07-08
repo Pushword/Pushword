@@ -4,13 +4,21 @@ namespace Pushword\Quiz\Tests;
 
 use DateTime;
 use PHPUnit\Framework\Attributes\Group;
+use Psr\Log\NullLogger;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\RequestContext;
+use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Twig\MediaExtension;
+use Pushword\Core\Twig\VideoExtension;
 use Pushword\Quiz\Editor\QuizEditorToolProvider;
 use Pushword\Quiz\Service\QuizFactory;
+use Pushword\Quiz\Service\QuizRenderer;
 use Pushword\Quiz\Twig\QuizExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
@@ -123,6 +131,39 @@ final class QuizValidationTest extends KernelTestCase
         // so a statically served page (no PHP on its own origin) still reaches it.
         self::assertStringContainsString('"resultEndpoint":"http', $output);
         self::assertStringContainsString('\/quiz\/result"', $output);
+    }
+
+    public function testRenderSurvivesUnregisteredResultRoute(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $container->get(RequestContext::class)->setRequestContext('localhost.dev');
+
+        // Simulate the pushword_quiz_result route being absent (partial install /
+        // custom routing): generating it must not blank out the whole quiz.
+        $router = $this->createMock(RouterInterface::class);
+        $router->method('generate')->willThrowException(new RouteNotFoundException('missing'));
+
+        $renderer = new QuizRenderer(
+            $container->get(SiteRegistry::class),
+            $container->get('twig'),
+            $container->get(QuizFactory::class),
+            $container->get(ValidatorInterface::class),
+            $container->get(TranslatorInterface::class),
+            $container->get(Security::class),
+            $container->get(MediaExtension::class),
+            $container->get(VideoExtension::class),
+            $router,
+            new NullLogger(),
+        );
+
+        $html = $renderer->render('{"questions":[{"q":"Capital of France?",'
+            .'"answers":[{"a":"Paris","correct":true},{"a":"Lyon"}]}]}');
+
+        // The SEO/no-JS quiz still renders in full — only the optional result
+        // recording degrades (empty endpoint → runtime falls back / stays off).
+        self::assertStringContainsString('Capital of France?', $html);
+        self::assertStringContainsString('"resultEndpoint":""', $html);
     }
 
     public function testProfileMessageRendersMarkdown(): void

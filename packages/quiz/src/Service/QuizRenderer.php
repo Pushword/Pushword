@@ -2,6 +2,7 @@
 
 namespace Pushword\Quiz\Service;
 
+use Psr\Log\LoggerInterface;
 use Pushword\Conversation\Twig\AppExtension;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
@@ -13,6 +14,7 @@ use Pushword\Quiz\Model\Question;
 use function Safe\json_decode;
 
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
@@ -42,6 +44,8 @@ final class QuizRenderer implements RuntimeExtensionInterface
         private readonly Security $security,
         private readonly MediaExtension $mediaExtension,
         private readonly VideoExtension $videoExtension,
+        private readonly RouterInterface $router,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -79,11 +83,32 @@ final class QuizRenderer implements RuntimeExtensionInterface
                 'page' => $this->apps->getCurrentPage(),
                 'id' => 'pw-quiz-'.(++$this->instances),
                 'conversationAvailable' => class_exists(AppExtension::class),
+                'resultEndpoint' => $this->resolveResultEndpoint(),
             ]);
         } catch (Throwable $throwable) {
             // Last-resort guard: a broken template must never 500 the page.
             // Per-illustration failures are already swallowed in renderFigure().
             return $this->renderError(['Rendering failed: '.$throwable->getMessage()]);
+        }
+    }
+
+    /**
+     * Absolute (live-host) endpoint the runtime posts attempts to, generated here
+     * rather than in the template so a failure can be contained: recording results
+     * is an optional enhancement, and an unregistered `pushword_quiz_result` route
+     * must not blank out the whole quiz (SEO/no-JS Q&A included). On failure it
+     * logs a clear warning and returns '' — the runtime then falls back to the
+     * relative path, and percentile/share simply stay off.
+     */
+    private function resolveResultEndpoint(): string
+    {
+        try {
+            return $this->apps->get()->getStr('base_live_url')
+                .$this->router->generate('pushword_quiz_result');
+        } catch (Throwable $throwable) {
+            $this->logger->warning('Quiz result endpoint unavailable, percentile/share disabled: '.$throwable->getMessage());
+
+            return '';
         }
     }
 
