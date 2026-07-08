@@ -1,10 +1,12 @@
 ---
 title: 'Quiz: interactive QCM with end-of-quiz conversion form'
 h1: Quiz
+editMessage: 'Imported via pw:flat:sync from extension/quiz.md'
 publishedAt: '2026-06-10 12:00'
 parentPage: extensions
 toc: true
 filter_twig: 0
+revision: af539a6039be5151f3c1bfebe3f21dc685a22880 # read only
 ---
 
 Add interactive, client-side quizzes (QCM) to any page. A quiz works almost

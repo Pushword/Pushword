@@ -1,9 +1,11 @@
 ---
 title: 'Upgrade a Pushword installation | Changelog'
 h1: 'Upgrade Guide'
+editMessage: 'Imported via pw:flat:sync from upgrade.md'
 publishedAt: '2026-01-30 13:24'
 parentPage: installation
 toc: true
+revision: 6668a7fb68fe5b435a2252f8387ee167dd401835 # read only
 ---
 
 Smooth way is to use [composer](https://getcomposer.org), a dependency manager for PHP.
