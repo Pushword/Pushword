@@ -340,11 +340,11 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
                             $width = $dimensionRow['width'] ?? null;
                             $height = $dimensionRow['height'] ?? null;
 
-                            if (! \is_int($width) && ! (is_string($width) && ctype_digit($width))) {
+                            if (! \is_int($width) && (! is_string($width) || ! ctype_digit($width))) {
                                 return null;
                             }
 
-                            if (! \is_int($height) && ! (is_string($height) && ctype_digit($height))) {
+                            if (! \is_int($height) && (! is_string($height) || ! ctype_digit($height))) {
                                 return null;
                             }
 
