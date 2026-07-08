@@ -36,6 +36,13 @@ final class PageLockController extends AbstractController
             return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
 
+        // This endpoint only refreshes a file-based lock and never writes the session.
+        // Release the session lock early so the 3s polling pings don't serialize against
+        // other requests in the same session (notably the page save) under PHP's file handler.
+        if ($request->hasSession() && $request->getSession()->isStarted()) {
+            $request->getSession()->save();
+        }
+
         $data = json_decode($request->getContent(), true);
         $tabId = \is_array($data) && \is_string($data['tabId'] ?? null) ? $data['tabId'] : null;
 
