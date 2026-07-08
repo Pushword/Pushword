@@ -2,16 +2,21 @@
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\EditorNotice\TwigErrorMarker;
 use Twig\Environment;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 #[AsFilter]
 class Twig implements FilterInterface
 {
     public function __construct(
         private readonly Environment $twig,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -28,8 +33,18 @@ class Twig implements FilterInterface
             return $string;
         }
 
-        $templateWrapper = $this->twig->createTemplate($string);
+        try {
+            return $this->twig->createTemplate($string)->render(['page' => $page]);
+        } catch (RuntimeError|SyntaxError $twigError) {
+            // A malformed `{{ … }}` typed by an editor must not 500 the whole page.
+            // Degrade to an invisible marker (scanner reports it, editors see a badge).
+            $this->logger->warning('Twig rendering failed in page content: {message}', [
+                'message' => $twigError->getRawMessage(),
+                'slug' => $page->getSlug(),
+                'host' => $page->host,
+            ]);
 
-        return $templateWrapper->render(['page' => $page]);
+            return TwigErrorMarker::for($twigError->getRawMessage());
+        }
     }
 }

@@ -7,6 +7,8 @@ use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\NullLogger;
 use Pushword\Core\Component\EntityFilter\ManagerPool;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Service\EditorNotice\TwigErrorMarker;
+use Pushword\Core\Service\Markdown\BrokenImageComment;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
@@ -16,7 +18,6 @@ use Pushword\Quiz\Service\QuizFactory;
 use Pushword\Quiz\Service\QuizRenderer;
 use Pushword\Quiz\Twig\QuizExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -73,13 +74,32 @@ final class QuizValidationTest extends KernelTestCase
         self::assertContains('questions[0].answers', $paths); // < 2 answers + no correct
     }
 
-    public function testMalformedJsonDoesNotThrowAndRendersNothingForVisitors(): void
+    public function testMalformedJsonDegradesToAnInvisibleMarker(): void
     {
         self::bootKernel();
-        // Graceful degradation: a broken payload must never bubble up (no 500).
+        // Graceful degradation: a broken payload must never bubble up (no 500). It
+        // degrades to an invisible TwigErrorMarker — nothing visible for visitors,
+        // a badge for ROLE_EDITOR (via EditorNoticeListener), reported by the scanner.
         $output = self::getContainer()->get(QuizExtension::class)->renderQuiz('this is not json');
 
-        self::assertSame('', $output);
+        self::assertStringContainsString('<!-- pushword:twig-error', $output);
+        self::assertStringNotContainsString('pw-quiz', $output);
+        self::assertNotSame([], TwigErrorMarker::extractMessages($output));
+    }
+
+    public function testBrokenQuestionMediaDegradesToABrokenImageMarker(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+
+        // Valid payload, but the illustration can't resolve: the figure degrades to
+        // an invisible broken-image marker instead of fataling the whole quiz.
+        $json = '{"questions":[{"q":"Q?","media":"does-not-exist-quiz-media.jpg",'
+            .'"answers":[{"a":"Yes","correct":true},{"a":"No"}]}]}';
+        $output = self::getContainer()->get(QuizExtension::class)->renderQuiz($json);
+
+        self::assertStringContainsString('Q?', $output, 'the quiz still renders');
+        self::assertSame(['does-not-exist-quiz-media.jpg'], BrokenImageComment::extractSources($output));
     }
 
     public function testRenderLocalizesLabelDefaults(): void
@@ -150,7 +170,6 @@ final class QuizValidationTest extends KernelTestCase
             $container->get(QuizFactory::class),
             $container->get(ValidatorInterface::class),
             $container->get(TranslatorInterface::class),
-            $container->get(Security::class),
             $container->get(MediaExtension::class),
             $container->get(VideoExtension::class),
             $router,

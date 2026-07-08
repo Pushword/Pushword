@@ -93,6 +93,35 @@ final class SnippetRenderTest extends KernelTestCase
         $em->flush();
     }
 
+    public function testBrokenSnippetTwigDegradesToAMarkerInsteadOfThrowing(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+
+        $page = $em->getRepository(Page::class)->findOneBy([]);
+        self::assertInstanceOf(Page::class, $page);
+        $container->get(SiteRegistry::class)->setCurrentPage($page);
+
+        $slug = 'broken-'.uniqid();
+        $snippet = new Snippet();
+        $snippet->host = '';
+        $snippet->setSlug($slug);
+        $snippet->setName('Broken');
+        $snippet->setContent('{{ undefined_function_xyz() }}');
+
+        $em->persist($snippet);
+        $em->flush();
+
+        // A malformed snippet must not 500 the page that embeds it: it degrades to
+        // an invisible marker (editors see a badge, the scanner reports it).
+        $html = $container->get(SnippetExtension::class)->renderSnippet($slug);
+        self::assertStringContainsString('pushword:twig-error', $html);
+
+        $em->remove($snippet);
+        $em->flush();
+    }
+
     public function testHostSpecificSnippetOverridesGlobalOne(): void
     {
         self::bootKernel();

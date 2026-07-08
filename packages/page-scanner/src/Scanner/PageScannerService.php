@@ -40,6 +40,9 @@ final class PageScannerService
     #[Required]
     public BrokenImageScanner $brokenImageScanner;
 
+    #[Required]
+    public TwigErrorScanner $twigErrorScanner;
+
     /** @var DataCollectorTranslator|Translator */
     private readonly TranslatorInterface $translator;
 
@@ -87,6 +90,7 @@ final class PageScannerService
         $this->addErrors($page, $this->parentPageScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->todoScanner->scan($page, $pageHtml));
         $this->addErrors($page, $this->brokenImageScanner->scan($page, $pageHtml));
+        $this->addErrors($page, $this->twigErrorScanner->scan($page, $pageHtml));
 
         return [] === $this->errors ? true : $this->errors;
     }

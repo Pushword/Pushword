@@ -2,7 +2,9 @@
 
 namespace Pushword\Snippet\Twig;
 
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Content\ContentPipelineFactory;
+use Pushword\Core\Service\EditorNotice\TwigErrorMarker;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Snippet\Entity\Snippet;
@@ -10,6 +12,8 @@ use Pushword\Snippet\Registry\SnippetRegistry;
 use Pushword\Snippet\Repository\SnippetRepository;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 final readonly class SnippetExtension
 {
@@ -20,6 +24,7 @@ final readonly class SnippetExtension
         private SiteRegistry $siteRegistry,
         private Environment $twig,
         private MarkdownParser $markdownParser,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -96,11 +101,22 @@ final readonly class SnippetExtension
     {
         $page = $this->siteRegistry->getCurrentPage();
 
-        $content = $this->twig->createTemplate($snippet->getContent())->render([
-            'page' => $page,
-            'snippet' => $snippet,
-            'params' => $params,
-        ] + $params);
+        try {
+            $content = $this->twig->createTemplate($snippet->getContent())->render([
+                'page' => $page,
+                'snippet' => $snippet,
+                'params' => $params,
+            ] + $params);
+        } catch (RuntimeError|SyntaxError $twigError) {
+            // A malformed snippet must not 500 every page that embeds it: degrade to
+            // an invisible marker (scanner reports it, editors see a badge).
+            $this->logger->warning('Twig rendering failed in snippet "{slug}": {message}', [
+                'slug' => $snippet->getSlug(),
+                'message' => $twigError->getRawMessage(),
+            ]);
+
+            $content = TwigErrorMarker::for($twigError->getRawMessage());
+        }
 
         if (null === $page) {
             return $this->markdownParser->transform($content);

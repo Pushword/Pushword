@@ -1,4 +1,6 @@
 edit: Modifier
+editorNoticeBrokenImage: 'Image introuvable :'
+editorNoticeTwigError: 'Erreur Twig :'
 en: English
 cardButtonDefaultLabel: Réserver
 errorDescription: '<a href="/" class="btn btn-secondary">Retour</a>'

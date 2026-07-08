@@ -6,6 +6,7 @@ page_scanNotFound: 'non trouvé'
 page_scanNotPublished: 'non publié'
 page_scanObfuscateMail: 'pour prévenir le spam, vous pouvez obfusquer ce lien.'
 page_scanStatusCode: 'Code de réponse HTTP innatendu'
+page_scanTwigError: "Le rendu Twig d'un bloc de contenu a échoué"
 page_scanUnreachable: 'inaccessible - errorMessage'
 page_scannerForceNewScan: 'forcer un nouveau scan'
 page_scannerForceScan: 'Forcer un scan'
