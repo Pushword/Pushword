@@ -233,7 +233,6 @@
 .pw-quiz-result {
   margin-top: 1.5rem;
   padding: 1.5rem;
-  text-align: center;
   background: var(--pw-quiz-card);
   border: 1px solid var(--pw-quiz-border);
   border-radius: var(--pw-quiz-radius);
@@ -285,11 +284,13 @@
 .pw-quiz-profile-intro {
   color: var(--pw-quiz-muted);
   margin: 0 0 0.5rem;
+  text-align: center;
 }
 .pw-quiz-profile-title {
   font-size: 1.4rem;
   margin: 0 0 0.75rem;
   color: var(--pw-quiz-accent);
+  text-align: center;
 }
 .pw-quiz-profile-img {
   display: block;
