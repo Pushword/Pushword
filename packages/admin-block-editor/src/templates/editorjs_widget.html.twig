@@ -7,6 +7,9 @@
     <a href="#" onclick="toggleEditor('markdown'); return false;" style="color:#6b7280; margin-left:10px;" title="Ctrl + U">
         {{ svg('markdown', {style: 'width:12px; fill:currentColor'}) }}
     </a>
+    <a href="#" onclick="copyPageMarkdown(this); return false;" style="color:#6b7280; margin-left:10px;" title="Copy content (Markdown) with H1">
+        {{ svg('copy', {style: 'width:12px; fill:currentColor'}) }}
+    </a>
 </div>
 <div style="padding:10px 10px 0;">
     {% set editor_id = 'editorjs_' ~ id %}
@@ -31,6 +34,36 @@ document.addEventListener('DOMContentLoaded', function() {
         // return;
 
         type === 'editorjs' ? modeManager.toggleEditor() : modeManager.toggleMarkdownEditor();
+    };
+
+    // Copie le contenu (Markdown) précédé du H1 (# {h1}) dans le presse-papier
+    window.copyPageMarkdown = async function(el) {
+        const holder = document.getElementById(editorId);
+        const input = document.getElementById(holder ? holder.getAttribute('data-input-id') : '');
+        const markdown = input ? input.value : '';
+        const h1Field = document.querySelector('.h1Field');
+        const h1 = h1Field ? h1Field.value.trim() : '';
+        const text = (h1 ? '# ' + h1 + '\n\n' : '') + markdown;
+
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const helper = document.createElement('textarea');
+                helper.value = text;
+                helper.style.position = 'fixed';
+                helper.style.opacity = '0';
+                document.body.appendChild(helper);
+                helper.select();
+                document.execCommand('copy');
+                document.body.removeChild(helper);
+            }
+            const original = el.style.color;
+            el.style.color = '#16a34a';
+            setTimeout(function() { el.style.color = original; }, 1200);
+        } catch (error) {
+            console.error('copyPageMarkdown failed', error);
+        }
     };
 
     window.onkeyup = function(event) {
