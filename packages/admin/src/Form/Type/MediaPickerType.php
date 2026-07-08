@@ -5,13 +5,19 @@ namespace Pushword\Admin\Form\Type;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
 use Pushword\Admin\Controller\MediaCrudController;
+use Pushword\Admin\Form\ChoiceList\SelectedMediaChoiceLoader;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Repository\MediaRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -26,7 +32,28 @@ final class MediaPickerType extends AbstractType
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly TranslatorInterface $translator,
         private readonly ImageCacheManager $imageCacheManager,
+        private readonly MediaRepository $mediaRepo,
     ) {
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $loader = $options['choice_loader'] ?? null;
+        if (! $loader instanceof SelectedMediaChoiceLoader) {
+            return;
+        }
+
+        // Seed the render list with this field's own bound media so the <select>
+        // holds only the selected <option> (submit validation resolves any picked
+        // id by direct lookup). PRE_SET_DATA runs per collection entry, so each
+        // entry gets its own seed.
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, static function (FormEvent $event) use ($loader): void {
+            $media = $event->getData();
+            $loader->setSeed($media instanceof Media ? [$media] : []);
+        });
     }
 
     /**
@@ -58,6 +85,9 @@ final class MediaPickerType extends AbstractType
             'placeholder' => ' ',
             'required' => false,
             'media_picker_filters' => [],
+            // Lazy loader: render only the selected media, never the whole library.
+            // A fresh instance per field so collection entries don't share a seed.
+            'choice_loader' => fn (Options $options): SelectedMediaChoiceLoader => new SelectedMediaChoiceLoader($this->mediaRepo),
         ]);
         $resolver->setAllowedTypes('media_picker_filters', 'array');
     }

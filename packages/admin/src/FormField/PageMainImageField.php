@@ -5,6 +5,7 @@ namespace Pushword\Admin\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Type\ComparisonType;
+use Pushword\Admin\Form\ChoiceList\SelectedMediaChoiceLoader;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Symfony\Component\Translation\TranslatableMessage;
@@ -19,12 +20,17 @@ class PageMainImageField extends AbstractMediaPickerField
         /** @var Page $page */
         $page = $this->admin->getSubject();
 
+        $selected = $page->getMainImage();
+
         $field = AssociationField::new('mainImage', ' ')
             ->onlyOnForms()
             ->setFormTypeOption('required', false)
+            // Render only the current image, not the whole media library. The
+            // picker modal handles browsing; the submitted id is resolved lazily.
+            ->setFormTypeOption('choice_loader', new SelectedMediaChoiceLoader($this->mediaRepo(), $selected instanceof Media ? [$selected] : []))
             ->setFormTypeOption('choice_label', static fn (Media $media): string => $media->getAlt() ?: $media->getFileName())
             ->setFormTypeOption('placeholder', 'adminPageMainImageLabel')
-            ->setFormTypeOption('attr', $this->mediaPickerAttributes('mainImage', $this->defaultFilters(), $page->getMainImage()));
+            ->setFormTypeOption('attr', $this->mediaPickerAttributes('mainImage', $this->defaultFilters(), $selected));
 
         // Surface a broken reference recorded by flat import (media named in content but absent from the library).
         $notFound = $page->getCustomProperty('mainImageNotFound');
