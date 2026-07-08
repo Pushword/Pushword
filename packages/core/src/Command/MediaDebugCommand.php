@@ -42,7 +42,7 @@ final readonly class MediaDebugCommand
     {
         $results = [];
         foreach ($searchTerms as $term) {
-            $media = $this->mediaRepository->findOneByFileName($term);
+            $media = $this->mediaRepository->findOneByFileNameOrHistory($term);
             $results[$term] = $media?->getFileName();
         }
 
@@ -59,7 +59,7 @@ final readonly class MediaDebugCommand
         $hasNotFound = false;
 
         foreach ($searchTerms as $term) {
-            $media = $this->mediaRepository->findOneByFileName($term);
+            $media = $this->mediaRepository->findOneByFileNameOrHistory($term);
 
             if (null === $media) {
                 $io->error(\sprintf('No media found for "%s"', $term));
