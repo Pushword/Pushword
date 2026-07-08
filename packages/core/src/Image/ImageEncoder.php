@@ -13,11 +13,33 @@ final readonly class ImageEncoder
 {
     public function encodeOriginal(ImageInterface $image, string $outputPath, int $quality, Media|string $media): void
     {
-        $encoded = $this->isSourceWebp($media)
+        $this->saveAtomically($this->encodeSource($image, $quality, $media), $outputPath);
+    }
+
+    /**
+     * Encode an image in its source format and return the raw bytes.
+     *
+     * Used when rewriting the master file (e.g. rotation) through the storage
+     * adapter, which needs a string rather than a local path. Rejects an empty
+     * payload for the same reason saveAtomically() does — never overwrite a
+     * master with a 0-byte file.
+     */
+    public function encodeOriginalToString(ImageInterface $image, int $quality, Media|string $media): string
+    {
+        $encoded = $this->encodeSource($image, $quality, $media)->toString();
+
+        if ('' === $encoded) {
+            throw new RuntimeException('Refusing to encode an empty image.');
+        }
+
+        return $encoded;
+    }
+
+    private function encodeSource(ImageInterface $image, int $quality, Media|string $media): EncodedImageInterface
+    {
+        return $this->isSourceWebp($media)
             ? $image->encodeUsingFormat(Format::WEBP, quality: $quality)
             : $image->encode(new AutoEncoder(quality: $quality));
-
-        $this->saveAtomically($encoded, $outputPath);
     }
 
     public function encodeWebp(ImageInterface $image, string $outputPath, int $quality): void

@@ -121,6 +121,68 @@ final class MediaApiControllerTest extends WebTestCase
         self::assertSame('zz-needle-'.$marker.'.pdf', $item['filename']);
     }
 
+    public function testRotateSwapsDimensions(): void
+    {
+        $fileName = 'zz-rotate-'.uniqid().'.jpg';
+        $this->createRealImageMedia($fileName, 6, 3);
+
+        $response = $this->requestJson('PATCH', '/api/media/'.$fileName, ['rotate' => 90]);
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+
+        $data = $this->decode();
+        self::assertIsArray($data['image']);
+        self::assertSame(3, $data['image']['width'], 'width and height must be swapped');
+        self::assertSame(6, $data['image']['height']);
+    }
+
+    public function testRotateRejectsNonMultipleOf90(): void
+    {
+        $fileName = 'zz-rotate-invalid-'.uniqid().'.jpg';
+        $this->createRealImageMedia($fileName, 6, 3);
+
+        $response = $this->requestJson('PATCH', '/api/media/'.$fileName, ['rotate' => 45]);
+        self::assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
+    }
+
+    public function testRotateRejectsNonImage(): void
+    {
+        $fileName = 'zz-rotate-'.uniqid().'.pdf';
+        $this->createMedia($fileName, 'A document', 'application/pdf');
+
+        $response = $this->requestJson('PATCH', '/api/media/'.$fileName, ['rotate' => 90]);
+        self::assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
+    }
+
+    /**
+     * @param positive-int $width
+     * @param positive-int $height
+     */
+    private function createRealImageMedia(string $fileName, int $width, int $height): Media
+    {
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+
+        $gd = imagecreatetruecolor($width, $height);
+        self::assertNotFalse($gd);
+        imagejpeg($gd, $mediaDir.'/'.$fileName);
+
+        $hash = sha1_file($mediaDir.'/'.$fileName, true);
+        self::assertNotFalse($hash);
+
+        $media = new Media();
+        $media->setProjectDir(self::getContainer()->getParameter('kernel.project_dir'))
+            ->setStoreIn($mediaDir)
+            ->setFileName($fileName)
+            ->setAlt('rotation fixture')
+            ->setMimeType('image/jpeg')
+            ->setDimensions([$width, $height])
+            ->setHash($hash);
+        $this->em->persist($media);
+        $this->em->flush();
+        $this->createdMediaFileNames[] = $fileName;
+
+        return $media;
+    }
+
     private function createMedia(string $fileName, string $alt, string $mimeType = 'image/jpeg'): Media
     {
         $media = new Media();
@@ -142,6 +204,20 @@ final class MediaApiControllerTest extends WebTestCase
     {
         $server = ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken];
         $this->client->request($method, $url, [], [], $server);
+
+        return $this->client->getResponse();
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function requestJson(string $method, string $url, array $body): Response
+    {
+        $server = [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+            'CONTENT_TYPE' => 'application/json',
+        ];
+        $this->client->request($method, $url, [], [], $server, (string) json_encode($body));
 
         return $this->client->getResponse();
     }

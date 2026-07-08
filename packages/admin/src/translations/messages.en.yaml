@@ -56,6 +56,9 @@ adminMediaPreviewLabel: Preview
 adminMediaPreviewMarkdown: Markdown
 adminMediaPreviewPath: Path
 adminMediaRelatedLabel: "Related pages"
+adminMediaRotateLeftLabel: "Rotate left"
+adminMediaRotateRightLabel: "Rotate right"
+adminMediaRotateSuccess: "Image rotated. The cache is being regenerated."
 adminMediaSizeLabel: "File size"
 adminMediaSlugWarning: "Changing the slug changes the image URL and may cause errors."
 adminMediaTagsLabel: Tags

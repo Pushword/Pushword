@@ -5,6 +5,7 @@ namespace Pushword\Api\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Core\Controller\RoutePatterns;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Image\ImageRotator;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,6 +21,7 @@ final class MediaApiController extends AbstractApiController
     public function __construct(
         private readonly MediaRepository $mediaRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly ImageRotator $imageRotator,
     ) {
     }
 
@@ -87,6 +89,13 @@ final class MediaApiController extends AbstractApiController
             $data = json_decode($raw, true);
             if (! \is_array($data)) {
                 return $this->badRequest('Invalid JSON');
+            }
+
+            if (\array_key_exists('rotate', $data)) {
+                $rotateError = $this->applyRotation($media, $data['rotate']);
+                if (null !== $rotateError) {
+                    return $rotateError;
+                }
             }
 
             $this->applyMetadata($media, $data);
@@ -162,6 +171,29 @@ final class MediaApiController extends AbstractApiController
         if (\array_key_exists('filename', $data) && \is_string($data['filename'])) {
             $media->setFileName($data['filename']);
         }
+    }
+
+    /**
+     * Rotate the master image clockwise by a multiple of 90 degrees. A no-op
+     * rotation (0 / 360) is silently ignored. Returns a 400 response on invalid
+     * input, or null on success.
+     */
+    private function applyRotation(Media $media, mixed $degrees): ?JsonResponse
+    {
+        if (! $media->isImage()) {
+            return $this->badRequest('Only images can be rotated');
+        }
+
+        if (! \is_int($degrees) || 0 !== $degrees % 90) {
+            return $this->badRequest('rotate must be an integer multiple of 90 degrees');
+        }
+
+        // A full turn (0 / ±360) is a no-op; only touch the file for a real rotation.
+        if (0 !== $degrees % 360) {
+            $this->imageRotator->rotate($media, $degrees);
+        }
+
+        return null;
     }
 
     /**
@@ -328,6 +360,7 @@ final class MediaApiController extends AbstractApiController
                                         'alts' => ['type' => 'object'],
                                         'tags' => ['type' => 'array', 'items' => ['type' => 'string']],
                                         'filename' => ['type' => 'string'],
+                                        'rotate' => ['type' => 'integer', 'description' => 'Rotate the master image clockwise by a multiple of 90 (90, 180, 270; negative rotates counter-clockwise). Regenerates the cache.'],
                                     ],
                                 ]],
                             ],
@@ -339,7 +372,7 @@ final class MediaApiController extends AbstractApiController
                         ],
                     ],
                     'patch' => [
-                        'summary' => 'Update media metadata',
+                        'summary' => 'Update media metadata or rotate the image',
                         'requestBody' => ['content' => ['application/json' => ['schema' => [
                             'type' => 'object',
                             'properties' => [
@@ -347,6 +380,7 @@ final class MediaApiController extends AbstractApiController
                                 'alts' => ['type' => 'object'],
                                 'tags' => ['type' => 'array', 'items' => ['type' => 'string']],
                                 'filename' => ['type' => 'string'],
+                                'rotate' => ['type' => 'integer', 'description' => 'Rotate the master image clockwise by a multiple of 90 (90, 180, 270; negative rotates counter-clockwise). Regenerates the cache.'],
                             ],
                         ]]]],
                         'responses' => ['200' => ['description' => 'Updated']],

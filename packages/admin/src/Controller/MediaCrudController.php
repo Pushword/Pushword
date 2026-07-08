@@ -3,9 +3,11 @@
 namespace Pushword\Admin\Controller;
 
 use Doctrine\ORM\QueryBuilder;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
@@ -26,9 +28,12 @@ use Pushword\Admin\Filter\MediaTagFilter;
 use Pushword\Admin\Utils\Thumb;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ImageRotator;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Utils\FlashBag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /** @extends AbstractAdminCrudController<Media> */
 class MediaCrudController extends AbstractAdminCrudController
@@ -40,6 +45,7 @@ class MediaCrudController extends AbstractAdminCrudController
         private readonly MediaRepository $mediaRepo,
         private readonly PageRepository $pageRepository,
         private readonly AdminUrlGenerator $adminUrlGenerator,
+        private readonly ImageRotator $imageRotator,
     ) {
     }
 
@@ -103,6 +109,65 @@ class MediaCrudController extends AbstractAdminCrudController
                 'crud/edit' => '@pwAdmin/media/edit.html.twig',
             ])
             ->showEntityActionsInlined();
+    }
+
+    #[Override]
+    public function configureActions(Actions $actions): Actions
+    {
+        $isImage = static fn (Media $media): bool => $media->isImage();
+
+        $rotateLeft = Action::new('rotateLeft', 'adminMediaRotateLeftLabel', 'fa fa-rotate-left')
+            ->linkToCrudAction('rotateLeft')
+            ->displayIf($isImage);
+
+        $rotateRight = Action::new('rotateRight', 'adminMediaRotateRightLabel', 'fa fa-rotate-right')
+            ->linkToCrudAction('rotateRight')
+            ->displayIf($isImage);
+
+        foreach ([Crud::PAGE_INDEX, Crud::PAGE_EDIT] as $page) {
+            $actions->add($page, $rotateLeft);
+            $actions->add($page, $rotateRight);
+        }
+
+        return $actions;
+    }
+
+    /** @param AdminContext<Media> $context */
+    #[AdminRoute('/rotate-left/{entityId}', name: 'rotate_left', options: ['methods' => ['GET']])]
+    public function rotateLeft(AdminContext $context): Response
+    {
+        return $this->rotate($context, 270);
+    }
+
+    /** @param AdminContext<Media> $context */
+    #[AdminRoute('/rotate-right/{entityId}', name: 'rotate_right', options: ['methods' => ['GET']])]
+    public function rotateRight(AdminContext $context): Response
+    {
+        return $this->rotate($context, 90);
+    }
+
+    /** @param AdminContext<Media> $context */
+    private function rotate(AdminContext $context, int $degrees): Response
+    {
+        $media = $context->getEntity()->getInstance();
+        assert($media instanceof Media);
+
+        if ($media->isImage()) {
+            $this->imageRotator->rotate($media, $degrees);
+            $this->getEntityManager()->flush();
+
+            FlashBag::get($this->getRequest())?->add('success', $this->getTranslator()->trans('adminMediaRotateSuccess'));
+        }
+
+        $referrer = $this->getRequest()?->query->get('referrer');
+        if (\is_string($referrer) && '' !== $referrer) {
+            return $this->redirect($referrer);
+        }
+
+        $editUrl = clone $this->adminUrlGenerator;
+        $editUrl->setController(self::class)->setAction(Action::EDIT)->setEntityId($media->id);
+
+        return $this->redirect($editUrl->generateUrl());
     }
 
     #[Override]

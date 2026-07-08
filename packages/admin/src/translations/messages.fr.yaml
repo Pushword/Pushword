@@ -68,6 +68,9 @@ adminMediaPreviewLabel: Aperçu
 adminMediaPreviewMarkdown: Markdown
 adminMediaPreviewPath: Chemin
 adminMediaRelatedLabel: 'Pages connectées'
+adminMediaRotateLeftLabel: 'Pivoter à gauche'
+adminMediaRotateRightLabel: 'Pivoter à droite'
+adminMediaRotateSuccess: "Image pivotée. Le cache est en cours de régénération."
 adminMediaSizeLabel: 'Taille du fichier'
 adminMediaSlugWarning: "Changer le slug change l'URL de l'image et peut créer des erreurs."
 adminMediaTagsLabel: Tags

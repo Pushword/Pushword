@@ -29,6 +29,7 @@ final class ImageEncoderTest extends TestCase
         $fs->remove($output);
 
         $thrown = false;
+
         try {
             new ImageEncoder()->encodeWebp($image, $output, 90);
         } catch (RuntimeException) {
@@ -43,7 +44,7 @@ final class ImageEncoderTest extends TestCase
     {
         $encoded = $this->createMock(EncodedImageInterface::class);
         $encoded->method('toString')->willReturn('WEBP-BYTES');
-        $encoded->method('save')->willReturnCallback(function (string $path) use (&$encoded): EncodedImageInterface {
+        $encoded->method('save')->willReturnCallback(static function (string $path) use (&$encoded): EncodedImageInterface {
             file_put_contents($path, 'WEBP-BYTES');
 
             return $encoded;
@@ -62,5 +63,32 @@ final class ImageEncoderTest extends TestCase
         self::assertSame('WEBP-BYTES', file_get_contents($output));
 
         $fs->remove($output);
+    }
+
+    /**
+     * encodeOriginalToString() rewrites the master through the storage adapter,
+     * so an empty payload must throw rather than return "" and blank the source.
+     */
+    public function testEncodeOriginalToStringRefusesEmpty(): void
+    {
+        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded->method('toString')->willReturn('');
+
+        $image = $this->createMock(ImageInterface::class);
+        $image->method('encode')->willReturn($encoded);
+
+        $this->expectException(RuntimeException::class);
+        new ImageEncoder()->encodeOriginalToString($image, 90, 'foo.jpg');
+    }
+
+    public function testEncodeOriginalToStringReturnsBytes(): void
+    {
+        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded->method('toString')->willReturn('JPG-BYTES');
+
+        $image = $this->createMock(ImageInterface::class);
+        $image->method('encode')->willReturn($encoded);
+
+        self::assertSame('JPG-BYTES', new ImageEncoder()->encodeOriginalToString($image, 90, 'foo.jpg'));
     }
 }
