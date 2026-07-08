@@ -81,6 +81,7 @@ adminPageAuthorLabel: Author
 adminPageBrokenImageWarning: "This page references image(s) that no longer exist. They are skipped when the page is displayed:"
 adminPageCloneLabel: Clone
 adminPageCloneSuccess: "Page cloned successfully. Remember to update hidden fields (title, description…) if this is a new dedicated page."
+adminPageContentDegraded: 'Some content was hidden because it could not be generated:<br>%errors%'
 adminPageCreatedAtLabel: "Created At"
 adminPageCustomCanonicalHelp: "<small>Force the canonical URL of this page (SEO consolidation). Leave empty for the default self-canonical.</small>"
 adminPageCustomCanonicalLabel: "Canonical URL (override)"

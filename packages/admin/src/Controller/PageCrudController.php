@@ -35,6 +35,7 @@ use Pushword\Core\Controller\PageController;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Router\PushwordRouteGenerator;
+use Pushword\Core\Service\EditorNotice\TwigErrorMarker;
 use Pushword\Core\Service\VariantManager;
 use Pushword\Core\Utils\FlashBag;
 use Pushword\Core\Utils\TwigErrorExtractor;
@@ -43,6 +44,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
@@ -378,9 +380,14 @@ class PageCrudController extends AbstractAdminCrudController
 
         try {
             $response = $this->pageController->showPage($page);
+
             if (Response::HTTP_OK !== $response->getStatusCode()) {
                 $flashBag->add('warning', $this->getTranslator()->trans('adminPageErrorGenerationFailed'));
+
+                return;
             }
+
+            $this->warnAboutDegradedContent($flashBag, (string) $response->getContent());
         } catch (RuntimeError|SyntaxError $runtimeError) {
             $flashBag->add(
                 'warning',
@@ -390,6 +397,35 @@ class PageCrudController extends AbstractAdminCrudController
                 ]),
             );
         }
+    }
+
+    /**
+     * A Twig error in editor content no longer 500s — it degrades to an invisible
+     * marker ({@see TwigErrorMarker}) so `showPage()` returns 200. Surface it as an
+     * edit-time flash so saving still tells the editor what silently broke,
+     * mirroring the front-end badge (EditorNoticeListener) and the page scanner.
+     * Broken images already have their own persistent banner (`pw_broken_images`).
+     */
+    private function warnAboutDegradedContent(FlashBagInterface $flashBag, string $html): void
+    {
+        if (! str_contains($html, 'pushword:twig-error')) {
+            return;
+        }
+
+        $translator = $this->getTranslator();
+        $label = $translator->trans('editorNoticeTwigError');
+        $items = array_map(
+            static fn (string $message): string => $label.' <code>'.htmlspecialchars($message).'</code>',
+            TwigErrorMarker::extractMessages($html),
+        );
+
+        if ([] === $items) {
+            return;
+        }
+
+        $flashBag->add('warning', $translator->trans('adminPageContentDegraded', [
+            '%errors%' => implode('<br>', $items),
+        ]));
     }
 
     /**

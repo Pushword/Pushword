@@ -80,6 +80,7 @@ adminPageAuthorLabel: Auteur
 adminPageBrokenImageWarning: "Cette page référence des image(s) introuvable(s). Elles sont ignorées à l'affichage de la page :"
 adminPageCloneLabel: Dupliquer
 adminPageCloneSuccess: "Page dupliquée avec succès. Pensez à mettre à jour les champs cachés (titre, description…) si cette page a une destination propre."
+adminPageContentDegraded: 'Certains contenus ont été masqués car ils n''ont pas pu être générés :<br>%errors%'
 adminPageCreatedAtLabel: 'Créé le'
 adminPageCustomCanonicalHelp: "<small>Force l'URL canonique de cette page (consolidation SEO). Laisser vide pour la canonique par défaut.</small>"
 adminPageCustomCanonicalLabel: "URL canonique (forcée)"
