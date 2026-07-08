@@ -52,7 +52,7 @@ raw: 1
       <span class="font-mono text-2xl font-light tabular-nums text-[oklch(45%_0.13_35)] leading-none pt-1">01</span>
       <div>
         <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">AI-native editing</dt>
-        <dd class="text-stone-600 dark:text-stone-300">Flat-file mode means Cursor, Claude, and Copilot work directly with your content. No middleware, no API layers.</dd>
+        <dd class="text-stone-600 dark:text-stone-300">Flat-file mode lets Cursor, Claude, and Copilot edit your Markdown directly — and a REST API takes it further, letting agents drive a live site.</dd>
       </div>
     </div>
 
@@ -137,6 +137,56 @@ Your content here...</pre>
 </div>
 </div>
 
+  </div>
+</section>
+
+<section class="py-20 border-t border-stone-200 dark:border-stone-800">
+  <div class="max-w-5xl mx-auto px-6">
+    <p class="text-sm font-medium tracking-widest uppercase text-[oklch(45%_0.13_35)] mb-3">Beyond flat-file</p>
+    <h2 class="text-3xl md:text-4xl font-semibold tracking-tight mb-4 text-stone-900 dark:text-stone-100">Flat files were only the start.</h2>
+    <p class="text-lg text-stone-600 dark:text-stone-300 leading-relaxed max-w-2xl mb-12">
+      Flat files let an AI edit Markdown on your laptop. But your content lives on a live, multi-site instance — so we built a REST API that mirrors the whole admin (pages, media, redirections, even dead-link scans) and is designed, field by field, for agents to drive. Point Claude Code at it and editors run advanced content operations in plain language, straight to production — safely.
+    </p>
+
+    <dl class="grid sm:grid-cols-2 gap-x-10 gap-y-10 mb-14">
+      <div>
+        <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">Self-describing</dt>
+        <dd class="text-stone-600 dark:text-stone-300 text-[15px]"><code class="font-mono text-[oklch(45%_0.13_35)] dark:text-[oklch(70%_0.13_35)]">GET /api/docs</code> returns a live OpenAPI 3.1 spec built from the controllers themselves. An agent discovers every route and field before it authenticates — no docs to ship, never out of date.</dd>
+      </div>
+      <div>
+        <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">Token-efficient edits</dt>
+        <dd class="text-stone-600 dark:text-stone-300 text-[15px]"><code class="font-mono text-[oklch(45%_0.13_35)] dark:text-[oklch(70%_0.13_35)]">PATCH</code> takes anchored find/replace, so an agent sends only the slice it changed — not the whole page. Each anchor must match exactly once, or the write is refused: a loud error beats a silent wrong edit.</dd>
+      </div>
+      <div>
+        <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">Safe concurrency</dt>
+        <dd class="text-stone-600 dark:text-stone-300 text-[15px]">Every page carries a revision; writes send <code class="font-mono text-[oklch(45%_0.13_35)] dark:text-[oklch(70%_0.13_35)]">If-Match</code>. An agent and a human can't clobber each other — a stale write returns <code class="font-mono text-[oklch(45%_0.13_35)] dark:text-[oklch(70%_0.13_35)]">409</code> with the fresh page to rebase on.</dd>
+      </div>
+      <div>
+        <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">Nothing ships by accident</dt>
+        <dd class="text-stone-600 dark:text-stone-300 text-[15px]">Edits stage as drafts while the live site keeps serving. <code class="font-mono text-[oklch(45%_0.13_35)] dark:text-[oklch(70%_0.13_35)]">ROLE_EDITOR</code> gates every token, and the Version extension diffs each revision before you publish.</dd>
+      </div>
+    </dl>
+
+    <div class="grid md:grid-cols-2 gap-10">
+      <div>
+        <h3 class="text-xs font-semibold tracking-widest uppercase text-stone-500 mb-3">One anchored edit — not the whole page</h3>
+        <pre class="font-mono text-xs leading-relaxed bg-stone-900 text-stone-300 rounded-md p-4 overflow-x-auto"><span class="text-[oklch(70%_0.13_35)]">PATCH</span> /api/page/example.com/pricing
+<span class="text-[oklch(70%_0.13_35)]">If-Match:</span> <span class="text-stone-100">66a3f1b2…</span>
+
+{ <span class="text-[oklch(70%_0.13_35)]">"edits"</span>: [
+    { <span class="text-[oklch(70%_0.13_35)]">"find"</span>: <span class="text-stone-100">"From 90€"</span>, <span class="text-[oklch(70%_0.13_35)]">"replace"</span>: <span class="text-stone-100">"From 120€"</span> }
+] }</pre>
+      </div>
+      <div>
+        <h3 class="text-xs font-semibold tracking-widest uppercase text-stone-500 mb-3">In production today</h3>
+        <p class="text-stone-600 dark:text-stone-300 text-[15px] mb-6">
+          Real brand sites are edited entirely through this API. Marketing teams open Claude Code, type what they want in plain French or English, and every save syncs to production with optimistic locking — always staged as a draft until a human publishes.
+        </p>
+        <a href="/extension/api" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
+          Read the API reference
+        </a>
+      </div>
+    </div>
   </div>
 </section>
 
