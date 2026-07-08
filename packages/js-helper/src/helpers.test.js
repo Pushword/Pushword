@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { liveBlock } from './helpers.js'
+import { liveBlock, addClassForNormalUser } from './helpers.js'
 
 // Helpers to build minimal DOM fixtures
 function makeLiveBlockEl(url) {
@@ -73,6 +73,37 @@ describe('liveBlock — getLiveBlock', () => {
     // original block must still be present
     expect(document.body.querySelector('[data-live]')).not.toBeNull()
     expect(document.body.innerHTML).not.toContain('login page')
+  })
+})
+
+describe('addClassForNormalUser — one-time hash navigation', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+    window.location.hash = '#quiz'
+    vi.restoreAllMocks()
+  })
+
+  function scrollFourTimes() {
+    for (let i = 0; i < 4; i++) document.dispatchEvent(new Event('scroll'))
+  }
+
+  it('applies location.hash navigation at most once across re-inits', () => {
+    const scrollToHash = vi.fn()
+    window.ShowMore = { scrollToHash }
+
+    // Initial page load registers the watcher; its 4th scroll event applies
+    // the one-time hash correction.
+    addClassForNormalUser()
+    scrollFourTimes()
+    expect(scrollToHash).toHaveBeenCalledTimes(1)
+    expect(scrollToHash).toHaveBeenCalledWith('#quiz')
+
+    // A later DOMChanged (e.g. a quiz revealing its result box) re-registers
+    // the watcher; the ensuing programmatic-scroll burst must NOT yank the
+    // user back to the anchor.
+    addClassForNormalUser()
+    scrollFourTimes()
+    expect(scrollToHash).toHaveBeenCalledTimes(1)
   })
 })
 

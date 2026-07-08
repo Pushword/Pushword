@@ -240,6 +240,15 @@ export function responsiveImage(src) {
   return src
 }
 
+// The scroll-triggered hash correction below is a one-time page-load concern
+// (the browser's native jump to #anchor can land wrong when content lazily
+// reveals). addClassForNormalUser() re-runs on every DOMChanged and each run
+// registers a fresh scroll watcher, so without this guard the correction
+// re-fires on the next 4th scroll event — yanking the user back to the anchor
+// whenever an unrelated programmatic scroll happens later (e.g. a quiz
+// smooth-scrolling to its result box). Apply it at most once per page.
+let hashNavApplied = false
+
 export function addClassForNormalUser(attribute = 'data-acinb') {
   var startScrolling = 0
   function scrollEventAddClassHandler() {
@@ -260,8 +269,9 @@ export function addClassForNormalUser(attribute = 'data-acinb') {
           }
         },
       )
-      // Handle hash navigation - delegate to ShowMore if available
-      if (window.location.hash && window.ShowMore) {
+      // One-time hash navigation - delegate to ShowMore if available.
+      if (!hashNavApplied && window.location.hash && window.ShowMore) {
+        hashNavApplied = true
         window.ShowMore.scrollToHash(window.location.hash)
       }
     }
