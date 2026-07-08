@@ -11,6 +11,7 @@ use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -168,7 +169,7 @@ final class ImageManagerCommand
         if ($this->agentMode) {
             $this->reportAgentSummary($output, \count($medias) - $skipped - \count($errors), $skipped, $errors, $startTime);
 
-            return 0;
+            return [] === $errors ? Command::SUCCESS : Command::FAILURE;
         }
 
         if (! $isWorker) {
@@ -176,7 +177,7 @@ final class ImageManagerCommand
             $this->reportErrors($errors, $io);
         }
 
-        return 0;
+        return [] === $errors ? Command::SUCCESS : Command::FAILURE;
     }
 
     /**
@@ -303,13 +304,13 @@ final class ImageManagerCommand
         if ($this->agentMode) {
             $this->reportAgentSummary($output, $staleCount - \count($errors), $preSkipped, $errors, $startTime);
 
-            return 0;
+            return [] === $errors ? Command::SUCCESS : Command::FAILURE;
         }
 
         $this->reportSummary($io, $staleCount - \count($errors), $preSkipped, \count($errors), $startTime);
         $this->reportErrors($errors, $io);
 
-        return 0;
+        return [] === $errors ? Command::SUCCESS : Command::FAILURE;
     }
 
     private function createProgressBar(OutputInterface $output, int $max): ProgressBar

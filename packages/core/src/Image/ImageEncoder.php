@@ -11,9 +11,17 @@ use RuntimeException;
 
 final readonly class ImageEncoder
 {
+    /**
+     * Intervention/GD/Imagick intermittently returns an empty payload for a
+     * large resize (memory pressure, driver hiccup) — a transient failure a
+     * fresh encode recovers from. Retry before giving up so one hiccup does not
+     * leave a variant missing until the next scheduled run.
+     */
+    private const int ENCODE_ATTEMPTS = 3;
+
     public function encodeOriginal(ImageInterface $image, string $outputPath, int $quality, Media|string $media): void
     {
-        $this->saveAtomically($this->encodeSource($image, $quality, $media), $outputPath);
+        $this->saveAtomically(fn (): EncodedImageInterface => $this->encodeSource($image, $quality, $media), $outputPath);
     }
 
     /**
@@ -26,13 +34,12 @@ final readonly class ImageEncoder
      */
     public function encodeOriginalToString(ImageInterface $image, int $quality, Media|string $media): string
     {
-        $encoded = $this->encodeSource($image, $quality, $media)->toString();
+        return $this->encodeNonEmpty(fn (): EncodedImageInterface => $this->encodeSource($image, $quality, $media));
+    }
 
-        if ('' === $encoded) {
-            throw new RuntimeException('Refusing to encode an empty image.');
-        }
-
-        return $encoded;
+    public function encodeWebp(ImageInterface $image, string $outputPath, int $quality): void
+    {
+        $this->saveAtomically(static fn (): EncodedImageInterface => $image->encodeUsingFormat(Format::WEBP, quality: $quality), $outputPath);
     }
 
     private function encodeSource(ImageInterface $image, int $quality, Media|string $media): EncodedImageInterface
@@ -42,9 +49,24 @@ final readonly class ImageEncoder
             : $image->encode(new AutoEncoder(quality: $quality));
     }
 
-    public function encodeWebp(ImageInterface $image, string $outputPath, int $quality): void
+    /**
+     * Encode with a bounded retry, returning the raw bytes and never an empty
+     * string. A transient failure yields an empty payload that would blank a
+     * master or poison a cache variant; retry recovers it, then we throw rather
+     * than hand back "" so the caller reports an error instead of success.
+     *
+     * @param callable(): EncodedImageInterface $encode
+     */
+    private function encodeNonEmpty(callable $encode): string
     {
-        $this->saveAtomically($image->encodeUsingFormat(Format::WEBP, quality: $quality), $outputPath);
+        for ($attempt = 1; $attempt <= self::ENCODE_ATTEMPTS; ++$attempt) {
+            $bytes = $encode()->toString();
+            if ('' !== $bytes) {
+                return $bytes;
+            }
+        }
+
+        throw new RuntimeException('Image encoder produced an empty payload after '.self::ENCODE_ATTEMPTS.' attempts.');
     }
 
     /**
@@ -52,18 +74,26 @@ final readonly class ImageEncoder
      * concurrent reader (e.g. the static generator copying the image cache while
      * another process regenerates the same variant) never sees a partial file.
      *
-     * A transient encoder failure can yield an empty payload; promoting it would
-     * poison the cache with a 0-byte file that reads as fresh forever (broken
-     * <img>, never regenerated). Refuse it so the source stays the fallback.
+     * The bytes must reach disk intact before committing: an empty encode or a
+     * truncated write (disk full, IO error) would otherwise be renamed over a
+     * valid variant, poisoning the cache with a 0-byte file that reads as fresh
+     * forever (broken <img>, never regenerated).
+     *
+     * @param callable(): EncodedImageInterface $encode
      */
-    private function saveAtomically(EncodedImageInterface $encoded, string $outputPath): void
+    private function saveAtomically(callable $encode, string $outputPath): void
     {
-        if ('' === $encoded->toString()) {
-            throw new RuntimeException('Refusing to write an empty encoded image to '.$outputPath);
-        }
+        $bytes = $this->encodeNonEmpty($encode);
 
         $tmpPath = $outputPath.'.'.getmypid().'.'.uniqid().'.tmp';
-        $encoded->save($tmpPath);
+        $written = @file_put_contents($tmpPath, $bytes);
+
+        if (\strlen($bytes) !== $written) {
+            @unlink($tmpPath);
+
+            throw new RuntimeException(\sprintf('Encoded image write to %s was truncated (%s of %d bytes).', $outputPath, false === $written ? 'failed' : (string) $written, \strlen($bytes)));
+        }
+
         rename($tmpPath, $outputPath);
     }
 

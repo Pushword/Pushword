@@ -91,4 +91,50 @@ final class ImageEncoderTest extends TestCase
 
         self::assertSame('JPG-BYTES', new ImageEncoder()->encodeOriginalToString($image, 90, 'foo.jpg'));
     }
+
+    /**
+     * The 0-byte poison is transient (a fresh encode recovers), so a single
+     * hiccup must be retried and heal within the same run rather than skipped.
+     */
+    public function testRetriesTransientEmptyEncode(): void
+    {
+        $empty = $this->createMock(EncodedImageInterface::class);
+        $empty->method('toString')->willReturn('');
+        $full = $this->createMock(EncodedImageInterface::class);
+        $full->method('toString')->willReturn('WEBP-RECOVERED');
+
+        $image = $this->createMock(ImageInterface::class);
+        // First encode hiccups (empty), the retry recovers.
+        $image->expects(self::exactly(2))->method('encodeUsingFormat')
+            ->willReturnOnConsecutiveCalls($empty, $full);
+
+        $output = sys_get_temp_dir().'/pw-encoder-retry-'.getmypid().'.webp';
+        $fs = new Filesystem();
+        $fs->remove($output);
+
+        new ImageEncoder()->encodeWebp($image, $output, 90);
+
+        self::assertFileExists($output);
+        self::assertSame('WEBP-RECOVERED', file_get_contents($output));
+
+        $fs->remove($output);
+    }
+
+    /**
+     * Even with a valid encode, a failed disk write (here: a non-existent
+     * target directory) must throw instead of silently reporting success.
+     */
+    public function testThrowsWhenWriteFails(): void
+    {
+        $encoded = $this->createMock(EncodedImageInterface::class);
+        $encoded->method('toString')->willReturn('WEBP-BYTES');
+
+        $image = $this->createMock(ImageInterface::class);
+        $image->method('encodeUsingFormat')->willReturn($encoded);
+
+        $output = sys_get_temp_dir().'/pw-encoder-missing-dir-'.getmypid().'/out.webp';
+
+        $this->expectException(RuntimeException::class);
+        new ImageEncoder()->encodeWebp($image, $output, 90);
+    }
 }
