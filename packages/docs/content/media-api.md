@@ -64,7 +64,7 @@ Returns metadata for the given media file. Supports current filename and histori
 
 - `hash` — SHA-1 of the file content, hex-encoded. `null` if not yet computed.
 - `fileNameHistory` — previous filenames after renames.
-- `customProperties` — free-form key/value map set via the admin.
+- `customProperties` — free-form key/value map. Writable (see below); keys are merged, not replaced.
 - `image` is `null` for non-image media (PDF, video, etc.).
 
 ### POST /api/media/{filename}
@@ -80,12 +80,13 @@ Partial update — only the fields you send are modified.
 
 **Updatable fields (all optional):**
 
-| Field      | Type     | Description                                   |
-| ---------- | -------- | --------------------------------------------- |
-| `alt`      | string   | Main alt text                                 |
-| `alts`     | object   | Localized alts (`{"fr": "..."}`)              |
-| `tags`     | string[] | Tag list                                      |
-| `filename` | string   | Rename the file (old name is kept in history) |
+| Field              | Type     | Description                                            |
+| ------------------ | -------- | ------------------------------------------------------ |
+| `alt`              | string   | Main alt text                                          |
+| `alts`             | object   | Localized alts (`{"fr": "..."}`)                       |
+| `tags`             | string[] | Tag list                                               |
+| `customProperties` | object   | Custom key/value map; provided keys are merged in      |
+| `filename`         | string   | Rename the file (old name is kept in history)          |
 
 **Example:**
 
@@ -93,7 +94,7 @@ Partial update — only the fields you send are modified.
 curl -X POST \
   -H "Authorization: Bearer your-secret-token" \
   -H "Content-Type: application/json" \
-  -d '{"alt": "New alt text", "tags": ["landscape"]}' \
+  -d '{"alt": "New alt text", "tags": ["landscape"], "customProperties": {"credit": "Jane Doe"}}' \
   https://example.com/api/media/photo.jpg
 ```
 
@@ -105,12 +106,13 @@ Send the binary together with metadata. The `{filename}` in the URL is the targe
 
 **Form fields:**
 
-| Field   | Type         | Description                                                 |
-| ------- | ------------ | ----------------------------------------------------------- |
-| `file`  | file         | **Required.** The binary to upload                          |
-| `alt`   | string       | Main alt text                                               |
-| `alts`  | string       | Localized alts, JSON-encoded object (`{"fr": "…"}`)         |
-| `tags`  | string       | Tag list, JSON-encoded array (`["landscape","nature"]`)     |
+| Field              | Type   | Description                                                     |
+| ------------------ | ------ | -------------------------------------------------------------- |
+| `file`             | file   | **Required.** The binary to upload                             |
+| `alt`              | string | Main alt text                                                  |
+| `alts`             | string | Localized alts, JSON-encoded object (`{"fr": "…"}`)            |
+| `tags`             | string | Tag list, JSON-encoded array (`["landscape","nature"]`)        |
+| `customProperties` | string | Custom key/value map, JSON-encoded object (`{"credit":"…"}`)   |
 
 **Example:**
 

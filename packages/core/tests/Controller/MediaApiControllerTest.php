@@ -187,6 +187,32 @@ final class MediaApiControllerTest extends WebTestCase
         self::assertContains('logo', $response['tags']);
     }
 
+    public function testPostMergesCustomProperties(): void
+    {
+        // First write establishes a key; the second must set its own without
+        // wiping the first — the endpoint merges custom properties, not replaces.
+        $this->client->request(Request::METHOD_POST, '/api/media/piedweb-logo.png', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ], (string) json_encode(['customProperties' => ['credit' => 'Jane Doe']]));
+        self::assertResponseIsSuccessful();
+
+        $this->client->request(Request::METHOD_POST, '/api/media/piedweb-logo.png', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ], (string) json_encode(['customProperties' => ['license' => 'CC-BY']]));
+        self::assertResponseIsSuccessful();
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        $response = json_decode($content, true);
+        self::assertIsArray($response);
+        self::assertIsArray($response['customProperties']);
+        self::assertSame('Jane Doe', $response['customProperties']['credit'], 'merge must preserve pre-existing keys');
+        self::assertSame('CC-BY', $response['customProperties']['license']);
+    }
+
     public function testPostWithInvalidJsonReturns400(): void
     {
         $this->client->request(Request::METHOD_POST, '/api/media/piedweb-logo.png', [], [], [
@@ -229,6 +255,7 @@ final class MediaApiControllerTest extends WebTestCase
                 'alt' => 'Uploaded via API',
                 'alts' => (string) json_encode(['fr' => 'Envoyé via API']),
                 'tags' => (string) json_encode(['api', 'test']),
+                'customProperties' => (string) json_encode(['credit' => 'Jane Doe']),
             ],
             ['file' => $file],
             ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken],
@@ -243,6 +270,8 @@ final class MediaApiControllerTest extends WebTestCase
         self::assertIsArray($response['tags']);
         self::assertContains('api', $response['tags']);
         self::assertContains('test', $response['tags']);
+        self::assertIsArray($response['customProperties']);
+        self::assertSame('Jane Doe', $response['customProperties']['credit']);
         self::assertIsArray($response['image']);
         self::assertGreaterThan(0, $response['image']['width']);
 

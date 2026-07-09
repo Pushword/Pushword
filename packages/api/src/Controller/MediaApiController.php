@@ -158,6 +158,16 @@ final class MediaApiController extends AbstractApiController
             $media->setTags($tags);
         }
 
+        // Merge, don't replace: each provided key is set independently so a PATCH
+        // can update a single custom property without wiping the others.
+        if (\array_key_exists('customProperties', $data) && \is_array($data['customProperties'])) {
+            /** @var array<array-key, mixed> $customProperties */
+            $customProperties = $data['customProperties'];
+            foreach ($customProperties as $key => $value) {
+                $media->setCustomProperty((string) $key, $value);
+            }
+        }
+
         // Rename log: lets the importer replay the harvester's rename chain so a
         // body reference to an old/original filename still resolves via
         // MediaRepository::findOneByFileNameOrHistory(). Without this the API
@@ -221,6 +231,11 @@ final class MediaApiController extends AbstractApiController
         $fileNameHistory = $this->decodeJsonArray($request->request->get('fileNameHistory'));
         if (null !== $fileNameHistory) {
             $data['fileNameHistory'] = $fileNameHistory;
+        }
+
+        $customProperties = $this->decodeJsonArray($request->request->get('customProperties'));
+        if (null !== $customProperties) {
+            $data['customProperties'] = $customProperties;
         }
 
         return $data;
@@ -351,6 +366,7 @@ final class MediaApiController extends AbstractApiController
                                         'alt' => ['type' => 'string'],
                                         'alts' => ['type' => 'string', 'description' => 'JSON-encoded localized alts'],
                                         'tags' => ['type' => 'string', 'description' => 'JSON-encoded tag list'],
+                                        'customProperties' => ['type' => 'string', 'description' => 'JSON-encoded custom property map (merged key by key)'],
                                     ],
                                 ]],
                                 'application/json' => ['schema' => [
@@ -359,6 +375,7 @@ final class MediaApiController extends AbstractApiController
                                         'alt' => ['type' => 'string'],
                                         'alts' => ['type' => 'object'],
                                         'tags' => ['type' => 'array', 'items' => ['type' => 'string']],
+                                        'customProperties' => ['type' => 'object', 'additionalProperties' => true, 'description' => 'Custom property map; keys are merged into the existing ones (not replaced)'],
                                         'filename' => ['type' => 'string'],
                                         'rotate' => ['type' => 'integer', 'description' => 'Rotate the master image clockwise by a multiple of 90 (90, 180, 270; negative rotates counter-clockwise). Regenerates the cache.'],
                                     ],
@@ -379,6 +396,7 @@ final class MediaApiController extends AbstractApiController
                                 'alt' => ['type' => 'string'],
                                 'alts' => ['type' => 'object'],
                                 'tags' => ['type' => 'array', 'items' => ['type' => 'string']],
+                                'customProperties' => ['type' => 'object', 'additionalProperties' => true, 'description' => 'Custom property map; keys are merged into the existing ones (not replaced)'],
                                 'filename' => ['type' => 'string'],
                                 'rotate' => ['type' => 'integer', 'description' => 'Rotate the master image clockwise by a multiple of 90 (90, 180, 270; negative rotates counter-clockwise). Regenerates the cache.'],
                             ],
