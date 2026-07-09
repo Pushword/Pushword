@@ -60,7 +60,7 @@ raw: 1
       <span class="font-mono text-2xl font-light tabular-nums text-[oklch(45%_0.13_35)] leading-none pt-1">02</span>
       <div>
         <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">Cutting-edge stack</dt>
-        <dd class="text-stone-600 dark:text-stone-300">PHP 8.4, Symfony 8, Doctrine 3, Tailwind 4. Modern features, strict typing, PHPStan enforced.</dd>
+        <dd class="text-stone-600 dark:text-stone-300">PHP 8.4, Symfony 8, Doctrine 3, Tailwind 4. Modern features, PHPStan enforced.</dd>
       </div>
     </div>
 
@@ -171,22 +171,23 @@ Your content here...</pre>
       <div>
         <h3 class="text-xs font-semibold tracking-widest uppercase text-stone-500 mb-3">One anchored edit — not the whole page</h3>
         <pre class="font-mono text-xs leading-relaxed bg-stone-900 text-stone-300 rounded-md p-4 overflow-x-auto"><span class="text-[oklch(70%_0.13_35)]">PATCH</span> /api/page/example.com/pricing
+
 <span class="text-[oklch(70%_0.13_35)]">If-Match:</span> <span class="text-stone-100">66a3f1b2…</span>
 
 { <span class="text-[oklch(70%_0.13_35)]">"edits"</span>: [
-    { <span class="text-[oklch(70%_0.13_35)]">"find"</span>: <span class="text-stone-100">"From 90€"</span>, <span class="text-[oklch(70%_0.13_35)]">"replace"</span>: <span class="text-stone-100">"From 120€"</span> }
+{ <span class="text-[oklch(70%_0.13_35)]">"find"</span>: <span class="text-stone-100">"From 90€"</span>, <span class="text-[oklch(70%_0.13_35)]">"replace"</span>: <span class="text-stone-100">"From 120€"</span> }
 ] }</pre>
-      </div>
-      <div>
-        <h3 class="text-xs font-semibold tracking-widest uppercase text-stone-500 mb-3">In production today</h3>
-        <p class="text-stone-600 dark:text-stone-300 text-[15px] mb-6">
-          Real brand sites are edited entirely through this API. Marketing teams open Claude Code, type what they want in plain French or English, and every save syncs to production with optimistic locking — always staged as a draft until a human publishes.
-        </p>
-        <a href="/extension/api" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
-          Read the API reference
-        </a>
-      </div>
-    </div>
+</div>
+<div>
+<h3 class="text-xs font-semibold tracking-widest uppercase text-stone-500 mb-3">In production today</h3>
+<p class="text-stone-600 dark:text-stone-300 text-[15px] mb-6">
+Real brand sites are edited entirely through this API. Marketing teams open Claude Code, type what they want in plain French or English, and every save syncs to production with optimistic locking — always staged as a draft until a human publishes.
+</p>
+<a href="/extension/api" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
+Read the API reference
+</a>
+</div>
+</div>
   </div>
 </section>
 

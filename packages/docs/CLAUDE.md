@@ -56,7 +56,7 @@ bars, colors, PID/timing/memory chatter — far cheaper to parse. Each starts wi
 
 ### PHP conventions
 
-- PHP 8.4+ strict typing, type declarations everywhere
+- PHP 8.4+
 - `camelCase` methods/variables, `SCREAMING_SNAKE_CASE` constants
 - Fast returns, trailing commas, 4-space indent
 - PHPDoc only when necessary (Collection generics)

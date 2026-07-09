@@ -45,20 +45,20 @@ Choosing the right CMS is a critical decision that affects your project's long-t
 
 ## Content Management Features
 
-| Feature                 | Pushword                       | WordPress                | Statamic      | Sulu                |
-| ----------------------- | ------------------------------ | ------------------------ | ------------- | ------------------- |
-| **Block Editor**        | EditorJS (extensible)          | Gutenberg (React-based)  | Bard + Peak   | Content blocks      |
-| **Flat-file Support**   | Native                         | Via plugins (unreliable) | Native        | Optional            |
-| **Multi-site**          | Native                         | Multisite network        | Pro addon     | Native (Webspaces)  |
-| **i18n / Multilingual** | Native                         | Plugins (WPML, Polylang) | Native        | Native              |
-| **Page Versioning**     | Extension (diff/restore/timeline) | Revisions (basic)     | Revisions     | Native              |
-| **Publication control** | Per-page publication hold + version diffs | Plugins (PublishPress) | Workflow addon | Native (workflows) |
-| **REST API**            | Token + OpenAPI (extension)    | REST core / GraphQL plugin | REST + GraphQL (Pro) | REST (GraphQL ready) |
-| **Media Management**    | Auto-optimization (WebP)       | Basic + plugins          | Asset manager | Media bundles       |
-| **Custom Fields**       | Custom properties              | ACF / Meta Box           | Fieldsets     | Content types       |
-| **Git Integration**     | Full support (flat-file)       | Requires workarounds     | Full support  | Developer-dependent |
-| **AI Editing**          | Direct file access (no layer)  | Via API only             | Flat-file     | Via API only        |
-| **Bulk Operations**     | grep/sed/scripts               | SQL or plugins           | CLI/scripts   | SQL or custom code  |
+| Feature                 | Pushword                                  | WordPress                  | Statamic             | Sulu                 |
+| ----------------------- | ----------------------------------------- | -------------------------- | -------------------- | -------------------- |
+| **Block Editor**        | EditorJS (extensible)                     | Gutenberg (React-based)    | Bard + Peak          | Content blocks       |
+| **Flat-file Support**   | Native                                    | Via plugins (unreliable)   | Native               | Optional             |
+| **Multi-site**          | Native                                    | Multisite network          | Pro addon            | Native (Webspaces)   |
+| **i18n / Multilingual** | Native                                    | Plugins (WPML, Polylang)   | Native               | Native               |
+| **Page Versioning**     | Extension (diff/restore/timeline)         | Revisions (basic)          | Revisions            | Native               |
+| **Publication control** | Per-page publication hold + version diffs | Plugins (PublishPress)     | Workflow addon       | Native (workflows)   |
+| **REST API**            | Token + OpenAPI (extension)               | REST core / GraphQL plugin | REST + GraphQL (Pro) | REST (GraphQL ready) |
+| **Media Management**    | Auto-optimization (WebP)                  | Basic + plugins            | Asset manager        | Media bundles        |
+| **Custom Fields**       | Custom properties                         | ACF / Meta Box             | Fieldsets            | Content types        |
+| **Git Integration**     | Full support (flat-file)                  | Requires workarounds       | Full support         | Developer-dependent  |
+| **AI Editing**          | Direct file access (no layer)             | Via API only               | Flat-file            | Via API only         |
+| **Bulk Operations**     | grep/sed/scripts                          | SQL or plugins             | CLI/scripts          | SQL or custom code   |
 
 ### Analysis
 
@@ -121,18 +121,18 @@ Each plugin adds database queries and JavaScript overhead. Caching plugins (WP S
 
 ## User & Editor Experience (Non-Technical)
 
-| Aspect                    | Pushword                   | WordPress                        | Statamic                 | Sulu                      |
-| ------------------------- | -------------------------- | -------------------------------- | ------------------------ | ------------------------- |
-| **Admin UI Style**        | Clean, minimal             | Familiar, feature-rich           | Modern, elegant          | Enterprise-focused        |
-| **Editor Learning Curve** | Low–Medium                 | Very Low                         | Low                      | Medium–High               |
-| **Content Editing**       | EditorJS (modern blocks)   | Gutenberg (mature blocks)        | Bard (live preview)      | Content blocks            |
-| **Media Upload**          | Drag & drop, auto-optimize | Drag & drop                      | Drag & drop              | Structured upload         |
-| **Preview / Draft**       | Yes                        | Yes                              | Live preview (real-time) | Preview mode              |
-| **Collaborative Editing** | Publication hold + version diffs | Real-time (plugins)          | Basic                    | Advanced (workflows)      |
-| **Mobile Admin**          | Responsive                 | Native apps (Jetpack)            | Responsive               | Responsive                |
-| **Onboarding**            | Documented                 | Extensive tutorials              | Excellent                | Complex (requires setup)  |
-| **Documentation**         | Growing                    | Extensive (tutorials everywhere) | Excellent                | Good (enterprise-focused) |
-| **Support Community**     | GitHub, small community    | Forums, agencies, huge           | Laravel community        | Professional services     |
+| Aspect                    | Pushword                         | WordPress                        | Statamic                 | Sulu                      |
+| ------------------------- | -------------------------------- | -------------------------------- | ------------------------ | ------------------------- |
+| **Admin UI Style**        | Clean, minimal                   | Familiar, feature-rich           | Modern, elegant          | Enterprise-focused        |
+| **Editor Learning Curve** | Low–Medium                       | Very Low                         | Low                      | Medium–High               |
+| **Content Editing**       | EditorJS (modern blocks)         | Gutenberg (mature blocks)        | Bard (live preview)      | Content blocks            |
+| **Media Upload**          | Drag & drop, auto-optimize       | Drag & drop                      | Drag & drop              | Structured upload         |
+| **Preview / Draft**       | Yes                              | Yes                              | Live preview (real-time) | Preview mode              |
+| **Collaborative Editing** | Publication hold + version diffs | Real-time (plugins)              | Basic                    | Advanced (workflows)      |
+| **Mobile Admin**          | Responsive                       | Native apps (Jetpack)            | Responsive               | Responsive                |
+| **Onboarding**            | Documented                       | Extensive tutorials              | Excellent                | Complex (requires setup)  |
+| **Documentation**         | Growing                          | Extensive (tutorials everywhere) | Excellent                | Good (enterprise-focused) |
+| **Support Community**     | GitHub, small community          | Forums, agencies, huge           | Laravel community        | Professional services     |
 
 ### Analysis
 
@@ -192,6 +192,7 @@ A key differentiator for technical teams: **direct file access**.
 - **Scripting** content changes is straightforward—any language that reads/writes files works
 
 Example bulk operations:
+
 ```bash
 # Find all pages mentioning "old-product"
 grep -r "old-product" content/
@@ -259,7 +260,7 @@ For teams leveraging AI-assisted development workflows, this direct access is tr
 
 **Strengths**:
 
-- Modern PHP 8.4+ / Symfony 8 stack with strict typing
+- Modern PHP 8.4+ / Symfony 8 stack
 - **Zero-layer AI editing**: Content stored as plain markdown—AI tools (Cursor, Claude Code, Copilot) edit files directly without API abstraction
 - **Bulk operations for power users**: grep, sed, find/replace across hundreds of pages in seconds—no admin UI needed
 - Native multi-site and i18n without plugins
