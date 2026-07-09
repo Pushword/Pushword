@@ -22,6 +22,25 @@ final readonly class PwAuthCookieListener
 {
     public const string COOKIE_NAME = 'pw_auth';
 
+    /**
+     * Single source of truth for the `pw_auth` cookie attributes, shared with
+     * {@see PwAuthCookieHealListener} so the login-time write and the heal-time
+     * write can never drift apart.
+     *
+     * Left as a browser-session cookie (no expiry): auth-vs-cookie mismatches are
+     * healed on the next authenticated request by PwAuthCookieHealListener, so a
+     * persistent expiry would only save one heal Set-Cookie per browser session
+     * while duplicating the remember-me lifetime in a second place.
+     */
+    public static function createAuthCookie(bool $secure): Cookie
+    {
+        return Cookie::create(self::COOKIE_NAME, '1')
+            ->withPath('/')
+            ->withSameSite(Cookie::SAMESITE_LAX)
+            ->withHttpOnly(false)
+            ->withSecure($secure);
+    }
+
     #[AsEventListener(event: LoginSuccessEvent::class)]
     public function onLoginSuccess(LoginSuccessEvent $event): void
     {
@@ -30,13 +49,7 @@ final readonly class PwAuthCookieListener
             return;
         }
 
-        $response->headers->setCookie(
-            Cookie::create(self::COOKIE_NAME, '1')
-                ->withPath('/')
-                ->withSameSite(Cookie::SAMESITE_LAX)
-                ->withHttpOnly(false)
-                ->withSecure($event->getRequest()->isSecure()),
-        );
+        $response->headers->setCookie(self::createAuthCookie($event->getRequest()->isSecure()));
     }
 
     #[AsEventListener(event: LogoutEvent::class)]
