@@ -164,23 +164,16 @@ export abstract class AbstractMediaTool extends BaseTool {
       'cdx-input-editable',
       'cdx-input-gallery',
     ])
+    // Multi-select already covers picking a single media, so when it is available
+    // it backs the "Select" button and the redundant single-select button is dropped.
+    const selectHandler = this.onMultiSelectFile ?? this.onSelectFile
     const selectButton = make.element('div', [this.api.styles.button])
     selectButton.innerHTML = SelectIcon + ' ' + this.api.i18n.t('Select')
 
     selectButton.addEventListener('click', (event: Event) => {
-      this.onSelectFile(this, event)
+      selectHandler(this, event)
     })
     buttonWrapper.appendChild(selectButton)
-
-    if (this.onMultiSelectFile) {
-      const multiSelectButton = make.element('div', [this.api.styles.button])
-      multiSelectButton.innerHTML = SelectIcon + ' ' + this.api.i18n.t('Multi-select')
-      multiSelectButton.style.marginLeft = '-2px'
-      multiSelectButton.addEventListener('click', (event: Event) => {
-        this.onMultiSelectFile!(this, event)
-      })
-      buttonWrapper.appendChild(multiSelectButton)
-    }
 
     const uploadButton = make.element('div', [this.api.styles.button])
 
