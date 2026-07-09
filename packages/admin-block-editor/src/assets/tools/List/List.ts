@@ -52,9 +52,12 @@ export default class List extends ListTool {
   static importFromMarkdown(editor: API, markdown: string): void {
     const result = MarkdownUtils.parseTunesFromMarkdown(markdown)
     const tunes: BlockTuneData = result.tunes
-    let markdownWithoutTunes = result.markdown
-    markdownWithoutTunes = MarkdownUtils.convertInlineMarkdownToHtml(markdownWithoutTunes)
+    const markdownWithoutTunes = result.markdown
 
+    // Split on raw newlines first: converting the whole block to HTML upfront
+    // would turn every newline into <br> and collapse a "tight" list (items on
+    // consecutive lines, no blank line between) into a single item. Inline
+    // markdown is converted per item content below instead.
     const lines = markdownWithoutTunes.split('\n')
 
     const rootItems: any[] = []
@@ -83,7 +86,8 @@ export default class List extends ListTool {
           throw new Error('isItMarkdownExported not worked as expected')
         }
         // This is a continuation of the current item
-        currentItem.content += '<br>' + trimmedLine
+        currentItem.content +=
+          '<br>' + MarkdownUtils.convertInlineMarkdownToHtml(trimmedLine)
         continue
       }
 
@@ -91,7 +95,8 @@ export default class List extends ListTool {
       const isCurrentOrdered = orderedMatch !== null
 
       // @ts-ignore
-      const content: string = orderedMatch ? orderedMatch[2] : unorderedMatch[1]
+      const rawContent: string = orderedMatch ? orderedMatch[2] : unorderedMatch[1]
+      const content: string = MarkdownUtils.convertInlineMarkdownToHtml(rawContent)
 
       // first item permits to set isOrdered
       if (isOrdered === null) {
