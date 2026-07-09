@@ -110,6 +110,21 @@ final class RouterTest extends KernelTestCase
         self::assertFalse($router->mayUseCustomPath('pushword.piedweb.com'));
     }
 
+    public function testResetRestoresUseCustomHostPath(): void
+    {
+        self::bootKernel();
+        $router = $this->makeRouter();
+
+        // A synchronous static regeneration disables the custom host path; the worker
+        // request boundary (kernel.reset) must restore the default for the next request.
+        $router->setUseCustomHostPath(false);
+        self::assertFalse($router->mayUseCustomPath('pushword.piedweb.com'));
+
+        $router->reset();
+
+        self::assertTrue($router->mayUseCustomPath('pushword.piedweb.com'));
+    }
+
     public function testGenerateUsesSimpleRouteWhenDirectAccessOnSameHost(): void
     {
         self::bootKernel();

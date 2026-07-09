@@ -5,9 +5,10 @@ namespace Pushword\Core\Router;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Routing\RouterInterface as SfRouterInterface;
+use Symfony\Contracts\Service\ResetInterface;
 use Twig\Attribute\AsTwigFunction;
 
-final class PushwordRouteGenerator
+final class PushwordRouteGenerator implements ResetInterface
 {
     public const string PATH = 'pushword_page';
 
@@ -130,6 +131,17 @@ final class PushwordRouteGenerator
         $this->useCustomHostPath = $useCustomHostPath;
 
         return $this;
+    }
+
+    /**
+     * Worker-mode safety (kernel.reset): restore the default so a synchronous
+     * static regeneration during a request (AbstractGenerator sets this to false)
+     * never leaks into the next request served by the same worker — which would
+     * render every link without its /{host}/ prefix, like the static site.
+     */
+    public function reset(): void
+    {
+        $this->useCustomHostPath = true;
     }
 
     /**

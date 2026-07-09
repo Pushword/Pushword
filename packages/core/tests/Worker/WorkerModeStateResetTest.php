@@ -12,6 +12,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\EventListener\PageListener;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
+use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
 use ReflectionObject;
@@ -190,6 +191,29 @@ final class WorkerModeStateResetTest extends KernelTestCase
         self::assertFalse(
             PageListener::$skipSlugChangeDetection,
             'worker mode: a leftover skip-slug-detection flag must not disable redirects globally',
+        );
+    }
+
+    public function testRouteGeneratorCustomHostPathDoesNotLeakAcrossRequests(): void
+    {
+        self::bootKernel();
+
+        /** @var PushwordRouteGenerator $router */
+        $router = self::getContainer()->get(PushwordRouteGenerator::class);
+
+        // --- Request A: a synchronous static regeneration (triggered by a save on a
+        // static host) constructs AbstractGenerator, which flips this shared flag to
+        // false so links render without the /{host}/ prefix, like the static site. ---
+        $router->setUseCustomHostPath(false);
+        self::assertFalse($router->mayUseCustomPath('a-custom-host.dev'));
+
+        // --- The worker boundary. Without kernel.reset the flag stays false and every
+        // later request served by this worker loses its /{host}/ prefix. ---
+        $this->simulateWorkerRequestBoundary();
+
+        self::assertTrue(
+            $router->mayUseCustomPath('a-custom-host.dev'),
+            'worker mode: a static regeneration must not leave links stripped of their /{host}/ prefix for the next request',
         );
     }
 
