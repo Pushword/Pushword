@@ -64,7 +64,7 @@ Returns metadata for the given media file. Supports current filename and histori
 
 - `hash` — SHA-1 of the file content, hex-encoded. `null` if not yet computed.
 - `fileNameHistory` — previous filenames after renames.
-- `customProperties` — free-form key/value map. Writable (see below); keys are merged, not replaced.
+- `customProperties` — free-form key/value map. Writable (see below); keys are merged, not replaced, and a `null` value removes a key.
 - `image` is `null` for non-image media (PDF, video, etc.).
 
 ### POST /api/media/{filename}
@@ -85,7 +85,7 @@ Partial update — only the fields you send are modified.
 | `alt`              | string   | Main alt text                                          |
 | `alts`             | object   | Localized alts (`{"fr": "..."}`)                       |
 | `tags`             | string[] | Tag list                                               |
-| `customProperties` | object   | Custom key/value map; provided keys are merged in      |
+| `customProperties` | object   | Custom key/value map; keys are merged in, `null` removes a key |
 | `filename`         | string   | Rename the file (old name is kept in history)          |
 
 **Example:**

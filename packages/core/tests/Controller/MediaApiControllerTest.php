@@ -213,6 +213,31 @@ final class MediaApiControllerTest extends WebTestCase
         self::assertSame('CC-BY', $response['customProperties']['license']);
     }
 
+    public function testPostRemovesCustomPropertyWithNull(): void
+    {
+        $this->client->request(Request::METHOD_POST, '/api/media/piedweb-logo.png', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ], (string) json_encode(['customProperties' => ['temporary' => 'x', 'kept' => 'y']]));
+        self::assertResponseIsSuccessful();
+
+        // A null value removes just that key (JSON Merge Patch), leaving the rest.
+        $this->client->request(Request::METHOD_POST, '/api/media/piedweb-logo.png', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ], (string) json_encode(['customProperties' => ['temporary' => null]]));
+        self::assertResponseIsSuccessful();
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        $response = json_decode($content, true);
+        self::assertIsArray($response);
+        self::assertIsArray($response['customProperties']);
+        self::assertArrayNotHasKey('temporary', $response['customProperties'], 'null must remove the key');
+        self::assertSame('y', $response['customProperties']['kept'], 'other keys must survive the removal');
+    }
+
     public function testPostWithInvalidJsonReturns400(): void
     {
         $this->client->request(Request::METHOD_POST, '/api/media/piedweb-logo.png', [], [], [
