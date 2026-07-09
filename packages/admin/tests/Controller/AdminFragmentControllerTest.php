@@ -57,4 +57,24 @@ final class AdminFragmentControllerTest extends AbstractAdminTestClass
         self::assertResponseIsSuccessful();
         self::assertNotEmpty((string) $client->getResponse()->getContent());
     }
+
+    /**
+     * The "list" button must reproduce the applied-filter format EasyAdmin expects
+     * (plural `filters`, a `comparison`, and a scalar `value`) — the same one the
+     * admin host menu emits. The former singular/array format silently filtered
+     * nothing. Page 1 lives on host "localhost.dev".
+     */
+    public function testPageButtonsListLinkUsesWorkingHostFilterFormat(): void
+    {
+        $client = $this->loginUser();
+
+        $client->request(Request::METHOD_GET, '/admin/fragment/page-buttons/1');
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $client->getResponse()->getContent();
+
+        self::assertStringContainsString('filters%5Bhost%5D%5Bcomparison%5D=%3D', $content);
+        self::assertStringContainsString('filters%5Bhost%5D%5Bvalue%5D=localhost.dev', $content);
+        self::assertStringNotContainsString('filter%5Bhost%5D%5Bvalue%5D%5B%5D', $content);
+    }
 }

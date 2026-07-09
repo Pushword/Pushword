@@ -66,7 +66,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
 
     private function getHostFromFilter(): ?string
     {
-        // based on filter : /edit?filter[host][value][0]=localhost.dev
+        // based on filter : /admin/page?filters[host][comparison]==&filters[host][value]=localhost.dev
         $currentRequest = $this->getRequest();
 
         if (null === $currentRequest) {
