@@ -41,12 +41,20 @@ abstract class AbstractGenerator implements GeneratorInterface
         protected SiteRegistry $apps,
     ) {
         $this->filesystem = new Filesystem();
+        // Defensive: this kernel's router is used in-process by RedirectionManager
+        // to compute the static redirect map, whose "from" paths must stay host-less
+        // (no /{host}/ prefix). mayUseCustomPath() already forces that here (it is
+        // called with no host argument and no current page), so this is belt-and-
+        // suspenders — but PushwordRouteGenerator::reset() still restores the flag
+        // per request so a synchronous cache-mode regen never leaks it into a live one.
         $this->router->setUseCustomHostPath(false);
         $this->publicDir = $params->get('pw.public_dir');
 
         static::loadKernel($kernel);
         $this->kernel = $kernel;
 
+        // The sub-kernel renders the page HTML itself (saveAsStatic → getKernel()->handle());
+        // its own router must likewise drop the prefix. Distinct instance, not a duplicate.
         $newKernelRouter = static::getKernel()->getContainer()->get(PushwordRouteGenerator::class);
         $newKernelRouter->setUseCustomHostPath(false);
 

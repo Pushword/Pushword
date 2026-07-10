@@ -469,6 +469,38 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertSame(308, $code);
     }
 
+    /**
+     * The static redirect map is served from the host root, so its "from"/"to"
+     * paths must never carry a /{host}/ prefix — even on a non-default host. This
+     * host-less output is what AbstractGenerator's setUseCustomHostPath(false) aims
+     * to guarantee (belt-and-suspenders: PushwordRouteGenerator::mayUseCustomPath()
+     * also drops the prefix here because RedirectionManager generates with no host
+     * argument and no current page).
+     */
+    public function testRedirectFromPathsAreHostLessOnNonDefaultHost(): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        self::getContainer()->get(SiteRegistry::class)->switchSite('pushword.piedweb.com');
+
+        /** @var RedirectionManager $redirectionManager */
+        $redirectionManager = $this->getGeneratorBag()->get(RedirectionManager::class);
+        $redirectionManager->reset();
+
+        $page = new Page(false);
+        $page->host = 'pushword.piedweb.com';
+        $page->setSlug('redirect-dest-test');
+        $page->setMainContent('content');
+        $page->setRedirectFrom(['old-incoming' => 308]);
+
+        $redirectionManager->addRedirectFrom($page);
+
+        [$from, $to] = $redirectionManager->get()[0];
+        self::assertStringStartsWith('/old-incoming', $from);
+        self::assertStringNotContainsString('pushword.piedweb.com', $from);
+        self::assertStringNotContainsString('pushword.piedweb.com', $to);
+    }
+
     public function testGenerateCNAME(): void
     {
         self::bootKernel();
