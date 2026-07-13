@@ -8,6 +8,7 @@ use Iterator;
 use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Api\Service\InvalidFrontmatterException;
 use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Core\Entity\Page;
 use Pushword\Flat\Converter\PublishedAtConverter;
@@ -209,6 +210,47 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         $this->mapper->applyFrontmatter($page, ['mainImageFormat' => 2]);
 
         self::assertSame(2, $page->getCustomProperty('mainImageFormat'));
+    }
+
+    public function testTopLevelConverterManagedPropertyResolvesHumanName(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+
+        // The None format's label is the symbol "∅"; the human name "None" (the
+        // key suffix) must still resolve to its integer value, case-insensitively.
+        $this->mapper->applyFrontmatter($page, ['mainImageFormat' => 'None']);
+        self::assertSame(1, $page->getCustomProperty('mainImageFormat'));
+
+        $this->mapper->applyFrontmatter($page, ['mainImageFormat' => 'none']);
+        self::assertSame(1, $page->getCustomProperty('mainImageFormat'));
+    }
+
+    public function testTopLevelConverterManagedPropertyRejectsUnknownValue(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+
+        // Neither a label, a translation key, a number nor a known human name, so
+        // it cannot resolve to the integer-backed mainImageFormat. Rejected here
+        // so the API returns 422 instead of storing a string that crashes the
+        // int-typed hero render.
+        $this->expectException(InvalidFrontmatterException::class);
+        $this->mapper->applyFrontmatter($page, ['mainImageFormat' => 'banana']);
+    }
+
+    public function testTopLevelConverterManagedPropertyNullIsSkipped(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+
+        // An explicit null is "unset", not an invalid value: skip it silently
+        // rather than rejecting it as an unresolvable value.
+        $this->mapper->applyFrontmatter($page, ['mainImageFormat' => null]);
+        self::assertNull($page->getCustomProperty('mainImageFormat'));
     }
 
     public function testUnknownTopLevelKeyIsIgnored(): void

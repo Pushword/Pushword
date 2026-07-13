@@ -111,6 +111,83 @@ final class PageApiControllerTest extends WebTestCase
         $this->createdPageIds[] = $this->lookupPageId($host, $body['slug']);
     }
 
+    public function testCreatePageRejectsUnresolvableConverterValueWith422(): void
+    {
+        // "banana" is not a mainImageFormat label, key, number or human name, so
+        // it cannot resolve to the integer-backed property. It must be rejected at
+        // the boundary rather than stored as a string that crashes the render.
+        $host = 'api-test-'.uniqid().'.example.com';
+        $slug = 'about-'.uniqid();
+        $response = $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => $slug, 'h1' => 'About', 'locale' => 'en', 'mainImageFormat' => 'banana'],
+            'body' => '# Hi',
+        ]);
+
+        self::assertSame(422, $response->getStatusCode());
+        $body = $this->decode();
+        self::assertSame('invalid_frontmatter', $body['error']);
+        self::assertSame('mainImageFormat', $body['key']);
+
+        // The invalid payload persisted nothing.
+        self::assertSame(404, $this->request('GET', '/api/page/'.$host.'/'.$slug)->getStatusCode());
+    }
+
+    public function testPutRejectsUnresolvableConverterValueWith422(): void
+    {
+        // The 422 guard also covers the update path, not just create.
+        [$host, $slug] = $this->createTestPage(['publishedAt' => null]);
+        $revision = $this->currentRevision($host, $slug);
+
+        $response = $this->request('PUT', '/api/page/'.$host.'/'.$slug, [
+            'frontmatter' => ['mainImageFormat' => 'banana'],
+        ], ['HTTP_IF_MATCH' => $revision]);
+
+        self::assertSame(422, $response->getStatusCode());
+        $body = $this->decode();
+        self::assertSame('invalid_frontmatter', $body['error']);
+        self::assertSame('mainImageFormat', $body['key']);
+    }
+
+    public function testCreatePageAcceptsHumanNamedConverterValue(): void
+    {
+        // The None format's label is the symbol "∅"; a client sending the obvious
+        // word "None" must resolve to its integer value (1), not be rejected.
+        $host = 'api-test-'.uniqid().'.example.com';
+        $slug = 'none-'.uniqid();
+        $response = $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => $slug, 'h1' => 'No hero', 'locale' => 'en', 'mainImageFormat' => 'None'],
+            'body' => '# Hi',
+        ]);
+
+        self::assertSame(201, $response->getStatusCode());
+        $this->createdPageIds[] = $this->lookupPageId($host, $slug);
+
+        $this->request('GET', '/api/page/'.$host.'/'.$slug);
+        $fresh = $this->decode();
+        self::assertIsArray($fresh['frontmatter']);
+        self::assertIsArray($fresh['frontmatter']['customProperties']);
+        self::assertSame(1, $fresh['frontmatter']['customProperties']['mainImageFormat']);
+    }
+
+    public function testCreatePageAcceptsValidConverterValue(): void
+    {
+        $host = 'api-test-'.uniqid().'.example.com';
+        $slug = 'hero-'.uniqid();
+        $response = $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => $slug, 'h1' => 'Hero', 'locale' => 'en', 'mainImageFormat' => 2],
+            'body' => '# Hi',
+        ]);
+
+        self::assertSame(201, $response->getStatusCode());
+        $this->createdPageIds[] = $this->lookupPageId($host, $slug);
+
+        $this->request('GET', '/api/page/'.$host.'/'.$slug);
+        $fresh = $this->decode();
+        self::assertIsArray($fresh['frontmatter']);
+        self::assertIsArray($fresh['frontmatter']['customProperties']);
+        self::assertSame(2, $fresh['frontmatter']['customProperties']['mainImageFormat']);
+    }
+
     public function testGetPageRoundtrips(): void
     {
         [$host, $slug] = $this->createTestPage();

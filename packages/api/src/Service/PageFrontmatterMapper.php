@@ -177,10 +177,20 @@ final readonly class PageFrontmatterMapper
                 }
 
                 $converted = $this->converterRegistry->fromFlatValue($key, $value);
-                if (null !== $converted) {
-                    $page->setCustomProperty($key, $converted);
-                    $page->registerManagedPropertyKey($key);
+                if (null === $converted) {
+                    // A non-null input the converter cannot resolve (e.g. an
+                    // unknown mainImageFormat label) is an invalid value, not an
+                    // unset one — reject it so the client gets a 422 instead of
+                    // a stored string that crashes the int-typed render.
+                    if (null !== $value) {
+                        throw new InvalidFrontmatterException($key, $value);
+                    }
+
+                    continue;
                 }
+
+                $page->setCustomProperty($key, $converted);
+                $page->registerManagedPropertyKey($key);
             }
         }
     }

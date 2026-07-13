@@ -1397,7 +1397,11 @@ MD;
         $page->locale = 'en';
         $page->setMainContent('Content');
         $page->setPublishedAt(new DateTime());
-        $page->setCustomProperty('mainImageFormat', 'default');
+        // A plain (non-converter-managed) custom property: it must round-trip
+        // verbatim. mainImageFormat is deliberately not used here — it is an
+        // integer-backed converter property whose round-trip is covered by
+        // testMainImageFormatConverterExportImport.
+        $page->setCustomProperty('layoutVariant', 'default');
         $page->setCustomProperty('customField', 'customValue');
         $page->setCustomProperty('numberProp', 42);
 
@@ -1416,7 +1420,7 @@ MD;
         $mdContent = file_get_contents($mdFilePath);
 
         // Custom properties should be at top level, not under customProperties:
-        self::assertStringContainsString('mainImageFormat: default', $mdContent, 'mainImageFormat should be at top level');
+        self::assertStringContainsString('layoutVariant: default', $mdContent, 'layoutVariant should be at top level');
         self::assertStringContainsString('customField: customValue', $mdContent, 'customField should be at top level');
         self::assertStringContainsString('numberProp: 42', $mdContent, 'numberProp should be at top level');
         self::assertStringNotContainsString('customProperties:', $mdContent, 'Should not have nested customProperties key');
@@ -1437,7 +1441,7 @@ MD;
         self::assertNotNull($importedPage, 'Page should be recreated');
 
         // Verify custom properties
-        self::assertSame('default', $importedPage->getCustomProperty('mainImageFormat'), 'mainImageFormat should be imported');
+        self::assertSame('default', $importedPage->getCustomProperty('layoutVariant'), 'layoutVariant should be imported');
         self::assertSame('customValue', $importedPage->getCustomProperty('customField'), 'customField should be imported');
         self::assertSame(42, $importedPage->getCustomProperty('numberProp'), 'numberProp should be imported');
 

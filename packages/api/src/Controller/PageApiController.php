@@ -6,6 +6,7 @@ use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Api\Service\BodyPatcher;
 use Pushword\Api\Service\BodyPatchException;
+use Pushword\Api\Service\InvalidFrontmatterException;
 use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
@@ -126,7 +127,11 @@ final class PageApiController extends AbstractApiController
         $page = new Page();
         $page->setSlug($slug);
 
-        $this->mapper->applyFrontmatter($page, $frontmatter);
+        $error = $this->applyFrontmatterOrError($page, $frontmatter);
+        if (null !== $error) {
+            return $error;
+        }
+
         if (null !== $body) {
             $page->setMainContent($body);
         }
@@ -268,7 +273,11 @@ final class PageApiController extends AbstractApiController
      */
     private function applyAndRespond(Page $page, array $frontmatter, ?string $body, Request $request): JsonResponse
     {
-        $this->mapper->applyFrontmatter($page, $frontmatter);
+        $error = $this->applyFrontmatterOrError($page, $frontmatter);
+        if (null !== $error) {
+            return $error;
+        }
+
         if (null !== $body) {
             $page->setMainContent($body);
         }
@@ -288,6 +297,28 @@ final class PageApiController extends AbstractApiController
             fn (): array => $this->buildPagePayload($page),
             $this->revisions->compute($page),
         );
+    }
+
+    /**
+     * Apply frontmatter, turning a rejected converter-backed value (e.g. an
+     * unknown mainImageFormat label) into a 422 instead of letting the invalid
+     * value reach the entity and crash at render time. Returns null on success.
+     *
+     * @param array<string, mixed> $frontmatter
+     */
+    private function applyFrontmatterOrError(Page $page, array $frontmatter): ?JsonResponse
+    {
+        try {
+            $this->mapper->applyFrontmatter($page, $frontmatter);
+        } catch (InvalidFrontmatterException $invalidFrontmatterException) {
+            return $this->respond([
+                'error' => 'invalid_frontmatter',
+                'key' => $invalidFrontmatterException->key,
+                'message' => $invalidFrontmatterException->getMessage(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return null;
     }
 
     private function doDelete(Page $page): JsonResponse

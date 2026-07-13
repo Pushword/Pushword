@@ -12,6 +12,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final readonly class MainImageFormatConverter implements FlatPropertyConverterInterface
 {
+    /**
+     * Shared prefix of the default format translation keys
+     * (adminPageMainImageFormatNone, …). The suffix is the format's human name.
+     */
+    private const string TRANSLATION_KEY_PREFIX = 'adminPageMainImageFormat';
+
     public function __construct(
         private SiteRegistry $apps,
         private TranslatorInterface $translator,
@@ -64,7 +70,28 @@ final readonly class MainImageFormatConverter implements FlatPropertyConverterIn
             return (int) $value;
         }
 
-        return $value;
+        // Fourth: accept the format's human name — the key suffix after the
+        // standard prefix (e.g. "None" for adminPageMainImageFormatNone). This
+        // makes the obvious word work even when the translated label is a symbol
+        // like ∅; without it "None" would be rejected while "Normal" (whose label
+        // happens to be the word) worked, an inconsistency for API/flat clients.
+        $needle = strtolower($value);
+        foreach ($formats as $translationKey => $intValue) {
+            if (! str_starts_with($translationKey, self::TRANSLATION_KEY_PREFIX)) {
+                continue;
+            }
+
+            $name = substr($translationKey, \strlen(self::TRANSLATION_KEY_PREFIX));
+            if ('' !== $name && strtolower($name) === $needle) {
+                return $intValue;
+            }
+        }
+
+        // Unresolvable string: this property is integer-backed, so a value that
+        // matches no label, key or number is invalid. Return null rather than
+        // the raw string — callers skip null (flat import) or reject it (API),
+        // instead of storing a string that crashes the int-typed hero render.
+        return null;
     }
 
     /**
