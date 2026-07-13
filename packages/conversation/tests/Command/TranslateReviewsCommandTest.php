@@ -68,9 +68,11 @@ final class TranslateReviewsCommandTest extends KernelTestCase
         // target_lang=EN (dummy) and reads detected_source_language; the real translation uses
         // target_lang=FR and reads translations[0].text. One callback serves both.
         $container->set('http_client', new MockHttpClient(static function (string $method, string $url, array $options): MockResponse {
-            $body = json_decode(\is_string($options['body'] ?? null) ? $options['body'] : '{}', true);
-            $target = \is_array($body) && \is_string($body['target_lang'] ?? null) ? $body['target_lang'] : '';
-            $text = \is_array($body) && isset($body['text'][0]) && \is_string($body['text'][0]) ? $body['text'][0] : '';
+            $decoded = json_decode(\is_string($options['body'] ?? null) ? $options['body'] : '{}', true);
+            $body = \is_array($decoded) ? $decoded : [];
+            $target = \is_string($body['target_lang'] ?? null) ? $body['target_lang'] : '';
+            $textList = \is_array($body['text'] ?? null) ? $body['text'] : [];
+            $text = \is_string($textList[0] ?? null) ? $textList[0] : '';
 
             $payload = 'FR' === $target
                 ? ['translations' => [['text' => 'FR::'.$text]]]
@@ -93,6 +95,7 @@ final class TranslateReviewsCommandTest extends KernelTestCase
         $toTranslate->setRating(5);
         $toTranslate->setReferring('/trip');
         $toTranslate->setContent('A wonderful trip along the river.');
+
         $em->persist($toTranslate);
 
         // Already translated to FR → must be skipped, not overwritten or re-requested.
@@ -103,9 +106,11 @@ final class TranslateReviewsCommandTest extends KernelTestCase
         $alreadyTranslated->setContent('Another great trip.');
         $alreadyTranslated->locale = 'en';
         $alreadyTranslated->setTranslation('fr', null, 'déjà traduit');
+
         $em->persist($alreadyTranslated);
 
         $em->flush();
+
         $this->createdReviewIds = [(int) $toTranslate->id, (int) $alreadyTranslated->id];
 
         $commandTester = $this->runTranslateCommand([
