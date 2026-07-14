@@ -21,6 +21,20 @@ use Symfony\Component\Yaml\Yaml;
  */
 final readonly class PageFrontmatterMapper
 {
+    /**
+     * Top-level frontmatter keys with dedicated handling below (recognized
+     * columns/associations plus the export-only `revision` stamp). A key in this
+     * list is never treated as a bare custom property by the fallback loop.
+     *
+     * @var string[]
+     */
+    private const array RESERVED_FRONTMATTER_KEYS = [
+        'h1', 'title', 'name', 'metaRobots', 'host', 'locale', 'template',
+        'editMessage', 'slug', 'weight', 'tags', 'redirectFrom', 'publishedAt',
+        'holdPublication', 'mainImage', 'parentPage', 'variantOf', 'customCanonical',
+        'translations', 'customProperties', 'revision',
+    ];
+
     public function __construct(
         private PageRepository $pageRepository,
         private MediaRepository $mediaRepository,
@@ -192,6 +206,32 @@ final readonly class PageFrontmatterMapper
                 $page->setCustomProperty($key, $converted);
                 $page->registerManagedPropertyKey($key);
             }
+        }
+
+        // Any remaining top-level key that is neither a recognized column nor a
+        // converter-backed managed property is a bare custom property in the
+        // on-disk frontmatter shape: the flat exporter unpacks customProperties
+        // to the top level (e.g. searchExcerpt, targetKeyword, toc), so a payload
+        // built from a .md snapshot arrives with those keys flattened. Mirror the
+        // flat-file importer and route them into customProperties instead of
+        // dropping them, so the snapshot round-trips through the API without
+        // silent data loss. property_exists() keeps real declared columns (e.g.
+        // extendedPage, holdPublicationAt) out of customProperties.
+        foreach ($frontmatter as $key => $value) {
+            if (\in_array($key, self::RESERVED_FRONTMATTER_KEYS, true)) {
+                continue;
+            }
+            if (str_starts_with($key, 'customProperty.')) {
+                continue;
+            }
+            if (property_exists($page, $key)) {
+                continue;
+            }
+            if (null !== $this->converterRegistry && $this->converterRegistry->hasConverter($key)) {
+                continue;
+            }
+            $page->setCustomProperty($key, $value);
+            $page->registerManagedPropertyKey($key);
         }
     }
 

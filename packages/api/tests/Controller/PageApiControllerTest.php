@@ -291,6 +291,33 @@ final class PageApiControllerTest extends WebTestCase
         self::assertSame(['productCode' => 'ABC-123'], $fresh['frontmatter']['customProperties']);
     }
 
+    public function testPutWithBareTopLevelCustomPropertyKeysPersistsThem(): void
+    {
+        // Regression: the flat exporter unpacks customProperties to bare top-level
+        // frontmatter keys, so an editor that PUTs a payload built from a .md
+        // snapshot sends e.g. searchExcerpt/targetKeyword flat. They used to be
+        // silently dropped (only converter-backed keys like mainImageFormat
+        // survived); they must now round-trip into customProperties.
+        [$host, $slug, $revision] = $this->createTestPage();
+
+        $response = $this->request('PUT', '/api/page/'.$host.'/'.$slug, [
+            'frontmatter' => [
+                'h1' => 'About us',
+                'searchExcerpt' => 'A short SEO summary.',
+                'targetKeyword' => 'about us',
+            ],
+        ], ['HTTP_IF_MATCH' => $revision]);
+        self::assertSame(200, $response->getStatusCode());
+
+        $this->request('GET', '/api/page/'.$host.'/'.$slug);
+        $fresh = $this->decode();
+        self::assertIsArray($fresh['frontmatter']);
+        self::assertSame('About us', $fresh['frontmatter']['h1']);
+        self::assertIsArray($fresh['frontmatter']['customProperties']);
+        self::assertSame('A short SEO summary.', $fresh['frontmatter']['customProperties']['searchExcerpt']);
+        self::assertSame('about us', $fresh['frontmatter']['customProperties']['targetKeyword']);
+    }
+
     public function testPreviewRendersMarkdown(): void
     {
         $this->request('POST', '/api/page/preview', [

@@ -253,17 +253,59 @@ final class PageFrontmatterMapperTest extends KernelTestCase
         self::assertNull($page->getCustomProperty('mainImageFormat'));
     }
 
-    public function testUnknownTopLevelKeyIsIgnored(): void
+    public function testBareTopLevelCustomPropertyKeysRoundTripFromFlatSnapshot(): void
     {
         $page = new Page();
         $page->host = 'example.com';
         $page->setSlug('about');
 
-        // A top-level key without a converter must not slip into custom properties:
-        // the allowlist stays strict; custom data goes through customProperty.* only.
-        $this->mapper->applyFrontmatter($page, ['notAColumn' => 'value']);
+        // The flat exporter unpacks customProperties to the top level, so a payload
+        // built from a .md snapshot arrives with bare keys (no customProperty.*
+        // prefix, no customProperties nesting). Both a managed key (searchExcerpt,
+        // which has a dedicated getter) and an arbitrary unmanaged one (targetKeyword)
+        // must survive the round-trip instead of being silently dropped.
+        $this->mapper->applyFrontmatter($page, [
+            'h1' => 'About',
+            'searchExcerpt' => 'A short SEO summary.',
+            'targetKeyword' => 'about us',
+            'toc' => true,
+        ]);
 
-        self::assertNull($page->getCustomProperty('notAColumn'));
+        self::assertSame('About', $page->getH1()); // recognized column still applied
+        self::assertSame('A short SEO summary.', $page->getCustomProperty('searchExcerpt'));
+        self::assertSame('A short SEO summary.', $page->getSearchExcerpt());
+        self::assertSame('about us', $page->getCustomProperty('targetKeyword'));
+        self::assertTrue($page->getCustomProperty('toc'));
+    }
+
+    public function testExportOnlyRevisionStampIsNotStoredAsCustomProperty(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+
+        // Every exported .md carries a read-only `revision:` stamp; an editor that
+        // PUTs the snapshot's frontmatter verbatim includes it. It is the ETag
+        // value, not page data — the reserved-keys guard must keep it out of
+        // customProperties (storing it would also churn the computed revision).
+        $this->mapper->applyFrontmatter($page, ['h1' => 'About', 'revision' => 'abc123']);
+
+        self::assertNull($page->getCustomProperty('revision'));
+        self::assertSame([], $page->getCustomProperties());
+    }
+
+    public function testRealEntityColumnIsNotMisroutedToCustomProperties(): void
+    {
+        $page = new Page();
+        $page->host = 'example.com';
+        $page->setSlug('about');
+
+        // holdPublicationAt is a real declared column the flat exporter can emit at
+        // the top level; property_exists() must keep it out of customProperties so
+        // it is not stored as a stray string key.
+        $this->mapper->applyFrontmatter($page, ['holdPublicationAt' => '2026-01-01 00:00']);
+
+        self::assertNull($page->getCustomProperty('holdPublicationAt'));
     }
 
     public function testSummaryReturnsLightProjection(): void
