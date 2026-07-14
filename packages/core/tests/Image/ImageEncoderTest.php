@@ -44,10 +44,8 @@ final class ImageEncoderTest extends TestCase
     {
         $encoded = $this->createMock(EncodedImageInterface::class);
         $encoded->method('toString')->willReturn('WEBP-BYTES');
-        $encoded->method('save')->willReturnCallback(static function (string $path) use (&$encoded): EncodedImageInterface {
+        $encoded->method('save')->willReturnCallback(static function (string $path): void {
             file_put_contents($path, 'WEBP-BYTES');
-
-            return $encoded;
         });
 
         $image = $this->createMock(ImageInterface::class);
