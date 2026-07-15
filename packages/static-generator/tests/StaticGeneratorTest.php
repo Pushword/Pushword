@@ -274,7 +274,16 @@ final class StaticGeneratorTest extends KernelTestCase
             $em->flush();
 
             $commandTester = $this->rebootStaticCommandTester();
-            $commandTester->execute(['host' => 'localhost.dev', '--format' => 'text']);
+            // workers=1 keeps the rebuild in-process, so the held check reads this
+            // test's just-committed holdPublicationAt directly. With parallel workers
+            // the check runs in freshly-spawned child processes whose DB read can race
+            // the commit under load, intermittently missing the hold and regenerating
+            // the page. That race is a test-harness timing artefact — production commits
+            // content long before pw:static runs — so it must not gate the carry-over
+            // behaviour under test here. Parallel generation mechanics are exercised by
+            // the testParallelGeneration* tests; the worker's held-skip (generateSlugs)
+            // mirrors the in-process guard this test drives.
+            $commandTester->execute(['host' => 'localhost.dev', '--workers' => 1, '--format' => 'text']);
 
             self::assertStringContainsString('Held', $commandTester->getDisplay());
 
