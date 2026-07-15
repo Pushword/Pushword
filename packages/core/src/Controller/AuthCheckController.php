@@ -4,6 +4,7 @@ namespace Pushword\Core\Controller;
 
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -25,6 +26,12 @@ final readonly class AuthCheckController
         $authenticated = $this->security->isGranted('IS_AUTHENTICATED_FULLY');
         $response = new Response('', $authenticated ? Response::HTTP_NO_CONTENT : Response::HTTP_UNAUTHORIZED);
         $response->headers->set('Cache-Control', 'no-store, private');
+
+        // Reading the auth token marks the session as used (here, and again in
+        // PwAuthCookieHealListener on the same response), which would otherwise let
+        // Symfony's AbstractSessionListener prepend "max-age=0, must-revalidate,
+        // private" to the Cache-Control set above. Opt out to keep it verbatim.
+        $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
 
         return $response;
     }

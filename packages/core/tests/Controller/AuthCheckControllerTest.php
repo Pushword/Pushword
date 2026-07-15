@@ -25,7 +25,11 @@ final class AuthCheckControllerTest extends WebTestCase
     {
         $this->client->request(Request::METHOD_GET, '/_pushword/auth-check');
 
-        self::assertSame(Response::HTTP_UNAUTHORIZED, $this->client->getResponse()->getStatusCode());
+        $response = $this->client->getResponse();
+        self::assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode());
+        // The endpoint exposes per-visitor auth state, so neither the 401 nor the
+        // 204 may ever be stored by a shared cache.
+        self::assertSame('no-store, private', $response->headers->get('Cache-Control'));
     }
 
     public function testAuthenticatedVisitorGets204(): void
@@ -37,6 +41,10 @@ final class AuthCheckControllerTest extends WebTestCase
 
         $response = $this->client->getResponse();
         self::assertSame(Response::HTTP_NO_CONTENT, $response->getStatusCode());
+        // Exact header: the controller opts out of Symfony's session auto
+        // cache-control (AbstractSessionListener), which would otherwise prepend
+        // "max-age=0, must-revalidate, private" once the session is read to resolve
+        // auth (and again by PwAuthCookieHealListener). Guards that opt-out.
         self::assertSame('no-store, private', $response->headers->get('Cache-Control'));
     }
 
