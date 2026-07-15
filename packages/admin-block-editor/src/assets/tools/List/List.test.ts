@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import List from './List'
 
 type CapturedList = { style: string; items: any[] }

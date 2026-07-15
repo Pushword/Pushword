@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import Raw from './Raw'
-// @ts-expect-error untyped JS module from the admin-monaco-editor package
 import MonacoHelper from '../../../../../admin-monaco-editor/MonacoHelper.js'
 
 type Listener = () => void
