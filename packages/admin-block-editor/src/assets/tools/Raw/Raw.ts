@@ -108,8 +108,10 @@ export default class Raw extends BaseTool {
           const monacoHelperInstance = new window.monacoHelper!(this.editorInstance)
 
           monacoHelperInstance.updateHeight(this.wrapper)
-          this.editorInstance.onDidChangeModelContent(() => {
+          this.editorInstance.onDidContentSizeChange(() => {
             monacoHelperInstance.updateHeight(this.wrapper!)
+          })
+          this.editorInstance.onDidChangeModelContent(() => {
             monacoHelperInstance.autocloseTag()
           })
         } catch (error) {

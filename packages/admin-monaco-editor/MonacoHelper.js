@@ -75,9 +75,12 @@ export default class MonacoHelper {
 
     const monacoHelperInstance = new MonacoHelper(editor)
 
+    editor.onDidContentSizeChange(() => {
+      monacoHelperInstance.updateHeight(textarea)
+    })
+
     editor.onDidChangeModelContent(() => {
       textarea.value = editor.getValue()
-      monacoHelperInstance.updateHeight(textarea)
     })
 
     textarea.style.opacity = 0
@@ -149,12 +152,8 @@ export default class MonacoHelper {
    * @param {int} minHeight  in PX
    */
   updateHeight(wrapperOrTextarea, minHeight = 60) {
-    const model = this.editor.getModel()
-    if (!model) return
-    const lineCount = model.getLineCount()
-    const lineHeight = 21 // Hauteur approximative d'une ligne dans Monaco
-
-    const newHeight = Math.max(lineCount * lineHeight + 10, minHeight)
+    // getContentHeight() counts wrapped lines (wordWrap: 'on'), unlike getLineCount()
+    const newHeight = Math.max(this.editor.getContentHeight() + 10, minHeight)
     wrapperOrTextarea.style.height = `${newHeight}px`
     wrapperOrTextarea.style.width = `100%`
     this.resizeEditor(wrapperOrTextarea)

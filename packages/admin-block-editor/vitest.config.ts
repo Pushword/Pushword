@@ -12,6 +12,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src/assets'),
+      'monaco-editor': resolve(__dirname, 'src/test/monaco-editor-stub.ts'),
     },
   },
 })
