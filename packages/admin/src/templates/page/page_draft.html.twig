@@ -1,12 +1,14 @@
 <div class="pw-draft-toggle d-flex align-items-center gap-2">
-  <label class="form-check form-switch mb-0" id="pw-draft-toggle-wrapper">
+  <span class="ea-switch" id="pw-draft-toggle-wrapper">
     <input
       type="checkbox"
-      class="form-check-input"
+      role="switch"
+      class="ea-switch-input"
       id="pw-draft-toggle-switch"
       data-target-input="Page_publishedAt"
     >
-  </label>
+    <span class="ea-switch-track" aria-hidden="true"><span class="ea-switch-thumb"></span></span>
+  </span>
   <small class="text-muted mb-0" id="pw-draft-toggle-status">
     —
   </small>
@@ -49,16 +51,16 @@
   function updateToggleColor() {
     if (!toggleWrapper) return;
 
-    toggleWrapper.classList.remove('pw-published-online', 'pw-scheduled');
+    toggleWrapper.classList.remove('ea-switch-success', 'ea-switch-warning');
 
     if (!toggleSwitch.checked) return;
 
     const date = new Date(targetInput.value);
     const now = new Date();
     if (date > now) {
-      toggleWrapper.classList.add('pw-scheduled');
+      toggleWrapper.classList.add('ea-switch-warning');
     } else {
-      toggleWrapper.classList.add('pw-published-online');
+      toggleWrapper.classList.add('ea-switch-success');
     }
   }
 

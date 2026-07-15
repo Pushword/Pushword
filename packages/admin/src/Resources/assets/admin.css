@@ -284,16 +284,6 @@ body.pw-inline-window .wrapper {
   --sidebar-max-width: 0;
 }
 
-/* Published toggle colors */
-.pw-published-online .form-check-input:checked {
-  background-color: #22c55e;
-  border-color: #16a34a;
-}
-.pw-scheduled .form-check-input:checked {
-  background-color: #f59e0b;
-  border-color: #d97706;
-}
-
 /* ============================================
    Accessibility: Focus Management (WCAG 2.4.7)
    ============================================ */
