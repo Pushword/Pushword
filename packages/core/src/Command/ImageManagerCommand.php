@@ -47,7 +47,7 @@ final class ImageManagerCommand
         OutputInterface $output,
         #[Option(description: 'Force regeneration even if cache is fresh', name: 'force', shortcut: 'f')]
         bool $force = false,
-        #[Option(description: 'Number of parallel workers (0 = auto, 1 = sequential)', name: 'parallel', shortcut: 'p')]
+        #[Option(description: 'Number of parallel workers (0 = auto: a quarter of the CPU cores, 1 = sequential)', name: 'parallel', shortcut: 'p')]
         int $parallel = 0,
         #[Option(description: 'Skip lock (internal use by parallel workers)', name: 'no-lock')]
         bool $noLock = false,
@@ -85,7 +85,11 @@ final class ImageManagerCommand
                 ? $this->resolveMediaNames($mediaName)
                 : $this->mediaRepository->findAll();
 
-            $workers = $parallel > 0 ? $parallel : $this->detectCpuCount();
+            // Auto (0): use a quarter of the cores (min 1). Each worker already decodes the
+            // full master through vips (memory-heavy) AND spawns a background pw:image:optimize
+            // whose cwebp runs with -mt (all cores), so one worker per core oversubscribes
+            // CPU/RAM and OOM-kills encodes on large images. Override with -p when needed.
+            $workers = $parallel > 0 ? $parallel : max(1, intdiv($this->detectCpuCount(), 4));
 
             if (null === $mediaName && $workers > 1) {
                 if (! $this->agentMode) {

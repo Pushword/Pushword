@@ -74,6 +74,23 @@ final class MediaCacheControllerTest extends WebTestCase
         @unlink($webpPath);
     }
 
+    public function testRegeneratesEmptyVariantInsteadOfServingIt(): void
+    {
+        $cacheManager = self::getContainer()->get(ImageCacheManager::class);
+        $webpPath = $cacheManager->getFilterPath('piedweb-logo.png', 'md', 'webp');
+
+        // A poisoned cache entry: a 0-byte variant left by a failed encode/optimize.
+        $filesystem = new Filesystem();
+        $filesystem->mkdir(\dirname($webpPath));
+        $filesystem->dumpFile($webpPath, '');
+
+        $this->client->request(Request::METHOD_GET, '/media/md/piedweb-logo.webp');
+
+        // It must be rebuilt and served with real bytes, never as HTTP 200 / Content-Length: 0.
+        self::assertResponseIsSuccessful();
+        self::assertGreaterThan(0, (int) filesize($webpPath), 'The empty variant must be regenerated, not served');
+    }
+
     public function testUnknownFilterReturns404(): void
     {
         $this->client->request(Request::METHOD_GET, '/media/notafilter/piedweb-logo.webp');

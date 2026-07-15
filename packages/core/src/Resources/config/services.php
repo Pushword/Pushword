@@ -19,8 +19,10 @@ use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\Core\Twig\OAuthExtension;
+use Pushword\Core\Utils\ImageOptimizer\OptimizerChainFactory;
 use SensioLabs\AnsiConverter\AnsiToHtmlConverter;
 use SensioLabs\AnsiConverter\Bridge\Twig\AnsiExtension;
+use Spatie\ImageOptimizer\OptimizerChain;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -96,6 +98,11 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // See who to avoid limit for this one too
     $services->set(VichUploadPropertyNamer::class)
         ->public();
+
+    // Spatie image optimizer chain (injected into ImageOptimizer so the optimize
+    // path can be exercised in tests with a controllable chain).
+    $services->set(OptimizerChain::class)
+        ->factory([OptimizerChainFactory::class, 'create']);
 
     $services->set(PushwordCoreBundle::class);
     $services->set(StringLoaderExtension::class);

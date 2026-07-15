@@ -3,18 +3,16 @@
 namespace Pushword\Core\Image;
 
 use Pushword\Core\Entity\Media;
-use Pushword\Core\Utils\ImageOptimizer\OptimizerChainFactory;
 use Spatie\ImageOptimizer\OptimizerChain;
+use Throwable;
 
 final readonly class ImageOptimizer
 {
-    private OptimizerChain $optimizer;
-
     public function __construct(
         private ImageCacheManager $imageCacheManager,
         private ImageCacheGenerator $imageCacheGenerator,
+        private OptimizerChain $optimizer,
     ) {
-        $this->optimizer = OptimizerChainFactory::create();
     }
 
     public function optimize(Media $media): void
@@ -29,30 +27,65 @@ final readonly class ImageOptimizer
         /** @var string[] $formats */
         $formats = $this->imageCacheManager->getFilterSets()[$filterName]['formats'] ?? ['original', 'webp'];
 
-        $formatExtensions = [];
+        $extensions = [];
         foreach ($formats as $format) {
-            $extension = 'original' === $format ? null : $format;
-            $formatExtensions[$format] = $extension;
+            $extensions[] = 'original' === $format ? null : $format;
         }
 
-        $needsGeneration = false;
-        foreach ($formatExtensions as $extension) {
-            if (! file_exists($this->imageCacheManager->getFilterPath($media, $filterName, $extension))) {
-                $needsGeneration = true;
+        // Regenerate when a variant is missing OR poisoned (0-byte): a previously
+        // truncated derivative must be rebuilt before we try to optimize it.
+        foreach ($extensions as $extension) {
+            if (! $this->isUsable($this->imageCacheManager->getFilterPath($media, $filterName, $extension))) {
+                $this->imageCacheGenerator->generateFilteredCache($media, $filterName);
 
                 break;
             }
         }
 
-        if ($needsGeneration) {
-            $this->imageCacheGenerator->generateFilteredCache($media, $filterName);
-        }
-
-        foreach ($formatExtensions as $extension) {
+        foreach ($extensions as $extension) {
             $path = $this->imageCacheManager->getFilterPath($media, $filterName, $extension);
-            if (file_exists($path)) {
-                $this->optimizer->optimize($path);
+            if ($this->isUsable($path)) {
+                $this->optimizeAtomically($path);
             }
         }
+    }
+
+    /**
+     * Optimize a variant into a throwaway copy, then atomically swap it into place
+     * only when the result is a complete, decodable image.
+     *
+     * The Spatie optimizers shell out to external binaries (cwebp, mozjpeg, …) that
+     * rewrite their target in place and truncate it at open. A process killed
+     * mid-encode — OOM or the per-optimizer timeout, worst on large variants under
+     * parallel batch load plus on-demand traffic — would otherwise leave the live
+     * derivative at 0 bytes, served as a broken image forever. Isolating the write
+     * keeps the valid file untouched until a good result is ready.
+     */
+    private function optimizeAtomically(string $path): void
+    {
+        $tmpPath = $path.'.opt-'.getmypid().'.'.uniqid().'.tmp';
+
+        try {
+            $this->optimizer->optimize($path, $tmpPath);
+
+            if ($this->isUsable($tmpPath) && false !== @getimagesize($tmpPath)) {
+                rename($tmpPath, $path);
+            }
+        } catch (Throwable) {
+            // Optimizer failed (binary killed/timed out): keep the valid, unoptimized derivative.
+        } finally {
+            if (is_file($tmpPath)) {
+                @unlink($tmpPath);
+            }
+        }
+    }
+
+    /**
+     * A variant is usable only when it exists AND is non-empty; a 0-byte file
+     * (a truncated encode) counts as missing so it is rebuilt, never optimized.
+     */
+    private function isUsable(string $path): bool
+    {
+        return is_file($path) && 0 < (@filesize($path) ?: 0);
     }
 }

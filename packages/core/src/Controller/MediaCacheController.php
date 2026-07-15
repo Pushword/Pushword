@@ -52,8 +52,11 @@ final class MediaCacheController extends AbstractController
         $extension = strtolower(pathinfo($fileName, \PATHINFO_EXTENSION));
         $filePath = $this->imageCacheManager->getFilterPath($media, $filter, 'webp' === $extension ? 'webp' : null);
 
-        // Already produced by the background job (or a concurrent request): serve it.
-        if (is_file($filePath)) {
+        // Already produced by the background job (or a concurrent request): serve it —
+        // but only when it is a real, non-empty file. A 0-byte variant (a poisoned cache
+        // entry left by a failed encode/optimize) must be treated as missing and rebuilt,
+        // never served as HTTP 200 with Content-Length: 0 (a broken <img> the CDN caches).
+        if ($this->isUsable($filePath)) {
             return new BinaryFileResponse($filePath);
         }
 
@@ -61,11 +64,23 @@ final class MediaCacheController extends AbstractController
         // are served statically by the web server.
         $this->imageCacheGenerator->generateFilteredCache($media, $filter);
 
-        if (! is_file($filePath)) {
+        if (! $this->isUsable($filePath)) {
             throw $this->createNotFoundException();
         }
 
         return new BinaryFileResponse($filePath);
+    }
+
+    /**
+     * A cached variant is usable only when it exists AND is non-empty. A 0-byte file
+     * counts as missing so it is regenerated instead of served broken.
+     *
+     * @phpstan-impure Reads the filesystem: the same path flips from empty to usable
+     *                 once generateFilteredCache() has written the variant.
+     */
+    private function isUsable(string $path): bool
+    {
+        return is_file($path) && 0 < (@filesize($path) ?: 0);
     }
 
     /**

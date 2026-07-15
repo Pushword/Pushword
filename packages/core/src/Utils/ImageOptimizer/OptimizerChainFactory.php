@@ -28,6 +28,11 @@ class OptimizerChainFactory
         $otpimizerChain->addOptimizer(new Gifsicle(['-b', '-O3']));
         $otpimizerChain->addOptimizer(new Cwebp(['-m 6', '-pass 10', '-mt', '-q 80']));
 
+        // Surface optimizer failures (a killed/timed-out binary) as exceptions instead
+        // of swallowing them: the caller optimizes into a throwaway copy and must know
+        // when the process died so it never swaps a truncated result over a valid file.
+        $otpimizerChain->throws();
+
         return $otpimizerChain;
     }
 }
