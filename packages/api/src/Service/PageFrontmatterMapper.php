@@ -221,15 +221,19 @@ final readonly class PageFrontmatterMapper
             if (\in_array($key, self::RESERVED_FRONTMATTER_KEYS, true)) {
                 continue;
             }
+
             if (str_starts_with($key, 'customProperty.')) {
                 continue;
             }
+
             if (property_exists($page, $key)) {
                 continue;
             }
+
             if (null !== $this->converterRegistry && $this->converterRegistry->hasConverter($key)) {
                 continue;
             }
+
             $page->setCustomProperty($key, $value);
             $page->registerManagedPropertyKey($key);
         }
