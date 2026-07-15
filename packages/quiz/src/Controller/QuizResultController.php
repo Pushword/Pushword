@@ -4,11 +4,13 @@ namespace Pushword\Quiz\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Quiz\Entity\QuizResult;
+use Pushword\Quiz\Event\QuizCompletedEvent;
 use Pushword\Quiz\Repository\QuizResultRepository;
 
 use function Safe\json_decode;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,6 +26,7 @@ final class QuizResultController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly QuizResultRepository $repository,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -60,6 +63,10 @@ final class QuizResultController extends AbstractController
 
         $host = $this->resolveHost($request);
 
+        // Chosen answers ride the event only — never persisted on the anonymous
+        // QuizResult. A listener may keep them against a known (logged-in) visitor.
+        $answers = $this->parseAnswers($data['answers'] ?? null);
+
         // Personality test: a chosen profile key instead of a numeric score.
         $profileRaw = $data['result'] ?? null;
         $profile = \is_string($profileRaw) ? trim($profileRaw) : '';
@@ -78,6 +85,8 @@ final class QuizResultController extends AbstractController
 
             $this->entityManager->persist($entity);
             $this->entityManager->flush();
+
+            $this->eventDispatcher->dispatch(new QuizCompletedEvent($host, $quiz, 'profile', $profile, null, $answers));
 
             return $this->json(['share' => $share]);
         }
@@ -99,7 +108,42 @@ final class QuizResultController extends AbstractController
         $this->entityManager->persist($result);
         $this->entityManager->flush();
 
+        $this->eventDispatcher->dispatch(new QuizCompletedEvent($host, $quiz, 'quiz', null, $score, $answers));
+
         return $this->json(['percentile' => $percentile]);
+    }
+
+    /**
+     * The visitor's chosen answers, tolerant of shape and bounded in size — an
+     * optional enrichment payload, absent on legacy/static clients.
+     *
+     * @return list<array{q: string, a: string}>
+     */
+    private function parseAnswers(mixed $raw): array
+    {
+        if (! \is_array($raw)) {
+            return [];
+        }
+
+        $answers = [];
+        foreach ($raw as $entry) {
+            if (! \is_array($entry)) {
+                continue;
+            }
+
+            $q = \is_string($entry['q'] ?? null) ? trim($entry['q']) : '';
+            $a = \is_string($entry['a'] ?? null) ? trim($entry['a']) : '';
+            if ('' === $q && '' === $a) {
+                continue;
+            }
+
+            $answers[] = ['q' => mb_substr($q, 0, 500), 'a' => mb_substr($a, 0, 500)];
+            if (\count($answers) >= 50) {
+                break;
+            }
+        }
+
+        return $answers;
     }
 
     /**

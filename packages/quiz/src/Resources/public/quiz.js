@@ -103,6 +103,7 @@
     var answered = 0
     var score = 0
     var scores = {} // profile mode: tallied weights per profile key
+    var chosenAnswers = [] // {q, a} per answered question — optional enrichment for a logged-in visitor
 
     questions.forEach(function (q, idx) {
       if (idx > 0) q.setAttribute('data-locked', '1')
@@ -118,6 +119,13 @@
     function answer(q, idx, chosen, buttons) {
       q.setAttribute('data-answered', '1')
       q.classList.add('pw-quiz-q--answered')
+
+      var qText = q.querySelector('.pw-quiz-question')
+      var aText = chosen.querySelector('.pw-quiz-a-text')
+      chosenAnswers.push({
+        q: qText ? qText.textContent.trim() : '',
+        a: (aText ? aText.textContent : chosen.textContent).trim(),
+      })
 
       if (profileMode) {
         // No right or wrong: each answer tallies weights toward one or more profiles.
@@ -166,7 +174,7 @@
       if (scoreBox) scoreBox.innerHTML = buildScoreHtml(pct, score, total, config)
       if (resultBox) softScroll(resultBox)
 
-      submitResult(root.getAttribute('data-slug'), pct, scoreBox, config)
+      submitResult(root.getAttribute('data-slug'), pct, scoreBox, config, chosenAnswers)
       maybeShowCta(root, 'quizScore=' + pct)
       maybeOfferNextLevel(scoreBox, pct, config, levelCtx)
     }
@@ -189,7 +197,7 @@
       }
       if (resultBox) softScroll(resultBox)
 
-      submitProfileResult(root.getAttribute('data-slug'), winner, scoreBox, config)
+      submitProfileResult(root.getAttribute('data-slug'), winner, scoreBox, config, chosenAnswers)
       maybeShowCta(root, 'quizProfile=' + encodeURIComponent(winner || ''))
     }
   }
@@ -291,7 +299,7 @@
     )
   }
 
-  function submitResult(slug, pct, scoreBox, config) {
+  function submitResult(slug, pct, scoreBox, config, answers) {
     if (!slug || !scoreBox || !window.fetch) return
     var line = scoreBox.querySelector('.pw-quiz-percentile')
 
@@ -300,7 +308,7 @@
     // reads the raw JSON body regardless.
     fetch(resultEndpoint(config), {
       method: 'POST',
-      body: JSON.stringify({ quiz: slug, score: pct }),
+      body: JSON.stringify({ quiz: slug, score: pct, answers: answers || [] }),
     })
       .then(function (r) {
         return r.ok ? r.json() : null
@@ -316,12 +324,12 @@
   }
 
   // Personality mode: record the chosen profile and show how common it is.
-  function submitProfileResult(slug, result, scoreBox, config) {
+  function submitProfileResult(slug, result, scoreBox, config, answers) {
     if (!slug || !result || !scoreBox || !window.fetch) return
 
     fetch(resultEndpoint(config), {
       method: 'POST',
-      body: JSON.stringify({ quiz: slug, result: result }),
+      body: JSON.stringify({ quiz: slug, result: result, answers: answers || [] }),
     })
       .then(function (r) {
         return r.ok ? r.json() : null
