@@ -501,6 +501,97 @@ final class StaticGeneratorTest extends KernelTestCase
         self::assertStringNotContainsString('pushword.piedweb.com', $to);
     }
 
+    /**
+     * Regression guard for the parallel/worker static-generation link bug.
+     *
+     * A brand static host is served from its own root, so every internal link a
+     * rendered page carries must be host-less (`/slug`, never `/{host}/slug`). The
+     * /{host}/ prefix is produced by PushwordRouteGenerator when useCustomHostPath is
+     * on; AbstractGenerator turns it off once, in its constructor. But the generator
+     * implements ResetInterface, so under a long-lived worker the framework's
+     * services_resetter runs reset() between page renders and flips it back on. A
+     * worker renders many pages, so only the *first* stayed host-less — every later
+     * page re-prefixed its links with /{host}/ and 404'd on the live static host.
+     * saveAsStatic must therefore re-assert the flag before *every* render.
+     *
+     * In production the worker resets the very kernel that renders the page; here the
+     * generator renders through its own sub-kernel (AbstractGenerator::$appKernel), so
+     * we reset that kernel's services_resetter — the faithful boundary. Without the
+     * per-render re-assert the probe page renders href="/pushword.piedweb.com/installation".
+     */
+    public function testWorkerResetBetweenRendersKeepsLinksHostLess(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get('doctrine.orm.default_entity_manager');
+
+        // The render sub-kernel (KernelTrait::$appKernel) is a process-wide singleton
+        // that accumulates state across tests. Start from a fresh one so this test's
+        // worker-reset simulation is deterministic whether run alone or in the suite.
+        AbstractGenerator::$appKernel = null;
+
+        // A real, persisted page on a NON-default host: localhost.dev is the default
+        // host (prefix suppressed regardless of the flag), and an id-less page 500s in
+        // the page-buttons fragment — so persist a real pushword.piedweb.com page.
+        $probe = new Page(false);
+        $probe->host = 'pushword.piedweb.com';
+        $probe->setSlug('worker-reset-probe');
+        $probe->locale = 'en';
+        $probe->setH1('Worker reset probe');
+        $probe->setMainContent('Probe body.');
+        $probe->createdAt = new DateTime('2 days ago');
+
+        $em->persist($probe);
+        $em->flush();
+
+        try {
+            // Constructor sets useCustomHostPath=false on the render kernel's router.
+            $generator = $this->getGenerator(PagesGenerator::class);
+            self::assertInstanceOf(PageGenerator::class, $generator);
+
+            // The exact boundary a long-lived worker crosses between page renders:
+            // services_resetter runs PushwordRouteGenerator::reset() on the SAME kernel
+            // that renders the HTML (getGenerator() just booted it), flipping the
+            // /{host}/ prefix back on.
+            AbstractGenerator::getKernel()->getContainer()->get('services_resetter')->reset();
+
+            $container->get(SiteRegistry::class)->switchSite('pushword.piedweb.com');
+            new ReflectionMethod(AbstractGenerator::class, 'init')->invoke($generator, 'pushword.piedweb.com');
+            $page = $container->get(PageRepository::class)
+                ->findOneBy(['host' => 'pushword.piedweb.com', 'slug' => 'worker-reset-probe']);
+            self::assertNotNull($page);
+
+            $destination = $this->getStaticDir().'/worker-reset-regression.html';
+            new ReflectionMethod(PageGenerator::class, 'saveAsStatic')
+                ->invoke($generator, $generator->generateLivePathFor($page), $destination, $page);
+
+            self::assertFileExists(
+                $destination,
+                'page must render 200 (errors: '.implode(' | ', $this->getStaticAppGenerator()->getErrors()).')',
+            );
+            $html = (string) file_get_contents($destination);
+
+            // The bug's fingerprint: a root-relative link that begins with the host
+            // segment — href="/pushword.piedweb.com/…". Distinct from the legitimate
+            // absolute canonical href="https://pushword.piedweb.com/…".
+            self::assertStringNotContainsString(
+                'href="/pushword.piedweb.com',
+                $html,
+                'internal links must not carry the /{host}/ prefix on a static host',
+            );
+            // Non-vacuity: a page()-built nav link rendered host-less.
+            self::assertStringContainsString('href="/installation"', $html);
+        } finally {
+            $resetEm = self::getContainer()->get('doctrine.orm.default_entity_manager');
+            $planted = self::getContainer()->get(PageRepository::class)
+                ->findOneBy(['host' => 'pushword.piedweb.com', 'slug' => 'worker-reset-probe']);
+            if (null !== $planted) {
+                $resetEm->remove($planted);
+                $resetEm->flush();
+            }
+        }
+    }
+
     public function testGenerateCNAME(): void
     {
         self::bootKernel();

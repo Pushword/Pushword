@@ -29,6 +29,14 @@ abstract class AbstractGenerator implements GeneratorInterface
 
     protected StaticAppGenerator $staticAppGenerator;
 
+    /**
+     * The render kernel's own PushwordRouteGenerator — the instance that page()
+     * resolves through while saveAsStatic() renders the HTML. Captured so it can be
+     * re-asserted host-less before every render (a long-lived worker's
+     * services_resetter flips the flag back between pages).
+     */
+    protected PushwordRouteGenerator $renderRouter;
+
     private ?string $staticDirOverride = null;
 
     public function __construct(
@@ -55,8 +63,10 @@ abstract class AbstractGenerator implements GeneratorInterface
 
         // The sub-kernel renders the page HTML itself (saveAsStatic → getKernel()->handle());
         // its own router must likewise drop the prefix. Distinct instance, not a duplicate.
-        $newKernelRouter = static::getKernel()->getContainer()->get(PushwordRouteGenerator::class);
-        $newKernelRouter->setUseCustomHostPath(false);
+        // saveAsStatic re-asserts this per render (a worker's services_resetter flips it
+        // back between pages), so this constructor set is just the initial state.
+        $this->renderRouter = static::getKernel()->getContainer()->get(PushwordRouteGenerator::class);
+        $this->renderRouter->setUseCustomHostPath(false);
 
         foreach ($this->apps->getAll() as $site) {
             $site->isStatic = true;

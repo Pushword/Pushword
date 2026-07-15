@@ -104,6 +104,15 @@ class PageGenerator extends AbstractGenerator
             $request->attributes->set('_pushword_page', $page);
         }
 
+        // Re-assert host-less link generation before every render. The constructor
+        // sets this once, but under a long-lived worker the framework's
+        // services_resetter runs PushwordRouteGenerator::reset() between requests,
+        // flipping useCustomHostPath back to true — which would re-prefix every
+        // internal link with /{host}/ and 404 on the brand static host. Only the
+        // first page a worker renders would be correct otherwise. This is the same
+        // render-kernel router instance the handle() below resolves page() through.
+        $this->renderRouter->setUseCustomHostPath(false);
+
         $stopwatch?->start('kernel.handle');
         $response = static::getKernel()->handle($request);
         $stopwatch?->stop('kernel.handle');
