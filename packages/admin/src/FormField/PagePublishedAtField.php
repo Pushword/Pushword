@@ -21,7 +21,6 @@ class PagePublishedAtField extends AbstractField
             'label' => 'adminPagePublishedAtLabel',
             'help' => $this->getHelp(),
             'help_html' => true,
-            'attr' => ['data-selector' => 'publishedAtToDraft'],
         ]);
     }
 
