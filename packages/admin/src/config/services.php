@@ -24,9 +24,11 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autowire()
         ->autoconfigure();
 
-    // PageEditLockManager configuration
+    // Locks live in the configured runtime state dir, not a hardcoded var/: tests
+    // point pushword.var_dir at a per-worker dir, so lock files (keyed by page id)
+    // don't collide with each other or with a running dev app.
     $services->set(PageEditLockManager::class)
-        ->arg('$varDir', '%kernel.project_dir%/var');
+        ->arg('$varDir', '%pw.var_dir%');
 
     $services->alias(AdminContextProviderInterface::class, AdminContextProvider::class);
 };

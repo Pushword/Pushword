@@ -55,40 +55,85 @@ export interface QuizData extends BlockToolData {
   levels?: QuizData[]
 }
 
-const LABEL_DEFAULTS: Record<string, string> = {
-  question: 'Question',
-  questions: 'questions',
-  explanation: 'Explanation',
-  score: 'Your score:',
-  better: 'Better than {p}% of participants',
-}
+/** The three shapes a quiz block can take; `levels`/`profile` are mutually exclusive by construction. */
+type QuizMode = 'quiz' | 'levels' | 'profile'
+
+/**
+ * Every UI word a quiz may override, with the English default it otherwise falls
+ * back to, and the modes it means anything in. All of them get an input: `save()`
+ * rebuilds `labels` from these alone, so a key without one would be dropped.
+ */
+const LABELS: { key: string; placeholder: string; only?: QuizMode[] }[] = [
+  { key: 'question', placeholder: 'Question' },
+  { key: 'questions', placeholder: 'questions' },
+  { key: 'explanation', placeholder: 'Explanation' },
+  { key: 'score', placeholder: 'Your score:', only: ['quiz', 'levels'] },
+  { key: 'better', placeholder: 'Better than {p}% of participants', only: ['quiz', 'levels'] },
+  { key: 'level', placeholder: 'Level', only: ['levels'] },
+  { key: 'nextLevel', placeholder: 'Next level', only: ['levels'] },
+  { key: 'profile', placeholder: 'Your profile:', only: ['profile'] },
+  { key: 'share', placeholder: '{p}% got the same profile', only: ['profile'] },
+]
 
 /**
  * Editor for the quiz block: add/remove questions and answers, flag the correct
  * answer(s), attach an image or video, write the explanation. Exports a
  * `{% quiz %}…{% endquiz %}` block with pretty-printed raw JSON, and imports both
  * that and the legacy `{{ quiz('…') }}` form.
+ *
+ * In `profile` mode the profiles are declared *above* the questions — they are the
+ * vocabulary the answers then point at, through chips rather than typed keys.
  */
 export default class Quiz extends BaseTool {
   declare public data: QuizData
+  private conversationTypes: string[] = []
+  private ctaListId = ''
   private wrapper!: HTMLElement
   private singleSection!: HTMLElement
   private levelsSection!: HTMLElement
   private levelsList!: HTMLElement
   private profilesSection!: HTMLElement
-  private levelsToggle!: HTMLInputElement
-  private profileToggle!: HTMLInputElement
-  private levelsMode = false
-  private profileMode = false
+  private profilesList!: HTMLElement
+  private modeSelect!: HTMLSelectElement
+  private mode: QuizMode = 'quiz'
+  private pidSeq = 0
   private mediaPickerMessageHandler: ((event: MessageEvent) => void) | null = null
+
+  /**
+   * A chip cycles through 1…W_MAX points. Heavier weights stay reachable from
+   * hand-written JSON for the odd answer that must count double: they render as
+   * their own `×N` chip and survive an edit untouched.
+   */
+  private static readonly W_MAX = 3
+
+  /** Each block needs its own datalist to point at. */
+  private static listSeq = 0
+
+  private get profileMode(): boolean {
+    return 'profile' === this.mode
+  }
+
+  private get levelsMode(): boolean {
+    return 'levels' === this.mode
+  }
 
   public static toolbox = {
     title: 'Quiz',
     icon: ToolboxIcon,
   }
 
-  constructor({ data, api, readOnly }: { data: QuizData; api: API; readOnly: boolean }) {
+  constructor({
+    data,
+    api,
+    readOnly,
+    config,
+  }: { data: QuizData; api: API; readOnly: boolean; config?: { conversationTypes?: string[] } }) {
     super({ data, api, readOnly })
+
+    // Contributed by the quiz bundle's editor tool provider (the form types this
+    // site actually declares). Absent when the conversation bundle is not installed.
+    this.conversationTypes = Array.isArray(config?.conversationTypes) ? config.conversationTypes : []
+    this.ctaListId = 'cdx-quiz-cta-' + String(++Quiz.listSeq)
 
     const questions =
       Array.isArray(data.questions) && data.questions.length > 0
@@ -109,8 +154,7 @@ export default class Quiz extends BaseTool {
       questions,
       levels: Array.isArray(data.levels) ? data.levels : [],
     }
-    this.levelsMode = (this.data.levels || []).length > 0
-    this.profileMode = 'profile' === this.data.mode
+    this.mode = 'profile' === this.data.mode ? 'profile' : ((this.data.levels || []).length > 0 ? 'levels' : 'quiz')
   }
 
   public render(): HTMLElement {
@@ -121,65 +165,54 @@ export default class Quiz extends BaseTool {
 
     const meta = make.element('div', 'cdx-quiz__meta')
     meta.appendChild(this.inputEl('cdx-quiz__title', 'Title', this.data.title || ''))
-    const feedback = make.element('select', ['cdx-quiz__feedback']) as HTMLSelectElement
+    const feedback = make.element('select', ['cdx-quiz__feedback'], {
+      'aria-label': 'When to reveal the answer',
+    }) as HTMLSelectElement
     make.option(feedback, 'immediate', 'immediate')
     make.option(feedback, 'end', 'end')
     feedback.value = this.data.feedback || 'immediate'
     meta.appendChild(feedback)
-    const numbering = make.element('select', ['cdx-quiz__numbering']) as HTMLSelectElement
+    const numbering = make.element('select', ['cdx-quiz__numbering'], {
+      'aria-label': 'Answer numbering',
+    }) as HTMLSelectElement
     make.option(numbering, '', 'No numbering')
     make.option(numbering, 'A', 'A, B, C…')
     make.option(numbering, 'a', 'a, b, c…')
     make.option(numbering, '1', '1, 2, 3…')
     numbering.value = this.data.numbering || ''
     meta.appendChild(numbering)
-    meta.appendChild(this.inputEl('cdx-quiz__cta', 'End form (conversation type, optional)', this.data.cta || ''))
     this.wrapper.appendChild(meta)
-    this.wrapper.appendChild(
-      this.inputEl('cdx-quiz__cta-title', 'End form heading (call to action, optional)', this.data.ctaTitle || ''),
-    )
 
-    // Difficulty-levels toggle: a single quiz, or several levels behind tabs.
-    const modeWrap = make.element('label', 'cdx-quiz__mode')
-    this.levelsToggle = make.element('input', 'cdx-quiz__mode-toggle', { type: 'checkbox' }) as HTMLInputElement
-    this.levelsToggle.checked = this.levelsMode
-    this.levelsToggle.addEventListener('change', () => {
-      this.levelsMode = this.levelsToggle.checked
-      // Difficulty levels and a personality test are mutually exclusive.
-      if (this.levelsMode) {
-        this.profileMode = false
-        this.profileToggle.checked = false
-      }
-
+    // One shape at a time: a plain quiz, difficulty tabs, or a personality test.
+    const modeWrap = make.element('div', 'cdx-quiz__mode')
+    modeWrap.appendChild(make.element('span', 'cdx-quiz__mode-label', {}, 'Type'))
+    this.modeSelect = make.element('select', ['cdx-quiz__input', 'cdx-quiz__mode-select'], {
+      'aria-label': 'Quiz type',
+    }) as HTMLSelectElement
+    make.option(this.modeSelect, 'quiz', 'Knowledge quiz')
+    make.option(this.modeSelect, 'levels', 'Knowledge quiz with difficulty levels (tabs)')
+    make.option(this.modeSelect, 'profile', 'Personality test (answers weigh profiles)')
+    this.modeSelect.value = this.mode
+    this.modeSelect.addEventListener('change', () => {
+      this.mode = this.modeSelect.value as QuizMode
       if (this.levelsMode && 0 === this.levelsList.children.length) {
         this.levelsList.appendChild(this.buildLevel({}))
       }
 
-      this.applyMode()
-    })
-    modeWrap.appendChild(this.levelsToggle)
-    modeWrap.appendChild(make.element('span', null, {}, 'Multiple difficulty levels (tabs)'))
-    this.wrapper.appendChild(modeWrap)
-
-    // Personality-test toggle: answers weigh profiles instead of being correct.
-    const profileWrap = make.element('label', 'cdx-quiz__mode')
-    this.profileToggle = make.element('input', 'cdx-quiz__mode-toggle', { type: 'checkbox' }) as HTMLInputElement
-    this.profileToggle.checked = this.profileMode
-    this.profileToggle.addEventListener('change', () => {
-      this.profileMode = this.profileToggle.checked
+      // A personality test is meaningless below two outcomes: seed the pair.
       if (this.profileMode) {
-        this.levelsMode = false
-        this.levelsToggle.checked = false
-        if (0 === this.profilesSection.querySelectorAll('.cdx-quiz__profile').length) {
-          this.profilesSection.querySelector('.cdx-quiz__profiles')?.appendChild(this.buildProfile({}))
-        }
+        while (this.profilesList.children.length < 2) this.profilesList.appendChild(this.buildProfile({}))
       }
 
       this.applyMode()
     })
-    profileWrap.appendChild(this.profileToggle)
-    profileWrap.appendChild(make.element('span', null, {}, 'Personality test (profiles instead of correct answers)'))
-    this.wrapper.appendChild(profileWrap)
+    modeWrap.appendChild(this.modeSelect)
+    this.wrapper.appendChild(modeWrap)
+
+    // Personality-test outcomes. Declared *before* the questions on purpose: they
+    // are the vocabulary the answers below then point at, so they must exist first.
+    this.profilesSection = this.buildProfilesBlock(this.data.profiles || [])
+    this.wrapper.appendChild(this.profilesSection)
 
     // Single-quiz editor (difficulty + questions + score bands). Its questions are
     // reused by the personality test — only their answers read weights, not a flag.
@@ -188,10 +221,6 @@ export default class Quiz extends BaseTool {
     this.singleSection.appendChild(this.buildQuestionsBlock(this.data.questions || []))
     this.singleSection.appendChild(this.buildResultsBlock(this.data.results || []))
     this.wrapper.appendChild(this.singleSection)
-
-    // Personality-test outcomes (shown instead of score bands in profile mode).
-    this.profilesSection = this.buildProfilesBlock(this.data.profiles || [])
-    this.wrapper.appendChild(this.profilesSection)
 
     // Multi-level editor: one full sub-quiz per level.
     this.levelsSection = make.element('div', 'cdx-quiz__levels')
@@ -205,14 +234,21 @@ export default class Quiz extends BaseTool {
     )
     this.wrapper.appendChild(this.levelsSection)
 
+    // The end form renders after the last question, so its config sits after the
+    // questions too. Folded away until it holds something.
+    this.wrapper.appendChild(this.buildCtaBlock())
+
     // Author-defined UI words (no i18n). Empty = English default (the placeholder).
     this.wrapper.appendChild(
       make.element('div', 'cdx-quiz__subtitle', {}, 'Labels (optional — override the default words)'),
     )
     const labels = make.element('div', 'cdx-quiz__labels')
-    Object.keys(LABEL_DEFAULTS).forEach((key) => {
-      const input = this.inputEl('cdx-quiz__label', LABEL_DEFAULTS[key], (this.data.labels || {})[key] || '')
-      input.dataset.label = key
+    LABELS.forEach((label) => {
+      const input = this.inputEl('cdx-quiz__label', label.placeholder, (this.data.labels || {})[label.key] || '')
+      input.dataset.label = label.key
+      // A label the current mode never shows stays in the DOM (and so keeps its
+      // value through a save) but is hidden — see applyMode().
+      if (undefined !== label.only) input.dataset.only = label.only.join(' ')
       labels.appendChild(input)
     })
     this.wrapper.appendChild(labels)
@@ -222,52 +258,126 @@ export default class Quiz extends BaseTool {
     return this.wrapper
   }
 
+  /**
+   * The optional lead form shown once the quiz is over: which conversation form to
+   * serve, and the heading above it. Folded shut until it carries something, since
+   * most quizzes never set one and it was crowding the top of the block.
+   */
+  private buildCtaBlock(): HTMLElement {
+    const cta = this.data.cta || ''
+    const ctaTitle = this.data.ctaTitle || ''
+
+    const block = make.element('details', 'cdx-quiz__cta-block') as HTMLDetailsElement
+    block.open = '' !== cta || '' !== ctaTitle
+    block.appendChild(make.element('summary', 'cdx-quiz__cta-summary', {}, 'End form (optional)'))
+
+    const input = this.inputEl('cdx-quiz__cta', 'Conversation form type', cta)
+    block.appendChild(input)
+    block.appendChild(
+      this.inputEl('cdx-quiz__cta-title', 'Heading above the form (call to action)', ctaTitle),
+    )
+
+    // Suggestions, never a closed list: a type the site does not declare still
+    // resolves through conversation's `App\Form\{type}` fallback, so a <select>
+    // would silently rewrite a working custom type into something else.
+    if (this.conversationTypes.length > 0) {
+      input.setAttribute('list', this.ctaListId)
+      const list = make.element('datalist', null, { id: this.ctaListId })
+      this.conversationTypes.forEach((type) => list.appendChild(make.element('option', null, { value: type })))
+      block.appendChild(list)
+    }
+
+    return block
+  }
+
   /** Reflect the active mode (single quiz / difficulty levels / personality test). */
   private applyMode(): void {
-    // A CSS class swaps the per-answer control (correct flag <-> profile weights)
+    // A CSS class swaps the per-answer control (correct flag <-> profile chips)
     // and hides the score bands / difficulty in personality mode.
     this.wrapper.classList.toggle('cdx-quiz--profile', this.profileMode)
     // The questions live in the single section, reused by the personality test.
-    this.singleSection.hidden = this.levelsMode && !this.profileMode
-    this.levelsSection.hidden = !this.levelsMode || this.profileMode
+    this.singleSection.hidden = this.levelsMode
+    this.levelsSection.hidden = !this.levelsMode
     this.profilesSection.hidden = !this.profileMode
+    // Only offer the words the active mode actually renders.
+    this.wrapper.querySelectorAll('.cdx-quiz__label').forEach((el) => {
+      const only = (el as HTMLElement).dataset.only
+      ;(el as HTMLElement).hidden = undefined !== only && !only.split(' ').includes(this.mode)
+    })
+    if (this.profileMode) this.refreshChips()
   }
 
   /** A profiles list plus its "+ Profile" button (personality-test outcomes). */
   private buildProfilesBlock(profiles: QuizProfile[]): HTMLElement {
     const block = make.element('div', 'cdx-quiz__profiles-block')
     block.appendChild(make.element('div', 'cdx-quiz__subtitle', {}, 'Profiles (personality results)'))
-    const list = make.element('div', 'cdx-quiz__profiles')
-    profiles.forEach((p) => list.appendChild(this.buildProfile(p)))
-    block.appendChild(list)
+    this.profilesList = make.element('div', 'cdx-quiz__profiles')
+    profiles.forEach((p) => this.profilesList.appendChild(this.buildProfile(p)))
+    block.appendChild(this.profilesList)
     block.appendChild(
       make.element('button', 'cdx-quiz__add', { type: 'button' }, '+ Profile', () => {
-        list.appendChild(this.buildProfile({}))
+        this.profilesList.appendChild(this.buildProfile({}))
+        this.refreshChips()
       }),
     )
     return block
   }
 
-  /** One personality outcome: its key (referenced by answer weights), title, description, image. */
+  /**
+   * One personality outcome: its key, title, description, image. Answers never
+   * name the key again — they point at this card through `pid`, so renaming the
+   * key can no longer orphan a weight.
+   */
   private buildProfile(p: QuizProfile): HTMLElement {
     const el = make.element('div', 'cdx-quiz__profile')
+    el.dataset.pid = 'p' + String(++this.pidSeq)
 
     const head = make.element('div', 'cdx-quiz__level-head')
     head.appendChild(make.element('span', null, {}, 'Profile'))
+    head.appendChild(make.element('span', 'cdx-quiz__balance'))
     head.appendChild(
-      make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove profile' }, '✕', () => el.remove()),
+      make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove profile' }, '✕', () => {
+        el.remove()
+        this.refreshChips()
+      }),
     )
     el.appendChild(head)
 
     const row = make.element('div', 'cdx-quiz__row')
-    row.appendChild(this.inputEl('cdx-quiz__profile-key', 'Key (used by answer weights)', p.key || ''))
-    row.appendChild(this.inputEl('cdx-quiz__profile-title', 'Title', p.title || ''))
+    // The key stays author-chosen: it is the concept ("naxos"), while the title is
+    // the sentence shown to the reader ("Votre île, c'est Naxos") — not a slug of it.
+    const key = this.inputEl('cdx-quiz__profile-key', 'Key (short handle, e.g. naxos)', p.key || '')
+    const title = this.inputEl('cdx-quiz__profile-title', 'Title (shown on the result card)', p.title || '')
+    key.addEventListener('input', () => this.refreshChips())
+    title.addEventListener('input', () => this.refreshChips())
+    row.appendChild(key)
+    row.appendChild(title)
     el.appendChild(row)
 
     el.appendChild(this.textareaEl('cdx-quiz__profile-msg', 'Description (shown on the result card)', p.msg || ''))
-    el.appendChild(this.buildMediaField('cdx-quiz__profile-media', 'Result image (optional)', p.media || ''))
+    el.appendChild(
+      this.buildMediaWithAlt(
+        'cdx-quiz__profile-media',
+        'Result image (optional)',
+        p.media || '',
+        'cdx-quiz__profile-alt',
+        p.alt || '',
+      ),
+    )
 
     return el
+  }
+
+  /** The profiles currently declared, in declaration order (ties resolve to the first). */
+  private profileHeads(): { pid: string; key: string; label: string }[] {
+    const heads: { pid: string; key: string; label: string }[] = []
+    this.profilesList?.querySelectorAll('.cdx-quiz__profile').forEach((pEl) => {
+      const pid = (pEl as HTMLElement).dataset.pid || ''
+      const key = Quiz.val('.cdx-quiz__profile-key', pEl)
+      const title = Quiz.val('.cdx-quiz__profile-title', pEl)
+      if (pid) heads.push({ pid, key, label: title || key || 'Untitled profile' })
+    })
+    return heads
   }
 
   /** A questions list plus its "+ Question" button. Reused per level. */
@@ -278,10 +388,24 @@ export default class Quiz extends BaseTool {
     block.appendChild(list)
     block.appendChild(
       make.element('button', 'cdx-quiz__add', { type: 'button' }, '+ Question', () => {
-        list.appendChild(this.buildQuestion({ q: '', answers: [{ a: '', correct: true }, { a: '' }] }))
+        list.appendChild(this.buildQuestion(this.blankQuestion()))
+        this.refreshBalance()
       }),
     )
     return block
+  }
+
+  /**
+   * A personality test's natural shape is one answer per profile, each designating
+   * its own — seed that instead of the quiz's two blank propositions.
+   */
+  private blankQuestion(): QuizQuestion {
+    if (!this.profileMode) return { q: '', answers: [{ a: '', correct: true }, { a: '' }] }
+
+    const keys = this.profileHeads().map((head) => head.key).filter((key) => '' !== key)
+    if (0 === keys.length) return { q: '', answers: [{ a: '' }, { a: '' }] }
+
+    return { q: '', answers: keys.map((key) => ({ a: '', weights: { [key]: 1 } })) }
   }
 
   /** A score-bands list plus its "+ Band" button. Reused per level. */
@@ -334,10 +458,13 @@ export default class Quiz extends BaseTool {
 
     const head = make.element('div', 'cdx-quiz__q-head')
     head.appendChild(make.element('span', null, {}, 'Question'))
+    // Says out loud what the amber wash means, so the flag does not rely on colour.
+    head.appendChild(make.element('span', 'cdx-quiz__q-warn'))
     head.appendChild(
-      make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove question' }, '✕', () =>
-        el.remove(),
-      ),
+      make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove question' }, '✕', () => {
+        el.remove()
+        this.refreshBalance()
+      }),
     )
     el.appendChild(head)
 
@@ -380,20 +507,141 @@ export default class Quiz extends BaseTool {
     main.appendChild(correct)
     main.appendChild(this.inputEl('cdx-quiz__a-text', 'Answer', a.a || ''))
     main.appendChild(
-      make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove answer' }, '✕', () =>
-        el.remove(),
-      ),
+      make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove answer' }, '✕', () => {
+        el.remove()
+        this.refreshBalance()
+      }),
     )
     el.appendChild(main)
 
     // Personality mode only (a CSS class shows it in place of the correct flag):
-    // which profiles this answer weighs, e.g. "explorer:2, builder".
-    const weights = this.inputEl('cdx-quiz__a-weights', 'Profiles (e.g. explorer:2, builder)', Quiz.weightsToStr(a.weights, a.profile))
-    el.appendChild(weights)
+    // one chip per declared profile. Weights arrive keyed by profile key (from the
+    // JSON) and are re-keyed to the live cards, so an unknown key cannot survive.
+    const chips = make.element('div', 'cdx-quiz__chips')
+    const byKey: Record<string, number> = { ...(a.weights || {}) }
+    if (a.profile && !(a.profile in byKey)) byKey[a.profile] = 1
+    const byPid: Record<string, number> = {}
+    this.profileHeads().forEach((head) => {
+      const weight = byKey[head.key]
+      if ('' !== head.key && undefined !== weight) byPid[head.pid] = weight
+    })
+    this.renderChips(chips, byPid)
+    el.appendChild(chips)
 
-    el.appendChild(this.buildMediaField('cdx-quiz__a-media', 'Answer image (optional)', a.media || ''))
+    el.appendChild(
+      this.buildMediaWithAlt('cdx-quiz__a-media', 'Answer image (optional)', a.media || '', 'cdx-quiz__a-alt', a.alt || ''),
+    )
 
     return el
+  }
+
+  /** Paint a chip from its `data-w`: off, or N points (the count shows past 1). */
+  private static paintChip(chip: HTMLElement): void {
+    const weight = Number(chip.dataset.w) || 0
+    const label = chip.dataset.label || ''
+    chip.classList.toggle('is-on', weight > 0)
+    chip.classList.toggle('is-heavy', weight > Quiz.W_MAX)
+    chip.textContent = weight > 1 ? `${label} ×${weight}` : label
+    // A toggle whose state is only painted is invisible to assistive tech, and the
+    // `×2` glyph does not read as "2 points" — spell both out.
+    chip.setAttribute('aria-pressed', String(weight > 0))
+    chip.setAttribute('aria-label', 0 === weight ? label : `${label}, ${Quiz.plural(weight, 'point')}`)
+  }
+
+  /** off → 1 → 2 → 3 → off. A hand-authored heavier weight drops straight back to off. */
+  private static nextWeight(current: number): number {
+    if (current <= 0) return 1
+    if (current >= Quiz.W_MAX) return 0
+
+    return current + 1
+  }
+
+  /** Read one answer's chips into a `{pid: points}` map. */
+  private static readChips(scope: Element): Record<string, number> {
+    const weights: Record<string, number> = {}
+    scope.querySelectorAll('.cdx-quiz__chip').forEach((chip) => {
+      const el = chip as HTMLElement
+      const weight = Number(el.dataset.w) || 0
+      const pid = el.dataset.pid || ''
+      if (pid && weight) weights[pid] = weight
+    })
+    return weights
+  }
+
+  /** Render one chip per declared profile, carrying over the weights already set. */
+  private renderChips(container: HTMLElement, weights: Record<string, number>): void {
+    container.textContent = ''
+    const heads = this.profileHeads()
+    if (0 === heads.length) {
+      container.appendChild(make.element('span', 'cdx-quiz__chips-empty', {}, 'Declare a profile above first'))
+      return
+    }
+
+    heads.forEach((head) => {
+      const chip = make.element('button', 'cdx-quiz__chip', {
+        type: 'button',
+        title: 'Click to add a point, again to raise it, past ×' + String(Quiz.W_MAX) + ' to clear it',
+      }) as HTMLButtonElement
+      chip.dataset.pid = head.pid
+      chip.dataset.label = head.label
+      chip.dataset.w = String(weights[head.pid] ?? 0)
+      chip.addEventListener('click', () => {
+        chip.dataset.w = String(Quiz.nextWeight(Number(chip.dataset.w) || 0))
+        Quiz.paintChip(chip)
+        this.refreshBalance()
+      })
+      Quiz.paintChip(chip)
+      container.appendChild(chip)
+    })
+  }
+
+  /** Re-render every answer's chips against the current profiles, keeping the weights set. */
+  private refreshChips(): void {
+    this.singleSection?.querySelectorAll('.cdx-quiz__a').forEach((aEl) => {
+      const box = aEl.querySelector('.cdx-quiz__chips') as HTMLElement | null
+      if (box) this.renderChips(box, Quiz.readChips(aEl))
+    })
+    this.refreshBalance()
+  }
+
+  /**
+   * Live tally per profile, and a flag on any question that votes for nobody — the
+   * two authoring slips a personality test otherwise only reveals when played.
+   */
+  private refreshBalance(): void {
+    if (!this.profileMode || !this.singleSection) return
+
+    const tally: Record<string, { answers: number; points: number }> = {}
+    this.singleSection.querySelectorAll('.cdx-quiz__q').forEach((qEl) => {
+      let voted = false
+      // Per answer, not per question: two answers weighing the same profile must
+      // count twice, and a question-wide read would collapse them into one.
+      qEl.querySelectorAll('.cdx-quiz__a').forEach((aEl) => {
+        Object.entries(Quiz.readChips(aEl)).forEach(([pid, weight]) => {
+          voted = true
+          tally[pid] = tally[pid] ?? { answers: 0, points: 0 }
+          tally[pid].answers++
+          tally[pid].points += weight
+        })
+      })
+      qEl.classList.toggle('is-mute', !voted)
+      const warn = qEl.querySelector('.cdx-quiz__q-warn')
+      if (null !== warn) warn.textContent = voted ? '' : 'No answer weighs a profile'
+    })
+
+    this.profilesList.querySelectorAll('.cdx-quiz__profile').forEach((pEl) => {
+      const box = pEl.querySelector('.cdx-quiz__balance') as HTMLElement | null
+      if (null === box) return
+      const hit = tally[(pEl as HTMLElement).dataset.pid || '']
+      box.textContent = undefined === hit
+        ? 'No answer leads here'
+        : `${Quiz.plural(hit.answers, 'answer')} · ${Quiz.plural(hit.points, 'point')}`
+      box.classList.toggle('is-warn', undefined === hit)
+    })
+  }
+
+  private static plural(count: number, word: string): string {
+    return `${count} ${word}${1 === count ? '' : 's'}`
   }
 
   private buildResult(r: QuizResultBand): HTMLElement {
@@ -413,10 +661,13 @@ export default class Quiz extends BaseTool {
     return el
   }
 
+  // The whole block labels its fields by placeholder alone, which leaves them
+  // nameless once filled in: mirror it into an aria-label. No visual change.
   private inputEl(cls: string, placeholder: string, value: string): HTMLInputElement {
     const input = make.element('input', ['cdx-quiz__input', cls], {
       type: 'text',
       placeholder,
+      'aria-label': placeholder,
     }) as HTMLInputElement
     input.value = value
     return input
@@ -425,9 +676,31 @@ export default class Quiz extends BaseTool {
   private textareaEl(cls: string, placeholder: string, value: string): HTMLTextAreaElement {
     const textarea = make.element('textarea', ['cdx-quiz__textarea', cls], {
       placeholder,
+      'aria-label': placeholder,
     }) as HTMLTextAreaElement
     textarea.value = value
     return textarea
+  }
+
+  /**
+   * The media field plus the alt text of that image, so both survive a round-trip.
+   * The alt only surfaces once there is an image to describe.
+   */
+  private buildMediaWithAlt(
+    cls: string,
+    placeholder: string,
+    value: string,
+    altCls: string,
+    altValue: string,
+  ): HTMLElement {
+    const box = make.element('div', 'cdx-quiz__media-box')
+    const alt = this.inputEl(altCls, 'Image alt text', altValue)
+    box.appendChild(this.buildMediaField(cls, placeholder, value, (current: string) => {
+      alt.hidden = '' === current
+    }))
+    alt.hidden = '' === value
+    box.appendChild(alt)
+    return box
   }
 
   /**
@@ -435,7 +708,12 @@ export default class Quiz extends BaseTool {
    * a thumbnail preview. The input keeps `cls` so save() still reads it. Reused
    * for the question image (which doubles as the video poster) and answer images.
    */
-  private buildMediaField(cls: string, placeholder: string, value: string): HTMLElement {
+  private buildMediaField(
+    cls: string,
+    placeholder: string,
+    value: string,
+    onChange?: (value: string) => void,
+  ): HTMLElement {
     const field = make.element('div', 'cdx-quiz__media')
 
     const thumb = make.element('img', 'cdx-quiz__media-thumb') as HTMLImageElement
@@ -447,6 +725,8 @@ export default class Quiz extends BaseTool {
         thumb.removeAttribute('src')
         thumb.style.display = 'none'
       }
+
+      if (undefined !== onChange) onChange(current)
     }
 
     const input = this.inputEl(cls, placeholder, value)
@@ -560,6 +840,13 @@ export default class Quiz extends BaseTool {
   /** Read every `.cdx-quiz__q` within `scope` into question objects. */
   private readQuestions(scope: Element): QuizQuestion[] {
     const val = Quiz.val
+    // Chips carry a `pid`; the key they export is whatever the profile card holds
+    // right now, so a key renamed after the fact stays in sync for free.
+    const keyByPid: Record<string, string> = {}
+    this.profileHeads().forEach((head) => {
+      if ('' !== head.key) keyByPid[head.pid] = head.key
+    })
+
     const questions: QuizQuestion[] = []
     scope.querySelectorAll('.cdx-quiz__q').forEach((qEl) => {
       const question: QuizQuestion = { q: val('.cdx-quiz__q-text', qEl), answers: [] }
@@ -577,13 +864,19 @@ export default class Quiz extends BaseTool {
         if (!text) return
         const answer: QuizAnswer = { a: text }
         if (this.profileMode) {
-          const weights = Quiz.parseWeights(val('.cdx-quiz__a-weights', aEl))
+          const weights: Record<string, number> = {}
+          Object.entries(Quiz.readChips(aEl)).forEach(([pid, weight]) => {
+            const key = keyByPid[pid]
+            if (undefined !== key) weights[key] = weight
+          })
           if (Object.keys(weights).length > 0) answer.weights = weights
         } else if ((aEl.querySelector('.cdx-quiz__a-correct') as HTMLInputElement)?.checked) {
           answer.correct = true
         }
         const answerMedia = val('.cdx-quiz__a-media', aEl)
         if (answerMedia) answer.media = answerMedia
+        const answerAlt = val('.cdx-quiz__a-alt', aEl)
+        if (answerAlt) answer.alt = answerAlt
         question.answers!.push(answer)
       })
 
@@ -604,36 +897,11 @@ export default class Quiz extends BaseTool {
       if (msg) profile.msg = msg
       const media = Quiz.val('.cdx-quiz__profile-media', pEl)
       if (media) profile.media = media
+      const alt = Quiz.val('.cdx-quiz__profile-alt', pEl)
+      if (alt) profile.alt = alt
       profiles.push(profile)
     })
     return profiles
-  }
-
-  /** Serialise `weights` (+ the `profile` shorthand) into the "key:points, key" input text. */
-  private static weightsToStr(weights?: Record<string, number>, profile?: string): string {
-    const map: Record<string, number> = { ...(weights || {}) }
-    if (profile && !(profile in map)) map[profile] = 1
-    return Object.keys(map)
-      .map((k) => (1 === map[k] ? k : `${k}:${map[k]}`))
-      .join(', ')
-  }
-
-  /** Parse the "key:points, key" input text back into a weights map (bare key == 1 point). */
-  private static parseWeights(raw: string): Record<string, number> {
-    const out: Record<string, number> = {}
-    raw.split(',').forEach((part) => {
-      const seg = part.trim()
-      if (!seg) return
-      const at = seg.lastIndexOf(':')
-      if (-1 === at) {
-        out[seg] = 1
-        return
-      }
-      const key = seg.slice(0, at).trim()
-      const value = Number(seg.slice(at + 1).trim())
-      if (key) out[key] = Number.isFinite(value) && 0 !== value ? value : 1
-    })
-    return out
   }
 
   /** Read every `.cdx-quiz__result-row` within `scope` into score bands. */

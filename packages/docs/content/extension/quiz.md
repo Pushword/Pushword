@@ -123,8 +123,8 @@ selector. Add a `levels` array: each entry is a **complete quiz of its own**
   score never dilutes a Hard one.
 - A quiz **without** `levels` renders exactly as before — zero change.
 
-In the EditorJS block, tick *"Multiple difficulty levels"* to switch a quiz to
-levels mode and edit one full sub-quiz per level.
+In the EditorJS block, pick *"Knowledge quiz with difficulty levels"* in the
+**Type** selector to edit one full sub-quiz per level.
 
 ## Personality test (`mode: profile`)
 
@@ -150,9 +150,22 @@ are you?"). There is no correct answer: each answer weighs one or more named
 - `labels.profile` (the *"Your profile:"* heading) and `labels.share` (use `{p}`
   for the share) override the wording.
 
-In the EditorJS block, tick *"Personality test"* to swap the correct-answer flag
-for a per-answer profile-weights field (`explorer:2, builder`) and edit the
-profile cards. It is mutually exclusive with difficulty levels.
+### Editing one
+
+Pick *"Personality test"* in the **Type** selector. The profiles are edited
+**above** the questions — they are the vocabulary the answers then point at:
+
+- Each answer shows **one chip per declared profile**. Clicking a chip adds a
+  point, clicking again raises it up to ×3, once more clears it. Because the chips
+  are generated from the profiles, an answer cannot weigh a profile that does not
+  exist, and renaming a `key` follows through every weight on its own.
+- A weight heavier than ×3 stays available from hand-written JSON, for the odd
+  answer that must count far more than the others. It renders as its own chip and
+  an edit leaves it untouched.
+- Each profile card reports its live tally (*"6 answers · 8 pts"*) and warns when
+  **no answer leads to it** — an unreachable profile is otherwise only noticed
+  while playing the quiz. A question weighing nothing at all is flagged too.
+- *"+ Question"* seeds one answer per profile, each designating its own.
 
 ## SEO & accessibility
 

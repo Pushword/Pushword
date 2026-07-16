@@ -2,8 +2,14 @@
   --q-accent: #6d28d9;
   --q-accent-weak: #f5f3ff;
   --q-border: #e5e7eb;
-  --q-border-soft: #ede9fe;
   --q-muted: #6b7280;
+  --q-strong: #1f2937;
+  /* Questions sit on a neutral surface, profiles on an accent wash: the two zones
+     then read apart by hue, not by yet another border. */
+  --q-surface: #f4f5f7;
+  --q-warn: #b45309;
+  --q-warn-weak: #fffbeb;
+  --q-ring: 0 0 0 3px color-mix(in oklch, var(--q-accent) 16%, #fff);
   border: 1px solid var(--q-border);
   border-radius: 12px;
   padding: 1rem 1.1rem 1.1rem;
@@ -36,7 +42,7 @@
   border-radius: 7px;
   padding: 0.45rem 0.65rem;
   font: inherit;
-  color: #1f2937;
+  color: var(--q-strong);
   background: #fff;
   box-sizing: border-box;
   transition: border-color 0.12s, box-shadow 0.12s;
@@ -47,7 +53,19 @@
 .cdx-quiz__numbering:focus {
   outline: none;
   border-color: var(--q-accent);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--q-accent) 16%, #fff);
+  box-shadow: var(--q-ring);
+}
+
+/* The fields ring in accent on focus; the buttons fell back to the UA outline.
+   One focus vocabulary for every control in the block. */
+.cdx-quiz__chip:focus-visible,
+.cdx-quiz__add:focus-visible,
+.cdx-quiz__add-a:focus-visible,
+.cdx-quiz__del:focus-visible,
+.cdx-quiz__media-btn:focus-visible {
+  outline: none;
+  border-color: var(--q-accent);
+  box-shadow: var(--q-ring);
 }
 .cdx-quiz__textarea {
   min-height: 2.5rem;
@@ -60,14 +78,43 @@
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
-.cdx-quiz__cta-title {
-  margin-bottom: 0.85rem;
+/* The title carries the block: give it the full row rather than let it share
+   with a 6rem enum. */
+.cdx-quiz__title {
+  grid-column: 1 / -1;
+}
+
+/* ---- end form (folded until it holds something) ---- */
+.cdx-quiz__cta-block {
+  margin: 0.9rem 0 0.2rem;
+}
+.cdx-quiz__cta-summary {
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--q-muted);
+  padding: 0.2rem 0;
+  list-style-position: inside;
+}
+.cdx-quiz__cta-summary:hover {
+  color: var(--q-accent);
+}
+.cdx-quiz__cta-summary:focus-visible {
+  outline: none;
+  border-radius: 6px;
+  box-shadow: var(--q-ring);
+}
+.cdx-quiz__cta-block .cdx-quiz__cta {
+  margin: 0.45rem 0 0.5rem;
 }
 
 /* ---- question card ---- */
+/* Surface, not outline: the block already draws one border and the fields draw
+   their own. A third and fourth ring between them is noise. */
 .cdx-quiz__q {
-  border: 1px solid var(--q-border-soft);
-  background: #fbfaff;
+  background: var(--q-surface);
   border-radius: 10px;
   padding: 0.85rem;
   margin-bottom: 0.7rem;
@@ -135,23 +182,27 @@
 }
 
 /* ---- answers ---- */
+/* No box per answer: it is already outlined by its own input, and proximity ties
+   its chips and image to it. A hairline rule down the group says "these belong to
+   the question above" — a structural guide, not an accent stripe: 1px, neutral. */
 .cdx-quiz__answers {
-  margin: 0.5rem 0;
+  margin: 0.5rem 0 0.65rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 1.1rem;
+  border-left: 1px solid var(--q-border);
+  padding-left: 0.7rem;
 }
 .cdx-quiz__a {
-  border: 1px solid var(--q-border);
   border-radius: 8px;
   padding: 0.45rem 0.55rem;
-  background: #fff;
-  transition: border-color 0.12s, background 0.12s;
+  transition: background 0.12s;
 }
-/* Highlight an answer flagged correct, so the key reads at a glance. */
+/* Highlight an answer flagged correct, so the key reads at a glance. The accent
+   wash is for zones on white; against the grey question surface it needs real
+   chroma to register at all. */
 .cdx-quiz__a:has(.cdx-quiz__a-correct:checked) {
-  border-color: color-mix(in oklch, var(--q-accent) 45%, #fff);
-  background: var(--q-accent-weak);
+  background: color-mix(in oklch, var(--q-accent) 15%, #fff);
 }
 .cdx-quiz__a-main {
   display: flex;
@@ -168,9 +219,12 @@
 .cdx-quiz__a-main .cdx-quiz__a-text {
   flex: 1 1 auto;
 }
-/* Answer media is a compact, de-emphasised second line. */
-.cdx-quiz__a .cdx-quiz__media {
+/* Answer media + its alt are a compact, de-emphasised trailing block. */
+.cdx-quiz__a .cdx-quiz__media-box {
   margin: 0.4rem 0 0.1rem 1.65rem;
+}
+.cdx-quiz__a .cdx-quiz__media {
+  margin: 0 0 0.3rem;
 }
 
 /* ---- score bands ---- */
@@ -220,6 +274,10 @@
 .cdx-quiz__add {
   margin-bottom: 0.5rem;
 }
+/* Stands between the answers and the explanation below: it needs to clear both. */
+.cdx-quiz__add-a {
+  margin-bottom: 0.9rem;
+}
 .cdx-quiz__del {
   flex: 0 0 auto;
   border: none;
@@ -235,29 +293,34 @@
   background: #ffe4e6;
 }
 
-/* ---- difficulty levels ---- */
+/* ---- mode selector ---- */
 .cdx-quiz__mode {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  font-size: 0.85rem;
-  color: #1f2937;
+  gap: 0.5rem;
   margin-bottom: 0.85rem;
+}
+.cdx-quiz__mode-label {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--q-muted);
+}
+.cdx-quiz__mode-select {
+  flex: 1 1 auto;
   cursor: pointer;
 }
-.cdx-quiz__mode-toggle {
-  width: 1.05rem;
-  height: 1.05rem;
-  accent-color: var(--q-accent);
-  cursor: pointer;
-}
+
+/* ---- difficulty levels ---- */
+/* A level is a container zone, like the profiles block: same accent wash, so the
+   grey question surfaces inside it read the same way in either mode. */
 .cdx-quiz__level {
-  border: 1px solid var(--q-border);
-  border-left: 3px solid var(--q-accent);
   border-radius: 10px;
   padding: 0.85rem;
   margin-bottom: 0.85rem;
-  background: #fff;
+  background: var(--q-accent-weak);
 }
 .cdx-quiz__level-head {
   display: flex;
@@ -275,25 +338,124 @@
 }
 
 /* ---- personality test (profile mode) ---- */
-/* The weights input replaces the correct flag; the score bands and difficulty
-   drop out. The profiles section is shown/hidden from JS via the `hidden` attr. */
-.cdx-quiz__a-weights {
+/* Profile chips replace the correct flag; the score bands and difficulty drop
+   out. The profiles section is shown/hidden from JS via the `hidden` attr. */
+/* The 1.65rem indent elsewhere clears the correct-answer checkbox; profile mode
+   hides that checkbox, so anything indented by it would hang off its own input. */
+.cdx-quiz__chips {
   display: none;
-  margin-top: 0.4rem;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.45rem 0 0.1rem;
 }
-.cdx-quiz--profile .cdx-quiz__a-weights {
-  display: block;
+.cdx-quiz--profile .cdx-quiz__a .cdx-quiz__media-box {
+  margin-left: 0;
 }
+.cdx-quiz--profile .cdx-quiz__chips {
+  display: flex;
+}
+/* A personality test has no correct answer to reveal, so `feedback` is forced to
+   `end` on save — offering the choice would be a lie. Same for the score bands. */
 .cdx-quiz--profile .cdx-quiz__a-correct,
 .cdx-quiz--profile .cdx-quiz__results-block,
+.cdx-quiz--profile .cdx-quiz__feedback,
 .cdx-quiz--profile .cdx-quiz__difficulty {
   display: none;
 }
-.cdx-quiz__profile {
+.cdx-quiz__chips-empty {
+  font-size: 0.78rem;
+  color: var(--q-muted);
+  font-style: italic;
+}
+
+/* A chip is off (outline) or worth N points (filled, count shown past 1). */
+.cdx-quiz__chip {
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  cursor: pointer;
+  min-height: 1.7rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
   border: 1px solid var(--q-border);
-  border-left: 3px solid var(--q-accent);
+  background: #fff;
+  color: var(--q-muted);
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.cdx-quiz__chip:hover {
+  border-color: var(--q-accent);
+  color: var(--q-accent);
+}
+/* Cycling is the whole interaction: give the click somewhere to land. */
+.cdx-quiz__chip:active {
+  background: var(--q-accent-weak);
+}
+.cdx-quiz__chip.is-on {
+  border-color: var(--q-accent);
+  background: var(--q-accent);
+  color: #fff;
+  font-weight: 600;
+}
+.cdx-quiz__chip.is-on:active {
+  background: color-mix(in oklch, var(--q-accent) 80%, #000);
+}
+/* A weight authored beyond the chip ladder (×4, ×5…): kept, and visibly special. */
+.cdx-quiz__chip.is-heavy {
+  background: var(--q-strong);
+  border-color: var(--q-strong);
+}
+/* An answer that designates nobody is fine; a whole question that does is a slip.
+   The wash only seconds the wording in the header — never carries it alone. */
+.cdx-quiz--profile .cdx-quiz__q.is-mute {
+  background: var(--q-warn-weak);
+}
+.cdx-quiz__q-warn {
+  margin-left: auto;
+  margin-right: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--q-warn);
+}
+
+/* The profiles are a zone of their own, not a run of cards like the questions:
+   an accent wash carries that, and the outcomes read as white cards on top of it. */
+.cdx-quiz__profiles-block {
+  background: var(--q-accent-weak);
   border-radius: 10px;
+  padding: 0.85rem;
+  margin-bottom: 1rem;
+}
+.cdx-quiz__profiles-block .cdx-quiz__subtitle {
+  margin-top: 0;
+}
+.cdx-quiz__profile {
+  border-radius: 8px;
   padding: 0.85rem;
   margin-bottom: 0.6rem;
   background: #fff;
+}
+/* On the wash, the add button's usual white-to-tint hover would vanish. */
+.cdx-quiz__profiles-block .cdx-quiz__add {
+  margin-bottom: 0;
+}
+.cdx-quiz__profiles-block .cdx-quiz__add:hover {
+  background: color-mix(in oklch, var(--q-accent) 14%, #fff);
+}
+/* Live tally, so an unreachable profile shows up while authoring, not when played. */
+.cdx-quiz__balance {
+  margin-left: auto;
+  margin-right: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--q-muted);
+}
+.cdx-quiz__balance.is-warn {
+  color: var(--q-warn);
+}
+.cdx-quiz__media-box .cdx-quiz__input {
+  font-size: 0.85rem;
 }
