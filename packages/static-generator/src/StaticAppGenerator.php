@@ -50,6 +50,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly PageRepository $pageRepository,
         private readonly string $projectDir,
+        private readonly string $environment,
     ) {
     }
 
@@ -352,6 +353,9 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
                 '--state-file='.$stateFile,
                 '--redirections-file='.$redirectionsFile,
                 '--static-dir='.$app->getStr('static_dir'),
+                // Workers must run in the parent's environment: without this they
+                // re-resolve APP_ENV from .env and would read another database.
+                '--env='.$this->environment,
                 '--no-debug',
             ];
 

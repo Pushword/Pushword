@@ -17,7 +17,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->autowire()
         ->autoconfigure()
         ->bind('$kernel', service('kernel'))
-        ->bind('$projectDir', '%kernel.project_dir%');
+        ->bind('$projectDir', '%kernel.project_dir%')
+        ->bind('$environment', '%kernel.environment%');
 
     $adminInstalled = class_exists(PushwordAdminBundle::class);
     $adminExclude = $adminInstalled ? [] : [__DIR__.'/../Cache/Admin/'];

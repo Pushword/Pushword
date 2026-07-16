@@ -379,6 +379,7 @@ final class StaticGeneratorTest extends KernelTestCase
             self::getContainer()->get(EventDispatcherInterface::class),
             self::getContainer()->get(PageRepository::class),
             $projectDir,
+            self::getContainer()->getParameter('kernel.environment'),
         );
     }
 
