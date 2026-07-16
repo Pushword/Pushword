@@ -144,6 +144,33 @@
   background: #dc2626;
 }
 
+/* Our popup modals are full-screen iframes, but EasyAdmin's theme restyles Bootstrap's
+   modal markup as a narrow shadcn-like alert-dialog: it caps every .modal-dialog at
+   --bs-modal-width (380px) and turns .modal-content into a padded grid. Both rules land
+   after Bootstrap's own .modal-fullscreen ones and, at equal specificity, cancel them.
+   Opt back out here so the iframe gets the whole viewport. */
+.pw-admin-modal .modal-dialog {
+  max-width: none;
+}
+
+.pw-admin-modal .modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+/* EasyAdmin drops the header padding because its modals are padded by .modal-content;
+   ours isn't anymore, so the header carries its own spacing again. */
+.pw-admin-modal .modal-header {
+  padding: 0.75rem 1rem;
+}
+
+.pw-admin-modal .modal-body {
+  flex: 1;
+  min-height: 0;
+}
+
 .pw-media-picker__modal .modal-body,
 .pw-inline-edit__modal .modal-body {
   min-height: 70vh;

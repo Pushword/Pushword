@@ -158,6 +158,58 @@ final class AdminMediaPickerTest extends AbstractPantherAdminTest
     }
 
     /**
+     * The modal hosts a whole admin page in an iframe, so it must stay full-screen.
+     * Asserting it is visible is not enough: EasyAdmin's theme caps every .modal-dialog
+     * at --bs-modal-width and restyles .modal-content as a padded grid, silently
+     * cancelling Bootstrap's .modal-fullscreen (same specificity, declared later) and
+     * shrinking the picker to a ~380px alert-dialog box.
+     */
+    public function testMediaPickerModalFillsViewport(): void
+    {
+        $client = $this->createPantherClientWithLogin();
+        $this->navigateToPageEdit($client);
+        $this->ensureMediaPickerReady($client);
+
+        $this->scrollAndClick($client, self::SELECTOR_MEDIA_PICKER_CHOOSE);
+
+        $client->waitFor(self::SELECTOR_MEDIA_PICKER_MODAL, self::timeoutMedium());
+
+        $this->pollUntilTrue(
+            $client,
+            'const m = document.querySelector(arguments[0]); return m && m.classList.contains("show") && getComputedStyle(m).display !== "none"',
+            [self::SELECTOR_MEDIA_PICKER_MODAL],
+            self::timeoutShort(),
+        );
+
+        $result = $client->executeScript('
+            const modal = document.querySelector(arguments[0]);
+            const dialog = modal?.querySelector(".modal-dialog")?.getBoundingClientRect();
+            const iframe = modal?.querySelector(arguments[1])?.getBoundingClientRect();
+            return {
+                viewportWidth: window.innerWidth,
+                viewportHeight: window.innerHeight,
+                dialogWidth: Math.round(dialog?.width ?? 0),
+                dialogHeight: Math.round(dialog?.height ?? 0),
+                iframeWidth: Math.round(iframe?.width ?? 0)
+            };
+        ', [self::SELECTOR_MEDIA_PICKER_MODAL, self::SELECTOR_MEDIA_PICKER_IFRAME]);
+
+        self::assertIsArray($result);
+
+        /** @var array{viewportWidth: int, viewportHeight: int, dialogWidth: int, dialogHeight: int, iframeWidth: int} $result */
+        // A ratio, not an exact match: scrollbar compensation shifts the widths by a
+        // few pixels, while any lost .modal-fullscreen leaves the dialog far below 90%.
+        $minWidth = $result['viewportWidth'] * 0.9;
+        $minHeight = $result['viewportHeight'] * 0.9;
+
+        self::assertGreaterThan($minWidth, $result['dialogWidth'], 'Modal dialog should span the viewport width');
+        self::assertGreaterThan($minHeight, $result['dialogHeight'], 'Modal dialog should span the viewport height');
+        self::assertGreaterThan($minWidth, $result['iframeWidth'], 'Modal iframe should span the viewport width');
+
+        $this->closeMediaPickerModal($client);
+    }
+
+    /**
      * Test that selecting a media item via postMessage updates the form.
      */
     public function testMediaPickerSelectMedia(): void
