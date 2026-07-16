@@ -10,9 +10,9 @@
     {% set isPublished = publishedAt is not null %}
     {% set isScheduled = isPublished and publishedAt > date() %}
     {% if isScheduled %}
-        {% set toggleClass = 'pw-scheduled' %}
+        {% set toggleClass = 'ea-switch-warning' %}
     {% elseif isPublished %}
-        {% set toggleClass = 'pw-published-online' %}
+        {% set toggleClass = 'ea-switch-success' %}
     {% else %}
         {% set toggleClass = '' %}
     {% endif %}
@@ -28,11 +28,12 @@
     {% set tokenId = entityType ~ '_toggle_published_' ~ entityId %}
     {% set token = csrf_token(tokenId) %}
 
-    <div id="{{ target }}" class="pw-published d-flex align-items-center gap-2 {{ toggleClass }}">
-        <label class="form-check form-switch mb-0">
+    <div id="{{ target }}" class="pw-published d-flex align-items-center gap-2">
+        <span class="ea-switch {{ toggleClass }}">
             <input
                 type="checkbox"
-                class="form-check-input"
+                role="switch"
+                class="ea-switch-input"
                 hx-post="{{ action }}"
                 hx-trigger="change"
                 hx-target="#{{ target }}"
@@ -40,7 +41,8 @@
                 hx-vals='js:{published: event.target.checked ? 1 : 0, _token: "{{ token|e('js') }}"}'
                 {{ isPublished ? 'checked' : '' }}
             >
-        </label>
+            <span class="ea-switch-track" aria-hidden="true"><span class="ea-switch-thumb"></span></span>
+        </span>
         <small class="text-muted mb-0">
             {{ publishedAt ? publishedAt|format_date('short') : '—' }}
         </small>

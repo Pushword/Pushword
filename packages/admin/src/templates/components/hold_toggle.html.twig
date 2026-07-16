@@ -11,18 +11,19 @@
   id="{{ target }}"
   class="pw-hold d-inline-flex align-items-center me-2{{ held ? ' pw-hold-on' : '' }}"
   title="{{ 'adminPageHoldToggleHelp'|trans }}">
-  <label class="form-check form-switch mb-0 d-inline-flex align-items-center">
+  <span class="ea-switch">
     <input
       type="checkbox"
-      class="form-check-input mt-0"
       role="switch"
+      class="ea-switch-input"
       hx-post="{{ action }}"
       hx-trigger="change"
       hx-target="#{{ target }}"
       hx-swap="outerHTML"
       hx-vals='js:{hold: event.target.checked ? 1 : 0, _token: "{{ token|e('js') }}"}'
       {{ held ? 'checked' : '' }}>
-  </label>
+    <span class="ea-switch-track" aria-hidden="true"><span class="ea-switch-thumb"></span></span>
+  </span>
   {% if held %}
     <small class="text-warning fw-semibold ms-1"><i class="fa fa-pause-circle"></i> {{ 'adminPageHoldBadge'|trans }}</small>
   {% endif %}
