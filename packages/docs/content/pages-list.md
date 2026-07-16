@@ -52,6 +52,32 @@ Or use the `exclude_linked()` function with `pages()`:
 
 See the [Link Collector documentation](/link-collector) for detailed usage, examples, and the full API reference.
 
+## Listing What Is Not Online Yet
+
+`pages_list()` only ever returns pages that are online right now. `draft_list()` takes the
+same arguments and renders the same views over the complementary set: pages never scheduled
+(no `publishedAt`) and pages scheduled for later. It is the only Twig function that reaches
+them as full entities, so an editorial debug page can render real cards — title, main image,
+link — instead of the bare slugs `page_uri_list()` returns.
+
+```twig
+{{ draft_list('type:blog', 999, 'publishedAt DESC', wrapperClass: 'bg-pink-50 p-4') }}
+```
+
+**It renders nothing unless a `ROLE_EDITOR` is logged in** — anonymous visitors get an empty
+string, so the block can live on a public page. This is safe against the render cache: the
+Markdown cache keys fragments on their post-Twig text, so an editor render and a visitor
+render never share a cache entry. Note that `pw:static` generates as an anonymous visitor,
+so the block is empty in statically generated HTML.
+
+Two deliberate differences from `pages_list()`:
+
+- noindex pages are **kept** (`pages_list()` drops them) — a draft list that hid them would
+  hide exactly the pages you are looking for;
+- ordering by `publishedAt` puts never-scheduled pages last, since their `publishedAt` is NULL.
+
+Redirections are excluded, as in `pages_list()`.
+
 ## Extending Search with an Event Listener
 
 Before the search string is parsed into DQL criteria, Pushword dispatches a `PagesListSearchEvent`. A listener can inspect or rewrite the string — useful for expanding application-specific prefixes into standard Pushword ones.

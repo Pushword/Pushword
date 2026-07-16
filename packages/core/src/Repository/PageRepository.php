@@ -398,8 +398,31 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      */
     public function getPublishedPageQueryBuilder(string|array $host = '', array $where = [], array $orderBy = [], int|array $limit = 0): QueryBuilder
     {
-        $queryBuilder = $this->buildPublishedPageQuery('p');
+        return $this->applyListCriteria($this->buildPublishedPageQuery('p'), $host, $where, $orderBy, $limit);
+    }
 
+    /**
+     * Same as getPublishedPageQueryBuilder() over the complementary set: the pages
+     * not online right now. Backs the draft_list() twig function.
+     *
+     * @param string|array<string>         $host
+     * @param array<(string|int), string>  $orderBy
+     * @param array<mixed>                 $where
+     * @param int|array<(string|int), int> $limit
+     */
+    public function getUnpublishedPageQueryBuilder(string|array $host = '', array $where = [], array $orderBy = [], int|array $limit = 0): QueryBuilder
+    {
+        return $this->applyListCriteria($this->buildUnpublishedPageQuery('p'), $host, $where, $orderBy, $limit);
+    }
+
+    /**
+     * @param string|array<string>         $host
+     * @param array<mixed>                 $where
+     * @param array<(string|int), string>  $orderBy
+     * @param int|array<(string|int), int> $limit
+     */
+    private function applyListCriteria(QueryBuilder $queryBuilder, string|array $host, array $where, array $orderBy, int|array $limit): QueryBuilder
+    {
         $this->andHost($queryBuilder, $host);
         new FilterWhereParser($queryBuilder, $where)->parseAndAdd();
         $this->orderBy($queryBuilder, $orderBy);
@@ -408,16 +431,42 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
         return $queryBuilder;
     }
 
-    private function buildPublishedPageQuery(string $alias = 'p'): QueryBuilder
+    /**
+     * Joins and exclusions shared by the published and unpublished queries, so the
+     * two stay strict complements of each other: only the publishedAt condition
+     * differs between them.
+     */
+    private function buildPageQuery(string $alias = 'p'): QueryBuilder
     {
         return $this->createQueryBuilder($alias)
             ->leftJoin($alias.'.parentPage', 'parent')->addSelect('parent')
             ->leftJoin($alias.'.mainImage', 'mainImage')->addSelect('mainImage')
-            ->andWhere($alias.'.publishedAt IS NOT NULL')
-            ->andWhere($alias.'.publishedAt <=  :now')
-            ->setParameter('now', new DateTime(), 'datetime')
             ->andWhere($alias.'.slug <> :cheatsheet')
             ->setParameter('cheatsheet', PageCheatSheetCrudController::CHEATSHEET_SLUG);
+    }
+
+    private function buildPublishedPageQuery(string $alias = 'p'): QueryBuilder
+    {
+        return $this->buildPageQuery($alias)
+            ->andWhere($alias.'.publishedAt IS NOT NULL')
+            ->andWhere($alias.'.publishedAt <=  :now')
+            ->setParameter('now', new DateTime(), 'datetime');
+    }
+
+    /**
+     * Pages not online right now: never scheduled (publishedAt IS NULL) or scheduled
+     * for later. Strict complement of buildPublishedPageQuery().
+     */
+    private function buildUnpublishedPageQuery(string $alias = 'p'): QueryBuilder
+    {
+        $queryBuilder = $this->buildPageQuery($alias);
+
+        return $queryBuilder
+            ->andWhere($queryBuilder->expr()->orX(
+                $queryBuilder->expr()->isNull($alias.'.publishedAt'),
+                $queryBuilder->expr()->gt($alias.'.publishedAt', ':now'),
+            ))
+            ->setParameter('now', new DateTime(), 'datetime');
     }
 
     /** @return Page[] */

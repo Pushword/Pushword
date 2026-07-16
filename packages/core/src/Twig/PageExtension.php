@@ -18,6 +18,7 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\StringToDQLCriteria;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -32,6 +33,7 @@ final class PageExtension
         private readonly RouteGeneratorFactoryInterface $routeGeneratorFactory,
         private readonly LinkCollectorService $linkCollector,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly Security $security,
     ) {
     }
 
@@ -227,6 +229,7 @@ final class PageExtension
         ?Page $currentPage = null,
         bool $excludeAlreadyLinked = false,
         bool $indexableOnly = true,
+        bool $published = true,
     ): string {
         $currentPage ??= $this->apps->getCurrentPage();
 
@@ -276,12 +279,9 @@ final class PageExtension
             : ['key' => $order[0], 'direction' => $order[1]];
 
         $host = $this->getHost($host, $currentPage);
-        $queryBuilder = $this->pageRepo->getPublishedPageQueryBuilder(
-            $host,
-            $search,
-            $order,
-            $max,
-        );
+        $queryBuilder = $published
+            ? $this->pageRepo->getPublishedPageQueryBuilder($host, $search, $order, $max)
+            : $this->pageRepo->getUnpublishedPageQueryBuilder($host, $search, $order, $max);
 
         if (! $hasSlugFilter) {
             $locale = $currentPage->locale ?? '';
@@ -341,6 +341,58 @@ final class PageExtension
             'id' => $id,
             'wrapperClass' => $wrapperClass,
         ]);
+    }
+
+    /**
+     * Editorial counterpart of pages_list(): same arguments, same rendering, but over
+     * the pages that are NOT online right now — never scheduled (publishedAt IS NULL)
+     * and scheduled for later. Meant for back-office/debug pages listing what a host
+     * still has in the pipe, which no other twig function can reach.
+     *
+     * Renders nothing unless a ROLE_EDITOR is logged in. Safe against the render cache:
+     * the markdown cache keys fragments on their post-Twig text (see Markdown filter),
+     * so an editor render and a visitor render never share a cache entry.
+     *
+     * Unlike pages_list(), noindex pages are kept: a draft list that silently drops them
+     * would hide exactly the pages an editor is looking for.
+     *
+     * @param string|array<mixed>                $search
+     * @param int|array<(string|int)>            $max
+     * @param string|array<(string|int), string> $order
+     * @param Page|null                          $currentPage DO NOT USE OUTSIDE PUSHWORD PACKAGES
+     * @param string|string[]                    $host        DO NOT USE OUTSIDE PUSHWORD PACKAGES
+     */
+    #[AsTwigFunction('draft_list', needsEnvironment: false, isSafe: ['html'])]
+    public function renderDraftList(
+        array|string $search = '',
+        int|array|string $max = 0,
+        array|string $order = 'publishedAt,weight',
+        string $view = '',
+        int|string $maxPages = 0,
+        string $wrapperClass = '',
+        string $id = '',
+
+        // next properties are not documented, do not use outside pushword packages
+        array|string $host = '',
+        ?Page $currentPage = null,
+    ): string {
+        if (null === $this->security->getToken() || ! $this->security->isGranted('ROLE_EDITOR')) {
+            return '';
+        }
+
+        return $this->renderPagesList(
+            search: $search,
+            max: $max,
+            order: $order,
+            view: $view,
+            maxPages: $maxPages,
+            wrapperClass: $wrapperClass,
+            id: $id,
+            host: $host,
+            currentPage: $currentPage,
+            indexableOnly: false,
+            published: false,
+        );
     }
 
     /**
